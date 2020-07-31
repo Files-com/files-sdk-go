@@ -7,7 +7,7 @@ import (
 )
 
 type Behavior struct {
-	Id             int             `json:"id,omitempty"`
+	Id             int64           `json:"id,omitempty"`
 	Path           string          `json:"path,omitempty"`
 	AttachmentUrl  string          `json:"attachment_url,omitempty"`
 	Behavior       string          `json:"behavior,omitempty"`
@@ -34,7 +34,7 @@ type BehaviorListParams struct {
 }
 
 type BehaviorFindParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 type BehaviorListForParams struct {
@@ -72,7 +72,7 @@ type BehaviorWebhookTestParams struct {
 }
 
 type BehaviorUpdateParams struct {
-	Id             int       `url:"-,omitempty"`
+	Id             int64     `url:"-,omitempty"`
 	Value          string    `url:"value,omitempty"`
 	AttachmentFile io.Writer `url:"attachment_file,omitempty"`
 	Behavior       string    `url:"behavior,omitempty"`
@@ -80,7 +80,7 @@ type BehaviorUpdateParams struct {
 }
 
 type BehaviorDeleteParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 func (b *Behavior) UnmarshalJSON(data []byte) error {

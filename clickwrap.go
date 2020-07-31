@@ -11,7 +11,7 @@ type Clickwrap struct {
 	UseWithUsers   string `json:"use_with_users,omitempty"`
 	UseWithBundles string `json:"use_with_bundles,omitempty"`
 	UseWithInboxes string `json:"use_with_inboxes,omitempty"`
-	Id             int    `json:"id,omitempty"`
+	Id             int64  `json:"id,omitempty"`
 }
 
 type ClickwrapCollection []Clickwrap
@@ -24,7 +24,7 @@ type ClickwrapListParams struct {
 }
 
 type ClickwrapFindParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 type ClickwrapCreateParams struct {
@@ -36,7 +36,7 @@ type ClickwrapCreateParams struct {
 }
 
 type ClickwrapUpdateParams struct {
-	Id             int    `url:"-,omitempty"`
+	Id             int64  `url:"-,omitempty"`
 	Name           string `url:"name,omitempty"`
 	Body           string `url:"body,omitempty"`
 	UseWithBundles string `url:"use_with_bundles,omitempty"`
@@ -45,7 +45,7 @@ type ClickwrapUpdateParams struct {
 }
 
 type ClickwrapDeleteParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 func (c *Clickwrap) UnmarshalJSON(data []byte) error {

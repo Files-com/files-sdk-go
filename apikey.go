@@ -7,7 +7,7 @@ import (
 )
 
 type ApiKey struct {
-	Id               int       `json:"id,omitempty"`
+	Id               int64     `json:"id,omitempty"`
 	DescriptiveLabel string    `json:"descriptive_label,omitempty"`
 	CreatedAt        time.Time `json:"created_at,omitempty"`
 	ExpiresAt        time.Time `json:"expires_at,omitempty"`
@@ -17,13 +17,13 @@ type ApiKey struct {
 	Path             string    `json:"path,omitempty"`
 	PermissionSet    string    `json:"permission_set,omitempty"`
 	Platform         string    `json:"platform,omitempty"`
-	UserId           int       `json:"user_id,omitempty"`
+	UserId           int64     `json:"user_id,omitempty"`
 }
 
 type ApiKeyCollection []ApiKey
 
 type ApiKeyListParams struct {
-	UserId     int             `url:"user_id,omitempty"`
+	UserId     int64           `url:"user_id,omitempty"`
 	Page       int             `url:"page,omitempty"`
 	PerPage    int             `url:"per_page,omitempty"`
 	Action     string          `url:"action,omitempty"`
@@ -39,11 +39,11 @@ type ApiKeyListParams struct {
 }
 
 type ApiKeyFindParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 type ApiKeyCreateParams struct {
-	UserId        int    `url:"user_id,omitempty"`
+	UserId        int64  `url:"user_id,omitempty"`
 	Name          string `url:"name,omitempty"`
 	ExpiresAt     string `url:"expires_at,omitempty"`
 	PermissionSet string `url:"permission_set,omitempty"`
@@ -57,14 +57,14 @@ type ApiKeyUpdateCurrentParams struct {
 }
 
 type ApiKeyUpdateParams struct {
-	Id            int    `url:"-,omitempty"`
+	Id            int64  `url:"-,omitempty"`
 	Name          string `url:"name,omitempty"`
 	ExpiresAt     string `url:"expires_at,omitempty"`
 	PermissionSet string `url:"permission_set,omitempty"`
 }
 
 type ApiKeyDeleteParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 func (a *ApiKey) UnmarshalJSON(data []byte) error {

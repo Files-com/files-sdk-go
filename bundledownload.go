@@ -18,7 +18,7 @@ type BundleDownloadListParams struct {
 	Page                 int    `url:"page,omitempty"`
 	PerPage              int    `url:"per_page,omitempty"`
 	Action               string `url:"action,omitempty"`
-	BundleRegistrationId int    `url:"bundle_registration_id,omitempty"`
+	BundleRegistrationId int64  `url:"bundle_registration_id,omitempty"`
 	lib.ListParams
 }
 

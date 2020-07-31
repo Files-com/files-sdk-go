@@ -6,11 +6,11 @@ import (
 )
 
 type Permission struct {
-	Id         int    `json:"id,omitempty"`
+	Id         int64  `json:"id,omitempty"`
 	Path       string `json:"path,omitempty"`
-	UserId     int    `json:"user_id,omitempty"`
+	UserId     int64  `json:"user_id,omitempty"`
 	Username   string `json:"username,omitempty"`
-	GroupId    int    `json:"group_id,omitempty"`
+	GroupId    int64  `json:"group_id,omitempty"`
 	GroupName  string `json:"group_name,omitempty"`
 	Permission string `json:"permission,omitempty"`
 	Recursive  *bool  `json:"recursive,omitempty"`
@@ -38,16 +38,16 @@ type PermissionListParams struct {
 }
 
 type PermissionCreateParams struct {
-	GroupId    int    `url:"group_id,omitempty"`
+	GroupId    int64  `url:"group_id,omitempty"`
 	Path       string `url:"path,omitempty"`
 	Permission string `url:"permission,omitempty"`
 	Recursive  *bool  `url:"recursive,omitempty"`
-	UserId     int    `url:"user_id,omitempty"`
+	UserId     int64  `url:"user_id,omitempty"`
 	Username   string `url:"username,omitempty"`
 }
 
 type PermissionDeleteParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 func (p *Permission) UnmarshalJSON(data []byte) error {

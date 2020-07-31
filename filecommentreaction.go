@@ -5,22 +5,22 @@ import (
 )
 
 type FileCommentReaction struct {
-	Id            int    `json:"id,omitempty"`
+	Id            int64  `json:"id,omitempty"`
 	Emoji         string `json:"emoji,omitempty"`
-	UserId        int    `json:"user_id,omitempty"`
-	FileCommentId int    `json:"file_comment_id,omitempty"`
+	UserId        int64  `json:"user_id,omitempty"`
+	FileCommentId int64  `json:"file_comment_id,omitempty"`
 }
 
 type FileCommentReactionCollection []FileCommentReaction
 
 type FileCommentReactionCreateParams struct {
-	UserId        int    `url:"user_id,omitempty"`
-	FileCommentId int    `url:"file_comment_id,omitempty"`
+	UserId        int64  `url:"user_id,omitempty"`
+	FileCommentId int64  `url:"file_comment_id,omitempty"`
 	Emoji         string `url:"emoji,omitempty"`
 }
 
 type FileCommentReactionDeleteParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 func (f *FileCommentReaction) UnmarshalJSON(data []byte) error {

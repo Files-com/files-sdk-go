@@ -8,7 +8,7 @@ import (
 )
 
 type User struct {
-	Id                         int       `json:"id,omitempty"`
+	Id                         int64     `json:"id,omitempty"`
 	Username                   string    `json:"username,omitempty"`
 	AdminGroupIds              []string  `json:"admin_group_ids,omitempty"`
 	AllowedIps                 string    `json:"allowed_ips,omitempty"`
@@ -47,7 +47,7 @@ type User struct {
 	SiteAdmin                  *bool     `json:"site_admin,omitempty"`
 	SkipWelcomeScreen          *bool     `json:"skip_welcome_screen,omitempty"`
 	SslRequired                string    `json:"ssl_required,omitempty"`
-	SsoStrategyId              int       `json:"sso_strategy_id,omitempty"`
+	SsoStrategyId              int64     `json:"sso_strategy_id,omitempty"`
 	SubscribeToNewsletter      *bool     `json:"subscribe_to_newsletter,omitempty"`
 	ExternallyManaged          *bool     `json:"externally_managed,omitempty"`
 	TimeZone                   string    `json:"time_zone,omitempty"`
@@ -58,7 +58,7 @@ type User struct {
 	ChangePassword             string    `json:"change_password,omitempty"`
 	ChangePasswordConfirmation string    `json:"change_password_confirmation,omitempty"`
 	GrantPermission            string    `json:"grant_permission,omitempty"`
-	GroupId                    int       `json:"group_id,omitempty"`
+	GroupId                    int64     `json:"group_id,omitempty"`
 	Password                   string    `json:"password,omitempty"`
 	PasswordConfirmation       string    `json:"password_confirmation,omitempty"`
 	AnnouncementsRead          *bool     `json:"announcements_read,omitempty"`
@@ -83,7 +83,7 @@ type UserListParams struct {
 }
 
 type UserFindParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 type UserCreateParams struct {
@@ -93,7 +93,7 @@ type UserCreateParams struct {
 	ChangePasswordConfirmation string    `url:"change_password_confirmation,omitempty"`
 	Email                      string    `url:"email,omitempty"`
 	GrantPermission            string    `url:"grant_permission,omitempty"`
-	GroupId                    int       `url:"group_id,omitempty"`
+	GroupId                    int64     `url:"group_id,omitempty"`
 	GroupIds                   string    `url:"group_ids,omitempty"`
 	Password                   string    `url:"password,omitempty"`
 	PasswordConfirmation       string    `url:"password_confirmation,omitempty"`
@@ -123,7 +123,7 @@ type UserCreateParams struct {
 	SiteAdmin                  *bool     `url:"site_admin,omitempty"`
 	SkipWelcomeScreen          *bool     `url:"skip_welcome_screen,omitempty"`
 	SslRequired                string    `url:"ssl_required,omitempty"`
-	SsoStrategyId              int       `url:"sso_strategy_id,omitempty"`
+	SsoStrategyId              int64     `url:"sso_strategy_id,omitempty"`
 	SubscribeToNewsletter      *bool     `url:"subscribe_to_newsletter,omitempty"`
 	TimeZone                   string    `url:"time_zone,omitempty"`
 	UserRoot                   string    `url:"user_root,omitempty"`
@@ -131,26 +131,26 @@ type UserCreateParams struct {
 }
 
 type UserUnlockParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 type UserResendWelcomeEmailParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 type UserUser2faResetParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 type UserUpdateParams struct {
-	Id                         int       `url:"-,omitempty"`
+	Id                         int64     `url:"-,omitempty"`
 	AvatarFile                 io.Writer `url:"avatar_file,omitempty"`
 	AvatarDelete               *bool     `url:"avatar_delete,omitempty"`
 	ChangePassword             string    `url:"change_password,omitempty"`
 	ChangePasswordConfirmation string    `url:"change_password_confirmation,omitempty"`
 	Email                      string    `url:"email,omitempty"`
 	GrantPermission            string    `url:"grant_permission,omitempty"`
-	GroupId                    int       `url:"group_id,omitempty"`
+	GroupId                    int64     `url:"group_id,omitempty"`
 	GroupIds                   string    `url:"group_ids,omitempty"`
 	Password                   string    `url:"password,omitempty"`
 	PasswordConfirmation       string    `url:"password_confirmation,omitempty"`
@@ -180,7 +180,7 @@ type UserUpdateParams struct {
 	SiteAdmin                  *bool     `url:"site_admin,omitempty"`
 	SkipWelcomeScreen          *bool     `url:"skip_welcome_screen,omitempty"`
 	SslRequired                string    `url:"ssl_required,omitempty"`
-	SsoStrategyId              int       `url:"sso_strategy_id,omitempty"`
+	SsoStrategyId              int64     `url:"sso_strategy_id,omitempty"`
 	SubscribeToNewsletter      *bool     `url:"subscribe_to_newsletter,omitempty"`
 	TimeZone                   string    `url:"time_zone,omitempty"`
 	UserRoot                   string    `url:"user_root,omitempty"`
@@ -188,7 +188,7 @@ type UserUpdateParams struct {
 }
 
 type UserDeleteParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 func (u *User) UnmarshalJSON(data []byte) error {

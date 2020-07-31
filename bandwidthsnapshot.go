@@ -7,7 +7,7 @@ import (
 )
 
 type BandwidthSnapshot struct {
-	Id            int       `json:"id,omitempty"`
+	Id            int64     `json:"id,omitempty"`
 	BytesReceived float32   `json:"bytes_received,omitempty"`
 	BytesSent     float32   `json:"bytes_sent,omitempty"`
 	RequestsGet   float32   `json:"requests_get,omitempty"`

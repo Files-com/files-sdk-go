@@ -7,18 +7,18 @@ import (
 )
 
 type PublicKey struct {
-	Id          int       `json:"id,omitempty"`
+	Id          int64     `json:"id,omitempty"`
 	Title       string    `json:"title,omitempty"`
 	CreatedAt   time.Time `json:"created_at,omitempty"`
 	Fingerprint string    `json:"fingerprint,omitempty"`
-	UserId      int       `json:"user_id,omitempty"`
+	UserId      int64     `json:"user_id,omitempty"`
 	PublicKey   string    `json:"public_key,omitempty"`
 }
 
 type PublicKeyCollection []PublicKey
 
 type PublicKeyListParams struct {
-	UserId  int    `url:"user_id,omitempty"`
+	UserId  int64  `url:"user_id,omitempty"`
 	Page    int    `url:"page,omitempty"`
 	PerPage int    `url:"per_page,omitempty"`
 	Action  string `url:"action,omitempty"`
@@ -26,22 +26,22 @@ type PublicKeyListParams struct {
 }
 
 type PublicKeyFindParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 type PublicKeyCreateParams struct {
-	UserId    int    `url:"user_id,omitempty"`
+	UserId    int64  `url:"user_id,omitempty"`
 	Title     string `url:"title,omitempty"`
 	PublicKey string `url:"public_key,omitempty"`
 }
 
 type PublicKeyUpdateParams struct {
-	Id    int    `url:"-,omitempty"`
+	Id    int64  `url:"-,omitempty"`
 	Title string `url:"title,omitempty"`
 }
 
 type PublicKeyDeleteParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 func (p *PublicKey) UnmarshalJSON(data []byte) error {

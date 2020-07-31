@@ -6,7 +6,7 @@ import (
 )
 
 type FileComment struct {
-	Id        int      `json:"id,omitempty"`
+	Id        int64    `json:"id,omitempty"`
 	Body      string   `json:"body,omitempty"`
 	Reactions []string `json:"reactions,omitempty"`
 	Path      string   `json:"path,omitempty"`
@@ -28,12 +28,12 @@ type FileCommentCreateParams struct {
 }
 
 type FileCommentUpdateParams struct {
-	Id   int    `url:"-,omitempty"`
+	Id   int64  `url:"-,omitempty"`
 	Body string `url:"body,omitempty"`
 }
 
 type FileCommentDeleteParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 func (f *FileComment) UnmarshalJSON(data []byte) error {

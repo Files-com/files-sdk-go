@@ -6,7 +6,7 @@ import (
 )
 
 type Automation struct {
-	Id                     int      `json:"id,omitempty"`
+	Id                     int64    `json:"id,omitempty"`
 	Automation             string   `json:"automation,omitempty"`
 	Source                 string   `json:"source,omitempty"`
 	Destination            string   `json:"destination,omitempty"`
@@ -16,7 +16,7 @@ type Automation struct {
 	NextProcessOn          string   `json:"next_process_on,omitempty"`
 	Path                   string   `json:"path,omitempty"`
 	Realtime               *bool    `json:"realtime,omitempty"`
-	UserId                 int      `json:"user_id,omitempty"`
+	UserId                 int64    `json:"user_id,omitempty"`
 	UserIds                []string `json:"user_ids,omitempty"`
 	GroupIds               []string `json:"group_ids,omitempty"`
 }
@@ -40,7 +40,7 @@ type AutomationListParams struct {
 }
 
 type AutomationFindParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 type AutomationCreateParams struct {
@@ -56,7 +56,7 @@ type AutomationCreateParams struct {
 }
 
 type AutomationUpdateParams struct {
-	Id                     int    `url:"-,omitempty"`
+	Id                     int64  `url:"-,omitempty"`
 	Automation             string `url:"automation,omitempty"`
 	Source                 string `url:"source,omitempty"`
 	Destination            string `url:"destination,omitempty"`
@@ -69,7 +69,7 @@ type AutomationUpdateParams struct {
 }
 
 type AutomationDeleteParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 func (a *Automation) UnmarshalJSON(data []byte) error {

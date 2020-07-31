@@ -6,7 +6,7 @@ import (
 )
 
 type Style struct {
-	Id        int       `json:"id,omitempty"`
+	Id        int64     `json:"id,omitempty"`
 	Path      string    `json:"path,omitempty"`
 	Logo      string    `json:"logo,omitempty"`
 	Thumbnail string    `json:"thumbnail,omitempty"`

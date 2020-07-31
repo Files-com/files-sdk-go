@@ -12,7 +12,7 @@ type Site struct {
 	Allowed2faMethodTotp                 *bool     `json:"allowed_2fa_method_totp,omitempty"`
 	Allowed2faMethodU2f                  *bool     `json:"allowed_2fa_method_u2f,omitempty"`
 	Allowed2faMethodYubi                 *bool     `json:"allowed_2fa_method_yubi,omitempty"`
-	AdminUserId                          int       `json:"admin_user_id,omitempty"`
+	AdminUserId                          int64     `json:"admin_user_id,omitempty"`
 	AllowBundleNames                     *bool     `json:"allow_bundle_names,omitempty"`
 	AllowedIps                           string    `json:"allowed_ips,omitempty"`
 	AskAboutOverwrites                   *bool     `json:"ask_about_overwrites,omitempty"`

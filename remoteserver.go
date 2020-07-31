@@ -6,7 +6,7 @@ import (
 )
 
 type RemoteServer struct {
-	Id                                int    `json:"id,omitempty"`
+	Id                                int64  `json:"id,omitempty"`
 	AuthenticationMethod              string `json:"authentication_method,omitempty"`
 	Hostname                          string `json:"hostname,omitempty"`
 	Name                              string `json:"name,omitempty"`
@@ -58,7 +58,7 @@ type RemoteServerListParams struct {
 }
 
 type RemoteServerFindParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 type RemoteServerCreateParams struct {
@@ -100,7 +100,7 @@ type RemoteServerCreateParams struct {
 }
 
 type RemoteServerUpdateParams struct {
-	Id                                int    `url:"-,omitempty"`
+	Id                                int64  `url:"-,omitempty"`
 	AwsAccessKey                      string `url:"aws_access_key,omitempty"`
 	AwsSecretKey                      string `url:"aws_secret_key,omitempty"`
 	Password                          string `url:"password,omitempty"`
@@ -139,7 +139,7 @@ type RemoteServerUpdateParams struct {
 }
 
 type RemoteServerDeleteParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 func (r *RemoteServer) UnmarshalJSON(data []byte) error {

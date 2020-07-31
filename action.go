@@ -6,7 +6,7 @@ import (
 )
 
 type Action struct {
-	Id          int       `json:"id,omitempty"`
+	Id          int64     `json:"id,omitempty"`
 	Path        string    `json:"path,omitempty"`
 	When        time.Time `json:"when,omitempty"`
 	Destination string    `json:"destination,omitempty"`
@@ -14,7 +14,7 @@ type Action struct {
 	Ip          string    `json:"ip,omitempty"`
 	Source      string    `json:"source,omitempty"`
 	Targets     []string  `json:"targets,omitempty"`
-	UserId      int       `json:"user_id,omitempty"`
+	UserId      int64     `json:"user_id,omitempty"`
 	Username    string    `json:"username,omitempty"`
 	Action      string    `json:"action,omitempty"`
 	FailureType string    `json:"failure_type,omitempty"`

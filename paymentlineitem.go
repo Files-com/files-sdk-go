@@ -8,8 +8,8 @@ import (
 type PaymentLineItem struct {
 	Amount    float32   `json:"amount,omitempty"`
 	CreatedAt time.Time `json:"created_at,omitempty"`
-	InvoiceId int       `json:"invoice_id,omitempty"`
-	PaymentId int       `json:"payment_id,omitempty"`
+	InvoiceId int64     `json:"invoice_id,omitempty"`
+	PaymentId int64     `json:"payment_id,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 }
 

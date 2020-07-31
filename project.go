@@ -6,7 +6,7 @@ import (
 )
 
 type Project struct {
-	Id           int    `json:"id,omitempty"`
+	Id           int64  `json:"id,omitempty"`
 	GlobalAccess string `json:"global_access,omitempty"`
 }
 
@@ -20,7 +20,7 @@ type ProjectListParams struct {
 }
 
 type ProjectFindParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 type ProjectCreateParams struct {
@@ -28,12 +28,12 @@ type ProjectCreateParams struct {
 }
 
 type ProjectUpdateParams struct {
-	Id           int    `url:"-,omitempty"`
+	Id           int64  `url:"-,omitempty"`
 	GlobalAccess string `url:"global_access,omitempty"`
 }
 
 type ProjectDeleteParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 func (p *Project) UnmarshalJSON(data []byte) error {

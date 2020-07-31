@@ -13,7 +13,7 @@ type Session struct {
 	MultipleRegions       *bool  `json:"multiple_regions,omitempty"`
 	ReadOnly              *bool  `json:"read_only,omitempty"`
 	RootPath              string `json:"root_path,omitempty"`
-	SiteId                int    `json:"site_id,omitempty"`
+	SiteId                int64  `json:"site_id,omitempty"`
 	SslRequired           *bool  `json:"ssl_required,omitempty"`
 	TlsDisabled           *bool  `json:"tls_disabled,omitempty"`
 	TwoFactorSetupNeeded  *bool  `json:"two_factor_setup_needed,omitempty"`

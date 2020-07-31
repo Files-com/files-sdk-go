@@ -6,7 +6,7 @@ import (
 )
 
 type Request struct {
-	Id              int    `json:"id,omitempty"`
+	Id              int64  `json:"id,omitempty"`
 	Path            string `json:"path,omitempty"`
 	Source          string `json:"source,omitempty"`
 	Destination     string `json:"destination,omitempty"`
@@ -47,7 +47,7 @@ type RequestCreateParams struct {
 }
 
 type RequestDeleteParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 func (r *Request) UnmarshalJSON(data []byte) error {

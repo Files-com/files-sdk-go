@@ -10,7 +10,7 @@ type SsoStrategy struct {
 	Provider                       string   `json:"provider,omitempty"`
 	Label                          string   `json:"label,omitempty"`
 	LogoUrl                        string   `json:"logo_url,omitempty"`
-	Id                             int      `json:"id,omitempty"`
+	Id                             int64    `json:"id,omitempty"`
 	SamlProviderCertFingerprint    string   `json:"saml_provider_cert_fingerprint,omitempty"`
 	SamlProviderIssuerUrl          string   `json:"saml_provider_issuer_url,omitempty"`
 	SamlProviderMetadataUrl        string   `json:"saml_provider_metadata_url,omitempty"`
@@ -54,7 +54,7 @@ type SsoStrategyListParams struct {
 }
 
 type SsoStrategyFindParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 func (s *SsoStrategy) UnmarshalJSON(data []byte) error {

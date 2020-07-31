@@ -7,7 +7,7 @@ import (
 )
 
 type Invoice struct {
-	Id                int       `json:"id,omitempty"`
+	Id                int64     `json:"id,omitempty"`
 	Amount            float32   `json:"amount,omitempty"`
 	Balance           float32   `json:"balance,omitempty"`
 	CreatedAt         time.Time `json:"created_at,omitempty"`
@@ -33,7 +33,7 @@ type InvoiceListParams struct {
 }
 
 type InvoiceFindParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 func (i *Invoice) UnmarshalJSON(data []byte) error {

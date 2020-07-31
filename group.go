@@ -6,7 +6,7 @@ import (
 )
 
 type Group struct {
-	Id        int      `json:"id,omitempty"`
+	Id        int64    `json:"id,omitempty"`
 	Name      string   `json:"name,omitempty"`
 	AdminIds  []string `json:"admin_ids,omitempty"`
 	Notes     string   `json:"notes,omitempty"`
@@ -33,7 +33,7 @@ type GroupListParams struct {
 }
 
 type GroupFindParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 type GroupCreateParams struct {
@@ -44,7 +44,7 @@ type GroupCreateParams struct {
 }
 
 type GroupUpdateParams struct {
-	Id       int    `url:"-,omitempty"`
+	Id       int64  `url:"-,omitempty"`
 	Name     string `url:"name,omitempty"`
 	Notes    string `url:"notes,omitempty"`
 	UserIds  string `url:"user_ids,omitempty"`
@@ -52,7 +52,7 @@ type GroupUpdateParams struct {
 }
 
 type GroupDeleteParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 func (g *Group) UnmarshalJSON(data []byte) error {

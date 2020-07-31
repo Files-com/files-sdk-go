@@ -7,7 +7,7 @@ import (
 )
 
 type UsageSnapshot struct {
-	Id                           int             `json:"id,omitempty"`
+	Id                           int64           `json:"id,omitempty"`
 	StartAt                      time.Time       `json:"start_at,omitempty"`
 	EndAt                        time.Time       `json:"end_at,omitempty"`
 	CreatedAt                    time.Time       `json:"created_at,omitempty"`

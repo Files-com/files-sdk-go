@@ -17,11 +17,11 @@ type BundleRecipient struct {
 type BundleRecipientCollection []BundleRecipient
 
 type BundleRecipientListParams struct {
-	UserId   int    `url:"user_id,omitempty"`
+	UserId   int64  `url:"user_id,omitempty"`
 	Page     int    `url:"page,omitempty"`
 	PerPage  int    `url:"per_page,omitempty"`
 	Action   string `url:"action,omitempty"`
-	BundleId int    `url:"bundle_id,omitempty"`
+	BundleId int64  `url:"bundle_id,omitempty"`
 	lib.ListParams
 }
 

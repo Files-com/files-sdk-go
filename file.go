@@ -6,7 +6,7 @@ import (
 )
 
 type File struct {
-	Id               int       `json:"id,omitempty"`
+	Id               int64     `json:"id,omitempty"`
 	Path             string    `json:"path,omitempty"`
 	DisplayName      string    `json:"display_name,omitempty"`
 	Type             string    `json:"type,omitempty"`
@@ -21,7 +21,7 @@ type File struct {
 	SubfoldersLocked *bool     `json:"subfolders_locked?,omitempty"`
 	DownloadUri      string    `json:"download_uri,omitempty"`
 	PriorityColor    string    `json:"priority_color,omitempty"`
-	PreviewId        int       `json:"preview_id,omitempty"`
+	PreviewId        int64     `json:"preview_id,omitempty"`
 	Preview          string    `json:"preview,omitempty"`
 	Action           string    `json:"action,omitempty"`
 	Length           int       `json:"length,omitempty"`

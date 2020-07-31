@@ -7,7 +7,7 @@ import (
 )
 
 type UsageDailySnapshot struct {
-	Id                 int       `json:"id,omitempty"`
+	Id                 int64     `json:"id,omitempty"`
 	Date               date.Date `json:"date,omitempty"`
 	CurrentStorage     int       `json:"current_storage,omitempty"`
 	UsageByTopLevelDir []string  `json:"usage_by_top_level_dir,omitempty"`

@@ -5,7 +5,7 @@ import (
 )
 
 type Preview struct {
-	Id          int    `json:"id,omitempty"`
+	Id          int64  `json:"id,omitempty"`
 	Status      string `json:"status,omitempty"`
 	DownloadUri string `json:"download_uri,omitempty"`
 	Type        string `json:"type,omitempty"`

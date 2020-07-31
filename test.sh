@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-cd generated/go || exit 1
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd "${DIR}" || exit 1
 go mod tidy
 go get -d -v
 go fmt . -s

@@ -14,15 +14,15 @@ type Bundle struct {
 	RequireRegistration   *bool     `json:"require_registration,omitempty"`
 	RequireShareRecipient *bool     `json:"require_share_recipient,omitempty"`
 	ClickwrapBody         string    `json:"clickwrap_body,omitempty"`
-	Id                    int       `json:"id,omitempty"`
+	Id                    int64     `json:"id,omitempty"`
 	CreatedAt             time.Time `json:"created_at,omitempty"`
 	ExpiresAt             time.Time `json:"expires_at,omitempty"`
 	MaxUses               int       `json:"max_uses,omitempty"`
 	Note                  string    `json:"note,omitempty"`
-	UserId                int       `json:"user_id,omitempty"`
+	UserId                int64     `json:"user_id,omitempty"`
 	Username              string    `json:"username,omitempty"`
-	ClickwrapId           int       `json:"clickwrap_id,omitempty"`
-	InboxId               int       `json:"inbox_id,omitempty"`
+	ClickwrapId           int64     `json:"clickwrap_id,omitempty"`
+	InboxId               int64     `json:"inbox_id,omitempty"`
 	Paths                 []string  `json:"paths,omitempty"`
 	Password              string    `json:"password,omitempty"`
 }
@@ -30,7 +30,7 @@ type Bundle struct {
 type BundleCollection []Bundle
 
 type BundleListParams struct {
-	UserId     int             `url:"user_id,omitempty"`
+	UserId     int64           `url:"user_id,omitempty"`
 	Page       int             `url:"page,omitempty"`
 	PerPage    int             `url:"per_page,omitempty"`
 	Action     string          `url:"action,omitempty"`
@@ -46,11 +46,11 @@ type BundleListParams struct {
 }
 
 type BundleFindParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 type BundleCreateParams struct {
-	UserId                int      `url:"user_id,omitempty"`
+	UserId                int64    `url:"user_id,omitempty"`
 	Paths                 []string `url:"paths,omitempty"`
 	Password              string   `url:"password,omitempty"`
 	ExpiresAt             string   `url:"expires_at,omitempty"`
@@ -59,25 +59,25 @@ type BundleCreateParams struct {
 	Note                  string   `url:"note,omitempty"`
 	Code                  string   `url:"code,omitempty"`
 	RequireRegistration   *bool    `url:"require_registration,omitempty"`
-	ClickwrapId           int      `url:"clickwrap_id,omitempty"`
-	InboxId               int      `url:"inbox_id,omitempty"`
+	ClickwrapId           int64    `url:"clickwrap_id,omitempty"`
+	InboxId               int64    `url:"inbox_id,omitempty"`
 	RequireShareRecipient *bool    `url:"require_share_recipient,omitempty"`
 }
 
 type BundleShareParams struct {
-	Id   int      `url:"-,omitempty"`
+	Id   int64    `url:"-,omitempty"`
 	To   []string `url:"to,omitempty"`
 	Note string   `url:"note,omitempty"`
 }
 
 type BundleUpdateParams struct {
-	Id                    int    `url:"-,omitempty"`
+	Id                    int64  `url:"-,omitempty"`
 	Password              string `url:"password,omitempty"`
-	ClickwrapId           int    `url:"clickwrap_id,omitempty"`
+	ClickwrapId           int64  `url:"clickwrap_id,omitempty"`
 	Code                  string `url:"code,omitempty"`
 	Description           string `url:"description,omitempty"`
 	ExpiresAt             string `url:"expires_at,omitempty"`
-	InboxId               int    `url:"inbox_id,omitempty"`
+	InboxId               int64  `url:"inbox_id,omitempty"`
 	MaxUses               int    `url:"max_uses,omitempty"`
 	Note                  string `url:"note,omitempty"`
 	RequireRegistration   *bool  `url:"require_registration,omitempty"`
@@ -85,7 +85,7 @@ type BundleUpdateParams struct {
 }
 
 type BundleDeleteParams struct {
-	Id int `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty"`
 }
 
 func (b *Bundle) UnmarshalJSON(data []byte) error {

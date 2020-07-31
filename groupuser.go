@@ -7,35 +7,35 @@ import (
 
 type GroupUser struct {
 	GroupName string   `json:"group_name,omitempty"`
-	GroupId   int      `json:"group_id,omitempty"`
-	UserId    int      `json:"user_id,omitempty"`
+	GroupId   int64    `json:"group_id,omitempty"`
+	UserId    int64    `json:"user_id,omitempty"`
 	Admin     *bool    `json:"admin,omitempty"`
 	Usernames []string `json:"usernames,omitempty"`
-	Id        int      `json:"id,omitempty"`
+	Id        int64    `json:"id,omitempty"`
 }
 
 type GroupUserCollection []GroupUser
 
 type GroupUserListParams struct {
-	UserId  int    `url:"user_id,omitempty"`
+	UserId  int64  `url:"user_id,omitempty"`
 	Page    int    `url:"page,omitempty"`
 	PerPage int    `url:"per_page,omitempty"`
 	Action  string `url:"action,omitempty"`
-	GroupId int    `url:"group_id,omitempty"`
+	GroupId int64  `url:"group_id,omitempty"`
 	lib.ListParams
 }
 
 type GroupUserUpdateParams struct {
-	Id      int   `url:"-,omitempty"`
-	GroupId int   `url:"group_id,omitempty"`
-	UserId  int   `url:"user_id,omitempty"`
+	Id      int64 `url:"-,omitempty"`
+	GroupId int64 `url:"group_id,omitempty"`
+	UserId  int64 `url:"user_id,omitempty"`
 	Admin   *bool `url:"admin,omitempty"`
 }
 
 type GroupUserDeleteParams struct {
-	Id      int `url:"-,omitempty"`
-	GroupId int `url:"group_id,omitempty"`
-	UserId  int `url:"user_id,omitempty"`
+	Id      int64 `url:"-,omitempty"`
+	GroupId int64 `url:"group_id,omitempty"`
+	UserId  int64 `url:"user_id,omitempty"`
 }
 
 func (g *GroupUser) UnmarshalJSON(data []byte) error {

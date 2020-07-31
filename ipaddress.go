@@ -8,7 +8,7 @@ import (
 type IpAddress struct {
 	Id             string   `json:"id,omitempty"`
 	AssociatedWith string   `json:"associated_with,omitempty"`
-	GroupId        int      `json:"group_id,omitempty"`
+	GroupId        int64    `json:"group_id,omitempty"`
 	IpAddresses    []string `json:"ip_addresses,omitempty"`
 }
 
