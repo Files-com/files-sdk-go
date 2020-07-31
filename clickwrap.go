@@ -1,53 +1,52 @@
 package files_sdk
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  "encoding/json"
+	"encoding/json"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type Clickwrap struct {
-  Name string `json:"name,omitempty"`
-  Body string `json:"body,omitempty"`
-  UseWithUsers string `json:"use_with_users,omitempty"`
-  UseWithBundles string `json:"use_with_bundles,omitempty"`
-  UseWithInboxes string `json:"use_with_inboxes,omitempty"`
-  Id int `json:"id,omitempty"`
+	Name           string `json:"name,omitempty"`
+	Body           string `json:"body,omitempty"`
+	UseWithUsers   string `json:"use_with_users,omitempty"`
+	UseWithBundles string `json:"use_with_bundles,omitempty"`
+	UseWithInboxes string `json:"use_with_inboxes,omitempty"`
+	Id             int    `json:"id,omitempty"`
 }
 
 type ClickwrapCollection []Clickwrap
 
 type ClickwrapListParams struct {
-  Page int `url:"page,omitempty"`
-  PerPage int `url:"per_page,omitempty"`
-  Action string `url:"action,omitempty"`
-  lib.ListParams
+	Page    int    `url:"page,omitempty"`
+	PerPage int    `url:"per_page,omitempty"`
+	Action  string `url:"action,omitempty"`
+	lib.ListParams
 }
 
 type ClickwrapFindParams struct {
-  Id int `url:"-,omitempty"`
+	Id int `url:"-,omitempty"`
 }
 
 type ClickwrapCreateParams struct {
-  Name string `url:"name,omitempty"`
-  Body string `url:"body,omitempty"`
-  UseWithBundles string `url:"use_with_bundles,omitempty"`
-  UseWithInboxes string `url:"use_with_inboxes,omitempty"`
-  UseWithUsers string `url:"use_with_users,omitempty"`
+	Name           string `url:"name,omitempty"`
+	Body           string `url:"body,omitempty"`
+	UseWithBundles string `url:"use_with_bundles,omitempty"`
+	UseWithInboxes string `url:"use_with_inboxes,omitempty"`
+	UseWithUsers   string `url:"use_with_users,omitempty"`
 }
 
 type ClickwrapUpdateParams struct {
-  Id int `url:"-,omitempty"`
-  Name string `url:"name,omitempty"`
-  Body string `url:"body,omitempty"`
-  UseWithBundles string `url:"use_with_bundles,omitempty"`
-  UseWithInboxes string `url:"use_with_inboxes,omitempty"`
-  UseWithUsers string `url:"use_with_users,omitempty"`
+	Id             int    `url:"-,omitempty"`
+	Name           string `url:"name,omitempty"`
+	Body           string `url:"body,omitempty"`
+	UseWithBundles string `url:"use_with_bundles,omitempty"`
+	UseWithInboxes string `url:"use_with_inboxes,omitempty"`
+	UseWithUsers   string `url:"use_with_users,omitempty"`
 }
 
 type ClickwrapDeleteParams struct {
-  Id int `url:"-,omitempty"`
+	Id int `url:"-,omitempty"`
 }
-
 
 func (c *Clickwrap) UnmarshalJSON(data []byte) error {
 	type clickwrap Clickwrap
@@ -70,4 +69,3 @@ func (c *ClickwrapCollection) UnmarshalJSON(data []byte) error {
 	*c = ClickwrapCollection(v)
 	return nil
 }
-

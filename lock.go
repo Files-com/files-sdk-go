@@ -1,43 +1,42 @@
 package files_sdk
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  "encoding/json"
+	"encoding/json"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type Lock struct {
-  Path string `json:"path,omitempty"`
-  Timeout int `json:"timeout,omitempty"`
-  Depth string `json:"depth,omitempty"`
-  Owner string `json:"owner,omitempty"`
-  Scope string `json:"scope,omitempty"`
-  Token string `json:"token,omitempty"`
-  Type string `json:"type,omitempty"`
-  UserId int `json:"user_id,omitempty"`
-  Username string `json:"username,omitempty"`
+	Path     string `json:"path,omitempty"`
+	Timeout  int    `json:"timeout,omitempty"`
+	Depth    string `json:"depth,omitempty"`
+	Owner    string `json:"owner,omitempty"`
+	Scope    string `json:"scope,omitempty"`
+	Token    string `json:"token,omitempty"`
+	Type     string `json:"type,omitempty"`
+	UserId   int    `json:"user_id,omitempty"`
+	Username string `json:"username,omitempty"`
 }
 
 type LockCollection []Lock
 
 type LockListForParams struct {
-  Page int `url:"page,omitempty"`
-  PerPage int `url:"per_page,omitempty"`
-  Action string `url:"action,omitempty"`
-  Path string `url:"-,omitempty"`
-  IncludeChildren *bool `url:"include_children,omitempty"`
-  lib.ListParams
+	Page            int    `url:"page,omitempty"`
+	PerPage         int    `url:"per_page,omitempty"`
+	Action          string `url:"action,omitempty"`
+	Path            string `url:"-,omitempty"`
+	IncludeChildren *bool  `url:"include_children,omitempty"`
+	lib.ListParams
 }
 
 type LockCreateParams struct {
-  Path string `url:"-,omitempty"`
-  Timeout int `url:"timeout,omitempty"`
+	Path    string `url:"-,omitempty"`
+	Timeout int    `url:"timeout,omitempty"`
 }
 
 type LockDeleteParams struct {
-  Path string `url:"-,omitempty"`
-  Token string `url:"token,omitempty"`
+	Path  string `url:"-,omitempty"`
+	Token string `url:"token,omitempty"`
 }
-
 
 func (l *Lock) UnmarshalJSON(data []byte) error {
 	type lock Lock
@@ -60,4 +59,3 @@ func (l *LockCollection) UnmarshalJSON(data []byte) error {
 	*l = LockCollection(v)
 	return nil
 }
-

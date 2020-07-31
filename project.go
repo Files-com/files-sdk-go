@@ -1,41 +1,40 @@
 package files_sdk
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  "encoding/json"
+	"encoding/json"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type Project struct {
-  Id int `json:"id,omitempty"`
-  GlobalAccess string `json:"global_access,omitempty"`
+	Id           int    `json:"id,omitempty"`
+	GlobalAccess string `json:"global_access,omitempty"`
 }
 
 type ProjectCollection []Project
 
 type ProjectListParams struct {
-  Page int `url:"page,omitempty"`
-  PerPage int `url:"per_page,omitempty"`
-  Action string `url:"action,omitempty"`
-  lib.ListParams
+	Page    int    `url:"page,omitempty"`
+	PerPage int    `url:"per_page,omitempty"`
+	Action  string `url:"action,omitempty"`
+	lib.ListParams
 }
 
 type ProjectFindParams struct {
-  Id int `url:"-,omitempty"`
+	Id int `url:"-,omitempty"`
 }
 
 type ProjectCreateParams struct {
-  GlobalAccess string `url:"global_access,omitempty"`
+	GlobalAccess string `url:"global_access,omitempty"`
 }
 
 type ProjectUpdateParams struct {
-  Id int `url:"-,omitempty"`
-  GlobalAccess string `url:"global_access,omitempty"`
+	Id           int    `url:"-,omitempty"`
+	GlobalAccess string `url:"global_access,omitempty"`
 }
 
 type ProjectDeleteParams struct {
-  Id int `url:"-,omitempty"`
+	Id int `url:"-,omitempty"`
 }
-
 
 func (p *Project) UnmarshalJSON(data []byte) error {
 	type project Project
@@ -58,4 +57,3 @@ func (p *ProjectCollection) UnmarshalJSON(data []byte) error {
 	*p = ProjectCollection(v)
 	return nil
 }
-

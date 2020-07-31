@@ -1,40 +1,39 @@
 package files_sdk
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  "encoding/json"
+	"encoding/json"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type MessageCommentReaction struct {
-  Id int `json:"id,omitempty"`
-  Emoji string `json:"emoji,omitempty"`
-  UserId int `json:"user_id,omitempty"`
+	Id     int    `json:"id,omitempty"`
+	Emoji  string `json:"emoji,omitempty"`
+	UserId int    `json:"user_id,omitempty"`
 }
 
 type MessageCommentReactionCollection []MessageCommentReaction
 
 type MessageCommentReactionListParams struct {
-  UserId int `url:"user_id,omitempty"`
-  Page int `url:"page,omitempty"`
-  PerPage int `url:"per_page,omitempty"`
-  Action string `url:"action,omitempty"`
-  MessageCommentId int `url:"message_comment_id,omitempty"`
-  lib.ListParams
+	UserId           int    `url:"user_id,omitempty"`
+	Page             int    `url:"page,omitempty"`
+	PerPage          int    `url:"per_page,omitempty"`
+	Action           string `url:"action,omitempty"`
+	MessageCommentId int    `url:"message_comment_id,omitempty"`
+	lib.ListParams
 }
 
 type MessageCommentReactionFindParams struct {
-  Id int `url:"-,omitempty"`
+	Id int `url:"-,omitempty"`
 }
 
 type MessageCommentReactionCreateParams struct {
-  UserId int `url:"user_id,omitempty"`
-  Emoji string `url:"emoji,omitempty"`
+	UserId int    `url:"user_id,omitempty"`
+	Emoji  string `url:"emoji,omitempty"`
 }
 
 type MessageCommentReactionDeleteParams struct {
-  Id int `url:"-,omitempty"`
+	Id int `url:"-,omitempty"`
 }
-
 
 func (m *MessageCommentReaction) UnmarshalJSON(data []byte) error {
 	type messageCommentReaction MessageCommentReaction
@@ -57,4 +56,3 @@ func (m *MessageCommentReactionCollection) UnmarshalJSON(data []byte) error {
 	*m = MessageCommentReactionCollection(v)
 	return nil
 }
-

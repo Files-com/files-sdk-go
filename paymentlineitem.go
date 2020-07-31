@@ -1,20 +1,19 @@
 package files_sdk
 
 import (
-  "encoding/json"
-  "time"
+	"encoding/json"
+	"time"
 )
 
 type PaymentLineItem struct {
-  Amount float32 `json:"amount,omitempty"`
-  CreatedAt time.Time `json:"created_at,omitempty"`
-  InvoiceId int `json:"invoice_id,omitempty"`
-  PaymentId int `json:"payment_id,omitempty"`
-  UpdatedAt time.Time `json:"updated_at,omitempty"`
+	Amount    float32   `json:"amount,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	InvoiceId int       `json:"invoice_id,omitempty"`
+	PaymentId int       `json:"payment_id,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
 }
 
 type PaymentLineItemCollection []PaymentLineItem
-
 
 func (p *PaymentLineItem) UnmarshalJSON(data []byte) error {
 	type paymentLineItem PaymentLineItem
@@ -37,4 +36,3 @@ func (p *PaymentLineItemCollection) UnmarshalJSON(data []byte) error {
 	*p = PaymentLineItemCollection(v)
 	return nil
 }
-

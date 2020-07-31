@@ -1,32 +1,31 @@
 package files_sdk
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  "encoding/json"
+	"encoding/json"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type IpAddress struct {
-  Id string `json:"id,omitempty"`
-  AssociatedWith string `json:"associated_with,omitempty"`
-  GroupId int `json:"group_id,omitempty"`
-  IpAddresses []string `json:"ip_addresses,omitempty"`
+	Id             string   `json:"id,omitempty"`
+	AssociatedWith string   `json:"associated_with,omitempty"`
+	GroupId        int      `json:"group_id,omitempty"`
+	IpAddresses    []string `json:"ip_addresses,omitempty"`
 }
 
 type IpAddressCollection []IpAddress
 
 type IpAddressListParams struct {
-  Page int `url:"page,omitempty"`
-  PerPage int `url:"per_page,omitempty"`
-  Action string `url:"action,omitempty"`
-  lib.ListParams
+	Page    int    `url:"page,omitempty"`
+	PerPage int    `url:"per_page,omitempty"`
+	Action  string `url:"action,omitempty"`
+	lib.ListParams
 }
 
 type IpAddressGetReservedParams struct {
-  Page int `url:"page,omitempty"`
-  PerPage int `url:"per_page,omitempty"`
-  Action string `url:"action,omitempty"`
+	Page    int    `url:"page,omitempty"`
+	PerPage int    `url:"per_page,omitempty"`
+	Action  string `url:"action,omitempty"`
 }
-
 
 func (i *IpAddress) UnmarshalJSON(data []byte) error {
 	type ipAddress IpAddress
@@ -49,4 +48,3 @@ func (i *IpAddressCollection) UnmarshalJSON(data []byte) error {
 	*i = IpAddressCollection(v)
 	return nil
 }
-

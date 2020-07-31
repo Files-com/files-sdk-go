@@ -1,16 +1,15 @@
 package files_sdk
 
 import (
-  "encoding/json"
+	"encoding/json"
 )
 
 type Errors struct {
-  Fields []string `json:"fields,omitempty"`
-  Messages []string `json:"messages,omitempty"`
+	Fields   []string `json:"fields,omitempty"`
+	Messages []string `json:"messages,omitempty"`
 }
 
 type ErrorsCollection []Errors
-
 
 func (e *Errors) UnmarshalJSON(data []byte) error {
 	type errors Errors
@@ -33,4 +32,3 @@ func (e *ErrorsCollection) UnmarshalJSON(data []byte) error {
 	*e = ErrorsCollection(v)
 	return nil
 }
-

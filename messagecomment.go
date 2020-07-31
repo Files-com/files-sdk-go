@@ -1,46 +1,45 @@
 package files_sdk
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  "encoding/json"
+	"encoding/json"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type MessageComment struct {
-  Id int `json:"id,omitempty"`
-  Body string `json:"body,omitempty"`
-  Reactions []string `json:"reactions,omitempty"`
-  UserId int `json:"user_id,omitempty"`
+	Id        int      `json:"id,omitempty"`
+	Body      string   `json:"body,omitempty"`
+	Reactions []string `json:"reactions,omitempty"`
+	UserId    int      `json:"user_id,omitempty"`
 }
 
 type MessageCommentCollection []MessageComment
 
 type MessageCommentListParams struct {
-  UserId int `url:"user_id,omitempty"`
-  Page int `url:"page,omitempty"`
-  PerPage int `url:"per_page,omitempty"`
-  Action string `url:"action,omitempty"`
-  MessageId int `url:"message_id,omitempty"`
-  lib.ListParams
+	UserId    int    `url:"user_id,omitempty"`
+	Page      int    `url:"page,omitempty"`
+	PerPage   int    `url:"per_page,omitempty"`
+	Action    string `url:"action,omitempty"`
+	MessageId int    `url:"message_id,omitempty"`
+	lib.ListParams
 }
 
 type MessageCommentFindParams struct {
-  Id int `url:"-,omitempty"`
+	Id int `url:"-,omitempty"`
 }
 
 type MessageCommentCreateParams struct {
-  UserId int `url:"user_id,omitempty"`
-  Body string `url:"body,omitempty"`
+	UserId int    `url:"user_id,omitempty"`
+	Body   string `url:"body,omitempty"`
 }
 
 type MessageCommentUpdateParams struct {
-  Id int `url:"-,omitempty"`
-  Body string `url:"body,omitempty"`
+	Id   int    `url:"-,omitempty"`
+	Body string `url:"body,omitempty"`
 }
 
 type MessageCommentDeleteParams struct {
-  Id int `url:"-,omitempty"`
+	Id int `url:"-,omitempty"`
 }
-
 
 func (m *MessageComment) UnmarshalJSON(data []byte) error {
 	type messageComment MessageComment
@@ -63,4 +62,3 @@ func (m *MessageCommentCollection) UnmarshalJSON(data []byte) error {
 	*m = MessageCommentCollection(v)
 	return nil
 }
-

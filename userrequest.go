@@ -1,39 +1,38 @@
 package files_sdk
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  "encoding/json"
+	"encoding/json"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type UserRequest struct {
-  Name string `json:"name,omitempty"`
-  Email string `json:"email,omitempty"`
-  Details string `json:"details,omitempty"`
+	Name    string `json:"name,omitempty"`
+	Email   string `json:"email,omitempty"`
+	Details string `json:"details,omitempty"`
 }
 
 type UserRequestCollection []UserRequest
 
 type UserRequestListParams struct {
-  Page int `url:"page,omitempty"`
-  PerPage int `url:"per_page,omitempty"`
-  Action string `url:"action,omitempty"`
-  lib.ListParams
+	Page    int    `url:"page,omitempty"`
+	PerPage int    `url:"per_page,omitempty"`
+	Action  string `url:"action,omitempty"`
+	lib.ListParams
 }
 
 type UserRequestFindParams struct {
-  Id int `url:"-,omitempty"`
+	Id int `url:"-,omitempty"`
 }
 
 type UserRequestCreateParams struct {
-  Name string `url:"name,omitempty"`
-  Email string `url:"email,omitempty"`
-  Details string `url:"details,omitempty"`
+	Name    string `url:"name,omitempty"`
+	Email   string `url:"email,omitempty"`
+	Details string `url:"details,omitempty"`
 }
 
 type UserRequestDeleteParams struct {
-  Id int `url:"-,omitempty"`
+	Id int `url:"-,omitempty"`
 }
-
 
 func (u *UserRequest) UnmarshalJSON(data []byte) error {
 	type userRequest UserRequest
@@ -56,4 +55,3 @@ func (u *UserRequestCollection) UnmarshalJSON(data []byte) error {
 	*u = UserRequestCollection(v)
 	return nil
 }
-

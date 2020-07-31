@@ -1,15 +1,14 @@
 package files_sdk
 
 import (
-  "encoding/json"
+	"encoding/json"
 )
 
 type Auto struct {
-  Dynamic json.RawMessage `json:"dynamic,omitempty"`
+	Dynamic json.RawMessage `json:"dynamic,omitempty"`
 }
 
 type AutoCollection []Auto
-
 
 func (a *Auto) UnmarshalJSON(data []byte) error {
 	type auto Auto
@@ -32,4 +31,3 @@ func (a *AutoCollection) UnmarshalJSON(data []byte) error {
 	*a = AutoCollection(v)
 	return nil
 }
-

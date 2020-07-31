@@ -1,33 +1,32 @@
 package files_sdk
 
 import (
-  "encoding/json"
-  "io"
+	"encoding/json"
+	"io"
 )
 
 type Style struct {
-  Id int `json:"id,omitempty"`
-  Path string `json:"path,omitempty"`
-  Logo string `json:"logo,omitempty"`
-  Thumbnail string `json:"thumbnail,omitempty"`
-  File io.Reader `json:"file,omitempty"`
+	Id        int       `json:"id,omitempty"`
+	Path      string    `json:"path,omitempty"`
+	Logo      string    `json:"logo,omitempty"`
+	Thumbnail string    `json:"thumbnail,omitempty"`
+	File      io.Reader `json:"file,omitempty"`
 }
 
 type StyleCollection []Style
 
 type StyleFindParams struct {
-  Path string `url:"-,omitempty"`
+	Path string `url:"-,omitempty"`
 }
 
 type StyleUpdateParams struct {
-  Path string `url:"-,omitempty"`
-  File io.Writer `url:"file,omitempty"`
+	Path string    `url:"-,omitempty"`
+	File io.Writer `url:"file,omitempty"`
 }
 
 type StyleDeleteParams struct {
-  Path string `url:"-,omitempty"`
+	Path string `url:"-,omitempty"`
 }
-
 
 func (s *Style) UnmarshalJSON(data []byte) error {
 	type style Style
@@ -50,4 +49,3 @@ func (s *StyleCollection) UnmarshalJSON(data []byte) error {
 	*s = StyleCollection(v)
 	return nil
 }
-

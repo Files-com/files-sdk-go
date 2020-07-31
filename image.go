@@ -1,16 +1,15 @@
 package files_sdk
 
 import (
-  "encoding/json"
+	"encoding/json"
 )
 
 type Image struct {
-  Name string `json:"name,omitempty"`
-  Uri string `json:"uri,omitempty"`
+	Name string `json:"name,omitempty"`
+	Uri  string `json:"uri,omitempty"`
 }
 
 type ImageCollection []Image
-
 
 func (i *Image) UnmarshalJSON(data []byte) error {
 	type image Image
@@ -33,4 +32,3 @@ func (i *ImageCollection) UnmarshalJSON(data []byte) error {
 	*i = ImageCollection(v)
 	return nil
 }
-

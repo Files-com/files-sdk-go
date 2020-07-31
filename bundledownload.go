@@ -1,27 +1,26 @@
 package files_sdk
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  "encoding/json"
-  "time"
+	"encoding/json"
+	lib "github.com/Files-com/files-sdk-go/lib"
+	"time"
 )
 
 type BundleDownload struct {
-  DownloadMethod string `json:"download_method,omitempty"`
-  Path string `json:"path,omitempty"`
-  CreatedAt time.Time `json:"created_at,omitempty"`
+	DownloadMethod string    `json:"download_method,omitempty"`
+	Path           string    `json:"path,omitempty"`
+	CreatedAt      time.Time `json:"created_at,omitempty"`
 }
 
 type BundleDownloadCollection []BundleDownload
 
 type BundleDownloadListParams struct {
-  Page int `url:"page,omitempty"`
-  PerPage int `url:"per_page,omitempty"`
-  Action string `url:"action,omitempty"`
-  BundleRegistrationId int `url:"bundle_registration_id,omitempty"`
-  lib.ListParams
+	Page                 int    `url:"page,omitempty"`
+	PerPage              int    `url:"per_page,omitempty"`
+	Action               string `url:"action,omitempty"`
+	BundleRegistrationId int    `url:"bundle_registration_id,omitempty"`
+	lib.ListParams
 }
-
 
 func (b *BundleDownload) UnmarshalJSON(data []byte) error {
 	type bundleDownload BundleDownload
@@ -44,4 +43,3 @@ func (b *BundleDownloadCollection) UnmarshalJSON(data []byte) error {
 	*b = BundleDownloadCollection(v)
 	return nil
 }
-

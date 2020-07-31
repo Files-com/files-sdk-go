@@ -1,19 +1,18 @@
 package files_sdk
 
 import (
-  "encoding/json"
+	"encoding/json"
 )
 
 type Status struct {
-  Code int `json:"code,omitempty"`
-  Message string `json:"message,omitempty"`
-  Status string `json:"status,omitempty"`
-  Data string `json:"data,omitempty"`
-  Errors []string `json:"errors,omitempty"`
+	Code    int      `json:"code,omitempty"`
+	Message string   `json:"message,omitempty"`
+	Status  string   `json:"status,omitempty"`
+	Data    string   `json:"data,omitempty"`
+	Errors  []string `json:"errors,omitempty"`
 }
 
 type StatusCollection []Status
-
 
 func (s *Status) UnmarshalJSON(data []byte) error {
 	type status Status
@@ -36,4 +35,3 @@ func (s *StatusCollection) UnmarshalJSON(data []byte) error {
 	*s = StatusCollection(v)
 	return nil
 }
-

@@ -1,19 +1,18 @@
 package files_sdk
 
 import (
-  "encoding/json"
+	"encoding/json"
 )
 
 type Preview struct {
-  Id int `json:"id,omitempty"`
-  Status string `json:"status,omitempty"`
-  DownloadUri string `json:"download_uri,omitempty"`
-  Type string `json:"type,omitempty"`
-  Size int `json:"size,omitempty"`
+	Id          int    `json:"id,omitempty"`
+	Status      string `json:"status,omitempty"`
+	DownloadUri string `json:"download_uri,omitempty"`
+	Type        string `json:"type,omitempty"`
+	Size        int    `json:"size,omitempty"`
 }
 
 type PreviewCollection []Preview
-
 
 func (p *Preview) UnmarshalJSON(data []byte) error {
 	type preview Preview
@@ -36,4 +35,3 @@ func (p *PreviewCollection) UnmarshalJSON(data []byte) error {
 	*p = PreviewCollection(v)
 	return nil
 }
-

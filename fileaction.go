@@ -1,7 +1,7 @@
 package files_sdk
 
 import (
-  "encoding/json"
+	"encoding/json"
 )
 
 type FileAction struct {
@@ -10,26 +10,25 @@ type FileAction struct {
 type FileActionCollection []FileAction
 
 type FileActionCopyParams struct {
-  Path string `url:"-,omitempty"`
-  Destination string `url:"destination,omitempty"`
-  Structure *bool `url:"structure,omitempty"`
+	Path        string `url:"-,omitempty"`
+	Destination string `url:"destination,omitempty"`
+	Structure   *bool  `url:"structure,omitempty"`
 }
 
 type FileActionMoveParams struct {
-  Path string `url:"-,omitempty"`
-  Destination string `url:"destination,omitempty"`
+	Path        string `url:"-,omitempty"`
+	Destination string `url:"destination,omitempty"`
 }
 
 type FileActionBeginUploadParams struct {
-  Path string `url:"-,omitempty"`
-  MkdirParents *bool `url:"mkdir_parents,omitempty"`
-  Part int `url:"part,omitempty"`
-  Parts int `url:"parts,omitempty"`
-  Ref string `url:"ref,omitempty"`
-  Restart int `url:"restart,omitempty"`
-  WithRename *bool `url:"with_rename,omitempty"`
+	Path         string `url:"-,omitempty"`
+	MkdirParents *bool  `url:"mkdir_parents,omitempty"`
+	Part         int    `url:"part,omitempty"`
+	Parts        int    `url:"parts,omitempty"`
+	Ref          string `url:"ref,omitempty"`
+	Restart      int    `url:"restart,omitempty"`
+	WithRename   *bool  `url:"with_rename,omitempty"`
 }
-
 
 func (f *FileAction) UnmarshalJSON(data []byte) error {
 	type fileAction FileAction
@@ -52,4 +51,3 @@ func (f *FileActionCollection) UnmarshalJSON(data []byte) error {
 	*f = FileActionCollection(v)
 	return nil
 }
-

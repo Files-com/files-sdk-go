@@ -49,25 +49,6 @@ func List(params files_sdk.ApiKeyListParams) *Iter {
   return client.List (params)
 }
 
-func (c *Client) Find (params files_sdk.ApiKeyFindParams) (files_sdk.ApiKey, error) {
-  apiKey := files_sdk.ApiKey{}
-  	path := "/api_keys/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
-	if err != nil {
-	  return apiKey, err
-	}
-	if err := apiKey.UnmarshalJSON(*data); err != nil {
-	return apiKey, err
-	}
-
-	return  apiKey, nil
-}
-
-func Find (params files_sdk.ApiKeyFindParams) (files_sdk.ApiKey, error) {
-  client := Client{}
-  return client.Find (params)
-}
-
 func (c *Client) FindCurrent () (files_sdk.ApiKey, error) {
   apiKey := files_sdk.ApiKey{}
 	  path := "/api_key"
@@ -85,6 +66,25 @@ func (c *Client) FindCurrent () (files_sdk.ApiKey, error) {
 func FindCurrent () (files_sdk.ApiKey, error) {
   client := Client{}
   return client.FindCurrent ()
+}
+
+func (c *Client) Find (params files_sdk.ApiKeyFindParams) (files_sdk.ApiKey, error) {
+  apiKey := files_sdk.ApiKey{}
+  	path := "/api_keys/" + lib.QueryEscape(string(params.Id)) + ""
+	data, _, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+	if err != nil {
+	  return apiKey, err
+	}
+	if err := apiKey.UnmarshalJSON(*data); err != nil {
+	return apiKey, err
+	}
+
+	return  apiKey, nil
+}
+
+func Find (params files_sdk.ApiKeyFindParams) (files_sdk.ApiKey, error) {
+  client := Client{}
+  return client.Find (params)
 }
 
 func (c *Client) Create (params files_sdk.ApiKeyCreateParams) (files_sdk.ApiKey, error) {
@@ -106,25 +106,6 @@ func Create (params files_sdk.ApiKeyCreateParams) (files_sdk.ApiKey, error) {
   return client.Create (params)
 }
 
-func (c *Client) Update (params files_sdk.ApiKeyUpdateParams) (files_sdk.ApiKey, error) {
-  apiKey := files_sdk.ApiKey{}
-  	path := "/api_keys/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("PATCH", c.Config, path, lib.ExportParams(params))
-	if err != nil {
-	  return apiKey, err
-	}
-	if err := apiKey.UnmarshalJSON(*data); err != nil {
-	return apiKey, err
-	}
-
-	return  apiKey, nil
-}
-
-func Update (params files_sdk.ApiKeyUpdateParams) (files_sdk.ApiKey, error) {
-  client := Client{}
-  return client.Update (params)
-}
-
 func (c *Client) UpdateCurrent (params files_sdk.ApiKeyUpdateCurrentParams) (files_sdk.ApiKey, error) {
   apiKey := files_sdk.ApiKey{}
 	  path := "/api_key"
@@ -144,10 +125,10 @@ func UpdateCurrent (params files_sdk.ApiKeyUpdateCurrentParams) (files_sdk.ApiKe
   return client.UpdateCurrent (params)
 }
 
-func (c *Client) Delete (params files_sdk.ApiKeyDeleteParams) (files_sdk.ApiKey, error) {
+func (c *Client) Update (params files_sdk.ApiKeyUpdateParams) (files_sdk.ApiKey, error) {
   apiKey := files_sdk.ApiKey{}
   	path := "/api_keys/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
+	data, _, err := files_sdk.Call("PATCH", c.Config, path, lib.ExportParams(params))
 	if err != nil {
 	  return apiKey, err
 	}
@@ -158,9 +139,9 @@ func (c *Client) Delete (params files_sdk.ApiKeyDeleteParams) (files_sdk.ApiKey,
 	return  apiKey, nil
 }
 
-func Delete (params files_sdk.ApiKeyDeleteParams) (files_sdk.ApiKey, error) {
+func Update (params files_sdk.ApiKeyUpdateParams) (files_sdk.ApiKey, error) {
   client := Client{}
-  return client.Delete (params)
+  return client.Update (params)
 }
 
 func (c *Client) DeleteCurrent () (files_sdk.ApiKey, error) {
@@ -180,4 +161,23 @@ func (c *Client) DeleteCurrent () (files_sdk.ApiKey, error) {
 func DeleteCurrent () (files_sdk.ApiKey, error) {
   client := Client{}
   return client.DeleteCurrent ()
+}
+
+func (c *Client) Delete (params files_sdk.ApiKeyDeleteParams) (files_sdk.ApiKey, error) {
+  apiKey := files_sdk.ApiKey{}
+  	path := "/api_keys/" + lib.QueryEscape(string(params.Id)) + ""
+	data, _, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
+	if err != nil {
+	  return apiKey, err
+	}
+	if err := apiKey.UnmarshalJSON(*data); err != nil {
+	return apiKey, err
+	}
+
+	return  apiKey, nil
+}
+
+func Delete (params files_sdk.ApiKeyDeleteParams) (files_sdk.ApiKey, error) {
+  client := Client{}
+  return client.Delete (params)
 }

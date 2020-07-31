@@ -1,26 +1,25 @@
 package files_sdk
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  "encoding/json"
+	"encoding/json"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type DnsRecord struct {
-  Id string `json:"id,omitempty"`
-  Domain string `json:"domain,omitempty"`
-  Rrtype string `json:"rrtype,omitempty"`
-  Value string `json:"value,omitempty"`
+	Id     string `json:"id,omitempty"`
+	Domain string `json:"domain,omitempty"`
+	Rrtype string `json:"rrtype,omitempty"`
+	Value  string `json:"value,omitempty"`
 }
 
 type DnsRecordCollection []DnsRecord
 
 type DnsRecordListParams struct {
-  Page int `url:"page,omitempty"`
-  PerPage int `url:"per_page,omitempty"`
-  Action string `url:"action,omitempty"`
-  lib.ListParams
+	Page    int    `url:"page,omitempty"`
+	PerPage int    `url:"per_page,omitempty"`
+	Action  string `url:"action,omitempty"`
+	lib.ListParams
 }
-
 
 func (d *DnsRecord) UnmarshalJSON(data []byte) error {
 	type dnsRecord DnsRecord
@@ -43,4 +42,3 @@ func (d *DnsRecordCollection) UnmarshalJSON(data []byte) error {
 	*d = DnsRecordCollection(v)
 	return nil
 }
-

@@ -1,16 +1,15 @@
 package files_sdk
 
 import (
-  "encoding/json"
+	"encoding/json"
 )
 
 type PublicIpAddress struct {
-  IpAddress string `json:"ip_address,omitempty"`
-  ServerName string `json:"server_name,omitempty"`
+	IpAddress  string `json:"ip_address,omitempty"`
+	ServerName string `json:"server_name,omitempty"`
 }
 
 type PublicIpAddressCollection []PublicIpAddress
-
 
 func (p *PublicIpAddress) UnmarshalJSON(data []byte) error {
 	type publicIpAddress PublicIpAddress
@@ -33,4 +32,3 @@ func (p *PublicIpAddressCollection) UnmarshalJSON(data []byte) error {
 	*p = PublicIpAddressCollection(v)
 	return nil
 }
-

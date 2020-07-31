@@ -1,40 +1,39 @@
 package files_sdk
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  "encoding/json"
+	"encoding/json"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type MessageReaction struct {
-  Id int `json:"id,omitempty"`
-  Emoji string `json:"emoji,omitempty"`
-  UserId int `json:"user_id,omitempty"`
+	Id     int    `json:"id,omitempty"`
+	Emoji  string `json:"emoji,omitempty"`
+	UserId int    `json:"user_id,omitempty"`
 }
 
 type MessageReactionCollection []MessageReaction
 
 type MessageReactionListParams struct {
-  UserId int `url:"user_id,omitempty"`
-  Page int `url:"page,omitempty"`
-  PerPage int `url:"per_page,omitempty"`
-  Action string `url:"action,omitempty"`
-  MessageId int `url:"message_id,omitempty"`
-  lib.ListParams
+	UserId    int    `url:"user_id,omitempty"`
+	Page      int    `url:"page,omitempty"`
+	PerPage   int    `url:"per_page,omitempty"`
+	Action    string `url:"action,omitempty"`
+	MessageId int    `url:"message_id,omitempty"`
+	lib.ListParams
 }
 
 type MessageReactionFindParams struct {
-  Id int `url:"-,omitempty"`
+	Id int `url:"-,omitempty"`
 }
 
 type MessageReactionCreateParams struct {
-  UserId int `url:"user_id,omitempty"`
-  Emoji string `url:"emoji,omitempty"`
+	UserId int    `url:"user_id,omitempty"`
+	Emoji  string `url:"emoji,omitempty"`
 }
 
 type MessageReactionDeleteParams struct {
-  Id int `url:"-,omitempty"`
+	Id int `url:"-,omitempty"`
 }
-
 
 func (m *MessageReaction) UnmarshalJSON(data []byte) error {
 	type messageReaction MessageReaction
@@ -57,4 +56,3 @@ func (m *MessageReactionCollection) UnmarshalJSON(data []byte) error {
 	*m = MessageReactionCollection(v)
 	return nil
 }
-

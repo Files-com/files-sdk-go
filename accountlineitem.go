@@ -1,29 +1,28 @@
 package files_sdk
 
 import (
-  "encoding/json"
-  "time"
+	"encoding/json"
+	"time"
 )
 
 type AccountLineItem struct {
-  Id int `json:"id,omitempty"`
-  Amount float32 `json:"amount,omitempty"`
-  Balance float32 `json:"balance,omitempty"`
-  CreatedAt time.Time `json:"created_at,omitempty"`
-  Currency string `json:"currency,omitempty"`
-  DownloadUri string `json:"download_uri,omitempty"`
-  InvoiceLineItems []string `json:"invoice_line_items,omitempty"`
-  Method string `json:"method,omitempty"`
-  PaymentLineItems []string `json:"payment_line_items,omitempty"`
-  PaymentReversedAt time.Time `json:"payment_reversed_at,omitempty"`
-  PaymentType string `json:"payment_type,omitempty"`
-  SiteName string `json:"site_name,omitempty"`
-  Type string `json:"type,omitempty"`
-  UpdatedAt time.Time `json:"updated_at,omitempty"`
+	Id                int       `json:"id,omitempty"`
+	Amount            float32   `json:"amount,omitempty"`
+	Balance           float32   `json:"balance,omitempty"`
+	CreatedAt         time.Time `json:"created_at,omitempty"`
+	Currency          string    `json:"currency,omitempty"`
+	DownloadUri       string    `json:"download_uri,omitempty"`
+	InvoiceLineItems  []string  `json:"invoice_line_items,omitempty"`
+	Method            string    `json:"method,omitempty"`
+	PaymentLineItems  []string  `json:"payment_line_items,omitempty"`
+	PaymentReversedAt time.Time `json:"payment_reversed_at,omitempty"`
+	PaymentType       string    `json:"payment_type,omitempty"`
+	SiteName          string    `json:"site_name,omitempty"`
+	Type              string    `json:"type,omitempty"`
+	UpdatedAt         time.Time `json:"updated_at,omitempty"`
 }
 
 type AccountLineItemCollection []AccountLineItem
-
 
 func (a *AccountLineItem) UnmarshalJSON(data []byte) error {
 	type accountLineItem AccountLineItem
@@ -46,4 +45,3 @@ func (a *AccountLineItemCollection) UnmarshalJSON(data []byte) error {
 	*a = AccountLineItemCollection(v)
 	return nil
 }
-

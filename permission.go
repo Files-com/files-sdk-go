@@ -1,55 +1,54 @@
 package files_sdk
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  "encoding/json"
+	"encoding/json"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type Permission struct {
-  Id int `json:"id,omitempty"`
-  Path string `json:"path,omitempty"`
-  UserId int `json:"user_id,omitempty"`
-  Username string `json:"username,omitempty"`
-  GroupId int `json:"group_id,omitempty"`
-  GroupName string `json:"group_name,omitempty"`
-  Permission string `json:"permission,omitempty"`
-  Recursive *bool `json:"recursive,omitempty"`
+	Id         int    `json:"id,omitempty"`
+	Path       string `json:"path,omitempty"`
+	UserId     int    `json:"user_id,omitempty"`
+	Username   string `json:"username,omitempty"`
+	GroupId    int    `json:"group_id,omitempty"`
+	GroupName  string `json:"group_name,omitempty"`
+	Permission string `json:"permission,omitempty"`
+	Recursive  *bool  `json:"recursive,omitempty"`
 }
 
 type PermissionCollection []Permission
 
 type PermissionListParams struct {
-  Page int `url:"page,omitempty"`
-  PerPage int `url:"per_page,omitempty"`
-  Action string `url:"action,omitempty"`
-  Cursor string `url:"cursor,omitempty"`
-  SortBy json.RawMessage `url:"sort_by,omitempty"`
-  Filter json.RawMessage `url:"filter,omitempty"`
-  FilterGt json.RawMessage `url:"filter_gt,omitempty"`
-  FilterGteq json.RawMessage `url:"filter_gteq,omitempty"`
-  FilterLike json.RawMessage `url:"filter_like,omitempty"`
-  FilterLt json.RawMessage `url:"filter_lt,omitempty"`
-  FilterLteq json.RawMessage `url:"filter_lteq,omitempty"`
-  Path string `url:"path,omitempty"`
-  GroupId string `url:"group_id,omitempty"`
-  UserId string `url:"user_id,omitempty"`
-  IncludeGroups *bool `url:"include_groups,omitempty"`
-  lib.ListParams
+	Page          int             `url:"page,omitempty"`
+	PerPage       int             `url:"per_page,omitempty"`
+	Action        string          `url:"action,omitempty"`
+	Cursor        string          `url:"cursor,omitempty"`
+	SortBy        json.RawMessage `url:"sort_by,omitempty"`
+	Filter        json.RawMessage `url:"filter,omitempty"`
+	FilterGt      json.RawMessage `url:"filter_gt,omitempty"`
+	FilterGteq    json.RawMessage `url:"filter_gteq,omitempty"`
+	FilterLike    json.RawMessage `url:"filter_like,omitempty"`
+	FilterLt      json.RawMessage `url:"filter_lt,omitempty"`
+	FilterLteq    json.RawMessage `url:"filter_lteq,omitempty"`
+	Path          string          `url:"path,omitempty"`
+	GroupId       string          `url:"group_id,omitempty"`
+	UserId        string          `url:"user_id,omitempty"`
+	IncludeGroups *bool           `url:"include_groups,omitempty"`
+	lib.ListParams
 }
 
 type PermissionCreateParams struct {
-  GroupId int `url:"group_id,omitempty"`
-  Path string `url:"path,omitempty"`
-  Permission string `url:"permission,omitempty"`
-  Recursive *bool `url:"recursive,omitempty"`
-  UserId int `url:"user_id,omitempty"`
-  Username string `url:"username,omitempty"`
+	GroupId    int    `url:"group_id,omitempty"`
+	Path       string `url:"path,omitempty"`
+	Permission string `url:"permission,omitempty"`
+	Recursive  *bool  `url:"recursive,omitempty"`
+	UserId     int    `url:"user_id,omitempty"`
+	Username   string `url:"username,omitempty"`
 }
 
 type PermissionDeleteParams struct {
-  Id int `url:"-,omitempty"`
+	Id int `url:"-,omitempty"`
 }
-
 
 func (p *Permission) UnmarshalJSON(data []byte) error {
 	type permission Permission
@@ -72,4 +71,3 @@ func (p *PermissionCollection) UnmarshalJSON(data []byte) error {
 	*p = PermissionCollection(v)
 	return nil
 }
-
