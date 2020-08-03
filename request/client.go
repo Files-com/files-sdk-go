@@ -49,7 +49,7 @@ func List(params files_sdk.RequestListParams) *Iter {
   return client.List (params)
 }
 
-func (c *Client) FindFolder (params files_sdk.RequestFindFolderParams) (files_sdk.Request, error) {
+func (c *Client) GetFolder (params files_sdk.RequestGetFolderParams) (files_sdk.Request, error) {
   request := files_sdk.Request{}
 		path := "/requests/folders/" + lib.QueryEscape(params.Path) + ""
 	data, _, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
@@ -63,9 +63,9 @@ func (c *Client) FindFolder (params files_sdk.RequestFindFolderParams) (files_sd
 	return  request, nil
 }
 
-func FindFolder (params files_sdk.RequestFindFolderParams) (files_sdk.Request, error) {
+func GetFolder (params files_sdk.RequestGetFolderParams) (files_sdk.Request, error) {
   client := Client{}
-  return client.FindFolder (params)
+  return client.GetFolder (params)
 }
 
 func (c *Client) Create (params files_sdk.RequestCreateParams) (files_sdk.Request, error) {

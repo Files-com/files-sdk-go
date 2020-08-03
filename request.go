@@ -29,7 +29,7 @@ type RequestListParams struct {
 	lib.ListParams
 }
 
-type RequestFindFolderParams struct {
+type RequestGetFolderParams struct {
 	Page    int             `url:"page,omitempty"`
 	PerPage int             `url:"per_page,omitempty"`
 	Action  string          `url:"action,omitempty"`
