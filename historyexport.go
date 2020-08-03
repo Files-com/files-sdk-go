@@ -2,7 +2,6 @@ package files_sdk
 
 import (
 	"encoding/json"
-	lib "github.com/Files-com/files-sdk-go/lib"
 	"time"
 )
 
@@ -30,18 +29,11 @@ type HistoryExport struct {
 	QueryTargetUsername      string    `json:"query_target_username,omitempty"`
 	QueryTargetPlatform      string    `json:"query_target_platform,omitempty"`
 	QueryTargetPermissionSet string    `json:"query_target_permission_set,omitempty"`
+	ResultsUrl               string    `json:"results_url,omitempty"`
 	UserId                   int64     `json:"user_id,omitempty"`
 }
 
 type HistoryExportCollection []HistoryExport
-
-type HistoryExportListParams struct {
-	UserId  int64  `url:"user_id,omitempty"`
-	Page    int    `url:"page,omitempty"`
-	PerPage int    `url:"per_page,omitempty"`
-	Action  string `url:"action,omitempty"`
-	lib.ListParams
-}
 
 type HistoryExportFindParams struct {
 	Id int64 `url:"-,omitempty"`
@@ -70,10 +62,6 @@ type HistoryExportCreateParams struct {
 	QueryTargetUsername      string `url:"query_target_username,omitempty"`
 	QueryTargetPlatform      string `url:"query_target_platform,omitempty"`
 	QueryTargetPermissionSet string `url:"query_target_permission_set,omitempty"`
-}
-
-type HistoryExportDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
 }
 
 func (h *HistoryExport) UnmarshalJSON(data []byte) error {
