@@ -13,6 +13,7 @@ type FilePartUpload struct {
 	Headers            json.RawMessage `json:"headers,omitempty"`
 	HttpMethod         string          `json:"http_method,omitempty"`
 	NextPartsize       string          `json:"next_partsize,omitempty"`
+	ParallelParts      *bool           `json:"parallel_parts,omitempty"`
 	Parameters         string          `json:"parameters,omitempty"`
 	PartNumber         string          `json:"part_number,omitempty"`
 	Partsize           string          `json:"partsize,omitempty"`
