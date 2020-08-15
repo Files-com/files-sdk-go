@@ -21,6 +21,7 @@ type GroupUserListParams struct {
 	Page    int    `url:"page,omitempty"`
 	PerPage int    `url:"per_page,omitempty"`
 	Action  string `url:"action,omitempty"`
+	Cursor  string `url:"cursor,omitempty"`
 	GroupId int64  `url:"group_id,omitempty"`
 	lib.ListParams
 }

@@ -32,8 +32,8 @@ type FolderListForParams struct {
 	Page              int    `url:"page,omitempty"`
 	PerPage           int    `url:"per_page,omitempty"`
 	Action            string `url:"action,omitempty"`
-	Path              string `url:"-,omitempty"`
 	Cursor            string `url:"cursor,omitempty"`
+	Path              string `url:"-,omitempty"`
 	Filter            string `url:"filter,omitempty"`
 	PreviewSize       string `url:"preview_size,omitempty"`
 	Search            string `url:"search,omitempty"`

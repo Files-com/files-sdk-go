@@ -50,6 +50,7 @@ type SsoStrategyListParams struct {
 	Page    int    `url:"page,omitempty"`
 	PerPage int    `url:"per_page,omitempty"`
 	Action  string `url:"action,omitempty"`
+	Cursor  string `url:"cursor,omitempty"`
 	lib.ListParams
 }
 

@@ -34,13 +34,12 @@ type HistoryExportResult struct {
 type HistoryExportResultCollection []HistoryExportResult
 
 type HistoryExportResultListParams struct {
-	UserId          int64           `url:"user_id,omitempty"`
-	Page            int             `url:"page,omitempty"`
-	PerPage         int             `url:"per_page,omitempty"`
-	Action          string          `url:"action,omitempty"`
-	Cursor          string          `url:"cursor,omitempty"`
-	SortBy          json.RawMessage `url:"sort_by,omitempty"`
-	HistoryExportId int64           `url:"history_export_id,omitempty"`
+	UserId          int64  `url:"user_id,omitempty"`
+	Page            int    `url:"page,omitempty"`
+	PerPage         int    `url:"per_page,omitempty"`
+	Action          string `url:"action,omitempty"`
+	Cursor          string `url:"cursor,omitempty"`
+	HistoryExportId int64  `url:"history_export_id,omitempty"`
 	lib.ListParams
 }
 

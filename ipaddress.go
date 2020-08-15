@@ -18,6 +18,7 @@ type IpAddressListParams struct {
 	Page    int    `url:"page,omitempty"`
 	PerPage int    `url:"per_page,omitempty"`
 	Action  string `url:"action,omitempty"`
+	Cursor  string `url:"cursor,omitempty"`
 	lib.ListParams
 }
 
@@ -25,6 +26,7 @@ type IpAddressGetReservedParams struct {
 	Page    int    `url:"page,omitempty"`
 	PerPage int    `url:"per_page,omitempty"`
 	Action  string `url:"action,omitempty"`
+	Cursor  string `url:"cursor,omitempty"`
 }
 
 func (i *IpAddress) UnmarshalJSON(data []byte) error {

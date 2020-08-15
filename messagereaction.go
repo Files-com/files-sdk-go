@@ -18,6 +18,7 @@ type MessageReactionListParams struct {
 	Page      int    `url:"page,omitempty"`
 	PerPage   int    `url:"per_page,omitempty"`
 	Action    string `url:"action,omitempty"`
+	Cursor    string `url:"cursor,omitempty"`
 	MessageId int64  `url:"message_id,omitempty"`
 	lib.ListParams
 }

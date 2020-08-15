@@ -12,9 +12,9 @@ type HistoryExport struct {
 	Status                   string    `json:"status,omitempty"`
 	QueryAction              string    `json:"query_action,omitempty"`
 	QueryInterface           string    `json:"query_interface,omitempty"`
-	QueryUserId              int64     `json:"query_user_id,omitempty"`
-	QueryFileId              int64     `json:"query_file_id,omitempty"`
-	QueryParentId            int64     `json:"query_parent_id,omitempty"`
+	QueryUserId              string    `json:"query_user_id,omitempty"`
+	QueryFileId              string    `json:"query_file_id,omitempty"`
+	QueryParentId            string    `json:"query_parent_id,omitempty"`
 	QueryPath                string    `json:"query_path,omitempty"`
 	QueryFolder              string    `json:"query_folder,omitempty"`
 	QuerySrc                 string    `json:"query_src,omitempty"`
@@ -22,10 +22,10 @@ type HistoryExport struct {
 	QueryIp                  string    `json:"query_ip,omitempty"`
 	QueryUsername            string    `json:"query_username,omitempty"`
 	QueryFailureType         string    `json:"query_failure_type,omitempty"`
-	QueryTargetId            int64     `json:"query_target_id,omitempty"`
+	QueryTargetId            string    `json:"query_target_id,omitempty"`
 	QueryTargetName          string    `json:"query_target_name,omitempty"`
 	QueryTargetPermission    string    `json:"query_target_permission,omitempty"`
-	QueryTargetUserId        int64     `json:"query_target_user_id,omitempty"`
+	QueryTargetUserId        string    `json:"query_target_user_id,omitempty"`
 	QueryTargetUsername      string    `json:"query_target_username,omitempty"`
 	QueryTargetPlatform      string    `json:"query_target_platform,omitempty"`
 	QueryTargetPermissionSet string    `json:"query_target_permission_set,omitempty"`
@@ -45,9 +45,9 @@ type HistoryExportCreateParams struct {
 	EndAt                    string `url:"end_at,omitempty"`
 	QueryAction              string `url:"query_action,omitempty"`
 	QueryInterface           string `url:"query_interface,omitempty"`
-	QueryUserId              int64  `url:"query_user_id,omitempty"`
-	QueryFileId              int64  `url:"query_file_id,omitempty"`
-	QueryParentId            int64  `url:"query_parent_id,omitempty"`
+	QueryUserId              string `url:"query_user_id,omitempty"`
+	QueryFileId              string `url:"query_file_id,omitempty"`
+	QueryParentId            string `url:"query_parent_id,omitempty"`
 	QueryPath                string `url:"query_path,omitempty"`
 	QueryFolder              string `url:"query_folder,omitempty"`
 	QuerySrc                 string `url:"query_src,omitempty"`
@@ -55,10 +55,10 @@ type HistoryExportCreateParams struct {
 	QueryIp                  string `url:"query_ip,omitempty"`
 	QueryUsername            string `url:"query_username,omitempty"`
 	QueryFailureType         string `url:"query_failure_type,omitempty"`
-	QueryTargetId            int64  `url:"query_target_id,omitempty"`
+	QueryTargetId            string `url:"query_target_id,omitempty"`
 	QueryTargetName          string `url:"query_target_name,omitempty"`
 	QueryTargetPermission    string `url:"query_target_permission,omitempty"`
-	QueryTargetUserId        int64  `url:"query_target_user_id,omitempty"`
+	QueryTargetUserId        string `url:"query_target_user_id,omitempty"`
 	QueryTargetUsername      string `url:"query_target_username,omitempty"`
 	QueryTargetPlatform      string `url:"query_target_platform,omitempty"`
 	QueryTargetPermissionSet string `url:"query_target_permission_set,omitempty"`
