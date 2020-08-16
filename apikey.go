@@ -38,6 +38,11 @@ type ApiKeyListParams struct {
 	lib.ListParams
 }
 
+type ApiKeyFindCurrentParams struct {
+	Format string          `url:"format,omitempty"`
+	ApiKey json.RawMessage `url:"api_key,omitempty"`
+}
+
 type ApiKeyFindParams struct {
 	Id int64 `url:"-,omitempty"`
 }
@@ -61,6 +66,11 @@ type ApiKeyUpdateParams struct {
 	Name          string `url:"name,omitempty"`
 	ExpiresAt     string `url:"expires_at,omitempty"`
 	PermissionSet string `url:"permission_set,omitempty"`
+}
+
+type ApiKeyDeleteCurrentParams struct {
+	Format string          `url:"format,omitempty"`
+	ApiKey json.RawMessage `url:"api_key,omitempty"`
 }
 
 type ApiKeyDeleteParams struct {

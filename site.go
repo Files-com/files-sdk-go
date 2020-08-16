@@ -121,6 +121,16 @@ type Site struct {
 
 type SiteCollection []Site
 
+type SiteGetParams struct {
+	Format string          `url:"format,omitempty"`
+	Site   json.RawMessage `url:"site,omitempty"`
+}
+
+type SiteGetUsageParams struct {
+	Format string          `url:"format,omitempty"`
+	Site   json.RawMessage `url:"site,omitempty"`
+}
+
 type SiteUpdateParams struct {
 	Name                                 string    `url:"name,omitempty"`
 	Subdomain                            string    `url:"subdomain,omitempty"`

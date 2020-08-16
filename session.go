@@ -38,6 +38,11 @@ type SessionCreateParams struct {
 	PartialSessionId string `url:"partial_session_id,omitempty"`
 }
 
+type SessionDeleteParams struct {
+	Format  string          `url:"format,omitempty"`
+	Session json.RawMessage `url:"session,omitempty"`
+}
+
 func (s *Session) UnmarshalJSON(data []byte) error {
 	type session Session
 	var v session

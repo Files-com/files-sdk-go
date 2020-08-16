@@ -49,10 +49,10 @@ func List(params files_sdk.ApiKeyListParams) *Iter {
   return client.List (params)
 }
 
-func (c *Client) FindCurrent () (files_sdk.ApiKey, error) {
+func (c *Client) FindCurrent (params files_sdk.ApiKeyFindCurrentParams) (files_sdk.ApiKey, error) {
   apiKey := files_sdk.ApiKey{}
 	  path := "/api_key"
-	data, _, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(lib.Interface()))
+	data, _, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
 	if err != nil {
 	  return apiKey, err
 	}
@@ -63,9 +63,9 @@ func (c *Client) FindCurrent () (files_sdk.ApiKey, error) {
 	return  apiKey, nil
 }
 
-func FindCurrent () (files_sdk.ApiKey, error) {
+func FindCurrent (params files_sdk.ApiKeyFindCurrentParams) (files_sdk.ApiKey, error) {
   client := Client{}
-  return client.FindCurrent ()
+  return client.FindCurrent (params)
 }
 
 func (c *Client) Find (params files_sdk.ApiKeyFindParams) (files_sdk.ApiKey, error) {
@@ -144,10 +144,10 @@ func Update (params files_sdk.ApiKeyUpdateParams) (files_sdk.ApiKey, error) {
   return client.Update (params)
 }
 
-func (c *Client) DeleteCurrent () (files_sdk.ApiKey, error) {
+func (c *Client) DeleteCurrent (params files_sdk.ApiKeyDeleteCurrentParams) (files_sdk.ApiKey, error) {
   apiKey := files_sdk.ApiKey{}
 	  path := "/api_key"
-	data, _, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(lib.Interface()))
+	data, _, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
 	if err != nil {
 	  return apiKey, err
 	}
@@ -158,9 +158,9 @@ func (c *Client) DeleteCurrent () (files_sdk.ApiKey, error) {
 	return  apiKey, nil
 }
 
-func DeleteCurrent () (files_sdk.ApiKey, error) {
+func DeleteCurrent (params files_sdk.ApiKeyDeleteCurrentParams) (files_sdk.ApiKey, error) {
   client := Client{}
-  return client.DeleteCurrent ()
+  return client.DeleteCurrent (params)
 }
 
 func (c *Client) Delete (params files_sdk.ApiKeyDeleteParams) (files_sdk.ApiKey, error) {
