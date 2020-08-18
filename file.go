@@ -50,8 +50,19 @@ type FileDownloadParams struct {
 }
 
 type FileCreateParams struct {
-	Path       string       `url:"-,omitempty"`
-	EtagsParam []EtagsParam `url:"etags,omitempty"`
+	Path          string       `url:"-,omitempty"`
+	Action        string       `url:"action,omitempty"`
+	EtagsParam    []EtagsParam `url:"etags,omitempty"`
+	Length        int          `url:"length,omitempty"`
+	MkdirParents  *bool        `url:"mkdir_parents,omitempty"`
+	Part          int          `url:"part,omitempty"`
+	Parts         int          `url:"parts,omitempty"`
+	ProvidedMtime string       `url:"provided_mtime,omitempty"`
+	Ref           string       `url:"ref,omitempty"`
+	Restart       int          `url:"restart,omitempty"`
+	Size          int          `url:"size,omitempty"`
+	Structure     string       `url:"structure,omitempty"`
+	WithRename    *bool        `url:"with_rename,omitempty"`
 }
 
 type FileUpdateParams struct {
