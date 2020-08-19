@@ -23,6 +23,7 @@ type SsoStrategy struct {
 	ProvisionGroups                *bool    `json:"provision_groups,omitempty"`
 	DeprovisionUsers               *bool    `json:"deprovision_users,omitempty"`
 	DeprovisionGroups              *bool    `json:"deprovision_groups,omitempty"`
+	DeprovisionBehavior            string   `json:"deprovision_behavior,omitempty"`
 	ProvisionGroupDefault          string   `json:"provision_group_default,omitempty"`
 	ProvisionGroupExclusion        string   `json:"provision_group_exclusion,omitempty"`
 	ProvisionGroupInclusion        string   `json:"provision_group_inclusion,omitempty"`
