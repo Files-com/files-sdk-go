@@ -6,7 +6,6 @@ import (
 )
 
 type File struct {
-	Id               int64     `json:"id,omitempty"`
 	Path             string    `json:"path,omitempty"`
 	DisplayName      string    `json:"display_name,omitempty"`
 	Type             string    `json:"type,omitempty"`

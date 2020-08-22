@@ -11,6 +11,7 @@ type App struct {
 	DocumentationLinks  string `json:"documentation_links,omitempty"`
 	IconUrl             string `json:"icon_url,omitempty"`
 	LogoUrl             string `json:"logo_url,omitempty"`
+	ScreenshotListUrls  string `json:"screenshot_list_urls,omitempty"`
 	LogoThumbnailUrl    string `json:"logo_thumbnail_url,omitempty"`
 	SsoStrategyType     string `json:"sso_strategy_type,omitempty"`
 	RemoteServerType    string `json:"remote_server_type,omitempty"`
