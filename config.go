@@ -1,11 +1,12 @@
 package files_sdk
 
 import (
-	"github.com/hashicorp/go-retryablehttp"
 	"log"
 	"net/http"
 	"os"
 	"reflect"
+
+	"github.com/hashicorp/go-retryablehttp"
 )
 
 const (
@@ -17,6 +18,7 @@ var APIKey string
 
 type HttpClient interface {
 	Do(*http.Request) (*http.Response, error)
+	Get(string) (*http.Response, error)
 }
 
 type Config struct {
@@ -25,6 +27,7 @@ type Config struct {
 	HttpClient        HttpClient
 	AdditionalHeaders map[string]string
 	Logger            retryablehttp.Logger
+	Debug             *bool
 }
 
 func (s *Config) GetHttpClient() HttpClient {
@@ -43,12 +46,29 @@ func (n NullLogger) Printf(_ string, _ ...interface{}) {
 }
 
 func (s *Config) GetLogger() retryablehttp.Logger {
-	debugLevel := os.Getenv("FILES_SDK_DEBUG")
+	var debugLevel string
+	if s.Debug == nil {
+		debugLevel = os.Getenv("FILES_SDK_DEBUG")
+	} else {
+		if *s.Debug {
+			debugLevel = "debug"
+		}
+	}
+
 	log.New(os.Stderr, "", log.LstdFlags)
 	if debugLevel == "" {
 		s.Logger = NullLogger{}
 	} else {
-		s.Logger = log.New(os.Stderr, "", log.LstdFlags)
+		_, err := os.Stat("../log")
+		if os.IsNotExist(err) {
+			os.Mkdir("../log", 0700)
+		}
+
+		f, err := os.OpenFile("../log/test.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalf("error opening file: %v", err)
+		}
+		s.Logger = log.New(f, "", log.LstdFlags)
 	}
 	return s.Logger
 }
@@ -73,7 +93,7 @@ func (s *Config) GetAPIKey() string {
 	return ""
 }
 
-func (s *Config) SetHeaders(headers http.Header) {
+func (s *Config) SetHeaders(headers *http.Header) {
 	headers.Set("User-Agent", UserAgent)
 	headers.Set("X-FilesAPI-Key", s.GetAPIKey())
 	for key, value := range s.AdditionalHeaders {

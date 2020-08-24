@@ -40,28 +40,28 @@ type HistoryExportFindParams struct {
 }
 
 type HistoryExportCreateParams struct {
-	UserId                   int64  `url:"user_id,omitempty"`
-	StartAt                  string `url:"start_at,omitempty"`
-	EndAt                    string `url:"end_at,omitempty"`
-	QueryAction              string `url:"query_action,omitempty"`
-	QueryInterface           string `url:"query_interface,omitempty"`
-	QueryUserId              string `url:"query_user_id,omitempty"`
-	QueryFileId              string `url:"query_file_id,omitempty"`
-	QueryParentId            string `url:"query_parent_id,omitempty"`
-	QueryPath                string `url:"query_path,omitempty"`
-	QueryFolder              string `url:"query_folder,omitempty"`
-	QuerySrc                 string `url:"query_src,omitempty"`
-	QueryDestination         string `url:"query_destination,omitempty"`
-	QueryIp                  string `url:"query_ip,omitempty"`
-	QueryUsername            string `url:"query_username,omitempty"`
-	QueryFailureType         string `url:"query_failure_type,omitempty"`
-	QueryTargetId            string `url:"query_target_id,omitempty"`
-	QueryTargetName          string `url:"query_target_name,omitempty"`
-	QueryTargetPermission    string `url:"query_target_permission,omitempty"`
-	QueryTargetUserId        string `url:"query_target_user_id,omitempty"`
-	QueryTargetUsername      string `url:"query_target_username,omitempty"`
-	QueryTargetPlatform      string `url:"query_target_platform,omitempty"`
-	QueryTargetPermissionSet string `url:"query_target_permission_set,omitempty"`
+	UserId                   int64     `url:"user_id,omitempty"`
+	StartAt                  time.Time `url:"start_at,omitempty"`
+	EndAt                    time.Time `url:"end_at,omitempty"`
+	QueryAction              string    `url:"query_action,omitempty"`
+	QueryInterface           string    `url:"query_interface,omitempty"`
+	QueryUserId              string    `url:"query_user_id,omitempty"`
+	QueryFileId              string    `url:"query_file_id,omitempty"`
+	QueryParentId            string    `url:"query_parent_id,omitempty"`
+	QueryPath                string    `url:"query_path,omitempty"`
+	QueryFolder              string    `url:"query_folder,omitempty"`
+	QuerySrc                 string    `url:"query_src,omitempty"`
+	QueryDestination         string    `url:"query_destination,omitempty"`
+	QueryIp                  string    `url:"query_ip,omitempty"`
+	QueryUsername            string    `url:"query_username,omitempty"`
+	QueryFailureType         string    `url:"query_failure_type,omitempty"`
+	QueryTargetId            string    `url:"query_target_id,omitempty"`
+	QueryTargetName          string    `url:"query_target_name,omitempty"`
+	QueryTargetPermission    string    `url:"query_target_permission,omitempty"`
+	QueryTargetUserId        string    `url:"query_target_user_id,omitempty"`
+	QueryTargetUsername      string    `url:"query_target_username,omitempty"`
+	QueryTargetPlatform      string    `url:"query_target_platform,omitempty"`
+	QueryTargetPermissionSet string    `url:"query_target_permission_set,omitempty"`
 }
 
 func (h *HistoryExport) UnmarshalJSON(data []byte) error {

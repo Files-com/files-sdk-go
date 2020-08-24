@@ -1,8 +1,10 @@
 package behavior
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  files_sdk "github.com/Files-com/files-sdk-go"
+	"strconv"
+
+	files_sdk "github.com/Files-com/files-sdk-go"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type Client struct {
@@ -25,13 +27,13 @@ func (c *Client) List(params files_sdk.BehaviorListParams) *Iter {
 	i.Query = func() (*[]interface{}, string, error) {
 		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
 		defaultValue := make([]interface{}, 0)
-        if err != nil {
-          return &defaultValue, "", err
-        }
+		if err != nil {
+			return &defaultValue, "", err
+		}
 		list := files_sdk.BehaviorCollection{}
 		if err := list.UnmarshalJSON(*data); err != nil {
-          return &defaultValue, "", err
-        }
+			return &defaultValue, "", err
+		}
 
 		ret := make([]interface{}, len(list))
 		for i, v := range list {
@@ -45,27 +47,28 @@ func (c *Client) List(params files_sdk.BehaviorListParams) *Iter {
 }
 
 func List(params files_sdk.BehaviorListParams) *Iter {
-  client := Client{}
-  return client.List (params)
+	return (&Client{}).List(params)
 }
 
-func (c *Client) Find (params files_sdk.BehaviorFindParams) (files_sdk.Behavior, error) {
-  behavior := files_sdk.Behavior{}
-  	path := "/behaviors/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+func (c *Client) Find(params files_sdk.BehaviorFindParams) (files_sdk.Behavior, error) {
+	behavior := files_sdk.Behavior{}
+	path := "/behaviors/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
+	data, res, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return behavior, err
+		return behavior, err
+	}
+	if res.StatusCode == 204 {
+		return behavior, nil
 	}
 	if err := behavior.UnmarshalJSON(*data); err != nil {
-	return behavior, err
+		return behavior, err
 	}
 
-	return  behavior, nil
+	return behavior, nil
 }
 
-func Find (params files_sdk.BehaviorFindParams) (files_sdk.Behavior, error) {
-  client := Client{}
-  return client.Find (params)
+func Find(params files_sdk.BehaviorFindParams) (files_sdk.Behavior, error) {
+	return (&Client{}).Find(params)
 }
 
 func (c *Client) ListFor(params files_sdk.BehaviorListForParams) *Iter {
@@ -76,13 +79,13 @@ func (c *Client) ListFor(params files_sdk.BehaviorListForParams) *Iter {
 	i.Query = func() (*[]interface{}, string, error) {
 		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
 		defaultValue := make([]interface{}, 0)
-        if err != nil {
-          return &defaultValue, "", err
-        }
+		if err != nil {
+			return &defaultValue, "", err
+		}
 		list := files_sdk.BehaviorCollection{}
 		if err := list.UnmarshalJSON(*data); err != nil {
-          return &defaultValue, "", err
-        }
+			return &defaultValue, "", err
+		}
 
 		ret := make([]interface{}, len(list))
 		for i, v := range list {
@@ -96,82 +99,89 @@ func (c *Client) ListFor(params files_sdk.BehaviorListForParams) *Iter {
 }
 
 func ListFor(params files_sdk.BehaviorListForParams) *Iter {
-  client := Client{}
-  return client.ListFor (params)
+	return (&Client{}).ListFor(params)
 }
 
-func (c *Client) Create (params files_sdk.BehaviorCreateParams) (files_sdk.Behavior, error) {
-  behavior := files_sdk.Behavior{}
-	  path := "/behaviors"
-	data, _, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
+func (c *Client) Create(params files_sdk.BehaviorCreateParams) (files_sdk.Behavior, error) {
+	behavior := files_sdk.Behavior{}
+	path := "/behaviors"
+	data, res, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return behavior, err
+		return behavior, err
+	}
+	if res.StatusCode == 204 {
+		return behavior, nil
 	}
 	if err := behavior.UnmarshalJSON(*data); err != nil {
-	return behavior, err
+		return behavior, err
 	}
 
-	return  behavior, nil
+	return behavior, nil
 }
 
-func Create (params files_sdk.BehaviorCreateParams) (files_sdk.Behavior, error) {
-  client := Client{}
-  return client.Create (params)
+func Create(params files_sdk.BehaviorCreateParams) (files_sdk.Behavior, error) {
+	return (&Client{}).Create(params)
 }
 
-func (c *Client) WebhookTest (params files_sdk.BehaviorWebhookTestParams) (files_sdk.Behavior, error) {
-  behavior := files_sdk.Behavior{}
-	  path := "/behaviors/webhook/test"
-	data, _, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
+func (c *Client) WebhookTest(params files_sdk.BehaviorWebhookTestParams) (files_sdk.Behavior, error) {
+	behavior := files_sdk.Behavior{}
+	path := "/behaviors/webhook/test"
+	data, res, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return behavior, err
+		return behavior, err
+	}
+	if res.StatusCode == 204 {
+		return behavior, nil
 	}
 	if err := behavior.UnmarshalJSON(*data); err != nil {
-	return behavior, err
+		return behavior, err
 	}
 
-	return  behavior, nil
+	return behavior, nil
 }
 
-func WebhookTest (params files_sdk.BehaviorWebhookTestParams) (files_sdk.Behavior, error) {
-  client := Client{}
-  return client.WebhookTest (params)
+func WebhookTest(params files_sdk.BehaviorWebhookTestParams) (files_sdk.Behavior, error) {
+	return (&Client{}).WebhookTest(params)
 }
 
-func (c *Client) Update (params files_sdk.BehaviorUpdateParams) (files_sdk.Behavior, error) {
-  behavior := files_sdk.Behavior{}
-  	path := "/behaviors/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("PATCH", c.Config, path, lib.ExportParams(params))
+func (c *Client) Update(params files_sdk.BehaviorUpdateParams) (files_sdk.Behavior, error) {
+	behavior := files_sdk.Behavior{}
+	path := "/behaviors/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return behavior, err
+		return behavior, err
+	}
+	if res.StatusCode == 204 {
+		return behavior, nil
 	}
 	if err := behavior.UnmarshalJSON(*data); err != nil {
-	return behavior, err
+		return behavior, err
 	}
 
-	return  behavior, nil
+	return behavior, nil
 }
 
-func Update (params files_sdk.BehaviorUpdateParams) (files_sdk.Behavior, error) {
-  client := Client{}
-  return client.Update (params)
+func Update(params files_sdk.BehaviorUpdateParams) (files_sdk.Behavior, error) {
+	return (&Client{}).Update(params)
 }
 
-func (c *Client) Delete (params files_sdk.BehaviorDeleteParams) (files_sdk.Behavior, error) {
-  behavior := files_sdk.Behavior{}
-  	path := "/behaviors/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
+func (c *Client) Delete(params files_sdk.BehaviorDeleteParams) (files_sdk.Behavior, error) {
+	behavior := files_sdk.Behavior{}
+	path := "/behaviors/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return behavior, err
+		return behavior, err
+	}
+	if res.StatusCode == 204 {
+		return behavior, nil
 	}
 	if err := behavior.UnmarshalJSON(*data); err != nil {
-	return behavior, err
+		return behavior, err
 	}
 
-	return  behavior, nil
+	return behavior, nil
 }
 
-func Delete (params files_sdk.BehaviorDeleteParams) (files_sdk.Behavior, error) {
-  client := Client{}
-  return client.Delete (params)
+func Delete(params files_sdk.BehaviorDeleteParams) (files_sdk.Behavior, error) {
+	return (&Client{}).Delete(params)
 }

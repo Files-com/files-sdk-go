@@ -1,8 +1,10 @@
 package payment
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  files_sdk "github.com/Files-com/files-sdk-go"
+	"strconv"
+
+	files_sdk "github.com/Files-com/files-sdk-go"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type Client struct {
@@ -25,13 +27,13 @@ func (c *Client) List(params files_sdk.PaymentListParams) *Iter {
 	i.Query = func() (*[]interface{}, string, error) {
 		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
 		defaultValue := make([]interface{}, 0)
-        if err != nil {
-          return &defaultValue, "", err
-        }
+		if err != nil {
+			return &defaultValue, "", err
+		}
 		list := files_sdk.PaymentCollection{}
 		if err := list.UnmarshalJSON(*data); err != nil {
-          return &defaultValue, "", err
-        }
+			return &defaultValue, "", err
+		}
 
 		ret := make([]interface{}, len(list))
 		for i, v := range list {
@@ -45,25 +47,26 @@ func (c *Client) List(params files_sdk.PaymentListParams) *Iter {
 }
 
 func List(params files_sdk.PaymentListParams) *Iter {
-  client := Client{}
-  return client.List (params)
+	return (&Client{}).List(params)
 }
 
-func (c *Client) Find (params files_sdk.PaymentFindParams) (files_sdk.Payment, error) {
-  payment := files_sdk.Payment{}
-  	path := "/payments/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+func (c *Client) Find(params files_sdk.PaymentFindParams) (files_sdk.AccountLineItem, error) {
+	accountLineItem := files_sdk.AccountLineItem{}
+	path := "/payments/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
+	data, res, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return payment, err
+		return accountLineItem, err
 	}
-	if err := payment.UnmarshalJSON(*data); err != nil {
-	return payment, err
+	if res.StatusCode == 204 {
+		return accountLineItem, nil
+	}
+	if err := accountLineItem.UnmarshalJSON(*data); err != nil {
+		return accountLineItem, err
 	}
 
-	return  payment, nil
+	return accountLineItem, nil
 }
 
-func Find (params files_sdk.PaymentFindParams) (files_sdk.Payment, error) {
-  client := Client{}
-  return client.Find (params)
+func Find(params files_sdk.PaymentFindParams) (files_sdk.AccountLineItem, error) {
+	return (&Client{}).Find(params)
 }

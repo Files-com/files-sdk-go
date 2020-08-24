@@ -6,52 +6,103 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
+
+	"github.com/moul/http2curl"
 )
 
 func Call(method string, config Config, resource string, params url.Values) (*[]byte, *http.Response, error) {
-	res, err := CallRaw(method, config, resource, params)
-	defaultValue := make([]byte, 0)
+	defaultHeaders := &http.Header{}
+	config.SetHeaders(defaultHeaders)
+	res, err := CallRaw(method, config, config.RootPath()+resource, &params, nil, defaultHeaders)
 	if err != nil {
-		return &defaultValue, res, err
+		return nil, res, err
+	}
+	return ParseResponse(res)
+}
+
+func ParseResponse(res *http.Response) (*[]byte, *http.Response, error) {
+	defaultValue := make([]byte, 0)
+	if res.StatusCode == 204 {
+		return &defaultValue, res, nil
 	}
 	data, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return &defaultValue, res, err
 	}
-	config.GetLogger().Printf("Response Body: %v", string(data))
 	re := ResponseError{}
 	err = re.UnmarshalJSON(data)
 	if err != nil {
 		return &data, res, err
 	}
 	return &data, res, err
+
 }
 
-func CallRaw(method string, config Config, path string, params url.Values) (*http.Response, error) {
-	httpClient := config.GetHttpClient()
-	var body []byte
-	var urlWithParams string
-	bodyParams := make(map[string]string)
-	switch method {
-	case "GET", "HEAD", "DELETE":
-		urlWithParams = config.RootPath() + path + "?" + params.Encode()
-	default:
-		for key, value := range params {
-			bodyParams[key] = value[0]
-		}
-		body, _ = json.Marshal(bodyParams)
-		config.GetLogger().Printf("Body: %v", string(body))
-		params = url.Values{}
-		urlWithParams = config.RootPath() + path
+func CallRaw(method string, config Config, uri string, params *url.Values, body *bytes.Buffer, headers *http.Header) (*http.Response, error) {
+	if headers == nil {
+		headers = &http.Header{}
 	}
-	req, err := http.NewRequest(method, urlWithParams, bytes.NewBuffer(body))
+	if params != nil {
+		removeDash(params)
+	}
+	httpClient := config.GetHttpClient()
+	req, err := http.NewRequest(method, uri, nil)
+
 	if err != nil {
 		return &http.Response{}, err
 	}
-	config.SetHeaders(req.Header)
-	if method == "post" {
-		req.Header.Add("Content-Type", "application/json")
+
+	if headers.Get("Content-Length") != "" {
+		c, _ := strconv.ParseInt(headers.Get("Content-Length"), 10, 64)
+		req.ContentLength = c
 	}
-	config.GetLogger().Printf("Headers: %v", req.Header)
+
+	switch method {
+	case "GET", "HEAD", "DELETE":
+		if params != nil {
+			removeDash(params)
+			req.URL.RawQuery = params.Encode()
+		}
+	default:
+		if body == nil {
+			jsonBody, err := paramsToJson(params, headers)
+			if err != nil {
+				return &http.Response{}, err
+			}
+			req.Body = ioutil.NopCloser(jsonBody)
+		} else {
+			req.Body = ioutil.NopCloser(body)
+		}
+	}
+	req.Header = *headers
+	command, err := http2curl.GetCurlCommand(req)
+	if err != nil {
+		panic(err)
+	}
+	config.GetLogger().Printf(" %v", command)
 	return httpClient.Do(req)
+}
+
+func paramsToJson(params *url.Values, headers *http.Header) (*bytes.Buffer, error) {
+	bodyParams := make(map[string]string)
+	for key, value := range *params {
+		bodyParams[key] = value[0]
+	}
+	bodyBytes, err := json.Marshal(bodyParams)
+	if err != nil {
+		return nil, err
+	}
+	body := bytes.NewBuffer(bodyBytes)
+
+	headers.Add("Content-Type", "application/json")
+	return body, nil
+}
+
+func removeDash(params *url.Values) {
+	for key := range *params {
+		if key == "-" {
+			params.Del(key)
+		}
+	}
 }

@@ -1,8 +1,10 @@
 package user_request
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  files_sdk "github.com/Files-com/files-sdk-go"
+	"strconv"
+
+	files_sdk "github.com/Files-com/files-sdk-go"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type Client struct {
@@ -25,13 +27,13 @@ func (c *Client) List(params files_sdk.UserRequestListParams) *Iter {
 	i.Query = func() (*[]interface{}, string, error) {
 		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
 		defaultValue := make([]interface{}, 0)
-        if err != nil {
-          return &defaultValue, "", err
-        }
+		if err != nil {
+			return &defaultValue, "", err
+		}
 		list := files_sdk.UserRequestCollection{}
 		if err := list.UnmarshalJSON(*data); err != nil {
-          return &defaultValue, "", err
-        }
+			return &defaultValue, "", err
+		}
 
 		ret := make([]interface{}, len(list))
 		for i, v := range list {
@@ -45,63 +47,68 @@ func (c *Client) List(params files_sdk.UserRequestListParams) *Iter {
 }
 
 func List(params files_sdk.UserRequestListParams) *Iter {
-  client := Client{}
-  return client.List (params)
+	return (&Client{}).List(params)
 }
 
-func (c *Client) Find (params files_sdk.UserRequestFindParams) (files_sdk.UserRequest, error) {
-  userRequest := files_sdk.UserRequest{}
-  	path := "/user_requests/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+func (c *Client) Find(params files_sdk.UserRequestFindParams) (files_sdk.UserRequest, error) {
+	userRequest := files_sdk.UserRequest{}
+	path := "/user_requests/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
+	data, res, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return userRequest, err
+		return userRequest, err
+	}
+	if res.StatusCode == 204 {
+		return userRequest, nil
 	}
 	if err := userRequest.UnmarshalJSON(*data); err != nil {
-	return userRequest, err
+		return userRequest, err
 	}
 
-	return  userRequest, nil
+	return userRequest, nil
 }
 
-func Find (params files_sdk.UserRequestFindParams) (files_sdk.UserRequest, error) {
-  client := Client{}
-  return client.Find (params)
+func Find(params files_sdk.UserRequestFindParams) (files_sdk.UserRequest, error) {
+	return (&Client{}).Find(params)
 }
 
-func (c *Client) Create (params files_sdk.UserRequestCreateParams) (files_sdk.UserRequest, error) {
-  userRequest := files_sdk.UserRequest{}
-	  path := "/user_requests"
-	data, _, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
+func (c *Client) Create(params files_sdk.UserRequestCreateParams) (files_sdk.UserRequest, error) {
+	userRequest := files_sdk.UserRequest{}
+	path := "/user_requests"
+	data, res, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return userRequest, err
+		return userRequest, err
+	}
+	if res.StatusCode == 204 {
+		return userRequest, nil
 	}
 	if err := userRequest.UnmarshalJSON(*data); err != nil {
-	return userRequest, err
+		return userRequest, err
 	}
 
-	return  userRequest, nil
+	return userRequest, nil
 }
 
-func Create (params files_sdk.UserRequestCreateParams) (files_sdk.UserRequest, error) {
-  client := Client{}
-  return client.Create (params)
+func Create(params files_sdk.UserRequestCreateParams) (files_sdk.UserRequest, error) {
+	return (&Client{}).Create(params)
 }
 
-func (c *Client) Delete (params files_sdk.UserRequestDeleteParams) (files_sdk.UserRequest, error) {
-  userRequest := files_sdk.UserRequest{}
-  	path := "/user_requests/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
+func (c *Client) Delete(params files_sdk.UserRequestDeleteParams) (files_sdk.UserRequest, error) {
+	userRequest := files_sdk.UserRequest{}
+	path := "/user_requests/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return userRequest, err
+		return userRequest, err
+	}
+	if res.StatusCode == 204 {
+		return userRequest, nil
 	}
 	if err := userRequest.UnmarshalJSON(*data); err != nil {
-	return userRequest, err
+		return userRequest, err
 	}
 
-	return  userRequest, nil
+	return userRequest, nil
 }
 
-func Delete (params files_sdk.UserRequestDeleteParams) (files_sdk.UserRequest, error) {
-  client := Client{}
-  return client.Delete (params)
+func Delete(params files_sdk.UserRequestDeleteParams) (files_sdk.UserRequest, error) {
+	return (&Client{}).Delete(params)
 }

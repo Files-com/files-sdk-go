@@ -2,6 +2,7 @@ package files_sdk
 
 import (
 	"encoding/json"
+	"io"
 	"time"
 )
 
@@ -40,12 +41,14 @@ type EtagsParam struct {
 	Part string `url:"part,omitempty"`
 }
 
+// Download file
 type FileDownloadParams struct {
-	Path              string `url:"-,omitempty"`
-	Action            string `url:"action,omitempty"`
-	PreviewSize       string `url:"preview_size,omitempty"`
-	WithPreviews      *bool  `url:"with_previews,omitempty"`
-	WithPriorityColor *bool  `url:"with_priority_color,omitempty"`
+	Path              string    `url:"-,omitempty"`
+	Action            string    `url:"action,omitempty"`
+	PreviewSize       string    `url:"preview_size,omitempty"`
+	WithPreviews      *bool     `url:"with_previews,omitempty"`
+	WithPriorityColor *bool     `url:"with_priority_color,omitempty"`
+	Writer            io.Writer ``
 }
 
 type FileCreateParams struct {
@@ -65,9 +68,9 @@ type FileCreateParams struct {
 }
 
 type FileUpdateParams struct {
-	Path          string `url:"-,omitempty"`
-	ProvidedMtime string `url:"provided_mtime,omitempty"`
-	PriorityColor string `url:"priority_color,omitempty"`
+	Path          string    `url:"-,omitempty"`
+	ProvidedMtime time.Time `url:"provided_mtime,omitempty"`
+	PriorityColor string    `url:"priority_color,omitempty"`
 }
 
 type FileDeleteParams struct {

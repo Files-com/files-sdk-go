@@ -2,8 +2,9 @@ package files_sdk
 
 import (
 	"encoding/json"
-	lib "github.com/Files-com/files-sdk-go/lib"
 	"time"
+
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type As2Key struct {

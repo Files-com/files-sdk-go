@@ -1,8 +1,8 @@
 package folder
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  files_sdk "github.com/Files-com/files-sdk-go"
+	files_sdk "github.com/Files-com/files-sdk-go"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type Client struct {
@@ -25,13 +25,13 @@ func (c *Client) ListFor(params files_sdk.FolderListForParams) *Iter {
 	i.Query = func() (*[]interface{}, string, error) {
 		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
 		defaultValue := make([]interface{}, 0)
-        if err != nil {
-          return &defaultValue, "", err
-        }
+		if err != nil {
+			return &defaultValue, "", err
+		}
 		list := files_sdk.FolderCollection{}
 		if err := list.UnmarshalJSON(*data); err != nil {
-          return &defaultValue, "", err
-        }
+			return &defaultValue, "", err
+		}
 
 		ret := make([]interface{}, len(list))
 		for i, v := range list {
@@ -45,25 +45,26 @@ func (c *Client) ListFor(params files_sdk.FolderListForParams) *Iter {
 }
 
 func ListFor(params files_sdk.FolderListForParams) *Iter {
-  client := Client{}
-  return client.ListFor (params)
+	return (&Client{}).ListFor(params)
 }
 
-func (c *Client) Create (params files_sdk.FolderCreateParams) (files_sdk.Folder, error) {
-  folder := files_sdk.Folder{}
-		path := "/folders/" + lib.QueryEscape(params.Path) + ""
-	data, _, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
+func (c *Client) Create(params files_sdk.FolderCreateParams) (files_sdk.File, error) {
+	file := files_sdk.File{}
+	path := "/folders/" + lib.QueryEscape(params.Path) + ""
+	data, res, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return folder, err
+		return file, err
 	}
-	if err := folder.UnmarshalJSON(*data); err != nil {
-	return folder, err
+	if res.StatusCode == 204 {
+		return file, nil
+	}
+	if err := file.UnmarshalJSON(*data); err != nil {
+		return file, err
 	}
 
-	return  folder, nil
+	return file, nil
 }
 
-func Create (params files_sdk.FolderCreateParams) (files_sdk.Folder, error) {
-  client := Client{}
-  return client.Create (params)
+func Create(params files_sdk.FolderCreateParams) (files_sdk.File, error) {
+	return (&Client{}).Create(params)
 }

@@ -1,8 +1,10 @@
 package permission
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  files_sdk "github.com/Files-com/files-sdk-go"
+	"strconv"
+
+	files_sdk "github.com/Files-com/files-sdk-go"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type Client struct {
@@ -25,13 +27,13 @@ func (c *Client) List(params files_sdk.PermissionListParams) *Iter {
 	i.Query = func() (*[]interface{}, string, error) {
 		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
 		defaultValue := make([]interface{}, 0)
-        if err != nil {
-          return &defaultValue, "", err
-        }
+		if err != nil {
+			return &defaultValue, "", err
+		}
 		list := files_sdk.PermissionCollection{}
 		if err := list.UnmarshalJSON(*data); err != nil {
-          return &defaultValue, "", err
-        }
+			return &defaultValue, "", err
+		}
 
 		ret := make([]interface{}, len(list))
 		for i, v := range list {
@@ -45,44 +47,47 @@ func (c *Client) List(params files_sdk.PermissionListParams) *Iter {
 }
 
 func List(params files_sdk.PermissionListParams) *Iter {
-  client := Client{}
-  return client.List (params)
+	return (&Client{}).List(params)
 }
 
-func (c *Client) Create (params files_sdk.PermissionCreateParams) (files_sdk.Permission, error) {
-  permission := files_sdk.Permission{}
-	  path := "/permissions"
-	data, _, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
+func (c *Client) Create(params files_sdk.PermissionCreateParams) (files_sdk.Permission, error) {
+	permission := files_sdk.Permission{}
+	path := "/permissions"
+	data, res, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return permission, err
+		return permission, err
+	}
+	if res.StatusCode == 204 {
+		return permission, nil
 	}
 	if err := permission.UnmarshalJSON(*data); err != nil {
-	return permission, err
+		return permission, err
 	}
 
-	return  permission, nil
+	return permission, nil
 }
 
-func Create (params files_sdk.PermissionCreateParams) (files_sdk.Permission, error) {
-  client := Client{}
-  return client.Create (params)
+func Create(params files_sdk.PermissionCreateParams) (files_sdk.Permission, error) {
+	return (&Client{}).Create(params)
 }
 
-func (c *Client) Delete (params files_sdk.PermissionDeleteParams) (files_sdk.Permission, error) {
-  permission := files_sdk.Permission{}
-  	path := "/permissions/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
+func (c *Client) Delete(params files_sdk.PermissionDeleteParams) (files_sdk.Permission, error) {
+	permission := files_sdk.Permission{}
+	path := "/permissions/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return permission, err
+		return permission, err
+	}
+	if res.StatusCode == 204 {
+		return permission, nil
 	}
 	if err := permission.UnmarshalJSON(*data); err != nil {
-	return permission, err
+		return permission, err
 	}
 
-	return  permission, nil
+	return permission, nil
 }
 
-func Delete (params files_sdk.PermissionDeleteParams) (files_sdk.Permission, error) {
-  client := Client{}
-  return client.Delete (params)
+func Delete(params files_sdk.PermissionDeleteParams) (files_sdk.Permission, error) {
+	return (&Client{}).Delete(params)
 }

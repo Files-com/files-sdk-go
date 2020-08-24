@@ -1,8 +1,10 @@
 package group_user
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  files_sdk "github.com/Files-com/files-sdk-go"
+	"strconv"
+
+	files_sdk "github.com/Files-com/files-sdk-go"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type Client struct {
@@ -25,13 +27,13 @@ func (c *Client) List(params files_sdk.GroupUserListParams) *Iter {
 	i.Query = func() (*[]interface{}, string, error) {
 		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
 		defaultValue := make([]interface{}, 0)
-        if err != nil {
-          return &defaultValue, "", err
-        }
+		if err != nil {
+			return &defaultValue, "", err
+		}
 		list := files_sdk.GroupUserCollection{}
 		if err := list.UnmarshalJSON(*data); err != nil {
-          return &defaultValue, "", err
-        }
+			return &defaultValue, "", err
+		}
 
 		ret := make([]interface{}, len(list))
 		for i, v := range list {
@@ -45,44 +47,47 @@ func (c *Client) List(params files_sdk.GroupUserListParams) *Iter {
 }
 
 func List(params files_sdk.GroupUserListParams) *Iter {
-  client := Client{}
-  return client.List (params)
+	return (&Client{}).List(params)
 }
 
-func (c *Client) Update (params files_sdk.GroupUserUpdateParams) (files_sdk.GroupUser, error) {
-  groupUser := files_sdk.GroupUser{}
-  	path := "/group_users/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("PATCH", c.Config, path, lib.ExportParams(params))
+func (c *Client) Update(params files_sdk.GroupUserUpdateParams) (files_sdk.GroupUser, error) {
+	groupUser := files_sdk.GroupUser{}
+	path := "/group_users/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return groupUser, err
+		return groupUser, err
+	}
+	if res.StatusCode == 204 {
+		return groupUser, nil
 	}
 	if err := groupUser.UnmarshalJSON(*data); err != nil {
-	return groupUser, err
+		return groupUser, err
 	}
 
-	return  groupUser, nil
+	return groupUser, nil
 }
 
-func Update (params files_sdk.GroupUserUpdateParams) (files_sdk.GroupUser, error) {
-  client := Client{}
-  return client.Update (params)
+func Update(params files_sdk.GroupUserUpdateParams) (files_sdk.GroupUser, error) {
+	return (&Client{}).Update(params)
 }
 
-func (c *Client) Delete (params files_sdk.GroupUserDeleteParams) (files_sdk.GroupUser, error) {
-  groupUser := files_sdk.GroupUser{}
-  	path := "/group_users/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
+func (c *Client) Delete(params files_sdk.GroupUserDeleteParams) (files_sdk.GroupUser, error) {
+	groupUser := files_sdk.GroupUser{}
+	path := "/group_users/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return groupUser, err
+		return groupUser, err
+	}
+	if res.StatusCode == 204 {
+		return groupUser, nil
 	}
 	if err := groupUser.UnmarshalJSON(*data); err != nil {
-	return groupUser, err
+		return groupUser, err
 	}
 
-	return  groupUser, nil
+	return groupUser, nil
 }
 
-func Delete (params files_sdk.GroupUserDeleteParams) (files_sdk.GroupUser, error) {
-  client := Client{}
-  return client.Delete (params)
+func Delete(params files_sdk.GroupUserDeleteParams) (files_sdk.GroupUser, error) {
+	return (&Client{}).Delete(params)
 }

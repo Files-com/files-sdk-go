@@ -1,8 +1,10 @@
 package notification
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  files_sdk "github.com/Files-com/files-sdk-go"
+	"strconv"
+
+	files_sdk "github.com/Files-com/files-sdk-go"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type Client struct {
@@ -25,13 +27,13 @@ func (c *Client) List(params files_sdk.NotificationListParams) *Iter {
 	i.Query = func() (*[]interface{}, string, error) {
 		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
 		defaultValue := make([]interface{}, 0)
-        if err != nil {
-          return &defaultValue, "", err
-        }
+		if err != nil {
+			return &defaultValue, "", err
+		}
 		list := files_sdk.NotificationCollection{}
 		if err := list.UnmarshalJSON(*data); err != nil {
-          return &defaultValue, "", err
-        }
+			return &defaultValue, "", err
+		}
 
 		ret := make([]interface{}, len(list))
 		for i, v := range list {
@@ -45,82 +47,89 @@ func (c *Client) List(params files_sdk.NotificationListParams) *Iter {
 }
 
 func List(params files_sdk.NotificationListParams) *Iter {
-  client := Client{}
-  return client.List (params)
+	return (&Client{}).List(params)
 }
 
-func (c *Client) Find (params files_sdk.NotificationFindParams) (files_sdk.Notification, error) {
-  notification := files_sdk.Notification{}
-  	path := "/notifications/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+func (c *Client) Find(params files_sdk.NotificationFindParams) (files_sdk.Notification, error) {
+	notification := files_sdk.Notification{}
+	path := "/notifications/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
+	data, res, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return notification, err
+		return notification, err
+	}
+	if res.StatusCode == 204 {
+		return notification, nil
 	}
 	if err := notification.UnmarshalJSON(*data); err != nil {
-	return notification, err
+		return notification, err
 	}
 
-	return  notification, nil
+	return notification, nil
 }
 
-func Find (params files_sdk.NotificationFindParams) (files_sdk.Notification, error) {
-  client := Client{}
-  return client.Find (params)
+func Find(params files_sdk.NotificationFindParams) (files_sdk.Notification, error) {
+	return (&Client{}).Find(params)
 }
 
-func (c *Client) Create (params files_sdk.NotificationCreateParams) (files_sdk.Notification, error) {
-  notification := files_sdk.Notification{}
-	  path := "/notifications"
-	data, _, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
+func (c *Client) Create(params files_sdk.NotificationCreateParams) (files_sdk.Notification, error) {
+	notification := files_sdk.Notification{}
+	path := "/notifications"
+	data, res, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return notification, err
+		return notification, err
+	}
+	if res.StatusCode == 204 {
+		return notification, nil
 	}
 	if err := notification.UnmarshalJSON(*data); err != nil {
-	return notification, err
+		return notification, err
 	}
 
-	return  notification, nil
+	return notification, nil
 }
 
-func Create (params files_sdk.NotificationCreateParams) (files_sdk.Notification, error) {
-  client := Client{}
-  return client.Create (params)
+func Create(params files_sdk.NotificationCreateParams) (files_sdk.Notification, error) {
+	return (&Client{}).Create(params)
 }
 
-func (c *Client) Update (params files_sdk.NotificationUpdateParams) (files_sdk.Notification, error) {
-  notification := files_sdk.Notification{}
-  	path := "/notifications/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("PATCH", c.Config, path, lib.ExportParams(params))
+func (c *Client) Update(params files_sdk.NotificationUpdateParams) (files_sdk.Notification, error) {
+	notification := files_sdk.Notification{}
+	path := "/notifications/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return notification, err
+		return notification, err
+	}
+	if res.StatusCode == 204 {
+		return notification, nil
 	}
 	if err := notification.UnmarshalJSON(*data); err != nil {
-	return notification, err
+		return notification, err
 	}
 
-	return  notification, nil
+	return notification, nil
 }
 
-func Update (params files_sdk.NotificationUpdateParams) (files_sdk.Notification, error) {
-  client := Client{}
-  return client.Update (params)
+func Update(params files_sdk.NotificationUpdateParams) (files_sdk.Notification, error) {
+	return (&Client{}).Update(params)
 }
 
-func (c *Client) Delete (params files_sdk.NotificationDeleteParams) (files_sdk.Notification, error) {
-  notification := files_sdk.Notification{}
-  	path := "/notifications/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
+func (c *Client) Delete(params files_sdk.NotificationDeleteParams) (files_sdk.Notification, error) {
+	notification := files_sdk.Notification{}
+	path := "/notifications/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return notification, err
+		return notification, err
+	}
+	if res.StatusCode == 204 {
+		return notification, nil
 	}
 	if err := notification.UnmarshalJSON(*data); err != nil {
-	return notification, err
+		return notification, err
 	}
 
-	return  notification, nil
+	return notification, nil
 }
 
-func Delete (params files_sdk.NotificationDeleteParams) (files_sdk.Notification, error) {
-  client := Client{}
-  return client.Delete (params)
+func Delete(params files_sdk.NotificationDeleteParams) (files_sdk.Notification, error) {
+	return (&Client{}).Delete(params)
 }

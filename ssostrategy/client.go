@@ -1,8 +1,10 @@
 package sso_strategy
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  files_sdk "github.com/Files-com/files-sdk-go"
+	"strconv"
+
+	files_sdk "github.com/Files-com/files-sdk-go"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type Client struct {
@@ -25,13 +27,13 @@ func (c *Client) List(params files_sdk.SsoStrategyListParams) *Iter {
 	i.Query = func() (*[]interface{}, string, error) {
 		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
 		defaultValue := make([]interface{}, 0)
-        if err != nil {
-          return &defaultValue, "", err
-        }
+		if err != nil {
+			return &defaultValue, "", err
+		}
 		list := files_sdk.SsoStrategyCollection{}
 		if err := list.UnmarshalJSON(*data); err != nil {
-          return &defaultValue, "", err
-        }
+			return &defaultValue, "", err
+		}
 
 		ret := make([]interface{}, len(list))
 		for i, v := range list {
@@ -45,25 +47,26 @@ func (c *Client) List(params files_sdk.SsoStrategyListParams) *Iter {
 }
 
 func List(params files_sdk.SsoStrategyListParams) *Iter {
-  client := Client{}
-  return client.List (params)
+	return (&Client{}).List(params)
 }
 
-func (c *Client) Find (params files_sdk.SsoStrategyFindParams) (files_sdk.SsoStrategy, error) {
-  ssoStrategy := files_sdk.SsoStrategy{}
-  	path := "/sso_strategies/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+func (c *Client) Find(params files_sdk.SsoStrategyFindParams) (files_sdk.SsoStrategy, error) {
+	ssoStrategy := files_sdk.SsoStrategy{}
+	path := "/sso_strategies/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
+	data, res, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return ssoStrategy, err
+		return ssoStrategy, err
+	}
+	if res.StatusCode == 204 {
+		return ssoStrategy, nil
 	}
 	if err := ssoStrategy.UnmarshalJSON(*data); err != nil {
-	return ssoStrategy, err
+		return ssoStrategy, err
 	}
 
-	return  ssoStrategy, nil
+	return ssoStrategy, nil
 }
 
-func Find (params files_sdk.SsoStrategyFindParams) (files_sdk.SsoStrategy, error) {
-  client := Client{}
-  return client.Find (params)
+func Find(params files_sdk.SsoStrategyFindParams) (files_sdk.SsoStrategy, error) {
+	return (&Client{}).Find(params)
 }

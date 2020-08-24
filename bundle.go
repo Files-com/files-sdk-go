@@ -2,8 +2,9 @@ package files_sdk
 
 import (
 	"encoding/json"
-	lib "github.com/Files-com/files-sdk-go/lib"
 	"time"
+
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type Bundle struct {
@@ -50,20 +51,21 @@ type BundleFindParams struct {
 }
 
 type BundleCreateParams struct {
-	UserId                int64    `url:"user_id,omitempty"`
-	Paths                 []string `url:"paths,omitempty"`
-	Password              string   `url:"password,omitempty"`
-	ExpiresAt             string   `url:"expires_at,omitempty"`
-	MaxUses               int      `url:"max_uses,omitempty"`
-	Description           string   `url:"description,omitempty"`
-	Note                  string   `url:"note,omitempty"`
-	Code                  string   `url:"code,omitempty"`
-	RequireRegistration   *bool    `url:"require_registration,omitempty"`
-	ClickwrapId           int64    `url:"clickwrap_id,omitempty"`
-	InboxId               int64    `url:"inbox_id,omitempty"`
-	RequireShareRecipient *bool    `url:"require_share_recipient,omitempty"`
+	UserId                int64     `url:"user_id,omitempty"`
+	Paths                 []string  `url:"paths,omitempty"`
+	Password              string    `url:"password,omitempty"`
+	ExpiresAt             time.Time `url:"expires_at,omitempty"`
+	MaxUses               int       `url:"max_uses,omitempty"`
+	Description           string    `url:"description,omitempty"`
+	Note                  string    `url:"note,omitempty"`
+	Code                  string    `url:"code,omitempty"`
+	RequireRegistration   *bool     `url:"require_registration,omitempty"`
+	ClickwrapId           int64     `url:"clickwrap_id,omitempty"`
+	InboxId               int64     `url:"inbox_id,omitempty"`
+	RequireShareRecipient *bool     `url:"require_share_recipient,omitempty"`
 }
 
+// Send email(s) with a link to bundle
 type BundleShareParams struct {
 	Id   int64    `url:"-,omitempty"`
 	To   []string `url:"to,omitempty"`
@@ -71,17 +73,17 @@ type BundleShareParams struct {
 }
 
 type BundleUpdateParams struct {
-	Id                    int64  `url:"-,omitempty"`
-	Password              string `url:"password,omitempty"`
-	ClickwrapId           int64  `url:"clickwrap_id,omitempty"`
-	Code                  string `url:"code,omitempty"`
-	Description           string `url:"description,omitempty"`
-	ExpiresAt             string `url:"expires_at,omitempty"`
-	InboxId               int64  `url:"inbox_id,omitempty"`
-	MaxUses               int    `url:"max_uses,omitempty"`
-	Note                  string `url:"note,omitempty"`
-	RequireRegistration   *bool  `url:"require_registration,omitempty"`
-	RequireShareRecipient *bool  `url:"require_share_recipient,omitempty"`
+	Id                    int64     `url:"-,omitempty"`
+	Password              string    `url:"password,omitempty"`
+	ClickwrapId           int64     `url:"clickwrap_id,omitempty"`
+	Code                  string    `url:"code,omitempty"`
+	Description           string    `url:"description,omitempty"`
+	ExpiresAt             time.Time `url:"expires_at,omitempty"`
+	InboxId               int64     `url:"inbox_id,omitempty"`
+	MaxUses               int       `url:"max_uses,omitempty"`
+	Note                  string    `url:"note,omitempty"`
+	RequireRegistration   *bool     `url:"require_registration,omitempty"`
+	RequireShareRecipient *bool     `url:"require_share_recipient,omitempty"`
 }
 
 type BundleDeleteParams struct {

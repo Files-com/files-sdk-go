@@ -2,9 +2,10 @@ package files_sdk
 
 import (
 	"encoding/json"
-	lib "github.com/Files-com/files-sdk-go/lib"
 	"io"
 	"time"
+
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type User struct {
@@ -112,7 +113,7 @@ type UserCreateParams struct {
 	AnnouncementsRead          *bool     `url:"announcements_read,omitempty"`
 	AllowedIps                 string    `url:"allowed_ips,omitempty"`
 	AttachmentsPermission      *bool     `url:"attachments_permission,omitempty"`
-	AuthenticateUntil          string    `url:"authenticate_until,omitempty"`
+	AuthenticateUntil          time.Time `url:"authenticate_until,omitempty"`
 	AuthenticationMethod       string    `url:"authentication_method,omitempty"`
 	BillingPermission          *bool     `url:"billing_permission,omitempty"`
 	BypassInactiveDisable      *bool     `url:"bypass_inactive_disable,omitempty"`
@@ -142,14 +143,17 @@ type UserCreateParams struct {
 	Username                   string    `url:"username,omitempty"`
 }
 
+// Unlock user who has been locked out due to failed logins
 type UserUnlockParams struct {
 	Id int64 `url:"-,omitempty"`
 }
 
+// Resend user welcome email
 type UserResendWelcomeEmailParams struct {
 	Id int64 `url:"-,omitempty"`
 }
 
+// Trigger 2FA Reset process for user who has lost access to their existing 2FA methods
 type UserUser2faResetParams struct {
 	Id int64 `url:"-,omitempty"`
 }
@@ -169,7 +173,7 @@ type UserUpdateParams struct {
 	AnnouncementsRead          *bool     `url:"announcements_read,omitempty"`
 	AllowedIps                 string    `url:"allowed_ips,omitempty"`
 	AttachmentsPermission      *bool     `url:"attachments_permission,omitempty"`
-	AuthenticateUntil          string    `url:"authenticate_until,omitempty"`
+	AuthenticateUntil          time.Time `url:"authenticate_until,omitempty"`
 	AuthenticationMethod       string    `url:"authentication_method,omitempty"`
 	BillingPermission          *bool     `url:"billing_permission,omitempty"`
 	BypassInactiveDisable      *bool     `url:"bypass_inactive_disable,omitempty"`

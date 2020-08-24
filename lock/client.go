@@ -1,8 +1,8 @@
 package lock
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  files_sdk "github.com/Files-com/files-sdk-go"
+	files_sdk "github.com/Files-com/files-sdk-go"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type Client struct {
@@ -25,13 +25,13 @@ func (c *Client) ListFor(params files_sdk.LockListForParams) *Iter {
 	i.Query = func() (*[]interface{}, string, error) {
 		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
 		defaultValue := make([]interface{}, 0)
-        if err != nil {
-          return &defaultValue, "", err
-        }
+		if err != nil {
+			return &defaultValue, "", err
+		}
 		list := files_sdk.LockCollection{}
 		if err := list.UnmarshalJSON(*data); err != nil {
-          return &defaultValue, "", err
-        }
+			return &defaultValue, "", err
+		}
 
 		ret := make([]interface{}, len(list))
 		for i, v := range list {
@@ -45,44 +45,47 @@ func (c *Client) ListFor(params files_sdk.LockListForParams) *Iter {
 }
 
 func ListFor(params files_sdk.LockListForParams) *Iter {
-  client := Client{}
-  return client.ListFor (params)
+	return (&Client{}).ListFor(params)
 }
 
-func (c *Client) Create (params files_sdk.LockCreateParams) (files_sdk.Lock, error) {
-  lock := files_sdk.Lock{}
-		path := "/locks/" + lib.QueryEscape(params.Path) + ""
-	data, _, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
+func (c *Client) Create(params files_sdk.LockCreateParams) (files_sdk.Lock, error) {
+	lock := files_sdk.Lock{}
+	path := "/locks/" + lib.QueryEscape(params.Path) + ""
+	data, res, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return lock, err
+		return lock, err
+	}
+	if res.StatusCode == 204 {
+		return lock, nil
 	}
 	if err := lock.UnmarshalJSON(*data); err != nil {
-	return lock, err
+		return lock, err
 	}
 
-	return  lock, nil
+	return lock, nil
 }
 
-func Create (params files_sdk.LockCreateParams) (files_sdk.Lock, error) {
-  client := Client{}
-  return client.Create (params)
+func Create(params files_sdk.LockCreateParams) (files_sdk.Lock, error) {
+	return (&Client{}).Create(params)
 }
 
-func (c *Client) Delete (params files_sdk.LockDeleteParams) (files_sdk.Lock, error) {
-  lock := files_sdk.Lock{}
-		path := "/locks/" + lib.QueryEscape(params.Path) + ""
-	data, _, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
+func (c *Client) Delete(params files_sdk.LockDeleteParams) (files_sdk.Lock, error) {
+	lock := files_sdk.Lock{}
+	path := "/locks/" + lib.QueryEscape(params.Path) + ""
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return lock, err
+		return lock, err
+	}
+	if res.StatusCode == 204 {
+		return lock, nil
 	}
 	if err := lock.UnmarshalJSON(*data); err != nil {
-	return lock, err
+		return lock, err
 	}
 
-	return  lock, nil
+	return lock, nil
 }
 
-func Delete (params files_sdk.LockDeleteParams) (files_sdk.Lock, error) {
-  client := Client{}
-  return client.Delete (params)
+func Delete(params files_sdk.LockDeleteParams) (files_sdk.Lock, error) {
+	return (&Client{}).Delete(params)
 }

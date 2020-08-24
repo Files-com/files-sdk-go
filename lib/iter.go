@@ -5,10 +5,10 @@ import (
 )
 
 type ListParams struct {
-	Page    int    `json:"page,omitempty" url:"page,omitempty"`
-	PerPage int    `json:"per_page,omitempty" url:"per_page,omitempty"`
-	Cursor  string `json:"cursor,omitempty" url:"cursor,omitempty"`
-	MaxPages   int `json:"-" url:"-"`
+	Page     int    `json:"page,omitempty" url:"page,omitempty"`
+	PerPage  int    `json:"per_page,omitempty" url:"per_page,omitempty"`
+	Cursor   string `json:"cursor,omitempty" url:"cursor,omitempty"`
+	MaxPages int    `json:"-" url:"-"`
 }
 
 // ListParamsContainer is a general interface for which all list parameter
@@ -39,12 +39,12 @@ type Query func() (*[]interface{}, string, error)
 
 type Iter struct {
 	Query
-	ListParams    ListParamsContainer
-	Params        []interface{}
-	CurrentIndex  int
-	Values        *[]interface{}
-	Cursor        string
-	Error         error
+	ListParams   ListParamsContainer
+	Params       []interface{}
+	CurrentIndex int
+	Values       *[]interface{}
+	Cursor       string
+	Error        error
 }
 
 // Err returns the error, if any,
@@ -79,7 +79,7 @@ func (i *Iter) ExportParams() url.Values {
 }
 
 func (i *Iter) GetPage() bool {
-	if  i.GetParams().MaxPages != 0 && i.GetParams().Page == i.GetParams().MaxPages {
+	if i.GetParams().MaxPages != 0 && i.GetParams().Page == i.GetParams().MaxPages {
 		return false
 	}
 
@@ -97,7 +97,7 @@ func (i *Iter) GetCursor() string {
 	return i.GetParams().Cursor
 }
 
-func (i *Iter) SetCursor(cursor string)  {
+func (i *Iter) SetCursor(cursor string) {
 	i.GetParams().Cursor = cursor
 }
 

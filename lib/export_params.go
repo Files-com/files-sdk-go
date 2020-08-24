@@ -2,7 +2,8 @@ package lib
 
 import (
 	"net/url"
-	"github.com/google/go-querystring/query"
+
+	"github.com/appscode/go-querystring/query"
 )
 
 func ExportParams(i interface{}) url.Values {

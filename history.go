@@ -2,8 +2,9 @@ package files_sdk
 
 import (
 	"encoding/json"
-	lib "github.com/Files-com/files-sdk-go/lib"
 	"time"
+
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type History struct {
@@ -25,8 +26,8 @@ type History struct {
 type HistoryCollection []History
 
 type HistoryListForFileParams struct {
-	StartAt string          `url:"start_at,omitempty"`
-	EndAt   string          `url:"end_at,omitempty"`
+	StartAt time.Time       `url:"start_at,omitempty"`
+	EndAt   time.Time       `url:"end_at,omitempty"`
 	Display string          `url:"display,omitempty"`
 	Page    int             `url:"page,omitempty"`
 	PerPage int             `url:"per_page,omitempty"`
@@ -38,8 +39,8 @@ type HistoryListForFileParams struct {
 }
 
 type HistoryListForFolderParams struct {
-	StartAt string          `url:"start_at,omitempty"`
-	EndAt   string          `url:"end_at,omitempty"`
+	StartAt time.Time       `url:"start_at,omitempty"`
+	EndAt   time.Time       `url:"end_at,omitempty"`
 	Display string          `url:"display,omitempty"`
 	Page    int             `url:"page,omitempty"`
 	PerPage int             `url:"per_page,omitempty"`
@@ -51,8 +52,8 @@ type HistoryListForFolderParams struct {
 }
 
 type HistoryListForUserParams struct {
-	StartAt string          `url:"start_at,omitempty"`
-	EndAt   string          `url:"end_at,omitempty"`
+	StartAt time.Time       `url:"start_at,omitempty"`
+	EndAt   time.Time       `url:"end_at,omitempty"`
 	Display string          `url:"display,omitempty"`
 	Page    int             `url:"page,omitempty"`
 	PerPage int             `url:"per_page,omitempty"`
@@ -64,8 +65,8 @@ type HistoryListForUserParams struct {
 }
 
 type HistoryListLoginsParams struct {
-	StartAt string          `url:"start_at,omitempty"`
-	EndAt   string          `url:"end_at,omitempty"`
+	StartAt time.Time       `url:"start_at,omitempty"`
+	EndAt   time.Time       `url:"end_at,omitempty"`
 	Display string          `url:"display,omitempty"`
 	Page    int             `url:"page,omitempty"`
 	PerPage int             `url:"per_page,omitempty"`
@@ -76,8 +77,8 @@ type HistoryListLoginsParams struct {
 }
 
 type HistoryListParams struct {
-	StartAt    string          `url:"start_at,omitempty"`
-	EndAt      string          `url:"end_at,omitempty"`
+	StartAt    time.Time       `url:"start_at,omitempty"`
+	EndAt      time.Time       `url:"end_at,omitempty"`
 	Display    string          `url:"display,omitempty"`
 	Page       int             `url:"page,omitempty"`
 	PerPage    int             `url:"per_page,omitempty"`

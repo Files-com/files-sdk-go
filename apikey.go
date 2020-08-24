@@ -2,8 +2,9 @@ package files_sdk
 
 import (
 	"encoding/json"
-	lib "github.com/Files-com/files-sdk-go/lib"
 	"time"
+
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type ApiKey struct {
@@ -48,24 +49,24 @@ type ApiKeyFindParams struct {
 }
 
 type ApiKeyCreateParams struct {
-	UserId        int64  `url:"user_id,omitempty"`
-	Name          string `url:"name,omitempty"`
-	ExpiresAt     string `url:"expires_at,omitempty"`
-	PermissionSet string `url:"permission_set,omitempty"`
-	Path          string `url:"path,omitempty"`
+	UserId        int64     `url:"user_id,omitempty"`
+	Name          string    `url:"name,omitempty"`
+	ExpiresAt     time.Time `url:"expires_at,omitempty"`
+	PermissionSet string    `url:"permission_set,omitempty"`
+	Path          string    `url:"path,omitempty"`
 }
 
 type ApiKeyUpdateCurrentParams struct {
-	ExpiresAt     string `url:"expires_at,omitempty"`
-	Name          string `url:"name,omitempty"`
-	PermissionSet string `url:"permission_set,omitempty"`
+	ExpiresAt     time.Time `url:"expires_at,omitempty"`
+	Name          string    `url:"name,omitempty"`
+	PermissionSet string    `url:"permission_set,omitempty"`
 }
 
 type ApiKeyUpdateParams struct {
-	Id            int64  `url:"-,omitempty"`
-	Name          string `url:"name,omitempty"`
-	ExpiresAt     string `url:"expires_at,omitempty"`
-	PermissionSet string `url:"permission_set,omitempty"`
+	Id            int64     `url:"-,omitempty"`
+	Name          string    `url:"name,omitempty"`
+	ExpiresAt     time.Time `url:"expires_at,omitempty"`
+	PermissionSet string    `url:"permission_set,omitempty"`
 }
 
 type ApiKeyDeleteCurrentParams struct {

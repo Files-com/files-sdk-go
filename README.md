@@ -27,10 +27,10 @@ toolchain will resolve and fetch the files module automatically.
 
 ### Setting API Key
 
-#### Setting by env 
+#### Setting by ENV 
 
 ``` sh
-FILES_API_KEY="XXXX-XXXX..."
+export FILES_API_KEY="XXXX-XXXX..."
 ```
 
 #### Set Global Variable
@@ -51,6 +51,75 @@ import (
     "github.com/Files-com/files-sdk-go/file"
 )
 
-config :=  files_sdk.Config{APIKey: "XXXX-XXXX..."}
+config := files_sdk.Config{APIKey: "XXXX-XXXX..."}
 client := file.Client{Config: config}
+```
+
+### List
+
+```go 
+import (
+	files_sdk "github.com/Files-com/files-sdk-go"
+	folder "github.com/Files-com/files-sdk-go/folder"
+    "fmt"
+)
+
+func main() {
+    params := files_sdk.FolderListForParams{}
+    it := folder.ListFor(params)
+
+    for it.Next() {
+        entry := it.Folder()
+        fmt.Println(entry.Path)
+    }
+}
+
+```
+
+### Upload a File
+```go 
+import (
+	files_sdk "github.com/Files-com/files-sdk-go"
+	file "github.com/Files-com/files-sdk-go/file"
+)
+
+func main() {
+    client := file.Client{}
+    uploadPath := "file-to-upload.txt"
+    destinationPath := nil // Defaults to filename of uploadPath
+    fileEntry, err := client.UploadFile(uploadPath, destinationPath)
+    if err != nil {
+        panic(err)
+    }
+}
+```
+
+#### Via io.Reader
+
+```go 
+import file "github.com/Files-com/files-sdk-go/file"
+
+func main() {
+    client := file.Client{}
+    io := strings.NewReader("my file contents")
+    destinationPath := "my-file.txt"
+    fileEntry, err := client.Upload(io, destinationPath)
+    if err != nil {
+        panic(err)
+    }
+}
+```
+
+### Download a File
+```go 
+import file "github.com/Files-com/files-sdk-go/file"
+
+func main() {
+    client := file.Client{}
+    downloadPath := "file-to-download.txt"
+    fileEntry, err := client.DownloadToFile(files_sdk.FileDownloadParams{Path: "file-to-download.txt"}, downloadPath)
+    if err != nil {
+        panic(err)
+    }
+}
 ```

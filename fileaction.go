@@ -9,17 +9,20 @@ type FileAction struct {
 
 type FileActionCollection []FileAction
 
+// Copy file/folder
 type FileActionCopyParams struct {
 	Path        string `url:"-,omitempty"`
 	Destination string `url:"destination,omitempty"`
 	Structure   *bool  `url:"structure,omitempty"`
 }
 
+// Move file/folder
 type FileActionMoveParams struct {
 	Path        string `url:"-,omitempty"`
 	Destination string `url:"destination,omitempty"`
 }
 
+// Begin file upload
 type FileActionBeginUploadParams struct {
 	Path         string `url:"-,omitempty"`
 	MkdirParents *bool  `url:"mkdir_parents,omitempty"`

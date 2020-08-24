@@ -1,8 +1,9 @@
 package lib
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIter_Next_MaxPages(t *testing.T) {
@@ -21,7 +22,7 @@ func TestIter_Next_MaxPages(t *testing.T) {
 	for it.Next() {
 		recordCount += 1
 	}
-	assert.Equal(params.PerPage * params.MaxPages, recordCount)
+	assert.Equal(params.PerPage*params.MaxPages, recordCount)
 	assert.Equal(nil, it.Err())
 	assert.Equal("cursor", it.GetCursor())
 }
@@ -42,7 +43,7 @@ func TestIter_Next_ZeroMaxPages(t *testing.T) {
 	for it.Next() {
 		recordCount += 1
 	}
-	assert.Equal(params.PerPage * params.MaxPages, recordCount)
+	assert.Equal(params.PerPage*params.MaxPages, recordCount)
 }
 
 func TestIter_Next_PerPage_of_one(t *testing.T) {

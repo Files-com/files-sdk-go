@@ -1,8 +1,10 @@
 package file_comment
 
 import (
-  lib "github.com/Files-com/files-sdk-go/lib"
-  files_sdk "github.com/Files-com/files-sdk-go"
+	"strconv"
+
+	files_sdk "github.com/Files-com/files-sdk-go"
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type Client struct {
@@ -25,13 +27,13 @@ func (c *Client) ListFor(params files_sdk.FileCommentListForParams) *Iter {
 	i.Query = func() (*[]interface{}, string, error) {
 		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
 		defaultValue := make([]interface{}, 0)
-        if err != nil {
-          return &defaultValue, "", err
-        }
+		if err != nil {
+			return &defaultValue, "", err
+		}
 		list := files_sdk.FileCommentCollection{}
 		if err := list.UnmarshalJSON(*data); err != nil {
-          return &defaultValue, "", err
-        }
+			return &defaultValue, "", err
+		}
 
 		ret := make([]interface{}, len(list))
 		for i, v := range list {
@@ -45,63 +47,68 @@ func (c *Client) ListFor(params files_sdk.FileCommentListForParams) *Iter {
 }
 
 func ListFor(params files_sdk.FileCommentListForParams) *Iter {
-  client := Client{}
-  return client.ListFor (params)
+	return (&Client{}).ListFor(params)
 }
 
-func (c *Client) Create (params files_sdk.FileCommentCreateParams) (files_sdk.FileComment, error) {
-  fileComment := files_sdk.FileComment{}
-	  path := "/file_comments"
-	data, _, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
+func (c *Client) Create(params files_sdk.FileCommentCreateParams) (files_sdk.FileComment, error) {
+	fileComment := files_sdk.FileComment{}
+	path := "/file_comments"
+	data, res, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return fileComment, err
+		return fileComment, err
+	}
+	if res.StatusCode == 204 {
+		return fileComment, nil
 	}
 	if err := fileComment.UnmarshalJSON(*data); err != nil {
-	return fileComment, err
+		return fileComment, err
 	}
 
-	return  fileComment, nil
+	return fileComment, nil
 }
 
-func Create (params files_sdk.FileCommentCreateParams) (files_sdk.FileComment, error) {
-  client := Client{}
-  return client.Create (params)
+func Create(params files_sdk.FileCommentCreateParams) (files_sdk.FileComment, error) {
+	return (&Client{}).Create(params)
 }
 
-func (c *Client) Update (params files_sdk.FileCommentUpdateParams) (files_sdk.FileComment, error) {
-  fileComment := files_sdk.FileComment{}
-  	path := "/file_comments/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("PATCH", c.Config, path, lib.ExportParams(params))
+func (c *Client) Update(params files_sdk.FileCommentUpdateParams) (files_sdk.FileComment, error) {
+	fileComment := files_sdk.FileComment{}
+	path := "/file_comments/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return fileComment, err
+		return fileComment, err
+	}
+	if res.StatusCode == 204 {
+		return fileComment, nil
 	}
 	if err := fileComment.UnmarshalJSON(*data); err != nil {
-	return fileComment, err
+		return fileComment, err
 	}
 
-	return  fileComment, nil
+	return fileComment, nil
 }
 
-func Update (params files_sdk.FileCommentUpdateParams) (files_sdk.FileComment, error) {
-  client := Client{}
-  return client.Update (params)
+func Update(params files_sdk.FileCommentUpdateParams) (files_sdk.FileComment, error) {
+	return (&Client{}).Update(params)
 }
 
-func (c *Client) Delete (params files_sdk.FileCommentDeleteParams) (files_sdk.FileComment, error) {
-  fileComment := files_sdk.FileComment{}
-  	path := "/file_comments/" + lib.QueryEscape(string(params.Id)) + ""
-	data, _, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
+func (c *Client) Delete(params files_sdk.FileCommentDeleteParams) (files_sdk.FileComment, error) {
+	fileComment := files_sdk.FileComment{}
+	path := "/file_comments/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
 	if err != nil {
-	  return fileComment, err
+		return fileComment, err
+	}
+	if res.StatusCode == 204 {
+		return fileComment, nil
 	}
 	if err := fileComment.UnmarshalJSON(*data); err != nil {
-	return fileComment, err
+		return fileComment, err
 	}
 
-	return  fileComment, nil
+	return fileComment, nil
 }
 
-func Delete (params files_sdk.FileCommentDeleteParams) (files_sdk.FileComment, error) {
-  client := Client{}
-  return client.Delete (params)
+func Delete(params files_sdk.FileCommentDeleteParams) (files_sdk.FileComment, error) {
+	return (&Client{}).Delete(params)
 }
