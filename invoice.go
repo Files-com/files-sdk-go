@@ -27,15 +27,15 @@ type Invoice struct {
 type InvoiceCollection []Invoice
 
 type InvoiceListParams struct {
-	Page    int    `url:"page,omitempty"`
-	PerPage int    `url:"per_page,omitempty"`
-	Action  string `url:"action,omitempty"`
-	Cursor  string `url:"cursor,omitempty"`
+	Page    int    `url:"page,omitempty" required:"false"`
+	PerPage int    `url:"per_page,omitempty" required:"false"`
+	Action  string `url:"action,omitempty" required:"false"`
+	Cursor  string `url:"cursor,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type InvoiceFindParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (i *Invoice) UnmarshalJSON(data []byte) error {

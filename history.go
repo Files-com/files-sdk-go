@@ -26,71 +26,71 @@ type History struct {
 type HistoryCollection []History
 
 type HistoryListForFileParams struct {
-	StartAt time.Time       `url:"start_at,omitempty"`
-	EndAt   time.Time       `url:"end_at,omitempty"`
-	Display string          `url:"display,omitempty"`
-	Page    int             `url:"page,omitempty"`
-	PerPage int             `url:"per_page,omitempty"`
-	Action  string          `url:"action,omitempty"`
-	Cursor  string          `url:"cursor,omitempty"`
-	SortBy  json.RawMessage `url:"sort_by,omitempty"`
-	Path    string          `url:"-,omitempty"`
+	StartAt time.Time       `url:"start_at,omitempty" required:"false"`
+	EndAt   time.Time       `url:"end_at,omitempty" required:"false"`
+	Display string          `url:"display,omitempty" required:"false"`
+	Page    int             `url:"page,omitempty" required:"false"`
+	PerPage int             `url:"per_page,omitempty" required:"false"`
+	Action  string          `url:"action,omitempty" required:"false"`
+	Cursor  string          `url:"cursor,omitempty" required:"false"`
+	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false"`
+	Path    string          `url:"-,omitempty" required:"true"`
 	lib.ListParams
 }
 
 type HistoryListForFolderParams struct {
-	StartAt time.Time       `url:"start_at,omitempty"`
-	EndAt   time.Time       `url:"end_at,omitempty"`
-	Display string          `url:"display,omitempty"`
-	Page    int             `url:"page,omitempty"`
-	PerPage int             `url:"per_page,omitempty"`
-	Action  string          `url:"action,omitempty"`
-	Cursor  string          `url:"cursor,omitempty"`
-	SortBy  json.RawMessage `url:"sort_by,omitempty"`
-	Path    string          `url:"-,omitempty"`
+	StartAt time.Time       `url:"start_at,omitempty" required:"false"`
+	EndAt   time.Time       `url:"end_at,omitempty" required:"false"`
+	Display string          `url:"display,omitempty" required:"false"`
+	Page    int             `url:"page,omitempty" required:"false"`
+	PerPage int             `url:"per_page,omitempty" required:"false"`
+	Action  string          `url:"action,omitempty" required:"false"`
+	Cursor  string          `url:"cursor,omitempty" required:"false"`
+	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false"`
+	Path    string          `url:"-,omitempty" required:"true"`
 	lib.ListParams
 }
 
 type HistoryListForUserParams struct {
-	StartAt time.Time       `url:"start_at,omitempty"`
-	EndAt   time.Time       `url:"end_at,omitempty"`
-	Display string          `url:"display,omitempty"`
-	Page    int             `url:"page,omitempty"`
-	PerPage int             `url:"per_page,omitempty"`
-	Action  string          `url:"action,omitempty"`
-	Cursor  string          `url:"cursor,omitempty"`
-	SortBy  json.RawMessage `url:"sort_by,omitempty"`
-	UserId  int64           `url:"-,omitempty"`
+	StartAt time.Time       `url:"start_at,omitempty" required:"false"`
+	EndAt   time.Time       `url:"end_at,omitempty" required:"false"`
+	Display string          `url:"display,omitempty" required:"false"`
+	Page    int             `url:"page,omitempty" required:"false"`
+	PerPage int             `url:"per_page,omitempty" required:"false"`
+	Action  string          `url:"action,omitempty" required:"false"`
+	Cursor  string          `url:"cursor,omitempty" required:"false"`
+	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false"`
+	UserId  int64           `url:"-,omitempty" required:"true"`
 	lib.ListParams
 }
 
 type HistoryListLoginsParams struct {
-	StartAt time.Time       `url:"start_at,omitempty"`
-	EndAt   time.Time       `url:"end_at,omitempty"`
-	Display string          `url:"display,omitempty"`
-	Page    int             `url:"page,omitempty"`
-	PerPage int             `url:"per_page,omitempty"`
-	Action  string          `url:"action,omitempty"`
-	Cursor  string          `url:"cursor,omitempty"`
-	SortBy  json.RawMessage `url:"sort_by,omitempty"`
+	StartAt time.Time       `url:"start_at,omitempty" required:"false"`
+	EndAt   time.Time       `url:"end_at,omitempty" required:"false"`
+	Display string          `url:"display,omitempty" required:"false"`
+	Page    int             `url:"page,omitempty" required:"false"`
+	PerPage int             `url:"per_page,omitempty" required:"false"`
+	Action  string          `url:"action,omitempty" required:"false"`
+	Cursor  string          `url:"cursor,omitempty" required:"false"`
+	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type HistoryListParams struct {
-	StartAt    time.Time       `url:"start_at,omitempty"`
-	EndAt      time.Time       `url:"end_at,omitempty"`
-	Display    string          `url:"display,omitempty"`
-	Page       int             `url:"page,omitempty"`
-	PerPage    int             `url:"per_page,omitempty"`
-	Action     string          `url:"action,omitempty"`
-	Cursor     string          `url:"cursor,omitempty"`
-	SortBy     json.RawMessage `url:"sort_by,omitempty"`
-	Filter     json.RawMessage `url:"filter,omitempty"`
-	FilterGt   json.RawMessage `url:"filter_gt,omitempty"`
-	FilterGteq json.RawMessage `url:"filter_gteq,omitempty"`
-	FilterLike json.RawMessage `url:"filter_like,omitempty"`
-	FilterLt   json.RawMessage `url:"filter_lt,omitempty"`
-	FilterLteq json.RawMessage `url:"filter_lteq,omitempty"`
+	StartAt    time.Time       `url:"start_at,omitempty" required:"false"`
+	EndAt      time.Time       `url:"end_at,omitempty" required:"false"`
+	Display    string          `url:"display,omitempty" required:"false"`
+	Page       int             `url:"page,omitempty" required:"false"`
+	PerPage    int             `url:"per_page,omitempty" required:"false"`
+	Action     string          `url:"action,omitempty" required:"false"`
+	Cursor     string          `url:"cursor,omitempty" required:"false"`
+	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
+	Filter     json.RawMessage `url:"filter,omitempty" required:"false"`
+	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false"`
+	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false"`
+	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false"`
+	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false"`
+	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false"`
 	lib.ListParams
 }
 

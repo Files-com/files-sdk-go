@@ -19,13 +19,17 @@ func (i *Iter) GroupUser() files_sdk.GroupUser {
 	return i.Current().(files_sdk.GroupUser)
 }
 
-func (c *Client) List(params files_sdk.GroupUserListParams) *Iter {
+func (c *Client) List(params files_sdk.GroupUserListParams) (*Iter, error) {
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	i := &Iter{Iter: &lib.Iter{}}
 	path := "/group_users"
-
+	i.ListParams = &params
+	exportParams, err := i.ExportParams()
+	if err != nil {
+		return i, err
+	}
 	i.Query = func() (*[]interface{}, string, error) {
-		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
+		data, res, err := files_sdk.Call("GET", c.Config, path, exportParams)
 		defaultValue := make([]interface{}, 0)
 		if err != nil {
 			return &defaultValue, "", err
@@ -42,18 +46,24 @@ func (c *Client) List(params files_sdk.GroupUserListParams) *Iter {
 		cursor := res.Header.Get("X-Files-Cursor")
 		return &ret, cursor, nil
 	}
-	i.ListParams = &params
-	return i
+	return i, nil
 }
 
-func List(params files_sdk.GroupUserListParams) *Iter {
+func List(params files_sdk.GroupUserListParams) (*Iter, error) {
 	return (&Client{}).List(params)
 }
 
 func (c *Client) Update(params files_sdk.GroupUserUpdateParams) (files_sdk.GroupUser, error) {
 	groupUser := files_sdk.GroupUser{}
+	if params.Id == 0 {
+		return groupUser, lib.CreateError(params, "Id")
+	}
 	path := "/group_users/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return groupUser, err
+	}
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParms)
 	if err != nil {
 		return groupUser, err
 	}
@@ -73,8 +83,15 @@ func Update(params files_sdk.GroupUserUpdateParams) (files_sdk.GroupUser, error)
 
 func (c *Client) Delete(params files_sdk.GroupUserDeleteParams) (files_sdk.GroupUser, error) {
 	groupUser := files_sdk.GroupUser{}
+	if params.Id == 0 {
+		return groupUser, lib.CreateError(params, "Id")
+	}
 	path := "/group_users/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return groupUser, err
+	}
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
 	if err != nil {
 		return groupUser, err
 	}

@@ -13,8 +13,15 @@ type Client struct {
 
 func (c *Client) Find(params files_sdk.HistoryExportFindParams) (files_sdk.HistoryExport, error) {
 	historyExport := files_sdk.HistoryExport{}
+	if params.Id == 0 {
+		return historyExport, lib.CreateError(params, "Id")
+	}
 	path := "/history_exports/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	data, res, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return historyExport, err
+	}
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
 	if err != nil {
 		return historyExport, err
 	}
@@ -35,7 +42,11 @@ func Find(params files_sdk.HistoryExportFindParams) (files_sdk.HistoryExport, er
 func (c *Client) Create(params files_sdk.HistoryExportCreateParams) (files_sdk.HistoryExport, error) {
 	historyExport := files_sdk.HistoryExport{}
 	path := "/history_exports"
-	data, res, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return historyExport, err
+	}
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
 	if err != nil {
 		return historyExport, err
 	}

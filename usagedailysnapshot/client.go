@@ -17,13 +17,17 @@ func (i *Iter) UsageDailySnapshot() files_sdk.UsageDailySnapshot {
 	return i.Current().(files_sdk.UsageDailySnapshot)
 }
 
-func (c *Client) List(params files_sdk.UsageDailySnapshotListParams) *Iter {
+func (c *Client) List(params files_sdk.UsageDailySnapshotListParams) (*Iter, error) {
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	i := &Iter{Iter: &lib.Iter{}}
 	path := "/usage_daily_snapshots"
-
+	i.ListParams = &params
+	exportParams, err := i.ExportParams()
+	if err != nil {
+		return i, err
+	}
 	i.Query = func() (*[]interface{}, string, error) {
-		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
+		data, res, err := files_sdk.Call("GET", c.Config, path, exportParams)
 		defaultValue := make([]interface{}, 0)
 		if err != nil {
 			return &defaultValue, "", err
@@ -40,10 +44,9 @@ func (c *Client) List(params files_sdk.UsageDailySnapshotListParams) *Iter {
 		cursor := res.Header.Get("X-Files-Cursor")
 		return &ret, cursor, nil
 	}
-	i.ListParams = &params
-	return i
+	return i, nil
 }
 
-func List(params files_sdk.UsageDailySnapshotListParams) *Iter {
+func List(params files_sdk.UsageDailySnapshotListParams) (*Iter, error) {
 	return (&Client{}).List(params)
 }

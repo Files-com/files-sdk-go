@@ -19,31 +19,31 @@ type As2Key struct {
 type As2KeyCollection []As2Key
 
 type As2KeyListParams struct {
-	UserId  int64  `url:"user_id,omitempty"`
-	Page    int    `url:"page,omitempty"`
-	PerPage int    `url:"per_page,omitempty"`
-	Action  string `url:"action,omitempty"`
-	Cursor  string `url:"cursor,omitempty"`
+	UserId  int64  `url:"user_id,omitempty" required:"false"`
+	Page    int    `url:"page,omitempty" required:"false"`
+	PerPage int    `url:"per_page,omitempty" required:"false"`
+	Action  string `url:"action,omitempty" required:"false"`
+	Cursor  string `url:"cursor,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type As2KeyFindParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 type As2KeyCreateParams struct {
-	UserId             int64  `url:"user_id,omitempty"`
-	As2PartnershipName string `url:"as2_partnership_name,omitempty"`
-	PublicKey          string `url:"public_key,omitempty"`
+	UserId             int64  `url:"user_id,omitempty" required:"false"`
+	As2PartnershipName string `url:"as2_partnership_name,omitempty" required:"true"`
+	PublicKey          string `url:"public_key,omitempty" required:"true"`
 }
 
 type As2KeyUpdateParams struct {
-	Id                 int64  `url:"-,omitempty"`
-	As2PartnershipName string `url:"as2_partnership_name,omitempty"`
+	Id                 int64  `url:"-,omitempty" required:"true"`
+	As2PartnershipName string `url:"as2_partnership_name,omitempty" required:"true"`
 }
 
 type As2KeyDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (a *As2Key) UnmarshalJSON(data []byte) error {

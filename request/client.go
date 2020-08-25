@@ -19,13 +19,17 @@ func (i *Iter) Request() files_sdk.Request {
 	return i.Current().(files_sdk.Request)
 }
 
-func (c *Client) List(params files_sdk.RequestListParams) *Iter {
+func (c *Client) List(params files_sdk.RequestListParams) (*Iter, error) {
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	i := &Iter{Iter: &lib.Iter{}}
 	path := "/requests"
-
+	i.ListParams = &params
+	exportParams, err := i.ExportParams()
+	if err != nil {
+		return i, err
+	}
 	i.Query = func() (*[]interface{}, string, error) {
-		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
+		data, res, err := files_sdk.Call("GET", c.Config, path, exportParams)
 		defaultValue := make([]interface{}, 0)
 		if err != nil {
 			return &defaultValue, "", err
@@ -42,18 +46,21 @@ func (c *Client) List(params files_sdk.RequestListParams) *Iter {
 		cursor := res.Header.Get("X-Files-Cursor")
 		return &ret, cursor, nil
 	}
-	i.ListParams = &params
-	return i
+	return i, nil
 }
 
-func List(params files_sdk.RequestListParams) *Iter {
+func List(params files_sdk.RequestListParams) (*Iter, error) {
 	return (&Client{}).List(params)
 }
 
 func (c *Client) GetFolder(params files_sdk.RequestGetFolderParams) (files_sdk.RequestCollection, error) {
 	requestCollection := files_sdk.RequestCollection{}
 	path := "/requests/folders/" + lib.QueryEscape(params.Path) + ""
-	data, res, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return requestCollection, err
+	}
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
 	if err != nil {
 		return requestCollection, err
 	}
@@ -74,7 +81,11 @@ func GetFolder(params files_sdk.RequestGetFolderParams) (files_sdk.RequestCollec
 func (c *Client) Create(params files_sdk.RequestCreateParams) (files_sdk.Request, error) {
 	request := files_sdk.Request{}
 	path := "/requests"
-	data, res, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return request, err
+	}
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
 	if err != nil {
 		return request, err
 	}
@@ -94,8 +105,15 @@ func Create(params files_sdk.RequestCreateParams) (files_sdk.Request, error) {
 
 func (c *Client) Delete(params files_sdk.RequestDeleteParams) (files_sdk.Request, error) {
 	request := files_sdk.Request{}
+	if params.Id == 0 {
+		return request, lib.CreateError(params, "Id")
+	}
 	path := "/requests/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return request, err
+	}
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
 	if err != nil {
 		return request, err
 	}

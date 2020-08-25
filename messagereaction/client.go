@@ -19,13 +19,17 @@ func (i *Iter) MessageReaction() files_sdk.MessageReaction {
 	return i.Current().(files_sdk.MessageReaction)
 }
 
-func (c *Client) List(params files_sdk.MessageReactionListParams) *Iter {
+func (c *Client) List(params files_sdk.MessageReactionListParams) (*Iter, error) {
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	i := &Iter{Iter: &lib.Iter{}}
 	path := "/message_reactions"
-
+	i.ListParams = &params
+	exportParams, err := i.ExportParams()
+	if err != nil {
+		return i, err
+	}
 	i.Query = func() (*[]interface{}, string, error) {
-		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
+		data, res, err := files_sdk.Call("GET", c.Config, path, exportParams)
 		defaultValue := make([]interface{}, 0)
 		if err != nil {
 			return &defaultValue, "", err
@@ -42,18 +46,24 @@ func (c *Client) List(params files_sdk.MessageReactionListParams) *Iter {
 		cursor := res.Header.Get("X-Files-Cursor")
 		return &ret, cursor, nil
 	}
-	i.ListParams = &params
-	return i
+	return i, nil
 }
 
-func List(params files_sdk.MessageReactionListParams) *Iter {
+func List(params files_sdk.MessageReactionListParams) (*Iter, error) {
 	return (&Client{}).List(params)
 }
 
 func (c *Client) Find(params files_sdk.MessageReactionFindParams) (files_sdk.MessageReaction, error) {
 	messageReaction := files_sdk.MessageReaction{}
+	if params.Id == 0 {
+		return messageReaction, lib.CreateError(params, "Id")
+	}
 	path := "/message_reactions/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	data, res, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return messageReaction, err
+	}
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
 	if err != nil {
 		return messageReaction, err
 	}
@@ -74,7 +84,11 @@ func Find(params files_sdk.MessageReactionFindParams) (files_sdk.MessageReaction
 func (c *Client) Create(params files_sdk.MessageReactionCreateParams) (files_sdk.MessageReaction, error) {
 	messageReaction := files_sdk.MessageReaction{}
 	path := "/message_reactions"
-	data, res, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return messageReaction, err
+	}
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
 	if err != nil {
 		return messageReaction, err
 	}
@@ -94,8 +108,15 @@ func Create(params files_sdk.MessageReactionCreateParams) (files_sdk.MessageReac
 
 func (c *Client) Delete(params files_sdk.MessageReactionDeleteParams) (files_sdk.MessageReaction, error) {
 	messageReaction := files_sdk.MessageReaction{}
+	if params.Id == 0 {
+		return messageReaction, lib.CreateError(params, "Id")
+	}
 	path := "/message_reactions/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return messageReaction, err
+	}
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
 	if err != nil {
 		return messageReaction, err
 	}

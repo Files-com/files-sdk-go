@@ -16,26 +16,26 @@ type FileComment struct {
 type FileCommentCollection []FileComment
 
 type FileCommentListForParams struct {
-	Page    int    `url:"page,omitempty"`
-	PerPage int    `url:"per_page,omitempty"`
-	Action  string `url:"action,omitempty"`
-	Cursor  string `url:"cursor,omitempty"`
-	Path    string `url:"-,omitempty"`
+	Page    int    `url:"page,omitempty" required:"false"`
+	PerPage int    `url:"per_page,omitempty" required:"false"`
+	Action  string `url:"action,omitempty" required:"false"`
+	Cursor  string `url:"cursor,omitempty" required:"false"`
+	Path    string `url:"-,omitempty" required:"true"`
 	lib.ListParams
 }
 
 type FileCommentCreateParams struct {
-	Body string `url:"body,omitempty"`
-	Path string `url:"path,omitempty"`
+	Body string `url:"body,omitempty" required:"true"`
+	Path string `url:"path,omitempty" required:"true"`
 }
 
 type FileCommentUpdateParams struct {
-	Id   int64  `url:"-,omitempty"`
-	Body string `url:"body,omitempty"`
+	Id   int64  `url:"-,omitempty" required:"true"`
+	Body string `url:"body,omitempty" required:"true"`
 }
 
 type FileCommentDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (f *FileComment) UnmarshalJSON(data []byte) error {

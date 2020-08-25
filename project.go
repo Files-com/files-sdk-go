@@ -14,28 +14,28 @@ type Project struct {
 type ProjectCollection []Project
 
 type ProjectListParams struct {
-	Page    int    `url:"page,omitempty"`
-	PerPage int    `url:"per_page,omitempty"`
-	Action  string `url:"action,omitempty"`
-	Cursor  string `url:"cursor,omitempty"`
+	Page    int    `url:"page,omitempty" required:"false"`
+	PerPage int    `url:"per_page,omitempty" required:"false"`
+	Action  string `url:"action,omitempty" required:"false"`
+	Cursor  string `url:"cursor,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type ProjectFindParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 type ProjectCreateParams struct {
-	GlobalAccess string `url:"global_access,omitempty"`
+	GlobalAccess string `url:"global_access,omitempty" required:"true"`
 }
 
 type ProjectUpdateParams struct {
-	Id           int64  `url:"-,omitempty"`
-	GlobalAccess string `url:"global_access,omitempty"`
+	Id           int64  `url:"-,omitempty" required:"true"`
+	GlobalAccess string `url:"global_access,omitempty" required:"true"`
 }
 
 type ProjectDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (p *Project) UnmarshalJSON(data []byte) error {

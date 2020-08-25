@@ -12,7 +12,11 @@ type Client struct {
 func (c *Client) Get(params files_sdk.SiteGetParams) (files_sdk.Site, error) {
 	site := files_sdk.Site{}
 	path := "/site"
-	data, res, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return site, err
+	}
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
 	if err != nil {
 		return site, err
 	}
@@ -33,7 +37,11 @@ func Get(params files_sdk.SiteGetParams) (files_sdk.Site, error) {
 func (c *Client) GetUsage(params files_sdk.SiteGetUsageParams) (files_sdk.UsageSnapshot, error) {
 	usageSnapshot := files_sdk.UsageSnapshot{}
 	path := "/site/usage"
-	data, res, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return usageSnapshot, err
+	}
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
 	if err != nil {
 		return usageSnapshot, err
 	}
@@ -54,7 +62,11 @@ func GetUsage(params files_sdk.SiteGetUsageParams) (files_sdk.UsageSnapshot, err
 func (c *Client) Update(params files_sdk.SiteUpdateParams) (files_sdk.Site, error) {
 	site := files_sdk.Site{}
 	path := "/site"
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return site, err
+	}
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParms)
 	if err != nil {
 		return site, err
 	}

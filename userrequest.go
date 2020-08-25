@@ -16,25 +16,25 @@ type UserRequest struct {
 type UserRequestCollection []UserRequest
 
 type UserRequestListParams struct {
-	Page    int    `url:"page,omitempty"`
-	PerPage int    `url:"per_page,omitempty"`
-	Action  string `url:"action,omitempty"`
-	Cursor  string `url:"cursor,omitempty"`
+	Page    int    `url:"page,omitempty" required:"false"`
+	PerPage int    `url:"per_page,omitempty" required:"false"`
+	Action  string `url:"action,omitempty" required:"false"`
+	Cursor  string `url:"cursor,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type UserRequestFindParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 type UserRequestCreateParams struct {
-	Name    string `url:"name,omitempty"`
-	Email   string `url:"email,omitempty"`
-	Details string `url:"details,omitempty"`
+	Name    string `url:"name,omitempty" required:"true"`
+	Email   string `url:"email,omitempty" required:"true"`
+	Details string `url:"details,omitempty" required:"true"`
 }
 
 type UserRequestDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (u *UserRequest) UnmarshalJSON(data []byte) error {

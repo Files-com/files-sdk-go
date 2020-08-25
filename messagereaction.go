@@ -15,26 +15,26 @@ type MessageReaction struct {
 type MessageReactionCollection []MessageReaction
 
 type MessageReactionListParams struct {
-	UserId    int64  `url:"user_id,omitempty"`
-	Page      int    `url:"page,omitempty"`
-	PerPage   int    `url:"per_page,omitempty"`
-	Action    string `url:"action,omitempty"`
-	Cursor    string `url:"cursor,omitempty"`
-	MessageId int64  `url:"message_id,omitempty"`
+	UserId    int64  `url:"user_id,omitempty" required:"false"`
+	Page      int    `url:"page,omitempty" required:"false"`
+	PerPage   int    `url:"per_page,omitempty" required:"false"`
+	Action    string `url:"action,omitempty" required:"false"`
+	Cursor    string `url:"cursor,omitempty" required:"false"`
+	MessageId int64  `url:"message_id,omitempty" required:"true"`
 	lib.ListParams
 }
 
 type MessageReactionFindParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 type MessageReactionCreateParams struct {
-	UserId int64  `url:"user_id,omitempty"`
-	Emoji  string `url:"emoji,omitempty"`
+	UserId int64  `url:"user_id,omitempty" required:"false"`
+	Emoji  string `url:"emoji,omitempty" required:"true"`
 }
 
 type MessageReactionDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (m *MessageReaction) UnmarshalJSON(data []byte) error {

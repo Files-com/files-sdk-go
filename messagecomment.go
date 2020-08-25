@@ -16,31 +16,31 @@ type MessageComment struct {
 type MessageCommentCollection []MessageComment
 
 type MessageCommentListParams struct {
-	UserId    int64  `url:"user_id,omitempty"`
-	Page      int    `url:"page,omitempty"`
-	PerPage   int    `url:"per_page,omitempty"`
-	Action    string `url:"action,omitempty"`
-	Cursor    string `url:"cursor,omitempty"`
-	MessageId int64  `url:"message_id,omitempty"`
+	UserId    int64  `url:"user_id,omitempty" required:"false"`
+	Page      int    `url:"page,omitempty" required:"false"`
+	PerPage   int    `url:"per_page,omitempty" required:"false"`
+	Action    string `url:"action,omitempty" required:"false"`
+	Cursor    string `url:"cursor,omitempty" required:"false"`
+	MessageId int64  `url:"message_id,omitempty" required:"true"`
 	lib.ListParams
 }
 
 type MessageCommentFindParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 type MessageCommentCreateParams struct {
-	UserId int64  `url:"user_id,omitempty"`
-	Body   string `url:"body,omitempty"`
+	UserId int64  `url:"user_id,omitempty" required:"false"`
+	Body   string `url:"body,omitempty" required:"true"`
 }
 
 type MessageCommentUpdateParams struct {
-	Id   int64  `url:"-,omitempty"`
-	Body string `url:"body,omitempty"`
+	Id   int64  `url:"-,omitempty" required:"true"`
+	Body string `url:"body,omitempty" required:"true"`
 }
 
 type MessageCommentDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (m *MessageComment) UnmarshalJSON(data []byte) error {

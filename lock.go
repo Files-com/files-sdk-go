@@ -21,23 +21,23 @@ type Lock struct {
 type LockCollection []Lock
 
 type LockListForParams struct {
-	Page            int    `url:"page,omitempty"`
-	PerPage         int    `url:"per_page,omitempty"`
-	Action          string `url:"action,omitempty"`
-	Cursor          string `url:"cursor,omitempty"`
-	Path            string `url:"-,omitempty"`
-	IncludeChildren *bool  `url:"include_children,omitempty"`
+	Page            int    `url:"page,omitempty" required:"false"`
+	PerPage         int    `url:"per_page,omitempty" required:"false"`
+	Action          string `url:"action,omitempty" required:"false"`
+	Cursor          string `url:"cursor,omitempty" required:"false"`
+	Path            string `url:"-,omitempty" required:"true"`
+	IncludeChildren *bool  `url:"include_children,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type LockCreateParams struct {
-	Path    string `url:"-,omitempty"`
-	Timeout int    `url:"timeout,omitempty"`
+	Path    string `url:"-,omitempty" required:"true"`
+	Timeout int    `url:"timeout,omitempty" required:"false"`
 }
 
 type LockDeleteParams struct {
-	Path  string `url:"-,omitempty"`
-	Token string `url:"token,omitempty"`
+	Path  string `url:"-,omitempty" required:"true"`
+	Token string `url:"token,omitempty" required:"true"`
 }
 
 func (l *Lock) UnmarshalJSON(data []byte) error {

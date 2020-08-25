@@ -12,7 +12,11 @@ type Client struct {
 func (c *Client) Find(params files_sdk.StyleFindParams) (files_sdk.Style, error) {
 	style := files_sdk.Style{}
 	path := "/styles/" + lib.QueryEscape(params.Path) + ""
-	data, res, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return style, err
+	}
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
 	if err != nil {
 		return style, err
 	}
@@ -33,7 +37,11 @@ func Find(params files_sdk.StyleFindParams) (files_sdk.Style, error) {
 func (c *Client) Update(params files_sdk.StyleUpdateParams) (files_sdk.Style, error) {
 	style := files_sdk.Style{}
 	path := "/styles/" + lib.QueryEscape(params.Path) + ""
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return style, err
+	}
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParms)
 	if err != nil {
 		return style, err
 	}
@@ -54,7 +62,11 @@ func Update(params files_sdk.StyleUpdateParams) (files_sdk.Style, error) {
 func (c *Client) Delete(params files_sdk.StyleDeleteParams) (files_sdk.Style, error) {
 	style := files_sdk.Style{}
 	path := "/styles/" + lib.QueryEscape(params.Path) + ""
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return style, err
+	}
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
 	if err != nil {
 		return style, err
 	}

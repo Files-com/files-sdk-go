@@ -19,13 +19,17 @@ func (i *Iter) Automation() files_sdk.Automation {
 	return i.Current().(files_sdk.Automation)
 }
 
-func (c *Client) List(params files_sdk.AutomationListParams) *Iter {
+func (c *Client) List(params files_sdk.AutomationListParams) (*Iter, error) {
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	i := &Iter{Iter: &lib.Iter{}}
 	path := "/automations"
-
+	i.ListParams = &params
+	exportParams, err := i.ExportParams()
+	if err != nil {
+		return i, err
+	}
 	i.Query = func() (*[]interface{}, string, error) {
-		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
+		data, res, err := files_sdk.Call("GET", c.Config, path, exportParams)
 		defaultValue := make([]interface{}, 0)
 		if err != nil {
 			return &defaultValue, "", err
@@ -42,18 +46,24 @@ func (c *Client) List(params files_sdk.AutomationListParams) *Iter {
 		cursor := res.Header.Get("X-Files-Cursor")
 		return &ret, cursor, nil
 	}
-	i.ListParams = &params
-	return i
+	return i, nil
 }
 
-func List(params files_sdk.AutomationListParams) *Iter {
+func List(params files_sdk.AutomationListParams) (*Iter, error) {
 	return (&Client{}).List(params)
 }
 
 func (c *Client) Find(params files_sdk.AutomationFindParams) (files_sdk.Automation, error) {
 	automation := files_sdk.Automation{}
+	if params.Id == 0 {
+		return automation, lib.CreateError(params, "Id")
+	}
 	path := "/automations/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	data, res, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return automation, err
+	}
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
 	if err != nil {
 		return automation, err
 	}
@@ -74,7 +84,11 @@ func Find(params files_sdk.AutomationFindParams) (files_sdk.Automation, error) {
 func (c *Client) Create(params files_sdk.AutomationCreateParams) (files_sdk.Automation, error) {
 	automation := files_sdk.Automation{}
 	path := "/automations"
-	data, res, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return automation, err
+	}
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
 	if err != nil {
 		return automation, err
 	}
@@ -94,8 +108,15 @@ func Create(params files_sdk.AutomationCreateParams) (files_sdk.Automation, erro
 
 func (c *Client) Update(params files_sdk.AutomationUpdateParams) (files_sdk.Automation, error) {
 	automation := files_sdk.Automation{}
+	if params.Id == 0 {
+		return automation, lib.CreateError(params, "Id")
+	}
 	path := "/automations/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return automation, err
+	}
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParms)
 	if err != nil {
 		return automation, err
 	}
@@ -115,8 +136,15 @@ func Update(params files_sdk.AutomationUpdateParams) (files_sdk.Automation, erro
 
 func (c *Client) Delete(params files_sdk.AutomationDeleteParams) (files_sdk.Automation, error) {
 	automation := files_sdk.Automation{}
+	if params.Id == 0 {
+		return automation, lib.CreateError(params, "Id")
+	}
 	path := "/automations/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return automation, err
+	}
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
 	if err != nil {
 		return automation, err
 	}

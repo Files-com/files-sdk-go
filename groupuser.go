@@ -18,26 +18,26 @@ type GroupUser struct {
 type GroupUserCollection []GroupUser
 
 type GroupUserListParams struct {
-	UserId  int64  `url:"user_id,omitempty"`
-	Page    int    `url:"page,omitempty"`
-	PerPage int    `url:"per_page,omitempty"`
-	Action  string `url:"action,omitempty"`
-	Cursor  string `url:"cursor,omitempty"`
-	GroupId int64  `url:"group_id,omitempty"`
+	UserId  int64  `url:"user_id,omitempty" required:"false"`
+	Page    int    `url:"page,omitempty" required:"false"`
+	PerPage int    `url:"per_page,omitempty" required:"false"`
+	Action  string `url:"action,omitempty" required:"false"`
+	Cursor  string `url:"cursor,omitempty" required:"false"`
+	GroupId int64  `url:"group_id,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type GroupUserUpdateParams struct {
-	Id      int64 `url:"-,omitempty"`
-	GroupId int64 `url:"group_id,omitempty"`
-	UserId  int64 `url:"user_id,omitempty"`
-	Admin   *bool `url:"admin,omitempty"`
+	Id      int64 `url:"-,omitempty" required:"true"`
+	GroupId int64 `url:"group_id,omitempty" required:"true"`
+	UserId  int64 `url:"user_id,omitempty" required:"true"`
+	Admin   *bool `url:"admin,omitempty" required:"false"`
 }
 
 type GroupUserDeleteParams struct {
-	Id      int64 `url:"-,omitempty"`
-	GroupId int64 `url:"group_id,omitempty"`
-	UserId  int64 `url:"user_id,omitempty"`
+	Id      int64 `url:"-,omitempty" required:"true"`
+	GroupId int64 `url:"group_id,omitempty" required:"true"`
+	UserId  int64 `url:"user_id,omitempty" required:"true"`
 }
 
 func (g *GroupUser) UnmarshalJSON(data []byte) error {

@@ -15,26 +15,26 @@ type MessageCommentReaction struct {
 type MessageCommentReactionCollection []MessageCommentReaction
 
 type MessageCommentReactionListParams struct {
-	UserId           int64  `url:"user_id,omitempty"`
-	Page             int    `url:"page,omitempty"`
-	PerPage          int    `url:"per_page,omitempty"`
-	Action           string `url:"action,omitempty"`
-	Cursor           string `url:"cursor,omitempty"`
-	MessageCommentId int64  `url:"message_comment_id,omitempty"`
+	UserId           int64  `url:"user_id,omitempty" required:"false"`
+	Page             int    `url:"page,omitempty" required:"false"`
+	PerPage          int    `url:"per_page,omitempty" required:"false"`
+	Action           string `url:"action,omitempty" required:"false"`
+	Cursor           string `url:"cursor,omitempty" required:"false"`
+	MessageCommentId int64  `url:"message_comment_id,omitempty" required:"true"`
 	lib.ListParams
 }
 
 type MessageCommentReactionFindParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 type MessageCommentReactionCreateParams struct {
-	UserId int64  `url:"user_id,omitempty"`
-	Emoji  string `url:"emoji,omitempty"`
+	UserId int64  `url:"user_id,omitempty" required:"false"`
+	Emoji  string `url:"emoji,omitempty" required:"true"`
 }
 
 type MessageCommentReactionDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (m *MessageCommentReaction) UnmarshalJSON(data []byte) error {

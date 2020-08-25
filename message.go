@@ -18,35 +18,35 @@ type Message struct {
 type MessageCollection []Message
 
 type MessageListParams struct {
-	UserId    int64  `url:"user_id,omitempty"`
-	Page      int    `url:"page,omitempty"`
-	PerPage   int    `url:"per_page,omitempty"`
-	Action    string `url:"action,omitempty"`
-	Cursor    string `url:"cursor,omitempty"`
-	ProjectId int64  `url:"project_id,omitempty"`
+	UserId    int64  `url:"user_id,omitempty" required:"false"`
+	Page      int    `url:"page,omitempty" required:"false"`
+	PerPage   int    `url:"per_page,omitempty" required:"false"`
+	Action    string `url:"action,omitempty" required:"false"`
+	Cursor    string `url:"cursor,omitempty" required:"false"`
+	ProjectId int64  `url:"project_id,omitempty" required:"true"`
 	lib.ListParams
 }
 
 type MessageFindParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 type MessageCreateParams struct {
-	UserId    int64  `url:"user_id,omitempty"`
-	ProjectId int64  `url:"project_id,omitempty"`
-	Subject   string `url:"subject,omitempty"`
-	Body      string `url:"body,omitempty"`
+	UserId    int64  `url:"user_id,omitempty" required:"false"`
+	ProjectId int64  `url:"project_id,omitempty" required:"true"`
+	Subject   string `url:"subject,omitempty" required:"true"`
+	Body      string `url:"body,omitempty" required:"true"`
 }
 
 type MessageUpdateParams struct {
-	Id        int64  `url:"-,omitempty"`
-	ProjectId int64  `url:"project_id,omitempty"`
-	Subject   string `url:"subject,omitempty"`
-	Body      string `url:"body,omitempty"`
+	Id        int64  `url:"-,omitempty" required:"true"`
+	ProjectId int64  `url:"project_id,omitempty" required:"true"`
+	Subject   string `url:"subject,omitempty" required:"true"`
+	Body      string `url:"body,omitempty" required:"true"`
 }
 
 type MessageDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (m *Message) UnmarshalJSON(data []byte) error {

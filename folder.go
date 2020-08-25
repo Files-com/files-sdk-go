@@ -29,22 +29,22 @@ type Folder struct {
 type FolderCollection []Folder
 
 type FolderListForParams struct {
-	Page              int    `url:"page,omitempty"`
-	PerPage           int    `url:"per_page,omitempty"`
-	Action            string `url:"action,omitempty"`
-	Cursor            string `url:"cursor,omitempty"`
-	Path              string `url:"-,omitempty"`
-	Filter            string `url:"filter,omitempty"`
-	PreviewSize       string `url:"preview_size,omitempty"`
-	Search            string `url:"search,omitempty"`
-	SearchAll         *bool  `url:"search_all,omitempty"`
-	WithPreviews      *bool  `url:"with_previews,omitempty"`
-	WithPriorityColor *bool  `url:"with_priority_color,omitempty"`
+	Page              int    `url:"page,omitempty" required:"false"`
+	PerPage           int    `url:"per_page,omitempty" required:"false"`
+	Action            string `url:"action,omitempty" required:"false"`
+	Cursor            string `url:"cursor,omitempty" required:"false"`
+	Path              string `url:"-,omitempty" required:"true"`
+	Filter            string `url:"filter,omitempty" required:"false"`
+	PreviewSize       string `url:"preview_size,omitempty" required:"false"`
+	Search            string `url:"search,omitempty" required:"false"`
+	SearchAll         *bool  `url:"search_all,omitempty" required:"false"`
+	WithPreviews      *bool  `url:"with_previews,omitempty" required:"false"`
+	WithPriorityColor *bool  `url:"with_priority_color,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type FolderCreateParams struct {
-	Path string `url:"-,omitempty"`
+	Path string `url:"-,omitempty" required:"true"`
 }
 
 func (f *Folder) UnmarshalJSON(data []byte) error {

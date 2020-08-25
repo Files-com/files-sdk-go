@@ -18,12 +18,12 @@ type BundleRecipient struct {
 type BundleRecipientCollection []BundleRecipient
 
 type BundleRecipientListParams struct {
-	UserId   int64  `url:"user_id,omitempty"`
-	Page     int    `url:"page,omitempty"`
-	PerPage  int    `url:"per_page,omitempty"`
-	Action   string `url:"action,omitempty"`
-	Cursor   string `url:"cursor,omitempty"`
-	BundleId int64  `url:"bundle_id,omitempty"`
+	UserId   int64  `url:"user_id,omitempty" required:"false"`
+	Page     int    `url:"page,omitempty" required:"false"`
+	PerPage  int    `url:"per_page,omitempty" required:"false"`
+	Action   string `url:"action,omitempty" required:"false"`
+	Cursor   string `url:"cursor,omitempty" required:"false"`
+	BundleId int64  `url:"bundle_id,omitempty" required:"true"`
 	lib.ListParams
 }
 

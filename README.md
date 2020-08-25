@@ -66,7 +66,11 @@ import (
 
 func main() {
     params := files_sdk.FolderListForParams{}
-    it := folder.ListFor(params)
+    it, err := folder.ListFor(params)
+
+    if err != nil {
+        // deal with error
+    }
 
     for it.Next() {
         entry := it.Folder()

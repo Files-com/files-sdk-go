@@ -24,47 +24,47 @@ type Notification struct {
 type NotificationCollection []Notification
 
 type NotificationListParams struct {
-	UserId           int64           `url:"user_id,omitempty"`
-	Page             int             `url:"page,omitempty"`
-	PerPage          int             `url:"per_page,omitempty"`
-	Action           string          `url:"action,omitempty"`
-	Cursor           string          `url:"cursor,omitempty"`
-	SortBy           json.RawMessage `url:"sort_by,omitempty"`
-	Filter           json.RawMessage `url:"filter,omitempty"`
-	FilterGt         json.RawMessage `url:"filter_gt,omitempty"`
-	FilterGteq       json.RawMessage `url:"filter_gteq,omitempty"`
-	FilterLike       json.RawMessage `url:"filter_like,omitempty"`
-	FilterLt         json.RawMessage `url:"filter_lt,omitempty"`
-	FilterLteq       json.RawMessage `url:"filter_lteq,omitempty"`
-	GroupId          int64           `url:"group_id,omitempty"`
-	Path             string          `url:"path,omitempty"`
-	IncludeAncestors *bool           `url:"include_ancestors,omitempty"`
+	UserId           int64           `url:"user_id,omitempty" required:"false"`
+	Page             int             `url:"page,omitempty" required:"false"`
+	PerPage          int             `url:"per_page,omitempty" required:"false"`
+	Action           string          `url:"action,omitempty" required:"false"`
+	Cursor           string          `url:"cursor,omitempty" required:"false"`
+	SortBy           json.RawMessage `url:"sort_by,omitempty" required:"false"`
+	Filter           json.RawMessage `url:"filter,omitempty" required:"false"`
+	FilterGt         json.RawMessage `url:"filter_gt,omitempty" required:"false"`
+	FilterGteq       json.RawMessage `url:"filter_gteq,omitempty" required:"false"`
+	FilterLike       json.RawMessage `url:"filter_like,omitempty" required:"false"`
+	FilterLt         json.RawMessage `url:"filter_lt,omitempty" required:"false"`
+	FilterLteq       json.RawMessage `url:"filter_lteq,omitempty" required:"false"`
+	GroupId          int64           `url:"group_id,omitempty" required:"false"`
+	Path             string          `url:"path,omitempty" required:"false"`
+	IncludeAncestors *bool           `url:"include_ancestors,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type NotificationFindParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 type NotificationCreateParams struct {
-	UserId            int64  `url:"user_id,omitempty"`
-	NotifyOnCopy      *bool  `url:"notify_on_copy,omitempty"`
-	NotifyUserActions *bool  `url:"notify_user_actions,omitempty"`
-	SendInterval      string `url:"send_interval,omitempty"`
-	GroupId           int64  `url:"group_id,omitempty"`
-	Path              string `url:"path,omitempty"`
-	Username          string `url:"username,omitempty"`
+	UserId            int64  `url:"user_id,omitempty" required:"false"`
+	NotifyOnCopy      *bool  `url:"notify_on_copy,omitempty" required:"false"`
+	NotifyUserActions *bool  `url:"notify_user_actions,omitempty" required:"false"`
+	SendInterval      string `url:"send_interval,omitempty" required:"false"`
+	GroupId           int64  `url:"group_id,omitempty" required:"false"`
+	Path              string `url:"path,omitempty" required:"false"`
+	Username          string `url:"username,omitempty" required:"false"`
 }
 
 type NotificationUpdateParams struct {
-	Id                int64  `url:"-,omitempty"`
-	NotifyOnCopy      *bool  `url:"notify_on_copy,omitempty"`
-	NotifyUserActions *bool  `url:"notify_user_actions,omitempty"`
-	SendInterval      string `url:"send_interval,omitempty"`
+	Id                int64  `url:"-,omitempty" required:"true"`
+	NotifyOnCopy      *bool  `url:"notify_on_copy,omitempty" required:"false"`
+	NotifyUserActions *bool  `url:"notify_user_actions,omitempty" required:"false"`
+	SendInterval      string `url:"send_interval,omitempty" required:"false"`
 }
 
 type NotificationDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (n *Notification) UnmarshalJSON(data []byte) error {

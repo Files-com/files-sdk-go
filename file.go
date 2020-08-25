@@ -43,39 +43,39 @@ type EtagsParam struct {
 
 // Download file
 type FileDownloadParams struct {
-	Path              string    `url:"-,omitempty"`
-	Action            string    `url:"action,omitempty"`
-	PreviewSize       string    `url:"preview_size,omitempty"`
-	WithPreviews      *bool     `url:"with_previews,omitempty"`
-	WithPriorityColor *bool     `url:"with_priority_color,omitempty"`
+	Path              string    `url:"-,omitempty" required:"true"`
+	Action            string    `url:"action,omitempty" required:"false"`
+	PreviewSize       string    `url:"preview_size,omitempty" required:"false"`
+	WithPreviews      *bool     `url:"with_previews,omitempty" required:"false"`
+	WithPriorityColor *bool     `url:"with_priority_color,omitempty" required:"false"`
 	Writer            io.Writer ``
 }
 
 type FileCreateParams struct {
-	Path          string       `url:"-,omitempty"`
-	Action        string       `url:"action,omitempty"`
-	EtagsParam    []EtagsParam `url:"etags,omitempty"`
-	Length        int          `url:"length,omitempty"`
-	MkdirParents  *bool        `url:"mkdir_parents,omitempty"`
-	Part          int          `url:"part,omitempty"`
-	Parts         int          `url:"parts,omitempty"`
-	ProvidedMtime string       `url:"provided_mtime,omitempty"`
-	Ref           string       `url:"ref,omitempty"`
-	Restart       int          `url:"restart,omitempty"`
-	Size          int          `url:"size,omitempty"`
-	Structure     string       `url:"structure,omitempty"`
-	WithRename    *bool        `url:"with_rename,omitempty"`
+	Path          string       `url:"-,omitempty" required:"true"`
+	Action        string       `url:"action,omitempty" required:"false"`
+	EtagsParam    []EtagsParam `url:"etags,omitempty" required:"false"`
+	Length        int          `url:"length,omitempty" required:"false"`
+	MkdirParents  *bool        `url:"mkdir_parents,omitempty" required:"false"`
+	Part          int          `url:"part,omitempty" required:"false"`
+	Parts         int          `url:"parts,omitempty" required:"false"`
+	ProvidedMtime string       `url:"provided_mtime,omitempty" required:"false"`
+	Ref           string       `url:"ref,omitempty" required:"false"`
+	Restart       int          `url:"restart,omitempty" required:"false"`
+	Size          int          `url:"size,omitempty" required:"false"`
+	Structure     string       `url:"structure,omitempty" required:"false"`
+	WithRename    *bool        `url:"with_rename,omitempty" required:"false"`
 }
 
 type FileUpdateParams struct {
-	Path          string    `url:"-,omitempty"`
-	ProvidedMtime time.Time `url:"provided_mtime,omitempty"`
-	PriorityColor string    `url:"priority_color,omitempty"`
+	Path          string    `url:"-,omitempty" required:"true"`
+	ProvidedMtime time.Time `url:"provided_mtime,omitempty" required:"false"`
+	PriorityColor string    `url:"priority_color,omitempty" required:"false"`
 }
 
 type FileDeleteParams struct {
-	Path      string `url:"-,omitempty"`
-	Recursive *bool  `url:"recursive,omitempty"`
+	Path      string `url:"-,omitempty" required:"true"`
+	Recursive *bool  `url:"recursive,omitempty" required:"false"`
 }
 
 func (f *File) UnmarshalJSON(data []byte) error {

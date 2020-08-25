@@ -18,42 +18,42 @@ type Group struct {
 type GroupCollection []Group
 
 type GroupListParams struct {
-	Page       int             `url:"page,omitempty"`
-	PerPage    int             `url:"per_page,omitempty"`
-	Action     string          `url:"action,omitempty"`
-	Cursor     string          `url:"cursor,omitempty"`
-	SortBy     json.RawMessage `url:"sort_by,omitempty"`
-	Filter     json.RawMessage `url:"filter,omitempty"`
-	FilterGt   json.RawMessage `url:"filter_gt,omitempty"`
-	FilterGteq json.RawMessage `url:"filter_gteq,omitempty"`
-	FilterLike json.RawMessage `url:"filter_like,omitempty"`
-	FilterLt   json.RawMessage `url:"filter_lt,omitempty"`
-	FilterLteq json.RawMessage `url:"filter_lteq,omitempty"`
-	Ids        string          `url:"ids,omitempty"`
+	Page       int             `url:"page,omitempty" required:"false"`
+	PerPage    int             `url:"per_page,omitempty" required:"false"`
+	Action     string          `url:"action,omitempty" required:"false"`
+	Cursor     string          `url:"cursor,omitempty" required:"false"`
+	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
+	Filter     json.RawMessage `url:"filter,omitempty" required:"false"`
+	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false"`
+	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false"`
+	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false"`
+	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false"`
+	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false"`
+	Ids        string          `url:"ids,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type GroupFindParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 type GroupCreateParams struct {
-	Name     string `url:"name,omitempty"`
-	Notes    string `url:"notes,omitempty"`
-	UserIds  string `url:"user_ids,omitempty"`
-	AdminIds string `url:"admin_ids,omitempty"`
+	Name     string `url:"name,omitempty" required:"false"`
+	Notes    string `url:"notes,omitempty" required:"false"`
+	UserIds  string `url:"user_ids,omitempty" required:"false"`
+	AdminIds string `url:"admin_ids,omitempty" required:"false"`
 }
 
 type GroupUpdateParams struct {
-	Id       int64  `url:"-,omitempty"`
-	Name     string `url:"name,omitempty"`
-	Notes    string `url:"notes,omitempty"`
-	UserIds  string `url:"user_ids,omitempty"`
-	AdminIds string `url:"admin_ids,omitempty"`
+	Id       int64  `url:"-,omitempty" required:"true"`
+	Name     string `url:"name,omitempty" required:"false"`
+	Notes    string `url:"notes,omitempty" required:"false"`
+	UserIds  string `url:"user_ids,omitempty" required:"false"`
+	AdminIds string `url:"admin_ids,omitempty" required:"false"`
 }
 
 type GroupDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (g *Group) UnmarshalJSON(data []byte) error {

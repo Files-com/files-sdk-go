@@ -14,13 +14,13 @@ type FileCommentReaction struct {
 type FileCommentReactionCollection []FileCommentReaction
 
 type FileCommentReactionCreateParams struct {
-	UserId        int64  `url:"user_id,omitempty"`
-	FileCommentId int64  `url:"file_comment_id,omitempty"`
-	Emoji         string `url:"emoji,omitempty"`
+	UserId        int64  `url:"user_id,omitempty" required:"false"`
+	FileCommentId int64  `url:"file_comment_id,omitempty" required:"true"`
+	Emoji         string `url:"emoji,omitempty" required:"true"`
 }
 
 type FileCommentReactionDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (f *FileCommentReaction) UnmarshalJSON(data []byte) error {

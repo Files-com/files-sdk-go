@@ -31,63 +31,63 @@ type Bundle struct {
 type BundleCollection []Bundle
 
 type BundleListParams struct {
-	UserId     int64           `url:"user_id,omitempty"`
-	Page       int             `url:"page,omitempty"`
-	PerPage    int             `url:"per_page,omitempty"`
-	Action     string          `url:"action,omitempty"`
-	Cursor     string          `url:"cursor,omitempty"`
-	SortBy     json.RawMessage `url:"sort_by,omitempty"`
-	Filter     json.RawMessage `url:"filter,omitempty"`
-	FilterGt   json.RawMessage `url:"filter_gt,omitempty"`
-	FilterGteq json.RawMessage `url:"filter_gteq,omitempty"`
-	FilterLike json.RawMessage `url:"filter_like,omitempty"`
-	FilterLt   json.RawMessage `url:"filter_lt,omitempty"`
-	FilterLteq json.RawMessage `url:"filter_lteq,omitempty"`
+	UserId     int64           `url:"user_id,omitempty" required:"false"`
+	Page       int             `url:"page,omitempty" required:"false"`
+	PerPage    int             `url:"per_page,omitempty" required:"false"`
+	Action     string          `url:"action,omitempty" required:"false"`
+	Cursor     string          `url:"cursor,omitempty" required:"false"`
+	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
+	Filter     json.RawMessage `url:"filter,omitempty" required:"false"`
+	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false"`
+	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false"`
+	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false"`
+	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false"`
+	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type BundleFindParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 type BundleCreateParams struct {
-	UserId                int64     `url:"user_id,omitempty"`
-	Paths                 []string  `url:"paths,omitempty"`
-	Password              string    `url:"password,omitempty"`
-	ExpiresAt             time.Time `url:"expires_at,omitempty"`
-	MaxUses               int       `url:"max_uses,omitempty"`
-	Description           string    `url:"description,omitempty"`
-	Note                  string    `url:"note,omitempty"`
-	Code                  string    `url:"code,omitempty"`
-	RequireRegistration   *bool     `url:"require_registration,omitempty"`
-	ClickwrapId           int64     `url:"clickwrap_id,omitempty"`
-	InboxId               int64     `url:"inbox_id,omitempty"`
-	RequireShareRecipient *bool     `url:"require_share_recipient,omitempty"`
+	UserId                int64     `url:"user_id,omitempty" required:"false"`
+	Paths                 []string  `url:"paths,omitempty" required:"true"`
+	Password              string    `url:"password,omitempty" required:"false"`
+	ExpiresAt             time.Time `url:"expires_at,omitempty" required:"false"`
+	MaxUses               int       `url:"max_uses,omitempty" required:"false"`
+	Description           string    `url:"description,omitempty" required:"false"`
+	Note                  string    `url:"note,omitempty" required:"false"`
+	Code                  string    `url:"code,omitempty" required:"false"`
+	RequireRegistration   *bool     `url:"require_registration,omitempty" required:"false"`
+	ClickwrapId           int64     `url:"clickwrap_id,omitempty" required:"false"`
+	InboxId               int64     `url:"inbox_id,omitempty" required:"false"`
+	RequireShareRecipient *bool     `url:"require_share_recipient,omitempty" required:"false"`
 }
 
 // Send email(s) with a link to bundle
 type BundleShareParams struct {
-	Id   int64    `url:"-,omitempty"`
-	To   []string `url:"to,omitempty"`
-	Note string   `url:"note,omitempty"`
+	Id   int64    `url:"-,omitempty" required:"true"`
+	To   []string `url:"to,omitempty" required:"true"`
+	Note string   `url:"note,omitempty" required:"false"`
 }
 
 type BundleUpdateParams struct {
-	Id                    int64     `url:"-,omitempty"`
-	Password              string    `url:"password,omitempty"`
-	ClickwrapId           int64     `url:"clickwrap_id,omitempty"`
-	Code                  string    `url:"code,omitempty"`
-	Description           string    `url:"description,omitempty"`
-	ExpiresAt             time.Time `url:"expires_at,omitempty"`
-	InboxId               int64     `url:"inbox_id,omitempty"`
-	MaxUses               int       `url:"max_uses,omitempty"`
-	Note                  string    `url:"note,omitempty"`
-	RequireRegistration   *bool     `url:"require_registration,omitempty"`
-	RequireShareRecipient *bool     `url:"require_share_recipient,omitempty"`
+	Id                    int64     `url:"-,omitempty" required:"true"`
+	Password              string    `url:"password,omitempty" required:"false"`
+	ClickwrapId           int64     `url:"clickwrap_id,omitempty" required:"false"`
+	Code                  string    `url:"code,omitempty" required:"false"`
+	Description           string    `url:"description,omitempty" required:"false"`
+	ExpiresAt             time.Time `url:"expires_at,omitempty" required:"false"`
+	InboxId               int64     `url:"inbox_id,omitempty" required:"false"`
+	MaxUses               int       `url:"max_uses,omitempty" required:"false"`
+	Note                  string    `url:"note,omitempty" required:"false"`
+	RequireRegistration   *bool     `url:"require_registration,omitempty" required:"false"`
+	RequireShareRecipient *bool     `url:"require_share_recipient,omitempty" required:"false"`
 }
 
 type BundleDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (b *Bundle) UnmarshalJSON(data []byte) error {

@@ -18,36 +18,36 @@ type Clickwrap struct {
 type ClickwrapCollection []Clickwrap
 
 type ClickwrapListParams struct {
-	Page    int    `url:"page,omitempty"`
-	PerPage int    `url:"per_page,omitempty"`
-	Action  string `url:"action,omitempty"`
-	Cursor  string `url:"cursor,omitempty"`
+	Page    int    `url:"page,omitempty" required:"false"`
+	PerPage int    `url:"per_page,omitempty" required:"false"`
+	Action  string `url:"action,omitempty" required:"false"`
+	Cursor  string `url:"cursor,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type ClickwrapFindParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 type ClickwrapCreateParams struct {
-	Name           string `url:"name,omitempty"`
-	Body           string `url:"body,omitempty"`
-	UseWithBundles string `url:"use_with_bundles,omitempty"`
-	UseWithInboxes string `url:"use_with_inboxes,omitempty"`
-	UseWithUsers   string `url:"use_with_users,omitempty"`
+	Name           string `url:"name,omitempty" required:"false"`
+	Body           string `url:"body,omitempty" required:"false"`
+	UseWithBundles string `url:"use_with_bundles,omitempty" required:"false"`
+	UseWithInboxes string `url:"use_with_inboxes,omitempty" required:"false"`
+	UseWithUsers   string `url:"use_with_users,omitempty" required:"false"`
 }
 
 type ClickwrapUpdateParams struct {
-	Id             int64  `url:"-,omitempty"`
-	Name           string `url:"name,omitempty"`
-	Body           string `url:"body,omitempty"`
-	UseWithBundles string `url:"use_with_bundles,omitempty"`
-	UseWithInboxes string `url:"use_with_inboxes,omitempty"`
-	UseWithUsers   string `url:"use_with_users,omitempty"`
+	Id             int64  `url:"-,omitempty" required:"true"`
+	Name           string `url:"name,omitempty" required:"false"`
+	Body           string `url:"body,omitempty" required:"false"`
+	UseWithBundles string `url:"use_with_bundles,omitempty" required:"false"`
+	UseWithInboxes string `url:"use_with_inboxes,omitempty" required:"false"`
+	UseWithUsers   string `url:"use_with_users,omitempty" required:"false"`
 }
 
 type ClickwrapDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (c *Clickwrap) UnmarshalJSON(data []byte) error {

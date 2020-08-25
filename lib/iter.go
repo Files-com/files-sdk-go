@@ -5,9 +5,9 @@ import (
 )
 
 type ListParams struct {
-	Page     int    `json:"page,omitempty" url:"page,omitempty"`
-	PerPage  int    `json:"per_page,omitempty" url:"per_page,omitempty"`
-	Cursor   string `json:"cursor,omitempty" url:"cursor,omitempty"`
+	Page     int    `json:"page,omitempty" url:"page,omitempty" required:"false"`
+	PerPage  int    `json:"per_page,omitempty" url:"per_page,omitempty" required:"false"`
+	Cursor   string `json:"cursor,omitempty" url:"cursor,omitempty" required:"false"`
 	MaxPages int    `json:"-" url:"-"`
 }
 
@@ -63,9 +63,12 @@ func (i *Iter) GetParams() *ListParams {
 	return i.ListParams.GetListParams()
 }
 
-func (i *Iter) ExportParams() url.Values {
-	paramValues := ExportParams(i.GetParams())
-	listParamValues := ExportParams(i.ListParams)
+func (i *Iter) ExportParams() (url.Values, error) {
+	paramValues, err := ExportParams(i.GetParams())
+	if err != nil {
+		return paramValues, err
+	}
+	listParamValues, _ := ExportParams(i.ListParams)
 
 	for key, value := range paramValues {
 		listParamValues.Set(key, value[0])
@@ -75,7 +78,7 @@ func (i *Iter) ExportParams() url.Values {
 		listParamValues.Del("page")
 	}
 
-	return listParamValues
+	return listParamValues, nil
 }
 
 func (i *Iter) GetPage() bool {

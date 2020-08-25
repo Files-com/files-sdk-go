@@ -52,96 +52,96 @@ type RemoteServer struct {
 type RemoteServerCollection []RemoteServer
 
 type RemoteServerListParams struct {
-	Page    int    `url:"page,omitempty"`
-	PerPage int    `url:"per_page,omitempty"`
-	Action  string `url:"action,omitempty"`
-	Cursor  string `url:"cursor,omitempty"`
+	Page    int    `url:"page,omitempty" required:"false"`
+	PerPage int    `url:"per_page,omitempty" required:"false"`
+	Action  string `url:"action,omitempty" required:"false"`
+	Cursor  string `url:"cursor,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type RemoteServerFindParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 type RemoteServerCreateParams struct {
-	AwsAccessKey                      string `url:"aws_access_key,omitempty"`
-	AwsSecretKey                      string `url:"aws_secret_key,omitempty"`
-	Password                          string `url:"password,omitempty"`
-	PrivateKey                        string `url:"private_key,omitempty"`
-	GoogleCloudStorageCredentialsJson string `url:"google_cloud_storage_credentials_json,omitempty"`
-	WasabiAccessKey                   string `url:"wasabi_access_key,omitempty"`
-	WasabiSecretKey                   string `url:"wasabi_secret_key,omitempty"`
-	BackblazeB2KeyId                  string `url:"backblaze_b2_key_id,omitempty"`
-	BackblazeB2ApplicationKey         string `url:"backblaze_b2_application_key,omitempty"`
-	RackspaceApiKey                   string `url:"rackspace_api_key,omitempty"`
-	ResetAuthentication               *bool  `url:"reset_authentication,omitempty"`
-	AzureBlobStorageAccessKey         string `url:"azure_blob_storage_access_key,omitempty"`
-	Hostname                          string `url:"hostname,omitempty"`
-	Name                              string `url:"name,omitempty"`
-	MaxConnections                    int    `url:"max_connections,omitempty"`
-	Port                              int    `url:"port,omitempty"`
-	S3Bucket                          string `url:"s3_bucket,omitempty"`
-	S3Region                          string `url:"s3_region,omitempty"`
-	ServerCertificate                 string `url:"server_certificate,omitempty"`
-	ServerHostKey                     string `url:"server_host_key,omitempty"`
-	ServerType                        string `url:"server_type,omitempty"`
-	Ssl                               string `url:"ssl,omitempty"`
-	Username                          string `url:"username,omitempty"`
-	GoogleCloudStorageBucket          string `url:"google_cloud_storage_bucket,omitempty"`
-	GoogleCloudStorageProjectId       string `url:"google_cloud_storage_project_id,omitempty"`
-	BackblazeB2Bucket                 string `url:"backblaze_b2_bucket,omitempty"`
-	BackblazeB2S3Endpoint             string `url:"backblaze_b2_s3_endpoint,omitempty"`
-	WasabiBucket                      string `url:"wasabi_bucket,omitempty"`
-	WasabiRegion                      string `url:"wasabi_region,omitempty"`
-	RackspaceUsername                 string `url:"rackspace_username,omitempty"`
-	RackspaceRegion                   string `url:"rackspace_region,omitempty"`
-	RackspaceContainer                string `url:"rackspace_container,omitempty"`
-	OneDriveAccountType               string `url:"one_drive_account_type,omitempty"`
-	AzureBlobStorageAccount           string `url:"azure_blob_storage_account,omitempty"`
-	AzureBlobStorageContainer         string `url:"azure_blob_storage_container,omitempty"`
+	AwsAccessKey                      string `url:"aws_access_key,omitempty" required:"false"`
+	AwsSecretKey                      string `url:"aws_secret_key,omitempty" required:"false"`
+	Password                          string `url:"password,omitempty" required:"false"`
+	PrivateKey                        string `url:"private_key,omitempty" required:"false"`
+	GoogleCloudStorageCredentialsJson string `url:"google_cloud_storage_credentials_json,omitempty" required:"false"`
+	WasabiAccessKey                   string `url:"wasabi_access_key,omitempty" required:"false"`
+	WasabiSecretKey                   string `url:"wasabi_secret_key,omitempty" required:"false"`
+	BackblazeB2KeyId                  string `url:"backblaze_b2_key_id,omitempty" required:"false"`
+	BackblazeB2ApplicationKey         string `url:"backblaze_b2_application_key,omitempty" required:"false"`
+	RackspaceApiKey                   string `url:"rackspace_api_key,omitempty" required:"false"`
+	ResetAuthentication               *bool  `url:"reset_authentication,omitempty" required:"false"`
+	AzureBlobStorageAccessKey         string `url:"azure_blob_storage_access_key,omitempty" required:"false"`
+	Hostname                          string `url:"hostname,omitempty" required:"false"`
+	Name                              string `url:"name,omitempty" required:"false"`
+	MaxConnections                    int    `url:"max_connections,omitempty" required:"false"`
+	Port                              int    `url:"port,omitempty" required:"false"`
+	S3Bucket                          string `url:"s3_bucket,omitempty" required:"false"`
+	S3Region                          string `url:"s3_region,omitempty" required:"false"`
+	ServerCertificate                 string `url:"server_certificate,omitempty" required:"false"`
+	ServerHostKey                     string `url:"server_host_key,omitempty" required:"false"`
+	ServerType                        string `url:"server_type,omitempty" required:"false"`
+	Ssl                               string `url:"ssl,omitempty" required:"false"`
+	Username                          string `url:"username,omitempty" required:"false"`
+	GoogleCloudStorageBucket          string `url:"google_cloud_storage_bucket,omitempty" required:"false"`
+	GoogleCloudStorageProjectId       string `url:"google_cloud_storage_project_id,omitempty" required:"false"`
+	BackblazeB2Bucket                 string `url:"backblaze_b2_bucket,omitempty" required:"false"`
+	BackblazeB2S3Endpoint             string `url:"backblaze_b2_s3_endpoint,omitempty" required:"false"`
+	WasabiBucket                      string `url:"wasabi_bucket,omitempty" required:"false"`
+	WasabiRegion                      string `url:"wasabi_region,omitempty" required:"false"`
+	RackspaceUsername                 string `url:"rackspace_username,omitempty" required:"false"`
+	RackspaceRegion                   string `url:"rackspace_region,omitempty" required:"false"`
+	RackspaceContainer                string `url:"rackspace_container,omitempty" required:"false"`
+	OneDriveAccountType               string `url:"one_drive_account_type,omitempty" required:"false"`
+	AzureBlobStorageAccount           string `url:"azure_blob_storage_account,omitempty" required:"false"`
+	AzureBlobStorageContainer         string `url:"azure_blob_storage_container,omitempty" required:"false"`
 }
 
 type RemoteServerUpdateParams struct {
-	Id                                int64  `url:"-,omitempty"`
-	AwsAccessKey                      string `url:"aws_access_key,omitempty"`
-	AwsSecretKey                      string `url:"aws_secret_key,omitempty"`
-	Password                          string `url:"password,omitempty"`
-	PrivateKey                        string `url:"private_key,omitempty"`
-	GoogleCloudStorageCredentialsJson string `url:"google_cloud_storage_credentials_json,omitempty"`
-	WasabiAccessKey                   string `url:"wasabi_access_key,omitempty"`
-	WasabiSecretKey                   string `url:"wasabi_secret_key,omitempty"`
-	BackblazeB2KeyId                  string `url:"backblaze_b2_key_id,omitempty"`
-	BackblazeB2ApplicationKey         string `url:"backblaze_b2_application_key,omitempty"`
-	RackspaceApiKey                   string `url:"rackspace_api_key,omitempty"`
-	ResetAuthentication               *bool  `url:"reset_authentication,omitempty"`
-	AzureBlobStorageAccessKey         string `url:"azure_blob_storage_access_key,omitempty"`
-	Hostname                          string `url:"hostname,omitempty"`
-	Name                              string `url:"name,omitempty"`
-	MaxConnections                    int    `url:"max_connections,omitempty"`
-	Port                              int    `url:"port,omitempty"`
-	S3Bucket                          string `url:"s3_bucket,omitempty"`
-	S3Region                          string `url:"s3_region,omitempty"`
-	ServerCertificate                 string `url:"server_certificate,omitempty"`
-	ServerHostKey                     string `url:"server_host_key,omitempty"`
-	ServerType                        string `url:"server_type,omitempty"`
-	Ssl                               string `url:"ssl,omitempty"`
-	Username                          string `url:"username,omitempty"`
-	GoogleCloudStorageBucket          string `url:"google_cloud_storage_bucket,omitempty"`
-	GoogleCloudStorageProjectId       string `url:"google_cloud_storage_project_id,omitempty"`
-	BackblazeB2Bucket                 string `url:"backblaze_b2_bucket,omitempty"`
-	BackblazeB2S3Endpoint             string `url:"backblaze_b2_s3_endpoint,omitempty"`
-	WasabiBucket                      string `url:"wasabi_bucket,omitempty"`
-	WasabiRegion                      string `url:"wasabi_region,omitempty"`
-	RackspaceUsername                 string `url:"rackspace_username,omitempty"`
-	RackspaceRegion                   string `url:"rackspace_region,omitempty"`
-	RackspaceContainer                string `url:"rackspace_container,omitempty"`
-	OneDriveAccountType               string `url:"one_drive_account_type,omitempty"`
-	AzureBlobStorageAccount           string `url:"azure_blob_storage_account,omitempty"`
-	AzureBlobStorageContainer         string `url:"azure_blob_storage_container,omitempty"`
+	Id                                int64  `url:"-,omitempty" required:"true"`
+	AwsAccessKey                      string `url:"aws_access_key,omitempty" required:"false"`
+	AwsSecretKey                      string `url:"aws_secret_key,omitempty" required:"false"`
+	Password                          string `url:"password,omitempty" required:"false"`
+	PrivateKey                        string `url:"private_key,omitempty" required:"false"`
+	GoogleCloudStorageCredentialsJson string `url:"google_cloud_storage_credentials_json,omitempty" required:"false"`
+	WasabiAccessKey                   string `url:"wasabi_access_key,omitempty" required:"false"`
+	WasabiSecretKey                   string `url:"wasabi_secret_key,omitempty" required:"false"`
+	BackblazeB2KeyId                  string `url:"backblaze_b2_key_id,omitempty" required:"false"`
+	BackblazeB2ApplicationKey         string `url:"backblaze_b2_application_key,omitempty" required:"false"`
+	RackspaceApiKey                   string `url:"rackspace_api_key,omitempty" required:"false"`
+	ResetAuthentication               *bool  `url:"reset_authentication,omitempty" required:"false"`
+	AzureBlobStorageAccessKey         string `url:"azure_blob_storage_access_key,omitempty" required:"false"`
+	Hostname                          string `url:"hostname,omitempty" required:"false"`
+	Name                              string `url:"name,omitempty" required:"false"`
+	MaxConnections                    int    `url:"max_connections,omitempty" required:"false"`
+	Port                              int    `url:"port,omitempty" required:"false"`
+	S3Bucket                          string `url:"s3_bucket,omitempty" required:"false"`
+	S3Region                          string `url:"s3_region,omitempty" required:"false"`
+	ServerCertificate                 string `url:"server_certificate,omitempty" required:"false"`
+	ServerHostKey                     string `url:"server_host_key,omitempty" required:"false"`
+	ServerType                        string `url:"server_type,omitempty" required:"false"`
+	Ssl                               string `url:"ssl,omitempty" required:"false"`
+	Username                          string `url:"username,omitempty" required:"false"`
+	GoogleCloudStorageBucket          string `url:"google_cloud_storage_bucket,omitempty" required:"false"`
+	GoogleCloudStorageProjectId       string `url:"google_cloud_storage_project_id,omitempty" required:"false"`
+	BackblazeB2Bucket                 string `url:"backblaze_b2_bucket,omitempty" required:"false"`
+	BackblazeB2S3Endpoint             string `url:"backblaze_b2_s3_endpoint,omitempty" required:"false"`
+	WasabiBucket                      string `url:"wasabi_bucket,omitempty" required:"false"`
+	WasabiRegion                      string `url:"wasabi_region,omitempty" required:"false"`
+	RackspaceUsername                 string `url:"rackspace_username,omitempty" required:"false"`
+	RackspaceRegion                   string `url:"rackspace_region,omitempty" required:"false"`
+	RackspaceContainer                string `url:"rackspace_container,omitempty" required:"false"`
+	OneDriveAccountType               string `url:"one_drive_account_type,omitempty" required:"false"`
+	AzureBlobStorageAccount           string `url:"azure_blob_storage_account,omitempty" required:"false"`
+	AzureBlobStorageContainer         string `url:"azure_blob_storage_container,omitempty" required:"false"`
 }
 
 type RemoteServerDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (r *RemoteServer) UnmarshalJSON(data []byte) error {

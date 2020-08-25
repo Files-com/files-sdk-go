@@ -25,52 +25,52 @@ type Automation struct {
 type AutomationCollection []Automation
 
 type AutomationListParams struct {
-	Page       int             `url:"page,omitempty"`
-	PerPage    int             `url:"per_page,omitempty"`
-	Action     string          `url:"action,omitempty"`
-	Cursor     string          `url:"cursor,omitempty"`
-	SortBy     json.RawMessage `url:"sort_by,omitempty"`
-	Filter     json.RawMessage `url:"filter,omitempty"`
-	FilterGt   json.RawMessage `url:"filter_gt,omitempty"`
-	FilterGteq json.RawMessage `url:"filter_gteq,omitempty"`
-	FilterLike json.RawMessage `url:"filter_like,omitempty"`
-	FilterLt   json.RawMessage `url:"filter_lt,omitempty"`
-	FilterLteq json.RawMessage `url:"filter_lteq,omitempty"`
-	Automation string          `url:"automation,omitempty"`
+	Page       int             `url:"page,omitempty" required:"false"`
+	PerPage    int             `url:"per_page,omitempty" required:"false"`
+	Action     string          `url:"action,omitempty" required:"false"`
+	Cursor     string          `url:"cursor,omitempty" required:"false"`
+	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
+	Filter     json.RawMessage `url:"filter,omitempty" required:"false"`
+	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false"`
+	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false"`
+	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false"`
+	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false"`
+	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false"`
+	Automation string          `url:"automation,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type AutomationFindParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 type AutomationCreateParams struct {
-	Automation             string `url:"automation,omitempty"`
-	Source                 string `url:"source,omitempty"`
-	Destination            string `url:"destination,omitempty"`
-	DestinationReplaceFrom string `url:"destination_replace_from,omitempty"`
-	DestinationReplaceTo   string `url:"destination_replace_to,omitempty"`
-	Interval               string `url:"interval,omitempty"`
-	Path                   string `url:"path,omitempty"`
-	UserIds                string `url:"user_ids,omitempty"`
-	GroupIds               string `url:"group_ids,omitempty"`
+	Automation             string `url:"automation,omitempty" required:"true"`
+	Source                 string `url:"source,omitempty" required:"false"`
+	Destination            string `url:"destination,omitempty" required:"false"`
+	DestinationReplaceFrom string `url:"destination_replace_from,omitempty" required:"false"`
+	DestinationReplaceTo   string `url:"destination_replace_to,omitempty" required:"false"`
+	Interval               string `url:"interval,omitempty" required:"false"`
+	Path                   string `url:"path,omitempty" required:"false"`
+	UserIds                string `url:"user_ids,omitempty" required:"false"`
+	GroupIds               string `url:"group_ids,omitempty" required:"false"`
 }
 
 type AutomationUpdateParams struct {
-	Id                     int64  `url:"-,omitempty"`
-	Automation             string `url:"automation,omitempty"`
-	Source                 string `url:"source,omitempty"`
-	Destination            string `url:"destination,omitempty"`
-	DestinationReplaceFrom string `url:"destination_replace_from,omitempty"`
-	DestinationReplaceTo   string `url:"destination_replace_to,omitempty"`
-	Interval               string `url:"interval,omitempty"`
-	Path                   string `url:"path,omitempty"`
-	UserIds                string `url:"user_ids,omitempty"`
-	GroupIds               string `url:"group_ids,omitempty"`
+	Id                     int64  `url:"-,omitempty" required:"true"`
+	Automation             string `url:"automation,omitempty" required:"true"`
+	Source                 string `url:"source,omitempty" required:"false"`
+	Destination            string `url:"destination,omitempty" required:"false"`
+	DestinationReplaceFrom string `url:"destination_replace_from,omitempty" required:"false"`
+	DestinationReplaceTo   string `url:"destination_replace_to,omitempty" required:"false"`
+	Interval               string `url:"interval,omitempty" required:"false"`
+	Path                   string `url:"path,omitempty" required:"false"`
+	UserIds                string `url:"user_ids,omitempty" required:"false"`
+	GroupIds               string `url:"group_ids,omitempty" required:"false"`
 }
 
 type AutomationDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (a *Automation) UnmarshalJSON(data []byte) error {

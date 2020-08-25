@@ -20,7 +20,11 @@ func (i *Iter) History() files_sdk.History {
 func (c *Client) ListForFile(params files_sdk.HistoryListForFileParams) (files_sdk.ActionCollection, error) {
 	actionCollection := files_sdk.ActionCollection{}
 	path := "/history/files/" + lib.QueryEscape(params.Path) + ""
-	data, res, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return actionCollection, err
+	}
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
 	if err != nil {
 		return actionCollection, err
 	}
@@ -41,7 +45,11 @@ func ListForFile(params files_sdk.HistoryListForFileParams) (files_sdk.ActionCol
 func (c *Client) ListForFolder(params files_sdk.HistoryListForFolderParams) (files_sdk.ActionCollection, error) {
 	actionCollection := files_sdk.ActionCollection{}
 	path := "/history/folders/" + lib.QueryEscape(params.Path) + ""
-	data, res, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return actionCollection, err
+	}
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
 	if err != nil {
 		return actionCollection, err
 	}
@@ -62,7 +70,11 @@ func ListForFolder(params files_sdk.HistoryListForFolderParams) (files_sdk.Actio
 func (c *Client) ListForUser(params files_sdk.HistoryListForUserParams) (files_sdk.ActionCollection, error) {
 	actionCollection := files_sdk.ActionCollection{}
 	path := "/history/users/{user_id}"
-	data, res, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return actionCollection, err
+	}
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
 	if err != nil {
 		return actionCollection, err
 	}
@@ -83,7 +95,11 @@ func ListForUser(params files_sdk.HistoryListForUserParams) (files_sdk.ActionCol
 func (c *Client) ListLogins(params files_sdk.HistoryListLoginsParams) (files_sdk.ActionCollection, error) {
 	actionCollection := files_sdk.ActionCollection{}
 	path := "/history/login"
-	data, res, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return actionCollection, err
+	}
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
 	if err != nil {
 		return actionCollection, err
 	}
@@ -101,13 +117,17 @@ func ListLogins(params files_sdk.HistoryListLoginsParams) (files_sdk.ActionColle
 	return (&Client{}).ListLogins(params)
 }
 
-func (c *Client) List(params files_sdk.HistoryListParams) *Iter {
+func (c *Client) List(params files_sdk.HistoryListParams) (*Iter, error) {
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	i := &Iter{Iter: &lib.Iter{}}
 	path := "/history"
-
+	i.ListParams = &params
+	exportParams, err := i.ExportParams()
+	if err != nil {
+		return i, err
+	}
 	i.Query = func() (*[]interface{}, string, error) {
-		data, res, err := files_sdk.Call("GET", c.Config, path, i.ExportParams())
+		data, res, err := files_sdk.Call("GET", c.Config, path, exportParams)
 		defaultValue := make([]interface{}, 0)
 		if err != nil {
 			return &defaultValue, "", err
@@ -124,10 +144,9 @@ func (c *Client) List(params files_sdk.HistoryListParams) *Iter {
 		cursor := res.Header.Get("X-Files-Cursor")
 		return &ret, cursor, nil
 	}
-	i.ListParams = &params
-	return i
+	return i, nil
 }
 
-func List(params files_sdk.HistoryListParams) *Iter {
+func List(params files_sdk.HistoryListParams) (*Iter, error) {
 	return (&Client{}).List(params)
 }

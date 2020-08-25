@@ -32,15 +32,15 @@ type Session struct {
 type SessionCollection []Session
 
 type SessionCreateParams struct {
-	Username         string `url:"username,omitempty"`
-	Password         string `url:"password,omitempty"`
-	Otp              string `url:"otp,omitempty"`
-	PartialSessionId string `url:"partial_session_id,omitempty"`
+	Username         string `url:"username,omitempty" required:"false"`
+	Password         string `url:"password,omitempty" required:"false"`
+	Otp              string `url:"otp,omitempty" required:"false"`
+	PartialSessionId string `url:"partial_session_id,omitempty" required:"false"`
 }
 
 type SessionDeleteParams struct {
-	Format  string          `url:"format,omitempty"`
-	Session json.RawMessage `url:"session,omitempty"`
+	Format  string          `url:"format,omitempty" required:"false"`
+	Session json.RawMessage `url:"session,omitempty" required:"false"`
 }
 
 func (s *Session) UnmarshalJSON(data []byte) error {

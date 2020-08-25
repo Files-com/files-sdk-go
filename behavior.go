@@ -19,69 +19,69 @@ type Behavior struct {
 type BehaviorCollection []Behavior
 
 type BehaviorListParams struct {
-	Page       int             `url:"page,omitempty"`
-	PerPage    int             `url:"per_page,omitempty"`
-	Action     string          `url:"action,omitempty"`
-	Cursor     string          `url:"cursor,omitempty"`
-	SortBy     json.RawMessage `url:"sort_by,omitempty"`
-	Filter     json.RawMessage `url:"filter,omitempty"`
-	FilterGt   json.RawMessage `url:"filter_gt,omitempty"`
-	FilterGteq json.RawMessage `url:"filter_gteq,omitempty"`
-	FilterLike json.RawMessage `url:"filter_like,omitempty"`
-	FilterLt   json.RawMessage `url:"filter_lt,omitempty"`
-	FilterLteq json.RawMessage `url:"filter_lteq,omitempty"`
-	Behavior   string          `url:"behavior,omitempty"`
+	Page       int             `url:"page,omitempty" required:"false"`
+	PerPage    int             `url:"per_page,omitempty" required:"false"`
+	Action     string          `url:"action,omitempty" required:"false"`
+	Cursor     string          `url:"cursor,omitempty" required:"false"`
+	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
+	Filter     json.RawMessage `url:"filter,omitempty" required:"false"`
+	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false"`
+	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false"`
+	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false"`
+	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false"`
+	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false"`
+	Behavior   string          `url:"behavior,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type BehaviorFindParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 type BehaviorListForParams struct {
-	Page       int             `url:"page,omitempty"`
-	PerPage    int             `url:"per_page,omitempty"`
-	Action     string          `url:"action,omitempty"`
-	Cursor     string          `url:"cursor,omitempty"`
-	SortBy     json.RawMessage `url:"sort_by,omitempty"`
-	Filter     json.RawMessage `url:"filter,omitempty"`
-	FilterGt   json.RawMessage `url:"filter_gt,omitempty"`
-	FilterGteq json.RawMessage `url:"filter_gteq,omitempty"`
-	FilterLike json.RawMessage `url:"filter_like,omitempty"`
-	FilterLt   json.RawMessage `url:"filter_lt,omitempty"`
-	FilterLteq json.RawMessage `url:"filter_lteq,omitempty"`
-	Path       string          `url:"-,omitempty"`
-	Recursive  string          `url:"recursive,omitempty"`
-	Behavior   string          `url:"behavior,omitempty"`
+	Page       int             `url:"page,omitempty" required:"false"`
+	PerPage    int             `url:"per_page,omitempty" required:"false"`
+	Action     string          `url:"action,omitempty" required:"false"`
+	Cursor     string          `url:"cursor,omitempty" required:"false"`
+	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
+	Filter     json.RawMessage `url:"filter,omitempty" required:"false"`
+	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false"`
+	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false"`
+	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false"`
+	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false"`
+	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false"`
+	Path       string          `url:"-,omitempty" required:"true"`
+	Recursive  string          `url:"recursive,omitempty" required:"false"`
+	Behavior   string          `url:"behavior,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type BehaviorCreateParams struct {
-	Value          string    `url:"value,omitempty"`
-	AttachmentFile io.Writer `url:"attachment_file,omitempty"`
-	Path           string    `url:"path,omitempty"`
-	Behavior       string    `url:"behavior,omitempty"`
+	Value          string    `url:"value,omitempty" required:"false"`
+	AttachmentFile io.Writer `url:"attachment_file,omitempty" required:"false"`
+	Path           string    `url:"path,omitempty" required:"true"`
+	Behavior       string    `url:"behavior,omitempty" required:"true"`
 }
 
 type BehaviorWebhookTestParams struct {
-	Url      string          `url:"url,omitempty"`
-	Method   string          `url:"method,omitempty"`
-	Encoding string          `url:"encoding,omitempty"`
-	Headers  json.RawMessage `url:"headers,omitempty"`
-	Body     json.RawMessage `url:"body,omitempty"`
-	Action   string          `url:"action,omitempty"`
+	Url      string          `url:"url,omitempty" required:"true"`
+	Method   string          `url:"method,omitempty" required:"false"`
+	Encoding string          `url:"encoding,omitempty" required:"false"`
+	Headers  json.RawMessage `url:"headers,omitempty" required:"false"`
+	Body     json.RawMessage `url:"body,omitempty" required:"false"`
+	Action   string          `url:"action,omitempty" required:"false"`
 }
 
 type BehaviorUpdateParams struct {
-	Id             int64     `url:"-,omitempty"`
-	Value          string    `url:"value,omitempty"`
-	AttachmentFile io.Writer `url:"attachment_file,omitempty"`
-	Behavior       string    `url:"behavior,omitempty"`
-	Path           string    `url:"path,omitempty"`
+	Id             int64     `url:"-,omitempty" required:"true"`
+	Value          string    `url:"value,omitempty" required:"false"`
+	AttachmentFile io.Writer `url:"attachment_file,omitempty" required:"false"`
+	Behavior       string    `url:"behavior,omitempty" required:"false"`
+	Path           string    `url:"path,omitempty" required:"false"`
 }
 
 type BehaviorDeleteParams struct {
-	Id int64 `url:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (b *Behavior) UnmarshalJSON(data []byte) error {

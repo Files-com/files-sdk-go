@@ -116,7 +116,11 @@ func DownloadToFile(params files_sdk.FileDownloadParams, filePath string) (files
 func (c *Client) Download(params files_sdk.FileDownloadParams) (files_sdk.File, error) {
 	file := files_sdk.File{}
 	path := "/files/" + lib.QueryEscape(params.Path) + ""
-	data, _, err := files_sdk.Call("GET", c.Config, path, lib.ExportParams(params))
+	exportParams, err := lib.ExportParams(params)
+	if err != nil {
+		return file, err
+	}
+	data, _, err := files_sdk.Call("GET", c.Config, path, exportParams)
 	if err != nil {
 		return file, err
 	}
@@ -144,7 +148,11 @@ func Download(params files_sdk.FileDownloadParams) (files_sdk.File, error) {
 func (c *Client) Create(params files_sdk.FileCreateParams) (files_sdk.File, error) {
 	file := files_sdk.File{}
 	path := "/files/" + lib.QueryEscape(params.Path) + ""
-	data, res, err := files_sdk.Call("POST", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return file, err
+	}
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
 	if err != nil {
 		return file, err
 	}
@@ -165,7 +173,11 @@ func Create(params files_sdk.FileCreateParams) (files_sdk.File, error) {
 func (c *Client) Update(params files_sdk.FileUpdateParams) (files_sdk.File, error) {
 	file := files_sdk.File{}
 	path := "/files/" + lib.QueryEscape(params.Path) + ""
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return file, err
+	}
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParms)
 	if err != nil {
 		return file, err
 	}
@@ -186,7 +198,11 @@ func Update(params files_sdk.FileUpdateParams) (files_sdk.File, error) {
 func (c *Client) Delete(params files_sdk.FileDeleteParams) (files_sdk.File, error) {
 	file := files_sdk.File{}
 	path := "/files/" + lib.QueryEscape(params.Path) + ""
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, lib.ExportParams(params))
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return file, err
+	}
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
 	if err != nil {
 		return file, err
 	}
