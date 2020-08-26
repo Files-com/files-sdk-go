@@ -59,7 +59,7 @@ type FileCreateParams struct {
 	MkdirParents  *bool        `url:"mkdir_parents,omitempty" required:"false"`
 	Part          int          `url:"part,omitempty" required:"false"`
 	Parts         int          `url:"parts,omitempty" required:"false"`
-	ProvidedMtime string       `url:"provided_mtime,omitempty" required:"false"`
+	ProvidedMtime time.Time    `url:"provided_mtime,omitempty" required:"false"`
 	Ref           string       `url:"ref,omitempty" required:"false"`
 	Restart       int          `url:"restart,omitempty" required:"false"`
 	Size          int          `url:"size,omitempty" required:"false"`

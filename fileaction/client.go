@@ -59,27 +59,27 @@ func Move(params files_sdk.FileActionMoveParams) (files_sdk.FileAction, error) {
 	return (&Client{}).Move(params)
 }
 
-func (c *Client) BeginUpload(params files_sdk.FileActionBeginUploadParams) (files_sdk.FilePartUploadCollection, error) {
-	filePartUploadCollection := files_sdk.FilePartUploadCollection{}
+func (c *Client) BeginUpload(params files_sdk.FileActionBeginUploadParams) (files_sdk.FileUploadPartCollection, error) {
+	fileUploadPartCollection := files_sdk.FileUploadPartCollection{}
 	path := "/file_actions/begin_upload/" + lib.QueryEscape(params.Path) + ""
 	exportedParms, err := lib.ExportParams(params)
 	if err != nil {
-		return filePartUploadCollection, err
+		return fileUploadPartCollection, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
 	if err != nil {
-		return filePartUploadCollection, err
+		return fileUploadPartCollection, err
 	}
 	if res.StatusCode == 204 {
-		return filePartUploadCollection, nil
+		return fileUploadPartCollection, nil
 	}
-	if err := filePartUploadCollection.UnmarshalJSON(*data); err != nil {
-		return filePartUploadCollection, err
+	if err := fileUploadPartCollection.UnmarshalJSON(*data); err != nil {
+		return fileUploadPartCollection, err
 	}
 
-	return filePartUploadCollection, nil
+	return fileUploadPartCollection, nil
 }
 
-func BeginUpload(params files_sdk.FileActionBeginUploadParams) (files_sdk.FilePartUploadCollection, error) {
+func BeginUpload(params files_sdk.FileActionBeginUploadParams) (files_sdk.FileUploadPartCollection, error) {
 	return (&Client{}).BeginUpload(params)
 }

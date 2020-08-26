@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 )
 
-type FilePartUpload struct {
+type FileUploadPart struct {
 	Send               json.RawMessage `json:"send,omitempty"`
 	Action             string          `json:"action,omitempty"`
 	AskAboutOverwrites *bool           `json:"ask_about_overwrites,omitempty"`
@@ -22,26 +22,26 @@ type FilePartUpload struct {
 	UploadUri          string          `json:"upload_uri,omitempty"`
 }
 
-type FilePartUploadCollection []FilePartUpload
+type FileUploadPartCollection []FileUploadPart
 
-func (f *FilePartUpload) UnmarshalJSON(data []byte) error {
-	type filePartUpload FilePartUpload
-	var v filePartUpload
+func (f *FileUploadPart) UnmarshalJSON(data []byte) error {
+	type fileUploadPart FileUploadPart
+	var v fileUploadPart
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
 
-	*f = FilePartUpload(v)
+	*f = FileUploadPart(v)
 	return nil
 }
 
-func (f *FilePartUploadCollection) UnmarshalJSON(data []byte) error {
-	type filePartUploads []FilePartUpload
-	var v filePartUploads
+func (f *FileUploadPartCollection) UnmarshalJSON(data []byte) error {
+	type fileUploadParts []FileUploadPart
+	var v fileUploadParts
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
 
-	*f = FilePartUploadCollection(v)
+	*f = FileUploadPartCollection(v)
 	return nil
 }

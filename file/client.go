@@ -18,11 +18,11 @@ type Client struct {
 	files_sdk.Config
 }
 
-func (c *Client) uploadChunks(reader io.Reader, path string) (files_sdk.FilePartUpload, []files_sdk.EtagsParam, int, error) {
+func (c *Client) uploadChunks(reader io.Reader, path string) (files_sdk.FileUploadPart, []files_sdk.EtagsParam, int, error) {
 	bytesWritten := 0
 	etags := make([]files_sdk.EtagsParam, 0)
 	beginUpload := files_sdk.FileActionBeginUploadParams{}
-	upload := files_sdk.FilePartUpload{}
+	upload := files_sdk.FileUploadPart{}
 	for {
 		beginUpload.Path = path
 		beginUpload.Part = upload.PartNumber + 1
@@ -88,7 +88,7 @@ func (c *Client) Upload(source io.Reader, destination string) (files_sdk.File, e
 		return files_sdk.File{}, err
 	}
 	return c.Create(files_sdk.FileCreateParams{
-		ProvidedMtime: time.Now().Format(time.RFC3339),
+		ProvidedMtime: time.Now(),
 		EtagsParam:    etags,
 		Action:        "end",
 		Size:          bytesWritten,
@@ -113,6 +113,7 @@ func (c *Client) DownloadToFile(params files_sdk.FileDownloadParams, filePath st
 func DownloadToFile(params files_sdk.FileDownloadParams, filePath string) (files_sdk.File, error) {
 	return (&Client{}).DownloadToFile(params, filePath)
 }
+
 func (c *Client) Download(params files_sdk.FileDownloadParams) (files_sdk.File, error) {
 	file := files_sdk.File{}
 	path := "/files/" + lib.QueryEscape(params.Path) + ""
