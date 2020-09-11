@@ -24,6 +24,7 @@ type Bundle struct {
 	Username              string    `json:"username,omitempty"`
 	ClickwrapId           int64     `json:"clickwrap_id,omitempty"`
 	InboxId               int64     `json:"inbox_id,omitempty"`
+	HasInbox              *bool     `json:"has_inbox,omitempty"`
 	Paths                 []string  `json:"paths,omitempty"`
 	Password              string    `json:"password,omitempty"`
 }

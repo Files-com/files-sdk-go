@@ -33,6 +33,7 @@ type User struct {
 	LastProtocolCipher         string    `json:"last_protocol_cipher,omitempty"`
 	LockoutExpires             time.Time `json:"lockout_expires,omitempty"`
 	Name                       string    `json:"name,omitempty"`
+	Company                    string    `json:"company,omitempty"`
 	Notes                      string    `json:"notes,omitempty"`
 	NotificationDailySendTime  int       `json:"notification_daily_send_time,omitempty"`
 	OfficeIntegrationEnabled   *bool     `json:"office_integration_enabled,omitempty"`
@@ -125,6 +126,7 @@ type UserCreateParams struct {
 	Language                   string    `url:"language,omitempty" required:"false"`
 	NotificationDailySendTime  int       `url:"notification_daily_send_time,omitempty" required:"false"`
 	Name                       string    `url:"name,omitempty" required:"false"`
+	Company                    string    `url:"company,omitempty" required:"false"`
 	Notes                      string    `url:"notes,omitempty" required:"false"`
 	OfficeIntegrationEnabled   *bool     `url:"office_integration_enabled,omitempty" required:"false"`
 	PasswordValidityDays       int       `url:"password_validity_days,omitempty" required:"false"`
@@ -185,6 +187,7 @@ type UserUpdateParams struct {
 	Language                   string    `url:"language,omitempty" required:"false"`
 	NotificationDailySendTime  int       `url:"notification_daily_send_time,omitempty" required:"false"`
 	Name                       string    `url:"name,omitempty" required:"false"`
+	Company                    string    `url:"company,omitempty" required:"false"`
 	Notes                      string    `url:"notes,omitempty" required:"false"`
 	OfficeIntegrationEnabled   *bool     `url:"office_integration_enabled,omitempty" required:"false"`
 	PasswordValidityDays       int       `url:"password_validity_days,omitempty" required:"false"`
