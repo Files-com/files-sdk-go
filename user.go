@@ -42,6 +42,7 @@ type User struct {
 	PublicKeysCount            int       `json:"public_keys_count,omitempty"`
 	ReceiveAdminAlerts         *bool     `json:"receive_admin_alerts,omitempty"`
 	Require2fa                 *bool     `json:"require_2fa,omitempty"`
+	Active2fa                  *bool     `json:"active_2fa,omitempty"`
 	RequirePasswordChange      *bool     `json:"require_password_change,omitempty"`
 	RestapiPermission          *bool     `json:"restapi_permission,omitempty"`
 	SelfManaged                *bool     `json:"self_managed,omitempty"`
