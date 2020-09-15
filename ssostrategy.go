@@ -35,6 +35,7 @@ type SsoStrategy struct {
 	ProvisionFtpPermission         *bool    `json:"provision_ftp_permission,omitempty"`
 	ProvisionSftpPermission        *bool    `json:"provision_sftp_permission,omitempty"`
 	ProvisionTimeZone              string   `json:"provision_time_zone,omitempty"`
+	ProvisionCompany               string   `json:"provision_company,omitempty"`
 	LdapBaseDn                     string   `json:"ldap_base_dn,omitempty"`
 	LdapDomain                     string   `json:"ldap_domain,omitempty"`
 	Enabled                        *bool    `json:"enabled,omitempty"`

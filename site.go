@@ -35,6 +35,7 @@ type Site struct {
 	DisablePasswordReset                 *bool     `json:"disable_password_reset,omitempty"`
 	Domain                               string    `json:"domain,omitempty"`
 	Email                                string    `json:"email,omitempty"`
+	ReplyToEmail                         string    `json:"reply_to_email,omitempty"`
 	NonSsoGroupsAllowed                  *bool     `json:"non_sso_groups_allowed,omitempty"`
 	NonSsoUsersAllowed                   *bool     `json:"non_sso_users_allowed,omitempty"`
 	FolderPermissionsGroupsOnly          *bool     `json:"folder_permissions_groups_only,omitempty"`
@@ -136,6 +137,7 @@ type SiteUpdateParams struct {
 	Subdomain                            string    `url:"subdomain,omitempty" required:"false"`
 	Domain                               string    `url:"domain,omitempty" required:"false"`
 	Email                                string    `url:"email,omitempty" required:"false"`
+	ReplyToEmail                         string    `url:"reply_to_email,omitempty" required:"false"`
 	AllowBundleNames                     *bool     `url:"allow_bundle_names,omitempty" required:"false"`
 	BundleExpiration                     int       `url:"bundle_expiration,omitempty" required:"false"`
 	OverageNotify                        *bool     `url:"overage_notify,omitempty" required:"false"`
