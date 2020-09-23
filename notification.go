@@ -13,6 +13,7 @@ type Notification struct {
 	GroupName          string `json:"group_name,omitempty"`
 	NotifyUserActions  *bool  `json:"notify_user_actions,omitempty"`
 	NotifyOnCopy       *bool  `json:"notify_on_copy,omitempty"`
+	Recursive          *bool  `json:"recursive,omitempty"`
 	SendInterval       string `json:"send_interval,omitempty"`
 	Unsubscribed       *bool  `json:"unsubscribed,omitempty"`
 	UnsubscribedReason string `json:"unsubscribed_reason,omitempty"`
@@ -50,6 +51,7 @@ type NotificationCreateParams struct {
 	UserId            int64  `url:"user_id,omitempty" required:"false"`
 	NotifyOnCopy      *bool  `url:"notify_on_copy,omitempty" required:"false"`
 	NotifyUserActions *bool  `url:"notify_user_actions,omitempty" required:"false"`
+	Recursive         *bool  `url:"recursive,omitempty" required:"false"`
 	SendInterval      string `url:"send_interval,omitempty" required:"false"`
 	GroupId           int64  `url:"group_id,omitempty" required:"false"`
 	Path              string `url:"path,omitempty" required:"false"`
@@ -60,6 +62,7 @@ type NotificationUpdateParams struct {
 	Id                int64  `url:"-,omitempty" required:"true"`
 	NotifyOnCopy      *bool  `url:"notify_on_copy,omitempty" required:"false"`
 	NotifyUserActions *bool  `url:"notify_user_actions,omitempty" required:"false"`
+	Recursive         *bool  `url:"recursive,omitempty" required:"false"`
 	SendInterval      string `url:"send_interval,omitempty" required:"false"`
 }
 
