@@ -14,6 +14,7 @@ type Site struct {
 	Allowed2faMethodYubi                 *bool     `json:"allowed_2fa_method_yubi,omitempty"`
 	AdminUserId                          int64     `json:"admin_user_id,omitempty"`
 	AllowBundleNames                     *bool     `json:"allow_bundle_names,omitempty"`
+	AllowedCountries                     string    `json:"allowed_countries,omitempty"`
 	AllowedIps                           string    `json:"allowed_ips,omitempty"`
 	AskAboutOverwrites                   *bool     `json:"ask_about_overwrites,omitempty"`
 	BundleExpiration                     int       `json:"bundle_expiration,omitempty"`
@@ -31,6 +32,7 @@ type Site struct {
 	DesktopApp                           *bool     `json:"desktop_app,omitempty"`
 	DesktopAppSessionIpPinning           *bool     `json:"desktop_app_session_ip_pinning,omitempty"`
 	DesktopAppSessionLifetime            int       `json:"desktop_app_session_lifetime,omitempty"`
+	DisallowedCountries                  string    `json:"disallowed_countries,omitempty"`
 	DisableNotifications                 *bool     `json:"disable_notifications,omitempty"`
 	DisablePasswordReset                 *bool     `json:"disable_password_reset,omitempty"`
 	Domain                               string    `json:"domain,omitempty"`
@@ -163,7 +165,9 @@ type SiteUpdateParams struct {
 	UserLockoutWithin                    int       `url:"user_lockout_within,omitempty" required:"false"`
 	UserLockoutLockPeriod                int       `url:"user_lockout_lock_period,omitempty" required:"false"`
 	IncludePasswordInWelcomeEmail        *bool     `url:"include_password_in_welcome_email,omitempty" required:"false"`
+	AllowedCountries                     string    `url:"allowed_countries,omitempty" required:"false"`
 	AllowedIps                           string    `url:"allowed_ips,omitempty" required:"false"`
+	DisallowedCountries                  string    `url:"disallowed_countries,omitempty" required:"false"`
 	DaysToRetainBackups                  int       `url:"days_to_retain_backups,omitempty" required:"false"`
 	MaxPriorPasswords                    int       `url:"max_prior_passwords,omitempty" required:"false"`
 	PasswordValidityDays                 int       `url:"password_validity_days,omitempty" required:"false"`
