@@ -30,6 +30,7 @@ type SsoStrategy struct {
 	ProvisionGroupExclusion        string   `json:"provision_group_exclusion,omitempty"`
 	ProvisionGroupInclusion        string   `json:"provision_group_inclusion,omitempty"`
 	ProvisionGroupRequired         string   `json:"provision_group_required,omitempty"`
+	ProvisionSiteAdminGroups       string   `json:"provision_site_admin_groups,omitempty"`
 	ProvisionAttachmentsPermission *bool    `json:"provision_attachments_permission,omitempty"`
 	ProvisionDavPermission         *bool    `json:"provision_dav_permission,omitempty"`
 	ProvisionFtpPermission         *bool    `json:"provision_ftp_permission,omitempty"`
