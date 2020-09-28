@@ -184,7 +184,7 @@ func Update(params files_sdk.ApiKeyUpdateParams) (files_sdk.ApiKey, error) {
 	return (&Client{}).Update(params)
 }
 
-func (c *Client) Current(params files_sdk.ApiKeyCurrentParams) (files_sdk.ApiKey, error) {
+func (c *Client) DeleteCurrent(params files_sdk.ApiKeyDeleteCurrentParams) (files_sdk.ApiKey, error) {
 	apiKey := files_sdk.ApiKey{}
 	path := "/api_key"
 	exportedParms, err := lib.ExportParams(params)
@@ -205,8 +205,8 @@ func (c *Client) Current(params files_sdk.ApiKeyCurrentParams) (files_sdk.ApiKey
 	return apiKey, nil
 }
 
-func Current(params files_sdk.ApiKeyCurrentParams) (files_sdk.ApiKey, error) {
-	return (&Client{}).Current(params)
+func DeleteCurrent(params files_sdk.ApiKeyDeleteCurrentParams) (files_sdk.ApiKey, error) {
+	return (&Client{}).DeleteCurrent(params)
 }
 
 func (c *Client) Delete(params files_sdk.ApiKeyDeleteParams) (files_sdk.ApiKey, error) {

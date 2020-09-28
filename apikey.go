@@ -69,7 +69,7 @@ type ApiKeyUpdateParams struct {
 	PermissionSet string    `url:"permission_set,omitempty" required:"false"`
 }
 
-type ApiKeyCurrentParams struct {
+type ApiKeyDeleteCurrentParams struct {
 	Format string          `url:"format,omitempty" required:"false"`
 	ApiKey json.RawMessage `url:"api_key,omitempty" required:"false"`
 }
