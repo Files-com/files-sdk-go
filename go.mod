@@ -10,6 +10,6 @@ require (
 	github.com/moul/http2curl v1.0.0
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/stretchr/testify v1.6.1
-	golang.org/x/tools v0.0.0-20201002184944-ecd9fd270d5d // indirect
+	golang.org/x/tools v0.0.0-20201005185003-576e169c3de7 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 )

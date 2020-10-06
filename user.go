@@ -41,7 +41,7 @@ type User struct {
 	PasswordValidityDays       int       `json:"password_validity_days,omitempty"`
 	PublicKeysCount            int       `json:"public_keys_count,omitempty"`
 	ReceiveAdminAlerts         *bool     `json:"receive_admin_alerts,omitempty"`
-	Require2fa                 *bool     `json:"require_2fa,omitempty"`
+	Require2fa                 string    `json:"require_2fa,omitempty"`
 	Active2fa                  *bool     `json:"active_2fa,omitempty"`
 	RequirePasswordChange      *bool     `json:"require_password_change,omitempty"`
 	RestapiPermission          *bool     `json:"restapi_permission,omitempty"`
@@ -141,6 +141,7 @@ type UserCreateParams struct {
 	SslRequired                string    `url:"ssl_required,omitempty" required:"false"`
 	SsoStrategyId              int64     `url:"sso_strategy_id,omitempty" required:"false"`
 	SubscribeToNewsletter      *bool     `url:"subscribe_to_newsletter,omitempty" required:"false"`
+	Require2fa                 string    `url:"require_2fa,omitempty" required:"false"`
 	TimeZone                   string    `url:"time_zone,omitempty" required:"false"`
 	UserRoot                   string    `url:"user_root,omitempty" required:"false"`
 	Username                   string    `url:"username,omitempty" required:"false"`
@@ -202,6 +203,7 @@ type UserUpdateParams struct {
 	SslRequired                string    `url:"ssl_required,omitempty" required:"false"`
 	SsoStrategyId              int64     `url:"sso_strategy_id,omitempty" required:"false"`
 	SubscribeToNewsletter      *bool     `url:"subscribe_to_newsletter,omitempty" required:"false"`
+	Require2fa                 string    `url:"require_2fa,omitempty" required:"false"`
 	TimeZone                   string    `url:"time_zone,omitempty" required:"false"`
 	UserRoot                   string    `url:"user_root,omitempty" required:"false"`
 	Username                   string    `url:"username,omitempty" required:"false"`
