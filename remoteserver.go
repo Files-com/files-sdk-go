@@ -39,6 +39,7 @@ type RemoteServer struct {
 	AwsSecretKey                      string `json:"aws_secret_key,omitempty"`
 	Password                          string `json:"password,omitempty"`
 	PrivateKey                        string `json:"private_key,omitempty"`
+	SslCertificate                    string `json:"ssl_certificate,omitempty"`
 	GoogleCloudStorageCredentialsJson string `json:"google_cloud_storage_credentials_json,omitempty"`
 	WasabiAccessKey                   string `json:"wasabi_access_key,omitempty"`
 	WasabiSecretKey                   string `json:"wasabi_secret_key,omitempty"`
@@ -68,6 +69,7 @@ type RemoteServerCreateParams struct {
 	AwsSecretKey                      string `url:"aws_secret_key,omitempty" required:"false"`
 	Password                          string `url:"password,omitempty" required:"false"`
 	PrivateKey                        string `url:"private_key,omitempty" required:"false"`
+	SslCertificate                    string `url:"ssl_certificate,omitempty" required:"false"`
 	GoogleCloudStorageCredentialsJson string `url:"google_cloud_storage_credentials_json,omitempty" required:"false"`
 	WasabiAccessKey                   string `url:"wasabi_access_key,omitempty" required:"false"`
 	WasabiSecretKey                   string `url:"wasabi_secret_key,omitempty" required:"false"`
@@ -107,6 +109,7 @@ type RemoteServerUpdateParams struct {
 	AwsSecretKey                      string `url:"aws_secret_key,omitempty" required:"false"`
 	Password                          string `url:"password,omitempty" required:"false"`
 	PrivateKey                        string `url:"private_key,omitempty" required:"false"`
+	SslCertificate                    string `url:"ssl_certificate,omitempty" required:"false"`
 	GoogleCloudStorageCredentialsJson string `url:"google_cloud_storage_credentials_json,omitempty" required:"false"`
 	WasabiAccessKey                   string `url:"wasabi_access_key,omitempty" required:"false"`
 	WasabiSecretKey                   string `url:"wasabi_secret_key,omitempty" required:"false"`
