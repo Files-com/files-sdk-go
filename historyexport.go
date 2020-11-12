@@ -9,8 +9,6 @@ type HistoryExport struct {
 	Id                       int64     `json:"id,omitempty"`
 	StartAt                  time.Time `json:"start_at,omitempty"`
 	EndAt                    time.Time `json:"end_at,omitempty"`
-	ExportAs                 string    `json:"export_as,omitempty"`
-	FileExport               *bool     `json:"file_export,omitempty"`
 	Status                   string    `json:"status,omitempty"`
 	QueryAction              string    `json:"query_action,omitempty"`
 	QueryInterface           string    `json:"query_interface,omitempty"`
@@ -45,7 +43,6 @@ type HistoryExportCreateParams struct {
 	UserId                   int64     `url:"user_id,omitempty" required:"false"`
 	StartAt                  time.Time `url:"start_at,omitempty" required:"false"`
 	EndAt                    time.Time `url:"end_at,omitempty" required:"false"`
-	ExportAs                 string    `url:"export_as,omitempty" required:"false"`
 	QueryAction              string    `url:"query_action,omitempty" required:"false"`
 	QueryInterface           string    `url:"query_interface,omitempty" required:"false"`
 	QueryUserId              string    `url:"query_user_id,omitempty" required:"false"`
