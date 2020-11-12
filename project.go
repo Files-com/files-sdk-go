@@ -14,10 +14,8 @@ type Project struct {
 type ProjectCollection []Project
 
 type ProjectListParams struct {
-	Page    int    `url:"page,omitempty" required:"false"`
-	PerPage int    `url:"per_page,omitempty" required:"false"`
-	Action  string `url:"action,omitempty" required:"false"`
 	Cursor  string `url:"cursor,omitempty" required:"false"`
+	PerPage int    `url:"per_page,omitempty" required:"false"`
 	lib.ListParams
 }
 

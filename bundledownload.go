@@ -16,10 +16,8 @@ type BundleDownload struct {
 type BundleDownloadCollection []BundleDownload
 
 type BundleDownloadListParams struct {
-	Page                 int    `url:"page,omitempty" required:"false"`
-	PerPage              int    `url:"per_page,omitempty" required:"false"`
-	Action               string `url:"action,omitempty" required:"false"`
 	Cursor               string `url:"cursor,omitempty" required:"false"`
+	PerPage              int    `url:"per_page,omitempty" required:"false"`
 	BundleRegistrationId int64  `url:"bundle_registration_id,omitempty" required:"true"`
 	lib.ListParams
 }

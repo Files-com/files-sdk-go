@@ -18,10 +18,8 @@ type Group struct {
 type GroupCollection []Group
 
 type GroupListParams struct {
-	Page       int             `url:"page,omitempty" required:"false"`
-	PerPage    int             `url:"per_page,omitempty" required:"false"`
-	Action     string          `url:"action,omitempty" required:"false"`
 	Cursor     string          `url:"cursor,omitempty" required:"false"`
+	PerPage    int             `url:"per_page,omitempty" required:"false"`
 	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
 	Filter     json.RawMessage `url:"filter,omitempty" required:"false"`
 	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false"`

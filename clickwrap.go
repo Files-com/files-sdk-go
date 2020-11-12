@@ -7,21 +7,19 @@ import (
 )
 
 type Clickwrap struct {
+	Id             int64  `json:"id,omitempty"`
 	Name           string `json:"name,omitempty"`
 	Body           string `json:"body,omitempty"`
 	UseWithUsers   string `json:"use_with_users,omitempty"`
 	UseWithBundles string `json:"use_with_bundles,omitempty"`
 	UseWithInboxes string `json:"use_with_inboxes,omitempty"`
-	Id             int64  `json:"id,omitempty"`
 }
 
 type ClickwrapCollection []Clickwrap
 
 type ClickwrapListParams struct {
-	Page    int    `url:"page,omitempty" required:"false"`
-	PerPage int    `url:"per_page,omitempty" required:"false"`
-	Action  string `url:"action,omitempty" required:"false"`
 	Cursor  string `url:"cursor,omitempty" required:"false"`
+	PerPage int    `url:"per_page,omitempty" required:"false"`
 	lib.ListParams
 }
 

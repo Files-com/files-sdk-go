@@ -29,10 +29,8 @@ type Folder struct {
 type FolderCollection []Folder
 
 type FolderListForParams struct {
-	Page              int    `url:"page,omitempty" required:"false"`
-	PerPage           int    `url:"per_page,omitempty" required:"false"`
-	Action            string `url:"action,omitempty" required:"false"`
 	Cursor            string `url:"cursor,omitempty" required:"false"`
+	PerPage           int    `url:"per_page,omitempty" required:"false"`
 	Path              string `url:"-,omitempty" required:"true"`
 	Filter            string `url:"filter,omitempty" required:"false"`
 	PreviewSize       string `url:"preview_size,omitempty" required:"false"`

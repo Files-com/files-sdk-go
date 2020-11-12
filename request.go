@@ -20,10 +20,8 @@ type Request struct {
 type RequestCollection []Request
 
 type RequestListParams struct {
-	Page    int             `url:"page,omitempty" required:"false"`
-	PerPage int             `url:"per_page,omitempty" required:"false"`
-	Action  string          `url:"action,omitempty" required:"false"`
 	Cursor  string          `url:"cursor,omitempty" required:"false"`
+	PerPage int             `url:"per_page,omitempty" required:"false"`
 	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false"`
 	Mine    *bool           `url:"mine,omitempty" required:"false"`
 	Path    string          `url:"path,omitempty" required:"false"`
@@ -31,10 +29,8 @@ type RequestListParams struct {
 }
 
 type RequestGetFolderParams struct {
-	Page    int             `url:"page,omitempty" required:"false"`
-	PerPage int             `url:"per_page,omitempty" required:"false"`
-	Action  string          `url:"action,omitempty" required:"false"`
 	Cursor  string          `url:"cursor,omitempty" required:"false"`
+	PerPage int             `url:"per_page,omitempty" required:"false"`
 	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false"`
 	Mine    *bool           `url:"mine,omitempty" required:"false"`
 	Path    string          `url:"-,omitempty" required:"true"`

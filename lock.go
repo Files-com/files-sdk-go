@@ -21,10 +21,8 @@ type Lock struct {
 type LockCollection []Lock
 
 type LockListForParams struct {
-	Page            int    `url:"page,omitempty" required:"false"`
-	PerPage         int    `url:"per_page,omitempty" required:"false"`
-	Action          string `url:"action,omitempty" required:"false"`
 	Cursor          string `url:"cursor,omitempty" required:"false"`
+	PerPage         int    `url:"per_page,omitempty" required:"false"`
 	Path            string `url:"-,omitempty" required:"true"`
 	IncludeChildren *bool  `url:"include_children,omitempty" required:"false"`
 	lib.ListParams

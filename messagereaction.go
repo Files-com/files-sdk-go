@@ -16,10 +16,8 @@ type MessageReactionCollection []MessageReaction
 
 type MessageReactionListParams struct {
 	UserId    int64  `url:"user_id,omitempty" required:"false"`
-	Page      int    `url:"page,omitempty" required:"false"`
-	PerPage   int    `url:"per_page,omitempty" required:"false"`
-	Action    string `url:"action,omitempty" required:"false"`
 	Cursor    string `url:"cursor,omitempty" required:"false"`
+	PerPage   int    `url:"per_page,omitempty" required:"false"`
 	MessageId int64  `url:"message_id,omitempty" required:"true"`
 	lib.ListParams
 }

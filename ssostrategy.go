@@ -20,6 +20,8 @@ type SsoStrategy struct {
 	SamlProviderSsoTargetUrl       string   `json:"saml_provider_sso_target_url,omitempty"`
 	ScimAuthenticationMethod       string   `json:"scim_authentication_method,omitempty"`
 	ScimUsername                   string   `json:"scim_username,omitempty"`
+	ScimOauthAccessToken           string   `json:"scim_oauth_access_token,omitempty"`
+	ScimOauthAccessTokenExpiresAt  string   `json:"scim_oauth_access_token_expires_at,omitempty"`
 	Subdomain                      string   `json:"subdomain,omitempty"`
 	ProvisionUsers                 *bool    `json:"provision_users,omitempty"`
 	ProvisionGroups                *bool    `json:"provision_groups,omitempty"`
@@ -52,10 +54,8 @@ type SsoStrategy struct {
 type SsoStrategyCollection []SsoStrategy
 
 type SsoStrategyListParams struct {
-	Page    int    `url:"page,omitempty" required:"false"`
-	PerPage int    `url:"per_page,omitempty" required:"false"`
-	Action  string `url:"action,omitempty" required:"false"`
 	Cursor  string `url:"cursor,omitempty" required:"false"`
+	PerPage int    `url:"per_page,omitempty" required:"false"`
 	lib.ListParams
 }
 
