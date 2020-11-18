@@ -81,6 +81,31 @@ func Find(params files_sdk.RemoteServerFindParams) (files_sdk.RemoteServer, erro
 	return (&Client{}).Find(params)
 }
 
+func (c *Client) ListForTesting(params files_sdk.RemoteServerListForTestingParams) (files_sdk.File, error) {
+	file := files_sdk.File{}
+	path := "/remote_servers/list_for_testing"
+	exportedParms, err := lib.ExportParams(params)
+	if err != nil {
+		return file, err
+	}
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	if err != nil {
+		return file, err
+	}
+	if res.StatusCode == 204 {
+		return file, nil
+	}
+	if err := file.UnmarshalJSON(*data); err != nil {
+		return file, err
+	}
+
+	return file, nil
+}
+
+func ListForTesting(params files_sdk.RemoteServerListForTestingParams) (files_sdk.File, error) {
+	return (&Client{}).ListForTesting(params)
+}
+
 func (c *Client) Create(params files_sdk.RemoteServerCreateParams) (files_sdk.RemoteServer, error) {
 	remoteServer := files_sdk.RemoteServer{}
 	path := "/remote_servers"

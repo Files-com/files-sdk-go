@@ -28,6 +28,7 @@ type Config struct {
 	AdditionalHeaders map[string]string
 	Logger            retryablehttp.Logger
 	Debug             *bool
+	ConcurrentUploads int
 }
 
 func (s *Config) GetHttpClient() HttpClient {

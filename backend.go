@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/moul/http2curl"
+	"moul.io/http2curl"
 )
 
 func Call(method string, config Config, resource string, params url.Values) (*[]byte, *http.Response, error) {
