@@ -7,7 +7,10 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
+
+	"github.com/Files-com/files-sdk-go/folder"
 
 	"fmt"
 
@@ -164,4 +167,53 @@ func TestClient_UploadFolder_as_file(t *testing.T) {
 	}
 	assert.Equal(string(downloadData), string(localData))
 	defer os.Remove(tempFile.Name())
+}
+
+func TestClient_DownloadFolder(t *testing.T) {
+	client, r, err := CreateClient("TestClient_DownloadFolder")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+
+	folderClient := folder.Client{Config: client.Config}
+
+	folderClient.Create(files_sdk.FolderCreateParams{Path: "TestClient_DownloadFolder"})
+	folderClient.Create(files_sdk.FolderCreateParams{Path: filepath.Join("TestClient_DownloadFolder", "nested_1")})
+	folderClient.Create(files_sdk.FolderCreateParams{Path: filepath.Join("TestClient_DownloadFolder", "nested_1", "nested_2")})
+
+	client.Upload(strings.NewReader("testing 1"), filepath.Join("TestClient_DownloadFolder", "1.text"))
+	client.Upload(strings.NewReader("testing 2"), filepath.Join("TestClient_DownloadFolder", "2.text"))
+	client.Upload(strings.NewReader("testing 3"), filepath.Join("TestClient_DownloadFolder", "nested_1", "nested_2", "3.text"))
+
+	assert := assert.New(t)
+	var results []string
+	err = client.DownloadFolder(
+		files_sdk.FolderListForParams{Path: "./TestClient_DownloadFolder"},
+		"download",
+		func(file files_sdk.File, destination string, err error) {
+			if err != nil {
+				results = append(results, fmt.Sprint(file.Path, err))
+			} else {
+				results = append(results, fmt.Sprint(
+					fmt.Sprintf("%d bytes ", file.Size),
+					fmt.Sprintf("%s => %s", file.Path, destination),
+				))
+			}
+		},
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	var expected []string
+	expected = append(expected, "0 bytes TestClient_DownloadFolder/nested_1 => download/TestClient_DownloadFolder/nested_1")
+	expected = append(expected, "9 bytes TestClient_DownloadFolder/2.text => download/TestClient_DownloadFolder/2.text")
+	expected = append(expected, "9 bytes TestClient_DownloadFolder/1.text => download/TestClient_DownloadFolder/1.text")
+	expected = append(expected, "0 bytes TestClient_DownloadFolder/nested_1/nested_2 => download/TestClient_DownloadFolder/nested_1/nested_2")
+	expected = append(expected, "9 bytes TestClient_DownloadFolder/nested_1/nested_2/3.text => download/TestClient_DownloadFolder/nested_1/nested_2/3.text")
+	assert.Subset(results, expected)
+	assert.Equal(len(results), 5)
+	os.RemoveAll("download")
 }

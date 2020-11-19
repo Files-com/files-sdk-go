@@ -96,10 +96,8 @@ func (c *Client) UploadFolder(localFolderPath string, destinationRootPath *strin
 			return uploadFiles, err
 		}
 	}
-	if c.ConcurrentUploads == 0 {
-		c.ConcurrentUploads = 10
-	}
-	goc := goccm.New(c.Config.ConcurrentUploads)
+
+	goc := goccm.New(c.Config.MaxConcurrentConnections())
 
 	fileChannel := make(chan fileUpload)
 	for _, dir := range directoriesToCreate {

@@ -22,13 +22,13 @@ type HttpClient interface {
 }
 
 type Config struct {
-	APIKey            string `header:"X-FilesAPI-Key"`
-	Endpoint          string
-	HttpClient        HttpClient
-	AdditionalHeaders map[string]string
-	Logger            retryablehttp.Logger
-	Debug             *bool
-	ConcurrentUploads int
+	APIKey                   string `header:"X-FilesAPI-Key"`
+	Endpoint                 string
+	HttpClient               HttpClient
+	AdditionalHeaders        map[string]string
+	Logger                   retryablehttp.Logger
+	Debug                    *bool
+	maxConcurrentConnections int
 }
 
 func (s *Config) GetHttpClient() HttpClient {
@@ -100,4 +100,15 @@ func (s *Config) SetHeaders(headers *http.Header) {
 	for key, value := range s.AdditionalHeaders {
 		headers.Set(key, value)
 	}
+}
+
+func (s *Config) SetMaxConcurrentConnections(value int) {
+	s.maxConcurrentConnections = value
+}
+
+func (s *Config) MaxConcurrentConnections() int {
+	if s.maxConcurrentConnections == 0 {
+		s.SetMaxConcurrentConnections(10)
+	}
+	return s.maxConcurrentConnections
 }

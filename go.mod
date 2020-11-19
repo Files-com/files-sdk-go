@@ -11,7 +11,7 @@ require (
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/stretchr/testify v1.6.1
 	github.com/zenthangplus/goccm v0.0.0-20200608171100-39e9e08b694a
-	golang.org/x/tools v0.0.0-20201118030313-598b068a9102 // indirect
+	golang.org/x/tools v0.0.0-20201118215654-4d9c4f8a78b0 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	moul.io/http2curl v1.0.0
 )

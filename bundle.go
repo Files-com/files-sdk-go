@@ -74,6 +74,7 @@ type BundleShareParams struct {
 
 type BundleUpdateParams struct {
 	Id                    int64     `url:"-,omitempty" required:"true"`
+	Paths                 []string  `url:"paths,omitempty" required:"false"`
 	Password              string    `url:"password,omitempty" required:"false"`
 	ClickwrapId           int64     `url:"clickwrap_id,omitempty" required:"false"`
 	Code                  string    `url:"code,omitempty" required:"false"`
