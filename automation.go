@@ -9,19 +9,18 @@ import (
 type Automation struct {
 	Id                     int64           `json:"id,omitempty"`
 	Automation             string          `json:"automation,omitempty"`
+	Trigger                string          `json:"trigger,omitempty"`
+	Interval               string          `json:"interval,omitempty"`
+	NextProcessOn          string          `json:"next_process_on,omitempty"`
+	Schedule               json.RawMessage `json:"schedule,omitempty"`
 	Source                 string          `json:"source,omitempty"`
 	Destination            string          `json:"destination,omitempty"`
 	DestinationReplaceFrom string          `json:"destination_replace_from,omitempty"`
 	DestinationReplaceTo   string          `json:"destination_replace_to,omitempty"`
-	Interval               string          `json:"interval,omitempty"`
-	NextProcessOn          string          `json:"next_process_on,omitempty"`
 	Path                   string          `json:"path,omitempty"`
-	Realtime               *bool           `json:"realtime,omitempty"`
 	UserId                 int64           `json:"user_id,omitempty"`
 	UserIds                []string        `json:"user_ids,omitempty"`
 	GroupIds               []string        `json:"group_ids,omitempty"`
-	Trigger                string          `json:"trigger,omitempty"`
-	Schedule               json.RawMessage `json:"schedule,omitempty"`
 }
 
 type AutomationCollection []Automation
