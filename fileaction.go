@@ -5,6 +5,8 @@ import (
 )
 
 type FileAction struct {
+	Status          string `json:"status,omitempty"`
+	FileMigrationId int64  `json:"file_migration_id,omitempty"`
 }
 
 type FileActionCollection []FileAction

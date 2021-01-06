@@ -15,6 +15,7 @@ type Bundle struct {
 	RequireRegistration   *bool     `json:"require_registration,omitempty"`
 	RequireShareRecipient *bool     `json:"require_share_recipient,omitempty"`
 	ClickwrapBody         string    `json:"clickwrap_body,omitempty"`
+	FormFieldSet          string    `json:"form_field_set,omitempty"`
 	Id                    int64     `json:"id,omitempty"`
 	CreatedAt             time.Time `json:"created_at,omitempty"`
 	ExpiresAt             time.Time `json:"expires_at,omitempty"`
@@ -27,6 +28,7 @@ type Bundle struct {
 	HasInbox              *bool     `json:"has_inbox,omitempty"`
 	Paths                 []string  `json:"paths,omitempty"`
 	Password              string    `json:"password,omitempty"`
+	FormFieldSetId        int64     `json:"form_field_set_id,omitempty"`
 }
 
 type BundleCollection []Bundle
@@ -53,6 +55,7 @@ type BundleCreateParams struct {
 	UserId                int64     `url:"user_id,omitempty" required:"false"`
 	Paths                 []string  `url:"paths,omitempty" required:"true"`
 	Password              string    `url:"password,omitempty" required:"false"`
+	FormFieldSetId        int64     `url:"form_field_set_id,omitempty" required:"false"`
 	ExpiresAt             time.Time `url:"expires_at,omitempty" required:"false"`
 	MaxUses               int       `url:"max_uses,omitempty" required:"false"`
 	Description           string    `url:"description,omitempty" required:"false"`
@@ -76,6 +79,7 @@ type BundleUpdateParams struct {
 	Id                    int64     `url:"-,omitempty" required:"true"`
 	Paths                 []string  `url:"paths,omitempty" required:"false"`
 	Password              string    `url:"password,omitempty" required:"false"`
+	FormFieldSetId        int64     `url:"form_field_set_id,omitempty" required:"false"`
 	ClickwrapId           int64     `url:"clickwrap_id,omitempty" required:"false"`
 	Code                  string    `url:"code,omitempty" required:"false"`
 	Description           string    `url:"description,omitempty" required:"false"`

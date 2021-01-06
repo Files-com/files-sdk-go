@@ -1,0 +1,1 @@
+package inbox_registration

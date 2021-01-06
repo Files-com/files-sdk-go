@@ -18,10 +18,17 @@ type BundleRecipient struct {
 type BundleRecipientCollection []BundleRecipient
 
 type BundleRecipientListParams struct {
-	UserId   int64  `url:"user_id,omitempty" required:"false"`
-	Cursor   string `url:"cursor,omitempty" required:"false"`
-	PerPage  int    `url:"per_page,omitempty" required:"false"`
-	BundleId int64  `url:"bundle_id,omitempty" required:"true"`
+	UserId     int64           `url:"user_id,omitempty" required:"false"`
+	Cursor     string          `url:"cursor,omitempty" required:"false"`
+	PerPage    int             `url:"per_page,omitempty" required:"false"`
+	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
+	Filter     json.RawMessage `url:"filter,omitempty" required:"false"`
+	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false"`
+	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false"`
+	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false"`
+	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false"`
+	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false"`
+	BundleId   int64           `url:"bundle_id,omitempty" required:"true"`
 	lib.ListParams
 }
 

@@ -8,9 +8,10 @@ import (
 )
 
 type BundleDownload struct {
-	DownloadMethod string    `json:"download_method,omitempty"`
-	Path           string    `json:"path,omitempty"`
-	CreatedAt      time.Time `json:"created_at,omitempty"`
+	BundleRegistration string    `json:"bundle_registration,omitempty"`
+	DownloadMethod     string    `json:"download_method,omitempty"`
+	Path               string    `json:"path,omitempty"`
+	CreatedAt          time.Time `json:"created_at,omitempty"`
 }
 
 type BundleDownloadCollection []BundleDownload
@@ -18,7 +19,8 @@ type BundleDownloadCollection []BundleDownload
 type BundleDownloadListParams struct {
 	Cursor               string `url:"cursor,omitempty" required:"false"`
 	PerPage              int    `url:"per_page,omitempty" required:"false"`
-	BundleRegistrationId int64  `url:"bundle_registration_id,omitempty" required:"true"`
+	BundleId             int64  `url:"bundle_id,omitempty" required:"false"`
+	BundleRegistrationId int64  `url:"bundle_registration_id,omitempty" required:"false"`
 	lib.ListParams
 }
 
