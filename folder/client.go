@@ -20,7 +20,7 @@ func (i *Iter) Folder() files_sdk.Folder {
 func (c *Client) ListFor(params files_sdk.FolderListForParams) (*Iter, error) {
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	i := &Iter{Iter: &lib.Iter{}}
-	path := "/folders/" + lib.QueryEscape(params.Path) + ""
+	path := lib.BuildPath("/folders/", params.Path)
 	i.ListParams = &params
 	exportParams, err := i.ExportParams()
 	if err != nil {
@@ -53,12 +53,12 @@ func ListFor(params files_sdk.FolderListForParams) (*Iter, error) {
 
 func (c *Client) Create(params files_sdk.FolderCreateParams) (files_sdk.File, error) {
 	file := files_sdk.File{}
-	path := "/folders/" + lib.QueryEscape(params.Path) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := lib.BuildPath("/folders/", params.Path)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return file, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return file, err
 	}

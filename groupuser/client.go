@@ -58,12 +58,12 @@ func (c *Client) Update(params files_sdk.GroupUserUpdateParams) (files_sdk.Group
 	if params.Id == 0 {
 		return groupUser, lib.CreateError(params, "Id")
 	}
-	path := "/group_users/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/group_users/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return groupUser, err
 	}
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
 	if err != nil {
 		return groupUser, err
 	}
@@ -86,12 +86,12 @@ func (c *Client) Delete(params files_sdk.GroupUserDeleteParams) (files_sdk.Group
 	if params.Id == 0 {
 		return groupUser, lib.CreateError(params, "Id")
 	}
-	path := "/group_users/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/group_users/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return groupUser, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
 	if err != nil {
 		return groupUser, err
 	}

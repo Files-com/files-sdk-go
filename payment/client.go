@@ -58,12 +58,12 @@ func (c *Client) Find(params files_sdk.PaymentFindParams) (files_sdk.AccountLine
 	if params.Id == 0 {
 		return accountLineItem, lib.CreateError(params, "Id")
 	}
-	path := "/payments/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/payments/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return accountLineItem, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return accountLineItem, err
 	}

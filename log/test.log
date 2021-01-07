@@ -1,97 +1,6 @@
-2021/01/07 04:23:53  curl -X 'POST' -d '{}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/folders/lib'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Fstring.go'
-2021/01/07 04:23:53  curl -X 'PUT' -d 'package lib
-
-func String(string string) *string {
-	return &string
-}
-' -H 'Content-Length: 68' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/6d439a96-abe6-4421-8ecf-37e29293b730?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201116T233430Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=K4eveftzkHtckAnoSOk3T9RJzRyWjK.A1PWxicrRp96R2y_6f_mJvSdk6HXKjFT3w0xJL3OglYFUTC1vCotZLXDOeeughz0sY9wQchOIEJhoNT7CNxl43GiQIKHwP4WH&X-Amz-Signature=b72aef20bdd117e14d1df06c2e2bfdad8a2451f5d50eb261497c7067ea3009df'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"2","ref":"put-3243106215"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Fstring.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Frequired.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Frequired_test.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Fiter_test.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Fbool.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Fquery.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"cecd1ea94155ea41d1f8f9e0c2f2e0d9\"","etags[0][part]":"1","provided_mtime":"2021-01-07T04:23:53Z","ref":"put-3243106215","size":"68"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/lib%2Fstring.go'
-2021/01/07 04:23:53  curl -X 'PUT' -d 'package lib
-
-import (
-	"net/url"
-	"strings"
-)
-
-var QueryEscape = url.QueryEscape
-
-func PathEscape(path string) string {
-	pathParts := strings.Split(path, "/")
-	newParts := make([]string, len(pathParts))
-
-	for _, part := range pathParts {
-		newParts = append(newParts, url.PathEscape(part))
-	}
-
-	return strings.Join(newParts, "/")
-}
-' -H 'Content-Length: 332' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/03227044-822c-473b-aa83-599203da3449?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201116T233430Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=BsV.zR5snHxJkbZrQVpORVrZ4rEXCTWaAthybnQVWEsH5PRypp64sJLLAYzwufyaWPsIdlweHHXdRi_2DKzl124rklytE6Okq2kyzimTpHs1o5SWvor3QpssIGM_mBd4&X-Amz-Signature=6afe6273021a460a4266d1ec1338a4e662fe92fa2cc923d5fdb5cdc426d21838'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"2","ref":"put-3243106220"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Fquery.go'
-2021/01/07 04:23:53  curl -X 'PUT' -d 'package lib
-
-import (
-	"fmt"
-	"net/url"
-	"reflect"
-	"strings"
-)
-
-func CheckRequired(iStruct interface{}, values *url.Values) error {
-	var errors = make([]string, 0)
-	val := reflect.ValueOf(iStruct)
-	for val.Kind() == reflect.Ptr {
-		if val.IsNil() {
-			return nil
-		}
-		val = val.Elem()
-	}
-
-	if iStruct == nil {
-		return nil
-	}
-
-	if val.Kind() != reflect.Struct {
-		return fmt.Errorf("CheckRequired expects struct input. Got %v", val.Kind())
-	}
-
-	typ := val.Type()
-	for i := 0; i < typ.NumField(); i++ {
-		sf := typ.Field(i)
-		if sf.PkgPath != "" && !sf.Anonymous { // unexported
-			continue
-		}
-		tag := sf.Tag.Get("required")
-		urlTag := sf.Tag.Get("url")
-		key := strings.Split(urlTag, ",")[0]
-
-		if tag == "true" && values.Get(key) == "" {
-			errors = append(
-				errors,
-				CreateError(iStruct, sf.Name).Error(),
-			)
-		}
-	}
-	if len(errors) != 0 {
-		return fmt.Errorf(strings.Join(errors, "\n"))
-	}
-	return nil
-}
-
-func CreateError(i interface{}, name string) error {
-	structName := reflect.TypeOf(i).Name()
-	return fmt.Errorf("missing required field: %v{}.%v", structName, name)
-}
-' -H 'Content-Length: 1087' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/64980794-e912-4b5a-b3ce-1faa3fcae1d4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201116T233430Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=gu7pNTAnCwkwPjORqa5nMGmmMevXWcfVMnTXr.wJk2RwXZ7QF_4aPRn9YdSDgyZs_.dqkHxf7DFJhZ9fIB9cdWqaxy5FRjjsXtPLR4P0F3Gj3J1igyjpqUWjbX.lp7R7&X-Amz-Signature=38de030b98f0f30d21b5c2fa6b1820e0dcf1c018e7c1759fc000517cb2053321'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"2","ref":"put-3243106218"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Frequired.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"7b6ae360822806fb9b8547d83939518c\"","etags[0][part]":"1","provided_mtime":"2021-01-07T04:23:53Z","ref":"put-3243106220","size":"332"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/lib%2Fquery.go'
-2021/01/07 04:23:53  curl -X 'PUT' -d 'package lib
+2021/01/07 16:38:50  curl -X 'POST' -d '{}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/folders/golib'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/iter_test.go'
+2021/01/07 16:38:50  curl -X 'PUT' -d 'package lib
 
 import (
 	"testing"
@@ -161,28 +70,57 @@ func TestIter_Next_PerPage_of_one(t *testing.T) {
 	}
 	assert.Equal(1, recordCount)
 }
-' -H 'Content-Length: 1593' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/217b4553-99bc-41cb-8fb5-3d749dfcf397?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201116T233430Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=dvllJjt.wgWsxsJdfGV8ni6CYoOvMW7g3PwILSt7jXROOIgk4TfXr8vUQNVJ.saGx.dBIumvj7okwKfUNJ63fU7hMLOe0ES8QhrrNHyFP846w5SanOXINi8B80BEetKW&X-Amz-Signature=a5ea6af0e1e9db371d5dd3ce2266ca9f70e307a9cfbcf39cf71305c47adc99b0'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"2","ref":"put-3243106212"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Fiter_test.go'
-2021/01/07 04:23:53  curl -X 'PUT' -d 'package lib
+' -H 'Content-Length: 1593' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/8efd1eee-2c4b-4c5f-9212-250c86ee3567?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220437Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=EJrl8Q6bzsy6wQnxRFz4vDOae4bmwWrvzvc7S728I5RiSNtBLcOUGBfTv18XkNtH6jlHiWAx1w1ENj6.Ylk4mZnxWqeA9lRdoYQZmnhn_C6Xqv4_vaU5OV0iHQ26xUil&X-Amz-Signature=eab81c654def355198a755bc00fa18cf8f0a036004eb5b7bdb6f599caffcd91c'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/query.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/progresswriter.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/required_test.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"2","ref":"put-3503636953"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/iter_test.go'
+2021/01/07 16:38:50  curl -X 'PUT' -d 'package lib
 
-func Bool(bool bool) *bool {
-	return &bool
-}
-' -H 'Content-Length: 58' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/b372192c-d208-4969-b35b-bccc0a8c3913?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201116T233430Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=EEqnIhLOyE2YK8JBYp9dL7HoSTkKSLkfpQ6P8A1fK8upznY51IJ5mwdJQPJE8J_JGtfr6FmbB3CW69QclkgaimD__X8HQyhdwP5h.mMPXMtRUThePxvyA.LrHIrFDAWi&X-Amz-Signature=91dacc68f53f4c4e7746c9a127a26f05f971838a1b74baf577281d7eb2e26215'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"2","ref":"put-3243106213"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Fbool.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"25f2df6af835e7bd72937852b3ef3728\"","etags[0][part]":"1","provided_mtime":"2021-01-07T04:23:53Z","ref":"put-3243106212","size":"1593"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/lib%2Fiter_test.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"83789abda0845357c13aa5fa9c8605a2\"","etags[0][part]":"1","provided_mtime":"2021-01-07T04:23:53Z","ref":"put-3243106213","size":"58"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/lib%2Fbool.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Finterface.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Fiter.go'
-2021/01/07 04:23:53  curl -X 'PUT' -d 'package lib
+import (
+	"net/url"
+	"path/filepath"
+	"strings"
+)
 
-func Interface() interface{} {
-	var i interface{}
-	return i
+var QueryEscape = url.QueryEscape
+
+func PathEscape(path string) string {
+	pathParts := strings.Split(path, "/")
+	newParts := make([]string, len(pathParts))
+
+	for i, part := range pathParts {
+		newParts[i] = url.PathEscape(part)
+	}
+
+	return strings.Join(newParts, "/")
 }
-' -H 'Content-Length: 75' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/399e5cf6-8568-417c-b5fe-49a53bbc5f00?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201116T233430Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=s442JD7jqt8KAWu7YzjHfYky.g.4TyvNLGNIKeBo95AGyRPKvUE1cAgKLop3bVfnOd4Jtlg2XYxPd4DobR3TfW60cGpi3cpQClXidzfP6y7_SZ09uwp7EVdspIbaP.Z5&X-Amz-Signature=9055bd83a0766dc2c623f0c6710633a24364617ad001a4fc1e976536c984c380'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"2","ref":"put-3243106211"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Finterface.go'
-2021/01/07 04:23:53  curl -X 'PUT' -d 'package lib
+
+func BuildPath(resourcePath string, unescapedPath string) string {
+	return filepath.Join(resourcePath, PathEscape(unescapedPath))
+}
+' -H 'Content-Length: 467' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/5cecdc4d-a633-4ddd-a4cb-c55d27527da3?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220437Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=DYybW9UU0j1pxFDLOmtEICWRtBYCou4t6eDkR30CgULJXdqoLHaUJUghqPNxEqES08d4CF7bkKdMNzsk0LowTECoYsFfpFgeaCJkv.unKpGg9A9toqZKkgItD9gTlAww&X-Amz-Signature=637d25fdbe137f0fc00a97652c3b28902349d1a0ada3a8ce76f3bf07cf4e3b4e'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"2","ref":"put-3503636950"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/query.go'
+2021/01/07 16:38:50  curl -X 'PUT' -d 'package lib
+
+import "io"
+
+type ProgressWriter struct {
+	Writer          io.Writer
+	ProgressWatcher func(int64)
+}
+
+func (w ProgressWriter) Write(p []byte) (n int, err error) {
+	n, err = w.Writer.Write(p)
+
+	w.ProgressWatcher(int64(n))
+	return n, err
+}
+' -H 'Content-Length: 250' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/2067859d-e1af-4fc7-9f1d-49b1d8ec9379?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220437Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=ROXj9cce2NRElWJ_ymf4JtTAfvClbg9U6k.aaPjbO.PydfgNcaipce8.cRdvih938b2bULDZoT6AMCFJyvtvkGdVD8YPAad.vOtiEwaQEO_oHMaBLGdAj5UsWECWwPpn&X-Amz-Signature=85e5d748a3ba3200dfd5696bd5503823c7669f9c7adc7ea747dbc1342dd84dee'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"b053524d13f4b7aada70f38cb1a6bd23\"","etags[0][part]":"1","provided_mtime":"2021-01-07T16:38:50Z","ref":"put-3503636950","size":"467"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/golib/query.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"2","ref":"put-3503636945"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/progresswriter.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"a818d0badee418a848d9dc03b985b244\"","etags[0][part]":"1","provided_mtime":"2021-01-07T16:38:50Z","ref":"put-3503636945","size":"250"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/golib/progresswriter.go'
+2021/01/07 16:38:50  curl -X 'PUT' -d 'package lib
 
 import (
 	"testing"
@@ -214,8 +152,107 @@ func TestCheckRequired_Invalid(t *testing.T) {
 	err := CheckRequired(a, &values)
 	assert.EqualError(err, "missing required field: A{}.Name")
 }
-' -H 'Content-Length: 691' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/2d036444-a4ec-4e72-aab1-ed251a6c7008?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201116T233430Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=fY58lZ0TpBhvyPkVEgELxSGGq15dwfuDwQ_XhBQmS7K9cfKBqLbG1Pr8ciL9aIqwWW2ooUc4Ix50v4wt5D.fF_xdbHNi0pO4DLBZ6cXpIeHLTNOYkcq2tveXdBJjTyl4&X-Amz-Signature=f8de2677b875fea4832c5030995e5afd3c24d666714cf8bbcf1572878cfd5e10'
-2021/01/07 04:23:53  curl -X 'PUT' -d 'package lib
+' -H 'Content-Length: 691' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/5ecfcaa5-f9ea-4327-9e25-32f963e5f755?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220437Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=vVAGVfP3n80HONwbiNrQAcGVN1g8hbOZHL3KVkFfxb6soJy3p8a.3rUxaEY7rTXjJKC4ntp4JYyJ8XgltLNINbWPU.31_MQb4nuIpofATnp0vN7PQCPXgZ2.GKGuiseQ&X-Amz-Signature=70c5cdc9bcfed0cfeabeb34bc5ff5aea8f36a79c4dfc22c941fb5636132beaca'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"2","ref":"put-3503636949"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/required_test.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"129a7a11d2f07ee5446398ff07588c99\"","etags[0][part]":"1","provided_mtime":"2021-01-07T16:38:50Z","ref":"put-3503636949","size":"691"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/golib/required_test.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/interface.go'
+2021/01/07 16:38:50  curl -X 'PUT' -d 'package lib
+
+func Interface() interface{} {
+	var i interface{}
+	return i
+}
+' -H 'Content-Length: 75' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/c3ef15ef-8585-43e8-953d-379023ea335a?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220437Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=X7UV.Fkouu0mTATAEk.gpPDQsfhYtyGNiHPUzI2WgZiZWP58n3iQa0sbdq80M4Fl.yUV6cjBOMCDAkb4PF..v9_Dy.ueYDpQVuOJG2DhQoT24ACP972E_xPREq6FH_46&X-Amz-Signature=3dd645bd0aeb3ae0b19ff6326cd27b7842eb61dcd85e7141c2207b573993bf65'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"2","ref":"put-3503636951"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/interface.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"f7cb73244af2aafb2ced638dc9658dee\"","etags[0][part]":"1","provided_mtime":"2021-01-07T16:38:50Z","ref":"put-3503636951","size":"75"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/golib/interface.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/export_params.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/string.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/iter.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/required.go'
+2021/01/07 16:38:50  curl -X 'PUT' -d 'package lib
+
+func String(string string) *string {
+	return &string
+}
+' -H 'Content-Length: 68' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/e93b9e43-eb37-4971-a093-492f04fff02c?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220437Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=rAtEUJoNCDgwjPbiBlEjSorX0SIjQVbzM2fUCBzSteT7rxeV1HOQXmmUv5DsTc8.wUZ0n_7A3U_ZkRHn1IJzQivKmd.D3Za_6XfqIS8YsINGzX3ekWe.vuL0b1T__4E_&X-Amz-Signature=334fc5eb60e739a361543c41c830f3f0b2ba4eb21ee0b77979f87bb634e794d9'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"2","ref":"put-3503636959"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/string.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"25f2df6af835e7bd72937852b3ef3728\"","etags[0][part]":"1","provided_mtime":"2021-01-07T16:38:50Z","ref":"put-3503636953","size":"1593"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/golib/iter_test.go'
+2021/01/07 16:38:50  curl -X 'PUT' -d 'package lib
+
+import (
+	"fmt"
+	"net/url"
+	"reflect"
+	"strings"
+)
+
+func CheckRequired(iStruct interface{}, values *url.Values) error {
+	var errors = make([]string, 0)
+	val := reflect.ValueOf(iStruct)
+	for val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			return nil
+		}
+		val = val.Elem()
+	}
+
+	if iStruct == nil {
+		return nil
+	}
+
+	if val.Kind() != reflect.Struct {
+		return fmt.Errorf("CheckRequired expects struct input. Got %v", val.Kind())
+	}
+
+	typ := val.Type()
+	for i := 0; i < typ.NumField(); i++ {
+		sf := typ.Field(i)
+		if sf.PkgPath != "" && !sf.Anonymous { // unexported
+			continue
+		}
+		tag := sf.Tag.Get("required")
+		urlTag := sf.Tag.Get("url")
+		key := strings.Split(urlTag, ",")[0]
+
+		if tag == "true" && values.Get(key) == "" {
+			errors = append(
+				errors,
+				CreateError(iStruct, sf.Name).Error(),
+			)
+		}
+	}
+	if len(errors) != 0 {
+		return fmt.Errorf(strings.Join(errors, "\n"))
+	}
+	return nil
+}
+
+func CreateError(i interface{}, name string) error {
+	structName := reflect.TypeOf(i).Name()
+	return fmt.Errorf("missing required field: %v{}.%v", structName, name)
+}
+' -H 'Content-Length: 1087' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/550a33f0-b164-47f7-8380-a2bb6cbf9621?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220437Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=SqjX_t.F_p1AaACBCbz6yx2.TIlH984LtURqwmeW_5AxlaVIb4wXYFHkBpxDpVUOD0E0ocqQ624fDL.6acWgI9nOV6Wm96KzPafm0YqnMvZlaQ9jHxPCth92xIxMszVW&X-Amz-Signature=05f69a5c3d59b78cedddbb30adff6616900e8000538ac9e82e22d363f4cb0190'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"2","ref":"put-3503636954"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/required.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"72556a26959c471a4b0bff38d08e558b\"","etags[0][part]":"1","provided_mtime":"2021-01-07T16:38:50Z","ref":"put-3503636954","size":"1087"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/golib/required.go'
+2021/01/07 16:38:50  curl -X 'PUT' -d 'package lib
+
+import (
+	"net/url"
+
+	"github.com/appscode/go-querystring/query"
+)
+
+func ExportParams(i interface{}) (url.Values, error) {
+	v, err := query.Values(i)
+	if err != nil {
+		panic(err)
+	}
+
+	return v, CheckRequired(i, &v)
+}
+' -H 'Content-Length: 231' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/710a6da5-8ad6-4e48-a55e-c023ed8af299?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220437Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=uJZkevzDfbMKSnNYyDElnR.wxAvUhdE1cZYqtrTz1AHHfhrCCswmDGHCdFCC9LehHjQYxCNqjo5YvKwaH9YyT0i_4Iu2wvXW6cWzhyLOao6wYioXB8v8NVBmlEw4MflS&X-Amz-Signature=f67464e8bbbf7be0ea719ca399f6baea614bdb582f980470f098c45f7eb4b3e2'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"2","ref":"put-3503636956"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/export_params.go'
+2021/01/07 16:38:50  curl -X 'PUT' -d 'package lib
 
 import (
 	"net/url"
@@ -346,35 +383,22 @@ func (i *Iter) Next() bool {
 
 	return false
 }
-' -H 'Content-Length: 3141' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/673e0ee1-d0d1-4310-8168-5762db200466?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201116T233430Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=PYbFJMeXN2gwaZW02FR7hQKzfjV7wcNKGI2780bc6g._H6L2M6PcMbDKWT8XP9WUXNo.isxjelaSy9pkPerijIh68u.7j7RRMcWlsrE1xqsYRh3InmT8jFzYwng7cqVJ&X-Amz-Signature=0cca622b919623ff242cfab107b56096b063bd5d190510a63c019ddc55176ec2'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"2","ref":"put-3243106216"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Frequired_test.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"72556a26959c471a4b0bff38d08e558b\"","etags[0][part]":"1","provided_mtime":"2021-01-07T04:23:53Z","ref":"put-3243106218","size":"1087"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/lib%2Frequired.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Fexport_params.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"2","ref":"put-3243106221"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Fiter.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"f7cb73244af2aafb2ced638dc9658dee\"","etags[0][part]":"1","provided_mtime":"2021-01-07T04:23:53Z","ref":"put-3243106211","size":"75"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/lib%2Finterface.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"129a7a11d2f07ee5446398ff07588c99\"","etags[0][part]":"1","provided_mtime":"2021-01-07T04:23:53Z","ref":"put-3243106216","size":"691"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/lib%2Frequired_test.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"c7863ec1199239ae6862018331c9ad76\"","etags[0][part]":"1","provided_mtime":"2021-01-07T04:23:53Z","ref":"put-3243106221","size":"3141"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/lib%2Fiter.go'
-2021/01/07 04:23:53  curl -X 'PUT' -d 'package lib
+' -H 'Content-Length: 3141' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/bc1aad57-a93e-46c6-8158-812d723d0756?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220437Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=.U1SDjdY6Ap7n2QTBMddA1iz1ESWqY76IUKMG3zH7D8WbElRjwdn5tl9kbfMEx6M69XjiVrCXEwpCj86MyQWGdtu5.xz0EJQKfQ1LWkKq74NYOMYibW_0U1VHwp6HfpE&X-Amz-Signature=fda99a487f92913c8141f2a7b0158957648bb94d7655815e4cf357a9ab966324'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"3cc6728f7554f3ea0f53dabed57b19d2\"","etags[0][part]":"1","provided_mtime":"2021-01-07T16:38:50Z","ref":"put-3503636956","size":"231"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/golib/export_params.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"2","ref":"put-3503636946"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/iter.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/bool.go'
+2021/01/07 16:38:50  curl -X 'PUT' -d 'package lib
 
-import (
-	"net/url"
-
-	"github.com/appscode/go-querystring/query"
-)
-
-func ExportParams(i interface{}) (url.Values, error) {
-	v, err := query.Values(i)
-	if err != nil {
-		panic(err)
-	}
-
-	return v, CheckRequired(i, &v)
+func Bool(bool bool) *bool {
+	return &bool
 }
-' -H 'Content-Length: 231' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/1e0f8fab-4ea0-4285-9f7d-6cd8005da6e1?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201116T233430Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=qKmChXlsr17TWgkDzya07a8EG8S6Pfw1WgQ3ZxjxdIHJfGJ9Pu9ksEg4KScdR8inIjRX5znQBoGF2Goe3fRWWZE7nt55_3ZbfYec_dvxTHZ9gFwWvvObILPyNb7uvVpd&X-Amz-Signature=61718eef1383b1637259b685598718c628101a33e247cf2367dfab532340bbe8'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"2","ref":"put-3243106217"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/lib%2Fexport_params.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"3cc6728f7554f3ea0f53dabed57b19d2\"","etags[0][part]":"1","provided_mtime":"2021-01-07T04:23:53Z","ref":"put-3243106217","size":"231"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/lib%2Fexport_params.go'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/LICENSE'
-2021/01/07 04:23:53  curl -X 'PUT' -d 'The MIT License
+' -H 'Content-Length: 58' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/f94e2cc9-1181-4195-a761-1812b0a514d8?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220437Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=VGFq.nI2_fUOBk1pd4av2tVK1LtY8j3VcJlqGJTUktA6fXKmTuunm6CCaKUOTrl_q0pFct3modKwTAZkMxsqquJK4Hre267BdBN8m6QwVa0QvLASHLXOx6KfE_uvbr.S&X-Amz-Signature=79c3f895a1ab60a1bb56e9cd04bea5d956566efff85786884ff4ebf28ae17d40'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"2","ref":"put-3503636955"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/bool.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"c7863ec1199239ae6862018331c9ad76\"","etags[0][part]":"1","provided_mtime":"2021-01-07T16:38:50Z","ref":"put-3503636946","size":"3141"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/golib/iter.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"cecd1ea94155ea41d1f8f9e0c2f2e0d9\"","etags[0][part]":"1","provided_mtime":"2021-01-07T16:38:50Z","ref":"put-3503636959","size":"68"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/golib/string.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"83789abda0845357c13aa5fa9c8605a2\"","etags[0][part]":"1","provided_mtime":"2021-01-07T16:38:50Z","ref":"put-3503636955","size":"58"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/golib/bool.go'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/LICENSE'
+2021/01/07 16:38:50  curl -X 'PUT' -d 'The MIT License
 
 Copyright (c) 2019- Action Verb, LLC (https://www.files.com)
 
@@ -395,12 +419,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-' -H 'Content-Length: 1102' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/06e0bfcc-e551-4c5f-b195-b0bc9ec6e737?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201116T233432Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=sn6lghFyNof0p4bPfdSoma0fX3Tf3LieaMDXZ0Mjt9UrZlRKcmWVksu9SJ.5WfP8_SQWtfqURAQhn0FNfDJMfxmJFQ_TgcPQE2RhkY0Y3Qn_lUXsTq9_vVHPMlbjucA9&X-Amz-Signature=8bd0b0407d1ee7b2d7c495ec6f60a37dd7c159f1e23e2ca486d157e4527557ae'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"2","ref":"put-3243106362"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/LICENSE'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"5b1e5439f3483c0b3e5af1d44889d0f7\"","etags[0][part]":"1","provided_mtime":"2021-01-07T04:23:53Z","ref":"put-3243106362","size":"1102"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/LICENSE'
-2021/01/07 04:23:53  curl -X 'GET' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/LICENSE'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/LICENSE'
-2021/01/07 04:23:53  curl -X 'PUT' -d 'The MIT License
+' -H 'Content-Length: 1102' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/a22b73ee-d581-4d76-a439-2c1d7169d1d9?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220439Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=.9U1fqrIZtZA961pIPSHGGeLE1uQcYoU.f5Sw2yA3mk6vITzAW.QPeE.0FUianOeIEd6MhV8D5nYYttrx.S8u59bBL.nRQKuIbXSPd3.AoC_K.CA7Bwr_hCvtpx3ISbr&X-Amz-Signature=288bc07f964c0282be130d74e2e723f9c022d35aa3fbbd35069c535f936eb641'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"2","ref":"put-3503637080"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/LICENSE'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"5b1e5439f3483c0b3e5af1d44889d0f7\"","etags[0][part]":"1","provided_mtime":"2021-01-07T16:38:50Z","ref":"put-3503637080","size":"1102"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/LICENSE'
+2021/01/07 16:38:50  curl -X 'GET' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/LICENSE'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/LICENSE'
+2021/01/07 16:38:50  curl -X 'PUT' -d 'The MIT License
 
 Copyright (c) 2019- Action Verb, LLC (https://www.files.com)
 
@@ -421,28 +445,28 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-' -H 'Content-Length: 1102' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/4883ff6c-8b1d-4f92-b1ad-80838467c2cb?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201116T233433Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=McM.P_rCliESi.mv_YwNVfHA5xuvsWMthONEnoR_TvZvrxzFojssQNbnTyFIGu8Kkg050M7GezLDN0SIa5BcW2aaEnp1PBOjA_d6.XUJejlT0MKy1D3I.8GwDmKim1te&X-Amz-Signature=ecb7e2ad5391550adc4f5c480db47b3872863b7d1b16f2bba6c26bdd3afbd896'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"2","ref":"put-3243106444"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/LICENSE'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"5b1e5439f3483c0b3e5af1d44889d0f7\"","etags[0][part]":"1","provided_mtime":"2021-01-07T04:23:53Z","ref":"put-3243106444","size":"1102"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/LICENSE'
-2021/01/07 04:23:53  curl -X 'GET' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/LICENSE'
-2021/01/07 04:23:53  curl -X 'POST' -d '{}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder'
-2021/01/07 04:23:53  curl -X 'POST' -d '{}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder%2Fnested_1'
-2021/01/07 04:23:53  curl -X 'POST' -d '{}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder%2Fnested_1%2Fnested_2'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/TestClient_DownloadFolder%2F1.text'
-2021/01/07 04:23:53  curl -X 'PUT' -d 'testing 1' -H 'Content-Length: 9' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/6d5192f5-e97f-4168-9cc4-c93f6232a77f?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201118%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201118T183350Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=gXH8Pptga.jvw..uAIdn4c0byhDApOkXEi0KRxAHCXvVhr.xTkUkyt5mJtSdF3c1P1JnMxzch5Nh8PAg12oPzQbcKuE8_6uyP4EHSQntoOxHVwrag2jJctFUNjvvGciK&X-Amz-Signature=eea3d63cb908d77052236779eb855167d2068f6c9bd8ab533d1e7bb068bd7f69'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"2","ref":"put-3255294782"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/TestClient_DownloadFolder%2F1.text'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"ab6e3983b98e417df77242b035504638\"","etags[0][part]":"1","provided_mtime":"2021-01-07T04:23:53Z","ref":"put-3255294782","size":"9"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder%2F1.text'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/TestClient_DownloadFolder%2F2.text'
-2021/01/07 04:23:53  curl -X 'PUT' -d 'testing 2' -H 'Content-Length: 9' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/0e1b3327-016b-480a-b929-4b871b3a97cc?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201118%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201118T183351Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=Cve2aZjL27iHoEdG6hPMRZYkvOpXQDkAxBrtFO4QEkCelveFUOOEQIgJ8nGiicomlD8dPn2AkBnODwFl.Fhs0Z18j4TxvwgIOWO5kKvR6RHaSeTUYw2tJtlWEkGFLwSB&X-Amz-Signature=0f814befc7f7d05cd049525c333eb1d63fd844d4643e2c63e8daf2f13bde2665'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"2","ref":"put-3255294911"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/TestClient_DownloadFolder%2F2.text'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"f29e2ea37b89dc6c1a7522523109e5c0\"","etags[0][part]":"1","provided_mtime":"2021-01-07T04:23:53Z","ref":"put-3255294911","size":"9"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder%2F2.text'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/TestClient_DownloadFolder%2Fnested_1%2Fnested_2%2F3.text'
-2021/01/07 04:23:53  curl -X 'PUT' -d 'testing 3' -H 'Content-Length: 9' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/3c1e99fb-c21b-4d43-a16a-3d1765dd6eac?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201118%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201118T183352Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=ZzlP8haNFIfayw1WYxOwYz4xAVI_2sdl3zsyRCpMcrYNSZhqax1pgLakENWukQa0Z0Y9RqmdwDXiLXO6TvfVs6c8ZZmfPqHf0mP5GT3Nvi8YZvNI3HRXGK6GG13DtcQ4&X-Amz-Signature=9448204705bdad63027e5986a501eb1bc7efdb017549f24424e1b4f8f0c3313f'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"part":"2","ref":"put-3255295004"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/TestClient_DownloadFolder%2Fnested_1%2Fnested_2%2F3.text'
-2021/01/07 04:23:53  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"15e081c59a53cf6aadd83c7dc0e831d3\"","etags[0][part]":"1","provided_mtime":"2021-01-07T04:23:53Z","ref":"put-3255295004","size":"9"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder%2Fnested_1%2Fnested_2%2F3.text'
-2021/01/07 04:23:53  curl -X 'GET' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/folders/.%2FTestClient_DownloadFolder'
-2021/01/07 04:23:53  curl -X 'GET' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder%2F2.text'
-2021/01/07 04:23:53  curl -X 'GET' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder%2Fnested_1'
-2021/01/07 04:23:53  curl -X 'GET' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder%2Fnested_1%2Fnested_2'
-2021/01/07 04:23:53  curl -X 'GET' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder%2Fnested_1%2Fnested_2%2F3.text'
-2021/01/07 04:23:53  curl -X 'GET' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder%2F1.text'
+' -H 'Content-Length: 1102' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/08826dbc-861d-408c-a78d-05a30d913a89?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220440Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=UFoYn3968byuiXHFtT2CP2tgPo.6UPimYaxH16xf3PArNEhKrkX9v4BpcxBRZ_uCtCSMhp_9JpU2PEXKvZZzkblPOHtRaSoom2TCmfmmiAlUZzQHWm9a8NOJIV4P8t0W&X-Amz-Signature=d40a5c3b4cdf1ead560e38760104fa58eac8695116e640311d538d8e4ba66722'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"2","ref":"put-3503637168"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/LICENSE'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"5b1e5439f3483c0b3e5af1d44889d0f7\"","etags[0][part]":"1","provided_mtime":"2021-01-07T16:38:50Z","ref":"put-3503637168","size":"1102"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/LICENSE'
+2021/01/07 16:38:50  curl -X 'GET' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/LICENSE'
+2021/01/07 16:38:50  curl -X 'POST' -d '{}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder'
+2021/01/07 16:38:50  curl -X 'POST' -d '{}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder/nested_1'
+2021/01/07 16:38:50  curl -X 'POST' -d '{}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder/nested_1/nested_2'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/TestClient_DownloadFolder/1.text'
+2021/01/07 16:38:50  curl -X 'PUT' -d 'testing 1' -H 'Content-Length: 9' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/8225d67a-a24f-4f32-8fa0-0777f0307184?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220441Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=39GLT9VC_ClSreVeTYx3sy5c2ckm16VraeOMh8OwppXDBRkdA5vkh.lbudTNyPhTlyRogawJ8dp4a10TFyXm_zsP22WZKUFqFrEjCk6iGiUt8N8c1QQn0PjaGK.QlAHU&X-Amz-Signature=a93745b59421228e1954c771649be55777de0e536c8c0a4ae89a014d89f555a3'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"2","ref":"put-3503637305"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/TestClient_DownloadFolder/1.text'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"ab6e3983b98e417df77242b035504638\"","etags[0][part]":"1","provided_mtime":"2021-01-07T16:38:50Z","ref":"put-3503637305","size":"9"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder/1.text'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/TestClient_DownloadFolder/2.text'
+2021/01/07 16:38:50  curl -X 'PUT' -d 'testing 2' -H 'Content-Length: 9' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/40ef96fc-6df0-498e-835f-d75f0af9d26b?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220442Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=2pTfjEmk2_JKj3LLmxmkuo96yolARJ0c12p2_WFt1rHV2e_Cwa.6F8ekxXacQvcgLCy3TEV1KdCrqIMWaHr.0EgS7uKHFxGdJI5A.F4uOlcnorsqWQKdrOY3cYp63j_j&X-Amz-Signature=32a640c546631bad591d103182c2046fdf3239aa793844531f5f5add87d29981'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"2","ref":"put-3503637349"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/TestClient_DownloadFolder/2.text'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"f29e2ea37b89dc6c1a7522523109e5c0\"","etags[0][part]":"1","provided_mtime":"2021-01-07T16:38:50Z","ref":"put-3503637349","size":"9"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder/2.text'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"1"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/TestClient_DownloadFolder/nested_1/nested_2/3.text'
+2021/01/07 16:38:50  curl -X 'PUT' -d 'testing 3' -H 'Content-Length: 9' 'https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/fe5e87fd-0fdd-4e6c-821d-ef7772325eba?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220443Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=daHPBya9I9zADLcL3D8FMuBfxje54f8jiD_Hx7DD.iZie5.ceB_QU28nGAEliNxrnaPyUPcBFGfLwhIitU1kU8D0hApsudDL8WN5mir2X8O8wIaZ9sBZIVzUfkEgbinP&X-Amz-Signature=7922078b76e47eb1f761c5d4043d03fd5a002730a1fbedb9393986ded9423511'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"part":"2","ref":"put-3503637427"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/file_actions/begin_upload/TestClient_DownloadFolder/nested_1/nested_2/3.text'
+2021/01/07 16:38:50  curl -X 'POST' -d '{"action":"end","etags[0][etag]":"\"15e081c59a53cf6aadd83c7dc0e831d3\"","etags[0][part]":"1","provided_mtime":"2021-01-07T16:38:50Z","ref":"put-3503637427","size":"9"}' -H 'Content-Type: application/json' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder/nested_1/nested_2/3.text'
+2021/01/07 16:38:50  curl -X 'GET' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder'
+2021/01/07 16:38:50  curl -X 'GET' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder/nested_1'
+2021/01/07 16:38:50  curl -X 'GET' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder/nested_1/nested_2'
+2021/01/07 16:38:50  curl -X 'GET' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder/2.text'
+2021/01/07 16:38:50  curl -X 'GET' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder/1.text'
+2021/01/07 16:38:50  curl -X 'GET' -H 'User-Agent: Files.com Go SDK' -H 'X-Filesapi-Key: ' 'https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder/nested_1/nested_2/3.text'

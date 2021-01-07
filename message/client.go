@@ -58,12 +58,12 @@ func (c *Client) Find(params files_sdk.MessageFindParams) (files_sdk.Message, er
 	if params.Id == 0 {
 		return message, lib.CreateError(params, "Id")
 	}
-	path := "/messages/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/messages/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return message, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return message, err
 	}
@@ -84,11 +84,11 @@ func Find(params files_sdk.MessageFindParams) (files_sdk.Message, error) {
 func (c *Client) Create(params files_sdk.MessageCreateParams) (files_sdk.Message, error) {
 	message := files_sdk.Message{}
 	path := "/messages"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return message, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return message, err
 	}
@@ -111,12 +111,12 @@ func (c *Client) Update(params files_sdk.MessageUpdateParams) (files_sdk.Message
 	if params.Id == 0 {
 		return message, lib.CreateError(params, "Id")
 	}
-	path := "/messages/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/messages/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return message, err
 	}
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
 	if err != nil {
 		return message, err
 	}
@@ -139,12 +139,12 @@ func (c *Client) Delete(params files_sdk.MessageDeleteParams) (files_sdk.Message
 	if params.Id == 0 {
 		return message, lib.CreateError(params, "Id")
 	}
-	path := "/messages/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/messages/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return message, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
 	if err != nil {
 		return message, err
 	}

@@ -1,28 +1,34 @@
 package file
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
+	"sync"
 	"testing"
 
-	"github.com/Files-com/files-sdk-go/folder"
-
-	"fmt"
-
 	files_sdk "github.com/Files-com/files-sdk-go"
+	"github.com/Files-com/files-sdk-go/folder"
 	"github.com/Files-com/files-sdk-go/lib"
+	"github.com/dnaeon/go-vcr/cassette"
 	recorder "github.com/dnaeon/go-vcr/recorder"
 	"github.com/stretchr/testify/assert"
 )
 
 func CreateClient(fixture string) (*Client, *recorder.Recorder, error) {
 	client := Client{}
-	r, err := recorder.New(filepath.Join("fixtures", fixture))
+	var r *recorder.Recorder
+	var err error
+	if os.Getenv("GITLAB") != "" {
+		fmt.Println("using ModeReplaying")
+		r, err = recorder.NewAsMode(filepath.Join("fixtures", fixture), recorder.ModeReplaying, nil)
+	} else {
+		r, err = recorder.New(filepath.Join("fixtures", fixture))
+	}
 	if err != nil {
 		return &client, r, err
 	}
@@ -32,6 +38,11 @@ func CreateClient(fixture string) (*Client, *recorder.Recorder, error) {
 	}
 	client.Config.Debug = lib.Bool(true)
 	client.HttpClient = httpClient
+
+	r.AddFilter(func(i *cassette.Interaction) error {
+		delete(i.Request.Headers, "X-Filesapi-Key")
+		return nil
+	})
 	return &client, r, nil
 }
 
@@ -43,40 +54,34 @@ func TestClient_UploadFolder(t *testing.T) {
 	defer r.Stop()
 
 	assert := assert.New(t)
+	resultsMapMutex := sync.RWMutex{}
+	results := make(map[string][]int64)
 
-	firstRun := true
-	var results []string
-	files, err := client.UploadFolder("../../go/lib", lib.String("lib"), func(source string, file files_sdk.File, largestSize int, largestFilePath int, totalUploads int, err error) {
-		if firstRun {
-			results = append(results, fmt.Sprint("Number of files/directories ", totalUploads))
-			firstRun = false
-		}
-		if err != nil {
-			results = append(results, fmt.Sprint(file.Path, err))
-		} else {
-			results = append(results, fmt.Sprint(
-				fmt.Sprintf("%-"+strconv.Itoa(len(strconv.Itoa(largestSize)))+"d bytes", file.Size),
-				fmt.Sprintf("%-"+strconv.Itoa(largestFilePath)+"s => %s", source, file.Path),
-			))
-		}
-	})
+	_, err = client.UploadFolder(
+		&UploadParams{
+			Source:      "../lib",
+			Destination: "golib",
+			ProgressReporter: func(source string, file files_sdk.File, newBytesCount int64, batchStats UploadBatchStats, err error) {
+				resultsMapMutex.Lock()
+				results[file.Path] = append(results[file.Path], newBytesCount)
+				resultsMapMutex.Unlock()
+			},
+		})
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
-	assert.Equal(len(files), 9)
-	var expected []string
-	expected = append(expected, "Number of files/directories 9")
-	expected = append(expected, "68   bytes../../go/lib/string.go        => lib/string.go")
-	expected = append(expected, "691  bytes../../go/lib/required_test.go => lib/required_test.go")
-	expected = append(expected, "1087 bytes../../go/lib/required.go      => lib/required.go")
-	expected = append(expected, "332  bytes../../go/lib/query.go         => lib/query.go")
-	expected = append(expected, "231  bytes../../go/lib/export_params.go => lib/export_params.go")
-	expected = append(expected, "68   bytes../../go/lib/string.go        => lib/string.go")
-	expected = append(expected, "3141 bytes../../go/lib/iter.go          => lib/iter.go")
-	expected = append(expected, "1593 bytes../../go/lib/iter_test.go     => lib/iter_test.go")
-	expected = append(expected, "75   bytes../../go/lib/interface.go     => lib/interface.go")
-	assert.Subset(results, expected)
+	assert.Equal(10, len(results))
+	assert.Contains(results, "golib/bool.go")
+	assert.Contains(results, "golib/export_params.go")
+	assert.Contains(results, "golib/interface.go")
+	assert.Contains(results, "golib/iter.go")
+	assert.Contains(results, "golib/string.go")
+	assert.Contains(results, "golib/required_test.go")
+	assert.Contains(results, "golib/required.go")
+	assert.Contains(results, "golib/query.go")
+	assert.Contains(results, "golib/progresswriter.go")
+	assert.Contains(results, "golib/iter_test.go")
 }
 
 func TestClient_UploadFile(t *testing.T) {
@@ -88,7 +93,7 @@ func TestClient_UploadFile(t *testing.T) {
 	assert := assert.New(t)
 
 	uploadPath := "../LICENSE"
-	_, err = client.UploadFile(uploadPath, nil)
+	_, err = client.UploadFile(&UploadParams{Source: uploadPath})
 	if err != nil {
 		panic(err)
 	}
@@ -124,8 +129,8 @@ func TestClient_UploadFile(t *testing.T) {
 	defer os.Remove(tempFile.Name())
 }
 
-func TestClient_UploadFolder_as_file(t *testing.T) {
-	client, r, err := CreateClient("TestClient_UploadFolder_as_file")
+func TestClient_UploadFolder_as_file2(t *testing.T) {
+	client, r, err := CreateClient("TestClient_UploadFolder_as_file2")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,7 +138,7 @@ func TestClient_UploadFolder_as_file(t *testing.T) {
 	assert := assert.New(t)
 
 	uploadPath := "../LICENSE"
-	_, err = client.UploadFolder(uploadPath, nil)
+	_, err = client.UploadFolder(&UploadParams{Source: uploadPath})
 	if err != nil {
 		panic(err)
 	}
@@ -182,21 +187,21 @@ func TestClient_DownloadFolder(t *testing.T) {
 	folderClient.Create(files_sdk.FolderCreateParams{Path: filepath.Join("TestClient_DownloadFolder", "nested_1")})
 	folderClient.Create(files_sdk.FolderCreateParams{Path: filepath.Join("TestClient_DownloadFolder", "nested_1", "nested_2")})
 
-	client.Upload(strings.NewReader("testing 1"), filepath.Join("TestClient_DownloadFolder", "1.text"))
-	client.Upload(strings.NewReader("testing 2"), filepath.Join("TestClient_DownloadFolder", "2.text"))
-	client.Upload(strings.NewReader("testing 3"), filepath.Join("TestClient_DownloadFolder", "nested_1", "nested_2", "3.text"))
+	client.Upload(strings.NewReader("testing 1"), filepath.Join("TestClient_DownloadFolder", "1.text"), &UploadProgress{})
+	client.Upload(strings.NewReader("testing 2"), filepath.Join("TestClient_DownloadFolder", "2.text"), &UploadProgress{})
+	client.Upload(strings.NewReader("testing 3"), filepath.Join("TestClient_DownloadFolder", "nested_1", "nested_2", "3.text"), &UploadProgress{})
 
 	assert := assert.New(t)
 	var results []string
 	err = client.DownloadFolder(
 		files_sdk.FolderListForParams{Path: "./TestClient_DownloadFolder"},
 		"download",
-		func(file files_sdk.File, destination string, err error) {
+		func(incDownloadedBytes int64, file files_sdk.File, destination string, err error) {
 			if err != nil {
 				results = append(results, fmt.Sprint(file.Path, err))
 			} else {
 				results = append(results, fmt.Sprint(
-					fmt.Sprintf("%d bytes ", file.Size),
+					fmt.Sprintf("%d bytes ", incDownloadedBytes),
 					fmt.Sprintf("%s => %s", file.Path, destination),
 				))
 			}
@@ -208,12 +213,10 @@ func TestClient_DownloadFolder(t *testing.T) {
 	}
 
 	var expected []string
-	expected = append(expected, "0 bytes TestClient_DownloadFolder/nested_1 => download/TestClient_DownloadFolder/nested_1")
 	expected = append(expected, "9 bytes TestClient_DownloadFolder/2.text => download/TestClient_DownloadFolder/2.text")
 	expected = append(expected, "9 bytes TestClient_DownloadFolder/1.text => download/TestClient_DownloadFolder/1.text")
-	expected = append(expected, "0 bytes TestClient_DownloadFolder/nested_1/nested_2 => download/TestClient_DownloadFolder/nested_1/nested_2")
 	expected = append(expected, "9 bytes TestClient_DownloadFolder/nested_1/nested_2/3.text => download/TestClient_DownloadFolder/nested_1/nested_2/3.text")
+	assert.Equal(6, len(results))
 	assert.Subset(results, expected)
-	assert.Equal(len(results), 5)
 	os.RemoveAll("download")
 }

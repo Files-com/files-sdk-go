@@ -20,7 +20,7 @@ func (i *Iter) Lock() files_sdk.Lock {
 func (c *Client) ListFor(params files_sdk.LockListForParams) (*Iter, error) {
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	i := &Iter{Iter: &lib.Iter{}}
-	path := "/locks/" + lib.QueryEscape(params.Path) + ""
+	path := lib.BuildPath("/locks/", params.Path)
 	i.ListParams = &params
 	exportParams, err := i.ExportParams()
 	if err != nil {
@@ -53,12 +53,12 @@ func ListFor(params files_sdk.LockListForParams) (*Iter, error) {
 
 func (c *Client) Create(params files_sdk.LockCreateParams) (files_sdk.Lock, error) {
 	lock := files_sdk.Lock{}
-	path := "/locks/" + lib.QueryEscape(params.Path) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := lib.BuildPath("/locks/", params.Path)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return lock, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return lock, err
 	}
@@ -78,12 +78,12 @@ func Create(params files_sdk.LockCreateParams) (files_sdk.Lock, error) {
 
 func (c *Client) Delete(params files_sdk.LockDeleteParams) (files_sdk.Lock, error) {
 	lock := files_sdk.Lock{}
-	path := "/locks/" + lib.QueryEscape(params.Path) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := lib.BuildPath("/locks/", params.Path)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return lock, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
 	if err != nil {
 		return lock, err
 	}

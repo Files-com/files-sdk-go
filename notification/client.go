@@ -58,12 +58,12 @@ func (c *Client) Find(params files_sdk.NotificationFindParams) (files_sdk.Notifi
 	if params.Id == 0 {
 		return notification, lib.CreateError(params, "Id")
 	}
-	path := "/notifications/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/notifications/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return notification, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return notification, err
 	}
@@ -84,11 +84,11 @@ func Find(params files_sdk.NotificationFindParams) (files_sdk.Notification, erro
 func (c *Client) Create(params files_sdk.NotificationCreateParams) (files_sdk.Notification, error) {
 	notification := files_sdk.Notification{}
 	path := "/notifications"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return notification, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return notification, err
 	}
@@ -111,12 +111,12 @@ func (c *Client) Update(params files_sdk.NotificationUpdateParams) (files_sdk.No
 	if params.Id == 0 {
 		return notification, lib.CreateError(params, "Id")
 	}
-	path := "/notifications/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/notifications/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return notification, err
 	}
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
 	if err != nil {
 		return notification, err
 	}
@@ -139,12 +139,12 @@ func (c *Client) Delete(params files_sdk.NotificationDeleteParams) (files_sdk.No
 	if params.Id == 0 {
 		return notification, lib.CreateError(params, "Id")
 	}
-	path := "/notifications/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/notifications/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return notification, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
 	if err != nil {
 		return notification, err
 	}

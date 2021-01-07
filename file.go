@@ -48,7 +48,7 @@ type FileDownloadParams struct {
 	PreviewSize       string    `url:"preview_size,omitempty" required:"false"`
 	WithPreviews      *bool     `url:"with_previews,omitempty" required:"false"`
 	WithPriorityColor *bool     `url:"with_priority_color,omitempty" required:"false"`
-	Writer            io.Writer ``
+	Writer            io.Writer `url:"-,omitempty" required:"false"`
 }
 
 type FileCreateParams struct {

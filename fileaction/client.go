@@ -11,12 +11,12 @@ type Client struct {
 
 func (c *Client) Copy(params files_sdk.FileActionCopyParams) (files_sdk.FileAction, error) {
 	fileAction := files_sdk.FileAction{}
-	path := "/file_actions/copy/" + lib.QueryEscape(params.Path) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := lib.BuildPath("/file_actions/copy/", params.Path)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return fileAction, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return fileAction, err
 	}
@@ -36,12 +36,12 @@ func Copy(params files_sdk.FileActionCopyParams) (files_sdk.FileAction, error) {
 
 func (c *Client) Move(params files_sdk.FileActionMoveParams) (files_sdk.FileAction, error) {
 	fileAction := files_sdk.FileAction{}
-	path := "/file_actions/move/" + lib.QueryEscape(params.Path) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := lib.BuildPath("/file_actions/move/", params.Path)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return fileAction, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return fileAction, err
 	}
@@ -61,12 +61,12 @@ func Move(params files_sdk.FileActionMoveParams) (files_sdk.FileAction, error) {
 
 func (c *Client) BeginUpload(params files_sdk.FileActionBeginUploadParams) (files_sdk.FileUploadPartCollection, error) {
 	fileUploadPartCollection := files_sdk.FileUploadPartCollection{}
-	path := "/file_actions/begin_upload/" + lib.QueryEscape(params.Path) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := lib.BuildPath("/file_actions/begin_upload/", params.Path)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return fileUploadPartCollection, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return fileUploadPartCollection, err
 	}

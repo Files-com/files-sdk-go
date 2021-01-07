@@ -58,12 +58,12 @@ func (c *Client) Find(params files_sdk.MessageCommentReactionFindParams) (files_
 	if params.Id == 0 {
 		return messageCommentReaction, lib.CreateError(params, "Id")
 	}
-	path := "/message_comment_reactions/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/message_comment_reactions/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return messageCommentReaction, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return messageCommentReaction, err
 	}
@@ -84,11 +84,11 @@ func Find(params files_sdk.MessageCommentReactionFindParams) (files_sdk.MessageC
 func (c *Client) Create(params files_sdk.MessageCommentReactionCreateParams) (files_sdk.MessageCommentReaction, error) {
 	messageCommentReaction := files_sdk.MessageCommentReaction{}
 	path := "/message_comment_reactions"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return messageCommentReaction, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return messageCommentReaction, err
 	}
@@ -111,12 +111,12 @@ func (c *Client) Delete(params files_sdk.MessageCommentReactionDeleteParams) (fi
 	if params.Id == 0 {
 		return messageCommentReaction, lib.CreateError(params, "Id")
 	}
-	path := "/message_comment_reactions/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/message_comment_reactions/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return messageCommentReaction, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
 	if err != nil {
 		return messageCommentReaction, err
 	}

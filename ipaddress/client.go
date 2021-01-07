@@ -54,11 +54,11 @@ func List(params files_sdk.IpAddressListParams) (*Iter, error) {
 func (c *Client) GetReserved(params files_sdk.IpAddressGetReservedParams) (files_sdk.PublicIpAddressCollection, error) {
 	publicIpAddressCollection := files_sdk.PublicIpAddressCollection{}
 	path := "/ip_addresses/reserved"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return publicIpAddressCollection, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return publicIpAddressCollection, err
 	}

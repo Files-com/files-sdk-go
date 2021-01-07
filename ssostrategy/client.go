@@ -58,12 +58,12 @@ func (c *Client) Find(params files_sdk.SsoStrategyFindParams) (files_sdk.SsoStra
 	if params.Id == 0 {
 		return ssoStrategy, lib.CreateError(params, "Id")
 	}
-	path := "/sso_strategies/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/sso_strategies/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return ssoStrategy, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return ssoStrategy, err
 	}

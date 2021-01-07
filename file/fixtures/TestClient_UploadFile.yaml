@@ -9,19 +9,17 @@ interactions:
       - application/json
       User-Agent:
       - Files.com Go SDK
-      X-Filesapi-Key:
-      - 11ebbfedb6cebcdf1d7ab0faafc4d677006b6e5cbd9a4cbe8c849f601fe82d68
     url: https://app.files.com/api/rest/v1/file_actions/begin_upload/LICENSE
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2020-11-16T23:49:32Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-3243106362","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/06e0bfcc-e551-4c5f-b195-b0bc9ec6e737?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201116%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20201116T233432Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=sn6lghFyNof0p4bPfdSoma0fX3Tf3LieaMDXZ0Mjt9UrZlRKcmWVksu9SJ.5WfP8_SQWtfqURAQhn0FNfDJMfxmJFQ_TgcPQE2RhkY0Y3Qn_lUXsTq9_vVHPMlbjucA9\u0026X-Amz-Signature=8bd0b0407d1ee7b2d7c495ec6f60a37dd7c159f1e23e2ca486d157e4527557ae"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2020-12-29T22:19:39Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-3503637080","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/a22b73ee-d581-4d76-a439-2c1d7169d1d9?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20201229T220439Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=.9U1fqrIZtZA961pIPSHGGeLE1uQcYoU.f5Sw2yA3mk6vITzAW.QPeE.0FUianOeIEd6MhV8D5nYYttrx.S8u59bBL.nRQKuIbXSPd3.AoC_K.CA7Bwr_hCvtpx3ISbr\u0026X-Amz-Signature=288bc07f964c0282be130d74e2e723f9c022d35aa3fbbd35069c535f936eb641"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 16 Nov 2020 23:34:32 GMT
+      - Tue, 29 Dec 2020 22:04:39 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -29,7 +27,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 73b05c09-131c-4784-b45c-bcd5af34e2d4
+      - 9317df5e-c807-4700-b40a-9340ab6e8d28
     status: 200 OK
     code: 200
     duration: ""
@@ -60,7 +58,7 @@ interactions:
     headers:
       Content-Length:
       - "1102"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/06e0bfcc-e551-4c5f-b195-b0bc9ec6e737?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201116T233432Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=sn6lghFyNof0p4bPfdSoma0fX3Tf3LieaMDXZ0Mjt9UrZlRKcmWVksu9SJ.5WfP8_SQWtfqURAQhn0FNfDJMfxmJFQ_TgcPQE2RhkY0Y3Qn_lUXsTq9_vVHPMlbjucA9&X-Amz-Signature=8bd0b0407d1ee7b2d7c495ec6f60a37dd7c159f1e23e2ca486d157e4527557ae
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/a22b73ee-d581-4d76-a439-2c1d7169d1d9?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220439Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=.9U1fqrIZtZA961pIPSHGGeLE1uQcYoU.f5Sw2yA3mk6vITzAW.QPeE.0FUianOeIEd6MhV8D5nYYttrx.S8u59bBL.nRQKuIbXSPd3.AoC_K.CA7Bwr_hCvtpx3ISbr&X-Amz-Signature=288bc07f964c0282be130d74e2e723f9c022d35aa3fbbd35069c535f936eb641
     method: PUT
   response:
     body: ""
@@ -68,41 +66,39 @@ interactions:
       Content-Length:
       - "0"
       Date:
-      - Mon, 16 Nov 2020 23:34:33 GMT
+      - Tue, 29 Dec 2020 22:04:40 GMT
       Etag:
       - '"5b1e5439f3483c0b3e5af1d44889d0f7"'
       Server:
       - AmazonS3
       X-Amz-Id-2:
-      - dcHaAik3p8r+3eSK+JcDnKsUtDMTQwaDwSeSOuI6YKWxrOQgiM9j7+xUZq4QzD2YF7m2UvK9/KE=
+      - hdadAPOjoWuqV2BQK6C/wNLyG+LK6WQSGL4hJ18SdSp+j/WGZsrFPCoeF6mhTmzVkxSh1SL+zz4=
       X-Amz-Request-Id:
-      - 4D372BB80B2BEE1B
+      - 9FE783453A742954
       X-Amz-Server-Side-Encryption:
       - AES256
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"part":"2","ref":"put-3243106362"}'
+    body: '{"part":"2","ref":"put-3503637080"}'
     form: {}
     headers:
       Content-Type:
       - application/json
       User-Agent:
       - Files.com Go SDK
-      X-Filesapi-Key:
-      - 11ebbfedb6cebcdf1d7ab0faafc4d677006b6e5cbd9a4cbe8c849f601fe82d68
     url: https://app.files.com/api/rest/v1/file_actions/begin_upload/LICENSE
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2020-11-16T23:49:32Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":2,"partsize":6291456,"ref":"put-3243106362","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/06e0bfcc-e551-4c5f-b195-b0bc9ec6e737?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201116%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20201116T233432Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=2\u0026response-content-type=application%2Foctet-stream\u0026uploadId=sn6lghFyNof0p4bPfdSoma0fX3Tf3LieaMDXZ0Mjt9UrZlRKcmWVksu9SJ.5WfP8_SQWtfqURAQhn0FNfDJMfxmJFQ_TgcPQE2RhkY0Y3Qn_lUXsTq9_vVHPMlbjucA9\u0026X-Amz-Signature=2d2dafdde439fdee17d716833d4d39115ac4ed0d392e8a5ac12b1846eedb214e"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2020-12-29T22:19:39Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":2,"partsize":6291456,"ref":"put-3503637080","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/a22b73ee-d581-4d76-a439-2c1d7169d1d9?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20201229T220439Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=2\u0026response-content-type=application%2Foctet-stream\u0026uploadId=.9U1fqrIZtZA961pIPSHGGeLE1uQcYoU.f5Sw2yA3mk6vITzAW.QPeE.0FUianOeIEd6MhV8D5nYYttrx.S8u59bBL.nRQKuIbXSPd3.AoC_K.CA7Bwr_hCvtpx3ISbr\u0026X-Amz-Signature=b58ac4dfc58822745dc14067dbb326f925e05d9720f6011a6b30c89ee7e18df8"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 16 Nov 2020 23:34:32 GMT
+      - Tue, 29 Dec 2020 22:04:39 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -110,31 +106,29 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - e34aa838-ac89-462f-bb1d-21fc193505ed
+      - 9eadf371-7111-4bb8-9aa0-3abc388d9b75
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"action":"end","etags[0][etag]":"\"5b1e5439f3483c0b3e5af1d44889d0f7\"","etags[0][part]":"1","provided_mtime":"2020-11-16T15:34:32-08:00","ref":"put-3243106362","size":"1102"}'
+    body: '{"action":"end","etags[0][etag]":"\"5b1e5439f3483c0b3e5af1d44889d0f7\"","etags[0][part]":"1","provided_mtime":"2020-12-29T14:04:39-08:00","ref":"put-3503637080","size":"1102"}'
     form: {}
     headers:
       Content-Type:
       - application/json
       User-Agent:
       - Files.com Go SDK
-      X-Filesapi-Key:
-      - 11ebbfedb6cebcdf1d7ab0faafc4d677006b6e5cbd9a4cbe8c849f601fe82d68
     url: https://app.files.com/api/rest/v1/files/LICENSE
     method: POST
   response:
-    body: '{"path":"LICENSE","display_name":"LICENSE","type":"file","size":1102,"mtime":"2020-11-16T23:34:33Z","provided_mtime":"2020-11-16T23:34:32Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
+    body: '{"path":"LICENSE","display_name":"LICENSE","type":"file","size":1102,"mtime":"2020-12-29T22:04:40Z","provided_mtime":"2020-12-29T22:04:39Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 16 Nov 2020 23:34:33 GMT
+      - Tue, 29 Dec 2020 22:04:40 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -142,7 +136,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 4ee89d21-94f4-4aef-8068-a6f2ad3a9538
+      - aae73706-ab35-4129-9aed-dd10560a0121
     status: 200 OK
     code: 200
     duration: ""
@@ -152,19 +146,17 @@ interactions:
     headers:
       User-Agent:
       - Files.com Go SDK
-      X-Filesapi-Key:
-      - 11ebbfedb6cebcdf1d7ab0faafc4d677006b6e5cbd9a4cbe8c849f601fe82d68
     url: https://app.files.com/api/rest/v1/files/LICENSE
     method: GET
   response:
-    body: '{"path":"LICENSE","display_name":"LICENSE","type":"file","size":1102,"mtime":"2020-11-16T23:34:33Z","provided_mtime":"2020-11-16T23:34:32Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/06e0bfcc-e551-4c5f-b195-b0bc9ec6e737?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201116%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20201116T233433Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22LICENSE%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=6b6262fb6572909c57278c1844f06cc2df30f49baa41c688688cab68262e2646"}'
+    body: '{"path":"LICENSE","display_name":"LICENSE","type":"file","size":1102,"mtime":"2020-12-29T22:04:40Z","provided_mtime":"2020-12-29T22:04:39Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/a22b73ee-d581-4d76-a439-2c1d7169d1d9?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20201229T220440Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22LICENSE%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=59f15bf64c7f4b0616f3a2d04b2843baf310fb887e39db4b501e984ec47efb92"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 16 Nov 2020 23:34:33 GMT
+      - Tue, 29 Dec 2020 22:04:40 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -172,7 +164,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 81eda33e-1af0-490e-9b25-f6a455953345
+      - 12fd3b1c-ff8c-4be4-958f-1044150bd9ac
     status: 200 OK
     code: 200
     duration: ""
@@ -180,7 +172,7 @@ interactions:
     body: ""
     form: {}
     headers: {}
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/06e0bfcc-e551-4c5f-b195-b0bc9ec6e737?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201116%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201116T233433Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%22LICENSE%22&response-content-type=application%2Foctet-stream&X-Amz-Signature=6b6262fb6572909c57278c1844f06cc2df30f49baa41c688688cab68262e2646
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/a22b73ee-d581-4d76-a439-2c1d7169d1d9?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20201229%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20201229T220440Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%22LICENSE%22&response-content-type=application%2Foctet-stream&X-Amz-Signature=59f15bf64c7f4b0616f3a2d04b2843baf310fb887e39db4b501e984ec47efb92
     method: GET
   response:
     body: |
@@ -217,15 +209,15 @@ interactions:
       Content-Type:
       - application/octet-stream
       Date:
-      - Mon, 16 Nov 2020 23:34:34 GMT
+      - Tue, 29 Dec 2020 22:04:41 GMT
       Etag:
       - '"271a2e273e57cb8d4d3b15f6d01195f5-1"'
       Last-Modified:
-      - Mon, 16 Nov 2020 23:34:33 GMT
+      - Tue, 29 Dec 2020 22:04:40 GMT
       Server:
       - AmazonS3
       X-Amz-Id-2:
-      - qeJQAu/t/ZXEjDy0j+1GFTt4Wh5COMaClvQtRwTqHmEeT2dQUWRsUibgtXjnwyganJ9hSOI78oc=
+      - UY/DrzMUsWlNLjUxehTjlkTuucr1qg+5iM6kZCtqb1AdGwZcQysR/oj5BHtRUqCdp6KdmvD0TtY=
       X-Amz-Meta-X-Amz-Meta-Gid:
       - "65534"
       X-Amz-Meta-X-Amz-Meta-Mode:
@@ -233,7 +225,7 @@ interactions:
       X-Amz-Meta-X-Amz-Meta-Uid:
       - "65534"
       X-Amz-Request-Id:
-      - 785E352E648CCA1A
+      - 591BA8DB874A0EF8
       X-Amz-Server-Side-Encryption:
       - AES256
       X-Amz-Version-Id:

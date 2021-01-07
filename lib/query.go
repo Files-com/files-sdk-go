@@ -2,6 +2,7 @@ package lib
 
 import (
 	"net/url"
+	"path/filepath"
 	"strings"
 )
 
@@ -11,9 +12,13 @@ func PathEscape(path string) string {
 	pathParts := strings.Split(path, "/")
 	newParts := make([]string, len(pathParts))
 
-	for _, part := range pathParts {
-		newParts = append(newParts, url.PathEscape(part))
+	for i, part := range pathParts {
+		newParts[i] = url.PathEscape(part)
 	}
 
 	return strings.Join(newParts, "/")
+}
+
+func BuildPath(resourcePath string, unescapedPath string) string {
+	return filepath.Join(resourcePath, PathEscape(unescapedPath))
 }

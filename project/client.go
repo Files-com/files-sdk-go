@@ -58,12 +58,12 @@ func (c *Client) Find(params files_sdk.ProjectFindParams) (files_sdk.Project, er
 	if params.Id == 0 {
 		return project, lib.CreateError(params, "Id")
 	}
-	path := "/projects/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/projects/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return project, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return project, err
 	}
@@ -84,11 +84,11 @@ func Find(params files_sdk.ProjectFindParams) (files_sdk.Project, error) {
 func (c *Client) Create(params files_sdk.ProjectCreateParams) (files_sdk.Project, error) {
 	project := files_sdk.Project{}
 	path := "/projects"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return project, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return project, err
 	}
@@ -111,12 +111,12 @@ func (c *Client) Update(params files_sdk.ProjectUpdateParams) (files_sdk.Project
 	if params.Id == 0 {
 		return project, lib.CreateError(params, "Id")
 	}
-	path := "/projects/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/projects/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return project, err
 	}
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
 	if err != nil {
 		return project, err
 	}
@@ -139,12 +139,12 @@ func (c *Client) Delete(params files_sdk.ProjectDeleteParams) (files_sdk.Project
 	if params.Id == 0 {
 		return project, lib.CreateError(params, "Id")
 	}
-	path := "/projects/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/projects/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return project, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
 	if err != nil {
 		return project, err
 	}

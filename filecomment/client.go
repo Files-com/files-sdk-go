@@ -22,7 +22,7 @@ func (i *Iter) FileComment() files_sdk.FileComment {
 func (c *Client) ListFor(params files_sdk.FileCommentListForParams) (*Iter, error) {
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	i := &Iter{Iter: &lib.Iter{}}
-	path := "/file_comments/files/" + lib.QueryEscape(params.Path) + ""
+	path := lib.BuildPath("/file_comments/files/", params.Path)
 	i.ListParams = &params
 	exportParams, err := i.ExportParams()
 	if err != nil {
@@ -56,11 +56,11 @@ func ListFor(params files_sdk.FileCommentListForParams) (*Iter, error) {
 func (c *Client) Create(params files_sdk.FileCommentCreateParams) (files_sdk.FileComment, error) {
 	fileComment := files_sdk.FileComment{}
 	path := "/file_comments"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return fileComment, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return fileComment, err
 	}
@@ -83,12 +83,12 @@ func (c *Client) Update(params files_sdk.FileCommentUpdateParams) (files_sdk.Fil
 	if params.Id == 0 {
 		return fileComment, lib.CreateError(params, "Id")
 	}
-	path := "/file_comments/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/file_comments/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return fileComment, err
 	}
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
 	if err != nil {
 		return fileComment, err
 	}
@@ -111,12 +111,12 @@ func (c *Client) Delete(params files_sdk.FileCommentDeleteParams) (files_sdk.Fil
 	if params.Id == 0 {
 		return fileComment, lib.CreateError(params, "Id")
 	}
-	path := "/file_comments/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/file_comments/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return fileComment, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
 	if err != nil {
 		return fileComment, err
 	}

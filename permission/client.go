@@ -56,11 +56,11 @@ func List(params files_sdk.PermissionListParams) (*Iter, error) {
 func (c *Client) Create(params files_sdk.PermissionCreateParams) (files_sdk.Permission, error) {
 	permission := files_sdk.Permission{}
 	path := "/permissions"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return permission, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return permission, err
 	}
@@ -83,12 +83,12 @@ func (c *Client) Delete(params files_sdk.PermissionDeleteParams) (files_sdk.Perm
 	if params.Id == 0 {
 		return permission, lib.CreateError(params, "Id")
 	}
-	path := "/permissions/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/permissions/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return permission, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
 	if err != nil {
 		return permission, err
 	}

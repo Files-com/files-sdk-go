@@ -14,11 +14,11 @@ type Client struct {
 func (c *Client) Create(params files_sdk.FileCommentReactionCreateParams) (files_sdk.FileCommentReaction, error) {
 	fileCommentReaction := files_sdk.FileCommentReaction{}
 	path := "/file_comment_reactions"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return fileCommentReaction, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return fileCommentReaction, err
 	}
@@ -41,12 +41,12 @@ func (c *Client) Delete(params files_sdk.FileCommentReactionDeleteParams) (files
 	if params.Id == 0 {
 		return fileCommentReaction, lib.CreateError(params, "Id")
 	}
-	path := "/file_comment_reactions/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/file_comment_reactions/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return fileCommentReaction, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
 	if err != nil {
 		return fileCommentReaction, err
 	}

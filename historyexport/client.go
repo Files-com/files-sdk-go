@@ -16,12 +16,12 @@ func (c *Client) Find(params files_sdk.HistoryExportFindParams) (files_sdk.Histo
 	if params.Id == 0 {
 		return historyExport, lib.CreateError(params, "Id")
 	}
-	path := "/history_exports/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/history_exports/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return historyExport, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return historyExport, err
 	}
@@ -42,11 +42,11 @@ func Find(params files_sdk.HistoryExportFindParams) (files_sdk.HistoryExport, er
 func (c *Client) Create(params files_sdk.HistoryExportCreateParams) (files_sdk.HistoryExport, error) {
 	historyExport := files_sdk.HistoryExport{}
 	path := "/history_exports"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return historyExport, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return historyExport, err
 	}

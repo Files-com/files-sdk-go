@@ -58,12 +58,12 @@ func (c *Client) Find(params files_sdk.PublicKeyFindParams) (files_sdk.PublicKey
 	if params.Id == 0 {
 		return publicKey, lib.CreateError(params, "Id")
 	}
-	path := "/public_keys/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/public_keys/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return publicKey, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return publicKey, err
 	}
@@ -84,11 +84,11 @@ func Find(params files_sdk.PublicKeyFindParams) (files_sdk.PublicKey, error) {
 func (c *Client) Create(params files_sdk.PublicKeyCreateParams) (files_sdk.PublicKey, error) {
 	publicKey := files_sdk.PublicKey{}
 	path := "/public_keys"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return publicKey, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return publicKey, err
 	}
@@ -111,12 +111,12 @@ func (c *Client) Update(params files_sdk.PublicKeyUpdateParams) (files_sdk.Publi
 	if params.Id == 0 {
 		return publicKey, lib.CreateError(params, "Id")
 	}
-	path := "/public_keys/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/public_keys/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return publicKey, err
 	}
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
 	if err != nil {
 		return publicKey, err
 	}
@@ -139,12 +139,12 @@ func (c *Client) Delete(params files_sdk.PublicKeyDeleteParams) (files_sdk.Publi
 	if params.Id == 0 {
 		return publicKey, lib.CreateError(params, "Id")
 	}
-	path := "/public_keys/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/public_keys/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return publicKey, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
 	if err != nil {
 		return publicKey, err
 	}

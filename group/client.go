@@ -58,12 +58,12 @@ func (c *Client) Find(params files_sdk.GroupFindParams) (files_sdk.Group, error)
 	if params.Id == 0 {
 		return group, lib.CreateError(params, "Id")
 	}
-	path := "/groups/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/groups/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return group, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return group, err
 	}
@@ -84,11 +84,11 @@ func Find(params files_sdk.GroupFindParams) (files_sdk.Group, error) {
 func (c *Client) Create(params files_sdk.GroupCreateParams) (files_sdk.Group, error) {
 	group := files_sdk.Group{}
 	path := "/groups"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return group, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return group, err
 	}
@@ -111,12 +111,12 @@ func (c *Client) Update(params files_sdk.GroupUpdateParams) (files_sdk.Group, er
 	if params.Id == 0 {
 		return group, lib.CreateError(params, "Id")
 	}
-	path := "/groups/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/groups/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return group, err
 	}
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
 	if err != nil {
 		return group, err
 	}
@@ -139,12 +139,12 @@ func (c *Client) Delete(params files_sdk.GroupDeleteParams) (files_sdk.Group, er
 	if params.Id == 0 {
 		return group, lib.CreateError(params, "Id")
 	}
-	path := "/groups/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/groups/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return group, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
 	if err != nil {
 		return group, err
 	}

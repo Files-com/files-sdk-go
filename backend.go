@@ -3,6 +3,7 @@ package files_sdk
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -39,7 +40,7 @@ func ParseResponse(res *http.Response) (*[]byte, *http.Response, error) {
 
 }
 
-func CallRaw(method string, config Config, uri string, params *url.Values, body *bytes.Buffer, headers *http.Header) (*http.Response, error) {
+func CallRaw(method string, config Config, uri string, params *url.Values, body io.Reader, headers *http.Header) (*http.Response, error) {
 	if headers == nil {
 		headers = &http.Header{}
 	}
@@ -75,6 +76,7 @@ func CallRaw(method string, config Config, uri string, params *url.Values, body 
 			req.Body = ioutil.NopCloser(body)
 		}
 	}
+
 	req.Header = *headers
 	command, err := http2curl.GetCurlCommand(req)
 	if err != nil {
@@ -101,7 +103,7 @@ func paramsToJson(params *url.Values, headers *http.Header) (*bytes.Buffer, erro
 
 func removeDash(params *url.Values) {
 	for key := range *params {
-		if key == "-" {
+		if string(key[0]) == "-" {
 			params.Del(key)
 		}
 	}

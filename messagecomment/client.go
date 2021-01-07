@@ -58,12 +58,12 @@ func (c *Client) Find(params files_sdk.MessageCommentFindParams) (files_sdk.Mess
 	if params.Id == 0 {
 		return messageComment, lib.CreateError(params, "Id")
 	}
-	path := "/message_comments/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/message_comments/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return messageComment, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return messageComment, err
 	}
@@ -84,11 +84,11 @@ func Find(params files_sdk.MessageCommentFindParams) (files_sdk.MessageComment, 
 func (c *Client) Create(params files_sdk.MessageCommentCreateParams) (files_sdk.MessageComment, error) {
 	messageComment := files_sdk.MessageComment{}
 	path := "/message_comments"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return messageComment, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return messageComment, err
 	}
@@ -111,12 +111,12 @@ func (c *Client) Update(params files_sdk.MessageCommentUpdateParams) (files_sdk.
 	if params.Id == 0 {
 		return messageComment, lib.CreateError(params, "Id")
 	}
-	path := "/message_comments/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/message_comments/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return messageComment, err
 	}
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
 	if err != nil {
 		return messageComment, err
 	}
@@ -139,12 +139,12 @@ func (c *Client) Delete(params files_sdk.MessageCommentDeleteParams) (files_sdk.
 	if params.Id == 0 {
 		return messageComment, lib.CreateError(params, "Id")
 	}
-	path := "/message_comments/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/message_comments/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return messageComment, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
 	if err != nil {
 		return messageComment, err
 	}

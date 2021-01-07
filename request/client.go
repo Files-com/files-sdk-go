@@ -55,12 +55,12 @@ func List(params files_sdk.RequestListParams) (*Iter, error) {
 
 func (c *Client) GetFolder(params files_sdk.RequestGetFolderParams) (files_sdk.RequestCollection, error) {
 	requestCollection := files_sdk.RequestCollection{}
-	path := "/requests/folders/" + lib.QueryEscape(params.Path) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := lib.BuildPath("/requests/folders/", params.Path)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return requestCollection, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return requestCollection, err
 	}
@@ -81,11 +81,11 @@ func GetFolder(params files_sdk.RequestGetFolderParams) (files_sdk.RequestCollec
 func (c *Client) Create(params files_sdk.RequestCreateParams) (files_sdk.Request, error) {
 	request := files_sdk.Request{}
 	path := "/requests"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return request, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return request, err
 	}
@@ -108,12 +108,12 @@ func (c *Client) Delete(params files_sdk.RequestDeleteParams) (files_sdk.Request
 	if params.Id == 0 {
 		return request, lib.CreateError(params, "Id")
 	}
-	path := "/requests/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/requests/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return request, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
 	if err != nil {
 		return request, err
 	}

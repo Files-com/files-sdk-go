@@ -58,12 +58,12 @@ func (c *Client) Find(params files_sdk.AutomationFindParams) (files_sdk.Automati
 	if params.Id == 0 {
 		return automation, lib.CreateError(params, "Id")
 	}
-	path := "/automations/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/automations/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return automation, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return automation, err
 	}
@@ -84,11 +84,11 @@ func Find(params files_sdk.AutomationFindParams) (files_sdk.Automation, error) {
 func (c *Client) Create(params files_sdk.AutomationCreateParams) (files_sdk.Automation, error) {
 	automation := files_sdk.Automation{}
 	path := "/automations"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return automation, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return automation, err
 	}
@@ -111,12 +111,12 @@ func (c *Client) Update(params files_sdk.AutomationUpdateParams) (files_sdk.Auto
 	if params.Id == 0 {
 		return automation, lib.CreateError(params, "Id")
 	}
-	path := "/automations/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/automations/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return automation, err
 	}
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
 	if err != nil {
 		return automation, err
 	}
@@ -139,12 +139,12 @@ func (c *Client) Delete(params files_sdk.AutomationDeleteParams) (files_sdk.Auto
 	if params.Id == 0 {
 		return automation, lib.CreateError(params, "Id")
 	}
-	path := "/automations/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/automations/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return automation, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
 	if err != nil {
 		return automation, err
 	}

@@ -58,12 +58,12 @@ func (c *Client) Find(params files_sdk.ClickwrapFindParams) (files_sdk.Clickwrap
 	if params.Id == 0 {
 		return clickwrap, lib.CreateError(params, "Id")
 	}
-	path := "/clickwraps/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/clickwraps/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return clickwrap, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return clickwrap, err
 	}
@@ -84,11 +84,11 @@ func Find(params files_sdk.ClickwrapFindParams) (files_sdk.Clickwrap, error) {
 func (c *Client) Create(params files_sdk.ClickwrapCreateParams) (files_sdk.Clickwrap, error) {
 	clickwrap := files_sdk.Clickwrap{}
 	path := "/clickwraps"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return clickwrap, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
 		return clickwrap, err
 	}
@@ -111,12 +111,12 @@ func (c *Client) Update(params files_sdk.ClickwrapUpdateParams) (files_sdk.Click
 	if params.Id == 0 {
 		return clickwrap, lib.CreateError(params, "Id")
 	}
-	path := "/clickwraps/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/clickwraps/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return clickwrap, err
 	}
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
 	if err != nil {
 		return clickwrap, err
 	}
@@ -139,12 +139,12 @@ func (c *Client) Delete(params files_sdk.ClickwrapDeleteParams) (files_sdk.Click
 	if params.Id == 0 {
 		return clickwrap, lib.CreateError(params, "Id")
 	}
-	path := "/clickwraps/" + lib.QueryEscape(strconv.FormatInt(params.Id, 10)) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := "/clickwraps/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return clickwrap, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
 	if err != nil {
 		return clickwrap, err
 	}

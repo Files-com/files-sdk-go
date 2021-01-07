@@ -19,12 +19,12 @@ func (i *Iter) History() files_sdk.History {
 
 func (c *Client) ListForFile(params files_sdk.HistoryListForFileParams) (files_sdk.ActionCollection, error) {
 	actionCollection := files_sdk.ActionCollection{}
-	path := "/history/files/" + lib.QueryEscape(params.Path) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := lib.BuildPath("/history/files/", params.Path)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return actionCollection, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return actionCollection, err
 	}
@@ -44,12 +44,12 @@ func ListForFile(params files_sdk.HistoryListForFileParams) (files_sdk.ActionCol
 
 func (c *Client) ListForFolder(params files_sdk.HistoryListForFolderParams) (files_sdk.ActionCollection, error) {
 	actionCollection := files_sdk.ActionCollection{}
-	path := "/history/folders/" + lib.QueryEscape(params.Path) + ""
-	exportedParms, err := lib.ExportParams(params)
+	path := lib.BuildPath("/history/folders/", params.Path)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return actionCollection, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return actionCollection, err
 	}
@@ -70,11 +70,11 @@ func ListForFolder(params files_sdk.HistoryListForFolderParams) (files_sdk.Actio
 func (c *Client) ListForUser(params files_sdk.HistoryListForUserParams) (files_sdk.ActionCollection, error) {
 	actionCollection := files_sdk.ActionCollection{}
 	path := "/history/users/{user_id}"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return actionCollection, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return actionCollection, err
 	}
@@ -95,11 +95,11 @@ func ListForUser(params files_sdk.HistoryListForUserParams) (files_sdk.ActionCol
 func (c *Client) ListLogins(params files_sdk.HistoryListLoginsParams) (files_sdk.ActionCollection, error) {
 	actionCollection := files_sdk.ActionCollection{}
 	path := "/history/login"
-	exportedParms, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return actionCollection, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParms)
+	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
 	if err != nil {
 		return actionCollection, err
 	}
