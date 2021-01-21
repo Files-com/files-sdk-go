@@ -5,11 +5,13 @@ import (
 )
 
 type Status struct {
-	Code    int      `json:"code,omitempty"`
-	Message string   `json:"message,omitempty"`
-	Status  string   `json:"status,omitempty"`
-	Data    string   `json:"data,omitempty"`
-	Errors  []string `json:"errors,omitempty"`
+	Code          int      `json:"code,omitempty"`
+	Message       string   `json:"message,omitempty"`
+	Status        string   `json:"status,omitempty"`
+	Data          string   `json:"data,omitempty"`
+	Errors        []string `json:"errors,omitempty"`
+	ClickwrapId   int64    `json:"clickwrap_id,omitempty"`
+	ClickwrapBody string   `json:"clickwrap_body,omitempty"`
 }
 
 type StatusCollection []Status

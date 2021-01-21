@@ -1,4 +1,4 @@
-package bundle_recipient
+package inbox_recipient
 
 import (
 	files_sdk "github.com/Files-com/files-sdk-go"
@@ -13,14 +13,14 @@ type Iter struct {
 	*lib.Iter
 }
 
-func (i *Iter) BundleRecipient() files_sdk.BundleRecipient {
-	return i.Current().(files_sdk.BundleRecipient)
+func (i *Iter) InboxRecipient() files_sdk.InboxRecipient {
+	return i.Current().(files_sdk.InboxRecipient)
 }
 
-func (c *Client) List(params files_sdk.BundleRecipientListParams) (*Iter, error) {
+func (c *Client) List(params files_sdk.InboxRecipientListParams) (*Iter, error) {
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	i := &Iter{Iter: &lib.Iter{}}
-	path := "/bundle_recipients"
+	path := "/inbox_recipients"
 	i.ListParams = &params
 	exportParams, err := i.ExportParams()
 	if err != nil {
@@ -32,7 +32,7 @@ func (c *Client) List(params files_sdk.BundleRecipientListParams) (*Iter, error)
 		if err != nil {
 			return &defaultValue, "", err
 		}
-		list := files_sdk.BundleRecipientCollection{}
+		list := files_sdk.InboxRecipientCollection{}
 		if err := list.UnmarshalJSON(*data); err != nil {
 			return &defaultValue, "", err
 		}
@@ -47,31 +47,31 @@ func (c *Client) List(params files_sdk.BundleRecipientListParams) (*Iter, error)
 	return i, nil
 }
 
-func List(params files_sdk.BundleRecipientListParams) (*Iter, error) {
+func List(params files_sdk.InboxRecipientListParams) (*Iter, error) {
 	return (&Client{}).List(params)
 }
 
-func (c *Client) Create(params files_sdk.BundleRecipientCreateParams) (files_sdk.BundleRecipient, error) {
-	bundleRecipient := files_sdk.BundleRecipient{}
-	path := "/bundle_recipients"
+func (c *Client) Create(params files_sdk.InboxRecipientCreateParams) (files_sdk.InboxRecipient, error) {
+	inboxRecipient := files_sdk.InboxRecipient{}
+	path := "/inbox_recipients"
 	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
-		return bundleRecipient, err
+		return inboxRecipient, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
 	if err != nil {
-		return bundleRecipient, err
+		return inboxRecipient, err
 	}
 	if res.StatusCode == 204 {
-		return bundleRecipient, nil
+		return inboxRecipient, nil
 	}
-	if err := bundleRecipient.UnmarshalJSON(*data); err != nil {
-		return bundleRecipient, err
+	if err := inboxRecipient.UnmarshalJSON(*data); err != nil {
+		return inboxRecipient, err
 	}
 
-	return bundleRecipient, nil
+	return inboxRecipient, nil
 }
 
-func Create(params files_sdk.BundleRecipientCreateParams) (files_sdk.BundleRecipient, error) {
+func Create(params files_sdk.InboxRecipientCreateParams) (files_sdk.InboxRecipient, error) {
 	return (&Client{}).Create(params)
 }

@@ -7,20 +7,20 @@ import (
 	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
-type BundleRecipient struct {
+type InboxRecipient struct {
 	Company          string    `json:"company,omitempty"`
 	Name             string    `json:"name,omitempty"`
 	Note             string    `json:"note,omitempty"`
 	Recipient        string    `json:"recipient,omitempty"`
 	SentAt           time.Time `json:"sent_at,omitempty"`
 	UserId           int64     `json:"user_id,omitempty"`
-	BundleId         int64     `json:"bundle_id,omitempty"`
+	InboxId          int64     `json:"inbox_id,omitempty"`
 	ShareAfterCreate *bool     `json:"share_after_create,omitempty"`
 }
 
-type BundleRecipientCollection []BundleRecipient
+type InboxRecipientCollection []InboxRecipient
 
-type BundleRecipientListParams struct {
+type InboxRecipientListParams struct {
 	UserId     int64           `url:"user_id,omitempty" required:"false"`
 	Cursor     string          `url:"cursor,omitempty" required:"false"`
 	PerPage    int             `url:"per_page,omitempty" required:"false"`
@@ -31,13 +31,13 @@ type BundleRecipientListParams struct {
 	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false"`
 	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false"`
 	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false"`
-	BundleId   int64           `url:"bundle_id,omitempty" required:"true"`
+	InboxId    int64           `url:"inbox_id,omitempty" required:"true"`
 	lib.ListParams
 }
 
-type BundleRecipientCreateParams struct {
+type InboxRecipientCreateParams struct {
 	UserId           int64  `url:"user_id,omitempty" required:"false"`
-	BundleId         int64  `url:"bundle_id,omitempty" required:"true"`
+	InboxId          int64  `url:"inbox_id,omitempty" required:"true"`
 	Recipient        string `url:"recipient,omitempty" required:"true"`
 	Name             string `url:"name,omitempty" required:"false"`
 	Company          string `url:"company,omitempty" required:"false"`
@@ -45,24 +45,24 @@ type BundleRecipientCreateParams struct {
 	ShareAfterCreate *bool  `url:"share_after_create,omitempty" required:"false"`
 }
 
-func (b *BundleRecipient) UnmarshalJSON(data []byte) error {
-	type bundleRecipient BundleRecipient
-	var v bundleRecipient
+func (i *InboxRecipient) UnmarshalJSON(data []byte) error {
+	type inboxRecipient InboxRecipient
+	var v inboxRecipient
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
 
-	*b = BundleRecipient(v)
+	*i = InboxRecipient(v)
 	return nil
 }
 
-func (b *BundleRecipientCollection) UnmarshalJSON(data []byte) error {
-	type bundleRecipients []BundleRecipient
-	var v bundleRecipients
+func (i *InboxRecipientCollection) UnmarshalJSON(data []byte) error {
+	type inboxRecipients []InboxRecipient
+	var v inboxRecipients
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
 
-	*b = BundleRecipientCollection(v)
+	*i = InboxRecipientCollection(v)
 	return nil
 }
