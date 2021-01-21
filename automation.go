@@ -22,6 +22,8 @@ type Automation struct {
 	UserIds                []int64         `json:"user_ids,omitempty"`
 	GroupIds               []int64         `json:"group_ids,omitempty"`
 	WebhookUrl             string          `json:"webhook_url,omitempty"`
+	TriggerActions         string          `json:"trigger_actions,omitempty"`
+	TriggerActionPath      string          `json:"trigger_action_path,omitempty"`
 }
 
 type AutomationCollection []Automation
@@ -56,6 +58,8 @@ type AutomationCreateParams struct {
 	GroupIds               string          `url:"group_ids,omitempty" required:"false"`
 	Schedule               json.RawMessage `url:"schedule,omitempty" required:"false"`
 	Trigger                string          `url:"trigger,omitempty" required:"false"`
+	TriggerActions         []string        `url:"trigger_actions,omitempty" required:"false"`
+	TriggerActionPath      string          `url:"trigger_action_path,omitempty" required:"false"`
 }
 
 type AutomationUpdateParams struct {
@@ -71,6 +75,8 @@ type AutomationUpdateParams struct {
 	GroupIds               string          `url:"group_ids,omitempty" required:"false"`
 	Schedule               json.RawMessage `url:"schedule,omitempty" required:"false"`
 	Trigger                string          `url:"trigger,omitempty" required:"false"`
+	TriggerActions         []string        `url:"trigger_actions,omitempty" required:"false"`
+	TriggerActionPath      string          `url:"trigger_action_path,omitempty" required:"false"`
 }
 
 type AutomationDeleteParams struct {
