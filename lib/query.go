@@ -2,6 +2,7 @@ package lib
 
 import (
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -20,5 +21,6 @@ func PathEscape(path string) string {
 }
 
 func BuildPath(resourcePath string, unescapedPath string) string {
-	return filepath.Join(resourcePath, PathEscape(unescapedPath))
+	viaOS := filepath.Join(resourcePath, PathEscape(unescapedPath))
+	return strings.Join(strings.Split(viaOS, string(os.PathSeparator)), "/")
 }
