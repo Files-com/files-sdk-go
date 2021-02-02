@@ -10,10 +10,10 @@ import (
 )
 
 const (
-	ProductionEndpoint = "https://app.files.com"
 	UserAgent          = "Files.com Go SDK"
 )
 
+var ProductionEndpoint string = "https://app.files.com"
 var APIKey string
 
 type HttpClient interface {
