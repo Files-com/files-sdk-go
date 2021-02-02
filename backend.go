@@ -36,6 +36,9 @@ func ParseResponse(res *http.Response) (*[]byte, *http.Response, error) {
 	if err != nil {
 		return &data, res, err
 	}
+	if !re.IsNil() {
+		return &data, res, re
+	}
 	return &data, res, err
 
 }

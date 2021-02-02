@@ -153,7 +153,7 @@ func (c *Client) UploadFolder(params *UploadParams) ([]fileUpload, error) {
 	if destinationRootPath != "" {
 		folderClient := folder.Client{Config: c.Config}
 		_, err := folderClient.Create(files_sdk.FolderCreateParams{Path: filepath.Clean(destinationRootPath)})
-		if err != nil && (err).(*files_sdk.ResponseError).ErrorMessage != "The destination exists." {
+		if err != nil && (err).(files_sdk.ResponseError).ErrorMessage != "The destination exists." {
 			return uploadFiles, err
 		}
 	}
@@ -214,7 +214,7 @@ func (c *Client) UploadFolder(params *UploadParams) ([]fileUpload, error) {
 func maybeCreateFolder(file fileUpload) {
 	createdFolder, err := folder.Create(files_sdk.FolderCreateParams{Path: file.Destination + "/"})
 
-	if err != nil && (err).(*files_sdk.ResponseError).ErrorMessage != "The destination exists." {
+	if err != nil && (err).(files_sdk.ResponseError).ErrorMessage != "The destination exists." {
 		file.error = err
 	} else {
 		file.File = createdFolder

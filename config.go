@@ -5,16 +5,20 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/hashicorp/go-retryablehttp"
 )
 
 const (
-	ProductionEndpoint = "https://app.files.com"
+	ProductionEndpoint = "https://{SUBDOMAIN}.files.com"
 	UserAgent          = "Files.com Go SDK"
+	DefaultDomain      = "app"
+	APIPath            = "/api/rest/v1"
 )
 
 var APIKey string
+var GlobalConfig Config
 
 type HttpClient interface {
 	Do(*http.Request) (*http.Response, error)
@@ -23,7 +27,9 @@ type HttpClient interface {
 
 type Config struct {
 	APIKey                   string `header:"X-FilesAPI-Key"`
+	SessionId                string `header:"X-FilesAPI-Auth"`
 	Endpoint                 string
+	Subdomain                string
 	HttpClient               HttpClient
 	AdditionalHeaders        map[string]string
 	Logger                   retryablehttp.Logger
@@ -60,25 +66,19 @@ func (s *Config) GetLogger() retryablehttp.Logger {
 	if debugLevel == "" {
 		s.Logger = NullLogger{}
 	} else {
-		_, err := os.Stat("../log")
-		if os.IsNotExist(err) {
-			os.Mkdir("../log", 0700)
-		}
-
-		f, err := os.OpenFile("../log/test.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		if err != nil {
-			log.Fatalf("error opening file: %v", err)
-		}
-		s.Logger = log.New(f, "", log.LstdFlags)
+		s.Logger = log.New(os.Stderr, "", log.LstdFlags)
 	}
 	return s.Logger
 }
 
 func (s *Config) RootPath() string {
-	if s.Endpoint == "" {
-		s.Endpoint = ProductionEndpoint
+	if s.Subdomain == "" {
+		s.Subdomain = DefaultDomain
 	}
-	return s.Endpoint + "/api/rest/v1"
+	if s.Endpoint == "" {
+		s.Endpoint = strings.Replace(ProductionEndpoint, "{SUBDOMAIN}", s.Subdomain, 1)
+	}
+	return s.Endpoint + APIPath
 }
 
 func (s *Config) GetAPIKey() string {
@@ -96,7 +96,12 @@ func (s *Config) GetAPIKey() string {
 
 func (s *Config) SetHeaders(headers *http.Header) {
 	headers.Set("User-Agent", UserAgent)
-	headers.Set("X-FilesAPI-Key", s.GetAPIKey())
+	if s.GetAPIKey() != "" {
+		headers.Set("X-FilesAPI-Key", s.GetAPIKey())
+	} else if s.SessionId != "" {
+		headers.Set("X-FilesAPI-Auth", s.SessionId)
+	}
+
 	for key, value := range s.AdditionalHeaders {
 		headers.Set(key, value)
 	}
