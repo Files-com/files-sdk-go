@@ -196,7 +196,7 @@ func TestClient_DownloadFolder(t *testing.T) {
 	err = client.DownloadFolder(
 		files_sdk.FolderListForParams{Path: "./TestClient_DownloadFolder"},
 		"download",
-		func(incDownloadedBytes int64, file files_sdk.File, destination string, err error) {
+		func(incDownloadedBytes int64, file files_sdk.File, destination string, err error, message string) {
 			if err != nil {
 				results = append(results, fmt.Sprint(file.Path, err))
 			} else {

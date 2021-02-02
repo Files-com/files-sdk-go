@@ -30,11 +30,14 @@ type fileDownload struct {
 	error
 }
 
-func (c *Client) DownloadFolder(params files_sdk.FolderListForParams, rootDestination string, reporters ...func(incDownloadedBytes int64, file files_sdk.File, destination string, err error)) error {
+func (c *Client) DownloadFolder(params files_sdk.FolderListForParams, rootDestination string, reporters ...func(incDownloadedBytes int64, file files_sdk.File, destination string, err error, onlyMessage string)) error {
 	goc := goccm.New(c.Config.MaxConcurrentConnections())
 	files := c.index(params)
 	signal := make(chan bool)
 	for _, entity := range files {
+		if entity.error != nil {
+			return entity.error
+		}
 		go func(entity Entity) {
 			goc.Wait()
 			file := files_sdk.File{Path: entity.file.Path, Size: entity.file.Size, Type: entity.file.Type}
@@ -47,21 +50,21 @@ func (c *Client) DownloadFolder(params files_sdk.FolderListForParams, rootDestin
 			out, err := os.Create(destinationPath)
 			if err != nil {
 				if len(reporters) > 0 {
-					reporters[0](0, file, destinationPath, err)
+					reporters[0](0, file, destinationPath, err, "")
 				}
 			}
 			params := files_sdk.FileDownloadParams{Path: file.Path}
 			writer := lib.ProgressWriter{Writer: out}
 			writer.ProgressWatcher = func(incDownloadedBytes int64) {
 				if len(reporters) > 0 {
-					reporters[0](incDownloadedBytes, file, destinationPath, entity.error)
+					reporters[0](incDownloadedBytes, file, destinationPath, entity.error, "")
 				}
 			}
 			params.Writer = writer
 			writer.ProgressWatcher(0)
 			newFile, err := c.Download(params)
 			if len(reporters) > 0 && err != nil {
-				reporters[0](0, newFile, destinationPath, err)
+				reporters[0](0, newFile, destinationPath, err, "")
 			}
 			signal <- true
 			goc.Done()
@@ -70,6 +73,11 @@ func (c *Client) DownloadFolder(params files_sdk.FolderListForParams, rootDestin
 	}
 	for range files {
 		<-signal
+	}
+	if len(files) == 0 {
+		if len(reporters) > 0 {
+			reporters[0](0, files_sdk.File{}, params.Path, nil, "No files to download")
+		}
 	}
 	return nil
 }
@@ -160,12 +168,12 @@ func (c *Client) index(params files_sdk.FolderListForParams) []Entity {
 		case "file":
 			files = append(files, Entity{file: entry})
 		default:
-			if it.Err() != nil {
-				files = append(files, Entity{file: entry, error: it.Err()})
-			} else {
-				files = append(files, Entity{file: entry, error: fmt.Errorf("unknown file type %v", entry.Type)})
-			}
+			files = append(files, Entity{file: entry, error: fmt.Errorf("unknown file type %v", entry.Type)})
 		}
+	}
+
+	if it.Err() != nil {
+		files = append(files, Entity{file: files_sdk.Folder{Path: params.Path}, error: it.Err()})
 	}
 	return files
 }
