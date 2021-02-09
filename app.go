@@ -18,6 +18,8 @@ type App struct {
 	RemoteServerType    string `json:"remote_server_type,omitempty"`
 	FolderBehaviorType  string `json:"folder_behavior_type,omitempty"`
 	ExternalHomepageUrl string `json:"external_homepage_url,omitempty"`
+	MarketingYoutubeUrl string `json:"marketing_youtube_url,omitempty"`
+	TutorialYoutubeUrl  string `json:"tutorial_youtube_url,omitempty"`
 	AppType             string `json:"app_type,omitempty"`
 	Featured            *bool  `json:"featured,omitempty"`
 }
