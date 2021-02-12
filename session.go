@@ -39,8 +39,8 @@ type SessionCreateParams struct {
 }
 
 type SessionDeleteParams struct {
-	Format  string          `url:"format,omitempty" required:"false"`
-	Session json.RawMessage `url:"session,omitempty" required:"false"`
+	Format  string  `url:"format,omitempty" required:"false"`
+	Session Session `url:"session,omitempty" required:"false"`
 }
 
 func (s *Session) UnmarshalJSON(data []byte) error {
