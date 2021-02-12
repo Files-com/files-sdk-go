@@ -24,6 +24,7 @@ type Automation struct {
 	WebhookUrl             string          `json:"webhook_url,omitempty"`
 	TriggerActions         string          `json:"trigger_actions,omitempty"`
 	TriggerActionPath      string          `json:"trigger_action_path,omitempty"`
+	Value                  json.RawMessage `json:"value,omitempty"`
 }
 
 type AutomationCollection []Automation
@@ -60,6 +61,7 @@ type AutomationCreateParams struct {
 	Trigger                string          `url:"trigger,omitempty" required:"false"`
 	TriggerActions         []string        `url:"trigger_actions,omitempty" required:"false"`
 	TriggerActionPath      string          `url:"trigger_action_path,omitempty" required:"false"`
+	Value                  json.RawMessage `url:"value,omitempty" required:"false"`
 }
 
 type AutomationUpdateParams struct {
@@ -77,6 +79,7 @@ type AutomationUpdateParams struct {
 	Trigger                string          `url:"trigger,omitempty" required:"false"`
 	TriggerActions         []string        `url:"trigger_actions,omitempty" required:"false"`
 	TriggerActionPath      string          `url:"trigger_action_path,omitempty" required:"false"`
+	Value                  json.RawMessage `url:"value,omitempty" required:"false"`
 }
 
 type AutomationDeleteParams struct {
