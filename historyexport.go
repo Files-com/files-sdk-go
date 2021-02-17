@@ -7,6 +7,7 @@ import (
 
 type HistoryExport struct {
 	Id                       int64     `json:"id,omitempty"`
+	HistoryVersion           string    `json:"history_version,omitempty"`
 	StartAt                  time.Time `json:"start_at,omitempty"`
 	EndAt                    time.Time `json:"end_at,omitempty"`
 	Status                   string    `json:"status,omitempty"`
