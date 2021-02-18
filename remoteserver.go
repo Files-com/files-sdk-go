@@ -10,6 +10,7 @@ type RemoteServer struct {
 	Id                                int64  `json:"id,omitempty"`
 	AuthenticationMethod              string `json:"authentication_method,omitempty"`
 	Hostname                          string `json:"hostname,omitempty"`
+	RemoteHomePath                    string `json:"remote_home_path,omitempty"`
 	Name                              string `json:"name,omitempty"`
 	Port                              int    `json:"port,omitempty"`
 	MaxConnections                    int    `json:"max_connections,omitempty"`
