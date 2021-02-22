@@ -45,10 +45,18 @@ func (e *ResponseError) UnmarshalJSON(data []byte) error {
 	err := json.Unmarshal(data, &v)
 
 	if err != nil {
-		if er, ok := err.(*json.UnmarshalTypeError); ok && er.Value != "array" {
-			return err
+		jsonError, ok := err.(*json.UnmarshalTypeError)
+
+		if ok && jsonError.Field == "" {
+			if jsonError.Value == "string" {
+				var str string
+				json.Unmarshal(data, &str)
+				v.ErrorMessage = str
+			} else if jsonError.Value != "array" {
+				return err
+			}
 		} else {
-			GlobalConfig.GetLogger().Printf(err.Error())
+			return err
 		}
 	}
 
