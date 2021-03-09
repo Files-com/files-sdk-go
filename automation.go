@@ -15,6 +15,7 @@ type Automation struct {
 	Schedule               json.RawMessage `json:"schedule,omitempty"`
 	Source                 string          `json:"source,omitempty"`
 	Destination            string          `json:"destination,omitempty"`
+	Destinations           string          `json:"destinations,omitempty"`
 	DestinationReplaceFrom string          `json:"destination_replace_from,omitempty"`
 	DestinationReplaceTo   string          `json:"destination_replace_to,omitempty"`
 	Path                   string          `json:"path,omitempty"`
@@ -51,6 +52,7 @@ type AutomationCreateParams struct {
 	Automation             string          `url:"automation,omitempty" required:"true"`
 	Source                 string          `url:"source,omitempty" required:"false"`
 	Destination            string          `url:"destination,omitempty" required:"false"`
+	Destinations           []string        `url:"destinations,omitempty" required:"false"`
 	DestinationReplaceFrom string          `url:"destination_replace_from,omitempty" required:"false"`
 	DestinationReplaceTo   string          `url:"destination_replace_to,omitempty" required:"false"`
 	Interval               string          `url:"interval,omitempty" required:"false"`
@@ -69,6 +71,7 @@ type AutomationUpdateParams struct {
 	Automation             string          `url:"automation,omitempty" required:"true"`
 	Source                 string          `url:"source,omitempty" required:"false"`
 	Destination            string          `url:"destination,omitempty" required:"false"`
+	Destinations           []string        `url:"destinations,omitempty" required:"false"`
 	DestinationReplaceFrom string          `url:"destination_replace_from,omitempty" required:"false"`
 	DestinationReplaceTo   string          `url:"destination_replace_to,omitempty" required:"false"`
 	Interval               string          `url:"interval,omitempty" required:"false"`
