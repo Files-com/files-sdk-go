@@ -2,6 +2,8 @@ package files_sdk
 
 import (
 	"encoding/json"
+
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type InboxRegistration struct {
@@ -14,6 +16,13 @@ type InboxRegistration struct {
 }
 
 type InboxRegistrationCollection []InboxRegistration
+
+type InboxRegistrationListParams struct {
+	Cursor           string `url:"cursor,omitempty" required:"false"`
+	PerPage          int    `url:"per_page,omitempty" required:"false"`
+	FolderBehaviorId int64  `url:"folder_behavior_id,omitempty" required:"true"`
+	lib.ListParams
+}
 
 func (i *InboxRegistration) UnmarshalJSON(data []byte) error {
 	type inboxRegistration InboxRegistration

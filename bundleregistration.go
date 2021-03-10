@@ -2,6 +2,8 @@ package files_sdk
 
 import (
 	"encoding/json"
+
+	lib "github.com/Files-com/files-sdk-go/lib"
 )
 
 type BundleRegistration struct {
@@ -15,6 +17,14 @@ type BundleRegistration struct {
 }
 
 type BundleRegistrationCollection []BundleRegistration
+
+type BundleRegistrationListParams struct {
+	UserId   int64  `url:"user_id,omitempty" required:"false"`
+	Cursor   string `url:"cursor,omitempty" required:"false"`
+	PerPage  int    `url:"per_page,omitempty" required:"false"`
+	BundleId int64  `url:"bundle_id,omitempty" required:"true"`
+	lib.ListParams
+}
 
 func (b *BundleRegistration) UnmarshalJSON(data []byte) error {
 	type bundleRegistration BundleRegistration
