@@ -9,10 +9,10 @@ type Client struct {
 	files_sdk.Config
 }
 
-func (c *Client) Get(params files_sdk.SiteGetParams) (files_sdk.Site, error) {
+func (c *Client) Get() (files_sdk.Site, error) {
 	site := files_sdk.Site{}
 	path := "/site"
-	exportedParams, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(lib.Interface())
 	if err != nil {
 		return site, err
 	}
@@ -30,14 +30,14 @@ func (c *Client) Get(params files_sdk.SiteGetParams) (files_sdk.Site, error) {
 	return site, nil
 }
 
-func Get(params files_sdk.SiteGetParams) (files_sdk.Site, error) {
-	return (&Client{}).Get(params)
+func Get() (files_sdk.Site, error) {
+	return (&Client{}).Get()
 }
 
-func (c *Client) GetUsage(params files_sdk.SiteGetUsageParams) (files_sdk.UsageSnapshot, error) {
+func (c *Client) GetUsage() (files_sdk.UsageSnapshot, error) {
 	usageSnapshot := files_sdk.UsageSnapshot{}
 	path := "/site/usage"
-	exportedParams, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(lib.Interface())
 	if err != nil {
 		return usageSnapshot, err
 	}
@@ -55,8 +55,8 @@ func (c *Client) GetUsage(params files_sdk.SiteGetUsageParams) (files_sdk.UsageS
 	return usageSnapshot, nil
 }
 
-func GetUsage(params files_sdk.SiteGetUsageParams) (files_sdk.UsageSnapshot, error) {
-	return (&Client{}).GetUsage(params)
+func GetUsage() (files_sdk.UsageSnapshot, error) {
+	return (&Client{}).GetUsage()
 }
 
 func (c *Client) Update(params files_sdk.SiteUpdateParams) (files_sdk.Site, error) {
