@@ -12,6 +12,7 @@ type UsageSnapshot struct {
 	StartAt                      time.Time       `json:"start_at,omitempty"`
 	EndAt                        time.Time       `json:"end_at,omitempty"`
 	CreatedAt                    time.Time       `json:"created_at,omitempty"`
+	HighWaterUserCount           float32         `json:"high_water_user_count,omitempty"`
 	CurrentStorage               float32         `json:"current_storage,omitempty"`
 	HighWaterStorage             float32         `json:"high_water_storage,omitempty"`
 	TotalDownloads               int             `json:"total_downloads,omitempty"`
