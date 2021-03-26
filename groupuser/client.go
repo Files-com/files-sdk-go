@@ -53,6 +53,31 @@ func List(params files_sdk.GroupUserListParams) (*Iter, error) {
 	return (&Client{}).List(params)
 }
 
+func (c *Client) Create(params files_sdk.GroupUserCreateParams) (files_sdk.GroupUser, error) {
+	groupUser := files_sdk.GroupUser{}
+	path := "/group_users"
+	exportedParams, err := lib.ExportParams(params)
+	if err != nil {
+		return groupUser, err
+	}
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	if err != nil {
+		return groupUser, err
+	}
+	if res.StatusCode == 204 {
+		return groupUser, nil
+	}
+	if err := groupUser.UnmarshalJSON(*data); err != nil {
+		return groupUser, err
+	}
+
+	return groupUser, nil
+}
+
+func Create(params files_sdk.GroupUserCreateParams) (files_sdk.GroupUser, error) {
+	return (&Client{}).Create(params)
+}
+
 func (c *Client) Update(params files_sdk.GroupUserUpdateParams) (files_sdk.GroupUser, error) {
 	groupUser := files_sdk.GroupUser{}
 	if params.Id == 0 {

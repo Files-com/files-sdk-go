@@ -25,6 +25,12 @@ type GroupUserListParams struct {
 	lib.ListParams
 }
 
+type GroupUserCreateParams struct {
+	GroupId int64 `url:"group_id,omitempty" required:"true"`
+	UserId  int64 `url:"user_id,omitempty" required:"true"`
+	Admin   *bool `url:"admin,omitempty" required:"false"`
+}
+
 type GroupUserUpdateParams struct {
 	Id      int64 `url:"-,omitempty" required:"true"`
 	GroupId int64 `url:"group_id,omitempty" required:"true"`
