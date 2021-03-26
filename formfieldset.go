@@ -7,11 +7,14 @@ import (
 )
 
 type FormFieldSet struct {
-	Id         int64    `json:"id,omitempty"`
-	Title      string   `json:"title,omitempty"`
-	FormLayout int      `json:"form_layout,omitempty"`
-	FormFields []string `json:"form_fields,omitempty"`
-	UserId     int64    `json:"user_id,omitempty"`
+	Id          int64    `json:"id,omitempty"`
+	Title       string   `json:"title,omitempty"`
+	FormLayout  int      `json:"form_layout,omitempty"`
+	FormFields  []string `json:"form_fields,omitempty"`
+	SkipName    *bool    `json:"skip_name,omitempty"`
+	SkipEmail   *bool    `json:"skip_email,omitempty"`
+	SkipCompany *bool    `json:"skip_company,omitempty"`
+	UserId      int64    `json:"user_id,omitempty"`
 }
 
 type FormFieldSetCollection []FormFieldSet
@@ -28,15 +31,21 @@ type FormFieldSetFindParams struct {
 }
 
 type FormFieldSetCreateParams struct {
-	UserId     int64    `url:"user_id,omitempty" required:""`
-	Title      string   `url:"title,omitempty" required:""`
-	FormFields []string `url:"form_fields,omitempty" required:""`
+	UserId      int64    `url:"user_id,omitempty" required:""`
+	Title       string   `url:"title,omitempty" required:""`
+	SkipEmail   *bool    `url:"skip_email,omitempty" required:""`
+	SkipName    *bool    `url:"skip_name,omitempty" required:""`
+	SkipCompany *bool    `url:"skip_company,omitempty" required:""`
+	FormFields  []string `url:"form_fields,omitempty" required:""`
 }
 
 type FormFieldSetUpdateParams struct {
-	Id         int64    `url:"-,omitempty" required:"true"`
-	Title      string   `url:"title,omitempty" required:""`
-	FormFields []string `url:"form_fields,omitempty" required:""`
+	Id          int64    `url:"-,omitempty" required:"true"`
+	Title       string   `url:"title,omitempty" required:""`
+	SkipEmail   *bool    `url:"skip_email,omitempty" required:""`
+	SkipName    *bool    `url:"skip_name,omitempty" required:""`
+	SkipCompany *bool    `url:"skip_company,omitempty" required:""`
+	FormFields  []string `url:"form_fields,omitempty" required:""`
 }
 
 type FormFieldSetDeleteParams struct {
