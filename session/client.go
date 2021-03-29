@@ -34,10 +34,10 @@ func Create(params files_sdk.SessionCreateParams) (files_sdk.Session, error) {
 	return (&Client{}).Create(params)
 }
 
-func (c *Client) Delete(params files_sdk.SessionDeleteParams) (files_sdk.Session, error) {
+func (c *Client) Delete() (files_sdk.Session, error) {
 	session := files_sdk.Session{}
 	path := "/sessions"
-	exportedParams, err := lib.ExportParams(params)
+	exportedParams, err := lib.ExportParams(lib.Interface())
 	if err != nil {
 		return session, err
 	}
@@ -55,6 +55,6 @@ func (c *Client) Delete(params files_sdk.SessionDeleteParams) (files_sdk.Session
 	return session, nil
 }
 
-func Delete(params files_sdk.SessionDeleteParams) (files_sdk.Session, error) {
-	return (&Client{}).Delete(params)
+func Delete() (files_sdk.Session, error) {
+	return (&Client{}).Delete()
 }
