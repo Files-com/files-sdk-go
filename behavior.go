@@ -101,12 +101,3 @@ func (b *BehaviorCollection) UnmarshalJSON(data []byte) error {
 	*b = BehaviorCollection(v)
 	return nil
 }
-
-func (b *BehaviorCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*b))
-	for i, v := range *b {
-		ret[i] = v
-	}
-
-	return &ret
-}

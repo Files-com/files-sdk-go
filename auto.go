@@ -31,12 +31,3 @@ func (a *AutoCollection) UnmarshalJSON(data []byte) error {
 	*a = AutoCollection(v)
 	return nil
 }
-
-func (a *AutoCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*a))
-	for i, v := range *a {
-		ret[i] = v
-	}
-
-	return &ret
-}

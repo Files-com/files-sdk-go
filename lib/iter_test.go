@@ -30,17 +30,12 @@ func TestIter_Next_MaxPages(t *testing.T) {
 func TestIter_Next_ZeroMaxPages(t *testing.T) {
 	assert := assert.New(t)
 	params := ListParams{}
-	params.Set(0, 2, "", 0)
-	pages := make([][]interface{}, 0)
-	pages = append(pages, make([]interface{}, params.PerPage))
-	pages = append(pages, make([]interface{}, params.PerPage))
-	pages = append(pages, make([]interface{}, 0))
+	params.Set(0, 5, "", 0)
 	it := Iter{}
 	it.ListParams = &params
 
 	it.Query = func() (*[]interface{}, string, error) {
-		ret := pages[:1][0]
-		pages = pages[1:]
+		ret := make([]interface{}, params.PerPage)
 
 		return &ret, "cursor", nil
 	}
@@ -48,7 +43,7 @@ func TestIter_Next_ZeroMaxPages(t *testing.T) {
 	for it.Next() {
 		recordCount += 1
 	}
-	assert.Equal(4, recordCount)
+	assert.Equal(params.PerPage*params.MaxPages, recordCount)
 }
 
 func TestIter_Next_PerPage_of_one(t *testing.T) {

@@ -29,6 +29,9 @@ func (p *ListParams) Set(page int, perPage int, cursor string, maxPages int) {
 	p.Page = page
 	p.PerPage = perPage
 	p.Cursor = cursor
+	if maxPages == 0 {
+		maxPages = 1
+	}
 	p.MaxPages = maxPages
 }
 
@@ -99,7 +102,6 @@ func (i *Iter) GetCursor() string {
 
 func (i *Iter) SetCursor(cursor string) {
 	i.GetParams().Cursor = cursor
-	i.Cursor = cursor
 }
 
 // Next iterates the results in i.Current() or i.`ResourceName`().

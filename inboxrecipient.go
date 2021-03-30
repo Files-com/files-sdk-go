@@ -66,12 +66,3 @@ func (i *InboxRecipientCollection) UnmarshalJSON(data []byte) error {
 	*i = InboxRecipientCollection(v)
 	return nil
 }
-
-func (i *InboxRecipientCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*i))
-	for i, v := range *i {
-		ret[i] = v
-	}
-
-	return &ret
-}

@@ -50,12 +50,3 @@ func (w *WebhookTestCollection) UnmarshalJSON(data []byte) error {
 	*w = WebhookTestCollection(v)
 	return nil
 }
-
-func (w *WebhookTestCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*w))
-	for i, v := range *w {
-		ret[i] = v
-	}
-
-	return &ret
-}

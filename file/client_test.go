@@ -67,7 +67,9 @@ func TestClient_UploadFolder(t *testing.T) {
 				resultsMapMutex.Unlock()
 			},
 		})
-	assert.NoError(err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	assert.Equal(10, len(results))
 	assert.Contains(results, "golib/bool.go")
@@ -92,7 +94,9 @@ func TestClient_UploadFile(t *testing.T) {
 
 	uploadPath := "../LICENSE"
 	_, err = client.UploadFile(&UploadParams{Source: uploadPath})
-	assert.NoError(err)
+	if err != nil {
+		panic(err)
+	}
 	_, err1 := os.Stat("../tmp")
 	if os.IsNotExist(err1) {
 		os.Mkdir("../tmp", 0700)
@@ -107,7 +111,9 @@ func TestClient_UploadFile(t *testing.T) {
 	}
 	downloadPath = path.Join(downloadPath, tempFile.Name())
 	file, err := client.DownloadToFile(files_sdk.FileDownloadParams{Path: "LICENSE"}, downloadPath)
-	assert.NoError(err)
+	if err != nil {
+		panic(err)
+	}
 
 	assert.Equal(file.DisplayName, "LICENSE")
 
@@ -150,7 +156,9 @@ func TestClient_UploadFolder_as_file2(t *testing.T) {
 	}
 	downloadPath = path.Join(downloadPath, tempFile.Name())
 	file, err := client.DownloadToFile(files_sdk.FileDownloadParams{Path: "LICENSE"}, downloadPath)
-	assert.NoError(err)
+	if err != nil {
+		panic(err)
+	}
 
 	assert.Equal(file.DisplayName, "LICENSE")
 
@@ -184,20 +192,6 @@ func TestClient_DownloadFolder(t *testing.T) {
 	client.Upload(strings.NewReader("testing 3"), filepath.Join("TestClient_DownloadFolder", "nested_1", "nested_2", "3.text"), &UploadProgress{})
 
 	assert := assert.New(t)
-
-	it, err := folderClient.ListFor(files_sdk.FolderListForParams{
-		PerPage: 1,
-		Path:    "TestClient_DownloadFolder",
-	})
-
-	assert.NoError(err)
-	folders := files_sdk.FolderCollection{}
-	for it.Next() {
-		folders = append(folders, it.Folder())
-	}
-
-	assert.Len(folders, 3, "something is wrong with cursor")
-
 	var results []string
 	err = client.DownloadFolder(
 		files_sdk.FolderListForParams{Path: "./TestClient_DownloadFolder"},
@@ -214,7 +208,9 @@ func TestClient_DownloadFolder(t *testing.T) {
 		},
 	)
 
-	assert.NoError(err)
+	if err != nil {
+		panic(err)
+	}
 
 	var expected []string
 	expected = append(expected, "9 bytes TestClient_DownloadFolder/2.text => download/TestClient_DownloadFolder/2.text")

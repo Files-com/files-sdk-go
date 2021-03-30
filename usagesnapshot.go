@@ -53,12 +53,3 @@ func (u *UsageSnapshotCollection) UnmarshalJSON(data []byte) error {
 	*u = UsageSnapshotCollection(v)
 	return nil
 }
-
-func (u *UsageSnapshotCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*u))
-	for i, v := range *u {
-		ret[i] = v
-	}
-
-	return &ret
-}

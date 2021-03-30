@@ -57,12 +57,3 @@ func (f *FileCommentCollection) UnmarshalJSON(data []byte) error {
 	*f = FileCommentCollection(v)
 	return nil
 }
-
-func (f *FileCommentCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*f))
-	for i, v := range *f {
-		ret[i] = v
-	}
-
-	return &ret
-}

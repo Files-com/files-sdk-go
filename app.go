@@ -60,12 +60,3 @@ func (a *AppCollection) UnmarshalJSON(data []byte) error {
 	*a = AppCollection(v)
 	return nil
 }
-
-func (a *AppCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*a))
-	for i, v := range *a {
-		ret[i] = v
-	}
-
-	return &ret
-}

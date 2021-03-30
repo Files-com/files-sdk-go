@@ -57,12 +57,3 @@ func (p *ProjectCollection) UnmarshalJSON(data []byte) error {
 	*p = ProjectCollection(v)
 	return nil
 }
-
-func (p *ProjectCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*p))
-	for i, v := range *p {
-		ret[i] = v
-	}
-
-	return &ret
-}

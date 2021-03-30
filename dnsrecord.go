@@ -42,12 +42,3 @@ func (d *DnsRecordCollection) UnmarshalJSON(data []byte) error {
 	*d = DnsRecordCollection(v)
 	return nil
 }
-
-func (d *DnsRecordCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*d))
-	for i, v := range *d {
-		ret[i] = v
-	}
-
-	return &ret
-}

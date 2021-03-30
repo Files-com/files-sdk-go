@@ -59,12 +59,3 @@ func (l *LockCollection) UnmarshalJSON(data []byte) error {
 	*l = LockCollection(v)
 	return nil
 }
-
-func (l *LockCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*l))
-	for i, v := range *l {
-		ret[i] = v
-	}
-
-	return &ret
-}

@@ -56,12 +56,3 @@ func (f *FileActionCollection) UnmarshalJSON(data []byte) error {
 	*f = FileActionCollection(v)
 	return nil
 }
-
-func (f *FileActionCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*f))
-	for i, v := range *f {
-		ret[i] = v
-	}
-
-	return &ret
-}

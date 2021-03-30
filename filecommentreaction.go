@@ -44,12 +44,3 @@ func (f *FileCommentReactionCollection) UnmarshalJSON(data []byte) error {
 	*f = FileCommentReactionCollection(v)
 	return nil
 }
-
-func (f *FileCommentReactionCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*f))
-	for i, v := range *f {
-		ret[i] = v
-	}
-
-	return &ret
-}

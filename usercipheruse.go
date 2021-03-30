@@ -46,12 +46,3 @@ func (u *UserCipherUseCollection) UnmarshalJSON(data []byte) error {
 	*u = UserCipherUseCollection(v)
 	return nil
 }
-
-func (u *UserCipherUseCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*u))
-	for i, v := range *u {
-		ret[i] = v
-	}
-
-	return &ret
-}

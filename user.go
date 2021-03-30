@@ -232,12 +232,3 @@ func (u *UserCollection) UnmarshalJSON(data []byte) error {
 	*u = UserCollection(v)
 	return nil
 }
-
-func (u *UserCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*u))
-	for i, v := range *u {
-		ret[i] = v
-	}
-
-	return &ret
-}

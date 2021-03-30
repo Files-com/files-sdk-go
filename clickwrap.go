@@ -69,12 +69,3 @@ func (c *ClickwrapCollection) UnmarshalJSON(data []byte) error {
 	*c = ClickwrapCollection(v)
 	return nil
 }
-
-func (c *ClickwrapCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*c))
-	for i, v := range *c {
-		ret[i] = v
-	}
-
-	return &ret
-}

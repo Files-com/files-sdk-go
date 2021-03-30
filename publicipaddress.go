@@ -32,12 +32,3 @@ func (p *PublicIpAddressCollection) UnmarshalJSON(data []byte) error {
 	*p = PublicIpAddressCollection(v)
 	return nil
 }
-
-func (p *PublicIpAddressCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*p))
-	for i, v := range *p {
-		ret[i] = v
-	}
-
-	return &ret
-}

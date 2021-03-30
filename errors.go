@@ -32,12 +32,3 @@ func (e *ErrorsCollection) UnmarshalJSON(data []byte) error {
 	*e = ErrorsCollection(v)
 	return nil
 }
-
-func (e *ErrorsCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*e))
-	for i, v := range *e {
-		ret[i] = v
-	}
-
-	return &ret
-}

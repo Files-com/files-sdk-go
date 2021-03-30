@@ -105,12 +105,3 @@ func (h *HistoryCollection) UnmarshalJSON(data []byte) error {
 	*h = HistoryCollection(v)
 	return nil
 }
-
-func (h *HistoryCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*h))
-	for i, v := range *h {
-		ret[i] = v
-	}
-
-	return &ret
-}

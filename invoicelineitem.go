@@ -40,12 +40,3 @@ func (i *InvoiceLineItemCollection) UnmarshalJSON(data []byte) error {
 	*i = InvoiceLineItemCollection(v)
 	return nil
 }
-
-func (i *InvoiceLineItemCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*i))
-	for i, v := range *i {
-		ret[i] = v
-	}
-
-	return &ret
-}

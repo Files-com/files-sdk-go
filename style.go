@@ -49,12 +49,3 @@ func (s *StyleCollection) UnmarshalJSON(data []byte) error {
 	*s = StyleCollection(v)
 	return nil
 }
-
-func (s *StyleCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*s))
-	for i, v := range *s {
-		ret[i] = v
-	}
-
-	return &ret
-}

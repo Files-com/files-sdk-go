@@ -35,12 +35,3 @@ func (p *PreviewCollection) UnmarshalJSON(data []byte) error {
 	*p = PreviewCollection(v)
 	return nil
 }
-
-func (p *PreviewCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*p))
-	for i, v := range *p {
-		ret[i] = v
-	}
-
-	return &ret
-}

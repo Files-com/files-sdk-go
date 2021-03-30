@@ -1,4 +1,4 @@
-package webhooktest
+package webhook_test
 
 import (
 	files_sdk "github.com/Files-com/files-sdk-go"

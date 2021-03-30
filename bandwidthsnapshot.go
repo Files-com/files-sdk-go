@@ -57,12 +57,3 @@ func (b *BandwidthSnapshotCollection) UnmarshalJSON(data []byte) error {
 	*b = BandwidthSnapshotCollection(v)
 	return nil
 }
-
-func (b *BandwidthSnapshotCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*b))
-	for i, v := range *b {
-		ret[i] = v
-	}
-
-	return &ret
-}

@@ -59,12 +59,3 @@ func (s *SessionCollection) UnmarshalJSON(data []byte) error {
 	*s = SessionCollection(v)
 	return nil
 }
-
-func (s *SessionCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*s))
-	for i, v := range *s {
-		ret[i] = v
-	}
-
-	return &ret
-}

@@ -116,12 +116,3 @@ func (b *BundleCollection) UnmarshalJSON(data []byte) error {
 	*b = BundleCollection(v)
 	return nil
 }
-
-func (b *BundleCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*b))
-	for i, v := range *b {
-		ret[i] = v
-	}
-
-	return &ret
-}

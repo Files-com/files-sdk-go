@@ -86,12 +86,3 @@ func (h *HistoryExportCollection) UnmarshalJSON(data []byte) error {
 	*h = HistoryExportCollection(v)
 	return nil
 }
-
-func (h *HistoryExportCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*h))
-	for i, v := range *h {
-		ret[i] = v
-	}
-
-	return &ret
-}

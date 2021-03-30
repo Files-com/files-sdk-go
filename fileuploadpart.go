@@ -45,12 +45,3 @@ func (f *FileUploadPartCollection) UnmarshalJSON(data []byte) error {
 	*f = FileUploadPartCollection(v)
 	return nil
 }
-
-func (f *FileUploadPartCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*f))
-	for i, v := range *f {
-		ret[i] = v
-	}
-
-	return &ret
-}

@@ -70,12 +70,3 @@ func (p *PermissionCollection) UnmarshalJSON(data []byte) error {
 	*p = PermissionCollection(v)
 	return nil
 }
-
-func (p *PermissionCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*p))
-	for i, v := range *p {
-		ret[i] = v
-	}
-
-	return &ret
-}

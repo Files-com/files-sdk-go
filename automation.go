@@ -110,12 +110,3 @@ func (a *AutomationCollection) UnmarshalJSON(data []byte) error {
 	*a = AutomationCollection(v)
 	return nil
 }
-
-func (a *AutomationCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*a))
-	for i, v := range *a {
-		ret[i] = v
-	}
-
-	return &ret
-}
