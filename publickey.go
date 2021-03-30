@@ -65,3 +65,12 @@ func (p *PublicKeyCollection) UnmarshalJSON(data []byte) error {
 	*p = PublicKeyCollection(v)
 	return nil
 }
+
+func (p *PublicKeyCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*p))
+	for i, v := range *p {
+		ret[i] = v
+	}
+
+	return &ret
+}

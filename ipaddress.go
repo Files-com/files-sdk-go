@@ -47,3 +47,12 @@ func (i *IpAddressCollection) UnmarshalJSON(data []byte) error {
 	*i = IpAddressCollection(v)
 	return nil
 }
+
+func (i *IpAddressCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*i))
+	for i, v := range *i {
+		ret[i] = v
+	}
+
+	return &ret
+}

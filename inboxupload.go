@@ -44,3 +44,12 @@ func (i *InboxUploadCollection) UnmarshalJSON(data []byte) error {
 	*i = InboxUploadCollection(v)
 	return nil
 }
+
+func (i *InboxUploadCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*i))
+	for i, v := range *i {
+		ret[i] = v
+	}
+
+	return &ret
+}

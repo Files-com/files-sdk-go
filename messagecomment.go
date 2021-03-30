@@ -62,3 +62,12 @@ func (m *MessageCommentCollection) UnmarshalJSON(data []byte) error {
 	*m = MessageCommentCollection(v)
 	return nil
 }
+
+func (m *MessageCommentCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*m))
+	for i, v := range *m {
+		ret[i] = v
+	}
+
+	return &ret
+}

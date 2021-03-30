@@ -49,3 +49,12 @@ func (s *SettingsChangeCollection) UnmarshalJSON(data []byte) error {
 	*s = SettingsChangeCollection(v)
 	return nil
 }
+
+func (s *SettingsChangeCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*s))
+	for i, v := range *s {
+		ret[i] = v
+	}
+
+	return &ret
+}

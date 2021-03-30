@@ -44,3 +44,12 @@ func (a *ActionCollection) UnmarshalJSON(data []byte) error {
 	*a = ActionCollection(v)
 	return nil
 }
+
+func (a *ActionCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*a))
+	for i, v := range *a {
+		ret[i] = v
+	}
+
+	return &ret
+}
