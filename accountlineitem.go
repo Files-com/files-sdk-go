@@ -45,3 +45,12 @@ func (a *AccountLineItemCollection) UnmarshalJSON(data []byte) error {
 	*a = AccountLineItemCollection(v)
 	return nil
 }
+
+func (a *AccountLineItemCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*a))
+	for i, v := range *a {
+		ret[i] = v
+	}
+
+	return &ret
+}

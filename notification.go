@@ -89,3 +89,12 @@ func (n *NotificationCollection) UnmarshalJSON(data []byte) error {
 	*n = NotificationCollection(v)
 	return nil
 }
+
+func (n *NotificationCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*n))
+	for i, v := range *n {
+		ret[i] = v
+	}
+
+	return &ret
+}

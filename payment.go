@@ -57,3 +57,12 @@ func (p *PaymentCollection) UnmarshalJSON(data []byte) error {
 	*p = PaymentCollection(v)
 	return nil
 }
+
+func (p *PaymentCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*p))
+	for i, v := range *p {
+		ret[i] = v
+	}
+
+	return &ret
+}

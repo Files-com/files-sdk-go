@@ -84,3 +84,12 @@ func (s *SsoStrategyCollection) UnmarshalJSON(data []byte) error {
 	*s = SsoStrategyCollection(v)
 	return nil
 }
+
+func (s *SsoStrategyCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*s))
+	for i, v := range *s {
+		ret[i] = v
+	}
+
+	return &ret
+}

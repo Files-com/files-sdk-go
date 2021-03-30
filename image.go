@@ -32,3 +32,12 @@ func (i *ImageCollection) UnmarshalJSON(data []byte) error {
 	*i = ImageCollection(v)
 	return nil
 }
+
+func (i *ImageCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*i))
+	for i, v := range *i {
+		ret[i] = v
+	}
+
+	return &ret
+}

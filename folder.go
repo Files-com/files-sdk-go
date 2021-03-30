@@ -66,3 +66,12 @@ func (f *FolderCollection) UnmarshalJSON(data []byte) error {
 	*f = FolderCollection(v)
 	return nil
 }
+
+func (f *FolderCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*f))
+	for i, v := range *f {
+		ret[i] = v
+	}
+
+	return &ret
+}

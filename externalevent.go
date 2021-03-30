@@ -50,3 +50,12 @@ func (e *ExternalEventCollection) UnmarshalJSON(data []byte) error {
 	*e = ExternalEventCollection(v)
 	return nil
 }
+
+func (e *ExternalEventCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*e))
+	for i, v := range *e {
+		ret[i] = v
+	}
+
+	return &ret
+}

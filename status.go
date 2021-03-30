@@ -37,3 +37,12 @@ func (s *StatusCollection) UnmarshalJSON(data []byte) error {
 	*s = StatusCollection(v)
 	return nil
 }
+
+func (s *StatusCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*s))
+	for i, v := range *s {
+		ret[i] = v
+	}
+
+	return &ret
+}

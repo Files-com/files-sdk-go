@@ -65,3 +65,12 @@ func (g *GroupUserCollection) UnmarshalJSON(data []byte) error {
 	*g = GroupUserCollection(v)
 	return nil
 }
+
+func (g *GroupUserCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*g))
+	for i, v := range *g {
+		ret[i] = v
+	}
+
+	return &ret
+}

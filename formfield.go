@@ -38,3 +38,12 @@ func (f *FormFieldCollection) UnmarshalJSON(data []byte) error {
 	*f = FormFieldCollection(v)
 	return nil
 }
+
+func (f *FormFieldCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*f))
+	for i, v := range *f {
+		ret[i] = v
+	}
+
+	return &ret
+}

@@ -167,3 +167,12 @@ func (r *RemoteServerCollection) UnmarshalJSON(data []byte) error {
 	*r = RemoteServerCollection(v)
 	return nil
 }
+
+func (r *RemoteServerCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*r))
+	for i, v := range *r {
+		ret[i] = v
+	}
+
+	return &ret
+}

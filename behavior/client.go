@@ -5,6 +5,7 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go"
 	lib "github.com/Files-com/files-sdk-go/lib"
+	listquery "github.com/Files-com/files-sdk-go/listquery"
 )
 
 type Client struct {
@@ -20,32 +21,12 @@ func (i *Iter) Behavior() files_sdk.Behavior {
 }
 
 func (c *Client) List(params files_sdk.BehaviorListParams) (*Iter, error) {
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	i := &Iter{Iter: &lib.Iter{}}
+	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	path := "/behaviors"
 	i.ListParams = &params
-	exportParams, err := i.ExportParams()
-	if err != nil {
-		return i, err
-	}
-	i.Query = func() (*[]interface{}, string, error) {
-		data, res, err := files_sdk.Call("GET", c.Config, path, exportParams)
-		defaultValue := make([]interface{}, 0)
-		if err != nil {
-			return &defaultValue, "", err
-		}
-		list := files_sdk.BehaviorCollection{}
-		if err := list.UnmarshalJSON(*data); err != nil {
-			return &defaultValue, "", err
-		}
-
-		ret := make([]interface{}, len(list))
-		for i, v := range list {
-			ret[i] = v
-		}
-		cursor := res.Header.Get("X-Files-Cursor")
-		return &ret, cursor, nil
-	}
+	list := files_sdk.BehaviorCollection{}
+	i.Query = listquery.Build(i, c.Config, path, &list)
 	return i, nil
 }
 
@@ -82,32 +63,12 @@ func Find(params files_sdk.BehaviorFindParams) (files_sdk.Behavior, error) {
 }
 
 func (c *Client) ListFor(params files_sdk.BehaviorListForParams) (*Iter, error) {
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	i := &Iter{Iter: &lib.Iter{}}
+	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	path := lib.BuildPath("/behaviors/folders/", params.Path)
 	i.ListParams = &params
-	exportParams, err := i.ExportParams()
-	if err != nil {
-		return i, err
-	}
-	i.Query = func() (*[]interface{}, string, error) {
-		data, res, err := files_sdk.Call("GET", c.Config, path, exportParams)
-		defaultValue := make([]interface{}, 0)
-		if err != nil {
-			return &defaultValue, "", err
-		}
-		list := files_sdk.BehaviorCollection{}
-		if err := list.UnmarshalJSON(*data); err != nil {
-			return &defaultValue, "", err
-		}
-
-		ret := make([]interface{}, len(list))
-		for i, v := range list {
-			ret[i] = v
-		}
-		cursor := res.Header.Get("X-Files-Cursor")
-		return &ret, cursor, nil
-	}
+	list := files_sdk.BehaviorCollection{}
+	i.Query = listquery.Build(i, c.Config, path, &list)
 	return i, nil
 }
 

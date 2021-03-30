@@ -65,3 +65,12 @@ func (a *As2KeyCollection) UnmarshalJSON(data []byte) error {
 	*a = As2KeyCollection(v)
 	return nil
 }
+
+func (a *As2KeyCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*a))
+	for i, v := range *a {
+		ret[i] = v
+	}
+
+	return &ret
+}
