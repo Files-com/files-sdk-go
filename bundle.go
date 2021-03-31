@@ -70,7 +70,7 @@ type BundleCreateParams struct {
 // Send email(s) with a link to bundle
 type BundleShareParams struct {
 	Id         int64    `url:"-,omitempty" required:"true"`
-	To         []string `url:"to,omitempty" required:"true"`
+	To         []string `url:"to,omitempty" required:"false"`
 	Note       string   `url:"note,omitempty" required:"false"`
 	Recipients []string `url:"recipients,omitempty" required:"false"`
 }
