@@ -14,7 +14,6 @@ type Automation struct {
 	NextProcessOn          string          `json:"next_process_on,omitempty"`
 	Schedule               json.RawMessage `json:"schedule,omitempty"`
 	Source                 string          `json:"source,omitempty"`
-	Destination            string          `json:"destination,omitempty"`
 	Destinations           string          `json:"destinations,omitempty"`
 	DestinationReplaceFrom string          `json:"destination_replace_from,omitempty"`
 	DestinationReplaceTo   string          `json:"destination_replace_to,omitempty"`
@@ -26,6 +25,7 @@ type Automation struct {
 	TriggerActions         string          `json:"trigger_actions,omitempty"`
 	TriggerActionPath      string          `json:"trigger_action_path,omitempty"`
 	Value                  json.RawMessage `json:"value,omitempty"`
+	Destination            string          `json:"destination,omitempty"`
 }
 
 type AutomationCollection []Automation
