@@ -14,9 +14,9 @@ type Invoice struct {
 	CreatedAt         time.Time `json:"created_at,omitempty"`
 	Currency          string    `json:"currency,omitempty"`
 	DownloadUri       string    `json:"download_uri,omitempty"`
-	InvoiceLineItems  []string  `json:"invoice_line_items,omitempty"`
+	InvoiceLineItems  string    `json:"invoice_line_items,omitempty"`
 	Method            string    `json:"method,omitempty"`
-	PaymentLineItems  []string  `json:"payment_line_items,omitempty"`
+	PaymentLineItems  string    `json:"payment_line_items,omitempty"`
 	PaymentReversedAt time.Time `json:"payment_reversed_at,omitempty"`
 	PaymentType       string    `json:"payment_type,omitempty"`
 	SiteName          string    `json:"site_name,omitempty"`
