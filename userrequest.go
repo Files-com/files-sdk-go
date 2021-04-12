@@ -17,7 +17,7 @@ type UserRequestCollection []UserRequest
 
 type UserRequestListParams struct {
 	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int    `url:"per_page,omitempty" required:"false"`
+	PerPage int64  `url:"per_page,omitempty" required:"false"`
 	lib.ListParams
 }
 

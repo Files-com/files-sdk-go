@@ -5,10 +5,10 @@ import (
 )
 
 type ListParams struct {
-	Page     int    `json:"page,omitempty" url:"page,omitempty" required:"false"`
-	PerPage  int    `json:"per_page,omitempty" url:"per_page,omitempty" required:"false"`
+	Page     int64  `json:"page,omitempty" url:"page,omitempty" required:"false"`
+	PerPage  int64  `json:"per_page,omitempty" url:"per_page,omitempty" required:"false"`
 	Cursor   string `json:"cursor,omitempty" url:"cursor,omitempty" required:"false"`
-	MaxPages int    `json:"-" url:"-"`
+	MaxPages int64  `json:"-" url:"-"`
 }
 
 // ListParamsContainer is a general interface for which all list parameter
@@ -25,7 +25,7 @@ func (p *ListParams) GetListParams() *ListParams {
 	return p
 }
 
-func (p *ListParams) Set(page int, perPage int, cursor string, maxPages int) {
+func (p *ListParams) Set(page int64, perPage int64, cursor string, maxPages int64) {
 	p.Page = page
 	p.PerPage = perPage
 	p.Cursor = cursor
@@ -120,7 +120,7 @@ func (i *Iter) Next() bool {
 		return true
 	}
 
-	if len(*i.Values) == i.GetParams().PerPage {
+	if len(*i.Values) == int(i.GetParams().PerPage) {
 		i.CurrentIndex = 0
 		return i.GetPage()
 	}

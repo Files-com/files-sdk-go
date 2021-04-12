@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Files-com/files-sdk-go/lib"
+
 	files_sdk "github.com/Files-com/files-sdk-go"
 	file_action "github.com/Files-com/files-sdk-go/fileaction"
 	folder "github.com/Files-com/files-sdk-go/folder"
@@ -51,7 +53,11 @@ type UploadBatchStats struct {
 }
 
 func (c *Client) UploadFolderOrFile(params *UploadParams) ([]files_sdk.File, error) {
-	fi, err := os.Stat(params.Source)
+	absoluteSource, err := filepath.Abs(params.Source)
+	if err != nil {
+		return []files_sdk.File{}, err
+	}
+	fi, err := os.Stat(absoluteSource)
 	if err != nil {
 		return []files_sdk.File{}, err
 	}
@@ -112,8 +118,14 @@ func (c *Client) UploadFolder(params *UploadParams) ([]fileUpload, error) {
 		}
 
 		var destination string
-		baseDestination := filepath.Clean(strings.Replace(path, localFolderPath, "", 1))
+		var baseDestination string
+		if localFolderPath != "." {
+			baseDestination = strings.TrimPrefix(path, localFolderPath)
+		} else if path != "." {
+			baseDestination = path
+		}
 		baseDestination = strings.TrimLeft(baseDestination, "/")
+		baseDestination = strings.TrimPrefix(baseDestination, "/")
 		if destinationRootPath == "" {
 			destination = baseDestination
 		} else {
@@ -124,7 +136,7 @@ func (c *Client) UploadFolder(params *UploadParams) ([]fileUpload, error) {
 			destination = filename
 		}
 
-		file := fileUpload{File: files_sdk.File{Path: destination, Size: int(info.Size())}, Source: path, Destination: destination}
+		file := fileUpload{File: files_sdk.File{Path: destination, Size: info.Size()}, Source: path, Destination: destination}
 		if file.isDir() {
 			file.File.Type = "directory"
 			directoriesToCreate[destination] = file
@@ -161,8 +173,8 @@ func (c *Client) UploadFolder(params *UploadParams) ([]fileUpload, error) {
 	batchStatus := UploadBatchStats{LargestSize: int(largestSize), LargestFilePath: largestFilePath, TotalUploads: len(uploadFiles), Size: TotalSize}
 	someMapMutex := sync.RWMutex{}
 	goc := goccm.New(c.Config.MaxConcurrentConnections())
-
 	for _, uploadFile := range uploadFiles {
+
 		go func(uploadFile fileUpload) {
 			goc.Wait()
 			progress := UploadProgress{}
@@ -198,7 +210,7 @@ func (c *Client) UploadFolder(params *UploadParams) ([]fileUpload, error) {
 				return
 			}
 
-			file, err := c.Upload(localFile, uploadFile.File.Path, &progress)
+			file, err := c.Upload(localFile, files_sdk.FileActionBeginUploadParams{Path: uploadFile.File.Path, MkdirParents: lib.Bool(true)}, &progress)
 			if err != nil {
 				uploadFile.error = err
 				progress.progressWatcher(0)
@@ -237,10 +249,24 @@ func (u *fileUpload) isDir() bool {
 }
 
 func (c *Client) UploadFile(params *UploadParams) (files_sdk.File, error) {
+	beginUpload := files_sdk.FileActionBeginUploadParams{}
 	destination := params.Destination
+	_, localFileName := filepath.Split(params.Source)
 	if params.Destination == "" {
-		_, fileName := filepath.Split(params.Source)
-		destination = fileName
+		destination = localFileName
+	} else {
+		_, err := c.Find(params.Destination)
+		responseError, ok := err.(files_sdk.ResponseError)
+		if ok && responseError.Type == "bad-request/cannot-download-directory" {
+			destination = filepath.Join(params.Destination, localFileName)
+		} else if ok && responseError.Type == "not-found" {
+			if destination[len(destination)-1:] == "/" {
+				destination = filepath.Join(params.Destination, localFileName)
+				beginUpload.MkdirParents = lib.Bool(true)
+			}
+		} else if err != nil {
+			return files_sdk.File{}, err
+		}
 	}
 	fi, err := os.Stat(params.Source)
 	localFile, err := os.Open(params.Source)
@@ -255,21 +281,22 @@ func (c *Client) UploadFile(params *UploadParams) (files_sdk.File, error) {
 		}
 		params.ProgressReporter(
 			params.Source,
-			files_sdk.File{Size: int(fi.Size()), Path: destination, Type: "file"},
+			files_sdk.File{Size: fi.Size(), Path: destination, Type: "file"},
 			bytesCount,
 			UploadBatchStats{Size: fi.Size(), LargestSize: int(fi.Size()), LargestFilePath: len(params.Destination), TotalUploads: 1},
 			nil,
 		)
 	}
-	return c.Upload(localFile, destination, &progress)
+	beginUpload.Path = destination
+	return c.Upload(localFile, beginUpload, &progress)
 }
 
 func UploadFile(params *UploadParams) (files_sdk.File, error) {
 	return (&Client{}).UploadFile(params)
 }
 
-func (c *Client) Upload(source io.Reader, destination string, progress *UploadProgress) (files_sdk.File, error) {
-	upload, etags, bytesWritten, err := c.uploadChunks(source, destination, progress)
+func (c *Client) Upload(source io.Reader, beginUpload files_sdk.FileActionBeginUploadParams, progress *UploadProgress) (files_sdk.File, error) {
+	upload, etags, bytesWritten, err := c.uploadChunks(source, beginUpload, progress)
 	if err != nil {
 		return files_sdk.File{}, err
 	}
@@ -277,8 +304,8 @@ func (c *Client) Upload(source io.Reader, destination string, progress *UploadPr
 		ProvidedMtime: time.Now(),
 		EtagsParam:    etags,
 		Action:        "end",
-		Size:          bytesWritten,
-		Path:          destination,
+		Size:          int64(bytesWritten),
+		Path:          beginUpload.Path,
 		Ref:           upload.Ref,
 	})
 	if err != nil {
@@ -298,13 +325,11 @@ func (p *ProgressReader) Read(b []byte) (n int, err error) {
 	return n, err
 }
 
-func (c *Client) uploadChunks(reader io.Reader, path string, progress *UploadProgress) (files_sdk.FileUploadPart, []files_sdk.EtagsParam, int, error) {
+func (c *Client) uploadChunks(reader io.Reader, beginUpload files_sdk.FileActionBeginUploadParams, progress *UploadProgress) (files_sdk.FileUploadPart, []files_sdk.EtagsParam, int, error) {
 	bytesWritten := 0
 	etags := make([]files_sdk.EtagsParam, 0)
-	beginUpload := files_sdk.FileActionBeginUploadParams{}
 	upload := files_sdk.FileUploadPart{}
 	for {
-		beginUpload.Path = path
 		beginUpload.Part = upload.PartNumber + 1
 		beginUpload.Ref = upload.Ref
 		fileActionClient := file_action.Client{Config: c.Config}
@@ -346,6 +371,6 @@ func (c *Client) uploadChunks(reader io.Reader, path string, progress *UploadPro
 	return upload, etags, bytesWritten, nil
 }
 
-func Upload(source io.Reader, destination string, progress *UploadProgress) (files_sdk.File, error) {
-	return (&Client{}).Upload(source, destination, progress)
+func Upload(source io.Reader, destination string, beginUpload files_sdk.FileActionBeginUploadParams, progress *UploadProgress) (files_sdk.File, error) {
+	return (&Client{}).Upload(source, beginUpload, progress)
 }

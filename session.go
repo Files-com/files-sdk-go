@@ -9,7 +9,7 @@ type Session struct {
 	Language              string `json:"language,omitempty"`
 	LoginToken            string `json:"login_token,omitempty"`
 	LoginTokenDomain      string `json:"login_token_domain,omitempty"`
-	MaxDirListingSize     int    `json:"max_dir_listing_size,omitempty"`
+	MaxDirListingSize     int64  `json:"max_dir_listing_size,omitempty"`
 	MultipleRegions       *bool  `json:"multiple_regions,omitempty"`
 	ReadOnly              *bool  `json:"read_only,omitempty"`
 	RootPath              string `json:"root_path,omitempty"`

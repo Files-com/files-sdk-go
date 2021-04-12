@@ -3,6 +3,7 @@ package files_sdk
 import (
 	"encoding/json"
 	"io"
+	"net/http"
 	"time"
 )
 
@@ -10,7 +11,7 @@ type File struct {
 	Path             string    `json:"path,omitempty"`
 	DisplayName      string    `json:"display_name,omitempty"`
 	Type             string    `json:"type,omitempty"`
-	Size             int       `json:"size,omitempty"`
+	Size             int64     `json:"size,omitempty"`
 	Mtime            time.Time `json:"mtime,omitempty"`
 	ProvidedMtime    time.Time `json:"provided_mtime,omitempty"`
 	Crc32            string    `json:"crc32,omitempty"`
@@ -24,12 +25,12 @@ type File struct {
 	PreviewId        int64     `json:"preview_id,omitempty"`
 	Preview          string    `json:"preview,omitempty"`
 	Action           string    `json:"action,omitempty"`
-	Length           int       `json:"length,omitempty"`
+	Length           int64     `json:"length,omitempty"`
 	MkdirParents     *bool     `json:"mkdir_parents,omitempty"`
-	Part             int       `json:"part,omitempty"`
-	Parts            int       `json:"parts,omitempty"`
+	Part             int64     `json:"part,omitempty"`
+	Parts            int64     `json:"parts,omitempty"`
 	Ref              string    `json:"ref,omitempty"`
-	Restart          int       `json:"restart,omitempty"`
+	Restart          int64     `json:"restart,omitempty"`
 	Structure        string    `json:"structure,omitempty"`
 	WithRename       *bool     `json:"with_rename,omitempty"`
 }
@@ -43,26 +44,27 @@ type EtagsParam struct {
 
 // Download file
 type FileDownloadParams struct {
-	Path              string    `url:"-,omitempty" required:"true"`
-	Action            string    `url:"action,omitempty" required:"false"`
-	PreviewSize       string    `url:"preview_size,omitempty" required:"false"`
-	WithPreviews      *bool     `url:"with_previews,omitempty" required:"false"`
-	WithPriorityColor *bool     `url:"with_priority_color,omitempty" required:"false"`
-	Writer            io.Writer `url:"-,omitempty" required:"false"`
+	Path              string               `url:"-,omitempty" required:"true"`
+	Action            string               `url:"action,omitempty" required:"false"`
+	PreviewSize       string               `url:"preview_size,omitempty" required:"false"`
+	WithPreviews      *bool                `url:"with_previews,omitempty" required:"false"`
+	WithPriorityColor *bool                `url:"with_priority_color,omitempty" required:"false"`
+	Writer            io.Writer            `url:"-,omitempty" required:"false"`
+	OnDownload        func(*http.Response) `url:"-,omitempty" required:"false"`
 }
 
 type FileCreateParams struct {
 	Path          string       `url:"-,omitempty" required:"true"`
 	Action        string       `url:"action,omitempty" required:"false"`
 	EtagsParam    []EtagsParam `url:"etags,omitempty" required:"false"`
-	Length        int          `url:"length,omitempty" required:"false"`
+	Length        int64        `url:"length,omitempty" required:"false"`
 	MkdirParents  *bool        `url:"mkdir_parents,omitempty" required:"false"`
-	Part          int          `url:"part,omitempty" required:"false"`
-	Parts         int          `url:"parts,omitempty" required:"false"`
+	Part          int64        `url:"part,omitempty" required:"false"`
+	Parts         int64        `url:"parts,omitempty" required:"false"`
 	ProvidedMtime time.Time    `url:"provided_mtime,omitempty" required:"false"`
 	Ref           string       `url:"ref,omitempty" required:"false"`
-	Restart       int          `url:"restart,omitempty" required:"false"`
-	Size          int          `url:"size,omitempty" required:"false"`
+	Restart       int64        `url:"restart,omitempty" required:"false"`
+	Size          int64        `url:"size,omitempty" required:"false"`
 	Structure     string       `url:"structure,omitempty" required:"false"`
 	WithRename    *bool        `url:"with_rename,omitempty" required:"false"`
 }

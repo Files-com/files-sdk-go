@@ -12,8 +12,8 @@ type RemoteServer struct {
 	Hostname                          string `json:"hostname,omitempty"`
 	RemoteHomePath                    string `json:"remote_home_path,omitempty"`
 	Name                              string `json:"name,omitempty"`
-	Port                              int    `json:"port,omitempty"`
-	MaxConnections                    int    `json:"max_connections,omitempty"`
+	Port                              int64  `json:"port,omitempty"`
+	MaxConnections                    int64  `json:"max_connections,omitempty"`
 	S3Bucket                          string `json:"s3_bucket,omitempty"`
 	S3Region                          string `json:"s3_region,omitempty"`
 	ServerCertificate                 string `json:"server_certificate,omitempty"`
@@ -55,7 +55,7 @@ type RemoteServerCollection []RemoteServer
 
 type RemoteServerListParams struct {
 	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int    `url:"per_page,omitempty" required:"false"`
+	PerPage int64  `url:"per_page,omitempty" required:"false"`
 	lib.ListParams
 }
 
@@ -79,8 +79,8 @@ type RemoteServerCreateParams struct {
 	AzureBlobStorageAccessKey         string `url:"azure_blob_storage_access_key,omitempty" required:"false"`
 	Hostname                          string `url:"hostname,omitempty" required:"false"`
 	Name                              string `url:"name,omitempty" required:"false"`
-	MaxConnections                    int    `url:"max_connections,omitempty" required:"false"`
-	Port                              int    `url:"port,omitempty" required:"false"`
+	MaxConnections                    int64  `url:"max_connections,omitempty" required:"false"`
+	Port                              int64  `url:"port,omitempty" required:"false"`
 	S3Bucket                          string `url:"s3_bucket,omitempty" required:"false"`
 	S3Region                          string `url:"s3_region,omitempty" required:"false"`
 	ServerCertificate                 string `url:"server_certificate,omitempty" required:"false"`
@@ -119,8 +119,8 @@ type RemoteServerUpdateParams struct {
 	AzureBlobStorageAccessKey         string `url:"azure_blob_storage_access_key,omitempty" required:"false"`
 	Hostname                          string `url:"hostname,omitempty" required:"false"`
 	Name                              string `url:"name,omitempty" required:"false"`
-	MaxConnections                    int    `url:"max_connections,omitempty" required:"false"`
-	Port                              int    `url:"port,omitempty" required:"false"`
+	MaxConnections                    int64  `url:"max_connections,omitempty" required:"false"`
+	Port                              int64  `url:"port,omitempty" required:"false"`
 	S3Bucket                          string `url:"s3_bucket,omitempty" required:"false"`
 	S3Region                          string `url:"s3_region,omitempty" required:"false"`
 	ServerCertificate                 string `url:"server_certificate,omitempty" required:"false"`

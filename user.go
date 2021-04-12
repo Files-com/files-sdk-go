@@ -14,7 +14,7 @@ type User struct {
 	AdminGroupIds              []int64   `json:"admin_group_ids,omitempty"`
 	AllowedIps                 string    `json:"allowed_ips,omitempty"`
 	AttachmentsPermission      *bool     `json:"attachments_permission,omitempty"`
-	ApiKeysCount               int       `json:"api_keys_count,omitempty"`
+	ApiKeysCount               int64     `json:"api_keys_count,omitempty"`
 	AuthenticateUntil          time.Time `json:"authenticate_until,omitempty"`
 	AuthenticationMethod       string    `json:"authentication_method,omitempty"`
 	AvatarUrl                  string    `json:"avatar_url,omitempty"`
@@ -35,11 +35,11 @@ type User struct {
 	Name                       string    `json:"name,omitempty"`
 	Company                    string    `json:"company,omitempty"`
 	Notes                      string    `json:"notes,omitempty"`
-	NotificationDailySendTime  int       `json:"notification_daily_send_time,omitempty"`
+	NotificationDailySendTime  int64     `json:"notification_daily_send_time,omitempty"`
 	OfficeIntegrationEnabled   *bool     `json:"office_integration_enabled,omitempty"`
 	PasswordSetAt              time.Time `json:"password_set_at,omitempty"`
-	PasswordValidityDays       int       `json:"password_validity_days,omitempty"`
-	PublicKeysCount            int       `json:"public_keys_count,omitempty"`
+	PasswordValidityDays       int64     `json:"password_validity_days,omitempty"`
+	PublicKeysCount            int64     `json:"public_keys_count,omitempty"`
 	ReceiveAdminAlerts         *bool     `json:"receive_admin_alerts,omitempty"`
 	Require2fa                 string    `json:"require_2fa,omitempty"`
 	Active2fa                  *bool     `json:"active_2fa,omitempty"`
@@ -81,7 +81,7 @@ type QParam struct {
 
 type UserListParams struct {
 	Cursor     string          `url:"cursor,omitempty" required:"false"`
-	PerPage    int             `url:"per_page,omitempty" required:"false"`
+	PerPage    int64           `url:"per_page,omitempty" required:"false"`
 	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
 	Filter     json.RawMessage `url:"filter,omitempty" required:"false"`
 	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false"`
@@ -123,12 +123,12 @@ type UserCreateParams struct {
 	FtpPermission              *bool     `url:"ftp_permission,omitempty" required:"false"`
 	HeaderText                 string    `url:"header_text,omitempty" required:"false"`
 	Language                   string    `url:"language,omitempty" required:"false"`
-	NotificationDailySendTime  int       `url:"notification_daily_send_time,omitempty" required:"false"`
+	NotificationDailySendTime  int64     `url:"notification_daily_send_time,omitempty" required:"false"`
 	Name                       string    `url:"name,omitempty" required:"false"`
 	Company                    string    `url:"company,omitempty" required:"false"`
 	Notes                      string    `url:"notes,omitempty" required:"false"`
 	OfficeIntegrationEnabled   *bool     `url:"office_integration_enabled,omitempty" required:"false"`
-	PasswordValidityDays       int       `url:"password_validity_days,omitempty" required:"false"`
+	PasswordValidityDays       int64     `url:"password_validity_days,omitempty" required:"false"`
 	ReceiveAdminAlerts         *bool     `url:"receive_admin_alerts,omitempty" required:"false"`
 	RequirePasswordChange      *bool     `url:"require_password_change,omitempty" required:"false"`
 	RestapiPermission          *bool     `url:"restapi_permission,omitempty" required:"false"`
@@ -185,12 +185,12 @@ type UserUpdateParams struct {
 	FtpPermission              *bool     `url:"ftp_permission,omitempty" required:"false"`
 	HeaderText                 string    `url:"header_text,omitempty" required:"false"`
 	Language                   string    `url:"language,omitempty" required:"false"`
-	NotificationDailySendTime  int       `url:"notification_daily_send_time,omitempty" required:"false"`
+	NotificationDailySendTime  int64     `url:"notification_daily_send_time,omitempty" required:"false"`
 	Name                       string    `url:"name,omitempty" required:"false"`
 	Company                    string    `url:"company,omitempty" required:"false"`
 	Notes                      string    `url:"notes,omitempty" required:"false"`
 	OfficeIntegrationEnabled   *bool     `url:"office_integration_enabled,omitempty" required:"false"`
-	PasswordValidityDays       int       `url:"password_validity_days,omitempty" required:"false"`
+	PasswordValidityDays       int64     `url:"password_validity_days,omitempty" required:"false"`
 	ReceiveAdminAlerts         *bool     `url:"receive_admin_alerts,omitempty" required:"false"`
 	RequirePasswordChange      *bool     `url:"require_password_change,omitempty" required:"false"`
 	RestapiPermission          *bool     `url:"restapi_permission,omitempty" required:"false"`

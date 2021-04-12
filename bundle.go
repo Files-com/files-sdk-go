@@ -19,7 +19,7 @@ type Bundle struct {
 	Id                    int64     `json:"id,omitempty"`
 	CreatedAt             time.Time `json:"created_at,omitempty"`
 	ExpiresAt             time.Time `json:"expires_at,omitempty"`
-	MaxUses               int       `json:"max_uses,omitempty"`
+	MaxUses               int64     `json:"max_uses,omitempty"`
 	Note                  string    `json:"note,omitempty"`
 	UserId                int64     `json:"user_id,omitempty"`
 	Username              string    `json:"username,omitempty"`
@@ -36,7 +36,7 @@ type BundleCollection []Bundle
 type BundleListParams struct {
 	UserId     int64           `url:"user_id,omitempty" required:"false"`
 	Cursor     string          `url:"cursor,omitempty" required:"false"`
-	PerPage    int             `url:"per_page,omitempty" required:"false"`
+	PerPage    int64           `url:"per_page,omitempty" required:"false"`
 	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
 	Filter     json.RawMessage `url:"filter,omitempty" required:"false"`
 	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false"`
@@ -57,7 +57,7 @@ type BundleCreateParams struct {
 	Password              string    `url:"password,omitempty" required:"false"`
 	FormFieldSetId        int64     `url:"form_field_set_id,omitempty" required:"false"`
 	ExpiresAt             time.Time `url:"expires_at,omitempty" required:"false"`
-	MaxUses               int       `url:"max_uses,omitempty" required:"false"`
+	MaxUses               int64     `url:"max_uses,omitempty" required:"false"`
 	Description           string    `url:"description,omitempty" required:"false"`
 	Note                  string    `url:"note,omitempty" required:"false"`
 	Code                  string    `url:"code,omitempty" required:"false"`
@@ -85,7 +85,7 @@ type BundleUpdateParams struct {
 	Description           string    `url:"description,omitempty" required:"false"`
 	ExpiresAt             time.Time `url:"expires_at,omitempty" required:"false"`
 	InboxId               int64     `url:"inbox_id,omitempty" required:"false"`
-	MaxUses               int       `url:"max_uses,omitempty" required:"false"`
+	MaxUses               int64     `url:"max_uses,omitempty" required:"false"`
 	Note                  string    `url:"note,omitempty" required:"false"`
 	RequireRegistration   *bool     `url:"require_registration,omitempty" required:"false"`
 	RequireShareRecipient *bool     `url:"require_share_recipient,omitempty" required:"false"`

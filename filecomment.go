@@ -17,7 +17,7 @@ type FileCommentCollection []FileComment
 
 type FileCommentListForParams struct {
 	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int    `url:"per_page,omitempty" required:"false"`
+	PerPage int64  `url:"per_page,omitempty" required:"false"`
 	Path    string `url:"-,omitempty" required:"true"`
 	lib.ListParams
 }

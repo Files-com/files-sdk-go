@@ -19,7 +19,7 @@ type InboxRegistrationCollection []InboxRegistration
 
 type InboxRegistrationListParams struct {
 	Cursor           string `url:"cursor,omitempty" required:"false"`
-	PerPage          int    `url:"per_page,omitempty" required:"false"`
+	PerPage          int64  `url:"per_page,omitempty" required:"false"`
 	FolderBehaviorId int64  `url:"folder_behavior_id,omitempty" required:"true"`
 	lib.ListParams
 }

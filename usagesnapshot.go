@@ -15,8 +15,8 @@ type UsageSnapshot struct {
 	HighWaterUserCount           float32         `json:"high_water_user_count,omitempty"`
 	CurrentStorage               float32         `json:"current_storage,omitempty"`
 	HighWaterStorage             float32         `json:"high_water_storage,omitempty"`
-	TotalDownloads               int             `json:"total_downloads,omitempty"`
-	TotalUploads                 int             `json:"total_uploads,omitempty"`
+	TotalDownloads               int64           `json:"total_downloads,omitempty"`
+	TotalUploads                 int64           `json:"total_uploads,omitempty"`
 	UpdatedAt                    time.Time       `json:"updated_at,omitempty"`
 	UsageByTopLevelDir           json.RawMessage `json:"usage_by_top_level_dir,omitempty"`
 	RootStorage                  float32         `json:"root_storage,omitempty"`
@@ -28,7 +28,7 @@ type UsageSnapshotCollection []UsageSnapshot
 
 type UsageSnapshotListParams struct {
 	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int    `url:"per_page,omitempty" required:"false"`
+	PerPage int64  `url:"per_page,omitempty" required:"false"`
 	lib.ListParams
 }
 

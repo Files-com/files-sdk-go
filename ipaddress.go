@@ -17,13 +17,13 @@ type IpAddressCollection []IpAddress
 
 type IpAddressListParams struct {
 	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int    `url:"per_page,omitempty" required:"false"`
+	PerPage int64  `url:"per_page,omitempty" required:"false"`
 	lib.ListParams
 }
 
 type IpAddressGetReservedParams struct {
 	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int    `url:"per_page,omitempty" required:"false"`
+	PerPage int64  `url:"per_page,omitempty" required:"false"`
 }
 
 func (i *IpAddress) UnmarshalJSON(data []byte) error {

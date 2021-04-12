@@ -5,7 +5,7 @@ import (
 )
 
 type Status struct {
-	Code          int    `json:"code,omitempty"`
+	Code          int64  `json:"code,omitempty"`
 	Message       string `json:"message,omitempty"`
 	Status        string `json:"status,omitempty"`
 	Data          string `json:"data,omitempty"`

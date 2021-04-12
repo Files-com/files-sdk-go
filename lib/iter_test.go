@@ -22,7 +22,7 @@ func TestIter_Next_MaxPages(t *testing.T) {
 	for it.Next() {
 		recordCount += 1
 	}
-	assert.Equal(params.PerPage*params.MaxPages, recordCount)
+	assert.Equal(int(params.PerPage*params.MaxPages), recordCount)
 	assert.Equal(nil, it.Err())
 	assert.Equal("cursor", it.GetCursor())
 }

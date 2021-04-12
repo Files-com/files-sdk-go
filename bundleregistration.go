@@ -21,7 +21,7 @@ type BundleRegistrationCollection []BundleRegistration
 type BundleRegistrationListParams struct {
 	UserId   int64  `url:"user_id,omitempty" required:"false"`
 	Cursor   string `url:"cursor,omitempty" required:"false"`
-	PerPage  int    `url:"per_page,omitempty" required:"false"`
+	PerPage  int64  `url:"per_page,omitempty" required:"false"`
 	BundleId int64  `url:"bundle_id,omitempty" required:"true"`
 	lib.ListParams
 }

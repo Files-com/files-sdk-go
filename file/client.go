@@ -11,6 +11,29 @@ type Client struct {
 	files_sdk.Config
 }
 
+func (c *Client) Find(Path string) (files_sdk.File, error) {
+	file := files_sdk.File{}
+	path := lib.BuildPath("/files/", Path)
+	exportParams, err := lib.ExportParams(lib.Interface())
+	if err != nil {
+		return file, err
+	}
+	data, _, err := files_sdk.Call("GET", c.Config, path, exportParams)
+	if err != nil {
+		return file, err
+	}
+	if err := file.UnmarshalJSON(*data); err != nil {
+		return file, err
+	}
+
+	return file, nil
+}
+
+func Find(Path string) (files_sdk.File, error) {
+	client := Client{}
+	return client.Find(Path)
+}
+
 func (c *Client) Download(params files_sdk.FileDownloadParams) (files_sdk.File, error) {
 	file := files_sdk.File{}
 	path := lib.BuildPath("/files/", params.Path)
@@ -29,6 +52,9 @@ func (c *Client) Download(params files_sdk.FileDownloadParams) (files_sdk.File, 
 	resp, err := c.Config.GetHttpClient().Get(file.DownloadUri)
 	if err != nil {
 		return file, err
+	}
+	if params.OnDownload != nil {
+		params.OnDownload(resp)
 	}
 	_, err = io.Copy(params.Writer, resp.Body)
 	if err != nil {

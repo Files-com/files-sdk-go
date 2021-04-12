@@ -9,7 +9,7 @@ type Preview struct {
 	Status      string `json:"status,omitempty"`
 	DownloadUri string `json:"download_uri,omitempty"`
 	Type        string `json:"type,omitempty"`
-	Size        int    `json:"size,omitempty"`
+	Size        int64  `json:"size,omitempty"`
 }
 
 type PreviewCollection []Preview

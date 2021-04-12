@@ -17,7 +17,7 @@ type Site struct {
 	AllowedCountries                     string    `json:"allowed_countries,omitempty"`
 	AllowedIps                           string    `json:"allowed_ips,omitempty"`
 	AskAboutOverwrites                   *bool     `json:"ask_about_overwrites,omitempty"`
-	BundleExpiration                     int       `json:"bundle_expiration,omitempty"`
+	BundleExpiration                     int64     `json:"bundle_expiration,omitempty"`
 	BundlePasswordRequired               *bool     `json:"bundle_password_required,omitempty"`
 	Color2Left                           string    `json:"color2_left,omitempty"`
 	Color2Link                           string    `json:"color2_link,omitempty"`
@@ -27,11 +27,11 @@ type Site struct {
 	CreatedAt                            time.Time `json:"created_at,omitempty"`
 	Currency                             string    `json:"currency,omitempty"`
 	CustomNamespace                      *bool     `json:"custom_namespace,omitempty"`
-	DaysToRetainBackups                  int       `json:"days_to_retain_backups,omitempty"`
+	DaysToRetainBackups                  int64     `json:"days_to_retain_backups,omitempty"`
 	DefaultTimeZone                      string    `json:"default_time_zone,omitempty"`
 	DesktopApp                           *bool     `json:"desktop_app,omitempty"`
 	DesktopAppSessionIpPinning           *bool     `json:"desktop_app_session_ip_pinning,omitempty"`
-	DesktopAppSessionLifetime            int       `json:"desktop_app_session_lifetime,omitempty"`
+	DesktopAppSessionLifetime            int64     `json:"desktop_app_session_lifetime,omitempty"`
 	DisallowedCountries                  string    `json:"disallowed_countries,omitempty"`
 	DisableNotifications                 *bool     `json:"disable_notifications,omitempty"`
 	DisablePasswordReset                 *bool     `json:"disable_password_reset,omitempty"`
@@ -58,7 +58,7 @@ type Site struct {
 	LdapHost                             string    `json:"ldap_host,omitempty"`
 	LdapHost2                            string    `json:"ldap_host_2,omitempty"`
 	LdapHost3                            string    `json:"ldap_host_3,omitempty"`
-	LdapPort                             int       `json:"ldap_port,omitempty"`
+	LdapPort                             int64     `json:"ldap_port,omitempty"`
 	LdapSecure                           *bool     `json:"ldap_secure,omitempty"`
 	LdapType                             string    `json:"ldap_type,omitempty"`
 	LdapUserAction                       string    `json:"ldap_user_action,omitempty"`
@@ -67,7 +67,7 @@ type Site struct {
 	LdapUsernameField                    string    `json:"ldap_username_field,omitempty"`
 	LoginHelpText                        string    `json:"login_help_text,omitempty"`
 	Logo                                 string    `json:"logo,omitempty"`
-	MaxPriorPasswords                    int       `json:"max_prior_passwords,omitempty"`
+	MaxPriorPasswords                    int64     `json:"max_prior_passwords,omitempty"`
 	NextBillingAmount                    float32   `json:"next_billing_amount,omitempty"`
 	NextBillingDate                      string    `json:"next_billing_date,omitempty"`
 	OfficeIntegrationAvailable           *bool     `json:"office_integration_available,omitempty"`
@@ -75,14 +75,14 @@ type Site struct {
 	OverageNotifiedAt                    time.Time `json:"overage_notified_at,omitempty"`
 	OverageNotify                        *bool     `json:"overage_notify,omitempty"`
 	Overdue                              *bool     `json:"overdue,omitempty"`
-	PasswordMinLength                    int       `json:"password_min_length,omitempty"`
+	PasswordMinLength                    int64     `json:"password_min_length,omitempty"`
 	PasswordRequireLetter                *bool     `json:"password_require_letter,omitempty"`
 	PasswordRequireMixed                 *bool     `json:"password_require_mixed,omitempty"`
 	PasswordRequireNumber                *bool     `json:"password_require_number,omitempty"`
 	PasswordRequireSpecial               *bool     `json:"password_require_special,omitempty"`
 	PasswordRequireUnbreached            *bool     `json:"password_require_unbreached,omitempty"`
 	PasswordRequirementsApplyToBundles   *bool     `json:"password_requirements_apply_to_bundles,omitempty"`
-	PasswordValidityDays                 int       `json:"password_validity_days,omitempty"`
+	PasswordValidityDays                 int64     `json:"password_validity_days,omitempty"`
 	Phone                                string    `json:"phone,omitempty"`
 	Require2fa                           *bool     `json:"require_2fa,omitempty"`
 	Require2faStopTime                   time.Time `json:"require_2fa_stop_time,omitempty"`
@@ -97,29 +97,29 @@ type Site struct {
 	SmtpAddress                          string    `json:"smtp_address,omitempty"`
 	SmtpAuthentication                   string    `json:"smtp_authentication,omitempty"`
 	SmtpFrom                             string    `json:"smtp_from,omitempty"`
-	SmtpPort                             int       `json:"smtp_port,omitempty"`
+	SmtpPort                             int64     `json:"smtp_port,omitempty"`
 	SmtpUsername                         string    `json:"smtp_username,omitempty"`
 	SessionExpiry                        float32   `json:"session_expiry,omitempty"`
 	SslRequired                          *bool     `json:"ssl_required,omitempty"`
 	Subdomain                            string    `json:"subdomain,omitempty"`
 	SwitchToPlanDate                     time.Time `json:"switch_to_plan_date,omitempty"`
 	TlsDisabled                          *bool     `json:"tls_disabled,omitempty"`
-	TrialDaysLeft                        int       `json:"trial_days_left,omitempty"`
+	TrialDaysLeft                        int64     `json:"trial_days_left,omitempty"`
 	TrialUntil                           time.Time `json:"trial_until,omitempty"`
 	UpdatedAt                            time.Time `json:"updated_at,omitempty"`
 	UseProvidedModifiedAt                *bool     `json:"use_provided_modified_at,omitempty"`
 	User                                 string    `json:"user,omitempty"`
 	UserLockout                          *bool     `json:"user_lockout,omitempty"`
-	UserLockoutLockPeriod                int       `json:"user_lockout_lock_period,omitempty"`
-	UserLockoutTries                     int       `json:"user_lockout_tries,omitempty"`
-	UserLockoutWithin                    int       `json:"user_lockout_within,omitempty"`
+	UserLockoutLockPeriod                int64     `json:"user_lockout_lock_period,omitempty"`
+	UserLockoutTries                     int64     `json:"user_lockout_tries,omitempty"`
+	UserLockoutWithin                    int64     `json:"user_lockout_within,omitempty"`
 	UserRequestsEnabled                  *bool     `json:"user_requests_enabled,omitempty"`
 	WelcomeCustomText                    string    `json:"welcome_custom_text,omitempty"`
 	WelcomeEmailCc                       string    `json:"welcome_email_cc,omitempty"`
 	WelcomeEmailEnabled                  *bool     `json:"welcome_email_enabled,omitempty"`
 	WelcomeScreen                        string    `json:"welcome_screen,omitempty"`
 	WindowsModeFtp                       *bool     `json:"windows_mode_ftp,omitempty"`
-	DisableUsersFromInactivityPeriodDays int       `json:"disable_users_from_inactivity_period_days,omitempty"`
+	DisableUsersFromInactivityPeriodDays int64     `json:"disable_users_from_inactivity_period_days,omitempty"`
 }
 
 type SiteCollection []Site
@@ -131,7 +131,7 @@ type SiteUpdateParams struct {
 	Email                                string    `url:"email,omitempty" required:"false"`
 	ReplyToEmail                         string    `url:"reply_to_email,omitempty" required:"false"`
 	AllowBundleNames                     *bool     `url:"allow_bundle_names,omitempty" required:"false"`
-	BundleExpiration                     int       `url:"bundle_expiration,omitempty" required:"false"`
+	BundleExpiration                     int64     `url:"bundle_expiration,omitempty" required:"false"`
 	OverageNotify                        *bool     `url:"overage_notify,omitempty" required:"false"`
 	WelcomeEmailEnabled                  *bool     `url:"welcome_email_enabled,omitempty" required:"false"`
 	AskAboutOverwrites                   *bool     `url:"ask_about_overwrites,omitempty" required:"false"`
@@ -143,7 +143,7 @@ type SiteUpdateParams struct {
 	DefaultTimeZone                      string    `url:"default_time_zone,omitempty" required:"false"`
 	DesktopApp                           *bool     `url:"desktop_app,omitempty" required:"false"`
 	DesktopAppSessionIpPinning           *bool     `url:"desktop_app_session_ip_pinning,omitempty" required:"false"`
-	DesktopAppSessionLifetime            int       `url:"desktop_app_session_lifetime,omitempty" required:"false"`
+	DesktopAppSessionLifetime            int64     `url:"desktop_app_session_lifetime,omitempty" required:"false"`
 	FolderPermissionsGroupsOnly          *bool     `url:"folder_permissions_groups_only,omitempty" required:"false"`
 	WelcomeScreen                        string    `url:"welcome_screen,omitempty" required:"false"`
 	OfficeIntegrationAvailable           *bool     `url:"office_integration_available,omitempty" required:"false"`
@@ -151,17 +151,17 @@ type SiteUpdateParams struct {
 	SslRequired                          *bool     `url:"ssl_required,omitempty" required:"false"`
 	TlsDisabled                          *bool     `url:"tls_disabled,omitempty" required:"false"`
 	UserLockout                          *bool     `url:"user_lockout,omitempty" required:"false"`
-	UserLockoutTries                     int       `url:"user_lockout_tries,omitempty" required:"false"`
-	UserLockoutWithin                    int       `url:"user_lockout_within,omitempty" required:"false"`
-	UserLockoutLockPeriod                int       `url:"user_lockout_lock_period,omitempty" required:"false"`
+	UserLockoutTries                     int64     `url:"user_lockout_tries,omitempty" required:"false"`
+	UserLockoutWithin                    int64     `url:"user_lockout_within,omitempty" required:"false"`
+	UserLockoutLockPeriod                int64     `url:"user_lockout_lock_period,omitempty" required:"false"`
 	IncludePasswordInWelcomeEmail        *bool     `url:"include_password_in_welcome_email,omitempty" required:"false"`
 	AllowedCountries                     string    `url:"allowed_countries,omitempty" required:"false"`
 	AllowedIps                           string    `url:"allowed_ips,omitempty" required:"false"`
 	DisallowedCountries                  string    `url:"disallowed_countries,omitempty" required:"false"`
-	DaysToRetainBackups                  int       `url:"days_to_retain_backups,omitempty" required:"false"`
-	MaxPriorPasswords                    int       `url:"max_prior_passwords,omitempty" required:"false"`
-	PasswordValidityDays                 int       `url:"password_validity_days,omitempty" required:"false"`
-	PasswordMinLength                    int       `url:"password_min_length,omitempty" required:"false"`
+	DaysToRetainBackups                  int64     `url:"days_to_retain_backups,omitempty" required:"false"`
+	MaxPriorPasswords                    int64     `url:"max_prior_passwords,omitempty" required:"false"`
+	PasswordValidityDays                 int64     `url:"password_validity_days,omitempty" required:"false"`
+	PasswordMinLength                    int64     `url:"password_min_length,omitempty" required:"false"`
 	PasswordRequireLetter                *bool     `url:"password_require_letter,omitempty" required:"false"`
 	PasswordRequireMixed                 *bool     `url:"password_require_mixed,omitempty" required:"false"`
 	PasswordRequireSpecial               *bool     `url:"password_require_special,omitempty" required:"false"`
@@ -176,7 +176,7 @@ type SiteUpdateParams struct {
 	OptOutGlobal                         *bool     `url:"opt_out_global,omitempty" required:"false"`
 	UseProvidedModifiedAt                *bool     `url:"use_provided_modified_at,omitempty" required:"false"`
 	CustomNamespace                      *bool     `url:"custom_namespace,omitempty" required:"false"`
-	DisableUsersFromInactivityPeriodDays int       `url:"disable_users_from_inactivity_period_days,omitempty" required:"false"`
+	DisableUsersFromInactivityPeriodDays int64     `url:"disable_users_from_inactivity_period_days,omitempty" required:"false"`
 	NonSsoGroupsAllowed                  *bool     `url:"non_sso_groups_allowed,omitempty" required:"false"`
 	NonSsoUsersAllowed                   *bool     `url:"non_sso_users_allowed,omitempty" required:"false"`
 	SharingEnabled                       *bool     `url:"sharing_enabled,omitempty" required:"false"`
@@ -199,13 +199,13 @@ type SiteUpdateParams struct {
 	SmtpAuthentication                   string    `url:"smtp_authentication,omitempty" required:"false"`
 	SmtpFrom                             string    `url:"smtp_from,omitempty" required:"false"`
 	SmtpUsername                         string    `url:"smtp_username,omitempty" required:"false"`
-	SmtpPort                             int       `url:"smtp_port,omitempty" required:"false"`
+	SmtpPort                             int64     `url:"smtp_port,omitempty" required:"false"`
 	LdapEnabled                          *bool     `url:"ldap_enabled,omitempty" required:"false"`
 	LdapType                             string    `url:"ldap_type,omitempty" required:"false"`
 	LdapHost                             string    `url:"ldap_host,omitempty" required:"false"`
 	LdapHost2                            string    `url:"ldap_host_2,omitempty" required:"false"`
 	LdapHost3                            string    `url:"ldap_host_3,omitempty" required:"false"`
-	LdapPort                             int       `url:"ldap_port,omitempty" required:"false"`
+	LdapPort                             int64     `url:"ldap_port,omitempty" required:"false"`
 	LdapSecure                           *bool     `url:"ldap_secure,omitempty" required:"false"`
 	LdapUsername                         string    `url:"ldap_username,omitempty" required:"false"`
 	LdapUsernameField                    string    `url:"ldap_username_field,omitempty" required:"false"`

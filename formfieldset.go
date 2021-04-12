@@ -9,7 +9,7 @@ import (
 type FormFieldSet struct {
 	Id          int64  `json:"id,omitempty"`
 	Title       string `json:"title,omitempty"`
-	FormLayout  int    `json:"form_layout,omitempty"`
+	FormLayout  int64  `json:"form_layout,omitempty"`
 	FormFields  string `json:"form_fields,omitempty"`
 	SkipName    *bool  `json:"skip_name,omitempty"`
 	SkipEmail   *bool  `json:"skip_email,omitempty"`
@@ -22,7 +22,7 @@ type FormFieldSetCollection []FormFieldSet
 type FormFieldSetListParams struct {
 	UserId  int64  `url:"user_id,omitempty" required:"false"`
 	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int    `url:"per_page,omitempty" required:"false"`
+	PerPage int64  `url:"per_page,omitempty" required:"false"`
 	lib.ListParams
 }
 

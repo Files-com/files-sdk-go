@@ -28,7 +28,7 @@ type AppCollection []App
 
 type AppListParams struct {
 	Cursor     string          `url:"cursor,omitempty" required:"false"`
-	PerPage    int             `url:"per_page,omitempty" required:"false"`
+	PerPage    int64           `url:"per_page,omitempty" required:"false"`
 	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
 	Filter     json.RawMessage `url:"filter,omitempty" required:"false"`
 	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false"`

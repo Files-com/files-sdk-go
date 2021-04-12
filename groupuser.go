@@ -20,7 +20,7 @@ type GroupUserCollection []GroupUser
 type GroupUserListParams struct {
 	UserId  int64  `url:"user_id,omitempty" required:"false"`
 	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int    `url:"per_page,omitempty" required:"false"`
+	PerPage int64  `url:"per_page,omitempty" required:"false"`
 	GroupId int64  `url:"group_id,omitempty" required:"false"`
 	lib.ListParams
 }

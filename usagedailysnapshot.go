@@ -10,7 +10,7 @@ import (
 type UsageDailySnapshot struct {
 	Id                 int64     `json:"id,omitempty"`
 	Date               date.Date `json:"date,omitempty"`
-	CurrentStorage     int       `json:"current_storage,omitempty"`
+	CurrentStorage     int64     `json:"current_storage,omitempty"`
 	UsageByTopLevelDir []string  `json:"usage_by_top_level_dir,omitempty"`
 }
 
@@ -18,7 +18,7 @@ type UsageDailySnapshotCollection []UsageDailySnapshot
 
 type UsageDailySnapshotListParams struct {
 	Cursor     string          `url:"cursor,omitempty" required:"false"`
-	PerPage    int             `url:"per_page,omitempty" required:"false"`
+	PerPage    int64           `url:"per_page,omitempty" required:"false"`
 	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
 	Filter     json.RawMessage `url:"filter,omitempty" required:"false"`
 	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false"`

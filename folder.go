@@ -11,7 +11,7 @@ type Folder struct {
 	Path             string    `json:"path,omitempty"`
 	DisplayName      string    `json:"display_name,omitempty"`
 	Type             string    `json:"type,omitempty"`
-	Size             int       `json:"size,omitempty"`
+	Size             int64     `json:"size,omitempty"`
 	Mtime            time.Time `json:"mtime,omitempty"`
 	ProvidedMtime    time.Time `json:"provided_mtime,omitempty"`
 	Crc32            string    `json:"crc32,omitempty"`
@@ -30,7 +30,7 @@ type FolderCollection []Folder
 
 type FolderListForParams struct {
 	Cursor            string `url:"cursor,omitempty" required:"false"`
-	PerPage           int    `url:"per_page,omitempty" required:"false"`
+	PerPage           int64  `url:"per_page,omitempty" required:"false"`
 	Path              string `url:"-,omitempty" required:"true"`
 	Filter            string `url:"filter,omitempty" required:"false"`
 	PreviewSize       string `url:"preview_size,omitempty" required:"false"`

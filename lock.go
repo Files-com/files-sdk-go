@@ -8,7 +8,7 @@ import (
 
 type Lock struct {
 	Path     string `json:"path,omitempty"`
-	Timeout  int    `json:"timeout,omitempty"`
+	Timeout  int64  `json:"timeout,omitempty"`
 	Depth    string `json:"depth,omitempty"`
 	Owner    string `json:"owner,omitempty"`
 	Scope    string `json:"scope,omitempty"`
@@ -22,7 +22,7 @@ type LockCollection []Lock
 
 type LockListForParams struct {
 	Cursor          string `url:"cursor,omitempty" required:"false"`
-	PerPage         int    `url:"per_page,omitempty" required:"false"`
+	PerPage         int64  `url:"per_page,omitempty" required:"false"`
 	Path            string `url:"-,omitempty" required:"true"`
 	IncludeChildren *bool  `url:"include_children,omitempty" required:"false"`
 	lib.ListParams
@@ -30,7 +30,7 @@ type LockListForParams struct {
 
 type LockCreateParams struct {
 	Path    string `url:"-,omitempty" required:"true"`
-	Timeout int    `url:"timeout,omitempty" required:"false"`
+	Timeout int64  `url:"timeout,omitempty" required:"false"`
 }
 
 type LockDeleteParams struct {

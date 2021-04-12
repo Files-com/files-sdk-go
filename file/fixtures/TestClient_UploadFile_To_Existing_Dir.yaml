@@ -1,0 +1,357 @@
+---
+version: 1
+interactions:
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/folders/docs
+    method: POST
+  response:
+    body: '{"display_name":"docs","type":"directory","size":null,"crc32":null,"md5":null,"subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "105"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 29 Mar 2021 19:47:13 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 7a6e89bd-bb3f-440d-b079-03d316345b3a
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/files/docs
+    method: GET
+  response:
+    body: '{"error":"cannot download folder","http-code":400,"instance":"36528a6f-69e4-4814-8aa4-c68130fa8a87","title":"Cannot
+      Download Directory","type":"bad-request/cannot-download-directory"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "183"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 29 Mar 2021 19:47:13 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 36528a6f-69e4-4814-8aa4-c68130fa8a87
+    status: 400 Bad Request
+    code: 400
+    duration: ""
+- request:
+    body: '{"part":"1"}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/docs/LICENSE
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-03-29T20:02:13Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-4065599692","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/80d12dc2-ee58-415e-8fe3-59c211d2d7de?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210329%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210329T194713Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=hjrHdXiVRx.lqLwIqnQWZdChbfu2QzBm5h2vGxeRUsRGO2FcxMeNz7aNyc87TZPnHZFl76lSbXHrstUCTLGbW042OKNFlvA6FU2M29j4ihCtuYcr3jzYFQbBglLN5EUm\u0026X-Amz-Signature=bdaed6848cfff3f75396a475f0e2526e4d3cfae47c2c9853758d779e98738d9a"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 29 Mar 2021 19:47:13 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 53b3e708-040d-4116-8e52-e05faa1a86e4
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: |
+      The MIT License
+
+      Copyright (c) 2019- Action Verb, LLC (https://www.files.com)
+
+      Permission is hereby granted, free of charge, to any person obtaining a copy
+      of this software and associated documentation files (the "Software"), to deal
+      in the Software without restriction, including without limitation the rights
+      to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+      copies of the Software, and to permit persons to whom the Software is
+      furnished to do so, subject to the following conditions:
+
+      The above copyright notice and this permission notice shall be included in
+      all copies or substantial portions of the Software.
+
+      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+      FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+      THE SOFTWARE.
+    form: {}
+    headers:
+      Content-Length:
+      - "1102"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/80d12dc2-ee58-415e-8fe3-59c211d2d7de?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210329%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210329T194713Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=hjrHdXiVRx.lqLwIqnQWZdChbfu2QzBm5h2vGxeRUsRGO2FcxMeNz7aNyc87TZPnHZFl76lSbXHrstUCTLGbW042OKNFlvA6FU2M29j4ihCtuYcr3jzYFQbBglLN5EUm&X-Amz-Signature=bdaed6848cfff3f75396a475f0e2526e4d3cfae47c2c9853758d779e98738d9a
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Mon, 29 Mar 2021 19:47:14 GMT
+      Etag:
+      - '"5b1e5439f3483c0b3e5af1d44889d0f7"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - BWHsY6uaBdvgP83CfI3zKgV5fz4J45wxw8tzgeHfp9tzRG/0Aj3Z68zrdakznzyCiRElH1Jg8kc=
+      X-Amz-Request-Id:
+      - P1GH8FZ2KDDDHHZ4
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"part":"2","ref":"put-4065599692"}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/docs/LICENSE
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-03-29T20:02:14Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":2,"partsize":6291456,"ref":"put-4065599692","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/80d12dc2-ee58-415e-8fe3-59c211d2d7de?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210329%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210329T194714Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=2\u0026response-content-type=application%2Foctet-stream\u0026uploadId=hjrHdXiVRx.lqLwIqnQWZdChbfu2QzBm5h2vGxeRUsRGO2FcxMeNz7aNyc87TZPnHZFl76lSbXHrstUCTLGbW042OKNFlvA6FU2M29j4ihCtuYcr3jzYFQbBglLN5EUm\u0026X-Amz-Signature=1189fa9e3a61cae42f4e4a88bb0d31708ceb9664380acbd7379055a5f79bc113"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 29 Mar 2021 19:47:14 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 6d91cb2d-8d56-4d93-a3a9-374e045ee1bd
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"action":"end","etags[0][etag]":"\"5b1e5439f3483c0b3e5af1d44889d0f7\"","etags[0][part]":"1","provided_mtime":"2021-03-29T12:47:14-07:00","ref":"put-4065599692","size":"1102"}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/files/docs/LICENSE
+    method: POST
+  response:
+    body: '{"path":"docs/LICENSE","display_name":"LICENSE","type":"file","size":1102,"mtime":"2021-03-29T19:47:14Z","provided_mtime":"2021-03-29T19:47:14Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "249"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 29 Mar 2021 19:47:14 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 14402a3a-e834-470f-b632-2d5c908c08df
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/files/docs/LICENSE
+    method: GET
+  response:
+    body: '{"path":"docs/LICENSE","display_name":"LICENSE","type":"file","size":1102,"mtime":"2021-03-29T19:47:14Z","provided_mtime":"2021-03-29T19:47:14Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/80d12dc2-ee58-415e-8fe3-59c211d2d7de?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210329%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210329T194714Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22LICENSE%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=201a33ebcc8871cc1f23c232d124ce4764f66661b9e6bd6e468c564a7d63e7d3"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 29 Mar 2021 19:47:14 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 191f3ada-f963-4729-bd75-b6c81c9f1614
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers: {}
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/80d12dc2-ee58-415e-8fe3-59c211d2d7de?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210329%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210329T194714Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%22LICENSE%22&response-content-type=application%2Foctet-stream&X-Amz-Signature=201a33ebcc8871cc1f23c232d124ce4764f66661b9e6bd6e468c564a7d63e7d3
+    method: GET
+  response:
+    body: |
+      The MIT License
+
+      Copyright (c) 2019- Action Verb, LLC (https://www.files.com)
+
+      Permission is hereby granted, free of charge, to any person obtaining a copy
+      of this software and associated documentation files (the "Software"), to deal
+      in the Software without restriction, including without limitation the rights
+      to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+      copies of the Software, and to permit persons to whom the Software is
+      furnished to do so, subject to the following conditions:
+
+      The above copyright notice and this permission notice shall be included in
+      all copies or substantial portions of the Software.
+
+      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+      FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+      THE SOFTWARE.
+    headers:
+      Accept-Ranges:
+      - bytes
+      Cache-Control:
+      - no-cache, no-store
+      Content-Disposition:
+      - attachment; filename="LICENSE"
+      Content-Length:
+      - "1102"
+      Content-Type:
+      - application/octet-stream
+      Date:
+      - Mon, 29 Mar 2021 19:47:15 GMT
+      Etag:
+      - '"271a2e273e57cb8d4d3b15f6d01195f5-1"'
+      Last-Modified:
+      - Mon, 29 Mar 2021 19:47:14 GMT
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - Z2k1eli9wNkgrCTECgqRXozf1A4myASZdoyBB0scF0cHqhjG5JEVrbM5K64Mljs9d8GlgLgoTds=
+      X-Amz-Meta-X-Amz-Meta-Gid:
+      - "65534"
+      X-Amz-Meta-X-Amz-Meta-Mode:
+      - "33188"
+      X-Amz-Meta-X-Amz-Meta-Uid:
+      - "65534"
+      X-Amz-Request-Id:
+      - D1HB7S6JX8TNRHQR
+      X-Amz-Server-Side-Encryption:
+      - AES256
+      X-Amz-Version-Id:
+      - "null"
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/files/docs
+    method: DELETE
+  response:
+    body: '{"error":"Folder docs not empty","http-code":422,"instance":"4f12a656-57dc-40b5-a115-3a1ebd889ee7","title":"Folder
+      Not Empty","type":"processing-failure/folder-not-empty"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "171"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 29 Mar 2021 19:47:14 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 4f12a656-57dc-40b5-a115-3a1ebd889ee7
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/files/docs?recursive=true
+    method: DELETE
+  response:
+    body: ""
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Date:
+      - Mon, 29 Mar 2021 19:47:15 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 4bbb7c54-55d0-401c-ab23-d3708c29c713
+    status: 204 No Content
+    code: 204
+    duration: ""

@@ -1,0 +1,321 @@
+---
+version: 1
+interactions:
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/files/taco
+    method: DELETE
+  response:
+    body: '{"error":"Not Found","http-code":404,"instance":"ebf0dbd4-9554-4871-80ce-3ce6b2f488bc","title":"Not
+      Found","type":"not-found"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 29 Mar 2021 19:47:15 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - ebf0dbd4-9554-4871-80ce-3ce6b2f488bc
+    status: 404 Not Found
+    code: 404
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/files/taco
+    method: GET
+  response:
+    body: '{"error":"Not Found","http-code":404,"instance":"487fa9c3-8efe-4502-9c7b-bd1f00bb0b07","title":"Not
+      Found","type":"not-found"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 29 Mar 2021 19:47:15 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 487fa9c3-8efe-4502-9c7b-bd1f00bb0b07
+    status: 404 Not Found
+    code: 404
+    duration: ""
+- request:
+    body: '{"part":"1"}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/taco
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-03-29T20:02:15Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-4065599861","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/b8b45e61-a4e3-46c1-8e7a-bc8c7a9cbcf4?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210329%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210329T194715Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=LE1K0847YlB_AlVAQcoTd9AcUMPp566BPny9V98MjDCRcjAExua4wZq6yTLXoGCTerE5jq_1pGVLCEqKLIuosA2tvwfl.fi5Ut1c5FYMwXkUTjT0Lb6s2YrjVZk5AmPC\u0026X-Amz-Signature=477786a9b27cebf8775b393b015f183c21574a41f41928ee108476364e8e1166"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 29 Mar 2021 19:47:15 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 9ce817c6-f1da-4ca4-81e6-165349ef031c
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: |
+      The MIT License
+
+      Copyright (c) 2019- Action Verb, LLC (https://www.files.com)
+
+      Permission is hereby granted, free of charge, to any person obtaining a copy
+      of this software and associated documentation files (the "Software"), to deal
+      in the Software without restriction, including without limitation the rights
+      to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+      copies of the Software, and to permit persons to whom the Software is
+      furnished to do so, subject to the following conditions:
+
+      The above copyright notice and this permission notice shall be included in
+      all copies or substantial portions of the Software.
+
+      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+      FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+      THE SOFTWARE.
+    form: {}
+    headers:
+      Content-Length:
+      - "1102"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/b8b45e61-a4e3-46c1-8e7a-bc8c7a9cbcf4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210329%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210329T194715Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=LE1K0847YlB_AlVAQcoTd9AcUMPp566BPny9V98MjDCRcjAExua4wZq6yTLXoGCTerE5jq_1pGVLCEqKLIuosA2tvwfl.fi5Ut1c5FYMwXkUTjT0Lb6s2YrjVZk5AmPC&X-Amz-Signature=477786a9b27cebf8775b393b015f183c21574a41f41928ee108476364e8e1166
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Mon, 29 Mar 2021 19:47:16 GMT
+      Etag:
+      - '"5b1e5439f3483c0b3e5af1d44889d0f7"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - 0fr3FnmsOG4826E30X8X25TksHUaq4a8JRKC1hmNXjShafnILqk4jnTQhFRC81IryAt2zeg/naA=
+      X-Amz-Request-Id:
+      - WN6BWKVKY4CTKN88
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"part":"2","ref":"put-4065599861"}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/taco
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-03-29T20:02:15Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":2,"partsize":6291456,"ref":"put-4065599861","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/b8b45e61-a4e3-46c1-8e7a-bc8c7a9cbcf4?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210329%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210329T194715Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=2\u0026response-content-type=application%2Foctet-stream\u0026uploadId=LE1K0847YlB_AlVAQcoTd9AcUMPp566BPny9V98MjDCRcjAExua4wZq6yTLXoGCTerE5jq_1pGVLCEqKLIuosA2tvwfl.fi5Ut1c5FYMwXkUTjT0Lb6s2YrjVZk5AmPC\u0026X-Amz-Signature=406a1330443327245affba3271aeee3ed487f6aa3196feeeea3960dbc95dadf6"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 29 Mar 2021 19:47:15 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 5b2c428c-1761-44ba-acb8-413a99b55de1
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"action":"end","etags[0][etag]":"\"5b1e5439f3483c0b3e5af1d44889d0f7\"","etags[0][part]":"1","provided_mtime":"2021-03-29T12:47:15-07:00","ref":"put-4065599861","size":"1102"}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/files/taco
+    method: POST
+  response:
+    body: '{"path":"taco","display_name":"taco","type":"file","size":1102,"mtime":"2021-03-29T19:47:15Z","provided_mtime":"2021-03-29T19:47:15Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "238"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 29 Mar 2021 19:47:15 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - da1afaa7-4913-41da-8b80-74bf131246f1
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/files/taco
+    method: GET
+  response:
+    body: '{"path":"taco","display_name":"taco","type":"file","size":1102,"mtime":"2021-03-29T19:47:15Z","provided_mtime":"2021-03-29T19:47:15Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/b8b45e61-a4e3-46c1-8e7a-bc8c7a9cbcf4?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210329%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210329T194716Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22taco%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=8578ccdbb9ae8529f1c1350e05558ba0b4409eca1fbaca28d7c18d973ce87d25"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 29 Mar 2021 19:47:16 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 58cba41a-f953-4f7a-a777-99e9b8353c0c
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers: {}
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/b8b45e61-a4e3-46c1-8e7a-bc8c7a9cbcf4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210329%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210329T194716Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%22taco%22&response-content-type=application%2Foctet-stream&X-Amz-Signature=8578ccdbb9ae8529f1c1350e05558ba0b4409eca1fbaca28d7c18d973ce87d25
+    method: GET
+  response:
+    body: |
+      The MIT License
+
+      Copyright (c) 2019- Action Verb, LLC (https://www.files.com)
+
+      Permission is hereby granted, free of charge, to any person obtaining a copy
+      of this software and associated documentation files (the "Software"), to deal
+      in the Software without restriction, including without limitation the rights
+      to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+      copies of the Software, and to permit persons to whom the Software is
+      furnished to do so, subject to the following conditions:
+
+      The above copyright notice and this permission notice shall be included in
+      all copies or substantial portions of the Software.
+
+      THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+      IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+      FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+      AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+      LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+      OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+      THE SOFTWARE.
+    headers:
+      Accept-Ranges:
+      - bytes
+      Cache-Control:
+      - no-cache, no-store
+      Content-Disposition:
+      - attachment; filename="taco"
+      Content-Length:
+      - "1102"
+      Content-Type:
+      - application/octet-stream
+      Date:
+      - Mon, 29 Mar 2021 19:47:17 GMT
+      Etag:
+      - '"271a2e273e57cb8d4d3b15f6d01195f5-1"'
+      Last-Modified:
+      - Mon, 29 Mar 2021 19:47:16 GMT
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - OiZEFEd3Hz7HZvxXmA+wOgSemu/zCq+a9HfKCys1ncua/or6J0vYoBFLs4Y1wBTRpcjRwH6KNCI=
+      X-Amz-Meta-X-Amz-Meta-Gid:
+      - "65534"
+      X-Amz-Meta-X-Amz-Meta-Mode:
+      - "33188"
+      X-Amz-Meta-X-Amz-Meta-Uid:
+      - "65534"
+      X-Amz-Request-Id:
+      - 6QH0A800ZWFJFQJC
+      X-Amz-Server-Side-Encryption:
+      - AES256
+      X-Amz-Version-Id:
+      - "null"
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/files/taco
+    method: DELETE
+  response:
+    body: ""
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Date:
+      - Mon, 29 Mar 2021 19:47:16 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - f7ef038c-3c49-4ea7-9e83-5dade1ea8fd7
+    status: 204 No Content
+    code: 204
+    duration: ""

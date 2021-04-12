@@ -28,10 +28,10 @@ type FileActionMoveParams struct {
 type FileActionBeginUploadParams struct {
 	Path         string `url:"-,omitempty" required:"true"`
 	MkdirParents *bool  `url:"mkdir_parents,omitempty" required:"false"`
-	Part         int    `url:"part,omitempty" required:"false"`
-	Parts        int    `url:"parts,omitempty" required:"false"`
+	Part         int64  `url:"part,omitempty" required:"false"`
+	Parts        int64  `url:"parts,omitempty" required:"false"`
 	Ref          string `url:"ref,omitempty" required:"false"`
-	Restart      int    `url:"restart,omitempty" required:"false"`
+	Restart      int64  `url:"restart,omitempty" required:"false"`
 	WithRename   *bool  `url:"with_rename,omitempty" required:"false"`
 }
 

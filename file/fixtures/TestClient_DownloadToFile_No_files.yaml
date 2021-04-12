@@ -1,0 +1,68 @@
+---
+version: 1
+interactions:
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/folders/empty%20folder
+    method: POST
+  response:
+    body: '{"error":"The destination exists.","http-code":422,"instance":"66b784df-9770-4339-bac3-48518fb6698d","title":"Destination
+      Exists","type":"processing-failure/destination-exists"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "177"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 01 Apr 2021 23:14:44 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 66b784df-9770-4339-bac3-48518fb6698d
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK
+    url: https://app.files.com/api/rest/v1/folders/empty%20folder?page=1
+    method: GET
+  response:
+    body: '[]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "2"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 01 Apr 2021 23:14:44 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Files-Cached-Response:
+      - "1617318615"
+      X-Request-Id:
+      - 24c256c4-a8c2-401f-b2f2-db2891bf1100
+    status: 200 OK
+    code: 200
+    duration: ""

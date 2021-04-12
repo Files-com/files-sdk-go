@@ -8,7 +8,7 @@ import (
 
 type HistoryExportResult struct {
 	Id                  int64  `json:"id,omitempty"`
-	CreatedAt           int    `json:"created_at,omitempty"`
+	CreatedAt           int64  `json:"created_at,omitempty"`
 	UserId              int64  `json:"user_id,omitempty"`
 	FileId              int64  `json:"file_id,omitempty"`
 	ParentId            int64  `json:"parent_id,omitempty"`
@@ -25,7 +25,7 @@ type HistoryExportResult struct {
 	TargetName          string `json:"target_name,omitempty"`
 	TargetPermission    string `json:"target_permission,omitempty"`
 	TargetRecursive     *bool  `json:"target_recursive,omitempty"`
-	TargetExpiresAt     int    `json:"target_expires_at,omitempty"`
+	TargetExpiresAt     int64  `json:"target_expires_at,omitempty"`
 	TargetPermissionSet string `json:"target_permission_set,omitempty"`
 	TargetPlatform      string `json:"target_platform,omitempty"`
 	TargetUsername      string `json:"target_username,omitempty"`
@@ -37,7 +37,7 @@ type HistoryExportResultCollection []HistoryExportResult
 type HistoryExportResultListParams struct {
 	UserId          int64  `url:"user_id,omitempty" required:"false"`
 	Cursor          string `url:"cursor,omitempty" required:"false"`
-	PerPage         int    `url:"per_page,omitempty" required:"false"`
+	PerPage         int64  `url:"per_page,omitempty" required:"false"`
 	HistoryExportId int64  `url:"history_export_id,omitempty" required:"true"`
 	lib.ListParams
 }

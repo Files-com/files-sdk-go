@@ -30,7 +30,7 @@ type HistoryListForFileParams struct {
 	EndAt   time.Time       `url:"end_at,omitempty" required:"false"`
 	Display string          `url:"display,omitempty" required:"false"`
 	Cursor  string          `url:"cursor,omitempty" required:"false"`
-	PerPage int             `url:"per_page,omitempty" required:"false"`
+	PerPage int64           `url:"per_page,omitempty" required:"false"`
 	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false"`
 	Path    string          `url:"-,omitempty" required:"true"`
 	lib.ListParams
@@ -41,7 +41,7 @@ type HistoryListForFolderParams struct {
 	EndAt   time.Time       `url:"end_at,omitempty" required:"false"`
 	Display string          `url:"display,omitempty" required:"false"`
 	Cursor  string          `url:"cursor,omitempty" required:"false"`
-	PerPage int             `url:"per_page,omitempty" required:"false"`
+	PerPage int64           `url:"per_page,omitempty" required:"false"`
 	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false"`
 	Path    string          `url:"-,omitempty" required:"true"`
 	lib.ListParams
@@ -52,7 +52,7 @@ type HistoryListForUserParams struct {
 	EndAt   time.Time       `url:"end_at,omitempty" required:"false"`
 	Display string          `url:"display,omitempty" required:"false"`
 	Cursor  string          `url:"cursor,omitempty" required:"false"`
-	PerPage int             `url:"per_page,omitempty" required:"false"`
+	PerPage int64           `url:"per_page,omitempty" required:"false"`
 	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false"`
 	UserId  int64           `url:"-,omitempty" required:"true"`
 	lib.ListParams
@@ -63,7 +63,7 @@ type HistoryListLoginsParams struct {
 	EndAt   time.Time       `url:"end_at,omitempty" required:"false"`
 	Display string          `url:"display,omitempty" required:"false"`
 	Cursor  string          `url:"cursor,omitempty" required:"false"`
-	PerPage int             `url:"per_page,omitempty" required:"false"`
+	PerPage int64           `url:"per_page,omitempty" required:"false"`
 	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false"`
 	lib.ListParams
 }
@@ -73,7 +73,7 @@ type HistoryListParams struct {
 	EndAt      time.Time       `url:"end_at,omitempty" required:"false"`
 	Display    string          `url:"display,omitempty" required:"false"`
 	Cursor     string          `url:"cursor,omitempty" required:"false"`
-	PerPage    int             `url:"per_page,omitempty" required:"false"`
+	PerPage    int64           `url:"per_page,omitempty" required:"false"`
 	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
 	Filter     json.RawMessage `url:"filter,omitempty" required:"false"`
 	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false"`

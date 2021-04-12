@@ -45,7 +45,7 @@ type SsoStrategy struct {
 	LdapHost                       string `json:"ldap_host,omitempty"`
 	LdapHost2                      string `json:"ldap_host_2,omitempty"`
 	LdapHost3                      string `json:"ldap_host_3,omitempty"`
-	LdapPort                       int    `json:"ldap_port,omitempty"`
+	LdapPort                       int64  `json:"ldap_port,omitempty"`
 	LdapSecure                     *bool  `json:"ldap_secure,omitempty"`
 	LdapUsername                   string `json:"ldap_username,omitempty"`
 	LdapUsernameField              string `json:"ldap_username_field,omitempty"`
@@ -55,7 +55,7 @@ type SsoStrategyCollection []SsoStrategy
 
 type SsoStrategyListParams struct {
 	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int    `url:"per_page,omitempty" required:"false"`
+	PerPage int64  `url:"per_page,omitempty" required:"false"`
 	lib.ListParams
 }
 

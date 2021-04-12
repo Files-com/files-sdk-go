@@ -21,7 +21,7 @@ type PublicKeyCollection []PublicKey
 type PublicKeyListParams struct {
 	UserId  int64  `url:"user_id,omitempty" required:"false"`
 	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int    `url:"per_page,omitempty" required:"false"`
+	PerPage int64  `url:"per_page,omitempty" required:"false"`
 	lib.ListParams
 }
 
