@@ -12,6 +12,7 @@ type Bundle struct {
 	Url                   string    `json:"url,omitempty"`
 	Description           string    `json:"description,omitempty"`
 	PasswordProtected     *bool     `json:"password_protected,omitempty"`
+	PreviewOnly           *bool     `json:"preview_only,omitempty"`
 	RequireRegistration   *bool     `json:"require_registration,omitempty"`
 	RequireShareRecipient *bool     `json:"require_share_recipient,omitempty"`
 	ClickwrapBody         string    `json:"clickwrap_body,omitempty"`
@@ -61,6 +62,7 @@ type BundleCreateParams struct {
 	Description           string    `url:"description,omitempty" required:"false"`
 	Note                  string    `url:"note,omitempty" required:"false"`
 	Code                  string    `url:"code,omitempty" required:"false"`
+	PreviewOnly           *bool     `url:"preview_only,omitempty" required:"false"`
 	RequireRegistration   *bool     `url:"require_registration,omitempty" required:"false"`
 	ClickwrapId           int64     `url:"clickwrap_id,omitempty" required:"false"`
 	InboxId               int64     `url:"inbox_id,omitempty" required:"false"`
@@ -87,6 +89,7 @@ type BundleUpdateParams struct {
 	InboxId               int64     `url:"inbox_id,omitempty" required:"false"`
 	MaxUses               int64     `url:"max_uses,omitempty" required:"false"`
 	Note                  string    `url:"note,omitempty" required:"false"`
+	PreviewOnly           *bool     `url:"preview_only,omitempty" required:"false"`
 	RequireRegistration   *bool     `url:"require_registration,omitempty" required:"false"`
 	RequireShareRecipient *bool     `url:"require_share_recipient,omitempty" required:"false"`
 }
