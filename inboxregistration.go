@@ -11,6 +11,7 @@ type InboxRegistration struct {
 	Name           string `json:"name,omitempty"`
 	Company        string `json:"company,omitempty"`
 	Email          string `json:"email,omitempty"`
+	ClickwrapBody  string `json:"clickwrap_body,omitempty"`
 	FormFieldSetId int64  `json:"form_field_set_id,omitempty"`
 	FormFieldData  string `json:"form_field_data,omitempty"`
 }
