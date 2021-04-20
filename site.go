@@ -19,6 +19,7 @@ type Site struct {
 	AskAboutOverwrites                   *bool     `json:"ask_about_overwrites,omitempty"`
 	BundleExpiration                     int64     `json:"bundle_expiration,omitempty"`
 	BundlePasswordRequired               *bool     `json:"bundle_password_required,omitempty"`
+	BundleRequireShareRecipient          *bool     `json:"bundle_require_share_recipient,omitempty"`
 	Color2Left                           string    `json:"color2_left,omitempty"`
 	Color2Link                           string    `json:"color2_link,omitempty"`
 	Color2Text                           string    `json:"color2_text,omitempty"`
@@ -172,6 +173,7 @@ type SiteUpdateParams struct {
 	ImmutableFiles                       *bool     `url:"immutable_files,omitempty" required:"false"`
 	SessionPinnedByIp                    *bool     `url:"session_pinned_by_ip,omitempty" required:"false"`
 	BundlePasswordRequired               *bool     `url:"bundle_password_required,omitempty" required:"false"`
+	BundleRequireShareRecipient          *bool     `url:"bundle_require_share_recipient,omitempty" required:"false"`
 	PasswordRequirementsApplyToBundles   *bool     `url:"password_requirements_apply_to_bundles,omitempty" required:"false"`
 	OptOutGlobal                         *bool     `url:"opt_out_global,omitempty" required:"false"`
 	UseProvidedModifiedAt                *bool     `url:"use_provided_modified_at,omitempty" required:"false"`
