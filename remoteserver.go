@@ -34,7 +34,6 @@ type RemoteServer struct {
 	AuthStatus                        string `json:"auth_status,omitempty"`
 	AuthAccountName                   string `json:"auth_account_name,omitempty"`
 	OneDriveAccountType               string `json:"one_drive_account_type,omitempty"`
-	SharepointHostname                string `json:"sharepoint_hostname,omitempty"`
 	AzureBlobStorageAccount           string `json:"azure_blob_storage_account,omitempty"`
 	AzureBlobStorageContainer         string `json:"azure_blob_storage_container,omitempty"`
 	AwsAccessKey                      string `json:"aws_access_key,omitempty"`
@@ -99,7 +98,6 @@ type RemoteServerCreateParams struct {
 	RackspaceRegion                   string `url:"rackspace_region,omitempty" required:"false"`
 	RackspaceContainer                string `url:"rackspace_container,omitempty" required:"false"`
 	OneDriveAccountType               string `url:"one_drive_account_type,omitempty" required:"false"`
-	SharepointHostname                string `url:"sharepoint_hostname,omitempty" required:"false"`
 	AzureBlobStorageAccount           string `url:"azure_blob_storage_account,omitempty" required:"false"`
 	AzureBlobStorageContainer         string `url:"azure_blob_storage_container,omitempty" required:"false"`
 }
@@ -140,7 +138,6 @@ type RemoteServerUpdateParams struct {
 	RackspaceRegion                   string `url:"rackspace_region,omitempty" required:"false"`
 	RackspaceContainer                string `url:"rackspace_container,omitempty" required:"false"`
 	OneDriveAccountType               string `url:"one_drive_account_type,omitempty" required:"false"`
-	SharepointHostname                string `url:"sharepoint_hostname,omitempty" required:"false"`
 	AzureBlobStorageAccount           string `url:"azure_blob_storage_account,omitempty" required:"false"`
 	AzureBlobStorageContainer         string `url:"azure_blob_storage_container,omitempty" required:"false"`
 }
