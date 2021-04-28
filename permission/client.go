@@ -42,6 +42,11 @@ func (c *Client) Create(params files_sdk.PermissionCreateParams) (files_sdk.Perm
 		return permission, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return permission, err
 	}
@@ -70,6 +75,11 @@ func (c *Client) Delete(params files_sdk.PermissionDeleteParams) (files_sdk.Perm
 		return permission, err
 	}
 	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return permission, err
 	}

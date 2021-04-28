@@ -17,6 +17,11 @@ func (c *Client) Get() (files_sdk.Site, error) {
 		return site, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return site, err
 	}
@@ -42,6 +47,11 @@ func (c *Client) GetUsage() (files_sdk.UsageSnapshot, error) {
 		return usageSnapshot, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return usageSnapshot, err
 	}
@@ -67,6 +77,11 @@ func (c *Client) Update(params files_sdk.SiteUpdateParams) (files_sdk.Site, erro
 		return site, err
 	}
 	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return site, err
 	}

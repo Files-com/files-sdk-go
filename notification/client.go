@@ -45,6 +45,11 @@ func (c *Client) Find(params files_sdk.NotificationFindParams) (files_sdk.Notifi
 		return notification, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return notification, err
 	}
@@ -70,6 +75,11 @@ func (c *Client) Create(params files_sdk.NotificationCreateParams) (files_sdk.No
 		return notification, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return notification, err
 	}
@@ -98,6 +108,11 @@ func (c *Client) Update(params files_sdk.NotificationUpdateParams) (files_sdk.No
 		return notification, err
 	}
 	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return notification, err
 	}
@@ -126,6 +141,11 @@ func (c *Client) Delete(params files_sdk.NotificationDeleteParams) (files_sdk.No
 		return notification, err
 	}
 	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return notification, err
 	}

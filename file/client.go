@@ -77,6 +77,11 @@ func (c *Client) Create(params files_sdk.FileCreateParams) (files_sdk.File, erro
 		return file, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return file, err
 	}
@@ -102,6 +107,11 @@ func (c *Client) Update(params files_sdk.FileUpdateParams) (files_sdk.File, erro
 		return file, err
 	}
 	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return file, err
 	}
@@ -127,6 +137,11 @@ func (c *Client) Delete(params files_sdk.FileDeleteParams) (files_sdk.File, erro
 		return file, err
 	}
 	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return file, err
 	}

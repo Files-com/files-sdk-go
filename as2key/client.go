@@ -45,6 +45,11 @@ func (c *Client) Find(params files_sdk.As2KeyFindParams) (files_sdk.As2Key, erro
 		return as2Key, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return as2Key, err
 	}
@@ -70,6 +75,11 @@ func (c *Client) Create(params files_sdk.As2KeyCreateParams) (files_sdk.As2Key, 
 		return as2Key, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return as2Key, err
 	}
@@ -98,6 +108,11 @@ func (c *Client) Update(params files_sdk.As2KeyUpdateParams) (files_sdk.As2Key, 
 		return as2Key, err
 	}
 	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return as2Key, err
 	}
@@ -126,6 +141,11 @@ func (c *Client) Delete(params files_sdk.As2KeyDeleteParams) (files_sdk.As2Key, 
 		return as2Key, err
 	}
 	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return as2Key, err
 	}

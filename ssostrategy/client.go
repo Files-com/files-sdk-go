@@ -45,6 +45,11 @@ func (c *Client) Find(params files_sdk.SsoStrategyFindParams) (files_sdk.SsoStra
 		return ssoStrategy, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return ssoStrategy, err
 	}

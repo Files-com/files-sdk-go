@@ -17,6 +17,11 @@ func (c *Client) Copy(params files_sdk.FileActionCopyParams) (files_sdk.FileActi
 		return fileAction, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return fileAction, err
 	}
@@ -42,6 +47,11 @@ func (c *Client) Move(params files_sdk.FileActionMoveParams) (files_sdk.FileActi
 		return fileAction, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return fileAction, err
 	}
@@ -67,6 +77,11 @@ func (c *Client) BeginUpload(params files_sdk.FileActionBeginUploadParams) (file
 		return fileUploadPartCollection, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return fileUploadPartCollection, err
 	}

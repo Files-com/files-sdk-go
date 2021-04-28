@@ -45,6 +45,11 @@ func (c *Client) Find(params files_sdk.UserRequestFindParams) (files_sdk.UserReq
 		return userRequest, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return userRequest, err
 	}
@@ -70,6 +75,11 @@ func (c *Client) Create(params files_sdk.UserRequestCreateParams) (files_sdk.Use
 		return userRequest, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return userRequest, err
 	}
@@ -98,6 +108,11 @@ func (c *Client) Delete(params files_sdk.UserRequestDeleteParams) (files_sdk.Use
 		return userRequest, err
 	}
 	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return userRequest, err
 	}

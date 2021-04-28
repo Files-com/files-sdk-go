@@ -1,8 +1,8 @@
 package file
 
 import (
-	"bytes"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -11,11 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Files-com/files-sdk-go/lib"
-
 	files_sdk "github.com/Files-com/files-sdk-go"
 	file_action "github.com/Files-com/files-sdk-go/fileaction"
-	folder "github.com/Files-com/files-sdk-go/folder"
+	"github.com/Files-com/files-sdk-go/folder"
+	"github.com/Files-com/files-sdk-go/lib"
 	"github.com/zenthangplus/goccm"
 )
 
@@ -165,18 +164,19 @@ func (c *Client) UploadFolder(params *UploadParams) ([]fileUpload, error) {
 	if destinationRootPath != "" {
 		folderClient := folder.Client{Config: c.Config}
 		_, err := folderClient.Create(files_sdk.FolderCreateParams{Path: filepath.Clean(destinationRootPath)})
-		if err != nil && (err).(files_sdk.ResponseError).ErrorMessage != "The destination exists." {
+		responseError, ok := (err).(files_sdk.ResponseError)
+		if err != nil && ok && responseError.ErrorMessage != "The destination exists." {
 			return uploadFiles, err
 		}
 	}
 
 	batchStatus := UploadBatchStats{LargestSize: int(largestSize), LargestFilePath: largestFilePath, TotalUploads: len(uploadFiles), Size: TotalSize}
 	someMapMutex := sync.RWMutex{}
-	goc := goccm.New(c.Config.MaxConcurrentConnections())
+	goc := goccm.New(10)
 	for _, uploadFile := range uploadFiles {
+		goc.Wait()
 
 		go func(uploadFile fileUpload) {
-			goc.Wait()
 			progress := UploadProgress{}
 			progress.progressWatcher = func(bytesCount int64) {
 				if params.ProgressReporter == nil {
@@ -210,7 +210,7 @@ func (c *Client) UploadFolder(params *UploadParams) ([]fileUpload, error) {
 				return
 			}
 
-			file, err := c.Upload(localFile, files_sdk.FileActionBeginUploadParams{Path: uploadFile.File.Path, MkdirParents: lib.Bool(true)}, &progress)
+			file, err := c.Upload(localFile, uploadFile.Stat.Size(), files_sdk.FileActionBeginUploadParams{Path: uploadFile.File.Path, MkdirParents: lib.Bool(true)}, &progress)
 			if err != nil {
 				uploadFile.error = err
 				progress.progressWatcher(0)
@@ -225,8 +225,8 @@ func (c *Client) UploadFolder(params *UploadParams) ([]fileUpload, error) {
 
 func maybeCreateFolder(file fileUpload) {
 	createdFolder, err := folder.Create(files_sdk.FolderCreateParams{Path: file.Destination + "/"})
-
-	if err != nil && (err).(files_sdk.ResponseError).ErrorMessage != "The destination exists." {
+	responseError, ok := (err).(files_sdk.ResponseError)
+	if err != nil && ok && responseError.ErrorMessage != "The destination exists." {
 		file.error = err
 	} else {
 		file.File = createdFolder
@@ -288,89 +288,147 @@ func (c *Client) UploadFile(params *UploadParams) (files_sdk.File, error) {
 		)
 	}
 	beginUpload.Path = destination
-	return c.Upload(localFile, beginUpload, &progress)
+	return c.Upload(localFile, fi.Size(), beginUpload, &progress)
 }
 
 func UploadFile(params *UploadParams) (files_sdk.File, error) {
 	return (&Client{}).UploadFile(params)
 }
 
-func (c *Client) Upload(source io.Reader, beginUpload files_sdk.FileActionBeginUploadParams, progress *UploadProgress) (files_sdk.File, error) {
-	upload, etags, bytesWritten, err := c.uploadChunks(source, beginUpload, progress)
+func (c *Client) Upload(reader io.ReaderAt, size int64, params files_sdk.FileActionBeginUploadParams, progress *UploadProgress) (files_sdk.File, error) {
+	onComplete := make(chan files_sdk.EtagsParam)
+	onError := make(chan error)
+	bytesWritten := int64(0)
+	etags := make([]files_sdk.EtagsParam, 0)
+	goc := c.Config.NullConcurrencyManger()
+	fileUploadPart, err := c.startUpload(params)
 	if err != nil {
 		return files_sdk.File{}, err
 	}
-	file, err := c.Create(files_sdk.FileCreateParams{
+	if *fileUploadPart.ParallelParts {
+		goc = c.Config.ConcurrencyManger()
+	}
+	partReturnedError := false
+	fileUploadPart.Path = params.Path
+
+	byteOffset(
+		size,
+		fileUploadPart.Partsize,
+		func(off int64, len int64) {
+			goc.Wait()
+
+			if partReturnedError {
+				return
+			}
+			go func(off int64, len int64, fileUploadPart files_sdk.FileUploadPart) {
+				etag, bytesRead, err := c.createPart(reader, off, len, fileUploadPart)
+				if err != nil {
+					goc.Done()
+					onError <- err
+					return
+				}
+				bytesWritten += bytesRead
+				progress.AddUploadedBytes(bytesRead)
+				goc.Done()
+				onComplete <- etag
+			}(off, len, fileUploadPart)
+
+			fileUploadPart.PartNumber += 1
+		},
+	)
+
+	n := int64(0)
+	for n < fileUploadPart.PartNumber-1 {
+		n++
+		select {
+		case err := <-onError:
+			partReturnedError = true
+			return files_sdk.File{}, err
+		case etag := <-onComplete:
+			etags = append(etags, etag)
+		}
+	}
+
+	return c.completeUpload(etags, bytesWritten, fileUploadPart.Path, fileUploadPart.Ref)
+}
+
+func (c *Client) startUpload(beginUpload files_sdk.FileActionBeginUploadParams) (files_sdk.FileUploadPart, error) {
+	fileActionClient := file_action.Client{Config: c.Config}
+	uploads, err := fileActionClient.BeginUpload(beginUpload)
+	if err != nil {
+		return files_sdk.FileUploadPart{}, err
+	}
+	return uploads[0], err
+}
+
+func (c *Client) completeUpload(etags []files_sdk.EtagsParam, bytesWritten int64, path string, ref string) (files_sdk.File, error) {
+	return c.Create(files_sdk.FileCreateParams{
 		ProvidedMtime: time.Now(),
 		EtagsParam:    etags,
 		Action:        "end",
-		Size:          int64(bytesWritten),
-		Path:          beginUpload.Path,
-		Ref:           upload.Ref,
+		Path:          path,
+		Ref:           ref,
+		Size:          bytesWritten,
 	})
-	if err != nil {
-		return file, err
-	}
-	return file, nil
 }
 
-type ProgressReader struct {
-	io.Reader
-	*UploadProgress
-}
-
-func (p *ProgressReader) Read(b []byte) (n int, err error) {
-	n, err = p.Reader.Read(b)
-	p.UploadProgress.AddUploadedBytes(int64(n))
-	return n, err
-}
-
-func (c *Client) uploadChunks(reader io.Reader, beginUpload files_sdk.FileActionBeginUploadParams, progress *UploadProgress) (files_sdk.FileUploadPart, []files_sdk.EtagsParam, int, error) {
-	bytesWritten := 0
-	etags := make([]files_sdk.EtagsParam, 0)
-	upload := files_sdk.FileUploadPart{}
+func byteOffset(size int64, blockSize int64, callback func(off int64, len int64)) {
+	off := int64(0)
+	endRange := blockSize
 	for {
-		beginUpload.Part = upload.PartNumber + 1
-		beginUpload.Ref = upload.Ref
-		fileActionClient := file_action.Client{Config: c.Config}
-		uploads, err := fileActionClient.BeginUpload(beginUpload)
-		if err != nil {
-			return upload, etags, 0, err
-		}
-		upload = uploads[0]
-
-		partSizeBuffer := make([]byte, upload.Partsize)
-		bytesRead, err := reader.Read(partSizeBuffer)
-		if err == io.EOF {
+		if off < size {
+			endRange = int64(math.Min(float64(endRange), float64(size)))
+			callback(off, endRange-off)
+			off = endRange
+			endRange = off + blockSize
+		} else {
 			break
 		}
-		if err != nil {
-			return upload, etags, 0, err
-		}
-
-		readBytesBuffer := bytes.Buffer{}
-		readBytesBuffer.Grow(bytesRead)
-		readBytesBuffer.Write(partSizeBuffer[:bytesRead])
-		bytesWritten += bytesRead
-		progressReader := ProgressReader{Reader: &readBytesBuffer, UploadProgress: progress}
-		headers := http.Header{}
-		headers.Add("Content-Length", strconv.FormatInt(int64(bytesRead), 10))
-		res, err := files_sdk.CallRaw(upload.HttpMethod, c.Config, upload.UploadUri, nil, &progressReader, &headers)
-		if err != nil {
-			return upload, etags, 0, err
-		}
-		etags = append(
-			etags,
-			files_sdk.EtagsParam{
-				Etag: res.Header.Get("ETag"),
-				Part: strconv.FormatInt(int64(upload.PartNumber), 10),
-			},
-		)
 	}
-
-	return upload, etags, bytesWritten, nil
 }
 
-func Upload(source io.Reader, destination string, beginUpload files_sdk.FileActionBeginUploadParams, progress *UploadProgress) (files_sdk.File, error) {
-	return (&Client{}).Upload(source, beginUpload, progress)
+func Upload(reader io.ReaderAt, size int64, beginUpload files_sdk.FileActionBeginUploadParams, progress *UploadProgress) (files_sdk.File, error) {
+	return (&Client{}).Upload(reader, size, beginUpload, progress)
+}
+
+func (c *Client) createPart(reader io.ReaderAt, off int64, len int64, fileUploadPart files_sdk.FileUploadPart) (files_sdk.EtagsParam, int64, error) {
+	var err error
+	if fileUploadPart.PartNumber != 1 {
+		fileUploadPart, err = c.startUpload(
+			files_sdk.FileActionBeginUploadParams{Path: fileUploadPart.Path, Ref: fileUploadPart.Ref, Part: fileUploadPart.PartNumber},
+		)
+		if err != nil {
+			return files_sdk.EtagsParam{}, int64(0), err
+		}
+	}
+
+	partSizeBuffer := make([]byte, len)
+	bytesRead, err := reader.ReadAt(partSizeBuffer, off)
+	if err != nil {
+		return files_sdk.EtagsParam{}, int64(bytesRead), err
+	}
+
+	headers := http.Header{}
+	headers.Add("Content-Length", strconv.FormatInt(int64(bytesRead), 10))
+	res, err := files_sdk.CallRaw(
+		fileUploadPart.HttpMethod,
+		c.Config,
+		fileUploadPart.UploadUri,
+		nil,
+		&partSizeBuffer,
+		&headers,
+	)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
+	if err != nil {
+		return files_sdk.EtagsParam{}, int64(bytesRead), err
+	}
+
+	return files_sdk.EtagsParam{
+		Etag: res.Header.Get("Etag"),
+		Part: strconv.FormatInt(int64(fileUploadPart.PartNumber), 10),
+	}, int64(bytesRead), nil
 }

@@ -40,6 +40,11 @@ func (c *Client) GetReserved(params files_sdk.IpAddressGetReservedParams) (files
 		return publicIpAddressCollection, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return publicIpAddressCollection, err
 	}

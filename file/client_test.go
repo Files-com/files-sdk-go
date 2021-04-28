@@ -71,8 +71,8 @@ func buildScenario(base string, client *Client) {
 	folderClient.Create(files_sdk.FolderCreateParams{Path: filepath.Join(base, "nested_1", "nested_2")})
 	folderClient.Create(files_sdk.FolderCreateParams{Path: filepath.Join(base, "nested_1", "nested_2", "nested_3")})
 
-	client.Upload(strings.NewReader("testing 3"), files_sdk.FileActionBeginUploadParams{Path: filepath.Join(base, "nested_1", "nested_2", "3.text")}, &UploadProgress{})
-	client.Upload(strings.NewReader("testing 3"), files_sdk.FileActionBeginUploadParams{Path: filepath.Join(base, "nested_1", "nested_2", "nested_3", "4.text")}, &UploadProgress{})
+	client.Upload(strings.NewReader("testing 3"), int64(9), files_sdk.FileActionBeginUploadParams{Path: filepath.Join(base, "nested_1", "nested_2", "3.text")}, &UploadProgress{})
+	client.Upload(strings.NewReader("testing 3"), int64(9), files_sdk.FileActionBeginUploadParams{Path: filepath.Join(base, "nested_1", "nested_2", "nested_3", "4.text")}, &UploadProgress{})
 
 }
 
@@ -526,7 +526,7 @@ func TestClient_DownloadFolder_file_only(t *testing.T) {
 	}
 	defer r.Stop()
 
-	client.Upload(strings.NewReader("hello"), files_sdk.FileActionBeginUploadParams{Path: filepath.Join("i am at the root.text")}, &UploadProgress{})
+	client.Upload(strings.NewReader("hello"), int64(5), files_sdk.FileActionBeginUploadParams{Path: filepath.Join("i am at the root.text")}, &UploadProgress{})
 	assert := assert.New(t)
 	results, err := runDownloadScenario("i am at the root.text", "", client)
 	assert.NoError(err)

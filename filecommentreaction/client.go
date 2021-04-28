@@ -19,6 +19,11 @@ func (c *Client) Create(params files_sdk.FileCommentReactionCreateParams) (files
 		return fileCommentReaction, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return fileCommentReaction, err
 	}
@@ -47,6 +52,11 @@ func (c *Client) Delete(params files_sdk.FileCommentReactionDeleteParams) (files
 		return fileCommentReaction, err
 	}
 	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return fileCommentReaction, err
 	}

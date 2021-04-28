@@ -45,6 +45,11 @@ func (c *Client) Find(params files_sdk.PaymentFindParams) (files_sdk.AccountLine
 		return accountLineItem, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return accountLineItem, err
 	}

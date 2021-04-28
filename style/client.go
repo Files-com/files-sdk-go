@@ -17,6 +17,11 @@ func (c *Client) Find(params files_sdk.StyleFindParams) (files_sdk.Style, error)
 		return style, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return style, err
 	}
@@ -42,6 +47,11 @@ func (c *Client) Update(params files_sdk.StyleUpdateParams) (files_sdk.Style, er
 		return style, err
 	}
 	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return style, err
 	}
@@ -67,6 +77,11 @@ func (c *Client) Delete(params files_sdk.StyleDeleteParams) (files_sdk.Style, er
 		return style, err
 	}
 	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return style, err
 	}

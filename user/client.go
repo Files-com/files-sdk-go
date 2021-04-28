@@ -45,6 +45,11 @@ func (c *Client) Find(params files_sdk.UserFindParams) (files_sdk.User, error) {
 		return user, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return user, err
 	}
@@ -70,6 +75,11 @@ func (c *Client) Create(params files_sdk.UserCreateParams) (files_sdk.User, erro
 		return user, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return user, err
 	}
@@ -98,6 +108,11 @@ func (c *Client) Unlock(params files_sdk.UserUnlockParams) (files_sdk.User, erro
 		return user, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return user, err
 	}
@@ -126,6 +141,11 @@ func (c *Client) ResendWelcomeEmail(params files_sdk.UserResendWelcomeEmailParam
 		return user, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return user, err
 	}
@@ -154,6 +174,11 @@ func (c *Client) User2faReset(params files_sdk.UserUser2faResetParams) (files_sd
 		return user, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return user, err
 	}
@@ -182,6 +207,11 @@ func (c *Client) Update(params files_sdk.UserUpdateParams) (files_sdk.User, erro
 		return user, err
 	}
 	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return user, err
 	}
@@ -210,6 +240,11 @@ func (c *Client) Delete(params files_sdk.UserDeleteParams) (files_sdk.User, erro
 		return user, err
 	}
 	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return user, err
 	}

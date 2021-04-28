@@ -45,6 +45,11 @@ func (c *Client) Find(params files_sdk.BundleFindParams) (files_sdk.Bundle, erro
 		return bundle, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return bundle, err
 	}
@@ -70,6 +75,11 @@ func (c *Client) Create(params files_sdk.BundleCreateParams) (files_sdk.Bundle, 
 		return bundle, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return bundle, err
 	}
@@ -98,6 +108,11 @@ func (c *Client) Share(params files_sdk.BundleShareParams) (files_sdk.Bundle, er
 		return bundle, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return bundle, err
 	}
@@ -126,6 +141,11 @@ func (c *Client) Update(params files_sdk.BundleUpdateParams) (files_sdk.Bundle, 
 		return bundle, err
 	}
 	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return bundle, err
 	}
@@ -154,6 +174,11 @@ func (c *Client) Delete(params files_sdk.BundleDeleteParams) (files_sdk.Bundle, 
 		return bundle, err
 	}
 	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return bundle, err
 	}

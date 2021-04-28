@@ -26,6 +26,11 @@ func (c *Client) ListForFile(params files_sdk.HistoryListForFileParams) (files_s
 		return actionCollection, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return actionCollection, err
 	}
@@ -51,6 +56,11 @@ func (c *Client) ListForFolder(params files_sdk.HistoryListForFolderParams) (fil
 		return actionCollection, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return actionCollection, err
 	}
@@ -76,6 +86,11 @@ func (c *Client) ListForUser(params files_sdk.HistoryListForUserParams) (files_s
 		return actionCollection, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return actionCollection, err
 	}
@@ -101,6 +116,11 @@ func (c *Client) ListLogins(params files_sdk.HistoryListLoginsParams) (files_sdk
 		return actionCollection, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return actionCollection, err
 	}

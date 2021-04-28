@@ -45,6 +45,11 @@ func (c *Client) Find(params files_sdk.MessageFindParams) (files_sdk.Message, er
 		return message, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return message, err
 	}
@@ -70,6 +75,11 @@ func (c *Client) Create(params files_sdk.MessageCreateParams) (files_sdk.Message
 		return message, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return message, err
 	}
@@ -98,6 +108,11 @@ func (c *Client) Update(params files_sdk.MessageUpdateParams) (files_sdk.Message
 		return message, err
 	}
 	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return message, err
 	}
@@ -126,6 +141,11 @@ func (c *Client) Delete(params files_sdk.MessageDeleteParams) (files_sdk.Message
 		return message, err
 	}
 	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return message, err
 	}

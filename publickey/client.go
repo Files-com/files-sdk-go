@@ -45,6 +45,11 @@ func (c *Client) Find(params files_sdk.PublicKeyFindParams) (files_sdk.PublicKey
 		return publicKey, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return publicKey, err
 	}
@@ -70,6 +75,11 @@ func (c *Client) Create(params files_sdk.PublicKeyCreateParams) (files_sdk.Publi
 		return publicKey, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return publicKey, err
 	}
@@ -98,6 +108,11 @@ func (c *Client) Update(params files_sdk.PublicKeyUpdateParams) (files_sdk.Publi
 		return publicKey, err
 	}
 	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return publicKey, err
 	}
@@ -126,6 +141,11 @@ func (c *Client) Delete(params files_sdk.PublicKeyDeleteParams) (files_sdk.Publi
 		return publicKey, err
 	}
 	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return publicKey, err
 	}

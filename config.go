@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-retryablehttp"
+	"github.com/zenthangplus/goccm"
 )
 
 const (
@@ -25,6 +26,10 @@ type HttpClient interface {
 	Get(string) (*http.Response, error)
 }
 
+type Logger interface {
+	Printf(string, ...interface{})
+}
+
 type Config struct {
 	APIKey                   string `header:"X-FilesAPI-Key"`
 	SessionId                string `header:"X-FilesAPI-Auth"`
@@ -32,15 +37,16 @@ type Config struct {
 	Subdomain                string
 	HttpClient               HttpClient
 	AdditionalHeaders        map[string]string
-	Logger                   retryablehttp.Logger
+	logger                   Logger
 	Debug                    *bool
 	maxConcurrentConnections int
+	concurrencyManger        goccm.ConcurrencyManager
 }
 
 func (s *Config) GetHttpClient() HttpClient {
 	if s.HttpClient == nil || reflect.ValueOf(s.HttpClient).IsNil() {
 		retryClient := retryablehttp.NewClient()
-		retryClient.Logger = s.GetLogger()
+		retryClient.Logger = s.Logger()
 		retryClient.RetryMax = 3
 		s.HttpClient = retryClient.StandardClient()
 	}
@@ -52,23 +58,21 @@ type NullLogger struct{}
 func (n NullLogger) Printf(_ string, _ ...interface{}) {
 }
 
-func (s *Config) GetLogger() retryablehttp.Logger {
-	var debugLevel string
-	if s.Debug == nil {
-		debugLevel = os.Getenv("FILES_SDK_DEBUG")
-	} else {
-		if *s.Debug {
-			debugLevel = "debug"
-		}
-	}
+func (s *Config) InDebug() bool {
+	return s.Debug != nil && *s.Debug || (os.Getenv("FILES_SDK_DEBUG") != "")
+}
 
-	log.New(os.Stderr, "", log.LstdFlags)
-	if debugLevel == "" {
-		s.Logger = NullLogger{}
+func (s *Config) Logger() retryablehttp.Logger {
+	if s.InDebug() {
+		s.SetLogger(log.New(os.Stderr, "", log.LstdFlags))
 	} else {
-		s.Logger = log.New(os.Stderr, "", log.LstdFlags)
+		s.SetLogger(NullLogger{})
 	}
-	return s.Logger
+	return s.logger
+}
+
+func (s *Config) SetLogger(l Logger) {
+	s.logger = l
 }
 
 func (s *Config) RootPath() string {
@@ -116,4 +120,15 @@ func (s *Config) MaxConcurrentConnections() int {
 		s.SetMaxConcurrentConnections(10)
 	}
 	return s.maxConcurrentConnections
+}
+
+func (s *Config) ConcurrencyManger() goccm.ConcurrencyManager {
+	if s.concurrencyManger == nil {
+		s.concurrencyManger = goccm.New(s.MaxConcurrentConnections())
+	}
+	return s.concurrencyManger
+}
+
+func (s *Config) NullConcurrencyManger() goccm.ConcurrencyManager {
+	return goccm.New(1)
 }

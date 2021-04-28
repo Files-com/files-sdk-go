@@ -23,6 +23,11 @@ func Build(i ExportParams, config files_sdk.Config, path string, list List) func
 			return &defaultValue, "", err
 		}
 		data, res, err := files_sdk.Call("GET", config, path, exportParams)
+		defer func() {
+			if res != nil {
+				res.Body.Close()
+			}
+		}()
 		if err != nil {
 			return &defaultValue, "", err
 		}

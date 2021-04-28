@@ -42,6 +42,11 @@ func (c *Client) GetFolder(params files_sdk.RequestGetFolderParams) (files_sdk.R
 		return requestCollection, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return requestCollection, err
 	}
@@ -67,6 +72,11 @@ func (c *Client) Create(params files_sdk.RequestCreateParams) (files_sdk.Request
 		return request, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return request, err
 	}
@@ -95,6 +105,11 @@ func (c *Client) Delete(params files_sdk.RequestDeleteParams) (files_sdk.Request
 		return request, err
 	}
 	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return request, err
 	}

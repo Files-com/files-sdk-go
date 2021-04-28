@@ -17,6 +17,11 @@ func (c *Client) Create(params files_sdk.WebhookTestCreateParams) (files_sdk.Web
 		return webhookTest, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return webhookTest, err
 	}

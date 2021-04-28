@@ -45,7 +45,7 @@ func (c *Client) DownloadFolder(params files_sdk.FolderListForParams, rootDestin
 		}
 	}
 
-	goc := goccm.New(c.Config.MaxConcurrentConnections())
+	goc := goccm.New(10)
 	files := c.index(params)
 	if len(files) > 1 {
 		rootDestinationIsDir = true
@@ -57,8 +57,8 @@ func (c *Client) DownloadFolder(params files_sdk.FolderListForParams, rootDestin
 		if entity.error != nil {
 			return entity.error
 		}
+		goc.Wait()
 		go func(entity Entity) {
-			goc.Wait()
 			file := files_sdk.File{Path: entity.file.Path, Size: entity.file.Size, Type: entity.file.Type}
 			sep := strings.Split(file.Path, "/")
 			r := int(math.Min(float64(len(sep)-1), float64(sourceRootLen)))
@@ -155,10 +155,9 @@ func (c *Client) downloadNode(params files_sdk.FolderListForParams, rootDestinat
 			}
 			params.Writer = writer
 			*queuedDownloads++
+			goc.Wait()
 			go func() {
-				goc.Wait()
 				writer.ProgressWatcher(0)
-
 				file, err := c.Download(params)
 				completedDownload := fileDownload{File: file, error: err}
 				*fileChannel <- completedDownload

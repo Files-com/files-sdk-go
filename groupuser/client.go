@@ -42,6 +42,11 @@ func (c *Client) Create(params files_sdk.GroupUserCreateParams) (files_sdk.Group
 		return groupUser, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return groupUser, err
 	}
@@ -70,6 +75,11 @@ func (c *Client) Update(params files_sdk.GroupUserUpdateParams) (files_sdk.Group
 		return groupUser, err
 	}
 	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return groupUser, err
 	}
@@ -98,6 +108,11 @@ func (c *Client) Delete(params files_sdk.GroupUserDeleteParams) (files_sdk.Group
 		return groupUser, err
 	}
 	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return groupUser, err
 	}

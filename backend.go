@@ -3,7 +3,6 @@ package files_sdk
 import (
 	"bytes"
 	"encoding/json"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -15,11 +14,20 @@ import (
 func Call(method string, config Config, resource string, params url.Values) (*[]byte, *http.Response, error) {
 	defaultHeaders := &http.Header{}
 	config.SetHeaders(defaultHeaders)
-	res, err := CallRaw(method, config, config.RootPath()+resource, &params, nil, defaultHeaders)
+	request, err := buildRequest(method, config, config.RootPath()+resource, &params, nil, defaultHeaders)
 	if err != nil {
-		return nil, res, err
+		return nil, &http.Response{}, err
 	}
-	return ParseResponse(res)
+	response, err := config.GetHttpClient().Do(request)
+	if err != nil {
+		return nil, response, err
+	}
+	data, res, err := ParseResponse(response)
+	responseError, ok := err.(ResponseError)
+	if ok {
+		err = responseError
+	}
+	return data, res, err
 }
 
 func ParseResponse(res *http.Response) (*[]byte, *http.Response, error) {
@@ -43,18 +51,26 @@ func ParseResponse(res *http.Response) (*[]byte, *http.Response, error) {
 
 }
 
-func CallRaw(method string, config Config, uri string, params *url.Values, body io.Reader, headers *http.Header) (*http.Response, error) {
+func CallRaw(method string, config Config, uri string, params *url.Values, body *[]byte, headers *http.Header) (*http.Response, error) {
+	request, err := buildRequest(method, config, uri, params, body, headers)
+	if err != nil {
+		return &http.Response{}, err
+	}
+	return config.GetHttpClient().Do(request)
+}
+
+func buildRequest(method string, config Config, uri string, params *url.Values, body *[]byte, headers *http.Header) (*http.Request, error) {
 	if headers == nil {
 		headers = &http.Header{}
 	}
 	if params != nil {
 		removeDash(params)
 	}
-	httpClient := config.GetHttpClient()
+
 	req, err := http.NewRequest(method, uri, nil)
 
 	if err != nil {
-		return &http.Response{}, err
+		return &http.Request{}, err
 	}
 
 	if headers.Get("Content-Length") != "" {
@@ -72,21 +88,24 @@ func CallRaw(method string, config Config, uri string, params *url.Values, body 
 		if body == nil {
 			jsonBody, err := paramsToJson(params, headers)
 			if err != nil {
-				return &http.Response{}, err
+				return &http.Request{}, err
 			}
 			req.Body = ioutil.NopCloser(jsonBody)
 		} else {
-			req.Body = ioutil.NopCloser(body)
+			req.Body = ioutil.NopCloser(bytes.NewReader(*body))
 		}
 	}
 
 	req.Header = *headers
-	command, err := http2curl.GetCurlCommand(req)
-	if err != nil {
-		panic(err)
+	if config.InDebug() {
+		command, err := http2curl.GetCurlCommand(req)
+		if err != nil {
+			panic(err)
+		}
+		config.Logger().Printf(" %v", command)
 	}
-	config.GetLogger().Printf(" %v", command)
-	return httpClient.Do(req)
+
+	return req, nil
 }
 
 func paramsToJson(params *url.Values, headers *http.Header) (*bytes.Buffer, error) {

@@ -17,6 +17,11 @@ func (c *Client) Create(params files_sdk.SessionCreateParams) (files_sdk.Session
 		return session, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return session, err
 	}
@@ -42,6 +47,11 @@ func (c *Client) Delete() (files_sdk.Session, error) {
 		return session, err
 	}
 	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return session, err
 	}

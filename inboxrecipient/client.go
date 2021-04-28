@@ -40,6 +40,11 @@ func (c *Client) Create(params files_sdk.InboxRecipientCreateParams) (files_sdk.
 		return inboxRecipient, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return inboxRecipient, err
 	}

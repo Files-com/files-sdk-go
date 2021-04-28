@@ -45,6 +45,11 @@ func (c *Client) Find(params files_sdk.BehaviorFindParams) (files_sdk.Behavior, 
 		return behavior, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return behavior, err
 	}
@@ -84,6 +89,11 @@ func (c *Client) Create(params files_sdk.BehaviorCreateParams) (files_sdk.Behavi
 		return behavior, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return behavior, err
 	}
@@ -109,6 +119,11 @@ func (c *Client) WebhookTest(params files_sdk.BehaviorWebhookTestParams) (files_
 		return behavior, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return behavior, err
 	}
@@ -137,6 +152,11 @@ func (c *Client) Update(params files_sdk.BehaviorUpdateParams) (files_sdk.Behavi
 		return behavior, err
 	}
 	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return behavior, err
 	}
@@ -165,6 +185,11 @@ func (c *Client) Delete(params files_sdk.BehaviorDeleteParams) (files_sdk.Behavi
 		return behavior, err
 	}
 	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return behavior, err
 	}

@@ -22,6 +22,11 @@ func (c *Client) Find(params files_sdk.HistoryExportFindParams) (files_sdk.Histo
 		return historyExport, err
 	}
 	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return historyExport, err
 	}
@@ -47,6 +52,11 @@ func (c *Client) Create(params files_sdk.HistoryExportCreateParams) (files_sdk.H
 		return historyExport, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return historyExport, err
 	}

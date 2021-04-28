@@ -40,6 +40,11 @@ func (c *Client) Create(params files_sdk.LockCreateParams) (files_sdk.Lock, erro
 		return lock, err
 	}
 	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return lock, err
 	}
@@ -65,6 +70,11 @@ func (c *Client) Delete(params files_sdk.LockDeleteParams) (files_sdk.Lock, erro
 		return lock, err
 	}
 	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
 	if err != nil {
 		return lock, err
 	}
