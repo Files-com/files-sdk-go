@@ -8,6 +8,7 @@ import (
 )
 
 type ExternalEvent struct {
+	Id        int64     `json:"id,omitempty"`
 	EventType string    `json:"event_type,omitempty"`
 	Status    string    `json:"status,omitempty"`
 	Body      string    `json:"body,omitempty"`
@@ -27,6 +28,10 @@ type ExternalEventListParams struct {
 	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false"`
 	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false"`
 	lib.ListParams
+}
+
+type ExternalEventFindParams struct {
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (e *ExternalEvent) UnmarshalJSON(data []byte) error {
