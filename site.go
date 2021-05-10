@@ -72,6 +72,7 @@ type Site struct {
 	NextBillingAmount                    float32   `json:"next_billing_amount,omitempty"`
 	NextBillingDate                      string    `json:"next_billing_date,omitempty"`
 	OfficeIntegrationAvailable           *bool     `json:"office_integration_available,omitempty"`
+	OncehubLink                          string    `json:"oncehub_link,omitempty"`
 	OptOutGlobal                         *bool     `json:"opt_out_global,omitempty"`
 	OverageNotifiedAt                    time.Time `json:"overage_notified_at,omitempty"`
 	OverageNotify                        *bool     `json:"overage_notify,omitempty"`
