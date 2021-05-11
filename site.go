@@ -25,7 +25,6 @@ type Site struct {
 	Color2Text                           string    `json:"color2_text,omitempty"`
 	Color2Top                            string    `json:"color2_top,omitempty"`
 	Color2TopText                        string    `json:"color2_top_text,omitempty"`
-	ContactName                          string    `json:"contact_name,omitempty"`
 	CreatedAt                            time.Time `json:"created_at,omitempty"`
 	Currency                             string    `json:"currency,omitempty"`
 	CustomNamespace                      *bool     `json:"custom_namespace,omitempty"`
