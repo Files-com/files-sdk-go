@@ -79,7 +79,7 @@ func buildScenario(base string, client *Client) {
 func runDownloadScenario(path string, destination string, client *Client) ([]string, error) {
 	var results []string
 	err := client.DownloadFolder(
-		files_sdk.FolderListForParams{Path: path},
+		DownloadFolderParams{FolderListForParams: files_sdk.FolderListForParams{Path: path}},
 		destination,
 		func(incDownloadedBytes int64, file files_sdk.File, destination string, err error, message string, _ int) {
 			if message != "" {
