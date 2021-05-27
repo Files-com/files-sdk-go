@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Files-com/files-sdk-go/ignore"
+
 	files_sdk "github.com/Files-com/files-sdk-go"
 	file_action "github.com/Files-com/files-sdk-go/fileaction"
 	"github.com/Files-com/files-sdk-go/folder"
@@ -104,7 +106,8 @@ func (c *Client) UploadFolder(params *UploadParams) ([]fileUpload, error) {
 			return nil
 		}
 
-		if filename == ".DS_Store" {
+		i, err := ignore.New()
+		if err == nil && i.MatchesPath(filename) {
 			return nil
 		}
 
