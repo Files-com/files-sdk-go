@@ -321,14 +321,20 @@ func (c *Client) Upload(reader io.ReaderAt, size int64, params files_sdk.FileAct
 				return
 			}
 			go func(off int64, len int64, fileUploadPart files_sdk.FileUploadPart) {
-				etag, bytesRead, err := c.createPart(reader, off, len, fileUploadPart)
+				proxyReader := &ProxyReader{
+					ReaderAt: reader,
+					off:      off,
+					len:      len,
+					onRead:   progress.AddUploadedBytes,
+				}
+
+				etag, bytesRead, err := c.createPart(proxyReader, len, fileUploadPart)
 				if err != nil {
 					goc.Done()
 					onError <- err
 					return
 				}
 				bytesWritten += bytesRead
-				progress.AddUploadedBytes(bytesRead)
 				goc.Done()
 				onComplete <- etag
 			}(off, len, fileUploadPart)
@@ -391,7 +397,7 @@ func Upload(reader io.ReaderAt, size int64, beginUpload files_sdk.FileActionBegi
 	return (&Client{}).Upload(reader, size, beginUpload, progress)
 }
 
-func (c *Client) createPart(reader io.ReaderAt, off int64, len int64, fileUploadPart files_sdk.FileUploadPart) (files_sdk.EtagsParam, int64, error) {
+func (c *Client) createPart(reader io.ReadCloser, len int64, fileUploadPart files_sdk.FileUploadPart) (files_sdk.EtagsParam, int64, error) {
 	var err error
 	if fileUploadPart.PartNumber != 1 {
 		fileUploadPart, err = c.startUpload(
@@ -402,21 +408,16 @@ func (c *Client) createPart(reader io.ReaderAt, off int64, len int64, fileUpload
 		}
 	}
 
-	partSizeBuffer := make([]byte, len)
-	bytesRead, err := reader.ReadAt(partSizeBuffer, off)
-	if err != nil {
-		return files_sdk.EtagsParam{}, int64(bytesRead), err
-	}
-
 	headers := http.Header{}
-	headers.Add("Content-Length", strconv.FormatInt(int64(bytesRead), 10))
+	headers.Add("Content-Length", strconv.FormatInt(len, 10))
 	res, err := files_sdk.CallRaw(
-		fileUploadPart.HttpMethod,
-		c.Config,
-		fileUploadPart.UploadUri,
-		nil,
-		&partSizeBuffer,
-		&headers,
+		&files_sdk.CallParams{
+			Method:  fileUploadPart.HttpMethod,
+			Config:  c.Config,
+			Uri:     fileUploadPart.UploadUri,
+			BodyIo:  reader,
+			Headers: &headers,
+		},
 	)
 	defer func() {
 		if res != nil {
@@ -424,11 +425,11 @@ func (c *Client) createPart(reader io.ReaderAt, off int64, len int64, fileUpload
 		}
 	}()
 	if err != nil {
-		return files_sdk.EtagsParam{}, int64(bytesRead), err
+		return files_sdk.EtagsParam{}, len, err
 	}
 
 	return files_sdk.EtagsParam{
 		Etag: res.Header.Get("Etag"),
 		Part: strconv.FormatInt(int64(fileUploadPart.PartNumber), 10),
-	}, int64(bytesRead), nil
+	}, len, nil
 }

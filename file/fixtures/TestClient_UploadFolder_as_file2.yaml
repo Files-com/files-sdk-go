@@ -10,14 +10,14 @@ interactions:
     url: https://app.files.com/api/rest/v1/files/LICENSE
     method: GET
   response:
-    body: '{"path":"LICENSE","display_name":"LICENSE","type":"file","size":1102,"mtime":"2021-04-14T16:29:17Z","provided_mtime":"2021-04-14T16:29:16Z","crc32":"32107119","md5":"5b1e5439f3483c0b3e5af1d44889d0f7","mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/bc9611ac-04ba-470a-a5f6-c3d48a4d41e9?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210414%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210414T162922Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22LICENSE%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=e90f810f8b2c8598f0346ce5955223944ba32e84890516001afeb957012f058b"}'
+    body: '{"path":"LICENSE","display_name":"LICENSE","type":"file","size":1102,"mtime":"2021-05-27T15:56:57Z","provided_mtime":"2021-05-27T15:56:57Z","crc32":"32107119","md5":"5b1e5439f3483c0b3e5af1d44889d0f7","mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/7075e65c-eaf9-48a6-9483-50bbb280cf9b?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210527%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210527T155703Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22LICENSE%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=5f022d8f36f3af763aa5f7b71504d14bf78d046c5ebb32fee7b23215adfb9905"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Wed, 14 Apr 2021 16:29:22 GMT
+      - Thu, 27 May 2021 15:57:03 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -25,7 +25,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - e44e5f68-fe92-407c-863c-16c1b9b5821c
+      - 32032a3e-511e-4d0d-90eb-a87d13fc295b
     status: 200 OK
     code: 200
     duration: ""
@@ -33,7 +33,7 @@ interactions:
     body: ""
     form: {}
     headers: {}
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/bc9611ac-04ba-470a-a5f6-c3d48a4d41e9?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210414%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210414T162922Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%22LICENSE%22&response-content-type=application%2Foctet-stream&X-Amz-Signature=e90f810f8b2c8598f0346ce5955223944ba32e84890516001afeb957012f058b
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/7075e65c-eaf9-48a6-9483-50bbb280cf9b?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210527%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210527T155703Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%22LICENSE%22&response-content-type=application%2Foctet-stream&X-Amz-Signature=5f022d8f36f3af763aa5f7b71504d14bf78d046c5ebb32fee7b23215adfb9905
     method: GET
   response:
     body: |
@@ -70,15 +70,15 @@ interactions:
       Content-Type:
       - application/octet-stream
       Date:
-      - Wed, 14 Apr 2021 16:29:23 GMT
+      - Thu, 27 May 2021 15:57:04 GMT
       Etag:
       - '"271a2e273e57cb8d4d3b15f6d01195f5-1"'
       Last-Modified:
-      - Wed, 14 Apr 2021 16:29:17 GMT
+      - Thu, 27 May 2021 15:56:57 GMT
       Server:
       - AmazonS3
       X-Amz-Id-2:
-      - jTmktCLCSrvPs5artc0gClxI9aXda137Fji+DF4KTrMPaz1uSIh7/ixGLqeHkYVO0qJ3JqaVt3k=
+      - 6ru+WY/48cgrbUSj5Yzz2jXtHXlOuW9tXIBqs/0Pc0LuxecmnDQFCBpvAkjUIttVrPOXtZDKdpU=
       X-Amz-Meta-X-Amz-Meta-Gid:
       - "65534"
       X-Amz-Meta-X-Amz-Meta-Mode:
@@ -86,7 +86,7 @@ interactions:
       X-Amz-Meta-X-Amz-Meta-Uid:
       - "65534"
       X-Amz-Request-Id:
-      - 5ZPH85B40MMDV9ND
+      - CB6TZQ9112RS0KDQ
       X-Amz-Server-Side-Encryption:
       - AES256
       X-Amz-Version-Id:

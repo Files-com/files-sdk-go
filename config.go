@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"reflect"
 	"strings"
 
 	"github.com/hashicorp/go-retryablehttp"
@@ -35,7 +34,8 @@ type Config struct {
 	SessionId                string `header:"X-FilesAPI-Auth"`
 	Endpoint                 string
 	Subdomain                string
-	HttpClient               HttpClient
+	standardClient           HttpClient
+	rawClient                *retryablehttp.Client
 	AdditionalHeaders        map[string]string
 	logger                   Logger
 	Debug                    *bool
@@ -43,14 +43,25 @@ type Config struct {
 	concurrencyManger        goccm.ConcurrencyManager
 }
 
+func (s *Config) SetHttpClient(client *http.Client) {
+	s.GetRawClient().HTTPClient = client
+}
+
 func (s *Config) GetHttpClient() HttpClient {
-	if s.HttpClient == nil || reflect.ValueOf(s.HttpClient).IsNil() {
-		retryClient := retryablehttp.NewClient()
-		retryClient.Logger = s.Logger()
-		retryClient.RetryMax = 3
-		s.HttpClient = retryClient.StandardClient()
+	if s.standardClient == nil {
+		s.standardClient = s.GetRawClient().StandardClient()
 	}
-	return s.HttpClient
+	return s.standardClient
+}
+
+func (s *Config) GetRawClient() *retryablehttp.Client {
+	if s.rawClient == nil {
+		s.rawClient = retryablehttp.NewClient()
+		s.rawClient.Logger = s.Logger()
+		s.rawClient.RetryMax = 3
+	}
+
+	return s.rawClient
 }
 
 type NullLogger struct{}

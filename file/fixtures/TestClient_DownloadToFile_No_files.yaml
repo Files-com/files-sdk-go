@@ -12,7 +12,7 @@ interactions:
     url: https://app.files.com/api/rest/v1/folders/empty%20folder
     method: POST
   response:
-    body: '{"error":"The destination exists.","http-code":422,"instance":"1e5938d0-99e4-423b-a81a-cfe280dfefe8","title":"Destination
+    body: '{"error":"The destination exists.","http-code":422,"instance":"cae19bec-1c87-4818-b269-139ed215848c","title":"Destination
       Exists","type":"processing-failure/destination-exists"}'
     headers:
       Cache-Control:
@@ -22,7 +22,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 14 Apr 2021 16:29:33 GMT
+      - Thu, 27 May 2021 15:57:15 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -30,7 +30,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 1e5938d0-99e4-423b-a81a-cfe280dfefe8
+      - cae19bec-1c87-4818-b269-139ed215848c
     status: 422 Unprocessable Entity
     code: 422
     duration: ""
@@ -52,7 +52,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 14 Apr 2021 16:29:33 GMT
+      - Thu, 27 May 2021 15:57:15 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -60,9 +60,9 @@ interactions:
       Server:
       - nginx
       X-Files-Cached-Response:
-      - "1618417586"
+      - "1622129278"
       X-Request-Id:
-      - 1f511fed-aa91-4c6e-bf6f-b79e60b377c0
+      - ea1c89fd-9193-4255-ac40-f84901437d2c
     status: 200 OK
     code: 200
     duration: ""

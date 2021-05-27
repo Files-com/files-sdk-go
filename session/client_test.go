@@ -31,7 +31,7 @@ func CreateClient(fixture string) (*Client, *recorder.Recorder, error) {
 		Transport: r,
 	}
 	client.Config.Debug = lib.Bool(true)
-	client.HttpClient = httpClient
+	client.SetHttpClient(httpClient)
 
 	r.AddFilter(func(i *cassette.Interaction) error {
 		delete(i.Request.Headers, "X-Filesapi-Key")

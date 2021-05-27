@@ -3,10 +3,13 @@ package files_sdk
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/hashicorp/go-retryablehttp"
 
 	"moul.io/http2curl"
 )
@@ -14,7 +17,14 @@ import (
 func Call(method string, config Config, resource string, params url.Values) (*[]byte, *http.Response, error) {
 	defaultHeaders := &http.Header{}
 	config.SetHeaders(defaultHeaders)
-	request, err := buildRequest(method, config, config.RootPath()+resource, &params, nil, defaultHeaders)
+	opts := &CallParams{
+		Method:  method,
+		Config:  config,
+		Uri:     config.RootPath() + resource,
+		Params:  &params,
+		Headers: defaultHeaders,
+	}
+	request, err := buildRequest(opts)
 	if err != nil {
 		return nil, &http.Response{}, err
 	}
@@ -51,58 +61,73 @@ func ParseResponse(res *http.Response) (*[]byte, *http.Response, error) {
 
 }
 
-func CallRaw(method string, config Config, uri string, params *url.Values, body *[]byte, headers *http.Header) (*http.Response, error) {
-	request, err := buildRequest(method, config, uri, params, body, headers)
+type CallParams struct {
+	Method  string
+	Config  Config
+	Uri     string
+	Params  *url.Values
+	BodyIo  io.ReadCloser
+	Headers *http.Header
+}
+
+func CallRaw(params *CallParams) (*http.Response, error) {
+	request, err := buildRequest(params)
 	if err != nil {
 		return &http.Response{}, err
 	}
-	return config.GetHttpClient().Do(request)
+	if request.Body != nil {
+		retryRequest := &retryablehttp.Request{Request: request}
+		retryRequest.SetBody(func() (io.Reader, error) { return request.Body, nil })
+		return params.Config.GetRawClient().Do(retryRequest)
+	} else {
+		return params.Config.GetHttpClient().Do(request)
+	}
 }
 
-func buildRequest(method string, config Config, uri string, params *url.Values, body *[]byte, headers *http.Header) (*http.Request, error) {
-	if headers == nil {
-		headers = &http.Header{}
+func buildRequest(opts *CallParams) (*http.Request, error) {
+	if opts.Headers == nil {
+		opts.Headers = &http.Header{}
 	}
-	if params != nil {
-		removeDash(params)
+	if opts.Params != nil {
+		removeDash(opts.Params)
 	}
 
-	req, err := http.NewRequest(method, uri, nil)
+	req, err := http.NewRequest(opts.Method, opts.Uri, nil)
 
 	if err != nil {
 		return &http.Request{}, err
 	}
 
-	if headers.Get("Content-Length") != "" {
-		c, _ := strconv.ParseInt(headers.Get("Content-Length"), 10, 64)
+	if opts.Headers.Get("Content-Length") != "" {
+		c, _ := strconv.ParseInt(opts.Headers.Get("Content-Length"), 10, 64)
 		req.ContentLength = c
 	}
 
-	switch method {
+	switch opts.Method {
 	case "GET", "HEAD", "DELETE":
-		if params != nil {
-			removeDash(params)
-			req.URL.RawQuery = params.Encode()
+		if opts.Params != nil {
+			removeDash(opts.Params)
+			req.URL.RawQuery = opts.Params.Encode()
 		}
 	default:
-		if body == nil {
-			jsonBody, err := paramsToJson(params, headers)
+		if opts.BodyIo == nil {
+			jsonBody, err := paramsToJson(opts.Params, opts.Headers)
 			if err != nil {
 				return &http.Request{}, err
 			}
 			req.Body = ioutil.NopCloser(jsonBody)
 		} else {
-			req.Body = ioutil.NopCloser(bytes.NewReader(*body))
+			req.Body = opts.BodyIo
 		}
 	}
 
-	req.Header = *headers
-	if config.InDebug() {
+	req.Header = *opts.Headers
+	if opts.Config.InDebug() {
 		command, err := http2curl.GetCurlCommand(req)
 		if err != nil {
 			panic(err)
 		}
-		config.Logger().Printf(" %v", command)
+		opts.Config.Logger().Printf(" %v", command)
 	}
 
 	return req, nil

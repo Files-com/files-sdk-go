@@ -37,7 +37,7 @@ func CreateClient(fixture string) (*Client, *recorder.Recorder, error) {
 		Transport: r,
 	}
 	client.Config.Debug = lib.Bool(false)
-	client.HttpClient = httpClient
+	client.SetHttpClient(httpClient)
 
 	r.AddFilter(func(i *cassette.Interaction) error {
 		delete(i.Request.Headers, "X-Filesapi-Key")
@@ -426,7 +426,7 @@ func TestClient_DownloadFolder(t *testing.T) {
 
 	it, err := folderClient.ListFor(files_sdk.FolderListForParams{
 		PerPage: 1,
-		Path:    "TestClient_DownloadFolder",
+		Path:    "TestClient_DownloadFolder/nested_1/nested_2",
 	})
 
 	assert.NoError(err)
@@ -435,16 +435,15 @@ func TestClient_DownloadFolder(t *testing.T) {
 		folders = append(folders, it.Folder())
 	}
 
-	assert.Len(folders, 3, "something is wrong with cursor")
+	assert.Len(folders, 2, "something is wrong with cursor")
 
 	results, err := runDownloadScenario("TestClient_DownloadFolder", "download", client)
 
 	assert.NoError(err)
 
 	var expected []string
-	expected = append(expected, "9 bytes TestClient_DownloadFolder/2.text => download/2.text")
-	expected = append(expected, "9 bytes TestClient_DownloadFolder/1.text => download/1.text")
 	expected = append(expected, "9 bytes TestClient_DownloadFolder/nested_1/nested_2/3.text => download/nested_1/nested_2/3.text")
+	expected = append(expected, "9 bytes TestClient_DownloadFolder/nested_1/nested_2/nested_3/4.text => download/nested_1/nested_2/nested_3/4.text")
 	assert.Subset(results, expected)
 	os.RemoveAll("download")
 }
