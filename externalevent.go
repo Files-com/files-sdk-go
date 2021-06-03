@@ -13,7 +13,6 @@ type ExternalEvent struct {
 	Status    string    `json:"status,omitempty"`
 	Body      string    `json:"body,omitempty"`
 	CreatedAt time.Time `json:"created_at,omitempty"`
-	BodyUrl   string    `json:"body_url,omitempty"`
 }
 
 type ExternalEventCollection []ExternalEvent
