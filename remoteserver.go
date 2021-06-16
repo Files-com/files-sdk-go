@@ -36,6 +36,9 @@ type RemoteServer struct {
 	OneDriveAccountType               string `json:"one_drive_account_type,omitempty"`
 	AzureBlobStorageAccount           string `json:"azure_blob_storage_account,omitempty"`
 	AzureBlobStorageContainer         string `json:"azure_blob_storage_container,omitempty"`
+	S3CompatibleBucket                string `json:"s3_compatible_bucket,omitempty"`
+	S3CompatibleRegion                string `json:"s3_compatible_region,omitempty"`
+	S3CompatibleEndpoint              string `json:"s3_compatible_endpoint,omitempty"`
 	AwsAccessKey                      string `json:"aws_access_key,omitempty"`
 	AwsSecretKey                      string `json:"aws_secret_key,omitempty"`
 	Password                          string `json:"password,omitempty"`
@@ -49,6 +52,8 @@ type RemoteServer struct {
 	RackspaceApiKey                   string `json:"rackspace_api_key,omitempty"`
 	ResetAuthentication               *bool  `json:"reset_authentication,omitempty"`
 	AzureBlobStorageAccessKey         string `json:"azure_blob_storage_access_key,omitempty"`
+	S3CompatibleAccessKey             string `json:"s3_compatible_access_key,omitempty"`
+	S3CompatibleSecretKey             string `json:"s3_compatible_secret_key,omitempty"`
 }
 
 type RemoteServerCollection []RemoteServer
@@ -100,6 +105,11 @@ type RemoteServerCreateParams struct {
 	OneDriveAccountType               string `url:"one_drive_account_type,omitempty" required:"false"`
 	AzureBlobStorageAccount           string `url:"azure_blob_storage_account,omitempty" required:"false"`
 	AzureBlobStorageContainer         string `url:"azure_blob_storage_container,omitempty" required:"false"`
+	S3CompatibleBucket                string `url:"s3_compatible_bucket,omitempty" required:"false"`
+	S3CompatibleRegion                string `url:"s3_compatible_region,omitempty" required:"false"`
+	S3CompatibleEndpoint              string `url:"s3_compatible_endpoint,omitempty" required:"false"`
+	S3CompatibleAccessKey             string `url:"s3_compatible_access_key,omitempty" required:"false"`
+	S3CompatibleSecretKey             string `url:"s3_compatible_secret_key,omitempty" required:"false"`
 }
 
 type RemoteServerUpdateParams struct {
@@ -140,6 +150,11 @@ type RemoteServerUpdateParams struct {
 	OneDriveAccountType               string `url:"one_drive_account_type,omitempty" required:"false"`
 	AzureBlobStorageAccount           string `url:"azure_blob_storage_account,omitempty" required:"false"`
 	AzureBlobStorageContainer         string `url:"azure_blob_storage_container,omitempty" required:"false"`
+	S3CompatibleBucket                string `url:"s3_compatible_bucket,omitempty" required:"false"`
+	S3CompatibleRegion                string `url:"s3_compatible_region,omitempty" required:"false"`
+	S3CompatibleEndpoint              string `url:"s3_compatible_endpoint,omitempty" required:"false"`
+	S3CompatibleAccessKey             string `url:"s3_compatible_access_key,omitempty" required:"false"`
+	S3CompatibleSecretKey             string `url:"s3_compatible_secret_key,omitempty" required:"false"`
 }
 
 type RemoteServerDeleteParams struct {
