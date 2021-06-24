@@ -66,3 +66,33 @@ func (c *Client) Find(params files_sdk.ExternalEventFindParams) (files_sdk.Exter
 func Find(params files_sdk.ExternalEventFindParams) (files_sdk.ExternalEvent, error) {
 	return (&Client{}).Find(params)
 }
+
+func (c *Client) Create(params files_sdk.ExternalEventCreateParams) (files_sdk.ExternalEvent, error) {
+	externalEvent := files_sdk.ExternalEvent{}
+	path := "/external_events"
+	exportedParams, err := lib.ExportParams(params)
+	if err != nil {
+		return externalEvent, err
+	}
+	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
+	if err != nil {
+		return externalEvent, err
+	}
+	if res.StatusCode == 204 {
+		return externalEvent, nil
+	}
+	if err := externalEvent.UnmarshalJSON(*data); err != nil {
+		return externalEvent, err
+	}
+
+	return externalEvent, nil
+}
+
+func Create(params files_sdk.ExternalEventCreateParams) (files_sdk.ExternalEvent, error) {
+	return (&Client{}).Create(params)
+}

@@ -35,6 +35,11 @@ type ExternalEventFindParams struct {
 	Id int64 `url:"-,omitempty" required:"true"`
 }
 
+type ExternalEventCreateParams struct {
+	Status string `url:"status,omitempty" required:"true"`
+	Body   string `url:"body,omitempty" required:"true"`
+}
+
 func (e *ExternalEvent) UnmarshalJSON(data []byte) error {
 	type externalEvent ExternalEvent
 	var v externalEvent
