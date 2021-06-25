@@ -18,6 +18,24 @@ type ExternalEvent struct {
 
 type ExternalEventCollection []ExternalEvent
 
+type ExternalEventStatusEnum string
+
+func (u ExternalEventStatusEnum) String() string {
+	return string(u)
+}
+
+const (
+	SuccessStatus ExternalEventStatusEnum = "success"
+	ErrorStatus   ExternalEventStatusEnum = "error"
+)
+
+func (u ExternalEventStatusEnum) Enum() map[string]ExternalEventStatusEnum {
+	return map[string]ExternalEventStatusEnum{
+		"success": SuccessStatus,
+		"error":   ErrorStatus,
+	}
+}
+
 type ExternalEventListParams struct {
 	Cursor     string          `url:"cursor,omitempty" required:"false"`
 	PerPage    int64           `url:"per_page,omitempty" required:"false"`
@@ -36,8 +54,8 @@ type ExternalEventFindParams struct {
 }
 
 type ExternalEventCreateParams struct {
-	Status string `url:"status,omitempty" required:"true"`
-	Body   string `url:"body,omitempty" required:"true"`
+	Status ExternalEventStatusEnum `url:"status,omitempty" required:"true"`
+	Body   string                  `url:"body,omitempty" required:"true"`
 }
 
 func (e *ExternalEvent) UnmarshalJSON(data []byte) error {

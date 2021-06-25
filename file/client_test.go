@@ -441,9 +441,12 @@ func TestClient_DownloadFolder(t *testing.T) {
 
 	assert.NoError(err)
 
+	path, err := os.Getwd()
+	assert.NoError(err)
+
 	var expected []string
-	expected = append(expected, "9 bytes TestClient_DownloadFolder/nested_1/nested_2/3.text => download/nested_1/nested_2/3.text")
-	expected = append(expected, "9 bytes TestClient_DownloadFolder/nested_1/nested_2/nested_3/4.text => download/nested_1/nested_2/nested_3/4.text")
+	expected = append(expected, "9 bytes TestClient_DownloadFolder/nested_1/nested_2/3.text => "+path+"/download/nested_1/nested_2/3.text")
+	expected = append(expected, "9 bytes TestClient_DownloadFolder/nested_1/nested_2/nested_3/4.text => "+path+"/download/nested_1/nested_2/nested_3/4.text")
 	assert.Subset(results, expected)
 	os.RemoveAll("download")
 }
@@ -470,10 +473,12 @@ func TestClient_DownloadFolder_Smart(t *testing.T) {
 	results2, err := runDownloadScenario(filepath.Join("TestClient_DownloadFolder_Smart", "nested_1", "nested_2"), "download", client)
 
 	assert.NoError(err)
+	path, err := os.Getwd()
+	assert.NoError(err)
 
 	var expected2 []string
-	expected = append(expected2, "9 bytes TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text => download/3.text")
-	expected = append(expected2, "9 bytes TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text => download/nested_3/4.text")
+	expected = append(expected2, "9 bytes TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text => "+path+"/download/3.text")
+	expected = append(expected2, "9 bytes TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text => "+path+"/download/nested_3/4.text")
 	assert.Subset(results2, expected2)
 
 	os.RemoveAll("download")
@@ -492,8 +497,11 @@ func TestClient_DownloadFolder_file_to_file(t *testing.T) {
 	results, err := runDownloadScenario(filepath.Join("TestClient_DownloadFolder_file_to_file", "nested_1", "nested_2", "3.text"), "3.text", client)
 	assert.NoError(err)
 
+	path, err := os.Getwd()
+	assert.NoError(err)
+
 	var expected []string
-	expected = append(expected, "9 bytes TestClient_DownloadFolder_file_to_file/nested_1/nested_2/3.text => 3.text")
+	expected = append(expected, "9 bytes TestClient_DownloadFolder_file_to_file/nested_1/nested_2/3.text => "+path+"/3.text")
 	assert.Subset(results, expected)
 
 	os.RemoveAll("3.text")
@@ -511,8 +519,11 @@ func TestClient_DownloadFolder_file_to_implicit(t *testing.T) {
 	results, err := runDownloadScenario(filepath.Join("file_to_implicit", "nested_1", "nested_2", "3.text"), "", client)
 	assert.NoError(err)
 
+	path, err := os.Getwd()
+	assert.NoError(err)
+
 	var expected []string
-	expected = append(expected, "9 bytes file_to_implicit/nested_1/nested_2/3.text => 3.text")
+	expected = append(expected, "9 bytes file_to_implicit/nested_1/nested_2/3.text => "+path+"/3.text")
 	assert.Subset(results, expected)
 
 	os.RemoveAll("3.text")
@@ -530,8 +541,11 @@ func TestClient_DownloadFolder_file_only(t *testing.T) {
 	results, err := runDownloadScenario("i am at the root.text", "", client)
 	assert.NoError(err)
 
+	path, err := os.Getwd()
+	assert.NoError(err)
+
 	var expected []string
-	expected = append(expected, "5 bytes i am at the root.text => i am at the root.text")
+	expected = append(expected, "5 bytes i am at the root.text => "+path+"/i am at the root.text")
 	assert.Subset(results, expected)
 
 	os.RemoveAll("i am at the root.text")

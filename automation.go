@@ -30,6 +30,60 @@ type Automation struct {
 
 type AutomationCollection []Automation
 
+type AutomationEnum string
+
+func (u AutomationEnum) String() string {
+	return string(u)
+}
+
+const (
+	CreateFolderAutomation   AutomationEnum = "create_folder"
+	RequestFileAutomation    AutomationEnum = "request_file"
+	RequestMoveAutomation    AutomationEnum = "request_move"
+	CopyNewestFileAutomation AutomationEnum = "copy_newest_file"
+	DeleteFileAutomation     AutomationEnum = "delete_file"
+	CopyFileAutomation       AutomationEnum = "copy_file"
+	MoveFileAutomation       AutomationEnum = "move_file"
+)
+
+func (u AutomationEnum) Enum() map[string]AutomationEnum {
+	return map[string]AutomationEnum{
+		"create_folder":    CreateFolderAutomation,
+		"request_file":     RequestFileAutomation,
+		"request_move":     RequestMoveAutomation,
+		"copy_newest_file": CopyNewestFileAutomation,
+		"delete_file":      DeleteFileAutomation,
+		"copy_file":        CopyFileAutomation,
+		"move_file":        MoveFileAutomation,
+	}
+}
+
+type AutomationTriggerEnum string
+
+func (u AutomationTriggerEnum) String() string {
+	return string(u)
+}
+
+const (
+	RealtimeTrigger       AutomationTriggerEnum = "realtime"
+	DailyTrigger          AutomationTriggerEnum = "daily"
+	CustomScheduleTrigger AutomationTriggerEnum = "custom_schedule"
+	WebhookTrigger        AutomationTriggerEnum = "webhook"
+	EmailTrigger          AutomationTriggerEnum = "email"
+	ActionTrigger         AutomationTriggerEnum = "action"
+)
+
+func (u AutomationTriggerEnum) Enum() map[string]AutomationTriggerEnum {
+	return map[string]AutomationTriggerEnum{
+		"realtime":        RealtimeTrigger,
+		"daily":           DailyTrigger,
+		"custom_schedule": CustomScheduleTrigger,
+		"webhook":         WebhookTrigger,
+		"email":           EmailTrigger,
+		"action":          ActionTrigger,
+	}
+}
+
 type AutomationListParams struct {
 	Cursor     string          `url:"cursor,omitempty" required:"false"`
 	PerPage    int64           `url:"per_page,omitempty" required:"false"`
@@ -49,40 +103,40 @@ type AutomationFindParams struct {
 }
 
 type AutomationCreateParams struct {
-	Automation             string          `url:"automation,omitempty" required:"true"`
-	Source                 string          `url:"source,omitempty" required:"false"`
-	Destination            string          `url:"destination,omitempty" required:"false"`
-	Destinations           []string        `url:"destinations,omitempty" required:"false"`
-	DestinationReplaceFrom string          `url:"destination_replace_from,omitempty" required:"false"`
-	DestinationReplaceTo   string          `url:"destination_replace_to,omitempty" required:"false"`
-	Interval               string          `url:"interval,omitempty" required:"false"`
-	Path                   string          `url:"path,omitempty" required:"false"`
-	UserIds                string          `url:"user_ids,omitempty" required:"false"`
-	GroupIds               string          `url:"group_ids,omitempty" required:"false"`
-	Schedule               json.RawMessage `url:"schedule,omitempty" required:"false"`
-	Trigger                string          `url:"trigger,omitempty" required:"false"`
-	TriggerActions         []string        `url:"trigger_actions,omitempty" required:"false"`
-	TriggerActionPath      string          `url:"trigger_action_path,omitempty" required:"false"`
-	Value                  json.RawMessage `url:"value,omitempty" required:"false"`
+	Automation             AutomationEnum        `url:"automation,omitempty" required:"true"`
+	Source                 string                `url:"source,omitempty" required:"false"`
+	Destination            string                `url:"destination,omitempty" required:"false"`
+	Destinations           []string              `url:"destinations,omitempty" required:"false"`
+	DestinationReplaceFrom string                `url:"destination_replace_from,omitempty" required:"false"`
+	DestinationReplaceTo   string                `url:"destination_replace_to,omitempty" required:"false"`
+	Interval               string                `url:"interval,omitempty" required:"false"`
+	Path                   string                `url:"path,omitempty" required:"false"`
+	UserIds                string                `url:"user_ids,omitempty" required:"false"`
+	GroupIds               string                `url:"group_ids,omitempty" required:"false"`
+	Schedule               json.RawMessage       `url:"schedule,omitempty" required:"false"`
+	Trigger                AutomationTriggerEnum `url:"trigger,omitempty" required:"false"`
+	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false"`
+	TriggerActionPath      string                `url:"trigger_action_path,omitempty" required:"false"`
+	Value                  json.RawMessage       `url:"value,omitempty" required:"false"`
 }
 
 type AutomationUpdateParams struct {
-	Id                     int64           `url:"-,omitempty" required:"true"`
-	Automation             string          `url:"automation,omitempty" required:"true"`
-	Source                 string          `url:"source,omitempty" required:"false"`
-	Destination            string          `url:"destination,omitempty" required:"false"`
-	Destinations           []string        `url:"destinations,omitempty" required:"false"`
-	DestinationReplaceFrom string          `url:"destination_replace_from,omitempty" required:"false"`
-	DestinationReplaceTo   string          `url:"destination_replace_to,omitempty" required:"false"`
-	Interval               string          `url:"interval,omitempty" required:"false"`
-	Path                   string          `url:"path,omitempty" required:"false"`
-	UserIds                string          `url:"user_ids,omitempty" required:"false"`
-	GroupIds               string          `url:"group_ids,omitempty" required:"false"`
-	Schedule               json.RawMessage `url:"schedule,omitempty" required:"false"`
-	Trigger                string          `url:"trigger,omitempty" required:"false"`
-	TriggerActions         []string        `url:"trigger_actions,omitempty" required:"false"`
-	TriggerActionPath      string          `url:"trigger_action_path,omitempty" required:"false"`
-	Value                  json.RawMessage `url:"value,omitempty" required:"false"`
+	Id                     int64                 `url:"-,omitempty" required:"true"`
+	Automation             AutomationEnum        `url:"automation,omitempty" required:"true"`
+	Source                 string                `url:"source,omitempty" required:"false"`
+	Destination            string                `url:"destination,omitempty" required:"false"`
+	Destinations           []string              `url:"destinations,omitempty" required:"false"`
+	DestinationReplaceFrom string                `url:"destination_replace_from,omitempty" required:"false"`
+	DestinationReplaceTo   string                `url:"destination_replace_to,omitempty" required:"false"`
+	Interval               string                `url:"interval,omitempty" required:"false"`
+	Path                   string                `url:"path,omitempty" required:"false"`
+	UserIds                string                `url:"user_ids,omitempty" required:"false"`
+	GroupIds               string                `url:"group_ids,omitempty" required:"false"`
+	Schedule               json.RawMessage       `url:"schedule,omitempty" required:"false"`
+	Trigger                AutomationTriggerEnum `url:"trigger,omitempty" required:"false"`
+	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false"`
+	TriggerActionPath      string                `url:"trigger_action_path,omitempty" required:"false"`
+	Value                  json.RawMessage       `url:"value,omitempty" required:"false"`
 }
 
 type AutomationDeleteParams struct {

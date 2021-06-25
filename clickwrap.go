@@ -17,6 +17,64 @@ type Clickwrap struct {
 
 type ClickwrapCollection []Clickwrap
 
+type ClickwrapUseWithBundlesEnum string
+
+func (u ClickwrapUseWithBundlesEnum) String() string {
+	return string(u)
+}
+
+const (
+	NoneUseWithBundles      ClickwrapUseWithBundlesEnum = "none"
+	AvailableUseWithBundles ClickwrapUseWithBundlesEnum = "available"
+	RequireUseWithBundles   ClickwrapUseWithBundlesEnum = "require"
+)
+
+func (u ClickwrapUseWithBundlesEnum) Enum() map[string]ClickwrapUseWithBundlesEnum {
+	return map[string]ClickwrapUseWithBundlesEnum{
+		"none":      NoneUseWithBundles,
+		"available": AvailableUseWithBundles,
+		"require":   RequireUseWithBundles,
+	}
+}
+
+type ClickwrapUseWithInboxesEnum string
+
+func (u ClickwrapUseWithInboxesEnum) String() string {
+	return string(u)
+}
+
+const (
+	NoneUseWithInboxes      ClickwrapUseWithInboxesEnum = "none"
+	AvailableUseWithInboxes ClickwrapUseWithInboxesEnum = "available"
+	RequireUseWithInboxes   ClickwrapUseWithInboxesEnum = "require"
+)
+
+func (u ClickwrapUseWithInboxesEnum) Enum() map[string]ClickwrapUseWithInboxesEnum {
+	return map[string]ClickwrapUseWithInboxesEnum{
+		"none":      NoneUseWithInboxes,
+		"available": AvailableUseWithInboxes,
+		"require":   RequireUseWithInboxes,
+	}
+}
+
+type ClickwrapUseWithUsersEnum string
+
+func (u ClickwrapUseWithUsersEnum) String() string {
+	return string(u)
+}
+
+const (
+	NoneUseWithUsers    ClickwrapUseWithUsersEnum = "none"
+	RequireUseWithUsers ClickwrapUseWithUsersEnum = "require"
+)
+
+func (u ClickwrapUseWithUsersEnum) Enum() map[string]ClickwrapUseWithUsersEnum {
+	return map[string]ClickwrapUseWithUsersEnum{
+		"none":    NoneUseWithUsers,
+		"require": RequireUseWithUsers,
+	}
+}
+
 type ClickwrapListParams struct {
 	Cursor  string `url:"cursor,omitempty" required:"false"`
 	PerPage int64  `url:"per_page,omitempty" required:"false"`
@@ -28,20 +86,20 @@ type ClickwrapFindParams struct {
 }
 
 type ClickwrapCreateParams struct {
-	Name           string `url:"name,omitempty" required:"false"`
-	Body           string `url:"body,omitempty" required:"false"`
-	UseWithBundles string `url:"use_with_bundles,omitempty" required:"false"`
-	UseWithInboxes string `url:"use_with_inboxes,omitempty" required:"false"`
-	UseWithUsers   string `url:"use_with_users,omitempty" required:"false"`
+	Name           string                      `url:"name,omitempty" required:"false"`
+	Body           string                      `url:"body,omitempty" required:"false"`
+	UseWithBundles ClickwrapUseWithBundlesEnum `url:"use_with_bundles,omitempty" required:"false"`
+	UseWithInboxes ClickwrapUseWithInboxesEnum `url:"use_with_inboxes,omitempty" required:"false"`
+	UseWithUsers   ClickwrapUseWithUsersEnum   `url:"use_with_users,omitempty" required:"false"`
 }
 
 type ClickwrapUpdateParams struct {
-	Id             int64  `url:"-,omitempty" required:"true"`
-	Name           string `url:"name,omitempty" required:"false"`
-	Body           string `url:"body,omitempty" required:"false"`
-	UseWithBundles string `url:"use_with_bundles,omitempty" required:"false"`
-	UseWithInboxes string `url:"use_with_inboxes,omitempty" required:"false"`
-	UseWithUsers   string `url:"use_with_users,omitempty" required:"false"`
+	Id             int64                       `url:"-,omitempty" required:"true"`
+	Name           string                      `url:"name,omitempty" required:"false"`
+	Body           string                      `url:"body,omitempty" required:"false"`
+	UseWithBundles ClickwrapUseWithBundlesEnum `url:"use_with_bundles,omitempty" required:"false"`
+	UseWithInboxes ClickwrapUseWithInboxesEnum `url:"use_with_inboxes,omitempty" required:"false"`
+	UseWithUsers   ClickwrapUseWithUsersEnum   `url:"use_with_users,omitempty" required:"false"`
 }
 
 type ClickwrapDeleteParams struct {

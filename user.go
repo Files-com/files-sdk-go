@@ -79,6 +79,70 @@ type QParam struct {
 	SslRequired          string `url:"ssl_required,omitempty"`
 }
 
+type UserAuthenticationMethodEnum string
+
+func (u UserAuthenticationMethodEnum) String() string {
+	return string(u)
+}
+
+const (
+	PasswordAuthenticationMethod         UserAuthenticationMethodEnum = "password"
+	UnusedFormerLdapAuthenticationMethod UserAuthenticationMethodEnum = "unused_former_ldap"
+	SsoAuthenticationMethod              UserAuthenticationMethodEnum = "sso"
+	NoneAuthenticationMethod             UserAuthenticationMethodEnum = "none"
+	EmailSignupAuthenticationMethod      UserAuthenticationMethodEnum = "email_signup"
+)
+
+func (u UserAuthenticationMethodEnum) Enum() map[string]UserAuthenticationMethodEnum {
+	return map[string]UserAuthenticationMethodEnum{
+		"password":           PasswordAuthenticationMethod,
+		"unused_former_ldap": UnusedFormerLdapAuthenticationMethod,
+		"sso":                SsoAuthenticationMethod,
+		"none":               NoneAuthenticationMethod,
+		"email_signup":       EmailSignupAuthenticationMethod,
+	}
+}
+
+type UserSslRequiredEnum string
+
+func (u UserSslRequiredEnum) String() string {
+	return string(u)
+}
+
+const (
+	UseSystemSettingSslRequired UserSslRequiredEnum = "use_system_setting"
+	AlwaysRequireSslRequired    UserSslRequiredEnum = "always_require"
+	NeverRequireSslRequired     UserSslRequiredEnum = "never_require"
+)
+
+func (u UserSslRequiredEnum) Enum() map[string]UserSslRequiredEnum {
+	return map[string]UserSslRequiredEnum{
+		"use_system_setting": UseSystemSettingSslRequired,
+		"always_require":     AlwaysRequireSslRequired,
+		"never_require":      NeverRequireSslRequired,
+	}
+}
+
+type UserRequire2faEnum string
+
+func (u UserRequire2faEnum) String() string {
+	return string(u)
+}
+
+const (
+	UseSystemSettingRequire2fa UserRequire2faEnum = "use_system_setting"
+	AlwaysRequireRequire2fa    UserRequire2faEnum = "always_require"
+	NeverRequireRequire2fa     UserRequire2faEnum = "never_require"
+)
+
+func (u UserRequire2faEnum) Enum() map[string]UserRequire2faEnum {
+	return map[string]UserRequire2faEnum{
+		"use_system_setting": UseSystemSettingRequire2fa,
+		"always_require":     AlwaysRequireRequire2fa,
+		"never_require":      NeverRequireRequire2fa,
+	}
+}
+
 type UserListParams struct {
 	Cursor     string          `url:"cursor,omitempty" required:"false"`
 	PerPage    int64           `url:"per_page,omitempty" required:"false"`
@@ -100,49 +164,49 @@ type UserFindParams struct {
 }
 
 type UserCreateParams struct {
-	AvatarFile                 io.Writer `url:"avatar_file,omitempty" required:"false"`
-	AvatarDelete               *bool     `url:"avatar_delete,omitempty" required:"false"`
-	ChangePassword             string    `url:"change_password,omitempty" required:"false"`
-	ChangePasswordConfirmation string    `url:"change_password_confirmation,omitempty" required:"false"`
-	Email                      string    `url:"email,omitempty" required:"false"`
-	GrantPermission            string    `url:"grant_permission,omitempty" required:"false"`
-	GroupId                    int64     `url:"group_id,omitempty" required:"false"`
-	GroupIds                   string    `url:"group_ids,omitempty" required:"false"`
-	Password                   string    `url:"password,omitempty" required:"false"`
-	PasswordConfirmation       string    `url:"password_confirmation,omitempty" required:"false"`
-	AnnouncementsRead          *bool     `url:"announcements_read,omitempty" required:"false"`
-	AllowedIps                 string    `url:"allowed_ips,omitempty" required:"false"`
-	AttachmentsPermission      *bool     `url:"attachments_permission,omitempty" required:"false"`
-	AuthenticateUntil          time.Time `url:"authenticate_until,omitempty" required:"false"`
-	AuthenticationMethod       string    `url:"authentication_method,omitempty" required:"false"`
-	BillingPermission          *bool     `url:"billing_permission,omitempty" required:"false"`
-	BypassInactiveDisable      *bool     `url:"bypass_inactive_disable,omitempty" required:"false"`
-	BypassSiteAllowedIps       *bool     `url:"bypass_site_allowed_ips,omitempty" required:"false"`
-	DavPermission              *bool     `url:"dav_permission,omitempty" required:"false"`
-	Disabled                   *bool     `url:"disabled,omitempty" required:"false"`
-	FtpPermission              *bool     `url:"ftp_permission,omitempty" required:"false"`
-	HeaderText                 string    `url:"header_text,omitempty" required:"false"`
-	Language                   string    `url:"language,omitempty" required:"false"`
-	NotificationDailySendTime  int64     `url:"notification_daily_send_time,omitempty" required:"false"`
-	Name                       string    `url:"name,omitempty" required:"false"`
-	Company                    string    `url:"company,omitempty" required:"false"`
-	Notes                      string    `url:"notes,omitempty" required:"false"`
-	OfficeIntegrationEnabled   *bool     `url:"office_integration_enabled,omitempty" required:"false"`
-	PasswordValidityDays       int64     `url:"password_validity_days,omitempty" required:"false"`
-	ReceiveAdminAlerts         *bool     `url:"receive_admin_alerts,omitempty" required:"false"`
-	RequirePasswordChange      *bool     `url:"require_password_change,omitempty" required:"false"`
-	RestapiPermission          *bool     `url:"restapi_permission,omitempty" required:"false"`
-	SelfManaged                *bool     `url:"self_managed,omitempty" required:"false"`
-	SftpPermission             *bool     `url:"sftp_permission,omitempty" required:"false"`
-	SiteAdmin                  *bool     `url:"site_admin,omitempty" required:"false"`
-	SkipWelcomeScreen          *bool     `url:"skip_welcome_screen,omitempty" required:"false"`
-	SslRequired                string    `url:"ssl_required,omitempty" required:"false"`
-	SsoStrategyId              int64     `url:"sso_strategy_id,omitempty" required:"false"`
-	SubscribeToNewsletter      *bool     `url:"subscribe_to_newsletter,omitempty" required:"false"`
-	Require2fa                 string    `url:"require_2fa,omitempty" required:"false"`
-	TimeZone                   string    `url:"time_zone,omitempty" required:"false"`
-	UserRoot                   string    `url:"user_root,omitempty" required:"false"`
-	Username                   string    `url:"username,omitempty" required:"false"`
+	AvatarFile                 io.Writer                    `url:"avatar_file,omitempty" required:"false"`
+	AvatarDelete               *bool                        `url:"avatar_delete,omitempty" required:"false"`
+	ChangePassword             string                       `url:"change_password,omitempty" required:"false"`
+	ChangePasswordConfirmation string                       `url:"change_password_confirmation,omitempty" required:"false"`
+	Email                      string                       `url:"email,omitempty" required:"false"`
+	GrantPermission            string                       `url:"grant_permission,omitempty" required:"false"`
+	GroupId                    int64                        `url:"group_id,omitempty" required:"false"`
+	GroupIds                   string                       `url:"group_ids,omitempty" required:"false"`
+	Password                   string                       `url:"password,omitempty" required:"false"`
+	PasswordConfirmation       string                       `url:"password_confirmation,omitempty" required:"false"`
+	AnnouncementsRead          *bool                        `url:"announcements_read,omitempty" required:"false"`
+	AllowedIps                 string                       `url:"allowed_ips,omitempty" required:"false"`
+	AttachmentsPermission      *bool                        `url:"attachments_permission,omitempty" required:"false"`
+	AuthenticateUntil          time.Time                    `url:"authenticate_until,omitempty" required:"false"`
+	AuthenticationMethod       UserAuthenticationMethodEnum `url:"authentication_method,omitempty" required:"false"`
+	BillingPermission          *bool                        `url:"billing_permission,omitempty" required:"false"`
+	BypassInactiveDisable      *bool                        `url:"bypass_inactive_disable,omitempty" required:"false"`
+	BypassSiteAllowedIps       *bool                        `url:"bypass_site_allowed_ips,omitempty" required:"false"`
+	DavPermission              *bool                        `url:"dav_permission,omitempty" required:"false"`
+	Disabled                   *bool                        `url:"disabled,omitempty" required:"false"`
+	FtpPermission              *bool                        `url:"ftp_permission,omitempty" required:"false"`
+	HeaderText                 string                       `url:"header_text,omitempty" required:"false"`
+	Language                   string                       `url:"language,omitempty" required:"false"`
+	NotificationDailySendTime  int64                        `url:"notification_daily_send_time,omitempty" required:"false"`
+	Name                       string                       `url:"name,omitempty" required:"false"`
+	Company                    string                       `url:"company,omitempty" required:"false"`
+	Notes                      string                       `url:"notes,omitempty" required:"false"`
+	OfficeIntegrationEnabled   *bool                        `url:"office_integration_enabled,omitempty" required:"false"`
+	PasswordValidityDays       int64                        `url:"password_validity_days,omitempty" required:"false"`
+	ReceiveAdminAlerts         *bool                        `url:"receive_admin_alerts,omitempty" required:"false"`
+	RequirePasswordChange      *bool                        `url:"require_password_change,omitempty" required:"false"`
+	RestapiPermission          *bool                        `url:"restapi_permission,omitempty" required:"false"`
+	SelfManaged                *bool                        `url:"self_managed,omitempty" required:"false"`
+	SftpPermission             *bool                        `url:"sftp_permission,omitempty" required:"false"`
+	SiteAdmin                  *bool                        `url:"site_admin,omitempty" required:"false"`
+	SkipWelcomeScreen          *bool                        `url:"skip_welcome_screen,omitempty" required:"false"`
+	SslRequired                UserSslRequiredEnum          `url:"ssl_required,omitempty" required:"false"`
+	SsoStrategyId              int64                        `url:"sso_strategy_id,omitempty" required:"false"`
+	SubscribeToNewsletter      *bool                        `url:"subscribe_to_newsletter,omitempty" required:"false"`
+	Require2fa                 UserRequire2faEnum           `url:"require_2fa,omitempty" required:"false"`
+	TimeZone                   string                       `url:"time_zone,omitempty" required:"false"`
+	UserRoot                   string                       `url:"user_root,omitempty" required:"false"`
+	Username                   string                       `url:"username,omitempty" required:"false"`
 }
 
 // Unlock user who has been locked out due to failed logins
@@ -161,50 +225,50 @@ type UserUser2faResetParams struct {
 }
 
 type UserUpdateParams struct {
-	Id                         int64     `url:"-,omitempty" required:"true"`
-	AvatarFile                 io.Writer `url:"avatar_file,omitempty" required:"false"`
-	AvatarDelete               *bool     `url:"avatar_delete,omitempty" required:"false"`
-	ChangePassword             string    `url:"change_password,omitempty" required:"false"`
-	ChangePasswordConfirmation string    `url:"change_password_confirmation,omitempty" required:"false"`
-	Email                      string    `url:"email,omitempty" required:"false"`
-	GrantPermission            string    `url:"grant_permission,omitempty" required:"false"`
-	GroupId                    int64     `url:"group_id,omitempty" required:"false"`
-	GroupIds                   string    `url:"group_ids,omitempty" required:"false"`
-	Password                   string    `url:"password,omitempty" required:"false"`
-	PasswordConfirmation       string    `url:"password_confirmation,omitempty" required:"false"`
-	AnnouncementsRead          *bool     `url:"announcements_read,omitempty" required:"false"`
-	AllowedIps                 string    `url:"allowed_ips,omitempty" required:"false"`
-	AttachmentsPermission      *bool     `url:"attachments_permission,omitempty" required:"false"`
-	AuthenticateUntil          time.Time `url:"authenticate_until,omitempty" required:"false"`
-	AuthenticationMethod       string    `url:"authentication_method,omitempty" required:"false"`
-	BillingPermission          *bool     `url:"billing_permission,omitempty" required:"false"`
-	BypassInactiveDisable      *bool     `url:"bypass_inactive_disable,omitempty" required:"false"`
-	BypassSiteAllowedIps       *bool     `url:"bypass_site_allowed_ips,omitempty" required:"false"`
-	DavPermission              *bool     `url:"dav_permission,omitempty" required:"false"`
-	Disabled                   *bool     `url:"disabled,omitempty" required:"false"`
-	FtpPermission              *bool     `url:"ftp_permission,omitempty" required:"false"`
-	HeaderText                 string    `url:"header_text,omitempty" required:"false"`
-	Language                   string    `url:"language,omitempty" required:"false"`
-	NotificationDailySendTime  int64     `url:"notification_daily_send_time,omitempty" required:"false"`
-	Name                       string    `url:"name,omitempty" required:"false"`
-	Company                    string    `url:"company,omitempty" required:"false"`
-	Notes                      string    `url:"notes,omitempty" required:"false"`
-	OfficeIntegrationEnabled   *bool     `url:"office_integration_enabled,omitempty" required:"false"`
-	PasswordValidityDays       int64     `url:"password_validity_days,omitempty" required:"false"`
-	ReceiveAdminAlerts         *bool     `url:"receive_admin_alerts,omitempty" required:"false"`
-	RequirePasswordChange      *bool     `url:"require_password_change,omitempty" required:"false"`
-	RestapiPermission          *bool     `url:"restapi_permission,omitempty" required:"false"`
-	SelfManaged                *bool     `url:"self_managed,omitempty" required:"false"`
-	SftpPermission             *bool     `url:"sftp_permission,omitempty" required:"false"`
-	SiteAdmin                  *bool     `url:"site_admin,omitempty" required:"false"`
-	SkipWelcomeScreen          *bool     `url:"skip_welcome_screen,omitempty" required:"false"`
-	SslRequired                string    `url:"ssl_required,omitempty" required:"false"`
-	SsoStrategyId              int64     `url:"sso_strategy_id,omitempty" required:"false"`
-	SubscribeToNewsletter      *bool     `url:"subscribe_to_newsletter,omitempty" required:"false"`
-	Require2fa                 string    `url:"require_2fa,omitempty" required:"false"`
-	TimeZone                   string    `url:"time_zone,omitempty" required:"false"`
-	UserRoot                   string    `url:"user_root,omitempty" required:"false"`
-	Username                   string    `url:"username,omitempty" required:"false"`
+	Id                         int64                        `url:"-,omitempty" required:"true"`
+	AvatarFile                 io.Writer                    `url:"avatar_file,omitempty" required:"false"`
+	AvatarDelete               *bool                        `url:"avatar_delete,omitempty" required:"false"`
+	ChangePassword             string                       `url:"change_password,omitempty" required:"false"`
+	ChangePasswordConfirmation string                       `url:"change_password_confirmation,omitempty" required:"false"`
+	Email                      string                       `url:"email,omitempty" required:"false"`
+	GrantPermission            string                       `url:"grant_permission,omitempty" required:"false"`
+	GroupId                    int64                        `url:"group_id,omitempty" required:"false"`
+	GroupIds                   string                       `url:"group_ids,omitempty" required:"false"`
+	Password                   string                       `url:"password,omitempty" required:"false"`
+	PasswordConfirmation       string                       `url:"password_confirmation,omitempty" required:"false"`
+	AnnouncementsRead          *bool                        `url:"announcements_read,omitempty" required:"false"`
+	AllowedIps                 string                       `url:"allowed_ips,omitempty" required:"false"`
+	AttachmentsPermission      *bool                        `url:"attachments_permission,omitempty" required:"false"`
+	AuthenticateUntil          time.Time                    `url:"authenticate_until,omitempty" required:"false"`
+	AuthenticationMethod       UserAuthenticationMethodEnum `url:"authentication_method,omitempty" required:"false"`
+	BillingPermission          *bool                        `url:"billing_permission,omitempty" required:"false"`
+	BypassInactiveDisable      *bool                        `url:"bypass_inactive_disable,omitempty" required:"false"`
+	BypassSiteAllowedIps       *bool                        `url:"bypass_site_allowed_ips,omitempty" required:"false"`
+	DavPermission              *bool                        `url:"dav_permission,omitempty" required:"false"`
+	Disabled                   *bool                        `url:"disabled,omitempty" required:"false"`
+	FtpPermission              *bool                        `url:"ftp_permission,omitempty" required:"false"`
+	HeaderText                 string                       `url:"header_text,omitempty" required:"false"`
+	Language                   string                       `url:"language,omitempty" required:"false"`
+	NotificationDailySendTime  int64                        `url:"notification_daily_send_time,omitempty" required:"false"`
+	Name                       string                       `url:"name,omitempty" required:"false"`
+	Company                    string                       `url:"company,omitempty" required:"false"`
+	Notes                      string                       `url:"notes,omitempty" required:"false"`
+	OfficeIntegrationEnabled   *bool                        `url:"office_integration_enabled,omitempty" required:"false"`
+	PasswordValidityDays       int64                        `url:"password_validity_days,omitempty" required:"false"`
+	ReceiveAdminAlerts         *bool                        `url:"receive_admin_alerts,omitempty" required:"false"`
+	RequirePasswordChange      *bool                        `url:"require_password_change,omitempty" required:"false"`
+	RestapiPermission          *bool                        `url:"restapi_permission,omitempty" required:"false"`
+	SelfManaged                *bool                        `url:"self_managed,omitempty" required:"false"`
+	SftpPermission             *bool                        `url:"sftp_permission,omitempty" required:"false"`
+	SiteAdmin                  *bool                        `url:"site_admin,omitempty" required:"false"`
+	SkipWelcomeScreen          *bool                        `url:"skip_welcome_screen,omitempty" required:"false"`
+	SslRequired                UserSslRequiredEnum          `url:"ssl_required,omitempty" required:"false"`
+	SsoStrategyId              int64                        `url:"sso_strategy_id,omitempty" required:"false"`
+	SubscribeToNewsletter      *bool                        `url:"subscribe_to_newsletter,omitempty" required:"false"`
+	Require2fa                 UserRequire2faEnum           `url:"require_2fa,omitempty" required:"false"`
+	TimeZone                   string                       `url:"time_zone,omitempty" required:"false"`
+	UserRoot                   string                       `url:"user_root,omitempty" required:"false"`
+	Username                   string                       `url:"username,omitempty" required:"false"`
 }
 
 type UserDeleteParams struct {
