@@ -43,8 +43,8 @@ func downloadFolder(files []Entity, c Downloader, params DownloadFolderParams, r
 		goc.Wait()
 		go func(entity Entity) {
 			defer func() {
-				signal <- true
 				goc.Done()
+				signal <- true
 			}()
 			file := files_sdk.File{Path: entity.file.Path, Size: entity.file.Size, Type: entity.file.Type}
 			sep := strings.Split(file.Path, "/")
@@ -77,6 +77,7 @@ func downloadFolder(files []Entity, c Downloader, params DownloadFolderParams, r
 			}
 			out, err = os.Create(destinationPath + ".part")
 			defer func() {
+				out.Close()
 				err = os.Rename(destinationPath+".part", destinationPath)
 				if err != nil {
 					if len(reporters) > 0 {
