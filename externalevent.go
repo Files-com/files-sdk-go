@@ -24,15 +24,10 @@ func (u ExternalEventStatusEnum) String() string {
 	return string(u)
 }
 
-const (
-	SuccessStatus ExternalEventStatusEnum = "success"
-	ErrorStatus   ExternalEventStatusEnum = "error"
-)
-
 func (u ExternalEventStatusEnum) Enum() map[string]ExternalEventStatusEnum {
 	return map[string]ExternalEventStatusEnum{
-		"success": SuccessStatus,
-		"error":   ErrorStatus,
+		"success": ExternalEventStatusEnum("success"),
+		"error":   ExternalEventStatusEnum("error"),
 	}
 }
 

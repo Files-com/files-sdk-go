@@ -85,21 +85,13 @@ func (u UserAuthenticationMethodEnum) String() string {
 	return string(u)
 }
 
-const (
-	PasswordAuthenticationMethod         UserAuthenticationMethodEnum = "password"
-	UnusedFormerLdapAuthenticationMethod UserAuthenticationMethodEnum = "unused_former_ldap"
-	SsoAuthenticationMethod              UserAuthenticationMethodEnum = "sso"
-	NoneAuthenticationMethod             UserAuthenticationMethodEnum = "none"
-	EmailSignupAuthenticationMethod      UserAuthenticationMethodEnum = "email_signup"
-)
-
 func (u UserAuthenticationMethodEnum) Enum() map[string]UserAuthenticationMethodEnum {
 	return map[string]UserAuthenticationMethodEnum{
-		"password":           PasswordAuthenticationMethod,
-		"unused_former_ldap": UnusedFormerLdapAuthenticationMethod,
-		"sso":                SsoAuthenticationMethod,
-		"none":               NoneAuthenticationMethod,
-		"email_signup":       EmailSignupAuthenticationMethod,
+		"password":           UserAuthenticationMethodEnum("password"),
+		"unused_former_ldap": UserAuthenticationMethodEnum("unused_former_ldap"),
+		"sso":                UserAuthenticationMethodEnum("sso"),
+		"none":               UserAuthenticationMethodEnum("none"),
+		"email_signup":       UserAuthenticationMethodEnum("email_signup"),
 	}
 }
 
@@ -109,17 +101,11 @@ func (u UserSslRequiredEnum) String() string {
 	return string(u)
 }
 
-const (
-	UseSystemSettingSslRequired UserSslRequiredEnum = "use_system_setting"
-	AlwaysRequireSslRequired    UserSslRequiredEnum = "always_require"
-	NeverRequireSslRequired     UserSslRequiredEnum = "never_require"
-)
-
 func (u UserSslRequiredEnum) Enum() map[string]UserSslRequiredEnum {
 	return map[string]UserSslRequiredEnum{
-		"use_system_setting": UseSystemSettingSslRequired,
-		"always_require":     AlwaysRequireSslRequired,
-		"never_require":      NeverRequireSslRequired,
+		"use_system_setting": UserSslRequiredEnum("use_system_setting"),
+		"always_require":     UserSslRequiredEnum("always_require"),
+		"never_require":      UserSslRequiredEnum("never_require"),
 	}
 }
 
@@ -129,17 +115,11 @@ func (u UserRequire2faEnum) String() string {
 	return string(u)
 }
 
-const (
-	UseSystemSettingRequire2fa UserRequire2faEnum = "use_system_setting"
-	AlwaysRequireRequire2fa    UserRequire2faEnum = "always_require"
-	NeverRequireRequire2fa     UserRequire2faEnum = "never_require"
-)
-
 func (u UserRequire2faEnum) Enum() map[string]UserRequire2faEnum {
 	return map[string]UserRequire2faEnum{
-		"use_system_setting": UseSystemSettingRequire2fa,
-		"always_require":     AlwaysRequireRequire2fa,
-		"never_require":      NeverRequireRequire2fa,
+		"use_system_setting": UserRequire2faEnum("use_system_setting"),
+		"always_require":     UserRequire2faEnum("always_require"),
+		"never_require":      UserRequire2faEnum("never_require"),
 	}
 }
 

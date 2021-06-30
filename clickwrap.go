@@ -23,17 +23,11 @@ func (u ClickwrapUseWithBundlesEnum) String() string {
 	return string(u)
 }
 
-const (
-	NoneUseWithBundles      ClickwrapUseWithBundlesEnum = "none"
-	AvailableUseWithBundles ClickwrapUseWithBundlesEnum = "available"
-	RequireUseWithBundles   ClickwrapUseWithBundlesEnum = "require"
-)
-
 func (u ClickwrapUseWithBundlesEnum) Enum() map[string]ClickwrapUseWithBundlesEnum {
 	return map[string]ClickwrapUseWithBundlesEnum{
-		"none":      NoneUseWithBundles,
-		"available": AvailableUseWithBundles,
-		"require":   RequireUseWithBundles,
+		"none":      ClickwrapUseWithBundlesEnum("none"),
+		"available": ClickwrapUseWithBundlesEnum("available"),
+		"require":   ClickwrapUseWithBundlesEnum("require"),
 	}
 }
 
@@ -43,17 +37,11 @@ func (u ClickwrapUseWithInboxesEnum) String() string {
 	return string(u)
 }
 
-const (
-	NoneUseWithInboxes      ClickwrapUseWithInboxesEnum = "none"
-	AvailableUseWithInboxes ClickwrapUseWithInboxesEnum = "available"
-	RequireUseWithInboxes   ClickwrapUseWithInboxesEnum = "require"
-)
-
 func (u ClickwrapUseWithInboxesEnum) Enum() map[string]ClickwrapUseWithInboxesEnum {
 	return map[string]ClickwrapUseWithInboxesEnum{
-		"none":      NoneUseWithInboxes,
-		"available": AvailableUseWithInboxes,
-		"require":   RequireUseWithInboxes,
+		"none":      ClickwrapUseWithInboxesEnum("none"),
+		"available": ClickwrapUseWithInboxesEnum("available"),
+		"require":   ClickwrapUseWithInboxesEnum("require"),
 	}
 }
 
@@ -63,15 +51,10 @@ func (u ClickwrapUseWithUsersEnum) String() string {
 	return string(u)
 }
 
-const (
-	NoneUseWithUsers    ClickwrapUseWithUsersEnum = "none"
-	RequireUseWithUsers ClickwrapUseWithUsersEnum = "require"
-)
-
 func (u ClickwrapUseWithUsersEnum) Enum() map[string]ClickwrapUseWithUsersEnum {
 	return map[string]ClickwrapUseWithUsersEnum{
-		"none":    NoneUseWithUsers,
-		"require": RequireUseWithUsers,
+		"none":    ClickwrapUseWithUsersEnum("none"),
+		"require": ClickwrapUseWithUsersEnum("require"),
 	}
 }
 

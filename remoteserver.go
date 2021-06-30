@@ -64,15 +64,10 @@ func (u RemoteServerServerCertificateEnum) String() string {
 	return string(u)
 }
 
-const (
-	RequireMatchServerCertificate RemoteServerServerCertificateEnum = "require_match"
-	AllowAnyServerCertificate     RemoteServerServerCertificateEnum = "allow_any"
-)
-
 func (u RemoteServerServerCertificateEnum) Enum() map[string]RemoteServerServerCertificateEnum {
 	return map[string]RemoteServerServerCertificateEnum{
-		"require_match": RequireMatchServerCertificate,
-		"allow_any":     AllowAnyServerCertificate,
+		"require_match": RemoteServerServerCertificateEnum("require_match"),
+		"allow_any":     RemoteServerServerCertificateEnum("allow_any"),
 	}
 }
 
@@ -82,41 +77,23 @@ func (u RemoteServerServerTypeEnum) String() string {
 	return string(u)
 }
 
-const (
-	FtpServerType                RemoteServerServerTypeEnum = "ftp"
-	SftpServerType               RemoteServerServerTypeEnum = "sftp"
-	S3ServerType                 RemoteServerServerTypeEnum = "s3"
-	GoogleCloudStorageServerType RemoteServerServerTypeEnum = "google_cloud_storage"
-	WebdavServerType             RemoteServerServerTypeEnum = "webdav"
-	WasabiServerType             RemoteServerServerTypeEnum = "wasabi"
-	BackblazeB2ServerType        RemoteServerServerTypeEnum = "backblaze_b2"
-	OneDriveServerType           RemoteServerServerTypeEnum = "one_drive"
-	RackspaceServerType          RemoteServerServerTypeEnum = "rackspace"
-	BoxServerType                RemoteServerServerTypeEnum = "box"
-	DropboxServerType            RemoteServerServerTypeEnum = "dropbox"
-	GoogleDriveServerType        RemoteServerServerTypeEnum = "google_drive"
-	AzureServerType              RemoteServerServerTypeEnum = "azure"
-	SharepointServerType         RemoteServerServerTypeEnum = "sharepoint"
-	S3CompatibleServerType       RemoteServerServerTypeEnum = "s3_compatible"
-)
-
 func (u RemoteServerServerTypeEnum) Enum() map[string]RemoteServerServerTypeEnum {
 	return map[string]RemoteServerServerTypeEnum{
-		"ftp":                  FtpServerType,
-		"sftp":                 SftpServerType,
-		"s3":                   S3ServerType,
-		"google_cloud_storage": GoogleCloudStorageServerType,
-		"webdav":               WebdavServerType,
-		"wasabi":               WasabiServerType,
-		"backblaze_b2":         BackblazeB2ServerType,
-		"one_drive":            OneDriveServerType,
-		"rackspace":            RackspaceServerType,
-		"box":                  BoxServerType,
-		"dropbox":              DropboxServerType,
-		"google_drive":         GoogleDriveServerType,
-		"azure":                AzureServerType,
-		"sharepoint":           SharepointServerType,
-		"s3_compatible":        S3CompatibleServerType,
+		"ftp":                  RemoteServerServerTypeEnum("ftp"),
+		"sftp":                 RemoteServerServerTypeEnum("sftp"),
+		"s3":                   RemoteServerServerTypeEnum("s3"),
+		"google_cloud_storage": RemoteServerServerTypeEnum("google_cloud_storage"),
+		"webdav":               RemoteServerServerTypeEnum("webdav"),
+		"wasabi":               RemoteServerServerTypeEnum("wasabi"),
+		"backblaze_b2":         RemoteServerServerTypeEnum("backblaze_b2"),
+		"one_drive":            RemoteServerServerTypeEnum("one_drive"),
+		"rackspace":            RemoteServerServerTypeEnum("rackspace"),
+		"box":                  RemoteServerServerTypeEnum("box"),
+		"dropbox":              RemoteServerServerTypeEnum("dropbox"),
+		"google_drive":         RemoteServerServerTypeEnum("google_drive"),
+		"azure":                RemoteServerServerTypeEnum("azure"),
+		"sharepoint":           RemoteServerServerTypeEnum("sharepoint"),
+		"s3_compatible":        RemoteServerServerTypeEnum("s3_compatible"),
 	}
 }
 
@@ -126,19 +103,12 @@ func (u RemoteServerSslEnum) String() string {
 	return string(u)
 }
 
-const (
-	IfAvailableSsl     RemoteServerSslEnum = "if_available"
-	RequireSsl         RemoteServerSslEnum = "require"
-	RequireImplicitSsl RemoteServerSslEnum = "require_implicit"
-	NeverSsl           RemoteServerSslEnum = "never"
-)
-
 func (u RemoteServerSslEnum) Enum() map[string]RemoteServerSslEnum {
 	return map[string]RemoteServerSslEnum{
-		"if_available":     IfAvailableSsl,
-		"require":          RequireSsl,
-		"require_implicit": RequireImplicitSsl,
-		"never":            NeverSsl,
+		"if_available":     RemoteServerSslEnum("if_available"),
+		"require":          RemoteServerSslEnum("require"),
+		"require_implicit": RemoteServerSslEnum("require_implicit"),
+		"never":            RemoteServerSslEnum("never"),
 	}
 }
 
@@ -148,15 +118,10 @@ func (u RemoteServerOneDriveAccountTypeEnum) String() string {
 	return string(u)
 }
 
-const (
-	PersonalOneDriveAccountType      RemoteServerOneDriveAccountTypeEnum = "personal"
-	BusinessOtherOneDriveAccountType RemoteServerOneDriveAccountTypeEnum = "business_other"
-)
-
 func (u RemoteServerOneDriveAccountTypeEnum) Enum() map[string]RemoteServerOneDriveAccountTypeEnum {
 	return map[string]RemoteServerOneDriveAccountTypeEnum{
-		"personal":       PersonalOneDriveAccountType,
-		"business_other": BusinessOtherOneDriveAccountType,
+		"personal":       RemoteServerOneDriveAccountTypeEnum("personal"),
+		"business_other": RemoteServerOneDriveAccountTypeEnum("business_other"),
 	}
 }
 

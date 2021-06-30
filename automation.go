@@ -36,25 +36,15 @@ func (u AutomationEnum) String() string {
 	return string(u)
 }
 
-const (
-	CreateFolderAutomation   AutomationEnum = "create_folder"
-	RequestFileAutomation    AutomationEnum = "request_file"
-	RequestMoveAutomation    AutomationEnum = "request_move"
-	CopyNewestFileAutomation AutomationEnum = "copy_newest_file"
-	DeleteFileAutomation     AutomationEnum = "delete_file"
-	CopyFileAutomation       AutomationEnum = "copy_file"
-	MoveFileAutomation       AutomationEnum = "move_file"
-)
-
 func (u AutomationEnum) Enum() map[string]AutomationEnum {
 	return map[string]AutomationEnum{
-		"create_folder":    CreateFolderAutomation,
-		"request_file":     RequestFileAutomation,
-		"request_move":     RequestMoveAutomation,
-		"copy_newest_file": CopyNewestFileAutomation,
-		"delete_file":      DeleteFileAutomation,
-		"copy_file":        CopyFileAutomation,
-		"move_file":        MoveFileAutomation,
+		"create_folder":    AutomationEnum("create_folder"),
+		"request_file":     AutomationEnum("request_file"),
+		"request_move":     AutomationEnum("request_move"),
+		"copy_newest_file": AutomationEnum("copy_newest_file"),
+		"delete_file":      AutomationEnum("delete_file"),
+		"copy_file":        AutomationEnum("copy_file"),
+		"move_file":        AutomationEnum("move_file"),
 	}
 }
 
@@ -64,23 +54,14 @@ func (u AutomationTriggerEnum) String() string {
 	return string(u)
 }
 
-const (
-	RealtimeTrigger       AutomationTriggerEnum = "realtime"
-	DailyTrigger          AutomationTriggerEnum = "daily"
-	CustomScheduleTrigger AutomationTriggerEnum = "custom_schedule"
-	WebhookTrigger        AutomationTriggerEnum = "webhook"
-	EmailTrigger          AutomationTriggerEnum = "email"
-	ActionTrigger         AutomationTriggerEnum = "action"
-)
-
 func (u AutomationTriggerEnum) Enum() map[string]AutomationTriggerEnum {
 	return map[string]AutomationTriggerEnum{
-		"realtime":        RealtimeTrigger,
-		"daily":           DailyTrigger,
-		"custom_schedule": CustomScheduleTrigger,
-		"webhook":         WebhookTrigger,
-		"email":           EmailTrigger,
-		"action":          ActionTrigger,
+		"realtime":        AutomationTriggerEnum("realtime"),
+		"daily":           AutomationTriggerEnum("daily"),
+		"custom_schedule": AutomationTriggerEnum("custom_schedule"),
+		"webhook":         AutomationTriggerEnum("webhook"),
+		"email":           AutomationTriggerEnum("email"),
+		"action":          AutomationTriggerEnum("action"),
 	}
 }
 

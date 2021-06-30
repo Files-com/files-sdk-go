@@ -29,21 +29,13 @@ func (u ApiKeyPermissionSetEnum) String() string {
 	return string(u)
 }
 
-const (
-	NonePermissionSet              ApiKeyPermissionSetEnum = "none"
-	FullPermissionSet              ApiKeyPermissionSetEnum = "full"
-	DesktopAppPermissionSet        ApiKeyPermissionSetEnum = "desktop_app"
-	SyncAppPermissionSet           ApiKeyPermissionSetEnum = "sync_app"
-	OfficeIntegrationPermissionSet ApiKeyPermissionSetEnum = "office_integration"
-)
-
 func (u ApiKeyPermissionSetEnum) Enum() map[string]ApiKeyPermissionSetEnum {
 	return map[string]ApiKeyPermissionSetEnum{
-		"none":               NonePermissionSet,
-		"full":               FullPermissionSet,
-		"desktop_app":        DesktopAppPermissionSet,
-		"sync_app":           SyncAppPermissionSet,
-		"office_integration": OfficeIntegrationPermissionSet,
+		"none":               ApiKeyPermissionSetEnum("none"),
+		"full":               ApiKeyPermissionSetEnum("full"),
+		"desktop_app":        ApiKeyPermissionSetEnum("desktop_app"),
+		"sync_app":           ApiKeyPermissionSetEnum("sync_app"),
+		"office_integration": ApiKeyPermissionSetEnum("office_integration"),
 	}
 }
 
