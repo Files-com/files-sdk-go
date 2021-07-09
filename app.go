@@ -9,6 +9,7 @@ import (
 type App struct {
 	Name                string `json:"name,omitempty"`
 	ExtendedDescription string `json:"extended_description,omitempty"`
+	ShortDescription    string `json:"short_description,omitempty"`
 	DocumentationLinks  string `json:"documentation_links,omitempty"`
 	IconUrl             string `json:"icon_url,omitempty"`
 	LogoUrl             string `json:"logo_url,omitempty"`
