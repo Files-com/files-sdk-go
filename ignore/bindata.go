@@ -94,7 +94,7 @@ func ignoreDataLinuxGitignore() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "ignore/data/Linux.gitignore", size: 316, mode: os.FileMode(420), modTime: time.Unix(1625890801, 0)}
+	info := bindataFileInfo{name: "ignore/data/Linux.gitignore", size: 316, mode: os.FileMode(420), modTime: time.Unix(1625977245, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -114,7 +114,7 @@ func ignoreDataWindowsGitignore() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "ignore/data/Windows.gitignore", size: 290, mode: os.FileMode(420), modTime: time.Unix(1625890801, 0)}
+	info := bindataFileInfo{name: "ignore/data/Windows.gitignore", size: 290, mode: os.FileMode(420), modTime: time.Unix(1625977245, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -134,7 +134,7 @@ func ignoreDataMacosGitignore() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "ignore/data/macOS.gitignore", size: 402, mode: os.FileMode(420), modTime: time.Unix(1625890801, 0)}
+	info := bindataFileInfo{name: "ignore/data/macOS.gitignore", size: 402, mode: os.FileMode(420), modTime: time.Unix(1625977245, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
