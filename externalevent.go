@@ -26,8 +26,9 @@ func (u ExternalEventStatusEnum) String() string {
 
 func (u ExternalEventStatusEnum) Enum() map[string]ExternalEventStatusEnum {
 	return map[string]ExternalEventStatusEnum{
-		"success": ExternalEventStatusEnum("success"),
-		"error":   ExternalEventStatusEnum("error"),
+		"success":         ExternalEventStatusEnum("success"),
+		"error":           ExternalEventStatusEnum("error"),
+		"partial_failure": ExternalEventStatusEnum("partial_failure"),
 	}
 }
 
