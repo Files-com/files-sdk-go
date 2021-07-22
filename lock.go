@@ -7,15 +7,18 @@ import (
 )
 
 type Lock struct {
-	Path     string `json:"path,omitempty"`
-	Timeout  int64  `json:"timeout,omitempty"`
-	Depth    string `json:"depth,omitempty"`
-	Owner    string `json:"owner,omitempty"`
-	Scope    string `json:"scope,omitempty"`
-	Token    string `json:"token,omitempty"`
-	Type     string `json:"type,omitempty"`
-	UserId   int64  `json:"user_id,omitempty"`
-	Username string `json:"username,omitempty"`
+	Path                 string `json:"path,omitempty"`
+	Timeout              int64  `json:"timeout,omitempty"`
+	Depth                string `json:"depth,omitempty"`
+	Recursive            *bool  `json:"recursive,omitempty"`
+	Owner                string `json:"owner,omitempty"`
+	Scope                string `json:"scope,omitempty"`
+	Exclusive            *bool  `json:"exclusive,omitempty"`
+	Token                string `json:"token,omitempty"`
+	Type                 string `json:"type,omitempty"`
+	AllowAccessByAnyUser *bool  `json:"allow_access_by_any_user,omitempty"`
+	UserId               int64  `json:"user_id,omitempty"`
+	Username             string `json:"username,omitempty"`
 }
 
 type LockCollection []Lock
@@ -29,8 +32,11 @@ type LockListForParams struct {
 }
 
 type LockCreateParams struct {
-	Path    string `url:"-,omitempty" required:"true"`
-	Timeout int64  `url:"timeout,omitempty" required:"false"`
+	Path                 string `url:"-,omitempty" required:"true"`
+	AllowAccessByAnyUser *bool  `url:"allow_access_by_any_user,omitempty" required:"false"`
+	Exclusive            *bool  `url:"exclusive,omitempty" required:"false"`
+	Recursive            string `url:"recursive,omitempty" required:"false"`
+	Timeout              int64  `url:"timeout,omitempty" required:"false"`
 }
 
 type LockDeleteParams struct {
