@@ -1,7 +1,9 @@
 package file
 
 import (
+	"context"
 	"io"
+	"net/http"
 
 	files_sdk "github.com/Files-com/files-sdk-go"
 	lib "github.com/Files-com/files-sdk-go/lib"
@@ -11,14 +13,14 @@ type Client struct {
 	files_sdk.Config
 }
 
-func (c *Client) Find(Path string) (files_sdk.File, error) {
+func (c *Client) Find(ctx context.Context, Path string) (files_sdk.File, error) {
 	file := files_sdk.File{}
 	path := lib.BuildPath("/files/", Path)
 	exportParams, err := lib.ExportParams(lib.Interface())
 	if err != nil {
 		return file, err
 	}
-	data, _, err := files_sdk.Call("GET", c.Config, path, exportParams)
+	data, _, err := files_sdk.Call(ctx, "GET", c.Config, path, exportParams)
 	if err != nil {
 		return file, err
 	}
@@ -29,27 +31,30 @@ func (c *Client) Find(Path string) (files_sdk.File, error) {
 	return file, nil
 }
 
-func Find(Path string) (files_sdk.File, error) {
+func Find(ctx context.Context, Path string) (files_sdk.File, error) {
 	client := Client{}
-	return client.Find(Path)
+	return client.Find(ctx, Path)
 }
 
-func (c *Client) Download(params files_sdk.FileDownloadParams) (files_sdk.File, error) {
+func (c *Client) Download(ctx context.Context, params files_sdk.FileDownloadParams) (files_sdk.File, error) {
 	file := files_sdk.File{}
 	path := lib.BuildPath("/files/", params.Path)
 	exportParams, err := lib.ExportParams(params)
 	if err != nil {
 		return file, err
 	}
-	data, _, err := files_sdk.Call("GET", c.Config, path, exportParams)
+	data, _, err := files_sdk.Call(ctx, "GET", c.Config, path, exportParams)
 	if err != nil {
 		return file, err
 	}
 	if err := file.UnmarshalJSON(*data); err != nil {
 		return file, err
 	}
-
-	resp, err := c.Config.GetHttpClient().Get(file.DownloadUri)
+	request, err := http.NewRequestWithContext(ctx, "GET", file.DownloadUri, nil)
+	if err != nil {
+		return file, err
+	}
+	resp, err := c.Config.GetHttpClient().Do(request)
 	if err != nil {
 		return file, err
 	}
@@ -64,19 +69,19 @@ func (c *Client) Download(params files_sdk.FileDownloadParams) (files_sdk.File, 
 	return file, nil
 }
 
-func Download(params files_sdk.FileDownloadParams) (files_sdk.File, error) {
+func Download(ctx context.Context, params files_sdk.FileDownloadParams) (files_sdk.File, error) {
 	client := Client{}
-	return client.Download(params)
+	return client.Download(ctx, params)
 }
 
-func (c *Client) Create(params files_sdk.FileCreateParams) (files_sdk.File, error) {
+func (c *Client) Create(ctx context.Context, params files_sdk.FileCreateParams) (files_sdk.File, error) {
 	file := files_sdk.File{}
 	path := lib.BuildPath("/files/", params.Path)
 	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return file, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -95,18 +100,18 @@ func (c *Client) Create(params files_sdk.FileCreateParams) (files_sdk.File, erro
 	return file, nil
 }
 
-func Create(params files_sdk.FileCreateParams) (files_sdk.File, error) {
-	return (&Client{}).Create(params)
+func Create(ctx context.Context, params files_sdk.FileCreateParams) (files_sdk.File, error) {
+	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Update(params files_sdk.FileUpdateParams) (files_sdk.File, error) {
+func (c *Client) Update(ctx context.Context, params files_sdk.FileUpdateParams) (files_sdk.File, error) {
 	file := files_sdk.File{}
 	path := lib.BuildPath("/files/", params.Path)
 	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return file, err
 	}
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -125,18 +130,18 @@ func (c *Client) Update(params files_sdk.FileUpdateParams) (files_sdk.File, erro
 	return file, nil
 }
 
-func Update(params files_sdk.FileUpdateParams) (files_sdk.File, error) {
-	return (&Client{}).Update(params)
+func Update(ctx context.Context, params files_sdk.FileUpdateParams) (files_sdk.File, error) {
+	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(params files_sdk.FileDeleteParams) (files_sdk.File, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.FileDeleteParams) (files_sdk.File, error) {
 	file := files_sdk.File{}
 	path := lib.BuildPath("/files/", params.Path)
 	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return file, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -155,6 +160,6 @@ func (c *Client) Delete(params files_sdk.FileDeleteParams) (files_sdk.File, erro
 	return file, nil
 }
 
-func Delete(params files_sdk.FileDeleteParams) (files_sdk.File, error) {
-	return (&Client{}).Delete(params)
+func Delete(ctx context.Context, params files_sdk.FileDeleteParams) (files_sdk.File, error) {
+	return (&Client{}).Delete(ctx, params)
 }

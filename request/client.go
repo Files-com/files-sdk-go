@@ -1,6 +1,7 @@
 package request
 
 import (
+	"context"
 	"strconv"
 
 	files_sdk "github.com/Files-com/files-sdk-go"
@@ -20,28 +21,28 @@ func (i *Iter) Request() files_sdk.Request {
 	return i.Current().(files_sdk.Request)
 }
 
-func (c *Client) List(params files_sdk.RequestListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.RequestListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	path := "/requests"
 	i.ListParams = &params
 	list := files_sdk.RequestCollection{}
-	i.Query = listquery.Build(i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
 	return i, nil
 }
 
-func List(params files_sdk.RequestListParams) (*Iter, error) {
-	return (&Client{}).List(params)
+func List(ctx context.Context, params files_sdk.RequestListParams) (*Iter, error) {
+	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) GetFolder(params files_sdk.RequestGetFolderParams) (files_sdk.RequestCollection, error) {
+func (c *Client) GetFolder(ctx context.Context, params files_sdk.RequestGetFolderParams) (files_sdk.RequestCollection, error) {
 	requestCollection := files_sdk.RequestCollection{}
 	path := lib.BuildPath("/requests/folders/", params.Path)
 	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return requestCollection, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -60,18 +61,18 @@ func (c *Client) GetFolder(params files_sdk.RequestGetFolderParams) (files_sdk.R
 	return requestCollection, nil
 }
 
-func GetFolder(params files_sdk.RequestGetFolderParams) (files_sdk.RequestCollection, error) {
-	return (&Client{}).GetFolder(params)
+func GetFolder(ctx context.Context, params files_sdk.RequestGetFolderParams) (files_sdk.RequestCollection, error) {
+	return (&Client{}).GetFolder(ctx, params)
 }
 
-func (c *Client) Create(params files_sdk.RequestCreateParams) (files_sdk.Request, error) {
+func (c *Client) Create(ctx context.Context, params files_sdk.RequestCreateParams) (files_sdk.Request, error) {
 	request := files_sdk.Request{}
 	path := "/requests"
 	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return request, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -90,11 +91,11 @@ func (c *Client) Create(params files_sdk.RequestCreateParams) (files_sdk.Request
 	return request, nil
 }
 
-func Create(params files_sdk.RequestCreateParams) (files_sdk.Request, error) {
-	return (&Client{}).Create(params)
+func Create(ctx context.Context, params files_sdk.RequestCreateParams) (files_sdk.Request, error) {
+	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Delete(params files_sdk.RequestDeleteParams) (files_sdk.Request, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.RequestDeleteParams) (files_sdk.Request, error) {
 	request := files_sdk.Request{}
 	if params.Id == 0 {
 		return request, lib.CreateError(params, "Id")
@@ -104,7 +105,7 @@ func (c *Client) Delete(params files_sdk.RequestDeleteParams) (files_sdk.Request
 	if err != nil {
 		return request, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -123,6 +124,6 @@ func (c *Client) Delete(params files_sdk.RequestDeleteParams) (files_sdk.Request
 	return request, nil
 }
 
-func Delete(params files_sdk.RequestDeleteParams) (files_sdk.Request, error) {
-	return (&Client{}).Delete(params)
+func Delete(ctx context.Context, params files_sdk.RequestDeleteParams) (files_sdk.Request, error) {
+	return (&Client{}).Delete(ctx, params)
 }

@@ -1,6 +1,7 @@
 package listquery
 
 import (
+	"context"
 	"net/url"
 
 	files_sdk "github.com/Files-com/files-sdk-go"
@@ -15,16 +16,16 @@ type ExportParams interface {
 	ExportParams() (url.Values, error)
 }
 
-func Build(i ExportParams, config files_sdk.Config, path string, list List) func() (*[]interface{}, string, error) {
+func Build(ctx context.Context, i ExportParams, config files_sdk.Config, path string, list List) func() (*[]interface{}, string, error) {
 	return func() (*[]interface{}, string, error) {
 		defaultValue := make([]interface{}, 0)
 		exportParams, err := i.ExportParams()
 		if err != nil {
 			return &defaultValue, "", err
 		}
-		data, res, err := files_sdk.Call("GET", config, path, exportParams)
+		data, res, err := files_sdk.Call(ctx, "GET", config, path, exportParams)
 		defer func() {
-			if res != nil {
+			if res != nil && res.Body != nil {
 				res.Body.Close()
 			}
 		}()

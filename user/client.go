@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"strconv"
 
 	files_sdk "github.com/Files-com/files-sdk-go"
@@ -20,21 +21,21 @@ func (i *Iter) User() files_sdk.User {
 	return i.Current().(files_sdk.User)
 }
 
-func (c *Client) List(params files_sdk.UserListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.UserListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	path := "/users"
 	i.ListParams = &params
 	list := files_sdk.UserCollection{}
-	i.Query = listquery.Build(i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
 	return i, nil
 }
 
-func List(params files_sdk.UserListParams) (*Iter, error) {
-	return (&Client{}).List(params)
+func List(ctx context.Context, params files_sdk.UserListParams) (*Iter, error) {
+	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) Find(params files_sdk.UserFindParams) (files_sdk.User, error) {
+func (c *Client) Find(ctx context.Context, params files_sdk.UserFindParams) (files_sdk.User, error) {
 	user := files_sdk.User{}
 	if params.Id == 0 {
 		return user, lib.CreateError(params, "Id")
@@ -44,7 +45,7 @@ func (c *Client) Find(params files_sdk.UserFindParams) (files_sdk.User, error) {
 	if err != nil {
 		return user, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -63,18 +64,18 @@ func (c *Client) Find(params files_sdk.UserFindParams) (files_sdk.User, error) {
 	return user, nil
 }
 
-func Find(params files_sdk.UserFindParams) (files_sdk.User, error) {
-	return (&Client{}).Find(params)
+func Find(ctx context.Context, params files_sdk.UserFindParams) (files_sdk.User, error) {
+	return (&Client{}).Find(ctx, params)
 }
 
-func (c *Client) Create(params files_sdk.UserCreateParams) (files_sdk.User, error) {
+func (c *Client) Create(ctx context.Context, params files_sdk.UserCreateParams) (files_sdk.User, error) {
 	user := files_sdk.User{}
 	path := "/users"
 	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return user, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -93,11 +94,11 @@ func (c *Client) Create(params files_sdk.UserCreateParams) (files_sdk.User, erro
 	return user, nil
 }
 
-func Create(params files_sdk.UserCreateParams) (files_sdk.User, error) {
-	return (&Client{}).Create(params)
+func Create(ctx context.Context, params files_sdk.UserCreateParams) (files_sdk.User, error) {
+	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Unlock(params files_sdk.UserUnlockParams) (files_sdk.User, error) {
+func (c *Client) Unlock(ctx context.Context, params files_sdk.UserUnlockParams) (files_sdk.User, error) {
 	user := files_sdk.User{}
 	if params.Id == 0 {
 		return user, lib.CreateError(params, "Id")
@@ -107,7 +108,7 @@ func (c *Client) Unlock(params files_sdk.UserUnlockParams) (files_sdk.User, erro
 	if err != nil {
 		return user, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -126,11 +127,11 @@ func (c *Client) Unlock(params files_sdk.UserUnlockParams) (files_sdk.User, erro
 	return user, nil
 }
 
-func Unlock(params files_sdk.UserUnlockParams) (files_sdk.User, error) {
-	return (&Client{}).Unlock(params)
+func Unlock(ctx context.Context, params files_sdk.UserUnlockParams) (files_sdk.User, error) {
+	return (&Client{}).Unlock(ctx, params)
 }
 
-func (c *Client) ResendWelcomeEmail(params files_sdk.UserResendWelcomeEmailParams) (files_sdk.User, error) {
+func (c *Client) ResendWelcomeEmail(ctx context.Context, params files_sdk.UserResendWelcomeEmailParams) (files_sdk.User, error) {
 	user := files_sdk.User{}
 	if params.Id == 0 {
 		return user, lib.CreateError(params, "Id")
@@ -140,7 +141,7 @@ func (c *Client) ResendWelcomeEmail(params files_sdk.UserResendWelcomeEmailParam
 	if err != nil {
 		return user, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -159,11 +160,11 @@ func (c *Client) ResendWelcomeEmail(params files_sdk.UserResendWelcomeEmailParam
 	return user, nil
 }
 
-func ResendWelcomeEmail(params files_sdk.UserResendWelcomeEmailParams) (files_sdk.User, error) {
-	return (&Client{}).ResendWelcomeEmail(params)
+func ResendWelcomeEmail(ctx context.Context, params files_sdk.UserResendWelcomeEmailParams) (files_sdk.User, error) {
+	return (&Client{}).ResendWelcomeEmail(ctx, params)
 }
 
-func (c *Client) User2faReset(params files_sdk.UserUser2faResetParams) (files_sdk.User, error) {
+func (c *Client) User2faReset(ctx context.Context, params files_sdk.UserUser2faResetParams) (files_sdk.User, error) {
 	user := files_sdk.User{}
 	if params.Id == 0 {
 		return user, lib.CreateError(params, "Id")
@@ -173,7 +174,7 @@ func (c *Client) User2faReset(params files_sdk.UserUser2faResetParams) (files_sd
 	if err != nil {
 		return user, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -192,11 +193,11 @@ func (c *Client) User2faReset(params files_sdk.UserUser2faResetParams) (files_sd
 	return user, nil
 }
 
-func User2faReset(params files_sdk.UserUser2faResetParams) (files_sdk.User, error) {
-	return (&Client{}).User2faReset(params)
+func User2faReset(ctx context.Context, params files_sdk.UserUser2faResetParams) (files_sdk.User, error) {
+	return (&Client{}).User2faReset(ctx, params)
 }
 
-func (c *Client) Update(params files_sdk.UserUpdateParams) (files_sdk.User, error) {
+func (c *Client) Update(ctx context.Context, params files_sdk.UserUpdateParams) (files_sdk.User, error) {
 	user := files_sdk.User{}
 	if params.Id == 0 {
 		return user, lib.CreateError(params, "Id")
@@ -206,7 +207,7 @@ func (c *Client) Update(params files_sdk.UserUpdateParams) (files_sdk.User, erro
 	if err != nil {
 		return user, err
 	}
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -225,11 +226,11 @@ func (c *Client) Update(params files_sdk.UserUpdateParams) (files_sdk.User, erro
 	return user, nil
 }
 
-func Update(params files_sdk.UserUpdateParams) (files_sdk.User, error) {
-	return (&Client{}).Update(params)
+func Update(ctx context.Context, params files_sdk.UserUpdateParams) (files_sdk.User, error) {
+	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(params files_sdk.UserDeleteParams) (files_sdk.User, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.UserDeleteParams) (files_sdk.User, error) {
 	user := files_sdk.User{}
 	if params.Id == 0 {
 		return user, lib.CreateError(params, "Id")
@@ -239,7 +240,7 @@ func (c *Client) Delete(params files_sdk.UserDeleteParams) (files_sdk.User, erro
 	if err != nil {
 		return user, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -258,6 +259,6 @@ func (c *Client) Delete(params files_sdk.UserDeleteParams) (files_sdk.User, erro
 	return user, nil
 }
 
-func Delete(params files_sdk.UserDeleteParams) (files_sdk.User, error) {
-	return (&Client{}).Delete(params)
+func Delete(ctx context.Context, params files_sdk.UserDeleteParams) (files_sdk.User, error) {
+	return (&Client{}).Delete(ctx, params)
 }

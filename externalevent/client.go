@@ -1,6 +1,7 @@
 package external_event
 
 import (
+	"context"
 	"strconv"
 
 	files_sdk "github.com/Files-com/files-sdk-go"
@@ -20,21 +21,21 @@ func (i *Iter) ExternalEvent() files_sdk.ExternalEvent {
 	return i.Current().(files_sdk.ExternalEvent)
 }
 
-func (c *Client) List(params files_sdk.ExternalEventListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.ExternalEventListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	path := "/external_events"
 	i.ListParams = &params
 	list := files_sdk.ExternalEventCollection{}
-	i.Query = listquery.Build(i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
 	return i, nil
 }
 
-func List(params files_sdk.ExternalEventListParams) (*Iter, error) {
-	return (&Client{}).List(params)
+func List(ctx context.Context, params files_sdk.ExternalEventListParams) (*Iter, error) {
+	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) Find(params files_sdk.ExternalEventFindParams) (files_sdk.ExternalEvent, error) {
+func (c *Client) Find(ctx context.Context, params files_sdk.ExternalEventFindParams) (files_sdk.ExternalEvent, error) {
 	externalEvent := files_sdk.ExternalEvent{}
 	if params.Id == 0 {
 		return externalEvent, lib.CreateError(params, "Id")
@@ -44,7 +45,7 @@ func (c *Client) Find(params files_sdk.ExternalEventFindParams) (files_sdk.Exter
 	if err != nil {
 		return externalEvent, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -63,18 +64,18 @@ func (c *Client) Find(params files_sdk.ExternalEventFindParams) (files_sdk.Exter
 	return externalEvent, nil
 }
 
-func Find(params files_sdk.ExternalEventFindParams) (files_sdk.ExternalEvent, error) {
-	return (&Client{}).Find(params)
+func Find(ctx context.Context, params files_sdk.ExternalEventFindParams) (files_sdk.ExternalEvent, error) {
+	return (&Client{}).Find(ctx, params)
 }
 
-func (c *Client) Create(params files_sdk.ExternalEventCreateParams) (files_sdk.ExternalEvent, error) {
+func (c *Client) Create(ctx context.Context, params files_sdk.ExternalEventCreateParams) (files_sdk.ExternalEvent, error) {
 	externalEvent := files_sdk.ExternalEvent{}
 	path := "/external_events"
 	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return externalEvent, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -93,6 +94,6 @@ func (c *Client) Create(params files_sdk.ExternalEventCreateParams) (files_sdk.E
 	return externalEvent, nil
 }
 
-func Create(params files_sdk.ExternalEventCreateParams) (files_sdk.ExternalEvent, error) {
-	return (&Client{}).Create(params)
+func Create(ctx context.Context, params files_sdk.ExternalEventCreateParams) (files_sdk.ExternalEvent, error) {
+	return (&Client{}).Create(ctx, params)
 }

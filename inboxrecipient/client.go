@@ -1,6 +1,8 @@
 package inbox_recipient
 
 import (
+	"context"
+
 	files_sdk "github.com/Files-com/files-sdk-go"
 	lib "github.com/Files-com/files-sdk-go/lib"
 	listquery "github.com/Files-com/files-sdk-go/listquery"
@@ -18,28 +20,28 @@ func (i *Iter) InboxRecipient() files_sdk.InboxRecipient {
 	return i.Current().(files_sdk.InboxRecipient)
 }
 
-func (c *Client) List(params files_sdk.InboxRecipientListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.InboxRecipientListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	path := "/inbox_recipients"
 	i.ListParams = &params
 	list := files_sdk.InboxRecipientCollection{}
-	i.Query = listquery.Build(i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
 	return i, nil
 }
 
-func List(params files_sdk.InboxRecipientListParams) (*Iter, error) {
-	return (&Client{}).List(params)
+func List(ctx context.Context, params files_sdk.InboxRecipientListParams) (*Iter, error) {
+	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) Create(params files_sdk.InboxRecipientCreateParams) (files_sdk.InboxRecipient, error) {
+func (c *Client) Create(ctx context.Context, params files_sdk.InboxRecipientCreateParams) (files_sdk.InboxRecipient, error) {
 	inboxRecipient := files_sdk.InboxRecipient{}
 	path := "/inbox_recipients"
 	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return inboxRecipient, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -58,6 +60,6 @@ func (c *Client) Create(params files_sdk.InboxRecipientCreateParams) (files_sdk.
 	return inboxRecipient, nil
 }
 
-func Create(params files_sdk.InboxRecipientCreateParams) (files_sdk.InboxRecipient, error) {
-	return (&Client{}).Create(params)
+func Create(ctx context.Context, params files_sdk.InboxRecipientCreateParams) (files_sdk.InboxRecipient, error) {
+	return (&Client{}).Create(ctx, params)
 }

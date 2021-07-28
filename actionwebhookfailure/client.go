@@ -1,6 +1,7 @@
 package action_webhook_failure
 
 import (
+	"context"
 	"strconv"
 
 	files_sdk "github.com/Files-com/files-sdk-go"
@@ -11,7 +12,7 @@ type Client struct {
 	files_sdk.Config
 }
 
-func (c *Client) Retry(params files_sdk.ActionWebhookFailureRetryParams) (files_sdk.ActionWebhookFailure, error) {
+func (c *Client) Retry(ctx context.Context, params files_sdk.ActionWebhookFailureRetryParams) (files_sdk.ActionWebhookFailure, error) {
 	actionWebhookFailure := files_sdk.ActionWebhookFailure{}
 	if params.Id == 0 {
 		return actionWebhookFailure, lib.CreateError(params, "Id")
@@ -21,7 +22,7 @@ func (c *Client) Retry(params files_sdk.ActionWebhookFailureRetryParams) (files_
 	if err != nil {
 		return actionWebhookFailure, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -40,6 +41,6 @@ func (c *Client) Retry(params files_sdk.ActionWebhookFailureRetryParams) (files_
 	return actionWebhookFailure, nil
 }
 
-func Retry(params files_sdk.ActionWebhookFailureRetryParams) (files_sdk.ActionWebhookFailure, error) {
-	return (&Client{}).Retry(params)
+func Retry(ctx context.Context, params files_sdk.ActionWebhookFailureRetryParams) (files_sdk.ActionWebhookFailure, error) {
+	return (&Client{}).Retry(ctx, params)
 }

@@ -80,6 +80,16 @@ type FileDeleteParams struct {
 	Recursive *bool  `url:"recursive,omitempty" required:"false"`
 }
 
+func (f File) ToFolder() (Folder, error) {
+	bodyBytes, err := json.Marshal(f)
+	if err != nil {
+		return Folder{}, err
+	}
+	folder := Folder{}
+	folder.UnmarshalJSON(bodyBytes)
+	return folder, nil
+}
+
 func (f *File) UnmarshalJSON(data []byte) error {
 	type file File
 	var v file

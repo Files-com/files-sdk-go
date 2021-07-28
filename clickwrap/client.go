@@ -1,6 +1,7 @@
 package clickwrap
 
 import (
+	"context"
 	"strconv"
 
 	files_sdk "github.com/Files-com/files-sdk-go"
@@ -20,21 +21,21 @@ func (i *Iter) Clickwrap() files_sdk.Clickwrap {
 	return i.Current().(files_sdk.Clickwrap)
 }
 
-func (c *Client) List(params files_sdk.ClickwrapListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.ClickwrapListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	path := "/clickwraps"
 	i.ListParams = &params
 	list := files_sdk.ClickwrapCollection{}
-	i.Query = listquery.Build(i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
 	return i, nil
 }
 
-func List(params files_sdk.ClickwrapListParams) (*Iter, error) {
-	return (&Client{}).List(params)
+func List(ctx context.Context, params files_sdk.ClickwrapListParams) (*Iter, error) {
+	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) Find(params files_sdk.ClickwrapFindParams) (files_sdk.Clickwrap, error) {
+func (c *Client) Find(ctx context.Context, params files_sdk.ClickwrapFindParams) (files_sdk.Clickwrap, error) {
 	clickwrap := files_sdk.Clickwrap{}
 	if params.Id == 0 {
 		return clickwrap, lib.CreateError(params, "Id")
@@ -44,7 +45,7 @@ func (c *Client) Find(params files_sdk.ClickwrapFindParams) (files_sdk.Clickwrap
 	if err != nil {
 		return clickwrap, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -63,18 +64,18 @@ func (c *Client) Find(params files_sdk.ClickwrapFindParams) (files_sdk.Clickwrap
 	return clickwrap, nil
 }
 
-func Find(params files_sdk.ClickwrapFindParams) (files_sdk.Clickwrap, error) {
-	return (&Client{}).Find(params)
+func Find(ctx context.Context, params files_sdk.ClickwrapFindParams) (files_sdk.Clickwrap, error) {
+	return (&Client{}).Find(ctx, params)
 }
 
-func (c *Client) Create(params files_sdk.ClickwrapCreateParams) (files_sdk.Clickwrap, error) {
+func (c *Client) Create(ctx context.Context, params files_sdk.ClickwrapCreateParams) (files_sdk.Clickwrap, error) {
 	clickwrap := files_sdk.Clickwrap{}
 	path := "/clickwraps"
 	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return clickwrap, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -93,11 +94,11 @@ func (c *Client) Create(params files_sdk.ClickwrapCreateParams) (files_sdk.Click
 	return clickwrap, nil
 }
 
-func Create(params files_sdk.ClickwrapCreateParams) (files_sdk.Clickwrap, error) {
-	return (&Client{}).Create(params)
+func Create(ctx context.Context, params files_sdk.ClickwrapCreateParams) (files_sdk.Clickwrap, error) {
+	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Update(params files_sdk.ClickwrapUpdateParams) (files_sdk.Clickwrap, error) {
+func (c *Client) Update(ctx context.Context, params files_sdk.ClickwrapUpdateParams) (files_sdk.Clickwrap, error) {
 	clickwrap := files_sdk.Clickwrap{}
 	if params.Id == 0 {
 		return clickwrap, lib.CreateError(params, "Id")
@@ -107,7 +108,7 @@ func (c *Client) Update(params files_sdk.ClickwrapUpdateParams) (files_sdk.Click
 	if err != nil {
 		return clickwrap, err
 	}
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -126,11 +127,11 @@ func (c *Client) Update(params files_sdk.ClickwrapUpdateParams) (files_sdk.Click
 	return clickwrap, nil
 }
 
-func Update(params files_sdk.ClickwrapUpdateParams) (files_sdk.Clickwrap, error) {
-	return (&Client{}).Update(params)
+func Update(ctx context.Context, params files_sdk.ClickwrapUpdateParams) (files_sdk.Clickwrap, error) {
+	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(params files_sdk.ClickwrapDeleteParams) (files_sdk.Clickwrap, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.ClickwrapDeleteParams) (files_sdk.Clickwrap, error) {
 	clickwrap := files_sdk.Clickwrap{}
 	if params.Id == 0 {
 		return clickwrap, lib.CreateError(params, "Id")
@@ -140,7 +141,7 @@ func (c *Client) Delete(params files_sdk.ClickwrapDeleteParams) (files_sdk.Click
 	if err != nil {
 		return clickwrap, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -159,6 +160,6 @@ func (c *Client) Delete(params files_sdk.ClickwrapDeleteParams) (files_sdk.Click
 	return clickwrap, nil
 }
 
-func Delete(params files_sdk.ClickwrapDeleteParams) (files_sdk.Clickwrap, error) {
-	return (&Client{}).Delete(params)
+func Delete(ctx context.Context, params files_sdk.ClickwrapDeleteParams) (files_sdk.Clickwrap, error) {
+	return (&Client{}).Delete(ctx, params)
 }

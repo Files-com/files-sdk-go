@@ -1,6 +1,7 @@
 package form_field_set
 
 import (
+	"context"
 	"strconv"
 
 	files_sdk "github.com/Files-com/files-sdk-go"
@@ -20,21 +21,21 @@ func (i *Iter) FormFieldSet() files_sdk.FormFieldSet {
 	return i.Current().(files_sdk.FormFieldSet)
 }
 
-func (c *Client) List(params files_sdk.FormFieldSetListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.FormFieldSetListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	path := "/form_field_sets"
 	i.ListParams = &params
 	list := files_sdk.FormFieldSetCollection{}
-	i.Query = listquery.Build(i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
 	return i, nil
 }
 
-func List(params files_sdk.FormFieldSetListParams) (*Iter, error) {
-	return (&Client{}).List(params)
+func List(ctx context.Context, params files_sdk.FormFieldSetListParams) (*Iter, error) {
+	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) Find(params files_sdk.FormFieldSetFindParams) (files_sdk.FormFieldSet, error) {
+func (c *Client) Find(ctx context.Context, params files_sdk.FormFieldSetFindParams) (files_sdk.FormFieldSet, error) {
 	formFieldSet := files_sdk.FormFieldSet{}
 	if params.Id == 0 {
 		return formFieldSet, lib.CreateError(params, "Id")
@@ -44,7 +45,7 @@ func (c *Client) Find(params files_sdk.FormFieldSetFindParams) (files_sdk.FormFi
 	if err != nil {
 		return formFieldSet, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -63,18 +64,18 @@ func (c *Client) Find(params files_sdk.FormFieldSetFindParams) (files_sdk.FormFi
 	return formFieldSet, nil
 }
 
-func Find(params files_sdk.FormFieldSetFindParams) (files_sdk.FormFieldSet, error) {
-	return (&Client{}).Find(params)
+func Find(ctx context.Context, params files_sdk.FormFieldSetFindParams) (files_sdk.FormFieldSet, error) {
+	return (&Client{}).Find(ctx, params)
 }
 
-func (c *Client) Create(params files_sdk.FormFieldSetCreateParams) (files_sdk.FormFieldSet, error) {
+func (c *Client) Create(ctx context.Context, params files_sdk.FormFieldSetCreateParams) (files_sdk.FormFieldSet, error) {
 	formFieldSet := files_sdk.FormFieldSet{}
 	path := "/form_field_sets"
 	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return formFieldSet, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -93,11 +94,11 @@ func (c *Client) Create(params files_sdk.FormFieldSetCreateParams) (files_sdk.Fo
 	return formFieldSet, nil
 }
 
-func Create(params files_sdk.FormFieldSetCreateParams) (files_sdk.FormFieldSet, error) {
-	return (&Client{}).Create(params)
+func Create(ctx context.Context, params files_sdk.FormFieldSetCreateParams) (files_sdk.FormFieldSet, error) {
+	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Update(params files_sdk.FormFieldSetUpdateParams) (files_sdk.FormFieldSet, error) {
+func (c *Client) Update(ctx context.Context, params files_sdk.FormFieldSetUpdateParams) (files_sdk.FormFieldSet, error) {
 	formFieldSet := files_sdk.FormFieldSet{}
 	if params.Id == 0 {
 		return formFieldSet, lib.CreateError(params, "Id")
@@ -107,7 +108,7 @@ func (c *Client) Update(params files_sdk.FormFieldSetUpdateParams) (files_sdk.Fo
 	if err != nil {
 		return formFieldSet, err
 	}
-	data, res, err := files_sdk.Call("PATCH", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -126,11 +127,11 @@ func (c *Client) Update(params files_sdk.FormFieldSetUpdateParams) (files_sdk.Fo
 	return formFieldSet, nil
 }
 
-func Update(params files_sdk.FormFieldSetUpdateParams) (files_sdk.FormFieldSet, error) {
-	return (&Client{}).Update(params)
+func Update(ctx context.Context, params files_sdk.FormFieldSetUpdateParams) (files_sdk.FormFieldSet, error) {
+	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(params files_sdk.FormFieldSetDeleteParams) (files_sdk.FormFieldSet, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.FormFieldSetDeleteParams) (files_sdk.FormFieldSet, error) {
 	formFieldSet := files_sdk.FormFieldSet{}
 	if params.Id == 0 {
 		return formFieldSet, lib.CreateError(params, "Id")
@@ -140,7 +141,7 @@ func (c *Client) Delete(params files_sdk.FormFieldSetDeleteParams) (files_sdk.Fo
 	if err != nil {
 		return formFieldSet, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -159,6 +160,6 @@ func (c *Client) Delete(params files_sdk.FormFieldSetDeleteParams) (files_sdk.Fo
 	return formFieldSet, nil
 }
 
-func Delete(params files_sdk.FormFieldSetDeleteParams) (files_sdk.FormFieldSet, error) {
-	return (&Client{}).Delete(params)
+func Delete(ctx context.Context, params files_sdk.FormFieldSetDeleteParams) (files_sdk.FormFieldSet, error) {
+	return (&Client{}).Delete(ctx, params)
 }

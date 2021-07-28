@@ -2,6 +2,7 @@ package files_sdk
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -14,7 +15,7 @@ import (
 	"moul.io/http2curl"
 )
 
-func Call(method string, config Config, resource string, params url.Values) (*[]byte, *http.Response, error) {
+func Call(ctx context.Context, method string, config Config, resource string, params url.Values) (*[]byte, *http.Response, error) {
 	defaultHeaders := &http.Header{}
 	config.SetHeaders(defaultHeaders)
 	opts := &CallParams{
@@ -23,6 +24,7 @@ func Call(method string, config Config, resource string, params url.Values) (*[]
 		Uri:     config.RootPath() + resource,
 		Params:  &params,
 		Headers: defaultHeaders,
+		Context: ctx,
 	}
 	request, err := buildRequest(opts)
 	if err != nil {
@@ -68,6 +70,7 @@ type CallParams struct {
 	Params  *url.Values
 	BodyIo  io.ReadCloser
 	Headers *http.Header
+	context.Context
 }
 
 func CallRaw(params *CallParams) (*http.Response, error) {
@@ -91,8 +94,13 @@ func buildRequest(opts *CallParams) (*http.Request, error) {
 	if opts.Params != nil {
 		removeDash(opts.Params)
 	}
-
-	req, err := http.NewRequest(opts.Method, opts.Uri, nil)
+	var req *http.Request
+	var err error
+	if opts.Context != nil {
+		req, err = http.NewRequestWithContext(opts.Context, opts.Method, opts.Uri, nil)
+	} else {
+		req, err = http.NewRequest(opts.Method, opts.Uri, nil)
+	}
 
 	if err != nil {
 		return &http.Request{}, err
@@ -123,7 +131,9 @@ func buildRequest(opts *CallParams) (*http.Request, error) {
 
 	req.Header = *opts.Headers
 	if opts.Config.InDebug() {
-		command, err := http2curl.GetCurlCommand(req)
+		withoutBodyReq := *req
+		withoutBodyReq.Body = nil
+		command, err := http2curl.GetCurlCommand(&withoutBodyReq)
 		if err != nil {
 			panic(err)
 		}

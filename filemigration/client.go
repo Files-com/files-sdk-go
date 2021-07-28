@@ -1,6 +1,7 @@
 package file_migration
 
 import (
+	"context"
 	"strconv"
 
 	files_sdk "github.com/Files-com/files-sdk-go"
@@ -11,7 +12,7 @@ type Client struct {
 	files_sdk.Config
 }
 
-func (c *Client) Find(params files_sdk.FileMigrationFindParams) (files_sdk.FileMigration, error) {
+func (c *Client) Find(ctx context.Context, params files_sdk.FileMigrationFindParams) (files_sdk.FileMigration, error) {
 	fileMigration := files_sdk.FileMigration{}
 	if params.Id == 0 {
 		return fileMigration, lib.CreateError(params, "Id")
@@ -21,7 +22,7 @@ func (c *Client) Find(params files_sdk.FileMigrationFindParams) (files_sdk.FileM
 	if err != nil {
 		return fileMigration, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -40,6 +41,6 @@ func (c *Client) Find(params files_sdk.FileMigrationFindParams) (files_sdk.FileM
 	return fileMigration, nil
 }
 
-func Find(params files_sdk.FileMigrationFindParams) (files_sdk.FileMigration, error) {
-	return (&Client{}).Find(params)
+func Find(ctx context.Context, params files_sdk.FileMigrationFindParams) (files_sdk.FileMigration, error) {
+	return (&Client{}).Find(ctx, params)
 }

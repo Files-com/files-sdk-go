@@ -45,6 +45,16 @@ type FolderCreateParams struct {
 	Path string `url:"-,omitempty" required:"true"`
 }
 
+func (f *Folder) ToFile() (File, error) {
+	bodyBytes, err := json.Marshal(f)
+	if err != nil {
+		return File{}, err
+	}
+	file := File{}
+	file.UnmarshalJSON(bodyBytes)
+	return file, nil
+}
+
 func (f *Folder) UnmarshalJSON(data []byte) error {
 	type folder Folder
 	var v folder

@@ -1,6 +1,7 @@
 package user_request
 
 import (
+	"context"
 	"strconv"
 
 	files_sdk "github.com/Files-com/files-sdk-go"
@@ -20,21 +21,21 @@ func (i *Iter) UserRequest() files_sdk.UserRequest {
 	return i.Current().(files_sdk.UserRequest)
 }
 
-func (c *Client) List(params files_sdk.UserRequestListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.UserRequestListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	path := "/user_requests"
 	i.ListParams = &params
 	list := files_sdk.UserRequestCollection{}
-	i.Query = listquery.Build(i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
 	return i, nil
 }
 
-func List(params files_sdk.UserRequestListParams) (*Iter, error) {
-	return (&Client{}).List(params)
+func List(ctx context.Context, params files_sdk.UserRequestListParams) (*Iter, error) {
+	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) Find(params files_sdk.UserRequestFindParams) (files_sdk.UserRequest, error) {
+func (c *Client) Find(ctx context.Context, params files_sdk.UserRequestFindParams) (files_sdk.UserRequest, error) {
 	userRequest := files_sdk.UserRequest{}
 	if params.Id == 0 {
 		return userRequest, lib.CreateError(params, "Id")
@@ -44,7 +45,7 @@ func (c *Client) Find(params files_sdk.UserRequestFindParams) (files_sdk.UserReq
 	if err != nil {
 		return userRequest, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -63,18 +64,18 @@ func (c *Client) Find(params files_sdk.UserRequestFindParams) (files_sdk.UserReq
 	return userRequest, nil
 }
 
-func Find(params files_sdk.UserRequestFindParams) (files_sdk.UserRequest, error) {
-	return (&Client{}).Find(params)
+func Find(ctx context.Context, params files_sdk.UserRequestFindParams) (files_sdk.UserRequest, error) {
+	return (&Client{}).Find(ctx, params)
 }
 
-func (c *Client) Create(params files_sdk.UserRequestCreateParams) (files_sdk.UserRequest, error) {
+func (c *Client) Create(ctx context.Context, params files_sdk.UserRequestCreateParams) (files_sdk.UserRequest, error) {
 	userRequest := files_sdk.UserRequest{}
 	path := "/user_requests"
 	exportedParams, err := lib.ExportParams(params)
 	if err != nil {
 		return userRequest, err
 	}
-	data, res, err := files_sdk.Call("POST", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -93,11 +94,11 @@ func (c *Client) Create(params files_sdk.UserRequestCreateParams) (files_sdk.Use
 	return userRequest, nil
 }
 
-func Create(params files_sdk.UserRequestCreateParams) (files_sdk.UserRequest, error) {
-	return (&Client{}).Create(params)
+func Create(ctx context.Context, params files_sdk.UserRequestCreateParams) (files_sdk.UserRequest, error) {
+	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Delete(params files_sdk.UserRequestDeleteParams) (files_sdk.UserRequest, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.UserRequestDeleteParams) (files_sdk.UserRequest, error) {
 	userRequest := files_sdk.UserRequest{}
 	if params.Id == 0 {
 		return userRequest, lib.CreateError(params, "Id")
@@ -107,7 +108,7 @@ func (c *Client) Delete(params files_sdk.UserRequestDeleteParams) (files_sdk.Use
 	if err != nil {
 		return userRequest, err
 	}
-	data, res, err := files_sdk.Call("DELETE", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -126,6 +127,6 @@ func (c *Client) Delete(params files_sdk.UserRequestDeleteParams) (files_sdk.Use
 	return userRequest, nil
 }
 
-func Delete(params files_sdk.UserRequestDeleteParams) (files_sdk.UserRequest, error) {
-	return (&Client{}).Delete(params)
+func Delete(ctx context.Context, params files_sdk.UserRequestDeleteParams) (files_sdk.UserRequest, error) {
+	return (&Client{}).Delete(ctx, params)
 }

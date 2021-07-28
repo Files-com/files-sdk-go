@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-retryablehttp"
-	"github.com/zenthangplus/goccm"
 )
 
 const (
@@ -30,17 +29,15 @@ type Logger interface {
 }
 
 type Config struct {
-	APIKey                   string `header:"X-FilesAPI-Key"`
-	SessionId                string `header:"X-FilesAPI-Auth"`
-	Endpoint                 string
-	Subdomain                string
-	standardClient           HttpClient
-	rawClient                *retryablehttp.Client
-	AdditionalHeaders        map[string]string
-	logger                   Logger
-	Debug                    *bool
-	maxConcurrentConnections int
-	concurrencyManger        goccm.ConcurrencyManager
+	APIKey            string `header:"X-FilesAPI-Key"`
+	SessionId         string `header:"X-FilesAPI-Auth"`
+	Endpoint          string
+	Subdomain         string
+	standardClient    HttpClient
+	rawClient         *retryablehttp.Client
+	AdditionalHeaders map[string]string
+	logger            Logger
+	Debug             *bool
 }
 
 func (s *Config) SetHttpClient(client *http.Client) {
@@ -120,26 +117,4 @@ func (s *Config) SetHeaders(headers *http.Header) {
 	for key, value := range s.AdditionalHeaders {
 		headers.Set(key, value)
 	}
-}
-
-func (s *Config) SetMaxConcurrentConnections(value int) {
-	s.maxConcurrentConnections = value
-}
-
-func (s *Config) MaxConcurrentConnections() int {
-	if s.maxConcurrentConnections == 0 {
-		s.SetMaxConcurrentConnections(10)
-	}
-	return s.maxConcurrentConnections
-}
-
-func (s *Config) ConcurrencyManger() goccm.ConcurrencyManager {
-	if s.concurrencyManger == nil {
-		s.concurrencyManger = goccm.New(s.MaxConcurrentConnections())
-	}
-	return s.concurrencyManger
-}
-
-func (s *Config) NullConcurrencyManger() goccm.ConcurrencyManager {
-	return goccm.New(1)
 }

@@ -1,6 +1,7 @@
 package sso_strategy
 
 import (
+	"context"
 	"strconv"
 
 	files_sdk "github.com/Files-com/files-sdk-go"
@@ -20,21 +21,21 @@ func (i *Iter) SsoStrategy() files_sdk.SsoStrategy {
 	return i.Current().(files_sdk.SsoStrategy)
 }
 
-func (c *Client) List(params files_sdk.SsoStrategyListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.SsoStrategyListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
 	path := "/sso_strategies"
 	i.ListParams = &params
 	list := files_sdk.SsoStrategyCollection{}
-	i.Query = listquery.Build(i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
 	return i, nil
 }
 
-func List(params files_sdk.SsoStrategyListParams) (*Iter, error) {
-	return (&Client{}).List(params)
+func List(ctx context.Context, params files_sdk.SsoStrategyListParams) (*Iter, error) {
+	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) Find(params files_sdk.SsoStrategyFindParams) (files_sdk.SsoStrategy, error) {
+func (c *Client) Find(ctx context.Context, params files_sdk.SsoStrategyFindParams) (files_sdk.SsoStrategy, error) {
 	ssoStrategy := files_sdk.SsoStrategy{}
 	if params.Id == 0 {
 		return ssoStrategy, lib.CreateError(params, "Id")
@@ -44,7 +45,7 @@ func (c *Client) Find(params files_sdk.SsoStrategyFindParams) (files_sdk.SsoStra
 	if err != nil {
 		return ssoStrategy, err
 	}
-	data, res, err := files_sdk.Call("GET", c.Config, path, exportedParams)
+	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
 		if res != nil {
 			res.Body.Close()
@@ -63,6 +64,6 @@ func (c *Client) Find(params files_sdk.SsoStrategyFindParams) (files_sdk.SsoStra
 	return ssoStrategy, nil
 }
 
-func Find(params files_sdk.SsoStrategyFindParams) (files_sdk.SsoStrategy, error) {
-	return (&Client{}).Find(params)
+func Find(ctx context.Context, params files_sdk.SsoStrategyFindParams) (files_sdk.SsoStrategy, error) {
+	return (&Client{}).Find(ctx, params)
 }
