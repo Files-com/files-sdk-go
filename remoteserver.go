@@ -39,6 +39,7 @@ type RemoteServer struct {
 	S3CompatibleBucket                string `json:"s3_compatible_bucket,omitempty"`
 	S3CompatibleRegion                string `json:"s3_compatible_region,omitempty"`
 	S3CompatibleEndpoint              string `json:"s3_compatible_endpoint,omitempty"`
+	EnableDedicatedIps                *bool  `json:"enable_dedicated_ips,omitempty"`
 	AwsAccessKey                      string `json:"aws_access_key,omitempty"`
 	AwsSecretKey                      string `json:"aws_secret_key,omitempty"`
 	Password                          string `json:"password,omitempty"`
@@ -175,6 +176,7 @@ type RemoteServerCreateParams struct {
 	S3CompatibleBucket                string                              `url:"s3_compatible_bucket,omitempty" required:"false"`
 	S3CompatibleRegion                string                              `url:"s3_compatible_region,omitempty" required:"false"`
 	S3CompatibleEndpoint              string                              `url:"s3_compatible_endpoint,omitempty" required:"false"`
+	EnableDedicatedIps                *bool                               `url:"enable_dedicated_ips,omitempty" required:"false"`
 	S3CompatibleAccessKey             string                              `url:"s3_compatible_access_key,omitempty" required:"false"`
 	S3CompatibleSecretKey             string                              `url:"s3_compatible_secret_key,omitempty" required:"false"`
 }
@@ -220,6 +222,7 @@ type RemoteServerUpdateParams struct {
 	S3CompatibleBucket                string                              `url:"s3_compatible_bucket,omitempty" required:"false"`
 	S3CompatibleRegion                string                              `url:"s3_compatible_region,omitempty" required:"false"`
 	S3CompatibleEndpoint              string                              `url:"s3_compatible_endpoint,omitempty" required:"false"`
+	EnableDedicatedIps                *bool                               `url:"enable_dedicated_ips,omitempty" required:"false"`
 	S3CompatibleAccessKey             string                              `url:"s3_compatible_access_key,omitempty" required:"false"`
 	S3CompatibleSecretKey             string                              `url:"s3_compatible_secret_key,omitempty" required:"false"`
 }
