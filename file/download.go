@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/Files-com/files-sdk-go/file/manager"
 
@@ -14,6 +15,25 @@ import (
 	files_sdk "github.com/Files-com/files-sdk-go"
 	"github.com/Files-com/files-sdk-go/folder"
 )
+
+type DownloadRetryParams struct {
+	status.File
+	*manager.Manager
+	status.Reporter
+}
+
+func (c *Client) DownloadRetry(ctx context.Context, params DownloadRetryParams) status.Job {
+	rootDestination, _ := filepath.Split(params.LocalPath)
+	return c.DownloadFolder(ctx,
+		DownloadFolderParams{
+			FolderListForParams: files_sdk.FolderListForParams{Path: params.File.RemotePath},
+			Sync:                params.Sync,
+			Manager:             params.Manager,
+			Reporter:            params.Reporter,
+			RootDestination:     rootDestination,
+			JobId:               params.Job.Id,
+		})
+}
 
 func (c *Client) DownloadToFile(ctx context.Context, params files_sdk.FileDownloadParams, filePath string) (files_sdk.File, error) {
 	out, err := os.Create(filePath)
@@ -28,18 +48,16 @@ func DownloadToFile(ctx context.Context, params files_sdk.FileDownloadParams, fi
 	return (&Client{}).DownloadToFile(ctx, params, filePath)
 }
 
-type Reporter func(status.Report, error)
-
 type DownloadFolderParams struct {
 	files_sdk.FolderListForParams
 	Sync bool
 	*manager.Manager
-	Reporter
+	status.Reporter
 	RootDestination string
 	JobId           string
 }
 
-func (c *Client) DownloadFolder(ctx context.Context, params DownloadFolderParams) (status.Job, error) {
+func (c *Client) DownloadFolder(ctx context.Context, params DownloadFolderParams) status.Job {
 	return downloadFolder(ctx, c.index(ctx, params.FolderListForParams), c, params)
 }
 

@@ -2,6 +2,7 @@ package file
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -23,9 +24,9 @@ type Uploader interface {
 	Find(context.Context, string) (files_sdk.File, error)
 }
 
-func uploadFolder(ctx context.Context, c Uploader, config files_sdk.Config, params *UploadParams) (status.Job, error) {
+func uploadFolder(ctx context.Context, c Uploader, config files_sdk.Config, params *UploadParams) status.Job {
 	if params.Reporter == nil {
-		params.Reporter = func(uploadStatus status.Report, err error) {}
+		params.Reporter = func(uploadStatus status.File, err error) {}
 	}
 	if params.Manager == nil {
 		params.Manager = manager.Default()
@@ -34,7 +35,27 @@ func uploadFolder(ctx context.Context, c Uploader, config files_sdk.Config, para
 	localFolderPath := params.Source
 	destinationRootPath := params.Destination
 	directoriesToCreate := make(map[string]UploadStatus)
-	job := status.Job{Id: params.JobId}.Init()
+	job := status.Job{}.Init(params.JobId)
+
+	metaFile := UploadStatus{
+		File:      files_sdk.File{DisplayName: filepath.Base(localFolderPath)},
+		Job:       job,
+		Status:    status.Errored,
+		LocalPath: localFolderPath,
+		Sync:      false,
+	}
+	metaStata, statErr := os.Stat(localFolderPath)
+	if statErr != nil {
+		job.Add(metaFile)
+		params.Reporter(metaFile.ToStatusFile(), statErr)
+		return *job
+	}
+	if metaStata.IsDir() {
+		metaFile.File.Type = "directory"
+	} else {
+		metaFile.File.Type = "file"
+	}
+
 	addUploads := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -71,37 +92,38 @@ func uploadFolder(ctx context.Context, c Uploader, config files_sdk.Config, para
 		}
 
 		file := &UploadStatus{
-			job:         job,
-			Source:      path,
-			destination: destination,
-			file:        files_sdk.File{DisplayName: filepath.Base(destination), Path: destination, Size: info.Size(), Mtime: info.ModTime()},
+			Job:        job,
+			RemotePath: destination,
+			LocalPath:  path,
+			Sync:       params.Sync,
+			File:       files_sdk.File{DisplayName: filepath.Base(destination), Path: destination, Size: info.Size(), Mtime: info.ModTime()},
 		}
 		if info.IsDir() {
-			file.file.Type = "directory"
+			file.File.Type = "directory"
 			directoriesToCreate[destination] = *file
 		} else {
-			file.file.Type = "file"
+			file.File.Type = "file"
 			job.Add(file)
 			uploadFiles = append(uploadFiles, file)
 			file.SetStatus(status.Queued)
-			params.Reporter(*file, nil) // Only block on queued so user can wait on locks
+			params.Reporter(file.ToStatusFile(), nil)
 		}
 		return nil
 	}
-	err := filepath.Walk(localFolderPath, addUploads)
+	walkErr := filepath.Walk(localFolderPath, addUploads)
 
-	if err != nil {
-		return *job, err
+	if walkErr != nil {
+		job.Add(metaFile)
+		params.Reporter(metaFile.ToStatusFile(), walkErr)
+		return *job
 	}
 
 	if len(uploadFiles) == 0 {
-		fi, err := os.Stat(localFolderPath)
-		if err != nil {
-			return *job, err
-		}
-		if !fi.IsDir() {
-			if addUploads(localFolderPath, fi, nil) != nil {
-				return *job, err
+		if metaFile.File.Type == "File" {
+			if addUploads(localFolderPath, metaStata, nil) != nil {
+				job.Add(metaFile)
+				params.Reporter(metaFile.ToStatusFile(), walkErr)
+				return *job
 			}
 		}
 	}
@@ -111,28 +133,30 @@ func uploadFolder(ctx context.Context, c Uploader, config files_sdk.Config, para
 		_, err := folderClient.Create(ctx, files_sdk.FolderCreateParams{Path: filepath.Clean(destinationRootPath)})
 		responseError, ok := (err).(files_sdk.ResponseError)
 		if err != nil && ok && responseError.ErrorMessage != "The destination exists." {
-			return *job, err
+			job.Add(metaFile)
+			params.Reporter(metaFile.ToStatusFile(), walkErr)
+			return *job
 		}
 	}
 
 	someMapMutex := sync.RWMutex{}
-	onComplete := make(chan bool)
+	onComplete := make(chan *UploadStatus)
 	for i := range uploadFiles {
 		uploadStatus := uploadFiles[i]
 		downloadCtx, cancel := context.WithCancel(ctx)
-		uploadStatus.cancel = cancel
+		uploadStatus.CancelFunc = cancel
 		uploadStatus.SetStatus(status.Queued)
 		params.Manager.FilesManager.Wait()
 		go func(ctx context.Context, uploadStatus *UploadStatus) {
 			defer func() {
 				params.Manager.FilesManager.Done()
-				onComplete <- true
+				onComplete <- uploadStatus
 			}()
 			if !checkUpdateSync(ctx, uploadStatus, params, c) {
 				return
 			}
 
-			dir, _ := filepath.Split(uploadStatus.File().Path)
+			dir, _ := filepath.Split(uploadStatus.File.Path)
 			someMapMutex.RLock()
 			dirFile, ok := directoriesToCreate[filepath.Clean(dir)]
 			someMapMutex.RUnlock()
@@ -143,36 +167,39 @@ func uploadFolder(ctx context.Context, c Uploader, config files_sdk.Config, para
 				delete(directoriesToCreate, filepath.Clean(dir))
 				someMapMutex.Unlock()
 			}
-			localFile, err := os.Open(uploadStatus.Source)
+			localFile, err := os.Open(uploadStatus.LocalPath)
 			defer localFile.Close()
 			if dealWithDBasicError(uploadStatus, err, params) {
 				return
 			}
 
-			file, err := c.Upload(ctx, localFile, uploadStatus.File().Size, files_sdk.FileActionBeginUploadParams{Path: uploadStatus.File().Path, MkdirParents: lib.Bool(true)}, uploadProgress(params, uploadStatus), params.FilePartsManager)
+			file, err := c.Upload(ctx, localFile, uploadStatus.Size, files_sdk.FileActionBeginUploadParams{Path: uploadStatus.RemotePath, MkdirParents: lib.Bool(true)}, uploadProgress(params, uploadStatus), params.FilePartsManager)
 			dealWithCanceledError(ctx, uploadStatus, err, file, params)
 		}(downloadCtx, uploadStatus)
 	}
 
-	for !job.AllEnded() {
+	for range uploadFiles {
+		s := <-onComplete
+		if s.Running() {
+			panic(fmt.Sprintf("<- Signal id: %v, status: %v\n", s.Id(), s.String()))
+		}
 	}
 
-	return *job, err
+	return *job
 }
 
 func checkUpdateSync(downloadCtx context.Context, uploadStatus *UploadStatus, params *UploadParams, c Uploader) bool {
 	if params.Sync {
-		file, err := c.Find(downloadCtx, uploadStatus.File().Path)
+		file, err := c.Find(downloadCtx, uploadStatus.RemotePath)
 		responseError, ok := err.(files_sdk.ResponseError)
 		if ok && responseError.Type == "not-found" {
 			return true
 		}
 		// local is not after server
-		if !uploadStatus.File().Mtime.After(file.Mtime) {
+		if !uploadStatus.Mtime.After(file.Mtime) {
 			// Server version is the same or newer
 			uploadStatus.SetStatus(status.Skipped)
-			uploadStatus.Cancel()
-			go params.Reporter(*uploadStatus, nil)
+			params.Reporter(uploadStatus.ToStatusFile(), nil)
 			return false
 		}
 	}

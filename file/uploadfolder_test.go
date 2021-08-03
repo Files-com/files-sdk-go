@@ -28,18 +28,16 @@ func (m *MockUploader) Find(context.Context, string) (files_sdk.File, error) {
 
 func Test_checkUploadSync(t *testing.T) {
 	assert := assert.New(t)
-	uploadStatus := UploadStatus{}
+	uploadStatus := UploadStatus{Job: &status.Job{}}
 	params := UploadParams{}
 	uploader := &MockUploader{}
 	var ctx context.Context
-	ctx, uploadStatus.cancel = context.WithCancel(context.Background())
-	var progressReportStatus status.Report
+	ctx, uploadStatus.CancelFunc = context.WithCancel(context.Background())
+	var progressReportStatus status.File
 	var progressReportError error
-	wait := make(chan bool)
-	params.Reporter = func(s status.Report, err error) {
+	params.Reporter = func(s status.File, err error) {
 		progressReportStatus = s
 		progressReportError = err
-		wait <- true
 	}
 
 	// sync not enabled
@@ -49,14 +47,12 @@ func Test_checkUploadSync(t *testing.T) {
 	// Mtime is the same between server and local
 	params.Sync = true
 	assert.Equal(false, checkUpdateSync(ctx, &uploadStatus, &params, uploader))
-	<-wait
-	assert.Equal(uploadStatus.Type(), status.Skipped)
-	assert.EqualErrorf(ctx.Err(), "context canceled", "")
-	assert.Equal(uploadStatus.Type(), progressReportStatus.Type())
+	assert.Equal(uploadStatus.Status, status.Skipped)
+	assert.Equal(uploadStatus.Status, progressReportStatus.Status)
 	assert.Equal(nil, progressReportError)
 
 	// local version is newer than server
-	uploadStatus.file.Mtime = time.Now()
+	uploadStatus.Mtime = time.Now()
 	assert.Equal(true, checkUpdateSync(ctx, &uploadStatus, &params, uploader))
 
 	// There is no server version

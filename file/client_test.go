@@ -80,22 +80,22 @@ func buildScenario(base string, client *Client) {
 	client.Upload(context.Background(), strings.NewReader("testing 3"), int64(9), files_sdk.FileActionBeginUploadParams{Path: filepath.Join(base, "nested_1", "nested_2", "nested_3", "4.text")}, func(i int64) {}, goccm.New(1))
 }
 
-func runDownloadScenario(path string, destination string, client *Client) (map[string][]status.Report, error) {
+func runDownloadScenario(path string, destination string, client *Client) map[string][]status.File {
 	m := sync.Mutex{}
-	results := make(map[string][]status.Report)
+	results := make(map[string][]status.File)
 
-	reporter := func(r status.Report, err error) {
+	reporter := func(r status.File, err error) {
 		m.Lock()
-		results[r.File().Path] = append(results[r.File().Path], r)
+		results[r.File.Path] = append(results[r.File.Path], r)
 		m.Unlock()
 	}
 
-	_, err := client.DownloadFolder(
+	client.DownloadFolder(
 		context.Background(),
 		DownloadFolderParams{FolderListForParams: files_sdk.FolderListForParams{Path: path}, RootDestination: destination, Reporter: reporter},
 	)
 
-	return results, err
+	return results
 }
 
 func TestClient_UploadFolder(t *testing.T) {
@@ -107,21 +107,20 @@ func TestClient_UploadFolder(t *testing.T) {
 
 	assert := assert.New(t)
 	resultsMapMutex := sync.RWMutex{}
-	results := make(map[string][]status.Report)
+	results := make(map[string][]status.File)
 
-	_, err = client.UploadFolder(
+	client.UploadFolder(
 		context.Background(),
 		&UploadParams{
 			Source:      "../lib",
 			Destination: "golib",
-			Reporter: func(status status.Report, err error) {
+			Reporter: func(status status.File, err error) {
 				resultsMapMutex.Lock()
-				results[status.File().Path] = append(results[status.File().Path], status)
+				results[status.File.Path] = append(results[status.File.Path], status)
 				resultsMapMutex.Unlock()
 			},
 		},
 	)
-	assert.NoError(err)
 
 	assert.Equal(10, len(results))
 	assert.Contains(results, "golib/bool.go")
@@ -135,8 +134,8 @@ func TestClient_UploadFolder(t *testing.T) {
 	assert.Contains(results, "golib/progresswriter.go")
 	assert.Contains(results, "golib/iter_test.go")
 
-	assert.Equal(10, results["golib/bool.go"][0].Job().Count())
-	assert.Equal(int64(7910), results["golib/bool.go"][0].Job().TotalBytes())
+	assert.Equal(10, results["golib/bool.go"][0].Job.Count())
+	assert.Equal(int64(7910), results["golib/bool.go"][0].Job.TotalBytes())
 
 	deletePath(client, "golib")
 }
@@ -152,18 +151,17 @@ func TestClient_UploadFolder_Dot(t *testing.T) {
 	resultsMapMutex := sync.RWMutex{}
 	results := make(map[string][]int64)
 
-	_, err = client.UploadFolder(
+	client.UploadFolder(
 		context.Background(),
 		&UploadParams{
 			Source:      ".",
 			Destination: "go-from-dot",
-			Reporter: func(status status.Report, err error) {
+			Reporter: func(status status.File, err error) {
 				resultsMapMutex.Lock()
-				results[status.File().Path] = append(results[status.File().Path], status.TransferBytes())
+				results[status.File.Path] = append(results[status.File.Path], status.TransferBytes)
 				resultsMapMutex.Unlock()
 			},
 		})
-	assert.NoError(err)
 
 	assert.Contains(results, "go-from-dot/fixtures/TestClient_UploadFolder.yaml")
 	assert.Contains(results, "go-from-dot/client_test.go")
@@ -185,18 +183,17 @@ func TestClient_UploadFolder_Relative(t *testing.T) {
 	resultsMapMutex := sync.RWMutex{}
 	results := make(map[string][]int64)
 
-	job, err := client.UploadFolder(
+	job := client.UploadFolder(
 		context.Background(),
 		&UploadParams{
 			Source:      "fixtures",
 			Destination: "file-fixtures",
-			Reporter: func(status status.Report, err error) {
+			Reporter: func(status status.File, err error) {
 				resultsMapMutex.Lock()
-				results[status.File().Path] = append(results[status.File().Path], status.TransferBytes())
+				results[status.File.Path] = append(results[status.File.Path], status.TransferBytes)
 				resultsMapMutex.Unlock()
 			},
 		})
-	assert.NoError(err)
 
 	assert.Contains(results, "file-fixtures/TestClient_UploadFolder.yaml")
 
@@ -217,8 +214,7 @@ func TestClient_UploadFile(t *testing.T) {
 	assert := assert.New(t)
 
 	uploadPath := "../LICENSE"
-	job, err := client.UploadFile(context.Background(), &UploadParams{Source: uploadPath})
-	assert.NoError(err)
+	job := client.UploadFile(context.Background(), &UploadParams{Source: uploadPath})
 
 	assert.Equal("LICENSE", job.Files()[0].DisplayName)
 	assert.Equal(1, job.Count())
@@ -268,7 +264,7 @@ func TestClient_UploadFile_To_Existing_Dir(t *testing.T) {
 
 	assert.NoError(err)
 	uploadPath := "../LICENSE"
-	_, err = client.UploadFile(context.Background(), &UploadParams{Source: uploadPath, Destination: "docs"})
+	client.UploadFile(context.Background(), &UploadParams{Source: uploadPath, Destination: "docs"})
 	assert.NoError(err)
 	_, err1 := os.Stat("../tmp")
 	if os.IsNotExist(err1) {
@@ -310,7 +306,7 @@ func TestClient_UploadFile_To_NonExistingPath(t *testing.T) {
 
 	deletePath(client, "taco")
 	uploadPath := "../LICENSE"
-	_, err = client.UploadFile(context.Background(), &UploadParams{Source: uploadPath, Destination: "taco"})
+	client.UploadFile(context.Background(), &UploadParams{Source: uploadPath, Destination: "taco"})
 	defer deletePath(client, "taco")
 	assert.NoError(err)
 	_, err1 := os.Stat("../tmp")
@@ -352,7 +348,7 @@ func TestClient_UploadFile_To_NonExistingPath_WithSlash(t *testing.T) {
 	assert.NoError(err)
 	uploadPath := "../LICENSE"
 	deletePath(client, "docs")
-	_, err = client.UploadFile(context.Background(), &UploadParams{Source: uploadPath, Destination: "docs/"})
+	client.UploadFile(context.Background(), &UploadParams{Source: uploadPath, Destination: "docs/"})
 	defer deletePath(client, "docs")
 	assert.NoError(err)
 	_, err1 := os.Stat("../tmp")
@@ -395,7 +391,7 @@ func TestClient_UploadFolder_as_file2(t *testing.T) {
 	assert := assert.New(t)
 
 	uploadPath := "../LICENSE"
-	_, err = client.UploadFolder(context.Background(), &UploadParams{Source: uploadPath})
+	client.UploadFolder(context.Background(), &UploadParams{Source: uploadPath})
 	if err != nil {
 		panic(err)
 	}
@@ -454,10 +450,10 @@ func TestClient_DownloadFolder(t *testing.T) {
 
 	assert.Len(folders, 2, "something is wrong with cursor")
 
-	results, err := runDownloadScenario("TestClient_DownloadFolder", "download", client)
+	results := runDownloadScenario("TestClient_DownloadFolder", "download", client)
 	assert.NoError(err)
-	assert.Equal(int64(9), results["TestClient_DownloadFolder/nested_1/nested_2/3.text"][3].TransferBytes())
-	assert.Equal(int64(9), results["TestClient_DownloadFolder/nested_1/nested_2/nested_3/4.text"][3].TransferBytes())
+	assert.Equal(int64(9), results["TestClient_DownloadFolder/nested_1/nested_2/3.text"][3].TransferBytes)
+	assert.Equal(int64(9), results["TestClient_DownloadFolder/nested_1/nested_2/nested_3/4.text"][3].TransferBytes)
 	os.RemoveAll("download")
 }
 
@@ -472,22 +468,22 @@ func TestClient_DownloadFolder_Smart(t *testing.T) {
 
 	assert := assert.New(t)
 
-	results, err := runDownloadScenario(filepath.Join("TestClient_DownloadFolder_Smart", "nested_1", "nested_2", "3.text"), "download/", client)
+	results := runDownloadScenario(filepath.Join("TestClient_DownloadFolder_Smart", "nested_1", "nested_2", "3.text"), "download/", client)
 
 	assert.Len(results["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"], 4)
-	assert.Equal(int64(9), results["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"][3].TransferBytes())
+	assert.Equal(int64(9), results["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"][3].TransferBytes)
 
-	results2, err := runDownloadScenario(filepath.Join("TestClient_DownloadFolder_Smart", "nested_1", "nested_2"), "download", client)
+	results2 := runDownloadScenario(filepath.Join("TestClient_DownloadFolder_Smart", "nested_1", "nested_2"), "download", client)
 
 	assert.NoError(err)
 
 	path, err := os.Getwd()
 	assert.NoError(err)
 
-	assert.Equal(int64(9), results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"][3].TransferBytes())
-	assert.Equal(path+"/download/3.text", results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"][3].Destination())
-	assert.Equal(int64(9), results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text"][3].TransferBytes())
-	assert.Equal(path+"/download/nested_3/4.text", results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text"][3].Destination())
+	assert.Equal(int64(9), results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"][3].TransferBytes)
+	assert.Equal(path+"/download/3.text", results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"][3].LocalPath)
+	assert.Equal(int64(9), results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text"][3].TransferBytes)
+	assert.Equal(path+"/download/nested_3/4.text", results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text"][3].LocalPath)
 
 	os.RemoveAll("download")
 }
@@ -502,10 +498,10 @@ func TestClient_DownloadFolder_file_to_file(t *testing.T) {
 	buildScenario("TestClient_DownloadFolder_file_to_file", client)
 	assert := assert.New(t)
 
-	results, err := runDownloadScenario(filepath.Join("TestClient_DownloadFolder_file_to_file", "nested_1", "nested_2", "3.text"), "3.text", client)
+	results := runDownloadScenario(filepath.Join("TestClient_DownloadFolder_file_to_file", "nested_1", "nested_2", "3.text"), "3.text", client)
 	assert.NoError(err)
 
-	assert.Equal(int64(9), results["TestClient_DownloadFolder_file_to_file/nested_1/nested_2/3.text"][3].TransferBytes())
+	assert.Equal(int64(9), results["TestClient_DownloadFolder_file_to_file/nested_1/nested_2/3.text"][3].TransferBytes)
 	os.RemoveAll("3.text")
 }
 
@@ -518,10 +514,10 @@ func TestClient_DownloadFolder_file_to_implicit(t *testing.T) {
 
 	buildScenario("file_to_implicit", client)
 	assert := assert.New(t)
-	results, err := runDownloadScenario(filepath.Join("file_to_implicit", "nested_1", "nested_2", "3.text"), "", client)
+	results := runDownloadScenario(filepath.Join("file_to_implicit", "nested_1", "nested_2", "3.text"), "", client)
 	assert.NoError(err)
 
-	assert.Equal(int64(9), results["file_to_implicit/nested_1/nested_2/3.text"][3].TransferBytes())
+	assert.Equal(int64(9), results["file_to_implicit/nested_1/nested_2/3.text"][3].TransferBytes)
 	os.RemoveAll("3.text")
 }
 
@@ -534,9 +530,9 @@ func TestClient_DownloadFolder_file_only(t *testing.T) {
 
 	client.Upload(context.Background(), strings.NewReader("hello"), int64(5), files_sdk.FileActionBeginUploadParams{Path: filepath.Join("i am at the root.text")}, func(i int64) {}, goccm.New(1))
 	assert := assert.New(t)
-	results, err := runDownloadScenario("i am at the root.text", "", client)
+	results := runDownloadScenario("i am at the root.text", "", client)
 	assert.NoError(err)
 
-	assert.Equal(int64(5), results["i am at the root.text"][3].TransferBytes())
+	assert.Equal(int64(5), results["i am at the root.text"][3].TransferBytes)
 	os.RemoveAll("i am at the root.text")
 }

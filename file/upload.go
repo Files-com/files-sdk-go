@@ -2,7 +2,6 @@ package file
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"math"
 	"net/http"
@@ -22,44 +21,76 @@ import (
 	"github.com/Files-com/files-sdk-go/lib"
 )
 
+type UploadRetryParams struct {
+	status.File
+	*manager.Manager
+	status.Reporter
+}
+
+func (c *Client) UploadRetry(ctx context.Context, params UploadRetryParams) status.File {
+	return c.UploadFile(ctx,
+		&UploadParams{
+			JobId:       params.Job.Id,
+			Sync:        params.Sync,
+			Source:      params.LocalPath,
+			Destination: params.RemotePath,
+			Reporter:    params.Reporter,
+			Manager:     params.Manager,
+		},
+	)
+}
+
 type UploadParams struct {
 	JobId       string
 	Sync        bool
 	Source      string
 	Destination string
-	Reporter    func(status.Report, error)
+	status.Reporter
 	*manager.Manager
 }
 
-func (c *Client) UploadFolderOrFile(ctx context.Context, params *UploadParams) (status.Job, error) {
+func (c *Client) UploadFolderOrFile(ctx context.Context, params *UploadParams) status.Job {
+	file := status.File{File: files_sdk.File{}, LocalPath: params.Source, Status: status.Errored, Job: status.Job{}.Init(params.JobId)}
 	absoluteSource, err := filepath.Abs(params.Source)
 	if err != nil {
-		return status.Job{}, err
+		params.Reporter(file, err)
+		return *file.Job
 	}
 	fi, err := os.Stat(absoluteSource)
 	if err != nil {
-		return status.Job{}, err
+		params.Reporter(file, err)
+		return *file.Job
 	}
 
 	if fi.IsDir() {
 		return c.UploadFolder(ctx, params)
 	} else {
-		return c.UploadFile(ctx, params)
+		return *c.UploadFile(ctx, params).Job
 	}
 }
 
-func (c *Client) UploadFolder(ctx context.Context, params *UploadParams) (status.Job, error) {
+func (c *Client) UploadFolder(ctx context.Context, params *UploadParams) status.Job {
 	return uploadFolder(ctx, c, c.Config, params)
 }
 
-func (c *Client) UploadFile(ctx context.Context, params *UploadParams) (status.Job, error) {
+func (c *Client) UploadFile(ctx context.Context, params *UploadParams) status.File {
 	if params.Reporter == nil {
-		params.Reporter = func(uploadStatus status.Report, err error) {}
+		params.Reporter = func(uploadStatus status.File, err error) {}
 	}
 	if params.Manager == nil {
 		params.Manager = manager.Default()
 	}
-	job := status.Job{}.Init()
+	job := status.Job{}.Init(params.JobId)
+	jobCtx, cancel := context.WithCancel(ctx)
+	job.CancelFunc = cancel
+	defer job.Cancel()
+	uploadStatus := &UploadStatus{
+		CancelFunc: cancel,
+		Job:        job,
+		LocalPath:  params.Source,
+		Sync:       params.Sync,
+	}
+
 	beginUpload := files_sdk.FileActionBeginUploadParams{}
 	destination := params.Destination
 	_, localFileName := filepath.Split(params.Source)
@@ -76,47 +107,41 @@ func (c *Client) UploadFile(ctx context.Context, params *UploadParams) (status.J
 				beginUpload.MkdirParents = lib.Bool(true)
 			}
 		} else if err != nil {
-			return *job, err
+			params.Reporter(uploadStatus.ToStatusFile(), err)
+			return uploadStatus.ToStatusFile()
 		}
 	}
 	params.FilesManager.Wait()
 	defer params.FilesManager.Done()
 	fi, err := os.Stat(params.Source)
-	uploadCxt, cancel := context.WithCancel(ctx)
-
-	uploadStatus := &UploadStatus{
-		cancel:      cancel,
-		job:         job,
-		Source:      params.Source,
-		destination: destination,
-		file: files_sdk.File{
-			DisplayName: filepath.Base(destination),
-			Path:        destination,
-			Type:        "file",
-			Mtime:       fi.ModTime(),
-			Size:        fi.Size(),
-		},
+	uploadStatus.RemotePath = destination
+	uploadStatus.File = files_sdk.File{
+		DisplayName: filepath.Base(destination),
+		Path:        destination,
+		Type:        "file",
+		Mtime:       fi.ModTime(),
+		Size:        fi.Size(),
 	}
 	uploadStatus.Status = status.Queued
 	job.Add(uploadStatus)
 	if !checkUpdateSync(ctx, uploadStatus, params, c) {
-		return *job, fmt.Errorf("file is already up to date")
+		return uploadStatus.ToStatusFile()
 	}
-	params.Reporter(uploadStatus, nil) // Only block on queued so user can wait on locks
+	params.Reporter(uploadStatus.ToStatusFile(), nil) // Only block on queued so user can wait on locks
 	localFile, err := os.Open(params.Source)
 	defer localFile.Close()
 	if dealWithDBasicError(uploadStatus, err, params) {
-		return *job, nil
+		return uploadStatus.ToStatusFile()
 	}
-	uploadStatus.file.Size = fi.Size()
+	uploadStatus.Size = fi.Size()
 	beginUpload.Path = destination
-	file, err := c.Upload(uploadCxt, localFile, fi.Size(), beginUpload, uploadProgress(params, uploadStatus), params.FilePartsManager)
+	file, err := c.Upload(jobCtx, localFile, fi.Size(), beginUpload, uploadProgress(params, uploadStatus), params.FilePartsManager)
 	dealWithCanceledError(ctx, uploadStatus, err, file, params)
 
-	return *job, nil
+	return uploadStatus.ToStatusFile()
 }
 
-func UploadFile(ctx context.Context, params *UploadParams) (status.Job, error) {
+func UploadFile(ctx context.Context, params *UploadParams) status.File {
 	return (&Client{}).UploadFile(ctx, params)
 }
 
@@ -271,17 +296,17 @@ func dealWithCanceledError(ctx context.Context, uploadStatus *UploadStatus, err 
 			uploadStatus.SetStatus(status.Canceled)
 		}
 	} else {
-		uploadStatus.file = file
+		uploadStatus.File = file
 		uploadStatus.SetStatus(status.Complete)
 	}
 	// Block on finishing report
-	params.Reporter(*uploadStatus, err)
+	params.Reporter(uploadStatus.ToStatusFile(), err)
 }
 
 func dealWithDBasicError(uploadStatus *UploadStatus, err error, params *UploadParams) bool {
 	if err != nil {
 		uploadStatus.SetStatus(status.Errored)
-		go params.Reporter(*uploadStatus, err)
+		params.Reporter(uploadStatus.ToStatusFile(), err)
 		return true
 	}
 	return false
@@ -289,12 +314,12 @@ func dealWithDBasicError(uploadStatus *UploadStatus, err error, params *UploadPa
 
 func maybeCreateFolder(ctx context.Context, file UploadStatus, config files_sdk.Config) error {
 	client := folder.Client{Config: config}
-	createdFolder, err := client.Create(ctx, files_sdk.FolderCreateParams{Path: file.Destination() + "/"})
+	createdFolder, err := client.Create(ctx, files_sdk.FolderCreateParams{Path: file.RemotePath + "/"})
 	responseError, ok := (err).(files_sdk.ResponseError)
 	if err != nil && ok && responseError.ErrorMessage != "The destination exists." {
 		return err
 	} else {
-		file.file = createdFolder
+		file.File = createdFolder
 	}
 
 	return nil
@@ -304,6 +329,6 @@ func uploadProgress(params *UploadParams, uploadStatus *UploadStatus) func(bytes
 	return func(bytesCount int64) {
 		uploadStatus.UploadedBytes += bytesCount
 		uploadStatus.SetStatus(status.Uploading)
-		params.Reporter(*uploadStatus, nil)
+		params.Reporter(uploadStatus.ToStatusFile(), nil)
 	}
 }

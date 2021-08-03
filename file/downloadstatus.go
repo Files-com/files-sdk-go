@@ -8,12 +8,28 @@ import (
 )
 
 type DownloadStatus struct {
-	file files_sdk.File
+	files_sdk.File
 	status.Status
 	DownloadedBytes int64
-	destination     string
-	cancel          context.CancelFunc
-	runStats        *status.Job
+	LocalPath       string
+	RemotePath      string
+	Sync            bool
+	context.CancelFunc
+	*status.Job
+}
+
+func (u DownloadStatus) ToStatusFile() status.File {
+	return status.File{
+		TransferBytes: u.DownloadedBytes,
+		File:          u.File,
+		Cancel:        u.CancelFunc,
+		LocalPath:     u.LocalPath,
+		RemotePath:    u.RemotePath,
+		Id:            u.Id(),
+		Job:           u.Job,
+		Status:        u.Status,
+		Sync:          u.Sync,
+	}
 }
 
 func (r *DownloadStatus) SetStatus(s status.Status) {
@@ -24,33 +40,10 @@ func (r *DownloadStatus) SetStatus(s status.Status) {
 	r.Status = s
 }
 
-func (r DownloadStatus) Destination() string {
-	return r.destination
-}
-
-func (r DownloadStatus) TransferBytes() int64 {
-	return r.DownloadedBytes
-}
-
-func (r DownloadStatus) File() files_sdk.File {
-	return r.file
-}
-
-func (r DownloadStatus) Job() status.Job {
-	return *r.runStats
-}
-
 func (r DownloadStatus) Id() string {
-	return r.Job().Id + ":" + r.File().Path
+	return r.Job.Id + ":" + r.File.Path
 }
 
 func (r *DownloadStatus) incrementDownloadedBytes(b int64) {
 	r.DownloadedBytes += b
-}
-
-func (r DownloadStatus) Cancel() {
-	if r.cancel != nil {
-		r.cancel()
-		r.Status = status.Canceled
-	}
 }

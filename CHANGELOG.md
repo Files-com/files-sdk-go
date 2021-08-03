@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
+## [1.2.1146] - 2021/08/03
+### Fix
+- `file.DownloadFolder` handle concurrent downloads on the same path by incrementing the tmp file name.
+
+### Add
+- `file.DownloadRetry(status.File)` and `file.UploadRetry(status.File)` give a interface to retry files that have may of failed.
+
+### Changes
+- `status.Report` is removed and replaced with `status.File`
+- `file.DownloadFolder` and `file.UploadFolder` no longer return `(*status.Job, error)` instead only `(*status.Job)`. All errors are sent via the Reporter func. 
+- When the SDK calls the given `Reporter: func(status.Report, error)` it will block and the user provided function should handle making code inside async. 
+
 ## [1.1.1145] - 2021/08/03
 ### Changes
 - Every applicable function now take `Context` as the first parameter. This allows for cancellation of tasks in flight.

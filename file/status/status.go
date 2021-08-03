@@ -1,43 +1,50 @@
 package status
 
-type Status string
+type Status struct {
+	Name  string
+	Value int
+}
 
-const (
-	Queued      = Status("queued")
-	Downloading = Status("downloading")
-	Uploading   = Status("uploading")
-	Skipped     = Status("skipped")
-	Complete    = Status("complete")
-	Errored     = Status("errored")
-	Canceled    = Status("canceled")
+var (
+	Queued      = Status{"queued", 0}
+	Downloading = Status{"downloading", 1}
+	Uploading   = Status{"uploading", 1}
+	Skipped     = Status{"skipped", 2}
+	Complete    = Status{"complete", 3}
+	Canceled    = Status{"canceled", 4}
+	Errored     = Status{"errored", 4}
 )
 
 func (e Status) String() string {
-	return string(e)
+	return e.Name
 }
 
 func (e Status) Queued() bool {
-	return e == Queued
+	return e.Name == Queued.Name
 }
 
 func (e Status) Downloading() bool {
-	return e == Downloading
+	return e.Name == Downloading.Name
 }
 
 func (e Status) Uploading() bool {
-	return e == Uploading
+	return e.Name == Uploading.Name
 }
 
 func (e Status) Completed() bool {
-	return e == Complete
+	return e.Name == Complete.Name
 }
 
 func (e Status) Skipped() bool {
-	return e == Skipped
+	return e.Name == Skipped.Name
 }
 
 func (e Status) Errored() bool {
-	return e == Errored
+	return e.Name == Errored.Name
+}
+
+func (e Status) Running() bool {
+	return e.Downloading() || e.Uploading()
 }
 
 func (e Status) Invalid() bool {
@@ -49,7 +56,7 @@ func (e Status) Valid() bool {
 }
 
 func (e Status) Canceled() bool {
-	return e == Canceled
+	return e.Name == Canceled.Name
 }
 
 func (e Status) Ended() bool {
@@ -57,25 +64,5 @@ func (e Status) Ended() bool {
 }
 
 func (e Status) Compare(s Status) bool {
-	return e == s
-}
-
-func (e Status) Type() Status {
-	return e
-}
-
-type IStatus interface {
-	String() string
-	Queued() bool
-	Downloading() bool
-	Uploading() bool
-	Completed() bool
-	Skipped() bool
-	Errored() bool
-	Invalid() bool
-	Valid() bool
-	Canceled() bool
-	Ended() bool
-	Compare(Status) bool
-	Type() Status
+	return e.Name == s.Name
 }
