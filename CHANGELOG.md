@@ -4,19 +4,23 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
-## [1.1.1142] - 2021/08/03### Changes
+## [1.1.1143] - 2021/08/03
+### Changes
 - Every applicable function now take `Context` as the first parameter. This allows for cancellation of tasks in flight.
 - `files_sdk.Config{}` has removed `SetMaxConcurrentConnections`. Instead pass `manager.Manager{}` to `file.DownloadFolder` and `file.UploadFolder`.
 - `file.DownloadFolder` and `file.UploadFolder` now take `Reporter: func(status.Report, error)`
 
-## [1.0.183] - 2021/04/28### Fix
+## [1.1.1142] - 2021/08/03### Changes
+### Fix
 - `files.Client{}.DownloadFolder()` Fix Windows issue `The process cannot access the file because it is being used by another process.`
 - `files.Client{}.DownloadFolder()` in some cases the func hangs after all files are download.
 - Enum constants are removed due to issue with duplicates. Use `Enum()["value"]` to validate input.
   
-## [1.0.156] - 2021/02/22### Add
+## [1.0.183] - 2021/04/28### Fix
+### Add
 - Enum constants are available for structs params used as server requests. 
 
+## [1.0.156] - 2021/02/22### Add
 ### Feature
 - `file.UploadFile(file.UploadParams{})` and `file.UploadFolder(file.UploadParams{})` now uploads file chunks in parallel. 
   Defaults to 25, but can be changed via `files_sdk.Config{}.SetMaxConcurrentConnections(50)`
