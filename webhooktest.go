@@ -15,6 +15,7 @@ type WebhookTest struct {
 	Encoding string          `json:"encoding,omitempty"`
 	Headers  json.RawMessage `json:"headers,omitempty"`
 	Body     json.RawMessage `json:"body,omitempty"`
+	RawBody  string          `json:"raw_body,omitempty"`
 	Action   string          `json:"action,omitempty"`
 }
 
@@ -26,6 +27,7 @@ type WebhookTestCreateParams struct {
 	Encoding string          `url:"encoding,omitempty" required:"false"`
 	Headers  json.RawMessage `url:"headers,omitempty" required:"false"`
 	Body     json.RawMessage `url:"body,omitempty" required:"false"`
+	RawBody  string          `url:"raw_body,omitempty" required:"false"`
 	Action   string          `url:"action,omitempty" required:"false"`
 }
 
