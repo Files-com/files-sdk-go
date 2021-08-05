@@ -5,30 +5,34 @@ import (
 )
 
 type WebhookTest struct {
-	Code     int64           `json:"code,omitempty"`
-	Message  string          `json:"message,omitempty"`
-	Status   string          `json:"status,omitempty"`
-	Data     string          `json:"data,omitempty"`
-	Success  *bool           `json:"success,omitempty"`
-	Url      string          `json:"url,omitempty"`
-	Method   string          `json:"method,omitempty"`
-	Encoding string          `json:"encoding,omitempty"`
-	Headers  json.RawMessage `json:"headers,omitempty"`
-	Body     json.RawMessage `json:"body,omitempty"`
-	RawBody  string          `json:"raw_body,omitempty"`
-	Action   string          `json:"action,omitempty"`
+	Code          int64           `json:"code,omitempty"`
+	Message       string          `json:"message,omitempty"`
+	Status        string          `json:"status,omitempty"`
+	Data          string          `json:"data,omitempty"`
+	Success       *bool           `json:"success,omitempty"`
+	Url           string          `json:"url,omitempty"`
+	Method        string          `json:"method,omitempty"`
+	Encoding      string          `json:"encoding,omitempty"`
+	Headers       json.RawMessage `json:"headers,omitempty"`
+	Body          json.RawMessage `json:"body,omitempty"`
+	RawBody       string          `json:"raw_body,omitempty"`
+	FileAsBody    *bool           `json:"file_as_body,omitempty"`
+	FileFormField string          `json:"file_form_field,omitempty"`
+	Action        string          `json:"action,omitempty"`
 }
 
 type WebhookTestCollection []WebhookTest
 
 type WebhookTestCreateParams struct {
-	Url      string          `url:"url,omitempty" required:"true"`
-	Method   string          `url:"method,omitempty" required:"false"`
-	Encoding string          `url:"encoding,omitempty" required:"false"`
-	Headers  json.RawMessage `url:"headers,omitempty" required:"false"`
-	Body     json.RawMessage `url:"body,omitempty" required:"false"`
-	RawBody  string          `url:"raw_body,omitempty" required:"false"`
-	Action   string          `url:"action,omitempty" required:"false"`
+	Url           string          `url:"url,omitempty" required:"true"`
+	Method        string          `url:"method,omitempty" required:"false"`
+	Encoding      string          `url:"encoding,omitempty" required:"false"`
+	Headers       json.RawMessage `url:"headers,omitempty" required:"false"`
+	Body          json.RawMessage `url:"body,omitempty" required:"false"`
+	RawBody       string          `url:"raw_body,omitempty" required:"false"`
+	FileAsBody    *bool           `url:"file_as_body,omitempty" required:"false"`
+	FileFormField string          `url:"file_form_field,omitempty" required:"false"`
+	Action        string          `url:"action,omitempty" required:"false"`
 }
 
 func (w *WebhookTest) UnmarshalJSON(data []byte) error {
