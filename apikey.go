@@ -36,6 +36,7 @@ func (u ApiKeyPermissionSetEnum) Enum() map[string]ApiKeyPermissionSetEnum {
 		"desktop_app":        ApiKeyPermissionSetEnum("desktop_app"),
 		"sync_app":           ApiKeyPermissionSetEnum("sync_app"),
 		"office_integration": ApiKeyPermissionSetEnum("office_integration"),
+		"mobile_app":         ApiKeyPermissionSetEnum("mobile_app"),
 	}
 }
 

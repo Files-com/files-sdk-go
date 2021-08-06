@@ -34,6 +34,9 @@ type Site struct {
 	DesktopApp                           *bool     `json:"desktop_app,omitempty"`
 	DesktopAppSessionIpPinning           *bool     `json:"desktop_app_session_ip_pinning,omitempty"`
 	DesktopAppSessionLifetime            int64     `json:"desktop_app_session_lifetime,omitempty"`
+	MobileApp                            *bool     `json:"mobile_app,omitempty"`
+	MobileAppSessionIpPinning            *bool     `json:"mobile_app_session_ip_pinning,omitempty"`
+	MobileAppSessionLifetime             int64     `json:"mobile_app_session_lifetime,omitempty"`
 	DisallowedCountries                  string    `json:"disallowed_countries,omitempty"`
 	DisableNotifications                 *bool     `json:"disable_notifications,omitempty"`
 	DisablePasswordReset                 *bool     `json:"disable_password_reset,omitempty"`
@@ -147,6 +150,9 @@ type SiteUpdateParams struct {
 	DesktopApp                           *bool     `url:"desktop_app,omitempty" required:"false"`
 	DesktopAppSessionIpPinning           *bool     `url:"desktop_app_session_ip_pinning,omitempty" required:"false"`
 	DesktopAppSessionLifetime            int64     `url:"desktop_app_session_lifetime,omitempty" required:"false"`
+	MobileApp                            *bool     `url:"mobile_app,omitempty" required:"false"`
+	MobileAppSessionIpPinning            *bool     `url:"mobile_app_session_ip_pinning,omitempty" required:"false"`
+	MobileAppSessionLifetime             int64     `url:"mobile_app_session_lifetime,omitempty" required:"false"`
 	FolderPermissionsGroupsOnly          *bool     `url:"folder_permissions_groups_only,omitempty" required:"false"`
 	WelcomeScreen                        string    `url:"welcome_screen,omitempty" required:"false"`
 	OfficeIntegrationAvailable           *bool     `url:"office_integration_available,omitempty" required:"false"`
