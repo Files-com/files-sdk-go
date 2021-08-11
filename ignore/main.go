@@ -5,30 +5,29 @@ import (
 	"runtime"
 	"strings"
 
+	_ "embed"
+
 	ignore "github.com/sabhiram/go-gitignore"
 )
+
+//go:embed data/Windows.gitignore
+var WindowsGitignore []byte
+
+//go:embed data/macOS.gitignore
+var macOSGitignore []byte
+
+//go:embed data/Linux.gitignore
+var LinuxGitignore []byte
 
 func New() (*ignore.GitIgnore, error) {
 	os := runtime.GOOS
 	switch os {
 	case "windows":
-		data, err := Asset("ignore/data/Windows.gitignore")
-		if err != nil {
-			return &ignore.GitIgnore{}, err
-		}
-		return ignore.CompileIgnoreLines(strings.Split(string(data), "\n")...), nil
+		return ignore.CompileIgnoreLines(strings.Split(string(WindowsGitignore), "\n")...), nil
 	case "darwin":
-		data, err := Asset("ignore/data/macOS.gitignore")
-		if err != nil {
-			return &ignore.GitIgnore{}, err
-		}
-		return ignore.CompileIgnoreLines(strings.Split(string(data), "\n")...), nil
+		return ignore.CompileIgnoreLines(strings.Split(string(macOSGitignore), "\n")...), nil
 	case "linux":
-		data, err := Asset("ignore/data/Linux.gitignore")
-		if err != nil {
-			return &ignore.GitIgnore{}, err
-		}
-		return ignore.CompileIgnoreLines(strings.Split(string(data), "\n")...), nil
+		return ignore.CompileIgnoreLines(strings.Split(string(LinuxGitignore), "\n")...), nil
 	default:
 		return &ignore.GitIgnore{}, fmt.Errorf("unknown os %s", os)
 	}

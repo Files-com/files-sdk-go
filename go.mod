@@ -6,7 +6,6 @@ require (
 	github.com/appscode/go-querystring v0.0.0-20170504095604-0126cfb3f1dc
 	github.com/chilts/sid v0.0.0-20190607042430-660e94789ec9
 	github.com/dnaeon/go-vcr v1.1.0
-	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
 	github.com/hashicorp/go-retryablehttp v0.6.6
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/lpar/date v1.0.0

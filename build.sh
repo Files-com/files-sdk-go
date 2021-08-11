@@ -8,5 +8,3 @@ go get -d -v
 go get golang.org/x/tools/cmd/goimports
 goimports -w .
 gofmt -s -w .
-go get -u github.com/go-bindata/go-bindata/...
-go-bindata --pkg ignore -o ignore/bindata.go ignore/data
