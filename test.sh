@@ -5,3 +5,5 @@ cd "${DIR}" || exit 1
 sh build.sh
 
 go test ./...
+
+exit $?
