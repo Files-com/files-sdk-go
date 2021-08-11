@@ -66,7 +66,7 @@ import (
 
 func main() {
     params := files_sdk.FolderListForParams{}
-    it, err := folder.ListFor(params)
+    it, err := folder.ListFor(context.Background(), params)
 
     if err != nil {
         // deal with error
@@ -91,7 +91,7 @@ func main() {
     client := file.Client{}
     uploadPath := "file-to-upload.txt"
     destinationPath := nil // Defaults to filename of uploadPath
-    fileEntry, err := client.UploadFile(uploadPath, destinationPath)
+    fileEntry, err := client.UploadFile(context.Background(), uploadPath, destinationPath)
     if err != nil {
         panic(err)
     }
@@ -107,7 +107,7 @@ func main() {
     client := file.Client{}
     io := strings.NewReader("my file contents")
     destinationPath := "my-file.txt"
-    fileEntry, err := client.Upload(io, destinationPath)
+    fileEntry, err := client.Upload(context.Background(), io, destinationPath)
     if err != nil {
         panic(err)
     }
@@ -121,7 +121,7 @@ import file "github.com/Files-com/files-sdk-go/file"
 func main() {
     client := file.Client{}
     downloadPath := "file-to-download.txt"
-    fileEntry, err := client.DownloadToFile(files_sdk.FileDownloadParams{Path: "file-to-download.txt"}, downloadPath)
+    fileEntry, err := client.DownloadToFile(context.Background(), files_sdk.FileDownloadParams{Path: "file-to-download.txt"}, downloadPath)
     if err != nil {
         panic(err)
     }
