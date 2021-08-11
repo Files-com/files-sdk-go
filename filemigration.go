@@ -13,6 +13,7 @@ type FileMigration struct {
 	Operation  string `json:"operation,omitempty"`
 	Region     string `json:"region,omitempty"`
 	Status     string `json:"status,omitempty"`
+	LogUrl     string `json:"log_url,omitempty"`
 }
 
 type FileMigrationCollection []FileMigration

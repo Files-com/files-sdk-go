@@ -11,30 +11,6 @@ type FileAction struct {
 
 type FileActionCollection []FileAction
 
-// Copy file/folder
-type FileActionCopyParams struct {
-	Path        string `url:"-,omitempty" required:"true"`
-	Destination string `url:"destination,omitempty" required:"true"`
-	Structure   *bool  `url:"structure,omitempty" required:"false"`
-}
-
-// Move file/folder
-type FileActionMoveParams struct {
-	Path        string `url:"-,omitempty" required:"true"`
-	Destination string `url:"destination,omitempty" required:"true"`
-}
-
-// Begin file upload
-type FileActionBeginUploadParams struct {
-	Path         string `url:"-,omitempty" required:"true"`
-	MkdirParents *bool  `url:"mkdir_parents,omitempty" required:"false"`
-	Part         int64  `url:"part,omitempty" required:"false"`
-	Parts        int64  `url:"parts,omitempty" required:"false"`
-	Ref          string `url:"ref,omitempty" required:"false"`
-	Restart      int64  `url:"restart,omitempty" required:"false"`
-	WithRename   *bool  `url:"with_rename,omitempty" required:"false"`
-}
-
 func (f *FileAction) UnmarshalJSON(data []byte) error {
 	type fileAction FileAction
 	var v fileAction

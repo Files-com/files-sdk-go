@@ -18,7 +18,7 @@ type MockUploader struct {
 	findError files_sdk.ResponseError
 }
 
-func (m *MockUploader) Upload(context.Context, io.ReaderAt, int64, files_sdk.FileActionBeginUploadParams, func(int64), goccm.ConcurrencyManager) (files_sdk.File, error) {
+func (m *MockUploader) Upload(context.Context, io.ReaderAt, int64, files_sdk.FileBeginUploadParams, func(int64), goccm.ConcurrencyManager) (files_sdk.File, error) {
 	return files_sdk.File{}, nil
 }
 

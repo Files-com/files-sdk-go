@@ -20,7 +20,7 @@ import (
 )
 
 type Uploader interface {
-	Upload(context.Context, io.ReaderAt, int64, files_sdk.FileActionBeginUploadParams, func(int64), goccm.ConcurrencyManager) (files_sdk.File, error)
+	Upload(context.Context, io.ReaderAt, int64, files_sdk.FileBeginUploadParams, func(int64), goccm.ConcurrencyManager) (files_sdk.File, error)
 	Find(context.Context, string) (files_sdk.File, error)
 }
 
@@ -173,7 +173,7 @@ func uploadFolder(ctx context.Context, c Uploader, config files_sdk.Config, para
 				return
 			}
 
-			file, err := c.Upload(ctx, localFile, uploadStatus.Size, files_sdk.FileActionBeginUploadParams{Path: uploadStatus.RemotePath, MkdirParents: lib.Bool(true)}, uploadProgress(params, uploadStatus), params.FilePartsManager)
+			file, err := c.Upload(ctx, localFile, uploadStatus.Size, files_sdk.FileBeginUploadParams{Path: uploadStatus.RemotePath, MkdirParents: lib.Bool(true)}, uploadProgress(params, uploadStatus), params.FilePartsManager)
 			dealWithCanceledError(ctx, uploadStatus, err, file, params)
 		}(downloadCtx, uploadStatus)
 	}

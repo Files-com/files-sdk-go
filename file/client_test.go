@@ -76,8 +76,8 @@ func buildScenario(base string, client *Client) {
 	folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filepath.Join(base, "nested_1", "nested_2")})
 	folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filepath.Join(base, "nested_1", "nested_2", "nested_3")})
 
-	client.Upload(context.Background(), strings.NewReader("testing 3"), int64(9), files_sdk.FileActionBeginUploadParams{Path: filepath.Join(base, "nested_1", "nested_2", "3.text")}, func(i int64) {}, goccm.New(1))
-	client.Upload(context.Background(), strings.NewReader("testing 3"), int64(9), files_sdk.FileActionBeginUploadParams{Path: filepath.Join(base, "nested_1", "nested_2", "nested_3", "4.text")}, func(i int64) {}, goccm.New(1))
+	client.Upload(context.Background(), strings.NewReader("testing 3"), int64(9), files_sdk.FileBeginUploadParams{Path: filepath.Join(base, "nested_1", "nested_2", "3.text")}, func(i int64) {}, goccm.New(1))
+	client.Upload(context.Background(), strings.NewReader("testing 3"), int64(9), files_sdk.FileBeginUploadParams{Path: filepath.Join(base, "nested_1", "nested_2", "nested_3", "4.text")}, func(i int64) {}, goccm.New(1))
 }
 
 func runDownloadScenario(path string, destination string, client *Client) map[string][]status.File {
@@ -528,7 +528,7 @@ func TestClient_DownloadFolder_file_only(t *testing.T) {
 	}
 	defer r.Stop()
 
-	client.Upload(context.Background(), strings.NewReader("hello"), int64(5), files_sdk.FileActionBeginUploadParams{Path: filepath.Join("i am at the root.text")}, func(i int64) {}, goccm.New(1))
+	client.Upload(context.Background(), strings.NewReader("hello"), int64(5), files_sdk.FileBeginUploadParams{Path: filepath.Join("i am at the root.text")}, func(i int64) {}, goccm.New(1))
 	assert := assert.New(t)
 	results := runDownloadScenario("i am at the root.text", "", client)
 	assert.NoError(err)

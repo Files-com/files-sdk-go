@@ -16,7 +16,6 @@ import (
 	"github.com/Files-com/files-sdk-go/file/status"
 
 	files_sdk "github.com/Files-com/files-sdk-go"
-	file_action "github.com/Files-com/files-sdk-go/fileaction"
 	"github.com/Files-com/files-sdk-go/folder"
 	"github.com/Files-com/files-sdk-go/lib"
 )
@@ -91,7 +90,7 @@ func (c *Client) UploadFile(ctx context.Context, params *UploadParams) status.Fi
 		Sync:       params.Sync,
 	}
 
-	beginUpload := files_sdk.FileActionBeginUploadParams{}
+	beginUpload := files_sdk.FileBeginUploadParams{}
 	destination := params.Destination
 	_, localFileName := filepath.Split(params.Source)
 	if params.Destination == "" {
@@ -145,11 +144,11 @@ func UploadFile(ctx context.Context, params *UploadParams) status.File {
 	return (&Client{}).UploadFile(ctx, params)
 }
 
-func Upload(ctx context.Context, reader io.ReaderAt, size int64, beginUpload files_sdk.FileActionBeginUploadParams, progress func(int64), cm goccm.ConcurrencyManager) (files_sdk.File, error) {
+func Upload(ctx context.Context, reader io.ReaderAt, size int64, beginUpload files_sdk.FileBeginUploadParams, progress func(int64), cm goccm.ConcurrencyManager) (files_sdk.File, error) {
 	return (&Client{}).Upload(ctx, reader, size, beginUpload, progress, cm)
 }
 
-func (c *Client) Upload(ctx context.Context, reader io.ReaderAt, size int64, params files_sdk.FileActionBeginUploadParams, progress func(int64), cm goccm.ConcurrencyManager) (files_sdk.File, error) {
+func (c *Client) Upload(ctx context.Context, reader io.ReaderAt, size int64, params files_sdk.FileBeginUploadParams, progress func(int64), cm goccm.ConcurrencyManager) (files_sdk.File, error) {
 	onComplete := make(chan files_sdk.EtagsParam)
 	onError := make(chan error)
 	bytesWritten := int64(0)
@@ -215,9 +214,8 @@ func (c *Client) Upload(ctx context.Context, reader io.ReaderAt, size int64, par
 	return c.completeUpload(ctx, etags, bytesWritten, fileUploadPart.Path, fileUploadPart.Ref)
 }
 
-func (c *Client) startUpload(ctx context.Context, beginUpload files_sdk.FileActionBeginUploadParams) (files_sdk.FileUploadPart, error) {
-	fileActionClient := file_action.Client{Config: c.Config}
-	uploads, err := fileActionClient.BeginUpload(ctx, beginUpload)
+func (c *Client) startUpload(ctx context.Context, beginUpload files_sdk.FileBeginUploadParams) (files_sdk.FileUploadPart, error) {
+	uploads, err := c.BeginUpload(ctx, beginUpload)
 	if err != nil {
 		return files_sdk.FileUploadPart{}, err
 	}
@@ -254,7 +252,7 @@ func (c *Client) createPart(ctx context.Context, reader io.ReadCloser, len int64
 	var err error
 	if fileUploadPart.PartNumber != 1 {
 		fileUploadPart, err = c.startUpload(
-			ctx, files_sdk.FileActionBeginUploadParams{Path: fileUploadPart.Path, Ref: fileUploadPart.Ref, Part: fileUploadPart.PartNumber},
+			ctx, files_sdk.FileBeginUploadParams{Path: fileUploadPart.Path, Ref: fileUploadPart.Ref, Part: fileUploadPart.PartNumber},
 		)
 		if err != nil {
 			return files_sdk.EtagsParam{}, int64(0), err

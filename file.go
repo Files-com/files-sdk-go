@@ -80,6 +80,38 @@ type FileDeleteParams struct {
 	Recursive *bool  `url:"recursive,omitempty" required:"false"`
 }
 
+// Return metadata for file/folder
+type FileMetadataParams struct {
+	Path              string `url:"-,omitempty" required:"true"`
+	PreviewSize       string `url:"preview_size,omitempty" required:"false"`
+	WithPreviews      *bool  `url:"with_previews,omitempty" required:"false"`
+	WithPriorityColor *bool  `url:"with_priority_color,omitempty" required:"false"`
+}
+
+// Copy file/folder
+type FileCopyParams struct {
+	Path        string `url:"-,omitempty" required:"true"`
+	Destination string `url:"destination,omitempty" required:"true"`
+	Structure   *bool  `url:"structure,omitempty" required:"false"`
+}
+
+// Move file/folder
+type FileMoveParams struct {
+	Path        string `url:"-,omitempty" required:"true"`
+	Destination string `url:"destination,omitempty" required:"true"`
+}
+
+// Begin file upload
+type FileBeginUploadParams struct {
+	Path         string `url:"-,omitempty" required:"true"`
+	MkdirParents *bool  `url:"mkdir_parents,omitempty" required:"false"`
+	Part         int64  `url:"part,omitempty" required:"false"`
+	Parts        int64  `url:"parts,omitempty" required:"false"`
+	Ref          string `url:"ref,omitempty" required:"false"`
+	Restart      int64  `url:"restart,omitempty" required:"false"`
+	WithRename   *bool  `url:"with_rename,omitempty" required:"false"`
+}
+
 func (f File) ToFolder() (Folder, error) {
 	bodyBytes, err := json.Marshal(f)
 	if err != nil {

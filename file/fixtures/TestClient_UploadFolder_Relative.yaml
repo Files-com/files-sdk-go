@@ -1710,7 +1710,7 @@ interactions:
             filepath.Clean(dir))\n\t\t\t\tsomeMapMutex.Unlock()\n\t\t\t}\n\t\t\tlocalFile,
             err := os.Open(uploadFile.Source)\n\t\t\tdefer func() {\n\t\t\t\tlocalFile.Close()\n\t\t\t\tgoc.Done()\n\t\t\t}()\n\t\t\tif
             err != nil {\n\t\t\t\tuploadFile.error = err\n\t\t\t\tprogress.progressWatcher(0)\n\t\t\t\treturn\n\t\t\t}\n\n\t\t\tfile,
-            err := c.Upload(localFile, uploadFile.Stat.Size(), files_sdk.FileActionBeginUploadParams{Path:
+            err := c.Upload(localFile, uploadFile.Stat.Size(), files_sdk.FileBeginUploadParams{Path:
             uploadFile.File.Path, MkdirParents: lib.Bool(true)}, &progress)\n\t\t\tif err
             != nil {\n\t\t\t\tuploadFile.error = err\n\t\t\t\tprogress.progressWatcher(0)\n\t\t\t}\n\t\t\tuploadFile.File
             = file\n\t\t}(uploadFile)\n\t}\n\tgoc.WaitAllDone()\n\n\treturn uploadFiles,
@@ -1722,7 +1722,7 @@ interactions:
             os.Stat(u.Source)\n\tif err != nil {\n\t\tu.error = err\n\t\treturn false\n\t}\n\tu.Stat
             = fi\n\n\tif fi.IsDir() {\n\t\treturn true\n\t} else {\n\t\treturn false\n\t}\n}\n\nfunc
             (c *Client) UploadFile(params *UploadParams) (files_sdk.File, error) {\n\tbeginUpload
-            := files_sdk.FileActionBeginUploadParams{}\n\tdestination := params.Destination\n\t_,
+            := files_sdk.FileBeginUploadParams{}\n\tdestination := params.Destination\n\t_,
             localFileName := filepath.Split(params.Source)\n\tif params.Destination == \"\"
             {\n\t\tdestination = localFileName\n\t} else {\n\t\t_, err := c.Find(params.Destination)\n\t\tresponseError,
             ok := err.(files_sdk.ResponseError)\n\t\tif ok && responseError.Type == \"bad-request/cannot-download-directory\"
@@ -1739,7 +1739,7 @@ interactions:
             TotalUploads: 1},\n\t\t\tnil,\n\t\t)\n\t}\n\tbeginUpload.Path = destination\n\treturn
             c.Upload(localFile, fi.Size(), beginUpload, &progress)\n}\n\nfunc UploadFile(params
             *UploadParams) (files_sdk.File, error) {\n\treturn (&Client{}).UploadFile(params)\n}\n\nfunc
-            (c *Client) Upload(reader io.ReaderAt, size int64, params files_sdk.FileActionBeginUploadParams,
+            (c *Client) Upload(reader io.ReaderAt, size int64, params files_sdk.FileBeginUploadParams,
             progress *UploadProgress) (files_sdk.File, error) {\n\tonComplete := make(chan
             files_sdk.EtagsParam)\n\tonError := make(chan error)\n\tbytesWritten := int64(0)\n\tetags
             := make([]files_sdk.EtagsParam, 0)\n\tgoc := c.Config.NullConcurrencyManger()\n\tfileUploadPart,
@@ -1758,7 +1758,7 @@ interactions:
             err := <-onError:\n\t\t\tpartReturnedError = true\n\t\t\treturn files_sdk.File{},
             err\n\t\tcase etag := <-onComplete:\n\t\t\tetags = append(etags, etag)\n\t\t}\n\t}\n\n\treturn
             c.completeUpload(etags, bytesWritten, fileUploadPart.Path, fileUploadPart.Ref)\n}\n\nfunc
-            (c *Client) startUpload(beginUpload files_sdk.FileActionBeginUploadParams) (files_sdk.FileUploadPart,
+            (c *Client) startUpload(beginUpload files_sdk.FileBeginUploadParams) (files_sdk.FileUploadPart,
             error) {\n\tfileActionClient := file_action.Client{Config: c.Config}\n\tuploads,
             err := fileActionClient.BeginUpload(beginUpload)\n\tif err != nil {\n\t\treturn
             files_sdk.FileUploadPart{}, err\n\t}\n\treturn uploads[0], err\n}\n\nfunc (c
@@ -1770,12 +1770,12 @@ interactions:
             {\n\toff := int64(0)\n\tendRange := blockSize\n\tfor {\n\t\tif off < size {\n\t\t\tendRange
             = int64(math.Min(float64(endRange), float64(size)))\n\t\t\tcallback(off, endRange-off)\n\t\t\toff
             = endRange\n\t\t\tendRange = off + blockSize\n\t\t} else {\n\t\t\tbreak\n\t\t}\n\t}\n}\n\nfunc
-            Upload(reader io.ReaderAt, size int64, beginUpload files_sdk.FileActionBeginUploadParams,
+            Upload(reader io.ReaderAt, size int64, beginUpload files_sdk.FileBeginUploadParams,
             progress *UploadProgress) (files_sdk.File, error) {\n\treturn (&Client{}).Upload(reader,
             size, beginUpload, progress)\n}\n\nfunc (c *Client) createPart(reader io.ReadCloser,
             len int64, fileUploadPart files_sdk.FileUploadPart) (files_sdk.EtagsParam, int64,
             error) {\n\tvar err error\n\tif fileUploadPart.PartNumber != 1 {\n\t\tfileUploadPart,
-            err = c.startUpload(\n\t\t\tfiles_sdk.FileActionBeginUploadParams{Path: fileUploadPart.Path,
+            err = c.startUpload(\n\t\t\tfiles_sdk.FileBeginUploadParams{Path: fileUploadPart.Path,
             Ref: fileUploadPart.Ref, Part: fileUploadPart.PartNumber},\n\t\t)\n\t\tif err
             != nil {\n\t\t\treturn files_sdk.EtagsParam{}, int64(0), err\n\t\t}\n\t}\n\n\theaders
             := http.Header{}\n\theaders.Add(\"Content-Length\", strconv.FormatInt(len, 10))\n\tres,
@@ -1963,9 +1963,9 @@ interactions:
             \"nested_1\")})\n\tfolderClient.Create(files_sdk.FolderCreateParams{Path: filepath.Join(base,
             \"nested_1\", \"nested_2\")})\n\tfolderClient.Create(files_sdk.FolderCreateParams{Path:
             filepath.Join(base, \"nested_1\", \"nested_2\", \"nested_3\")})\n\n\tclient.Upload(strings.NewReader(\"testing
-            3\"), int64(9), files_sdk.FileActionBeginUploadParams{Path: filepath.Join(base,
+            3\"), int64(9), files_sdk.FileBeginUploadParams{Path: filepath.Join(base,
             \"nested_1\", \"nested_2\", \"3.text\")}, &UploadProgress{})\n\tclient.Upload(strings.NewReader(\"testing
-            3\"), int64(9), files_sdk.FileActionBeginUploadParams{Path: filepath.Join(base,
+            3\"), int64(9), files_sdk.FileBeginUploadParams{Path: filepath.Join(base,
             \"nested_1\", \"nested_2\", \"nested_3\", \"4.text\")}, &UploadProgress{})\n\n}\n\nfunc
             runDownloadScenario(path string, destination string, client *Client) ([]string,
             error) {\n\tvar results []string\n\terr := client.DownloadFolder(\n\t\tfiles_sdk.FolderListForParams{Path:
@@ -2116,7 +2116,7 @@ interactions:
             => 3.text\")\n\tassert.Subset(results, expected)\n\n\tos.RemoveAll(\"3.text\")\n}\n\nfunc
             TestClient_DownloadFolder_file_only(t *testing.T) {\n\tclient, r, err := CreateClient(\"TestClient_DownloadFolder_file_only\")\n\tif
             err != nil {\n\t\tt.Fatal(err)\n\t}\n\tdefer r.Stop()\n\n\tclient.Upload(strings.NewReader(\"hello\"),
-            int64(5), files_sdk.FileActionBeginUploadParams{Path: filepath.Join(\"i am at
+            int64(5), files_sdk.FileBeginUploadParams{Path: filepath.Join(\"i am at
             the root.text\")}, &UploadProgress{})\n\tassert := assert.New(t)\n\tresults,
             err := runDownloadScenario(\"i am at the root.text\", \"\", client)\n\tassert.NoError(err)\n\n\tvar
             expected []string\n\texpected = append(expected, \"5 bytes i am at the root.text
