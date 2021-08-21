@@ -11,6 +11,7 @@ type BundleRegistration struct {
 	Name           string `json:"name,omitempty"`
 	Company        string `json:"company,omitempty"`
 	Email          string `json:"email,omitempty"`
+	Ip             string `json:"ip,omitempty"`
 	InboxCode      string `json:"inbox_code,omitempty"`
 	ClickwrapBody  string `json:"clickwrap_body,omitempty"`
 	FormFieldSetId int64  `json:"form_field_set_id,omitempty"`
