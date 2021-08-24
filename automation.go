@@ -11,7 +11,6 @@ type Automation struct {
 	Automation             string          `json:"automation,omitempty"`
 	Trigger                string          `json:"trigger,omitempty"`
 	Interval               string          `json:"interval,omitempty"`
-	NextProcessOn          string          `json:"next_process_on,omitempty"`
 	Schedule               json.RawMessage `json:"schedule,omitempty"`
 	Source                 string          `json:"source,omitempty"`
 	Destinations           string          `json:"destinations,omitempty"`
