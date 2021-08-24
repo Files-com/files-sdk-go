@@ -62,6 +62,7 @@ type User struct {
 	ChangePasswordConfirmation string    `json:"change_password_confirmation,omitempty"`
 	GrantPermission            string    `json:"grant_permission,omitempty"`
 	GroupId                    int64     `json:"group_id,omitempty"`
+	ImportedPasswordHash       string    `json:"imported_password_hash,omitempty"`
 	Password                   string    `json:"password,omitempty"`
 	PasswordConfirmation       string    `json:"password_confirmation,omitempty"`
 	AnnouncementsRead          *bool     `json:"announcements_read,omitempty"`
@@ -87,11 +88,12 @@ func (u UserAuthenticationMethodEnum) String() string {
 
 func (u UserAuthenticationMethodEnum) Enum() map[string]UserAuthenticationMethodEnum {
 	return map[string]UserAuthenticationMethodEnum{
-		"password":           UserAuthenticationMethodEnum("password"),
-		"unused_former_ldap": UserAuthenticationMethodEnum("unused_former_ldap"),
-		"sso":                UserAuthenticationMethodEnum("sso"),
-		"none":               UserAuthenticationMethodEnum("none"),
-		"email_signup":       UserAuthenticationMethodEnum("email_signup"),
+		"password":                    UserAuthenticationMethodEnum("password"),
+		"unused_former_ldap":          UserAuthenticationMethodEnum("unused_former_ldap"),
+		"sso":                         UserAuthenticationMethodEnum("sso"),
+		"none":                        UserAuthenticationMethodEnum("none"),
+		"email_signup":                UserAuthenticationMethodEnum("email_signup"),
+		"password_with_imported_hash": UserAuthenticationMethodEnum("password_with_imported_hash"),
 	}
 }
 
@@ -152,6 +154,7 @@ type UserCreateParams struct {
 	GrantPermission            string                       `url:"grant_permission,omitempty" required:"false"`
 	GroupId                    int64                        `url:"group_id,omitempty" required:"false"`
 	GroupIds                   string                       `url:"group_ids,omitempty" required:"false"`
+	ImportedPasswordHash       string                       `url:"imported_password_hash,omitempty" required:"false"`
 	Password                   string                       `url:"password,omitempty" required:"false"`
 	PasswordConfirmation       string                       `url:"password_confirmation,omitempty" required:"false"`
 	AnnouncementsRead          *bool                        `url:"announcements_read,omitempty" required:"false"`
@@ -214,6 +217,7 @@ type UserUpdateParams struct {
 	GrantPermission            string                       `url:"grant_permission,omitempty" required:"false"`
 	GroupId                    int64                        `url:"group_id,omitempty" required:"false"`
 	GroupIds                   string                       `url:"group_ids,omitempty" required:"false"`
+	ImportedPasswordHash       string                       `url:"imported_password_hash,omitempty" required:"false"`
 	Password                   string                       `url:"password,omitempty" required:"false"`
 	PasswordConfirmation       string                       `url:"password_confirmation,omitempty" required:"false"`
 	AnnouncementsRead          *bool                        `url:"announcements_read,omitempty" required:"false"`
