@@ -12,6 +12,8 @@ type Behavior struct {
 	Path           string          `json:"path,omitempty"`
 	AttachmentUrl  string          `json:"attachment_url,omitempty"`
 	Behavior       string          `json:"behavior,omitempty"`
+	Name           string          `json:"name,omitempty"`
+	Description    string          `json:"description,omitempty"`
 	Value          json.RawMessage `json:"value,omitempty"`
 	AttachmentFile io.Reader       `json:"attachment_file,omitempty"`
 }
@@ -55,6 +57,8 @@ type BehaviorListForParams struct {
 type BehaviorCreateParams struct {
 	Value          string    `url:"value,omitempty" required:"false"`
 	AttachmentFile io.Writer `url:"attachment_file,omitempty" required:"false"`
+	Name           string    `url:"name,omitempty" required:"false"`
+	Description    string    `url:"description,omitempty" required:"false"`
 	Path           string    `url:"path,omitempty" required:"true"`
 	Behavior       string    `url:"behavior,omitempty" required:"true"`
 }
@@ -72,6 +76,8 @@ type BehaviorUpdateParams struct {
 	Id             int64     `url:"-,omitempty" required:"true"`
 	Value          string    `url:"value,omitempty" required:"false"`
 	AttachmentFile io.Writer `url:"attachment_file,omitempty" required:"false"`
+	Name           string    `url:"name,omitempty" required:"false"`
+	Description    string    `url:"description,omitempty" required:"false"`
 	Behavior       string    `url:"behavior,omitempty" required:"false"`
 	Path           string    `url:"path,omitempty" required:"false"`
 }

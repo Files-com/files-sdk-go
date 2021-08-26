@@ -11,11 +11,13 @@ type Automation struct {
 	Automation             string          `json:"automation,omitempty"`
 	Trigger                string          `json:"trigger,omitempty"`
 	Interval               string          `json:"interval,omitempty"`
+	Name                   string          `json:"name,omitempty"`
 	Schedule               json.RawMessage `json:"schedule,omitempty"`
 	Source                 string          `json:"source,omitempty"`
 	Destinations           string          `json:"destinations,omitempty"`
 	DestinationReplaceFrom string          `json:"destination_replace_from,omitempty"`
 	DestinationReplaceTo   string          `json:"destination_replace_to,omitempty"`
+	Description            string          `json:"description,omitempty"`
 	Path                   string          `json:"path,omitempty"`
 	UserId                 int64           `json:"user_id,omitempty"`
 	UserIds                []int64         `json:"user_ids,omitempty"`
@@ -94,6 +96,8 @@ type AutomationCreateParams struct {
 	UserIds                string                `url:"user_ids,omitempty" required:"false"`
 	GroupIds               string                `url:"group_ids,omitempty" required:"false"`
 	Schedule               json.RawMessage       `url:"schedule,omitempty" required:"false"`
+	Description            string                `url:"description,omitempty" required:"false"`
+	Name                   string                `url:"name,omitempty" required:"false"`
 	Trigger                AutomationTriggerEnum `url:"trigger,omitempty" required:"false"`
 	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false"`
 	TriggerActionPath      string                `url:"trigger_action_path,omitempty" required:"false"`
@@ -113,6 +117,8 @@ type AutomationUpdateParams struct {
 	UserIds                string                `url:"user_ids,omitempty" required:"false"`
 	GroupIds               string                `url:"group_ids,omitempty" required:"false"`
 	Schedule               json.RawMessage       `url:"schedule,omitempty" required:"false"`
+	Description            string                `url:"description,omitempty" required:"false"`
+	Name                   string                `url:"name,omitempty" required:"false"`
 	Trigger                AutomationTriggerEnum `url:"trigger,omitempty" required:"false"`
 	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false"`
 	TriggerActionPath      string                `url:"trigger_action_path,omitempty" required:"false"`
