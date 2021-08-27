@@ -7,13 +7,15 @@ import (
 )
 
 type InboxRegistration struct {
-	Code           string `json:"code,omitempty"`
-	Name           string `json:"name,omitempty"`
-	Company        string `json:"company,omitempty"`
-	Email          string `json:"email,omitempty"`
-	ClickwrapBody  string `json:"clickwrap_body,omitempty"`
-	FormFieldSetId int64  `json:"form_field_set_id,omitempty"`
-	FormFieldData  string `json:"form_field_data,omitempty"`
+	Code             string `json:"code,omitempty"`
+	Name             string `json:"name,omitempty"`
+	Company          string `json:"company,omitempty"`
+	Email            string `json:"email,omitempty"`
+	ClickwrapBody    string `json:"clickwrap_body,omitempty"`
+	FormFieldSetId   int64  `json:"form_field_set_id,omitempty"`
+	FormFieldData    string `json:"form_field_data,omitempty"`
+	InboxId          int64  `json:"inbox_id,omitempty"`
+	InboxRecipientId int64  `json:"inbox_recipient_id,omitempty"`
 }
 
 type InboxRegistrationCollection []InboxRegistration
