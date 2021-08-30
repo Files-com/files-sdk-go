@@ -42,6 +42,7 @@ type Site struct {
 	DisablePasswordReset                 *bool     `json:"disable_password_reset,omitempty"`
 	Domain                               string    `json:"domain,omitempty"`
 	Email                                string    `json:"email,omitempty"`
+	FtpEnabled                           *bool     `json:"ftp_enabled,omitempty"`
 	ReplyToEmail                         string    `json:"reply_to_email,omitempty"`
 	NonSsoGroupsAllowed                  *bool     `json:"non_sso_groups_allowed,omitempty"`
 	NonSsoUsersAllowed                   *bool     `json:"non_sso_users_allowed,omitempty"`
@@ -95,6 +96,7 @@ type Site struct {
 	Require2faUserType                   string    `json:"require_2fa_user_type,omitempty"`
 	Session                              string    `json:"session,omitempty"`
 	SessionPinnedByIp                    *bool     `json:"session_pinned_by_ip,omitempty"`
+	SftpEnabled                          *bool     `json:"sftp_enabled,omitempty"`
 	SftpUserRootEnabled                  *bool     `json:"sftp_user_root_enabled,omitempty"`
 	SharingEnabled                       *bool     `json:"sharing_enabled,omitempty"`
 	ShowRequestAccessLink                *bool     `json:"show_request_access_link,omitempty"`
@@ -191,6 +193,8 @@ type SiteUpdateParams struct {
 	NonSsoUsersAllowed                   *bool     `url:"non_sso_users_allowed,omitempty" required:"false"`
 	SharingEnabled                       *bool     `url:"sharing_enabled,omitempty" required:"false"`
 	UserRequestsEnabled                  *bool     `url:"user_requests_enabled,omitempty" required:"false"`
+	FtpEnabled                           *bool     `url:"ftp_enabled,omitempty" required:"false"`
+	SftpEnabled                          *bool     `url:"sftp_enabled,omitempty" required:"false"`
 	Allowed2faMethodSms                  *bool     `url:"allowed_2fa_method_sms,omitempty" required:"false"`
 	Allowed2faMethodU2f                  *bool     `url:"allowed_2fa_method_u2f,omitempty" required:"false"`
 	Allowed2faMethodTotp                 *bool     `url:"allowed_2fa_method_totp,omitempty" required:"false"`
