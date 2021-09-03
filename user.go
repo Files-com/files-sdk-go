@@ -44,6 +44,7 @@ type User struct {
 	Require2fa                 string    `json:"require_2fa,omitempty"`
 	Active2fa                  *bool     `json:"active_2fa,omitempty"`
 	RequirePasswordChange      *bool     `json:"require_password_change,omitempty"`
+	PasswordExpired            *bool     `json:"password_expired,omitempty"`
 	RestapiPermission          *bool     `json:"restapi_permission,omitempty"`
 	SelfManaged                *bool     `json:"self_managed,omitempty"`
 	SftpPermission             *bool     `json:"sftp_permission,omitempty"`
