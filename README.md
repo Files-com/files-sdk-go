@@ -15,8 +15,8 @@ Then, reference files-sdk-go in a Go program with `import`:
 
 ``` go
 import (
-    "github.com/Files-com/files-sdk-go"
-    "github.com/Files-com/files-sdk-go/folder"
+    "github.com/Files-com/files-sdk-go/v2"
+    "github.com/Files-com/files-sdk-go/v2/folder"
 )
 ```
 
@@ -37,7 +37,7 @@ export FILES_API_KEY="XXXX-XXXX..."
 
 ```go 
 import (
-    "github.com/Files-com/files-sdk-go"
+    "github.com/Files-com/files-sdk-go/v2"
 )
 
  files_sdk.APIKey = "XXXX-XXXX..."
@@ -47,8 +47,8 @@ import (
 
 ```go 
 import (
-    "github.com/Files-com/files-sdk-go"
-    "github.com/Files-com/files-sdk-go/file"
+    "github.com/Files-com/files-sdk-go/v2"
+    "github.com/Files-com/files-sdk-go/v2/file"
 )
 
 config := files_sdk.Config{APIKey: "XXXX-XXXX..."}
@@ -59,8 +59,8 @@ client := file.Client{Config: config}
 
 ```go 
 import (
-	files_sdk "github.com/Files-com/files-sdk-go"
-	folder "github.com/Files-com/files-sdk-go/folder"
+	files_sdk "github.com/Files-com/files-sdk-go/v2"
+	folder "github.com/Files-com/files-sdk-go/v2/folder"
     "fmt"
 )
 
@@ -83,8 +83,8 @@ func main() {
 ### Upload a File
 ```go 
 import (
-	files_sdk "github.com/Files-com/files-sdk-go"
-	file "github.com/Files-com/files-sdk-go/file"
+	files_sdk "github.com/Files-com/files-sdk-go/v2"
+	file "github.com/Files-com/files-sdk-go/v2/file"
 )
 
 func main() {
@@ -101,7 +101,7 @@ func main() {
 #### Via io.Reader
 
 ```go 
-import file "github.com/Files-com/files-sdk-go/file"
+import file "github.com/Files-com/files-sdk-go/v2/file"
 
 func main() {
     client := file.Client{}
@@ -116,7 +116,7 @@ func main() {
 
 ### Download a File
 ```go 
-import file "github.com/Files-com/files-sdk-go/file"
+import file "github.com/Files-com/files-sdk-go/v2/file"
 
 func main() {
     client := file.Client{}

@@ -120,7 +120,7 @@ func (i *Iter) Next() bool {
 		return true
 	}
 
-	if len(*i.Values) == int(i.GetParams().PerPage) {
+	if i.EOFPage() {
 		i.CurrentIndex = 0
 		return i.GetPage()
 	}

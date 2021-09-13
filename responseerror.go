@@ -3,6 +3,7 @@ package files_sdk
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 )
 
 type ResponseError struct {
@@ -32,7 +33,7 @@ type Data struct {
 }
 
 func (e ResponseError) Error() string {
-	return fmt.Sprintf("%v - http-code: %v", e.ErrorMessage, e.HttpCode)
+	return fmt.Sprintf("%v - `%v`", e.Title, e.ErrorMessage)
 }
 
 func (e ResponseError) IsNil() bool {
@@ -55,6 +56,11 @@ func (e *ResponseError) UnmarshalJSON(data []byte) error {
 			} else if jsonError.Value != "array" {
 				return err
 			}
+		} else if ok && jsonError.Field == "http-code" {
+			tmp := make(map[string]interface{})
+			json.Unmarshal(data, &tmp)
+			intVar, _ := strconv.Atoi(tmp["http-code"].(string))
+			v.HttpCode = intVar
 		} else {
 			return err
 		}

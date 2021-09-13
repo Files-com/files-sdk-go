@@ -1,12 +1,14 @@
 package manager
 
 import (
+	"context"
+
 	"github.com/zenthangplus/goccm"
 )
 
 var (
-	ConcurrentFiles     = 25
-	ConcurrentFileParts = 100
+	ConcurrentFiles     = 50
+	ConcurrentFileParts = 75
 )
 
 type Manager struct {
@@ -23,4 +25,15 @@ func New(ConcurrentFiles int, ConcurrentFileParts int) *Manager {
 
 func Default() *Manager {
 	return New(ConcurrentFiles, ConcurrentFileParts)
+}
+
+func Wait(ctx context.Context, manager goccm.ConcurrencyManager) bool {
+	if ctx.Err() != nil {
+		return false
+	}
+	manager.Wait()
+	if ctx.Err() != nil {
+		return false
+	}
+	return true
 }

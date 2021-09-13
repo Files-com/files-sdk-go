@@ -6,63 +6,66 @@ type Status struct {
 }
 
 var (
-	Queued      = Status{"queued", 0}
-	Downloading = Status{"downloading", 1}
-	Uploading   = Status{"uploading", 1}
-	Skipped     = Status{"skipped", 2}
-	Complete    = Status{"complete", 3}
-	Canceled    = Status{"canceled", 4}
-	Errored     = Status{"errored", 4}
+	Null        = Status{"", -1}
+	Indexed     = Status{"indexed", 0}
+	Retrying    = Status{"retrying", 0}
+	Queued      = Status{"queued", 1}
+	Downloading = Status{"downloading", 2}
+	Uploading   = Status{"uploading", 2}
+	Skipped     = Status{"skipped", 3}
+	Ignored     = Status{"ignored", 3}
+	Complete    = Status{"complete", 4}
+	Canceled    = Status{"canceled", 5}
+	Errored     = Status{"errored", 5}
+
+	Included = []Status{Indexed, Queued, Retrying, Downloading, Uploading, Complete, Canceled, Errored}
+	Excluded = []Status{Skipped, Ignored}
+	Valid    = []Status{Indexed, Queued, Retrying, Downloading, Uploading, Complete}
+	Invalid  = []Status{Null, Canceled, Errored, Skipped, Ignored}
+	Running  = []Status{Downloading, Uploading}
+	Ended    = []Status{Complete, Canceled, Errored}
 )
 
 func (e Status) String() string {
 	return e.Name
 }
 
-func (e Status) Queued() bool {
-	return e.Name == Queued.Name
+func (e Status) Has(statuses ...Status) bool {
+	return e.Any(statuses...)
 }
 
-func (e Status) Downloading() bool {
-	return e.Name == Downloading.Name
+func (e Status) Is(statuses ...Status) bool {
+	return e.Any(statuses...)
 }
 
-func (e Status) Uploading() bool {
-	return e.Name == Uploading.Name
+func (e Status) IsNot(statuses ...Status) bool {
+	return !e.Any(statuses...)
 }
 
-func (e Status) Completed() bool {
-	return e.Name == Complete.Name
+func (e Status) is(status Status) bool {
+	return e.Name == status.Name
 }
 
-func (e Status) Skipped() bool {
-	return e.Name == Skipped.Name
+func (e Status) Any(statuses ...Status) bool {
+	if len(statuses) == 0 {
+		return true
+	}
+	for _, status := range statuses {
+		if e.is(status) {
+			return true
+		}
+	}
+	return false
 }
 
-func (e Status) Errored() bool {
-	return e.Name == Errored.Name
-}
+func SetStatus(old Status, new Status, err error) (Status, bool) {
+	var setError bool
+	if err != nil || new.Is(Retrying) {
+		setError = true
+	}
+	if old.Is(Errored) && new.Is(Running...) {
+		new = old
+	}
 
-func (e Status) Running() bool {
-	return e.Downloading() || e.Uploading()
-}
-
-func (e Status) Invalid() bool {
-	return e.Errored() || e.Canceled() || e.Skipped()
-}
-
-func (e Status) Valid() bool {
-	return e.Queued() || e.Downloading() || e.Uploading() || e.Completed()
-}
-
-func (e Status) Canceled() bool {
-	return e.Name == Canceled.Name
-}
-
-func (e Status) Ended() bool {
-	return e.Completed() || e.Errored() || e.Skipped() || e.Canceled()
-}
-
-func (e Status) Compare(s Status) bool {
-	return e.Name == s.Name
+	return new, setError
 }

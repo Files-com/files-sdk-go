@@ -3,7 +3,7 @@ package files_sdk
 import (
 	"encoding/json"
 
-	lib "github.com/Files-com/files-sdk-go/lib"
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 type Clickwrap struct {

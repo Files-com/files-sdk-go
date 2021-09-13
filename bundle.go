@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	lib "github.com/Files-com/files-sdk-go/lib"
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 type Bundle struct {

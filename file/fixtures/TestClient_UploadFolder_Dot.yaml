@@ -214,8 +214,8 @@ interactions:
     code: 200
     duration: ""
 - request:
-    body: "package file\n\nimport (\n\t\"io\"\n\n\tfiles_sdk \"github.com/Files-com/files-sdk-go\"\n\tlib
-      \"github.com/Files-com/files-sdk-go/lib\"\n)\n\ntype Client struct {\n\tfiles_sdk.Config\n}\n\nfunc
+    body: "package file\n\nimport (\n\t\"io\"\n\n\tfiles_sdk \"github.com/Files-com/files-sdk-go/v2\"\n\tlib
+      \"github.com/Files-com/files-sdk-go/v2/lib\"\n)\n\ntype Client struct {\n\tfiles_sdk.Config\n}\n\nfunc
       (c *Client) Find(Path string) (files_sdk.File, error) {\n\tfile := files_sdk.File{}\n\tpath
       := lib.BuildPath(\"/files/\", Path)\n\texportParams, err := lib.ExportParams(lib.Interface())\n\tif
       err != nil {\n\t\treturn file, err\n\t}\n\tdata, _, err := files_sdk.Call(\"GET\",
@@ -288,7 +288,7 @@ interactions:
     duration: ""
 - request:
     body: "package file\n\nimport (\n\t\"fmt\"\n\t\"math\"\n\t\"net/http\"\n\t\"os\"\n\t\"path/filepath\"\n\t\"strings\"\n\n\tfiles_sdk
-      \"github.com/Files-com/files-sdk-go\"\n\t\"github.com/Files-com/files-sdk-go/folder\"\n\t\"github.com/Files-com/files-sdk-go/lib\"\n\t\"github.com/zenthangplus/goccm\"\n)\n\nfunc
+      \"github.com/Files-com/files-sdk-go/v2\"\n\t\"github.com/Files-com/files-sdk-go/v2/folder\"\n\t\"github.com/Files-com/files-sdk-go/v2/lib\"\n\t\"github.com/zenthangplus/goccm\"\n)\n\nfunc
       (c *Client) DownloadToFile(params files_sdk.FileDownloadParams, filePath string)
       (files_sdk.File, error) {\n\tout, err := os.Create(filePath)\n\tif err != nil
       {\n\t\treturn files_sdk.File{}, err\n\t}\n\tparams.Writer = out\n\treturn c.Download(params)\n}\n\nfunc
@@ -432,7 +432,7 @@ interactions:
     duration: ""
 - request:
     body: "package file\n\nimport (\n\t\"io\"\n\t\"math\"\n\t\"net/http\"\n\t\"os\"\n\t\"path/filepath\"\n\t\"strconv\"\n\t\"strings\"\n\t\"sync\"\n\t\"time\"\n\n\tfiles_sdk
-      \"github.com/Files-com/files-sdk-go\"\n\tfile_action \"github.com/Files-com/files-sdk-go/fileaction\"\n\t\"github.com/Files-com/files-sdk-go/folder\"\n\t\"github.com/Files-com/files-sdk-go/lib\"\n\t\"github.com/zenthangplus/goccm\"\n)\n\ntype
+      \"github.com/Files-com/files-sdk-go/v2\"\n\tfile_action \"github.com/Files-com/files-sdk-go/v2/fileaction\"\n\t\"github.com/Files-com/files-sdk-go/v2/folder\"\n\t\"github.com/Files-com/files-sdk-go/v2/lib\"\n\t\"github.com/zenthangplus/goccm\"\n)\n\ntype
       fileUpload struct {\n\tLocalFile   *os.File\n\tDestination string\n\tSource
       \     string\n\tFile        files_sdk.File\n\tStat        os.FileInfo\n\terror\n}\n\ntype
       UploadParams struct {\n\tSource           string\n\tDestination      string\n\tProgressReporter
@@ -730,7 +730,7 @@ interactions:
     duration: ""
 - request:
     body: "package file\n\nimport (\n\t\"fmt\"\n\t\"io/ioutil\"\n\t\"net/http\"\n\t\"os\"\n\t\"path\"\n\t\"path/filepath\"\n\t\"strings\"\n\t\"sync\"\n\t\"testing\"\n\n\tfiles_sdk
-      \"github.com/Files-com/files-sdk-go\"\n\t\"github.com/Files-com/files-sdk-go/folder\"\n\t\"github.com/Files-com/files-sdk-go/lib\"\n\t\"github.com/dnaeon/go-vcr/cassette\"\n\trecorder
+      \"github.com/Files-com/files-sdk-go/v2\"\n\t\"github.com/Files-com/files-sdk-go/v2/folder\"\n\t\"github.com/Files-com/files-sdk-go/v2/lib\"\n\t\"github.com/dnaeon/go-vcr/cassette\"\n\trecorder
       \"github.com/dnaeon/go-vcr/recorder\"\n\t\"github.com/stretchr/testify/assert\"\n)\n\nfunc
       CreateClient(fixture string) (*Client, *recorder.Recorder, error) {\n\tclient
       := Client{}\n\tvar r *recorder.Recorder\n\tvar err error\n\tif os.Getenv(\"GITLAB\")

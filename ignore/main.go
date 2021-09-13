@@ -19,7 +19,11 @@ var macOSGitignore []byte
 //go:embed data/Linux.gitignore
 var LinuxGitignore []byte
 
-func New() (*ignore.GitIgnore, error) {
+func New(overrides ...string) (*ignore.GitIgnore, error) {
+	if len(overrides) > 0 {
+		return ignore.CompileIgnoreLines(overrides...), nil
+	}
+
 	os := runtime.GOOS
 	switch os {
 	case "windows":

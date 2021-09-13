@@ -3,9 +3,9 @@ package history_export_result
 import (
 	"context"
 
-	files_sdk "github.com/Files-com/files-sdk-go"
-	lib "github.com/Files-com/files-sdk-go/lib"
-	listquery "github.com/Files-com/files-sdk-go/listquery"
+	files_sdk "github.com/Files-com/files-sdk-go/v2"
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
+	listquery "github.com/Files-com/files-sdk-go/v2/listquery"
 )
 
 type Client struct {

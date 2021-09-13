@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Files-com/files-sdk-go/lib"
+	"github.com/Files-com/files-sdk-go/v2/lib"
 	"github.com/dnaeon/go-vcr/cassette"
 	recorder "github.com/dnaeon/go-vcr/recorder"
 	"github.com/stretchr/testify/assert"

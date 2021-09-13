@@ -5,8 +5,8 @@ import (
 	"io"
 	"net/http"
 
-	files_sdk "github.com/Files-com/files-sdk-go"
-	lib "github.com/Files-com/files-sdk-go/lib"
+	files_sdk "github.com/Files-com/files-sdk-go/v2"
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 type Client struct {

@@ -82,6 +82,10 @@ var TestStr2 = `
 }
 `
 
+var TestStr3 = `
+{"error":"Internal server error, please contact support or the person who created your account.","http-code":"500"}
+`
+
 func TestResponseError1_UnmarshalJSON(t *testing.T) {
 	assert := assert.New(t)
 	subject := ResponseError{}
@@ -107,6 +111,19 @@ func TestResponseError2_UnmarshalJSON(t *testing.T) {
 	assert.Equal("processing-failure/model-save-error", subject.Type)
 	assert.Equal("Model Save Error", subject.Title)
 	assert.Equal("Hidden reason can't be blank2", subject.Errors[0].ErrorMessage)
+	assert.Equal(false, subject.IsNil())
+}
+
+func TestResponseError3_UnmarshalJSON(t *testing.T) {
+	assert := assert.New(t)
+	subject := ResponseError{}
+
+	err := subject.UnmarshalJSON([]byte(TestStr3))
+
+	assert.Nil(err)
+	assert.Equal("Internal server error, please contact support or the person who created your account.", subject.ErrorMessage)
+	assert.Equal(int(500), subject.HttpCode)
+	assert.Equal("", subject.Type)
 	assert.Equal(false, subject.IsNil())
 }
 

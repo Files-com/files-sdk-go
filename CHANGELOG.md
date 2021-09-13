@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
+## [2.0.0-beta] - 2021/09/13
+### Changes
+- API changes to `file.UploadFolderOrFile` => `file.Uploader`, `file.DownloadFolder` => `file.Downloader`
+
+### Add
+- `file.FS{}.Init(context.Background(), files_sdk.Config{})` support for using Files.com as FS implementation.
+- `file.Uploader` Concurrent files system scanning improves performance for uploading large numbers of files.
+- `status.Job` includes stats `TransferRate`, `ETA`, `ElapsedTime`, and `Percentage`.
+- `file.RetryPolicy` for  `file.Uploader`/`file.Downloader`
+
+### Fix
+- `lib.Iter{}.Next()` if `PerPage` was not set func didn't not return all results.
+- Calling `status.Job.Any()` could cause deadlock.
+
 ## [1.2.1146] - 2021/08/03
 ### Fix
 - `file.DownloadFolder` handle concurrent downloads on the same path by incrementing the tmp file name.

@@ -1,6 +1,8 @@
 package files_sdk
 
 import (
+	_ "embed"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -8,6 +10,9 @@ import (
 
 	"github.com/hashicorp/go-retryablehttp"
 )
+
+//go:embed _VERSION
+var VERSION string
 
 const (
 	ProductionEndpoint = "https://{SUBDOMAIN}.files.com"
@@ -54,6 +59,7 @@ func (s *Config) GetHttpClient() HttpClient {
 func (s *Config) GetRawClient() *retryablehttp.Client {
 	if s.rawClient == nil {
 		s.rawClient = retryablehttp.NewClient()
+		s.rawClient.ErrorHandler = retryablehttp.PassthroughErrorHandler
 		s.rawClient.Logger = s.Logger()
 		s.rawClient.RetryMax = 3
 	}
@@ -107,7 +113,7 @@ func (s *Config) GetAPIKey() string {
 }
 
 func (s *Config) SetHeaders(headers *http.Header) {
-	headers.Set("User-Agent", UserAgent)
+	headers.Set("User-Agent", fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION)))
 	if s.GetAPIKey() != "" {
 		headers.Set("X-FilesAPI-Key", s.GetAPIKey())
 	} else if s.SessionId != "" {

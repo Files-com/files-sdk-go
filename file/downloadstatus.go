@@ -1,49 +1,54 @@
 package file
 
 import (
-	"context"
+	"io/fs"
+	"time"
 
-	files_sdk "github.com/Files-com/files-sdk-go"
-	"github.com/Files-com/files-sdk-go/file/status"
+	files_sdk "github.com/Files-com/files-sdk-go/v2"
+
+	"github.com/Files-com/files-sdk-go/v2/file/status"
 )
 
 type DownloadStatus struct {
+	fsFile fs.File
 	files_sdk.File
 	status.Status
+	*status.Job
 	DownloadedBytes int64
 	LocalPath       string
 	RemotePath      string
 	Sync            bool
-	context.CancelFunc
-	*status.Job
+	lastByte        time.Time
+	error
 }
 
-func (u DownloadStatus) ToStatusFile() status.File {
+func (d DownloadStatus) ToStatusFile() status.File {
 	return status.File{
-		TransferBytes: u.DownloadedBytes,
-		File:          u.File,
-		Cancel:        u.CancelFunc,
-		LocalPath:     u.LocalPath,
-		RemotePath:    u.RemotePath,
-		Id:            u.Id(),
-		Job:           u.Job,
-		Status:        u.Status,
-		Sync:          u.Sync,
+		TransferBytes: d.DownloadedBytes,
+		File:          d.File,
+		LocalPath:     d.LocalPath,
+		RemotePath:    d.RemotePath,
+		Id:            d.Id(),
+		Job:           d.Job,
+		Status:        d.Status,
+		LastByte:      d.lastByte,
+		Err:           d.error,
 	}
 }
 
-func (r *DownloadStatus) SetStatus(s status.Status) {
-	if s.Valid() && r.Invalid() {
-		return
+func (d *DownloadStatus) SetStatus(s status.Status, err error) {
+	var setError bool
+	d.Status, setError = status.SetStatus(d.Status, s, err)
+	if setError {
+		d.error = err
 	}
-
-	r.Status = s
 }
 
-func (r DownloadStatus) Id() string {
-	return r.Job.Id + ":" + r.File.Path
+func (d DownloadStatus) Id() string {
+	return d.Job.Id + ":" + d.File.Path
 }
 
-func (r *DownloadStatus) incrementDownloadedBytes(b int64) {
-	r.DownloadedBytes += b
+func (d *DownloadStatus) incrementDownloadedBytes(b int64) {
+	d.lastByte = time.Now()
+	d.DownloadedBytes += b
 }

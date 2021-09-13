@@ -8,11 +8,11 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder_Smart
     method: POST
   response:
-    body: '{"error":"The destination exists.","http-code":422,"instance":"1755c960-fcb4-4a0a-b9a6-48d660656edf","title":"Destination
+    body: '{"error":"The destination exists.","http-code":422,"instance":"93780345-1672-4dea-970d-821a2b868a5b","title":"Destination
       Exists","type":"processing-failure/destination-exists"}'
     headers:
       Cache-Control:
@@ -22,7 +22,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:57:07 GMT
+      - Mon, 30 Aug 2021 19:31:21 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -30,7 +30,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 1755c960-fcb4-4a0a-b9a6-48d660656edf
+      - 93780345-1672-4dea-970d-821a2b868a5b
     status: 422 Unprocessable Entity
     code: 422
     duration: ""
@@ -41,11 +41,11 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder_Smart/nested_1
     method: POST
   response:
-    body: '{"error":"The destination exists.","http-code":422,"instance":"6a2c7b00-7792-4baa-8298-1d41f98bb25e","title":"Destination
+    body: '{"error":"The destination exists.","http-code":422,"instance":"5aea5927-1a24-4ffb-af13-d4e15254e0f6","title":"Destination
       Exists","type":"processing-failure/destination-exists"}'
     headers:
       Cache-Control:
@@ -55,7 +55,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:57:07 GMT
+      - Mon, 30 Aug 2021 19:31:21 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -63,7 +63,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 6a2c7b00-7792-4baa-8298-1d41f98bb25e
+      - 5aea5927-1a24-4ffb-af13-d4e15254e0f6
     status: 422 Unprocessable Entity
     code: 422
     duration: ""
@@ -74,11 +74,11 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder_Smart/nested_1/nested_2
     method: POST
   response:
-    body: '{"error":"The destination exists.","http-code":422,"instance":"6ddb7392-c76f-4856-a1f4-82f445eb3635","title":"Destination
+    body: '{"error":"The destination exists.","http-code":422,"instance":"11405cb7-8988-4563-b6ab-b70f6713c07d","title":"Destination
       Exists","type":"processing-failure/destination-exists"}'
     headers:
       Cache-Control:
@@ -88,7 +88,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:57:07 GMT
+      - Mon, 30 Aug 2021 19:31:21 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -96,7 +96,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 6ddb7392-c76f-4856-a1f4-82f445eb3635
+      - 11405cb7-8988-4563-b6ab-b70f6713c07d
     status: 422 Unprocessable Entity
     code: 422
     duration: ""
@@ -107,11 +107,11 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3
     method: POST
   response:
-    body: '{"error":"The destination exists.","http-code":422,"instance":"db2b8c14-f9a9-431b-bc12-eb3ad090bb9e","title":"Destination
+    body: '{"error":"The destination exists.","http-code":422,"instance":"c8f5f932-c08e-4aac-8f30-a1da9f6972d7","title":"Destination
       Exists","type":"processing-failure/destination-exists"}'
     headers:
       Cache-Control:
@@ -121,7 +121,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:57:07 GMT
+      - Mon, 30 Aug 2021 19:31:21 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -129,7 +129,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - db2b8c14-f9a9-431b-bc12-eb3ad090bb9e
+      - c8f5f932-c08e-4aac-8f30-a1da9f6972d7
     status: 422 Unprocessable Entity
     code: 422
     duration: ""
@@ -140,18 +140,18 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/file_actions/begin_upload/TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-05-27T16:12:07Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-4451110057","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/0edec009-e6e2-4ef4-b313-108a1c1dbea8?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210527%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210527T155707Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=UPy7iUrsfUP9iaLvWjlwwiPpUdISIu.hWIFOhNi1KKAEz9I5yhvkrjgJfV40egKgUg93HEkivMX9z6af4QBWdVj04Tgd1rDh0VzsDgaAiID1x3NiPAVGCfMnojzDnm52\u0026X-Amz-Signature=761975b6ba0ff9435096ebdaecc13461558868d94ca53a9672b937941c1d7b15"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-08-30T19:46:21Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-5091479624","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/40301a71-8b9c-41fe-ae5b-08ff7f31a068?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210830%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210830T193121Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=AmGXzuMNhPB5b.gLI7iggdKrT6FyNo.kGq2kL5DML_CiEgdY7AAnv.FUxppFTUI51sGE4QyttftkIDR51a.6mljD4vuwAR5ifwXdYIr7K81KKUYjkQaBSffEr2x5cokE\u0026X-Amz-Signature=15e02681ed9f4fd08573fe05ae31742240677c9e8422c077c18c8030d2a3a2c5"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:57:07 GMT
+      - Mon, 30 Aug 2021 19:31:21 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -159,7 +159,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 219f9112-40c6-4279-9c02-795fd09698c7
+      - 1af49730-0d13-4b68-b09a-f958b1429db0
     status: 200 OK
     code: 200
     duration: ""
@@ -169,7 +169,7 @@ interactions:
     headers:
       Content-Length:
       - "9"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/0edec009-e6e2-4ef4-b313-108a1c1dbea8?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210527%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210527T155707Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=UPy7iUrsfUP9iaLvWjlwwiPpUdISIu.hWIFOhNi1KKAEz9I5yhvkrjgJfV40egKgUg93HEkivMX9z6af4QBWdVj04Tgd1rDh0VzsDgaAiID1x3NiPAVGCfMnojzDnm52&X-Amz-Signature=761975b6ba0ff9435096ebdaecc13461558868d94ca53a9672b937941c1d7b15
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/40301a71-8b9c-41fe-ae5b-08ff7f31a068?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210830%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210830T193121Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=AmGXzuMNhPB5b.gLI7iggdKrT6FyNo.kGq2kL5DML_CiEgdY7AAnv.FUxppFTUI51sGE4QyttftkIDR51a.6mljD4vuwAR5ifwXdYIr7K81KKUYjkQaBSffEr2x5cokE&X-Amz-Signature=15e02681ed9f4fd08573fe05ae31742240677c9e8422c077c18c8030d2a3a2c5
     method: PUT
   response:
     body: ""
@@ -177,39 +177,39 @@ interactions:
       Content-Length:
       - "0"
       Date:
-      - Thu, 27 May 2021 15:57:08 GMT
+      - Mon, 30 Aug 2021 19:31:23 GMT
       Etag:
       - '"15e081c59a53cf6aadd83c7dc0e831d3"'
       Server:
       - AmazonS3
       X-Amz-Id-2:
-      - FmSOjw5Ln5/kMulUZ7/eIFqTBvWaYSm+VvDHd3w8HqO4yaKDEjboMTaPDY8r/4K0ga2awe82xtY=
+      - vC92SMeb+eCLesIbOMYf9HcxJZWeHWkhTp7nVLiAXnpusRC/Hewp1MfoRt3QBBWeu6ysDMq0dHY=
       X-Amz-Request-Id:
-      - ZFPN6J0NWHQKDPFT
+      - FYC1K8X2EQWJX6B8
       X-Amz-Server-Side-Encryption:
       - AES256
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"action":"end","etags[0][etag]":"\"15e081c59a53cf6aadd83c7dc0e831d3\"","etags[0][part]":"1","provided_mtime":"2021-05-27T08:57:07-07:00","ref":"put-4451110057","size":"9"}'
+    body: '{"action":"end","etags[0][etag]":"\"15e081c59a53cf6aadd83c7dc0e831d3\"","etags[0][part]":"1","provided_mtime":"2021-08-30T12:31:22-07:00","ref":"put-5091479624","size":"9"}'
     form: {}
     headers:
       Content-Type:
       - application/json
       User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text
     method: POST
   response:
-    body: '{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text","display_name":"3.text","type":"file","size":9,"mtime":"2021-05-27T15:57:08Z","provided_mtime":"2021-05-27T15:57:07Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
+    body: '{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text","display_name":"3.text","type":"file","size":9,"mtime":"2021-08-30T19:31:22Z","provided_mtime":"2021-08-30T19:31:22Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:57:09 GMT
+      - Mon, 30 Aug 2021 19:31:22 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -217,7 +217,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - e469ef2b-e309-482c-beb9-b227f8b3e0ac
+      - 15a2c36d-e49a-42f4-80de-2ec78d512cc7
     status: 200 OK
     code: 200
     duration: ""
@@ -228,18 +228,18 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/file_actions/begin_upload/TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-05-27T16:12:09Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-4451110181","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/958ccdfe-beef-447b-8dbd-b32fa9f6e1aa?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210527%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210527T155709Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=41mGD62ZkINj7QYAHHIKmQeIOsLwm87wCzJyv0DkwwahCxv2L1q.rn_5eDgUxPkKPggyyH5_JZzZ7OLB_tZxd8U0Kh..K8KG4Lb9ep7lzkFzrZC7Lqwoxdys5WhHpK9h\u0026X-Amz-Signature=f0375527f7e9dd75ae95b75deced19c7fb3d341b518afb4763df3760790fa35a"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-08-30T19:46:26Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-5091479936","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/b5d7d156-bf5c-4cce-a722-3110424e181f?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210830%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210830T193126Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=N0znnFKrttzkQzjAQG3byytrWUDPlEpynDyv8YhZ6tbufQkDfvuzJBqWurxA4ruqiyd7c1zGpCNZZbltm5t0gxYY935WVKE_Flezb7wf1aQlZM7K_kGW3a1qC0eb_Xjo\u0026X-Amz-Signature=9bab75a0b8b721459cb2f0994f355a04ffc698c2e7ab9409713987a0e108eb14"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:57:09 GMT
+      - Mon, 30 Aug 2021 19:31:26 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -247,7 +247,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - d0311d01-b235-47a4-adf7-a219fdb399ee
+      - 3480bc00-6618-41a3-b425-c75545eb2c95
     status: 200 OK
     code: 200
     duration: ""
@@ -257,7 +257,7 @@ interactions:
     headers:
       Content-Length:
       - "9"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/958ccdfe-beef-447b-8dbd-b32fa9f6e1aa?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210527%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210527T155709Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=41mGD62ZkINj7QYAHHIKmQeIOsLwm87wCzJyv0DkwwahCxv2L1q.rn_5eDgUxPkKPggyyH5_JZzZ7OLB_tZxd8U0Kh..K8KG4Lb9ep7lzkFzrZC7Lqwoxdys5WhHpK9h&X-Amz-Signature=f0375527f7e9dd75ae95b75deced19c7fb3d341b518afb4763df3760790fa35a
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/b5d7d156-bf5c-4cce-a722-3110424e181f?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210830%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210830T193126Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=N0znnFKrttzkQzjAQG3byytrWUDPlEpynDyv8YhZ6tbufQkDfvuzJBqWurxA4ruqiyd7c1zGpCNZZbltm5t0gxYY935WVKE_Flezb7wf1aQlZM7K_kGW3a1qC0eb_Xjo&X-Amz-Signature=9bab75a0b8b721459cb2f0994f355a04ffc698c2e7ab9409713987a0e108eb14
     method: PUT
   response:
     body: ""
@@ -265,39 +265,39 @@ interactions:
       Content-Length:
       - "0"
       Date:
-      - Thu, 27 May 2021 15:57:10 GMT
+      - Mon, 30 Aug 2021 19:31:27 GMT
       Etag:
       - '"15e081c59a53cf6aadd83c7dc0e831d3"'
       Server:
       - AmazonS3
       X-Amz-Id-2:
-      - wTtfZ/fdQxcV4yZ4OqJ9/mbEbmN7GzVt/EfPzL65Hp3N3e6tHBaCYw4a35b61W6D99hBEc/nv8o=
+      - Lu6MaFPCeO2pFaI/yGOKN4VA/2Ay9jh0wJ+6z51XMshCXqVVeFDfvrvh7P/HrzG9tfpP00aDfHI=
       X-Amz-Request-Id:
-      - JDKEH152RRM55JCB
+      - GMGN4KZY562RGHN0
       X-Amz-Server-Side-Encryption:
       - AES256
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"action":"end","etags[0][etag]":"\"15e081c59a53cf6aadd83c7dc0e831d3\"","etags[0][part]":"1","provided_mtime":"2021-05-27T08:57:09-07:00","ref":"put-4451110181","size":"9"}'
+    body: '{"action":"end","etags[0][etag]":"\"15e081c59a53cf6aadd83c7dc0e831d3\"","etags[0][part]":"1","provided_mtime":"2021-08-30T12:31:26-07:00","ref":"put-5091479936","size":"9"}'
     form: {}
     headers:
       Content-Type:
       - application/json
       User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text
     method: POST
   response:
-    body: '{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text","display_name":"4.text","type":"file","size":9,"mtime":"2021-05-27T15:57:09Z","provided_mtime":"2021-05-27T15:57:09Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
+    body: '{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text","display_name":"4.text","type":"file","size":9,"mtime":"2021-08-30T19:31:27Z","provided_mtime":"2021-08-30T19:31:26Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:57:09 GMT
+      - Mon, 30 Aug 2021 19:31:27 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -305,7 +305,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 5aeccdf6-289e-4449-a020-d908dddc33db
+      - 382d3129-b937-4914-9a7e-14ca0eca3641
     status: 200 OK
     code: 200
     duration: ""
@@ -314,46 +314,18 @@ interactions:
     form: {}
     headers:
       User-Agent:
-      - Files.com Go SDK
-    url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text?page=1
-    method: GET
-  response:
-    body: '[{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text","display_name":"3.text","type":"file","size":9,"mtime":"2021-05-27T15:57:08Z","provided_mtime":"2021-05-27T15:57:07Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}]'
-    headers:
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Type:
-      - application/json
-      Date:
-      - Thu, 27 May 2021 15:57:09 GMT
-      Expires:
-      - Fri, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - nginx
-      X-Request-Id:
-      - 60d181b9-84ff-468b-b216-dc721265da59
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers:
-      User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text
     method: GET
   response:
-    body: '{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text","display_name":"3.text","type":"file","size":9,"mtime":"2021-05-27T15:57:08Z","provided_mtime":"2021-05-27T15:57:07Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/0edec009-e6e2-4ef4-b313-108a1c1dbea8?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210527%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210527T155710Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%223.text%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=ac91d3c1c229bcb83d7e08694f4e21d3d24df82e264859aad7cd32fad34061ef"}'
+    body: '{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text","display_name":"3.text","type":"file","size":9,"mtime":"2021-08-30T19:31:22Z","provided_mtime":"2021-08-30T19:31:22Z","crc32":"b669a0d4","md5":"15e081c59a53cf6aadd83c7dc0e831d3","mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/40301a71-8b9c-41fe-ae5b-08ff7f31a068?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210830%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210830T193132Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%223.text%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=3c19e68726310f54773ea7cfd94b709cc85ab5ed9b8b3d07aaccea2c6639b7e7"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:57:10 GMT
+      - Mon, 30 Aug 2021 19:31:32 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -361,7 +333,63 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 04b30807-3700-42d7-9c7e-377b7c8e8f1c
+      - 11fc5623-afe8-4092-a382-6f6b0ae43d23
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text
+    method: GET
+  response:
+    body: '{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text","display_name":"3.text","type":"file","size":9,"mtime":"2021-08-30T19:31:22Z","provided_mtime":"2021-08-30T19:31:22Z","crc32":"b669a0d4","md5":"15e081c59a53cf6aadd83c7dc0e831d3","mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/40301a71-8b9c-41fe-ae5b-08ff7f31a068?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210830%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210830T193132Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%223.text%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=3c19e68726310f54773ea7cfd94b709cc85ab5ed9b8b3d07aaccea2c6639b7e7"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 30 Aug 2021 19:31:32 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - e9da0e47-394c-43b0-acc2-5736a1a8b28b
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text
+    method: GET
+  response:
+    body: '{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text","display_name":"3.text","type":"file","size":9,"mtime":"2021-08-30T19:31:22Z","provided_mtime":"2021-08-30T19:31:22Z","crc32":"b669a0d4","md5":"15e081c59a53cf6aadd83c7dc0e831d3","mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/40301a71-8b9c-41fe-ae5b-08ff7f31a068?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210830%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210830T193138Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%223.text%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=ab727b0af56b1c0b7b7e7d78fcde7750affc68c1d94cae8eae826cdbc53f1419"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 30 Aug 2021 19:31:38 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 2475a0c9-0344-4870-8fec-b97bfcce524c
     status: 200 OK
     code: 200
     duration: ""
@@ -369,7 +397,7 @@ interactions:
     body: ""
     form: {}
     headers: {}
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/0edec009-e6e2-4ef4-b313-108a1c1dbea8?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210527%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210527T155710Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%223.text%22&response-content-type=application%2Foctet-stream&X-Amz-Signature=ac91d3c1c229bcb83d7e08694f4e21d3d24df82e264859aad7cd32fad34061ef
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/40301a71-8b9c-41fe-ae5b-08ff7f31a068?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210830%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210830T193138Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%223.text%22&response-content-type=application%2Foctet-stream&X-Amz-Signature=ab727b0af56b1c0b7b7e7d78fcde7750affc68c1d94cae8eae826cdbc53f1419
     method: GET
   response:
     body: testing 3
@@ -385,15 +413,15 @@ interactions:
       Content-Type:
       - application/octet-stream
       Date:
-      - Thu, 27 May 2021 15:57:11 GMT
+      - Mon, 30 Aug 2021 19:31:39 GMT
       Etag:
       - '"1f10b9f0c89ab4910091c8cb836b2b21-1"'
       Last-Modified:
-      - Thu, 27 May 2021 15:57:08 GMT
+      - Mon, 30 Aug 2021 19:31:22 GMT
       Server:
       - AmazonS3
       X-Amz-Id-2:
-      - QZmgkN6p6jwuGQil7JEEd2POYG9YMfUUkedKNvXIl06iQvbMe5/eUtHqAB4NiL5xpkpz/4TJ9Po=
+      - XIDZwUWloMJdeNPjnd0K2DPGGZ3EsqmwbSm8sOZydNuslX4dNiBYzONn9lB8LAgoQQzdsQ0GfrE=
       X-Amz-Meta-X-Amz-Meta-Gid:
       - "65534"
       X-Amz-Meta-X-Amz-Meta-Mode:
@@ -401,7 +429,7 @@ interactions:
       X-Amz-Meta-X-Amz-Meta-Uid:
       - "65534"
       X-Amz-Request-Id:
-      - 7032VMVQ0CMMK1YP
+      - 7NYJM0DTPR552APS
       X-Amz-Server-Side-Encryption:
       - AES256
       X-Amz-Version-Id:
@@ -414,18 +442,49 @@ interactions:
     form: {}
     headers:
       User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder_Smart/nested_1/nested_2
+    method: GET
+  response:
+    body: '{"error":"cannot download folder","http-code":400,"instance":"003128bd-09f4-4097-bcdc-5c6e27cfdee4","title":"Cannot
+      Download Directory","type":"bad-request/cannot-download-directory"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "183"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 30 Aug 2021 19:31:42 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 003128bd-09f4-4097-bcdc-5c6e27cfdee4
+    status: 400 Bad Request
+    code: 400
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder_Smart/nested_1/nested_2?page=1
     method: GET
   response:
-    body: '[{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3","display_name":"nested_3","type":"directory","size":null,"mtime":"2021-05-27T15:57:09Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"rwd","subfolders_locked?":false},{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text","display_name":"3.text","type":"file","size":9,"mtime":"2021-05-27T15:57:08Z","provided_mtime":"2021-05-27T15:57:07Z","crc32":"b669a0d4","md5":"15e081c59a53cf6aadd83c7dc0e831d3","mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}]'
+    body: '[{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3","display_name":"nested_3","type":"directory","size":null,"mtime":"2021-08-30T19:31:27Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"rwd","subfolders_locked?":false},{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text","display_name":"3.text","type":"file","size":9,"mtime":"2021-08-30T19:31:22Z","provided_mtime":"2021-08-30T19:31:22Z","crc32":"b669a0d4","md5":"15e081c59a53cf6aadd83c7dc0e831d3","mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:57:10 GMT
+      - Mon, 30 Aug 2021 19:31:42 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -433,7 +492,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 1d4847f9-7e75-4679-ab94-7b47b11e2933
+      - 2fffdebb-d3d7-4275-8582-6b3c6587500d
     status: 200 OK
     code: 200
     duration: ""
@@ -442,18 +501,48 @@ interactions:
     form: {}
     headers:
       User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder_Smart/nested_1/nested_2?page=2
+    method: GET
+  response:
+    body: '[]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "2"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 30 Aug 2021 19:31:43 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - f48e9c7e-0d5f-47e0-aa8a-34342964a2e1
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3?page=1
     method: GET
   response:
-    body: '[{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text","display_name":"4.text","type":"file","size":9,"mtime":"2021-05-27T15:57:09Z","provided_mtime":"2021-05-27T15:57:09Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}]'
+    body: '[{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text","display_name":"4.text","type":"file","size":9,"mtime":"2021-08-30T19:31:27Z","provided_mtime":"2021-08-30T19:31:26Z","crc32":"b669a0d4","md5":"15e081c59a53cf6aadd83c7dc0e831d3","mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:57:10 GMT
+      - Mon, 30 Aug 2021 19:31:44 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -461,7 +550,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 11d3674c-2bc4-4154-b9b6-05ec1e645e92
+      - 0bd1a6d3-46a4-4261-96c0-9b0d1c80aea3
     status: 200 OK
     code: 200
     duration: ""
@@ -470,18 +559,18 @@ interactions:
     form: {}
     headers:
       User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text
     method: GET
   response:
-    body: '{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text","display_name":"3.text","type":"file","size":9,"mtime":"2021-05-27T15:57:08Z","provided_mtime":"2021-05-27T15:57:07Z","crc32":"b669a0d4","md5":"15e081c59a53cf6aadd83c7dc0e831d3","mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/0edec009-e6e2-4ef4-b313-108a1c1dbea8?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210527%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210527T155710Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%223.text%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=ac91d3c1c229bcb83d7e08694f4e21d3d24df82e264859aad7cd32fad34061ef"}'
+    body: '{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text","display_name":"3.text","type":"file","size":9,"mtime":"2021-08-30T19:31:22Z","provided_mtime":"2021-08-30T19:31:22Z","crc32":"b669a0d4","md5":"15e081c59a53cf6aadd83c7dc0e831d3","mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/40301a71-8b9c-41fe-ae5b-08ff7f31a068?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210830%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210830T193144Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%223.text%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=ba05c86ac4e8b91ca5bf876729d54e2060ed58ada5f147c490c36fe6ed7f4cb5"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:57:10 GMT
+      - Mon, 30 Aug 2021 19:31:44 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -489,7 +578,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 8341a332-3ed9-44f3-82fb-5d31ad89042e
+      - c56cfacf-bcdb-4b4f-a74b-0fbcfbf9159e
     status: 200 OK
     code: 200
     duration: ""
@@ -498,18 +587,20 @@ interactions:
     form: {}
     headers:
       User-Agent:
-      - Files.com Go SDK
-    url: https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3?page=2
     method: GET
   response:
-    body: '{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text","display_name":"4.text","type":"file","size":9,"mtime":"2021-05-27T15:57:09Z","provided_mtime":"2021-05-27T15:57:09Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/958ccdfe-beef-447b-8dbd-b32fa9f6e1aa?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210527%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210527T155710Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%224.text%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=7948fa2495c7c5816a97bfc797a2b887d78d41428b0b418a436d9a32a1e90f52"}'
+    body: '[]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "2"
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:57:10 GMT
+      - Mon, 30 Aug 2021 19:31:44 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -517,7 +608,35 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - d48cf969-f346-42b0-9391-9354abd154f5
+      - 5ab3c61f-f9e2-4bc7-9b45-3c33b182cad3
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text
+    method: GET
+  response:
+    body: '{"path":"TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text","display_name":"4.text","type":"file","size":9,"mtime":"2021-08-30T19:31:27Z","provided_mtime":"2021-08-30T19:31:26Z","crc32":"b669a0d4","md5":"15e081c59a53cf6aadd83c7dc0e831d3","mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/b5d7d156-bf5c-4cce-a722-3110424e181f?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210830%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210830T193147Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%224.text%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=d1c0661e2d318de79f204b2d819d504c47f6d3105463809f4480517bc27fcd09"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 30 Aug 2021 19:31:47 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 7251ecba-d750-40b2-801d-5988a6f58bdc
     status: 200 OK
     code: 200
     duration: ""
@@ -525,7 +644,51 @@ interactions:
     body: ""
     form: {}
     headers: {}
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/958ccdfe-beef-447b-8dbd-b32fa9f6e1aa?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210527%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210527T155710Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%224.text%22&response-content-type=application%2Foctet-stream&X-Amz-Signature=7948fa2495c7c5816a97bfc797a2b887d78d41428b0b418a436d9a32a1e90f52
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/40301a71-8b9c-41fe-ae5b-08ff7f31a068?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210830%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210830T193144Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%223.text%22&response-content-type=application%2Foctet-stream&X-Amz-Signature=ba05c86ac4e8b91ca5bf876729d54e2060ed58ada5f147c490c36fe6ed7f4cb5
+    method: GET
+  response:
+    body: testing 3
+    headers:
+      Accept-Ranges:
+      - bytes
+      Cache-Control:
+      - no-cache, no-store
+      Content-Disposition:
+      - attachment; filename="3.text"
+      Content-Length:
+      - "9"
+      Content-Type:
+      - application/octet-stream
+      Date:
+      - Mon, 30 Aug 2021 19:31:48 GMT
+      Etag:
+      - '"1f10b9f0c89ab4910091c8cb836b2b21-1"'
+      Last-Modified:
+      - Mon, 30 Aug 2021 19:31:22 GMT
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - 8u3nNK7QbBKY2fmby0TWkDFoJ5DxV2OATtkOBepGFOmvp/D/kSQnUy27viPDT86D4WsFN8tQYsU=
+      X-Amz-Meta-X-Amz-Meta-Gid:
+      - "65534"
+      X-Amz-Meta-X-Amz-Meta-Mode:
+      - "33188"
+      X-Amz-Meta-X-Amz-Meta-Uid:
+      - "65534"
+      X-Amz-Request-Id:
+      - 7TWWDR170CW0P61V
+      X-Amz-Server-Side-Encryption:
+      - AES256
+      X-Amz-Version-Id:
+      - "null"
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers: {}
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/b5d7d156-bf5c-4cce-a722-3110424e181f?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210830%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210830T193147Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%224.text%22&response-content-type=application%2Foctet-stream&X-Amz-Signature=d1c0661e2d318de79f204b2d819d504c47f6d3105463809f4480517bc27fcd09
     method: GET
   response:
     body: testing 3
@@ -541,15 +704,15 @@ interactions:
       Content-Type:
       - application/octet-stream
       Date:
-      - Thu, 27 May 2021 15:57:11 GMT
+      - Mon, 30 Aug 2021 19:31:48 GMT
       Etag:
       - '"1f10b9f0c89ab4910091c8cb836b2b21-1"'
       Last-Modified:
-      - Thu, 27 May 2021 15:57:10 GMT
+      - Mon, 30 Aug 2021 19:31:27 GMT
       Server:
       - AmazonS3
       X-Amz-Id-2:
-      - uur6Dm3VnnNLIZKF7o/E87UsxmJu3lgWkdGNkS6NQzfEdVLCQ+t2ZVBp3hgu5i7OfWH2u98wFuc=
+      - nwx2ZmetXppILZojRtnu6eohEYOLHWez/45MwyS9bzf8HzV7W771aiL4CV900CQjMsvPLxWFudw=
       X-Amz-Meta-X-Amz-Meta-Gid:
       - "65534"
       X-Amz-Meta-X-Amz-Meta-Mode:
@@ -557,51 +720,7 @@ interactions:
       X-Amz-Meta-X-Amz-Meta-Uid:
       - "65534"
       X-Amz-Request-Id:
-      - 7030H01AVP0TT6H4
-      X-Amz-Server-Side-Encryption:
-      - AES256
-      X-Amz-Version-Id:
-      - "null"
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: ""
-    form: {}
-    headers: {}
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/0edec009-e6e2-4ef4-b313-108a1c1dbea8?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210527%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210527T155710Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%223.text%22&response-content-type=application%2Foctet-stream&X-Amz-Signature=ac91d3c1c229bcb83d7e08694f4e21d3d24df82e264859aad7cd32fad34061ef
-    method: GET
-  response:
-    body: testing 3
-    headers:
-      Accept-Ranges:
-      - bytes
-      Cache-Control:
-      - no-cache, no-store
-      Content-Disposition:
-      - attachment; filename="3.text"
-      Content-Length:
-      - "9"
-      Content-Type:
-      - application/octet-stream
-      Date:
-      - Thu, 27 May 2021 15:57:11 GMT
-      Etag:
-      - '"1f10b9f0c89ab4910091c8cb836b2b21-1"'
-      Last-Modified:
-      - Thu, 27 May 2021 15:57:08 GMT
-      Server:
-      - AmazonS3
-      X-Amz-Id-2:
-      - JblPbgKXASV42CANnqGF4m+VBZvauEM+3S+9FkJ36eTt/t/avUIvIGuhhdPADuevGT9OLfZu0nw=
-      X-Amz-Meta-X-Amz-Meta-Gid:
-      - "65534"
-      X-Amz-Meta-X-Amz-Meta-Mode:
-      - "33188"
-      X-Amz-Meta-X-Amz-Meta-Uid:
-      - "65534"
-      X-Amz-Request-Id:
-      - 7036W2RM9G99K2B8
+      - 7TWHEB9MQJ7123FJ
       X-Amz-Server-Side-Encryption:
       - AES256
       X-Amz-Version-Id:

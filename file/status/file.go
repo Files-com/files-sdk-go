@@ -1,9 +1,9 @@
 package status
 
 import (
-	"context"
+	"time"
 
-	filesSDK "github.com/Files-com/files-sdk-go"
+	filesSDK "github.com/Files-com/files-sdk-go/v2"
 )
 
 type File struct {
@@ -11,11 +11,23 @@ type File struct {
 	*Job
 	Status
 	TransferBytes int64
-	Cancel        context.CancelFunc
 	LocalPath     string
 	RemotePath    string
 	Id            string
-	Sync          bool
+	LastByte      time.Time
+	Err           error
 }
 
-type Reporter func(File, error)
+func (f *File) ToStatusFile() File {
+	return *f
+}
+
+func (f *File) SetStatus(status Status, err error) {
+	var setError bool
+	f.Status, setError = SetStatus(f.Status, status, err)
+	if setError {
+		f.Err = err
+	}
+}
+
+type Reporter func(File)
