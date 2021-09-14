@@ -37,7 +37,6 @@ type RemoteServer struct {
 	AzureBlobStorageAccount           string `json:"azure_blob_storage_account,omitempty"`
 	AzureBlobStorageContainer         string `json:"azure_blob_storage_container,omitempty"`
 	S3CompatibleBucket                string `json:"s3_compatible_bucket,omitempty"`
-	S3CompatibleRegion                string `json:"s3_compatible_region,omitempty"`
 	S3CompatibleEndpoint              string `json:"s3_compatible_endpoint,omitempty"`
 	EnableDedicatedIps                *bool  `json:"enable_dedicated_ips,omitempty"`
 	AwsAccessKey                      string `json:"aws_access_key,omitempty"`
@@ -174,7 +173,6 @@ type RemoteServerCreateParams struct {
 	AzureBlobStorageAccount           string                              `url:"azure_blob_storage_account,omitempty" required:"false"`
 	AzureBlobStorageContainer         string                              `url:"azure_blob_storage_container,omitempty" required:"false"`
 	S3CompatibleBucket                string                              `url:"s3_compatible_bucket,omitempty" required:"false"`
-	S3CompatibleRegion                string                              `url:"s3_compatible_region,omitempty" required:"false"`
 	S3CompatibleEndpoint              string                              `url:"s3_compatible_endpoint,omitempty" required:"false"`
 	EnableDedicatedIps                *bool                               `url:"enable_dedicated_ips,omitempty" required:"false"`
 	S3CompatibleAccessKey             string                              `url:"s3_compatible_access_key,omitempty" required:"false"`
@@ -220,7 +218,6 @@ type RemoteServerUpdateParams struct {
 	AzureBlobStorageAccount           string                              `url:"azure_blob_storage_account,omitempty" required:"false"`
 	AzureBlobStorageContainer         string                              `url:"azure_blob_storage_container,omitempty" required:"false"`
 	S3CompatibleBucket                string                              `url:"s3_compatible_bucket,omitempty" required:"false"`
-	S3CompatibleRegion                string                              `url:"s3_compatible_region,omitempty" required:"false"`
 	S3CompatibleEndpoint              string                              `url:"s3_compatible_endpoint,omitempty" required:"false"`
 	EnableDedicatedIps                *bool                               `url:"enable_dedicated_ips,omitempty" required:"false"`
 	S3CompatibleAccessKey             string                              `url:"s3_compatible_access_key,omitempty" required:"false"`
