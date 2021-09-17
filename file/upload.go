@@ -9,6 +9,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"strconv"
+	"sync/atomic"
 	"time"
 
 	"github.com/Files-com/files-sdk-go/v2/ignore"
@@ -191,6 +192,8 @@ func (c *Client) UploadFile(ctx context.Context, params UploadParams) *status.Jo
 }
 
 func (c *Client) Upload(parentCtx context.Context, reader io.ReaderAt, size int64, params files_sdk.FileBeginUploadParams, progress func(int64), cm goccm.ConcurrencyManager) (files_sdk.File, error) {
+	partSizes := lib.PartSizes
+	var partSize int64
 	onComplete := make(chan files_sdk.EtagsParam)
 	onError := make(chan error)
 	bytesWritten := int64(0)
@@ -219,15 +222,16 @@ func (c *Client) Upload(parentCtx context.Context, reader io.ReaderAt, size int6
 			onError <- err
 			return
 		}
-		bytesWritten += bytesRead
+		atomic.AddInt64(&bytesWritten, bytesRead)
 		if *fileUploadPart.ParallelParts {
 			cm.Done()
 		}
 		onComplete <- etag
 	}
+	partSize, partSizes = partSizes[0], partSizes[1:]
 	byteOffset(
 		size,
-		fileUploadPart.Partsize,
+		partSize,
 		func(off int64, len int64) {
 			count += len
 			if *fileUploadPart.ParallelParts {
