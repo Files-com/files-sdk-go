@@ -73,3 +73,22 @@ func TestIter_Next_PerPage_of_one(t *testing.T) {
 	}
 	assert.Equal(1, recordCount)
 }
+
+func TestIter_Next_No_Cursor(t *testing.T) {
+	assert := assert.New(t)
+	params := ListParams{}
+	it := Iter{}
+	it.ListParams = &params
+	resultCounter := 0
+	it.Query = func() (*[]interface{}, string, error) {
+		ret := make([]interface{}, 1)
+		resultCounter += 1
+		return &ret, "", nil
+	}
+	recordCount := 0
+	for it.Next() {
+		recordCount += 1
+		assert.Equal(Interface(), it.Current())
+	}
+	assert.Equal(1, recordCount)
+}

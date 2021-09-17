@@ -2,15 +2,15 @@ package file
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
+
+	"github.com/Files-com/files-sdk-go/v2/lib/test"
 
 	"github.com/zenthangplus/goccm"
 
@@ -19,36 +19,15 @@ import (
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/folder"
 	"github.com/Files-com/files-sdk-go/v2/lib"
-	"github.com/dnaeon/go-vcr/cassette"
 	recorder "github.com/dnaeon/go-vcr/recorder"
 	"github.com/stretchr/testify/assert"
 )
 
-func CreateClient(fixture string) (*Client, *recorder.Recorder, error) {
-	client := Client{}
-	var r *recorder.Recorder
-	var err error
-	if os.Getenv("GITLAB") != "" {
-		fmt.Println("using ModeReplaying")
-		r, err = recorder.NewAsMode(filepath.Join("fixtures", fixture), recorder.ModeReplaying, nil)
-	} else {
-		r, err = recorder.New(filepath.Join("fixtures", fixture))
-	}
-	if err != nil {
-		return &client, r, err
-	}
+func CreateClient(fixture string) (client *Client, r *recorder.Recorder, err error) {
+	client = &Client{}
+	client.Config, r, err = test.CreateConfig(fixture)
 
-	httpClient := &http.Client{
-		Transport: r,
-	}
-	client.Config.Debug = lib.Bool(false)
-	client.SetHttpClient(httpClient)
-
-	r.AddFilter(func(i *cassette.Interaction) error {
-		delete(i.Request.Headers, "X-Filesapi-Key")
-		return nil
-	})
-	return &client, r, nil
+	return client, r, err
 }
 
 func deletePath(client *Client, path string) {

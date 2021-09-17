@@ -84,6 +84,9 @@ func (i *Iter) GetPage() bool {
 	}
 
 	i.GetParams().Page += 1
+	if i.GetParams().Page == 2 && i.Cursor == "" {
+		return false
+	}
 	i.Values, i.Cursor, i.Error = i.Query()
 	i.SetCursor(i.Cursor)
 	return i.Error == nil && len(*i.Values) != 0

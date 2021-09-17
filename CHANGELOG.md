@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
+## [2.0.4-beta] - 2021/09/17
+### Fix
+- When using `lib.Iter{}.Next()` if a cursor is not given, in the case of listing a file, it would always return true.
+
 ## [2.0.2-beta] - 2021/09/17
 ### Fix
 - `file.Client{}.Upload()` supports up to 4.9 TB files due to improved file chunking.
