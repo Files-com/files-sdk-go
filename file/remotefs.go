@@ -120,7 +120,7 @@ func (f *File) load() error {
 }
 
 func (f *File) Reload() (File, error) {
-	fileInfo, err := (&Client{Config: f.Config}).Find(f.Context, f.Path)
+	fileInfo, err := (&Client{Config: f.Config}).Get(f.Context, f.Path)
 	if err != nil {
 		return File{File: &fileInfo, FS: f.FS}, err
 	}
@@ -143,7 +143,7 @@ func (f FS) Open(name string) (goFs.File, error) {
 		}
 		return &file, nil
 	}
-	fileInfo, err := (&Client{Config: f.Config}).Find(f.Context, filepath.Join(f.Root, name))
+	fileInfo, err := (&Client{Config: f.Config}).Get(f.Context, filepath.Join(f.Root, name))
 	responseError, ok := err.(files_sdk.ResponseError)
 
 	if err != nil {

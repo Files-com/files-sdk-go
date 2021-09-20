@@ -97,6 +97,7 @@ type Site struct {
 	Session                              string    `json:"session,omitempty"`
 	SessionPinnedByIp                    *bool     `json:"session_pinned_by_ip,omitempty"`
 	SftpEnabled                          *bool     `json:"sftp_enabled,omitempty"`
+	SftpInsecureCiphers                  *bool     `json:"sftp_insecure_ciphers,omitempty"`
 	SftpUserRootEnabled                  *bool     `json:"sftp_user_root_enabled,omitempty"`
 	SharingEnabled                       *bool     `json:"sharing_enabled,omitempty"`
 	ShowRequestAccessLink                *bool     `json:"show_request_access_link,omitempty"`
@@ -161,6 +162,7 @@ type SiteUpdateParams struct {
 	SessionExpiry                        float32   `url:"session_expiry,omitempty" required:"false"`
 	SslRequired                          *bool     `url:"ssl_required,omitempty" required:"false"`
 	TlsDisabled                          *bool     `url:"tls_disabled,omitempty" required:"false"`
+	SftpInsecureCiphers                  *bool     `url:"sftp_insecure_ciphers,omitempty" required:"false"`
 	UserLockout                          *bool     `url:"user_lockout,omitempty" required:"false"`
 	UserLockoutTries                     int64     `url:"user_lockout_tries,omitempty" required:"false"`
 	UserLockoutWithin                    int64     `url:"user_lockout_within,omitempty" required:"false"`

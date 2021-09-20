@@ -115,48 +115,46 @@ func (c *Client) UploadFile(ctx context.Context, params UploadParams) *status.Jo
 	jobCtx := job.WithContext(ctx)
 	job.Type = directory.File
 
-	uploadStatus := &UploadStatus{
-		Job:        job,
-		LocalPath:  params.LocalPath,
-		RemotePath: params.RemotePath,
-		Sync:       params.Sync,
-	}
-
-	beginUpload := files_sdk.FileBeginUploadParams{MkdirParents: lib.Bool(true)}
-	destination := params.RemotePath
-	_, localFileName := filepath.Split(params.LocalPath)
-	if params.RemotePath == "" {
-		destination = localFileName
-	} else {
-		_, err := c.Find(jobCtx, params.RemotePath)
-		responseError, ok := err.(files_sdk.ResponseError)
-		if ok && responseError.Type == "bad-request/cannot-download-directory" {
-			destination = filepath.Join(params.RemotePath, localFileName)
-		} else if ok && responseError.Type == "not-found" {
-			if destination[len(destination)-1:] == "/" {
-				destination = filepath.Join(params.RemotePath, localFileName)
-			}
-		} else if err != nil {
-			job.UpdateStatus(status.Errored, uploadStatus, err)
-			return job
-		}
-	}
-	job.FilesManager.Wait()
-	defer job.FilesManager.Done()
-	fi, _ := os.Stat(params.LocalPath)
-	uploadStatus.RemotePath = destination
-	uploadStatus.File = files_sdk.File{
-		DisplayName: filepath.Base(destination),
-		Path:        destination,
-		Type:        "file",
-		Mtime:       fi.ModTime(),
-		Size:        fi.Size(),
-	}
-	uploadStatus.Uploader = c
-	job.Add(uploadStatus)
-	job.UpdateStatus(status.Queued, uploadStatus, nil)
-
 	job.Start = func() {
+		uploadStatus := &UploadStatus{
+			Job:        job,
+			LocalPath:  params.LocalPath,
+			RemotePath: params.RemotePath,
+			Sync:       params.Sync,
+		}
+
+		beginUpload := files_sdk.FileBeginUploadParams{MkdirParents: lib.Bool(true)}
+		destination := params.RemotePath
+		_, localFileName := filepath.Split(params.LocalPath)
+		if params.RemotePath == "" {
+			destination = localFileName
+		} else {
+			_, err := c.Find(jobCtx, files_sdk.FileFindParams{Path: params.RemotePath})
+			responseError, ok := err.(files_sdk.ResponseError)
+			if ok && responseError.Type == "bad-request/cannot-download-directory" {
+				destination = filepath.Join(params.RemotePath, localFileName)
+			} else if ok && responseError.Type == "not-found" {
+				if destination[len(destination)-1:] == "/" {
+					destination = filepath.Join(params.RemotePath, localFileName)
+				}
+			} else if err != nil {
+				job.UpdateStatus(status.Errored, uploadStatus, err)
+			}
+		}
+		job.FilesManager.Wait()
+		defer job.FilesManager.Done()
+		fi, _ := os.Stat(params.LocalPath)
+		uploadStatus.RemotePath = destination
+		uploadStatus.File = files_sdk.File{
+			DisplayName: filepath.Base(destination),
+			Path:        destination,
+			Type:        "file",
+			Mtime:       fi.ModTime(),
+			Size:        fi.Size(),
+		}
+		uploadStatus.Uploader = c
+		job.Add(uploadStatus)
+		job.UpdateStatus(status.Queued, uploadStatus, nil)
 		job.StartTime = time.Now()
 		defer func() {
 			job.EndTime = time.Now()

@@ -23,7 +23,7 @@ import (
 
 type Uploader interface {
 	Upload(context.Context, io.ReaderAt, int64, files_sdk.FileBeginUploadParams, func(int64), goccm.ConcurrencyManager) (files_sdk.File, error)
-	Find(context.Context, string) (files_sdk.File, error)
+	Find(context.Context, files_sdk.FileFindParams) (files_sdk.File, error)
 }
 
 func uploadFolder(ctx context.Context, c Uploader, params UploadParams) *status.Job {
@@ -207,7 +207,7 @@ func skipOrIgnore(downloadCtx context.Context, uploadStatus *UploadStatus) bool 
 	}
 
 	if uploadStatus.Sync {
-		file, err := uploadStatus.Find(downloadCtx, uploadStatus.RemotePath)
+		file, err := uploadStatus.Find(downloadCtx, files_sdk.FileFindParams{Path: uploadStatus.RemotePath})
 		responseError, ok := err.(files_sdk.ResponseError)
 		if ok && responseError.Type == "not-found" {
 			return false

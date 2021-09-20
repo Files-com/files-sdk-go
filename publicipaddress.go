@@ -5,8 +5,10 @@ import (
 )
 
 type PublicIpAddress struct {
-	IpAddress  string `json:"ip_address,omitempty"`
-	ServerName string `json:"server_name,omitempty"`
+	IpAddress   string `json:"ip_address,omitempty"`
+	ServerName  string `json:"server_name,omitempty"`
+	FtpEnabled  string `json:"ftp_enabled,omitempty"`
+	SftpEnabled string `json:"sftp_enabled,omitempty"`
 }
 
 type PublicIpAddressCollection []PublicIpAddress

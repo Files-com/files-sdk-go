@@ -6,11 +6,11 @@ interactions:
     form: {}
     headers:
       User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/files/taco
     method: DELETE
   response:
-    body: '{"error":"Not Found","http-code":404,"instance":"3e8f777d-f642-406c-81e8-8753ca48d411","title":"Not
+    body: '{"error":"Not Found","http-code":404,"instance":"9d71c77d-1795-4b97-90eb-9aff0bf5af64","title":"Not
       Found","type":"not-found"}'
     headers:
       Cache-Control:
@@ -18,7 +18,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:56:59 GMT
+      - Mon, 20 Sep 2021 21:26:26 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -26,7 +26,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 3e8f777d-f642-406c-81e8-8753ca48d411
+      - 9d71c77d-1795-4b97-90eb-9aff0bf5af64
     status: 404 Not Found
     code: 404
     duration: ""
@@ -35,11 +35,11 @@ interactions:
     form: {}
     headers:
       User-Agent:
-      - Files.com Go SDK
-    url: https://app.files.com/api/rest/v1/files/taco
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/taco
     method: GET
   response:
-    body: '{"error":"Not Found","http-code":404,"instance":"e972b697-a8b5-43ce-a8b0-c43d906022cb","title":"Not
+    body: '{"error":"Not Found","http-code":404,"instance":"7bd88067-8899-47ba-83fc-c0467f9af0ae","title":"Not
       Found","type":"not-found"}'
     headers:
       Cache-Control:
@@ -47,7 +47,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:56:59 GMT
+      - Mon, 20 Sep 2021 21:26:27 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -55,29 +55,29 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - e972b697-a8b5-43ce-a8b0-c43d906022cb
+      - 7bd88067-8899-47ba-83fc-c0467f9af0ae
     status: 404 Not Found
     code: 404
     duration: ""
 - request:
-    body: '{}'
+    body: '{"mkdir_parents":"true"}'
     form: {}
     headers:
       Content-Type:
       - application/json
       User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/file_actions/begin_upload/taco
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-05-27T16:11:59Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-4451109330","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/02d65e8b-65d3-45f1-b2d7-073d9a33f0ba?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210527%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210527T155659Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=DzTCIVwDBFNvbypNMOlzK6jPNIymBjwLjdGAHHPtg5kBhYZy6Zwq7aRXn3K4g.sNPhRGbfgbkx0eoyrLU2tn59a4nGadEp3W1KWE0hUSZDAGRPwTyWb_vbrrnKP_pmnN\u0026X-Amz-Signature=2aeed27f0bf2a3cc83c69ec972568480500951dc967db22e8f9ef0e4b86951d5"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-20T21:41:27Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-52227946","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/4b354ce6-8b2f-437b-972a-35abd009d66b?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210920%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210920T212627Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=FxUqTy_htY1OC6wYhLjjwgUuQSTsUngNzA1KLpdJwiLol0cpi._DcMVRmNonGPAo671suE5Vr.bSUxIak1v9tkmkdxtvLAsUJiFsRz2acpbDkw9iOg5gs1g.yQLMLfrv\u0026X-Amz-Signature=a99764445b9028c453fa6303fbd70ea0e9aa323441c6c53bbf043350ce2f7162"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:56:59 GMT
+      - Mon, 20 Sep 2021 21:26:27 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -85,7 +85,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - b2655a3c-c577-444f-93d6-e33f53327a30
+      - 933a49e5-bee0-4f2f-a5da-583e1de17b1a
     status: 200 OK
     code: 200
     duration: ""
@@ -116,7 +116,7 @@ interactions:
     headers:
       Content-Length:
       - "1102"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/02d65e8b-65d3-45f1-b2d7-073d9a33f0ba?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210527%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210527T155659Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=DzTCIVwDBFNvbypNMOlzK6jPNIymBjwLjdGAHHPtg5kBhYZy6Zwq7aRXn3K4g.sNPhRGbfgbkx0eoyrLU2tn59a4nGadEp3W1KWE0hUSZDAGRPwTyWb_vbrrnKP_pmnN&X-Amz-Signature=2aeed27f0bf2a3cc83c69ec972568480500951dc967db22e8f9ef0e4b86951d5
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/4b354ce6-8b2f-437b-972a-35abd009d66b?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210920%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210920T212627Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=FxUqTy_htY1OC6wYhLjjwgUuQSTsUngNzA1KLpdJwiLol0cpi._DcMVRmNonGPAo671suE5Vr.bSUxIak1v9tkmkdxtvLAsUJiFsRz2acpbDkw9iOg5gs1g.yQLMLfrv&X-Amz-Signature=a99764445b9028c453fa6303fbd70ea0e9aa323441c6c53bbf043350ce2f7162
     method: PUT
   response:
     body: ""
@@ -124,32 +124,32 @@ interactions:
       Content-Length:
       - "0"
       Date:
-      - Thu, 27 May 2021 15:57:00 GMT
+      - Mon, 20 Sep 2021 21:26:28 GMT
       Etag:
       - '"5b1e5439f3483c0b3e5af1d44889d0f7"'
       Server:
       - AmazonS3
       X-Amz-Id-2:
-      - TOAdjEncrwgmDhIEUfYRRhHz256vX8GguucmN4geVG1O5vdvToTwtg74hWQkqQRqMvcOAdBSfqg=
+      - Hio5hdYzpfSC/+WeAlukMli7zvUhOhA7YyLSsA10c+6XFHfPahFSltMtymCPuIIWcBl1vooGCFs=
       X-Amz-Request-Id:
-      - NMEH6MBHXW8G2926
+      - K6WJR3WWG0WM76PB
       X-Amz-Server-Side-Encryption:
       - AES256
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"action":"end","etags[0][etag]":"\"5b1e5439f3483c0b3e5af1d44889d0f7\"","etags[0][part]":"1","provided_mtime":"2021-05-27T08:56:59-07:00","ref":"put-4451109330","size":"1102"}'
+    body: '{"action":"end","etags[0][etag]":"\"5b1e5439f3483c0b3e5af1d44889d0f7\"","etags[0][part]":"1","provided_mtime":"2021-09-20T14:26:27-07:00","ref":"put-52227946","size":"1102"}'
     form: {}
     headers:
       Content-Type:
       - application/json
       User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/files/taco
     method: POST
   response:
-    body: '{"path":"taco","display_name":"taco","type":"file","size":1102,"mtime":"2021-05-27T15:56:59Z","provided_mtime":"2021-05-27T15:56:59Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
+    body: '{"path":"taco","display_name":"taco","type":"file","size":1102,"mtime":"2021-09-20T21:26:28Z","provided_mtime":"2021-09-20T21:26:27Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -158,7 +158,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:56:59 GMT
+      - Mon, 20 Sep 2021 21:26:28 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -166,7 +166,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - eea1230f-ad29-4784-8c9d-9d24ae80e295
+      - 79b43d28-52b4-4ff7-acfb-96a924f12eb5
     status: 201 Created
     code: 201
     duration: ""
@@ -175,18 +175,18 @@ interactions:
     form: {}
     headers:
       User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/files/taco
     method: GET
   response:
-    body: '{"path":"taco","display_name":"taco","type":"file","size":1102,"mtime":"2021-05-27T15:56:59Z","provided_mtime":"2021-05-27T15:56:59Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/02d65e8b-65d3-45f1-b2d7-073d9a33f0ba?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210527%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210527T155659Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22taco%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=e0357647dcd50d731b73589ea5d53578589735ab3a6ff0234cad68e30cf29f2a"}'
+    body: '{"path":"taco","display_name":"taco","type":"file","size":1102,"mtime":"2021-09-20T21:26:28Z","provided_mtime":"2021-09-20T21:26:27Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/4b354ce6-8b2f-437b-972a-35abd009d66b?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210920%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210920T212628Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22taco%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=11f3c8ea649c790f7d484ba456dc2c67fda61659e33071ebcfd2950014e485bb"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Thu, 27 May 2021 15:56:59 GMT
+      - Mon, 20 Sep 2021 21:26:28 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -194,7 +194,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 19a2ccba-8217-4867-9b6d-8d9ef39709dc
+      - 058d240b-e623-4f93-bb6e-1980497fe119
     status: 200 OK
     code: 200
     duration: ""
@@ -202,7 +202,7 @@ interactions:
     body: ""
     form: {}
     headers: {}
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/02d65e8b-65d3-45f1-b2d7-073d9a33f0ba?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210527%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210527T155659Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%22taco%22&response-content-type=application%2Foctet-stream&X-Amz-Signature=e0357647dcd50d731b73589ea5d53578589735ab3a6ff0234cad68e30cf29f2a
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/4b354ce6-8b2f-437b-972a-35abd009d66b?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210920%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210920T212628Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%22taco%22&response-content-type=application%2Foctet-stream&X-Amz-Signature=11f3c8ea649c790f7d484ba456dc2c67fda61659e33071ebcfd2950014e485bb
     method: GET
   response:
     body: |
@@ -239,15 +239,15 @@ interactions:
       Content-Type:
       - application/octet-stream
       Date:
-      - Thu, 27 May 2021 15:57:00 GMT
+      - Mon, 20 Sep 2021 21:26:29 GMT
       Etag:
       - '"271a2e273e57cb8d4d3b15f6d01195f5-1"'
       Last-Modified:
-      - Thu, 27 May 2021 15:57:00 GMT
+      - Mon, 20 Sep 2021 21:26:28 GMT
       Server:
       - AmazonS3
       X-Amz-Id-2:
-      - GpNvowpxfMzDgzyekS7yT0OIZ+jSOxBy5krT2kDHDvyuDdjUMDEwMi/d72qVpXFzDtSvuh/4RSQ=
+      - PuFDwX0rxqs/4MF3rxFi+f7Ne0QxSkg9drR1R1kMqLhAXjQedaaFk4d6Vo/SwkvOrK0gvLJz6Nc=
       X-Amz-Meta-X-Amz-Meta-Gid:
       - "65534"
       X-Amz-Meta-X-Amz-Meta-Mode:
@@ -255,7 +255,7 @@ interactions:
       X-Amz-Meta-X-Amz-Meta-Uid:
       - "65534"
       X-Amz-Request-Id:
-      - NMEJN8K33X94F4XZ
+      - G53PEBK0F3P2183R
       X-Amz-Server-Side-Encryption:
       - AES256
       X-Amz-Version-Id:
@@ -268,7 +268,7 @@ interactions:
     form: {}
     headers:
       User-Agent:
-      - Files.com Go SDK
+      - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/files/taco
     method: DELETE
   response:
@@ -277,7 +277,7 @@ interactions:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Date:
-      - Thu, 27 May 2021 15:56:59 GMT
+      - Mon, 20 Sep 2021 21:26:28 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -285,7 +285,7 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - efb8b9d3-6462-4b7d-bec1-6cc312118631
+      - 6961408d-e2c5-4ccf-b12c-e3334ccc3867
     status: 204 No Content
     code: 204
     duration: ""

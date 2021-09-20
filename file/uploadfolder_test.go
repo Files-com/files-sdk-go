@@ -24,7 +24,7 @@ func (m *MockUploader) Upload(context.Context, io.ReaderAt, int64, files_sdk.Fil
 	return files_sdk.File{}, nil
 }
 
-func (m *MockUploader) Find(context.Context, string) (files_sdk.File, error) {
+func (m *MockUploader) Find(context.Context, files_sdk.FileFindParams) (files_sdk.File, error) {
 	return files_sdk.File{}, m.findError
 }
 

@@ -80,7 +80,7 @@ type FileDeleteParams struct {
 	Recursive *bool  `url:"recursive,omitempty" required:"false"`
 }
 
-type FileFindByParams struct {
+type FileFindParams struct {
 	Path              string `url:"-,omitempty" required:"true"`
 	PreviewSize       string `url:"preview_size,omitempty" required:"false"`
 	WithPreviews      *bool  `url:"with_previews,omitempty" required:"false"`

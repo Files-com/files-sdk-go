@@ -13,6 +13,7 @@ type Session struct {
 	MultipleRegions       *bool  `json:"multiple_regions,omitempty"`
 	ReadOnly              *bool  `json:"read_only,omitempty"`
 	RootPath              string `json:"root_path,omitempty"`
+	SftpInsecureCiphers   *bool  `json:"sftp_insecure_ciphers,omitempty"`
 	SiteId                int64  `json:"site_id,omitempty"`
 	SslRequired           *bool  `json:"ssl_required,omitempty"`
 	TlsDisabled           *bool  `json:"tls_disabled,omitempty"`

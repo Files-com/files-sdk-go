@@ -13,7 +13,7 @@ type Client struct {
 	files_sdk.Config
 }
 
-func (c *Client) Find(ctx context.Context, Path string) (files_sdk.File, error) {
+func (c *Client) Get(ctx context.Context, Path string) (files_sdk.File, error) {
 	file := files_sdk.File{}
 	path := lib.BuildPath("/files/", Path)
 	exportParams, err := lib.ExportParams(lib.Interface())
@@ -31,9 +31,9 @@ func (c *Client) Find(ctx context.Context, Path string) (files_sdk.File, error) 
 	return file, nil
 }
 
-func Find(ctx context.Context, Path string) (files_sdk.File, error) {
+func Get(ctx context.Context, Path string) (files_sdk.File, error) {
 	client := Client{}
-	return client.Find(ctx, Path)
+	return client.Get(ctx, Path)
 }
 
 func (c *Client) Download(ctx context.Context, params files_sdk.FileDownloadParams) (files_sdk.File, error) {
@@ -164,7 +164,7 @@ func Delete(ctx context.Context, params files_sdk.FileDeleteParams) (files_sdk.F
 	return (&Client{}).Delete(ctx, params)
 }
 
-func (c *Client) FindBy(ctx context.Context, params files_sdk.FileFindByParams) (files_sdk.File, error) {
+func (c *Client) Find(ctx context.Context, params files_sdk.FileFindParams) (files_sdk.File, error) {
 	file := files_sdk.File{}
 	path := lib.BuildPath("/file_actions/metadata/", params.Path)
 	exportedParams, err := lib.ExportParams(params)
@@ -190,8 +190,8 @@ func (c *Client) FindBy(ctx context.Context, params files_sdk.FileFindByParams) 
 	return file, nil
 }
 
-func FindBy(ctx context.Context, params files_sdk.FileFindByParams) (files_sdk.File, error) {
-	return (&Client{}).FindBy(ctx, params)
+func Find(ctx context.Context, params files_sdk.FileFindParams) (files_sdk.File, error) {
+	return (&Client{}).Find(ctx, params)
 }
 
 func (c *Client) Copy(ctx context.Context, params files_sdk.FileCopyParams) (files_sdk.FileAction, error) {
