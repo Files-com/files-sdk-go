@@ -164,7 +164,7 @@ func Delete(ctx context.Context, params files_sdk.FileDeleteParams) (files_sdk.F
 	return (&Client{}).Delete(ctx, params)
 }
 
-func (c *Client) Metadata(ctx context.Context, params files_sdk.FileMetadataParams) (files_sdk.File, error) {
+func (c *Client) FindBy(ctx context.Context, params files_sdk.FileFindByParams) (files_sdk.File, error) {
 	file := files_sdk.File{}
 	path := lib.BuildPath("/file_actions/metadata/", params.Path)
 	exportedParams, err := lib.ExportParams(params)
@@ -190,8 +190,8 @@ func (c *Client) Metadata(ctx context.Context, params files_sdk.FileMetadataPara
 	return file, nil
 }
 
-func Metadata(ctx context.Context, params files_sdk.FileMetadataParams) (files_sdk.File, error) {
-	return (&Client{}).Metadata(ctx, params)
+func FindBy(ctx context.Context, params files_sdk.FileFindByParams) (files_sdk.File, error) {
+	return (&Client{}).FindBy(ctx, params)
 }
 
 func (c *Client) Copy(ctx context.Context, params files_sdk.FileCopyParams) (files_sdk.FileAction, error) {
