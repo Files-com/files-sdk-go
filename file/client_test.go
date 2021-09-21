@@ -200,7 +200,7 @@ func TestClient_UploadFolder_Relative(t *testing.T) {
 	job.Wait()
 	assert.Contains(results, "file-fixtures/TestClient_UploadFolder.yaml")
 
-	assert.Equal(14, job.Count())
+	assert.Equal(15, job.Count())
 	assert.Equal(int64(179652), job.TotalBytes(status.Valid...))
 	assert.Equal(true, job.All(status.Ended...))
 

@@ -155,9 +155,9 @@ func (c *Client) UploadFile(ctx context.Context, params UploadParams) *status.Jo
 		uploadStatus.Uploader = c
 		job.Add(uploadStatus)
 		job.UpdateStatus(status.Queued, uploadStatus, nil)
-		job.StartTime = time.Now()
+		job.Timer.Start()
 		defer func() {
-			job.EndTime = time.Now()
+			job.Timer.Stop()
 		}()
 		var err error
 		job.GitIgnore, err = ignore.New(params.Ignore...)
@@ -178,11 +178,11 @@ func (c *Client) UploadFile(ctx context.Context, params UploadParams) *status.Jo
 		beginUpload.Path = destination
 		file, err := uploadStatus.Upload(jobCtx, localFile, fi.Size(), beginUpload, uploadProgress(uploadStatus), job.FilePartsManager)
 		dealWithCanceledError(uploadStatus, err, file)
-		RetryTransfers(jobCtx, job)
+		RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy))
 	}
 
 	job.Wait = func() {
-		for job.EndTime.IsZero() {
+		for !job.Finished() {
 		}
 	}
 

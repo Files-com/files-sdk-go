@@ -3,8 +3,11 @@ package status
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 	"time"
+
+	"github.com/Files-com/files-sdk-go/v2/lib/timer"
 
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/chilts/sid"
@@ -24,9 +27,8 @@ type ToStatusFile interface {
 }
 
 type Job struct {
-	Id            string
-	StartTime     time.Time
-	EndTime       time.Time
+	Id string
+	*timer.Timer
 	Statuses      []ToStatusFile
 	Scanning      bool
 	Direction     direction.Type
@@ -35,7 +37,7 @@ type Job struct {
 	RemotePath    string
 	Sync          bool
 	Start         func()
-	Stopped       bool
+	Canceled      bool
 	context.CancelFunc
 	Wait   func()
 	Params interface{}
@@ -52,6 +54,7 @@ func (r Job) Init() *Job {
 	r.Id = sid.IdBase64()
 	r.EventsReporter = make(map[Status]Reporter)
 	r.Wait = func() {}
+	r.Timer = timer.New()
 	return &r
 }
 
@@ -77,13 +80,13 @@ func (r *Job) ClearStatuses() Job {
 }
 
 func (r *Job) Reset() {
-	r.StartTime = time.Time{}
-	r.EndTime = time.Time{}
+	r.Canceled = false
+	r.Timer = timer.New()
 }
 
-func (r *Job) Stop() {
-	r.Stopped = true
-	r.EndTime = time.Now()
+func (r *Job) Cancel() {
+	r.Canceled = true
+	r.Timer.Stop()
 	r.CancelFunc()
 }
 
@@ -102,7 +105,11 @@ func (r *Job) Events(event Status, callback Reporter) {
 }
 
 func (r *Job) UpdateStatus(status Status, file ToStatusFile, err error) {
-	if err != nil {
+	if err != nil && strings.Contains(err.Error(), "context canceled") {
+		err = nil
+		status = Canceled
+	}
+	if err != nil && errors.Unwrap(err) != nil {
 		err = errors.Unwrap(err)
 	}
 	file.SetStatus(status, err)
@@ -180,7 +187,7 @@ func (r *Job) Idle(t ...Status) bool {
 }
 
 func (r *Job) TransferRate(t ...Status) int64 {
-	millisecondsSinceStart := time.Now().Sub(r.StartTime).Milliseconds()
+	millisecondsSinceStart := time.Now().Sub(r.LastStart()).Milliseconds()
 	bytesPerMilliseconds := float64(r.TransferBytes(t...)) / float64(millisecondsSinceStart)
 	bytesPerSecond := bytesPerMilliseconds * float64(1000)
 
@@ -203,7 +210,7 @@ func (r *Job) ETA(t ...Status) time.Duration {
 }
 
 func (r *Job) ElapsedTime() time.Duration {
-	return r.EndTime.Sub(r.StartTime)
+	return r.Elapsed()
 }
 
 func (r *Job) All(t ...Status) bool {
@@ -277,7 +284,7 @@ func (r *Job) Percentage(t ...Status) int {
 }
 
 func (r *Job) StatusFromError(s ToStatusFile, err error) {
-	if r.Stopped {
+	if r.Canceled {
 		r.UpdateStatus(Canceled, s, nil)
 	} else {
 		r.UpdateStatus(Errored, s, err)

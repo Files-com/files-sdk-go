@@ -13,21 +13,49 @@ type RetryPolicy string
 
 const (
 	RetryAll                    = RetryPolicy("RetryAll")
-	RetryErrored                = RetryPolicy("RetryErrored")
+	RetryUnfinished             = RetryPolicy("RetryUnfinished")
 	RetryErroredIfSomeCompleted = RetryPolicy("RetryErroredIfSomeCompleted")
 )
 
-func RetryTransfers(ctx context.Context, job *status.Job) {
-	if job.Stopped {
-		return
-	}
-	switch RetryPolicy(job.RetryPolicy) {
+func RetryByPolicy(ctx context.Context, job *status.Job, policy RetryPolicy) {
+	switch policy {
 	case RetryAll:
-		retryAll(ctx, job)
-	case RetryErrored:
-		retryErrored(ctx, job)
+		RetryByStatus(ctx, job, status.Included...)
+	case RetryUnfinished:
+		RetryByStatus(ctx, job, status.Errored, status.Canceled)
 	case RetryErroredIfSomeCompleted:
 		retryErroredIfSomeCompleted(ctx, job)
+	}
+}
+
+func RetryByStatus(ctx context.Context, job *status.Job, s ...status.Status) {
+	switch job.Direction {
+	case direction.DownloadType:
+		onComplete := make(chan *DownloadStatus)
+		enqueueByStatus(ctx, job,
+			func(s status.ToStatusFile, jobCxt context.Context) {
+				job.UpdateStatus(status.Retrying, s.(*DownloadStatus), nil)
+				enqueueDownload(jobCxt, job, s.(*DownloadStatus), onComplete)
+			}, func() {
+				<-onComplete
+			},
+			s...,
+		)
+		close(onComplete)
+	case direction.UploadType:
+		onComplete := make(chan *UploadStatus)
+		enqueueByStatus(ctx, job,
+			func(s status.ToStatusFile, jobCxt context.Context) {
+				job.UpdateStatus(status.Retrying, s.(*UploadStatus), nil)
+				enqueueUpload(jobCxt, job, s.(*UploadStatus), onComplete)
+			}, func() {
+				<-onComplete
+			},
+			s...,
+		)
+		close(onComplete)
+	default:
+		panic("invalid direction")
 	}
 }
 
@@ -43,64 +71,27 @@ func retryErroredIfSomeCompleted(ctx context.Context, job *status.Job) {
 	}
 	for _, s := range job.Sub(status.Complete).Statuses {
 		if lastFailure.Before(s.ToStatusFile().LastByte) {
-			retryErrored(ctx, job)
+			RetryByPolicy(ctx, job, RetryUnfinished)
 			return
 		}
 	}
 }
 
-func retryAll(ctx context.Context, job *status.Job) {
-	retryByStatus(ctx, job, status.Included...)
-}
-
-func retryErrored(ctx context.Context, job *status.Job) {
-	retryByStatus(ctx, job, status.Errored)
-}
-
-func retryByStatus(ctx context.Context, job *status.Job, s ...status.Status) {
-	switch job.Direction {
-	case direction.DownloadType:
-		onComplete := make(chan *DownloadStatus)
-		enqueueByStatus(job,
-			func(s status.ToStatusFile) {
-				job.UpdateStatus(status.Retrying, s.(*DownloadStatus), nil)
-				enqueueDownload(ctx, job, s.(*DownloadStatus), onComplete)
-			}, func() {
-				<-onComplete
-			},
-			s...,
-		)
-		close(onComplete)
-	case direction.UploadType:
-		onComplete := make(chan *UploadStatus)
-		enqueueByStatus(job,
-			func(s status.ToStatusFile) {
-				job.UpdateStatus(status.Retrying, s.(*UploadStatus), nil)
-				enqueueUpload(ctx, job, s.(*UploadStatus), onComplete)
-			}, func() {
-				<-onComplete
-			},
-			s...,
-		)
-		close(onComplete)
-	default:
-		panic("invalid direction")
-	}
-}
-
-func enqueueByStatus(job *status.Job, enqueue func(s status.ToStatusFile), onComplete func(), s ...status.Status) {
+func enqueueByStatus(ctx context.Context, job *status.Job, enqueue func(status.ToStatusFile, context.Context), onComplete func(), s ...status.Status) {
 	if job.Count(s...) == 0 {
 		return
 	}
 
-	job.Reset()
+	jobCtx := job.WithContext(ctx)
+	job.Canceled = false
+	job.Timer.Start()
 	count := 0
 	for _, s := range job.Sub(s...).Statuses {
 		count += 1
-		enqueue(s)
+		enqueue(s, jobCtx)
 	}
 	for range iter.N(count) {
 		onComplete()
 	}
-	job.EndTime = time.Now()
+	job.Timer.Stop()
 }

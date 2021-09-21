@@ -10,9 +10,19 @@ type readerCtx struct {
 	r   io.Reader
 }
 
+type WithContextReader interface {
+	WithContext(context.Context)
+	io.Reader
+}
+
 func (r *readerCtx) Read(p []byte) (n int, err error) {
 	if err := r.ctx.Err(); err != nil {
 		return 0, err
+	}
+
+	withContext, ok := r.r.(WithContextReader)
+	if ok {
+		withContext.WithContext(r.ctx)
 	}
 	return r.r.Read(p)
 }

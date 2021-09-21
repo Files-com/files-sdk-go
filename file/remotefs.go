@@ -129,10 +129,15 @@ func (f *File) Reload() (File, error) {
 }
 
 func (f *File) Close() error {
-	if f.ReadCloser != nil {
-		return f.ReadCloser.Close()
+	if f.ReadCloser == nil {
+		return nil
 	}
-	return nil
+	defer func() { f.ReadCloser = nil }()
+	return f.ReadCloser.Close()
+}
+
+func (f *File) WithContext(ctx context.Context) {
+	f.Context = ctx
 }
 
 func (f FS) Open(name string) (goFs.File, error) {
@@ -143,26 +148,22 @@ func (f FS) Open(name string) (goFs.File, error) {
 		}
 		return &file, nil
 	}
-	fileInfo, err := (&Client{Config: f.Config}).Get(f.Context, filepath.Join(f.Root, name))
-	responseError, ok := err.(files_sdk.ResponseError)
-
+	fileInfo, err := (&Client{Config: f.Config}).Find(f.Context, files_sdk.FileFindParams{Path: filepath.Join(f.Root, name)})
 	if err != nil {
-		if ok && responseError.Type == "bad-request/cannot-download-directory" {
-			fileInfo.Type = "directory"
-			fileInfo.DisplayName = name
-			fileInfo.Path = filepath.Join(f.Root, name)
-			f.cache[name] = File{File: &fileInfo, FS: f}
-			return &ReadDirFile{File: File{File: &fileInfo, FS: f}}, nil
-		} else {
-			return &File{File: &fileInfo, FS: f}, &goFs.PathError{Path: fileInfo.Path, Err: err, Op: "open"}
-		}
+		return &File{File: &fileInfo, FS: f}, &goFs.PathError{Path: fileInfo.Path, Err: err, Op: "open"}
 	}
-	return &File{File: &fileInfo, FS: f}, nil
+
+	if fileInfo.Type == "directory" {
+		f.cache[name] = File{File: &fileInfo, FS: f}
+		return &ReadDirFile{File: File{File: &fileInfo, FS: f}}, nil
+	} else {
+		return &File{File: &fileInfo, FS: f}, nil
+	}
 }
 
 func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {
 	var files []goFs.DirEntry
-	if f.Context.Err() != nil {
+	if f.Context != nil && f.Context.Err() != nil {
 		return files, &goFs.PathError{Path: f.Path, Err: f.Context.Err(), Op: "readdir"}
 	}
 	folderClient := folder.Client{Config: f.Config}

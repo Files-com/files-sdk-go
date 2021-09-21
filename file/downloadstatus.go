@@ -42,6 +42,11 @@ func (d *DownloadStatus) SetStatus(s status.Status, err error) {
 	if setError {
 		d.error = err
 	}
+
+	if s.Is(status.Retrying) {
+		d.DownloadedBytes = 0
+		d.lastByte = time.Time{}
+	}
 }
 
 func (d DownloadStatus) Id() string {

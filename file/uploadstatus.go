@@ -41,6 +41,11 @@ func (u *UploadStatus) SetStatus(s status.Status, err error) {
 	if setError {
 		u.error = err
 	}
+
+	if s.Is(status.Retrying) {
+		u.UploadedBytes = 0
+		u.lastByte = time.Time{}
+	}
 }
 
 func (u UploadStatus) Id() string {

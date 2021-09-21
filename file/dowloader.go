@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/Files-com/files-sdk-go/v2/directory"
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
@@ -64,9 +63,9 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloadFolderParams)
 	job.Start = func() {
 		job.Scanning = true
 		go enqueueIndexedDownloads(job, jobCtx, onComplete)
-		job.StartTime = time.Now()
+		job.Timer.Start()
 		fs.WalkDir(fileSys, job.RemotePath, func(path string, d fs.DirEntry, err error) error {
-			if job.Stopped {
+			if job.Canceled {
 				return jobCtx.Err()
 			}
 			if err != nil {
@@ -87,7 +86,7 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloadFolderParams)
 	}
 
 	job.Wait = func() {
-		for job.EndTime.IsZero() {
+		for job.Running() {
 		}
 	}
 
@@ -96,15 +95,13 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloadFolderParams)
 
 func markDownloadOnComplete(count int, onComplete chan *DownloadStatus, jobCtx context.Context, job *status.Job) {
 	for range iter.N(count) {
-		select {
-		case <-jobCtx.Done():
-			break
-		case <-onComplete:
-		}
+		<-onComplete
 	}
 	close(onComplete)
-	RetryTransfers(jobCtx, job)
-	job.EndTime = time.Now()
+	if !job.Canceled {
+		RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy))
+	}
+	job.Timer.Stop()
 }
 
 func enqueueIndexedDownloads(job *status.Job, jobCtx context.Context, onComplete chan *DownloadStatus) {
@@ -217,7 +214,10 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 		}
 
 		if !reportStatus.Is(status.Valid...) {
-			os.Remove(tmpName) // Clean up on invalid download
+			err = os.Remove(tmpName) // Clean up on invalid download
+			if err != nil {
+				reportStatus.Job.UpdateStatus(status.Errored, reportStatus, err)
+			}
 		} else {
 			err = os.Rename(tmpName, reportStatus.LocalPath)
 			if err != nil {

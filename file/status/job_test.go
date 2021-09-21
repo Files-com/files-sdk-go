@@ -22,7 +22,7 @@ func (f StatusFile) SetStatus(status Status, _ error) {
 func TestJob_TransferRate(t *testing.T) {
 	assert := assert.New(t)
 	job := Job{}.Init()
-	job.StartTime = time.Now()
+	job.Timer.Start()
 	file := StatusFile{}
 	file.LastByte = time.Now()
 	file.TransferBytes = 1000
@@ -38,7 +38,7 @@ func TestJob_TransferRate(t *testing.T) {
 func TestJob_ETA(t *testing.T) {
 	assert := assert.New(t)
 	job := Job{}.Init()
-	job.StartTime = time.Now()
+	job.Timer.Start()
 	file := StatusFile{}
 	file.Status = Downloading
 	file.Size = 10000
@@ -53,7 +53,8 @@ func TestJob_ETA(t *testing.T) {
 func TestJob_ElapsedTime(t *testing.T) {
 	assert := assert.New(t)
 	job := Job{}.Init()
-	job.StartTime = time.Now()
+	job.Timer.Start()
+
 	file := StatusFile{}
 	file.Status = Complete
 	file.Size = 10000
@@ -63,7 +64,8 @@ func TestJob_ElapsedTime(t *testing.T) {
 	file.TransferBytes = +5000
 	time.Sleep(1 * time.Second)
 	file.Status = Complete
-	job.EndTime = time.Now()
+	job.Timer.Stop()
+
 	job.Add(file)
 	assert.InDelta(2000, job.ElapsedTime().Milliseconds(), 100)
 }

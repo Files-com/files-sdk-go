@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/Files-com/files-sdk-go/v2/directory"
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
@@ -50,12 +49,12 @@ func uploadFolder(ctx context.Context, c Uploader, params UploadParams) *status.
 	job.Start = func() {
 		job.Scanning = true
 		go enqueueIndexedUploads(job, jobCtx, onComplete)
-		job.StartTime = time.Now()
+		job.Timer.Start()
 		i, err := ignore.New(params.Ignore...)
 		if err != nil {
 			job.Add(metaFile)
 			job.UpdateStatus(status.Errored, metaFile, err)
-			job.EndTime = time.Now()
+			job.Timer.Stop()
 			return
 		}
 		job.GitIgnore = i
@@ -78,7 +77,7 @@ func uploadFolder(ctx context.Context, c Uploader, params UploadParams) *status.
 	}
 
 	job.Wait = func() {
-		for job.EndTime.IsZero() {
+		for !job.Finished() {
 		}
 	}
 
@@ -91,15 +90,11 @@ func markUploadOnComplete(count int, job *status.Job, metaFile *UploadStatus, on
 		job.UpdateStatus(status.Complete, metaFile, nil)
 	}
 	for range iter.N(count) {
-		select {
-		case <-jobCtx.Done():
-			break
-		case <-onComplete:
-		}
+		<-onComplete
 	}
 	close(onComplete)
-	RetryTransfers(jobCtx, job)
-	job.EndTime = time.Now()
+	RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy))
+	job.Timer.Stop()
 }
 
 func enqueueIndexedUploads(job *status.Job, jobCtx context.Context, onComplete chan *UploadStatus) {
