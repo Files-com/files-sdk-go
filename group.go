@@ -11,7 +11,7 @@ type Group struct {
 	Name      string   `json:"name,omitempty"`
 	AdminIds  string   `json:"admin_ids,omitempty"`
 	Notes     string   `json:"notes,omitempty"`
-	UserIds   []int64  `json:"user_ids,omitempty"`
+	UserIds   []string `json:"user_ids,omitempty"`
 	Usernames []string `json:"usernames,omitempty"`
 }
 
