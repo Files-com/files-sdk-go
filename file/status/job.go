@@ -26,18 +26,24 @@ type ToStatusFile interface {
 	SetStatus(Status, error)
 }
 
+type Subscriptions struct {
+	Started     chan time.Time
+	Finished    chan time.Time
+	Canceled    chan time.Time
+	Scanning    chan time.Time
+	EndScanning chan time.Time
+}
+
 type Job struct {
 	Id string
 	*timer.Timer
 	Statuses      []ToStatusFile
-	Scanning      bool
 	Direction     direction.Type
 	statusesMutex *sync.RWMutex
 	LocalPath     string
 	RemotePath    string
 	Sync          bool
-	Start         func()
-	Canceled      bool
+	CodeStart     func()
 	context.CancelFunc
 	Wait   func()
 	Params interface{}
@@ -47,6 +53,11 @@ type Job struct {
 	*manager.Manager
 	RetryPolicy string
 	*ignore.GitIgnore
+	Started     *Signal
+	Finished    *Signal
+	Canceled    *Signal
+	Scanning    *Signal
+	EndScanning *Signal
 }
 
 func (r Job) Init() *Job {
@@ -55,6 +66,11 @@ func (r Job) Init() *Job {
 	r.EventsReporter = make(map[Status]Reporter)
 	r.Wait = func() {}
 	r.Timer = timer.New()
+	r.Started = &Signal{}
+	r.Finished = &Signal{}
+	r.Canceled = &Signal{}
+	r.Scanning = &Signal{}
+	r.EndScanning = &Signal{}
 	return &r
 }
 
@@ -72,6 +88,14 @@ func (r *Job) SetEventsReporter(e EventsReporter) {
 	}
 }
 
+func (r *Job) ClearCalled() {
+	r.Started.Clear()
+	r.Finished.Clear()
+	r.Canceled.Clear()
+	r.Scanning.Clear()
+	r.EndScanning.Clear()
+}
+
 func (r *Job) ClearStatuses() Job {
 	newJob := *r
 	newJob.Reset()
@@ -79,19 +103,46 @@ func (r *Job) ClearStatuses() Job {
 	return newJob
 }
 
-func (r *Job) Reset() {
-	r.Canceled = false
-	r.Timer = timer.New()
+func (r *Job) Scan() {
+	r.Scanning.call(time.Now())
+}
+
+func (r *Job) EndScan() {
+	r.EndScanning.call(time.Now())
+}
+
+func (r *Job) Start() {
+	r.Started.call(r.Timer.Start())
+	if r.CodeStart != nil {
+		r.CodeStart()
+	}
+}
+
+func (r *Job) Finish() {
+	r.Finished.call(r.Timer.Stop())
 }
 
 func (r *Job) Cancel() {
-	r.Canceled = true
-	r.Timer.Stop()
+	r.Canceled.call(r.Timer.Stop())
 	r.CancelFunc()
+}
+
+func (r *Job) Reset() {
+	r.Timer = timer.New()
 }
 
 func (r *Job) Job() *Job {
 	return r
+}
+
+func (r *Job) SubscribeAll() Subscriptions {
+	return Subscriptions{
+		Started:     r.Started.Subscribe(),
+		Finished:    r.Finished.Subscribe(),
+		Canceled:    r.Canceled.Subscribe(),
+		Scanning:    r.Scanning.Subscribe(),
+		EndScanning: r.EndScanning.Subscribe(),
+	}
 }
 
 func (r *Job) WithContext(ctx context.Context) context.Context {
@@ -284,7 +335,7 @@ func (r *Job) Percentage(t ...Status) int {
 }
 
 func (r *Job) StatusFromError(s ToStatusFile, err error) {
-	if r.Canceled {
+	if r.Canceled.Called {
 		r.UpdateStatus(Canceled, s, nil)
 	} else {
 		r.UpdateStatus(Errored, s, err)

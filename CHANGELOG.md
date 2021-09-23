@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
+## [2.0.9-beta] - 2021/09/23
+### Change
+- `status.Job` has subscribable events `Started`,`Finished`,`Canceled`,`Scanning`, and `EndScanning`. Call `Subscribe()` to return `chan time.Time`
+
+### Fix
+- `file.Client.Downloader` won't query stats of local/remote file when sync is false.
+
 ## [2.0.7-beta] - 2021/09/21
 ### Changes
 - `file.RetryTransfers` changed to `file.RetryByPolicy`.

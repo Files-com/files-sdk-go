@@ -83,8 +83,6 @@ func enqueueByStatus(ctx context.Context, job *status.Job, enqueue func(status.T
 	}
 
 	jobCtx := job.WithContext(ctx)
-	job.Canceled = false
-	job.Timer.Start()
 	count := 0
 	for _, s := range job.Sub(s...).Statuses {
 		count += 1
@@ -93,5 +91,4 @@ func enqueueByStatus(ctx context.Context, job *status.Job, enqueue func(status.T
 	for range iter.N(count) {
 		onComplete()
 	}
-	job.Timer.Stop()
 }

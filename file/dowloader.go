@@ -60,12 +60,12 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloadFolderParams)
 	}
 	onComplete := make(chan *DownloadStatus)
 	count := 0
-	job.Start = func() {
-		job.Scanning = true
+	job.CodeStart = func() {
+		job.Scan()
 		go enqueueIndexedDownloads(job, jobCtx, onComplete)
 		job.Timer.Start()
 		fs.WalkDir(fileSys, job.RemotePath, func(path string, d fs.DirEntry, err error) error {
-			if job.Canceled {
+			if job.Canceled.Called {
 				return jobCtx.Err()
 			}
 			if err != nil {
@@ -81,13 +81,12 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloadFolderParams)
 
 			return nil
 		})
-		job.Scanning = false
+		job.EndScan()
 		go markDownloadOnComplete(count, onComplete, jobCtx, job)
 	}
-
+	finished := job.Finished.Subscribe()
 	job.Wait = func() {
-		for job.Running() {
-		}
+		<-finished
 	}
 
 	return job
@@ -98,14 +97,14 @@ func markDownloadOnComplete(count int, onComplete chan *DownloadStatus, jobCtx c
 		<-onComplete
 	}
 	close(onComplete)
-	if !job.Canceled {
+	if !job.Canceled.Called {
 		RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy))
 	}
-	job.Timer.Stop()
+	job.Finish()
 }
 
 func enqueueIndexedDownloads(job *status.Job, jobCtx context.Context, onComplete chan *DownloadStatus) {
-	for job.Scanning || job.Count(status.Indexed) > 0 {
+	for !job.EndScanning.Called || job.Count(status.Indexed) > 0 {
 		f, ok := job.Find(status.Indexed)
 		if ok {
 			enqueueDownload(jobCtx, job, f.(*DownloadStatus), onComplete)
@@ -174,21 +173,23 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 				return
 			}
 		}
-		localStat, err := os.Stat(reportStatus.LocalPath)
-		if err != nil && !os.IsNotExist(err) {
-			reportStatus.Job.UpdateStatus(status.Errored, reportStatus, err)
-			return
-		}
-		remoteStat, err := reportStatus.fsFile.Stat()
-		if err != nil {
-			reportStatus.Job.UpdateStatus(status.Errored, reportStatus, err)
-			return
-		}
-		// server is not after local
-		if !os.IsNotExist(err) && reportStatus.Job.Sync && !remoteStat.ModTime().After(localStat.ModTime()) {
-			// Local version is the same or newer
-			reportStatus.Job.UpdateStatus(status.Skipped, reportStatus, nil)
-			return
+		if reportStatus.Job.Sync {
+			localStat, err := os.Stat(reportStatus.LocalPath)
+			if err != nil && !os.IsNotExist(err) {
+				reportStatus.Job.UpdateStatus(status.Errored, reportStatus, err)
+				return
+			}
+			remoteStat, err := reportStatus.fsFile.Stat()
+			if err != nil {
+				reportStatus.Job.UpdateStatus(status.Errored, reportStatus, err)
+				return
+			}
+			// server is not after local
+			if !os.IsNotExist(err) && reportStatus.Job.Sync && !remoteStat.ModTime().After(localStat.ModTime()) {
+				// Local version is the same or newer
+				reportStatus.Job.UpdateStatus(status.Skipped, reportStatus, nil)
+				return
+			}
 		}
 		downloadParams := files_sdk.FileDownloadParams{Path: reportStatus.RemotePath}
 

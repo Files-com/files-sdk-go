@@ -66,7 +66,7 @@ func expand(path string) (string, error) {
 func (c *Client) Uploader(ctx context.Context, params UploadParams) *status.Job {
 	job := status.Job{}.Init()
 	SetJobParams(job, direction.UploadType, params)
-	job.Start = func() {
+	job.CodeStart = func() {
 		params.Job = job
 		job.Params = params
 		file := &status.File{File: files_sdk.File{}, RemotePath: params.RemotePath, LocalPath: params.LocalPath, Status: status.Queued, Job: job}
@@ -90,9 +90,9 @@ func (c *Client) Uploader(ctx context.Context, params UploadParams) *status.Job 
 			return
 		}
 		if fi.IsDir() {
-			c.UploadFolder(ctx, params).Start()
+			c.UploadFolder(ctx, params).CodeStart()
 		} else {
-			c.UploadFile(ctx, params).Start()
+			c.UploadFile(ctx, params).CodeStart()
 		}
 	}
 
@@ -115,7 +115,16 @@ func (c *Client) UploadFile(ctx context.Context, params UploadParams) *status.Jo
 	jobCtx := job.WithContext(ctx)
 	job.Type = directory.File
 
-	job.Start = func() {
+	job.CodeStart = func() {
+		var localFile *os.File
+		var err error
+		defer func() {
+			if localFile != nil {
+				localFile.Close()
+			}
+			job.Finish()
+			job.FilesManager.Done()
+		}()
 		uploadStatus := &UploadStatus{
 			Job:        job,
 			LocalPath:  params.LocalPath,
@@ -129,9 +138,9 @@ func (c *Client) UploadFile(ctx context.Context, params UploadParams) *status.Jo
 		if params.RemotePath == "" {
 			destination = localFileName
 		} else {
-			_, err := c.Find(jobCtx, files_sdk.FileFindParams{Path: params.RemotePath})
+			remoteFile, err := c.Find(jobCtx, files_sdk.FileFindParams{Path: params.RemotePath})
 			responseError, ok := err.(files_sdk.ResponseError)
-			if ok && responseError.Type == "bad-request/cannot-download-directory" {
+			if remoteFile.Type == "directory" {
 				destination = filepath.Join(params.RemotePath, localFileName)
 			} else if ok && responseError.Type == "not-found" {
 				if destination[len(destination)-1:] == "/" {
@@ -142,8 +151,12 @@ func (c *Client) UploadFile(ctx context.Context, params UploadParams) *status.Jo
 			}
 		}
 		job.FilesManager.Wait()
-		defer job.FilesManager.Done()
-		fi, _ := os.Stat(params.LocalPath)
+		fi, err := os.Stat(params.LocalPath)
+		if err != nil {
+			job.Add(uploadStatus)
+			job.UpdateStatus(status.Errored, uploadStatus, err)
+			return
+		}
 		uploadStatus.RemotePath = destination
 		uploadStatus.File = files_sdk.File{
 			DisplayName: filepath.Base(destination),
@@ -155,11 +168,7 @@ func (c *Client) UploadFile(ctx context.Context, params UploadParams) *status.Jo
 		uploadStatus.Uploader = c
 		job.Add(uploadStatus)
 		job.UpdateStatus(status.Queued, uploadStatus, nil)
-		job.Timer.Start()
-		defer func() {
-			job.Timer.Stop()
-		}()
-		var err error
+
 		job.GitIgnore, err = ignore.New(params.Ignore...)
 		if err != nil {
 			job.Add(uploadStatus)
@@ -169,8 +178,7 @@ func (c *Client) UploadFile(ctx context.Context, params UploadParams) *status.Jo
 		if skipOrIgnore(jobCtx, uploadStatus) {
 			return
 		}
-		localFile, err := os.Open(params.LocalPath)
-		defer localFile.Close()
+		localFile, err = os.Open(params.LocalPath)
 		if dealWithDBasicError(uploadStatus, err) {
 			return
 		}
@@ -180,9 +188,8 @@ func (c *Client) UploadFile(ctx context.Context, params UploadParams) *status.Jo
 		dealWithCanceledError(uploadStatus, err, file)
 		RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy))
 	}
-
 	job.Wait = func() {
-		for !job.Finished() {
+		for !job.Finished.Called {
 		}
 	}
 

@@ -46,10 +46,9 @@ func uploadFolder(ctx context.Context, c Uploader, params UploadParams) *status.
 
 	onComplete := make(chan *UploadStatus)
 	count := 0
-	job.Start = func() {
-		job.Scanning = true
+	job.CodeStart = func() {
+		job.Scan()
 		go enqueueIndexedUploads(job, jobCtx, onComplete)
-		job.Timer.Start()
 		i, err := ignore.New(params.Ignore...)
 		if err != nil {
 			job.Add(metaFile)
@@ -67,7 +66,7 @@ func uploadFolder(ctx context.Context, c Uploader, params UploadParams) *status.
 			params,
 			c,
 		)
-		job.Scanning = false
+		job.EndScan()
 		if walkErr != nil {
 			job.Add(metaFile)
 			job.UpdateStatus(status.Errored, metaFile, walkErr)
@@ -76,9 +75,9 @@ func uploadFolder(ctx context.Context, c Uploader, params UploadParams) *status.
 		go markUploadOnComplete(count, job, metaFile, onComplete, jobCtx)
 	}
 
+	finished := job.Finished.Subscribe()
 	job.Wait = func() {
-		for !job.Finished() {
-		}
+		<-finished
 	}
 
 	return job
@@ -94,11 +93,11 @@ func markUploadOnComplete(count int, job *status.Job, metaFile *UploadStatus, on
 	}
 	close(onComplete)
 	RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy))
-	job.Timer.Stop()
+	job.Finish()
 }
 
 func enqueueIndexedUploads(job *status.Job, jobCtx context.Context, onComplete chan *UploadStatus) {
-	for job.Scanning || job.Count(status.Indexed) > 0 {
+	for !job.EndScanning.Called || job.Count(status.Indexed) > 0 {
 		f, ok := job.Find(status.Indexed)
 		if ok {
 			enqueueUpload(jobCtx, job, f.(*UploadStatus), onComplete)
@@ -114,15 +113,19 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 		return
 	}
 	go func() {
+		var localFile *os.File
+		var err error
 		defer func() {
+			if localFile != nil {
+				localFile.Close()
+			}
 			job.FilesManager.Done()
 			onComplete <- uploadStatus
 		}()
 		if skipOrIgnore(ctx, uploadStatus) {
 			return
 		}
-		localFile, err := os.Open(uploadStatus.LocalPath)
-		defer localFile.Close()
+		localFile, err = os.Open(uploadStatus.LocalPath)
 		if dealWithDBasicError(uploadStatus, err) {
 			return
 		}
@@ -137,7 +140,6 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 
 func walkPaginated(ctx context.Context, localFolderPath string, destinationRootPath string, job *status.Job, params UploadParams, c Uploader) (int, error) {
 	count := 0
-	job.Scanning = true
 	err := godirwalk.Walk(localFolderPath, &godirwalk.Options{
 		Callback: func(path string, de *godirwalk.Dirent) error {
 			if ctx.Err() != nil {
@@ -191,7 +193,6 @@ func walkPaginated(ctx context.Context, localFolderPath string, destinationRootP
 		},
 		Unsorted: true, // (optional) set true for faster yet non-deterministic enumeration (see godoc)
 	})
-	job.Scanning = false
 	return count, err
 }
 

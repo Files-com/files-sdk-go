@@ -21,16 +21,20 @@ func New() *Timer {
 	return &Timer{RWMutex: &sync.RWMutex{}}
 }
 
-func (t *Timer) Start() {
+func (t *Timer) Start() time.Time {
 	t.RWMutex.Lock()
-	t.Runs = append(t.Runs, Run{Start: time.Now()})
+	n := time.Now()
+	t.Runs = append(t.Runs, Run{Start: n})
 	t.RWMutex.Unlock()
+	return n
 }
 
-func (t *Timer) Stop() {
+func (t *Timer) Stop() time.Time {
 	t.RWMutex.Lock()
-	t.Runs[len(t.Runs)-1].Finish = time.Now()
+	n := time.Now()
+	t.Runs[len(t.Runs)-1].Finish = n
 	t.RWMutex.Unlock()
+	return n
 }
 
 func (t *Timer) Elapsed() time.Duration {
@@ -62,9 +66,6 @@ func (t *Timer) LastStart() time.Time {
 }
 
 func (t *Timer) Running() bool {
-	t.RWMutex.RLock()
-	defer t.RWMutex.RUnlock()
-
 	if len(t.Runs) == 0 {
 		return false
 	}
@@ -72,13 +73,17 @@ func (t *Timer) Running() bool {
 }
 
 func (t *Timer) Finished() bool {
-	t.RWMutex.RLock()
-	defer t.RWMutex.RUnlock()
-
 	if len(t.Runs) == 0 {
 		return false
 	}
 	return !t.Runs[len(t.Runs)-1].Finish.IsZero()
+}
+
+func (t *Timer) Started() bool {
+	if len(t.Runs) == 0 {
+		return false
+	}
+	return !t.Runs[0].Start.IsZero()
 }
 
 func (t *Timer) StartTime() time.Time {
