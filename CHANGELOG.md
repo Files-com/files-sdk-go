@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
+## [2.0.10-beta] - 2021/09/23
+### Fix
+- Error `too many open files`: solution was to inform the server that the client wants to close any connection after a transaction is complete.
+
 ## [2.0.9-beta] - 2021/09/23
 ### Change
 - `status.Job` has subscribable events `Started`,`Finished`,`Canceled`,`Scanning`, and `EndScanning`. Call `Subscribe()` to return `chan time.Time`

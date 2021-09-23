@@ -139,6 +139,8 @@ func buildRequest(opts *CallParams) (*http.Request, error) {
 		}
 		opts.Config.Logger().Printf(" %v", command)
 	}
+	req.Header.Set("Connection", "close")
+	req.Close = true
 
 	return req, nil
 }
