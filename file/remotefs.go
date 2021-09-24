@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	goFs "io/fs"
-	"net/http"
 	"path/filepath"
 	"time"
 
@@ -101,17 +100,19 @@ func (f *File) load() error {
 	if err != nil {
 		return &goFs.PathError{Path: f.File.Path, Err: err, Op: "read"}
 	}
-	request, err := http.NewRequestWithContext(f.Context, "GET", f1.File.DownloadUri, nil)
-	if err != nil {
-		return &goFs.PathError{Path: f1.File.Path, Err: err, Op: "read"}
-	}
-	resp, err := f.Config.GetHttpClient().Do(request)
+	resp, err := files_sdk.CallRaw(&files_sdk.CallParams{Config: f.Config, Uri: f1.File.DownloadUri, Method: "GET", Context: f.Context})
 	if err != nil {
 		return &goFs.PathError{Path: f1.File.Path, Err: err, Op: "read"}
 	}
 	if resp.StatusCode != 200 {
-		body := make([]byte, resp.ContentLength)
+		var body []byte
+		if resp.ContentLength == -1 {
+			body = make([]byte, 512)
+		} else {
+			body = make([]byte, resp.ContentLength)
+		}
 		resp.Body.Read(body)
+		resp.Body.Close()
 		return &goFs.PathError{Path: f1.File.Path, Err: fmt.Errorf(string(body)), Op: "read"}
 	}
 	f.ReadCloser = resp.Body
