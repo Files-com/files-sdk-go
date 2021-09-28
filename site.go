@@ -43,6 +43,7 @@ type Site struct {
 	DisableNotifications                 *bool           `json:"disable_notifications,omitempty"`
 	DisablePasswordReset                 *bool           `json:"disable_password_reset,omitempty"`
 	Domain                               string          `json:"domain,omitempty"`
+	DomainHstsHeader                     *bool           `json:"domain_hsts_header,omitempty"`
 	Email                                string          `json:"email,omitempty"`
 	FtpEnabled                           *bool           `json:"ftp_enabled,omitempty"`
 	ReplyToEmail                         string          `json:"reply_to_email,omitempty"`
@@ -139,6 +140,7 @@ type SiteUpdateParams struct {
 	Name                                 string    `url:"name,omitempty" required:"false"`
 	Subdomain                            string    `url:"subdomain,omitempty" required:"false"`
 	Domain                               string    `url:"domain,omitempty" required:"false"`
+	DomainHstsHeader                     *bool     `url:"domain_hsts_header,omitempty" required:"false"`
 	Email                                string    `url:"email,omitempty" required:"false"`
 	ReplyToEmail                         string    `url:"reply_to_email,omitempty" required:"false"`
 	AllowBundleNames                     *bool     `url:"allow_bundle_names,omitempty" required:"false"`
