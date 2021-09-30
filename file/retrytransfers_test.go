@@ -27,20 +27,44 @@ func TestRetryTransfers(t *testing.T) {
 			retryingEvents = append(retryingEvents, file.Status)
 		}
 		job.SetEventsReporter(events)
-		RetryByPolicy(context.Background(), job, RetryAll)
+		RetryByPolicy(context.Background(), job, RetryAll, false)
 		assert.Equal(true, job.All(status.Complete))
 		assert.Equal(3, len(retryingEvents), "sets a retrying status before starting")
 	})
 
 	buildDownloadTest(func(job *status.Job) {
-		RetryByPolicy(context.Background(), job, RetryUnfinished)
+		job.Start(false)
+		originalStartWhen := job.Started.When
+		RetryByPolicy(context.Background(), job, RetryUnfinished, false)
 		assert.Equal(false, job.All(status.Complete))
 		assert.Equal(2, job.Count(status.Complete))
 		assert.Equal(1, job.Count(status.Queued))
+		assert.Equal(true, job.Started.Called)
+		assert.Equal(originalStartWhen, job.Started.When)
+		assert.Equal(false, job.Scanning.Called)
+		assert.Equal(false, job.EndScanning.Called)
+		assert.Equal(false, job.Finished.Called)
+		job.Finish()
 	})
 
 	buildDownloadTest(func(job *status.Job) {
-		RetryByPolicy(context.Background(), job, RetryErroredIfSomeCompleted)
+		job.Start()
+		job.Finish() // Finish already called, this happens in the desktop app
+		originalFinishTime := job.Finished.When
+		RetryByPolicy(context.Background(), job, RetryUnfinished, true)
+		assert.Equal(false, job.All(status.Complete))
+		assert.Equal(2, job.Count(status.Complete))
+		assert.Equal(1, job.Count(status.Queued))
+		assert.NotEqual(originalFinishTime, job.Finished.When)
+
+		assert.Equal(true, job.Started.Called)
+		assert.Equal(true, job.Scanning.Called)
+		assert.Equal(true, job.EndScanning.Called)
+		assert.Equal(true, job.Finished.Called)
+	})
+
+	buildDownloadTest(func(job *status.Job) {
+		RetryByPolicy(context.Background(), job, RetryErroredIfSomeCompleted, false)
 		assert.Equal(false, job.All(status.Complete))
 		assert.Equal(2, job.Count(status.Complete))
 		assert.Equal(1, job.Count(status.Queued))
@@ -50,19 +74,19 @@ func TestRetryTransfers(t *testing.T) {
 		job.Statuses[0].(*DownloadStatus).lastByte = time.Time{}
 		job.Statuses[1].(*DownloadStatus).lastByte = time.Time{}
 		job.Statuses[2].(*DownloadStatus).lastByte = time.Time{}
-		RetryByPolicy(context.Background(), job, RetryErroredIfSomeCompleted)
+		RetryByPolicy(context.Background(), job, RetryErroredIfSomeCompleted, false)
 		assert.Equal(1, job.Count(status.Complete))
 		assert.Equal(1, job.Count(status.Queued))
 		assert.Equal(1, job.Count(status.Errored), "is not retried because completed happened before this error not after")
 	})
 
 	buildUploadTest(func(job *status.Job, _ *MockUploader) {
-		RetryByPolicy(context.Background(), job, RetryAll)
+		RetryByPolicy(context.Background(), job, RetryAll, false)
 		assert.Equal(true, job.All(status.Complete))
 	})
 
 	buildUploadTest(func(job *status.Job, _ *MockUploader) {
-		RetryByPolicy(context.Background(), job, RetryUnfinished)
+		RetryByPolicy(context.Background(), job, RetryUnfinished, false)
 		assert.Equal(false, job.All(status.Complete))
 		assert.Equal(2, job.Count(status.Complete))
 		assert.Equal(1, job.Count(status.Queued))
@@ -78,7 +102,7 @@ func TestRetryTransfers(t *testing.T) {
 		}}
 		uploadStatusErrored := job.Statuses[0].(*UploadStatus)
 		uploadStatusErrored.Status = status.Complete
-		RetryByPolicy(context.Background(), job, RetryUnfinished)
+		RetryByPolicy(context.Background(), job, RetryUnfinished, false)
 		assert.Equal(false, job.All(status.Complete))
 		assert.Equal(2, job.Count(status.Complete))
 		assert.Equal(1, job.Count(status.Queued))
@@ -90,7 +114,7 @@ func TestRetryTransfers(t *testing.T) {
 		uploadStatusErrored := job.Statuses[0].(*UploadStatus)
 		uploadStatusComplete := job.Statuses[1].(*UploadStatus)
 		uploadStatusComplete.lastByte = uploadStatusErrored.lastByte
-		RetryByPolicy(context.Background(), job, RetryErroredIfSomeCompleted)
+		RetryByPolicy(context.Background(), job, RetryErroredIfSomeCompleted, false)
 		assert.Equal(false, job.All(status.Complete))
 		assert.Equal(1, job.Count(status.Complete))
 		assert.Equal(1, job.Count(status.Queued))

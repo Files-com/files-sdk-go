@@ -88,7 +88,7 @@ func markUploadOnComplete(count int, job *status.Job, metaFile *UploadStatus, on
 		<-onComplete
 	}
 	close(onComplete)
-	RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy))
+	RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy), false)
 	job.Finish()
 }
 

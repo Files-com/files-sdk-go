@@ -119,9 +119,7 @@ func (r *Job) Start(ignoreCodeStart ...bool) {
 }
 
 func (r *Job) Finish() {
-	if !r.Finished.Called {
-		r.Finished.call(r.Timer.Stop())
-	}
+	r.Finished.call(r.Timer.Stop())
 }
 
 func (r *Job) Cancel() {

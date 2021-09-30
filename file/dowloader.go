@@ -98,7 +98,7 @@ func markDownloadOnComplete(count int, onComplete chan *DownloadStatus, jobCtx c
 	}
 	close(onComplete)
 	if !job.Canceled.Called {
-		RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy))
+		RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy), false)
 	}
 	job.Finish()
 }

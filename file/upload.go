@@ -190,7 +190,7 @@ func (c *Client) UploadFile(parentCtx context.Context, params UploadParams) *sta
 		if dealWithCanceledError(uploadStatus, err) {
 			uploadStatus.File = file
 		}
-		RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy))
+		RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy), false)
 	}
 	job.Wait = func() {
 		for !job.Finished.Called {

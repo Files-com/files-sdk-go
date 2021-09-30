@@ -1,3 +1,4 @@
+//go:build LIVE_TESTS
 // +build LIVE_TESTS
 
 package file
