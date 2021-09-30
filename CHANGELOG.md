@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
+## [2.0.17-beta] - 2021/09/30
+### Fix
+- panic caused by Job.Finish() being called twice after a retry is needed.
+
 ## [2.0.16-beta] - 2021/09/30
 ### Add
 - An upload job can be canceled and files will restart where is left off using `file.RetryByPolicy`.

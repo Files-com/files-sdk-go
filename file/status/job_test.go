@@ -183,4 +183,6 @@ func TestJob_Called(t *testing.T) {
 	job.ClearCalled()
 	assert.Equal(false, job.Started.Called)
 	assert.Equal(false, job.Finished.Called)
+
+	job.Finish()
 }
