@@ -1,5 +1,9 @@
 package lib
 
+const (
+	BasePart = int64(1024*1024*5 + 1024*1024/3)
+)
+
 // PartSizes return 10k parts that add up to 4.9 TB
 var PartSizes = partSizes()
 
@@ -8,7 +12,7 @@ func partSizes() []int64 {
 	totalParts := 10_000
 	totalSize := int64(0)
 	var parts []int64
-	partSize := int64(1024*1024*5 + 1024*1024/3)
+	partSize := BasePart
 	var iter []int
 	iter = append(iter, 0)
 	iter = append(iter, 100)

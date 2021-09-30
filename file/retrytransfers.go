@@ -22,7 +22,7 @@ func RetryByPolicy(ctx context.Context, job *status.Job, policy RetryPolicy) {
 	case RetryAll:
 		RetryByStatus(ctx, job, status.Included...)
 	case RetryUnfinished:
-		RetryByStatus(ctx, job, status.Errored, status.Canceled)
+		RetryByStatus(ctx, job, append(status.Running, []status.Status{status.Errored, status.Canceled}...)...)
 	case RetryErroredIfSomeCompleted:
 		retryErroredIfSomeCompleted(ctx, job)
 	}
@@ -81,14 +81,18 @@ func enqueueByStatus(ctx context.Context, job *status.Job, enqueue func(status.T
 	if job.Count(s...) == 0 {
 		return
 	}
-
+	job.ClearCalled()
 	jobCtx := job.WithContext(ctx)
+	job.Start(false)
 	count := 0
+	job.Scan()
 	for _, s := range job.Sub(s...).Statuses {
 		count += 1
 		enqueue(s, jobCtx)
 	}
+	job.EndScan()
 	for range iter.N(count) {
 		onComplete()
 	}
+	job.Finish()
 }

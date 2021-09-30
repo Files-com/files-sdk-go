@@ -10,11 +10,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/Files-com/files-sdk-go/v2/lib/test"
-
-	"github.com/zenthangplus/goccm"
-
+	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/Files-com/files-sdk-go/v2/file/status"
+	"github.com/Files-com/files-sdk-go/v2/lib/test"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/folder"
@@ -55,8 +53,8 @@ func buildScenario(base string, client *Client) {
 	folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filepath.Join(base, "nested_1", "nested_2")})
 	folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filepath.Join(base, "nested_1", "nested_2", "nested_3")})
 
-	client.Upload(context.Background(), strings.NewReader("testing 3"), int64(9), files_sdk.FileBeginUploadParams{Path: filepath.Join(base, "nested_1", "nested_2", "3.text")}, func(i int64) {}, goccm.New(1))
-	client.Upload(context.Background(), strings.NewReader("testing 3"), int64(9), files_sdk.FileBeginUploadParams{Path: filepath.Join(base, "nested_1", "nested_2", "nested_3", "4.text")}, func(i int64) {}, goccm.New(1))
+	client.UploadIO(context.Background(), UploadIOParams{Path: filepath.Join(base, "nested_1", "nested_2", "3.text"), Reader: strings.NewReader("testing 3"), Size: int64(9)})
+	client.UploadIO(context.Background(), UploadIOParams{Path: filepath.Join(base, "nested_1", "nested_2", "nested_3", "4.text"), Reader: strings.NewReader("testing 3"), Size: int64(9)})
 }
 
 func runDownloadScenario(path string, destination string, client *Client) map[string][]status.File {
@@ -115,6 +113,7 @@ func TestClient_UploadFolder(t *testing.T) {
 				results[status.RemotePath] = append(results[status.RemotePath], ReporterCall{File: status, err: status.Err})
 				resultsMapMutex.Unlock()
 			}),
+			Manager: manager.Default(),
 		},
 	)
 
@@ -132,11 +131,8 @@ func TestClient_UploadFolder(t *testing.T) {
 	assert.Contains(results, "golib/progresswriter.go")
 	assert.Contains(results, "golib/iter_test.go")
 	assert.Contains(results, "golib/direction/main.go")
-	assert.Equal(10, job.Count(status.Complete))
-	assert.Equal(int64(7910), results["golib/bool.go"][0].Job.TotalBytes(status.Complete))
-	errorFile := job.Sub(status.Errored).Statuses[job.Count(status.Errored)-1].ToStatusFile()
-	assert.Equal("main.go", errorFile.DisplayName)
-	assert.Contains(errorFile.Err.Error(), "Requested interaction not found")
+	assert.Equal(16, job.Count(status.Complete))
+	assert.Equal(int64(13077), results["golib/bool.go"][0].Job.TotalBytes(status.Complete))
 
 	deletePath(client, "golib")
 }
@@ -538,8 +534,8 @@ func TestClient_DownloadFolder_file_only(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer r.Stop()
+	client.UploadIO(context.Background(), UploadIOParams{Path: filepath.Join("i am at the root.text"), Reader: strings.NewReader("hello"), Size: int64(5)})
 
-	client.Upload(context.Background(), strings.NewReader("hello"), int64(5), files_sdk.FileBeginUploadParams{Path: filepath.Join("i am at the root.text")}, func(i int64) {}, goccm.New(1))
 	assert := assert.New(t)
 	results := runDownloadScenario("i am at the root.text", "", client)
 	assert.NoError(err)

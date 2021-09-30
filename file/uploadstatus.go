@@ -19,6 +19,8 @@ type UploadStatus struct {
 	lastByte      time.Time
 	error
 	Uploader
+	Parts
+	files_sdk.FileUploadPart
 }
 
 func (u *UploadStatus) ToStatusFile() status.File {

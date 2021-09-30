@@ -2,13 +2,10 @@ package file
 
 import (
 	"context"
-	"io"
 	"testing"
 	"time"
 
 	"github.com/Files-com/files-sdk-go/v2/ignore"
-
-	"github.com/zenthangplus/goccm"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/file/status"
@@ -20,8 +17,8 @@ type MockUploader struct {
 	findError files_sdk.ResponseError
 }
 
-func (m *MockUploader) Upload(context.Context, io.ReaderAt, int64, files_sdk.FileBeginUploadParams, func(int64), goccm.ConcurrencyManager) (files_sdk.File, error) {
-	return files_sdk.File{}, nil
+func (m *MockUploader) UploadIO(context.Context, UploadIOParams) (files_sdk.File, files_sdk.FileUploadPart, Parts, error) {
+	return files_sdk.File{}, files_sdk.FileUploadPart{}, Parts{}, nil
 }
 
 func (m *MockUploader) Find(context.Context, files_sdk.FileFindParams) (files_sdk.File, error) {

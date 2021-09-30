@@ -6,10 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/Files-com/files-sdk-go/v2/lib"
 	"github.com/stretchr/testify/assert"
-	"github.com/zenthangplus/goccm"
 )
 
 func TestFS_Open(t *testing.T) {
@@ -20,8 +17,7 @@ func TestFS_Open(t *testing.T) {
 	defer r.Stop()
 
 	assert := assert.New(t)
-
-	client.Upload(context.Background(), strings.NewReader("testing 3"), int64(9), files_sdk.FileBeginUploadParams{MkdirParents: lib.Bool(true), Path: filepath.Join("remotefs_test", "1.text")}, func(i int64) {}, goccm.New(1))
+	client.UploadIO(context.Background(), UploadIOParams{Path: filepath.Join("remotefs_test", "1.text"), Reader: strings.NewReader("testing 3"), Size: int64(9)})
 
 	fs := FS{}.Init(client.Config)
 	fs = fs.WithContext(context.TODO())

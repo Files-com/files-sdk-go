@@ -111,9 +111,9 @@ func (r *Job) EndScan() {
 	r.EndScanning.call(time.Now())
 }
 
-func (r *Job) Start() {
+func (r *Job) Start(ignoreCodeStart ...bool) {
 	r.Started.call(r.Timer.Start())
-	if r.CodeStart != nil {
+	if r.CodeStart != nil && len(ignoreCodeStart) == 0 {
 		r.CodeStart()
 	}
 }

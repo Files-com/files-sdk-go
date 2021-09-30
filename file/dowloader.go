@@ -84,9 +84,9 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloadFolderParams)
 		job.EndScan()
 		go markDownloadOnComplete(count, onComplete, jobCtx, job)
 	}
-	finished := job.Finished.Subscribe()
 	job.Wait = func() {
-		<-finished
+		for !job.Finished.Called {
+		}
 	}
 
 	return job

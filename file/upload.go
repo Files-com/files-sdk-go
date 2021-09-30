@@ -2,15 +2,9 @@ package file
 
 import (
 	"context"
-	"io"
-	"math"
-	"net/http"
 	"os"
 	"os/user"
 	"path/filepath"
-	"strconv"
-	"sync/atomic"
-	"time"
 
 	"github.com/Files-com/files-sdk-go/v2/ignore"
 
@@ -18,8 +12,6 @@ import (
 	"github.com/Files-com/files-sdk-go/v2/lib/direction"
 
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
-	"github.com/zenthangplus/goccm"
-
 	"github.com/Files-com/files-sdk-go/v2/file/status"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
@@ -103,7 +95,7 @@ func (c *Client) UploadFolder(ctx context.Context, params UploadParams) *status.
 	return uploadFolder(ctx, c, params)
 }
 
-func (c *Client) UploadFile(ctx context.Context, params UploadParams) *status.Job {
+func (c *Client) UploadFile(parentCtx context.Context, params UploadParams) *status.Job {
 	var job *status.Job
 	if params.Job == nil {
 		job = status.Job{}.Init()
@@ -112,7 +104,7 @@ func (c *Client) UploadFile(ctx context.Context, params UploadParams) *status.Jo
 	}
 	SetJobParams(job, direction.UploadType, params)
 	job.Client = c
-	jobCtx := job.WithContext(ctx)
+	jobCtx := job.WithContext(parentCtx)
 	job.Type = directory.File
 
 	job.CodeStart = func() {
@@ -179,13 +171,25 @@ func (c *Client) UploadFile(ctx context.Context, params UploadParams) *status.Jo
 			return
 		}
 		localFile, err = os.Open(params.LocalPath)
-		if dealWithDBasicError(uploadStatus, err) {
+		if err != nil {
+			uploadStatus.Job.UpdateStatus(status.Errored, uploadStatus, err)
 			return
 		}
-		uploadStatus.Size = fi.Size()
 		beginUpload.Path = destination
-		file, err := uploadStatus.Upload(jobCtx, localFile, fi.Size(), beginUpload, uploadProgress(uploadStatus), job.FilePartsManager)
-		dealWithCanceledError(uploadStatus, err, file)
+		uParams := UploadIOParams{
+			Path:           uploadStatus.RemotePath,
+			Reader:         localFile,
+			Size:           uploadStatus.ToStatusFile().Size,
+			Progress:       uploadProgress(uploadStatus),
+			Manager:        job.FilePartsManager,
+			Parts:          uploadStatus.Parts,
+			FileUploadPart: uploadStatus.FileUploadPart,
+		}
+		var file files_sdk.File
+		file, uploadStatus.FileUploadPart, uploadStatus.Parts, err = uploadStatus.UploadIO(jobCtx, uParams)
+		if dealWithCanceledError(uploadStatus, err) {
+			uploadStatus.File = file
+		}
 		RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy))
 	}
 	job.Wait = func() {
@@ -194,168 +198,4 @@ func (c *Client) UploadFile(ctx context.Context, params UploadParams) *status.Jo
 	}
 
 	return job
-}
-
-func (c *Client) Upload(parentCtx context.Context, reader io.ReaderAt, size int64, params files_sdk.FileBeginUploadParams, progress func(int64), cm goccm.ConcurrencyManager) (files_sdk.File, error) {
-	partSizes := lib.PartSizes
-	var partSize int64
-	onComplete := make(chan files_sdk.EtagsParam)
-	onError := make(chan error)
-	bytesWritten := int64(0)
-	etags := make([]files_sdk.EtagsParam, 0)
-	fileUploadPart, err := c.startUpload(parentCtx, params)
-	if err != nil {
-		return files_sdk.File{}, err
-	}
-	fileUploadPart.Path = params.Path
-	count := int64(0)
-	ctx, cancel := context.WithCancel(parentCtx)
-	defer cancel()
-	run := func(off int64, len int64, fileUploadPart files_sdk.FileUploadPart) {
-		proxyReader := &ProxyReader{
-			ReaderAt: reader,
-			off:      off,
-			len:      len,
-			onRead:   progress,
-		}
-
-		etag, bytesRead, err := c.createPart(ctx, proxyReader, len, fileUploadPart)
-		if err != nil {
-			if *fileUploadPart.ParallelParts {
-				cm.Done()
-			}
-			onError <- err
-			return
-		}
-		atomic.AddInt64(&bytesWritten, bytesRead)
-		if *fileUploadPart.ParallelParts {
-			cm.Done()
-		}
-		onComplete <- etag
-	}
-	partSize, partSizes = partSizes[0], partSizes[1:]
-	byteOffset(
-		size,
-		partSize,
-		func(off int64, len int64) {
-			count += len
-			if *fileUploadPart.ParallelParts {
-				cm.Wait()
-				go run(off, len, fileUploadPart)
-			} else {
-				run(off, len, fileUploadPart)
-			}
-			fileUploadPart.PartNumber += 1
-		},
-	)
-
-	n := int64(0)
-	for n < fileUploadPart.PartNumber-1 {
-		n++
-		select {
-		case err := <-onError:
-			cancel()
-			return files_sdk.File{}, err
-		case etag := <-onComplete:
-			etags = append(etags, etag)
-		}
-	}
-
-	return c.completeUpload(ctx, etags, bytesWritten, fileUploadPart.Path, fileUploadPart.Ref)
-}
-
-func (c *Client) startUpload(ctx context.Context, beginUpload files_sdk.FileBeginUploadParams) (files_sdk.FileUploadPart, error) {
-	uploads, err := c.BeginUpload(ctx, beginUpload)
-	if err != nil {
-		return files_sdk.FileUploadPart{}, err
-	}
-	return uploads[0], err
-}
-
-func (c *Client) completeUpload(ctx context.Context, etags []files_sdk.EtagsParam, bytesWritten int64, path string, ref string) (files_sdk.File, error) {
-	return c.Create(ctx, files_sdk.FileCreateParams{
-		ProvidedMtime: time.Now(),
-		EtagsParam:    etags,
-		Action:        "end",
-		Path:          path,
-		Ref:           ref,
-		Size:          bytesWritten,
-	})
-}
-
-func byteOffset(size int64, blockSize int64, callback func(off int64, len int64)) {
-	off := int64(0)
-	endRange := blockSize
-	for {
-		if off < size {
-			endRange = int64(math.Min(float64(endRange), float64(size)))
-			callback(off, endRange-off)
-			off = endRange
-			endRange = off + blockSize
-		} else {
-			break
-		}
-	}
-}
-
-func (c *Client) createPart(ctx context.Context, reader io.ReadCloser, len int64, fileUploadPart files_sdk.FileUploadPart) (files_sdk.EtagsParam, int64, error) {
-	var err error
-	if fileUploadPart.PartNumber != 1 {
-		fileUploadPart, err = c.startUpload(
-			ctx, files_sdk.FileBeginUploadParams{Path: fileUploadPart.Path, Ref: fileUploadPart.Ref, Part: fileUploadPart.PartNumber, MkdirParents: lib.Bool(true)},
-		)
-		if err != nil {
-			return files_sdk.EtagsParam{}, int64(0), err
-		}
-	}
-
-	headers := http.Header{}
-	headers.Add("Content-Length", strconv.FormatInt(len, 10))
-	res, err := files_sdk.CallRaw(
-		&files_sdk.CallParams{
-			Method:  fileUploadPart.HttpMethod,
-			Config:  c.Config,
-			Uri:     fileUploadPart.UploadUri,
-			BodyIo:  reader,
-			Headers: &headers,
-			Context: ctx,
-		},
-	)
-	defer func() {
-		if res != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return files_sdk.EtagsParam{}, len, err
-	}
-
-	return files_sdk.EtagsParam{
-		Etag: res.Header.Get("Etag"),
-		Part: strconv.FormatInt(fileUploadPart.PartNumber, 10),
-	}, len, nil
-}
-
-func dealWithCanceledError(uploadStatus *UploadStatus, err error, file files_sdk.File) {
-	if err != nil {
-		uploadStatus.Job.StatusFromError(uploadStatus, err)
-	} else {
-		uploadStatus.File = file
-		uploadStatus.Job.UpdateStatus(status.Complete, uploadStatus, nil)
-	}
-}
-
-func dealWithDBasicError(uploadStatus *UploadStatus, err error) bool {
-	if err != nil {
-		uploadStatus.Job.UpdateStatus(status.Errored, uploadStatus, err)
-		return true
-	}
-	return false
-}
-
-func uploadProgress(uploadStatus *UploadStatus) func(bytesCount int64) {
-	return func(bytesCount int64) {
-		uploadStatus.incrementDownloadedBytes(bytesCount)
-		uploadStatus.Job.UpdateStatus(status.Uploading, uploadStatus, nil)
-	}
 }

@@ -169,3 +169,18 @@ func TestJob_Percentage(t *testing.T) {
 	job.Add(file)
 	assert.Equal(1, job.Percentage(Included...))
 }
+
+func TestJob_Called(t *testing.T) {
+	assert := assert.New(t)
+	job := Job{}.Init()
+
+	job.Start()
+
+	assert.Equal(true, job.Started.Called)
+	assert.Equal(false, job.Finished.Called)
+	job.Finish()
+	assert.Equal(true, job.Finished.Called)
+	job.ClearCalled()
+	assert.Equal(false, job.Started.Called)
+	assert.Equal(false, job.Finished.Called)
+}

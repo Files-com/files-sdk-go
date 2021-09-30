@@ -2,30 +2,26 @@ package file
 
 import (
 	"context"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
+	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/directory"
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
+	"github.com/Files-com/files-sdk-go/v2/file/status"
 	"github.com/Files-com/files-sdk-go/v2/ignore"
 	"github.com/Files-com/files-sdk-go/v2/lib/direction"
 	"github.com/bradfitz/iter"
-	"github.com/zenthangplus/goccm"
-
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/Files-com/files-sdk-go/v2/file/status"
-	"github.com/Files-com/files-sdk-go/v2/lib"
 	"github.com/karrick/godirwalk"
 )
 
 type Uploader interface {
-	Upload(context.Context, io.ReaderAt, int64, files_sdk.FileBeginUploadParams, func(int64), goccm.ConcurrencyManager) (files_sdk.File, error)
+	UploadIO(context.Context, UploadIOParams) (files_sdk.File, files_sdk.FileUploadPart, Parts, error)
 	Find(context.Context, files_sdk.FileFindParams) (files_sdk.File, error)
 }
 
-func uploadFolder(ctx context.Context, c Uploader, params UploadParams) *status.Job {
+func uploadFolder(parentCtx context.Context, c Uploader, params UploadParams) *status.Job {
 	var job *status.Job
 	if params.Job == nil {
 		job = status.Job{}.Init()
@@ -33,16 +29,16 @@ func uploadFolder(ctx context.Context, c Uploader, params UploadParams) *status.
 		job = params.Job
 	}
 	SetJobParams(job, direction.UploadType, params)
-	jobCtx := job.WithContext(ctx)
+	jobCtx := job.WithContext(parentCtx)
 	job.Client = c
 	job.Type = directory.Dir
 	metaFile := &UploadStatus{
-		File:      files_sdk.File{DisplayName: filepath.Base(params.LocalPath), Type: "directory"},
 		Job:       job,
 		Status:    status.Errored,
 		LocalPath: params.LocalPath,
 		Sync:      params.Sync,
 	}
+	metaFile.File = files_sdk.File{DisplayName: filepath.Base(params.LocalPath), Type: "directory"}
 
 	onComplete := make(chan *UploadStatus)
 	count := 0
@@ -75,9 +71,9 @@ func uploadFolder(ctx context.Context, c Uploader, params UploadParams) *status.
 		go markUploadOnComplete(count, job, metaFile, onComplete, jobCtx)
 	}
 
-	finished := job.Finished.Subscribe()
 	job.Wait = func() {
-		<-finished
+		for !job.Finished.Called {
+		}
 	}
 
 	return job
@@ -126,15 +122,28 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 			return
 		}
 		localFile, err = os.Open(uploadStatus.LocalPath)
-		if dealWithDBasicError(uploadStatus, err) {
+		if err != nil {
+			uploadStatus.Job.UpdateStatus(status.Errored, uploadStatus, err)
 			return
 		}
 		if ctx.Err() != nil {
 			job.UpdateStatus(status.Canceled, uploadStatus, nil)
 			return
 		}
-		file, err := uploadStatus.Upload(ctx, localFile, uploadStatus.Size, files_sdk.FileBeginUploadParams{Path: uploadStatus.RemotePath, MkdirParents: lib.Bool(true)}, uploadProgress(uploadStatus), job.FilePartsManager)
-		dealWithCanceledError(uploadStatus, err, file)
+		params := UploadIOParams{
+			Path:           uploadStatus.RemotePath,
+			Reader:         localFile,
+			Size:           uploadStatus.ToStatusFile().Size,
+			Progress:       uploadProgress(uploadStatus),
+			Manager:        job.FilePartsManager,
+			Parts:          uploadStatus.Parts,
+			FileUploadPart: uploadStatus.FileUploadPart,
+		}
+		var file files_sdk.File
+		file, uploadStatus.FileUploadPart, uploadStatus.Parts, err = uploadStatus.UploadIO(ctx, params)
+		if dealWithCanceledError(uploadStatus, err) {
+			uploadStatus.File = file
+		}
 	}()
 }
 
@@ -209,7 +218,7 @@ func skipOrIgnore(downloadCtx context.Context, uploadStatus *UploadStatus) bool 
 			return false
 		}
 		// local is not after server
-		if !uploadStatus.Mtime.After(file.Mtime) {
+		if !uploadStatus.ToStatusFile().Mtime.After(file.Mtime) {
 			// Server version is the same or newer
 			uploadStatus.Job.UpdateStatus(status.Skipped, uploadStatus, nil)
 			return true

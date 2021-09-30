@@ -27,6 +27,10 @@ func Default() *Manager {
 	return New(ConcurrentFiles, ConcurrentFileParts)
 }
 
+func Sync() *Manager {
+	return New(1, 1)
+}
+
 func Wait(ctx context.Context, manager goccm.ConcurrencyManager) bool {
 	if ctx.Err() != nil {
 		return false
