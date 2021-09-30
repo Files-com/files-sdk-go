@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
+## [2.0.19-beta] - 2021/09/30
+### Fix
+- `file.Uploader` when uploading a single file the `Job.Scanning`/`Job.EndScanning` signals were not called. This caused problems for the CLI expecting that they would always be called.
+
 ## [2.0.18-beta] - 2021/09/30
 ### Change
 - `file.RetryByPolicy` takes 4th arg `signalEvents bool` when `true` it resets all events and calls new ones. When `false` fixes the case where events that were only expect to happen once don't get repeated.

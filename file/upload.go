@@ -117,6 +117,7 @@ func (c *Client) UploadFile(parentCtx context.Context, params UploadParams) *sta
 			job.Finish()
 			job.FilesManager.Done()
 		}()
+		job.Scan()
 		uploadStatus := &UploadStatus{
 			Job:        job,
 			LocalPath:  params.LocalPath,
@@ -160,6 +161,7 @@ func (c *Client) UploadFile(parentCtx context.Context, params UploadParams) *sta
 		uploadStatus.Uploader = c
 		job.Add(uploadStatus)
 		job.UpdateStatus(status.Queued, uploadStatus, nil)
+		job.EndScan()
 
 		job.GitIgnore, err = ignore.New(params.Ignore...)
 		if err != nil {
