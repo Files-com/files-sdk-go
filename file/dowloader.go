@@ -174,18 +174,18 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 			}
 		}
 		if reportStatus.Job.Sync {
-			localStat, err := os.Stat(reportStatus.LocalPath)
-			if err != nil && !os.IsNotExist(err) {
-				reportStatus.Job.UpdateStatus(status.Errored, reportStatus, err)
+			localStat, localStatErr := os.Stat(reportStatus.LocalPath)
+			if localStatErr != nil && !os.IsNotExist(localStatErr) {
+				reportStatus.Job.UpdateStatus(status.Errored, reportStatus, localStatErr)
 				return
 			}
-			remoteStat, err := reportStatus.fsFile.Stat()
-			if err != nil {
-				reportStatus.Job.UpdateStatus(status.Errored, reportStatus, err)
+			remoteStat, remoteStatErr := reportStatus.fsFile.Stat()
+			if remoteStatErr != nil {
+				reportStatus.Job.UpdateStatus(status.Errored, reportStatus, remoteStatErr)
 				return
 			}
 			// server is not after local
-			if !os.IsNotExist(err) && reportStatus.Job.Sync && !remoteStat.ModTime().After(localStat.ModTime()) {
+			if !os.IsNotExist(localStatErr) && reportStatus.Job.Sync && !remoteStat.ModTime().After(localStat.ModTime()) {
 				// Local version is the same or newer
 				reportStatus.Job.UpdateStatus(status.Skipped, reportStatus, nil)
 				return

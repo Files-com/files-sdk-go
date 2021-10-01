@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
+## [2.0.20-beta] - 2021/10/01
+### Fix
+- `file.Downloader` with sync panics when local file doesn't exist. Reason local error variable was overwritten by another call causing it to be nil when it should have had IsNotExist error object.
+
 ## [2.0.19-beta] - 2021/09/30
 ### Fix
 - `file.Uploader` when uploading a single file the `Job.Scanning`/`Job.EndScanning` signals were not called. This caused problems for the CLI expecting that they would always be called.

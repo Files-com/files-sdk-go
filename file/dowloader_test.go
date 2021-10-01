@@ -255,6 +255,28 @@ func Test_downloadFolder_sync_not_already_downloaded(t *testing.T) {
 	assert.NoError(setup.TearDown())
 }
 
+func Test_downloadFolder_sync_local_does_not_exist(t *testing.T) {
+	assert := assert.New(t)
+	setup := NewTestSetup()
+	setup.MapFS["taco.png"] = &fstest.MapFile{
+		Data:    make([]byte, 100),
+		ModTime: time.Now().AddDate(0, 1, 0),
+		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "taco.png", Type: "file"},
+	}
+	setup.DownloadFolderParams = DownloadFolderParams{RemotePath: "", Sync: true, EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
+	setup.rootDestination = ""
+	setup.Call()
+
+	assert.Equal(3, len(setup.reporterCalls))
+	assert.Equal("taco.png", setup.reporterCalls[0].File.Path)
+	assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
+	assert.Equal(status.Queued, setup.reporterCalls[0].Status)
+	assert.Equal(status.Downloading, setup.reporterCalls[1].Status)
+	assert.Equal(status.Complete, setup.reporterCalls[2].Status)
+
+	assert.NoError(setup.TearDown())
+}
+
 func Test_downloadFolder_download_file(t *testing.T) {
 	assert := assert.New(t)
 	setup := NewTestSetup()
