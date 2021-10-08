@@ -2,6 +2,7 @@ package automation_run
 
 import (
 	"context"
+	"strconv"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
@@ -32,4 +33,37 @@ func (c *Client) List(ctx context.Context, params files_sdk.AutomationRunListPar
 
 func List(ctx context.Context, params files_sdk.AutomationRunListParams) (*Iter, error) {
 	return (&Client{}).List(ctx, params)
+}
+
+func (c *Client) Find(ctx context.Context, params files_sdk.AutomationRunFindParams) (files_sdk.AutomationRun, error) {
+	automationRun := files_sdk.AutomationRun{}
+	if params.Id == 0 {
+		return automationRun, lib.CreateError(params, "Id")
+	}
+	path := "/automation_runs/" + strconv.FormatInt(params.Id, 10) + ""
+	exportedParams, err := lib.ExportParams(params)
+	if err != nil {
+		return automationRun, err
+	}
+	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
+	defer func() {
+		if res != nil {
+			res.Body.Close()
+		}
+	}()
+	if err != nil {
+		return automationRun, err
+	}
+	if res.StatusCode == 204 {
+		return automationRun, nil
+	}
+	if err := automationRun.UnmarshalJSON(*data); err != nil {
+		return automationRun, err
+	}
+
+	return automationRun, nil
+}
+
+func Find(ctx context.Context, params files_sdk.AutomationRunFindParams) (files_sdk.AutomationRun, error) {
+	return (&Client{}).Find(ctx, params)
 }

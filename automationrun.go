@@ -2,14 +2,18 @@ package files_sdk
 
 import (
 	"encoding/json"
+	"time"
 
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 type AutomationRun struct {
-	AutomationId      int64  `json:"automation_id,omitempty"`
-	Status            string `json:"status,omitempty"`
-	StatusMessagesUrl string `json:"status_messages_url,omitempty"`
+	Id                int64     `json:"id,omitempty"`
+	AutomationId      int64     `json:"automation_id,omitempty"`
+	CompletedAt       time.Time `json:"completed_at,omitempty"`
+	CreatedAt         time.Time `json:"created_at,omitempty"`
+	Status            string    `json:"status,omitempty"`
+	StatusMessagesUrl string    `json:"status_messages_url,omitempty"`
 }
 
 type AutomationRunCollection []AutomationRun
@@ -27,6 +31,10 @@ type AutomationRunListParams struct {
 	FilterLteq   json.RawMessage `url:"filter_lteq,omitempty" required:"false"`
 	AutomationId int64           `url:"automation_id,omitempty" required:"true"`
 	lib.ListParams
+}
+
+type AutomationRunFindParams struct {
+	Id int64 `url:"-,omitempty" required:"true"`
 }
 
 func (a *AutomationRun) UnmarshalJSON(data []byte) error {
