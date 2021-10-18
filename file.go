@@ -108,6 +108,7 @@ type FileBeginUploadParams struct {
 	Parts        int64  `url:"parts,omitempty" required:"false"`
 	Ref          string `url:"ref,omitempty" required:"false"`
 	Restart      int64  `url:"restart,omitempty" required:"false"`
+	Size         int64  `url:"size,omitempty" required:"false"`
 	WithRename   *bool  `url:"with_rename,omitempty" required:"false"`
 }
 
