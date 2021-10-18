@@ -16,6 +16,7 @@ type BundleRegistration struct {
 	ClickwrapBody     string `json:"clickwrap_body,omitempty"`
 	FormFieldSetId    int64  `json:"form_field_set_id,omitempty"`
 	FormFieldData     string `json:"form_field_data,omitempty"`
+	BundleCode        string `json:"bundle_code,omitempty"`
 	BundleId          int64  `json:"bundle_id,omitempty"`
 	BundleRecipientId int64  `json:"bundle_recipient_id,omitempty"`
 }

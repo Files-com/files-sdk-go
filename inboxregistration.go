@@ -16,6 +16,7 @@ type InboxRegistration struct {
 	FormFieldData    string `json:"form_field_data,omitempty"`
 	InboxId          int64  `json:"inbox_id,omitempty"`
 	InboxRecipientId int64  `json:"inbox_recipient_id,omitempty"`
+	InboxTitle       string `json:"inbox_title,omitempty"`
 }
 
 type InboxRegistrationCollection []InboxRegistration

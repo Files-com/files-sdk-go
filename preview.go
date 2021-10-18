@@ -5,11 +5,12 @@ import (
 )
 
 type Preview struct {
-	Id          int64  `json:"id,omitempty"`
-	Status      string `json:"status,omitempty"`
-	DownloadUri string `json:"download_uri,omitempty"`
-	Type        string `json:"type,omitempty"`
-	Size        int64  `json:"size,omitempty"`
+	Id            int64  `json:"id,omitempty"`
+	Status        string `json:"status,omitempty"`
+	DownloadUri   string `json:"download_uri,omitempty"`
+	Type          string `json:"type,omitempty"`
+	Size          int64  `json:"size,omitempty"`
+	StatusMessage string `json:"status_message,omitempty"`
 }
 
 type PreviewCollection []Preview
