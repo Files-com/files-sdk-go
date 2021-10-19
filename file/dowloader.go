@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/Files-com/files-sdk-go/v2/directory"
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
@@ -20,7 +21,7 @@ import (
 	"github.com/Files-com/files-sdk-go/v2/lib"
 )
 
-func downloader(ctx context.Context, fileSys fs.FS, params DownloadFolderParams) *status.Job {
+func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *status.Job {
 	job := status.Job{}.Init()
 	SetJobParams(job, direction.DownloadType, params)
 	jobCtx := job.WithContext(ctx)
@@ -63,9 +64,8 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloadFolderParams)
 	job.CodeStart = func() {
 		job.Scan()
 		go enqueueIndexedDownloads(job, jobCtx, onComplete)
-		job.Timer.Start()
 		fs.WalkDir(fileSys, job.RemotePath, func(path string, d fs.DirEntry, err error) error {
-			if job.Canceled.Called {
+			if job.Canceled.Called() {
 				return jobCtx.Err()
 			}
 			if err != nil {
@@ -84,10 +84,6 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloadFolderParams)
 		job.EndScan()
 		go markDownloadOnComplete(count, onComplete, jobCtx, job)
 	}
-	job.Wait = func() {
-		for !job.Finished.Called {
-		}
-	}
 
 	return job
 }
@@ -97,14 +93,14 @@ func markDownloadOnComplete(count int, onComplete chan *DownloadStatus, jobCtx c
 		<-onComplete
 	}
 	close(onComplete)
-	if !job.Canceled.Called {
+	if !job.Canceled.Called() {
 		RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy), false)
 	}
 	job.Finish()
 }
 
 func enqueueIndexedDownloads(job *status.Job, jobCtx context.Context, onComplete chan *DownloadStatus) {
-	for !job.EndScanning.Called || job.Count(status.Indexed) > 0 {
+	for !job.EndScanning.Called() || job.Count(status.Indexed) > 0 {
 		f, ok := job.Find(status.Indexed)
 		if ok {
 			enqueueDownload(jobCtx, job, f.(*DownloadStatus), onComplete)
@@ -120,7 +116,7 @@ func normalizePath(rootDestination string) string {
 	return rootDestination
 }
 
-func createIndexedStatus(f Entity, params DownloadFolderParams, job *status.Job) {
+func createIndexedStatus(f Entity, params DownloaderParams, job *status.Job) {
 	var fi files_sdk.File
 	if f.error == nil {
 		info, err := f.File.Stat()
@@ -133,12 +129,13 @@ func createIndexedStatus(f Entity, params DownloadFolderParams, job *status.Job)
 	s := &DownloadStatus{
 		error:      f.error,
 		fsFile:     f.File,
-		File:       fi,
-		LocalPath:  localPath(fi, *job),
-		RemotePath: fi.Path,
-		Job:        job,
+		file:       fi,
+		localPath:  localPath(fi, *job),
+		remotePath: fi.Path,
+		job:        job,
 		Sync:       params.Sync,
-		Status:     status.Indexed,
+		status:     status.Indexed,
+		Mutex:      &sync.RWMutex{},
 	}
 	job.Add(s)
 }
@@ -161,70 +158,70 @@ func enqueueDownload(ctx context.Context, job *status.Job, downloadStatus *Downl
 func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *DownloadStatus) {
 	func(ctx context.Context, reportStatus *DownloadStatus) {
 		defer func() {
-			s.Job.FilesManager.Done()
+			s.job.FilesManager.Done()
 			signal <- reportStatus
 		}()
-		dir, _ := filepath.Split(reportStatus.LocalPath)
+		dir, _ := filepath.Split(reportStatus.LocalPath())
 		_, err := os.Stat(dir)
 		if os.IsNotExist(err) {
 			err = os.MkdirAll(dir, 0755)
 			if err != nil {
-				reportStatus.Job.UpdateStatus(status.Errored, reportStatus, err)
+				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
 				return
 			}
 		}
-		if reportStatus.Job.Sync {
-			localStat, localStatErr := os.Stat(reportStatus.LocalPath)
+		if reportStatus.Job().Sync {
+			localStat, localStatErr := os.Stat(reportStatus.LocalPath())
 			if localStatErr != nil && !os.IsNotExist(localStatErr) {
-				reportStatus.Job.UpdateStatus(status.Errored, reportStatus, localStatErr)
+				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, localStatErr)
 				return
 			}
 			remoteStat, remoteStatErr := reportStatus.fsFile.Stat()
 			if remoteStatErr != nil {
-				reportStatus.Job.UpdateStatus(status.Errored, reportStatus, remoteStatErr)
+				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, remoteStatErr)
 				return
 			}
 			// server is not after local
-			if !os.IsNotExist(localStatErr) && reportStatus.Job.Sync && !remoteStat.ModTime().After(localStat.ModTime()) {
+			if !os.IsNotExist(localStatErr) && reportStatus.Job().Sync && remoteStat.Size() == localStat.Size() {
 				// Local version is the same or newer
-				reportStatus.Job.UpdateStatus(status.Skipped, reportStatus, nil)
+				reportStatus.Job().UpdateStatus(status.Skipped, reportStatus, nil)
 				return
 			}
 		}
-		downloadParams := files_sdk.FileDownloadParams{Path: reportStatus.RemotePath}
+		downloadParams := files_sdk.FileDownloadParams{Path: reportStatus.RemotePath()}
 
-		tmpName := tmpDownloadPath(reportStatus.LocalPath)
+		tmpName := tmpDownloadPath(reportStatus.LocalPath())
 		var out *os.File
 		out, downloadParams.Writer = openFile(tmpName, reportStatus)
 		written, err := io.Copy(downloadParams.Writer, lib.NewReader(ctx, s.fsFile))
 		if err != nil {
-			reportStatus.Job.StatusFromError(reportStatus, err)
+			reportStatus.Job().StatusFromError(reportStatus, err)
 		} else {
-			reportStatus.Size = written
+			reportStatus.SetFinalSize(written)
 		}
 		closeErr := out.Close()
 
 		if closeErr != nil {
-			reportStatus.Job.UpdateStatus(status.Errored, reportStatus, closeErr)
+			reportStatus.Job().UpdateStatus(status.Errored, reportStatus, closeErr)
 		}
 
 		closeErr = s.fsFile.Close()
 
 		if closeErr != nil {
-			reportStatus.Job.UpdateStatus(status.Errored, reportStatus, closeErr)
+			reportStatus.Job().UpdateStatus(status.Errored, reportStatus, closeErr)
 		}
 
-		if !reportStatus.Is(status.Valid...) {
+		if !reportStatus.Status().Is(status.Valid...) {
 			err = os.Remove(tmpName) // Clean up on invalid download
 			if err != nil {
-				reportStatus.Job.UpdateStatus(status.Errored, reportStatus, err)
+				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
 			}
 		} else {
-			err = os.Rename(tmpName, reportStatus.LocalPath)
+			err = os.Rename(tmpName, reportStatus.LocalPath())
 			if err != nil {
-				reportStatus.Job.UpdateStatus(status.Errored, reportStatus, err)
-			} else if reportStatus.Is(status.Downloading) {
-				reportStatus.Job.UpdateStatus(status.Complete, reportStatus, nil)
+				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
+			} else if reportStatus.Status().Is(status.Downloading) {
+				reportStatus.Job().UpdateStatus(status.Complete, reportStatus, nil)
 			}
 		}
 	}(ctx, s)
@@ -240,7 +237,7 @@ func _tmpDownloadPath(path string, index int) string {
 	if index == 0 {
 		name = fmt.Sprintf("%v.download", path)
 	} else {
-		name = fmt.Sprintf("%v.download (%v)", path, index)
+		name = fmt.Sprintf("%v (%v).download", path, index)
 	}
 	_, err := os.Stat(name)
 	if os.IsNotExist(err) {
@@ -252,11 +249,11 @@ func _tmpDownloadPath(path string, index int) string {
 func openFile(partName string, reportStatus *DownloadStatus) (*os.File, lib.ProgressWriter) {
 	out, createErr := os.Create(partName)
 	if createErr != nil {
-		reportStatus.Job.UpdateStatus(status.Errored, reportStatus, createErr)
+		reportStatus.Job().UpdateStatus(status.Errored, reportStatus, createErr)
 	}
 	writer := lib.ProgressWriter{Writer: out}
 	writer.ProgressWatcher = func(incDownloadedBytes int64) {
-		reportStatus.Job.UpdateStatus(status.Downloading, reportStatus, nil)
+		reportStatus.Job().UpdateStatus(status.Downloading, reportStatus, nil)
 		reportStatus.incrementDownloadedBytes(incDownloadedBytes)
 	}
 	return out, writer

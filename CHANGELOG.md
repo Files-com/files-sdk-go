@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
+## [2.0.25-beta] - 2021/10/19
+### Add
+- `file.Uploader`/`file.UploadIO` sends known file size in preflight upload request. Allows some remote servers to upload larger files.
+
+### Change
+- `file.Downloader`/`file.Uploader` `Sync` param compares file size instead of modified time to match the server sync.
+
+### Fix
+- Fix race condition `file.Uploader` where the reported upload bytes were less than the actual.
+- All detected race warning have been fixed.
+
 ## [2.0.20-beta] - 2021/10/01
 ### Fix
 - `file.Downloader` with sync panics when local file doesn't exist. Reason local error variable was overwritten by another call causing it to be nil when it should have had IsNotExist error object.

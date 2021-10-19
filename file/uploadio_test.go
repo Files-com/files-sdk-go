@@ -45,7 +45,7 @@ func TestClient_UploadIO_Cancel_Restart(t *testing.T) {
 		Manager:  goccm.New(4),
 		Progress: progress,
 	}
-
+	var fi files_sdk.File
 	var parts Parts
 	var fileUploadPart files_sdk.FileUploadPart
 	cancelLater := func() {
@@ -53,7 +53,9 @@ func TestClient_UploadIO_Cancel_Restart(t *testing.T) {
 		cancel()
 	}
 	go cancelLater()
-	_, fileUploadPart, parts, _ = client.UploadIO(ctx, params)
+	fi, fileUploadPart, parts, err = client.UploadIO(ctx, params)
+	assert.Error(err, "context canceled")
+	assert.Equal(int64(0), fi.Size)
 	assert.Equal(23, len(parts))
 	var successful int
 	var alreadyRan Parts
@@ -67,7 +69,7 @@ func TestClient_UploadIO_Cancel_Restart(t *testing.T) {
 		}
 	}
 	assert.InDelta(5, successful, 10)
-	assert.InDelta(parts.SuccessfulBytes(), progressCounter, 800_000)
+	assert.InDelta(parts.SuccessfulBytes(), progressCounter, 2*1024*1024)
 	params.Parts = parts
 	var uploadedBytes int64
 	ctx, _ = context.WithCancel(context.Background())
@@ -75,11 +77,12 @@ func TestClient_UploadIO_Cancel_Restart(t *testing.T) {
 	var newFileUploadPart files_sdk.FileUploadPart
 	progressCounter = 0
 
-	_, newFileUploadPart, parts, err = client.UploadIO(ctx, params)
+	fi, newFileUploadPart, parts, err = client.UploadIO(ctx, params)
 	assert.NoError(err)
 	assert.Equal(fileUploadPart, newFileUploadPart)
 	assert.InDelta(params.Size, progressCounter, float64(lib.BasePart))
-
+	assert.NotEqual(params.Size, fi.Size, "Returned size will not always match")
+	assert.Equal(params.Size, parts.SuccessfulBytes())
 	successful = 0
 	for _, part := range parts {
 		for _, rpart := range alreadyRan {
@@ -103,8 +106,10 @@ func TestClient_UploadIO_Cancel_Restart(t *testing.T) {
 	var buf bytes.Buffer
 	file, err := client.Download(context.Background(), files_sdk.FileDownloadParams{Writer: &buf, Path: params.Path})
 	assert.NoError(err)
+	assert.Equal(params.Size, int64(buf.Len()))
 	assert.Equal(f.Size(), int64(buf.Len()))
 	assert.Equal(f.Size(), file.Size)
+	assert.Equal(params.Size, file.Size)
 	remoteSHA := sha256.Sum256(buf.Bytes())
 	response, err := client.GetHttpClient().Do(req)
 	b, err := ioutil.ReadAll(response.Body)

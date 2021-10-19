@@ -19,6 +19,9 @@ var macOSGitignore []byte
 //go:embed data/Linux.gitignore
 var LinuxGitignore []byte
 
+//go:embed data/common.gitignore
+var commonGitignore []byte
+
 func New(overrides ...string) (*ignore.GitIgnore, error) {
 	if len(overrides) > 0 {
 		return ignore.CompileIgnoreLines(overrides...), nil
@@ -27,12 +30,16 @@ func New(overrides ...string) (*ignore.GitIgnore, error) {
 	os := runtime.GOOS
 	switch os {
 	case "windows":
-		return ignore.CompileIgnoreLines(strings.Split(string(WindowsGitignore), "\n")...), nil
+		return ignore.CompileIgnoreLines(format(WindowsGitignore)...), nil
 	case "darwin":
-		return ignore.CompileIgnoreLines(strings.Split(string(macOSGitignore), "\n")...), nil
+		return ignore.CompileIgnoreLines(format(macOSGitignore)...), nil
 	case "linux":
-		return ignore.CompileIgnoreLines(strings.Split(string(LinuxGitignore), "\n")...), nil
+		return ignore.CompileIgnoreLines(format(LinuxGitignore)...), nil
 	default:
 		return &ignore.GitIgnore{}, fmt.Errorf("unknown os %s", os)
 	}
+}
+
+func format(b []byte) []string {
+	return append(strings.Split(string(commonGitignore), "\n"), strings.Split(string(b), "\n")...)
 }

@@ -33,7 +33,7 @@ func RetryByStatus(ctx context.Context, job *status.Job, signalEvents bool, s ..
 	case direction.DownloadType:
 		onComplete := make(chan *DownloadStatus)
 		enqueueByStatus(ctx, job, signalEvents,
-			func(s status.ToStatusFile, jobCxt context.Context) {
+			func(s status.IFile, jobCxt context.Context) {
 				job.UpdateStatus(status.Retrying, s.(*DownloadStatus), nil)
 				enqueueDownload(jobCxt, job, s.(*DownloadStatus), onComplete)
 			}, func() {
@@ -45,7 +45,7 @@ func RetryByStatus(ctx context.Context, job *status.Job, signalEvents bool, s ..
 	case direction.UploadType:
 		onComplete := make(chan *UploadStatus)
 		enqueueByStatus(ctx, job, signalEvents,
-			func(s status.ToStatusFile, jobCxt context.Context) {
+			func(s status.IFile, jobCxt context.Context) {
 				job.UpdateStatus(status.Retrying, s.(*UploadStatus), nil)
 				enqueueUpload(jobCxt, job, s.(*UploadStatus), onComplete)
 			}, func() {
@@ -62,22 +62,22 @@ func RetryByStatus(ctx context.Context, job *status.Job, signalEvents bool, s ..
 func retryErroredIfSomeCompleted(ctx context.Context, job *status.Job, signalEvents bool) {
 	lastFailure := time.Time{}
 	for _, s := range job.Sub(status.Errored).Statuses {
-		if lastFailure.Before(s.ToStatusFile().LastByte) {
-			lastFailure = s.ToStatusFile().LastByte
+		if lastFailure.Before(s.LastByte()) {
+			lastFailure = s.LastByte()
 		}
 	}
 	if lastFailure.IsZero() {
 		return
 	}
 	for _, s := range job.Sub(status.Complete).Statuses {
-		if lastFailure.Before(s.ToStatusFile().LastByte) {
+		if lastFailure.Before(s.LastByte()) {
 			RetryByPolicy(ctx, job, RetryUnfinished, signalEvents)
 			return
 		}
 	}
 }
 
-func enqueueByStatus(ctx context.Context, job *status.Job, signalEvents bool, enqueue func(status.ToStatusFile, context.Context), onComplete func(), s ...status.Status) {
+func enqueueByStatus(ctx context.Context, job *status.Job, signalEvents bool, enqueue func(status.IFile, context.Context), onComplete func(), s ...status.Status) {
 	if job.Count(s...) == 0 {
 		return
 	}

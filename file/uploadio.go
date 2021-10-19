@@ -51,7 +51,14 @@ func (c *Client) UploadIO(parentCtx context.Context, params UploadIOParams) (fil
 		params.Parts = Parts{} // parts are invalidated
 	}
 	if expires.IsZero() || !time.Now().Before(expires) {
-		fileUploadPart, err = c.startUpload(parentCtx, files_sdk.FileBeginUploadParams{Path: params.Path, MkdirParents: lib.Bool(true)})
+		fileUploadPart, err = c.startUpload(
+			parentCtx,
+			files_sdk.FileBeginUploadParams{
+				Size:         params.Size,
+				Path:         params.Path,
+				MkdirParents: lib.Bool(true),
+			},
+		)
 	}
 	if err != nil {
 		return files_sdk.File{}, fileUploadPart, workingParts, err
@@ -260,10 +267,10 @@ func (c *Client) createPart(ctx context.Context, reader io.ReadCloser, len int64
 
 func dealWithCanceledError(uploadStatus *UploadStatus, err error) bool {
 	if err != nil {
-		uploadStatus.Job.StatusFromError(uploadStatus, err)
+		uploadStatus.Job().StatusFromError(uploadStatus, err)
 		return false
 	} else {
-		uploadStatus.Job.UpdateStatus(status.Complete, uploadStatus, nil)
+		uploadStatus.Job().UpdateStatus(status.Complete, uploadStatus, nil)
 		return true
 	}
 }
@@ -271,6 +278,6 @@ func dealWithCanceledError(uploadStatus *UploadStatus, err error) bool {
 func uploadProgress(uploadStatus *UploadStatus) func(bytesCount int64) {
 	return func(bytesCount int64) {
 		uploadStatus.incrementDownloadedBytes(bytesCount)
-		uploadStatus.Job.UpdateStatus(status.Uploading, uploadStatus, nil)
+		uploadStatus.Job().UpdateStatus(status.Uploading, uploadStatus, nil)
 	}
 }

@@ -7,28 +7,58 @@ import (
 
 type Signal struct {
 	c      chan time.Time
-	Called bool
-	When   time.Time
+	called bool
+	when   time.Time
 	mu     sync.RWMutex
 	subs   []chan time.Time
 }
 
-func (s *Signal) call(t time.Time) {
+func (s *Signal) Called() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	if s.Called {
+	return s.called
+}
+
+func (s *Signal) When() time.Time {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.when
+}
+
+func (s *Signal) call(t time.Time) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.called {
 		panic("already called")
 	}
+	s.when = t
+	s.called = true
 	for _, ch := range s.subs {
 		ch <- t
 	}
-	s.When = t
-	s.Called = true
+}
+
+func (s *Signal) TrySubscribe(try func(chan time.Time)) {
+	s.mu.Lock()
+	if s.called {
+		s.mu.Unlock()
+		return
+	}
+	c := make(chan time.Time)
+	s.subs = append(s.subs, c)
+	s.mu.Unlock()
+	try(c)
+}
+
+func (s *Signal) Wait() {
+	s.TrySubscribe(func(c chan time.Time) {
+		<-c
+	})
 }
 
 func (s *Signal) Subscribe() chan time.Time {
 	s.mu.Lock()
-	if s.Called {
+	if s.called {
 		panic("Can't Subscribe after called")
 	}
 	defer s.mu.Unlock()
@@ -38,5 +68,5 @@ func (s *Signal) Subscribe() chan time.Time {
 }
 
 func (s *Signal) Clear() {
-	s.Called = false
+	s.called = false
 }

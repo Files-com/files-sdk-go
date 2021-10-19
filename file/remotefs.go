@@ -6,6 +6,7 @@ import (
 	"io"
 	goFs "io/fs"
 	"path/filepath"
+	"strings"
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
@@ -190,4 +191,22 @@ func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {
 		return files, &goFs.PathError{Path: f.Path, Err: err, Op: "readdir"}
 	}
 	return files, nil
+}
+
+func (f *FS) MkdirAll(dir string, _ goFs.FileMode) error {
+	var parentPath string
+	for _, dirPath := range strings.Split(dir, "/") {
+		if dirPath == "" {
+			break
+		}
+		folderClient := folder.Client{Config: f.Config}
+		_, err := folderClient.Create(f.Context, files_sdk.FolderCreateParams{Path: filepath.Join(parentPath, dirPath)})
+		rErr, ok := err.(files_sdk.ResponseError)
+		if err != nil && ok && rErr.Type != "processing-failure/destination-exists" {
+			return err
+		}
+
+		parentPath = filepath.Join(parentPath, dirPath)
+	}
+	return nil
 }

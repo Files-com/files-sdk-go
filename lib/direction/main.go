@@ -1,15 +1,15 @@
 package direction
 
-type Type struct {
+type Direction struct {
 	name   string
 	Symbol string
 }
 
 var (
-	DownloadType = Type{name: "download", Symbol: "⬆"}
-	UploadType   = Type{name: "upload", Symbol: "⬆"}
+	DownloadType = Direction{name: "download", Symbol: "⬆"}
+	UploadType   = Direction{name: "upload", Symbol: "⬆"}
 )
 
-func (t *Type) Name() string {
+func (t *Direction) Name() string {
 	return t.name
 }

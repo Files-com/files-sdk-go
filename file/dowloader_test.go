@@ -52,7 +52,7 @@ type TestSetup struct {
 	files         []Entity
 	reporterCalls []ReporterCall
 	fstest.MapFS
-	DownloadFolderParams
+	DownloaderParams
 	rootDestination string
 	tempDir         string
 }
@@ -75,11 +75,11 @@ func (setup *TestSetup) Reporter() status.EventsReporter {
 	}
 
 	for _, s := range status.Included {
-		events[s] = callback
+		events[s] = append(events[s], callback)
 	}
 
 	for _, s := range status.Excluded {
-		events[s] = callback
+		events[s] = append(events[s], callback)
 	}
 
 	return events
@@ -100,7 +100,7 @@ func (setup *TestSetup) Call() *status.Job {
 	job := downloader(
 		context.Background(),
 		setup.MapFS,
-		setup.DownloadFolderParams,
+		setup.DownloaderParams,
 	)
 
 	job.Start()
@@ -130,10 +130,10 @@ func Test_downloadFolder_ending_in_slash(t *testing.T) {
 		Data:    make([]byte, 100),
 		Mode:    fs.ModePerm,
 		ModTime: time.Time{},
-		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "some-path/taco.png", Type: "file"},
+		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "some-path/taco.png", Type: "file", Size: 100},
 	}
 
-	setup.DownloadFolderParams = DownloadFolderParams{RemotePath: "some-path", EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
+	setup.DownloaderParams = DownloaderParams{RemotePath: "some-path", EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
 	setup.rootDestination = "some-path/"
 	setup.Call()
 
@@ -169,19 +169,19 @@ func Test_downloadFolder_more_than_one_file(t *testing.T) {
 		Data:    make([]byte, 100),
 		Mode:    fs.ModePerm,
 		ModTime: time.Time{},
-		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "some-path/taco.png", Type: "file"},
+		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "some-path/taco.png", Type: "file", Size: 100},
 	}
 
 	setup.MapFS["some-path/pizza.png"] = &fstest.MapFile{
 		Data:    make([]byte, 102),
 		Mode:    fs.ModePerm,
 		ModTime: time.Time{},
-		Sys:     files_sdk.File{DisplayName: "pizza.png", Path: "some-path/pizza.png", Type: "file"},
+		Sys:     files_sdk.File{DisplayName: "pizza.png", Path: "some-path/pizza.png", Type: "file", Size: 102},
 	}
-	setup.DownloadFolderParams = DownloadFolderParams{RemotePath: "some-path", EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
+	setup.DownloaderParams = DownloaderParams{RemotePath: "some-path", EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
 	setup.rootDestination = "some-path"
 
-	setup.Call()
+	job := setup.Call()
 
 	statuses := make(map[string]int)
 	for _, call := range setup.reporterCalls {
@@ -199,9 +199,9 @@ func Test_downloadFolder_more_than_one_file(t *testing.T) {
 	assert.Contains([]string{setup.reporterCalls[0].File.Path, setup.reporterCalls[1].File.Path}, "some-path/pizza.png")
 	assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
 
-	assert.Equal(true, setup.reporterCalls[1].Job.All(status.Ended...))
-	assert.Equal(int64(202), setup.reporterCalls[1].Job.TransferBytes())
-	assert.Equal(int64(202), setup.reporterCalls[1].Job.TotalBytes())
+	assert.Equal(true, job.All(status.Ended...))
+	assert.Equal(int64(202), job.TransferBytes())
+	assert.Equal(int64(202), job.TotalBytes())
 
 	assert.NoError(setup.TearDown())
 }
@@ -211,15 +211,15 @@ func Test_downloadFolder_sync_already_downloaded(t *testing.T) {
 	setup := NewTestSetup()
 
 	setup.MapFS["taco.png"] = &fstest.MapFile{
-		Data:    make([]byte, 100),
-		Mode:    fs.ModePerm,
-		ModTime: time.Now().AddDate(0, -1, 0),
-		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "taco.png", Type: "file"},
+		Data: make([]byte, 100),
+		Mode: fs.ModePerm,
+		Sys:  files_sdk.File{DisplayName: "taco.png", Path: "taco.png", Type: "file", Size: 100},
 	}
-	setup.DownloadFolderParams = DownloadFolderParams{RemotePath: "", Sync: true, EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
+	setup.DownloaderParams = DownloaderParams{RemotePath: "", Sync: true, EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
 	setup.rootDestination = ""
-	_, err := os.Create(filepath.Join(setup.tempDir, "taco.png"))
+	taco, err := os.Create(filepath.Join(setup.tempDir, "taco.png"))
 	assert.NoError(err)
+	taco.Write(make([]byte, 100))
 	setup.Call()
 
 	assert.Equal(2, len(setup.reporterCalls))
@@ -237,9 +237,9 @@ func Test_downloadFolder_sync_not_already_downloaded(t *testing.T) {
 	setup.MapFS["taco.png"] = &fstest.MapFile{
 		Data:    make([]byte, 100),
 		ModTime: time.Now().AddDate(0, 1, 0),
-		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "taco.png", Type: "file"},
+		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "taco.png", Type: "file", Size: 100},
 	}
-	setup.DownloadFolderParams = DownloadFolderParams{RemotePath: "", Sync: true, EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
+	setup.DownloaderParams = DownloaderParams{RemotePath: "", Sync: true, EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
 	setup.rootDestination = ""
 	_, err := os.Create(filepath.Join(setup.tempDir, "taco.png"))
 	assert.NoError(err)
@@ -261,9 +261,9 @@ func Test_downloadFolder_sync_local_does_not_exist(t *testing.T) {
 	setup.MapFS["taco.png"] = &fstest.MapFile{
 		Data:    make([]byte, 100),
 		ModTime: time.Now().AddDate(0, 1, 0),
-		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "taco.png", Type: "file"},
+		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "taco.png", Type: "file", Size: 100},
 	}
-	setup.DownloadFolderParams = DownloadFolderParams{RemotePath: "", Sync: true, EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
+	setup.DownloaderParams = DownloaderParams{RemotePath: "", Sync: true, EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
 	setup.rootDestination = ""
 	setup.Call()
 
@@ -284,9 +284,9 @@ func Test_downloadFolder_download_file(t *testing.T) {
 		Data:    make([]byte, 100),
 		Mode:    fs.ModePerm,
 		ModTime: time.Time{},
-		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "some-path/taco.png", Type: "file"},
+		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "some-path/taco.png", Type: "file", Size: 100},
 	}
-	setup.DownloadFolderParams = DownloadFolderParams{RemotePath: "some-path", EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
+	setup.DownloaderParams = DownloaderParams{RemotePath: "some-path", EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
 	setup.rootDestination = "taco.png"
 
 	job := setup.Call()
@@ -305,9 +305,9 @@ func Test_downloadFolder_OnDownload(t *testing.T) {
 	setup.MapFS["some-path/taco.png"] = &fstest.MapFile{
 		Data:    make([]byte, 100),
 		ModTime: time.Time{},
-		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "some-path/taco.png", Type: "file", Size: 99},
+		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "some-path/taco.png", Type: "file", Size: 100},
 	}
-	setup.DownloadFolderParams = DownloadFolderParams{RemotePath: "some-path", EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
+	setup.DownloaderParams = DownloaderParams{RemotePath: "some-path", EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
 	setup.rootDestination = "taco.png"
 
 	setup.Call()
@@ -338,6 +338,5 @@ func Test_tmpDownloadPath(t *testing.T) {
 		panic(err)
 	}
 	path = tmpDownloadPath("find-me")
-
-	assert.Equal(fmt.Sprintf("%v (1)", file.Name()), path, "it increments a number")
+	assert.Equal(fmt.Sprintf("find-me (1).download"), path, "it increments a number")
 }

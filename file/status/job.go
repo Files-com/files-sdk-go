@@ -19,11 +19,33 @@ import (
 	filesSDK "github.com/Files-com/files-sdk-go/v2"
 )
 
-type EventsReporter map[Status]Reporter
+type EventsReporter map[Status][]Reporter
 
-type ToStatusFile interface {
-	ToStatusFile() File
+type IFile interface {
 	SetStatus(Status, error)
+	TransferBytes() int64
+	File() filesSDK.File
+	Id() string
+	LocalPath() string
+	RemotePath() string
+	Status() Status
+	LastByte() time.Time
+	Err() error
+	Job() *Job
+}
+
+func ToStatusFile(f IFile) File {
+	return File{
+		TransferBytes: f.TransferBytes(),
+		File:          f.File(),
+		LocalPath:     f.LocalPath(),
+		RemotePath:    f.RemotePath(),
+		Id:            f.Id(),
+		Job:           f.Job(),
+		Status:        f.Status(),
+		LastByte:      f.LastByte(),
+		Err:           f.Err(),
+	}
 }
 
 type Subscriptions struct {
@@ -37,15 +59,14 @@ type Subscriptions struct {
 type Job struct {
 	Id string
 	*timer.Timer
-	Statuses      []ToStatusFile
-	Direction     direction.Type
+	Statuses      []IFile
+	Direction     direction.Direction
 	statusesMutex *sync.RWMutex
 	LocalPath     string
 	RemotePath    string
 	Sync          bool
 	CodeStart     func()
 	context.CancelFunc
-	Wait   func()
 	Params interface{}
 	Client interface{}
 	EventsReporter
@@ -63,8 +84,7 @@ type Job struct {
 func (r Job) Init() *Job {
 	r.statusesMutex = &sync.RWMutex{}
 	r.Id = sid.IdBase64()
-	r.EventsReporter = make(map[Status]Reporter)
-	r.Wait = func() {}
+	r.EventsReporter = make(map[Status][]Reporter)
 	r.Timer = timer.New()
 	r.Started = &Signal{}
 	r.Finished = &Signal{}
@@ -99,7 +119,7 @@ func (r *Job) ClearCalled() {
 func (r *Job) ClearStatuses() Job {
 	newJob := *r
 	newJob.Reset()
-	newJob.Statuses = []ToStatusFile{}
+	newJob.Statuses = []IFile{}
 	return newJob
 }
 
@@ -131,6 +151,10 @@ func (r *Job) Reset() {
 	r.Timer = timer.New()
 }
 
+func (r *Job) Wait() {
+	r.Finished.Wait()
+}
+
 func (r *Job) Job() *Job {
 	return r
 }
@@ -151,22 +175,31 @@ func (r *Job) WithContext(ctx context.Context) context.Context {
 	return jobCtx
 }
 
-func (r *Job) Events(event Status, callback Reporter) {
-	r.EventsReporter[event] = callback
+func (r *Job) RegisterFileEvent(callback Reporter, events ...Status) {
+	for _, event := range events {
+		r.EventsReporter[event] = append(r.EventsReporter[event], callback)
+	}
 }
 
-func (r *Job) UpdateStatus(status Status, file ToStatusFile, err error) {
+type UnwrappedError struct {
+	error
+	OriginalError error
+}
+
+func (r *Job) UpdateStatus(status Status, file IFile, err error) {
 	if err != nil && strings.Contains(err.Error(), "context canceled") {
 		err = nil
 		status = Canceled
 	}
 	if err != nil && errors.Unwrap(err) != nil {
-		err = errors.Unwrap(err)
+		err = UnwrappedError{error: errors.Unwrap(err), OriginalError: err}
 	}
 	file.SetStatus(status, err)
-	callback, ok := r.EventsReporter[status]
+	callbacks, ok := r.EventsReporter[status]
 	if ok {
-		callback(file.ToStatusFile())
+		for _, callback := range callbacks {
+			callback(ToStatusFile(file))
+		}
 	}
 }
 
@@ -177,7 +210,7 @@ func (r *Job) Count(t ...Status) int {
 	var total int
 	r.statusesMutex.RLock()
 	for _, s := range r.Statuses {
-		if s.ToStatusFile().Status.Any(t...) {
+		if s.Status().Any(t...) {
 			total += 1
 		}
 	}
@@ -185,7 +218,7 @@ func (r *Job) Count(t ...Status) int {
 	return total
 }
 
-func (r *Job) Add(report ToStatusFile) {
+func (r *Job) Add(report IFile) {
 	r.statusesMutex.Lock()
 	r.Statuses = append(r.Statuses, report)
 	r.statusesMutex.Unlock()
@@ -195,8 +228,8 @@ func (r *Job) TotalBytes(t ...Status) int64 {
 	var total int64
 	r.statusesMutex.RLock()
 	for _, s := range r.Statuses {
-		if s.ToStatusFile().Status.Any(t...) {
-			total += s.ToStatusFile().Size
+		if s.Status().Any(t...) {
+			total += s.File().Size
 		}
 	}
 	r.statusesMutex.RUnlock()
@@ -211,8 +244,8 @@ func (r *Job) TransferBytes(t ...Status) int64 {
 	var transferBytes int64
 	r.statusesMutex.RLock()
 	for _, s := range r.Statuses {
-		if s.ToStatusFile().Status.Any(t...) {
-			transferBytes += s.ToStatusFile().TransferBytes
+		if s.Status().Any(t...) {
+			transferBytes += s.TransferBytes()
 		}
 	}
 	r.statusesMutex.RUnlock()
@@ -222,11 +255,11 @@ func (r *Job) TransferBytes(t ...Status) int64 {
 func (r *Job) mostRecentBytes(t ...Status) (recent time.Time) {
 	r.statusesMutex.RLock()
 	for _, s := range r.Statuses {
-		if !s.ToStatusFile().Status.Any(t...) {
+		if !s.Status().Any(t...) {
 			continue
 		}
-		if recent.IsZero() || recent.Before(s.ToStatusFile().LastByte) {
-			recent = s.ToStatusFile().LastByte
+		if recent.IsZero() || recent.Before(s.LastByte()) {
+			recent = s.LastByte()
 		}
 	}
 	r.statusesMutex.RUnlock()
@@ -249,10 +282,11 @@ func (r *Job) TransferRate(t ...Status) int64 {
 }
 
 func (r *Job) ETA(t ...Status) time.Duration {
-	if r.TransferRate() == 0 {
+	transferRate := r.TransferRate(t...)
+	if transferRate == 0 {
 		return 0
 	}
-	seconds := time.Duration(r.RemainingBytes(t...) / r.TransferRate(t...))
+	seconds := time.Duration(r.RemainingBytes(t...) / transferRate)
 	eta := seconds * time.Second
 	if eta < 0 {
 		return 0
@@ -268,7 +302,7 @@ func (r *Job) All(t ...Status) bool {
 	allEnded := true
 	r.statusesMutex.RLock()
 	for _, s := range r.Statuses {
-		if !s.ToStatusFile().Status.Any(t...) {
+		if !s.Status().Any(t...) {
 			allEnded = false
 			break
 		}
@@ -280,7 +314,7 @@ func (r *Job) All(t ...Status) bool {
 func (r *Job) Any(t ...Status) (b bool) {
 	r.statusesMutex.RLock()
 	for _, s := range r.Statuses {
-		if s.ToStatusFile().Status.Any(t...) {
+		if s.Status().Any(t...) {
 			b = true
 			break
 		}
@@ -289,12 +323,12 @@ func (r *Job) Any(t ...Status) (b bool) {
 	return
 }
 
-func (r *Job) Find(t Status) (ToStatusFile, bool) {
+func (r *Job) Find(t Status) (IFile, bool) {
 	r.statusesMutex.RLock()
 	defer r.statusesMutex.RUnlock()
 
 	for _, s := range r.Statuses {
-		if s.ToStatusFile().Status.Any(t) {
+		if s.Status().Any(t) {
 			return s, true
 		}
 	}
@@ -303,10 +337,10 @@ func (r *Job) Find(t Status) (ToStatusFile, bool) {
 }
 
 func (r *Job) Sub(t ...Status) *Job {
-	var sub []ToStatusFile
+	var sub []IFile
 	r.statusesMutex.RLock()
 	for _, s := range r.Statuses {
-		if s.ToStatusFile().Status.Any(t...) {
+		if s.Status().Any(t...) {
 			sub = append(sub, s)
 		}
 	}
@@ -320,7 +354,7 @@ func (r *Job) Files() []filesSDK.File {
 	var files []filesSDK.File
 	r.statusesMutex.RLock()
 	for _, s := range r.Statuses {
-		files = append(files, s.ToStatusFile().File)
+		files = append(files, s.File())
 	}
 	r.statusesMutex.RUnlock()
 	return files
@@ -334,8 +368,8 @@ func (r *Job) Percentage(t ...Status) int {
 	return p
 }
 
-func (r *Job) StatusFromError(s ToStatusFile, err error) {
-	if r.Canceled.Called {
+func (r *Job) StatusFromError(s IFile, err error) {
+	if r.Canceled.Called() {
 		r.UpdateStatus(Canceled, s, nil)
 	} else {
 		r.UpdateStatus(Errored, s, err)

@@ -3,12 +3,14 @@ package file
 import (
 	"context"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/Files-com/files-sdk-go/v2/file/status"
@@ -69,7 +71,7 @@ func runDownloadScenario(path string, destination string, client *Client) map[st
 
 	job := client.Downloader(
 		context.Background(),
-		DownloadFolderParams{RemotePath: path, LocalPath: destination, EventsReporter: Reporter(reporter)},
+		DownloaderParams{RemotePath: path, LocalPath: destination, EventsReporter: Reporter(reporter)},
 	)
 
 	job.Start()
@@ -82,11 +84,11 @@ func Reporter(callback status.Reporter) status.EventsReporter {
 	events := make(status.EventsReporter)
 
 	for _, s := range status.Included {
-		events[s] = callback
+		events[s] = append(events[s], callback)
 	}
 
 	for _, s := range status.Excluded {
-		events[s] = callback
+		events[s] = append(events[s], callback)
 	}
 
 	return events
@@ -105,7 +107,7 @@ func TestClient_UploadFolder(t *testing.T) {
 
 	job := client.Uploader(
 		context.Background(),
-		UploadParams{
+		UploaderParams{
 			LocalPath:  "../lib",
 			RemotePath: "golib",
 			EventsReporter: Reporter(func(status status.File) {
@@ -132,7 +134,7 @@ func TestClient_UploadFolder(t *testing.T) {
 	assert.Contains(results, "golib/iter_test.go")
 	assert.Contains(results, "golib/direction/main.go")
 	assert.Equal(16, job.Count(status.Complete))
-	assert.Equal(int64(13077), results["golib/bool.go"][0].Job.TotalBytes(status.Complete))
+	assert.Equal(int64(13129), results["golib/bool.go"][0].Job.TotalBytes(status.Complete))
 
 	deletePath(client, "golib")
 }
@@ -145,27 +147,61 @@ func TestClient_UploadFolder_Dot(t *testing.T) {
 	defer r.Stop()
 
 	assert := assert.New(t)
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
 	resultsMapMutex := sync.RWMutex{}
 	results := make(map[string][]int64)
+	err = os.MkdirAll(filepath.Join(tmpDir, "dot"), 0755)
+	assert.NoError(err)
 
+	f1, err := os.Create(filepath.Join(tmpDir, "dot/1.text"))
+	f1.Write([]byte("hello 1"))
+	f1.Close()
+
+	f2, err := os.Create(filepath.Join(tmpDir, "dot/2.text"))
+	f2.Write([]byte("hello 2"))
+	f2.Close()
+
+	f3, err := os.Create(filepath.Join(tmpDir, "dot/3.text"))
+	f3.Write([]byte("hello 3"))
+	f3.Close()
+
+	currentPwd, err := os.Getwd()
+	err = os.Chdir(filepath.Join(tmpDir, "dot"))
+	defer func() {
+		os.Chdir(currentPwd)
+		os.RemoveAll(filepath.Join(tmpDir, "/dot"))
+	}()
+	assert.NoError(err)
+
+	ctx, _ := context.WithTimeout(context.Background(), 90*time.Second)
 	job := client.Uploader(
-		context.Background(),
-		UploadParams{
+		ctx,
+		UploaderParams{
 			LocalPath:  ".",
 			RemotePath: "go-from-dot",
-			EventsReporter: Reporter(func(status status.File) {
+			EventsReporter: Reporter(func(s status.File) {
 				resultsMapMutex.Lock()
-				results[status.File.Path] = append(results[status.File.Path], status.TransferBytes)
+				if s.Err != nil {
+					panic(s.Err)
+				}
+
+				results[s.File.Path] = append(results[s.File.Path], s.TransferBytes)
 				resultsMapMutex.Unlock()
 			}),
 		})
 	job.Start()
 	job.Wait()
-	assert.Contains(results, "go-from-dot/fixtures/TestClient_UploadFolder.yaml")
-	assert.Contains(results, "go-from-dot/client_test.go")
-	assert.Contains(results, "go-from-dot/client.go")
-	assert.Contains(results, "go-from-dot/downloadstatus.go")
-	assert.Contains(results, "go-from-dot/uploadstatus.go")
+	assert.Contains(results, "go-from-dot/1.text")
+	assert.Contains(results, "go-from-dot/2.text")
+	assert.Contains(results, "go-from-dot/3.text")
+	assert.Equal(int64(7), job.Statuses[0].TransferBytes())
+	assert.Equal(int64(7), job.Statuses[1].TransferBytes())
+	assert.Equal(int64(7), job.Statuses[2].TransferBytes())
 
 	deletePath(client, "go-from-dot")
 }
@@ -178,14 +214,39 @@ func TestClient_UploadFolder_Relative(t *testing.T) {
 	defer r.Stop()
 
 	assert := assert.New(t)
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
 	resultsMapMutex := sync.RWMutex{}
 	results := make(map[string][]int64)
 
+	err = os.MkdirAll(filepath.Join(tmpDir, "relative"), 0755)
+	assert.NoError(err)
+
+	f1, err := os.Create(filepath.Join(tmpDir, "relative/1.text"))
+	f1.Write([]byte("hello 1"))
+	f1.Close()
+
+	f2, err := os.Create(filepath.Join(tmpDir, "relative/2.text"))
+	f2.Write([]byte("hello 2"))
+	f2.Close()
+
+	f3, err := os.Create(filepath.Join(tmpDir, "relative/3.text"))
+	f3.Write([]byte("hello 3"))
+	f3.Close()
+
+	currentPwd, err := os.Getwd()
+	err = os.Chdir(tmpDir)
+	defer os.Chdir(currentPwd)
+	assert.NoError(err)
+
 	job := client.Uploader(
 		context.Background(),
-		UploadParams{
-			LocalPath:  "fixtures",
-			RemotePath: "file-fixtures",
+		UploaderParams{
+			LocalPath:  "relative",
+			RemotePath: "relative",
 			EventsReporter: Reporter(func(status status.File) {
 				resultsMapMutex.Lock()
 				results[status.File.Path] = append(results[status.File.Path], status.TransferBytes)
@@ -194,13 +255,16 @@ func TestClient_UploadFolder_Relative(t *testing.T) {
 		})
 	job.Start()
 	job.Wait()
-	assert.Contains(results, "file-fixtures/TestClient_UploadFolder.yaml")
-
-	assert.Equal(15, job.Count())
-	assert.Equal(int64(179652), job.TotalBytes(status.Valid...))
+	assert.Contains(results, "relative/1.text")
+	assert.Contains(results, "relative/2.text")
+	assert.Contains(results, "relative/3.text")
+	assert.Equal(int64(7), job.Statuses[0].TransferBytes())
+	assert.Equal(int64(7), job.Statuses[1].TransferBytes())
+	assert.Equal(int64(7), job.Statuses[2].TransferBytes())
+	assert.Equal(int64(21), job.TotalBytes(status.Valid...))
 	assert.Equal(true, job.All(status.Ended...))
 
-	deletePath(client, "file-fixtures")
+	deletePath(client, "relative")
 }
 
 func TestClient_UploadFile(t *testing.T) {
@@ -212,38 +276,38 @@ func TestClient_UploadFile(t *testing.T) {
 	assert := assert.New(t)
 
 	uploadPath := "../LICENSE"
-	job := client.UploadFile(context.Background(), UploadParams{LocalPath: uploadPath})
+	job := client.Uploader(context.Background(), UploaderParams{LocalPath: uploadPath})
 	job.Start()
 	job.Wait()
-	assert.Equal(true, job.Started.Called)
-	assert.Equal(true, job.Scanning.Called)
-	assert.Equal(true, job.EndScanning.Called)
-	assert.Equal(true, job.Finished.Called)
-	assert.Equal(false, job.Canceled.Called)
+	assert.Equal(true, job.Started.Called())
+	assert.Equal(true, job.Scanning.Called())
+	assert.Equal(true, job.EndScanning.Called())
+	assert.Equal(true, job.Finished.Called())
+	assert.Equal(false, job.Canceled.Called())
 	assert.Equal("LICENSE", job.Files()[0].DisplayName)
 	assert.Equal(1, job.Count())
 	assert.Equal(int64(1102), job.TotalBytes())
 	assert.Equal(true, job.All(status.Ended...))
 
-	_, err1 := os.Stat("../tmp")
-	if os.IsNotExist(err1) {
-		os.Mkdir("../tmp", 0700)
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	if err != nil {
+		log.Fatal(err)
 	}
-	tempFile, err := ioutil.TempFile("../tmp", "LICENSE")
+	defer os.RemoveAll(tmpDir)
+
+	tempFile, err := ioutil.TempFile(tmpDir, "LICENSE")
 	if err != nil {
 		panic(err)
 	}
-	downloadPath, err := filepath.Abs(filepath.Dir(tempFile.Name()))
 	if err != nil {
 		panic(err)
 	}
-	downloadPath = path.Join(downloadPath, tempFile.Name())
-	file, err := client.DownloadToFile(context.Background(), files_sdk.FileDownloadParams{Path: "LICENSE"}, downloadPath)
+	file, err := client.DownloadToFile(context.Background(), files_sdk.FileDownloadParams{Path: "LICENSE"}, tempFile.Name())
 	assert.NoError(err)
 
 	assert.Equal(file.DisplayName, "LICENSE")
 
-	downloadData, err := ioutil.ReadFile(downloadPath)
+	downloadData, err := ioutil.ReadFile(tempFile.Name())
 	if err != nil {
 		panic(err)
 	}
@@ -262,34 +326,32 @@ func TestClient_UploadFile_To_Existing_Dir(t *testing.T) {
 	}
 	defer r.Stop()
 	assert := assert.New(t)
+
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
 	folderClient := folder.Client{Config: client.Config}
 	_, err = folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: "docs"})
 	defer deletePath(client, "docs")
 
 	assert.NoError(err)
 	uploadPath := "../LICENSE"
-	job := client.UploadFile(context.Background(), UploadParams{LocalPath: uploadPath, RemotePath: "docs"})
+	job := client.Uploader(context.Background(), UploaderParams{LocalPath: uploadPath, RemotePath: "docs"})
 	job.Start()
 	job.Wait()
-	_, err1 := os.Stat("../tmp")
-	if os.IsNotExist(err1) {
-		os.Mkdir("../tmp", 0700)
-	}
-	tempFile, err := ioutil.TempFile("../tmp", "LICENSE")
+	tempFile, err := ioutil.TempFile(tmpDir, "LICENSE")
 	if err != nil {
 		panic(err)
 	}
-	downloadPath, err := filepath.Abs(filepath.Dir(tempFile.Name()))
-	if err != nil {
-		panic(err)
-	}
-	downloadPath = path.Join(downloadPath, tempFile.Name())
-	file, err := client.DownloadToFile(context.Background(), files_sdk.FileDownloadParams{Path: "docs/LICENSE"}, downloadPath)
+	file, err := client.DownloadToFile(context.Background(), files_sdk.FileDownloadParams{Path: "docs/LICENSE"}, tempFile.Name())
 	assert.NoError(err)
 
 	assert.Equal(file.DisplayName, "LICENSE")
 
-	downloadData, err := ioutil.ReadFile(downloadPath)
+	downloadData, err := ioutil.ReadFile(tempFile.Name())
 	if err != nil {
 		panic(err)
 	}
@@ -309,31 +371,30 @@ func TestClient_UploadFile_To_NonExistingPath(t *testing.T) {
 	defer r.Stop()
 	assert := assert.New(t)
 
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
 	deletePath(client, "taco")
 	uploadPath := "../LICENSE"
-	job := client.UploadFile(context.Background(), UploadParams{LocalPath: uploadPath, RemotePath: "taco"})
+	job := client.Uploader(context.Background(), UploaderParams{LocalPath: uploadPath, RemotePath: "taco"})
 	defer deletePath(client, "taco")
 	job.Start()
 	job.Wait()
-	_, err1 := os.Stat("../tmp")
-	if os.IsNotExist(err1) {
-		os.Mkdir("../tmp", 0700)
-	}
-	tempFile, err := ioutil.TempFile("../tmp", "LICENSE")
-	if err != nil {
-		panic(err)
-	}
+	tempFile, err := ioutil.TempFile(tmpDir, "LICENSE")
 	downloadPath, err := filepath.Abs(filepath.Dir(tempFile.Name()))
 	if err != nil {
 		panic(err)
 	}
 	downloadPath = path.Join(downloadPath, tempFile.Name())
-	file, err := client.DownloadToFile(context.Background(), files_sdk.FileDownloadParams{Path: "taco"}, downloadPath)
+	file, err := client.DownloadToFile(context.Background(), files_sdk.FileDownloadParams{Path: "taco"}, tempFile.Name())
 	assert.NoError(err)
 
 	assert.Equal("taco", file.DisplayName, "because the docs did not exist as a folder it becomes the file")
 
-	downloadData, err := ioutil.ReadFile(downloadPath)
+	downloadData, err := ioutil.ReadFile(tempFile.Name())
 	assert.NoError(err)
 	localData, err := ioutil.ReadFile(uploadPath)
 	if err != nil {
@@ -351,33 +412,30 @@ func TestClient_UploadFile_To_NonExistingPath_WithSlash(t *testing.T) {
 	defer r.Stop()
 	assert := assert.New(t)
 
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
 	assert.NoError(err)
 	uploadPath := "../LICENSE"
 	deletePath(client, "docs")
-	job := client.UploadFile(context.Background(), UploadParams{LocalPath: uploadPath, RemotePath: "docs/"})
+	job := client.Uploader(context.Background(), UploaderParams{LocalPath: uploadPath, RemotePath: "docs/"})
 	defer deletePath(client, "docs")
 	job.Start()
 	job.Wait()
-	_, err1 := os.Stat("../tmp")
-	if os.IsNotExist(err1) {
-		os.Mkdir("../tmp", 0700)
-	}
-	tempFile, err := ioutil.TempFile("../tmp", "LICENSE")
+	tempFile, err := ioutil.TempFile(tmpDir, "LICENSE")
 	if err != nil {
 		panic(err)
 	}
-	downloadPath, err := filepath.Abs(filepath.Dir(tempFile.Name()))
-	if err != nil {
-		panic(err)
-	}
-	downloadPath = path.Join(downloadPath, tempFile.Name())
-	file, err := client.DownloadToFile(context.Background(), files_sdk.FileDownloadParams{Path: "docs/LICENSE"}, downloadPath)
+	file, err := client.DownloadToFile(context.Background(), files_sdk.FileDownloadParams{Path: "docs/LICENSE"}, tempFile.Name())
 	assert.NoError(err)
 
 	assert.Equal("file", file.Type)
 	assert.Equal("LICENSE", file.DisplayName)
 
-	downloadData, err := ioutil.ReadFile(downloadPath)
+	downloadData, err := ioutil.ReadFile(tempFile.Name())
 	if err != nil {
 		panic(err)
 	}
@@ -396,30 +454,30 @@ func TestClient_UploadFolder_as_file2(t *testing.T) {
 	}
 	defer r.Stop()
 	assert := assert.New(t)
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
 
 	uploadPath := "../LICENSE"
-	job := client.Uploader(context.Background(), UploadParams{LocalPath: uploadPath})
+	job := client.Uploader(context.Background(), UploaderParams{LocalPath: uploadPath})
 	job.Start()
 	job.Wait()
-	_, err1 := os.Stat("../tmp")
-	if os.IsNotExist(err1) {
-		os.Mkdir("../tmp", 0700)
-	}
-	tempFile, err := ioutil.TempFile("../tmp", "LICENSE")
+
+	assert.Equal(int64(1102), job.TransferBytes())
+	assert.Equal(int64(1102), job.TotalBytes())
+
+	tempFile, err := ioutil.TempFile(tmpDir, "LICENSE")
 	if err != nil {
 		panic(err)
 	}
-	downloadPath, err := filepath.Abs(filepath.Dir(tempFile.Name()))
-	if err != nil {
-		panic(err)
-	}
-	downloadPath = path.Join(downloadPath, tempFile.Name())
-	file, err := client.DownloadToFile(context.Background(), files_sdk.FileDownloadParams{Path: "LICENSE"}, downloadPath)
+	file, err := client.DownloadToFile(context.Background(), files_sdk.FileDownloadParams{Path: "LICENSE"}, tempFile.Name())
 	assert.NoError(err)
 
 	assert.Equal(file.DisplayName, "LICENSE")
 
-	downloadData, err := ioutil.ReadFile(downloadPath)
+	downloadData, err := ioutil.ReadFile(tempFile.Name())
 	if err != nil {
 		panic(err)
 	}
@@ -504,17 +562,16 @@ func TestClient_DownloadFolder_file_to_file(t *testing.T) {
 	buildScenario("TestClient_DownloadFolder_file_to_file", client)
 	assert := assert.New(t)
 
-	tmp, err1 := os.Stat("../tmp")
-	if os.IsNotExist(err1) {
-		os.Mkdir("../tmp", 0700)
-		tmp, _ = os.Stat("../tmp")
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	if err != nil {
+		log.Fatal(err)
 	}
+	defer os.RemoveAll(tmpDir)
 
-	results := runDownloadScenario(filepath.Join("TestClient_DownloadFolder_file_to_file", "nested_1", "nested_2", "3.text"), filepath.Join(tmp.Name(), "3.text"), client)
+	results := runDownloadScenario(filepath.Join("TestClient_DownloadFolder_file_to_file", "nested_1", "nested_2", "3.text"), filepath.Join(tmpDir, "3.text"), client)
 	assert.NoError(err)
 
 	assert.Equal(int64(9), results["TestClient_DownloadFolder_file_to_file/nested_1/nested_2/3.text"][2].TransferBytes)
-	os.RemoveAll(filepath.Join(tmp.Name(), "3.text"))
 }
 
 func TestClient_DownloadFolder_file_to_implicit(t *testing.T) {
@@ -547,4 +604,237 @@ func TestClient_DownloadFolder_file_only(t *testing.T) {
 
 	assert.Equal(int64(5), results["i am at the root.text"][2].TransferBytes)
 	os.RemoveAll("i am at the root.text")
+}
+
+func TestClient_Downloader_Delete_Source(t *testing.T) {
+	client, r, err := CreateClient("TestClient_Downloader_Delete_Source")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	assert := assert.New(t)
+
+	folderClient := folder.Client{Config: client.Config}
+
+	folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: "test-delete-source"})
+	_, _, _, err = client.UploadIO(context.Background(), UploadIOParams{Path: filepath.Join("test-delete-source", "test.text"), Reader: strings.NewReader("testing 3"), Size: int64(9)})
+	assert.NoError(err)
+	job := client.Downloader(
+		context.Background(),
+		DownloaderParams{RemotePath: filepath.Join("test-delete-source"), LocalPath: ""},
+	)
+	var fi status.File
+	var log status.Log
+	job.RegisterFileEvent(func(f status.File) {
+		fi = f
+		log, err = DeleteSource{Config: client.Config, Direction: job.Direction}.Call(context.Background(), f)
+	}, status.Complete)
+	job.Start()
+	<-job.Finished.Subscribe()
+	assert.NoError(err)
+	assert.Equal("delete source", log.Action)
+	assert.Equal(fi.RemotePath, log.Path)
+
+	_, err = client.Find(context.Background(), files_sdk.FileFindParams{Path: filepath.Join("test-delete-source", "test.text")})
+	assert.Equal("Not Found - `Not Found`", err.Error())
+	os.RemoveAll("test.text")
+}
+
+func TestClient_Downloader_Move_Source(t *testing.T) {
+	client, r, err := CreateClient("TestClient_Downloader_Move_Source")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	assert := assert.New(t)
+
+	folderClient := folder.Client{Config: client.Config}
+
+	folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: "test-move-source"})
+	_, _, _, err = client.UploadIO(context.Background(), UploadIOParams{Path: filepath.Join("test-move-source", "test.text"), Reader: strings.NewReader("testing 3"), Size: int64(9)})
+	assert.NoError(err)
+	job := client.Downloader(
+		context.Background(),
+		DownloaderParams{RemotePath: filepath.Join("test-move-source"), LocalPath: ""},
+	)
+	var log status.Log
+	job.RegisterFileEvent(func(f status.File) {
+		log, err = MoveSource{Config: client.Config, Direction: job.Direction, Path: "test-moved-source"}.Call(context.Background(), f)
+	}, status.Complete)
+	job.Start()
+	job.Wait()
+
+	assert.NoError(err)
+	assert.Equal("move source", log.Action)
+	assert.Equal("test-moved-source/test.text", log.Path)
+
+	_, err = client.Find(context.Background(), files_sdk.FileFindParams{Path: filepath.Join("test-move-source", "test.text")})
+	assert.Equal("Not Found - `Not Found`", err.Error())
+	_, err = client.Find(context.Background(), files_sdk.FileFindParams{Path: filepath.Join("test-moved-source", "test.text")})
+	assert.NoError(err)
+	os.RemoveAll("test.text")
+}
+
+func TestClient_UploadFolder_Move_Source(t *testing.T) {
+	client, r, err := CreateClient("TestClient_UploadFolder_Move_Source")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	assert := assert.New(t)
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+	var log status.Log
+
+	defer os.RemoveAll(tmpDir)
+	err = os.MkdirAll(filepath.Join(tmpDir, "move-source"), 0755)
+	assert.NoError(err)
+
+	tempFile, err := os.Create(filepath.Join(tmpDir, "move-source/upload-move-source.text"))
+	assert.NoError(err)
+	tempFile.Write([]byte("testing"))
+	job := client.Uploader(context.Background(), UploaderParams{LocalPath: tempFile.Name()})
+	job.RegisterFileEvent(func(f status.File) {
+		log, err = MoveSource{Config: client.Config, Direction: job.Direction, Path: filepath.Join(tmpDir, "move-source/test-moved-source.text")}.Call(context.Background(), f)
+	}, status.Complete)
+	job.Start()
+	job.Wait()
+	assert.Equal(false, job.Any(status.Errored))
+	assert.NoError(err)
+	assert.Equal("move source", log.Action)
+	assert.Equal(filepath.Join(tmpDir, "move-source/test-moved-source.text"), log.Path)
+	stat, err := os.Stat(log.Path)
+	assert.NoError(err)
+	assert.Equal("test-moved-source.text", stat.Name())
+	tempFile.Close()
+}
+
+func TestClient_UploadFolder_Move_Source_Missing_Dir(t *testing.T) {
+	client, r, err := CreateClient("TestClient_UploadFolder_Move_Source_Missing_Dir")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	assert := assert.New(t)
+
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	var log status.Log
+	err = os.MkdirAll(filepath.Join(tmpDir, "/move-source-dir"), 0755)
+	assert.NoError(err)
+	tempFile, err := os.Create(filepath.Join(tmpDir, "/move-source-dir/upload-move-source.text"))
+	assert.NoError(err)
+	tempFile.Write([]byte("testing"))
+	tempFile.Close()
+	job := client.Uploader(context.Background(), UploaderParams{LocalPath: filepath.Join(tmpDir, "move-source-dir")})
+	job.RegisterFileEvent(func(f status.File) {
+		log, err = MoveSource{Config: client.Config, Direction: job.Direction, Path: filepath.Join(tmpDir, "moved-source-dir")}.Call(context.Background(), f)
+	}, status.Complete)
+	job.Start()
+	job.Wait()
+	assert.Equal(false, job.Any(status.Errored))
+	assert.NoError(err)
+	assert.Equal("move source", log.Action)
+	assert.Equal(filepath.Join(tmpDir, "moved-source-dir/upload-move-source.text"), log.Path)
+	stat, err := os.Stat(log.Path)
+	assert.NoError(err)
+	assert.Equal("upload-move-source.text", stat.Name())
+	assert.Equal(false, stat.IsDir())
+
+	_, err = os.Stat(filepath.Join(tmpDir, "move-source-dir/upload-move-source.text"))
+	assert.Equal(true, os.IsNotExist(err))
+}
+
+func TestClient_Downloader_Move_Source_Missing_Dir(t *testing.T) {
+	client, r, err := CreateClient("TestClient_Downloader_Move_Source_Missing_Dir")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	assert := assert.New(t)
+
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	buildScenario("TestClient_Downloader_Move_Source_Missing_Dir", client)
+	os.MkdirAll(filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir"), 0755)
+
+	logChan := make(chan status.Log)
+	errChan := make(chan error)
+	job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "TestClient_Downloader_Move_Source_Missing_Dir", LocalPath: filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir")})
+	job.RegisterFileEvent(func(f status.File) {
+		log, err := MoveSource{Config: client.Config, Direction: job.Direction, Path: filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir-moved")}.Call(context.Background(), f)
+		logChan <- log
+		errChan <- err
+	}, status.Complete)
+	job.Start()
+
+	fileValues := []string{
+		filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir-moved/nested_1/nested_2/3.text"),
+		filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir-moved/nested_1/nested_2/nested_3/4.text"),
+	}
+	files := make(map[string]string)
+	files[fileValues[0]] = fileValues[0]
+	files[fileValues[1]] = fileValues[1]
+
+	log1 := <-logChan
+	assert.Equal("move source", log1.Action)
+	assert.Equal(files[log1.Path], log1.Path)
+	assert.NoError(<-errChan)
+
+	log2 := <-logChan
+	assert.Equal("move source", log2.Action)
+	assert.Equal(files[log2.Path], log2.Path)
+	assert.NoError(<-errChan)
+
+	job.Wait()
+
+	assert.Equal(false, job.Any(status.Errored))
+
+	movedDir, err := client.Find(context.Background(), files_sdk.FileFindParams{Path: "TestClient_Downloader_Move_Source_Missing_Dir-moved"})
+	assert.NoError(err)
+	assert.Equal("TestClient_Downloader_Move_Source_Missing_Dir-moved", movedDir.Path)
+	assert.Equal("directory", movedDir.Type)
+}
+
+func TestClient_UploadFile_Delete_Source(t *testing.T) {
+	client, r, err := CreateClient("TestClient_UploadFile_Delete_Source")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	assert := assert.New(t)
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	var log status.Log
+	tempFile, err := os.Create(filepath.Join(tmpDir, "upload-delete-source.text"))
+	tempFile.Write([]byte("testing"))
+	var fi status.File
+	job := client.Uploader(context.Background(), UploaderParams{LocalPath: tempFile.Name()})
+	job.RegisterFileEvent(func(f status.File) {
+		fi = f
+		log, err = DeleteSource{Config: client.Config, Direction: job.Direction}.Call(context.Background(), f)
+	}, status.Complete)
+	job.Start()
+	job.Wait()
+	assert.Equal(false, job.Any(status.Errored))
+	assert.NoError(err)
+	assert.Equal("delete source", log.Action)
+	assert.Equal(fi.LocalPath, log.Path)
+	tempFile.Close()
+	os.Remove(tempFile.Name())
 }

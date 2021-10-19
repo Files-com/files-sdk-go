@@ -14,7 +14,7 @@ import (
 func (c *Client) DownloadRetry(ctx context.Context, job status.Job) *status.Job {
 	newJob := job.ClearStatuses()
 	return c.Downloader(ctx,
-		DownloadFolderParams{
+		DownloaderParams{
 			RemotePath:     newJob.RemotePath,
 			Sync:           newJob.Sync,
 			Manager:        newJob.Manager,
@@ -33,7 +33,7 @@ func (c *Client) DownloadToFile(ctx context.Context, params files_sdk.FileDownlo
 	return c.Download(ctx, params)
 }
 
-type DownloadFolderParams struct {
+type DownloaderParams struct {
 	RemotePath string
 	RemoteFile files_sdk.File
 	LocalPath  string
@@ -43,7 +43,7 @@ type DownloadFolderParams struct {
 	status.EventsReporter
 }
 
-func (c *Client) Downloader(ctx context.Context, params DownloadFolderParams) *status.Job {
+func (c *Client) Downloader(ctx context.Context, params DownloaderParams) *status.Job {
 	return downloader(ctx, FS{}.Init(c.Config), params)
 }
 
