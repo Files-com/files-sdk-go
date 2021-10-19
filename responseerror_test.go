@@ -86,6 +86,10 @@ var TestStr3 = `
 {"error":"Internal server error, please contact support or the person who created your account.","http-code":"500"}
 `
 
+var TestStr4 = `
+<body></body>
+`
+
 func TestResponseError1_UnmarshalJSON(t *testing.T) {
 	assert := assert.New(t)
 	subject := ResponseError{}
@@ -158,6 +162,18 @@ func TestResponseError_UnmarshalJSON_Error3(t *testing.T) {
 	err := subject.UnmarshalJSON([]byte(`["error"]`))
 
 	assert.Nil(err, "The response is not an error, but a list response.")
+	assert.Equal("", subject.ErrorMessage)
+	assert.Equal("", subject.Type)
+	assert.Equal(true, subject.IsNil())
+}
+
+func TestResponseError_UnmarshalJSON_Error4(t *testing.T) {
+	assert := assert.New(t)
+	subject := ResponseError{}
+
+	err := subject.UnmarshalJSON([]byte(TestStr4))
+
+	assert.Error(err, "\n<body></body>\n")
 	assert.Equal("", subject.ErrorMessage)
 	assert.Equal("", subject.Type)
 	assert.Equal(true, subject.IsNil())

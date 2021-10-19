@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
+## [2.0.26-beta] - 2021/10/19
+### Fix
+- `files_sdk.ResponseError.UnmarshalJSON` detects HTML errors and returns an error with it rather than a JSON syntax error.
+- `file.Uploader` When uploading to a remote server parts were being incorrectly validating causing `status.File.TransferBytes` to return 0.
+
 ## [2.0.25-beta] - 2021/10/19
 ### Add
 - `file.Uploader`/`file.UploadIO` sends known file size in preflight upload request. Allows some remote servers to upload larger files.

@@ -174,7 +174,7 @@ func (p *Part) Touch() {
 }
 
 func (p *Part) Successful() bool {
-	return p.Etag != "" && p.bytes == p.len
+	return p.bytes == p.len && p.error == nil
 }
 
 func (p *Part) Clear() {
@@ -263,16 +263,6 @@ func (c *Client) createPart(ctx context.Context, reader io.ReadCloser, len int64
 		Etag: strings.Trim(res.Header.Get("Etag"), "\""),
 		Part: strconv.FormatInt(fileUploadPart.PartNumber, 10),
 	}, len, nil
-}
-
-func dealWithCanceledError(uploadStatus *UploadStatus, err error) bool {
-	if err != nil {
-		uploadStatus.Job().StatusFromError(uploadStatus, err)
-		return false
-	} else {
-		uploadStatus.Job().UpdateStatus(status.Complete, uploadStatus, nil)
-		return true
-	}
 }
 
 func uploadProgress(uploadStatus *UploadStatus) func(bytesCount int64) {
