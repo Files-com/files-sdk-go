@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math"
 	"net/http"
 	"strconv"
@@ -50,6 +51,7 @@ func (c *Client) UploadIO(parentCtx context.Context, params UploadIOParams) (fil
 	if !time.Now().Before(expires) {
 		params.Parts = Parts{} // parts are invalidated
 	}
+
 	if expires.IsZero() || !time.Now().Before(expires) {
 		fileUploadPart, err = c.startUpload(
 			parentCtx,
@@ -60,13 +62,17 @@ func (c *Client) UploadIO(parentCtx context.Context, params UploadIOParams) (fil
 			},
 		)
 	}
+
+	if !*fileUploadPart.ParallelParts {
+		params.Parts = Parts{} // parts cannot be retried
+	}
 	if err != nil {
 		return files_sdk.File{}, fileUploadPart, workingParts, err
 	}
 	fileUploadPart.Path = params.Path
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
-	run := func(part *Part, fileUploadPart files_sdk.FileUploadPart) {
+	run := func(part *Part, fileUploadPart files_sdk.FileUploadPart, lastPart bool) {
 		proxyReader := &ProxyReader{
 			ReaderAt: params.Reader,
 			off:      part.off,
@@ -74,7 +80,7 @@ func (c *Client) UploadIO(parentCtx context.Context, params UploadIOParams) (fil
 			onRead:   params.Progress,
 		}
 		fileUploadPart.PartNumber = part.number
-		part.EtagsParam, part.bytes, part.error = c.createPart(ctx, proxyReader, part.len, fileUploadPart)
+		part.EtagsParam, part.bytes, part.error = c.createPart(ctx, proxyReader, part.len, fileUploadPart, lastPart)
 		part.Touch()
 		if part.error != nil {
 			if *fileUploadPart.ParallelParts {
@@ -109,12 +115,12 @@ func (c *Client) UploadIO(parentCtx context.Context, params UploadIOParams) (fil
 	}
 
 	go func() {
-		for _, part := range workingParts {
+		for i, part := range workingParts {
 			if *fileUploadPart.ParallelParts {
 				params.Manager.Wait()
-				go run(part, fileUploadPart)
+				go run(part, fileUploadPart, len(workingParts) == i+1)
 			} else {
-				run(part, fileUploadPart)
+				run(part, fileUploadPart, len(workingParts) == i+1)
 			}
 		}
 	}()
@@ -215,9 +221,9 @@ func byteOffsetSlice(size int64) []OffSet {
 	return offsets
 }
 
-func (c *Client) createPart(ctx context.Context, reader io.ReadCloser, len int64, fileUploadPart files_sdk.FileUploadPart) (files_sdk.EtagsParam, int64, error) {
+func (c *Client) createPart(ctx context.Context, reader io.ReadCloser, len int64, fileUploadPart files_sdk.FileUploadPart, lastPart bool) (files_sdk.EtagsParam, int64, error) {
 	var err error
-	if fileUploadPart.PartNumber != 1 {
+	if fileUploadPart.PartNumber != 1 && *fileUploadPart.ParallelParts { // Remote Mounts use the same url
 		fileUploadPart, err = c.startUpload(
 			ctx, files_sdk.FileBeginUploadParams{Path: fileUploadPart.Path, Ref: fileUploadPart.Ref, Part: fileUploadPart.PartNumber, MkdirParents: lib.Bool(true)},
 		)
@@ -230,15 +236,17 @@ func (c *Client) createPart(ctx context.Context, reader io.ReadCloser, len int64
 	headers.Add("Content-Length", strconv.FormatInt(len, 10))
 	res, err := files_sdk.CallRaw(
 		&files_sdk.CallParams{
-			Method:  fileUploadPart.HttpMethod,
-			Config:  c.Config,
-			Uri:     fileUploadPart.UploadUri,
-			BodyIo:  reader,
-			Headers: &headers,
-			Context: ctx,
+			Method:   fileUploadPart.HttpMethod,
+			Config:   c.Config,
+			Uri:      fileUploadPart.UploadUri,
+			BodyIo:   reader,
+			Headers:  &headers,
+			Context:  ctx,
+			StayOpen: !*fileUploadPart.ParallelParts && !lastPart, // Since Remote Mounts use the same url only close the connection on the last part.
 		},
 	)
 	defer func() {
+		reader.Close()
 		if res != nil {
 			res.Body.Close()
 		}
@@ -248,15 +256,11 @@ func (c *Client) createPart(ctx context.Context, reader io.ReadCloser, len int64
 	}
 
 	if res.StatusCode != 200 {
-		var body []byte
-		if res.ContentLength == -1 {
-			body = make([]byte, 512)
-		} else {
-			body = make([]byte, res.ContentLength)
+		out, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return files_sdk.EtagsParam{}, len, err
 		}
-		res.Body.Read(body)
-		res.Body.Close()
-		return files_sdk.EtagsParam{}, len, fmt.Errorf(string(body))
+		return files_sdk.EtagsParam{}, len, fmt.Errorf(string(out))
 	}
 
 	return files_sdk.EtagsParam{

@@ -267,7 +267,7 @@ func (r *Job) mostRecentBytes(t ...Status) (recent time.Time) {
 }
 
 func (r *Job) Idle(t ...Status) bool {
-	return r.mostRecentBytes(t...).Before(time.Now().Add(time.Duration(-2) * time.Second))
+	return r.mostRecentBytes(t...).Before(time.Now().Add(time.Duration(-3500) * time.Millisecond))
 }
 
 func (r *Job) TransferRate(t ...Status) int64 {

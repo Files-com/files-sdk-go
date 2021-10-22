@@ -64,12 +64,13 @@ func ParseResponse(res *http.Response) (*[]byte, *http.Response, error) {
 }
 
 type CallParams struct {
-	Method  string
-	Config  Config
-	Uri     string
-	Params  *url.Values
-	BodyIo  io.ReadCloser
-	Headers *http.Header
+	Method   string
+	Config   Config
+	Uri      string
+	Params   *url.Values
+	BodyIo   io.ReadCloser
+	Headers  *http.Header
+	StayOpen bool
 	context.Context
 }
 
@@ -139,8 +140,10 @@ func buildRequest(opts *CallParams) (*http.Request, error) {
 		}
 		opts.Config.Logger().Printf(" %v", command)
 	}
-	req.Header.Set("Connection", "close")
-	req.Close = true
+	if !opts.StayOpen {
+		req.Header.Set("Connection", "close")
+		req.Close = true
+	}
 
 	return req, nil
 }

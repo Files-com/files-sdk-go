@@ -2,7 +2,6 @@ package file
 
 import (
 	"io"
-	"math"
 )
 
 type ProxyReader struct {
@@ -11,6 +10,7 @@ type ProxyReader struct {
 	len    int64
 	onRead func(i int64)
 	read   int
+	closed bool
 }
 
 func (x *ProxyReader) Len() int {
@@ -18,17 +18,27 @@ func (x *ProxyReader) Len() int {
 }
 
 func (x *ProxyReader) Read(p []byte) (int, error) {
-	if x.read == int(x.len) {
+	if x.closed {
+		x.onRead(-int64(x.read)) // rewind progress
+		x.read = 0
+		x.closed = false
+	}
+
+	if x.read == x.Len() {
 		return 0, io.EOF
 	}
-	buffLen := int(math.Min(float64(int(x.len)-x.read), float64(len(p))))
-	buff := make([]byte, buffLen)
-	n, err := x.ReadAt(buff, x.off+int64(x.read))
+	var n int
+	var err error
+	if len(p) > x.Len()-x.read {
+		n, err = x.ReadAt(p[0:x.Len()-x.read], x.off+int64(x.read))
+	} else {
+		n, err = x.ReadAt(p, x.off+int64(x.read))
+	}
+
 	if err != nil {
 		return n, err
 	}
 
-	n = copy(p, buff)
 	x.read += n
 	if x.onRead != nil {
 		x.onRead(int64(n))
@@ -36,4 +46,7 @@ func (x *ProxyReader) Read(p []byte) (int, error) {
 	return n, nil
 }
 
-func (x *ProxyReader) Close() error { return nil }
+func (x *ProxyReader) Close() error {
+	x.closed = true
+	return nil
+}

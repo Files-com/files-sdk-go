@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
+## [2.0.27-beta] - 2021/10/22
+### Improvements
+- `file.UploadIO` 
+  - Reduce unnecessary HTTP calls when uploading to a remote server.
+  - Better invalidation of upload parts when a remote server upload is no longer found.
+  - Reduction byte allocations when segmenting file parts.
+  - `file.ProxyReader` can be reread after closed to allowing for inline reties of http bodies. 
+  - Skip indicating to close connection after part upload for remote mount urls that don't change.
+- `status.Job` Less jittery `TransferRate` and `ETA` indicators when uploading to slower remote mounts.
+
 ## [2.0.26-beta] - 2021/10/19
 ### Fix
 - `files_sdk.ResponseError.UnmarshalJSON` detects HTML errors and returns an error with it rather than a JSON syntax error.

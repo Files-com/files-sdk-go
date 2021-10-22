@@ -63,7 +63,7 @@ func TestJob_TransferRate(t *testing.T) {
 	assert.InDelta(int64(1000), job.TransferRate(), 100)
 	assert.Equal(false, job.Idle(), "Nothing has happened recently so rate is zero")
 
-	time.Sleep(2 * time.Second)
+	time.Sleep(3500 * time.Millisecond)
 	assert.Equal(true, job.Idle(), "Nothing has happened recently so rate is zero")
 }
 
