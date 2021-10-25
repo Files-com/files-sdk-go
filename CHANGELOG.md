@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
+## [2.0.28-beta] - 2021/10/25
+### Fix
+- `file.UploadIO` could cause `panic: runtime error: invalid memory address or nil pointer dereference` when `file.UploadIOParams.FilesUploadParts.ParallelParts` is nil
+
 ## [2.0.27-beta] - 2021/10/22
 ### Improvements
 - `file.UploadIO` 

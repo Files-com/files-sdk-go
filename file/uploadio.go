@@ -48,10 +48,9 @@ func (c *Client) UploadIO(parentCtx context.Context, params UploadIOParams) (fil
 	if params.FileUploadPart.Expires != "" {
 		expires, _ = time.Parse(time.RFC3339, params.FileUploadPart.Expires)
 	}
-	if !time.Now().Before(expires) {
+	if !time.Now().Before(expires) || !lib.UnWrapBool(params.FileUploadPart.ParallelParts) {
 		params.Parts = Parts{} // parts are invalidated
 	}
-
 	if expires.IsZero() || !time.Now().Before(expires) {
 		fileUploadPart, err = c.startUpload(
 			parentCtx,
@@ -61,10 +60,6 @@ func (c *Client) UploadIO(parentCtx context.Context, params UploadIOParams) (fil
 				MkdirParents: lib.Bool(true),
 			},
 		)
-	}
-
-	if !*fileUploadPart.ParallelParts {
-		params.Parts = Parts{} // parts cannot be retried
 	}
 	if err != nil {
 		return files_sdk.File{}, fileUploadPart, workingParts, err
