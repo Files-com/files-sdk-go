@@ -20,8 +20,8 @@ type Automation struct {
 	Description            string          `json:"description,omitempty"`
 	Path                   string          `json:"path,omitempty"`
 	UserId                 int64           `json:"user_id,omitempty"`
-	UserIds                []string        `json:"user_ids,omitempty"`
-	GroupIds               []string        `json:"group_ids,omitempty"`
+	UserIds                []int64         `json:"user_ids,omitempty"`
+	GroupIds               []int64         `json:"group_ids,omitempty"`
 	WebhookUrl             string          `json:"webhook_url,omitempty"`
 	TriggerActions         string          `json:"trigger_actions,omitempty"`
 	TriggerActionPath      string          `json:"trigger_action_path,omitempty"`

@@ -11,7 +11,7 @@ import (
 type User struct {
 	Id                         int64     `json:"id,omitempty"`
 	Username                   string    `json:"username,omitempty"`
-	AdminGroupIds              []string  `json:"admin_group_ids,omitempty"`
+	AdminGroupIds              []int64   `json:"admin_group_ids,omitempty"`
 	AllowedIps                 string    `json:"allowed_ips,omitempty"`
 	AttachmentsPermission      *bool     `json:"attachments_permission,omitempty"`
 	ApiKeysCount               int64     `json:"api_keys_count,omitempty"`
