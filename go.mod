@@ -11,7 +11,7 @@ require (
 	github.com/karrick/godirwalk v1.16.1
 	github.com/lpar/date v1.0.0
 	github.com/sabhiram/go-gitignore v0.0.0-20201211210132-54b8a0bf510f
-	github.com/smartystreets/goconvey v1.7.0 // indirect
+	github.com/smartystreets/goconvey v1.7.2 // indirect
 	github.com/snabb/httpreaderat v1.0.1
 	github.com/stretchr/testify v1.6.1
 	github.com/zenthangplus/goccm v0.0.0-20200608171100-39e9e08b694a
