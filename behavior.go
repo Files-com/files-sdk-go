@@ -8,14 +8,15 @@ import (
 )
 
 type Behavior struct {
-	Id             int64           `json:"id,omitempty"`
-	Path           string          `json:"path,omitempty"`
-	AttachmentUrl  string          `json:"attachment_url,omitempty"`
-	Behavior       string          `json:"behavior,omitempty"`
-	Name           string          `json:"name,omitempty"`
-	Description    string          `json:"description,omitempty"`
-	Value          json.RawMessage `json:"value,omitempty"`
-	AttachmentFile io.Reader       `json:"attachment_file,omitempty"`
+	Id               int64           `json:"id,omitempty"`
+	Path             string          `json:"path,omitempty"`
+	AttachmentUrl    string          `json:"attachment_url,omitempty"`
+	Behavior         string          `json:"behavior,omitempty"`
+	Name             string          `json:"name,omitempty"`
+	Description      string          `json:"description,omitempty"`
+	Value            json.RawMessage `json:"value,omitempty"`
+	AttachmentFile   io.Reader       `json:"attachment_file,omitempty"`
+	AttachmentDelete *bool           `json:"attachment_delete,omitempty"`
 }
 
 type BehaviorCollection []Behavior
@@ -73,13 +74,14 @@ type BehaviorWebhookTestParams struct {
 }
 
 type BehaviorUpdateParams struct {
-	Id             int64     `url:"-,omitempty" required:"true"`
-	Value          string    `url:"value,omitempty" required:"false"`
-	AttachmentFile io.Writer `url:"attachment_file,omitempty" required:"false"`
-	Name           string    `url:"name,omitempty" required:"false"`
-	Description    string    `url:"description,omitempty" required:"false"`
-	Behavior       string    `url:"behavior,omitempty" required:"false"`
-	Path           string    `url:"path,omitempty" required:"false"`
+	Id               int64     `url:"-,omitempty" required:"true"`
+	Value            string    `url:"value,omitempty" required:"false"`
+	AttachmentFile   io.Writer `url:"attachment_file,omitempty" required:"false"`
+	Name             string    `url:"name,omitempty" required:"false"`
+	Description      string    `url:"description,omitempty" required:"false"`
+	Behavior         string    `url:"behavior,omitempty" required:"false"`
+	Path             string    `url:"path,omitempty" required:"false"`
+	AttachmentDelete *bool     `url:"attachment_delete,omitempty" required:"false"`
 }
 
 type BehaviorDeleteParams struct {
