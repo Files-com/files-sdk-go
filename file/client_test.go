@@ -134,7 +134,7 @@ func TestClient_UploadFolder(t *testing.T) {
 	assert.Contains(results, "golib/iter_test.go")
 	assert.Contains(results, "golib/direction/main.go")
 	assert.Equal(16, job.Count(status.Complete))
-	assert.Equal(int64(13209), results["golib/bool.go"][0].Job.TotalBytes(status.Complete))
+	assert.Equal(int64(13300), results["golib/bool.go"][0].Job.TotalBytes(status.Complete))
 
 	deletePath(client, "golib")
 }
@@ -837,4 +837,60 @@ func TestClient_UploadFile_Delete_Source(t *testing.T) {
 	assert.Equal(fi.LocalPath, log.Path)
 	tempFile.Close()
 	os.Remove(tempFile.Name())
+}
+
+func TestClient_ListForRecursive(t *testing.T) {
+	client, r, err := CreateClient("TestClient_ListForRecursive")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	assert := assert.New(t)
+	buildScenario("TestClient_ListForRecursive", client)
+
+	it, err := client.ListForRecursive(context.Background(), files_sdk.FolderListForParams{Path: "TestClient_ListForRecursive"})
+	var files []files_sdk.File
+	for it.Next() {
+		files = append(files, it.Current().(files_sdk.File))
+	}
+
+	assert.Equal(len(files), 6)
+	assert.Equal(files[0].Path, "TestClient_ListForRecursive")
+	assert.Equal(files[1].Path, "TestClient_ListForRecursive/nested_1")
+	assert.Equal(files[2].Path, "TestClient_ListForRecursive/nested_1/nested_2")
+	assert.Equal(files[3].Path, "TestClient_ListForRecursive/nested_1/nested_2/3.text")
+	assert.Equal(files[4].Path, "TestClient_ListForRecursive/nested_1/nested_2/nested_3")
+	assert.Equal(files[5].Path, "TestClient_ListForRecursive/nested_1/nested_2/nested_3/4.text")
+}
+
+func TestClient_ListForRecursive_Error(t *testing.T) {
+	client, r, err := CreateClient("TestClient_ListForRecursive_Error")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	assert := assert.New(t)
+	it, err := client.ListForRecursive(context.Background(), files_sdk.FolderListForParams{Path: "TestClient_ListForRecursive-Not-Found"})
+	var files []files_sdk.File
+	for it.Next() {
+		files = append(files, it.Current().(files_sdk.File))
+	}
+
+	assert.Equal(len(files), 0)
+	assert.Equal(it.Err().Error(), "open : Authentication Required - `Unauthorized. The API key or Session token is either missing or invalid.`")
+}
+
+func TestClient_ListForRecursive_Root(t *testing.T) {
+	client, r, err := CreateClient("TestClient_ListForRecursive_Root")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	assert := assert.New(t)
+	it, err := client.ListForRecursive(context.Background(), files_sdk.FolderListForParams{Path: ""})
+	var files []files_sdk.File
+	for it.Next() {
+		files = append(files, it.Current().(files_sdk.File))
+		assert.NotEqual(it.Current().(files_sdk.File).Path, "")
+	}
 }

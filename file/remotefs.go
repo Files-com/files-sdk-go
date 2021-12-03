@@ -150,9 +150,16 @@ func (f FS) Open(name string) (goFs.File, error) {
 		}
 		return &file, nil
 	}
-	fileInfo, err := (&Client{Config: f.Config}).Find(f.Context, files_sdk.FileFindParams{Path: filepath.Join(f.Root, name)})
-	if err != nil {
-		return &File{File: &fileInfo, FS: f}, &goFs.PathError{Path: fileInfo.Path, Err: err, Op: "open"}
+	path := filepath.Join(f.Root, name)
+	var fileInfo files_sdk.File
+	var err error
+	if path == "" { // skip call on root path
+		fileInfo = files_sdk.File{Type: "directory"}
+	} else {
+		fileInfo, err = (&Client{Config: f.Config}).Find(f.Context, files_sdk.FileFindParams{Path: filepath.Join(f.Root, name)})
+		if err != nil {
+			return &File{File: &fileInfo, FS: f}, &goFs.PathError{Path: fileInfo.Path, Err: err, Op: "open"}
+		}
 	}
 
 	if fileInfo.Type == "directory" {

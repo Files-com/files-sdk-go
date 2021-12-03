@@ -34,6 +34,13 @@ func (p *ListParams) Set(page int64, perPage int64, cursor string, maxPages int6
 
 type Query func() (*[]interface{}, string, error)
 
+type IterI interface {
+	Next() bool
+	Current() interface{}
+	Err() error
+	EOFPage() bool
+}
+
 type Iter struct {
 	Query
 	ListParams   ListParamsContainer

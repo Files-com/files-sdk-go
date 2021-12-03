@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
+## [2.0.36-beta] - 2021/12/03
+### Add
+- Alias `folder.Client.ListFor` `file.Client.ListFor`
+- `file.Client.ListForRecursive` recursively list folders/files.
+
 ## [2.0.30-beta] - 2021/10/27
 ### Fix
 - Models that contained an array if ids is now correctly deserialized from JSON. Fixes error `json: cannot unmarshal number into Go struct field user.admin_group_ids of type string`

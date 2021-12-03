@@ -3,9 +3,11 @@ package file
 import (
 	"context"
 	"io"
+	goFs "io/fs"
 	"net/http"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
+	"github.com/Files-com/files-sdk-go/v2/folder"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
@@ -282,4 +284,35 @@ func (c *Client) BeginUpload(ctx context.Context, params files_sdk.FileBeginUplo
 
 func BeginUpload(ctx context.Context, params files_sdk.FileBeginUploadParams) (files_sdk.FileUploadPartCollection, error) {
 	return (&Client{}).BeginUpload(ctx, params)
+}
+
+func (c *Client) ListFor(ctx context.Context, params files_sdk.FolderListForParams) (*folder.Iter, error) {
+	client := folder.Client{Config: c.Config}
+	return client.ListFor(ctx, params)
+}
+
+func (c *Client) ListForRecursive(ctx context.Context, params files_sdk.FolderListForParams) (lib.IterI, error) {
+	it := lib.IterChan{}.Init()
+
+	go func(params files_sdk.FolderListForParams) {
+		f := FS{}.Init(c.Config).WithContext(ctx)
+		err := goFs.WalkDir(f, params.Path, func(path string, d goFs.DirEntry, err error) error {
+			if path == "" && err == nil {
+				return nil // Skip root directory
+			}
+
+			if err == nil {
+				info, _ := d.Info()
+				it.Send <- info.Sys()
+			} else {
+				it.SendError <- err
+			}
+			return err
+		})
+		if err != nil {
+			it.Error.Store(err)
+		}
+		it.Stop <- true
+	}(params)
+	return it, nil
 }

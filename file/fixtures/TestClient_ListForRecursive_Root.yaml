@@ -1,0 +1,37 @@
+---
+version: 1
+interactions:
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders?page=1
+    method: GET
+  response:
+    body: '{"error":"Unauthorized. The API key or Session token is either missing
+      or invalid.","http-code":401,"instance":"f1036709-3492-4111-9a87-09fcf85eb875","title":"Authentication
+      Required","type":"not-authenticated/authentication-required"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "235"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 01 Dec 2021 23:37:32 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - f1036709-3492-4111-9a87-09fcf85eb875
+    status: 401 Unauthorized
+    code: 401
+    duration: ""
