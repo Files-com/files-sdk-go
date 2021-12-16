@@ -1,0 +1,40 @@
+---
+version: 1
+interactions:
+- request:
+    headers:
+    url: https://something-that-goes-to-amazon.com/1
+    method: GET
+  response:
+    body: '{"type":"file_migration","timestamp":"2021-12-14T20:11:19+00:00","operation":"copy","status":"success","operation":"copy","file_type":"file","path":"files-cli/.gitignore","dest_path":"files-cli-4/.gitignore","status":"success"}
+{"type":"file_migration","timestamp":"2021-12-14T20:11:19+00:00","operation":"copy","status":"success","operation":"copy","file_type":"file","path":"files-cli/lib/u2f.go","dest_path":"files-cli-4/lib/u2f.go","status":"success"}
+{"type":"file_migration","timestamp":"2021-12-14T20:11:19+00:00","operation":"copy","status":"success","operation":"copy","file_type":"file","path":"files-cli/go.mod","dest_path":"files-cli-4/go.mod","status":"success"}
+{"type":"file_migration","timestamp":"2021-12-14T20:11:19+00:00","operation":"copy","status":"success","operation":"copy","file_type":"file","path":"files-cli/CHANGELOG.md","dest_path":"files-cli-4/CHANGELOG.md","status":"success"}
+{"type":"file_migration","timestamp":"2021-12-14T20:11:19+00:00","operation":"copy","status":"success","operation":"copy","file_type":"file","path":"files-cli/main.go","dest_path":"files-cli-4/main.go","status":"success"}
+{"type":"file_migration","timestamp":"2021-12-14T20:11:19+00:00","operation":"copy","status":"success","operation":"copy","file_type":"file","path":"files-cli/go.sum","dest_path":"files-cli-4/go.sum","status":"success"}
+{"type":"file_migration","timestamp":"2021-12-14T20:11:19+00:00","operation":"copy","status":"success","operation":"copy","file_type":"file","path":"files-cli/transfers/main.go","dest_path":"files-cli-4/transfers/main.go","status":"success"}
+{"type":"file_migration","timestamp":"2021-12-14T20:11:19+00:00","operation":"copy","status":"success","operation":"copy","file_type":"file","path":"files-cli/CONTRIBUTORS","dest_path":"files-cli-4/CONTRIBUTORS","status":"success"}
+{"type":"file_migration","timestamp":"2021-12-14T20:11:19+00:00","operation":"copy","status":"success","operation":"copy","file_type":"file","path":"files-cli/.goreleaser.yml","dest_path":"files-cli-4/.goreleaser.yml","status":"success"}
+{"type":"file_migration","timestamp":"2021-12-14T20:11:19+00:00","operation":"copy","status":"success","operation":"copy","file_type":"file","path":"files-cli/LICENSE","dest_path":"files-cli-4/LICENSE","status":"success"}
+{"type":"file_migration","timestamp":"2021-12-14T20:11:19+00:00","operation":"copy","status":"success","operation":"copy","file_type":"file","path":"files-cli/README.md","dest_path":"files-cli-4/README.md","status":"success"}
+{"type":"file_migration","timestamp":"2021-12-14T20:11:19+00:00","operation":"copy","status":"success","operation":"copy","file_type":"file","path":"files-cli/release.sh","dest_path":"files-cli-4/release.sh","status":"success"}
+{"type":"file_migration","timestamp":"2021-12-14T20:11:19+00:00","operation":"copy","status":"success","operation":"copy","file_type":"file","path":"files-cli/build.sh","dest_path":"files-cli-4/build.sh","status":"success"}
+{"type":"file_migration","timestamp":"2021-12-14T20:11:19+00:00","operation":"copy","status":"success","operation":"copy","file_type":"file","path":"files-cli/SECURITY.md","dest_path":"files-cli-4/SECURITY.md","status":"success"}
+{"type":"file_migration","timestamp":"2021-12-14T20:11:19+00:00","operation":"copy","status":"success","operation":"copy","file_type":"file","path":"files-cli/test.sh","dest_path":"files-cli-4/test.sh","status":"success"}
+{"type":"file_migration","timestamp":"2021-12-14T20:11:19+00:00","operation":"copy","status":"success","operation":"copy","file_type":"file","path":"files-cli/_VERSION","dest_path":"files-cli-4/_VERSION","status":"success"}'
+    headers:
+      Content-Type:
+      - application/text
+    status: 200 Ok
+    code: 200
+- request:
+    headers:
+    url: https://something-that-goes-to-amazon.com/2
+    method: GET
+  response:
+    body: 'forbidden'
+    headers:
+      Content-Type:
+        - application/text
+    status: 404 Not Found
+    code: 404

@@ -38,6 +38,10 @@ type IterI interface {
 	Next() bool
 	Current() interface{}
 	Err() error
+}
+
+type IterPagingI interface {
+	IterI
 	EOFPage() bool
 }
 
@@ -101,6 +105,10 @@ func (i *Iter) GetPage() bool {
 
 func (i *Iter) EOFPage() bool {
 	return len(*i.Values) == i.CurrentIndex+1
+}
+
+func (i *Iter) Paging() bool {
+	return true
 }
 
 func (i *Iter) GetCursor() string {

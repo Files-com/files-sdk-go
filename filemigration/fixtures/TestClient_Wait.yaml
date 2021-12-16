@@ -1,0 +1,60 @@
+---
+version: 1
+interactions:
+- request:
+    headers:
+    url: https://app.files.com/api/rest/v1/file_migrations/11
+    method: GET
+  response:
+    body: '{"error":"Not Found","http-code":404,"instance":"3501f0de-daec-4ee2-b152-416e1637ec91","title":"Not
+      Found","type":"not-found"}'
+    headers:
+      Content-Type:
+      - application/json
+    status: 404 Not Found
+    code: 404
+- request:
+    headers:
+    url: https://app.files.com/api/rest/v1/file_migrations/12
+    method: GET
+  response:
+    body: '{"id":12,"path":"video.mp4","dest_path":"video-2.mp4","operation":"copy","status":"completed"}'
+    headers:
+      Content-Type:
+        - application/json
+    status: 200 Ok
+    code: 200
+- request:
+    headers:
+    url: https://app.files.com/api/rest/v1/file_migrations/14
+    method: GET
+  response:
+    body: '{"id":14,"path":"video.mp4","dest_path":"video-2.mp4","operation":"copy","status":"failed"}'
+    headers:
+      Content-Type:
+        - application/json
+    status: 200 Ok
+    code: 200
+- request:
+    headers:
+    url: https://app.files.com/api/rest/v1/file_migrations/15
+    method: GET
+  response:
+    body: '{"id":15,"path":"video.mp4","dest_path":"video-2.mp4","operation":"copy","status":"in_progress"}'
+    headers:
+      Content-Type:
+        - application/json
+    status: 200 Ok
+    code: 200
+- request:
+    headers:
+    url: https://app.files.com/api/rest/v1/file_migrations/15
+    method: GET
+  response:
+    body: '{"id":15,"path":"video.mp4","dest_path":"video-2.mp4","operation":"copy","status":"completed"}'
+    headers:
+      Content-Type:
+        - application/json
+    status: 200 Ok
+    code: 200
+

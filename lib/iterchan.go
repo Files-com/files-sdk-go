@@ -43,7 +43,3 @@ func (i *IterChan) Err() error {
 	}
 	return nil
 }
-
-func (i *IterChan) EOFPage() bool {
-	return false
-}
