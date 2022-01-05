@@ -46,6 +46,7 @@ func (u AutomationEnum) Enum() map[string]AutomationEnum {
 		"delete_file":      AutomationEnum("delete_file"),
 		"copy_file":        AutomationEnum("copy_file"),
 		"move_file":        AutomationEnum("move_file"),
+		"as2_send":         AutomationEnum("as2_send"),
 	}
 }
 

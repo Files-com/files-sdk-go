@@ -182,7 +182,7 @@ func Test_downloadFolder_more_than_one_file(t *testing.T) {
 	setup.rootDestination = "some-path"
 
 	job := setup.Call()
-
+	job.Wait()
 	statuses := make(map[string]int)
 	for _, call := range setup.reporterCalls {
 		i, ok := statuses[call.Status.Name]
