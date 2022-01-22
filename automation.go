@@ -24,6 +24,7 @@ type Automation struct {
 	GroupIds               []int64         `json:"group_ids,omitempty"`
 	WebhookUrl             string          `json:"webhook_url,omitempty"`
 	TriggerActions         string          `json:"trigger_actions,omitempty"`
+	TriggerActionPath      string          `json:"trigger_action_path,omitempty"`
 	Value                  json.RawMessage `json:"value,omitempty"`
 	Destination            string          `json:"destination,omitempty"`
 }
@@ -100,6 +101,7 @@ type AutomationCreateParams struct {
 	Name                   string                `url:"name,omitempty" required:"false"`
 	Trigger                AutomationTriggerEnum `url:"trigger,omitempty" required:"false"`
 	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false"`
+	TriggerActionPath      string                `url:"trigger_action_path,omitempty" required:"false"`
 	Value                  json.RawMessage       `url:"value,omitempty" required:"false"`
 }
 
@@ -120,6 +122,7 @@ type AutomationUpdateParams struct {
 	Name                   string                `url:"name,omitempty" required:"false"`
 	Trigger                AutomationTriggerEnum `url:"trigger,omitempty" required:"false"`
 	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false"`
+	TriggerActionPath      string                `url:"trigger_action_path,omitempty" required:"false"`
 	Value                  json.RawMessage       `url:"value,omitempty" required:"false"`
 }
 
