@@ -8,6 +8,7 @@ import (
 
 type RemoteServer struct {
 	Id                                int64  `json:"id,omitempty"`
+	Disabled                          *bool  `json:"disabled,omitempty"`
 	AuthenticationMethod              string `json:"authentication_method,omitempty"`
 	Hostname                          string `json:"hostname,omitempty"`
 	RemoteHomePath                    string `json:"remote_home_path,omitempty"`
