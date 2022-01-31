@@ -22,6 +22,11 @@ type UsageSnapshot struct {
 	RootStorage                  float32         `json:"root_storage,omitempty"`
 	DeletedFilesCountedInMinimum float32         `json:"deleted_files_counted_in_minimum,omitempty"`
 	DeletedFilesStorage          float32         `json:"deleted_files_storage,omitempty"`
+	TotalBillableUsage           float32         `json:"total_billable_usage,omitempty"`
+	TotalBillableTransferUsage   float32         `json:"total_billable_transfer_usage,omitempty"`
+	BytesSent                    float32         `json:"bytes_sent,omitempty"`
+	SyncBytesReceived            float32         `json:"sync_bytes_received,omitempty"`
+	SyncBytesSent                float32         `json:"sync_bytes_sent,omitempty"`
 }
 
 type UsageSnapshotCollection []UsageSnapshot
