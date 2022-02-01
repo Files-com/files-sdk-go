@@ -11,6 +11,7 @@ type Site struct {
 	Allowed2faMethodSms                  *bool           `json:"allowed_2fa_method_sms,omitempty"`
 	Allowed2faMethodTotp                 *bool           `json:"allowed_2fa_method_totp,omitempty"`
 	Allowed2faMethodU2f                  *bool           `json:"allowed_2fa_method_u2f,omitempty"`
+	Allowed2faMethodWebauthn             *bool           `json:"allowed_2fa_method_webauthn,omitempty"`
 	Allowed2faMethodYubi                 *bool           `json:"allowed_2fa_method_yubi,omitempty"`
 	AdminUserId                          int64           `json:"admin_user_id,omitempty"`
 	AllowBundleNames                     *bool           `json:"allow_bundle_names,omitempty"`
@@ -206,6 +207,7 @@ type SiteUpdateParams struct {
 	Allowed2faMethodSms                  *bool     `url:"allowed_2fa_method_sms,omitempty" required:"false"`
 	Allowed2faMethodU2f                  *bool     `url:"allowed_2fa_method_u2f,omitempty" required:"false"`
 	Allowed2faMethodTotp                 *bool     `url:"allowed_2fa_method_totp,omitempty" required:"false"`
+	Allowed2faMethodWebauthn             *bool     `url:"allowed_2fa_method_webauthn,omitempty" required:"false"`
 	Allowed2faMethodYubi                 *bool     `url:"allowed_2fa_method_yubi,omitempty" required:"false"`
 	Require2fa                           *bool     `url:"require_2fa,omitempty" required:"false"`
 	Require2faUserType                   string    `url:"require_2fa_user_type,omitempty" required:"false"`
