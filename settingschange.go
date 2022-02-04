@@ -8,10 +8,9 @@ import (
 )
 
 type SettingsChange struct {
-	ChangeDetails json.RawMessage `json:"change_details,omitempty"`
-	Changes       string          `json:"changes,omitempty"`
-	CreatedAt     time.Time       `json:"created_at,omitempty"`
-	UserId        int64           `json:"user_id,omitempty"`
+	Changes   string    `json:"changes,omitempty"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	UserId    int64     `json:"user_id,omitempty"`
 }
 
 type SettingsChangeCollection []SettingsChange
