@@ -7,21 +7,17 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
-type BandwidthSnapshot struct {
+type RemoteBandwidthSnapshot struct {
 	Id                int64     `json:"id,omitempty"`
-	BytesReceived     float32   `json:"bytes_received,omitempty"`
-	BytesSent         float32   `json:"bytes_sent,omitempty"`
 	SyncBytesReceived float32   `json:"sync_bytes_received,omitempty"`
 	SyncBytesSent     float32   `json:"sync_bytes_sent,omitempty"`
-	RequestsGet       float32   `json:"requests_get,omitempty"`
-	RequestsPut       float32   `json:"requests_put,omitempty"`
-	RequestsOther     float32   `json:"requests_other,omitempty"`
 	LoggedAt          time.Time `json:"logged_at,omitempty"`
+	RemoteServerId    int64     `json:"remote_server_id,omitempty"`
 }
 
-type BandwidthSnapshotCollection []BandwidthSnapshot
+type RemoteBandwidthSnapshotCollection []RemoteBandwidthSnapshot
 
-type BandwidthSnapshotListParams struct {
+type RemoteBandwidthSnapshotListParams struct {
 	Cursor     string          `url:"cursor,omitempty" required:"false"`
 	PerPage    int64           `url:"per_page,omitempty" required:"false"`
 	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
@@ -34,31 +30,31 @@ type BandwidthSnapshotListParams struct {
 	lib.ListParams
 }
 
-func (b *BandwidthSnapshot) UnmarshalJSON(data []byte) error {
-	type bandwidthSnapshot BandwidthSnapshot
-	var v bandwidthSnapshot
+func (r *RemoteBandwidthSnapshot) UnmarshalJSON(data []byte) error {
+	type remoteBandwidthSnapshot RemoteBandwidthSnapshot
+	var v remoteBandwidthSnapshot
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
 
-	*b = BandwidthSnapshot(v)
+	*r = RemoteBandwidthSnapshot(v)
 	return nil
 }
 
-func (b *BandwidthSnapshotCollection) UnmarshalJSON(data []byte) error {
-	type bandwidthSnapshots []BandwidthSnapshot
-	var v bandwidthSnapshots
+func (r *RemoteBandwidthSnapshotCollection) UnmarshalJSON(data []byte) error {
+	type remoteBandwidthSnapshots []RemoteBandwidthSnapshot
+	var v remoteBandwidthSnapshots
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
 
-	*b = BandwidthSnapshotCollection(v)
+	*r = RemoteBandwidthSnapshotCollection(v)
 	return nil
 }
 
-func (b *BandwidthSnapshotCollection) ToSlice() *[]interface{} {
-	ret := make([]interface{}, len(*b))
-	for i, v := range *b {
+func (r *RemoteBandwidthSnapshotCollection) ToSlice() *[]interface{} {
+	ret := make([]interface{}, len(*r))
+	for i, v := range *r {
 		ret[i] = v
 	}
 
