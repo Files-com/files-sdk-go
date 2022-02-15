@@ -17,6 +17,7 @@ type RemoteServer struct {
 	MaxConnections                    int64  `json:"max_connections,omitempty"`
 	S3Bucket                          string `json:"s3_bucket,omitempty"`
 	S3Region                          string `json:"s3_region,omitempty"`
+	AwsAccessKey                      string `json:"aws_access_key,omitempty"`
 	ServerCertificate                 string `json:"server_certificate,omitempty"`
 	ServerHostKey                     string `json:"server_host_key,omitempty"`
 	ServerType                        string `json:"server_type,omitempty"`
@@ -28,6 +29,7 @@ type RemoteServer struct {
 	BackblazeB2Bucket                 string `json:"backblaze_b2_bucket,omitempty"`
 	WasabiBucket                      string `json:"wasabi_bucket,omitempty"`
 	WasabiRegion                      string `json:"wasabi_region,omitempty"`
+	WasabiAccessKey                   string `json:"wasabi_access_key,omitempty"`
 	RackspaceUsername                 string `json:"rackspace_username,omitempty"`
 	RackspaceRegion                   string `json:"rackspace_region,omitempty"`
 	RackspaceContainer                string `json:"rackspace_container,omitempty"`
@@ -39,21 +41,19 @@ type RemoteServer struct {
 	AzureBlobStorageContainer         string `json:"azure_blob_storage_container,omitempty"`
 	S3CompatibleBucket                string `json:"s3_compatible_bucket,omitempty"`
 	S3CompatibleEndpoint              string `json:"s3_compatible_endpoint,omitempty"`
+	S3CompatibleAccessKey             string `json:"s3_compatible_access_key,omitempty"`
 	EnableDedicatedIps                *bool  `json:"enable_dedicated_ips,omitempty"`
-	AwsAccessKey                      string `json:"aws_access_key,omitempty"`
 	AwsSecretKey                      string `json:"aws_secret_key,omitempty"`
 	Password                          string `json:"password,omitempty"`
 	PrivateKey                        string `json:"private_key,omitempty"`
 	SslCertificate                    string `json:"ssl_certificate,omitempty"`
 	GoogleCloudStorageCredentialsJson string `json:"google_cloud_storage_credentials_json,omitempty"`
-	WasabiAccessKey                   string `json:"wasabi_access_key,omitempty"`
 	WasabiSecretKey                   string `json:"wasabi_secret_key,omitempty"`
 	BackblazeB2KeyId                  string `json:"backblaze_b2_key_id,omitempty"`
 	BackblazeB2ApplicationKey         string `json:"backblaze_b2_application_key,omitempty"`
 	RackspaceApiKey                   string `json:"rackspace_api_key,omitempty"`
 	ResetAuthentication               *bool  `json:"reset_authentication,omitempty"`
 	AzureBlobStorageAccessKey         string `json:"azure_blob_storage_access_key,omitempty"`
-	S3CompatibleAccessKey             string `json:"s3_compatible_access_key,omitempty"`
 	S3CompatibleSecretKey             string `json:"s3_compatible_secret_key,omitempty"`
 }
 
