@@ -64,6 +64,11 @@ type SsoStrategyFindParams struct {
 	Id int64 `url:"-,omitempty" required:"true"`
 }
 
+// Synchronize provisioning data with the SSO remote server
+type SsoStrategySyncParams struct {
+	Id int64 `url:"-,omitempty" required:"true"`
+}
+
 func (s *SsoStrategy) UnmarshalJSON(data []byte) error {
 	type ssoStrategy SsoStrategy
 	var v ssoStrategy
