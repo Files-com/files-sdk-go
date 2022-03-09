@@ -7,12 +7,12 @@ import (
 )
 
 type Message struct {
-	Id        int64  `json:"id,omitempty"`
-	Subject   string `json:"subject,omitempty"`
-	Body      string `json:"body,omitempty"`
-	Comments  string `json:"comments,omitempty"`
-	UserId    int64  `json:"user_id,omitempty"`
-	ProjectId int64  `json:"project_id,omitempty"`
+	Id        int64          `json:"id,omitempty"`
+	Subject   string         `json:"subject,omitempty"`
+	Body      string         `json:"body,omitempty"`
+	Comments  MessageComment `json:"comments,omitempty"`
+	UserId    int64          `json:"user_id,omitempty"`
+	ProjectId int64          `json:"project_id,omitempty"`
 }
 
 type MessageCollection []Message

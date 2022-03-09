@@ -7,14 +7,14 @@ import (
 )
 
 type FormFieldSet struct {
-	Id          int64  `json:"id,omitempty"`
-	Title       string `json:"title,omitempty"`
-	FormLayout  int64  `json:"form_layout,omitempty"`
-	FormFields  string `json:"form_fields,omitempty"`
-	SkipName    *bool  `json:"skip_name,omitempty"`
-	SkipEmail   *bool  `json:"skip_email,omitempty"`
-	SkipCompany *bool  `json:"skip_company,omitempty"`
-	UserId      int64  `json:"user_id,omitempty"`
+	Id          int64     `json:"id,omitempty"`
+	Title       string    `json:"title,omitempty"`
+	FormLayout  int64     `json:"form_layout,omitempty"`
+	FormFields  FormField `json:"form_fields,omitempty"`
+	SkipName    *bool     `json:"skip_name,omitempty"`
+	SkipEmail   *bool     `json:"skip_email,omitempty"`
+	SkipCompany *bool     `json:"skip_company,omitempty"`
+	UserId      int64     `json:"user_id,omitempty"`
 }
 
 type FormFieldSetCollection []FormFieldSet

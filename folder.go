@@ -23,7 +23,7 @@ type Folder struct {
 	DownloadUri      string    `json:"download_uri,omitempty"`
 	PriorityColor    string    `json:"priority_color,omitempty"`
 	PreviewId        int64     `json:"preview_id,omitempty"`
-	Preview          string    `json:"preview,omitempty"`
+	Preview          Preview   `json:"preview,omitempty"`
 }
 
 type FolderCollection []Folder

@@ -21,7 +21,7 @@ type Site struct {
 	BundleExpiration                     int64           `json:"bundle_expiration,omitempty"`
 	BundlePasswordRequired               *bool           `json:"bundle_password_required,omitempty"`
 	BundleRequireShareRecipient          *bool           `json:"bundle_require_share_recipient,omitempty"`
-	BundleWatermarkAttachment            string          `json:"bundle_watermark_attachment,omitempty"`
+	BundleWatermarkAttachment            Image           `json:"bundle_watermark_attachment,omitempty"`
 	BundleWatermarkValue                 json.RawMessage `json:"bundle_watermark_value,omitempty"`
 	Color2Left                           string          `json:"color2_left,omitempty"`
 	Color2Link                           string          `json:"color2_link,omitempty"`
@@ -53,10 +53,10 @@ type Site struct {
 	NonSsoUsersAllowed                   *bool           `json:"non_sso_users_allowed,omitempty"`
 	FolderPermissionsGroupsOnly          *bool           `json:"folder_permissions_groups_only,omitempty"`
 	Hipaa                                *bool           `json:"hipaa,omitempty"`
-	Icon128                              string          `json:"icon128,omitempty"`
-	Icon16                               string          `json:"icon16,omitempty"`
-	Icon32                               string          `json:"icon32,omitempty"`
-	Icon48                               string          `json:"icon48,omitempty"`
+	Icon128                              Image           `json:"icon128,omitempty"`
+	Icon16                               Image           `json:"icon16,omitempty"`
+	Icon32                               Image           `json:"icon32,omitempty"`
+	Icon48                               Image           `json:"icon48,omitempty"`
 	ImmutableFilesSetAt                  time.Time       `json:"immutable_files_set_at,omitempty"`
 	IncludePasswordInWelcomeEmail        *bool           `json:"include_password_in_welcome_email,omitempty"`
 	Language                             string          `json:"language,omitempty"`
@@ -77,7 +77,7 @@ type Site struct {
 	LdapUsername                         string          `json:"ldap_username,omitempty"`
 	LdapUsernameField                    string          `json:"ldap_username_field,omitempty"`
 	LoginHelpText                        string          `json:"login_help_text,omitempty"`
-	Logo                                 string          `json:"logo,omitempty"`
+	Logo                                 Image           `json:"logo,omitempty"`
 	MaxPriorPasswords                    int64           `json:"max_prior_passwords,omitempty"`
 	NextBillingAmount                    float32         `json:"next_billing_amount,omitempty"`
 	NextBillingDate                      string          `json:"next_billing_date,omitempty"`
@@ -99,7 +99,7 @@ type Site struct {
 	Require2fa                           *bool           `json:"require_2fa,omitempty"`
 	Require2faStopTime                   time.Time       `json:"require_2fa_stop_time,omitempty"`
 	Require2faUserType                   string          `json:"require_2fa_user_type,omitempty"`
-	Session                              string          `json:"session,omitempty"`
+	Session                              Session         `json:"session,omitempty"`
 	SessionPinnedByIp                    *bool           `json:"session_pinned_by_ip,omitempty"`
 	SftpEnabled                          *bool           `json:"sftp_enabled,omitempty"`
 	SftpInsecureCiphers                  *bool           `json:"sftp_insecure_ciphers,omitempty"`
@@ -122,7 +122,7 @@ type Site struct {
 	TrialUntil                           time.Time       `json:"trial_until,omitempty"`
 	UpdatedAt                            time.Time       `json:"updated_at,omitempty"`
 	UseProvidedModifiedAt                *bool           `json:"use_provided_modified_at,omitempty"`
-	User                                 string          `json:"user,omitempty"`
+	User                                 User            `json:"user,omitempty"`
 	UserLockout                          *bool           `json:"user_lockout,omitempty"`
 	UserLockoutLockPeriod                int64           `json:"user_lockout_lock_period,omitempty"`
 	UserLockoutTries                     int64           `json:"user_lockout_tries,omitempty"`

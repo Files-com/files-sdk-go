@@ -17,7 +17,7 @@ type Bundle struct {
 	RequireRegistration       *bool           `json:"require_registration,omitempty"`
 	RequireShareRecipient     *bool           `json:"require_share_recipient,omitempty"`
 	ClickwrapBody             string          `json:"clickwrap_body,omitempty"`
-	FormFieldSet              string          `json:"form_field_set,omitempty"`
+	FormFieldSet              FormFieldSet    `json:"form_field_set,omitempty"`
 	Id                        int64           `json:"id,omitempty"`
 	CreatedAt                 time.Time       `json:"created_at,omitempty"`
 	ExpiresAt                 time.Time       `json:"expires_at,omitempty"`
@@ -27,7 +27,7 @@ type Bundle struct {
 	Username                  string          `json:"username,omitempty"`
 	ClickwrapId               int64           `json:"clickwrap_id,omitempty"`
 	InboxId                   int64           `json:"inbox_id,omitempty"`
-	WatermarkAttachment       string          `json:"watermark_attachment,omitempty"`
+	WatermarkAttachment       Image           `json:"watermark_attachment,omitempty"`
 	WatermarkValue            json.RawMessage `json:"watermark_value,omitempty"`
 	HasInbox                  *bool           `json:"has_inbox,omitempty"`
 	Paths                     []string        `json:"paths,omitempty"`

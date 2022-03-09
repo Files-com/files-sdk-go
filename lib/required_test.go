@@ -3,7 +3,7 @@ package lib
 import (
 	"testing"
 
-	"github.com/appscode/go-querystring/query"
+	"github.com/google/go-querystring/query"
 	"github.com/stretchr/testify/assert"
 )
 

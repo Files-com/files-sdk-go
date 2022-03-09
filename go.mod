@@ -3,10 +3,10 @@ module github.com/Files-com/files-sdk-go/v2
 go 1.16
 
 require (
-	github.com/appscode/go-querystring v0.0.0-20170504095604-0126cfb3f1dc
 	github.com/bradfitz/iter v0.0.0-20191230175014-e8f45d346db8
 	github.com/chilts/sid v0.0.0-20190607042430-660e94789ec9
 	github.com/dnaeon/go-vcr v1.2.0
+	github.com/google/go-querystring v1.1.0
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/karrick/godirwalk v1.16.1
 	github.com/lpar/date v1.0.0

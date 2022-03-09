@@ -8,7 +8,7 @@ type WebhookTest struct {
 	Code          int64           `json:"code,omitempty"`
 	Message       string          `json:"message,omitempty"`
 	Status        string          `json:"status,omitempty"`
-	Data          string          `json:"data,omitempty"`
+	Data          Auto            `json:"data,omitempty"`
 	Success       *bool           `json:"success,omitempty"`
 	Url           string          `json:"url,omitempty"`
 	Method        string          `json:"method,omitempty"`

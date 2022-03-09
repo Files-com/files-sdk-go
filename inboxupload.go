@@ -8,9 +8,9 @@ import (
 )
 
 type InboxUpload struct {
-	InboxRegistration string    `json:"inbox_registration,omitempty"`
-	Path              string    `json:"path,omitempty"`
-	CreatedAt         time.Time `json:"created_at,omitempty"`
+	InboxRegistration InboxRegistration `json:"inbox_registration,omitempty"`
+	Path              string            `json:"path,omitempty"`
+	CreatedAt         time.Time         `json:"created_at,omitempty"`
 }
 
 type InboxUploadCollection []InboxUpload

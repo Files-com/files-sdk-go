@@ -134,7 +134,7 @@ func TestClient_UploadFolder(t *testing.T) {
 	assert.Contains(results, "golib/iter_test.go")
 	assert.Contains(results, "golib/direction/main.go")
 	assert.Equal(16, job.Count(status.Complete))
-	assert.Equal(int64(13386), results["golib/bool.go"][0].Job.TotalBytes(status.Complete))
+	assert.Equal(int64(13382), results["golib/bool.go"][0].Job.TotalBytes(status.Complete))
 
 	deletePath(client, "golib")
 }

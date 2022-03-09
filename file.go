@@ -23,7 +23,7 @@ type File struct {
 	DownloadUri      string    `json:"download_uri,omitempty"`
 	PriorityColor    string    `json:"priority_color,omitempty"`
 	PreviewId        int64     `json:"preview_id,omitempty"`
-	Preview          string    `json:"preview,omitempty"`
+	Preview          Preview   `json:"preview,omitempty"`
 	Action           string    `json:"action,omitempty"`
 	Length           int64     `json:"length,omitempty"`
 	MkdirParents     *bool     `json:"mkdir_parents,omitempty"`

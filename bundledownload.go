@@ -8,10 +8,10 @@ import (
 )
 
 type BundleDownload struct {
-	BundleRegistration string    `json:"bundle_registration,omitempty"`
-	DownloadMethod     string    `json:"download_method,omitempty"`
-	Path               string    `json:"path,omitempty"`
-	CreatedAt          time.Time `json:"created_at,omitempty"`
+	BundleRegistration BundleRegistration `json:"bundle_registration,omitempty"`
+	DownloadMethod     string             `json:"download_method,omitempty"`
+	Path               string             `json:"path,omitempty"`
+	CreatedAt          time.Time          `json:"created_at,omitempty"`
 }
 
 type BundleDownloadCollection []BundleDownload

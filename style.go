@@ -8,8 +8,8 @@ import (
 type Style struct {
 	Id        int64     `json:"id,omitempty"`
 	Path      string    `json:"path,omitempty"`
-	Logo      string    `json:"logo,omitempty"`
-	Thumbnail string    `json:"thumbnail,omitempty"`
+	Logo      Image     `json:"logo,omitempty"`
+	Thumbnail Image     `json:"thumbnail,omitempty"`
 	File      io.Reader `json:"file,omitempty"`
 }
 
