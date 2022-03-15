@@ -7,14 +7,19 @@ import (
 )
 
 type As2Station struct {
-	Id                   int64  `json:"id,omitempty"`
-	Name                 string `json:"name,omitempty"`
-	Uri                  string `json:"uri,omitempty"`
-	Domain               string `json:"domain,omitempty"`
-	PublicCertificate    string `json:"public_certificate,omitempty"`
-	PublicCertificateMd5 string `json:"public_certificate_md5,omitempty"`
-	PrivateKeyMd5        string `json:"private_key_md5,omitempty"`
-	PrivateKey           string `json:"private_key,omitempty"`
+	Id                         int64  `json:"id,omitempty"`
+	Name                       string `json:"name,omitempty"`
+	Uri                        string `json:"uri,omitempty"`
+	Domain                     string `json:"domain,omitempty"`
+	PublicCertificateMd5       string `json:"public_certificate_md5,omitempty"`
+	PrivateKeyMd5              string `json:"private_key_md5,omitempty"`
+	PublicCertificateSubject   string `json:"public_certificate_subject,omitempty"`
+	PublicCertificateIssuer    string `json:"public_certificate_issuer,omitempty"`
+	PublicCertificateSerial    string `json:"public_certificate_serial,omitempty"`
+	PublicCertificateNotBefore string `json:"public_certificate_not_before,omitempty"`
+	PublicCertificateNotAfter  string `json:"public_certificate_not_after,omitempty"`
+	PublicCertificate          string `json:"public_certificate,omitempty"`
+	PrivateKey                 string `json:"private_key,omitempty"`
 }
 
 type As2StationCollection []As2Station
@@ -31,8 +36,6 @@ type As2StationFindParams struct {
 
 type As2StationCreateParams struct {
 	Name              string `url:"name,omitempty" required:"true"`
-	Domain            string `url:"domain,omitempty" required:"true"`
-	Uri               string `url:"uri,omitempty" required:"true"`
 	PublicCertificate string `url:"public_certificate,omitempty" required:"true"`
 	PrivateKey        string `url:"private_key,omitempty" required:"true"`
 }
@@ -40,8 +43,6 @@ type As2StationCreateParams struct {
 type As2StationUpdateParams struct {
 	Id                int64  `url:"-,omitempty" required:"true"`
 	Name              string `url:"name,omitempty" required:"false"`
-	Domain            string `url:"domain,omitempty" required:"false"`
-	Uri               string `url:"uri,omitempty" required:"false"`
 	PublicCertificate string `url:"public_certificate,omitempty" required:"false"`
 	PrivateKey        string `url:"private_key,omitempty" required:"false"`
 }

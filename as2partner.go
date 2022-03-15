@@ -7,12 +7,17 @@ import (
 )
 
 type As2Partner struct {
-	Id                   int64  `json:"id,omitempty"`
-	As2StationId         int64  `json:"as2_station_id,omitempty"`
-	Name                 string `json:"name,omitempty"`
-	Uri                  string `json:"uri,omitempty"`
-	PublicCertificateMd5 string `json:"public_certificate_md5,omitempty"`
-	PublicCertificate    string `json:"public_certificate,omitempty"`
+	Id                         int64  `json:"id,omitempty"`
+	As2StationId               int64  `json:"as2_station_id,omitempty"`
+	Name                       string `json:"name,omitempty"`
+	Uri                        string `json:"uri,omitempty"`
+	PublicCertificateMd5       string `json:"public_certificate_md5,omitempty"`
+	PublicCertificateSubject   string `json:"public_certificate_subject,omitempty"`
+	PublicCertificateIssuer    string `json:"public_certificate_issuer,omitempty"`
+	PublicCertificateSerial    string `json:"public_certificate_serial,omitempty"`
+	PublicCertificateNotBefore string `json:"public_certificate_not_before,omitempty"`
+	PublicCertificateNotAfter  string `json:"public_certificate_not_after,omitempty"`
+	PublicCertificate          string `json:"public_certificate,omitempty"`
 }
 
 type As2PartnerCollection []As2Partner
