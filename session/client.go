@@ -14,13 +14,10 @@ type Client struct {
 func (c *Client) Create(ctx context.Context, params files_sdk.SessionCreateParams) (files_sdk.Session, error) {
 	session := files_sdk.Session{}
 	path := "/sessions"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return session, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -44,13 +41,10 @@ func Create(ctx context.Context, params files_sdk.SessionCreateParams) (files_sd
 func (c *Client) Delete(ctx context.Context) (files_sdk.Session, error) {
 	session := files_sdk.Session{}
 	path := "/sessions"
-	exportedParams, err := lib.ExportParams(lib.Interface())
-	if err != nil {
-		return session, err
-	}
+	exportedParams := lib.Params{Params: lib.Interface()}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

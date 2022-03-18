@@ -20,36 +20,36 @@ type FormFieldSet struct {
 type FormFieldSetCollection []FormFieldSet
 
 type FormFieldSetListParams struct {
-	UserId  int64  `url:"user_id,omitempty" required:"false"`
-	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int64  `url:"per_page,omitempty" required:"false"`
+	UserId  int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
 	lib.ListParams
 }
 
 type FormFieldSetFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 type FormFieldSetCreateParams struct {
-	UserId      int64    `url:"user_id,omitempty" required:""`
-	Title       string   `url:"title,omitempty" required:""`
-	SkipEmail   *bool    `url:"skip_email,omitempty" required:""`
-	SkipName    *bool    `url:"skip_name,omitempty" required:""`
-	SkipCompany *bool    `url:"skip_company,omitempty" required:""`
-	FormFields  []string `url:"form_fields,omitempty" required:""`
+	UserId      int64    `url:"user_id,omitempty" required:"" json:"user_id,omitempty"`
+	Title       string   `url:"title,omitempty" required:"" json:"title,omitempty"`
+	SkipEmail   *bool    `url:"skip_email,omitempty" required:"" json:"skip_email,omitempty"`
+	SkipName    *bool    `url:"skip_name,omitempty" required:"" json:"skip_name,omitempty"`
+	SkipCompany *bool    `url:"skip_company,omitempty" required:"" json:"skip_company,omitempty"`
+	FormFields  []string `url:"form_fields,omitempty" required:"" json:"form_fields,omitempty"`
 }
 
 type FormFieldSetUpdateParams struct {
-	Id          int64    `url:"-,omitempty" required:"true"`
-	Title       string   `url:"title,omitempty" required:""`
-	SkipEmail   *bool    `url:"skip_email,omitempty" required:""`
-	SkipName    *bool    `url:"skip_name,omitempty" required:""`
-	SkipCompany *bool    `url:"skip_company,omitempty" required:""`
-	FormFields  []string `url:"form_fields,omitempty" required:""`
+	Id          int64    `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Title       string   `url:"title,omitempty" required:"" json:"title,omitempty"`
+	SkipEmail   *bool    `url:"skip_email,omitempty" required:"" json:"skip_email,omitempty"`
+	SkipName    *bool    `url:"skip_name,omitempty" required:"" json:"skip_name,omitempty"`
+	SkipCompany *bool    `url:"skip_company,omitempty" required:"" json:"skip_company,omitempty"`
+	FormFields  []string `url:"form_fields,omitempty" required:"" json:"form_fields,omitempty"`
 }
 
 type FormFieldSetDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 func (f *FormFieldSet) UnmarshalJSON(data []byte) error {

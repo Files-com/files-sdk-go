@@ -27,7 +27,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.UserListParams) (*It
 	path := "/users"
 	i.ListParams = &params
 	list := files_sdk.UserCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -41,13 +41,10 @@ func (c *Client) Find(ctx context.Context, params files_sdk.UserFindParams) (fil
 		return user, lib.CreateError(params, "Id")
 	}
 	path := "/users/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return user, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -71,13 +68,10 @@ func Find(ctx context.Context, params files_sdk.UserFindParams) (files_sdk.User,
 func (c *Client) Create(ctx context.Context, params files_sdk.UserCreateParams) (files_sdk.User, error) {
 	user := files_sdk.User{}
 	path := "/users"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return user, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -104,13 +98,10 @@ func (c *Client) Unlock(ctx context.Context, params files_sdk.UserUnlockParams) 
 		return user, lib.CreateError(params, "Id")
 	}
 	path := "/users/" + strconv.FormatInt(params.Id, 10) + "/unlock"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return user, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -137,13 +128,10 @@ func (c *Client) ResendWelcomeEmail(ctx context.Context, params files_sdk.UserRe
 		return user, lib.CreateError(params, "Id")
 	}
 	path := "/users/" + strconv.FormatInt(params.Id, 10) + "/resend_welcome_email"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return user, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -170,13 +158,10 @@ func (c *Client) User2faReset(ctx context.Context, params files_sdk.UserUser2faR
 		return user, lib.CreateError(params, "Id")
 	}
 	path := "/users/" + strconv.FormatInt(params.Id, 10) + "/2fa/reset"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return user, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -203,13 +188,10 @@ func (c *Client) Update(ctx context.Context, params files_sdk.UserUpdateParams) 
 		return user, lib.CreateError(params, "Id")
 	}
 	path := "/users/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return user, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -236,13 +218,10 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.UserDeleteParams) 
 		return user, lib.CreateError(params, "Id")
 	}
 	path := "/users/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return user, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

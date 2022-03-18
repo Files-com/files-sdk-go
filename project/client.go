@@ -27,7 +27,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.ProjectListParams) (
 	path := "/projects"
 	i.ListParams = &params
 	list := files_sdk.ProjectCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -41,13 +41,10 @@ func (c *Client) Find(ctx context.Context, params files_sdk.ProjectFindParams) (
 		return project, lib.CreateError(params, "Id")
 	}
 	path := "/projects/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return project, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -71,13 +68,10 @@ func Find(ctx context.Context, params files_sdk.ProjectFindParams) (files_sdk.Pr
 func (c *Client) Create(ctx context.Context, params files_sdk.ProjectCreateParams) (files_sdk.Project, error) {
 	project := files_sdk.Project{}
 	path := "/projects"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return project, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -104,13 +98,10 @@ func (c *Client) Update(ctx context.Context, params files_sdk.ProjectUpdateParam
 		return project, lib.CreateError(params, "Id")
 	}
 	path := "/projects/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return project, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -137,13 +128,10 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.ProjectDeleteParam
 		return project, lib.CreateError(params, "Id")
 	}
 	path := "/projects/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return project, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

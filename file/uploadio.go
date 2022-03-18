@@ -217,11 +217,13 @@ func byteOffsetSlice(size int64) []OffSet {
 }
 
 func (c *Client) createPart(ctx context.Context, reader io.ReadCloser, len int64, fileUploadPart files_sdk.FileUploadPart, lastPart bool) (files_sdk.EtagsParam, int64, error) {
+	partNumber := fileUploadPart.PartNumber
 	var err error
-	if fileUploadPart.PartNumber != 1 && *fileUploadPart.ParallelParts { // Remote Mounts use the same url
+	if partNumber != 1 && *fileUploadPart.ParallelParts { // Remote Mounts use the same url
 		fileUploadPart, err = c.startUpload(
 			ctx, files_sdk.FileBeginUploadParams{Path: fileUploadPart.Path, Ref: fileUploadPart.Ref, Part: fileUploadPart.PartNumber, MkdirParents: lib.Bool(true)},
 		)
+		fileUploadPart.PartNumber = partNumber
 		if err != nil {
 			return files_sdk.EtagsParam{}, int64(0), err
 		}
@@ -257,7 +259,6 @@ func (c *Client) createPart(ctx context.Context, reader io.ReadCloser, len int64
 		}
 		return files_sdk.EtagsParam{}, len, fmt.Errorf(string(out))
 	}
-
 	return files_sdk.EtagsParam{
 		Etag: strings.Trim(res.Header.Get("Etag"), "\""),
 		Part: strconv.FormatInt(fileUploadPart.PartNumber, 10),

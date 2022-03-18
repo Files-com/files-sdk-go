@@ -26,7 +26,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.BundleRecipientListP
 	path := "/bundle_recipients"
 	i.ListParams = &params
 	list := files_sdk.BundleRecipientCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -37,13 +37,10 @@ func List(ctx context.Context, params files_sdk.BundleRecipientListParams) (*Ite
 func (c *Client) Create(ctx context.Context, params files_sdk.BundleRecipientCreateParams) (files_sdk.BundleRecipient, error) {
 	bundleRecipient := files_sdk.BundleRecipient{}
 	path := "/bundle_recipients"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return bundleRecipient, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

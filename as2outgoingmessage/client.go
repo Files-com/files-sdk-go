@@ -26,7 +26,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.As2OutgoingMessageLi
 	path := "/as2_outgoing_messages"
 	i.ListParams = &params
 	list := files_sdk.As2OutgoingMessageCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 

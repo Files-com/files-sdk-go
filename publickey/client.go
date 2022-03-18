@@ -27,7 +27,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.PublicKeyListParams)
 	path := "/public_keys"
 	i.ListParams = &params
 	list := files_sdk.PublicKeyCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -41,13 +41,10 @@ func (c *Client) Find(ctx context.Context, params files_sdk.PublicKeyFindParams)
 		return publicKey, lib.CreateError(params, "Id")
 	}
 	path := "/public_keys/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return publicKey, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -71,13 +68,10 @@ func Find(ctx context.Context, params files_sdk.PublicKeyFindParams) (files_sdk.
 func (c *Client) Create(ctx context.Context, params files_sdk.PublicKeyCreateParams) (files_sdk.PublicKey, error) {
 	publicKey := files_sdk.PublicKey{}
 	path := "/public_keys"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return publicKey, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -104,13 +98,10 @@ func (c *Client) Update(ctx context.Context, params files_sdk.PublicKeyUpdatePar
 		return publicKey, lib.CreateError(params, "Id")
 	}
 	path := "/public_keys/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return publicKey, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -137,13 +128,10 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.PublicKeyDeletePar
 		return publicKey, lib.CreateError(params, "Id")
 	}
 	path := "/public_keys/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return publicKey, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

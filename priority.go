@@ -14,9 +14,9 @@ type Priority struct {
 type PriorityCollection []Priority
 
 type PriorityListParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int64  `url:"per_page,omitempty" required:"false"`
-	Path    string `url:"path,omitempty" required:"true"`
+	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	Path    string `url:"path,omitempty" required:"true" json:"path,omitempty"`
 	lib.ListParams
 }
 

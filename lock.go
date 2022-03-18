@@ -24,24 +24,24 @@ type Lock struct {
 type LockCollection []Lock
 
 type LockListForParams struct {
-	Cursor          string `url:"cursor,omitempty" required:"false"`
-	PerPage         int64  `url:"per_page,omitempty" required:"false"`
-	Path            string `url:"-,omitempty" required:"true"`
-	IncludeChildren *bool  `url:"include_children,omitempty" required:"false"`
+	Cursor          string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage         int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	Path            string `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	IncludeChildren *bool  `url:"include_children,omitempty" required:"false" json:"include_children,omitempty"`
 	lib.ListParams
 }
 
 type LockCreateParams struct {
-	Path                 string `url:"-,omitempty" required:"true"`
-	AllowAccessByAnyUser *bool  `url:"allow_access_by_any_user,omitempty" required:"false"`
-	Exclusive            *bool  `url:"exclusive,omitempty" required:"false"`
-	Recursive            string `url:"recursive,omitempty" required:"false"`
-	Timeout              int64  `url:"timeout,omitempty" required:"false"`
+	Path                 string `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	AllowAccessByAnyUser *bool  `url:"allow_access_by_any_user,omitempty" required:"false" json:"allow_access_by_any_user,omitempty"`
+	Exclusive            *bool  `url:"exclusive,omitempty" required:"false" json:"exclusive,omitempty"`
+	Recursive            string `url:"recursive,omitempty" required:"false" json:"recursive,omitempty"`
+	Timeout              int64  `url:"timeout,omitempty" required:"false" json:"timeout,omitempty"`
 }
 
 type LockDeleteParams struct {
-	Path  string `url:"-,omitempty" required:"true"`
-	Token string `url:"token,omitempty" required:"true"`
+	Path  string `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Token string `url:"token,omitempty" required:"true" json:"token,omitempty"`
 }
 
 func (l *Lock) UnmarshalJSON(data []byte) error {

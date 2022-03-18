@@ -26,7 +26,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.UserCipherUseListPar
 	path := "/user_cipher_uses"
 	i.ListParams = &params
 	list := files_sdk.UserCipherUseCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 

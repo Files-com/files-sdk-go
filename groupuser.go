@@ -18,30 +18,30 @@ type GroupUser struct {
 type GroupUserCollection []GroupUser
 
 type GroupUserListParams struct {
-	UserId  int64  `url:"user_id,omitempty" required:"false"`
-	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int64  `url:"per_page,omitempty" required:"false"`
-	GroupId int64  `url:"group_id,omitempty" required:"false"`
+	UserId  int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	GroupId int64  `url:"group_id,omitempty" required:"false" json:"group_id,omitempty"`
 	lib.ListParams
 }
 
 type GroupUserCreateParams struct {
-	GroupId int64 `url:"group_id,omitempty" required:"true"`
-	UserId  int64 `url:"user_id,omitempty" required:"true"`
-	Admin   *bool `url:"admin,omitempty" required:"false"`
+	GroupId int64 `url:"group_id,omitempty" required:"true" json:"group_id,omitempty"`
+	UserId  int64 `url:"user_id,omitempty" required:"true" json:"user_id,omitempty"`
+	Admin   *bool `url:"admin,omitempty" required:"false" json:"admin,omitempty"`
 }
 
 type GroupUserUpdateParams struct {
-	Id      int64 `url:"-,omitempty" required:"true"`
-	GroupId int64 `url:"group_id,omitempty" required:"true"`
-	UserId  int64 `url:"user_id,omitempty" required:"true"`
-	Admin   *bool `url:"admin,omitempty" required:"false"`
+	Id      int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	GroupId int64 `url:"group_id,omitempty" required:"true" json:"group_id,omitempty"`
+	UserId  int64 `url:"user_id,omitempty" required:"true" json:"user_id,omitempty"`
+	Admin   *bool `url:"admin,omitempty" required:"false" json:"admin,omitempty"`
 }
 
 type GroupUserDeleteParams struct {
-	Id      int64 `url:"-,omitempty" required:"true"`
-	GroupId int64 `url:"group_id,omitempty" required:"true"`
-	UserId  int64 `url:"user_id,omitempty" required:"true"`
+	Id      int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	GroupId int64 `url:"group_id,omitempty" required:"true" json:"group_id,omitempty"`
+	UserId  int64 `url:"user_id,omitempty" required:"true" json:"user_id,omitempty"`
 }
 
 func (g *GroupUser) UnmarshalJSON(data []byte) error {

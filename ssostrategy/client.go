@@ -27,7 +27,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.SsoStrategyListParam
 	path := "/sso_strategies"
 	i.ListParams = &params
 	list := files_sdk.SsoStrategyCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -41,13 +41,10 @@ func (c *Client) Find(ctx context.Context, params files_sdk.SsoStrategyFindParam
 		return ssoStrategy, lib.CreateError(params, "Id")
 	}
 	path := "/sso_strategies/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return ssoStrategy, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -74,13 +71,10 @@ func (c *Client) Sync(ctx context.Context, params files_sdk.SsoStrategySyncParam
 		return ssoStrategy, lib.CreateError(params, "Id")
 	}
 	path := "/sso_strategies/" + strconv.FormatInt(params.Id, 10) + "/sync"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return ssoStrategy, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

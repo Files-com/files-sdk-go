@@ -27,7 +27,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.As2PartnerListParams
 	path := "/as2_partners"
 	i.ListParams = &params
 	list := files_sdk.As2PartnerCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -41,13 +41,10 @@ func (c *Client) Find(ctx context.Context, params files_sdk.As2PartnerFindParams
 		return as2Partner, lib.CreateError(params, "Id")
 	}
 	path := "/as2_partners/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return as2Partner, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -71,13 +68,10 @@ func Find(ctx context.Context, params files_sdk.As2PartnerFindParams) (files_sdk
 func (c *Client) Create(ctx context.Context, params files_sdk.As2PartnerCreateParams) (files_sdk.As2Partner, error) {
 	as2Partner := files_sdk.As2Partner{}
 	path := "/as2_partners"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return as2Partner, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -104,13 +98,10 @@ func (c *Client) Update(ctx context.Context, params files_sdk.As2PartnerUpdatePa
 		return as2Partner, lib.CreateError(params, "Id")
 	}
 	path := "/as2_partners/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return as2Partner, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -137,13 +128,10 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.As2PartnerDeletePa
 		return as2Partner, lib.CreateError(params, "Id")
 	}
 	path := "/as2_partners/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return as2Partner, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

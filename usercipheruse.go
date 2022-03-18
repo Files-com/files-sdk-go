@@ -19,9 +19,9 @@ type UserCipherUse struct {
 type UserCipherUseCollection []UserCipherUse
 
 type UserCipherUseListParams struct {
-	UserId  int64  `url:"user_id,omitempty" required:"false"`
-	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int64  `url:"per_page,omitempty" required:"false"`
+	UserId  int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
 	lib.ListParams
 }
 

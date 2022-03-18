@@ -27,9 +27,9 @@ type As2IncomingMessage struct {
 type As2IncomingMessageCollection []As2IncomingMessage
 
 type As2IncomingMessageListParams struct {
-	Cursor       string `url:"cursor,omitempty" required:"false"`
-	PerPage      int64  `url:"per_page,omitempty" required:"false"`
-	As2PartnerId int64  `url:"as2_partner_id,omitempty" required:"false"`
+	Cursor       string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage      int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	As2PartnerId int64  `url:"as2_partner_id,omitempty" required:"false" json:"as2_partner_id,omitempty"`
 	lib.ListParams
 }
 

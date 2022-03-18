@@ -24,10 +24,10 @@ type BundleRegistration struct {
 type BundleRegistrationCollection []BundleRegistration
 
 type BundleRegistrationListParams struct {
-	UserId   int64  `url:"user_id,omitempty" required:"false"`
-	Cursor   string `url:"cursor,omitempty" required:"false"`
-	PerPage  int64  `url:"per_page,omitempty" required:"false"`
-	BundleId int64  `url:"bundle_id,omitempty" required:"false"`
+	UserId   int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	Cursor   string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage  int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	BundleId int64  `url:"bundle_id,omitempty" required:"false" json:"bundle_id,omitempty"`
 	lib.ListParams
 }
 

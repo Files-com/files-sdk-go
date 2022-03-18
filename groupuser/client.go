@@ -27,7 +27,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.GroupUserListParams)
 	path := "/group_users"
 	i.ListParams = &params
 	list := files_sdk.GroupUserCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -38,13 +38,10 @@ func List(ctx context.Context, params files_sdk.GroupUserListParams) (*Iter, err
 func (c *Client) Create(ctx context.Context, params files_sdk.GroupUserCreateParams) (files_sdk.GroupUser, error) {
 	groupUser := files_sdk.GroupUser{}
 	path := "/group_users"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return groupUser, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -71,13 +68,10 @@ func (c *Client) Update(ctx context.Context, params files_sdk.GroupUserUpdatePar
 		return groupUser, lib.CreateError(params, "Id")
 	}
 	path := "/group_users/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return groupUser, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -104,13 +98,10 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.GroupUserDeletePar
 		return groupUser, lib.CreateError(params, "Id")
 	}
 	path := "/group_users/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return groupUser, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

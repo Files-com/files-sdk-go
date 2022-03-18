@@ -27,7 +27,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.GroupListParams) (*I
 	path := "/groups"
 	i.ListParams = &params
 	list := files_sdk.GroupCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -41,13 +41,10 @@ func (c *Client) Find(ctx context.Context, params files_sdk.GroupFindParams) (fi
 		return group, lib.CreateError(params, "Id")
 	}
 	path := "/groups/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return group, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -71,13 +68,10 @@ func Find(ctx context.Context, params files_sdk.GroupFindParams) (files_sdk.Grou
 func (c *Client) Create(ctx context.Context, params files_sdk.GroupCreateParams) (files_sdk.Group, error) {
 	group := files_sdk.Group{}
 	path := "/groups"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return group, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -104,13 +98,10 @@ func (c *Client) Update(ctx context.Context, params files_sdk.GroupUpdateParams)
 		return group, lib.CreateError(params, "Id")
 	}
 	path := "/groups/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return group, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -137,13 +128,10 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.GroupDeleteParams)
 		return group, lib.CreateError(params, "Id")
 	}
 	path := "/groups/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return group, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

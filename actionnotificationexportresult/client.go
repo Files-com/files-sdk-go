@@ -26,7 +26,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.ActionNotificationEx
 	path := "/action_notification_export_results"
 	i.ListParams = &params
 	list := files_sdk.ActionNotificationExportResultCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 

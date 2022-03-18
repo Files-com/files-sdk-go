@@ -24,15 +24,15 @@ type WebhookTest struct {
 type WebhookTestCollection []WebhookTest
 
 type WebhookTestCreateParams struct {
-	Url           string          `url:"url,omitempty" required:"true"`
-	Method        string          `url:"method,omitempty" required:"false"`
-	Encoding      string          `url:"encoding,omitempty" required:"false"`
-	Headers       json.RawMessage `url:"headers,omitempty" required:"false"`
-	Body          json.RawMessage `url:"body,omitempty" required:"false"`
-	RawBody       string          `url:"raw_body,omitempty" required:"false"`
-	FileAsBody    *bool           `url:"file_as_body,omitempty" required:"false"`
-	FileFormField string          `url:"file_form_field,omitempty" required:"false"`
-	Action        string          `url:"action,omitempty" required:"false"`
+	Url           string          `url:"url,omitempty" required:"true" json:"url,omitempty"`
+	Method        string          `url:"method,omitempty" required:"false" json:"method,omitempty"`
+	Encoding      string          `url:"encoding,omitempty" required:"false" json:"encoding,omitempty"`
+	Headers       json.RawMessage `url:"headers,omitempty" required:"false" json:"headers,omitempty"`
+	Body          json.RawMessage `url:"body,omitempty" required:"false" json:"body,omitempty"`
+	RawBody       string          `url:"raw_body,omitempty" required:"false" json:"raw_body,omitempty"`
+	FileAsBody    *bool           `url:"file_as_body,omitempty" required:"false" json:"file_as_body,omitempty"`
+	FileFormField string          `url:"file_form_field,omitempty" required:"false" json:"file_form_field,omitempty"`
+	Action        string          `url:"action,omitempty" required:"false" json:"action,omitempty"`
 }
 
 func (w *WebhookTest) UnmarshalJSON(data []byte) error {

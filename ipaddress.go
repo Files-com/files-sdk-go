@@ -16,14 +16,14 @@ type IpAddress struct {
 type IpAddressCollection []IpAddress
 
 type IpAddressListParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int64  `url:"per_page,omitempty" required:"false"`
+	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
 	lib.ListParams
 }
 
 type IpAddressGetReservedParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int64  `url:"per_page,omitempty" required:"false"`
+	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
 }
 
 func (i *IpAddress) UnmarshalJSON(data []byte) error {

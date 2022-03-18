@@ -35,10 +35,10 @@ type HistoryExportResult struct {
 type HistoryExportResultCollection []HistoryExportResult
 
 type HistoryExportResultListParams struct {
-	UserId          int64  `url:"user_id,omitempty" required:"false"`
-	Cursor          string `url:"cursor,omitempty" required:"false"`
-	PerPage         int64  `url:"per_page,omitempty" required:"false"`
-	HistoryExportId int64  `url:"history_export_id,omitempty" required:"true"`
+	UserId          int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	Cursor          string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage         int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	HistoryExportId int64  `url:"history_export_id,omitempty" required:"true" json:"history_export_id,omitempty"`
 	lib.ListParams
 }
 

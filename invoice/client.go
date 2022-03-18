@@ -27,7 +27,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.InvoiceListParams) (
 	path := "/invoices"
 	i.ListParams = &params
 	list := files_sdk.InvoiceCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -41,13 +41,10 @@ func (c *Client) Find(ctx context.Context, params files_sdk.InvoiceFindParams) (
 		return accountLineItem, lib.CreateError(params, "Id")
 	}
 	path := "/invoices/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return accountLineItem, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

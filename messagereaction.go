@@ -15,24 +15,24 @@ type MessageReaction struct {
 type MessageReactionCollection []MessageReaction
 
 type MessageReactionListParams struct {
-	UserId    int64  `url:"user_id,omitempty" required:"false"`
-	Cursor    string `url:"cursor,omitempty" required:"false"`
-	PerPage   int64  `url:"per_page,omitempty" required:"false"`
-	MessageId int64  `url:"message_id,omitempty" required:"true"`
+	UserId    int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	Cursor    string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage   int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	MessageId int64  `url:"message_id,omitempty" required:"true" json:"message_id,omitempty"`
 	lib.ListParams
 }
 
 type MessageReactionFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 type MessageReactionCreateParams struct {
-	UserId int64  `url:"user_id,omitempty" required:"false"`
-	Emoji  string `url:"emoji,omitempty" required:"true"`
+	UserId int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	Emoji  string `url:"emoji,omitempty" required:"true" json:"emoji,omitempty"`
 }
 
 type MessageReactionDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 func (m *MessageReaction) UnmarshalJSON(data []byte) error {

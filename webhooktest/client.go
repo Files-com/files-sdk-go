@@ -14,13 +14,10 @@ type Client struct {
 func (c *Client) Create(ctx context.Context, params files_sdk.WebhookTestCreateParams) (files_sdk.WebhookTest, error) {
 	webhookTest := files_sdk.WebhookTest{}
 	path := "/webhook_tests"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return webhookTest, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

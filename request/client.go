@@ -27,7 +27,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.RequestListParams) (
 	path := "/requests"
 	i.ListParams = &params
 	list := files_sdk.RequestCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -38,13 +38,10 @@ func List(ctx context.Context, params files_sdk.RequestListParams) (*Iter, error
 func (c *Client) GetFolder(ctx context.Context, params files_sdk.RequestGetFolderParams) (files_sdk.RequestCollection, error) {
 	requestCollection := files_sdk.RequestCollection{}
 	path := lib.BuildPath("/requests/folders/", params.Path)
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return requestCollection, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -68,13 +65,10 @@ func GetFolder(ctx context.Context, params files_sdk.RequestGetFolderParams) (fi
 func (c *Client) Create(ctx context.Context, params files_sdk.RequestCreateParams) (files_sdk.Request, error) {
 	request := files_sdk.Request{}
 	path := "/requests"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return request, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -101,13 +95,10 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.RequestDeleteParam
 		return request, lib.CreateError(params, "Id")
 	}
 	path := "/requests/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return request, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

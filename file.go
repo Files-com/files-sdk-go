@@ -38,78 +38,78 @@ type File struct {
 type FileCollection []File
 
 type EtagsParam struct {
-	Etag string `url:"etag,omitempty"`
-	Part string `url:"part,omitempty"`
+	Etag string `url:"etag,omitempty" json:"etag,omitempty"`
+	Part string `url:"part,omitempty" json:"part,omitempty"`
 }
 
 // Download file
 type FileDownloadParams struct {
-	Path              string               `url:"-,omitempty" required:"true"`
-	Action            string               `url:"action,omitempty" required:"false"`
-	PreviewSize       string               `url:"preview_size,omitempty" required:"false"`
-	WithPreviews      *bool                `url:"with_previews,omitempty" required:"false"`
-	WithPriorityColor *bool                `url:"with_priority_color,omitempty" required:"false"`
-	Writer            io.Writer            `url:"-,omitempty" required:"false"`
-	OnDownload        func(*http.Response) `url:"-,omitempty" required:"false"`
+	Path              string               `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Action            string               `url:"action,omitempty" required:"false" json:"action,omitempty"`
+	PreviewSize       string               `url:"preview_size,omitempty" required:"false" json:"preview_size,omitempty"`
+	WithPreviews      *bool                `url:"with_previews,omitempty" required:"false" json:"with_previews,omitempty"`
+	WithPriorityColor *bool                `url:"with_priority_color,omitempty" required:"false" json:"with_priority_color,omitempty"`
+	Writer            io.Writer            `url:"-,omitempty" required:"false" json:"-,omitempty"`
+	OnDownload        func(*http.Response) `url:"-,omitempty" required:"false" json:"-,omitempty"`
 }
 
 type FileCreateParams struct {
-	Path          string       `url:"-,omitempty" required:"true"`
-	Action        string       `url:"action,omitempty" required:"false"`
-	EtagsParam    []EtagsParam `url:"etags,omitempty" required:"false"`
-	Length        int64        `url:"length,omitempty" required:"false"`
-	MkdirParents  *bool        `url:"mkdir_parents,omitempty" required:"false"`
-	Part          int64        `url:"part,omitempty" required:"false"`
-	Parts         int64        `url:"parts,omitempty" required:"false"`
-	ProvidedMtime time.Time    `url:"provided_mtime,omitempty" required:"false"`
-	Ref           string       `url:"ref,omitempty" required:"false"`
-	Restart       int64        `url:"restart,omitempty" required:"false"`
-	Size          int64        `url:"size,omitempty" required:"false"`
-	Structure     string       `url:"structure,omitempty" required:"false"`
-	WithRename    *bool        `url:"with_rename,omitempty" required:"false"`
+	Path          string       `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Action        string       `url:"action,omitempty" required:"false" json:"action,omitempty"`
+	EtagsParam    []EtagsParam `url:"etags,omitempty" required:"false" json:"etags,omitempty"`
+	Length        int64        `url:"length,omitempty" required:"false" json:"length,omitempty"`
+	MkdirParents  *bool        `url:"mkdir_parents,omitempty" required:"false" json:"mkdir_parents,omitempty"`
+	Part          int64        `url:"part,omitempty" required:"false" json:"part,omitempty"`
+	Parts         int64        `url:"parts,omitempty" required:"false" json:"parts,omitempty"`
+	ProvidedMtime time.Time    `url:"provided_mtime,omitempty" required:"false" json:"provided_mtime,omitempty"`
+	Ref           string       `url:"ref,omitempty" required:"false" json:"ref,omitempty"`
+	Restart       int64        `url:"restart,omitempty" required:"false" json:"restart,omitempty"`
+	Size          int64        `url:"size,omitempty" required:"false" json:"size,omitempty"`
+	Structure     string       `url:"structure,omitempty" required:"false" json:"structure,omitempty"`
+	WithRename    *bool        `url:"with_rename,omitempty" required:"false" json:"with_rename,omitempty"`
 }
 
 type FileUpdateParams struct {
-	Path          string    `url:"-,omitempty" required:"true"`
-	ProvidedMtime time.Time `url:"provided_mtime,omitempty" required:"false"`
-	PriorityColor string    `url:"priority_color,omitempty" required:"false"`
+	Path          string    `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	ProvidedMtime time.Time `url:"provided_mtime,omitempty" required:"false" json:"provided_mtime,omitempty"`
+	PriorityColor string    `url:"priority_color,omitempty" required:"false" json:"priority_color,omitempty"`
 }
 
 type FileDeleteParams struct {
-	Path      string `url:"-,omitempty" required:"true"`
-	Recursive *bool  `url:"recursive,omitempty" required:"false"`
+	Path      string `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Recursive *bool  `url:"recursive,omitempty" required:"false" json:"recursive,omitempty"`
 }
 
 type FileFindParams struct {
-	Path              string `url:"-,omitempty" required:"true"`
-	PreviewSize       string `url:"preview_size,omitempty" required:"false"`
-	WithPreviews      *bool  `url:"with_previews,omitempty" required:"false"`
-	WithPriorityColor *bool  `url:"with_priority_color,omitempty" required:"false"`
+	Path              string `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	PreviewSize       string `url:"preview_size,omitempty" required:"false" json:"preview_size,omitempty"`
+	WithPreviews      *bool  `url:"with_previews,omitempty" required:"false" json:"with_previews,omitempty"`
+	WithPriorityColor *bool  `url:"with_priority_color,omitempty" required:"false" json:"with_priority_color,omitempty"`
 }
 
 // Copy file/folder
 type FileCopyParams struct {
-	Path        string `url:"-,omitempty" required:"true"`
-	Destination string `url:"destination,omitempty" required:"true"`
-	Structure   *bool  `url:"structure,omitempty" required:"false"`
+	Path        string `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Destination string `url:"destination,omitempty" required:"true" json:"destination,omitempty"`
+	Structure   *bool  `url:"structure,omitempty" required:"false" json:"structure,omitempty"`
 }
 
 // Move file/folder
 type FileMoveParams struct {
-	Path        string `url:"-,omitempty" required:"true"`
-	Destination string `url:"destination,omitempty" required:"true"`
+	Path        string `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Destination string `url:"destination,omitempty" required:"true" json:"destination,omitempty"`
 }
 
 // Begin file upload
 type FileBeginUploadParams struct {
-	Path         string `url:"-,omitempty" required:"true"`
-	MkdirParents *bool  `url:"mkdir_parents,omitempty" required:"false"`
-	Part         int64  `url:"part,omitempty" required:"false"`
-	Parts        int64  `url:"parts,omitempty" required:"false"`
-	Ref          string `url:"ref,omitempty" required:"false"`
-	Restart      int64  `url:"restart,omitempty" required:"false"`
-	Size         int64  `url:"size,omitempty" required:"false"`
-	WithRename   *bool  `url:"with_rename,omitempty" required:"false"`
+	Path         string `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	MkdirParents *bool  `url:"mkdir_parents,omitempty" required:"false" json:"mkdir_parents,omitempty"`
+	Part         int64  `url:"part,omitempty" required:"false" json:"part,omitempty"`
+	Parts        int64  `url:"parts,omitempty" required:"false" json:"parts,omitempty"`
+	Ref          string `url:"ref,omitempty" required:"false" json:"ref,omitempty"`
+	Restart      int64  `url:"restart,omitempty" required:"false" json:"restart,omitempty"`
+	Size         int64  `url:"size,omitempty" required:"false" json:"size,omitempty"`
+	WithRename   *bool  `url:"with_rename,omitempty" required:"false" json:"with_rename,omitempty"`
 }
 
 func (f File) ToFolder() (Folder, error) {

@@ -13,7 +13,7 @@ func TestIter_Next_MaxPages(t *testing.T) {
 	it := Iter{}
 	it.ListParams = &params
 
-	it.Query = func() (*[]interface{}, string, error) {
+	it.Query = func(Values) (*[]interface{}, string, error) {
 		ret := make([]interface{}, params.PerPage)
 
 		return &ret, "cursor", nil
@@ -38,7 +38,7 @@ func TestIter_Next_ZeroMaxPages(t *testing.T) {
 	it := Iter{}
 	it.ListParams = &params
 
-	it.Query = func() (*[]interface{}, string, error) {
+	it.Query = func(Values) (*[]interface{}, string, error) {
 		ret := pages[:1][0]
 		pages = pages[1:]
 
@@ -61,7 +61,7 @@ func TestIter_Next_PerPage_of_one(t *testing.T) {
 	sliceOfSliceInterfaces[0] = make([]interface{}, params.PerPage)
 	sliceOfSliceInterfaces[1] = make([]interface{}, 0)
 	resultCounter := 0
-	it.Query = func() (*[]interface{}, string, error) {
+	it.Query = func(Values) (*[]interface{}, string, error) {
 		ret := sliceOfSliceInterfaces[resultCounter]
 		resultCounter += 1
 		return &ret, "cursor", nil
@@ -80,7 +80,7 @@ func TestIter_Next_No_Cursor(t *testing.T) {
 	it := Iter{}
 	it.ListParams = &params
 	resultCounter := 0
-	it.Query = func() (*[]interface{}, string, error) {
+	it.Query = func(Values) (*[]interface{}, string, error) {
 		ret := make([]interface{}, 1)
 		resultCounter += 1
 		return &ret, "", nil

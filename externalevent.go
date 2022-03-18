@@ -39,25 +39,25 @@ func (u ExternalEventStatusEnum) Enum() map[string]ExternalEventStatusEnum {
 }
 
 type ExternalEventListParams struct {
-	Cursor     string          `url:"cursor,omitempty" required:"false"`
-	PerPage    int64           `url:"per_page,omitempty" required:"false"`
-	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
-	Filter     json.RawMessage `url:"filter,omitempty" required:"false"`
-	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false"`
-	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false"`
-	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false"`
-	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false"`
-	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false"`
+	Cursor     string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage    int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty"`
+	Filter     json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty"`
+	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty"`
+	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty"`
+	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false" json:"filter_like,omitempty"`
+	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty"`
+	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty"`
 	lib.ListParams
 }
 
 type ExternalEventFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 type ExternalEventCreateParams struct {
-	Status ExternalEventStatusEnum `url:"status,omitempty" required:"true"`
-	Body   string                  `url:"body,omitempty" required:"true"`
+	Status ExternalEventStatusEnum `url:"status,omitempty" required:"true" json:"status,omitempty"`
+	Body   string                  `url:"body,omitempty" required:"true" json:"body,omitempty"`
 }
 
 func (e *ExternalEvent) UnmarshalJSON(data []byte) error {

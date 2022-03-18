@@ -19,29 +19,29 @@ type PublicKey struct {
 type PublicKeyCollection []PublicKey
 
 type PublicKeyListParams struct {
-	UserId  int64  `url:"user_id,omitempty" required:"false"`
-	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int64  `url:"per_page,omitempty" required:"false"`
+	UserId  int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
 	lib.ListParams
 }
 
 type PublicKeyFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 type PublicKeyCreateParams struct {
-	UserId    int64  `url:"user_id,omitempty" required:"false"`
-	Title     string `url:"title,omitempty" required:"true"`
-	PublicKey string `url:"public_key,omitempty" required:"true"`
+	UserId    int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	Title     string `url:"title,omitempty" required:"true" json:"title,omitempty"`
+	PublicKey string `url:"public_key,omitempty" required:"true" json:"public_key,omitempty"`
 }
 
 type PublicKeyUpdateParams struct {
-	Id    int64  `url:"-,omitempty" required:"true"`
-	Title string `url:"title,omitempty" required:"true"`
+	Id    int64  `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Title string `url:"title,omitempty" required:"true" json:"title,omitempty"`
 }
 
 type PublicKeyDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 func (p *PublicKey) UnmarshalJSON(data []byte) error {

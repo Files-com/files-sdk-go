@@ -67,64 +67,64 @@ func (u AutomationTriggerEnum) Enum() map[string]AutomationTriggerEnum {
 }
 
 type AutomationListParams struct {
-	Cursor     string          `url:"cursor,omitempty" required:"false"`
-	PerPage    int64           `url:"per_page,omitempty" required:"false"`
-	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
-	Filter     json.RawMessage `url:"filter,omitempty" required:"false"`
-	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false"`
-	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false"`
-	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false"`
-	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false"`
-	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false"`
-	Automation string          `url:"automation,omitempty" required:"false"`
+	Cursor     string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage    int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty"`
+	Filter     json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty"`
+	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty"`
+	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty"`
+	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false" json:"filter_like,omitempty"`
+	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty"`
+	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty"`
+	Automation string          `url:"automation,omitempty" required:"false" json:"automation,omitempty"`
 	lib.ListParams
 }
 
 type AutomationFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 type AutomationCreateParams struct {
-	Automation             AutomationEnum        `url:"automation,omitempty" required:"true"`
-	Source                 string                `url:"source,omitempty" required:"false"`
-	Destination            string                `url:"destination,omitempty" required:"false"`
-	Destinations           []string              `url:"destinations,omitempty" required:"false"`
-	DestinationReplaceFrom string                `url:"destination_replace_from,omitempty" required:"false"`
-	DestinationReplaceTo   string                `url:"destination_replace_to,omitempty" required:"false"`
-	Interval               string                `url:"interval,omitempty" required:"false"`
-	Path                   string                `url:"path,omitempty" required:"false"`
-	UserIds                string                `url:"user_ids,omitempty" required:"false"`
-	GroupIds               string                `url:"group_ids,omitempty" required:"false"`
-	Schedule               json.RawMessage       `url:"schedule,omitempty" required:"false"`
-	Description            string                `url:"description,omitempty" required:"false"`
-	Name                   string                `url:"name,omitempty" required:"false"`
-	Trigger                AutomationTriggerEnum `url:"trigger,omitempty" required:"false"`
-	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false"`
-	Value                  json.RawMessage       `url:"value,omitempty" required:"false"`
+	Automation             AutomationEnum        `url:"automation,omitempty" required:"true" json:"automation,omitempty"`
+	Source                 string                `url:"source,omitempty" required:"false" json:"source,omitempty"`
+	Destination            string                `url:"destination,omitempty" required:"false" json:"destination,omitempty"`
+	Destinations           []string              `url:"destinations,omitempty" required:"false" json:"destinations,omitempty"`
+	DestinationReplaceFrom string                `url:"destination_replace_from,omitempty" required:"false" json:"destination_replace_from,omitempty"`
+	DestinationReplaceTo   string                `url:"destination_replace_to,omitempty" required:"false" json:"destination_replace_to,omitempty"`
+	Interval               string                `url:"interval,omitempty" required:"false" json:"interval,omitempty"`
+	Path                   string                `url:"path,omitempty" required:"false" json:"path,omitempty"`
+	UserIds                string                `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty"`
+	GroupIds               string                `url:"group_ids,omitempty" required:"false" json:"group_ids,omitempty"`
+	Schedule               json.RawMessage       `url:"schedule,omitempty" required:"false" json:"schedule,omitempty"`
+	Description            string                `url:"description,omitempty" required:"false" json:"description,omitempty"`
+	Name                   string                `url:"name,omitempty" required:"false" json:"name,omitempty"`
+	Trigger                AutomationTriggerEnum `url:"trigger,omitempty" required:"false" json:"trigger,omitempty"`
+	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false" json:"trigger_actions,omitempty"`
+	Value                  json.RawMessage       `url:"value,omitempty" required:"false" json:"value,omitempty"`
 }
 
 type AutomationUpdateParams struct {
-	Id                     int64                 `url:"-,omitempty" required:"true"`
-	Automation             AutomationEnum        `url:"automation,omitempty" required:"true"`
-	Source                 string                `url:"source,omitempty" required:"false"`
-	Destination            string                `url:"destination,omitempty" required:"false"`
-	Destinations           []string              `url:"destinations,omitempty" required:"false"`
-	DestinationReplaceFrom string                `url:"destination_replace_from,omitempty" required:"false"`
-	DestinationReplaceTo   string                `url:"destination_replace_to,omitempty" required:"false"`
-	Interval               string                `url:"interval,omitempty" required:"false"`
-	Path                   string                `url:"path,omitempty" required:"false"`
-	UserIds                string                `url:"user_ids,omitempty" required:"false"`
-	GroupIds               string                `url:"group_ids,omitempty" required:"false"`
-	Schedule               json.RawMessage       `url:"schedule,omitempty" required:"false"`
-	Description            string                `url:"description,omitempty" required:"false"`
-	Name                   string                `url:"name,omitempty" required:"false"`
-	Trigger                AutomationTriggerEnum `url:"trigger,omitempty" required:"false"`
-	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false"`
-	Value                  json.RawMessage       `url:"value,omitempty" required:"false"`
+	Id                     int64                 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Automation             AutomationEnum        `url:"automation,omitempty" required:"true" json:"automation,omitempty"`
+	Source                 string                `url:"source,omitempty" required:"false" json:"source,omitempty"`
+	Destination            string                `url:"destination,omitempty" required:"false" json:"destination,omitempty"`
+	Destinations           []string              `url:"destinations,omitempty" required:"false" json:"destinations,omitempty"`
+	DestinationReplaceFrom string                `url:"destination_replace_from,omitempty" required:"false" json:"destination_replace_from,omitempty"`
+	DestinationReplaceTo   string                `url:"destination_replace_to,omitempty" required:"false" json:"destination_replace_to,omitempty"`
+	Interval               string                `url:"interval,omitempty" required:"false" json:"interval,omitempty"`
+	Path                   string                `url:"path,omitempty" required:"false" json:"path,omitempty"`
+	UserIds                string                `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty"`
+	GroupIds               string                `url:"group_ids,omitempty" required:"false" json:"group_ids,omitempty"`
+	Schedule               json.RawMessage       `url:"schedule,omitempty" required:"false" json:"schedule,omitempty"`
+	Description            string                `url:"description,omitempty" required:"false" json:"description,omitempty"`
+	Name                   string                `url:"name,omitempty" required:"false" json:"name,omitempty"`
+	Trigger                AutomationTriggerEnum `url:"trigger,omitempty" required:"false" json:"trigger,omitempty"`
+	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false" json:"trigger_actions,omitempty"`
+	Value                  json.RawMessage       `url:"value,omitempty" required:"false" json:"value,omitempty"`
 }
 
 type AutomationDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 func (a *Automation) UnmarshalJSON(data []byte) error {

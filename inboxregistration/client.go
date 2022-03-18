@@ -26,7 +26,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.InboxRegistrationLis
 	path := "/inbox_registrations"
 	i.ListParams = &params
 	list := files_sdk.InboxRegistrationCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 

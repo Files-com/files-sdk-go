@@ -27,7 +27,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.PermissionListParams
 	path := "/permissions"
 	i.ListParams = &params
 	list := files_sdk.PermissionCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -38,13 +38,10 @@ func List(ctx context.Context, params files_sdk.PermissionListParams) (*Iter, er
 func (c *Client) Create(ctx context.Context, params files_sdk.PermissionCreateParams) (files_sdk.Permission, error) {
 	permission := files_sdk.Permission{}
 	path := "/permissions"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return permission, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -71,13 +68,10 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.PermissionDeletePa
 		return permission, lib.CreateError(params, "Id")
 	}
 	path := "/permissions/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return permission, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

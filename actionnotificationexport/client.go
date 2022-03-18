@@ -18,13 +18,10 @@ func (c *Client) Find(ctx context.Context, params files_sdk.ActionNotificationEx
 		return actionNotificationExport, lib.CreateError(params, "Id")
 	}
 	path := "/action_notification_exports/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return actionNotificationExport, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -48,13 +45,10 @@ func Find(ctx context.Context, params files_sdk.ActionNotificationExportFindPara
 func (c *Client) Create(ctx context.Context, params files_sdk.ActionNotificationExportCreateParams) (files_sdk.ActionNotificationExport, error) {
 	actionNotificationExport := files_sdk.ActionNotificationExport{}
 	path := "/action_notification_exports"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return actionNotificationExport, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

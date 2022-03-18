@@ -26,7 +26,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.UsageSnapshotListPar
 	path := "/usage_snapshots"
 	i.ListParams = &params
 	list := files_sdk.UsageSnapshotCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 

@@ -1,28 +1,26 @@
 package files_sdk
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strconv"
 
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
 	"github.com/hashicorp/go-retryablehttp"
 
 	"moul.io/http2curl"
 )
 
-func Call(ctx context.Context, method string, config Config, resource string, params url.Values) (*[]byte, *http.Response, error) {
+func Call(ctx context.Context, method string, config Config, resource string, params lib.Values) (*[]byte, *http.Response, error) {
 	defaultHeaders := &http.Header{}
 	config.SetHeaders(defaultHeaders)
 	opts := &CallParams{
 		Method:  method,
 		Config:  config,
 		Uri:     config.RootPath() + resource,
-		Params:  &params,
+		Params:  params,
 		Headers: defaultHeaders,
 		Context: ctx,
 	}
@@ -67,7 +65,7 @@ type CallParams struct {
 	Method   string
 	Config   Config
 	Uri      string
-	Params   *url.Values
+	Params   lib.Values
 	BodyIo   io.ReadCloser
 	Headers  *http.Header
 	StayOpen bool
@@ -89,12 +87,11 @@ func CallRaw(params *CallParams) (*http.Response, error) {
 }
 
 func buildRequest(opts *CallParams) (*http.Request, error) {
+	var bodyIsJson bool
 	if opts.Headers == nil {
 		opts.Headers = &http.Header{}
 	}
-	if opts.Params != nil {
-		removeDash(opts.Params)
-	}
+
 	var req *http.Request
 	var err error
 	if opts.Context != nil {
@@ -115,16 +112,21 @@ func buildRequest(opts *CallParams) (*http.Request, error) {
 	switch opts.Method {
 	case "GET", "HEAD", "DELETE":
 		if opts.Params != nil {
-			removeDash(opts.Params)
-			req.URL.RawQuery = opts.Params.Encode()
+			values, err := opts.Params.ToValues()
+			if err != nil {
+				return nil, err
+			}
+			req.URL.RawQuery = values.Encode()
 		}
 	default:
 		if opts.BodyIo == nil {
-			jsonBody, err := paramsToJson(opts.Params, opts.Headers)
+			bodyIsJson = true
+			jsonBody, err := opts.Params.ToJSON()
 			if err != nil {
 				return &http.Request{}, err
 			}
 			req.Body = ioutil.NopCloser(jsonBody)
+			req.Header.Add("Content-Type", "application/json")
 		} else {
 			req.Body = opts.BodyIo
 		}
@@ -133,7 +135,9 @@ func buildRequest(opts *CallParams) (*http.Request, error) {
 	req.Header = *opts.Headers
 	if opts.Config.InDebug() {
 		withoutBodyReq := *req
-		withoutBodyReq.Body = nil
+		if !bodyIsJson {
+			withoutBodyReq.Body = nil
+		}
 		command, err := http2curl.GetCurlCommand(&withoutBodyReq)
 		if err != nil {
 			panic(err)
@@ -146,27 +150,4 @@ func buildRequest(opts *CallParams) (*http.Request, error) {
 	}
 
 	return req, nil
-}
-
-func paramsToJson(params *url.Values, headers *http.Header) (*bytes.Buffer, error) {
-	bodyParams := make(map[string]string)
-	for key, value := range *params {
-		bodyParams[key] = value[0]
-	}
-	bodyBytes, err := json.Marshal(bodyParams)
-	if err != nil {
-		return nil, err
-	}
-	body := bytes.NewBuffer(bodyBytes)
-
-	headers.Add("Content-Type", "application/json")
-	return body, nil
-}
-
-func removeDash(params *url.Values) {
-	for key := range *params {
-		if string(key[0]) == "-" {
-			params.Del(key)
-		}
-	}
 }

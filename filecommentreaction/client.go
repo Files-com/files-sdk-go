@@ -15,13 +15,10 @@ type Client struct {
 func (c *Client) Create(ctx context.Context, params files_sdk.FileCommentReactionCreateParams) (files_sdk.FileCommentReaction, error) {
 	fileCommentReaction := files_sdk.FileCommentReaction{}
 	path := "/file_comment_reactions"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return fileCommentReaction, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -48,13 +45,10 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.FileCommentReactio
 		return fileCommentReaction, lib.CreateError(params, "Id")
 	}
 	path := "/file_comment_reactions/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return fileCommentReaction, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

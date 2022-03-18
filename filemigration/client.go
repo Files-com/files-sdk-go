@@ -19,13 +19,10 @@ func (c *Client) Find(ctx context.Context, params files_sdk.FileMigrationFindPar
 		return fileMigration, lib.CreateError(params, "Id")
 	}
 	path := "/file_migrations/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return fileMigration, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

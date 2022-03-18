@@ -26,7 +26,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.IpAddressListParams)
 	path := "/ip_addresses"
 	i.ListParams = &params
 	list := files_sdk.IpAddressCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -37,13 +37,10 @@ func List(ctx context.Context, params files_sdk.IpAddressListParams) (*Iter, err
 func (c *Client) GetReserved(ctx context.Context, params files_sdk.IpAddressGetReservedParams) (files_sdk.PublicIpAddressCollection, error) {
 	publicIpAddressCollection := files_sdk.PublicIpAddressCollection{}
 	path := "/ip_addresses/reserved"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return publicIpAddressCollection, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

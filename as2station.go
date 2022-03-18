@@ -25,30 +25,30 @@ type As2Station struct {
 type As2StationCollection []As2Station
 
 type As2StationListParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int64  `url:"per_page,omitempty" required:"false"`
+	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
 	lib.ListParams
 }
 
 type As2StationFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 type As2StationCreateParams struct {
-	Name              string `url:"name,omitempty" required:"true"`
-	PublicCertificate string `url:"public_certificate,omitempty" required:"true"`
-	PrivateKey        string `url:"private_key,omitempty" required:"true"`
+	Name              string `url:"name,omitempty" required:"true" json:"name,omitempty"`
+	PublicCertificate string `url:"public_certificate,omitempty" required:"true" json:"public_certificate,omitempty"`
+	PrivateKey        string `url:"private_key,omitempty" required:"true" json:"private_key,omitempty"`
 }
 
 type As2StationUpdateParams struct {
-	Id                int64  `url:"-,omitempty" required:"true"`
-	Name              string `url:"name,omitempty" required:"false"`
-	PublicCertificate string `url:"public_certificate,omitempty" required:"false"`
-	PrivateKey        string `url:"private_key,omitempty" required:"false"`
+	Id                int64  `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Name              string `url:"name,omitempty" required:"false" json:"name,omitempty"`
+	PublicCertificate string `url:"public_certificate,omitempty" required:"false" json:"public_certificate,omitempty"`
+	PrivateKey        string `url:"private_key,omitempty" required:"false" json:"private_key,omitempty"`
 }
 
 type As2StationDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 func (a *As2Station) UnmarshalJSON(data []byte) error {

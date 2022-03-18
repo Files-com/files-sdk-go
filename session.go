@@ -34,10 +34,10 @@ type Session struct {
 type SessionCollection []Session
 
 type SessionCreateParams struct {
-	Username         string `url:"username,omitempty" required:"false"`
-	Password         string `url:"password,omitempty" required:"false"`
-	Otp              string `url:"otp,omitempty" required:"false"`
-	PartialSessionId string `url:"partial_session_id,omitempty" required:"false"`
+	Username         string `url:"username,omitempty" required:"false" json:"username,omitempty"`
+	Password         string `url:"password,omitempty" required:"false" json:"password,omitempty"`
+	Otp              string `url:"otp,omitempty" required:"false" json:"otp,omitempty"`
+	PartialSessionId string `url:"partial_session_id,omitempty" required:"false" json:"partial_session_id,omitempty"`
 }
 
 func (s *Session) UnmarshalJSON(data []byte) error {

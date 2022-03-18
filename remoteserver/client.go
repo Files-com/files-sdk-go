@@ -27,7 +27,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.RemoteServerListPara
 	path := "/remote_servers"
 	i.ListParams = &params
 	list := files_sdk.RemoteServerCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -41,13 +41,10 @@ func (c *Client) Find(ctx context.Context, params files_sdk.RemoteServerFindPara
 		return remoteServer, lib.CreateError(params, "Id")
 	}
 	path := "/remote_servers/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return remoteServer, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -71,13 +68,10 @@ func Find(ctx context.Context, params files_sdk.RemoteServerFindParams) (files_s
 func (c *Client) Create(ctx context.Context, params files_sdk.RemoteServerCreateParams) (files_sdk.RemoteServer, error) {
 	remoteServer := files_sdk.RemoteServer{}
 	path := "/remote_servers"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return remoteServer, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -104,13 +98,10 @@ func (c *Client) Update(ctx context.Context, params files_sdk.RemoteServerUpdate
 		return remoteServer, lib.CreateError(params, "Id")
 	}
 	path := "/remote_servers/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return remoteServer, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -137,13 +128,10 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.RemoteServerDelete
 		return remoteServer, lib.CreateError(params, "Id")
 	}
 	path := "/remote_servers/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return remoteServer, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

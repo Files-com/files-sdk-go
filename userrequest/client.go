@@ -27,7 +27,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.UserRequestListParam
 	path := "/user_requests"
 	i.ListParams = &params
 	list := files_sdk.UserRequestCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -41,13 +41,10 @@ func (c *Client) Find(ctx context.Context, params files_sdk.UserRequestFindParam
 		return userRequest, lib.CreateError(params, "Id")
 	}
 	path := "/user_requests/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return userRequest, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -71,13 +68,10 @@ func Find(ctx context.Context, params files_sdk.UserRequestFindParams) (files_sd
 func (c *Client) Create(ctx context.Context, params files_sdk.UserRequestCreateParams) (files_sdk.UserRequest, error) {
 	userRequest := files_sdk.UserRequest{}
 	path := "/user_requests"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return userRequest, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -104,13 +98,10 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.UserRequestDeleteP
 		return userRequest, lib.CreateError(params, "Id")
 	}
 	path := "/user_requests/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return userRequest, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

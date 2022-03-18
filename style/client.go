@@ -14,13 +14,10 @@ type Client struct {
 func (c *Client) Find(ctx context.Context, params files_sdk.StyleFindParams) (files_sdk.Style, error) {
 	style := files_sdk.Style{}
 	path := lib.BuildPath("/styles/", params.Path)
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return style, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -44,13 +41,10 @@ func Find(ctx context.Context, params files_sdk.StyleFindParams) (files_sdk.Styl
 func (c *Client) Update(ctx context.Context, params files_sdk.StyleUpdateParams) (files_sdk.Style, error) {
 	style := files_sdk.Style{}
 	path := lib.BuildPath("/styles/", params.Path)
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return style, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -74,13 +68,10 @@ func Update(ctx context.Context, params files_sdk.StyleUpdateParams) (files_sdk.
 func (c *Client) Delete(ctx context.Context, params files_sdk.StyleDeleteParams) (files_sdk.Style, error) {
 	style := files_sdk.Style{}
 	path := lib.BuildPath("/styles/", params.Path)
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return style, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

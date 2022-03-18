@@ -29,20 +29,20 @@ type Folder struct {
 type FolderCollection []Folder
 
 type FolderListForParams struct {
-	Cursor            string `url:"cursor,omitempty" required:"false"`
-	PerPage           int64  `url:"per_page,omitempty" required:"false"`
-	Path              string `url:"-,omitempty" required:"true"`
-	Filter            string `url:"filter,omitempty" required:"false"`
-	PreviewSize       string `url:"preview_size,omitempty" required:"false"`
-	Search            string `url:"search,omitempty" required:"false"`
-	SearchAll         *bool  `url:"search_all,omitempty" required:"false"`
-	WithPreviews      *bool  `url:"with_previews,omitempty" required:"false"`
-	WithPriorityColor *bool  `url:"with_priority_color,omitempty" required:"false"`
+	Cursor            string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage           int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	Path              string `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Filter            string `url:"filter,omitempty" required:"false" json:"filter,omitempty"`
+	PreviewSize       string `url:"preview_size,omitempty" required:"false" json:"preview_size,omitempty"`
+	Search            string `url:"search,omitempty" required:"false" json:"search,omitempty"`
+	SearchAll         *bool  `url:"search_all,omitempty" required:"false" json:"search_all,omitempty"`
+	WithPreviews      *bool  `url:"with_previews,omitempty" required:"false" json:"with_previews,omitempty"`
+	WithPriorityColor *bool  `url:"with_priority_color,omitempty" required:"false" json:"with_priority_color,omitempty"`
 	lib.ListParams
 }
 
 type FolderCreateParams struct {
-	Path string `url:"-,omitempty" required:"true"`
+	Path string `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 func (f *Folder) ToFile() (File, error) {

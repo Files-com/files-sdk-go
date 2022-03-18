@@ -27,7 +27,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.BehaviorListParams) 
 	path := "/behaviors"
 	i.ListParams = &params
 	list := files_sdk.BehaviorCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -41,13 +41,10 @@ func (c *Client) Find(ctx context.Context, params files_sdk.BehaviorFindParams) 
 		return behavior, lib.CreateError(params, "Id")
 	}
 	path := "/behaviors/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return behavior, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -74,7 +71,7 @@ func (c *Client) ListFor(ctx context.Context, params files_sdk.BehaviorListForPa
 	path := lib.BuildPath("/behaviors/folders/", params.Path)
 	i.ListParams = &params
 	list := files_sdk.BehaviorCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -85,13 +82,10 @@ func ListFor(ctx context.Context, params files_sdk.BehaviorListForParams) (*Iter
 func (c *Client) Create(ctx context.Context, params files_sdk.BehaviorCreateParams) (files_sdk.Behavior, error) {
 	behavior := files_sdk.Behavior{}
 	path := "/behaviors"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return behavior, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -115,13 +109,10 @@ func Create(ctx context.Context, params files_sdk.BehaviorCreateParams) (files_s
 func (c *Client) WebhookTest(ctx context.Context, params files_sdk.BehaviorWebhookTestParams) (files_sdk.Behavior, error) {
 	behavior := files_sdk.Behavior{}
 	path := "/behaviors/webhook/test"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return behavior, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -148,13 +139,10 @@ func (c *Client) Update(ctx context.Context, params files_sdk.BehaviorUpdatePara
 		return behavior, lib.CreateError(params, "Id")
 	}
 	path := "/behaviors/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return behavior, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -181,13 +169,10 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.BehaviorDeletePara
 		return behavior, lib.CreateError(params, "Id")
 	}
 	path := "/behaviors/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return behavior, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

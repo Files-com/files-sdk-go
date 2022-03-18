@@ -16,24 +16,24 @@ type FileComment struct {
 type FileCommentCollection []FileComment
 
 type FileCommentListForParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int64  `url:"per_page,omitempty" required:"false"`
-	Path    string `url:"-,omitempty" required:"true"`
+	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	Path    string `url:"-,omitempty" required:"true" json:"-,omitempty"`
 	lib.ListParams
 }
 
 type FileCommentCreateParams struct {
-	Body string `url:"body,omitempty" required:"true"`
-	Path string `url:"path,omitempty" required:"true"`
+	Body string `url:"body,omitempty" required:"true" json:"body,omitempty"`
+	Path string `url:"path,omitempty" required:"true" json:"path,omitempty"`
 }
 
 type FileCommentUpdateParams struct {
-	Id   int64  `url:"-,omitempty" required:"true"`
-	Body string `url:"body,omitempty" required:"true"`
+	Id   int64  `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Body string `url:"body,omitempty" required:"true" json:"body,omitempty"`
 }
 
 type FileCommentDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 func (f *FileComment) UnmarshalJSON(data []byte) error {

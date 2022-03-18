@@ -21,28 +21,28 @@ type InboxRecipient struct {
 type InboxRecipientCollection []InboxRecipient
 
 type InboxRecipientListParams struct {
-	UserId     int64           `url:"user_id,omitempty" required:"false"`
-	Cursor     string          `url:"cursor,omitempty" required:"false"`
-	PerPage    int64           `url:"per_page,omitempty" required:"false"`
-	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false"`
-	Filter     json.RawMessage `url:"filter,omitempty" required:"false"`
-	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false"`
-	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false"`
-	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false"`
-	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false"`
-	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false"`
-	InboxId    int64           `url:"inbox_id,omitempty" required:"true"`
+	UserId     int64           `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	Cursor     string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage    int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty"`
+	Filter     json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty"`
+	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty"`
+	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty"`
+	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false" json:"filter_like,omitempty"`
+	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty"`
+	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty"`
+	InboxId    int64           `url:"inbox_id,omitempty" required:"true" json:"inbox_id,omitempty"`
 	lib.ListParams
 }
 
 type InboxRecipientCreateParams struct {
-	UserId           int64  `url:"user_id,omitempty" required:"false"`
-	InboxId          int64  `url:"inbox_id,omitempty" required:"true"`
-	Recipient        string `url:"recipient,omitempty" required:"true"`
-	Name             string `url:"name,omitempty" required:"false"`
-	Company          string `url:"company,omitempty" required:"false"`
-	Note             string `url:"note,omitempty" required:"false"`
-	ShareAfterCreate *bool  `url:"share_after_create,omitempty" required:"false"`
+	UserId           int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	InboxId          int64  `url:"inbox_id,omitempty" required:"true" json:"inbox_id,omitempty"`
+	Recipient        string `url:"recipient,omitempty" required:"true" json:"recipient,omitempty"`
+	Name             string `url:"name,omitempty" required:"false" json:"name,omitempty"`
+	Company          string `url:"company,omitempty" required:"false" json:"company,omitempty"`
+	Note             string `url:"note,omitempty" required:"false" json:"note,omitempty"`
+	ShareAfterCreate *bool  `url:"share_after_create,omitempty" required:"false" json:"share_after_create,omitempty"`
 }
 
 func (i *InboxRecipient) UnmarshalJSON(data []byte) error {

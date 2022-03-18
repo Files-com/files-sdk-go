@@ -11,7 +11,7 @@ type ActionWebhookFailureCollection []ActionWebhookFailure
 
 // retry Action Webhook Failure
 type ActionWebhookFailureRetryParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 func (a *ActionWebhookFailure) UnmarshalJSON(data []byte) error {

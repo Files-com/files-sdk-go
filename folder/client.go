@@ -26,7 +26,7 @@ func (c *Client) ListFor(ctx context.Context, params files_sdk.FolderListForPara
 	path := lib.BuildPath("/folders/", params.Path)
 	i.ListParams = &params
 	list := files_sdk.FolderCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -37,13 +37,10 @@ func ListFor(ctx context.Context, params files_sdk.FolderListForParams) (*Iter, 
 func (c *Client) Create(ctx context.Context, params files_sdk.FolderCreateParams) (files_sdk.File, error) {
 	file := files_sdk.File{}
 	path := lib.BuildPath("/folders/", params.Path)
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return file, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

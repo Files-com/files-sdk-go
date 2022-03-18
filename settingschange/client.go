@@ -26,7 +26,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.SettingsChangeListPa
 	path := "/settings_changes"
 	i.ListParams = &params
 	list := files_sdk.SettingsChangeCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 

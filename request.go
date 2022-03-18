@@ -20,31 +20,31 @@ type Request struct {
 type RequestCollection []Request
 
 type RequestListParams struct {
-	Cursor  string          `url:"cursor,omitempty" required:"false"`
-	PerPage int64           `url:"per_page,omitempty" required:"false"`
-	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false"`
-	Mine    *bool           `url:"mine,omitempty" required:"false"`
-	Path    string          `url:"path,omitempty" required:"false"`
+	Cursor  string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty"`
+	Mine    *bool           `url:"mine,omitempty" required:"false" json:"mine,omitempty"`
+	Path    string          `url:"path,omitempty" required:"false" json:"path,omitempty"`
 	lib.ListParams
 }
 
 type RequestGetFolderParams struct {
-	Cursor  string          `url:"cursor,omitempty" required:"false"`
-	PerPage int64           `url:"per_page,omitempty" required:"false"`
-	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false"`
-	Mine    *bool           `url:"mine,omitempty" required:"false"`
-	Path    string          `url:"-,omitempty" required:"true"`
+	Cursor  string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty"`
+	Mine    *bool           `url:"mine,omitempty" required:"false" json:"mine,omitempty"`
+	Path    string          `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 type RequestCreateParams struct {
-	Path        string `url:"path,omitempty" required:"true"`
-	Destination string `url:"destination,omitempty" required:"true"`
-	UserIds     string `url:"user_ids,omitempty" required:"false"`
-	GroupIds    string `url:"group_ids,omitempty" required:"false"`
+	Path        string `url:"path,omitempty" required:"true" json:"path,omitempty"`
+	Destination string `url:"destination,omitempty" required:"true" json:"destination,omitempty"`
+	UserIds     string `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty"`
+	GroupIds    string `url:"group_ids,omitempty" required:"false" json:"group_ids,omitempty"`
 }
 
 type RequestDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 func (r *Request) UnmarshalJSON(data []byte) error {

@@ -23,31 +23,31 @@ type As2Partner struct {
 type As2PartnerCollection []As2Partner
 
 type As2PartnerListParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false"`
-	PerPage int64  `url:"per_page,omitempty" required:"false"`
+	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
 	lib.ListParams
 }
 
 type As2PartnerFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 type As2PartnerCreateParams struct {
-	Name              string `url:"name,omitempty" required:"true"`
-	Uri               string `url:"uri,omitempty" required:"true"`
-	PublicCertificate string `url:"public_certificate,omitempty" required:"true"`
-	As2StationId      int64  `url:"as2_station_id,omitempty" required:"true"`
+	Name              string `url:"name,omitempty" required:"true" json:"name,omitempty"`
+	Uri               string `url:"uri,omitempty" required:"true" json:"uri,omitempty"`
+	PublicCertificate string `url:"public_certificate,omitempty" required:"true" json:"public_certificate,omitempty"`
+	As2StationId      int64  `url:"as2_station_id,omitempty" required:"true" json:"as2_station_id,omitempty"`
 }
 
 type As2PartnerUpdateParams struct {
-	Id                int64  `url:"-,omitempty" required:"true"`
-	Name              string `url:"name,omitempty" required:"false"`
-	Uri               string `url:"uri,omitempty" required:"false"`
-	PublicCertificate string `url:"public_certificate,omitempty" required:"false"`
+	Id                int64  `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Name              string `url:"name,omitempty" required:"false" json:"name,omitempty"`
+	Uri               string `url:"uri,omitempty" required:"false" json:"uri,omitempty"`
+	PublicCertificate string `url:"public_certificate,omitempty" required:"false" json:"public_certificate,omitempty"`
 }
 
 type As2PartnerDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 func (a *As2Partner) UnmarshalJSON(data []byte) error {

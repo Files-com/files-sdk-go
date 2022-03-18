@@ -27,7 +27,7 @@ func (c *Client) ListFor(ctx context.Context, params files_sdk.FileCommentListFo
 	path := lib.BuildPath("/file_comments/files/", params.Path)
 	i.ListParams = &params
 	list := files_sdk.FileCommentCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -38,13 +38,10 @@ func ListFor(ctx context.Context, params files_sdk.FileCommentListForParams) (*I
 func (c *Client) Create(ctx context.Context, params files_sdk.FileCommentCreateParams) (files_sdk.FileComment, error) {
 	fileComment := files_sdk.FileComment{}
 	path := "/file_comments"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return fileComment, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -71,13 +68,10 @@ func (c *Client) Update(ctx context.Context, params files_sdk.FileCommentUpdateP
 		return fileComment, lib.CreateError(params, "Id")
 	}
 	path := "/file_comments/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return fileComment, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -104,13 +98,10 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.FileCommentDeleteP
 		return fileComment, lib.CreateError(params, "Id")
 	}
 	path := "/file_comments/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return fileComment, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

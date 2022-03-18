@@ -22,9 +22,9 @@ type InboxRegistration struct {
 type InboxRegistrationCollection []InboxRegistration
 
 type InboxRegistrationListParams struct {
-	Cursor           string `url:"cursor,omitempty" required:"false"`
-	PerPage          int64  `url:"per_page,omitempty" required:"false"`
-	FolderBehaviorId int64  `url:"folder_behavior_id,omitempty" required:"false"`
+	Cursor           string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage          int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	FolderBehaviorId int64  `url:"folder_behavior_id,omitempty" required:"false" json:"folder_behavior_id,omitempty"`
 	lib.ListParams
 }
 

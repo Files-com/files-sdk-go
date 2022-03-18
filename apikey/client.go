@@ -27,7 +27,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.ApiKeyListParams) (*
 	path := "/api_keys"
 	i.ListParams = &params
 	list := files_sdk.ApiKeyCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -38,13 +38,10 @@ func List(ctx context.Context, params files_sdk.ApiKeyListParams) (*Iter, error)
 func (c *Client) FindCurrent(ctx context.Context) (files_sdk.ApiKey, error) {
 	apiKey := files_sdk.ApiKey{}
 	path := "/api_key"
-	exportedParams, err := lib.ExportParams(lib.Interface())
-	if err != nil {
-		return apiKey, err
-	}
+	exportedParams := lib.Params{Params: lib.Interface()}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -71,13 +68,10 @@ func (c *Client) Find(ctx context.Context, params files_sdk.ApiKeyFindParams) (f
 		return apiKey, lib.CreateError(params, "Id")
 	}
 	path := "/api_keys/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return apiKey, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -101,13 +95,10 @@ func Find(ctx context.Context, params files_sdk.ApiKeyFindParams) (files_sdk.Api
 func (c *Client) Create(ctx context.Context, params files_sdk.ApiKeyCreateParams) (files_sdk.ApiKey, error) {
 	apiKey := files_sdk.ApiKey{}
 	path := "/api_keys"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return apiKey, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -131,13 +122,10 @@ func Create(ctx context.Context, params files_sdk.ApiKeyCreateParams) (files_sdk
 func (c *Client) UpdateCurrent(ctx context.Context, params files_sdk.ApiKeyUpdateCurrentParams) (files_sdk.ApiKey, error) {
 	apiKey := files_sdk.ApiKey{}
 	path := "/api_key"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return apiKey, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -164,13 +152,10 @@ func (c *Client) Update(ctx context.Context, params files_sdk.ApiKeyUpdateParams
 		return apiKey, lib.CreateError(params, "Id")
 	}
 	path := "/api_keys/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return apiKey, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -194,13 +179,10 @@ func Update(ctx context.Context, params files_sdk.ApiKeyUpdateParams) (files_sdk
 func (c *Client) DeleteCurrent(ctx context.Context) (files_sdk.ApiKey, error) {
 	apiKey := files_sdk.ApiKey{}
 	path := "/api_key"
-	exportedParams, err := lib.ExportParams(lib.Interface())
-	if err != nil {
-		return apiKey, err
-	}
+	exportedParams := lib.Params{Params: lib.Interface()}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -227,13 +209,10 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.ApiKeyDeleteParams
 		return apiKey, lib.CreateError(params, "Id")
 	}
 	path := "/api_keys/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return apiKey, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()

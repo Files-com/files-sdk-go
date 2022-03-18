@@ -26,7 +26,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.RemoteBandwidthSnaps
 	path := "/remote_bandwidth_snapshots"
 	i.ListParams = &params
 	list := files_sdk.RemoteBandwidthSnapshotCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 

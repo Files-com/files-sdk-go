@@ -22,10 +22,10 @@ type ActionNotificationExportResult struct {
 type ActionNotificationExportResultCollection []ActionNotificationExportResult
 
 type ActionNotificationExportResultListParams struct {
-	UserId                     int64  `url:"user_id,omitempty" required:"false"`
-	Cursor                     string `url:"cursor,omitempty" required:"false"`
-	PerPage                    int64  `url:"per_page,omitempty" required:"false"`
-	ActionNotificationExportId int64  `url:"action_notification_export_id,omitempty" required:"true"`
+	UserId                     int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	Cursor                     string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage                    int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	ActionNotificationExportId int64  `url:"action_notification_export_id,omitempty" required:"true" json:"action_notification_export_id,omitempty"`
 	lib.ListParams
 }
 

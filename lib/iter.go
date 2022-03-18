@@ -1,9 +1,5 @@
 package lib
 
-import (
-	"net/url"
-)
-
 type ListParams struct {
 	Page     int64  `json:"page,omitempty" url:"page,omitempty" required:"false"`
 	PerPage  int64  `json:"per_page,omitempty" url:"per_page,omitempty" required:"false"`
@@ -32,7 +28,7 @@ func (p *ListParams) Set(page int64, perPage int64, cursor string, maxPages int6
 	p.MaxPages = maxPages
 }
 
-type Query func() (*[]interface{}, string, error)
+type Query func(params Values) (*[]interface{}, string, error)
 
 type IterI interface {
 	Next() bool
@@ -71,12 +67,13 @@ func (i *Iter) GetParams() *ListParams {
 	return i.ListParams.GetListParams()
 }
 
-func (i *Iter) ExportParams() (url.Values, error) {
-	paramValues, err := ExportParams(i.GetParams())
+func (i *Iter) ExportParams() (ExportValues, error) {
+	p := Params{Params: i.GetParams()}
+	paramValues, err := p.ToValues()
 	if err != nil {
-		return paramValues, err
+		return ExportValues{}, err
 	}
-	listParamValues, _ := ExportParams(i.ListParams)
+	listParamValues, _ := Params{Params: i.ListParams}.ToValues()
 
 	for key, value := range paramValues {
 		listParamValues.Set(key, value[0])
@@ -86,7 +83,7 @@ func (i *Iter) ExportParams() (url.Values, error) {
 		listParamValues.Del("page")
 	}
 
-	return listParamValues, nil
+	return ExportValues{Values: listParamValues}, nil
 }
 
 func (i *Iter) GetPage() bool {
@@ -98,7 +95,8 @@ func (i *Iter) GetPage() bool {
 	if i.GetParams().Page == 2 && i.Cursor == "" {
 		return false
 	}
-	i.Values, i.Cursor, i.Error = i.Query()
+	params, _ := i.ExportParams()
+	i.Values, i.Cursor, i.Error = i.Query(params)
 	i.SetCursor(i.Cursor)
 	return i.Error == nil && len(*i.Values) != 0
 }

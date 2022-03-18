@@ -25,20 +25,20 @@ type ActionNotificationExport struct {
 type ActionNotificationExportCollection []ActionNotificationExport
 
 type ActionNotificationExportFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 type ActionNotificationExportCreateParams struct {
-	UserId             int64     `url:"user_id,omitempty" required:"false"`
-	StartAt            time.Time `url:"start_at,omitempty" required:"false"`
-	EndAt              time.Time `url:"end_at,omitempty" required:"false"`
-	QueryMessage       string    `url:"query_message,omitempty" required:"false"`
-	QueryRequestMethod string    `url:"query_request_method,omitempty" required:"false"`
-	QueryRequestUrl    string    `url:"query_request_url,omitempty" required:"false"`
-	QueryStatus        string    `url:"query_status,omitempty" required:"false"`
-	QuerySuccess       *bool     `url:"query_success,omitempty" required:"false"`
-	QueryPath          string    `url:"query_path,omitempty" required:"false"`
-	QueryFolder        string    `url:"query_folder,omitempty" required:"false"`
+	UserId             int64     `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	StartAt            time.Time `url:"start_at,omitempty" required:"false" json:"start_at,omitempty"`
+	EndAt              time.Time `url:"end_at,omitempty" required:"false" json:"end_at,omitempty"`
+	QueryMessage       string    `url:"query_message,omitempty" required:"false" json:"query_message,omitempty"`
+	QueryRequestMethod string    `url:"query_request_method,omitempty" required:"false" json:"query_request_method,omitempty"`
+	QueryRequestUrl    string    `url:"query_request_url,omitempty" required:"false" json:"query_request_url,omitempty"`
+	QueryStatus        string    `url:"query_status,omitempty" required:"false" json:"query_status,omitempty"`
+	QuerySuccess       *bool     `url:"query_success,omitempty" required:"false" json:"query_success,omitempty"`
+	QueryPath          string    `url:"query_path,omitempty" required:"false" json:"query_path,omitempty"`
+	QueryFolder        string    `url:"query_folder,omitempty" required:"false" json:"query_folder,omitempty"`
 }
 
 func (a *ActionNotificationExport) UnmarshalJSON(data []byte) error {

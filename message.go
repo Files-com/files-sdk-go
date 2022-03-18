@@ -18,33 +18,33 @@ type Message struct {
 type MessageCollection []Message
 
 type MessageListParams struct {
-	UserId    int64  `url:"user_id,omitempty" required:"false"`
-	Cursor    string `url:"cursor,omitempty" required:"false"`
-	PerPage   int64  `url:"per_page,omitempty" required:"false"`
-	ProjectId int64  `url:"project_id,omitempty" required:"true"`
+	UserId    int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	Cursor    string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage   int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	ProjectId int64  `url:"project_id,omitempty" required:"true" json:"project_id,omitempty"`
 	lib.ListParams
 }
 
 type MessageFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 type MessageCreateParams struct {
-	UserId    int64  `url:"user_id,omitempty" required:"false"`
-	ProjectId int64  `url:"project_id,omitempty" required:"true"`
-	Subject   string `url:"subject,omitempty" required:"true"`
-	Body      string `url:"body,omitempty" required:"true"`
+	UserId    int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	ProjectId int64  `url:"project_id,omitempty" required:"true" json:"project_id,omitempty"`
+	Subject   string `url:"subject,omitempty" required:"true" json:"subject,omitempty"`
+	Body      string `url:"body,omitempty" required:"true" json:"body,omitempty"`
 }
 
 type MessageUpdateParams struct {
-	Id        int64  `url:"-,omitempty" required:"true"`
-	ProjectId int64  `url:"project_id,omitempty" required:"true"`
-	Subject   string `url:"subject,omitempty" required:"true"`
-	Body      string `url:"body,omitempty" required:"true"`
+	Id        int64  `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	ProjectId int64  `url:"project_id,omitempty" required:"true" json:"project_id,omitempty"`
+	Subject   string `url:"subject,omitempty" required:"true" json:"subject,omitempty"`
+	Body      string `url:"body,omitempty" required:"true" json:"body,omitempty"`
 }
 
 type MessageDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
 }
 
 func (m *Message) UnmarshalJSON(data []byte) error {

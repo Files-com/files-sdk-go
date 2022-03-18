@@ -27,7 +27,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.MessageCommentReacti
 	path := "/message_comment_reactions"
 	i.ListParams = &params
 	list := files_sdk.MessageCommentReactionCollection{}
-	i.Query = listquery.Build(ctx, i, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
 
@@ -41,13 +41,10 @@ func (c *Client) Find(ctx context.Context, params files_sdk.MessageCommentReacti
 		return messageCommentReaction, lib.CreateError(params, "Id")
 	}
 	path := "/message_comment_reactions/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return messageCommentReaction, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -71,13 +68,10 @@ func Find(ctx context.Context, params files_sdk.MessageCommentReactionFindParams
 func (c *Client) Create(ctx context.Context, params files_sdk.MessageCommentReactionCreateParams) (files_sdk.MessageCommentReaction, error) {
 	messageCommentReaction := files_sdk.MessageCommentReaction{}
 	path := "/message_comment_reactions"
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return messageCommentReaction, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
@@ -104,13 +98,10 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.MessageCommentReac
 		return messageCommentReaction, lib.CreateError(params, "Id")
 	}
 	path := "/message_comment_reactions/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams, err := lib.ExportParams(params)
-	if err != nil {
-		return messageCommentReaction, err
-	}
+	exportedParams := lib.Params{Params: params}
 	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
 	defer func() {
-		if res != nil {
+		if res != nil && res.Body != nil {
 			res.Body.Close()
 		}
 	}()
