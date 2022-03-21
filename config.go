@@ -43,6 +43,7 @@ type Config struct {
 	AdditionalHeaders map[string]string
 	logger            Logger
 	Debug             *bool
+	UserAgent         string
 }
 
 func (s *Config) SetHttpClient(client *http.Client) {
@@ -113,7 +114,10 @@ func (s *Config) GetAPIKey() string {
 }
 
 func (s *Config) SetHeaders(headers *http.Header) {
-	headers.Set("User-Agent", fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION)))
+	if s.UserAgent == "" {
+		s.UserAgent = fmt.Sprintf("%v %v", "Files.com Go SDK", strings.TrimSpace(VERSION))
+	}
+	headers.Set("User-Agent", s.UserAgent)
 	if s.GetAPIKey() != "" {
 		headers.Set("X-FilesAPI-Key", s.GetAPIKey())
 	} else if s.SessionId != "" {
