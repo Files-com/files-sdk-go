@@ -16,6 +16,5 @@ require (
 	github.com/snabb/httpreaderat v1.0.1
 	github.com/stretchr/testify v1.6.1
 	github.com/zenthangplus/goccm v0.0.0-20200608171100-39e9e08b694a
-	golang.org/x/tools v0.1.10 // indirect
 	moul.io/http2curl v1.0.0
 )
