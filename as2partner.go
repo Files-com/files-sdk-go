@@ -11,6 +11,7 @@ type As2Partner struct {
 	As2StationId               int64  `json:"as2_station_id,omitempty"`
 	Name                       string `json:"name,omitempty"`
 	Uri                        string `json:"uri,omitempty"`
+	ServerCertificate          string `json:"server_certificate,omitempty"`
 	PublicCertificateMd5       string `json:"public_certificate_md5,omitempty"`
 	PublicCertificateSubject   string `json:"public_certificate_subject,omitempty"`
 	PublicCertificateIssuer    string `json:"public_certificate_issuer,omitempty"`
@@ -37,12 +38,14 @@ type As2PartnerCreateParams struct {
 	Uri               string `url:"uri,omitempty" required:"true" json:"uri,omitempty"`
 	PublicCertificate string `url:"public_certificate,omitempty" required:"true" json:"public_certificate,omitempty"`
 	As2StationId      int64  `url:"as2_station_id,omitempty" required:"true" json:"as2_station_id,omitempty"`
+	ServerCertificate string `url:"server_certificate,omitempty" required:"false" json:"server_certificate,omitempty"`
 }
 
 type As2PartnerUpdateParams struct {
 	Id                int64  `url:"-,omitempty" required:"true" json:"-,omitempty"`
 	Name              string `url:"name,omitempty" required:"false" json:"name,omitempty"`
 	Uri               string `url:"uri,omitempty" required:"false" json:"uri,omitempty"`
+	ServerCertificate string `url:"server_certificate,omitempty" required:"false" json:"server_certificate,omitempty"`
 	PublicCertificate string `url:"public_certificate,omitempty" required:"false" json:"public_certificate,omitempty"`
 }
 
