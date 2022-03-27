@@ -18,8 +18,10 @@ type As2Station struct {
 	PublicCertificateSerial    string `json:"public_certificate_serial,omitempty"`
 	PublicCertificateNotBefore string `json:"public_certificate_not_before,omitempty"`
 	PublicCertificateNotAfter  string `json:"public_certificate_not_after,omitempty"`
+	PrivateKeyPasswordMd5      string `json:"private_key_password_md5,omitempty"`
 	PublicCertificate          string `json:"public_certificate,omitempty"`
 	PrivateKey                 string `json:"private_key,omitempty"`
+	PrivateKeyPassword         string `json:"private_key_password,omitempty"`
 }
 
 type As2StationCollection []As2Station
@@ -35,16 +37,18 @@ type As2StationFindParams struct {
 }
 
 type As2StationCreateParams struct {
-	Name              string `url:"name,omitempty" required:"true" json:"name,omitempty"`
-	PublicCertificate string `url:"public_certificate,omitempty" required:"true" json:"public_certificate,omitempty"`
-	PrivateKey        string `url:"private_key,omitempty" required:"true" json:"private_key,omitempty"`
+	Name               string `url:"name,omitempty" required:"true" json:"name,omitempty"`
+	PublicCertificate  string `url:"public_certificate,omitempty" required:"true" json:"public_certificate,omitempty"`
+	PrivateKey         string `url:"private_key,omitempty" required:"true" json:"private_key,omitempty"`
+	PrivateKeyPassword string `url:"private_key_password,omitempty" required:"false" json:"private_key_password,omitempty"`
 }
 
 type As2StationUpdateParams struct {
-	Id                int64  `url:"-,omitempty" required:"true" json:"-,omitempty"`
-	Name              string `url:"name,omitempty" required:"false" json:"name,omitempty"`
-	PublicCertificate string `url:"public_certificate,omitempty" required:"false" json:"public_certificate,omitempty"`
-	PrivateKey        string `url:"private_key,omitempty" required:"false" json:"private_key,omitempty"`
+	Id                 int64  `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Name               string `url:"name,omitempty" required:"false" json:"name,omitempty"`
+	PublicCertificate  string `url:"public_certificate,omitempty" required:"false" json:"public_certificate,omitempty"`
+	PrivateKey         string `url:"private_key,omitempty" required:"false" json:"private_key,omitempty"`
+	PrivateKeyPassword string `url:"private_key_password,omitempty" required:"false" json:"private_key_password,omitempty"`
 }
 
 type As2StationDeleteParams struct {
