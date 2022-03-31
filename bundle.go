@@ -18,6 +18,9 @@ type Bundle struct {
 	RequireShareRecipient     *bool           `json:"require_share_recipient,omitempty"`
 	ClickwrapBody             string          `json:"clickwrap_body,omitempty"`
 	FormFieldSet              FormFieldSet    `json:"form_field_set,omitempty"`
+	SkipName                  *bool           `json:"skip_name,omitempty"`
+	SkipEmail                 *bool           `json:"skip_email,omitempty"`
+	SkipCompany               *bool           `json:"skip_company,omitempty"`
 	Id                        int64           `json:"id,omitempty"`
 	CreatedAt                 time.Time       `json:"created_at,omitempty"`
 	ExpiresAt                 time.Time       `json:"expires_at,omitempty"`
