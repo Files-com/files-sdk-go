@@ -75,6 +75,9 @@ type BundleCreateParams struct {
 	ClickwrapId             int64     `url:"clickwrap_id,omitempty" required:"false" json:"clickwrap_id,omitempty"`
 	InboxId                 int64     `url:"inbox_id,omitempty" required:"false" json:"inbox_id,omitempty"`
 	RequireShareRecipient   *bool     `url:"require_share_recipient,omitempty" required:"false" json:"require_share_recipient,omitempty"`
+	SkipEmail               *bool     `url:"skip_email,omitempty" required:"false" json:"skip_email,omitempty"`
+	SkipName                *bool     `url:"skip_name,omitempty" required:"false" json:"skip_name,omitempty"`
+	SkipCompany             *bool     `url:"skip_company,omitempty" required:"false" json:"skip_company,omitempty"`
 	WatermarkAttachmentFile io.Writer `url:"watermark_attachment_file,omitempty" required:"false" json:"watermark_attachment_file,omitempty"`
 }
 
@@ -101,6 +104,9 @@ type BundleUpdateParams struct {
 	PreviewOnly               *bool     `url:"preview_only,omitempty" required:"false" json:"preview_only,omitempty"`
 	RequireRegistration       *bool     `url:"require_registration,omitempty" required:"false" json:"require_registration,omitempty"`
 	RequireShareRecipient     *bool     `url:"require_share_recipient,omitempty" required:"false" json:"require_share_recipient,omitempty"`
+	SkipEmail                 *bool     `url:"skip_email,omitempty" required:"false" json:"skip_email,omitempty"`
+	SkipName                  *bool     `url:"skip_name,omitempty" required:"false" json:"skip_name,omitempty"`
+	SkipCompany               *bool     `url:"skip_company,omitempty" required:"false" json:"skip_company,omitempty"`
 	WatermarkAttachmentDelete *bool     `url:"watermark_attachment_delete,omitempty" required:"false" json:"watermark_attachment_delete,omitempty"`
 	WatermarkAttachmentFile   io.Writer `url:"watermark_attachment_file,omitempty" required:"false" json:"watermark_attachment_file,omitempty"`
 }
