@@ -9,6 +9,7 @@ import (
 type Automation struct {
 	Id                     int64           `json:"id,omitempty"`
 	Automation             string          `json:"automation,omitempty"`
+	Disabled               *bool           `json:"disabled,omitempty"`
 	Trigger                string          `json:"trigger,omitempty"`
 	Interval               string          `json:"interval,omitempty"`
 	Name                   string          `json:"name,omitempty"`
@@ -97,6 +98,7 @@ type AutomationCreateParams struct {
 	GroupIds               string                `url:"group_ids,omitempty" required:"false" json:"group_ids,omitempty"`
 	Schedule               json.RawMessage       `url:"schedule,omitempty" required:"false" json:"schedule,omitempty"`
 	Description            string                `url:"description,omitempty" required:"false" json:"description,omitempty"`
+	Disabled               *bool                 `url:"disabled,omitempty" required:"false" json:"disabled,omitempty"`
 	Name                   string                `url:"name,omitempty" required:"false" json:"name,omitempty"`
 	Trigger                AutomationTriggerEnum `url:"trigger,omitempty" required:"false" json:"trigger,omitempty"`
 	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false" json:"trigger_actions,omitempty"`
@@ -117,6 +119,7 @@ type AutomationUpdateParams struct {
 	GroupIds               string                `url:"group_ids,omitempty" required:"false" json:"group_ids,omitempty"`
 	Schedule               json.RawMessage       `url:"schedule,omitempty" required:"false" json:"schedule,omitempty"`
 	Description            string                `url:"description,omitempty" required:"false" json:"description,omitempty"`
+	Disabled               *bool                 `url:"disabled,omitempty" required:"false" json:"disabled,omitempty"`
 	Name                   string                `url:"name,omitempty" required:"false" json:"name,omitempty"`
 	Trigger                AutomationTriggerEnum `url:"trigger,omitempty" required:"false" json:"trigger,omitempty"`
 	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false" json:"trigger_actions,omitempty"`
