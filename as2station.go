@@ -11,6 +11,7 @@ type As2Station struct {
 	Name                       string `json:"name,omitempty"`
 	Uri                        string `json:"uri,omitempty"`
 	Domain                     string `json:"domain,omitempty"`
+	HexPublicCertificateSerial string `json:"hex_public_certificate_serial,omitempty"`
 	PublicCertificateMd5       string `json:"public_certificate_md5,omitempty"`
 	PrivateKeyMd5              string `json:"private_key_md5,omitempty"`
 	PublicCertificateSubject   string `json:"public_certificate_subject,omitempty"`

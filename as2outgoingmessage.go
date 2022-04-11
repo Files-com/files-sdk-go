@@ -8,17 +8,34 @@ import (
 )
 
 type As2OutgoingMessage struct {
-	Id                 int64           `json:"id,omitempty"`
-	As2PartnerId       int64           `json:"as2_partner_id,omitempty"`
-	Uuid               string          `json:"uuid,omitempty"`
-	HttpHeaders        json.RawMessage `json:"http_headers,omitempty"`
-	ActivityLog        string          `json:"activity_log,omitempty"`
-	ProcessingResult   string          `json:"processing_result,omitempty"`
-	Mic                string          `json:"mic,omitempty"`
-	MessageId          string          `json:"message_id,omitempty"`
-	BodySize           string          `json:"body_size,omitempty"`
-	AttachmentFilename string          `json:"attachment_filename,omitempty"`
-	CreatedAt          time.Time       `json:"created_at,omitempty"`
+	Id                   int64           `json:"id,omitempty"`
+	As2PartnerId         int64           `json:"as2_partner_id,omitempty"`
+	As2StationId         int64           `json:"as2_station_id,omitempty"`
+	Uuid                 string          `json:"uuid,omitempty"`
+	HttpHeaders          json.RawMessage `json:"http_headers,omitempty"`
+	ActivityLog          string          `json:"activity_log,omitempty"`
+	ProcessingResult     string          `json:"processing_result,omitempty"`
+	Mic                  string          `json:"mic,omitempty"`
+	MicSha256            string          `json:"mic_sha_256,omitempty"`
+	As2To                string          `json:"as2_to,omitempty"`
+	As2From              string          `json:"as2_from,omitempty"`
+	MessageId            string          `json:"message_id,omitempty"`
+	BodySize             string          `json:"body_size,omitempty"`
+	AttachmentFilename   string          `json:"attachment_filename,omitempty"`
+	CreatedAt            time.Time       `json:"created_at,omitempty"`
+	HttpResponseCode     string          `json:"http_response_code,omitempty"`
+	HttpResponseHeaders  json.RawMessage `json:"http_response_headers,omitempty"`
+	MdnReceived          *bool           `json:"mdn_received,omitempty"`
+	MdnValid             *bool           `json:"mdn_valid,omitempty"`
+	MdnSignatureVerified *bool           `json:"mdn_signature_verified,omitempty"`
+	MdnMessageIdMatched  *bool           `json:"mdn_message_id_matched,omitempty"`
+	MdnMicMatched        *bool           `json:"mdn_mic_matched,omitempty"`
+	MdnProcessingSuccess *bool           `json:"mdn_processing_success,omitempty"`
+	RawUri               string          `json:"raw_uri,omitempty"`
+	SmimeUri             string          `json:"smime_uri,omitempty"`
+	SmimeSignedUri       string          `json:"smime_signed_uri,omitempty"`
+	EncryptedUri         string          `json:"encrypted_uri,omitempty"`
+	MdnResponseUri       string          `json:"mdn_response_uri,omitempty"`
 }
 
 type As2OutgoingMessageCollection []As2OutgoingMessage
