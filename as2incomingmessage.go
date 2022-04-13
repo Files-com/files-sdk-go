@@ -28,6 +28,9 @@ type As2IncomingMessage struct {
 	CreatedAt                time.Time       `json:"created_at,omitempty"`
 	HttpResponseCode         string          `json:"http_response_code,omitempty"`
 	HttpResponseHeaders      json.RawMessage `json:"http_response_headers,omitempty"`
+	RecipientSerial          string          `json:"recipient_serial,omitempty"`
+	HexRecipientSerial       string          `json:"hex_recipient_serial,omitempty"`
+	RecipientIssuer          string          `json:"recipient_issuer,omitempty"`
 	MessageReceived          *bool           `json:"message_received,omitempty"`
 	MessageDecrypted         *bool           `json:"message_decrypted,omitempty"`
 	MessageSignatureVerified *bool           `json:"message_signature_verified,omitempty"`
