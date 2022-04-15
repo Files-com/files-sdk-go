@@ -130,6 +130,7 @@ type Site struct {
 	UserRequestsEnabled                  *bool           `json:"user_requests_enabled,omitempty"`
 	WelcomeCustomText                    string          `json:"welcome_custom_text,omitempty"`
 	WelcomeEmailCc                       string          `json:"welcome_email_cc,omitempty"`
+	WelcomeEmailSubject                  string          `json:"welcome_email_subject,omitempty"`
 	WelcomeEmailEnabled                  *bool           `json:"welcome_email_enabled,omitempty"`
 	WelcomeScreen                        string          `json:"welcome_screen,omitempty"`
 	WindowsModeFtp                       *bool           `json:"windows_mode_ftp,omitempty"`
@@ -153,6 +154,7 @@ type SiteUpdateParams struct {
 	AskAboutOverwrites                   *bool     `url:"ask_about_overwrites,omitempty" required:"false" json:"ask_about_overwrites,omitempty"`
 	ShowRequestAccessLink                *bool     `url:"show_request_access_link,omitempty" required:"false" json:"show_request_access_link,omitempty"`
 	WelcomeEmailCc                       string    `url:"welcome_email_cc,omitempty" required:"false" json:"welcome_email_cc,omitempty"`
+	WelcomeEmailSubject                  string    `url:"welcome_email_subject,omitempty" required:"false" json:"welcome_email_subject,omitempty"`
 	WelcomeCustomText                    string    `url:"welcome_custom_text,omitempty" required:"false" json:"welcome_custom_text,omitempty"`
 	Language                             string    `url:"language,omitempty" required:"false" json:"language,omitempty"`
 	WindowsModeFtp                       *bool     `url:"windows_mode_ftp,omitempty" required:"false" json:"windows_mode_ftp,omitempty"`
