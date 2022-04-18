@@ -19,6 +19,7 @@ type As2OutgoingMessage struct {
 	MicSha256            string          `json:"mic_sha_256,omitempty"`
 	As2To                string          `json:"as2_to,omitempty"`
 	As2From              string          `json:"as2_from,omitempty"`
+	Date                 string          `json:"date,omitempty"`
 	MessageId            string          `json:"message_id,omitempty"`
 	BodySize             string          `json:"body_size,omitempty"`
 	AttachmentFilename   string          `json:"attachment_filename,omitempty"`

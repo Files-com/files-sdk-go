@@ -22,6 +22,7 @@ type As2IncomingMessage struct {
 	As2From                  string          `json:"as2_from,omitempty"`
 	MessageId                string          `json:"message_id,omitempty"`
 	Subject                  string          `json:"subject,omitempty"`
+	Date                     string          `json:"date,omitempty"`
 	BodySize                 string          `json:"body_size,omitempty"`
 	AttachmentFilename       string          `json:"attachment_filename,omitempty"`
 	Ip                       string          `json:"ip,omitempty"`
