@@ -24,6 +24,7 @@ type Folder struct {
 	PriorityColor    string    `json:"priority_color,omitempty"`
 	PreviewId        int64     `json:"preview_id,omitempty"`
 	Preview          Preview   `json:"preview,omitempty"`
+	MkdirParents     *bool     `json:"mkdir_parents,omitempty"`
 }
 
 type FolderCollection []Folder
@@ -42,7 +43,8 @@ type FolderListForParams struct {
 }
 
 type FolderCreateParams struct {
-	Path string `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Path         string `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	MkdirParents *bool  `url:"mkdir_parents,omitempty" required:"false" json:"mkdir_parents,omitempty"`
 }
 
 func (f *Folder) ToFile() (File, error) {
