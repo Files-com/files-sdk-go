@@ -47,9 +47,16 @@ type As2IncomingMessage struct {
 type As2IncomingMessageCollection []As2IncomingMessage
 
 type As2IncomingMessageListParams struct {
-	Cursor       string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage      int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
-	As2PartnerId int64  `url:"as2_partner_id,omitempty" required:"false" json:"as2_partner_id,omitempty"`
+	Cursor       string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage      int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	SortBy       json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty"`
+	Filter       json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty"`
+	FilterGt     json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty"`
+	FilterGteq   json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty"`
+	FilterLike   json.RawMessage `url:"filter_like,omitempty" required:"false" json:"filter_like,omitempty"`
+	FilterLt     json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty"`
+	FilterLteq   json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty"`
+	As2PartnerId int64           `url:"as2_partner_id,omitempty" required:"false" json:"as2_partner_id,omitempty"`
 	lib.ListParams
 }
 
