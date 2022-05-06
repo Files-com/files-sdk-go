@@ -14,7 +14,7 @@ type As2Partner struct {
 	ServerCertificate          string `json:"server_certificate,omitempty"`
 	HexPublicCertificateSerial string `json:"hex_public_certificate_serial,omitempty"`
 	PublicCertificateMd5       string `json:"public_certificate_md5,omitempty"`
-	PublicCertificateSubject   string `json:"public_certificate_subject,omitempty"`
+	PublicCertificateSubjec    string `json:"public_certificate_subjec,omitempty"`
 	PublicCertificateIssuer    string `json:"public_certificate_issuer,omitempty"`
 	PublicCertificateSerial    string `json:"public_certificate_serial,omitempty"`
 	PublicCertificateNotBefore string `json:"public_certificate_not_before,omitempty"`
