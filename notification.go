@@ -15,6 +15,7 @@ type Notification struct {
 	NotifyOnCopy       *bool  `json:"notify_on_copy,omitempty"`
 	Recursive          *bool  `json:"recursive,omitempty"`
 	SendInterval       string `json:"send_interval,omitempty"`
+	Message            string `json:"message,omitempty"`
 	Unsubscribed       *bool  `json:"unsubscribed,omitempty"`
 	UnsubscribedReason string `json:"unsubscribed_reason,omitempty"`
 	UserId             int64  `json:"user_id,omitempty"`
@@ -51,6 +52,7 @@ type NotificationCreateParams struct {
 	NotifyUserActions *bool  `url:"notify_user_actions,omitempty" required:"false" json:"notify_user_actions,omitempty"`
 	Recursive         *bool  `url:"recursive,omitempty" required:"false" json:"recursive,omitempty"`
 	SendInterval      string `url:"send_interval,omitempty" required:"false" json:"send_interval,omitempty"`
+	Message           string `url:"message,omitempty" required:"false" json:"message,omitempty"`
 	GroupId           int64  `url:"group_id,omitempty" required:"false" json:"group_id,omitempty"`
 	Path              string `url:"path,omitempty" required:"false" json:"path,omitempty"`
 	Username          string `url:"username,omitempty" required:"false" json:"username,omitempty"`
@@ -62,6 +64,7 @@ type NotificationUpdateParams struct {
 	NotifyUserActions *bool  `url:"notify_user_actions,omitempty" required:"false" json:"notify_user_actions,omitempty"`
 	Recursive         *bool  `url:"recursive,omitempty" required:"false" json:"recursive,omitempty"`
 	SendInterval      string `url:"send_interval,omitempty" required:"false" json:"send_interval,omitempty"`
+	Message           string `url:"message,omitempty" required:"false" json:"message,omitempty"`
 }
 
 type NotificationDeleteParams struct {
