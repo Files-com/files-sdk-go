@@ -13,6 +13,7 @@ type Site struct {
 	Allowed2faMethodU2f                  *bool           `json:"allowed_2fa_method_u2f,omitempty"`
 	Allowed2faMethodWebauthn             *bool           `json:"allowed_2fa_method_webauthn,omitempty"`
 	Allowed2faMethodYubi                 *bool           `json:"allowed_2fa_method_yubi,omitempty"`
+	Allowed2faMethodBypassForFtpSftpDav  *bool           `json:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty"`
 	AdminUserId                          int64           `json:"admin_user_id,omitempty"`
 	AllowBundleNames                     *bool           `json:"allow_bundle_names,omitempty"`
 	AllowedCountries                     string          `json:"allowed_countries,omitempty"`
@@ -211,6 +212,7 @@ type SiteUpdateParams struct {
 	Allowed2faMethodTotp                 *bool     `url:"allowed_2fa_method_totp,omitempty" required:"false" json:"allowed_2fa_method_totp,omitempty"`
 	Allowed2faMethodWebauthn             *bool     `url:"allowed_2fa_method_webauthn,omitempty" required:"false" json:"allowed_2fa_method_webauthn,omitempty"`
 	Allowed2faMethodYubi                 *bool     `url:"allowed_2fa_method_yubi,omitempty" required:"false" json:"allowed_2fa_method_yubi,omitempty"`
+	Allowed2faMethodBypassForFtpSftpDav  *bool     `url:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty" required:"false" json:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty"`
 	Require2fa                           *bool     `url:"require_2fa,omitempty" required:"false" json:"require_2fa,omitempty"`
 	Require2faUserType                   string    `url:"require_2fa_user_type,omitempty" required:"false" json:"require_2fa_user_type,omitempty"`
 	Color2Top                            string    `url:"color2_top,omitempty" required:"false" json:"color2_top,omitempty"`
