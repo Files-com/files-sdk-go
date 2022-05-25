@@ -2,6 +2,7 @@ package files_sdk
 
 import (
 	"encoding/json"
+	"time"
 
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
@@ -9,9 +10,11 @@ import (
 type Automation struct {
 	Id                     int64           `json:"id,omitempty"`
 	Automation             string          `json:"automation,omitempty"`
+	Deleted                *bool           `json:"deleted,omitempty"`
 	Disabled               *bool           `json:"disabled,omitempty"`
 	Trigger                string          `json:"trigger,omitempty"`
 	Interval               string          `json:"interval,omitempty"`
+	LastModifiedAt         time.Time       `json:"last_modified_at,omitempty"`
 	Name                   string          `json:"name,omitempty"`
 	Schedule               json.RawMessage `json:"schedule,omitempty"`
 	Source                 string          `json:"source,omitempty"`
@@ -27,9 +30,27 @@ type Automation struct {
 	TriggerActions         string          `json:"trigger_actions,omitempty"`
 	Value                  json.RawMessage `json:"value,omitempty"`
 	Destination            string          `json:"destination,omitempty"`
+	ClonedFrom             int64           `json:"cloned_from,omitempty"`
 }
 
 type AutomationCollection []Automation
+
+type AutomationTriggerEnum string
+
+func (u AutomationTriggerEnum) String() string {
+	return string(u)
+}
+
+func (u AutomationTriggerEnum) Enum() map[string]AutomationTriggerEnum {
+	return map[string]AutomationTriggerEnum{
+		"realtime":        AutomationTriggerEnum("realtime"),
+		"daily":           AutomationTriggerEnum("daily"),
+		"custom_schedule": AutomationTriggerEnum("custom_schedule"),
+		"webhook":         AutomationTriggerEnum("webhook"),
+		"email":           AutomationTriggerEnum("email"),
+		"action":          AutomationTriggerEnum("action"),
+	}
+}
 
 type AutomationEnum string
 
@@ -50,34 +71,18 @@ func (u AutomationEnum) Enum() map[string]AutomationEnum {
 	}
 }
 
-type AutomationTriggerEnum string
-
-func (u AutomationTriggerEnum) String() string {
-	return string(u)
-}
-
-func (u AutomationTriggerEnum) Enum() map[string]AutomationTriggerEnum {
-	return map[string]AutomationTriggerEnum{
-		"realtime":        AutomationTriggerEnum("realtime"),
-		"daily":           AutomationTriggerEnum("daily"),
-		"custom_schedule": AutomationTriggerEnum("custom_schedule"),
-		"webhook":         AutomationTriggerEnum("webhook"),
-		"email":           AutomationTriggerEnum("email"),
-		"action":          AutomationTriggerEnum("action"),
-	}
-}
-
 type AutomationListParams struct {
-	Cursor     string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage    int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
-	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty"`
-	Filter     json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty"`
-	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty"`
-	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty"`
-	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false" json:"filter_like,omitempty"`
-	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty"`
-	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty"`
-	Automation string          `url:"automation,omitempty" required:"false" json:"automation,omitempty"`
+	Cursor      string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
+	PerPage     int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	SortBy      json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty"`
+	Filter      json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty"`
+	FilterGt    json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty"`
+	FilterGteq  json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty"`
+	FilterLike  json.RawMessage `url:"filter_like,omitempty" required:"false" json:"filter_like,omitempty"`
+	FilterLt    json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty"`
+	FilterLteq  json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty"`
+	WithDeleted *bool           `url:"with_deleted,omitempty" required:"false" json:"with_deleted,omitempty"`
+	Automation  string          `url:"automation,omitempty" required:"false" json:"automation,omitempty"`
 	lib.ListParams
 }
 
@@ -86,7 +91,6 @@ type AutomationFindParams struct {
 }
 
 type AutomationCreateParams struct {
-	Automation             AutomationEnum        `url:"automation,omitempty" required:"true" json:"automation,omitempty"`
 	Source                 string                `url:"source,omitempty" required:"false" json:"source,omitempty"`
 	Destination            string                `url:"destination,omitempty" required:"false" json:"destination,omitempty"`
 	Destinations           []string              `url:"destinations,omitempty" required:"false" json:"destinations,omitempty"`
@@ -103,11 +107,12 @@ type AutomationCreateParams struct {
 	Trigger                AutomationTriggerEnum `url:"trigger,omitempty" required:"false" json:"trigger,omitempty"`
 	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false" json:"trigger_actions,omitempty"`
 	Value                  json.RawMessage       `url:"value,omitempty" required:"false" json:"value,omitempty"`
+	Automation             AutomationEnum        `url:"automation,omitempty" required:"true" json:"automation,omitempty"`
+	ClonedFrom             int64                 `url:"cloned_from,omitempty" required:"false" json:"cloned_from,omitempty"`
 }
 
 type AutomationUpdateParams struct {
 	Id                     int64                 `url:"-,omitempty" required:"true" json:"-,omitempty"`
-	Automation             AutomationEnum        `url:"automation,omitempty" required:"true" json:"automation,omitempty"`
 	Source                 string                `url:"source,omitempty" required:"false" json:"source,omitempty"`
 	Destination            string                `url:"destination,omitempty" required:"false" json:"destination,omitempty"`
 	Destinations           []string              `url:"destinations,omitempty" required:"false" json:"destinations,omitempty"`
@@ -124,6 +129,7 @@ type AutomationUpdateParams struct {
 	Trigger                AutomationTriggerEnum `url:"trigger,omitempty" required:"false" json:"trigger,omitempty"`
 	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false" json:"trigger_actions,omitempty"`
 	Value                  json.RawMessage       `url:"value,omitempty" required:"false" json:"value,omitempty"`
+	Automation             AutomationEnum        `url:"automation,omitempty" required:"false" json:"automation,omitempty"`
 }
 
 type AutomationDeleteParams struct {

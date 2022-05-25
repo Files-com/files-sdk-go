@@ -35,6 +35,7 @@ func (u ExternalEventStatusEnum) Enum() map[string]ExternalEventStatusEnum {
 		"failure":         ExternalEventStatusEnum("failure"),
 		"partial_failure": ExternalEventStatusEnum("partial_failure"),
 		"in_progress":     ExternalEventStatusEnum("in_progress"),
+		"skipped":         ExternalEventStatusEnum("skipped"),
 	}
 }
 

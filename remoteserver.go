@@ -38,6 +38,7 @@ type RemoteServer struct {
 	AuthAccountName                   string `json:"auth_account_name,omitempty"`
 	OneDriveAccountType               string `json:"one_drive_account_type,omitempty"`
 	AzureBlobStorageAccount           string `json:"azure_blob_storage_account,omitempty"`
+	AzureBlobStorageSasToken          string `json:"azure_blob_storage_sas_token,omitempty"`
 	AzureBlobStorageContainer         string `json:"azure_blob_storage_container,omitempty"`
 	S3CompatibleBucket                string `json:"s3_compatible_bucket,omitempty"`
 	S3CompatibleEndpoint              string `json:"s3_compatible_endpoint,omitempty"`
@@ -174,6 +175,7 @@ type RemoteServerCreateParams struct {
 	OneDriveAccountType               RemoteServerOneDriveAccountTypeEnum `url:"one_drive_account_type,omitempty" required:"false" json:"one_drive_account_type,omitempty"`
 	AzureBlobStorageAccount           string                              `url:"azure_blob_storage_account,omitempty" required:"false" json:"azure_blob_storage_account,omitempty"`
 	AzureBlobStorageContainer         string                              `url:"azure_blob_storage_container,omitempty" required:"false" json:"azure_blob_storage_container,omitempty"`
+	AzureBlobStorageSasToken          string                              `url:"azure_blob_storage_sas_token,omitempty" required:"false" json:"azure_blob_storage_sas_token,omitempty"`
 	S3CompatibleBucket                string                              `url:"s3_compatible_bucket,omitempty" required:"false" json:"s3_compatible_bucket,omitempty"`
 	S3CompatibleEndpoint              string                              `url:"s3_compatible_endpoint,omitempty" required:"false" json:"s3_compatible_endpoint,omitempty"`
 	S3CompatibleRegion                string                              `url:"s3_compatible_region,omitempty" required:"false" json:"s3_compatible_region,omitempty"`
@@ -220,6 +222,7 @@ type RemoteServerUpdateParams struct {
 	OneDriveAccountType               RemoteServerOneDriveAccountTypeEnum `url:"one_drive_account_type,omitempty" required:"false" json:"one_drive_account_type,omitempty"`
 	AzureBlobStorageAccount           string                              `url:"azure_blob_storage_account,omitempty" required:"false" json:"azure_blob_storage_account,omitempty"`
 	AzureBlobStorageContainer         string                              `url:"azure_blob_storage_container,omitempty" required:"false" json:"azure_blob_storage_container,omitempty"`
+	AzureBlobStorageSasToken          string                              `url:"azure_blob_storage_sas_token,omitempty" required:"false" json:"azure_blob_storage_sas_token,omitempty"`
 	S3CompatibleBucket                string                              `url:"s3_compatible_bucket,omitempty" required:"false" json:"s3_compatible_bucket,omitempty"`
 	S3CompatibleEndpoint              string                              `url:"s3_compatible_endpoint,omitempty" required:"false" json:"s3_compatible_endpoint,omitempty"`
 	S3CompatibleRegion                string                              `url:"s3_compatible_region,omitempty" required:"false" json:"s3_compatible_region,omitempty"`
