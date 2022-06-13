@@ -13,7 +13,6 @@ import (
 	"github.com/Files-com/files-sdk-go/v2/file/status"
 	"github.com/Files-com/files-sdk-go/v2/ignore"
 	"github.com/Files-com/files-sdk-go/v2/lib/direction"
-	"github.com/bradfitz/iter"
 	"github.com/karrick/godirwalk"
 )
 
@@ -41,11 +40,12 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 	}
 	job.Client = c
 	onComplete := make(chan *UploadStatus)
-	count := 0
 	job.CodeStart = func() {
 		job.Scan()
 
 		go enqueueIndexedUploads(job, jobCtx, onComplete)
+		status.WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy), false) })
+
 		metaFile := &UploadStatus{
 			job:       job,
 			status:    status.Errored,
@@ -61,7 +61,8 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 			job.Finish()
 			return
 		}
-		i, err := ignore.New(params.Ignore...)
+		var err error
+		job.GitIgnore, err = ignore.New(params.Ignore...)
 		if err != nil {
 			job.Add(metaFile)
 			job.UpdateStatus(status.Errored, metaFile, err)
@@ -69,7 +70,6 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 			job.Finish()
 			return
 		}
-		job.GitIgnore = i
 		if job.Type == directory.File {
 			metaFile.file = files_sdk.File{
 				DisplayName: filepath.Base(params.LocalPath),
@@ -78,8 +78,7 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 				Size:        fi.Size(),
 				Path:        params.RemotePath,
 			}
-			path, err := remotePath(jobCtx, params.LocalPath, params.RemotePath, c)
-			metaFile.remotePath = path
+			metaFile.remotePath, err = remotePath(jobCtx, params.LocalPath, params.RemotePath, c)
 			if err != nil {
 				job.Add(metaFile)
 				job.UpdateStatus(status.Errored, metaFile, err)
@@ -90,10 +89,9 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 
 			job.Add(metaFile)
 			job.UpdateStatus(status.Indexed, metaFile, nil)
-			count = 1
 		} else {
 			var walkErr error
-			count, walkErr = walkPaginated(
+			walkErr = walkPaginated(
 				jobCtx,
 				params.LocalPath,
 				params.RemotePath,
@@ -106,9 +104,8 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 				job.UpdateStatus(status.Errored, metaFile, walkErr)
 			}
 		}
-		job.EndScan()
 
-		go markUploadOnComplete(count, job, onComplete, jobCtx)
+		job.EndScan()
 	}
 
 	return job
@@ -135,15 +132,6 @@ func remotePath(ctx context.Context, localPath string, remotePath string, c Uplo
 	return destination, nil
 }
 
-func markUploadOnComplete(count int, job *status.Job, onComplete chan *UploadStatus, jobCtx context.Context) {
-	for range iter.N(count) {
-		<-onComplete
-	}
-	close(onComplete)
-	RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy), false)
-	job.Finish()
-}
-
 func enqueueIndexedUploads(job *status.Job, jobCtx context.Context, onComplete chan *UploadStatus) {
 	for !job.EndScanning.Called() || job.Count(status.Indexed) > 0 {
 		f, ok := job.Find(status.Indexed)
@@ -154,6 +142,11 @@ func enqueueIndexedUploads(job *status.Job, jobCtx context.Context, onComplete c
 }
 
 func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadStatus, onComplete chan *UploadStatus) {
+	if uploadStatus.error != nil || uploadStatus.missingStat {
+		job.UpdateStatus(status.Errored, uploadStatus, uploadStatus.RecentError())
+		onComplete <- uploadStatus
+		return
+	}
 	job.UpdateStatus(status.Queued, uploadStatus, nil)
 	if !manager.Wait(ctx, job.FilesManager) {
 		job.UpdateStatus(status.Canceled, uploadStatus, nil)
@@ -163,52 +156,45 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 	go func() {
 		var localFile *os.File
 		var err error
-		finish := func() {
+		defer func() {
 			if localFile != nil {
 				localFile.Close()
 			}
 			job.FilesManager.Done()
 			onComplete <- uploadStatus
-		}
+		}()
 		if skipOrIgnore(ctx, uploadStatus) {
-			finish()
 			return
 		}
 		localFile, err = os.Open(uploadStatus.LocalPath())
 		if err != nil {
 			uploadStatus.Job().UpdateStatus(status.Errored, uploadStatus, err)
-			finish()
 			return
 		}
 		if ctx.Err() != nil {
 			job.UpdateStatus(status.Canceled, uploadStatus, nil)
-			finish()
 			return
 		}
-		params := UploadIOParams{
-			Path:           uploadStatus.RemotePath(),
-			Reader:         localFile,
-			Size:           uploadStatus.File().Size,
-			Progress:       uploadProgress(uploadStatus),
-			Manager:        job.FilePartsManager,
-			Parts:          uploadStatus.Parts,
-			FileUploadPart: uploadStatus.FileUploadPart,
-		}
-		_, uploadStatus.FileUploadPart, uploadStatus.Parts, err = uploadStatus.UploadIO(ctx, params)
-		localFile.Close()
+		_, uploadStatus.FileUploadPart, uploadStatus.Parts, err = uploadStatus.UploadIO(
+			ctx, UploadIOParams{
+				Path:           uploadStatus.RemotePath(),
+				Reader:         localFile,
+				Size:           uploadStatus.File().Size,
+				Progress:       uploadProgress(uploadStatus),
+				Manager:        job.FilePartsManager,
+				Parts:          uploadStatus.Parts,
+				FileUploadPart: uploadStatus.FileUploadPart,
+			})
 		if err != nil {
 			uploadStatus.Job().StatusFromError(uploadStatus, err)
 		} else {
 			uploadStatus.SetUploadedBytes(uploadStatus.Parts.SuccessfulBytes())
 			uploadStatus.Job().UpdateStatus(status.Complete, uploadStatus, nil)
 		}
-
-		finish()
 	}()
 }
 
-func walkPaginated(ctx context.Context, localFolderPath string, destinationRootPath string, job *status.Job, params UploaderParams, c Uploader) (int, error) {
-	count := 0
+func walkPaginated(ctx context.Context, localFolderPath string, destinationRootPath string, job *status.Job, params UploaderParams, c Uploader) error {
 	err := godirwalk.Walk(localFolderPath, &godirwalk.Options{
 		Callback: func(path string, de *godirwalk.Dirent) error {
 			if ctx.Err() != nil {
@@ -244,26 +230,31 @@ func walkPaginated(ctx context.Context, localFolderPath string, destinationRootP
 			}
 
 			info, err := os.Stat(filepath.Join(path))
-			if err != nil {
-				return err
-			}
 
-			count += 1
-			job.Add(&UploadStatus{
+			uploadStatus := UploadStatus{
 				Uploader:   c,
 				job:        job,
 				remotePath: destination,
 				localPath:  path,
 				Sync:       params.Sync,
 				status:     status.Indexed,
-				file:       files_sdk.File{Type: "file", DisplayName: filepath.Base(destination), Path: destination, Size: info.Size(), Mtime: info.ModTime()},
 				Mutex:      &sync.RWMutex{},
-			})
+				error:      err,
+			}
+
+			if err != nil {
+				uploadStatus.file = files_sdk.File{Type: "file", DisplayName: filepath.Base(destination), Path: destination}
+				uploadStatus.missingStat = true
+				uploadStatus.error = err
+			} else {
+				uploadStatus.file = files_sdk.File{Type: "file", DisplayName: filepath.Base(destination), Path: destination, Size: info.Size(), Mtime: info.ModTime()}
+			}
+			job.Add(&uploadStatus)
 			return nil
 		},
 		Unsorted: true, // (optional) set true for faster yet non-deterministic enumeration (see godoc)
 	})
-	return count, err
+	return err
 }
 
 func skipOrIgnore(downloadCtx context.Context, uploadStatus *UploadStatus) bool {

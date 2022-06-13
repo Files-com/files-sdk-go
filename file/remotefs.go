@@ -112,9 +112,13 @@ func (f *File) load() error {
 		} else {
 			body = make([]byte, resp.ContentLength)
 		}
-		resp.Body.Read(body)
-		resp.Body.Close()
-		return &goFs.PathError{Path: f1.File.Path, Err: fmt.Errorf(string(body)), Op: "read"}
+		_, err := resp.Body.Read(body)
+		defer resp.Body.Close()
+		if err == nil {
+			return &goFs.PathError{Path: f1.File.Path, Err: fmt.Errorf(string(body)), Op: "read"}
+		} else {
+			return &goFs.PathError{Path: f1.File.Path, Err: err, Op: "read"}
+		}
 	}
 	f.ReadCloser = resp.Body
 	f.Size = resp.ContentLength
@@ -176,7 +180,7 @@ func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {
 		return files, &goFs.PathError{Path: f.Path, Err: f.Context.Err(), Op: "readdir"}
 	}
 	folderClient := folder.Client{Config: f.Config}
-	it, err := folderClient.ListFor(f.Context, files_sdk.FolderListForParams{Path: f.File.Path})
+	it, err := folderClient.ListFor(f.Context, files_sdk.FolderListForParams{Path: f.Path})
 	if err != nil {
 		return files, &goFs.PathError{Path: f.Path, Err: err, Op: "readdir"}
 	}
@@ -189,8 +193,13 @@ func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {
 		if err != nil {
 			return files, &goFs.PathError{Path: f.Path, Err: err, Op: "readdir"}
 		}
-		f.cache[fi.Path] = File{File: &fi, FS: f.FS}
-		files = append(files, File{File: &fi, FS: f.FS})
+		dir, _ := filepath.Split(fi.Path)
+		if filepath.Clean(dir) == filepath.Clean(f.Path) {
+			// There is a bug in the API that it could return a nested file not in the current directory.
+			f.cache[fi.Path] = File{File: &fi, FS: f.FS}
+			files = append(files, File{File: &fi, FS: f.FS})
+		}
+
 		f.count += 1
 	}
 

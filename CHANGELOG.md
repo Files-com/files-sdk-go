@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
+## [2.0.80-beta] - 2022/06/13
+### Fix
+- `file.Downloader` and `file.Uploader`
+  - Could cause a nil pointer panic when a `file.RetryPolicy` is set.
+  - Removing possible blocking while job scanning phase that could block transfers from starting.
+
 ## [2.0.38-beta] - 2021/12/16
 ### Add
 - `file_migration.Client.Wait` poll async `file.FileAction` for results. 

@@ -11,14 +11,12 @@ import (
 	"strings"
 	"sync"
 
+	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/directory"
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/Files-com/files-sdk-go/v2/file/status"
-	"github.com/Files-com/files-sdk-go/v2/lib/direction"
-	"github.com/bradfitz/iter"
-
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/lib"
+	"github.com/Files-com/files-sdk-go/v2/lib/direction"
 )
 
 func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *status.Job {
@@ -60,43 +58,31 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 		}
 	}
 	onComplete := make(chan *DownloadStatus)
-	count := 0
 	job.CodeStart = func() {
 		job.Scan()
 		go enqueueIndexedDownloads(job, jobCtx, onComplete)
+		status.WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy), false) })
+
 		fs.WalkDir(fileSys, job.RemotePath, func(path string, d fs.DirEntry, err error) error {
 			if job.Canceled.Called() {
 				return jobCtx.Err()
 			}
 			if err != nil {
-				count += 1
 				createIndexedStatus(Entity{error: err}, params, job)
 				return err
 			}
 			if !d.IsDir() {
-				count += 1
 				f, err := fileSys.Open(path)
 				createIndexedStatus(Entity{error: err, File: f}, params, job)
 			}
 
 			return nil
 		})
+
 		job.EndScan()
-		go markDownloadOnComplete(count, onComplete, jobCtx, job)
 	}
 
 	return job
-}
-
-func markDownloadOnComplete(count int, onComplete chan *DownloadStatus, jobCtx context.Context, job *status.Job) {
-	for range iter.N(count) {
-		<-onComplete
-	}
-	close(onComplete)
-	if !job.Canceled.Called() {
-		RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy), false)
-	}
-	job.Finish()
 }
 
 func enqueueIndexedDownloads(job *status.Job, jobCtx context.Context, onComplete chan *DownloadStatus) {
@@ -141,8 +127,8 @@ func createIndexedStatus(f Entity, params DownloaderParams, job *status.Job) {
 }
 
 func enqueueDownload(ctx context.Context, job *status.Job, downloadStatus *DownloadStatus, signal chan *DownloadStatus) {
-	if downloadStatus.error != nil {
-		job.UpdateStatus(status.Errored, downloadStatus, downloadStatus.error)
+	if downloadStatus.error != nil || downloadStatus.fsFile == nil {
+		job.UpdateStatus(status.Errored, downloadStatus, downloadStatus.RecentError())
 		signal <- downloadStatus
 		return
 	}

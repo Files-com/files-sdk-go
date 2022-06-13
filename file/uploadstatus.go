@@ -18,11 +18,21 @@ type UploadStatus struct {
 	uploadedBytes int64
 	Sync          bool
 	lastByte      time.Time
-	error
 	Uploader
 	Parts
 	files_sdk.FileUploadPart
 	Mutex *sync.RWMutex
+	error
+	lastError   error
+	missingStat bool
+}
+
+func (u *UploadStatus) RecentError() error {
+	if u.error != nil {
+		return u.error
+	}
+
+	return u.lastError
 }
 
 func (u *UploadStatus) Job() *status.Job {
@@ -71,6 +81,9 @@ func (u *UploadStatus) SetStatus(s status.Status, err error) {
 	var setError bool
 	u.status, setError = status.SetStatus(u.status, s, err)
 	if setError {
+		if u.error != nil {
+			u.lastError = u.error
+		}
 		u.error = err
 	}
 

@@ -22,6 +22,15 @@ type DownloadStatus struct {
 	lastByte        time.Time
 	Mutex           *sync.RWMutex
 	error
+	lastError error
+}
+
+func (d *DownloadStatus) RecentError() error {
+	if d.error != nil {
+		return d.error
+	}
+
+	return d.lastError
 }
 
 func (d *DownloadStatus) SetStatus(s status.Status, err error) {
@@ -30,6 +39,9 @@ func (d *DownloadStatus) SetStatus(s status.Status, err error) {
 	var setError bool
 	d.status, setError = status.SetStatus(d.status, s, err)
 	if setError {
+		if d.error != nil {
+			d.lastError = d.error
+		}
 		d.error = err
 	}
 

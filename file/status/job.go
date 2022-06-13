@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bradfitz/iter"
+
 	"github.com/Files-com/files-sdk-go/v2/lib/timer"
 
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
@@ -373,5 +375,32 @@ func (r *Job) StatusFromError(s IFile, err error) {
 		r.UpdateStatus(Canceled, s, nil)
 	} else {
 		r.UpdateStatus(Errored, s, err)
+	}
+}
+
+func WaitTellFinished[T any](job *Job, onStatusComplete chan T, beforeCallingFinish func()) {
+	event := job.EndScanning.Subscribe()
+	go func() {
+		wait := waitForAndCount(event, onStatusComplete)
+		for range iter.N(len(job.Statuses) - wait) {
+			<-onStatusComplete
+		}
+		close(onStatusComplete)
+		if !job.Canceled.Called() {
+			beforeCallingFinish()
+		}
+		job.Finish()
+	}()
+}
+
+func waitForAndCount[T any, F any](wait chan T, onComplete chan F) int {
+	completed := 0
+	for {
+		select {
+		case <-wait:
+			return completed
+		case <-onComplete:
+			completed += 1
+		}
 	}
 }

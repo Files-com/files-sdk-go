@@ -32,6 +32,7 @@ func RetryByStatus(ctx context.Context, job *status.Job, signalEvents bool, s ..
 	switch job.Direction {
 	case direction.DownloadType:
 		onComplete := make(chan *DownloadStatus)
+		defer close(onComplete)
 		enqueueByStatus(ctx, job, signalEvents,
 			func(s status.IFile, jobCxt context.Context) {
 				job.UpdateStatus(status.Retrying, s.(*DownloadStatus), nil)
@@ -41,9 +42,9 @@ func RetryByStatus(ctx context.Context, job *status.Job, signalEvents bool, s ..
 			},
 			s...,
 		)
-		close(onComplete)
 	case direction.UploadType:
 		onComplete := make(chan *UploadStatus)
+		defer close(onComplete)
 		enqueueByStatus(ctx, job, signalEvents,
 			func(s status.IFile, jobCxt context.Context) {
 				job.UpdateStatus(status.Retrying, s.(*UploadStatus), nil)
@@ -53,7 +54,6 @@ func RetryByStatus(ctx context.Context, job *status.Job, signalEvents bool, s ..
 			},
 			s...,
 		)
-		close(onComplete)
 	default:
 		panic("invalid direction")
 	}
