@@ -27,18 +27,15 @@ func (c *Client) Create(ctx context.Context, params files_sdk.SessionCreateParam
 	if res.StatusCode == 204 {
 		return session, nil
 	}
-	if err := session.UnmarshalJSON(*data); err != nil {
-		return session, err
-	}
 
-	return session, nil
+	return session, session.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.SessionCreateParams) (files_sdk.Session, error) {
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context) (files_sdk.Session, error) {
+func (c *Client) Delete(ctx context.Context) error {
 	session := files_sdk.Session{}
 	path := "/sessions"
 	exportedParams := lib.Params{Params: lib.Interface()}
@@ -49,18 +46,15 @@ func (c *Client) Delete(ctx context.Context) (files_sdk.Session, error) {
 		}
 	}()
 	if err != nil {
-		return session, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return session, nil
-	}
-	if err := session.UnmarshalJSON(*data); err != nil {
-		return session, err
+		return nil
 	}
 
-	return session, nil
+	return session.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context) (files_sdk.Session, error) {
+func Delete(ctx context.Context) error {
 	return (&Client{}).Delete(ctx)
 }

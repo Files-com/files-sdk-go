@@ -51,11 +51,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.FileCommentCreateP
 	if res.StatusCode == 204 {
 		return fileComment, nil
 	}
-	if err := fileComment.UnmarshalJSON(*data); err != nil {
-		return fileComment, err
-	}
 
-	return fileComment, nil
+	return fileComment, fileComment.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.FileCommentCreateParams) (files_sdk.FileComment, error) {
@@ -81,21 +78,18 @@ func (c *Client) Update(ctx context.Context, params files_sdk.FileCommentUpdateP
 	if res.StatusCode == 204 {
 		return fileComment, nil
 	}
-	if err := fileComment.UnmarshalJSON(*data); err != nil {
-		return fileComment, err
-	}
 
-	return fileComment, nil
+	return fileComment, fileComment.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.FileCommentUpdateParams) (files_sdk.FileComment, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.FileCommentDeleteParams) (files_sdk.FileComment, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.FileCommentDeleteParams) error {
 	fileComment := files_sdk.FileComment{}
 	if params.Id == 0 {
-		return fileComment, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/file_comments/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -106,18 +100,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.FileCommentDeleteP
 		}
 	}()
 	if err != nil {
-		return fileComment, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return fileComment, nil
-	}
-	if err := fileComment.UnmarshalJSON(*data); err != nil {
-		return fileComment, err
+		return nil
 	}
 
-	return fileComment, nil
+	return fileComment.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.FileCommentDeleteParams) (files_sdk.FileComment, error) {
+func Delete(ctx context.Context, params files_sdk.FileCommentDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

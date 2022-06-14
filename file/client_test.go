@@ -31,11 +31,11 @@ func CreateClient(fixture string) (client *Client, r *recorder.Recorder, err err
 }
 
 func deletePath(client *Client, path string) {
-	_, err := client.Delete(context.Background(), files_sdk.FileDeleteParams{Path: path})
+	err := client.Delete(context.Background(), files_sdk.FileDeleteParams{Path: path})
 	responseError, ok := err.(files_sdk.ResponseError)
 	if ok && responseError.Type == "not-found" {
 	} else if ok && responseError.Type == "processing-failure/folder-not-empty" {
-		_, err = client.Delete(context.Background(), files_sdk.FileDeleteParams{Path: path, Recursive: lib.Bool(true)})
+		err = client.Delete(context.Background(), files_sdk.FileDeleteParams{Path: path, Recursive: lib.Bool(true)})
 		responseError, ok = err.(files_sdk.ResponseError)
 		if ok && responseError.Type == "not-found" {
 

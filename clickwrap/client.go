@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.ClickwrapFindParams)
 	if res.StatusCode == 204 {
 		return clickwrap, nil
 	}
-	if err := clickwrap.UnmarshalJSON(*data); err != nil {
-		return clickwrap, err
-	}
 
-	return clickwrap, nil
+	return clickwrap, clickwrap.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.ClickwrapFindParams) (files_sdk.Clickwrap, error) {
@@ -81,11 +78,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.ClickwrapCreatePar
 	if res.StatusCode == 204 {
 		return clickwrap, nil
 	}
-	if err := clickwrap.UnmarshalJSON(*data); err != nil {
-		return clickwrap, err
-	}
 
-	return clickwrap, nil
+	return clickwrap, clickwrap.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.ClickwrapCreateParams) (files_sdk.Clickwrap, error) {
@@ -111,21 +105,18 @@ func (c *Client) Update(ctx context.Context, params files_sdk.ClickwrapUpdatePar
 	if res.StatusCode == 204 {
 		return clickwrap, nil
 	}
-	if err := clickwrap.UnmarshalJSON(*data); err != nil {
-		return clickwrap, err
-	}
 
-	return clickwrap, nil
+	return clickwrap, clickwrap.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.ClickwrapUpdateParams) (files_sdk.Clickwrap, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.ClickwrapDeleteParams) (files_sdk.Clickwrap, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.ClickwrapDeleteParams) error {
 	clickwrap := files_sdk.Clickwrap{}
 	if params.Id == 0 {
-		return clickwrap, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/clickwraps/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -136,18 +127,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.ClickwrapDeletePar
 		}
 	}()
 	if err != nil {
-		return clickwrap, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return clickwrap, nil
-	}
-	if err := clickwrap.UnmarshalJSON(*data); err != nil {
-		return clickwrap, err
+		return nil
 	}
 
-	return clickwrap, nil
+	return clickwrap.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.ClickwrapDeleteParams) (files_sdk.Clickwrap, error) {
+func Delete(ctx context.Context, params files_sdk.ClickwrapDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

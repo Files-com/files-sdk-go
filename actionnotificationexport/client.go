@@ -31,11 +31,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.ActionNotificationEx
 	if res.StatusCode == 204 {
 		return actionNotificationExport, nil
 	}
-	if err := actionNotificationExport.UnmarshalJSON(*data); err != nil {
-		return actionNotificationExport, err
-	}
 
-	return actionNotificationExport, nil
+	return actionNotificationExport, actionNotificationExport.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.ActionNotificationExportFindParams) (files_sdk.ActionNotificationExport, error) {
@@ -58,11 +55,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.ActionNotification
 	if res.StatusCode == 204 {
 		return actionNotificationExport, nil
 	}
-	if err := actionNotificationExport.UnmarshalJSON(*data); err != nil {
-		return actionNotificationExport, err
-	}
 
-	return actionNotificationExport, nil
+	return actionNotificationExport, actionNotificationExport.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.ActionNotificationExportCreateParams) (files_sdk.ActionNotificationExport, error) {

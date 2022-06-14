@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.SsoStrategyFindParam
 	if res.StatusCode == 204 {
 		return ssoStrategy, nil
 	}
-	if err := ssoStrategy.UnmarshalJSON(*data); err != nil {
-		return ssoStrategy, err
-	}
 
-	return ssoStrategy, nil
+	return ssoStrategy, ssoStrategy.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.SsoStrategyFindParams) (files_sdk.SsoStrategy, error) {
@@ -84,11 +81,8 @@ func (c *Client) Sync(ctx context.Context, params files_sdk.SsoStrategySyncParam
 	if res.StatusCode == 204 {
 		return ssoStrategy, nil
 	}
-	if err := ssoStrategy.UnmarshalJSON(*data); err != nil {
-		return ssoStrategy, err
-	}
 
-	return ssoStrategy, nil
+	return ssoStrategy, ssoStrategy.UnmarshalJSON(*data)
 }
 
 func Sync(ctx context.Context, params files_sdk.SsoStrategySyncParams) (files_sdk.SsoStrategy, error) {

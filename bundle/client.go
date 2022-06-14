@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.BundleFindParams) (f
 	if res.StatusCode == 204 {
 		return bundle, nil
 	}
-	if err := bundle.UnmarshalJSON(*data); err != nil {
-		return bundle, err
-	}
 
-	return bundle, nil
+	return bundle, bundle.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.BundleFindParams) (files_sdk.Bundle, error) {
@@ -81,11 +78,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.BundleCreateParams
 	if res.StatusCode == 204 {
 		return bundle, nil
 	}
-	if err := bundle.UnmarshalJSON(*data); err != nil {
-		return bundle, err
-	}
 
-	return bundle, nil
+	return bundle, bundle.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.BundleCreateParams) (files_sdk.Bundle, error) {
@@ -111,11 +105,8 @@ func (c *Client) Share(ctx context.Context, params files_sdk.BundleShareParams) 
 	if res.StatusCode == 204 {
 		return bundle, nil
 	}
-	if err := bundle.UnmarshalJSON(*data); err != nil {
-		return bundle, err
-	}
 
-	return bundle, nil
+	return bundle, bundle.UnmarshalJSON(*data)
 }
 
 func Share(ctx context.Context, params files_sdk.BundleShareParams) (files_sdk.Bundle, error) {
@@ -141,21 +132,18 @@ func (c *Client) Update(ctx context.Context, params files_sdk.BundleUpdateParams
 	if res.StatusCode == 204 {
 		return bundle, nil
 	}
-	if err := bundle.UnmarshalJSON(*data); err != nil {
-		return bundle, err
-	}
 
-	return bundle, nil
+	return bundle, bundle.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.BundleUpdateParams) (files_sdk.Bundle, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.BundleDeleteParams) (files_sdk.Bundle, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.BundleDeleteParams) error {
 	bundle := files_sdk.Bundle{}
 	if params.Id == 0 {
-		return bundle, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/bundles/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -166,18 +154,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.BundleDeleteParams
 		}
 	}()
 	if err != nil {
-		return bundle, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return bundle, nil
-	}
-	if err := bundle.UnmarshalJSON(*data); err != nil {
-		return bundle, err
+		return nil
 	}
 
-	return bundle, nil
+	return bundle.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.BundleDeleteParams) (files_sdk.Bundle, error) {
+func Delete(ctx context.Context, params files_sdk.BundleDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

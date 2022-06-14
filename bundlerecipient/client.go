@@ -50,11 +50,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.BundleRecipientCre
 	if res.StatusCode == 204 {
 		return bundleRecipient, nil
 	}
-	if err := bundleRecipient.UnmarshalJSON(*data); err != nil {
-		return bundleRecipient, err
-	}
 
-	return bundleRecipient, nil
+	return bundleRecipient, bundleRecipient.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.BundleRecipientCreateParams) (files_sdk.BundleRecipient, error) {

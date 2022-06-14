@@ -50,18 +50,15 @@ func (c *Client) Create(ctx context.Context, params files_sdk.LockCreateParams) 
 	if res.StatusCode == 204 {
 		return lock, nil
 	}
-	if err := lock.UnmarshalJSON(*data); err != nil {
-		return lock, err
-	}
 
-	return lock, nil
+	return lock, lock.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.LockCreateParams) (files_sdk.Lock, error) {
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.LockDeleteParams) (files_sdk.Lock, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.LockDeleteParams) error {
 	lock := files_sdk.Lock{}
 	path := lib.BuildPath("/locks/", params.Path)
 	exportedParams := lib.Params{Params: params}
@@ -72,18 +69,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.LockDeleteParams) 
 		}
 	}()
 	if err != nil {
-		return lock, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return lock, nil
-	}
-	if err := lock.UnmarshalJSON(*data); err != nil {
-		return lock, err
+		return nil
 	}
 
-	return lock, nil
+	return lock.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.LockDeleteParams) (files_sdk.Lock, error) {
+func Delete(ctx context.Context, params files_sdk.LockDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

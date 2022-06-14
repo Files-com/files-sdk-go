@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.AutomationRunFindPar
 	if res.StatusCode == 204 {
 		return automationRun, nil
 	}
-	if err := automationRun.UnmarshalJSON(*data); err != nil {
-		return automationRun, err
-	}
 
-	return automationRun, nil
+	return automationRun, automationRun.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.AutomationRunFindParams) (files_sdk.AutomationRun, error) {

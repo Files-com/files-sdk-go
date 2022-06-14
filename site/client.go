@@ -27,11 +27,8 @@ func (c *Client) Get(ctx context.Context) (files_sdk.Site, error) {
 	if res.StatusCode == 204 {
 		return site, nil
 	}
-	if err := site.UnmarshalJSON(*data); err != nil {
-		return site, err
-	}
 
-	return site, nil
+	return site, site.UnmarshalJSON(*data)
 }
 
 func Get(ctx context.Context) (files_sdk.Site, error) {
@@ -54,11 +51,8 @@ func (c *Client) GetUsage(ctx context.Context) (files_sdk.UsageSnapshot, error) 
 	if res.StatusCode == 204 {
 		return usageSnapshot, nil
 	}
-	if err := usageSnapshot.UnmarshalJSON(*data); err != nil {
-		return usageSnapshot, err
-	}
 
-	return usageSnapshot, nil
+	return usageSnapshot, usageSnapshot.UnmarshalJSON(*data)
 }
 
 func GetUsage(ctx context.Context) (files_sdk.UsageSnapshot, error) {
@@ -81,11 +75,8 @@ func (c *Client) Update(ctx context.Context, params files_sdk.SiteUpdateParams) 
 	if res.StatusCode == 204 {
 		return site, nil
 	}
-	if err := site.UnmarshalJSON(*data); err != nil {
-		return site, err
-	}
 
-	return site, nil
+	return site, site.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.SiteUpdateParams) (files_sdk.Site, error) {

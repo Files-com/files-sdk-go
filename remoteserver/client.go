@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.RemoteServerFindPara
 	if res.StatusCode == 204 {
 		return remoteServer, nil
 	}
-	if err := remoteServer.UnmarshalJSON(*data); err != nil {
-		return remoteServer, err
-	}
 
-	return remoteServer, nil
+	return remoteServer, remoteServer.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.RemoteServerFindParams) (files_sdk.RemoteServer, error) {
@@ -81,11 +78,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.RemoteServerCreate
 	if res.StatusCode == 204 {
 		return remoteServer, nil
 	}
-	if err := remoteServer.UnmarshalJSON(*data); err != nil {
-		return remoteServer, err
-	}
 
-	return remoteServer, nil
+	return remoteServer, remoteServer.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.RemoteServerCreateParams) (files_sdk.RemoteServer, error) {
@@ -111,21 +105,18 @@ func (c *Client) Update(ctx context.Context, params files_sdk.RemoteServerUpdate
 	if res.StatusCode == 204 {
 		return remoteServer, nil
 	}
-	if err := remoteServer.UnmarshalJSON(*data); err != nil {
-		return remoteServer, err
-	}
 
-	return remoteServer, nil
+	return remoteServer, remoteServer.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.RemoteServerUpdateParams) (files_sdk.RemoteServer, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.RemoteServerDeleteParams) (files_sdk.RemoteServer, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.RemoteServerDeleteParams) error {
 	remoteServer := files_sdk.RemoteServer{}
 	if params.Id == 0 {
-		return remoteServer, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/remote_servers/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -136,18 +127,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.RemoteServerDelete
 		}
 	}()
 	if err != nil {
-		return remoteServer, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return remoteServer, nil
-	}
-	if err := remoteServer.UnmarshalJSON(*data); err != nil {
-		return remoteServer, err
+		return nil
 	}
 
-	return remoteServer, nil
+	return remoteServer.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.RemoteServerDeleteParams) (files_sdk.RemoteServer, error) {
+func Delete(ctx context.Context, params files_sdk.RemoteServerDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.As2StationFindParams
 	if res.StatusCode == 204 {
 		return as2Station, nil
 	}
-	if err := as2Station.UnmarshalJSON(*data); err != nil {
-		return as2Station, err
-	}
 
-	return as2Station, nil
+	return as2Station, as2Station.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.As2StationFindParams) (files_sdk.As2Station, error) {
@@ -81,11 +78,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.As2StationCreatePa
 	if res.StatusCode == 204 {
 		return as2Station, nil
 	}
-	if err := as2Station.UnmarshalJSON(*data); err != nil {
-		return as2Station, err
-	}
 
-	return as2Station, nil
+	return as2Station, as2Station.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.As2StationCreateParams) (files_sdk.As2Station, error) {
@@ -111,21 +105,18 @@ func (c *Client) Update(ctx context.Context, params files_sdk.As2StationUpdatePa
 	if res.StatusCode == 204 {
 		return as2Station, nil
 	}
-	if err := as2Station.UnmarshalJSON(*data); err != nil {
-		return as2Station, err
-	}
 
-	return as2Station, nil
+	return as2Station, as2Station.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.As2StationUpdateParams) (files_sdk.As2Station, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.As2StationDeleteParams) (files_sdk.As2Station, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.As2StationDeleteParams) error {
 	as2Station := files_sdk.As2Station{}
 	if params.Id == 0 {
-		return as2Station, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/as2_stations/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -136,18 +127,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.As2StationDeletePa
 		}
 	}()
 	if err != nil {
-		return as2Station, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return as2Station, nil
-	}
-	if err := as2Station.UnmarshalJSON(*data); err != nil {
-		return as2Station, err
+		return nil
 	}
 
-	return as2Station, nil
+	return as2Station.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.As2StationDeleteParams) (files_sdk.As2Station, error) {
+func Delete(ctx context.Context, params files_sdk.As2StationDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

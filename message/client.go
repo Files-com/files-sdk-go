@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.MessageFindParams) (
 	if res.StatusCode == 204 {
 		return message, nil
 	}
-	if err := message.UnmarshalJSON(*data); err != nil {
-		return message, err
-	}
 
-	return message, nil
+	return message, message.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.MessageFindParams) (files_sdk.Message, error) {
@@ -81,11 +78,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.MessageCreateParam
 	if res.StatusCode == 204 {
 		return message, nil
 	}
-	if err := message.UnmarshalJSON(*data); err != nil {
-		return message, err
-	}
 
-	return message, nil
+	return message, message.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.MessageCreateParams) (files_sdk.Message, error) {
@@ -111,21 +105,18 @@ func (c *Client) Update(ctx context.Context, params files_sdk.MessageUpdateParam
 	if res.StatusCode == 204 {
 		return message, nil
 	}
-	if err := message.UnmarshalJSON(*data); err != nil {
-		return message, err
-	}
 
-	return message, nil
+	return message, message.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.MessageUpdateParams) (files_sdk.Message, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.MessageDeleteParams) (files_sdk.Message, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.MessageDeleteParams) error {
 	message := files_sdk.Message{}
 	if params.Id == 0 {
-		return message, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/messages/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -136,18 +127,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.MessageDeleteParam
 		}
 	}()
 	if err != nil {
-		return message, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return message, nil
-	}
-	if err := message.UnmarshalJSON(*data); err != nil {
-		return message, err
+		return nil
 	}
 
-	return message, nil
+	return message.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.MessageDeleteParams) (files_sdk.Message, error) {
+func Delete(ctx context.Context, params files_sdk.MessageDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.UserFindParams) (fil
 	if res.StatusCode == 204 {
 		return user, nil
 	}
-	if err := user.UnmarshalJSON(*data); err != nil {
-		return user, err
-	}
 
-	return user, nil
+	return user, user.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.UserFindParams) (files_sdk.User, error) {
@@ -81,11 +78,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.UserCreateParams) 
 	if res.StatusCode == 204 {
 		return user, nil
 	}
-	if err := user.UnmarshalJSON(*data); err != nil {
-		return user, err
-	}
 
-	return user, nil
+	return user, user.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.UserCreateParams) (files_sdk.User, error) {
@@ -111,11 +105,8 @@ func (c *Client) Unlock(ctx context.Context, params files_sdk.UserUnlockParams) 
 	if res.StatusCode == 204 {
 		return user, nil
 	}
-	if err := user.UnmarshalJSON(*data); err != nil {
-		return user, err
-	}
 
-	return user, nil
+	return user, user.UnmarshalJSON(*data)
 }
 
 func Unlock(ctx context.Context, params files_sdk.UserUnlockParams) (files_sdk.User, error) {
@@ -141,11 +132,8 @@ func (c *Client) ResendWelcomeEmail(ctx context.Context, params files_sdk.UserRe
 	if res.StatusCode == 204 {
 		return user, nil
 	}
-	if err := user.UnmarshalJSON(*data); err != nil {
-		return user, err
-	}
 
-	return user, nil
+	return user, user.UnmarshalJSON(*data)
 }
 
 func ResendWelcomeEmail(ctx context.Context, params files_sdk.UserResendWelcomeEmailParams) (files_sdk.User, error) {
@@ -171,11 +159,8 @@ func (c *Client) User2faReset(ctx context.Context, params files_sdk.UserUser2faR
 	if res.StatusCode == 204 {
 		return user, nil
 	}
-	if err := user.UnmarshalJSON(*data); err != nil {
-		return user, err
-	}
 
-	return user, nil
+	return user, user.UnmarshalJSON(*data)
 }
 
 func User2faReset(ctx context.Context, params files_sdk.UserUser2faResetParams) (files_sdk.User, error) {
@@ -201,21 +186,18 @@ func (c *Client) Update(ctx context.Context, params files_sdk.UserUpdateParams) 
 	if res.StatusCode == 204 {
 		return user, nil
 	}
-	if err := user.UnmarshalJSON(*data); err != nil {
-		return user, err
-	}
 
-	return user, nil
+	return user, user.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.UserUpdateParams) (files_sdk.User, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.UserDeleteParams) (files_sdk.User, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.UserDeleteParams) error {
 	user := files_sdk.User{}
 	if params.Id == 0 {
-		return user, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/users/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -226,18 +208,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.UserDeleteParams) 
 		}
 	}()
 	if err != nil {
-		return user, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return user, nil
-	}
-	if err := user.UnmarshalJSON(*data); err != nil {
-		return user, err
+		return nil
 	}
 
-	return user, nil
+	return user.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.UserDeleteParams) (files_sdk.User, error) {
+func Delete(ctx context.Context, params files_sdk.UserDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

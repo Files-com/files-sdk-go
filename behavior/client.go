@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.BehaviorFindParams) 
 	if res.StatusCode == 204 {
 		return behavior, nil
 	}
-	if err := behavior.UnmarshalJSON(*data); err != nil {
-		return behavior, err
-	}
 
-	return behavior, nil
+	return behavior, behavior.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.BehaviorFindParams) (files_sdk.Behavior, error) {
@@ -95,11 +92,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.BehaviorCreatePara
 	if res.StatusCode == 204 {
 		return behavior, nil
 	}
-	if err := behavior.UnmarshalJSON(*data); err != nil {
-		return behavior, err
-	}
 
-	return behavior, nil
+	return behavior, behavior.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.BehaviorCreateParams) (files_sdk.Behavior, error) {
@@ -122,11 +116,8 @@ func (c *Client) WebhookTest(ctx context.Context, params files_sdk.BehaviorWebho
 	if res.StatusCode == 204 {
 		return behavior, nil
 	}
-	if err := behavior.UnmarshalJSON(*data); err != nil {
-		return behavior, err
-	}
 
-	return behavior, nil
+	return behavior, behavior.UnmarshalJSON(*data)
 }
 
 func WebhookTest(ctx context.Context, params files_sdk.BehaviorWebhookTestParams) (files_sdk.Behavior, error) {
@@ -152,21 +143,18 @@ func (c *Client) Update(ctx context.Context, params files_sdk.BehaviorUpdatePara
 	if res.StatusCode == 204 {
 		return behavior, nil
 	}
-	if err := behavior.UnmarshalJSON(*data); err != nil {
-		return behavior, err
-	}
 
-	return behavior, nil
+	return behavior, behavior.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.BehaviorUpdateParams) (files_sdk.Behavior, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.BehaviorDeleteParams) (files_sdk.Behavior, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.BehaviorDeleteParams) error {
 	behavior := files_sdk.Behavior{}
 	if params.Id == 0 {
-		return behavior, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/behaviors/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -177,18 +165,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.BehaviorDeletePara
 		}
 	}()
 	if err != nil {
-		return behavior, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return behavior, nil
-	}
-	if err := behavior.UnmarshalJSON(*data); err != nil {
-		return behavior, err
+		return nil
 	}
 
-	return behavior, nil
+	return behavior.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.BehaviorDeleteParams) (files_sdk.Behavior, error) {
+func Delete(ctx context.Context, params files_sdk.BehaviorDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

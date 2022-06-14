@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.AutomationFindParams
 	if res.StatusCode == 204 {
 		return automation, nil
 	}
-	if err := automation.UnmarshalJSON(*data); err != nil {
-		return automation, err
-	}
 
-	return automation, nil
+	return automation, automation.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.AutomationFindParams) (files_sdk.Automation, error) {
@@ -81,11 +78,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.AutomationCreatePa
 	if res.StatusCode == 204 {
 		return automation, nil
 	}
-	if err := automation.UnmarshalJSON(*data); err != nil {
-		return automation, err
-	}
 
-	return automation, nil
+	return automation, automation.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.AutomationCreateParams) (files_sdk.Automation, error) {
@@ -111,21 +105,18 @@ func (c *Client) Update(ctx context.Context, params files_sdk.AutomationUpdatePa
 	if res.StatusCode == 204 {
 		return automation, nil
 	}
-	if err := automation.UnmarshalJSON(*data); err != nil {
-		return automation, err
-	}
 
-	return automation, nil
+	return automation, automation.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.AutomationUpdateParams) (files_sdk.Automation, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.AutomationDeleteParams) (files_sdk.Automation, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.AutomationDeleteParams) error {
 	automation := files_sdk.Automation{}
 	if params.Id == 0 {
-		return automation, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/automations/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -136,18 +127,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.AutomationDeletePa
 		}
 	}()
 	if err != nil {
-		return automation, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return automation, nil
-	}
-	if err := automation.UnmarshalJSON(*data); err != nil {
-		return automation, err
+		return nil
 	}
 
-	return automation, nil
+	return automation.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.AutomationDeleteParams) (files_sdk.Automation, error) {
+func Delete(ctx context.Context, params files_sdk.AutomationDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

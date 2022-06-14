@@ -36,11 +36,8 @@ func (c *Client) ListForFile(ctx context.Context, params files_sdk.HistoryListFo
 	if res.StatusCode == 204 {
 		return actionCollection, nil
 	}
-	if err := actionCollection.UnmarshalJSON(*data); err != nil {
-		return actionCollection, err
-	}
 
-	return actionCollection, nil
+	return actionCollection, actionCollection.UnmarshalJSON(*data)
 }
 
 func ListForFile(ctx context.Context, params files_sdk.HistoryListForFileParams) (files_sdk.ActionCollection, error) {
@@ -63,11 +60,8 @@ func (c *Client) ListForFolder(ctx context.Context, params files_sdk.HistoryList
 	if res.StatusCode == 204 {
 		return actionCollection, nil
 	}
-	if err := actionCollection.UnmarshalJSON(*data); err != nil {
-		return actionCollection, err
-	}
 
-	return actionCollection, nil
+	return actionCollection, actionCollection.UnmarshalJSON(*data)
 }
 
 func ListForFolder(ctx context.Context, params files_sdk.HistoryListForFolderParams) (files_sdk.ActionCollection, error) {
@@ -90,11 +84,8 @@ func (c *Client) ListForUser(ctx context.Context, params files_sdk.HistoryListFo
 	if res.StatusCode == 204 {
 		return actionCollection, nil
 	}
-	if err := actionCollection.UnmarshalJSON(*data); err != nil {
-		return actionCollection, err
-	}
 
-	return actionCollection, nil
+	return actionCollection, actionCollection.UnmarshalJSON(*data)
 }
 
 func ListForUser(ctx context.Context, params files_sdk.HistoryListForUserParams) (files_sdk.ActionCollection, error) {
@@ -117,11 +108,8 @@ func (c *Client) ListLogins(ctx context.Context, params files_sdk.HistoryListLog
 	if res.StatusCode == 204 {
 		return actionCollection, nil
 	}
-	if err := actionCollection.UnmarshalJSON(*data); err != nil {
-		return actionCollection, err
-	}
 
-	return actionCollection, nil
+	return actionCollection, actionCollection.UnmarshalJSON(*data)
 }
 
 func ListLogins(ctx context.Context, params files_sdk.HistoryListLoginsParams) (files_sdk.ActionCollection, error) {

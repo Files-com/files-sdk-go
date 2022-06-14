@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.ProjectFindParams) (
 	if res.StatusCode == 204 {
 		return project, nil
 	}
-	if err := project.UnmarshalJSON(*data); err != nil {
-		return project, err
-	}
 
-	return project, nil
+	return project, project.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.ProjectFindParams) (files_sdk.Project, error) {
@@ -81,11 +78,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.ProjectCreateParam
 	if res.StatusCode == 204 {
 		return project, nil
 	}
-	if err := project.UnmarshalJSON(*data); err != nil {
-		return project, err
-	}
 
-	return project, nil
+	return project, project.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.ProjectCreateParams) (files_sdk.Project, error) {
@@ -111,21 +105,18 @@ func (c *Client) Update(ctx context.Context, params files_sdk.ProjectUpdateParam
 	if res.StatusCode == 204 {
 		return project, nil
 	}
-	if err := project.UnmarshalJSON(*data); err != nil {
-		return project, err
-	}
 
-	return project, nil
+	return project, project.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.ProjectUpdateParams) (files_sdk.Project, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.ProjectDeleteParams) (files_sdk.Project, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.ProjectDeleteParams) error {
 	project := files_sdk.Project{}
 	if params.Id == 0 {
-		return project, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/projects/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -136,18 +127,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.ProjectDeleteParam
 		}
 	}()
 	if err != nil {
-		return project, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return project, nil
-	}
-	if err := project.UnmarshalJSON(*data); err != nil {
-		return project, err
+		return nil
 	}
 
-	return project, nil
+	return project.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.ProjectDeleteParams) (files_sdk.Project, error) {
+func Delete(ctx context.Context, params files_sdk.ProjectDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

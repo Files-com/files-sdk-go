@@ -31,11 +31,8 @@ func (c *Client) Retry(ctx context.Context, params files_sdk.ActionWebhookFailur
 	if res.StatusCode == 204 {
 		return actionWebhookFailure, nil
 	}
-	if err := actionWebhookFailure.UnmarshalJSON(*data); err != nil {
-		return actionWebhookFailure, err
-	}
 
-	return actionWebhookFailure, nil
+	return actionWebhookFailure, actionWebhookFailure.UnmarshalJSON(*data)
 }
 
 func Retry(ctx context.Context, params files_sdk.ActionWebhookFailureRetryParams) (files_sdk.ActionWebhookFailure, error) {

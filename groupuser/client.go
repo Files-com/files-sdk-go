@@ -51,11 +51,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.GroupUserCreatePar
 	if res.StatusCode == 204 {
 		return groupUser, nil
 	}
-	if err := groupUser.UnmarshalJSON(*data); err != nil {
-		return groupUser, err
-	}
 
-	return groupUser, nil
+	return groupUser, groupUser.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.GroupUserCreateParams) (files_sdk.GroupUser, error) {
@@ -81,21 +78,18 @@ func (c *Client) Update(ctx context.Context, params files_sdk.GroupUserUpdatePar
 	if res.StatusCode == 204 {
 		return groupUser, nil
 	}
-	if err := groupUser.UnmarshalJSON(*data); err != nil {
-		return groupUser, err
-	}
 
-	return groupUser, nil
+	return groupUser, groupUser.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.GroupUserUpdateParams) (files_sdk.GroupUser, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.GroupUserDeleteParams) (files_sdk.GroupUser, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.GroupUserDeleteParams) error {
 	groupUser := files_sdk.GroupUser{}
 	if params.Id == 0 {
-		return groupUser, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/group_users/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -106,18 +100,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.GroupUserDeletePar
 		}
 	}()
 	if err != nil {
-		return groupUser, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return groupUser, nil
-	}
-	if err := groupUser.UnmarshalJSON(*data); err != nil {
-		return groupUser, err
+		return nil
 	}
 
-	return groupUser, nil
+	return groupUser.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.GroupUserDeleteParams) (files_sdk.GroupUser, error) {
+func Delete(ctx context.Context, params files_sdk.GroupUserDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

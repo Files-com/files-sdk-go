@@ -84,11 +84,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.FileCreateParams) 
 	if res.StatusCode == 204 {
 		return file, nil
 	}
-	if err := file.UnmarshalJSON(*data); err != nil {
-		return file, err
-	}
 
-	return file, nil
+	return file, file.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.FileCreateParams) (files_sdk.File, error) {
@@ -111,18 +108,15 @@ func (c *Client) Update(ctx context.Context, params files_sdk.FileUpdateParams) 
 	if res.StatusCode == 204 {
 		return file, nil
 	}
-	if err := file.UnmarshalJSON(*data); err != nil {
-		return file, err
-	}
 
-	return file, nil
+	return file, file.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.FileUpdateParams) (files_sdk.File, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.FileDeleteParams) (files_sdk.File, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.FileDeleteParams) error {
 	file := files_sdk.File{}
 	path := lib.BuildPath("/files/", params.Path)
 	exportedParams := lib.Params{Params: params}
@@ -133,19 +127,16 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.FileDeleteParams) 
 		}
 	}()
 	if err != nil {
-		return file, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return file, nil
-	}
-	if err := file.UnmarshalJSON(*data); err != nil {
-		return file, err
+		return nil
 	}
 
-	return file, nil
+	return file.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.FileDeleteParams) (files_sdk.File, error) {
+func Delete(ctx context.Context, params files_sdk.FileDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }
 
@@ -165,11 +156,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.FileFindParams) (fil
 	if res.StatusCode == 204 {
 		return file, nil
 	}
-	if err := file.UnmarshalJSON(*data); err != nil {
-		return file, err
-	}
 
-	return file, nil
+	return file, file.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.FileFindParams) (files_sdk.File, error) {
@@ -192,11 +180,8 @@ func (c *Client) Copy(ctx context.Context, params files_sdk.FileCopyParams) (fil
 	if res.StatusCode == 204 {
 		return fileAction, nil
 	}
-	if err := fileAction.UnmarshalJSON(*data); err != nil {
-		return fileAction, err
-	}
 
-	return fileAction, nil
+	return fileAction, fileAction.UnmarshalJSON(*data)
 }
 
 func Copy(ctx context.Context, params files_sdk.FileCopyParams) (files_sdk.FileAction, error) {
@@ -219,11 +204,8 @@ func (c *Client) Move(ctx context.Context, params files_sdk.FileMoveParams) (fil
 	if res.StatusCode == 204 {
 		return fileAction, nil
 	}
-	if err := fileAction.UnmarshalJSON(*data); err != nil {
-		return fileAction, err
-	}
 
-	return fileAction, nil
+	return fileAction, fileAction.UnmarshalJSON(*data)
 }
 
 func Move(ctx context.Context, params files_sdk.FileMoveParams) (files_sdk.FileAction, error) {
@@ -246,11 +228,8 @@ func (c *Client) BeginUpload(ctx context.Context, params files_sdk.FileBeginUplo
 	if res.StatusCode == 204 {
 		return fileUploadPartCollection, nil
 	}
-	if err := fileUploadPartCollection.UnmarshalJSON(*data); err != nil {
-		return fileUploadPartCollection, err
-	}
 
-	return fileUploadPartCollection, nil
+	return fileUploadPartCollection, fileUploadPartCollection.UnmarshalJSON(*data)
 }
 
 func BeginUpload(ctx context.Context, params files_sdk.FileBeginUploadParams) (files_sdk.FileUploadPartCollection, error) {

@@ -51,11 +51,8 @@ func (c *Client) FindCurrent(ctx context.Context) (files_sdk.ApiKey, error) {
 	if res.StatusCode == 204 {
 		return apiKey, nil
 	}
-	if err := apiKey.UnmarshalJSON(*data); err != nil {
-		return apiKey, err
-	}
 
-	return apiKey, nil
+	return apiKey, apiKey.UnmarshalJSON(*data)
 }
 
 func FindCurrent(ctx context.Context) (files_sdk.ApiKey, error) {
@@ -81,11 +78,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.ApiKeyFindParams) (f
 	if res.StatusCode == 204 {
 		return apiKey, nil
 	}
-	if err := apiKey.UnmarshalJSON(*data); err != nil {
-		return apiKey, err
-	}
 
-	return apiKey, nil
+	return apiKey, apiKey.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.ApiKeyFindParams) (files_sdk.ApiKey, error) {
@@ -108,11 +102,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.ApiKeyCreateParams
 	if res.StatusCode == 204 {
 		return apiKey, nil
 	}
-	if err := apiKey.UnmarshalJSON(*data); err != nil {
-		return apiKey, err
-	}
 
-	return apiKey, nil
+	return apiKey, apiKey.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.ApiKeyCreateParams) (files_sdk.ApiKey, error) {
@@ -135,11 +126,8 @@ func (c *Client) UpdateCurrent(ctx context.Context, params files_sdk.ApiKeyUpdat
 	if res.StatusCode == 204 {
 		return apiKey, nil
 	}
-	if err := apiKey.UnmarshalJSON(*data); err != nil {
-		return apiKey, err
-	}
 
-	return apiKey, nil
+	return apiKey, apiKey.UnmarshalJSON(*data)
 }
 
 func UpdateCurrent(ctx context.Context, params files_sdk.ApiKeyUpdateCurrentParams) (files_sdk.ApiKey, error) {
@@ -165,11 +153,8 @@ func (c *Client) Update(ctx context.Context, params files_sdk.ApiKeyUpdateParams
 	if res.StatusCode == 204 {
 		return apiKey, nil
 	}
-	if err := apiKey.UnmarshalJSON(*data); err != nil {
-		return apiKey, err
-	}
 
-	return apiKey, nil
+	return apiKey, apiKey.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.ApiKeyUpdateParams) (files_sdk.ApiKey, error) {
@@ -192,21 +177,18 @@ func (c *Client) DeleteCurrent(ctx context.Context) (files_sdk.ApiKey, error) {
 	if res.StatusCode == 204 {
 		return apiKey, nil
 	}
-	if err := apiKey.UnmarshalJSON(*data); err != nil {
-		return apiKey, err
-	}
 
-	return apiKey, nil
+	return apiKey, apiKey.UnmarshalJSON(*data)
 }
 
 func DeleteCurrent(ctx context.Context) (files_sdk.ApiKey, error) {
 	return (&Client{}).DeleteCurrent(ctx)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.ApiKeyDeleteParams) (files_sdk.ApiKey, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.ApiKeyDeleteParams) error {
 	apiKey := files_sdk.ApiKey{}
 	if params.Id == 0 {
-		return apiKey, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/api_keys/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -217,18 +199,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.ApiKeyDeleteParams
 		}
 	}()
 	if err != nil {
-		return apiKey, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return apiKey, nil
-	}
-	if err := apiKey.UnmarshalJSON(*data); err != nil {
-		return apiKey, err
+		return nil
 	}
 
-	return apiKey, nil
+	return apiKey.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.ApiKeyDeleteParams) (files_sdk.ApiKey, error) {
+func Delete(ctx context.Context, params files_sdk.ApiKeyDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

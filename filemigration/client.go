@@ -32,11 +32,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.FileMigrationFindPar
 	if res.StatusCode == 204 {
 		return fileMigration, nil
 	}
-	if err := fileMigration.UnmarshalJSON(*data); err != nil {
-		return fileMigration, err
-	}
 
-	return fileMigration, nil
+	return fileMigration, fileMigration.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.FileMigrationFindParams) (files_sdk.FileMigration, error) {

@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.GroupFindParams) (fi
 	if res.StatusCode == 204 {
 		return group, nil
 	}
-	if err := group.UnmarshalJSON(*data); err != nil {
-		return group, err
-	}
 
-	return group, nil
+	return group, group.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.GroupFindParams) (files_sdk.Group, error) {
@@ -81,11 +78,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.GroupCreateParams)
 	if res.StatusCode == 204 {
 		return group, nil
 	}
-	if err := group.UnmarshalJSON(*data); err != nil {
-		return group, err
-	}
 
-	return group, nil
+	return group, group.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.GroupCreateParams) (files_sdk.Group, error) {
@@ -111,21 +105,18 @@ func (c *Client) Update(ctx context.Context, params files_sdk.GroupUpdateParams)
 	if res.StatusCode == 204 {
 		return group, nil
 	}
-	if err := group.UnmarshalJSON(*data); err != nil {
-		return group, err
-	}
 
-	return group, nil
+	return group, group.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.GroupUpdateParams) (files_sdk.Group, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.GroupDeleteParams) (files_sdk.Group, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.GroupDeleteParams) error {
 	group := files_sdk.Group{}
 	if params.Id == 0 {
-		return group, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/groups/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -136,18 +127,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.GroupDeleteParams)
 		}
 	}()
 	if err != nil {
-		return group, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return group, nil
-	}
-	if err := group.UnmarshalJSON(*data); err != nil {
-		return group, err
+		return nil
 	}
 
-	return group, nil
+	return group.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.GroupDeleteParams) (files_sdk.Group, error) {
+func Delete(ctx context.Context, params files_sdk.GroupDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

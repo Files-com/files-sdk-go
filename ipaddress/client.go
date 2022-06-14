@@ -50,11 +50,8 @@ func (c *Client) GetReserved(ctx context.Context, params files_sdk.IpAddressGetR
 	if res.StatusCode == 204 {
 		return publicIpAddressCollection, nil
 	}
-	if err := publicIpAddressCollection.UnmarshalJSON(*data); err != nil {
-		return publicIpAddressCollection, err
-	}
 
-	return publicIpAddressCollection, nil
+	return publicIpAddressCollection, publicIpAddressCollection.UnmarshalJSON(*data)
 }
 
 func GetReserved(ctx context.Context, params files_sdk.IpAddressGetReservedParams) (files_sdk.PublicIpAddressCollection, error) {

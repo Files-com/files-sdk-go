@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.NotificationFindPara
 	if res.StatusCode == 204 {
 		return notification, nil
 	}
-	if err := notification.UnmarshalJSON(*data); err != nil {
-		return notification, err
-	}
 
-	return notification, nil
+	return notification, notification.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.NotificationFindParams) (files_sdk.Notification, error) {
@@ -81,11 +78,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.NotificationCreate
 	if res.StatusCode == 204 {
 		return notification, nil
 	}
-	if err := notification.UnmarshalJSON(*data); err != nil {
-		return notification, err
-	}
 
-	return notification, nil
+	return notification, notification.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.NotificationCreateParams) (files_sdk.Notification, error) {
@@ -111,21 +105,18 @@ func (c *Client) Update(ctx context.Context, params files_sdk.NotificationUpdate
 	if res.StatusCode == 204 {
 		return notification, nil
 	}
-	if err := notification.UnmarshalJSON(*data); err != nil {
-		return notification, err
-	}
 
-	return notification, nil
+	return notification, notification.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.NotificationUpdateParams) (files_sdk.Notification, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.NotificationDeleteParams) (files_sdk.Notification, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.NotificationDeleteParams) error {
 	notification := files_sdk.Notification{}
 	if params.Id == 0 {
-		return notification, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/notifications/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -136,18 +127,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.NotificationDelete
 		}
 	}()
 	if err != nil {
-		return notification, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return notification, nil
-	}
-	if err := notification.UnmarshalJSON(*data); err != nil {
-		return notification, err
+		return nil
 	}
 
-	return notification, nil
+	return notification.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.NotificationDeleteParams) (files_sdk.Notification, error) {
+func Delete(ctx context.Context, params files_sdk.NotificationDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

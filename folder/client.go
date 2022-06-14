@@ -50,11 +50,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.FolderCreateParams
 	if res.StatusCode == 204 {
 		return file, nil
 	}
-	if err := file.UnmarshalJSON(*data); err != nil {
-		return file, err
-	}
 
-	return file, nil
+	return file, file.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.FolderCreateParams) (files_sdk.File, error) {

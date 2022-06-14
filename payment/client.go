@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.PaymentFindParams) (
 	if res.StatusCode == 204 {
 		return accountLineItem, nil
 	}
-	if err := accountLineItem.UnmarshalJSON(*data); err != nil {
-		return accountLineItem, err
-	}
 
-	return accountLineItem, nil
+	return accountLineItem, accountLineItem.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.PaymentFindParams) (files_sdk.AccountLineItem, error) {

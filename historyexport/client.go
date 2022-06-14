@@ -31,11 +31,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.HistoryExportFindPar
 	if res.StatusCode == 204 {
 		return historyExport, nil
 	}
-	if err := historyExport.UnmarshalJSON(*data); err != nil {
-		return historyExport, err
-	}
 
-	return historyExport, nil
+	return historyExport, historyExport.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.HistoryExportFindParams) (files_sdk.HistoryExport, error) {
@@ -58,11 +55,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.HistoryExportCreat
 	if res.StatusCode == 204 {
 		return historyExport, nil
 	}
-	if err := historyExport.UnmarshalJSON(*data); err != nil {
-		return historyExport, err
-	}
 
-	return historyExport, nil
+	return historyExport, historyExport.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.HistoryExportCreateParams) (files_sdk.HistoryExport, error) {

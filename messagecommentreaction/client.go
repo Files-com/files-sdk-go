@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.MessageCommentReacti
 	if res.StatusCode == 204 {
 		return messageCommentReaction, nil
 	}
-	if err := messageCommentReaction.UnmarshalJSON(*data); err != nil {
-		return messageCommentReaction, err
-	}
 
-	return messageCommentReaction, nil
+	return messageCommentReaction, messageCommentReaction.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.MessageCommentReactionFindParams) (files_sdk.MessageCommentReaction, error) {
@@ -81,21 +78,18 @@ func (c *Client) Create(ctx context.Context, params files_sdk.MessageCommentReac
 	if res.StatusCode == 204 {
 		return messageCommentReaction, nil
 	}
-	if err := messageCommentReaction.UnmarshalJSON(*data); err != nil {
-		return messageCommentReaction, err
-	}
 
-	return messageCommentReaction, nil
+	return messageCommentReaction, messageCommentReaction.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.MessageCommentReactionCreateParams) (files_sdk.MessageCommentReaction, error) {
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.MessageCommentReactionDeleteParams) (files_sdk.MessageCommentReaction, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.MessageCommentReactionDeleteParams) error {
 	messageCommentReaction := files_sdk.MessageCommentReaction{}
 	if params.Id == 0 {
-		return messageCommentReaction, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/message_comment_reactions/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -106,18 +100,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.MessageCommentReac
 		}
 	}()
 	if err != nil {
-		return messageCommentReaction, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return messageCommentReaction, nil
-	}
-	if err := messageCommentReaction.UnmarshalJSON(*data); err != nil {
-		return messageCommentReaction, err
+		return nil
 	}
 
-	return messageCommentReaction, nil
+	return messageCommentReaction.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.MessageCommentReactionDeleteParams) (files_sdk.MessageCommentReaction, error) {
+func Delete(ctx context.Context, params files_sdk.MessageCommentReactionDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

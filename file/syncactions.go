@@ -30,7 +30,7 @@ func (ad DeleteSource) Call(ctx context.Context, f status.File) (status.Log, err
 		return status.Log{Path: f.LocalPath, Action: "delete source"}, os.Remove(f.LocalPath)
 	case direction.DownloadType:
 		client := Client{Config: ad.Config}
-		_, err := client.Delete(ctx, files_sdk.FileDeleteParams{Path: f.RemotePath})
+		err := client.Delete(ctx, files_sdk.FileDeleteParams{Path: f.RemotePath})
 		return status.Log{Path: f.RemotePath, Action: "delete source"}, err
 	default:
 		panic(fmt.Sprintf("unknown direction %v", f.Direction))

@@ -51,11 +51,8 @@ func (c *Client) GetFolder(ctx context.Context, params files_sdk.RequestGetFolde
 	if res.StatusCode == 204 {
 		return requestCollection, nil
 	}
-	if err := requestCollection.UnmarshalJSON(*data); err != nil {
-		return requestCollection, err
-	}
 
-	return requestCollection, nil
+	return requestCollection, requestCollection.UnmarshalJSON(*data)
 }
 
 func GetFolder(ctx context.Context, params files_sdk.RequestGetFolderParams) (files_sdk.RequestCollection, error) {
@@ -78,21 +75,18 @@ func (c *Client) Create(ctx context.Context, params files_sdk.RequestCreateParam
 	if res.StatusCode == 204 {
 		return request, nil
 	}
-	if err := request.UnmarshalJSON(*data); err != nil {
-		return request, err
-	}
 
-	return request, nil
+	return request, request.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.RequestCreateParams) (files_sdk.Request, error) {
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.RequestDeleteParams) (files_sdk.Request, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.RequestDeleteParams) error {
 	request := files_sdk.Request{}
 	if params.Id == 0 {
-		return request, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/requests/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -103,18 +97,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.RequestDeleteParam
 		}
 	}()
 	if err != nil {
-		return request, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return request, nil
-	}
-	if err := request.UnmarshalJSON(*data); err != nil {
-		return request, err
+		return nil
 	}
 
-	return request, nil
+	return request.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.RequestDeleteParams) (files_sdk.Request, error) {
+func Delete(ctx context.Context, params files_sdk.RequestDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

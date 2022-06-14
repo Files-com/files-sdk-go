@@ -51,21 +51,18 @@ func (c *Client) Create(ctx context.Context, params files_sdk.PermissionCreatePa
 	if res.StatusCode == 204 {
 		return permission, nil
 	}
-	if err := permission.UnmarshalJSON(*data); err != nil {
-		return permission, err
-	}
 
-	return permission, nil
+	return permission, permission.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.PermissionCreateParams) (files_sdk.Permission, error) {
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.PermissionDeleteParams) (files_sdk.Permission, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.PermissionDeleteParams) error {
 	permission := files_sdk.Permission{}
 	if params.Id == 0 {
-		return permission, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/permissions/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -76,18 +73,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.PermissionDeletePa
 		}
 	}()
 	if err != nil {
-		return permission, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return permission, nil
-	}
-	if err := permission.UnmarshalJSON(*data); err != nil {
-		return permission, err
+		return nil
 	}
 
-	return permission, nil
+	return permission.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.PermissionDeleteParams) (files_sdk.Permission, error) {
+func Delete(ctx context.Context, params files_sdk.PermissionDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.PublicKeyFindParams)
 	if res.StatusCode == 204 {
 		return publicKey, nil
 	}
-	if err := publicKey.UnmarshalJSON(*data); err != nil {
-		return publicKey, err
-	}
 
-	return publicKey, nil
+	return publicKey, publicKey.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.PublicKeyFindParams) (files_sdk.PublicKey, error) {
@@ -81,11 +78,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.PublicKeyCreatePar
 	if res.StatusCode == 204 {
 		return publicKey, nil
 	}
-	if err := publicKey.UnmarshalJSON(*data); err != nil {
-		return publicKey, err
-	}
 
-	return publicKey, nil
+	return publicKey, publicKey.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.PublicKeyCreateParams) (files_sdk.PublicKey, error) {
@@ -111,21 +105,18 @@ func (c *Client) Update(ctx context.Context, params files_sdk.PublicKeyUpdatePar
 	if res.StatusCode == 204 {
 		return publicKey, nil
 	}
-	if err := publicKey.UnmarshalJSON(*data); err != nil {
-		return publicKey, err
-	}
 
-	return publicKey, nil
+	return publicKey, publicKey.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.PublicKeyUpdateParams) (files_sdk.PublicKey, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.PublicKeyDeleteParams) (files_sdk.PublicKey, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.PublicKeyDeleteParams) error {
 	publicKey := files_sdk.PublicKey{}
 	if params.Id == 0 {
-		return publicKey, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/public_keys/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -136,18 +127,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.PublicKeyDeletePar
 		}
 	}()
 	if err != nil {
-		return publicKey, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return publicKey, nil
-	}
-	if err := publicKey.UnmarshalJSON(*data); err != nil {
-		return publicKey, err
+		return nil
 	}
 
-	return publicKey, nil
+	return publicKey.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.PublicKeyDeleteParams) (files_sdk.PublicKey, error) {
+func Delete(ctx context.Context, params files_sdk.PublicKeyDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

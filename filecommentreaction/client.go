@@ -28,21 +28,18 @@ func (c *Client) Create(ctx context.Context, params files_sdk.FileCommentReactio
 	if res.StatusCode == 204 {
 		return fileCommentReaction, nil
 	}
-	if err := fileCommentReaction.UnmarshalJSON(*data); err != nil {
-		return fileCommentReaction, err
-	}
 
-	return fileCommentReaction, nil
+	return fileCommentReaction, fileCommentReaction.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.FileCommentReactionCreateParams) (files_sdk.FileCommentReaction, error) {
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.FileCommentReactionDeleteParams) (files_sdk.FileCommentReaction, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.FileCommentReactionDeleteParams) error {
 	fileCommentReaction := files_sdk.FileCommentReaction{}
 	if params.Id == 0 {
-		return fileCommentReaction, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/file_comment_reactions/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -53,18 +50,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.FileCommentReactio
 		}
 	}()
 	if err != nil {
-		return fileCommentReaction, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return fileCommentReaction, nil
-	}
-	if err := fileCommentReaction.UnmarshalJSON(*data); err != nil {
-		return fileCommentReaction, err
+		return nil
 	}
 
-	return fileCommentReaction, nil
+	return fileCommentReaction.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.FileCommentReactionDeleteParams) (files_sdk.FileCommentReaction, error) {
+func Delete(ctx context.Context, params files_sdk.FileCommentReactionDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

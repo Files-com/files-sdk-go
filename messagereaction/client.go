@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.MessageReactionFindP
 	if res.StatusCode == 204 {
 		return messageReaction, nil
 	}
-	if err := messageReaction.UnmarshalJSON(*data); err != nil {
-		return messageReaction, err
-	}
 
-	return messageReaction, nil
+	return messageReaction, messageReaction.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.MessageReactionFindParams) (files_sdk.MessageReaction, error) {
@@ -81,21 +78,18 @@ func (c *Client) Create(ctx context.Context, params files_sdk.MessageReactionCre
 	if res.StatusCode == 204 {
 		return messageReaction, nil
 	}
-	if err := messageReaction.UnmarshalJSON(*data); err != nil {
-		return messageReaction, err
-	}
 
-	return messageReaction, nil
+	return messageReaction, messageReaction.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.MessageReactionCreateParams) (files_sdk.MessageReaction, error) {
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.MessageReactionDeleteParams) (files_sdk.MessageReaction, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.MessageReactionDeleteParams) error {
 	messageReaction := files_sdk.MessageReaction{}
 	if params.Id == 0 {
-		return messageReaction, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/message_reactions/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -106,18 +100,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.MessageReactionDel
 		}
 	}()
 	if err != nil {
-		return messageReaction, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return messageReaction, nil
-	}
-	if err := messageReaction.UnmarshalJSON(*data); err != nil {
-		return messageReaction, err
+		return nil
 	}
 
-	return messageReaction, nil
+	return messageReaction.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.MessageReactionDeleteParams) (files_sdk.MessageReaction, error) {
+func Delete(ctx context.Context, params files_sdk.MessageReactionDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

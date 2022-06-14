@@ -50,11 +50,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.InboxRecipientCrea
 	if res.StatusCode == 204 {
 		return inboxRecipient, nil
 	}
-	if err := inboxRecipient.UnmarshalJSON(*data); err != nil {
-		return inboxRecipient, err
-	}
 
-	return inboxRecipient, nil
+	return inboxRecipient, inboxRecipient.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.InboxRecipientCreateParams) (files_sdk.InboxRecipient, error) {

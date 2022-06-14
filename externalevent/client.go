@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.ExternalEventFindPar
 	if res.StatusCode == 204 {
 		return externalEvent, nil
 	}
-	if err := externalEvent.UnmarshalJSON(*data); err != nil {
-		return externalEvent, err
-	}
 
-	return externalEvent, nil
+	return externalEvent, externalEvent.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.ExternalEventFindParams) (files_sdk.ExternalEvent, error) {
@@ -81,11 +78,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.ExternalEventCreat
 	if res.StatusCode == 204 {
 		return externalEvent, nil
 	}
-	if err := externalEvent.UnmarshalJSON(*data); err != nil {
-		return externalEvent, err
-	}
 
-	return externalEvent, nil
+	return externalEvent, externalEvent.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.ExternalEventCreateParams) (files_sdk.ExternalEvent, error) {

@@ -27,11 +27,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.WebhookTestCreateP
 	if res.StatusCode == 204 {
 		return webhookTest, nil
 	}
-	if err := webhookTest.UnmarshalJSON(*data); err != nil {
-		return webhookTest, err
-	}
 
-	return webhookTest, nil
+	return webhookTest, webhookTest.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.WebhookTestCreateParams) (files_sdk.WebhookTest, error) {

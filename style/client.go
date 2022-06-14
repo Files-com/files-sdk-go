@@ -27,11 +27,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.StyleFindParams) (fi
 	if res.StatusCode == 204 {
 		return style, nil
 	}
-	if err := style.UnmarshalJSON(*data); err != nil {
-		return style, err
-	}
 
-	return style, nil
+	return style, style.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.StyleFindParams) (files_sdk.Style, error) {
@@ -54,18 +51,15 @@ func (c *Client) Update(ctx context.Context, params files_sdk.StyleUpdateParams)
 	if res.StatusCode == 204 {
 		return style, nil
 	}
-	if err := style.UnmarshalJSON(*data); err != nil {
-		return style, err
-	}
 
-	return style, nil
+	return style, style.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.StyleUpdateParams) (files_sdk.Style, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.StyleDeleteParams) (files_sdk.Style, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.StyleDeleteParams) error {
 	style := files_sdk.Style{}
 	path := lib.BuildPath("/styles/", params.Path)
 	exportedParams := lib.Params{Params: params}
@@ -76,18 +70,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.StyleDeleteParams)
 		}
 	}()
 	if err != nil {
-		return style, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return style, nil
-	}
-	if err := style.UnmarshalJSON(*data); err != nil {
-		return style, err
+		return nil
 	}
 
-	return style, nil
+	return style.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.StyleDeleteParams) (files_sdk.Style, error) {
+func Delete(ctx context.Context, params files_sdk.StyleDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }

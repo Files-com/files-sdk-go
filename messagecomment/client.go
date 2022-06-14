@@ -54,11 +54,8 @@ func (c *Client) Find(ctx context.Context, params files_sdk.MessageCommentFindPa
 	if res.StatusCode == 204 {
 		return messageComment, nil
 	}
-	if err := messageComment.UnmarshalJSON(*data); err != nil {
-		return messageComment, err
-	}
 
-	return messageComment, nil
+	return messageComment, messageComment.UnmarshalJSON(*data)
 }
 
 func Find(ctx context.Context, params files_sdk.MessageCommentFindParams) (files_sdk.MessageComment, error) {
@@ -81,11 +78,8 @@ func (c *Client) Create(ctx context.Context, params files_sdk.MessageCommentCrea
 	if res.StatusCode == 204 {
 		return messageComment, nil
 	}
-	if err := messageComment.UnmarshalJSON(*data); err != nil {
-		return messageComment, err
-	}
 
-	return messageComment, nil
+	return messageComment, messageComment.UnmarshalJSON(*data)
 }
 
 func Create(ctx context.Context, params files_sdk.MessageCommentCreateParams) (files_sdk.MessageComment, error) {
@@ -111,21 +105,18 @@ func (c *Client) Update(ctx context.Context, params files_sdk.MessageCommentUpda
 	if res.StatusCode == 204 {
 		return messageComment, nil
 	}
-	if err := messageComment.UnmarshalJSON(*data); err != nil {
-		return messageComment, err
-	}
 
-	return messageComment, nil
+	return messageComment, messageComment.UnmarshalJSON(*data)
 }
 
 func Update(ctx context.Context, params files_sdk.MessageCommentUpdateParams) (files_sdk.MessageComment, error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.MessageCommentDeleteParams) (files_sdk.MessageComment, error) {
+func (c *Client) Delete(ctx context.Context, params files_sdk.MessageCommentDeleteParams) error {
 	messageComment := files_sdk.MessageComment{}
 	if params.Id == 0 {
-		return messageComment, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/message_comments/" + strconv.FormatInt(params.Id, 10) + ""
 	exportedParams := lib.Params{Params: params}
@@ -136,18 +127,15 @@ func (c *Client) Delete(ctx context.Context, params files_sdk.MessageCommentDele
 		}
 	}()
 	if err != nil {
-		return messageComment, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return messageComment, nil
-	}
-	if err := messageComment.UnmarshalJSON(*data); err != nil {
-		return messageComment, err
+		return nil
 	}
 
-	return messageComment, nil
+	return messageComment.UnmarshalJSON(*data)
 }
 
-func Delete(ctx context.Context, params files_sdk.MessageCommentDeleteParams) (files_sdk.MessageComment, error) {
+func Delete(ctx context.Context, params files_sdk.MessageCommentDeleteParams) error {
 	return (&Client{}).Delete(ctx, params)
 }
