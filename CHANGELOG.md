@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
+## [2.0.84-beta] - 2022/06/15
+### Fix
+- Setting `FILES_SDK_DEBUG` ENV could cause API errors. This is because when it logs a JSON body of a request it will read the io.Reader leaving the request with an empty io.Reader.
+
 ## [2.0.82-beta] - 2022/06/15
 ### Change
 - `{modelName}.Client{}.delete` now returns only `error` instead of `(files_sdk.{modelName}, error)`

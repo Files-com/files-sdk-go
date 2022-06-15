@@ -133,21 +133,30 @@ func buildRequest(opts *CallParams) (*http.Request, error) {
 	}
 
 	req.Header = *opts.Headers
-	if opts.Config.InDebug() {
-		withoutBodyReq := *req
-		if !bodyIsJson {
-			withoutBodyReq.Body = nil
-		}
-		command, err := http2curl.GetCurlCommand(&withoutBodyReq)
-		if err != nil {
-			panic(err)
-		}
-		opts.Config.Logger().Printf(" %v", command)
-	}
 	if !opts.StayOpen {
 		req.Header.Set("Connection", "close")
 		req.Close = true
 	}
 
+	if opts.Config.InDebug() {
+		defer debugLog(bodyIsJson, req, opts.Config, opts.Params)
+	}
 	return req, nil
+}
+
+func debugLog(bodyIsJson bool, req *http.Request, config Config, params lib.Values) {
+	clonedReq := req.Clone(context.Background())
+	clonedReq.Body = nil
+	if bodyIsJson {
+		jsonBody, err := params.ToJSON()
+		if err != nil {
+			panic(err)
+		}
+		clonedReq.Body = ioutil.NopCloser(jsonBody)
+	}
+	command, err := http2curl.GetCurlCommand(clonedReq)
+	if err != nil {
+		panic(err)
+	}
+	config.Logger().Printf(" %v", command)
 }
