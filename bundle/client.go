@@ -86,10 +86,10 @@ func Create(ctx context.Context, params files_sdk.BundleCreateParams) (files_sdk
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Share(ctx context.Context, params files_sdk.BundleShareParams) (files_sdk.Bundle, error) {
+func (c *Client) Share(ctx context.Context, params files_sdk.BundleShareParams) error {
 	bundle := files_sdk.Bundle{}
 	if params.Id == 0 {
-		return bundle, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/bundles/" + strconv.FormatInt(params.Id, 10) + "/share"
 	exportedParams := lib.Params{Params: params}
@@ -100,16 +100,16 @@ func (c *Client) Share(ctx context.Context, params files_sdk.BundleShareParams) 
 		}
 	}()
 	if err != nil {
-		return bundle, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return bundle, nil
+		return nil
 	}
 
-	return bundle, bundle.UnmarshalJSON(*data)
+	return bundle.UnmarshalJSON(*data)
 }
 
-func Share(ctx context.Context, params files_sdk.BundleShareParams) (files_sdk.Bundle, error) {
+func Share(ctx context.Context, params files_sdk.BundleShareParams) error {
 	return (&Client{}).Share(ctx, params)
 }
 

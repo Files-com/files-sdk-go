@@ -12,10 +12,10 @@ type Client struct {
 	files_sdk.Config
 }
 
-func (c *Client) Retry(ctx context.Context, params files_sdk.ActionWebhookFailureRetryParams) (files_sdk.ActionWebhookFailure, error) {
+func (c *Client) Retry(ctx context.Context, params files_sdk.ActionWebhookFailureRetryParams) error {
 	actionWebhookFailure := files_sdk.ActionWebhookFailure{}
 	if params.Id == 0 {
-		return actionWebhookFailure, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/action_webhook_failures/" + strconv.FormatInt(params.Id, 10) + "/retry"
 	exportedParams := lib.Params{Params: params}
@@ -26,15 +26,15 @@ func (c *Client) Retry(ctx context.Context, params files_sdk.ActionWebhookFailur
 		}
 	}()
 	if err != nil {
-		return actionWebhookFailure, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return actionWebhookFailure, nil
+		return nil
 	}
 
-	return actionWebhookFailure, actionWebhookFailure.UnmarshalJSON(*data)
+	return actionWebhookFailure.UnmarshalJSON(*data)
 }
 
-func Retry(ctx context.Context, params files_sdk.ActionWebhookFailureRetryParams) (files_sdk.ActionWebhookFailure, error) {
+func Retry(ctx context.Context, params files_sdk.ActionWebhookFailureRetryParams) error {
 	return (&Client{}).Retry(ctx, params)
 }

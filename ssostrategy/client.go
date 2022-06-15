@@ -62,10 +62,10 @@ func Find(ctx context.Context, params files_sdk.SsoStrategyFindParams) (files_sd
 	return (&Client{}).Find(ctx, params)
 }
 
-func (c *Client) Sync(ctx context.Context, params files_sdk.SsoStrategySyncParams) (files_sdk.SsoStrategy, error) {
+func (c *Client) Sync(ctx context.Context, params files_sdk.SsoStrategySyncParams) error {
 	ssoStrategy := files_sdk.SsoStrategy{}
 	if params.Id == 0 {
-		return ssoStrategy, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/sso_strategies/" + strconv.FormatInt(params.Id, 10) + "/sync"
 	exportedParams := lib.Params{Params: params}
@@ -76,15 +76,15 @@ func (c *Client) Sync(ctx context.Context, params files_sdk.SsoStrategySyncParam
 		}
 	}()
 	if err != nil {
-		return ssoStrategy, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return ssoStrategy, nil
+		return nil
 	}
 
-	return ssoStrategy, ssoStrategy.UnmarshalJSON(*data)
+	return ssoStrategy.UnmarshalJSON(*data)
 }
 
-func Sync(ctx context.Context, params files_sdk.SsoStrategySyncParams) (files_sdk.SsoStrategy, error) {
+func Sync(ctx context.Context, params files_sdk.SsoStrategySyncParams) error {
 	return (&Client{}).Sync(ctx, params)
 }

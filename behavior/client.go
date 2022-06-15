@@ -100,7 +100,7 @@ func Create(ctx context.Context, params files_sdk.BehaviorCreateParams) (files_s
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) WebhookTest(ctx context.Context, params files_sdk.BehaviorWebhookTestParams) (files_sdk.Behavior, error) {
+func (c *Client) WebhookTest(ctx context.Context, params files_sdk.BehaviorWebhookTestParams) error {
 	behavior := files_sdk.Behavior{}
 	path := "/behaviors/webhook/test"
 	exportedParams := lib.Params{Params: params}
@@ -111,16 +111,16 @@ func (c *Client) WebhookTest(ctx context.Context, params files_sdk.BehaviorWebho
 		}
 	}()
 	if err != nil {
-		return behavior, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return behavior, nil
+		return nil
 	}
 
-	return behavior, behavior.UnmarshalJSON(*data)
+	return behavior.UnmarshalJSON(*data)
 }
 
-func WebhookTest(ctx context.Context, params files_sdk.BehaviorWebhookTestParams) (files_sdk.Behavior, error) {
+func WebhookTest(ctx context.Context, params files_sdk.BehaviorWebhookTestParams) error {
 	return (&Client{}).WebhookTest(ctx, params)
 }
 

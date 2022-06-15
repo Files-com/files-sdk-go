@@ -161,7 +161,7 @@ func Update(ctx context.Context, params files_sdk.ApiKeyUpdateParams) (files_sdk
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) DeleteCurrent(ctx context.Context) (files_sdk.ApiKey, error) {
+func (c *Client) DeleteCurrent(ctx context.Context) error {
 	apiKey := files_sdk.ApiKey{}
 	path := "/api_key"
 	exportedParams := lib.Params{Params: lib.Interface()}
@@ -172,16 +172,16 @@ func (c *Client) DeleteCurrent(ctx context.Context) (files_sdk.ApiKey, error) {
 		}
 	}()
 	if err != nil {
-		return apiKey, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return apiKey, nil
+		return nil
 	}
 
-	return apiKey, apiKey.UnmarshalJSON(*data)
+	return apiKey.UnmarshalJSON(*data)
 }
 
-func DeleteCurrent(ctx context.Context) (files_sdk.ApiKey, error) {
+func DeleteCurrent(ctx context.Context) error {
 	return (&Client{}).DeleteCurrent(ctx)
 }
 

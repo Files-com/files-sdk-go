@@ -86,10 +86,10 @@ func Create(ctx context.Context, params files_sdk.UserCreateParams) (files_sdk.U
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Unlock(ctx context.Context, params files_sdk.UserUnlockParams) (files_sdk.User, error) {
+func (c *Client) Unlock(ctx context.Context, params files_sdk.UserUnlockParams) error {
 	user := files_sdk.User{}
 	if params.Id == 0 {
-		return user, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/users/" + strconv.FormatInt(params.Id, 10) + "/unlock"
 	exportedParams := lib.Params{Params: params}
@@ -100,23 +100,23 @@ func (c *Client) Unlock(ctx context.Context, params files_sdk.UserUnlockParams) 
 		}
 	}()
 	if err != nil {
-		return user, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return user, nil
+		return nil
 	}
 
-	return user, user.UnmarshalJSON(*data)
+	return user.UnmarshalJSON(*data)
 }
 
-func Unlock(ctx context.Context, params files_sdk.UserUnlockParams) (files_sdk.User, error) {
+func Unlock(ctx context.Context, params files_sdk.UserUnlockParams) error {
 	return (&Client{}).Unlock(ctx, params)
 }
 
-func (c *Client) ResendWelcomeEmail(ctx context.Context, params files_sdk.UserResendWelcomeEmailParams) (files_sdk.User, error) {
+func (c *Client) ResendWelcomeEmail(ctx context.Context, params files_sdk.UserResendWelcomeEmailParams) error {
 	user := files_sdk.User{}
 	if params.Id == 0 {
-		return user, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/users/" + strconv.FormatInt(params.Id, 10) + "/resend_welcome_email"
 	exportedParams := lib.Params{Params: params}
@@ -127,23 +127,23 @@ func (c *Client) ResendWelcomeEmail(ctx context.Context, params files_sdk.UserRe
 		}
 	}()
 	if err != nil {
-		return user, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return user, nil
+		return nil
 	}
 
-	return user, user.UnmarshalJSON(*data)
+	return user.UnmarshalJSON(*data)
 }
 
-func ResendWelcomeEmail(ctx context.Context, params files_sdk.UserResendWelcomeEmailParams) (files_sdk.User, error) {
+func ResendWelcomeEmail(ctx context.Context, params files_sdk.UserResendWelcomeEmailParams) error {
 	return (&Client{}).ResendWelcomeEmail(ctx, params)
 }
 
-func (c *Client) User2faReset(ctx context.Context, params files_sdk.UserUser2faResetParams) (files_sdk.User, error) {
+func (c *Client) User2faReset(ctx context.Context, params files_sdk.UserUser2faResetParams) error {
 	user := files_sdk.User{}
 	if params.Id == 0 {
-		return user, lib.CreateError(params, "Id")
+		return lib.CreateError(params, "Id")
 	}
 	path := "/users/" + strconv.FormatInt(params.Id, 10) + "/2fa/reset"
 	exportedParams := lib.Params{Params: params}
@@ -154,16 +154,16 @@ func (c *Client) User2faReset(ctx context.Context, params files_sdk.UserUser2faR
 		}
 	}()
 	if err != nil {
-		return user, err
+		return err
 	}
 	if res.StatusCode == 204 {
-		return user, nil
+		return nil
 	}
 
-	return user, user.UnmarshalJSON(*data)
+	return user.UnmarshalJSON(*data)
 }
 
-func User2faReset(ctx context.Context, params files_sdk.UserUser2faResetParams) (files_sdk.User, error) {
+func User2faReset(ctx context.Context, params files_sdk.UserUser2faResetParams) error {
 	return (&Client{}).User2faReset(ctx, params)
 }
 
