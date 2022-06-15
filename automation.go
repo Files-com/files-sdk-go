@@ -30,7 +30,6 @@ type Automation struct {
 	TriggerActions         string          `json:"trigger_actions,omitempty"`
 	Value                  json.RawMessage `json:"value,omitempty"`
 	Destination            string          `json:"destination,omitempty"`
-	ClonedFrom             int64           `json:"cloned_from,omitempty"`
 }
 
 type AutomationCollection []Automation
@@ -108,7 +107,6 @@ type AutomationCreateParams struct {
 	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false" json:"trigger_actions,omitempty"`
 	Value                  json.RawMessage       `url:"value,omitempty" required:"false" json:"value,omitempty"`
 	Automation             AutomationEnum        `url:"automation,omitempty" required:"true" json:"automation,omitempty"`
-	ClonedFrom             int64                 `url:"cloned_from,omitempty" required:"false" json:"cloned_from,omitempty"`
 }
 
 type AutomationUpdateParams struct {
