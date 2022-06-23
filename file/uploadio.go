@@ -259,8 +259,13 @@ func (c *Client) createPart(ctx context.Context, reader io.ReadCloser, len int64
 		}
 		return files_sdk.EtagsParam{}, len, fmt.Errorf(string(out))
 	}
+	etag := strings.Trim(res.Header.Get("Etag"), "\"")
+	if etag == "" {
+		// With remote mounts this has no value, but the code strip the value causing a validation error.
+		etag = "null"
+	}
 	return files_sdk.EtagsParam{
-		Etag: strings.Trim(res.Header.Get("Etag"), "\""),
+		Etag: etag,
 		Part: strconv.FormatInt(fileUploadPart.PartNumber, 10),
 	}, len, nil
 }
