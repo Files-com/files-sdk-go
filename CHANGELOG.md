@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 This project gets auto released on every change to the [Files.com API](https://developers.files.com).
 Auto generated releases contain additions and fixes to models and method arguments, theses will not be documented here.
 
+## [2.0.88-beta] - 2022/06/29
+### Fix
+- `file.Uploader` when retrying a failed file part could result in an error of `Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed.`. This was fixed by property rewinding the IO before trying again.
+
 ## [2.0.87-beta] - 2022/06/29
 ### Fix
 - Model fields of `time.Time` are changed to `*time.Time`. This gets around a zero value being send to the API.

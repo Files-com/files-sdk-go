@@ -79,7 +79,7 @@ func CallRaw(params *CallParams) (*http.Response, error) {
 	}
 	if request.Body != nil {
 		retryRequest := &retryablehttp.Request{Request: request}
-		retryRequest.SetBody(func() (io.Reader, error) { return request.Body, nil })
+		retryRequest.Body = request.Body
 		return params.Config.GetRawClient().Do(retryRequest)
 	} else {
 		return params.Config.GetHttpClient().Do(request)

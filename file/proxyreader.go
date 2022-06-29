@@ -17,6 +17,12 @@ func (x *ProxyReader) Len() int {
 	return int(x.len)
 }
 
+func (x *ProxyReader) Seek(offset int64, whence int) (int64, error) {
+	x.onRead(-int64(x.read - int(offset))) // rewind progress
+	x.read = int(offset)
+	return offset, nil
+}
+
 func (x *ProxyReader) Read(p []byte) (int, error) {
 	if x.closed {
 		x.onRead(-int64(x.read)) // rewind progress
