@@ -71,7 +71,7 @@ func (i Info) Mode() goFs.FileMode {
 	return goFs.ModePerm
 }
 func (i Info) ModTime() time.Time {
-	return i.File.Mtime
+	return *i.File.Mtime
 }
 
 func (i Info) IsDir() bool {

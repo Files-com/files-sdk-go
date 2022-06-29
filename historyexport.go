@@ -6,32 +6,32 @@ import (
 )
 
 type HistoryExport struct {
-	Id                       int64     `json:"id,omitempty"`
-	HistoryVersion           string    `json:"history_version,omitempty"`
-	StartAt                  time.Time `json:"start_at,omitempty"`
-	EndAt                    time.Time `json:"end_at,omitempty"`
-	Status                   string    `json:"status,omitempty"`
-	QueryAction              string    `json:"query_action,omitempty"`
-	QueryInterface           string    `json:"query_interface,omitempty"`
-	QueryUserId              string    `json:"query_user_id,omitempty"`
-	QueryFileId              string    `json:"query_file_id,omitempty"`
-	QueryParentId            string    `json:"query_parent_id,omitempty"`
-	QueryPath                string    `json:"query_path,omitempty"`
-	QueryFolder              string    `json:"query_folder,omitempty"`
-	QuerySrc                 string    `json:"query_src,omitempty"`
-	QueryDestination         string    `json:"query_destination,omitempty"`
-	QueryIp                  string    `json:"query_ip,omitempty"`
-	QueryUsername            string    `json:"query_username,omitempty"`
-	QueryFailureType         string    `json:"query_failure_type,omitempty"`
-	QueryTargetId            string    `json:"query_target_id,omitempty"`
-	QueryTargetName          string    `json:"query_target_name,omitempty"`
-	QueryTargetPermission    string    `json:"query_target_permission,omitempty"`
-	QueryTargetUserId        string    `json:"query_target_user_id,omitempty"`
-	QueryTargetUsername      string    `json:"query_target_username,omitempty"`
-	QueryTargetPlatform      string    `json:"query_target_platform,omitempty"`
-	QueryTargetPermissionSet string    `json:"query_target_permission_set,omitempty"`
-	ResultsUrl               string    `json:"results_url,omitempty"`
-	UserId                   int64     `json:"user_id,omitempty"`
+	Id                       int64      `json:"id,omitempty"`
+	HistoryVersion           string     `json:"history_version,omitempty"`
+	StartAt                  *time.Time `json:"start_at,omitempty"`
+	EndAt                    *time.Time `json:"end_at,omitempty"`
+	Status                   string     `json:"status,omitempty"`
+	QueryAction              string     `json:"query_action,omitempty"`
+	QueryInterface           string     `json:"query_interface,omitempty"`
+	QueryUserId              string     `json:"query_user_id,omitempty"`
+	QueryFileId              string     `json:"query_file_id,omitempty"`
+	QueryParentId            string     `json:"query_parent_id,omitempty"`
+	QueryPath                string     `json:"query_path,omitempty"`
+	QueryFolder              string     `json:"query_folder,omitempty"`
+	QuerySrc                 string     `json:"query_src,omitempty"`
+	QueryDestination         string     `json:"query_destination,omitempty"`
+	QueryIp                  string     `json:"query_ip,omitempty"`
+	QueryUsername            string     `json:"query_username,omitempty"`
+	QueryFailureType         string     `json:"query_failure_type,omitempty"`
+	QueryTargetId            string     `json:"query_target_id,omitempty"`
+	QueryTargetName          string     `json:"query_target_name,omitempty"`
+	QueryTargetPermission    string     `json:"query_target_permission,omitempty"`
+	QueryTargetUserId        string     `json:"query_target_user_id,omitempty"`
+	QueryTargetUsername      string     `json:"query_target_username,omitempty"`
+	QueryTargetPlatform      string     `json:"query_target_platform,omitempty"`
+	QueryTargetPermissionSet string     `json:"query_target_permission_set,omitempty"`
+	ResultsUrl               string     `json:"results_url,omitempty"`
+	UserId                   int64      `json:"user_id,omitempty"`
 }
 
 type HistoryExportCollection []HistoryExport
@@ -41,28 +41,28 @@ type HistoryExportFindParams struct {
 }
 
 type HistoryExportCreateParams struct {
-	UserId                   int64     `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
-	StartAt                  time.Time `url:"start_at,omitempty" required:"false" json:"start_at,omitempty"`
-	EndAt                    time.Time `url:"end_at,omitempty" required:"false" json:"end_at,omitempty"`
-	QueryAction              string    `url:"query_action,omitempty" required:"false" json:"query_action,omitempty"`
-	QueryInterface           string    `url:"query_interface,omitempty" required:"false" json:"query_interface,omitempty"`
-	QueryUserId              string    `url:"query_user_id,omitempty" required:"false" json:"query_user_id,omitempty"`
-	QueryFileId              string    `url:"query_file_id,omitempty" required:"false" json:"query_file_id,omitempty"`
-	QueryParentId            string    `url:"query_parent_id,omitempty" required:"false" json:"query_parent_id,omitempty"`
-	QueryPath                string    `url:"query_path,omitempty" required:"false" json:"query_path,omitempty"`
-	QueryFolder              string    `url:"query_folder,omitempty" required:"false" json:"query_folder,omitempty"`
-	QuerySrc                 string    `url:"query_src,omitempty" required:"false" json:"query_src,omitempty"`
-	QueryDestination         string    `url:"query_destination,omitempty" required:"false" json:"query_destination,omitempty"`
-	QueryIp                  string    `url:"query_ip,omitempty" required:"false" json:"query_ip,omitempty"`
-	QueryUsername            string    `url:"query_username,omitempty" required:"false" json:"query_username,omitempty"`
-	QueryFailureType         string    `url:"query_failure_type,omitempty" required:"false" json:"query_failure_type,omitempty"`
-	QueryTargetId            string    `url:"query_target_id,omitempty" required:"false" json:"query_target_id,omitempty"`
-	QueryTargetName          string    `url:"query_target_name,omitempty" required:"false" json:"query_target_name,omitempty"`
-	QueryTargetPermission    string    `url:"query_target_permission,omitempty" required:"false" json:"query_target_permission,omitempty"`
-	QueryTargetUserId        string    `url:"query_target_user_id,omitempty" required:"false" json:"query_target_user_id,omitempty"`
-	QueryTargetUsername      string    `url:"query_target_username,omitempty" required:"false" json:"query_target_username,omitempty"`
-	QueryTargetPlatform      string    `url:"query_target_platform,omitempty" required:"false" json:"query_target_platform,omitempty"`
-	QueryTargetPermissionSet string    `url:"query_target_permission_set,omitempty" required:"false" json:"query_target_permission_set,omitempty"`
+	UserId                   int64      `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	StartAt                  *time.Time `url:"start_at,omitempty" required:"false" json:"start_at,omitempty"`
+	EndAt                    *time.Time `url:"end_at,omitempty" required:"false" json:"end_at,omitempty"`
+	QueryAction              string     `url:"query_action,omitempty" required:"false" json:"query_action,omitempty"`
+	QueryInterface           string     `url:"query_interface,omitempty" required:"false" json:"query_interface,omitempty"`
+	QueryUserId              string     `url:"query_user_id,omitempty" required:"false" json:"query_user_id,omitempty"`
+	QueryFileId              string     `url:"query_file_id,omitempty" required:"false" json:"query_file_id,omitempty"`
+	QueryParentId            string     `url:"query_parent_id,omitempty" required:"false" json:"query_parent_id,omitempty"`
+	QueryPath                string     `url:"query_path,omitempty" required:"false" json:"query_path,omitempty"`
+	QueryFolder              string     `url:"query_folder,omitempty" required:"false" json:"query_folder,omitempty"`
+	QuerySrc                 string     `url:"query_src,omitempty" required:"false" json:"query_src,omitempty"`
+	QueryDestination         string     `url:"query_destination,omitempty" required:"false" json:"query_destination,omitempty"`
+	QueryIp                  string     `url:"query_ip,omitempty" required:"false" json:"query_ip,omitempty"`
+	QueryUsername            string     `url:"query_username,omitempty" required:"false" json:"query_username,omitempty"`
+	QueryFailureType         string     `url:"query_failure_type,omitempty" required:"false" json:"query_failure_type,omitempty"`
+	QueryTargetId            string     `url:"query_target_id,omitempty" required:"false" json:"query_target_id,omitempty"`
+	QueryTargetName          string     `url:"query_target_name,omitempty" required:"false" json:"query_target_name,omitempty"`
+	QueryTargetPermission    string     `url:"query_target_permission,omitempty" required:"false" json:"query_target_permission,omitempty"`
+	QueryTargetUserId        string     `url:"query_target_user_id,omitempty" required:"false" json:"query_target_user_id,omitempty"`
+	QueryTargetUsername      string     `url:"query_target_username,omitempty" required:"false" json:"query_target_username,omitempty"`
+	QueryTargetPlatform      string     `url:"query_target_platform,omitempty" required:"false" json:"query_target_platform,omitempty"`
+	QueryTargetPermissionSet string     `url:"query_target_permission_set,omitempty" required:"false" json:"query_target_permission_set,omitempty"`
 }
 
 func (h *HistoryExport) UnmarshalJSON(data []byte) error {

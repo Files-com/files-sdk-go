@@ -8,23 +8,23 @@ import (
 )
 
 type Folder struct {
-	Path             string    `json:"path,omitempty"`
-	DisplayName      string    `json:"display_name,omitempty"`
-	Type             string    `json:"type,omitempty"`
-	Size             int64     `json:"size,omitempty"`
-	Mtime            time.Time `json:"mtime,omitempty"`
-	ProvidedMtime    time.Time `json:"provided_mtime,omitempty"`
-	Crc32            string    `json:"crc32,omitempty"`
-	Md5              string    `json:"md5,omitempty"`
-	MimeType         string    `json:"mime_type,omitempty"`
-	Region           string    `json:"region,omitempty"`
-	Permissions      string    `json:"permissions,omitempty"`
-	SubfoldersLocked *bool     `json:"subfolders_locked?,omitempty"`
-	DownloadUri      string    `json:"download_uri,omitempty"`
-	PriorityColor    string    `json:"priority_color,omitempty"`
-	PreviewId        int64     `json:"preview_id,omitempty"`
-	Preview          Preview   `json:"preview,omitempty"`
-	MkdirParents     *bool     `json:"mkdir_parents,omitempty"`
+	Path             string     `json:"path,omitempty"`
+	DisplayName      string     `json:"display_name,omitempty"`
+	Type             string     `json:"type,omitempty"`
+	Size             int64      `json:"size,omitempty"`
+	Mtime            *time.Time `json:"mtime,omitempty"`
+	ProvidedMtime    *time.Time `json:"provided_mtime,omitempty"`
+	Crc32            string     `json:"crc32,omitempty"`
+	Md5              string     `json:"md5,omitempty"`
+	MimeType         string     `json:"mime_type,omitempty"`
+	Region           string     `json:"region,omitempty"`
+	Permissions      string     `json:"permissions,omitempty"`
+	SubfoldersLocked *bool      `json:"subfolders_locked?,omitempty"`
+	DownloadUri      string     `json:"download_uri,omitempty"`
+	PriorityColor    string     `json:"priority_color,omitempty"`
+	PreviewId        int64      `json:"preview_id,omitempty"`
+	Preview          Preview    `json:"preview,omitempty"`
+	MkdirParents     *bool      `json:"mkdir_parents,omitempty"`
 }
 
 type FolderCollection []Folder

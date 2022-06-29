@@ -14,7 +14,7 @@ type Automation struct {
 	Disabled               *bool           `json:"disabled,omitempty"`
 	Trigger                string          `json:"trigger,omitempty"`
 	Interval               string          `json:"interval,omitempty"`
-	LastModifiedAt         time.Time       `json:"last_modified_at,omitempty"`
+	LastModifiedAt         *time.Time      `json:"last_modified_at,omitempty"`
 	Name                   string          `json:"name,omitempty"`
 	Schedule               json.RawMessage `json:"schedule,omitempty"`
 	Source                 string          `json:"source,omitempty"`

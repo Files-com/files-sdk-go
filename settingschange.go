@@ -8,11 +8,11 @@ import (
 )
 
 type SettingsChange struct {
-	Changes            string    `json:"changes,omitempty"`
-	CreatedAt          time.Time `json:"created_at,omitempty"`
-	UserId             int64     `json:"user_id,omitempty"`
-	UserIsFilesSupport *bool     `json:"user_is_files_support,omitempty"`
-	Username           string    `json:"username,omitempty"`
+	Changes            string     `json:"changes,omitempty"`
+	CreatedAt          *time.Time `json:"created_at,omitempty"`
+	UserId             int64      `json:"user_id,omitempty"`
+	UserIsFilesSupport *bool      `json:"user_is_files_support,omitempty"`
+	Username           string     `json:"username,omitempty"`
 }
 
 type SettingsChangeCollection []SettingsChange

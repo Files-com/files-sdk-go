@@ -8,12 +8,12 @@ import (
 )
 
 type UserCipherUse struct {
-	Id             int64     `json:"id,omitempty"`
-	ProtocolCipher string    `json:"protocol_cipher,omitempty"`
-	CreatedAt      time.Time `json:"created_at,omitempty"`
-	Interface      string    `json:"interface,omitempty"`
-	UpdatedAt      time.Time `json:"updated_at,omitempty"`
-	UserId         int64     `json:"user_id,omitempty"`
+	Id             int64      `json:"id,omitempty"`
+	ProtocolCipher string     `json:"protocol_cipher,omitempty"`
+	CreatedAt      *time.Time `json:"created_at,omitempty"`
+	Interface      string     `json:"interface,omitempty"`
+	UpdatedAt      *time.Time `json:"updated_at,omitempty"`
+	UserId         int64      `json:"user_id,omitempty"`
 }
 
 type UserCipherUseCollection []UserCipherUse

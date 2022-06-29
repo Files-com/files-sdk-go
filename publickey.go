@@ -8,12 +8,12 @@ import (
 )
 
 type PublicKey struct {
-	Id          int64     `json:"id,omitempty"`
-	Title       string    `json:"title,omitempty"`
-	CreatedAt   time.Time `json:"created_at,omitempty"`
-	Fingerprint string    `json:"fingerprint,omitempty"`
-	UserId      int64     `json:"user_id,omitempty"`
-	PublicKey   string    `json:"public_key,omitempty"`
+	Id          int64      `json:"id,omitempty"`
+	Title       string     `json:"title,omitempty"`
+	CreatedAt   *time.Time `json:"created_at,omitempty"`
+	Fingerprint string     `json:"fingerprint,omitempty"`
+	UserId      int64      `json:"user_id,omitempty"`
+	PublicKey   string     `json:"public_key,omitempty"`
 }
 
 type PublicKeyCollection []PublicKey

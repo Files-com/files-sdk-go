@@ -11,7 +11,7 @@ type BundleDownload struct {
 	BundleRegistration BundleRegistration `json:"bundle_registration,omitempty"`
 	DownloadMethod     string             `json:"download_method,omitempty"`
 	Path               string             `json:"path,omitempty"`
-	CreatedAt          time.Time          `json:"created_at,omitempty"`
+	CreatedAt          *time.Time         `json:"created_at,omitempty"`
 }
 
 type BundleDownloadCollection []BundleDownload

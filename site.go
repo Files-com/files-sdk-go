@@ -30,7 +30,7 @@ type Site struct {
 	Color2Top                            string          `json:"color2_top,omitempty"`
 	Color2TopText                        string          `json:"color2_top_text,omitempty"`
 	ContactName                          string          `json:"contact_name,omitempty"`
-	CreatedAt                            time.Time       `json:"created_at,omitempty"`
+	CreatedAt                            *time.Time      `json:"created_at,omitempty"`
 	Currency                             string          `json:"currency,omitempty"`
 	CustomNamespace                      *bool           `json:"custom_namespace,omitempty"`
 	DaysToRetainBackups                  int64           `json:"days_to_retain_backups,omitempty"`
@@ -58,7 +58,7 @@ type Site struct {
 	Icon16                               Image           `json:"icon16,omitempty"`
 	Icon32                               Image           `json:"icon32,omitempty"`
 	Icon48                               Image           `json:"icon48,omitempty"`
-	ImmutableFilesSetAt                  time.Time       `json:"immutable_files_set_at,omitempty"`
+	ImmutableFilesSetAt                  *time.Time      `json:"immutable_files_set_at,omitempty"`
 	IncludePasswordInWelcomeEmail        *bool           `json:"include_password_in_welcome_email,omitempty"`
 	Language                             string          `json:"language,omitempty"`
 	LdapBaseDn                           string          `json:"ldap_base_dn,omitempty"`
@@ -85,7 +85,7 @@ type Site struct {
 	OfficeIntegrationAvailable           *bool           `json:"office_integration_available,omitempty"`
 	OncehubLink                          string          `json:"oncehub_link,omitempty"`
 	OptOutGlobal                         *bool           `json:"opt_out_global,omitempty"`
-	OverageNotifiedAt                    time.Time       `json:"overage_notified_at,omitempty"`
+	OverageNotifiedAt                    *time.Time      `json:"overage_notified_at,omitempty"`
 	OverageNotify                        *bool           `json:"overage_notify,omitempty"`
 	Overdue                              *bool           `json:"overdue,omitempty"`
 	PasswordMinLength                    int64           `json:"password_min_length,omitempty"`
@@ -98,7 +98,7 @@ type Site struct {
 	PasswordValidityDays                 int64           `json:"password_validity_days,omitempty"`
 	Phone                                string          `json:"phone,omitempty"`
 	Require2fa                           *bool           `json:"require_2fa,omitempty"`
-	Require2faStopTime                   time.Time       `json:"require_2fa_stop_time,omitempty"`
+	Require2faStopTime                   *time.Time      `json:"require_2fa_stop_time,omitempty"`
 	Require2faUserType                   string          `json:"require_2fa_user_type,omitempty"`
 	Session                              Session         `json:"session,omitempty"`
 	SessionPinnedByIp                    *bool           `json:"session_pinned_by_ip,omitempty"`
@@ -117,11 +117,11 @@ type Site struct {
 	SessionExpiry                        float32         `json:"session_expiry,omitempty"`
 	SslRequired                          *bool           `json:"ssl_required,omitempty"`
 	Subdomain                            string          `json:"subdomain,omitempty"`
-	SwitchToPlanDate                     time.Time       `json:"switch_to_plan_date,omitempty"`
+	SwitchToPlanDate                     *time.Time      `json:"switch_to_plan_date,omitempty"`
 	TlsDisabled                          *bool           `json:"tls_disabled,omitempty"`
 	TrialDaysLeft                        int64           `json:"trial_days_left,omitempty"`
-	TrialUntil                           time.Time       `json:"trial_until,omitempty"`
-	UpdatedAt                            time.Time       `json:"updated_at,omitempty"`
+	TrialUntil                           *time.Time      `json:"trial_until,omitempty"`
+	UpdatedAt                            *time.Time      `json:"updated_at,omitempty"`
 	UseProvidedModifiedAt                *bool           `json:"use_provided_modified_at,omitempty"`
 	User                                 User            `json:"user,omitempty"`
 	UserLockout                          *bool           `json:"user_lockout,omitempty"`

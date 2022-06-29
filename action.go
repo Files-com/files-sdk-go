@@ -6,19 +6,19 @@ import (
 )
 
 type Action struct {
-	Id          int64     `json:"id,omitempty"`
-	Path        string    `json:"path,omitempty"`
-	When        time.Time `json:"when,omitempty"`
-	Destination string    `json:"destination,omitempty"`
-	Display     string    `json:"display,omitempty"`
-	Ip          string    `json:"ip,omitempty"`
-	Source      string    `json:"source,omitempty"`
-	Targets     []string  `json:"targets,omitempty"`
-	UserId      int64     `json:"user_id,omitempty"`
-	Username    string    `json:"username,omitempty"`
-	Action      string    `json:"action,omitempty"`
-	FailureType string    `json:"failure_type,omitempty"`
-	Interface   string    `json:"interface,omitempty"`
+	Id          int64      `json:"id,omitempty"`
+	Path        string     `json:"path,omitempty"`
+	When        *time.Time `json:"when,omitempty"`
+	Destination string     `json:"destination,omitempty"`
+	Display     string     `json:"display,omitempty"`
+	Ip          string     `json:"ip,omitempty"`
+	Source      string     `json:"source,omitempty"`
+	Targets     []string   `json:"targets,omitempty"`
+	UserId      int64      `json:"user_id,omitempty"`
+	Username    string     `json:"username,omitempty"`
+	Action      string     `json:"action,omitempty"`
+	FailureType string     `json:"failure_type,omitempty"`
+	Interface   string     `json:"interface,omitempty"`
 }
 
 type ActionCollection []Action

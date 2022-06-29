@@ -8,17 +8,17 @@ import (
 )
 
 type UsageDailySnapshot struct {
-	Id                           int64     `json:"id,omitempty"`
-	Date                         date.Date `json:"date,omitempty"`
-	ApiUsageAvailable            *bool     `json:"api_usage_available,omitempty"`
-	ReadApiUsage                 int64     `json:"read_api_usage,omitempty"`
-	WriteApiUsage                int64     `json:"write_api_usage,omitempty"`
-	UserCount                    int64     `json:"user_count,omitempty"`
-	CurrentStorage               int64     `json:"current_storage,omitempty"`
-	DeletedFilesStorage          int64     `json:"deleted_files_storage,omitempty"`
-	DeletedFilesCountedInMinimum int64     `json:"deleted_files_counted_in_minimum,omitempty"`
-	RootStorage                  int64     `json:"root_storage,omitempty"`
-	UsageByTopLevelDir           []string  `json:"usage_by_top_level_dir,omitempty"`
+	Id                           int64      `json:"id,omitempty"`
+	Date                         *date.Date `json:"date,omitempty"`
+	ApiUsageAvailable            *bool      `json:"api_usage_available,omitempty"`
+	ReadApiUsage                 int64      `json:"read_api_usage,omitempty"`
+	WriteApiUsage                int64      `json:"write_api_usage,omitempty"`
+	UserCount                    int64      `json:"user_count,omitempty"`
+	CurrentStorage               int64      `json:"current_storage,omitempty"`
+	DeletedFilesStorage          int64      `json:"deleted_files_storage,omitempty"`
+	DeletedFilesCountedInMinimum int64      `json:"deleted_files_counted_in_minimum,omitempty"`
+	RootStorage                  int64      `json:"root_storage,omitempty"`
+	UsageByTopLevelDir           []string   `json:"usage_by_top_level_dir,omitempty"`
 }
 
 type UsageDailySnapshotCollection []UsageDailySnapshot

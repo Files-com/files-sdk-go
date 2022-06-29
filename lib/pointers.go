@@ -1,5 +1,7 @@
 package lib
 
+import "time"
+
 func Bool(bool bool) *bool {
 	return &bool
 }
@@ -10,4 +12,8 @@ func UnWrapBool(b *bool) bool {
 	}
 
 	return *b
+}
+
+func Time(t time.Time) *time.Time {
+	return &t
 }

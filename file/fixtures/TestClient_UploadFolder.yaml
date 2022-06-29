@@ -363,7 +363,7 @@ interactions:
       - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/bool.go
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/pointers.go
     method: POST
   response:
     body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945711","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/8a2e6d02-bbac-4607-bcf5-ef0214afed58?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=_1O9r6qX3gjD3S3q6e0LH3zHdBGKjQQx3Bw0Ct5ptSe50eWAJKJodmpe2D5EOAp8bLBaYskwo_fzUhs6Or15vWixY7XYAZOCHUxzCj.mp5sssI7AMGhygwrs8lsTMJ1h\u0026X-Amz-Signature=bf5166bde03ddb48d64ecb6f656cc16e2df7e7a8be697eb2d230898bd5ebe39c"}]'
@@ -1364,10 +1364,10 @@ interactions:
       - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/bool.go
+    url: https://app.files.com/api/rest/v1/files/golib/pointers.go
     method: POST
   response:
-    body: '{"path":"golib/bool.go","display_name":"bool.go","type":"file","size":58,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
+    body: '{"path":"golib/pointers.go","display_name":"pointers.go","type":"file","size":58,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate

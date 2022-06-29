@@ -8,17 +8,17 @@ import (
 )
 
 type ExternalEvent struct {
-	Id               int64     `json:"id,omitempty"`
-	EventType        string    `json:"event_type,omitempty"`
-	Status           string    `json:"status,omitempty"`
-	Body             string    `json:"body,omitempty"`
-	CreatedAt        time.Time `json:"created_at,omitempty"`
-	BodyUrl          string    `json:"body_url,omitempty"`
-	FolderBehaviorId int64     `json:"folder_behavior_id,omitempty"`
-	SuccessfulFiles  int64     `json:"successful_files,omitempty"`
-	ErroredFiles     int64     `json:"errored_files,omitempty"`
-	BytesSynced      int64     `json:"bytes_synced,omitempty"`
-	RemoteServerType string    `json:"remote_server_type,omitempty"`
+	Id               int64      `json:"id,omitempty"`
+	EventType        string     `json:"event_type,omitempty"`
+	Status           string     `json:"status,omitempty"`
+	Body             string     `json:"body,omitempty"`
+	CreatedAt        *time.Time `json:"created_at,omitempty"`
+	BodyUrl          string     `json:"body_url,omitempty"`
+	FolderBehaviorId int64      `json:"folder_behavior_id,omitempty"`
+	SuccessfulFiles  int64      `json:"successful_files,omitempty"`
+	ErroredFiles     int64      `json:"errored_files,omitempty"`
+	BytesSynced      int64      `json:"bytes_synced,omitempty"`
+	RemoteServerType string     `json:"remote_server_type,omitempty"`
 }
 
 type ExternalEventCollection []ExternalEvent

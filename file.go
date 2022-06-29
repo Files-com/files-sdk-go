@@ -8,31 +8,31 @@ import (
 )
 
 type File struct {
-	Path             string    `json:"path,omitempty"`
-	DisplayName      string    `json:"display_name,omitempty"`
-	Type             string    `json:"type,omitempty"`
-	Size             int64     `json:"size,omitempty"`
-	Mtime            time.Time `json:"mtime,omitempty"`
-	ProvidedMtime    time.Time `json:"provided_mtime,omitempty"`
-	Crc32            string    `json:"crc32,omitempty"`
-	Md5              string    `json:"md5,omitempty"`
-	MimeType         string    `json:"mime_type,omitempty"`
-	Region           string    `json:"region,omitempty"`
-	Permissions      string    `json:"permissions,omitempty"`
-	SubfoldersLocked *bool     `json:"subfolders_locked?,omitempty"`
-	DownloadUri      string    `json:"download_uri,omitempty"`
-	PriorityColor    string    `json:"priority_color,omitempty"`
-	PreviewId        int64     `json:"preview_id,omitempty"`
-	Preview          Preview   `json:"preview,omitempty"`
-	Action           string    `json:"action,omitempty"`
-	Length           int64     `json:"length,omitempty"`
-	MkdirParents     *bool     `json:"mkdir_parents,omitempty"`
-	Part             int64     `json:"part,omitempty"`
-	Parts            int64     `json:"parts,omitempty"`
-	Ref              string    `json:"ref,omitempty"`
-	Restart          int64     `json:"restart,omitempty"`
-	Structure        string    `json:"structure,omitempty"`
-	WithRename       *bool     `json:"with_rename,omitempty"`
+	Path             string     `json:"path,omitempty"`
+	DisplayName      string     `json:"display_name,omitempty"`
+	Type             string     `json:"type,omitempty"`
+	Size             int64      `json:"size,omitempty"`
+	Mtime            *time.Time `json:"mtime,omitempty"`
+	ProvidedMtime    *time.Time `json:"provided_mtime,omitempty"`
+	Crc32            string     `json:"crc32,omitempty"`
+	Md5              string     `json:"md5,omitempty"`
+	MimeType         string     `json:"mime_type,omitempty"`
+	Region           string     `json:"region,omitempty"`
+	Permissions      string     `json:"permissions,omitempty"`
+	SubfoldersLocked *bool      `json:"subfolders_locked?,omitempty"`
+	DownloadUri      string     `json:"download_uri,omitempty"`
+	PriorityColor    string     `json:"priority_color,omitempty"`
+	PreviewId        int64      `json:"preview_id,omitempty"`
+	Preview          Preview    `json:"preview,omitempty"`
+	Action           string     `json:"action,omitempty"`
+	Length           int64      `json:"length,omitempty"`
+	MkdirParents     *bool      `json:"mkdir_parents,omitempty"`
+	Part             int64      `json:"part,omitempty"`
+	Parts            int64      `json:"parts,omitempty"`
+	Ref              string     `json:"ref,omitempty"`
+	Restart          int64      `json:"restart,omitempty"`
+	Structure        string     `json:"structure,omitempty"`
+	WithRename       *bool      `json:"with_rename,omitempty"`
 }
 
 type FileCollection []File
@@ -61,7 +61,7 @@ type FileCreateParams struct {
 	MkdirParents  *bool        `url:"mkdir_parents,omitempty" required:"false" json:"mkdir_parents,omitempty"`
 	Part          int64        `url:"part,omitempty" required:"false" json:"part,omitempty"`
 	Parts         int64        `url:"parts,omitempty" required:"false" json:"parts,omitempty"`
-	ProvidedMtime time.Time    `url:"provided_mtime,omitempty" required:"false" json:"provided_mtime,omitempty"`
+	ProvidedMtime *time.Time   `url:"provided_mtime,omitempty" required:"false" json:"provided_mtime,omitempty"`
 	Ref           string       `url:"ref,omitempty" required:"false" json:"ref,omitempty"`
 	Restart       int64        `url:"restart,omitempty" required:"false" json:"restart,omitempty"`
 	Size          int64        `url:"size,omitempty" required:"false" json:"size,omitempty"`
@@ -70,9 +70,9 @@ type FileCreateParams struct {
 }
 
 type FileUpdateParams struct {
-	Path          string    `url:"-,omitempty" required:"true" json:"-,omitempty"`
-	ProvidedMtime time.Time `url:"provided_mtime,omitempty" required:"false" json:"provided_mtime,omitempty"`
-	PriorityColor string    `url:"priority_color,omitempty" required:"false" json:"priority_color,omitempty"`
+	Path          string     `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	ProvidedMtime *time.Time `url:"provided_mtime,omitempty" required:"false" json:"provided_mtime,omitempty"`
+	PriorityColor string     `url:"priority_color,omitempty" required:"false" json:"priority_color,omitempty"`
 }
 
 type FileDeleteParams struct {

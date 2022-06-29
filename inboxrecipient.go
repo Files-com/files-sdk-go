@@ -8,14 +8,14 @@ import (
 )
 
 type InboxRecipient struct {
-	Company          string    `json:"company,omitempty"`
-	Name             string    `json:"name,omitempty"`
-	Note             string    `json:"note,omitempty"`
-	Recipient        string    `json:"recipient,omitempty"`
-	SentAt           time.Time `json:"sent_at,omitempty"`
-	UserId           int64     `json:"user_id,omitempty"`
-	InboxId          int64     `json:"inbox_id,omitempty"`
-	ShareAfterCreate *bool     `json:"share_after_create,omitempty"`
+	Company          string     `json:"company,omitempty"`
+	Name             string     `json:"name,omitempty"`
+	Note             string     `json:"note,omitempty"`
+	Recipient        string     `json:"recipient,omitempty"`
+	SentAt           *time.Time `json:"sent_at,omitempty"`
+	UserId           int64      `json:"user_id,omitempty"`
+	InboxId          int64      `json:"inbox_id,omitempty"`
+	ShareAfterCreate *bool      `json:"share_after_create,omitempty"`
 }
 
 type InboxRecipientCollection []InboxRecipient

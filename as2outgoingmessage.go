@@ -24,7 +24,7 @@ type As2OutgoingMessage struct {
 	MessageId                   string          `json:"message_id,omitempty"`
 	BodySize                    string          `json:"body_size,omitempty"`
 	AttachmentFilename          string          `json:"attachment_filename,omitempty"`
-	CreatedAt                   time.Time       `json:"created_at,omitempty"`
+	CreatedAt                   *time.Time      `json:"created_at,omitempty"`
 	HttpResponseCode            string          `json:"http_response_code,omitempty"`
 	HttpResponseHeaders         json.RawMessage `json:"http_response_headers,omitempty"`
 	HttpTransmissionDuration    float32         `json:"http_transmission_duration,omitempty"`

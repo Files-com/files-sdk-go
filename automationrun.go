@@ -8,12 +8,12 @@ import (
 )
 
 type AutomationRun struct {
-	Id                int64     `json:"id,omitempty"`
-	AutomationId      int64     `json:"automation_id,omitempty"`
-	CompletedAt       time.Time `json:"completed_at,omitempty"`
-	CreatedAt         time.Time `json:"created_at,omitempty"`
-	Status            string    `json:"status,omitempty"`
-	StatusMessagesUrl string    `json:"status_messages_url,omitempty"`
+	Id                int64      `json:"id,omitempty"`
+	AutomationId      int64      `json:"automation_id,omitempty"`
+	CompletedAt       *time.Time `json:"completed_at,omitempty"`
+	CreatedAt         *time.Time `json:"created_at,omitempty"`
+	Status            string     `json:"status,omitempty"`
+	StatusMessagesUrl string     `json:"status_messages_url,omitempty"`
 }
 
 type AutomationRunCollection []AutomationRun

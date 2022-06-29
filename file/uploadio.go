@@ -147,7 +147,7 @@ func (c *Client) startUpload(ctx context.Context, beginUpload files_sdk.FileBegi
 
 func (c *Client) completeUpload(ctx context.Context, etags []files_sdk.EtagsParam, bytesWritten int64, path string, ref string) (files_sdk.File, error) {
 	return c.Create(ctx, files_sdk.FileCreateParams{
-		ProvidedMtime: time.Now(),
+		ProvidedMtime: lib.Time(time.Now()),
 		EtagsParam:    etags,
 		Action:        "end",
 		Path:          path,

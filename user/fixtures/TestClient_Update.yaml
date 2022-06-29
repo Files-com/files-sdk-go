@@ -1,0 +1,68 @@
+---
+version: 1
+interactions:
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/users?page=1
+    method: GET
+  response:
+    body: '[{"id":406651,"username":"backend@files.com","admin_group_ids":[],"allowed_ips":null,"attachments_permission":true,"api_keys_count":1,"authenticate_until":null,"authentication_method":"password","avatar_url":null,"billing_permission":false,"bypass_site_allowed_ips":false,"bypass_inactive_disable":false,"created_at":"2020-04-23T20:13:49-04:00","dav_permission":true,"disabled":false,"email":"backend@files.com","ftp_permission":true,"group_ids":"","header_text":null,"language":"","last_login_at":"2021-05-07T15:21:43-04:00","last_protocol_cipher":"TLSv1.2;
+      ECDHE-RSA-AES256-GCM-SHA384","lockout_expires":null,"name":null,"company":null,"notes":null,"notification_daily_send_time":null,"office_integration_enabled":true,"password_set_at":"2020-04-23T20:18:16-04:00","password_validity_days":0,"public_keys_count":0,"receive_admin_alerts":false,"require_2fa":"use_system_setting","active_2fa":false,"require_password_change":false,"password_expired":false,"restapi_permission":true,"self_managed":true,"sftp_permission":true,"site_admin":true,"skip_welcome_screen":false,"ssl_required":"use_system_setting","sso_strategy_id":null,"subscribe_to_newsletter":false,"externally_managed":false,"time_zone":"Eastern
+      Time (US \u0026 Canada)","type_of_2fa":null,"user_root":""},{"id":450265,"username":"dfsdfsdfsdf","admin_group_ids":[],"allowed_ips":null,"attachments_permission":true,"api_keys_count":0,"authenticate_until":null,"authentication_method":"email_signup","avatar_url":null,"billing_permission":true,"bypass_site_allowed_ips":true,"bypass_inactive_disable":false,"created_at":"2020-12-27T16:05:00-05:00","dav_permission":true,"disabled":false,"email":"sdfsdfsdfsdf@jpcmc8r0t3bqwzg9p9r0pp2xyo4es3.burpcollaborator.net","ftp_permission":true,"group_ids":"","header_text":"","language":"","last_login_at":null,"last_protocol_cipher":null,"lockout_expires":null,"name":"","company":"","notes":"","notification_daily_send_time":null,"office_integration_enabled":true,"password_set_at":null,"password_validity_days":0,"public_keys_count":0,"receive_admin_alerts":true,"require_2fa":"use_system_setting","active_2fa":false,"require_password_change":false,"password_expired":false,"restapi_permission":true,"self_managed":true,"sftp_permission":true,"site_admin":true,"skip_welcome_screen":false,"ssl_required":"use_system_setting","sso_strategy_id":null,"subscribe_to_newsletter":true,"externally_managed":false,"time_zone":"Eastern
+      Time (US \u0026 Canada)","type_of_2fa":null,"user_root":""},{"id":558974,"username":"TestMo","admin_group_ids":[],"allowed_ips":null,"attachments_permission":false,"api_keys_count":0,"authenticate_until":null,"authentication_method":"password","avatar_url":null,"billing_permission":false,"bypass_site_allowed_ips":false,"bypass_inactive_disable":false,"created_at":"2022-06-29T17:19:58-04:00","dav_permission":true,"disabled":false,"email":null,"ftp_permission":true,"group_ids":"","header_text":null,"language":"","last_login_at":null,"last_protocol_cipher":null,"lockout_expires":null,"name":null,"company":null,"notes":null,"notification_daily_send_time":null,"office_integration_enabled":true,"password_set_at":null,"password_validity_days":0,"public_keys_count":0,"require_2fa":"use_system_setting","active_2fa":false,"require_password_change":false,"password_expired":false,"restapi_permission":true,"self_managed":true,"sftp_permission":true,"site_admin":false,"skip_welcome_screen":false,"ssl_required":"use_system_setting","sso_strategy_id":null,"externally_managed":false,"time_zone":"Eastern
+      Time (US \u0026 Canada)","type_of_2fa":null,"user_root":""}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 29 Jun 2022 21:36:17 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - ccfa0e45-8165-44ee-a500-a4181152ed7a
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"-":558974,"sftp_permission":false}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/users/558974
+    method: PATCH
+  response:
+    body: '{"id":558974,"username":"TestMo","admin_group_ids":[],"allowed_ips":null,"attachments_permission":false,"api_keys_count":0,"authenticate_until":null,"authentication_method":"password","avatar_url":null,"billing_permission":false,"bypass_site_allowed_ips":false,"bypass_inactive_disable":false,"created_at":"2022-06-29T17:19:58-04:00","dav_permission":true,"disabled":false,"email":null,"ftp_permission":true,"group_ids":"","header_text":null,"language":"","last_login_at":null,"last_protocol_cipher":null,"lockout_expires":null,"name":null,"company":null,"notes":null,"notification_daily_send_time":null,"office_integration_enabled":true,"password_set_at":null,"password_validity_days":0,"public_keys_count":0,"require_2fa":"use_system_setting","active_2fa":false,"require_password_change":false,"password_expired":false,"restapi_permission":true,"self_managed":true,"sftp_permission":false,"site_admin":false,"skip_welcome_screen":false,"ssl_required":"use_system_setting","sso_strategy_id":null,"externally_managed":false,"time_zone":"Eastern
+      Time (US \u0026 Canada)","type_of_2fa":null,"user_root":""}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 29 Jun 2022 21:36:18 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 07f5b595-780f-46da-ba9e-28d3b2d73d13
+    status: 200 OK
+    code: 200
+    duration: ""

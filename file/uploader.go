@@ -7,6 +7,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/Files-com/files-sdk-go/v2/lib"
+
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/directory"
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
@@ -74,7 +76,7 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 			metaFile.file = files_sdk.File{
 				DisplayName: filepath.Base(params.LocalPath),
 				Type:        job.Direction.Name(),
-				Mtime:       fi.ModTime(),
+				Mtime:       lib.Time(fi.ModTime()),
 				Size:        fi.Size(),
 				Path:        params.RemotePath,
 			}
@@ -247,7 +249,7 @@ func walkPaginated(ctx context.Context, localFolderPath string, destinationRootP
 				uploadStatus.missingStat = true
 				uploadStatus.error = err
 			} else {
-				uploadStatus.file = files_sdk.File{Type: "file", DisplayName: filepath.Base(destination), Path: destination, Size: info.Size(), Mtime: info.ModTime()}
+				uploadStatus.file = files_sdk.File{Type: "file", DisplayName: filepath.Base(destination), Path: destination, Size: info.Size(), Mtime: lib.Time(info.ModTime())}
 			}
 			job.Add(&uploadStatus)
 			return nil

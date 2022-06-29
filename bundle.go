@@ -22,8 +22,8 @@ type Bundle struct {
 	SkipEmail                 *bool           `json:"skip_email,omitempty"`
 	SkipCompany               *bool           `json:"skip_company,omitempty"`
 	Id                        int64           `json:"id,omitempty"`
-	CreatedAt                 time.Time       `json:"created_at,omitempty"`
-	ExpiresAt                 time.Time       `json:"expires_at,omitempty"`
+	CreatedAt                 *time.Time      `json:"created_at,omitempty"`
+	ExpiresAt                 *time.Time      `json:"expires_at,omitempty"`
 	MaxUses                   int64           `json:"max_uses,omitempty"`
 	Note                      string          `json:"note,omitempty"`
 	UserId                    int64           `json:"user_id,omitempty"`
@@ -61,24 +61,24 @@ type BundleFindParams struct {
 }
 
 type BundleCreateParams struct {
-	UserId                  int64     `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
-	Paths                   []string  `url:"paths,omitempty" required:"true" json:"paths,omitempty"`
-	Password                string    `url:"password,omitempty" required:"false" json:"password,omitempty"`
-	FormFieldSetId          int64     `url:"form_field_set_id,omitempty" required:"false" json:"form_field_set_id,omitempty"`
-	ExpiresAt               time.Time `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty"`
-	MaxUses                 int64     `url:"max_uses,omitempty" required:"false" json:"max_uses,omitempty"`
-	Description             string    `url:"description,omitempty" required:"false" json:"description,omitempty"`
-	Note                    string    `url:"note,omitempty" required:"false" json:"note,omitempty"`
-	Code                    string    `url:"code,omitempty" required:"false" json:"code,omitempty"`
-	PreviewOnly             *bool     `url:"preview_only,omitempty" required:"false" json:"preview_only,omitempty"`
-	RequireRegistration     *bool     `url:"require_registration,omitempty" required:"false" json:"require_registration,omitempty"`
-	ClickwrapId             int64     `url:"clickwrap_id,omitempty" required:"false" json:"clickwrap_id,omitempty"`
-	InboxId                 int64     `url:"inbox_id,omitempty" required:"false" json:"inbox_id,omitempty"`
-	RequireShareRecipient   *bool     `url:"require_share_recipient,omitempty" required:"false" json:"require_share_recipient,omitempty"`
-	SkipEmail               *bool     `url:"skip_email,omitempty" required:"false" json:"skip_email,omitempty"`
-	SkipName                *bool     `url:"skip_name,omitempty" required:"false" json:"skip_name,omitempty"`
-	SkipCompany             *bool     `url:"skip_company,omitempty" required:"false" json:"skip_company,omitempty"`
-	WatermarkAttachmentFile io.Writer `url:"watermark_attachment_file,omitempty" required:"false" json:"watermark_attachment_file,omitempty"`
+	UserId                  int64      `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
+	Paths                   []string   `url:"paths,omitempty" required:"true" json:"paths,omitempty"`
+	Password                string     `url:"password,omitempty" required:"false" json:"password,omitempty"`
+	FormFieldSetId          int64      `url:"form_field_set_id,omitempty" required:"false" json:"form_field_set_id,omitempty"`
+	ExpiresAt               *time.Time `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty"`
+	MaxUses                 int64      `url:"max_uses,omitempty" required:"false" json:"max_uses,omitempty"`
+	Description             string     `url:"description,omitempty" required:"false" json:"description,omitempty"`
+	Note                    string     `url:"note,omitempty" required:"false" json:"note,omitempty"`
+	Code                    string     `url:"code,omitempty" required:"false" json:"code,omitempty"`
+	PreviewOnly             *bool      `url:"preview_only,omitempty" required:"false" json:"preview_only,omitempty"`
+	RequireRegistration     *bool      `url:"require_registration,omitempty" required:"false" json:"require_registration,omitempty"`
+	ClickwrapId             int64      `url:"clickwrap_id,omitempty" required:"false" json:"clickwrap_id,omitempty"`
+	InboxId                 int64      `url:"inbox_id,omitempty" required:"false" json:"inbox_id,omitempty"`
+	RequireShareRecipient   *bool      `url:"require_share_recipient,omitempty" required:"false" json:"require_share_recipient,omitempty"`
+	SkipEmail               *bool      `url:"skip_email,omitempty" required:"false" json:"skip_email,omitempty"`
+	SkipName                *bool      `url:"skip_name,omitempty" required:"false" json:"skip_name,omitempty"`
+	SkipCompany             *bool      `url:"skip_company,omitempty" required:"false" json:"skip_company,omitempty"`
+	WatermarkAttachmentFile io.Writer  `url:"watermark_attachment_file,omitempty" required:"false" json:"watermark_attachment_file,omitempty"`
 }
 
 // Send email(s) with a link to bundle
@@ -90,25 +90,25 @@ type BundleShareParams struct {
 }
 
 type BundleUpdateParams struct {
-	Id                        int64     `url:"-,omitempty" required:"true" json:"-,omitempty"`
-	Paths                     []string  `url:"paths,omitempty" required:"false" json:"paths,omitempty"`
-	Password                  string    `url:"password,omitempty" required:"false" json:"password,omitempty"`
-	FormFieldSetId            int64     `url:"form_field_set_id,omitempty" required:"false" json:"form_field_set_id,omitempty"`
-	ClickwrapId               int64     `url:"clickwrap_id,omitempty" required:"false" json:"clickwrap_id,omitempty"`
-	Code                      string    `url:"code,omitempty" required:"false" json:"code,omitempty"`
-	Description               string    `url:"description,omitempty" required:"false" json:"description,omitempty"`
-	ExpiresAt                 time.Time `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty"`
-	InboxId                   int64     `url:"inbox_id,omitempty" required:"false" json:"inbox_id,omitempty"`
-	MaxUses                   int64     `url:"max_uses,omitempty" required:"false" json:"max_uses,omitempty"`
-	Note                      string    `url:"note,omitempty" required:"false" json:"note,omitempty"`
-	PreviewOnly               *bool     `url:"preview_only,omitempty" required:"false" json:"preview_only,omitempty"`
-	RequireRegistration       *bool     `url:"require_registration,omitempty" required:"false" json:"require_registration,omitempty"`
-	RequireShareRecipient     *bool     `url:"require_share_recipient,omitempty" required:"false" json:"require_share_recipient,omitempty"`
-	SkipEmail                 *bool     `url:"skip_email,omitempty" required:"false" json:"skip_email,omitempty"`
-	SkipName                  *bool     `url:"skip_name,omitempty" required:"false" json:"skip_name,omitempty"`
-	SkipCompany               *bool     `url:"skip_company,omitempty" required:"false" json:"skip_company,omitempty"`
-	WatermarkAttachmentDelete *bool     `url:"watermark_attachment_delete,omitempty" required:"false" json:"watermark_attachment_delete,omitempty"`
-	WatermarkAttachmentFile   io.Writer `url:"watermark_attachment_file,omitempty" required:"false" json:"watermark_attachment_file,omitempty"`
+	Id                        int64      `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Paths                     []string   `url:"paths,omitempty" required:"false" json:"paths,omitempty"`
+	Password                  string     `url:"password,omitempty" required:"false" json:"password,omitempty"`
+	FormFieldSetId            int64      `url:"form_field_set_id,omitempty" required:"false" json:"form_field_set_id,omitempty"`
+	ClickwrapId               int64      `url:"clickwrap_id,omitempty" required:"false" json:"clickwrap_id,omitempty"`
+	Code                      string     `url:"code,omitempty" required:"false" json:"code,omitempty"`
+	Description               string     `url:"description,omitempty" required:"false" json:"description,omitempty"`
+	ExpiresAt                 *time.Time `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty"`
+	InboxId                   int64      `url:"inbox_id,omitempty" required:"false" json:"inbox_id,omitempty"`
+	MaxUses                   int64      `url:"max_uses,omitempty" required:"false" json:"max_uses,omitempty"`
+	Note                      string     `url:"note,omitempty" required:"false" json:"note,omitempty"`
+	PreviewOnly               *bool      `url:"preview_only,omitempty" required:"false" json:"preview_only,omitempty"`
+	RequireRegistration       *bool      `url:"require_registration,omitempty" required:"false" json:"require_registration,omitempty"`
+	RequireShareRecipient     *bool      `url:"require_share_recipient,omitempty" required:"false" json:"require_share_recipient,omitempty"`
+	SkipEmail                 *bool      `url:"skip_email,omitempty" required:"false" json:"skip_email,omitempty"`
+	SkipName                  *bool      `url:"skip_name,omitempty" required:"false" json:"skip_name,omitempty"`
+	SkipCompany               *bool      `url:"skip_company,omitempty" required:"false" json:"skip_company,omitempty"`
+	WatermarkAttachmentDelete *bool      `url:"watermark_attachment_delete,omitempty" required:"false" json:"watermark_attachment_delete,omitempty"`
+	WatermarkAttachmentFile   io.Writer  `url:"watermark_attachment_file,omitempty" required:"false" json:"watermark_attachment_file,omitempty"`
 }
 
 type BundleDeleteParams struct {

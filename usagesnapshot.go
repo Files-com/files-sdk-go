@@ -9,15 +9,15 @@ import (
 
 type UsageSnapshot struct {
 	Id                           int64           `json:"id,omitempty"`
-	StartAt                      time.Time       `json:"start_at,omitempty"`
-	EndAt                        time.Time       `json:"end_at,omitempty"`
-	CreatedAt                    time.Time       `json:"created_at,omitempty"`
+	StartAt                      *time.Time      `json:"start_at,omitempty"`
+	EndAt                        *time.Time      `json:"end_at,omitempty"`
+	CreatedAt                    *time.Time      `json:"created_at,omitempty"`
 	HighWaterUserCount           float32         `json:"high_water_user_count,omitempty"`
 	CurrentStorage               float32         `json:"current_storage,omitempty"`
 	HighWaterStorage             float32         `json:"high_water_storage,omitempty"`
 	TotalDownloads               int64           `json:"total_downloads,omitempty"`
 	TotalUploads                 int64           `json:"total_uploads,omitempty"`
-	UpdatedAt                    time.Time       `json:"updated_at,omitempty"`
+	UpdatedAt                    *time.Time      `json:"updated_at,omitempty"`
 	UsageByTopLevelDir           json.RawMessage `json:"usage_by_top_level_dir,omitempty"`
 	RootStorage                  float32         `json:"root_storage,omitempty"`
 	DeletedFilesCountedInMinimum float32         `json:"deleted_files_counted_in_minimum,omitempty"`

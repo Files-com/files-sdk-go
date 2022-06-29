@@ -27,7 +27,7 @@ type As2IncomingMessage struct {
 	BodySize                    string          `json:"body_size,omitempty"`
 	AttachmentFilename          string          `json:"attachment_filename,omitempty"`
 	Ip                          string          `json:"ip,omitempty"`
-	CreatedAt                   time.Time       `json:"created_at,omitempty"`
+	CreatedAt                   *time.Time      `json:"created_at,omitempty"`
 	HttpResponseCode            string          `json:"http_response_code,omitempty"`
 	HttpResponseHeaders         json.RawMessage `json:"http_response_headers,omitempty"`
 	RecipientSerial             string          `json:"recipient_serial,omitempty"`

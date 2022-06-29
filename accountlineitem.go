@@ -9,17 +9,17 @@ type AccountLineItem struct {
 	Id                int64           `json:"id,omitempty"`
 	Amount            float32         `json:"amount,omitempty"`
 	Balance           float32         `json:"balance,omitempty"`
-	CreatedAt         time.Time       `json:"created_at,omitempty"`
+	CreatedAt         *time.Time      `json:"created_at,omitempty"`
 	Currency          string          `json:"currency,omitempty"`
 	DownloadUri       string          `json:"download_uri,omitempty"`
 	InvoiceLineItems  InvoiceLineItem `json:"invoice_line_items,omitempty"`
 	Method            string          `json:"method,omitempty"`
 	PaymentLineItems  PaymentLineItem `json:"payment_line_items,omitempty"`
-	PaymentReversedAt time.Time       `json:"payment_reversed_at,omitempty"`
+	PaymentReversedAt *time.Time      `json:"payment_reversed_at,omitempty"`
 	PaymentType       string          `json:"payment_type,omitempty"`
 	SiteName          string          `json:"site_name,omitempty"`
 	Type              string          `json:"type,omitempty"`
-	UpdatedAt         time.Time       `json:"updated_at,omitempty"`
+	UpdatedAt         *time.Time      `json:"updated_at,omitempty"`
 }
 
 type AccountLineItemCollection []AccountLineItem

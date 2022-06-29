@@ -121,7 +121,7 @@ func TestClient_UploadFolder(t *testing.T) {
 
 	job.Start()
 	job.Wait()
-	assert.Contains(results, "golib/bool.go")
+	assert.Contains(results, "golib/pointers.go")
 	assert.Contains(results, "golib/params.go")
 	assert.Contains(results, "golib/interface.go")
 	assert.Contains(results, "golib/iter.go")
@@ -133,7 +133,7 @@ func TestClient_UploadFolder(t *testing.T) {
 	assert.Contains(results, "golib/iter_test.go")
 	assert.Contains(results, "golib/direction/main.go")
 	assert.Equal(15, job.Count(status.Complete))
-	assert.Equal(int64(13457), results["golib/bool.go"][0].Job.TotalBytes(status.Complete))
+	assert.Equal(int64(13522), results["golib/pointers.go"][0].Job.TotalBytes(status.Complete))
 
 	deletePath(client, "golib")
 }

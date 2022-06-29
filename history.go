@@ -8,26 +8,26 @@ import (
 )
 
 type History struct {
-	Id          int64     `json:"id,omitempty"`
-	Path        string    `json:"path,omitempty"`
-	When        time.Time `json:"when,omitempty"`
-	Destination string    `json:"destination,omitempty"`
-	Display     string    `json:"display,omitempty"`
-	Ip          string    `json:"ip,omitempty"`
-	Source      string    `json:"source,omitempty"`
-	Targets     []string  `json:"targets,omitempty"`
-	UserId      int64     `json:"user_id,omitempty"`
-	Username    string    `json:"username,omitempty"`
-	Action      string    `json:"action,omitempty"`
-	FailureType string    `json:"failure_type,omitempty"`
-	Interface   string    `json:"interface,omitempty"`
+	Id          int64      `json:"id,omitempty"`
+	Path        string     `json:"path,omitempty"`
+	When        *time.Time `json:"when,omitempty"`
+	Destination string     `json:"destination,omitempty"`
+	Display     string     `json:"display,omitempty"`
+	Ip          string     `json:"ip,omitempty"`
+	Source      string     `json:"source,omitempty"`
+	Targets     []string   `json:"targets,omitempty"`
+	UserId      int64      `json:"user_id,omitempty"`
+	Username    string     `json:"username,omitempty"`
+	Action      string     `json:"action,omitempty"`
+	FailureType string     `json:"failure_type,omitempty"`
+	Interface   string     `json:"interface,omitempty"`
 }
 
 type HistoryCollection []History
 
 type HistoryListForFileParams struct {
-	StartAt time.Time       `url:"start_at,omitempty" required:"false" json:"start_at,omitempty"`
-	EndAt   time.Time       `url:"end_at,omitempty" required:"false" json:"end_at,omitempty"`
+	StartAt *time.Time      `url:"start_at,omitempty" required:"false" json:"start_at,omitempty"`
+	EndAt   *time.Time      `url:"end_at,omitempty" required:"false" json:"end_at,omitempty"`
 	Display string          `url:"display,omitempty" required:"false" json:"display,omitempty"`
 	Cursor  string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
 	PerPage int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
@@ -37,8 +37,8 @@ type HistoryListForFileParams struct {
 }
 
 type HistoryListForFolderParams struct {
-	StartAt time.Time       `url:"start_at,omitempty" required:"false" json:"start_at,omitempty"`
-	EndAt   time.Time       `url:"end_at,omitempty" required:"false" json:"end_at,omitempty"`
+	StartAt *time.Time      `url:"start_at,omitempty" required:"false" json:"start_at,omitempty"`
+	EndAt   *time.Time      `url:"end_at,omitempty" required:"false" json:"end_at,omitempty"`
 	Display string          `url:"display,omitempty" required:"false" json:"display,omitempty"`
 	Cursor  string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
 	PerPage int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
@@ -48,8 +48,8 @@ type HistoryListForFolderParams struct {
 }
 
 type HistoryListForUserParams struct {
-	StartAt time.Time       `url:"start_at,omitempty" required:"false" json:"start_at,omitempty"`
-	EndAt   time.Time       `url:"end_at,omitempty" required:"false" json:"end_at,omitempty"`
+	StartAt *time.Time      `url:"start_at,omitempty" required:"false" json:"start_at,omitempty"`
+	EndAt   *time.Time      `url:"end_at,omitempty" required:"false" json:"end_at,omitempty"`
 	Display string          `url:"display,omitempty" required:"false" json:"display,omitempty"`
 	Cursor  string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
 	PerPage int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
@@ -59,8 +59,8 @@ type HistoryListForUserParams struct {
 }
 
 type HistoryListLoginsParams struct {
-	StartAt time.Time       `url:"start_at,omitempty" required:"false" json:"start_at,omitempty"`
-	EndAt   time.Time       `url:"end_at,omitempty" required:"false" json:"end_at,omitempty"`
+	StartAt *time.Time      `url:"start_at,omitempty" required:"false" json:"start_at,omitempty"`
+	EndAt   *time.Time      `url:"end_at,omitempty" required:"false" json:"end_at,omitempty"`
 	Display string          `url:"display,omitempty" required:"false" json:"display,omitempty"`
 	Cursor  string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
 	PerPage int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
@@ -69,8 +69,8 @@ type HistoryListLoginsParams struct {
 }
 
 type HistoryListParams struct {
-	StartAt    time.Time       `url:"start_at,omitempty" required:"false" json:"start_at,omitempty"`
-	EndAt      time.Time       `url:"end_at,omitempty" required:"false" json:"end_at,omitempty"`
+	StartAt    *time.Time      `url:"start_at,omitempty" required:"false" json:"start_at,omitempty"`
+	EndAt      *time.Time      `url:"end_at,omitempty" required:"false" json:"end_at,omitempty"`
 	Display    string          `url:"display,omitempty" required:"false" json:"display,omitempty"`
 	Cursor     string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
 	PerPage    int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
