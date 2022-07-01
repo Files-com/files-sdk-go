@@ -17,6 +17,7 @@ type UploadStatus struct {
 	remotePath    string
 	uploadedBytes int64
 	Sync          bool
+	PreserveTimes bool
 	lastByte      time.Time
 	Uploader
 	Parts

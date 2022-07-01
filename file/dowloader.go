@@ -113,15 +113,16 @@ func createIndexedStatus(f Entity, params DownloaderParams, job *status.Job) {
 	}
 
 	s := &DownloadStatus{
-		error:      f.error,
-		fsFile:     f.File,
-		file:       fi,
-		localPath:  localPath(fi, *job),
-		remotePath: fi.Path,
-		job:        job,
-		Sync:       params.Sync,
-		status:     status.Indexed,
-		Mutex:      &sync.RWMutex{},
+		error:         f.error,
+		fsFile:        f.File,
+		file:          fi,
+		localPath:     localPath(fi, *job),
+		remotePath:    fi.Path,
+		job:           job,
+		Sync:          params.Sync,
+		status:        status.Indexed,
+		Mutex:         &sync.RWMutex{},
+		PreserveTimes: params.PreserveTimes,
 	}
 	job.Add(s)
 }
@@ -204,6 +205,12 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 			}
 		} else {
 			err = os.Rename(tmpName, reportStatus.LocalPath())
+
+			if err == nil && reportStatus.PreserveTimes {
+				stat, _ := s.fsFile.Stat()
+				err = os.Chtimes(reportStatus.LocalPath(), stat.ModTime().Local(), stat.ModTime().Local())
+			}
+
 			if err != nil {
 				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
 			} else if reportStatus.Status().Is(status.Downloading) {

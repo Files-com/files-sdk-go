@@ -161,24 +161,29 @@ func Test_downloadFolder_more_than_one_file(t *testing.T) {
 	setup.MapFS["some-path"] = &fstest.MapFile{
 		Data:    nil,
 		Mode:    fs.ModeDir,
-		ModTime: time.Time{},
+		ModTime: time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC),
 		Sys:     files_sdk.File{DisplayName: "some-path", Path: "some-path", Type: "directory"},
 	}
 
 	setup.MapFS["some-path/taco.png"] = &fstest.MapFile{
 		Data:    make([]byte, 100),
 		Mode:    fs.ModePerm,
-		ModTime: time.Time{},
+		ModTime: time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC),
 		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "some-path/taco.png", Type: "file", Size: 100},
 	}
 
 	setup.MapFS["some-path/pizza.png"] = &fstest.MapFile{
 		Data:    make([]byte, 102),
 		Mode:    fs.ModePerm,
-		ModTime: time.Time{},
+		ModTime: time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC),
 		Sys:     files_sdk.File{DisplayName: "pizza.png", Path: "some-path/pizza.png", Type: "file", Size: 102},
 	}
-	setup.DownloaderParams = DownloaderParams{RemotePath: "some-path", EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
+	setup.DownloaderParams = DownloaderParams{
+		RemotePath:     "some-path",
+		EventsReporter: setup.Reporter(),
+		LocalPath:      setup.RootDestination(),
+		PreserveTimes:  true,
+	}
 	setup.rootDestination = "some-path"
 
 	job := setup.Call()
@@ -196,6 +201,9 @@ func Test_downloadFolder_more_than_one_file(t *testing.T) {
 	assert.Equal(map[string]int{"complete": 2, "downloading": 2, "queued": 2}, statuses)
 	assert.Equal(6, len(setup.reporterCalls))
 	assert.Contains([]string{setup.reporterCalls[0].File.Path, setup.reporterCalls[1].File.Path}, "some-path/taco.png")
+	stat, err := os.Stat(filepath.Join(setup.tempDir, "pizza.png"))
+	assert.NoError(err)
+	assert.Equal(time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.Local), stat.ModTime())
 	assert.Contains([]string{setup.reporterCalls[0].File.Path, setup.reporterCalls[1].File.Path}, "some-path/pizza.png")
 	assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
 

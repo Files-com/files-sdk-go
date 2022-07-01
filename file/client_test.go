@@ -55,8 +55,20 @@ func buildScenario(base string, client *Client) {
 	folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filepath.Join(base, "nested_1", "nested_2")})
 	folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filepath.Join(base, "nested_1", "nested_2", "nested_3")})
 
-	client.UploadIO(context.Background(), UploadIOParams{Path: filepath.Join(base, "nested_1", "nested_2", "3.text"), Reader: strings.NewReader("testing 3"), Size: int64(9)})
-	client.UploadIO(context.Background(), UploadIOParams{Path: filepath.Join(base, "nested_1", "nested_2", "nested_3", "4.text"), Reader: strings.NewReader("testing 3"), Size: int64(9)})
+	client.UploadIO(
+		context.Background(),
+		UploadIOParams{
+			Path:   filepath.Join(base, "nested_1", "nested_2", "3.text"),
+			Reader: strings.NewReader("testing 3"), Size: int64(9),
+		},
+	)
+	client.UploadIO(
+		context.Background(),
+		UploadIOParams{
+			Path:   filepath.Join(base, "nested_1", "nested_2", "nested_3", "4.text"),
+			Reader: strings.NewReader("testing 3"), Size: int64(9),
+		},
+	)
 }
 
 func runDownloadScenario(path string, destination string, client *Client) map[string][]status.File {
@@ -275,7 +287,7 @@ func TestClient_UploadFile(t *testing.T) {
 	assert := assert.New(t)
 
 	uploadPath := "../LICENSE"
-	job := client.Uploader(context.Background(), UploaderParams{LocalPath: uploadPath})
+	job := client.Uploader(context.Background(), UploaderParams{LocalPath: uploadPath, PreserveTimes: true})
 	job.Start()
 	job.Wait()
 	assert.Equal(true, job.Started.Called())
@@ -595,7 +607,14 @@ func TestClient_DownloadFolder_file_only(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer r.Stop()
-	client.UploadIO(context.Background(), UploadIOParams{Path: filepath.Join("i am at the root.text"), Reader: strings.NewReader("hello"), Size: int64(5)})
+	client.UploadIO(
+		context.Background(),
+		UploadIOParams{
+			Path:   filepath.Join("i am at the root.text"),
+			Reader: strings.NewReader("hello"),
+			Size:   int64(5),
+		},
+	)
 
 	assert := assert.New(t)
 	results := runDownloadScenario("i am at the root.text", "", client)
@@ -616,7 +635,14 @@ func TestClient_Downloader_Delete_Source(t *testing.T) {
 	folderClient := folder.Client{Config: client.Config}
 
 	folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: "test-delete-source"})
-	_, _, _, err = client.UploadIO(context.Background(), UploadIOParams{Path: filepath.Join("test-delete-source", "test.text"), Reader: strings.NewReader("testing 3"), Size: int64(9)})
+	_, _, _, err = client.UploadIO(
+		context.Background(),
+		UploadIOParams{
+			Path:   filepath.Join("test-delete-source", "test.text"),
+			Reader: strings.NewReader("testing 3"),
+			Size:   int64(9),
+		},
+	)
 	assert.NoError(err)
 	job := client.Downloader(
 		context.Background(),
@@ -650,7 +676,14 @@ func TestClient_Downloader_Move_Source(t *testing.T) {
 	folderClient := folder.Client{Config: client.Config}
 
 	folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: "test-move-source"})
-	_, _, _, err = client.UploadIO(context.Background(), UploadIOParams{Path: filepath.Join("test-move-source", "test.text"), Reader: strings.NewReader("testing 3"), Size: int64(9)})
+	_, _, _, err = client.UploadIO(
+		context.Background(),
+		UploadIOParams{
+			Path:   filepath.Join("test-move-source", "test.text"),
+			Reader: strings.NewReader("testing 3"),
+			Size:   int64(9),
+		},
+	)
 	assert.NoError(err)
 	job := client.Downloader(
 		context.Background(),

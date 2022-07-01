@@ -9,6 +9,8 @@ import (
 
 	"github.com/Files-com/files-sdk-go/v2/lib"
 
+	"time"
+
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/directory"
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
@@ -49,12 +51,13 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 		status.WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy), false) })
 
 		metaFile := &UploadStatus{
-			job:       job,
-			status:    status.Errored,
-			localPath: params.LocalPath,
-			Sync:      params.Sync,
-			Uploader:  c,
-			Mutex:     &sync.RWMutex{},
+			job:           job,
+			status:        status.Errored,
+			localPath:     params.LocalPath,
+			Sync:          params.Sync,
+			Uploader:      c,
+			Mutex:         &sync.RWMutex{},
+			PreserveTimes: params.PreserveTimes,
 		}
 		if statErr != nil {
 			job.Add(metaFile)
@@ -177,6 +180,16 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 			job.UpdateStatus(status.Canceled, uploadStatus, nil)
 			return
 		}
+		var providedMtime time.Time
+
+		if uploadStatus.PreserveTimes {
+			stats, err := os.Stat(uploadStatus.LocalPath())
+			if err != nil {
+				uploadStatus.Job().UpdateStatus(status.Errored, uploadStatus, err)
+				return
+			}
+			providedMtime = stats.ModTime()
+		}
 		_, uploadStatus.FileUploadPart, uploadStatus.Parts, err = uploadStatus.UploadIO(
 			ctx, UploadIOParams{
 				Path:           uploadStatus.RemotePath(),
@@ -186,6 +199,7 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 				Manager:        job.FilePartsManager,
 				Parts:          uploadStatus.Parts,
 				FileUploadPart: uploadStatus.FileUploadPart,
+				providedMtime:  providedMtime,
 			})
 		if err != nil {
 			uploadStatus.Job().StatusFromError(uploadStatus, err)
@@ -234,14 +248,15 @@ func walkPaginated(ctx context.Context, localFolderPath string, destinationRootP
 			info, err := os.Stat(filepath.Join(path))
 
 			uploadStatus := UploadStatus{
-				Uploader:   c,
-				job:        job,
-				remotePath: destination,
-				localPath:  path,
-				Sync:       params.Sync,
-				status:     status.Indexed,
-				Mutex:      &sync.RWMutex{},
-				error:      err,
+				Uploader:      c,
+				job:           job,
+				remotePath:    destination,
+				localPath:     path,
+				Sync:          params.Sync,
+				status:        status.Indexed,
+				Mutex:         &sync.RWMutex{},
+				error:         err,
+				PreserveTimes: params.PreserveTimes,
 			}
 
 			if err != nil {

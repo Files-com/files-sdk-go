@@ -21,6 +21,7 @@ type DownloadStatus struct {
 	Sync            bool
 	lastByte        time.Time
 	Mutex           *sync.RWMutex
+	PreserveTimes   bool
 	error
 	lastError error
 }

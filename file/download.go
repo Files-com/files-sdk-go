@@ -34,10 +34,11 @@ func (c *Client) DownloadToFile(ctx context.Context, params files_sdk.FileDownlo
 }
 
 type DownloaderParams struct {
-	RemotePath string
-	RemoteFile files_sdk.File
-	LocalPath  string
-	Sync       bool
+	RemotePath    string
+	RemoteFile    files_sdk.File
+	LocalPath     string
+	Sync          bool
+	PreserveTimes bool
 	RetryPolicy
 	*manager.Manager
 	status.EventsReporter
