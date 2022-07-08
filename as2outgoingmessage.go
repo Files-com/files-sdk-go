@@ -27,7 +27,7 @@ type As2OutgoingMessage struct {
 	CreatedAt                   *time.Time      `json:"created_at,omitempty"`
 	HttpResponseCode            string          `json:"http_response_code,omitempty"`
 	HttpResponseHeaders         json.RawMessage `json:"http_response_headers,omitempty"`
-	HttpTransmissionDuration    float32         `json:"http_transmission_duration,omitempty"`
+	HttpTransmissionDuration    string          `json:"http_transmission_duration,omitempty"`
 	MdnReceived                 *bool           `json:"mdn_received,omitempty"`
 	MdnValid                    *bool           `json:"mdn_valid,omitempty"`
 	MdnSignatureVerified        *bool           `json:"mdn_signature_verified,omitempty"`

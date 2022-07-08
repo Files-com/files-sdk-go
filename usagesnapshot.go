@@ -12,21 +12,21 @@ type UsageSnapshot struct {
 	StartAt                      *time.Time      `json:"start_at,omitempty"`
 	EndAt                        *time.Time      `json:"end_at,omitempty"`
 	CreatedAt                    *time.Time      `json:"created_at,omitempty"`
-	HighWaterUserCount           float32         `json:"high_water_user_count,omitempty"`
-	CurrentStorage               float32         `json:"current_storage,omitempty"`
-	HighWaterStorage             float32         `json:"high_water_storage,omitempty"`
+	HighWaterUserCount           string          `json:"high_water_user_count,omitempty"`
+	CurrentStorage               string          `json:"current_storage,omitempty"`
+	HighWaterStorage             string          `json:"high_water_storage,omitempty"`
 	TotalDownloads               int64           `json:"total_downloads,omitempty"`
 	TotalUploads                 int64           `json:"total_uploads,omitempty"`
 	UpdatedAt                    *time.Time      `json:"updated_at,omitempty"`
 	UsageByTopLevelDir           json.RawMessage `json:"usage_by_top_level_dir,omitempty"`
-	RootStorage                  float32         `json:"root_storage,omitempty"`
-	DeletedFilesCountedInMinimum float32         `json:"deleted_files_counted_in_minimum,omitempty"`
-	DeletedFilesStorage          float32         `json:"deleted_files_storage,omitempty"`
-	TotalBillableUsage           float32         `json:"total_billable_usage,omitempty"`
-	TotalBillableTransferUsage   float32         `json:"total_billable_transfer_usage,omitempty"`
-	BytesSent                    float32         `json:"bytes_sent,omitempty"`
-	SyncBytesReceived            float32         `json:"sync_bytes_received,omitempty"`
-	SyncBytesSent                float32         `json:"sync_bytes_sent,omitempty"`
+	RootStorage                  string          `json:"root_storage,omitempty"`
+	DeletedFilesCountedInMinimum string          `json:"deleted_files_counted_in_minimum,omitempty"`
+	DeletedFilesStorage          string          `json:"deleted_files_storage,omitempty"`
+	TotalBillableUsage           string          `json:"total_billable_usage,omitempty"`
+	TotalBillableTransferUsage   string          `json:"total_billable_transfer_usage,omitempty"`
+	BytesSent                    string          `json:"bytes_sent,omitempty"`
+	SyncBytesReceived            string          `json:"sync_bytes_received,omitempty"`
+	SyncBytesSent                string          `json:"sync_bytes_sent,omitempty"`
 }
 
 type UsageSnapshotCollection []UsageSnapshot

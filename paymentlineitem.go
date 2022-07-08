@@ -6,7 +6,7 @@ import (
 )
 
 type PaymentLineItem struct {
-	Amount    float32    `json:"amount,omitempty"`
+	Amount    string     `json:"amount,omitempty"`
 	CreatedAt *time.Time `json:"created_at,omitempty"`
 	InvoiceId int64      `json:"invoice_id,omitempty"`
 	PaymentId int64      `json:"payment_id,omitempty"`

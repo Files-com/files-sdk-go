@@ -80,7 +80,7 @@ type Site struct {
 	LoginHelpText                        string          `json:"login_help_text,omitempty"`
 	Logo                                 Image           `json:"logo,omitempty"`
 	MaxPriorPasswords                    int64           `json:"max_prior_passwords,omitempty"`
-	NextBillingAmount                    float32         `json:"next_billing_amount,omitempty"`
+	NextBillingAmount                    string          `json:"next_billing_amount,omitempty"`
 	NextBillingDate                      string          `json:"next_billing_date,omitempty"`
 	OfficeIntegrationAvailable           *bool           `json:"office_integration_available,omitempty"`
 	OncehubLink                          string          `json:"oncehub_link,omitempty"`
@@ -114,7 +114,7 @@ type Site struct {
 	SmtpFrom                             string          `json:"smtp_from,omitempty"`
 	SmtpPort                             int64           `json:"smtp_port,omitempty"`
 	SmtpUsername                         string          `json:"smtp_username,omitempty"`
-	SessionExpiry                        float32         `json:"session_expiry,omitempty"`
+	SessionExpiry                        string          `json:"session_expiry,omitempty"`
 	SslRequired                          *bool           `json:"ssl_required,omitempty"`
 	Subdomain                            string          `json:"subdomain,omitempty"`
 	SwitchToPlanDate                     *time.Time      `json:"switch_to_plan_date,omitempty"`
@@ -169,7 +169,7 @@ type SiteUpdateParams struct {
 	FolderPermissionsGroupsOnly          *bool     `url:"folder_permissions_groups_only,omitempty" required:"false" json:"folder_permissions_groups_only,omitempty"`
 	WelcomeScreen                        string    `url:"welcome_screen,omitempty" required:"false" json:"welcome_screen,omitempty"`
 	OfficeIntegrationAvailable           *bool     `url:"office_integration_available,omitempty" required:"false" json:"office_integration_available,omitempty"`
-	SessionExpiry                        float32   `url:"session_expiry,omitempty" required:"false" json:"session_expiry,omitempty"`
+	SessionExpiry                        string    `url:"session_expiry,omitempty" required:"false" json:"session_expiry,omitempty"`
 	SslRequired                          *bool     `url:"ssl_required,omitempty" required:"false" json:"ssl_required,omitempty"`
 	TlsDisabled                          *bool     `url:"tls_disabled,omitempty" required:"false" json:"tls_disabled,omitempty"`
 	SftpInsecureCiphers                  *bool     `url:"sftp_insecure_ciphers,omitempty" required:"false" json:"sftp_insecure_ciphers,omitempty"`

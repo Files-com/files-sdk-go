@@ -9,8 +9,8 @@ import (
 
 type Invoice struct {
 	Id                int64           `json:"id,omitempty"`
-	Amount            float32         `json:"amount,omitempty"`
-	Balance           float32         `json:"balance,omitempty"`
+	Amount            string          `json:"amount,omitempty"`
+	Balance           string          `json:"balance,omitempty"`
 	CreatedAt         *time.Time      `json:"created_at,omitempty"`
 	Currency          string          `json:"currency,omitempty"`
 	DownloadUri       string          `json:"download_uri,omitempty"`

@@ -9,13 +9,13 @@ import (
 
 type BandwidthSnapshot struct {
 	Id                int64      `json:"id,omitempty"`
-	BytesReceived     float32    `json:"bytes_received,omitempty"`
-	BytesSent         float32    `json:"bytes_sent,omitempty"`
-	SyncBytesReceived float32    `json:"sync_bytes_received,omitempty"`
-	SyncBytesSent     float32    `json:"sync_bytes_sent,omitempty"`
-	RequestsGet       float32    `json:"requests_get,omitempty"`
-	RequestsPut       float32    `json:"requests_put,omitempty"`
-	RequestsOther     float32    `json:"requests_other,omitempty"`
+	BytesReceived     string     `json:"bytes_received,omitempty"`
+	BytesSent         string     `json:"bytes_sent,omitempty"`
+	SyncBytesReceived string     `json:"sync_bytes_received,omitempty"`
+	SyncBytesSent     string     `json:"sync_bytes_sent,omitempty"`
+	RequestsGet       string     `json:"requests_get,omitempty"`
+	RequestsPut       string     `json:"requests_put,omitempty"`
+	RequestsOther     string     `json:"requests_other,omitempty"`
 	LoggedAt          *time.Time `json:"logged_at,omitempty"`
 }
 
