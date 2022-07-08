@@ -203,7 +203,7 @@ func Test_downloadFolder_more_than_one_file(t *testing.T) {
 	assert.Contains([]string{setup.reporterCalls[0].File.Path, setup.reporterCalls[1].File.Path}, "some-path/taco.png")
 	stat, err := os.Stat(filepath.Join(setup.tempDir, "pizza.png"))
 	assert.NoError(err)
-	assert.Equal(time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.Local), stat.ModTime())
+	assert.Equal(time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC), stat.ModTime().UTC())
 	assert.Contains([]string{setup.reporterCalls[0].File.Path, setup.reporterCalls[1].File.Path}, "some-path/pizza.png")
 	assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
 
