@@ -22,8 +22,10 @@ func (i *Iter) BandwidthSnapshot() files_sdk.BandwidthSnapshot {
 
 func (c *Client) List(ctx context.Context, params files_sdk.BandwidthSnapshotListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/bandwidth_snapshots"
+	path, err := lib.BuildPath("/bandwidth_snapshots", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.BandwidthSnapshotCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)

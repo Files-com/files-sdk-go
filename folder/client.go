@@ -22,8 +22,10 @@ func (i *Iter) Folder() files_sdk.Folder {
 
 func (c *Client) ListFor(ctx context.Context, params files_sdk.FolderListForParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := lib.BuildPath("/folders/", params.Path)
+	path, err := lib.BuildPath("/folders/{path}", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.FolderCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)
@@ -34,26 +36,11 @@ func ListFor(ctx context.Context, params files_sdk.FolderListForParams) (*Iter, 
 	return (&Client{}).ListFor(ctx, params)
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.FolderCreateParams) (files_sdk.File, error) {
-	file := files_sdk.File{}
-	path := lib.BuildPath("/folders/", params.Path)
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return file, err
-	}
-	if res.StatusCode == 204 {
-		return file, nil
-	}
-
-	return file, file.UnmarshalJSON(*data)
+func (c *Client) Create(ctx context.Context, params files_sdk.FolderCreateParams) (file files_sdk.File, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/folders/{path}", Params: params, Entity: &file})
+	return
 }
 
-func Create(ctx context.Context, params files_sdk.FolderCreateParams) (files_sdk.File, error) {
+func Create(ctx context.Context, params files_sdk.FolderCreateParams) (file files_sdk.File, err error) {
 	return (&Client{}).Create(ctx, params)
 }

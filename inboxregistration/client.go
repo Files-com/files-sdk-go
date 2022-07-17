@@ -22,8 +22,10 @@ func (i *Iter) InboxRegistration() files_sdk.InboxRegistration {
 
 func (c *Client) List(ctx context.Context, params files_sdk.InboxRegistrationListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/inbox_registrations"
+	path, err := lib.BuildPath("/inbox_registrations", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.InboxRegistrationCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)

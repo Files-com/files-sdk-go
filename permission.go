@@ -7,53 +7,51 @@ import (
 )
 
 type Permission struct {
-	Id         int64  `json:"id,omitempty"`
-	Path       string `json:"path,omitempty"`
-	UserId     int64  `json:"user_id,omitempty"`
-	Username   string `json:"username,omitempty"`
-	GroupId    int64  `json:"group_id,omitempty"`
-	GroupName  string `json:"group_name,omitempty"`
-	Permission string `json:"permission,omitempty"`
-	Recursive  *bool  `json:"recursive,omitempty"`
+	Id         int64  `json:"id,omitempty" path:"id"`
+	Path       string `json:"path,omitempty" path:"path"`
+	UserId     int64  `json:"user_id,omitempty" path:"user_id"`
+	Username   string `json:"username,omitempty" path:"username"`
+	GroupId    int64  `json:"group_id,omitempty" path:"group_id"`
+	GroupName  string `json:"group_name,omitempty" path:"group_name"`
+	Permission string `json:"permission,omitempty" path:"permission"`
+	Recursive  *bool  `json:"recursive,omitempty" path:"recursive"`
 }
 
 type PermissionCollection []Permission
 
 type PermissionListParams struct {
-	Cursor        string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage       int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
-	SortBy        json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty"`
-	Filter        json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty"`
-	FilterGt      json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty"`
-	FilterGteq    json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty"`
-	FilterLike    json.RawMessage `url:"filter_like,omitempty" required:"false" json:"filter_like,omitempty"`
-	FilterLt      json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty"`
-	FilterLteq    json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty"`
-	Path          string          `url:"path,omitempty" required:"false" json:"path,omitempty"`
-	GroupId       string          `url:"group_id,omitempty" required:"false" json:"group_id,omitempty"`
-	UserId        string          `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
-	IncludeGroups *bool           `url:"include_groups,omitempty" required:"false" json:"include_groups,omitempty"`
+	SortBy        json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter        json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	FilterGt      json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq    json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterLike    json.RawMessage `url:"filter_like,omitempty" required:"false" json:"filter_like,omitempty" path:"filter_like"`
+	FilterLt      json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq    json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	Path          string          `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
+	GroupId       string          `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
+	UserId        string          `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	IncludeGroups *bool           `url:"include_groups,omitempty" required:"false" json:"include_groups,omitempty" path:"include_groups"`
 	lib.ListParams
 }
 
 type PermissionCreateParams struct {
-	GroupId    int64  `url:"group_id,omitempty" required:"false" json:"group_id,omitempty"`
-	Path       string `url:"path,omitempty" required:"false" json:"path,omitempty"`
-	Permission string `url:"permission,omitempty" required:"false" json:"permission,omitempty"`
-	Recursive  *bool  `url:"recursive,omitempty" required:"false" json:"recursive,omitempty"`
-	UserId     int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
-	Username   string `url:"username,omitempty" required:"false" json:"username,omitempty"`
+	GroupId    int64  `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
+	Path       string `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
+	Permission string `url:"permission,omitempty" required:"false" json:"permission,omitempty" path:"permission"`
+	Recursive  *bool  `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
+	UserId     int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	Username   string `url:"username,omitempty" required:"false" json:"username,omitempty" path:"username"`
 }
 
 type PermissionDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
 }
 
 func (p *Permission) UnmarshalJSON(data []byte) error {
 	type permission Permission
 	var v permission
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*p = Permission(v)
@@ -61,10 +59,10 @@ func (p *Permission) UnmarshalJSON(data []byte) error {
 }
 
 func (p *PermissionCollection) UnmarshalJSON(data []byte) error {
-	type permissions []Permission
+	type permissions PermissionCollection
 	var v permissions
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*p = PermissionCollection(v)

@@ -2,24 +2,26 @@ package files_sdk
 
 import (
 	"encoding/json"
+
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 type FileUploadPart struct {
-	Send               json.RawMessage `json:"send,omitempty"`
-	Action             string          `json:"action,omitempty"`
-	AskAboutOverwrites *bool           `json:"ask_about_overwrites,omitempty"`
-	AvailableParts     int64           `json:"available_parts,omitempty"`
-	Expires            string          `json:"expires,omitempty"`
-	Headers            json.RawMessage `json:"headers,omitempty"`
-	HttpMethod         string          `json:"http_method,omitempty"`
-	NextPartsize       int64           `json:"next_partsize,omitempty"`
-	ParallelParts      *bool           `json:"parallel_parts,omitempty"`
-	Parameters         json.RawMessage `json:"parameters,omitempty"`
-	PartNumber         int64           `json:"part_number,omitempty"`
-	Partsize           int64           `json:"partsize,omitempty"`
-	Path               string          `json:"path,omitempty"`
-	Ref                string          `json:"ref,omitempty"`
-	UploadUri          string          `json:"upload_uri,omitempty"`
+	Send               json.RawMessage `json:"send,omitempty" path:"send"`
+	Action             string          `json:"action,omitempty" path:"action"`
+	AskAboutOverwrites *bool           `json:"ask_about_overwrites,omitempty" path:"ask_about_overwrites"`
+	AvailableParts     int64           `json:"available_parts,omitempty" path:"available_parts"`
+	Expires            string          `json:"expires,omitempty" path:"expires"`
+	Headers            json.RawMessage `json:"headers,omitempty" path:"headers"`
+	HttpMethod         string          `json:"http_method,omitempty" path:"http_method"`
+	NextPartsize       int64           `json:"next_partsize,omitempty" path:"next_partsize"`
+	ParallelParts      *bool           `json:"parallel_parts,omitempty" path:"parallel_parts"`
+	Parameters         json.RawMessage `json:"parameters,omitempty" path:"parameters"`
+	PartNumber         int64           `json:"part_number,omitempty" path:"part_number"`
+	Partsize           int64           `json:"partsize,omitempty" path:"partsize"`
+	Path               string          `json:"path,omitempty" path:"path"`
+	Ref                string          `json:"ref,omitempty" path:"ref"`
+	UploadUri          string          `json:"upload_uri,omitempty" path:"upload_uri"`
 }
 
 type FileUploadPartCollection []FileUploadPart
@@ -28,7 +30,7 @@ func (f *FileUploadPart) UnmarshalJSON(data []byte) error {
 	type fileUploadPart FileUploadPart
 	var v fileUploadPart
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*f = FileUploadPart(v)
@@ -36,10 +38,10 @@ func (f *FileUploadPart) UnmarshalJSON(data []byte) error {
 }
 
 func (f *FileUploadPartCollection) UnmarshalJSON(data []byte) error {
-	type fileUploadParts []FileUploadPart
+	type fileUploadParts FileUploadPartCollection
 	var v fileUploadParts
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*f = FileUploadPartCollection(v)

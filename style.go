@@ -3,36 +3,38 @@ package files_sdk
 import (
 	"encoding/json"
 	"io"
+
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 type Style struct {
-	Id        int64     `json:"id,omitempty"`
-	Path      string    `json:"path,omitempty"`
-	Logo      Image     `json:"logo,omitempty"`
-	Thumbnail Image     `json:"thumbnail,omitempty"`
-	File      io.Reader `json:"file,omitempty"`
+	Id        int64     `json:"id,omitempty" path:"id"`
+	Path      string    `json:"path,omitempty" path:"path"`
+	Logo      Image     `json:"logo,omitempty" path:"logo"`
+	Thumbnail Image     `json:"thumbnail,omitempty" path:"thumbnail"`
+	File      io.Reader `json:"file,omitempty" path:"file"`
 }
 
 type StyleCollection []Style
 
 type StyleFindParams struct {
-	Path string `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Path string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
 }
 
 type StyleUpdateParams struct {
-	Path string    `url:"-,omitempty" required:"true" json:"-,omitempty"`
-	File io.Writer `url:"file,omitempty" required:"true" json:"file,omitempty"`
+	Path string    `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	File io.Writer `url:"file,omitempty" required:"true" json:"file,omitempty" path:"file"`
 }
 
 type StyleDeleteParams struct {
-	Path string `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Path string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
 }
 
 func (s *Style) UnmarshalJSON(data []byte) error {
 	type style Style
 	var v style
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*s = Style(v)
@@ -40,10 +42,10 @@ func (s *Style) UnmarshalJSON(data []byte) error {
 }
 
 func (s *StyleCollection) UnmarshalJSON(data []byte) error {
-	type styles []Style
+	type styles StyleCollection
 	var v styles
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*s = StyleCollection(v)

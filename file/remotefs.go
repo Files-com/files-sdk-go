@@ -2,12 +2,13 @@ package file
 
 import (
 	"context"
-	"fmt"
 	"io"
 	goFs "io/fs"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/Files-com/files-sdk-go/v2/lib"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/folder"
@@ -105,20 +106,9 @@ func (f *File) load() error {
 	if err != nil {
 		return &goFs.PathError{Path: f1.File.Path, Err: err, Op: "read"}
 	}
-	if resp.StatusCode != 200 {
-		var body []byte
-		if resp.ContentLength == -1 {
-			body = make([]byte, 512)
-		} else {
-			body = make([]byte, resp.ContentLength)
-		}
-		_, err := resp.Body.Read(body)
-		defer resp.Body.Close()
-		if err == nil {
-			return &goFs.PathError{Path: f1.File.Path, Err: fmt.Errorf(string(body)), Op: "read"}
-		} else {
-			return &goFs.PathError{Path: f1.File.Path, Err: err, Op: "read"}
-		}
+
+	if err := lib.ResponseErrors(resp, lib.NonOkError); err != nil {
+		return &goFs.PathError{Path: f1.File.Path, Err: err, Op: "read"}
 	}
 	f.ReadCloser = resp.Body
 	f.Size = resp.ContentLength

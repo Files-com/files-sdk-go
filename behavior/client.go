@@ -2,7 +2,6 @@ package behavior
 
 import (
 	"context"
-	"strconv"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
@@ -23,8 +22,10 @@ func (i *Iter) Behavior() files_sdk.Behavior {
 
 func (c *Client) List(ctx context.Context, params files_sdk.BehaviorListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/behaviors"
+	path, err := lib.BuildPath("/behaviors", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.BehaviorCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)
@@ -35,37 +36,21 @@ func List(ctx context.Context, params files_sdk.BehaviorListParams) (*Iter, erro
 	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) Find(ctx context.Context, params files_sdk.BehaviorFindParams) (files_sdk.Behavior, error) {
-	behavior := files_sdk.Behavior{}
-	if params.Id == 0 {
-		return behavior, lib.CreateError(params, "Id")
-	}
-	path := "/behaviors/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return behavior, err
-	}
-	if res.StatusCode == 204 {
-		return behavior, nil
-	}
-
-	return behavior, behavior.UnmarshalJSON(*data)
+func (c *Client) Find(ctx context.Context, params files_sdk.BehaviorFindParams) (behavior files_sdk.Behavior, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/behaviors/{id}", Params: params, Entity: &behavior})
+	return
 }
 
-func Find(ctx context.Context, params files_sdk.BehaviorFindParams) (files_sdk.Behavior, error) {
+func Find(ctx context.Context, params files_sdk.BehaviorFindParams) (behavior files_sdk.Behavior, err error) {
 	return (&Client{}).Find(ctx, params)
 }
 
 func (c *Client) ListFor(ctx context.Context, params files_sdk.BehaviorListForParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := lib.BuildPath("/behaviors/folders/", params.Path)
+	path, err := lib.BuildPath("/behaviors/folders/{path}", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.BehaviorCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)
@@ -76,104 +61,38 @@ func ListFor(ctx context.Context, params files_sdk.BehaviorListForParams) (*Iter
 	return (&Client{}).ListFor(ctx, params)
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.BehaviorCreateParams) (files_sdk.Behavior, error) {
-	behavior := files_sdk.Behavior{}
-	path := "/behaviors"
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return behavior, err
-	}
-	if res.StatusCode == 204 {
-		return behavior, nil
-	}
-
-	return behavior, behavior.UnmarshalJSON(*data)
+func (c *Client) Create(ctx context.Context, params files_sdk.BehaviorCreateParams) (behavior files_sdk.Behavior, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/behaviors", Params: params, Entity: &behavior})
+	return
 }
 
-func Create(ctx context.Context, params files_sdk.BehaviorCreateParams) (files_sdk.Behavior, error) {
+func Create(ctx context.Context, params files_sdk.BehaviorCreateParams) (behavior files_sdk.Behavior, err error) {
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) WebhookTest(ctx context.Context, params files_sdk.BehaviorWebhookTestParams) error {
-	behavior := files_sdk.Behavior{}
-	path := "/behaviors/webhook/test"
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return err
-	}
-	if res.StatusCode == 204 {
-		return nil
-	}
-
-	return behavior.UnmarshalJSON(*data)
+func (c *Client) WebhookTest(ctx context.Context, params files_sdk.BehaviorWebhookTestParams) (err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/behaviors/webhook/test", Params: params, Entity: nil})
+	return
 }
 
-func WebhookTest(ctx context.Context, params files_sdk.BehaviorWebhookTestParams) error {
+func WebhookTest(ctx context.Context, params files_sdk.BehaviorWebhookTestParams) (err error) {
 	return (&Client{}).WebhookTest(ctx, params)
 }
 
-func (c *Client) Update(ctx context.Context, params files_sdk.BehaviorUpdateParams) (files_sdk.Behavior, error) {
-	behavior := files_sdk.Behavior{}
-	if params.Id == 0 {
-		return behavior, lib.CreateError(params, "Id")
-	}
-	path := "/behaviors/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return behavior, err
-	}
-	if res.StatusCode == 204 {
-		return behavior, nil
-	}
-
-	return behavior, behavior.UnmarshalJSON(*data)
+func (c *Client) Update(ctx context.Context, params files_sdk.BehaviorUpdateParams) (behavior files_sdk.Behavior, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/behaviors/{id}", Params: params, Entity: &behavior})
+	return
 }
 
-func Update(ctx context.Context, params files_sdk.BehaviorUpdateParams) (files_sdk.Behavior, error) {
+func Update(ctx context.Context, params files_sdk.BehaviorUpdateParams) (behavior files_sdk.Behavior, err error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.BehaviorDeleteParams) error {
-	behavior := files_sdk.Behavior{}
-	if params.Id == 0 {
-		return lib.CreateError(params, "Id")
-	}
-	path := "/behaviors/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return err
-	}
-	if res.StatusCode == 204 {
-		return nil
-	}
-
-	return behavior.UnmarshalJSON(*data)
+func (c *Client) Delete(ctx context.Context, params files_sdk.BehaviorDeleteParams) (err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/behaviors/{id}", Params: params, Entity: nil})
+	return
 }
 
-func Delete(ctx context.Context, params files_sdk.BehaviorDeleteParams) error {
+func Delete(ctx context.Context, params files_sdk.BehaviorDeleteParams) (err error) {
 	return (&Client{}).Delete(ctx, params)
 }

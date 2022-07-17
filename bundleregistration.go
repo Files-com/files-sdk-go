@@ -7,27 +7,25 @@ import (
 )
 
 type BundleRegistration struct {
-	Code              string          `json:"code,omitempty"`
-	Name              string          `json:"name,omitempty"`
-	Company           string          `json:"company,omitempty"`
-	Email             string          `json:"email,omitempty"`
-	Ip                string          `json:"ip,omitempty"`
-	InboxCode         string          `json:"inbox_code,omitempty"`
-	ClickwrapBody     string          `json:"clickwrap_body,omitempty"`
-	FormFieldSetId    int64           `json:"form_field_set_id,omitempty"`
-	FormFieldData     json.RawMessage `json:"form_field_data,omitempty"`
-	BundleCode        string          `json:"bundle_code,omitempty"`
-	BundleId          int64           `json:"bundle_id,omitempty"`
-	BundleRecipientId int64           `json:"bundle_recipient_id,omitempty"`
+	Code              string          `json:"code,omitempty" path:"code"`
+	Name              string          `json:"name,omitempty" path:"name"`
+	Company           string          `json:"company,omitempty" path:"company"`
+	Email             string          `json:"email,omitempty" path:"email"`
+	Ip                string          `json:"ip,omitempty" path:"ip"`
+	InboxCode         string          `json:"inbox_code,omitempty" path:"inbox_code"`
+	ClickwrapBody     string          `json:"clickwrap_body,omitempty" path:"clickwrap_body"`
+	FormFieldSetId    int64           `json:"form_field_set_id,omitempty" path:"form_field_set_id"`
+	FormFieldData     json.RawMessage `json:"form_field_data,omitempty" path:"form_field_data"`
+	BundleCode        string          `json:"bundle_code,omitempty" path:"bundle_code"`
+	BundleId          int64           `json:"bundle_id,omitempty" path:"bundle_id"`
+	BundleRecipientId int64           `json:"bundle_recipient_id,omitempty" path:"bundle_recipient_id"`
 }
 
 type BundleRegistrationCollection []BundleRegistration
 
 type BundleRegistrationListParams struct {
-	UserId   int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
-	Cursor   string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage  int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
-	BundleId int64  `url:"bundle_id,omitempty" required:"false" json:"bundle_id,omitempty"`
+	UserId   int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	BundleId int64 `url:"bundle_id,omitempty" required:"false" json:"bundle_id,omitempty" path:"bundle_id"`
 	lib.ListParams
 }
 
@@ -35,7 +33,7 @@ func (b *BundleRegistration) UnmarshalJSON(data []byte) error {
 	type bundleRegistration BundleRegistration
 	var v bundleRegistration
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*b = BundleRegistration(v)
@@ -43,10 +41,10 @@ func (b *BundleRegistration) UnmarshalJSON(data []byte) error {
 }
 
 func (b *BundleRegistrationCollection) UnmarshalJSON(data []byte) error {
-	type bundleRegistrations []BundleRegistration
+	type bundleRegistrations BundleRegistrationCollection
 	var v bundleRegistrations
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*b = BundleRegistrationCollection(v)

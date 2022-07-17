@@ -22,8 +22,10 @@ func (i *Iter) IpAddress() files_sdk.IpAddress {
 
 func (c *Client) List(ctx context.Context, params files_sdk.IpAddressListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/ip_addresses"
+	path, err := lib.BuildPath("/ip_addresses", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.IpAddressCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)
@@ -34,26 +36,11 @@ func List(ctx context.Context, params files_sdk.IpAddressListParams) (*Iter, err
 	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) GetReserved(ctx context.Context, params files_sdk.IpAddressGetReservedParams) (files_sdk.PublicIpAddressCollection, error) {
-	publicIpAddressCollection := files_sdk.PublicIpAddressCollection{}
-	path := "/ip_addresses/reserved"
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return publicIpAddressCollection, err
-	}
-	if res.StatusCode == 204 {
-		return publicIpAddressCollection, nil
-	}
-
-	return publicIpAddressCollection, publicIpAddressCollection.UnmarshalJSON(*data)
+func (c *Client) GetReserved(ctx context.Context, params files_sdk.IpAddressGetReservedParams) (publicIpAddressCollection files_sdk.PublicIpAddressCollection, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/ip_addresses/reserved", Params: params, Entity: &publicIpAddressCollection})
+	return
 }
 
-func GetReserved(ctx context.Context, params files_sdk.IpAddressGetReservedParams) (files_sdk.PublicIpAddressCollection, error) {
+func GetReserved(ctx context.Context, params files_sdk.IpAddressGetReservedParams) (publicIpAddressCollection files_sdk.PublicIpAddressCollection, err error) {
 	return (&Client{}).GetReserved(ctx, params)
 }

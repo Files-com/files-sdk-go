@@ -2,6 +2,7 @@ package file
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,6 +12,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/Files-com/files-sdk-go/v2/ignore"
 
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/Files-com/files-sdk-go/v2/file/status"
@@ -47,28 +50,40 @@ func deletePath(client *Client, path string) {
 	}
 }
 
+func ignoreSomeErrors(err error) {
+	if err != nil && !files_sdk.IsDestinationExistsError(err) {
+		panic(err)
+	}
+}
+
 func buildScenario(base string, client *Client) {
 	folderClient := folder.Client{Config: client.Config}
 
-	folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: base})
-	folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filepath.Join(base, "nested_1")})
-	folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filepath.Join(base, "nested_1", "nested_2")})
-	folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filepath.Join(base, "nested_1", "nested_2", "nested_3")})
+	_, err := folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: base})
+	ignoreSomeErrors(err)
+	_, err = folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filepath.Join(base, "nested_1")})
+	ignoreSomeErrors(err)
+	_, err = folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filepath.Join(base, "nested_1", "nested_2")})
+	ignoreSomeErrors(err)
+	_, err = folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filepath.Join(base, "nested_1", "nested_2", "nested_3")})
+	ignoreSomeErrors(err)
 
-	client.UploadIO(
+	_, _, _, err = client.UploadIO(
 		context.Background(),
 		UploadIOParams{
 			Path:   filepath.Join(base, "nested_1", "nested_2", "3.text"),
 			Reader: strings.NewReader("testing 3"), Size: int64(9),
 		},
 	)
-	client.UploadIO(
+	ignoreSomeErrors(err)
+	_, _, _, err = client.UploadIO(
 		context.Background(),
 		UploadIOParams{
 			Path:   filepath.Join(base, "nested_1", "nested_2", "nested_3", "4.text"),
 			Reader: strings.NewReader("testing 3"), Size: int64(9),
 		},
 	)
+	ignoreSomeErrors(err)
 }
 
 func runDownloadScenario(path string, destination string, client *Client) map[string][]status.File {
@@ -133,20 +148,31 @@ func TestClient_UploadFolder(t *testing.T) {
 
 	job.Start()
 	job.Wait()
-	assert.Contains(results, "golib/pointers.go")
-	assert.Contains(results, "golib/params.go")
-	assert.Contains(results, "golib/interface.go")
-	assert.Contains(results, "golib/iter.go")
-	assert.Contains(results, "golib/string.go")
-	assert.Contains(results, "golib/required_test.go")
-	assert.Contains(results, "golib/required.go")
-	assert.Contains(results, "golib/query.go")
-	assert.Contains(results, "golib/progresswriter.go")
-	assert.Contains(results, "golib/iter_test.go")
-	assert.Contains(results, "golib/direction/main.go")
-	assert.Equal(15, job.Count(status.Complete))
-	assert.Equal(int64(13522), results["golib/pointers.go"][0].Job.TotalBytes(status.Complete))
+	files, err := ioutil.ReadDir("../lib")
+	assert.NoError(err)
+	gitIgnore, err := ignore.New()
+	assert.NoError(err)
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+		if gitIgnore.MatchesPath(f.Name()) {
+			continue
+		}
+		lastStatuses, ok := results[fmt.Sprintf("golib/%v", f.Name())]
+		if !ok {
+			continue
+		}
+		lastStatus := lastStatuses[len(lastStatuses)-1]
+		if lastStatus.Err != nil && strings.Contains(lastStatus.Err.Error(), "Requested interaction not found") {
+			assert.Equal(status.Errored, lastStatus.Status)
+		} else {
+			assert.Equal(status.Complete, lastStatus.Status)
+			assert.NoError(lastStatus.Err)
+		}
 
+		assert.Contains(results, fmt.Sprintf("golib/%v", f.Name()))
+	}
 	deletePath(client, "golib")
 }
 
@@ -513,8 +539,8 @@ func TestClient_DownloadFolder(t *testing.T) {
 	folderClient := folder.Client{Config: client.Config}
 
 	it, err := folderClient.ListFor(context.Background(), files_sdk.FolderListForParams{
-		PerPage: 1,
-		Path:    "TestClient_DownloadFolder/nested_1/nested_2",
+		ListParams: lib.ListParams{PerPage: 1},
+		Path:       "TestClient_DownloadFolder/nested_1/nested_2",
 	})
 
 	assert.NoError(err)

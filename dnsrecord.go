@@ -7,17 +7,15 @@ import (
 )
 
 type DnsRecord struct {
-	Id     string `json:"id,omitempty"`
-	Domain string `json:"domain,omitempty"`
-	Rrtype string `json:"rrtype,omitempty"`
-	Value  string `json:"value,omitempty"`
+	Id     string `json:"id,omitempty" path:"id"`
+	Domain string `json:"domain,omitempty" path:"domain"`
+	Rrtype string `json:"rrtype,omitempty" path:"rrtype"`
+	Value  string `json:"value,omitempty" path:"value"`
 }
 
 type DnsRecordCollection []DnsRecord
 
 type DnsRecordListParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
 	lib.ListParams
 }
 
@@ -25,7 +23,7 @@ func (d *DnsRecord) UnmarshalJSON(data []byte) error {
 	type dnsRecord DnsRecord
 	var v dnsRecord
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*d = DnsRecord(v)
@@ -33,10 +31,10 @@ func (d *DnsRecord) UnmarshalJSON(data []byte) error {
 }
 
 func (d *DnsRecordCollection) UnmarshalJSON(data []byte) error {
-	type dnsRecords []DnsRecord
+	type dnsRecords DnsRecordCollection
 	var v dnsRecords
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*d = DnsRecordCollection(v)

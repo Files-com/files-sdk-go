@@ -11,50 +11,20 @@ type Client struct {
 	files_sdk.Config
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.SessionCreateParams) (files_sdk.Session, error) {
-	session := files_sdk.Session{}
-	path := "/sessions"
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return session, err
-	}
-	if res.StatusCode == 204 {
-		return session, nil
-	}
-
-	return session, session.UnmarshalJSON(*data)
+func (c *Client) Create(ctx context.Context, params files_sdk.SessionCreateParams) (session files_sdk.Session, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/sessions", Params: params, Entity: &session})
+	return
 }
 
-func Create(ctx context.Context, params files_sdk.SessionCreateParams) (files_sdk.Session, error) {
+func Create(ctx context.Context, params files_sdk.SessionCreateParams) (session files_sdk.Session, err error) {
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context) error {
-	session := files_sdk.Session{}
-	path := "/sessions"
-	exportedParams := lib.Params{Params: lib.Interface()}
-	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return err
-	}
-	if res.StatusCode == 204 {
-		return nil
-	}
-
-	return session.UnmarshalJSON(*data)
+func (c *Client) Delete(ctx context.Context) (err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/sessions", Params: lib.Interface(), Entity: nil})
+	return
 }
 
-func Delete(ctx context.Context) error {
+func Delete(ctx context.Context) (err error) {
 	return (&Client{}).Delete(ctx)
 }

@@ -7,24 +7,22 @@ import (
 )
 
 type InboxRegistration struct {
-	Code             string          `json:"code,omitempty"`
-	Name             string          `json:"name,omitempty"`
-	Company          string          `json:"company,omitempty"`
-	Email            string          `json:"email,omitempty"`
-	ClickwrapBody    string          `json:"clickwrap_body,omitempty"`
-	FormFieldSetId   int64           `json:"form_field_set_id,omitempty"`
-	FormFieldData    json.RawMessage `json:"form_field_data,omitempty"`
-	InboxId          int64           `json:"inbox_id,omitempty"`
-	InboxRecipientId int64           `json:"inbox_recipient_id,omitempty"`
-	InboxTitle       string          `json:"inbox_title,omitempty"`
+	Code             string          `json:"code,omitempty" path:"code"`
+	Name             string          `json:"name,omitempty" path:"name"`
+	Company          string          `json:"company,omitempty" path:"company"`
+	Email            string          `json:"email,omitempty" path:"email"`
+	ClickwrapBody    string          `json:"clickwrap_body,omitempty" path:"clickwrap_body"`
+	FormFieldSetId   int64           `json:"form_field_set_id,omitempty" path:"form_field_set_id"`
+	FormFieldData    json.RawMessage `json:"form_field_data,omitempty" path:"form_field_data"`
+	InboxId          int64           `json:"inbox_id,omitempty" path:"inbox_id"`
+	InboxRecipientId int64           `json:"inbox_recipient_id,omitempty" path:"inbox_recipient_id"`
+	InboxTitle       string          `json:"inbox_title,omitempty" path:"inbox_title"`
 }
 
 type InboxRegistrationCollection []InboxRegistration
 
 type InboxRegistrationListParams struct {
-	Cursor           string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage          int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
-	FolderBehaviorId int64  `url:"folder_behavior_id,omitempty" required:"false" json:"folder_behavior_id,omitempty"`
+	FolderBehaviorId int64 `url:"folder_behavior_id,omitempty" required:"false" json:"folder_behavior_id,omitempty" path:"folder_behavior_id"`
 	lib.ListParams
 }
 
@@ -32,7 +30,7 @@ func (i *InboxRegistration) UnmarshalJSON(data []byte) error {
 	type inboxRegistration InboxRegistration
 	var v inboxRegistration
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*i = InboxRegistration(v)
@@ -40,10 +38,10 @@ func (i *InboxRegistration) UnmarshalJSON(data []byte) error {
 }
 
 func (i *InboxRegistrationCollection) UnmarshalJSON(data []byte) error {
-	type inboxRegistrations []InboxRegistration
+	type inboxRegistrations InboxRegistrationCollection
 	var v inboxRegistrations
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*i = InboxRegistrationCollection(v)

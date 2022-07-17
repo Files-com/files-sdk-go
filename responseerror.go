@@ -15,6 +15,15 @@ type ResponseError struct {
 	Data         Data            `json:"data"`
 }
 
+const (
+	DestinationExists = "processing-failure/destination-exists"
+)
+
+func IsDestinationExistsError(err error) bool {
+	re, ok := err.(ResponseError)
+	return ok && re.Type == DestinationExists
+}
+
 type SignRequest struct {
 	Version   string `json:"version"`
 	KeyHandle string `json:"keyHandle"`

@@ -7,40 +7,38 @@ import (
 )
 
 type Project struct {
-	Id           int64  `json:"id,omitempty"`
-	GlobalAccess string `json:"global_access,omitempty"`
+	Id           int64  `json:"id,omitempty" path:"id"`
+	GlobalAccess string `json:"global_access,omitempty" path:"global_access"`
 }
 
 type ProjectCollection []Project
 
 type ProjectListParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
 	lib.ListParams
 }
 
 type ProjectFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
 }
 
 type ProjectCreateParams struct {
-	GlobalAccess string `url:"global_access,omitempty" required:"true" json:"global_access,omitempty"`
+	GlobalAccess string `url:"global_access,omitempty" required:"true" json:"global_access,omitempty" path:"global_access"`
 }
 
 type ProjectUpdateParams struct {
-	Id           int64  `url:"-,omitempty" required:"true" json:"-,omitempty"`
-	GlobalAccess string `url:"global_access,omitempty" required:"true" json:"global_access,omitempty"`
+	Id           int64  `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	GlobalAccess string `url:"global_access,omitempty" required:"true" json:"global_access,omitempty" path:"global_access"`
 }
 
 type ProjectDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
 }
 
 func (p *Project) UnmarshalJSON(data []byte) error {
 	type project Project
 	var v project
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*p = Project(v)
@@ -48,10 +46,10 @@ func (p *Project) UnmarshalJSON(data []byte) error {
 }
 
 func (p *ProjectCollection) UnmarshalJSON(data []byte) error {
-	type projects []Project
+	type projects ProjectCollection
 	var v projects
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*p = ProjectCollection(v)

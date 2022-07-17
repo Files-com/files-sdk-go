@@ -22,8 +22,10 @@ func (i *Iter) InboxRecipient() files_sdk.InboxRecipient {
 
 func (c *Client) List(ctx context.Context, params files_sdk.InboxRecipientListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/inbox_recipients"
+	path, err := lib.BuildPath("/inbox_recipients", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.InboxRecipientCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)
@@ -34,26 +36,11 @@ func List(ctx context.Context, params files_sdk.InboxRecipientListParams) (*Iter
 	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.InboxRecipientCreateParams) (files_sdk.InboxRecipient, error) {
-	inboxRecipient := files_sdk.InboxRecipient{}
-	path := "/inbox_recipients"
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return inboxRecipient, err
-	}
-	if res.StatusCode == 204 {
-		return inboxRecipient, nil
-	}
-
-	return inboxRecipient, inboxRecipient.UnmarshalJSON(*data)
+func (c *Client) Create(ctx context.Context, params files_sdk.InboxRecipientCreateParams) (inboxRecipient files_sdk.InboxRecipient, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/inbox_recipients", Params: params, Entity: &inboxRecipient})
+	return
 }
 
-func Create(ctx context.Context, params files_sdk.InboxRecipientCreateParams) (files_sdk.InboxRecipient, error) {
+func Create(ctx context.Context, params files_sdk.InboxRecipientCreateParams) (inboxRecipient files_sdk.InboxRecipient, err error) {
 	return (&Client{}).Create(ctx, params)
 }

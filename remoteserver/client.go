@@ -2,7 +2,6 @@ package remote_server
 
 import (
 	"context"
-	"strconv"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
@@ -23,8 +22,10 @@ func (i *Iter) RemoteServer() files_sdk.RemoteServer {
 
 func (c *Client) List(ctx context.Context, params files_sdk.RemoteServerListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/remote_servers"
+	path, err := lib.BuildPath("/remote_servers", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.RemoteServerCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)
@@ -35,107 +36,38 @@ func List(ctx context.Context, params files_sdk.RemoteServerListParams) (*Iter, 
 	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) Find(ctx context.Context, params files_sdk.RemoteServerFindParams) (files_sdk.RemoteServer, error) {
-	remoteServer := files_sdk.RemoteServer{}
-	if params.Id == 0 {
-		return remoteServer, lib.CreateError(params, "Id")
-	}
-	path := "/remote_servers/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return remoteServer, err
-	}
-	if res.StatusCode == 204 {
-		return remoteServer, nil
-	}
-
-	return remoteServer, remoteServer.UnmarshalJSON(*data)
+func (c *Client) Find(ctx context.Context, params files_sdk.RemoteServerFindParams) (remoteServer files_sdk.RemoteServer, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/remote_servers/{id}", Params: params, Entity: &remoteServer})
+	return
 }
 
-func Find(ctx context.Context, params files_sdk.RemoteServerFindParams) (files_sdk.RemoteServer, error) {
+func Find(ctx context.Context, params files_sdk.RemoteServerFindParams) (remoteServer files_sdk.RemoteServer, err error) {
 	return (&Client{}).Find(ctx, params)
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.RemoteServerCreateParams) (files_sdk.RemoteServer, error) {
-	remoteServer := files_sdk.RemoteServer{}
-	path := "/remote_servers"
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return remoteServer, err
-	}
-	if res.StatusCode == 204 {
-		return remoteServer, nil
-	}
-
-	return remoteServer, remoteServer.UnmarshalJSON(*data)
+func (c *Client) Create(ctx context.Context, params files_sdk.RemoteServerCreateParams) (remoteServer files_sdk.RemoteServer, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/remote_servers", Params: params, Entity: &remoteServer})
+	return
 }
 
-func Create(ctx context.Context, params files_sdk.RemoteServerCreateParams) (files_sdk.RemoteServer, error) {
+func Create(ctx context.Context, params files_sdk.RemoteServerCreateParams) (remoteServer files_sdk.RemoteServer, err error) {
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Update(ctx context.Context, params files_sdk.RemoteServerUpdateParams) (files_sdk.RemoteServer, error) {
-	remoteServer := files_sdk.RemoteServer{}
-	if params.Id == 0 {
-		return remoteServer, lib.CreateError(params, "Id")
-	}
-	path := "/remote_servers/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return remoteServer, err
-	}
-	if res.StatusCode == 204 {
-		return remoteServer, nil
-	}
-
-	return remoteServer, remoteServer.UnmarshalJSON(*data)
+func (c *Client) Update(ctx context.Context, params files_sdk.RemoteServerUpdateParams) (remoteServer files_sdk.RemoteServer, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/remote_servers/{id}", Params: params, Entity: &remoteServer})
+	return
 }
 
-func Update(ctx context.Context, params files_sdk.RemoteServerUpdateParams) (files_sdk.RemoteServer, error) {
+func Update(ctx context.Context, params files_sdk.RemoteServerUpdateParams) (remoteServer files_sdk.RemoteServer, err error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.RemoteServerDeleteParams) error {
-	remoteServer := files_sdk.RemoteServer{}
-	if params.Id == 0 {
-		return lib.CreateError(params, "Id")
-	}
-	path := "/remote_servers/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return err
-	}
-	if res.StatusCode == 204 {
-		return nil
-	}
-
-	return remoteServer.UnmarshalJSON(*data)
+func (c *Client) Delete(ctx context.Context, params files_sdk.RemoteServerDeleteParams) (err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/remote_servers/{id}", Params: params, Entity: nil})
+	return
 }
 
-func Delete(ctx context.Context, params files_sdk.RemoteServerDeleteParams) error {
+func Delete(ctx context.Context, params files_sdk.RemoteServerDeleteParams) (err error) {
 	return (&Client{}).Delete(ctx, params)
 }

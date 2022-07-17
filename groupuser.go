@@ -7,48 +7,46 @@ import (
 )
 
 type GroupUser struct {
-	GroupName string   `json:"group_name,omitempty"`
-	GroupId   int64    `json:"group_id,omitempty"`
-	UserId    int64    `json:"user_id,omitempty"`
-	Admin     *bool    `json:"admin,omitempty"`
-	Usernames []string `json:"usernames,omitempty"`
-	Id        int64    `json:"id,omitempty"`
+	GroupName string   `json:"group_name,omitempty" path:"group_name"`
+	GroupId   int64    `json:"group_id,omitempty" path:"group_id"`
+	UserId    int64    `json:"user_id,omitempty" path:"user_id"`
+	Admin     *bool    `json:"admin,omitempty" path:"admin"`
+	Usernames []string `json:"usernames,omitempty" path:"usernames"`
+	Id        int64    `json:"id,omitempty" path:"id"`
 }
 
 type GroupUserCollection []GroupUser
 
 type GroupUserListParams struct {
-	UserId  int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
-	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
-	GroupId int64  `url:"group_id,omitempty" required:"false" json:"group_id,omitempty"`
+	UserId  int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	GroupId int64 `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
 	lib.ListParams
 }
 
 type GroupUserCreateParams struct {
-	GroupId int64 `url:"group_id,omitempty" required:"true" json:"group_id,omitempty"`
-	UserId  int64 `url:"user_id,omitempty" required:"true" json:"user_id,omitempty"`
-	Admin   *bool `url:"admin,omitempty" required:"false" json:"admin,omitempty"`
+	GroupId int64 `url:"group_id,omitempty" required:"true" json:"group_id,omitempty" path:"group_id"`
+	UserId  int64 `url:"user_id,omitempty" required:"true" json:"user_id,omitempty" path:"user_id"`
+	Admin   *bool `url:"admin,omitempty" required:"false" json:"admin,omitempty" path:"admin"`
 }
 
 type GroupUserUpdateParams struct {
-	Id      int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
-	GroupId int64 `url:"group_id,omitempty" required:"true" json:"group_id,omitempty"`
-	UserId  int64 `url:"user_id,omitempty" required:"true" json:"user_id,omitempty"`
-	Admin   *bool `url:"admin,omitempty" required:"false" json:"admin,omitempty"`
+	Id      int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	GroupId int64 `url:"group_id,omitempty" required:"true" json:"group_id,omitempty" path:"group_id"`
+	UserId  int64 `url:"user_id,omitempty" required:"true" json:"user_id,omitempty" path:"user_id"`
+	Admin   *bool `url:"admin,omitempty" required:"false" json:"admin,omitempty" path:"admin"`
 }
 
 type GroupUserDeleteParams struct {
-	Id      int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
-	GroupId int64 `url:"group_id,omitempty" required:"true" json:"group_id,omitempty"`
-	UserId  int64 `url:"user_id,omitempty" required:"true" json:"user_id,omitempty"`
+	Id      int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	GroupId int64 `url:"group_id,omitempty" required:"true" json:"group_id,omitempty" path:"group_id"`
+	UserId  int64 `url:"user_id,omitempty" required:"true" json:"user_id,omitempty" path:"user_id"`
 }
 
 func (g *GroupUser) UnmarshalJSON(data []byte) error {
 	type groupUser GroupUser
 	var v groupUser
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*g = GroupUser(v)
@@ -56,10 +54,10 @@ func (g *GroupUser) UnmarshalJSON(data []byte) error {
 }
 
 func (g *GroupUserCollection) UnmarshalJSON(data []byte) error {
-	type groupUsers []GroupUser
+	type groupUsers GroupUserCollection
 	var v groupUsers
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*g = GroupUserCollection(v)

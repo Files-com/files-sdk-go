@@ -2,16 +2,18 @@ package files_sdk
 
 import (
 	"encoding/json"
+
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 type Status struct {
-	Code          int64  `json:"code,omitempty"`
-	Message       string `json:"message,omitempty"`
-	Status        string `json:"status,omitempty"`
-	Data          Auto   `json:"data,omitempty"`
-	Errors        Errors `json:"errors,omitempty"`
-	ClickwrapId   int64  `json:"clickwrap_id,omitempty"`
-	ClickwrapBody string `json:"clickwrap_body,omitempty"`
+	Code          int64  `json:"code,omitempty" path:"code"`
+	Message       string `json:"message,omitempty" path:"message"`
+	Status        string `json:"status,omitempty" path:"status"`
+	Data          Auto   `json:"data,omitempty" path:"data"`
+	Errors        Errors `json:"errors,omitempty" path:"errors"`
+	ClickwrapId   int64  `json:"clickwrap_id,omitempty" path:"clickwrap_id"`
+	ClickwrapBody string `json:"clickwrap_body,omitempty" path:"clickwrap_body"`
 }
 
 type StatusCollection []Status
@@ -20,7 +22,7 @@ func (s *Status) UnmarshalJSON(data []byte) error {
 	type status Status
 	var v status
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*s = Status(v)
@@ -28,10 +30,10 @@ func (s *Status) UnmarshalJSON(data []byte) error {
 }
 
 func (s *StatusCollection) UnmarshalJSON(data []byte) error {
-	type statuss []Status
+	type statuss StatusCollection
 	var v statuss
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*s = StatusCollection(v)

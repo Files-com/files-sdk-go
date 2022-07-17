@@ -2,14 +2,16 @@ package files_sdk
 
 import (
 	"encoding/json"
+
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 type Preview struct {
-	Id          int64  `json:"id,omitempty"`
-	Status      string `json:"status,omitempty"`
-	DownloadUri string `json:"download_uri,omitempty"`
-	Type        string `json:"type,omitempty"`
-	Size        string `json:"size,omitempty"`
+	Id          int64  `json:"id,omitempty" path:"id"`
+	Status      string `json:"status,omitempty" path:"status"`
+	DownloadUri string `json:"download_uri,omitempty" path:"download_uri"`
+	Type        string `json:"type,omitempty" path:"type"`
+	Size        string `json:"size,omitempty" path:"size"`
 }
 
 type PreviewCollection []Preview
@@ -18,7 +20,7 @@ func (p *Preview) UnmarshalJSON(data []byte) error {
 	type preview Preview
 	var v preview
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*p = Preview(v)
@@ -26,10 +28,10 @@ func (p *Preview) UnmarshalJSON(data []byte) error {
 }
 
 func (p *PreviewCollection) UnmarshalJSON(data []byte) error {
-	type previews []Preview
+	type previews PreviewCollection
 	var v previews
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*p = PreviewCollection(v)

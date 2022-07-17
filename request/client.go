@@ -2,7 +2,6 @@ package request
 
 import (
 	"context"
-	"strconv"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
@@ -23,8 +22,10 @@ func (i *Iter) Request() files_sdk.Request {
 
 func (c *Client) List(ctx context.Context, params files_sdk.RequestListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/requests"
+	path, err := lib.BuildPath("/requests", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.RequestCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)
@@ -35,77 +36,29 @@ func List(ctx context.Context, params files_sdk.RequestListParams) (*Iter, error
 	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) GetFolder(ctx context.Context, params files_sdk.RequestGetFolderParams) (files_sdk.RequestCollection, error) {
-	requestCollection := files_sdk.RequestCollection{}
-	path := lib.BuildPath("/requests/folders/", params.Path)
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return requestCollection, err
-	}
-	if res.StatusCode == 204 {
-		return requestCollection, nil
-	}
-
-	return requestCollection, requestCollection.UnmarshalJSON(*data)
+func (c *Client) GetFolder(ctx context.Context, params files_sdk.RequestGetFolderParams) (requestCollection files_sdk.RequestCollection, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/requests/folders/{path}", Params: params, Entity: &requestCollection})
+	return
 }
 
-func GetFolder(ctx context.Context, params files_sdk.RequestGetFolderParams) (files_sdk.RequestCollection, error) {
+func GetFolder(ctx context.Context, params files_sdk.RequestGetFolderParams) (requestCollection files_sdk.RequestCollection, err error) {
 	return (&Client{}).GetFolder(ctx, params)
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.RequestCreateParams) (files_sdk.Request, error) {
-	request := files_sdk.Request{}
-	path := "/requests"
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return request, err
-	}
-	if res.StatusCode == 204 {
-		return request, nil
-	}
-
-	return request, request.UnmarshalJSON(*data)
+func (c *Client) Create(ctx context.Context, params files_sdk.RequestCreateParams) (request files_sdk.Request, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/requests", Params: params, Entity: &request})
+	return
 }
 
-func Create(ctx context.Context, params files_sdk.RequestCreateParams) (files_sdk.Request, error) {
+func Create(ctx context.Context, params files_sdk.RequestCreateParams) (request files_sdk.Request, err error) {
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.RequestDeleteParams) error {
-	request := files_sdk.Request{}
-	if params.Id == 0 {
-		return lib.CreateError(params, "Id")
-	}
-	path := "/requests/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return err
-	}
-	if res.StatusCode == 204 {
-		return nil
-	}
-
-	return request.UnmarshalJSON(*data)
+func (c *Client) Delete(ctx context.Context, params files_sdk.RequestDeleteParams) (err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/requests/{id}", Params: params, Entity: nil})
+	return
 }
 
-func Delete(ctx context.Context, params files_sdk.RequestDeleteParams) error {
+func Delete(ctx context.Context, params files_sdk.RequestDeleteParams) (err error) {
 	return (&Client{}).Delete(ctx, params)
 }

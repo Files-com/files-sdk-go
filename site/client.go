@@ -11,74 +11,29 @@ type Client struct {
 	files_sdk.Config
 }
 
-func (c *Client) Get(ctx context.Context) (files_sdk.Site, error) {
-	site := files_sdk.Site{}
-	path := "/site"
-	exportedParams := lib.Params{Params: lib.Interface()}
-	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return site, err
-	}
-	if res.StatusCode == 204 {
-		return site, nil
-	}
-
-	return site, site.UnmarshalJSON(*data)
+func (c *Client) Get(ctx context.Context) (site files_sdk.Site, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/site", Params: lib.Interface(), Entity: &site})
+	return
 }
 
-func Get(ctx context.Context) (files_sdk.Site, error) {
+func Get(ctx context.Context) (site files_sdk.Site, err error) {
 	return (&Client{}).Get(ctx)
 }
 
-func (c *Client) GetUsage(ctx context.Context) (files_sdk.UsageSnapshot, error) {
-	usageSnapshot := files_sdk.UsageSnapshot{}
-	path := "/site/usage"
-	exportedParams := lib.Params{Params: lib.Interface()}
-	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return usageSnapshot, err
-	}
-	if res.StatusCode == 204 {
-		return usageSnapshot, nil
-	}
-
-	return usageSnapshot, usageSnapshot.UnmarshalJSON(*data)
+func (c *Client) GetUsage(ctx context.Context) (usageSnapshot files_sdk.UsageSnapshot, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/site/usage", Params: lib.Interface(), Entity: &usageSnapshot})
+	return
 }
 
-func GetUsage(ctx context.Context) (files_sdk.UsageSnapshot, error) {
+func GetUsage(ctx context.Context) (usageSnapshot files_sdk.UsageSnapshot, err error) {
 	return (&Client{}).GetUsage(ctx)
 }
 
-func (c *Client) Update(ctx context.Context, params files_sdk.SiteUpdateParams) (files_sdk.Site, error) {
-	site := files_sdk.Site{}
-	path := "/site"
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return site, err
-	}
-	if res.StatusCode == 204 {
-		return site, nil
-	}
-
-	return site, site.UnmarshalJSON(*data)
+func (c *Client) Update(ctx context.Context, params files_sdk.SiteUpdateParams) (site files_sdk.Site, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/site", Params: params, Entity: &site})
+	return
 }
 
-func Update(ctx context.Context, params files_sdk.SiteUpdateParams) (files_sdk.Site, error) {
+func Update(ctx context.Context, params files_sdk.SiteUpdateParams) (site files_sdk.Site, err error) {
 	return (&Client{}).Update(ctx, params)
 }

@@ -22,8 +22,10 @@ func (i *Iter) Priority() files_sdk.Priority {
 
 func (c *Client) List(ctx context.Context, params files_sdk.PriorityListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/priorities"
+	path, err := lib.BuildPath("/priorities", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.PriorityCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)

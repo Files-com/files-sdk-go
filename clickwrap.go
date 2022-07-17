@@ -7,12 +7,12 @@ import (
 )
 
 type Clickwrap struct {
-	Id             int64  `json:"id,omitempty"`
-	Name           string `json:"name,omitempty"`
-	Body           string `json:"body,omitempty"`
-	UseWithUsers   string `json:"use_with_users,omitempty"`
-	UseWithBundles string `json:"use_with_bundles,omitempty"`
-	UseWithInboxes string `json:"use_with_inboxes,omitempty"`
+	Id             int64  `json:"id,omitempty" path:"id"`
+	Name           string `json:"name,omitempty" path:"name"`
+	Body           string `json:"body,omitempty" path:"body"`
+	UseWithUsers   string `json:"use_with_users,omitempty" path:"use_with_users"`
+	UseWithBundles string `json:"use_with_bundles,omitempty" path:"use_with_bundles"`
+	UseWithInboxes string `json:"use_with_inboxes,omitempty" path:"use_with_inboxes"`
 }
 
 type ClickwrapCollection []Clickwrap
@@ -59,41 +59,39 @@ func (u ClickwrapUseWithUsersEnum) Enum() map[string]ClickwrapUseWithUsersEnum {
 }
 
 type ClickwrapListParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
 	lib.ListParams
 }
 
 type ClickwrapFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
 }
 
 type ClickwrapCreateParams struct {
-	Name           string                      `url:"name,omitempty" required:"false" json:"name,omitempty"`
-	Body           string                      `url:"body,omitempty" required:"false" json:"body,omitempty"`
-	UseWithBundles ClickwrapUseWithBundlesEnum `url:"use_with_bundles,omitempty" required:"false" json:"use_with_bundles,omitempty"`
-	UseWithInboxes ClickwrapUseWithInboxesEnum `url:"use_with_inboxes,omitempty" required:"false" json:"use_with_inboxes,omitempty"`
-	UseWithUsers   ClickwrapUseWithUsersEnum   `url:"use_with_users,omitempty" required:"false" json:"use_with_users,omitempty"`
+	Name           string                      `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
+	Body           string                      `url:"body,omitempty" required:"false" json:"body,omitempty" path:"body"`
+	UseWithBundles ClickwrapUseWithBundlesEnum `url:"use_with_bundles,omitempty" required:"false" json:"use_with_bundles,omitempty" path:"use_with_bundles"`
+	UseWithInboxes ClickwrapUseWithInboxesEnum `url:"use_with_inboxes,omitempty" required:"false" json:"use_with_inboxes,omitempty" path:"use_with_inboxes"`
+	UseWithUsers   ClickwrapUseWithUsersEnum   `url:"use_with_users,omitempty" required:"false" json:"use_with_users,omitempty" path:"use_with_users"`
 }
 
 type ClickwrapUpdateParams struct {
-	Id             int64                       `url:"-,omitempty" required:"true" json:"-,omitempty"`
-	Name           string                      `url:"name,omitempty" required:"false" json:"name,omitempty"`
-	Body           string                      `url:"body,omitempty" required:"false" json:"body,omitempty"`
-	UseWithBundles ClickwrapUseWithBundlesEnum `url:"use_with_bundles,omitempty" required:"false" json:"use_with_bundles,omitempty"`
-	UseWithInboxes ClickwrapUseWithInboxesEnum `url:"use_with_inboxes,omitempty" required:"false" json:"use_with_inboxes,omitempty"`
-	UseWithUsers   ClickwrapUseWithUsersEnum   `url:"use_with_users,omitempty" required:"false" json:"use_with_users,omitempty"`
+	Id             int64                       `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Name           string                      `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
+	Body           string                      `url:"body,omitempty" required:"false" json:"body,omitempty" path:"body"`
+	UseWithBundles ClickwrapUseWithBundlesEnum `url:"use_with_bundles,omitempty" required:"false" json:"use_with_bundles,omitempty" path:"use_with_bundles"`
+	UseWithInboxes ClickwrapUseWithInboxesEnum `url:"use_with_inboxes,omitempty" required:"false" json:"use_with_inboxes,omitempty" path:"use_with_inboxes"`
+	UseWithUsers   ClickwrapUseWithUsersEnum   `url:"use_with_users,omitempty" required:"false" json:"use_with_users,omitempty" path:"use_with_users"`
 }
 
 type ClickwrapDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
 }
 
 func (c *Clickwrap) UnmarshalJSON(data []byte) error {
 	type clickwrap Clickwrap
 	var v clickwrap
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*c = Clickwrap(v)
@@ -101,10 +99,10 @@ func (c *Clickwrap) UnmarshalJSON(data []byte) error {
 }
 
 func (c *ClickwrapCollection) UnmarshalJSON(data []byte) error {
-	type clickwraps []Clickwrap
+	type clickwraps ClickwrapCollection
 	var v clickwraps
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*c = ClickwrapCollection(v)

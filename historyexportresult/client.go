@@ -22,8 +22,10 @@ func (i *Iter) HistoryExportResult() files_sdk.HistoryExportResult {
 
 func (c *Client) List(ctx context.Context, params files_sdk.HistoryExportResultListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/history_export_results"
+	path, err := lib.BuildPath("/history_export_results", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.HistoryExportResultCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)

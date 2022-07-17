@@ -7,16 +7,14 @@ import (
 )
 
 type Priority struct {
-	Path  string `json:"path,omitempty"`
-	Color string `json:"color,omitempty"`
+	Path  string `json:"path,omitempty" path:"path"`
+	Color string `json:"color,omitempty" path:"color"`
 }
 
 type PriorityCollection []Priority
 
 type PriorityListParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
-	Path    string `url:"path,omitempty" required:"true" json:"path,omitempty"`
+	Path string `url:"path,omitempty" required:"true" json:"path,omitempty" path:"path"`
 	lib.ListParams
 }
 
@@ -24,7 +22,7 @@ func (p *Priority) UnmarshalJSON(data []byte) error {
 	type priority Priority
 	var v priority
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*p = Priority(v)
@@ -32,10 +30,10 @@ func (p *Priority) UnmarshalJSON(data []byte) error {
 }
 
 func (p *PriorityCollection) UnmarshalJSON(data []byte) error {
-	type prioritys []Priority
+	type prioritys PriorityCollection
 	var v prioritys
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*p = PriorityCollection(v)

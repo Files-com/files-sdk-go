@@ -7,30 +7,28 @@ import (
 )
 
 type IpAddress struct {
-	Id             string   `json:"id,omitempty"`
-	AssociatedWith string   `json:"associated_with,omitempty"`
-	GroupId        int64    `json:"group_id,omitempty"`
-	IpAddresses    []string `json:"ip_addresses,omitempty"`
+	Id             string   `json:"id,omitempty" path:"id"`
+	AssociatedWith string   `json:"associated_with,omitempty" path:"associated_with"`
+	GroupId        int64    `json:"group_id,omitempty" path:"group_id"`
+	IpAddresses    []string `json:"ip_addresses,omitempty" path:"ip_addresses"`
 }
 
 type IpAddressCollection []IpAddress
 
 type IpAddressListParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
 	lib.ListParams
 }
 
 type IpAddressGetReservedParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
+	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty" path:"cursor"`
+	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty" path:"per_page"`
 }
 
 func (i *IpAddress) UnmarshalJSON(data []byte) error {
 	type ipAddress IpAddress
 	var v ipAddress
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*i = IpAddress(v)
@@ -38,10 +36,10 @@ func (i *IpAddress) UnmarshalJSON(data []byte) error {
 }
 
 func (i *IpAddressCollection) UnmarshalJSON(data []byte) error {
-	type ipAddresss []IpAddress
+	type ipAddresss IpAddressCollection
 	var v ipAddresss
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*i = IpAddressCollection(v)

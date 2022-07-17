@@ -22,8 +22,10 @@ func (i *Iter) BundleRecipient() files_sdk.BundleRecipient {
 
 func (c *Client) List(ctx context.Context, params files_sdk.BundleRecipientListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/bundle_recipients"
+	path, err := lib.BuildPath("/bundle_recipients", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.BundleRecipientCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)
@@ -34,26 +36,11 @@ func List(ctx context.Context, params files_sdk.BundleRecipientListParams) (*Ite
 	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.BundleRecipientCreateParams) (files_sdk.BundleRecipient, error) {
-	bundleRecipient := files_sdk.BundleRecipient{}
-	path := "/bundle_recipients"
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return bundleRecipient, err
-	}
-	if res.StatusCode == 204 {
-		return bundleRecipient, nil
-	}
-
-	return bundleRecipient, bundleRecipient.UnmarshalJSON(*data)
+func (c *Client) Create(ctx context.Context, params files_sdk.BundleRecipientCreateParams) (bundleRecipient files_sdk.BundleRecipient, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/bundle_recipients", Params: params, Entity: &bundleRecipient})
+	return
 }
 
-func Create(ctx context.Context, params files_sdk.BundleRecipientCreateParams) (files_sdk.BundleRecipient, error) {
+func Create(ctx context.Context, params files_sdk.BundleRecipientCreateParams) (bundleRecipient files_sdk.BundleRecipient, err error) {
 	return (&Client{}).Create(ctx, params)
 }

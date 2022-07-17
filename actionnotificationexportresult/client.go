@@ -22,8 +22,10 @@ func (i *Iter) ActionNotificationExportResult() files_sdk.ActionNotificationExpo
 
 func (c *Client) List(ctx context.Context, params files_sdk.ActionNotificationExportResultListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/action_notification_export_results"
+	path, err := lib.BuildPath("/action_notification_export_results", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.ActionNotificationExportResultCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)

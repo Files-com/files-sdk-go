@@ -2,7 +2,6 @@ package project
 
 import (
 	"context"
-	"strconv"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
@@ -23,8 +22,10 @@ func (i *Iter) Project() files_sdk.Project {
 
 func (c *Client) List(ctx context.Context, params files_sdk.ProjectListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/projects"
+	path, err := lib.BuildPath("/projects", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.ProjectCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)
@@ -35,107 +36,38 @@ func List(ctx context.Context, params files_sdk.ProjectListParams) (*Iter, error
 	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) Find(ctx context.Context, params files_sdk.ProjectFindParams) (files_sdk.Project, error) {
-	project := files_sdk.Project{}
-	if params.Id == 0 {
-		return project, lib.CreateError(params, "Id")
-	}
-	path := "/projects/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return project, err
-	}
-	if res.StatusCode == 204 {
-		return project, nil
-	}
-
-	return project, project.UnmarshalJSON(*data)
+func (c *Client) Find(ctx context.Context, params files_sdk.ProjectFindParams) (project files_sdk.Project, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/projects/{id}", Params: params, Entity: &project})
+	return
 }
 
-func Find(ctx context.Context, params files_sdk.ProjectFindParams) (files_sdk.Project, error) {
+func Find(ctx context.Context, params files_sdk.ProjectFindParams) (project files_sdk.Project, err error) {
 	return (&Client{}).Find(ctx, params)
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.ProjectCreateParams) (files_sdk.Project, error) {
-	project := files_sdk.Project{}
-	path := "/projects"
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return project, err
-	}
-	if res.StatusCode == 204 {
-		return project, nil
-	}
-
-	return project, project.UnmarshalJSON(*data)
+func (c *Client) Create(ctx context.Context, params files_sdk.ProjectCreateParams) (project files_sdk.Project, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/projects", Params: params, Entity: &project})
+	return
 }
 
-func Create(ctx context.Context, params files_sdk.ProjectCreateParams) (files_sdk.Project, error) {
+func Create(ctx context.Context, params files_sdk.ProjectCreateParams) (project files_sdk.Project, err error) {
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Update(ctx context.Context, params files_sdk.ProjectUpdateParams) (files_sdk.Project, error) {
-	project := files_sdk.Project{}
-	if params.Id == 0 {
-		return project, lib.CreateError(params, "Id")
-	}
-	path := "/projects/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return project, err
-	}
-	if res.StatusCode == 204 {
-		return project, nil
-	}
-
-	return project, project.UnmarshalJSON(*data)
+func (c *Client) Update(ctx context.Context, params files_sdk.ProjectUpdateParams) (project files_sdk.Project, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/projects/{id}", Params: params, Entity: &project})
+	return
 }
 
-func Update(ctx context.Context, params files_sdk.ProjectUpdateParams) (files_sdk.Project, error) {
+func Update(ctx context.Context, params files_sdk.ProjectUpdateParams) (project files_sdk.Project, err error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.ProjectDeleteParams) error {
-	project := files_sdk.Project{}
-	if params.Id == 0 {
-		return lib.CreateError(params, "Id")
-	}
-	path := "/projects/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return err
-	}
-	if res.StatusCode == 204 {
-		return nil
-	}
-
-	return project.UnmarshalJSON(*data)
+func (c *Client) Delete(ctx context.Context, params files_sdk.ProjectDeleteParams) (err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/projects/{id}", Params: params, Entity: nil})
+	return
 }
 
-func Delete(ctx context.Context, params files_sdk.ProjectDeleteParams) error {
+func Delete(ctx context.Context, params files_sdk.ProjectDeleteParams) (err error) {
 	return (&Client{}).Delete(ctx, params)
 }

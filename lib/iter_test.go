@@ -8,8 +8,7 @@ import (
 
 func TestIter_Next_MaxPages(t *testing.T) {
 	assert := assert.New(t)
-	params := ListParams{}
-	params.Set(0, 5, "", 2)
+	params := ListParams{Page: 0, PerPage: 5, MaxPages: 2}
 	it := Iter{}
 	it.ListParams = &params
 
@@ -29,8 +28,7 @@ func TestIter_Next_MaxPages(t *testing.T) {
 
 func TestIter_Next_ZeroMaxPages(t *testing.T) {
 	assert := assert.New(t)
-	params := ListParams{}
-	params.Set(0, 2, "", 0)
+	params := ListParams{Page: 0, PerPage: 2, MaxPages: 0}
 	pages := make([][]interface{}, 0)
 	pages = append(pages, make([]interface{}, params.PerPage))
 	pages = append(pages, make([]interface{}, params.PerPage))
@@ -53,8 +51,7 @@ func TestIter_Next_ZeroMaxPages(t *testing.T) {
 
 func TestIter_Next_PerPage_of_one(t *testing.T) {
 	assert := assert.New(t)
-	params := ListParams{}
-	params.Set(0, 1, "", 2)
+	params := ListParams{Page: 0, PerPage: 1, MaxPages: 2}
 	it := Iter{}
 	it.ListParams = &params
 	var sliceOfSliceInterfaces [2][]interface{}

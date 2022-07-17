@@ -22,8 +22,10 @@ func (i *Iter) InboxUpload() files_sdk.InboxUpload {
 
 func (c *Client) List(ctx context.Context, params files_sdk.InboxUploadListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/inbox_uploads"
+	path, err := lib.BuildPath("/inbox_uploads", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.InboxUploadCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)

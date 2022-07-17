@@ -7,40 +7,38 @@ import (
 )
 
 type FileComment struct {
-	Id        int64               `json:"id,omitempty"`
-	Body      string              `json:"body,omitempty"`
-	Reactions FileCommentReaction `json:"reactions,omitempty"`
-	Path      string              `json:"path,omitempty"`
+	Id        int64               `json:"id,omitempty" path:"id"`
+	Body      string              `json:"body,omitempty" path:"body"`
+	Reactions FileCommentReaction `json:"reactions,omitempty" path:"reactions"`
+	Path      string              `json:"path,omitempty" path:"path"`
 }
 
 type FileCommentCollection []FileComment
 
 type FileCommentListForParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
-	Path    string `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Path string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
 	lib.ListParams
 }
 
 type FileCommentCreateParams struct {
-	Body string `url:"body,omitempty" required:"true" json:"body,omitempty"`
-	Path string `url:"path,omitempty" required:"true" json:"path,omitempty"`
+	Body string `url:"body,omitempty" required:"true" json:"body,omitempty" path:"body"`
+	Path string `url:"path,omitempty" required:"true" json:"path,omitempty" path:"path"`
 }
 
 type FileCommentUpdateParams struct {
-	Id   int64  `url:"-,omitempty" required:"true" json:"-,omitempty"`
-	Body string `url:"body,omitempty" required:"true" json:"body,omitempty"`
+	Id   int64  `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Body string `url:"body,omitempty" required:"true" json:"body,omitempty" path:"body"`
 }
 
 type FileCommentDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
 }
 
 func (f *FileComment) UnmarshalJSON(data []byte) error {
 	type fileComment FileComment
 	var v fileComment
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*f = FileComment(v)
@@ -48,10 +46,10 @@ func (f *FileComment) UnmarshalJSON(data []byte) error {
 }
 
 func (f *FileCommentCollection) UnmarshalJSON(data []byte) error {
-	type fileComments []FileComment
+	type fileComments FileCommentCollection
 	var v fileComments
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*f = FileCommentCollection(v)

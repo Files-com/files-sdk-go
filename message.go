@@ -7,51 +7,49 @@ import (
 )
 
 type Message struct {
-	Id        int64          `json:"id,omitempty"`
-	Subject   string         `json:"subject,omitempty"`
-	Body      string         `json:"body,omitempty"`
-	Comments  MessageComment `json:"comments,omitempty"`
-	UserId    int64          `json:"user_id,omitempty"`
-	ProjectId int64          `json:"project_id,omitempty"`
+	Id        int64          `json:"id,omitempty" path:"id"`
+	Subject   string         `json:"subject,omitempty" path:"subject"`
+	Body      string         `json:"body,omitempty" path:"body"`
+	Comments  MessageComment `json:"comments,omitempty" path:"comments"`
+	UserId    int64          `json:"user_id,omitempty" path:"user_id"`
+	ProjectId int64          `json:"project_id,omitempty" path:"project_id"`
 }
 
 type MessageCollection []Message
 
 type MessageListParams struct {
-	UserId    int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
-	Cursor    string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage   int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
-	ProjectId int64  `url:"project_id,omitempty" required:"true" json:"project_id,omitempty"`
+	UserId    int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	ProjectId int64 `url:"project_id,omitempty" required:"true" json:"project_id,omitempty" path:"project_id"`
 	lib.ListParams
 }
 
 type MessageFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
 }
 
 type MessageCreateParams struct {
-	UserId    int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
-	ProjectId int64  `url:"project_id,omitempty" required:"true" json:"project_id,omitempty"`
-	Subject   string `url:"subject,omitempty" required:"true" json:"subject,omitempty"`
-	Body      string `url:"body,omitempty" required:"true" json:"body,omitempty"`
+	UserId    int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	ProjectId int64  `url:"project_id,omitempty" required:"true" json:"project_id,omitempty" path:"project_id"`
+	Subject   string `url:"subject,omitempty" required:"true" json:"subject,omitempty" path:"subject"`
+	Body      string `url:"body,omitempty" required:"true" json:"body,omitempty" path:"body"`
 }
 
 type MessageUpdateParams struct {
-	Id        int64  `url:"-,omitempty" required:"true" json:"-,omitempty"`
-	ProjectId int64  `url:"project_id,omitempty" required:"true" json:"project_id,omitempty"`
-	Subject   string `url:"subject,omitempty" required:"true" json:"subject,omitempty"`
-	Body      string `url:"body,omitempty" required:"true" json:"body,omitempty"`
+	Id        int64  `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	ProjectId int64  `url:"project_id,omitempty" required:"true" json:"project_id,omitempty" path:"project_id"`
+	Subject   string `url:"subject,omitempty" required:"true" json:"subject,omitempty" path:"subject"`
+	Body      string `url:"body,omitempty" required:"true" json:"body,omitempty" path:"body"`
 }
 
 type MessageDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
 }
 
 func (m *Message) UnmarshalJSON(data []byte) error {
 	type message Message
 	var v message
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*m = Message(v)
@@ -59,10 +57,10 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 }
 
 func (m *MessageCollection) UnmarshalJSON(data []byte) error {
-	type messages []Message
+	type messages MessageCollection
 	var v messages
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*m = MessageCollection(v)

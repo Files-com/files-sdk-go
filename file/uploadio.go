@@ -163,6 +163,7 @@ func (c *Client) completeUpload(ctx context.Context, providedMtime func() time.T
 		Path:          path,
 		Ref:           ref,
 		Size:          bytesWritten,
+		MkdirParents:  lib.Bool(true),
 	})
 }
 

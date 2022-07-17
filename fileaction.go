@@ -2,11 +2,13 @@ package files_sdk
 
 import (
 	"encoding/json"
+
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 type FileAction struct {
-	Status          string `json:"status,omitempty"`
-	FileMigrationId int64  `json:"file_migration_id,omitempty"`
+	Status          string `json:"status,omitempty" path:"status"`
+	FileMigrationId int64  `json:"file_migration_id,omitempty" path:"file_migration_id"`
 }
 
 type FileActionCollection []FileAction
@@ -15,7 +17,7 @@ func (f *FileAction) UnmarshalJSON(data []byte) error {
 	type fileAction FileAction
 	var v fileAction
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*f = FileAction(v)
@@ -23,10 +25,10 @@ func (f *FileAction) UnmarshalJSON(data []byte) error {
 }
 
 func (f *FileActionCollection) UnmarshalJSON(data []byte) error {
-	type fileActions []FileAction
+	type fileActions FileActionCollection
 	var v fileActions
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*f = FileActionCollection(v)

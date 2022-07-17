@@ -7,39 +7,37 @@ import (
 )
 
 type UserRequest struct {
-	Id      int64  `json:"id,omitempty"`
-	Name    string `json:"name,omitempty"`
-	Email   string `json:"email,omitempty"`
-	Details string `json:"details,omitempty"`
+	Id      int64  `json:"id,omitempty" path:"id"`
+	Name    string `json:"name,omitempty" path:"name"`
+	Email   string `json:"email,omitempty" path:"email"`
+	Details string `json:"details,omitempty" path:"details"`
 }
 
 type UserRequestCollection []UserRequest
 
 type UserRequestListParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
 	lib.ListParams
 }
 
 type UserRequestFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
 }
 
 type UserRequestCreateParams struct {
-	Name    string `url:"name,omitempty" required:"true" json:"name,omitempty"`
-	Email   string `url:"email,omitempty" required:"true" json:"email,omitempty"`
-	Details string `url:"details,omitempty" required:"true" json:"details,omitempty"`
+	Name    string `url:"name,omitempty" required:"true" json:"name,omitempty" path:"name"`
+	Email   string `url:"email,omitempty" required:"true" json:"email,omitempty" path:"email"`
+	Details string `url:"details,omitempty" required:"true" json:"details,omitempty" path:"details"`
 }
 
 type UserRequestDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
 }
 
 func (u *UserRequest) UnmarshalJSON(data []byte) error {
 	type userRequest UserRequest
 	var v userRequest
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*u = UserRequest(v)
@@ -47,10 +45,10 @@ func (u *UserRequest) UnmarshalJSON(data []byte) error {
 }
 
 func (u *UserRequestCollection) UnmarshalJSON(data []byte) error {
-	type userRequests []UserRequest
+	type userRequests UserRequestCollection
 	var v userRequests
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*u = UserRequestCollection(v)

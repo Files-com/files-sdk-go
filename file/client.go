@@ -17,7 +17,10 @@ type Client struct {
 
 func (c *Client) Get(ctx context.Context, Path string) (files_sdk.File, error) {
 	file := files_sdk.File{}
-	path := lib.BuildPath("/files/", Path)
+	path, err := lib.BuildPath("/files/{path}", map[string]string{"path": Path})
+	if err != nil {
+		return file, err
+	}
 	data, _, err := files_sdk.Call(ctx, "GET", c.Config, path, lib.Params{Params: lib.Interface()})
 	if err != nil {
 		return file, err
@@ -36,7 +39,10 @@ func Get(ctx context.Context, Path string) (files_sdk.File, error) {
 
 func (c *Client) Download(ctx context.Context, params files_sdk.FileDownloadParams) (files_sdk.File, error) {
 	file := files_sdk.File{}
-	path := lib.BuildPath("/files/", params.Path)
+	path, err := lib.BuildPath("/files/{path}", params)
+	if err != nil {
+		return file, err
+	}
 	data, _, err := files_sdk.Call(ctx, "GET", c.Config, path, lib.Params{Params: lib.Interface()})
 	if err != nil {
 		return file, err
@@ -68,171 +74,66 @@ func Download(ctx context.Context, params files_sdk.FileDownloadParams) (files_s
 	return client.Download(ctx, params)
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.FileCreateParams) (files_sdk.File, error) {
-	file := files_sdk.File{}
-	path := lib.BuildPath("/files/", params.Path)
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return file, err
-	}
-	if res.StatusCode == 204 {
-		return file, nil
-	}
-
-	return file, file.UnmarshalJSON(*data)
+func (c *Client) Create(ctx context.Context, params files_sdk.FileCreateParams) (file files_sdk.File, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/files/{path}", Params: params, Entity: &file})
+	return
 }
 
-func Create(ctx context.Context, params files_sdk.FileCreateParams) (files_sdk.File, error) {
+func Create(ctx context.Context, params files_sdk.FileCreateParams) (file files_sdk.File, err error) {
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Update(ctx context.Context, params files_sdk.FileUpdateParams) (files_sdk.File, error) {
-	file := files_sdk.File{}
-	path := lib.BuildPath("/files/", params.Path)
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return file, err
-	}
-	if res.StatusCode == 204 {
-		return file, nil
-	}
-
-	return file, file.UnmarshalJSON(*data)
+func (c *Client) Update(ctx context.Context, params files_sdk.FileUpdateParams) (file files_sdk.File, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/files/{path}", Params: params, Entity: &file})
+	return
 }
 
-func Update(ctx context.Context, params files_sdk.FileUpdateParams) (files_sdk.File, error) {
+func Update(ctx context.Context, params files_sdk.FileUpdateParams) (file files_sdk.File, err error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.FileDeleteParams) error {
-	file := files_sdk.File{}
-	path := lib.BuildPath("/files/", params.Path)
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return err
-	}
-	if res.StatusCode == 204 {
-		return nil
-	}
-
-	return file.UnmarshalJSON(*data)
+func (c *Client) Delete(ctx context.Context, params files_sdk.FileDeleteParams) (err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/files/{path}", Params: params, Entity: nil})
+	return
 }
 
-func Delete(ctx context.Context, params files_sdk.FileDeleteParams) error {
+func Delete(ctx context.Context, params files_sdk.FileDeleteParams) (err error) {
 	return (&Client{}).Delete(ctx, params)
 }
 
-func (c *Client) Find(ctx context.Context, params files_sdk.FileFindParams) (files_sdk.File, error) {
-	file := files_sdk.File{}
-	path := lib.BuildPath("/file_actions/metadata/", params.Path)
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return file, err
-	}
-	if res.StatusCode == 204 {
-		return file, nil
-	}
-
-	return file, file.UnmarshalJSON(*data)
+func (c *Client) Find(ctx context.Context, params files_sdk.FileFindParams) (file files_sdk.File, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/file_actions/metadata/{path}", Params: params, Entity: &file})
+	return
 }
 
-func Find(ctx context.Context, params files_sdk.FileFindParams) (files_sdk.File, error) {
+func Find(ctx context.Context, params files_sdk.FileFindParams) (file files_sdk.File, err error) {
 	return (&Client{}).Find(ctx, params)
 }
 
-func (c *Client) Copy(ctx context.Context, params files_sdk.FileCopyParams) (files_sdk.FileAction, error) {
-	fileAction := files_sdk.FileAction{}
-	path := lib.BuildPath("/file_actions/copy/", params.Path)
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return fileAction, err
-	}
-	if res.StatusCode == 204 {
-		return fileAction, nil
-	}
-
-	return fileAction, fileAction.UnmarshalJSON(*data)
+func (c *Client) Copy(ctx context.Context, params files_sdk.FileCopyParams) (fileAction files_sdk.FileAction, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/file_actions/copy/{path}", Params: params, Entity: &fileAction})
+	return
 }
 
-func Copy(ctx context.Context, params files_sdk.FileCopyParams) (files_sdk.FileAction, error) {
+func Copy(ctx context.Context, params files_sdk.FileCopyParams) (fileAction files_sdk.FileAction, err error) {
 	return (&Client{}).Copy(ctx, params)
 }
 
-func (c *Client) Move(ctx context.Context, params files_sdk.FileMoveParams) (files_sdk.FileAction, error) {
-	fileAction := files_sdk.FileAction{}
-	path := lib.BuildPath("/file_actions/move/", params.Path)
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return fileAction, err
-	}
-	if res.StatusCode == 204 {
-		return fileAction, nil
-	}
-
-	return fileAction, fileAction.UnmarshalJSON(*data)
+func (c *Client) Move(ctx context.Context, params files_sdk.FileMoveParams) (fileAction files_sdk.FileAction, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/file_actions/move/{path}", Params: params, Entity: &fileAction})
+	return
 }
 
-func Move(ctx context.Context, params files_sdk.FileMoveParams) (files_sdk.FileAction, error) {
+func Move(ctx context.Context, params files_sdk.FileMoveParams) (fileAction files_sdk.FileAction, err error) {
 	return (&Client{}).Move(ctx, params)
 }
 
-func (c *Client) BeginUpload(ctx context.Context, params files_sdk.FileBeginUploadParams) (files_sdk.FileUploadPartCollection, error) {
-	fileUploadPartCollection := files_sdk.FileUploadPartCollection{}
-	path := lib.BuildPath("/file_actions/begin_upload/", params.Path)
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return fileUploadPartCollection, err
-	}
-	if res.StatusCode == 204 {
-		return fileUploadPartCollection, nil
-	}
-
-	return fileUploadPartCollection, fileUploadPartCollection.UnmarshalJSON(*data)
+func (c *Client) BeginUpload(ctx context.Context, params files_sdk.FileBeginUploadParams) (fileUploadPartCollection files_sdk.FileUploadPartCollection, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/file_actions/begin_upload/{path}", Params: params, Entity: &fileUploadPartCollection})
+	return
 }
 
-func BeginUpload(ctx context.Context, params files_sdk.FileBeginUploadParams) (files_sdk.FileUploadPartCollection, error) {
+func BeginUpload(ctx context.Context, params files_sdk.FileBeginUploadParams) (fileUploadPartCollection files_sdk.FileUploadPartCollection, err error) {
 	return (&Client{}).BeginUpload(ctx, params)
 }
 

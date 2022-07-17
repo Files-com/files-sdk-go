@@ -22,8 +22,10 @@ func (i *Iter) UserCipherUse() files_sdk.UserCipherUse {
 
 func (c *Client) List(ctx context.Context, params files_sdk.UserCipherUseListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/user_cipher_uses"
+	path, err := lib.BuildPath("/user_cipher_uses", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.UserCipherUseCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)

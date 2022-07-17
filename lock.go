@@ -7,48 +7,46 @@ import (
 )
 
 type Lock struct {
-	Path                 string `json:"path,omitempty"`
-	Timeout              int64  `json:"timeout,omitempty"`
-	Depth                string `json:"depth,omitempty"`
-	Recursive            *bool  `json:"recursive,omitempty"`
-	Owner                string `json:"owner,omitempty"`
-	Scope                string `json:"scope,omitempty"`
-	Exclusive            *bool  `json:"exclusive,omitempty"`
-	Token                string `json:"token,omitempty"`
-	Type                 string `json:"type,omitempty"`
-	AllowAccessByAnyUser *bool  `json:"allow_access_by_any_user,omitempty"`
-	UserId               int64  `json:"user_id,omitempty"`
-	Username             string `json:"username,omitempty"`
+	Path                 string `json:"path,omitempty" path:"path"`
+	Timeout              int64  `json:"timeout,omitempty" path:"timeout"`
+	Depth                string `json:"depth,omitempty" path:"depth"`
+	Recursive            *bool  `json:"recursive,omitempty" path:"recursive"`
+	Owner                string `json:"owner,omitempty" path:"owner"`
+	Scope                string `json:"scope,omitempty" path:"scope"`
+	Exclusive            *bool  `json:"exclusive,omitempty" path:"exclusive"`
+	Token                string `json:"token,omitempty" path:"token"`
+	Type                 string `json:"type,omitempty" path:"type"`
+	AllowAccessByAnyUser *bool  `json:"allow_access_by_any_user,omitempty" path:"allow_access_by_any_user"`
+	UserId               int64  `json:"user_id,omitempty" path:"user_id"`
+	Username             string `json:"username,omitempty" path:"username"`
 }
 
 type LockCollection []Lock
 
 type LockListForParams struct {
-	Cursor          string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage         int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
-	Path            string `url:"-,omitempty" required:"true" json:"-,omitempty"`
-	IncludeChildren *bool  `url:"include_children,omitempty" required:"false" json:"include_children,omitempty"`
+	Path            string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	IncludeChildren *bool  `url:"include_children,omitempty" required:"false" json:"include_children,omitempty" path:"include_children"`
 	lib.ListParams
 }
 
 type LockCreateParams struct {
-	Path                 string `url:"-,omitempty" required:"true" json:"-,omitempty"`
-	AllowAccessByAnyUser *bool  `url:"allow_access_by_any_user,omitempty" required:"false" json:"allow_access_by_any_user,omitempty"`
-	Exclusive            *bool  `url:"exclusive,omitempty" required:"false" json:"exclusive,omitempty"`
-	Recursive            string `url:"recursive,omitempty" required:"false" json:"recursive,omitempty"`
-	Timeout              int64  `url:"timeout,omitempty" required:"false" json:"timeout,omitempty"`
+	Path                 string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	AllowAccessByAnyUser *bool  `url:"allow_access_by_any_user,omitempty" required:"false" json:"allow_access_by_any_user,omitempty" path:"allow_access_by_any_user"`
+	Exclusive            *bool  `url:"exclusive,omitempty" required:"false" json:"exclusive,omitempty" path:"exclusive"`
+	Recursive            string `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
+	Timeout              int64  `url:"timeout,omitempty" required:"false" json:"timeout,omitempty" path:"timeout"`
 }
 
 type LockDeleteParams struct {
-	Path  string `url:"-,omitempty" required:"true" json:"-,omitempty"`
-	Token string `url:"token,omitempty" required:"true" json:"token,omitempty"`
+	Path  string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Token string `url:"token,omitempty" required:"true" json:"token,omitempty" path:"token"`
 }
 
 func (l *Lock) UnmarshalJSON(data []byte) error {
 	type lock Lock
 	var v lock
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*l = Lock(v)
@@ -56,10 +54,10 @@ func (l *Lock) UnmarshalJSON(data []byte) error {
 }
 
 func (l *LockCollection) UnmarshalJSON(data []byte) error {
-	type locks []Lock
+	type locks LockCollection
 	var v locks
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*l = LockCollection(v)

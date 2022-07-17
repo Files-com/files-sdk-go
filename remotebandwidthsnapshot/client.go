@@ -22,8 +22,10 @@ func (i *Iter) RemoteBandwidthSnapshot() files_sdk.RemoteBandwidthSnapshot {
 
 func (c *Client) List(ctx context.Context, params files_sdk.RemoteBandwidthSnapshotListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/remote_bandwidth_snapshots"
+	path, err := lib.BuildPath("/remote_bandwidth_snapshots", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.RemoteBandwidthSnapshotCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)

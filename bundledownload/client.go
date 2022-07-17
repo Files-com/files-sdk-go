@@ -22,8 +22,10 @@ func (i *Iter) BundleDownload() files_sdk.BundleDownload {
 
 func (c *Client) List(ctx context.Context, params files_sdk.BundleDownloadListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/bundle_downloads"
+	path, err := lib.BuildPath("/bundle_downloads", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.BundleDownloadCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)

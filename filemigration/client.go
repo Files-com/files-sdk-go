@@ -2,7 +2,6 @@ package file_migration
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
@@ -13,30 +12,12 @@ type Client struct {
 	files_sdk.Config
 }
 
-func (c *Client) Find(ctx context.Context, params files_sdk.FileMigrationFindParams) (files_sdk.FileMigration, error) {
-	fileMigration := files_sdk.FileMigration{}
-	if params.Id == 0 {
-		return fileMigration, lib.CreateError(params, "Id")
-	}
-	path := "/file_migrations/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return fileMigration, err
-	}
-	if res.StatusCode == 204 {
-		return fileMigration, nil
-	}
-
-	return fileMigration, fileMigration.UnmarshalJSON(*data)
+func (c *Client) Find(ctx context.Context, params files_sdk.FileMigrationFindParams) (fileMigration files_sdk.FileMigration, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/file_migrations/{id}", Params: params, Entity: &fileMigration})
+	return
 }
 
-func Find(ctx context.Context, params files_sdk.FileMigrationFindParams) (files_sdk.FileMigration, error) {
+func Find(ctx context.Context, params files_sdk.FileMigrationFindParams) (fileMigration files_sdk.FileMigration, err error) {
 	return (&Client{}).Find(ctx, params)
 }
 

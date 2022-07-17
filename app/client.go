@@ -22,8 +22,10 @@ func (i *Iter) App() files_sdk.App {
 
 func (c *Client) List(ctx context.Context, params files_sdk.AppListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/apps"
+	path, err := lib.BuildPath("/apps", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.AppCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)

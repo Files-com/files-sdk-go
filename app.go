@@ -7,36 +7,34 @@ import (
 )
 
 type App struct {
-	Name                string          `json:"name,omitempty"`
-	ExtendedDescription string          `json:"extended_description,omitempty"`
-	ShortDescription    string          `json:"short_description,omitempty"`
-	DocumentationLinks  json.RawMessage `json:"documentation_links,omitempty"`
-	IconUrl             string          `json:"icon_url,omitempty"`
-	LogoUrl             string          `json:"logo_url,omitempty"`
-	ScreenshotListUrls  string          `json:"screenshot_list_urls,omitempty"`
-	LogoThumbnailUrl    string          `json:"logo_thumbnail_url,omitempty"`
-	SsoStrategyType     string          `json:"sso_strategy_type,omitempty"`
-	RemoteServerType    string          `json:"remote_server_type,omitempty"`
-	FolderBehaviorType  string          `json:"folder_behavior_type,omitempty"`
-	ExternalHomepageUrl string          `json:"external_homepage_url,omitempty"`
-	MarketingYoutubeUrl string          `json:"marketing_youtube_url,omitempty"`
-	TutorialYoutubeUrl  string          `json:"tutorial_youtube_url,omitempty"`
-	AppType             string          `json:"app_type,omitempty"`
-	Featured            *bool           `json:"featured,omitempty"`
+	Name                string          `json:"name,omitempty" path:"name"`
+	ExtendedDescription string          `json:"extended_description,omitempty" path:"extended_description"`
+	ShortDescription    string          `json:"short_description,omitempty" path:"short_description"`
+	DocumentationLinks  json.RawMessage `json:"documentation_links,omitempty" path:"documentation_links"`
+	IconUrl             string          `json:"icon_url,omitempty" path:"icon_url"`
+	LogoUrl             string          `json:"logo_url,omitempty" path:"logo_url"`
+	ScreenshotListUrls  string          `json:"screenshot_list_urls,omitempty" path:"screenshot_list_urls"`
+	LogoThumbnailUrl    string          `json:"logo_thumbnail_url,omitempty" path:"logo_thumbnail_url"`
+	SsoStrategyType     string          `json:"sso_strategy_type,omitempty" path:"sso_strategy_type"`
+	RemoteServerType    string          `json:"remote_server_type,omitempty" path:"remote_server_type"`
+	FolderBehaviorType  string          `json:"folder_behavior_type,omitempty" path:"folder_behavior_type"`
+	ExternalHomepageUrl string          `json:"external_homepage_url,omitempty" path:"external_homepage_url"`
+	MarketingYoutubeUrl string          `json:"marketing_youtube_url,omitempty" path:"marketing_youtube_url"`
+	TutorialYoutubeUrl  string          `json:"tutorial_youtube_url,omitempty" path:"tutorial_youtube_url"`
+	AppType             string          `json:"app_type,omitempty" path:"app_type"`
+	Featured            *bool           `json:"featured,omitempty" path:"featured"`
 }
 
 type AppCollection []App
 
 type AppListParams struct {
-	Cursor     string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage    int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
-	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty"`
-	Filter     json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty"`
-	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty"`
-	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty"`
-	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false" json:"filter_like,omitempty"`
-	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty"`
-	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty"`
+	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter     json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterLike json.RawMessage `url:"filter_like,omitempty" required:"false" json:"filter_like,omitempty" path:"filter_like"`
+	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	lib.ListParams
 }
 
@@ -44,7 +42,7 @@ func (a *App) UnmarshalJSON(data []byte) error {
 	type app App
 	var v app
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*a = App(v)
@@ -52,10 +50,10 @@ func (a *App) UnmarshalJSON(data []byte) error {
 }
 
 func (a *AppCollection) UnmarshalJSON(data []byte) error {
-	type apps []App
+	type apps AppCollection
 	var v apps
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*a = AppCollection(v)

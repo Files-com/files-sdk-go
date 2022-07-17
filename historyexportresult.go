@@ -7,38 +7,36 @@ import (
 )
 
 type HistoryExportResult struct {
-	Id                  int64  `json:"id,omitempty"`
-	CreatedAt           int64  `json:"created_at,omitempty"`
-	UserId              int64  `json:"user_id,omitempty"`
-	FileId              int64  `json:"file_id,omitempty"`
-	ParentId            int64  `json:"parent_id,omitempty"`
-	Path                string `json:"path,omitempty"`
-	Folder              string `json:"folder,omitempty"`
-	Src                 string `json:"src,omitempty"`
-	Destination         string `json:"destination,omitempty"`
-	Ip                  string `json:"ip,omitempty"`
-	Username            string `json:"username,omitempty"`
-	Action              string `json:"action,omitempty"`
-	FailureType         string `json:"failure_type,omitempty"`
-	Interface           string `json:"interface,omitempty"`
-	TargetId            int64  `json:"target_id,omitempty"`
-	TargetName          string `json:"target_name,omitempty"`
-	TargetPermission    string `json:"target_permission,omitempty"`
-	TargetRecursive     *bool  `json:"target_recursive,omitempty"`
-	TargetExpiresAt     int64  `json:"target_expires_at,omitempty"`
-	TargetPermissionSet string `json:"target_permission_set,omitempty"`
-	TargetPlatform      string `json:"target_platform,omitempty"`
-	TargetUsername      string `json:"target_username,omitempty"`
-	TargetUserId        int64  `json:"target_user_id,omitempty"`
+	Id                  int64  `json:"id,omitempty" path:"id"`
+	CreatedAt           int64  `json:"created_at,omitempty" path:"created_at"`
+	UserId              int64  `json:"user_id,omitempty" path:"user_id"`
+	FileId              int64  `json:"file_id,omitempty" path:"file_id"`
+	ParentId            int64  `json:"parent_id,omitempty" path:"parent_id"`
+	Path                string `json:"path,omitempty" path:"path"`
+	Folder              string `json:"folder,omitempty" path:"folder"`
+	Src                 string `json:"src,omitempty" path:"src"`
+	Destination         string `json:"destination,omitempty" path:"destination"`
+	Ip                  string `json:"ip,omitempty" path:"ip"`
+	Username            string `json:"username,omitempty" path:"username"`
+	Action              string `json:"action,omitempty" path:"action"`
+	FailureType         string `json:"failure_type,omitempty" path:"failure_type"`
+	Interface           string `json:"interface,omitempty" path:"interface"`
+	TargetId            int64  `json:"target_id,omitempty" path:"target_id"`
+	TargetName          string `json:"target_name,omitempty" path:"target_name"`
+	TargetPermission    string `json:"target_permission,omitempty" path:"target_permission"`
+	TargetRecursive     *bool  `json:"target_recursive,omitempty" path:"target_recursive"`
+	TargetExpiresAt     int64  `json:"target_expires_at,omitempty" path:"target_expires_at"`
+	TargetPermissionSet string `json:"target_permission_set,omitempty" path:"target_permission_set"`
+	TargetPlatform      string `json:"target_platform,omitempty" path:"target_platform"`
+	TargetUsername      string `json:"target_username,omitempty" path:"target_username"`
+	TargetUserId        int64  `json:"target_user_id,omitempty" path:"target_user_id"`
 }
 
 type HistoryExportResultCollection []HistoryExportResult
 
 type HistoryExportResultListParams struct {
-	UserId          int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
-	Cursor          string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage         int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
-	HistoryExportId int64  `url:"history_export_id,omitempty" required:"true" json:"history_export_id,omitempty"`
+	UserId          int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	HistoryExportId int64 `url:"history_export_id,omitempty" required:"true" json:"history_export_id,omitempty" path:"history_export_id"`
 	lib.ListParams
 }
 
@@ -46,7 +44,7 @@ func (h *HistoryExportResult) UnmarshalJSON(data []byte) error {
 	type historyExportResult HistoryExportResult
 	var v historyExportResult
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*h = HistoryExportResult(v)
@@ -54,10 +52,10 @@ func (h *HistoryExportResult) UnmarshalJSON(data []byte) error {
 }
 
 func (h *HistoryExportResultCollection) UnmarshalJSON(data []byte) error {
-	type historyExportResults []HistoryExportResult
+	type historyExportResults HistoryExportResultCollection
 	var v historyExportResults
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*h = HistoryExportResultCollection(v)

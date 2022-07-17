@@ -3,14 +3,16 @@ package files_sdk
 import (
 	"encoding/json"
 	"time"
+
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 type PaymentLineItem struct {
-	Amount    string     `json:"amount,omitempty"`
-	CreatedAt *time.Time `json:"created_at,omitempty"`
-	InvoiceId int64      `json:"invoice_id,omitempty"`
-	PaymentId int64      `json:"payment_id,omitempty"`
-	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+	Amount    string     `json:"amount,omitempty" path:"amount"`
+	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at"`
+	InvoiceId int64      `json:"invoice_id,omitempty" path:"invoice_id"`
+	PaymentId int64      `json:"payment_id,omitempty" path:"payment_id"`
+	UpdatedAt *time.Time `json:"updated_at,omitempty" path:"updated_at"`
 }
 
 type PaymentLineItemCollection []PaymentLineItem
@@ -19,7 +21,7 @@ func (p *PaymentLineItem) UnmarshalJSON(data []byte) error {
 	type paymentLineItem PaymentLineItem
 	var v paymentLineItem
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*p = PaymentLineItem(v)
@@ -27,10 +29,10 @@ func (p *PaymentLineItem) UnmarshalJSON(data []byte) error {
 }
 
 func (p *PaymentLineItemCollection) UnmarshalJSON(data []byte) error {
-	type paymentLineItems []PaymentLineItem
+	type paymentLineItems PaymentLineItemCollection
 	var v paymentLineItems
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*p = PaymentLineItemCollection(v)

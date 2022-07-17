@@ -2,7 +2,6 @@ package message_comment_reaction
 
 import (
 	"context"
-	"strconv"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
@@ -23,8 +22,10 @@ func (i *Iter) MessageCommentReaction() files_sdk.MessageCommentReaction {
 
 func (c *Client) List(ctx context.Context, params files_sdk.MessageCommentReactionListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/message_comment_reactions"
+	path, err := lib.BuildPath("/message_comment_reactions", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.MessageCommentReactionCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)
@@ -35,80 +36,29 @@ func List(ctx context.Context, params files_sdk.MessageCommentReactionListParams
 	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) Find(ctx context.Context, params files_sdk.MessageCommentReactionFindParams) (files_sdk.MessageCommentReaction, error) {
-	messageCommentReaction := files_sdk.MessageCommentReaction{}
-	if params.Id == 0 {
-		return messageCommentReaction, lib.CreateError(params, "Id")
-	}
-	path := "/message_comment_reactions/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return messageCommentReaction, err
-	}
-	if res.StatusCode == 204 {
-		return messageCommentReaction, nil
-	}
-
-	return messageCommentReaction, messageCommentReaction.UnmarshalJSON(*data)
+func (c *Client) Find(ctx context.Context, params files_sdk.MessageCommentReactionFindParams) (messageCommentReaction files_sdk.MessageCommentReaction, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/message_comment_reactions/{id}", Params: params, Entity: &messageCommentReaction})
+	return
 }
 
-func Find(ctx context.Context, params files_sdk.MessageCommentReactionFindParams) (files_sdk.MessageCommentReaction, error) {
+func Find(ctx context.Context, params files_sdk.MessageCommentReactionFindParams) (messageCommentReaction files_sdk.MessageCommentReaction, err error) {
 	return (&Client{}).Find(ctx, params)
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.MessageCommentReactionCreateParams) (files_sdk.MessageCommentReaction, error) {
-	messageCommentReaction := files_sdk.MessageCommentReaction{}
-	path := "/message_comment_reactions"
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return messageCommentReaction, err
-	}
-	if res.StatusCode == 204 {
-		return messageCommentReaction, nil
-	}
-
-	return messageCommentReaction, messageCommentReaction.UnmarshalJSON(*data)
+func (c *Client) Create(ctx context.Context, params files_sdk.MessageCommentReactionCreateParams) (messageCommentReaction files_sdk.MessageCommentReaction, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/message_comment_reactions", Params: params, Entity: &messageCommentReaction})
+	return
 }
 
-func Create(ctx context.Context, params files_sdk.MessageCommentReactionCreateParams) (files_sdk.MessageCommentReaction, error) {
+func Create(ctx context.Context, params files_sdk.MessageCommentReactionCreateParams) (messageCommentReaction files_sdk.MessageCommentReaction, err error) {
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.MessageCommentReactionDeleteParams) error {
-	messageCommentReaction := files_sdk.MessageCommentReaction{}
-	if params.Id == 0 {
-		return lib.CreateError(params, "Id")
-	}
-	path := "/message_comment_reactions/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return err
-	}
-	if res.StatusCode == 204 {
-		return nil
-	}
-
-	return messageCommentReaction.UnmarshalJSON(*data)
+func (c *Client) Delete(ctx context.Context, params files_sdk.MessageCommentReactionDeleteParams) (err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/message_comment_reactions/{id}", Params: params, Entity: nil})
+	return
 }
 
-func Delete(ctx context.Context, params files_sdk.MessageCommentReactionDeleteParams) error {
+func Delete(ctx context.Context, params files_sdk.MessageCommentReactionDeleteParams) (err error) {
 	return (&Client{}).Delete(ctx, params)
 }

@@ -2,17 +2,19 @@ package files_sdk
 
 import (
 	"encoding/json"
+
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 type FormField struct {
-	Id               int64  `json:"id,omitempty"`
-	Label            string `json:"label,omitempty"`
-	Required         *bool  `json:"required,omitempty"`
-	HelpText         string `json:"help_text,omitempty"`
-	FieldType        string `json:"field_type,omitempty"`
-	OptionsForSelect string `json:"options_for_select,omitempty"`
-	DefaultOption    string `json:"default_option,omitempty"`
-	FormFieldSetId   int64  `json:"form_field_set_id,omitempty"`
+	Id               int64  `json:"id,omitempty" path:"id"`
+	Label            string `json:"label,omitempty" path:"label"`
+	Required         *bool  `json:"required,omitempty" path:"required"`
+	HelpText         string `json:"help_text,omitempty" path:"help_text"`
+	FieldType        string `json:"field_type,omitempty" path:"field_type"`
+	OptionsForSelect string `json:"options_for_select,omitempty" path:"options_for_select"`
+	DefaultOption    string `json:"default_option,omitempty" path:"default_option"`
+	FormFieldSetId   int64  `json:"form_field_set_id,omitempty" path:"form_field_set_id"`
 }
 
 type FormFieldCollection []FormField
@@ -21,7 +23,7 @@ func (f *FormField) UnmarshalJSON(data []byte) error {
 	type formField FormField
 	var v formField
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*f = FormField(v)
@@ -29,10 +31,10 @@ func (f *FormField) UnmarshalJSON(data []byte) error {
 }
 
 func (f *FormFieldCollection) UnmarshalJSON(data []byte) error {
-	type formFields []FormField
+	type formFields FormFieldCollection
 	var v formFields
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*f = FormFieldCollection(v)

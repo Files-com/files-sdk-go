@@ -2,7 +2,6 @@ package public_key
 
 import (
 	"context"
-	"strconv"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
@@ -23,8 +22,10 @@ func (i *Iter) PublicKey() files_sdk.PublicKey {
 
 func (c *Client) List(ctx context.Context, params files_sdk.PublicKeyListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/public_keys"
+	path, err := lib.BuildPath("/public_keys", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.PublicKeyCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)
@@ -35,107 +36,38 @@ func List(ctx context.Context, params files_sdk.PublicKeyListParams) (*Iter, err
 	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) Find(ctx context.Context, params files_sdk.PublicKeyFindParams) (files_sdk.PublicKey, error) {
-	publicKey := files_sdk.PublicKey{}
-	if params.Id == 0 {
-		return publicKey, lib.CreateError(params, "Id")
-	}
-	path := "/public_keys/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return publicKey, err
-	}
-	if res.StatusCode == 204 {
-		return publicKey, nil
-	}
-
-	return publicKey, publicKey.UnmarshalJSON(*data)
+func (c *Client) Find(ctx context.Context, params files_sdk.PublicKeyFindParams) (publicKey files_sdk.PublicKey, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/public_keys/{id}", Params: params, Entity: &publicKey})
+	return
 }
 
-func Find(ctx context.Context, params files_sdk.PublicKeyFindParams) (files_sdk.PublicKey, error) {
+func Find(ctx context.Context, params files_sdk.PublicKeyFindParams) (publicKey files_sdk.PublicKey, err error) {
 	return (&Client{}).Find(ctx, params)
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.PublicKeyCreateParams) (files_sdk.PublicKey, error) {
-	publicKey := files_sdk.PublicKey{}
-	path := "/public_keys"
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return publicKey, err
-	}
-	if res.StatusCode == 204 {
-		return publicKey, nil
-	}
-
-	return publicKey, publicKey.UnmarshalJSON(*data)
+func (c *Client) Create(ctx context.Context, params files_sdk.PublicKeyCreateParams) (publicKey files_sdk.PublicKey, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/public_keys", Params: params, Entity: &publicKey})
+	return
 }
 
-func Create(ctx context.Context, params files_sdk.PublicKeyCreateParams) (files_sdk.PublicKey, error) {
+func Create(ctx context.Context, params files_sdk.PublicKeyCreateParams) (publicKey files_sdk.PublicKey, err error) {
 	return (&Client{}).Create(ctx, params)
 }
 
-func (c *Client) Update(ctx context.Context, params files_sdk.PublicKeyUpdateParams) (files_sdk.PublicKey, error) {
-	publicKey := files_sdk.PublicKey{}
-	if params.Id == 0 {
-		return publicKey, lib.CreateError(params, "Id")
-	}
-	path := "/public_keys/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "PATCH", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return publicKey, err
-	}
-	if res.StatusCode == 204 {
-		return publicKey, nil
-	}
-
-	return publicKey, publicKey.UnmarshalJSON(*data)
+func (c *Client) Update(ctx context.Context, params files_sdk.PublicKeyUpdateParams) (publicKey files_sdk.PublicKey, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/public_keys/{id}", Params: params, Entity: &publicKey})
+	return
 }
 
-func Update(ctx context.Context, params files_sdk.PublicKeyUpdateParams) (files_sdk.PublicKey, error) {
+func Update(ctx context.Context, params files_sdk.PublicKeyUpdateParams) (publicKey files_sdk.PublicKey, err error) {
 	return (&Client{}).Update(ctx, params)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.PublicKeyDeleteParams) error {
-	publicKey := files_sdk.PublicKey{}
-	if params.Id == 0 {
-		return lib.CreateError(params, "Id")
-	}
-	path := "/public_keys/" + strconv.FormatInt(params.Id, 10) + ""
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "DELETE", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return err
-	}
-	if res.StatusCode == 204 {
-		return nil
-	}
-
-	return publicKey.UnmarshalJSON(*data)
+func (c *Client) Delete(ctx context.Context, params files_sdk.PublicKeyDeleteParams) (err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/public_keys/{id}", Params: params, Entity: nil})
+	return
 }
 
-func Delete(ctx context.Context, params files_sdk.PublicKeyDeleteParams) error {
+func Delete(ctx context.Context, params files_sdk.PublicKeyDeleteParams) (err error) {
 	return (&Client{}).Delete(ctx, params)
 }

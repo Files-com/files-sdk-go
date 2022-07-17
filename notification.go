@@ -7,99 +7,97 @@ import (
 )
 
 type Notification struct {
-	Id                       int64    `json:"id,omitempty"`
-	Path                     string   `json:"path,omitempty"`
-	GroupId                  int64    `json:"group_id,omitempty"`
-	GroupName                string   `json:"group_name,omitempty"`
-	TriggeringGroupIds       int64    `json:"triggering_group_ids,omitempty"`
-	TriggeringUserIds        int64    `json:"triggering_user_ids,omitempty"`
-	TriggerByShareRecipients *bool    `json:"trigger_by_share_recipients,omitempty"`
-	NotifyUserActions        *bool    `json:"notify_user_actions,omitempty"`
-	NotifyOnCopy             *bool    `json:"notify_on_copy,omitempty"`
-	NotifyOnDelete           *bool    `json:"notify_on_delete,omitempty"`
-	NotifyOnDownload         *bool    `json:"notify_on_download,omitempty"`
-	NotifyOnMove             *bool    `json:"notify_on_move,omitempty"`
-	NotifyOnUpload           *bool    `json:"notify_on_upload,omitempty"`
-	Recursive                *bool    `json:"recursive,omitempty"`
-	SendInterval             string   `json:"send_interval,omitempty"`
-	Message                  string   `json:"message,omitempty"`
-	TriggeringFilenames      []string `json:"triggering_filenames,omitempty"`
-	Unsubscribed             *bool    `json:"unsubscribed,omitempty"`
-	UnsubscribedReason       string   `json:"unsubscribed_reason,omitempty"`
-	UserId                   int64    `json:"user_id,omitempty"`
-	Username                 string   `json:"username,omitempty"`
-	SuppressedEmail          *bool    `json:"suppressed_email,omitempty"`
+	Id                       int64    `json:"id,omitempty" path:"id"`
+	Path                     string   `json:"path,omitempty" path:"path"`
+	GroupId                  int64    `json:"group_id,omitempty" path:"group_id"`
+	GroupName                string   `json:"group_name,omitempty" path:"group_name"`
+	TriggeringGroupIds       int64    `json:"triggering_group_ids,omitempty" path:"triggering_group_ids"`
+	TriggeringUserIds        int64    `json:"triggering_user_ids,omitempty" path:"triggering_user_ids"`
+	TriggerByShareRecipients *bool    `json:"trigger_by_share_recipients,omitempty" path:"trigger_by_share_recipients"`
+	NotifyUserActions        *bool    `json:"notify_user_actions,omitempty" path:"notify_user_actions"`
+	NotifyOnCopy             *bool    `json:"notify_on_copy,omitempty" path:"notify_on_copy"`
+	NotifyOnDelete           *bool    `json:"notify_on_delete,omitempty" path:"notify_on_delete"`
+	NotifyOnDownload         *bool    `json:"notify_on_download,omitempty" path:"notify_on_download"`
+	NotifyOnMove             *bool    `json:"notify_on_move,omitempty" path:"notify_on_move"`
+	NotifyOnUpload           *bool    `json:"notify_on_upload,omitempty" path:"notify_on_upload"`
+	Recursive                *bool    `json:"recursive,omitempty" path:"recursive"`
+	SendInterval             string   `json:"send_interval,omitempty" path:"send_interval"`
+	Message                  string   `json:"message,omitempty" path:"message"`
+	TriggeringFilenames      []string `json:"triggering_filenames,omitempty" path:"triggering_filenames"`
+	Unsubscribed             *bool    `json:"unsubscribed,omitempty" path:"unsubscribed"`
+	UnsubscribedReason       string   `json:"unsubscribed_reason,omitempty" path:"unsubscribed_reason"`
+	UserId                   int64    `json:"user_id,omitempty" path:"user_id"`
+	Username                 string   `json:"username,omitempty" path:"username"`
+	SuppressedEmail          *bool    `json:"suppressed_email,omitempty" path:"suppressed_email"`
 }
 
 type NotificationCollection []Notification
 
 type NotificationListParams struct {
-	UserId           int64           `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
-	Cursor           string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage          int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
-	SortBy           json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty"`
-	Filter           json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty"`
-	FilterGt         json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty"`
-	FilterGteq       json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty"`
-	FilterLike       json.RawMessage `url:"filter_like,omitempty" required:"false" json:"filter_like,omitempty"`
-	FilterLt         json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty"`
-	FilterLteq       json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty"`
-	GroupId          int64           `url:"group_id,omitempty" required:"false" json:"group_id,omitempty"`
-	Path             string          `url:"path,omitempty" required:"false" json:"path,omitempty"`
-	IncludeAncestors *bool           `url:"include_ancestors,omitempty" required:"false" json:"include_ancestors,omitempty"`
+	UserId           int64           `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	SortBy           json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter           json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	FilterGt         json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq       json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterLike       json.RawMessage `url:"filter_like,omitempty" required:"false" json:"filter_like,omitempty" path:"filter_like"`
+	FilterLt         json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq       json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	GroupId          int64           `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
+	Path             string          `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
+	IncludeAncestors *bool           `url:"include_ancestors,omitempty" required:"false" json:"include_ancestors,omitempty" path:"include_ancestors"`
 	lib.ListParams
 }
 
 type NotificationFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
 }
 
 type NotificationCreateParams struct {
-	UserId                   int64    `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
-	NotifyOnCopy             *bool    `url:"notify_on_copy,omitempty" required:"false" json:"notify_on_copy,omitempty"`
-	NotifyOnDelete           *bool    `url:"notify_on_delete,omitempty" required:"false" json:"notify_on_delete,omitempty"`
-	NotifyOnDownload         *bool    `url:"notify_on_download,omitempty" required:"false" json:"notify_on_download,omitempty"`
-	NotifyOnMove             *bool    `url:"notify_on_move,omitempty" required:"false" json:"notify_on_move,omitempty"`
-	NotifyOnUpload           *bool    `url:"notify_on_upload,omitempty" required:"false" json:"notify_on_upload,omitempty"`
-	NotifyUserActions        *bool    `url:"notify_user_actions,omitempty" required:"false" json:"notify_user_actions,omitempty"`
-	Recursive                *bool    `url:"recursive,omitempty" required:"false" json:"recursive,omitempty"`
-	SendInterval             string   `url:"send_interval,omitempty" required:"false" json:"send_interval,omitempty"`
-	Message                  string   `url:"message,omitempty" required:"false" json:"message,omitempty"`
-	TriggeringFilenames      []string `url:"triggering_filenames,omitempty" required:"false" json:"triggering_filenames,omitempty"`
-	TriggeringGroupIds       []int64  `url:"triggering_group_ids,omitempty" required:"false" json:"triggering_group_ids,omitempty"`
-	TriggeringUserIds        []int64  `url:"triggering_user_ids,omitempty" required:"false" json:"triggering_user_ids,omitempty"`
-	TriggerByShareRecipients *bool    `url:"trigger_by_share_recipients,omitempty" required:"false" json:"trigger_by_share_recipients,omitempty"`
-	GroupId                  int64    `url:"group_id,omitempty" required:"false" json:"group_id,omitempty"`
-	Path                     string   `url:"path,omitempty" required:"false" json:"path,omitempty"`
-	Username                 string   `url:"username,omitempty" required:"false" json:"username,omitempty"`
+	UserId                   int64    `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	NotifyOnCopy             *bool    `url:"notify_on_copy,omitempty" required:"false" json:"notify_on_copy,omitempty" path:"notify_on_copy"`
+	NotifyOnDelete           *bool    `url:"notify_on_delete,omitempty" required:"false" json:"notify_on_delete,omitempty" path:"notify_on_delete"`
+	NotifyOnDownload         *bool    `url:"notify_on_download,omitempty" required:"false" json:"notify_on_download,omitempty" path:"notify_on_download"`
+	NotifyOnMove             *bool    `url:"notify_on_move,omitempty" required:"false" json:"notify_on_move,omitempty" path:"notify_on_move"`
+	NotifyOnUpload           *bool    `url:"notify_on_upload,omitempty" required:"false" json:"notify_on_upload,omitempty" path:"notify_on_upload"`
+	NotifyUserActions        *bool    `url:"notify_user_actions,omitempty" required:"false" json:"notify_user_actions,omitempty" path:"notify_user_actions"`
+	Recursive                *bool    `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
+	SendInterval             string   `url:"send_interval,omitempty" required:"false" json:"send_interval,omitempty" path:"send_interval"`
+	Message                  string   `url:"message,omitempty" required:"false" json:"message,omitempty" path:"message"`
+	TriggeringFilenames      []string `url:"triggering_filenames,omitempty" required:"false" json:"triggering_filenames,omitempty" path:"triggering_filenames"`
+	TriggeringGroupIds       []int64  `url:"triggering_group_ids,omitempty" required:"false" json:"triggering_group_ids,omitempty" path:"triggering_group_ids"`
+	TriggeringUserIds        []int64  `url:"triggering_user_ids,omitempty" required:"false" json:"triggering_user_ids,omitempty" path:"triggering_user_ids"`
+	TriggerByShareRecipients *bool    `url:"trigger_by_share_recipients,omitempty" required:"false" json:"trigger_by_share_recipients,omitempty" path:"trigger_by_share_recipients"`
+	GroupId                  int64    `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
+	Path                     string   `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
+	Username                 string   `url:"username,omitempty" required:"false" json:"username,omitempty" path:"username"`
 }
 
 type NotificationUpdateParams struct {
-	Id                       int64    `url:"-,omitempty" required:"true" json:"-,omitempty"`
-	NotifyOnCopy             *bool    `url:"notify_on_copy,omitempty" required:"false" json:"notify_on_copy,omitempty"`
-	NotifyOnDelete           *bool    `url:"notify_on_delete,omitempty" required:"false" json:"notify_on_delete,omitempty"`
-	NotifyOnDownload         *bool    `url:"notify_on_download,omitempty" required:"false" json:"notify_on_download,omitempty"`
-	NotifyOnMove             *bool    `url:"notify_on_move,omitempty" required:"false" json:"notify_on_move,omitempty"`
-	NotifyOnUpload           *bool    `url:"notify_on_upload,omitempty" required:"false" json:"notify_on_upload,omitempty"`
-	NotifyUserActions        *bool    `url:"notify_user_actions,omitempty" required:"false" json:"notify_user_actions,omitempty"`
-	Recursive                *bool    `url:"recursive,omitempty" required:"false" json:"recursive,omitempty"`
-	SendInterval             string   `url:"send_interval,omitempty" required:"false" json:"send_interval,omitempty"`
-	Message                  string   `url:"message,omitempty" required:"false" json:"message,omitempty"`
-	TriggeringFilenames      []string `url:"triggering_filenames,omitempty" required:"false" json:"triggering_filenames,omitempty"`
-	TriggeringGroupIds       []int64  `url:"triggering_group_ids,omitempty" required:"false" json:"triggering_group_ids,omitempty"`
-	TriggeringUserIds        []int64  `url:"triggering_user_ids,omitempty" required:"false" json:"triggering_user_ids,omitempty"`
-	TriggerByShareRecipients *bool    `url:"trigger_by_share_recipients,omitempty" required:"false" json:"trigger_by_share_recipients,omitempty"`
+	Id                       int64    `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	NotifyOnCopy             *bool    `url:"notify_on_copy,omitempty" required:"false" json:"notify_on_copy,omitempty" path:"notify_on_copy"`
+	NotifyOnDelete           *bool    `url:"notify_on_delete,omitempty" required:"false" json:"notify_on_delete,omitempty" path:"notify_on_delete"`
+	NotifyOnDownload         *bool    `url:"notify_on_download,omitempty" required:"false" json:"notify_on_download,omitempty" path:"notify_on_download"`
+	NotifyOnMove             *bool    `url:"notify_on_move,omitempty" required:"false" json:"notify_on_move,omitempty" path:"notify_on_move"`
+	NotifyOnUpload           *bool    `url:"notify_on_upload,omitempty" required:"false" json:"notify_on_upload,omitempty" path:"notify_on_upload"`
+	NotifyUserActions        *bool    `url:"notify_user_actions,omitempty" required:"false" json:"notify_user_actions,omitempty" path:"notify_user_actions"`
+	Recursive                *bool    `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
+	SendInterval             string   `url:"send_interval,omitempty" required:"false" json:"send_interval,omitempty" path:"send_interval"`
+	Message                  string   `url:"message,omitempty" required:"false" json:"message,omitempty" path:"message"`
+	TriggeringFilenames      []string `url:"triggering_filenames,omitempty" required:"false" json:"triggering_filenames,omitempty" path:"triggering_filenames"`
+	TriggeringGroupIds       []int64  `url:"triggering_group_ids,omitempty" required:"false" json:"triggering_group_ids,omitempty" path:"triggering_group_ids"`
+	TriggeringUserIds        []int64  `url:"triggering_user_ids,omitempty" required:"false" json:"triggering_user_ids,omitempty" path:"triggering_user_ids"`
+	TriggerByShareRecipients *bool    `url:"trigger_by_share_recipients,omitempty" required:"false" json:"trigger_by_share_recipients,omitempty" path:"trigger_by_share_recipients"`
 }
 
 type NotificationDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
 }
 
 func (n *Notification) UnmarshalJSON(data []byte) error {
 	type notification Notification
 	var v notification
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*n = Notification(v)
@@ -107,10 +105,10 @@ func (n *Notification) UnmarshalJSON(data []byte) error {
 }
 
 func (n *NotificationCollection) UnmarshalJSON(data []byte) error {
-	type notifications []Notification
+	type notifications NotificationCollection
 	var v notifications
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*n = NotificationCollection(v)

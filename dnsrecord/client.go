@@ -22,8 +22,10 @@ func (i *Iter) DnsRecord() files_sdk.DnsRecord {
 
 func (c *Client) List(ctx context.Context, params files_sdk.DnsRecordListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/dns_records"
+	path, err := lib.BuildPath("/dns_records", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.DnsRecordCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)

@@ -8,32 +8,30 @@ import (
 )
 
 type UsageSnapshot struct {
-	Id                           int64           `json:"id,omitempty"`
-	StartAt                      *time.Time      `json:"start_at,omitempty"`
-	EndAt                        *time.Time      `json:"end_at,omitempty"`
-	CreatedAt                    *time.Time      `json:"created_at,omitempty"`
-	HighWaterUserCount           string          `json:"high_water_user_count,omitempty"`
-	CurrentStorage               string          `json:"current_storage,omitempty"`
-	HighWaterStorage             string          `json:"high_water_storage,omitempty"`
-	TotalDownloads               int64           `json:"total_downloads,omitempty"`
-	TotalUploads                 int64           `json:"total_uploads,omitempty"`
-	UpdatedAt                    *time.Time      `json:"updated_at,omitempty"`
-	UsageByTopLevelDir           json.RawMessage `json:"usage_by_top_level_dir,omitempty"`
-	RootStorage                  string          `json:"root_storage,omitempty"`
-	DeletedFilesCountedInMinimum string          `json:"deleted_files_counted_in_minimum,omitempty"`
-	DeletedFilesStorage          string          `json:"deleted_files_storage,omitempty"`
-	TotalBillableUsage           string          `json:"total_billable_usage,omitempty"`
-	TotalBillableTransferUsage   string          `json:"total_billable_transfer_usage,omitempty"`
-	BytesSent                    string          `json:"bytes_sent,omitempty"`
-	SyncBytesReceived            string          `json:"sync_bytes_received,omitempty"`
-	SyncBytesSent                string          `json:"sync_bytes_sent,omitempty"`
+	Id                           int64           `json:"id,omitempty" path:"id"`
+	StartAt                      *time.Time      `json:"start_at,omitempty" path:"start_at"`
+	EndAt                        *time.Time      `json:"end_at,omitempty" path:"end_at"`
+	CreatedAt                    *time.Time      `json:"created_at,omitempty" path:"created_at"`
+	HighWaterUserCount           string          `json:"high_water_user_count,omitempty" path:"high_water_user_count"`
+	CurrentStorage               string          `json:"current_storage,omitempty" path:"current_storage"`
+	HighWaterStorage             string          `json:"high_water_storage,omitempty" path:"high_water_storage"`
+	TotalDownloads               int64           `json:"total_downloads,omitempty" path:"total_downloads"`
+	TotalUploads                 int64           `json:"total_uploads,omitempty" path:"total_uploads"`
+	UpdatedAt                    *time.Time      `json:"updated_at,omitempty" path:"updated_at"`
+	UsageByTopLevelDir           json.RawMessage `json:"usage_by_top_level_dir,omitempty" path:"usage_by_top_level_dir"`
+	RootStorage                  string          `json:"root_storage,omitempty" path:"root_storage"`
+	DeletedFilesCountedInMinimum string          `json:"deleted_files_counted_in_minimum,omitempty" path:"deleted_files_counted_in_minimum"`
+	DeletedFilesStorage          string          `json:"deleted_files_storage,omitempty" path:"deleted_files_storage"`
+	TotalBillableUsage           string          `json:"total_billable_usage,omitempty" path:"total_billable_usage"`
+	TotalBillableTransferUsage   string          `json:"total_billable_transfer_usage,omitempty" path:"total_billable_transfer_usage"`
+	BytesSent                    string          `json:"bytes_sent,omitempty" path:"bytes_sent"`
+	SyncBytesReceived            string          `json:"sync_bytes_received,omitempty" path:"sync_bytes_received"`
+	SyncBytesSent                string          `json:"sync_bytes_sent,omitempty" path:"sync_bytes_sent"`
 }
 
 type UsageSnapshotCollection []UsageSnapshot
 
 type UsageSnapshotListParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
 	lib.ListParams
 }
 
@@ -41,7 +39,7 @@ func (u *UsageSnapshot) UnmarshalJSON(data []byte) error {
 	type usageSnapshot UsageSnapshot
 	var v usageSnapshot
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*u = UsageSnapshot(v)
@@ -49,10 +47,10 @@ func (u *UsageSnapshot) UnmarshalJSON(data []byte) error {
 }
 
 func (u *UsageSnapshotCollection) UnmarshalJSON(data []byte) error {
-	type usageSnapshots []UsageSnapshot
+	type usageSnapshots UsageSnapshotCollection
 	var v usageSnapshots
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*u = UsageSnapshotCollection(v)

@@ -24,6 +24,11 @@ func Build(ctx context.Context, config files_sdk.Config, path string, list List)
 		if err != nil {
 			return &defaultValue, "", err
 		}
+
+		if err := lib.ResponseErrors(res, lib.NonOkError, lib.NonJSONError); err != nil {
+			return &defaultValue, "", err
+		}
+
 		if err := list.UnmarshalJSON(*data); err != nil {
 			return &defaultValue, "", err
 		}

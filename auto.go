@@ -2,10 +2,12 @@ package files_sdk
 
 import (
 	"encoding/json"
+
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 type Auto struct {
-	Dynamic json.RawMessage `json:"dynamic,omitempty"`
+	Dynamic json.RawMessage `json:"dynamic,omitempty" path:"dynamic"`
 }
 
 type AutoCollection []Auto
@@ -14,7 +16,7 @@ func (a *Auto) UnmarshalJSON(data []byte) error {
 	type auto Auto
 	var v auto
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*a = Auto(v)
@@ -22,10 +24,10 @@ func (a *Auto) UnmarshalJSON(data []byte) error {
 }
 
 func (a *AutoCollection) UnmarshalJSON(data []byte) error {
-	type autos []Auto
+	type autos AutoCollection
 	var v autos
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*a = AutoCollection(v)

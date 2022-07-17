@@ -20,106 +20,48 @@ func (i *Iter) History() files_sdk.History {
 	return i.Current().(files_sdk.History)
 }
 
-func (c *Client) ListForFile(ctx context.Context, params files_sdk.HistoryListForFileParams) (files_sdk.ActionCollection, error) {
-	actionCollection := files_sdk.ActionCollection{}
-	path := lib.BuildPath("/history/files/", params.Path)
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return actionCollection, err
-	}
-	if res.StatusCode == 204 {
-		return actionCollection, nil
-	}
-
-	return actionCollection, actionCollection.UnmarshalJSON(*data)
+func (c *Client) ListForFile(ctx context.Context, params files_sdk.HistoryListForFileParams) (actionCollection files_sdk.ActionCollection, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/history/files/{path}", Params: params, Entity: &actionCollection})
+	return
 }
 
-func ListForFile(ctx context.Context, params files_sdk.HistoryListForFileParams) (files_sdk.ActionCollection, error) {
+func ListForFile(ctx context.Context, params files_sdk.HistoryListForFileParams) (actionCollection files_sdk.ActionCollection, err error) {
 	return (&Client{}).ListForFile(ctx, params)
 }
 
-func (c *Client) ListForFolder(ctx context.Context, params files_sdk.HistoryListForFolderParams) (files_sdk.ActionCollection, error) {
-	actionCollection := files_sdk.ActionCollection{}
-	path := lib.BuildPath("/history/folders/", params.Path)
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return actionCollection, err
-	}
-	if res.StatusCode == 204 {
-		return actionCollection, nil
-	}
-
-	return actionCollection, actionCollection.UnmarshalJSON(*data)
+func (c *Client) ListForFolder(ctx context.Context, params files_sdk.HistoryListForFolderParams) (actionCollection files_sdk.ActionCollection, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/history/folders/{path}", Params: params, Entity: &actionCollection})
+	return
 }
 
-func ListForFolder(ctx context.Context, params files_sdk.HistoryListForFolderParams) (files_sdk.ActionCollection, error) {
+func ListForFolder(ctx context.Context, params files_sdk.HistoryListForFolderParams) (actionCollection files_sdk.ActionCollection, err error) {
 	return (&Client{}).ListForFolder(ctx, params)
 }
 
-func (c *Client) ListForUser(ctx context.Context, params files_sdk.HistoryListForUserParams) (files_sdk.ActionCollection, error) {
-	actionCollection := files_sdk.ActionCollection{}
-	path := "/history/users/{user_id}"
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return actionCollection, err
-	}
-	if res.StatusCode == 204 {
-		return actionCollection, nil
-	}
-
-	return actionCollection, actionCollection.UnmarshalJSON(*data)
+func (c *Client) ListForUser(ctx context.Context, params files_sdk.HistoryListForUserParams) (actionCollection files_sdk.ActionCollection, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/history/users/{user_id}", Params: params, Entity: &actionCollection})
+	return
 }
 
-func ListForUser(ctx context.Context, params files_sdk.HistoryListForUserParams) (files_sdk.ActionCollection, error) {
+func ListForUser(ctx context.Context, params files_sdk.HistoryListForUserParams) (actionCollection files_sdk.ActionCollection, err error) {
 	return (&Client{}).ListForUser(ctx, params)
 }
 
-func (c *Client) ListLogins(ctx context.Context, params files_sdk.HistoryListLoginsParams) (files_sdk.ActionCollection, error) {
-	actionCollection := files_sdk.ActionCollection{}
-	path := "/history/login"
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "GET", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return actionCollection, err
-	}
-	if res.StatusCode == 204 {
-		return actionCollection, nil
-	}
-
-	return actionCollection, actionCollection.UnmarshalJSON(*data)
+func (c *Client) ListLogins(ctx context.Context, params files_sdk.HistoryListLoginsParams) (actionCollection files_sdk.ActionCollection, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/history/login", Params: params, Entity: &actionCollection})
+	return
 }
 
-func ListLogins(ctx context.Context, params files_sdk.HistoryListLoginsParams) (files_sdk.ActionCollection, error) {
+func ListLogins(ctx context.Context, params files_sdk.HistoryListLoginsParams) (actionCollection files_sdk.ActionCollection, err error) {
 	return (&Client{}).ListLogins(ctx, params)
 }
 
 func (c *Client) List(ctx context.Context, params files_sdk.HistoryListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/history"
+	path, err := lib.BuildPath("/history", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.HistoryCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)

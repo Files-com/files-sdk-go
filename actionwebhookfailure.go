@@ -2,6 +2,8 @@ package files_sdk
 
 import (
 	"encoding/json"
+
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 type ActionWebhookFailure struct {
@@ -11,14 +13,14 @@ type ActionWebhookFailureCollection []ActionWebhookFailure
 
 // retry Action Webhook Failure
 type ActionWebhookFailureRetryParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
 }
 
 func (a *ActionWebhookFailure) UnmarshalJSON(data []byte) error {
 	type actionWebhookFailure ActionWebhookFailure
 	var v actionWebhookFailure
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*a = ActionWebhookFailure(v)
@@ -26,10 +28,10 @@ func (a *ActionWebhookFailure) UnmarshalJSON(data []byte) error {
 }
 
 func (a *ActionWebhookFailureCollection) UnmarshalJSON(data []byte) error {
-	type actionWebhookFailures []ActionWebhookFailure
+	type actionWebhookFailures ActionWebhookFailureCollection
 	var v actionWebhookFailures
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*a = ActionWebhookFailureCollection(v)

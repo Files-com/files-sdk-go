@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/directory"
@@ -149,14 +150,17 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 			signal <- reportStatus
 		}()
 		dir, _ := filepath.Split(reportStatus.LocalPath())
-		_, err := os.Stat(dir)
-		if os.IsNotExist(err) {
-			err = os.MkdirAll(dir, 0755)
-			if err != nil {
-				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
-				return
+		if dir != "" {
+			_, err := os.Stat(dir)
+			if os.IsNotExist(err) {
+				err = os.MkdirAll(dir, 0755)
+				if err != nil {
+					reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
+					return
+				}
 			}
 		}
+
 		if reportStatus.Job().Sync {
 			localStat, localStatErr := os.Stat(reportStatus.LocalPath())
 			if localStatErr != nil && !os.IsNotExist(localStatErr) {
@@ -207,8 +211,18 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 			err = os.Rename(tmpName, reportStatus.LocalPath())
 
 			if err == nil && reportStatus.PreserveTimes {
-				stat, _ := s.fsFile.Stat()
-				err = os.Chtimes(reportStatus.LocalPath(), stat.ModTime().Local(), stat.ModTime().Local())
+				var t time.Time
+				if s.file.ProvidedMtime != nil {
+					t = s.file.ProvidedMtime.Local()
+				} else {
+					stat, err := s.fsFile.Stat()
+					if err != nil {
+						reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
+						return
+					}
+					t = stat.ModTime()
+				}
+				err = os.Chtimes(reportStatus.LocalPath(), t, t)
 			}
 
 			if err != nil {

@@ -7,39 +7,37 @@ import (
 )
 
 type MessageCommentReaction struct {
-	Id     int64  `json:"id,omitempty"`
-	Emoji  string `json:"emoji,omitempty"`
-	UserId int64  `json:"user_id,omitempty"`
+	Id     int64  `json:"id,omitempty" path:"id"`
+	Emoji  string `json:"emoji,omitempty" path:"emoji"`
+	UserId int64  `json:"user_id,omitempty" path:"user_id"`
 }
 
 type MessageCommentReactionCollection []MessageCommentReaction
 
 type MessageCommentReactionListParams struct {
-	UserId           int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
-	Cursor           string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage          int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
-	MessageCommentId int64  `url:"message_comment_id,omitempty" required:"true" json:"message_comment_id,omitempty"`
+	UserId           int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	MessageCommentId int64 `url:"message_comment_id,omitempty" required:"true" json:"message_comment_id,omitempty" path:"message_comment_id"`
 	lib.ListParams
 }
 
 type MessageCommentReactionFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
 }
 
 type MessageCommentReactionCreateParams struct {
-	UserId int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty"`
-	Emoji  string `url:"emoji,omitempty" required:"true" json:"emoji,omitempty"`
+	UserId int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	Emoji  string `url:"emoji,omitempty" required:"true" json:"emoji,omitempty" path:"emoji"`
 }
 
 type MessageCommentReactionDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty"`
+	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
 }
 
 func (m *MessageCommentReaction) UnmarshalJSON(data []byte) error {
 	type messageCommentReaction MessageCommentReaction
 	var v messageCommentReaction
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*m = MessageCommentReaction(v)
@@ -47,10 +45,10 @@ func (m *MessageCommentReaction) UnmarshalJSON(data []byte) error {
 }
 
 func (m *MessageCommentReactionCollection) UnmarshalJSON(data []byte) error {
-	type messageCommentReactions []MessageCommentReaction
+	type messageCommentReactions MessageCommentReactionCollection
 	var v messageCommentReactions
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*m = MessageCommentReactionCollection(v)

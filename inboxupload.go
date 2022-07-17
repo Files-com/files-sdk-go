@@ -8,25 +8,23 @@ import (
 )
 
 type InboxUpload struct {
-	InboxRegistration InboxRegistration `json:"inbox_registration,omitempty"`
-	Path              string            `json:"path,omitempty"`
-	CreatedAt         *time.Time        `json:"created_at,omitempty"`
+	InboxRegistration InboxRegistration `json:"inbox_registration,omitempty" path:"inbox_registration"`
+	Path              string            `json:"path,omitempty" path:"path"`
+	CreatedAt         *time.Time        `json:"created_at,omitempty" path:"created_at"`
 }
 
 type InboxUploadCollection []InboxUpload
 
 type InboxUploadListParams struct {
-	Cursor              string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty"`
-	PerPage             int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty"`
-	SortBy              json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty"`
-	Filter              json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty"`
-	FilterGt            json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty"`
-	FilterGteq          json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty"`
-	FilterLike          json.RawMessage `url:"filter_like,omitempty" required:"false" json:"filter_like,omitempty"`
-	FilterLt            json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty"`
-	FilterLteq          json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty"`
-	InboxRegistrationId int64           `url:"inbox_registration_id,omitempty" required:"false" json:"inbox_registration_id,omitempty"`
-	InboxId             int64           `url:"inbox_id,omitempty" required:"false" json:"inbox_id,omitempty"`
+	SortBy              json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter              json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	FilterGt            json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq          json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterLike          json.RawMessage `url:"filter_like,omitempty" required:"false" json:"filter_like,omitempty" path:"filter_like"`
+	FilterLt            json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq          json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	InboxRegistrationId int64           `url:"inbox_registration_id,omitempty" required:"false" json:"inbox_registration_id,omitempty" path:"inbox_registration_id"`
+	InboxId             int64           `url:"inbox_id,omitempty" required:"false" json:"inbox_id,omitempty" path:"inbox_id"`
 	lib.ListParams
 }
 
@@ -34,7 +32,7 @@ func (i *InboxUpload) UnmarshalJSON(data []byte) error {
 	type inboxUpload InboxUpload
 	var v inboxUpload
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*i = InboxUpload(v)
@@ -42,10 +40,10 @@ func (i *InboxUpload) UnmarshalJSON(data []byte) error {
 }
 
 func (i *InboxUploadCollection) UnmarshalJSON(data []byte) error {
-	type inboxUploads []InboxUpload
+	type inboxUploads InboxUploadCollection
 	var v inboxUploads
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*i = InboxUploadCollection(v)

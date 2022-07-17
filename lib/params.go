@@ -65,3 +65,34 @@ func removeDash(params url.Values) url.Values {
 
 	return params
 }
+
+type UnmarshalJSON interface {
+	UnmarshalJSON(data []byte) error
+}
+
+type Resource struct {
+	Path   string
+	Params interface{}
+	Method string
+	Entity UnmarshalJSON
+}
+
+func (r Resource) Out() (ResourceOut, error) {
+	path, err := BuildPath(r.Path, r.Params)
+	if err != nil {
+		return ResourceOut{}, err
+	}
+	return ResourceOut{
+		Resource: Resource{
+			Path:   path,
+			Method: r.Method,
+			Entity: r.Entity,
+		},
+		Values: Params{Params: r.Params},
+	}, nil
+}
+
+type ResourceOut struct {
+	Resource
+	Values
+}

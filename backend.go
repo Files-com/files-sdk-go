@@ -13,6 +13,23 @@ import (
 	"moul.io/http2curl"
 )
 
+func Resource(ctx context.Context, config Config, resource lib.Resource) error {
+	out, err := resource.Out()
+	if err != nil {
+		return err
+	}
+	data, res, err := Call(ctx, resource.Method, config, out.Path, out.Values)
+	defer lib.CloseBody(res)
+	if err != nil {
+		return err
+	}
+	if res.StatusCode == 204 {
+		return err
+	}
+
+	return out.Entity.UnmarshalJSON(*data)
+}
+
 func Call(ctx context.Context, method string, config Config, resource string, params lib.Values) (*[]byte, *http.Response, error) {
 	defaultHeaders := &http.Header{}
 	config.SetHeaders(defaultHeaders)

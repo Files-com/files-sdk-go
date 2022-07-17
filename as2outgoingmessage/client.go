@@ -22,8 +22,10 @@ func (i *Iter) As2OutgoingMessage() files_sdk.As2OutgoingMessage {
 
 func (c *Client) List(ctx context.Context, params files_sdk.As2OutgoingMessageListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/as2_outgoing_messages"
+	path, err := lib.BuildPath("/as2_outgoing_messages", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.As2OutgoingMessageCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)

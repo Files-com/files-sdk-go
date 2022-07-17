@@ -21,13 +21,7 @@ func (p *ListParams) GetListParams() *ListParams {
 	return p
 }
 
-func (p *ListParams) Set(page int64, perPage int64, cursor string, maxPages int64) {
-	p.Page = page
-	p.PerPage = perPage
-	p.Cursor = cursor
-	p.MaxPages = maxPages
-}
-
+type OnPageError func(error) (*[]interface{}, error)
 type Query func(params Values) (*[]interface{}, string, error)
 
 type IterI interface {
@@ -49,6 +43,7 @@ type Iter struct {
 	Values       *[]interface{}
 	Cursor       string
 	Error        error
+	OnPageError
 }
 
 // Err returns the error, if any,
@@ -91,6 +86,8 @@ func (i *Iter) GetPage() bool {
 		return false
 	}
 
+	i.CurrentIndex = 0
+
 	i.GetParams().Page += 1
 	if i.GetParams().Page == 2 && i.Cursor == "" {
 		return false
@@ -98,6 +95,9 @@ func (i *Iter) GetPage() bool {
 	params, _ := i.ExportParams()
 	i.Values, i.Cursor, i.Error = i.Query(params)
 	i.SetCursor(i.Cursor)
+	if i.Error != nil && i.OnPageError != nil {
+		i.Values, i.Error = i.OnPageError(i.Error)
+	}
 	return i.Error == nil && len(*i.Values) != 0
 }
 
@@ -137,9 +137,12 @@ func (i *Iter) Next() bool {
 	}
 
 	if i.EOFPage() {
-		i.CurrentIndex = 0
 		return i.GetPage()
 	}
 
 	return false
+}
+
+func (i *Iter) NextPage() bool {
+	return i.Cursor != ""
 }

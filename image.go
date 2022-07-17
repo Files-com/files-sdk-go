@@ -2,11 +2,13 @@ package files_sdk
 
 import (
 	"encoding/json"
+
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 type Image struct {
-	Name string `json:"name,omitempty"`
-	Uri  string `json:"uri,omitempty"`
+	Name string `json:"name,omitempty" path:"name"`
+	Uri  string `json:"uri,omitempty" path:"uri"`
 }
 
 type ImageCollection []Image
@@ -15,7 +17,7 @@ func (i *Image) UnmarshalJSON(data []byte) error {
 	type image Image
 	var v image
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, map[string]interface{}{})
 	}
 
 	*i = Image(v)
@@ -23,10 +25,10 @@ func (i *Image) UnmarshalJSON(data []byte) error {
 }
 
 func (i *ImageCollection) UnmarshalJSON(data []byte) error {
-	type images []Image
+	type images ImageCollection
 	var v images
 	if err := json.Unmarshal(data, &v); err != nil {
-		return err
+		return lib.ErrorWithOriginalResponse{}.ProcessError(data, err, []map[string]interface{}{})
 	}
 
 	*i = ImageCollection(v)

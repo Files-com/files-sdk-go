@@ -22,8 +22,10 @@ func (i *Iter) UsageDailySnapshot() files_sdk.UsageDailySnapshot {
 
 func (c *Client) List(ctx context.Context, params files_sdk.UsageDailySnapshotListParams) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
-	params.ListParams.Set(params.Page, params.PerPage, params.Cursor, params.MaxPages)
-	path := "/usage_daily_snapshots"
+	path, err := lib.BuildPath("/usage_daily_snapshots", params)
+	if err != nil {
+		return i, err
+	}
 	i.ListParams = &params
 	list := files_sdk.UsageDailySnapshotCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)

@@ -11,26 +11,11 @@ type Client struct {
 	files_sdk.Config
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.WebhookTestCreateParams) (files_sdk.WebhookTest, error) {
-	webhookTest := files_sdk.WebhookTest{}
-	path := "/webhook_tests"
-	exportedParams := lib.Params{Params: params}
-	data, res, err := files_sdk.Call(ctx, "POST", c.Config, path, exportedParams)
-	defer func() {
-		if res != nil && res.Body != nil {
-			res.Body.Close()
-		}
-	}()
-	if err != nil {
-		return webhookTest, err
-	}
-	if res.StatusCode == 204 {
-		return webhookTest, nil
-	}
-
-	return webhookTest, webhookTest.UnmarshalJSON(*data)
+func (c *Client) Create(ctx context.Context, params files_sdk.WebhookTestCreateParams) (webhookTest files_sdk.WebhookTest, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/webhook_tests", Params: params, Entity: &webhookTest})
+	return
 }
 
-func Create(ctx context.Context, params files_sdk.WebhookTestCreateParams) (files_sdk.WebhookTest, error) {
+func Create(ctx context.Context, params files_sdk.WebhookTestCreateParams) (webhookTest files_sdk.WebhookTest, err error) {
 	return (&Client{}).Create(ctx, params)
 }
