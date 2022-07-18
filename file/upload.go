@@ -31,10 +31,9 @@ func (c *Client) UploadRetry(ctx context.Context, job status.Job) *status.Job {
 type UploaderParams struct {
 	Ignore []string
 	*status.Job
-	Sync          bool
-	LocalPath     string
-	RemotePath    string
-	PreserveTimes bool
+	Sync       bool
+	LocalPath  string
+	RemotePath string
 	RetryPolicy
 	status.EventsReporter
 	*manager.Manager

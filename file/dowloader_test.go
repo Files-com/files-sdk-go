@@ -13,6 +13,8 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/Files-com/files-sdk-go/v2/lib"
+
 	"github.com/Files-com/files-sdk-go/v2/file/status"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
@@ -159,24 +161,40 @@ func Test_downloadFolder_more_than_one_file(t *testing.T) {
 	assert := assert.New(t)
 	setup := NewTestSetup()
 	setup.MapFS["some-path"] = &fstest.MapFile{
-		Data:    nil,
-		Mode:    fs.ModeDir,
-		ModTime: time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC),
-		Sys:     files_sdk.File{DisplayName: "some-path", Path: "some-path", Type: "directory"},
+		Data: nil,
+		Mode: fs.ModeDir,
+		Sys: files_sdk.File{
+			DisplayName:   "some-path",
+			Path:          "some-path",
+			Type:          "directory",
+			ProvidedMtime: lib.Time(time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC)),
+			Mtime:         lib.Time(time.Now()),
+		},
 	}
 
 	setup.MapFS["some-path/taco.png"] = &fstest.MapFile{
-		Data:    make([]byte, 100),
-		Mode:    fs.ModePerm,
-		ModTime: time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC),
-		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "some-path/taco.png", Type: "file", Size: 100},
+		Data: make([]byte, 100),
+		Mode: fs.ModePerm,
+		Sys: files_sdk.File{
+			DisplayName: "taco.png",
+			Path:        "some-path/taco.png",
+			Type:        "file",
+			Size:        100,
+			Mtime:       lib.Time(time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC)),
+		},
 	}
 
 	setup.MapFS["some-path/pizza.png"] = &fstest.MapFile{
-		Data:    make([]byte, 102),
-		Mode:    fs.ModePerm,
-		ModTime: time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC),
-		Sys:     files_sdk.File{DisplayName: "pizza.png", Path: "some-path/pizza.png", Type: "file", Size: 102},
+		Data: make([]byte, 102),
+		Mode: fs.ModePerm,
+		Sys: files_sdk.File{
+			DisplayName:   "pizza.png",
+			Path:          "some-path/pizza.png",
+			Type:          "file",
+			Size:          102,
+			ProvidedMtime: lib.Time(time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC)),
+			Mtime:         lib.Time(time.Now()),
+		},
 	}
 	setup.DownloaderParams = DownloaderParams{
 		RemotePath:     "some-path",
@@ -197,19 +215,37 @@ func Test_downloadFolder_more_than_one_file(t *testing.T) {
 			statuses[call.Status.Name] = 1
 		}
 	}
-	assert.Equal(2, setup.reporterCalls[0].Job.Count())
-	assert.Equal(map[string]int{"complete": 2, "downloading": 2, "queued": 2}, statuses)
-	assert.Equal(6, len(setup.reporterCalls))
-	assert.Contains([]string{setup.reporterCalls[0].File.Path, setup.reporterCalls[1].File.Path}, "some-path/taco.png")
-	stat, err := os.Stat(filepath.Join(setup.tempDir, "pizza.png"))
-	assert.NoError(err)
-	assert.Equal(time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC), stat.ModTime().UTC())
-	assert.Contains([]string{setup.reporterCalls[0].File.Path, setup.reporterCalls[1].File.Path}, "some-path/pizza.png")
-	assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
+	t.Log("it goes through all statuses")
+	{
+		assert.Equal(2, setup.reporterCalls[0].Job.Count())
+		assert.Equal(map[string]int{"complete": 2, "downloading": 2, "queued": 2}, statuses)
+		assert.Equal(6, len(setup.reporterCalls))
+	}
 
-	assert.Equal(true, job.All(status.Ended...))
-	assert.Equal(int64(202), job.TransferBytes())
-	assert.Equal(int64(202), job.TotalBytes())
+	t.Log("it uses Mtime")
+	{
+		stat, err := os.Stat(filepath.Join(setup.tempDir, "taco.png"))
+		assert.NoError(err)
+		assert.Equal(time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC), stat.ModTime().UTC())
+		assert.Contains([]string{setup.reporterCalls[0].File.Path, setup.reporterCalls[1].File.Path}, "some-path/taco.png")
+		assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
+	}
+
+	t.Log("it uses ProvidedMtime")
+	{
+		stat, err := os.Stat(filepath.Join(setup.tempDir, "pizza.png"))
+		assert.NoError(err)
+		assert.Equal(time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC), stat.ModTime().UTC())
+		assert.Contains([]string{setup.reporterCalls[0].File.Path, setup.reporterCalls[1].File.Path}, "some-path/pizza.png")
+		assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
+	}
+
+	t.Log("it all ends with correct bytes transferred")
+	{
+		assert.Equal(true, job.All(status.Ended...))
+		assert.Equal(int64(202), job.TransferBytes())
+		assert.Equal(int64(202), job.TotalBytes())
+	}
 
 	assert.NoError(setup.TearDown())
 }

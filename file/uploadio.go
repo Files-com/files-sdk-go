@@ -24,18 +24,9 @@ type UploadIOParams struct {
 	Size          int64
 	Progress      func(int64)
 	Manager       goccm.ConcurrencyManager
-	providedMtime time.Time
+	ProvidedMtime time.Time
 	Parts
 	files_sdk.FileUploadPart
-}
-
-func (u UploadIOParams) ProvidedMtime() time.Time {
-	if u.providedMtime.IsZero() {
-		return time.Now()
-
-	} else {
-		return u.providedMtime
-	}
 }
 
 func (c *Client) UploadIO(parentCtx context.Context, params UploadIOParams) (files_sdk.File, files_sdk.FileUploadPart, Parts, error) {
@@ -143,7 +134,7 @@ func (c *Client) UploadIO(parentCtx context.Context, params UploadIOParams) (fil
 		}
 	}
 
-	f, err := c.completeUpload(ctx, params.ProvidedMtime, etags, bytesWritten, fileUploadPart.Path, fileUploadPart.Ref)
+	f, err := c.completeUpload(ctx, &params.ProvidedMtime, etags, bytesWritten, fileUploadPart.Path, fileUploadPart.Ref)
 	return f, fileUploadPart, allParts, err
 }
 
@@ -155,9 +146,9 @@ func (c *Client) startUpload(ctx context.Context, beginUpload files_sdk.FileBegi
 	return uploads[0], err
 }
 
-func (c *Client) completeUpload(ctx context.Context, providedMtime func() time.Time, etags []files_sdk.EtagsParam, bytesWritten int64, path string, ref string) (files_sdk.File, error) {
+func (c *Client) completeUpload(ctx context.Context, providedMtime *time.Time, etags []files_sdk.EtagsParam, bytesWritten int64, path string, ref string) (files_sdk.File, error) {
 	return c.Create(ctx, files_sdk.FileCreateParams{
-		ProvidedMtime: lib.Time(providedMtime()),
+		ProvidedMtime: providedMtime,
 		EtagsParam:    etags,
 		Action:        "end",
 		Path:          path,

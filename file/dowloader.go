@@ -213,16 +213,13 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 			if err == nil && reportStatus.PreserveTimes {
 				var t time.Time
 				if s.file.ProvidedMtime != nil {
-					t = s.file.ProvidedMtime.Local()
-				} else {
-					stat, err := s.fsFile.Stat()
-					if err != nil {
-						reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
-						return
-					}
-					t = stat.ModTime()
+					t = *s.file.ProvidedMtime
+				} else if s.file.Mtime != nil {
+					t = *s.file.Mtime
 				}
-				err = os.Chtimes(reportStatus.LocalPath(), t, t)
+				if !t.IsZero() {
+					err = os.Chtimes(reportStatus.LocalPath(), t.Local(), t.Local())
+				}
 			}
 
 			if err != nil {

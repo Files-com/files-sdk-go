@@ -313,7 +313,7 @@ func TestClient_UploadFile(t *testing.T) {
 	assert := assert.New(t)
 
 	uploadPath := "../LICENSE"
-	job := client.Uploader(context.Background(), UploaderParams{LocalPath: uploadPath, PreserveTimes: true})
+	job := client.Uploader(context.Background(), UploaderParams{LocalPath: uploadPath})
 	job.Start()
 	job.Wait()
 	assert.Equal(true, job.Started.Called())
