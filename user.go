@@ -25,6 +25,7 @@ type User struct {
 	DavPermission              *bool      `json:"dav_permission,omitempty" path:"dav_permission"`
 	Disabled                   *bool      `json:"disabled,omitempty" path:"disabled"`
 	Email                      string     `json:"email,omitempty" path:"email"`
+	FirstLoginAt               *time.Time `json:"first_login_at,omitempty" path:"first_login_at"`
 	FtpPermission              *bool      `json:"ftp_permission,omitempty" path:"ftp_permission"`
 	GroupIds                   string     `json:"group_ids,omitempty" path:"group_ids"`
 	HeaderText                 string     `json:"header_text,omitempty" path:"header_text"`
@@ -56,6 +57,7 @@ type User struct {
 	ExternallyManaged          *bool      `json:"externally_managed,omitempty" path:"externally_managed"`
 	TimeZone                   string     `json:"time_zone,omitempty" path:"time_zone"`
 	TypeOf2fa                  string     `json:"type_of_2fa,omitempty" path:"type_of_2fa"`
+	UpdatedAt                  *time.Time `json:"updated_at,omitempty" path:"updated_at"`
 	UserRoot                   string     `json:"user_root,omitempty" path:"user_root"`
 	AvatarFile                 io.Reader  `json:"avatar_file,omitempty" path:"avatar_file"`
 	AvatarDelete               *bool      `json:"avatar_delete,omitempty" path:"avatar_delete"`
