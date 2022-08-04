@@ -12,6 +12,7 @@ type Folder struct {
 	DisplayName      string     `json:"display_name,omitempty" path:"display_name"`
 	Type             string     `json:"type,omitempty" path:"type"`
 	Size             int64      `json:"size,omitempty" path:"size"`
+	CreatedAt        *time.Time `json:"created_at,omitempty" path:"created_at"`
 	Mtime            *time.Time `json:"mtime,omitempty" path:"mtime"`
 	ProvidedMtime    *time.Time `json:"provided_mtime,omitempty" path:"provided_mtime"`
 	Crc32            string     `json:"crc32,omitempty" path:"crc32"`
