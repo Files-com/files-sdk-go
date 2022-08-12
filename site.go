@@ -99,6 +99,7 @@ type Site struct {
 	PasswordRequirementsApplyToBundles   *bool           `json:"password_requirements_apply_to_bundles,omitempty" path:"password_requirements_apply_to_bundles"`
 	PasswordValidityDays                 int64           `json:"password_validity_days,omitempty" path:"password_validity_days"`
 	Phone                                string          `json:"phone,omitempty" path:"phone"`
+	PinAllRemoteServersToSiteRegion      *bool           `json:"pin_all_remote_servers_to_site_region,omitempty" path:"pin_all_remote_servers_to_site_region"`
 	Require2fa                           *bool           `json:"require_2fa,omitempty" path:"require_2fa"`
 	Require2faStopTime                   *time.Time      `json:"require_2fa_stop_time,omitempty" path:"require_2fa_stop_time"`
 	Require2faUserType                   string          `json:"require_2fa_user_type,omitempty" path:"require_2fa_user_type"`
@@ -131,6 +132,7 @@ type Site struct {
 	UserLockoutTries                     int64           `json:"user_lockout_tries,omitempty" path:"user_lockout_tries"`
 	UserLockoutWithin                    int64           `json:"user_lockout_within,omitempty" path:"user_lockout_within"`
 	UserRequestsEnabled                  *bool           `json:"user_requests_enabled,omitempty" path:"user_requests_enabled"`
+	UserRequestsNotifyAdmins             *bool           `json:"user_requests_notify_admins,omitempty" path:"user_requests_notify_admins"`
 	WelcomeCustomText                    string          `json:"welcome_custom_text,omitempty" path:"welcome_custom_text"`
 	WelcomeEmailCc                       string          `json:"welcome_email_cc,omitempty" path:"welcome_email_cc"`
 	WelcomeEmailSubject                  string          `json:"welcome_email_subject,omitempty" path:"welcome_email_subject"`
@@ -171,6 +173,7 @@ type SiteUpdateParams struct {
 	FolderPermissionsGroupsOnly          *bool     `url:"folder_permissions_groups_only,omitempty" required:"false" json:"folder_permissions_groups_only,omitempty" path:"folder_permissions_groups_only"`
 	WelcomeScreen                        string    `url:"welcome_screen,omitempty" required:"false" json:"welcome_screen,omitempty" path:"welcome_screen"`
 	OfficeIntegrationAvailable           *bool     `url:"office_integration_available,omitempty" required:"false" json:"office_integration_available,omitempty" path:"office_integration_available"`
+	PinAllRemoteServersToSiteRegion      *bool     `url:"pin_all_remote_servers_to_site_region,omitempty" required:"false" json:"pin_all_remote_servers_to_site_region,omitempty" path:"pin_all_remote_servers_to_site_region"`
 	SessionExpiry                        string    `url:"session_expiry,omitempty" required:"false" json:"session_expiry,omitempty" path:"session_expiry"`
 	SslRequired                          *bool     `url:"ssl_required,omitempty" required:"false" json:"ssl_required,omitempty" path:"ssl_required"`
 	TlsDisabled                          *bool     `url:"tls_disabled,omitempty" required:"false" json:"tls_disabled,omitempty" path:"tls_disabled"`
@@ -207,6 +210,7 @@ type SiteUpdateParams struct {
 	NonSsoUsersAllowed                   *bool     `url:"non_sso_users_allowed,omitempty" required:"false" json:"non_sso_users_allowed,omitempty" path:"non_sso_users_allowed"`
 	SharingEnabled                       *bool     `url:"sharing_enabled,omitempty" required:"false" json:"sharing_enabled,omitempty" path:"sharing_enabled"`
 	UserRequestsEnabled                  *bool     `url:"user_requests_enabled,omitempty" required:"false" json:"user_requests_enabled,omitempty" path:"user_requests_enabled"`
+	UserRequestsNotifyAdmins             *bool     `url:"user_requests_notify_admins,omitempty" required:"false" json:"user_requests_notify_admins,omitempty" path:"user_requests_notify_admins"`
 	FtpEnabled                           *bool     `url:"ftp_enabled,omitempty" required:"false" json:"ftp_enabled,omitempty" path:"ftp_enabled"`
 	SftpEnabled                          *bool     `url:"sftp_enabled,omitempty" required:"false" json:"sftp_enabled,omitempty" path:"sftp_enabled"`
 	Allowed2faMethodSms                  *bool     `url:"allowed_2fa_method_sms,omitempty" required:"false" json:"allowed_2fa_method_sms,omitempty" path:"allowed_2fa_method_sms"`

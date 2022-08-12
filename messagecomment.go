@@ -7,10 +7,10 @@ import (
 )
 
 type MessageComment struct {
-	Id        int64                  `json:"id,omitempty" path:"id"`
-	Body      string                 `json:"body,omitempty" path:"body"`
-	Reactions MessageCommentReaction `json:"reactions,omitempty" path:"reactions"`
-	UserId    int64                  `json:"user_id,omitempty" path:"user_id"`
+	Id        int64    `json:"id,omitempty" path:"id"`
+	Body      string   `json:"body,omitempty" path:"body"`
+	Reactions []string `json:"reactions,omitempty" path:"reactions"`
+	UserId    int64    `json:"user_id,omitempty" path:"user_id"`
 }
 
 type MessageCommentCollection []MessageComment

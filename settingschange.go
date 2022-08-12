@@ -8,7 +8,7 @@ import (
 )
 
 type SettingsChange struct {
-	Changes            string     `json:"changes,omitempty" path:"changes"`
+	Changes            []string   `json:"changes,omitempty" path:"changes"`
 	CreatedAt          *time.Time `json:"created_at,omitempty" path:"created_at"`
 	UserId             int64      `json:"user_id,omitempty" path:"user_id"`
 	UserIsFilesSupport *bool      `json:"user_is_files_support,omitempty" path:"user_is_files_support"`

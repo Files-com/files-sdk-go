@@ -7,10 +7,10 @@ import (
 )
 
 type FileComment struct {
-	Id        int64               `json:"id,omitempty" path:"id"`
-	Body      string              `json:"body,omitempty" path:"body"`
-	Reactions FileCommentReaction `json:"reactions,omitempty" path:"reactions"`
-	Path      string              `json:"path,omitempty" path:"path"`
+	Id        int64    `json:"id,omitempty" path:"id"`
+	Body      string   `json:"body,omitempty" path:"body"`
+	Reactions []string `json:"reactions,omitempty" path:"reactions"`
+	Path      string   `json:"path,omitempty" path:"path"`
 }
 
 type FileCommentCollection []FileComment

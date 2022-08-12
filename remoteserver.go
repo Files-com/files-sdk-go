@@ -15,6 +15,8 @@ type RemoteServer struct {
 	Name                              string `json:"name,omitempty" path:"name"`
 	Port                              int64  `json:"port,omitempty" path:"port"`
 	MaxConnections                    int64  `json:"max_connections,omitempty" path:"max_connections"`
+	PinToSiteRegion                   *bool  `json:"pin_to_site_region,omitempty" path:"pin_to_site_region"`
+	PinnedRegion                      string `json:"pinned_region,omitempty" path:"pinned_region"`
 	S3Bucket                          string `json:"s3_bucket,omitempty" path:"s3_bucket"`
 	S3Region                          string `json:"s3_region,omitempty" path:"s3_region"`
 	AwsAccessKey                      string `json:"aws_access_key,omitempty" path:"aws_access_key"`
@@ -161,6 +163,7 @@ type RemoteServerCreateParams struct {
 	Hostname                          string                              `url:"hostname,omitempty" required:"false" json:"hostname,omitempty" path:"hostname"`
 	Name                              string                              `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 	MaxConnections                    int64                               `url:"max_connections,omitempty" required:"false" json:"max_connections,omitempty" path:"max_connections"`
+	PinToSiteRegion                   *bool                               `url:"pin_to_site_region,omitempty" required:"false" json:"pin_to_site_region,omitempty" path:"pin_to_site_region"`
 	Port                              int64                               `url:"port,omitempty" required:"false" json:"port,omitempty" path:"port"`
 	S3Bucket                          string                              `url:"s3_bucket,omitempty" required:"false" json:"s3_bucket,omitempty" path:"s3_bucket"`
 	S3Region                          string                              `url:"s3_region,omitempty" required:"false" json:"s3_region,omitempty" path:"s3_region"`
@@ -213,6 +216,7 @@ type RemoteServerUpdateParams struct {
 	Hostname                          string                              `url:"hostname,omitempty" required:"false" json:"hostname,omitempty" path:"hostname"`
 	Name                              string                              `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 	MaxConnections                    int64                               `url:"max_connections,omitempty" required:"false" json:"max_connections,omitempty" path:"max_connections"`
+	PinToSiteRegion                   *bool                               `url:"pin_to_site_region,omitempty" required:"false" json:"pin_to_site_region,omitempty" path:"pin_to_site_region"`
 	Port                              int64                               `url:"port,omitempty" required:"false" json:"port,omitempty" path:"port"`
 	S3Bucket                          string                              `url:"s3_bucket,omitempty" required:"false" json:"s3_bucket,omitempty" path:"s3_bucket"`
 	S3Region                          string                              `url:"s3_region,omitempty" required:"false" json:"s3_region,omitempty" path:"s3_region"`

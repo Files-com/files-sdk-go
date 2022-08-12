@@ -7,12 +7,12 @@ import (
 )
 
 type Group struct {
-	Id        int64    `json:"id,omitempty" path:"id"`
-	Name      string   `json:"name,omitempty" path:"name"`
-	AdminIds  string   `json:"admin_ids,omitempty" path:"admin_ids"`
-	Notes     string   `json:"notes,omitempty" path:"notes"`
-	UserIds   []int64  `json:"user_ids,omitempty" path:"user_ids"`
-	Usernames []string `json:"usernames,omitempty" path:"usernames"`
+	Id        int64  `json:"id,omitempty" path:"id"`
+	Name      string `json:"name,omitempty" path:"name"`
+	AdminIds  string `json:"admin_ids,omitempty" path:"admin_ids"`
+	Notes     string `json:"notes,omitempty" path:"notes"`
+	UserIds   string `json:"user_ids,omitempty" path:"user_ids"`
+	Usernames string `json:"usernames,omitempty" path:"usernames"`
 }
 
 type GroupCollection []Group

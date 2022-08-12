@@ -11,8 +11,8 @@ type Notification struct {
 	Path                     string   `json:"path,omitempty" path:"path"`
 	GroupId                  int64    `json:"group_id,omitempty" path:"group_id"`
 	GroupName                string   `json:"group_name,omitempty" path:"group_name"`
-	TriggeringGroupIds       int64    `json:"triggering_group_ids,omitempty" path:"triggering_group_ids"`
-	TriggeringUserIds        int64    `json:"triggering_user_ids,omitempty" path:"triggering_user_ids"`
+	TriggeringGroupIds       []int64  `json:"triggering_group_ids,omitempty" path:"triggering_group_ids"`
+	TriggeringUserIds        []int64  `json:"triggering_user_ids,omitempty" path:"triggering_user_ids"`
 	TriggerByShareRecipients *bool    `json:"trigger_by_share_recipients,omitempty" path:"trigger_by_share_recipients"`
 	NotifyUserActions        *bool    `json:"notify_user_actions,omitempty" path:"notify_user_actions"`
 	NotifyOnCopy             *bool    `json:"notify_on_copy,omitempty" path:"notify_on_copy"`

@@ -13,7 +13,7 @@ type App struct {
 	DocumentationLinks  json.RawMessage `json:"documentation_links,omitempty" path:"documentation_links"`
 	IconUrl             string          `json:"icon_url,omitempty" path:"icon_url"`
 	LogoUrl             string          `json:"logo_url,omitempty" path:"logo_url"`
-	ScreenshotListUrls  string          `json:"screenshot_list_urls,omitempty" path:"screenshot_list_urls"`
+	ScreenshotListUrls  []string        `json:"screenshot_list_urls,omitempty" path:"screenshot_list_urls"`
 	LogoThumbnailUrl    string          `json:"logo_thumbnail_url,omitempty" path:"logo_thumbnail_url"`
 	SsoStrategyType     string          `json:"sso_strategy_type,omitempty" path:"sso_strategy_type"`
 	RemoteServerType    string          `json:"remote_server_type,omitempty" path:"remote_server_type"`

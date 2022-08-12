@@ -18,7 +18,7 @@ type Automation struct {
 	Name                   string          `json:"name,omitempty" path:"name"`
 	Schedule               json.RawMessage `json:"schedule,omitempty" path:"schedule"`
 	Source                 string          `json:"source,omitempty" path:"source"`
-	Destinations           string          `json:"destinations,omitempty" path:"destinations"`
+	Destinations           []string        `json:"destinations,omitempty" path:"destinations"`
 	DestinationReplaceFrom string          `json:"destination_replace_from,omitempty" path:"destination_replace_from"`
 	DestinationReplaceTo   string          `json:"destination_replace_to,omitempty" path:"destination_replace_to"`
 	Description            string          `json:"description,omitempty" path:"description"`
@@ -27,7 +27,7 @@ type Automation struct {
 	UserIds                []int64         `json:"user_ids,omitempty" path:"user_ids"`
 	GroupIds               []int64         `json:"group_ids,omitempty" path:"group_ids"`
 	WebhookUrl             string          `json:"webhook_url,omitempty" path:"webhook_url"`
-	TriggerActions         string          `json:"trigger_actions,omitempty" path:"trigger_actions"`
+	TriggerActions         []string        `json:"trigger_actions,omitempty" path:"trigger_actions"`
 	Value                  json.RawMessage `json:"value,omitempty" path:"value"`
 	Destination            string          `json:"destination,omitempty" path:"destination"`
 }

@@ -7,13 +7,13 @@ import (
 )
 
 type Status struct {
-	Code          int64  `json:"code,omitempty" path:"code"`
-	Message       string `json:"message,omitempty" path:"message"`
-	Status        string `json:"status,omitempty" path:"status"`
-	Data          Auto   `json:"data,omitempty" path:"data"`
-	Errors        Errors `json:"errors,omitempty" path:"errors"`
-	ClickwrapId   int64  `json:"clickwrap_id,omitempty" path:"clickwrap_id"`
-	ClickwrapBody string `json:"clickwrap_body,omitempty" path:"clickwrap_body"`
+	Code          int64    `json:"code,omitempty" path:"code"`
+	Message       string   `json:"message,omitempty" path:"message"`
+	Status        string   `json:"status,omitempty" path:"status"`
+	Data          Auto     `json:"data,omitempty" path:"data"`
+	Errors        []string `json:"errors,omitempty" path:"errors"`
+	ClickwrapId   int64    `json:"clickwrap_id,omitempty" path:"clickwrap_id"`
+	ClickwrapBody string   `json:"clickwrap_body,omitempty" path:"clickwrap_body"`
 }
 
 type StatusCollection []Status
