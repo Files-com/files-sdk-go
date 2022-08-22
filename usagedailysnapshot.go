@@ -8,17 +8,17 @@ import (
 )
 
 type UsageDailySnapshot struct {
-	Id                           int64      `json:"id,omitempty" path:"id"`
-	Date                         *date.Date `json:"date,omitempty" path:"date"`
-	ApiUsageAvailable            *bool      `json:"api_usage_available,omitempty" path:"api_usage_available"`
-	ReadApiUsage                 int64      `json:"read_api_usage,omitempty" path:"read_api_usage"`
-	WriteApiUsage                int64      `json:"write_api_usage,omitempty" path:"write_api_usage"`
-	UserCount                    int64      `json:"user_count,omitempty" path:"user_count"`
-	CurrentStorage               int64      `json:"current_storage,omitempty" path:"current_storage"`
-	DeletedFilesStorage          int64      `json:"deleted_files_storage,omitempty" path:"deleted_files_storage"`
-	DeletedFilesCountedInMinimum int64      `json:"deleted_files_counted_in_minimum,omitempty" path:"deleted_files_counted_in_minimum"`
-	RootStorage                  int64      `json:"root_storage,omitempty" path:"root_storage"`
-	UsageByTopLevelDir           []string   `json:"usage_by_top_level_dir,omitempty" path:"usage_by_top_level_dir"`
+	Id                           int64           `json:"id,omitempty" path:"id"`
+	Date                         *date.Date      `json:"date,omitempty" path:"date"`
+	ApiUsageAvailable            *bool           `json:"api_usage_available,omitempty" path:"api_usage_available"`
+	ReadApiUsage                 int64           `json:"read_api_usage,omitempty" path:"read_api_usage"`
+	WriteApiUsage                int64           `json:"write_api_usage,omitempty" path:"write_api_usage"`
+	UserCount                    int64           `json:"user_count,omitempty" path:"user_count"`
+	CurrentStorage               int64           `json:"current_storage,omitempty" path:"current_storage"`
+	DeletedFilesStorage          int64           `json:"deleted_files_storage,omitempty" path:"deleted_files_storage"`
+	DeletedFilesCountedInMinimum int64           `json:"deleted_files_counted_in_minimum,omitempty" path:"deleted_files_counted_in_minimum"`
+	RootStorage                  int64           `json:"root_storage,omitempty" path:"root_storage"`
+	UsageByTopLevelDir           json.RawMessage `json:"usage_by_top_level_dir,omitempty" path:"usage_by_top_level_dir"`
 }
 
 type UsageDailySnapshotCollection []UsageDailySnapshot
