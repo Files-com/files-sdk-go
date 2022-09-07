@@ -51,11 +51,12 @@ func (u BundlePermissionsEnum) String() string {
 
 func (u BundlePermissionsEnum) Enum() map[string]BundlePermissionsEnum {
 	return map[string]BundlePermissionsEnum{
-		"read":       BundlePermissionsEnum("read"),
-		"write":      BundlePermissionsEnum("write"),
-		"read_write": BundlePermissionsEnum("read_write"),
-		"full":       BundlePermissionsEnum("full"),
-		"none":       BundlePermissionsEnum("none"),
+		"read":         BundlePermissionsEnum("read"),
+		"write":        BundlePermissionsEnum("write"),
+		"read_write":   BundlePermissionsEnum("read_write"),
+		"full":         BundlePermissionsEnum("full"),
+		"none":         BundlePermissionsEnum("none"),
+		"preview_only": BundlePermissionsEnum("preview_only"),
 	}
 }
 
