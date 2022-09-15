@@ -44,6 +44,7 @@ type Site struct {
 	MobileAppSessionIpPinning            *bool           `json:"mobile_app_session_ip_pinning,omitempty" path:"mobile_app_session_ip_pinning"`
 	MobileAppSessionLifetime             int64           `json:"mobile_app_session_lifetime,omitempty" path:"mobile_app_session_lifetime"`
 	DisallowedCountries                  string          `json:"disallowed_countries,omitempty" path:"disallowed_countries"`
+	DisableFilesCertificateGeneration    *bool           `json:"disable_files_certificate_generation,omitempty" path:"disable_files_certificate_generation"`
 	DisableNotifications                 *bool           `json:"disable_notifications,omitempty" path:"disable_notifications"`
 	DisablePasswordReset                 *bool           `json:"disable_password_reset,omitempty" path:"disable_password_reset"`
 	Domain                               string          `json:"domain,omitempty" path:"domain"`
@@ -178,6 +179,7 @@ type SiteUpdateParams struct {
 	SslRequired                          *bool           `url:"ssl_required,omitempty" required:"false" json:"ssl_required,omitempty" path:"ssl_required"`
 	TlsDisabled                          *bool           `url:"tls_disabled,omitempty" required:"false" json:"tls_disabled,omitempty" path:"tls_disabled"`
 	SftpInsecureCiphers                  *bool           `url:"sftp_insecure_ciphers,omitempty" required:"false" json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers"`
+	DisableFilesCertificateGeneration    *bool           `url:"disable_files_certificate_generation,omitempty" required:"false" json:"disable_files_certificate_generation,omitempty" path:"disable_files_certificate_generation"`
 	UserLockout                          *bool           `url:"user_lockout,omitempty" required:"false" json:"user_lockout,omitempty" path:"user_lockout"`
 	UserLockoutTries                     int64           `url:"user_lockout_tries,omitempty" required:"false" json:"user_lockout_tries,omitempty" path:"user_lockout_tries"`
 	UserLockoutWithin                    int64           `url:"user_lockout_within,omitempty" required:"false" json:"user_lockout_within,omitempty" path:"user_lockout_within"`
