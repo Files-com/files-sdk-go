@@ -10,6 +10,7 @@ import (
 type ApiKey struct {
 	Id               int64      `json:"id,omitempty" path:"id"`
 	DescriptiveLabel string     `json:"descriptive_label,omitempty" path:"descriptive_label"`
+	Description      string     `json:"description,omitempty" path:"description"`
 	CreatedAt        *time.Time `json:"created_at,omitempty" path:"created_at"`
 	ExpiresAt        *time.Time `json:"expires_at,omitempty" path:"expires_at"`
 	Key              string     `json:"key,omitempty" path:"key"`
@@ -59,6 +60,7 @@ type ApiKeyFindParams struct {
 type ApiKeyCreateParams struct {
 	UserId        int64                   `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
 	Name          string                  `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
+	Description   string                  `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
 	ExpiresAt     *time.Time              `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty" path:"expires_at"`
 	PermissionSet ApiKeyPermissionSetEnum `url:"permission_set,omitempty" required:"false" json:"permission_set,omitempty" path:"permission_set"`
 	Path          string                  `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
@@ -73,6 +75,7 @@ type ApiKeyUpdateCurrentParams struct {
 type ApiKeyUpdateParams struct {
 	Id            int64                   `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
 	Name          string                  `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
+	Description   string                  `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
 	ExpiresAt     *time.Time              `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty" path:"expires_at"`
 	PermissionSet ApiKeyPermissionSetEnum `url:"permission_set,omitempty" required:"false" json:"permission_set,omitempty" path:"permission_set"`
 }
