@@ -83,6 +83,9 @@ type Site struct {
 	LoginHelpText                        string          `json:"login_help_text,omitempty" path:"login_help_text"`
 	Logo                                 Image           `json:"logo,omitempty" path:"logo"`
 	MaxPriorPasswords                    int64           `json:"max_prior_passwords,omitempty" path:"max_prior_passwords"`
+	MotdText                             string          `json:"motd_text,omitempty" path:"motd_text"`
+	MotdUseForFtp                        *bool           `json:"motd_use_for_ftp,omitempty" path:"motd_use_for_ftp"`
+	MotdUseForSftp                       *bool           `json:"motd_use_for_sftp,omitempty" path:"motd_use_for_sftp"`
 	NextBillingAmount                    string          `json:"next_billing_amount,omitempty" path:"next_billing_amount"`
 	NextBillingDate                      string          `json:"next_billing_date,omitempty" path:"next_billing_date"`
 	OfficeIntegrationAvailable           *bool           `json:"office_integration_available,omitempty" path:"office_integration_available"`
@@ -175,6 +178,9 @@ type SiteUpdateParams struct {
 	WelcomeScreen                        string          `url:"welcome_screen,omitempty" required:"false" json:"welcome_screen,omitempty" path:"welcome_screen"`
 	OfficeIntegrationAvailable           *bool           `url:"office_integration_available,omitempty" required:"false" json:"office_integration_available,omitempty" path:"office_integration_available"`
 	PinAllRemoteServersToSiteRegion      *bool           `url:"pin_all_remote_servers_to_site_region,omitempty" required:"false" json:"pin_all_remote_servers_to_site_region,omitempty" path:"pin_all_remote_servers_to_site_region"`
+	MotdText                             string          `url:"motd_text,omitempty" required:"false" json:"motd_text,omitempty" path:"motd_text"`
+	MotdUseForFtp                        *bool           `url:"motd_use_for_ftp,omitempty" required:"false" json:"motd_use_for_ftp,omitempty" path:"motd_use_for_ftp"`
+	MotdUseForSftp                       *bool           `url:"motd_use_for_sftp,omitempty" required:"false" json:"motd_use_for_sftp,omitempty" path:"motd_use_for_sftp"`
 	SessionExpiry                        string          `url:"session_expiry,omitempty" required:"false" json:"session_expiry,omitempty" path:"session_expiry"`
 	SslRequired                          *bool           `url:"ssl_required,omitempty" required:"false" json:"ssl_required,omitempty" path:"ssl_required"`
 	TlsDisabled                          *bool           `url:"tls_disabled,omitempty" required:"false" json:"tls_disabled,omitempty" path:"tls_disabled"`
