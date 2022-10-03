@@ -31,6 +31,14 @@ type User struct {
 	HeaderText                 string     `json:"header_text,omitempty" path:"header_text"`
 	Language                   string     `json:"language,omitempty" path:"language"`
 	LastLoginAt                *time.Time `json:"last_login_at,omitempty" path:"last_login_at"`
+	LastWebLoginAt             *time.Time `json:"last_web_login_at,omitempty" path:"last_web_login_at"`
+	LastFtpLoginAt             *time.Time `json:"last_ftp_login_at,omitempty" path:"last_ftp_login_at"`
+	LastSftpLoginAt            *time.Time `json:"last_sftp_login_at,omitempty" path:"last_sftp_login_at"`
+	LastDavLoginAt             *time.Time `json:"last_dav_login_at,omitempty" path:"last_dav_login_at"`
+	LastDesktopLoginAt         *time.Time `json:"last_desktop_login_at,omitempty" path:"last_desktop_login_at"`
+	LastRestapiLoginAt         *time.Time `json:"last_restapi_login_at,omitempty" path:"last_restapi_login_at"`
+	LastApiUseAt               *time.Time `json:"last_api_use_at,omitempty" path:"last_api_use_at"`
+	LastActiveAt               *time.Time `json:"last_active_at,omitempty" path:"last_active_at"`
 	LastProtocolCipher         string     `json:"last_protocol_cipher,omitempty" path:"last_protocol_cipher"`
 	LockoutExpires             *time.Time `json:"lockout_expires,omitempty" path:"lockout_expires"`
 	Name                       string     `json:"name,omitempty" path:"name"`
