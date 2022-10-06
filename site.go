@@ -110,6 +110,8 @@ type Site struct {
 	Session                              Session         `json:"session,omitempty" path:"session"`
 	SessionPinnedByIp                    *bool           `json:"session_pinned_by_ip,omitempty" path:"session_pinned_by_ip"`
 	SftpEnabled                          *bool           `json:"sftp_enabled,omitempty" path:"sftp_enabled"`
+	SftpHostKeyType                      string          `json:"sftp_host_key_type,omitempty" path:"sftp_host_key_type"`
+	ActiveSftpHostKeyId                  int64           `json:"active_sftp_host_key_id,omitempty" path:"active_sftp_host_key_id"`
 	SftpInsecureCiphers                  *bool           `json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers"`
 	SftpUserRootEnabled                  *bool           `json:"sftp_user_root_enabled,omitempty" path:"sftp_user_root_enabled"`
 	SharingEnabled                       *bool           `json:"sharing_enabled,omitempty" path:"sharing_enabled"`
@@ -221,6 +223,8 @@ type SiteUpdateParams struct {
 	UserRequestsNotifyAdmins             *bool           `url:"user_requests_notify_admins,omitempty" required:"false" json:"user_requests_notify_admins,omitempty" path:"user_requests_notify_admins"`
 	FtpEnabled                           *bool           `url:"ftp_enabled,omitempty" required:"false" json:"ftp_enabled,omitempty" path:"ftp_enabled"`
 	SftpEnabled                          *bool           `url:"sftp_enabled,omitempty" required:"false" json:"sftp_enabled,omitempty" path:"sftp_enabled"`
+	SftpHostKeyType                      string          `url:"sftp_host_key_type,omitempty" required:"false" json:"sftp_host_key_type,omitempty" path:"sftp_host_key_type"`
+	ActiveSftpHostKeyId                  int64           `url:"active_sftp_host_key_id,omitempty" required:"false" json:"active_sftp_host_key_id,omitempty" path:"active_sftp_host_key_id"`
 	BundleWatermarkValue                 json.RawMessage `url:"bundle_watermark_value,omitempty" required:"false" json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value"`
 	Allowed2faMethodSms                  *bool           `url:"allowed_2fa_method_sms,omitempty" required:"false" json:"allowed_2fa_method_sms,omitempty" path:"allowed_2fa_method_sms"`
 	Allowed2faMethodU2f                  *bool           `url:"allowed_2fa_method_u2f,omitempty" required:"false" json:"allowed_2fa_method_u2f,omitempty" path:"allowed_2fa_method_u2f"`

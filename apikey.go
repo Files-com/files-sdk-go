@@ -19,6 +19,7 @@ type ApiKey struct {
 	Path             string     `json:"path,omitempty" path:"path"`
 	PermissionSet    string     `json:"permission_set,omitempty" path:"permission_set"`
 	Platform         string     `json:"platform,omitempty" path:"platform"`
+	Url              string     `json:"url,omitempty" path:"url"`
 	UserId           int64      `json:"user_id,omitempty" path:"user_id"`
 }
 
