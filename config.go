@@ -15,13 +15,11 @@ import (
 var VERSION string
 
 const (
-	ProductionEndpoint = "https://{SUBDOMAIN}.files.com"
-	UserAgent          = "Files.com Go SDK"
-	DefaultDomain      = "app"
-	APIPath            = "/api/rest/v1"
+	UserAgent   = "Files.com Go SDK"
+	DefaultSite = "app"
+	APIPath     = "/api/rest/v1"
 )
 
-var APIKey string
 var GlobalConfig Config
 
 type HttpClient interface {
@@ -44,28 +42,29 @@ type Config struct {
 	logger            Logger
 	Debug             *bool
 	UserAgent         string
+	Environment
 }
 
-func (s *Config) SetHttpClient(client *http.Client) {
-	s.GetRawClient().HTTPClient = client
+func (c *Config) SetHttpClient(client *http.Client) {
+	c.GetRawClient().HTTPClient = client
 }
 
-func (s *Config) GetHttpClient() HttpClient {
-	if s.standardClient == nil {
-		s.standardClient = s.GetRawClient().StandardClient()
+func (c *Config) GetHttpClient() HttpClient {
+	if c.standardClient == nil {
+		c.standardClient = c.GetRawClient().StandardClient()
 	}
-	return s.standardClient
+	return c.standardClient
 }
 
-func (s *Config) GetRawClient() *retryablehttp.Client {
-	if s.rawClient == nil {
-		s.rawClient = retryablehttp.NewClient()
-		s.rawClient.ErrorHandler = retryablehttp.PassthroughErrorHandler
-		s.rawClient.Logger = s.Logger()
-		s.rawClient.RetryMax = 3
+func (c *Config) GetRawClient() *retryablehttp.Client {
+	if c.rawClient == nil {
+		c.rawClient = retryablehttp.NewClient()
+		c.rawClient.ErrorHandler = retryablehttp.PassthroughErrorHandler
+		c.rawClient.Logger = c.Logger()
+		c.rawClient.RetryMax = 3
 	}
 
-	return s.rawClient
+	return c.rawClient
 }
 
 type NullLogger struct{}
@@ -73,39 +72,39 @@ type NullLogger struct{}
 func (n NullLogger) Printf(_ string, _ ...interface{}) {
 }
 
-func (s *Config) InDebug() bool {
-	return s.Debug != nil && *s.Debug || (os.Getenv("FILES_SDK_DEBUG") != "")
+func (c *Config) InDebug() bool {
+	return c.Debug != nil && *c.Debug || (os.Getenv("FILES_SDK_DEBUG") != "")
 }
 
-func (s *Config) Logger() retryablehttp.Logger {
-	if s.InDebug() {
-		s.SetLogger(log.New(os.Stderr, "", log.LstdFlags))
+func (c *Config) Logger() retryablehttp.Logger {
+	if c.logger != nil {
+		return c.logger
+	}
+	if c.InDebug() {
+		c.SetLogger(log.New(os.Stderr, "", log.LstdFlags))
 	} else {
-		s.SetLogger(NullLogger{})
+		c.SetLogger(NullLogger{})
 	}
-	return s.logger
+	return c.logger
 }
 
-func (s *Config) SetLogger(l Logger) {
-	s.logger = l
+func (c *Config) SetLogger(l Logger) {
+	c.logger = l
 }
 
-func (s *Config) RootPath() string {
-	if s.Subdomain == "" {
-		s.Subdomain = DefaultDomain
+func (c *Config) RootPath() string {
+	if c.Subdomain == "" {
+		c.Subdomain = DefaultSite
 	}
-	if s.Endpoint == "" {
-		s.Endpoint = strings.Replace(ProductionEndpoint, "{SUBDOMAIN}", s.Subdomain, 1)
+	if c.Endpoint == "" {
+		c.Endpoint = strings.Replace(c.Environment.Endpoint(), "{SUBDOMAIN}", c.Subdomain, 1)
 	}
-	return s.Endpoint + APIPath
+	return c.Endpoint + APIPath
 }
 
-func (s *Config) GetAPIKey() string {
-	if s.APIKey != "" {
-		return s.APIKey
-	}
-	if APIKey != "" {
-		return APIKey
+func (c *Config) GetAPIKey() string {
+	if c.APIKey != "" {
+		return c.APIKey
 	}
 	if os.Getenv("FILES_API_KEY") != "" {
 		return os.Getenv("FILES_API_KEY")
@@ -113,18 +112,18 @@ func (s *Config) GetAPIKey() string {
 	return ""
 }
 
-func (s *Config) SetHeaders(headers *http.Header) {
-	if s.UserAgent == "" {
-		s.UserAgent = fmt.Sprintf("%v %v", "Files.com Go SDK", strings.TrimSpace(VERSION))
+func (c *Config) SetHeaders(headers *http.Header) {
+	if c.UserAgent == "" {
+		c.UserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
 	}
-	headers.Set("User-Agent", s.UserAgent)
-	if s.GetAPIKey() != "" {
-		headers.Set("X-FilesAPI-Key", s.GetAPIKey())
-	} else if s.SessionId != "" {
-		headers.Set("X-FilesAPI-Auth", s.SessionId)
+	headers.Set("User-Agent", c.UserAgent)
+	if c.GetAPIKey() != "" {
+		headers.Set("X-FilesAPI-Key", c.GetAPIKey())
+	} else if c.SessionId != "" {
+		headers.Set("X-FilesAPI-Auth", c.SessionId)
 	}
 
-	for key, value := range s.AdditionalHeaders {
+	for key, value := range c.AdditionalHeaders {
 		headers.Set(key, value)
 	}
 }
