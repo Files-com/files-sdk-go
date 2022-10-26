@@ -21,6 +21,7 @@ type Folder struct {
 	Region           string     `json:"region,omitempty" path:"region"`
 	Permissions      string     `json:"permissions,omitempty" path:"permissions"`
 	SubfoldersLocked *bool      `json:"subfolders_locked?,omitempty" path:"subfolders_locked?"`
+	IsLocked         *bool      `json:"is_locked,omitempty" path:"is_locked"`
 	DownloadUri      string     `json:"download_uri,omitempty" path:"download_uri"`
 	PriorityColor    string     `json:"priority_color,omitempty" path:"priority_color"`
 	PreviewId        int64      `json:"preview_id,omitempty" path:"preview_id"`
