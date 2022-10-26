@@ -52,14 +52,13 @@ func (am MoveSource) Call(ctx context.Context, f status.File) (status.Log, error
 	log := status.Log{Action: "move source"}
 	log.Path = am.movePath(f)
 
-	dir, _ := filepath.Split(log.Path)
-	err = os.MkdirAll(dir, 0755)
-	if err != nil && !errors.Is(err, syscall.EEXIST) {
-		return log, err
-	}
-
 	switch f.Direction {
 	case direction.UploadType:
+		dir, _ := filepath.Split(log.Path)
+		err = os.MkdirAll(dir, 0755)
+		if err != nil && !errors.Is(err, syscall.EEXIST) {
+			return log, err
+		}
 		err = os.Rename(f.LocalPath, log.Path)
 		if err != nil && errors.Is(err, syscall.EEXIST) {
 			err = os.Remove(log.Path)
@@ -71,7 +70,7 @@ func (am MoveSource) Call(ctx context.Context, f status.File) (status.Log, error
 		return log, err
 	case direction.DownloadType:
 		client := &Client{Config: am.Config}
-		_, err = client.Move(
+		_, err := client.Move(
 			ctx,
 			files_sdk.FileMoveParams{Path: f.RemotePath, Destination: log.Path},
 		)
@@ -79,6 +78,17 @@ func (am MoveSource) Call(ctx context.Context, f status.File) (status.Log, error
 		if ok && rErr.Type == "processing-failure/destination-parent-does-not-exist" {
 			fs := FS{}.Init(am.Config).WithContext(ctx)
 			err = fs.MkdirAll(filepath.Dir(log.Path), 0755)
+			if err != nil {
+				return log, err
+			}
+			return am.Call(ctx, f)
+		}
+		if ok && rErr.Type == "processing-failure/destination-exists" {
+			err := client.Delete(ctx, files_sdk.FileDeleteParams{Path: log.Path})
+			if err != nil {
+				return log, err
+			}
+			return am.Call(ctx, f)
 		}
 		return log, err
 	default:

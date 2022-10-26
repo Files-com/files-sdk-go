@@ -13,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/Files-com/files-sdk-go/v2/ignore"
 
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
@@ -73,6 +75,7 @@ func buildScenario(base string, client *Client) {
 		UploadIOParams{
 			Path:   filepath.Join(base, "nested_1", "nested_2", "3.text"),
 			Reader: strings.NewReader("testing 3"), Size: int64(9),
+			ProvidedMtime: time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC),
 		},
 	)
 	ignoreSomeErrors(err)
@@ -81,6 +84,7 @@ func buildScenario(base string, client *Client) {
 		UploadIOParams{
 			Path:   filepath.Join(base, "nested_1", "nested_2", "nested_3", "4.text"),
 			Reader: strings.NewReader("testing 3"), Size: int64(9),
+			ProvidedMtime: time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC),
 		},
 	)
 	ignoreSomeErrors(err)
@@ -119,6 +123,89 @@ func Reporter(callback status.Reporter) status.EventsReporter {
 	}
 
 	return events
+}
+
+func TestClient_UploadFolder_path_spec(t *testing.T) {
+	client, r, err := CreateClient("TestClient_UploadFolder_path_spec")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	t.Run("files", func(t *testing.T) {
+		for _, tt := range pathSpec() {
+			t.Run(tt.name, func(t *testing.T) {
+				filesDest := fmt.Sprintf(
+					"files-dest-%v",
+					strings.Replace(
+						strings.Replace(tt.name, " ", "_", -1),
+						"/", "_", -1,
+					),
+				)
+				folderClient := folder.Client{Config: client.Config}
+				_, err := folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filesDest})
+				ignoreSomeErrors(err)
+				localSrc, err := ioutil.TempDir("", "local-src")
+				assert.NoError(t, err)
+
+				for _, e := range tt.src {
+					if e.dir {
+						err := os.MkdirAll(filepath.Join(localSrc, e.path), 0750)
+						assert.NoError(t, err)
+					} else {
+						file, err := os.Create(filepath.Join(localSrc, e.path))
+						file.Write([]byte(e.path))
+						assert.NoError(t, err)
+					}
+				}
+				for _, e := range tt.dest {
+					if !e.preexisting {
+						continue
+					}
+					if e.dir {
+						_, err := folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filepath.Join(filesDest, e.path)})
+						ignoreSomeErrors(err)
+					} else {
+						_, _, _, err = client.UploadIO(
+							context.Background(),
+							UploadIOParams{
+								Path:   filepath.Join(filesDest, e.path),
+								Reader: strings.NewReader(e.path), Size: int64(len(e.path)),
+								ProvidedMtime: time.Now(),
+							},
+						)
+						assert.NoError(t, err)
+					}
+				}
+				params := UploaderParams{
+					LocalPath:  strings.Join([]string{localSrc, tt.args.src}, string(os.PathSeparator)),
+					RemotePath: filepath.Join(filesDest, tt.args.dest),
+				}
+				job := client.Uploader(context.Background(), params)
+
+				t.Logf("RemotePath: %v, LocalPath: %v", params.RemotePath, params.LocalPath)
+
+				job.Start()
+				job.Wait()
+
+				assert.Len(t, job.Statuses, 1)
+				assert.NoError(t, job.Statuses[0].Err())
+				it, err := client.ListForRecursive(context.Background(), files_sdk.FolderListForParams{Path: filesDest})
+				assert.NoError(t, err)
+				for it.Next() {
+					fmt.Println(it.Current().(files_sdk.File).Path)
+					assert.NoError(t, it.Err())
+				}
+				for _, e := range tt.dest {
+					file, err := client.Find(context.Background(), files_sdk.FileFindParams{Path: filepath.Join(filesDest, e.path)})
+					assert.NoError(t, err)
+					assert.Equal(t, e.dir, file.Type == "directory", e.path)
+				}
+
+				assert.NoError(t, os.RemoveAll(localSrc))
+				assert.NoError(t, client.Delete(context.Background(), files_sdk.FileDeleteParams{Path: filesDest, Recursive: lib.Bool(true)}))
+			})
+		}
+	})
 }
 
 func TestClient_UploadFolder(t *testing.T) {
@@ -219,7 +306,7 @@ func TestClient_UploadFolder_Dot(t *testing.T) {
 	job := client.Uploader(
 		ctx,
 		UploaderParams{
-			LocalPath:  ".",
+			LocalPath:  "./",
 			RemotePath: "go-from-dot",
 			EventsReporter: Reporter(func(s status.File) {
 				resultsMapMutex.Lock()
@@ -282,7 +369,7 @@ func TestClient_UploadFolder_Relative(t *testing.T) {
 	job := client.Uploader(
 		context.Background(),
 		UploaderParams{
-			LocalPath:  "relative",
+			LocalPath:  "relative/",
 			RemotePath: "relative",
 			EventsReporter: Reporter(func(status status.File) {
 				resultsMapMutex.Lock()
@@ -564,6 +651,7 @@ func TestClient_DownloadFolder_Smart(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer r.Stop()
+	defer os.RemoveAll("download")
 
 	buildScenario("TestClient_DownloadFolder_Smart", client)
 
@@ -574,7 +662,7 @@ func TestClient_DownloadFolder_Smart(t *testing.T) {
 	assert.Len(results["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"], 3)
 	assert.Equal(int64(9), results["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"][2].TransferBytes)
 
-	results2 := runDownloadScenario(filepath.Join("TestClient_DownloadFolder_Smart", "nested_1", "nested_2"), "download", client)
+	results2 := runDownloadScenario(filepath.Join("TestClient_DownloadFolder_Smart", "nested_1", "nested_2")+"/", "download", client)
 
 	assert.NoError(err)
 
@@ -582,11 +670,12 @@ func TestClient_DownloadFolder_Smart(t *testing.T) {
 	assert.NoError(err)
 
 	assert.Equal(int64(9), results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"][2].TransferBytes)
-	assert.Equal(path+"/download/3.text", results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"][2].LocalPath)
+	assert.Equal(filepath.Join(path, "download/3.text"), results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"][2].LocalPath)
+	fileInfo, err := os.Stat(filepath.Join(path, "download/3.text"))
+	require.NoError(t, err)
+	assert.Equal(int64(9), fileInfo.Size())
 	assert.Equal(int64(9), results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text"][2].TransferBytes)
-	assert.Equal(path+"/download/nested_3/4.text", results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text"][2].LocalPath)
-
-	os.RemoveAll("download")
+	assert.Equal(filepath.Join(path, "download/nested_3/4.text"), results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text"][2].LocalPath)
 }
 
 func TestClient_DownloadFolder_file_to_file(t *testing.T) {
@@ -633,14 +722,16 @@ func TestClient_DownloadFolder_file_only(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer r.Stop()
-	client.UploadIO(
+	_, _, _, err = client.UploadIO(
 		context.Background(),
 		UploadIOParams{
-			Path:   filepath.Join("i am at the root.text"),
-			Reader: strings.NewReader("hello"),
-			Size:   int64(5),
+			Path:          filepath.Join("i am at the root.text"),
+			Reader:        strings.NewReader("hello"),
+			Size:          int64(5),
+			ProvidedMtime: time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC),
 		},
 	)
+	require.NoError(t, err)
 
 	assert := assert.New(t)
 	results := runDownloadScenario("i am at the root.text", "", client)
@@ -791,13 +882,17 @@ func TestClient_UploadFolder_Move_Source_Missing_Dir(t *testing.T) {
 	assert.NoError(err)
 	tempFile.Write([]byte("testing"))
 	tempFile.Close()
-	job := client.Uploader(context.Background(), UploaderParams{LocalPath: filepath.Join(tmpDir, "move-source-dir")})
+	job := client.Uploader(context.Background(), UploaderParams{LocalPath: filepath.Join(tmpDir, "move-source-dir") + "/"})
 	job.RegisterFileEvent(func(f status.File) {
 		log, err = MoveSource{Config: client.Config, Direction: job.Direction, Path: filepath.Join(tmpDir, "moved-source-dir")}.Call(context.Background(), f)
 	}, status.Complete)
 	job.Start()
 	job.Wait()
-	assert.Equal(false, job.Any(status.Errored))
+	erroredFile, ok := job.Find(status.Errored)
+	if ok {
+		require.NoError(t, erroredFile.Err(), erroredFile.LocalPath())
+	}
+	require.Equal(t, false, job.Any(status.Errored), "")
 	assert.NoError(err)
 	assert.Equal("move source", log.Action)
 	assert.Equal(filepath.Join(tmpDir, "moved-source-dir/upload-move-source.text"), log.Path)
@@ -829,17 +924,17 @@ func TestClient_Downloader_Move_Source_Missing_Dir(t *testing.T) {
 
 	logChan := make(chan status.Log)
 	errChan := make(chan error)
-	job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "TestClient_Downloader_Move_Source_Missing_Dir", LocalPath: filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir")})
+	job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "TestClient_Downloader_Move_Source_Missing_Dir", LocalPath: filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir") + "/"})
 	job.RegisterFileEvent(func(f status.File) {
-		log, err := MoveSource{Config: client.Config, Direction: job.Direction, Path: filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir-moved")}.Call(context.Background(), f)
-		logChan <- log
+		moveLog, err := MoveSource{Config: client.Config, Direction: job.Direction, Path: "TestClient_Downloader_Move_Source_Missing_Dir-moved"}.Call(context.Background(), f)
+		logChan <- moveLog
 		errChan <- err
 	}, status.Complete)
 	job.Start()
 
 	fileValues := []string{
-		filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir-moved/nested_1/nested_2/3.text"),
-		filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir-moved/nested_1/nested_2/nested_3/4.text"),
+		"TestClient_Downloader_Move_Source_Missing_Dir-moved/nested_1/nested_2/3.text",
+		"TestClient_Downloader_Move_Source_Missing_Dir-moved/nested_1/nested_2/nested_3/4.text",
 	}
 	files := make(map[string]string)
 	files[fileValues[0]] = fileValues[0]

@@ -37,6 +37,13 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 
 	if statErr == nil && fi.IsDir() {
 		job.Type = directory.Dir
+
+		//When the local/dest has a trailing slash
+		if !(lib.Path{Path: params.LocalPath}).EndingSlash() {
+			_, lastDir := filepath.Split(params.LocalPath)
+			params.RemotePath = filepath.Join(params.RemotePath, lastDir)
+		}
+
 	} else {
 		job.Type = directory.File
 	}

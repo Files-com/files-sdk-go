@@ -2,9 +2,11 @@ package file
 
 import (
 	"context"
+	"os"
 	"os/user"
 	"path/filepath"
 
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
 	"github.com/Files-com/files-sdk-go/v2/lib/direction"
 
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
@@ -69,7 +71,11 @@ func (c *Client) Uploader(ctx context.Context, params UploaderParams) *status.Jo
 			job.UpdateStatus(status.Errored, file, err)
 			return
 		}
-		params.LocalPath = absolutePath
+		if (lib.Path{Path: params.LocalPath}).EndingSlash() {
+			params.LocalPath = absolutePath + string(os.PathSeparator)
+		} else {
+			params.LocalPath = absolutePath
+		}
 
 		uploader(ctx, c, params).CodeStart()
 	}

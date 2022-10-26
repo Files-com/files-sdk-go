@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"math"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/Files-com/files-sdk-go/v2/lib/direction"
+
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/directory"
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/Files-com/files-sdk-go/v2/file/status"
 	"github.com/Files-com/files-sdk-go/v2/lib"
-	"github.com/Files-com/files-sdk-go/v2/lib/direction"
 )
 
 func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *status.Job {
@@ -43,20 +43,44 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 		if job.RemotePath == "" {
 			job.RemotePath = "."
 		}
+		var remoteType directory.Type
+		remoteFile, err := fileSys.Open(params.RemotePath)
+		remoteType = directory.Dir // default to Dir not found error will have to be dealt with downstream
+		if err == nil {
+			remoteStat, err := remoteFile.Stat()
+			if err == nil {
+				if remoteStat.IsDir() {
+					remoteType = directory.Dir
+				} else {
+					remoteType = directory.File
+				}
+			}
+		}
+		var localType directory.Type
 		stats, err := os.Stat(params.LocalPath)
 		if os.IsNotExist(err) {
-			if params.LocalPath == "" || params.LocalPath[len(params.LocalPath)-1:] == string(os.PathSeparator) {
-				job.Type = directory.Dir
+			if (lib.Path{Path: params.LocalPath}).EndingSlash() { // explicit directory
+				localType = directory.Dir
+			} else if remoteType == directory.File {
+				localType = directory.File
 			} else {
-				job.Type = directory.File
+				localType = directory.Dir // implicit directory
 			}
 		} else {
 			if stats.IsDir() {
-				job.Type = directory.Dir
+				localType = directory.Dir
 			} else {
-				job.Type = directory.File
+				localType = directory.File
 			}
 		}
+		if (!(lib.Path{Path: params.RemotePath}).EndingSlash() && localType == directory.Dir) || remoteType == directory.File && localType == directory.Dir {
+			job.LocalPath = filepath.Join(job.LocalPath, (lib.Path{Path: params.RemotePath}).Pop())
+			if remoteType == directory.File {
+				localType = directory.File
+			}
+		}
+
+		job.Type = localType
 	}
 	onComplete := make(chan *DownloadStatus)
 	job.CodeStart = func() {
@@ -64,7 +88,7 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 		go enqueueIndexedDownloads(job, jobCtx, onComplete)
 		status.WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy), false) })
 
-		fs.WalkDir(fileSys, job.RemotePath, func(path string, d fs.DirEntry, err error) error {
+		fs.WalkDir(fileSys, strings.TrimSuffix(job.RemotePath, "/"), func(path string, d fs.DirEntry, err error) error {
 			if job.Canceled.Called() {
 				return jobCtx.Err()
 			}
@@ -268,16 +292,16 @@ func localPath(file files_sdk.File, job status.Job) string {
 	if job.Type == directory.File {
 		path = job.LocalPath
 	} else {
-		path = filepath.Join(normalizePath(job.LocalPath), compactPath(job, file))
+		path = filepath.Join(normalizePath(job.LocalPath), relativePath(job, file))
 	}
 
 	return path
 }
 
-func compactPath(job status.Job, file files_sdk.File) string {
-	sourceRootLen := len(strings.Split(job.RemotePath, "/"))
-	sep := strings.Split(file.Path, "/")
-	r := int(math.Min(float64(len(sep)-1), float64(sourceRootLen)))
-	filePathCompacted := strings.Join(sep[r:], string(os.PathSeparator))
-	return filePathCompacted
+func relativePath(job status.Job, file files_sdk.File) string {
+	relativePath, err := filepath.Rel(job.RemotePath, file.Path)
+	if err != nil {
+		panic(err)
+	}
+	return relativePath
 }

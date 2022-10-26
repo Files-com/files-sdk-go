@@ -2,26 +2,24 @@
 version: 1
 interactions:
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: '{"-":"golib/lib/partsize.go","mkdir_parents":true,"size":1076}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Type:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/required_test.go
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/partsize.go
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945686","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/4659d9ce-8a5d-439f-b8f7-c0b634afb0b1?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=hlFdJMA9oduXp5.LAno3GXc30zPv1tTruWoAV4da0CMr_3Vkbzeac15Um11kweKbKmcbB9IpCtHX.6AT8CeJFcyRt59uGI08EtfvtKZxWdGldcyl6geCU2vP2tCsOy7B\u0026X-Amz-Signature=54144badee9e814cb2fa5ce67c3c8b5bca6fcd3007a07c80d12b2122de954b61"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:29Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593855969","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/ef2fcde9-f530-41e7-9f50-b3c56ba69cd6?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222529Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=Lb8w2U0CUyB.rukMyUqwkUQhzj1CDeYqEq_eWmtZ962Cil4Smi7tGESMlOaHMRb4GJIWkspw10NUYdXjbIH0urmRJx3D18cP.xAYh6DT1vT5Cuf_zdC8DCJDOTiyfurT\u0026X-Amz-Signature=6887696034d61489b98e43503b752d067636895e6342349b4e0ae9c036a4bd19"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:53 GMT
+      - Tue, 04 Oct 2022 22:25:29 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -29,31 +27,30 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 5d8d7385-11b5-4259-9680-a9e0abdf1706
+      - 65593800-270e-42e0-9294-78c24a74d043
+      - 79cd9af55a05065c80ae0292cbaf66eb
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: '{"-":"golib/lib/readerctx.go","mkdir_parents":true,"size":552}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Type:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/interface.go
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/readerctx.go
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945690","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/5a0c083d-64d6-413d-babf-0828fc32f982?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=R86PaiJtYWk2aKiN4Qf07lEgikJ._rofr3D_AllxeNnBPLf7Nms6VAyMjNkJH5jvejcQHprd39Me2XTsuBF3SSocEorAh72VpEsDb3XHnK8yMUVLfYvvl5UNv1UDL8NV\u0026X-Amz-Signature=bad9fe0d7260499989dbff012454e845a7b834bdb69dfb555973fa7afcc1df57"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:29Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593855971","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/e11a9d7b-26f8-413d-91b4-811a5cf00648?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222529Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=cdfaMsLHS8wU.zux42wI23xiikwF3JH_8ST8bq_yyb.NMVSoq4u6YwclQrh4uTlfnvOnXXRwCcrdxHjRCXbIPHC19FCxKYdCYLk.b7hT9C4dsLZP_As4f52zI3iHIJQO\u0026X-Amz-Signature=c7b53cd0e7a66c98f3373651cc6e3b81ec600a3c3e725972953d6057ca8d16d6"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:53 GMT
+      - Tue, 04 Oct 2022 22:25:29 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -61,31 +58,30 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 88d4e998-b225-419e-b516-5a28ae7778a4
+      - 0443d833-15f7-4b01-861a-b777c040fd88
+      - 77182499559426531c5c4661ee18b52c
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: '{"-":"golib/lib/test/createconfig.go","mkdir_parents":true,"size":926}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Type:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/partsize_test.go
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/test/createconfig.go
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945692","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/c3c77fd6-d33e-4453-b314-6eb6c763fd73?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=yukGTcdMgIeKQ41LWdRFRjytqExp58y..by.8Jx9gcd8qhWEDjLut5n0o8LGfFnLueOX95Jm8R54rMi0l9k4vK34u_dglTGwPAOz0TImZyPWUM72nxtkWw6uqP092fWv\u0026X-Amz-Signature=ab59eb0c8e7cf7cc3b8585942757bb5ce4c1b33bd60dc532a9ccba237ee39fb5"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:29Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593855979","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/a229d94c-2758-4833-96ea-c43acc217aec?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222529Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=LJ44bNzQ76rnPGdxyzGEYABaM7Cs_dpHDIzASxmtdDqsXl1TCUmh4hCTnni9JxXM4N_prKeo0owUqEhtuMBPKsBzpC24xZyxSmPkNlRjWlJyZrib2t7qKt9hc.KB4._F\u0026X-Amz-Signature=244c091fb3287fe7fb0b1ed6544e1b629402b3e964d4790b8eb281e93894364f"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:53 GMT
+      - Tue, 04 Oct 2022 22:25:29 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -93,31 +89,30 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 64b39c09-cd66-40c9-9ff2-3c3a0acbd200
+      - f1a0ba34-aa05-4beb-8131-6f0a2a8532cc
+      - 6520609d8205cb90912b9950f194e5ae
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: '{"-":"golib/lib/required.go","mkdir_parents":true,"size":1457}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Type:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/export_params.go
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/required.go
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945694","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/4cf10a64-0ae3-4eba-9292-16630288ea53?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=Yv4txV3jBCDDw6fi8tcceO0fKQlksJhPwivAlutTRIZMpmC5oLWxp1HFlhPrLDp4sNzo9vbE4tKByKQZuFasDLhR0PB_YRzo.XpEDrouLV96PFTAjmY3SsDzE221s01E\u0026X-Amz-Signature=32e07821505a01c3f172ffaa3728c6b3386914fedf8e9069826136eae44f23b3"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:29Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593855977","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/5c6ac6de-cd6a-465f-9e8a-e189647150d5?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222529Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=QrZ8JLgyoLW9YAsg1qWZXGOy2tRBpMOUjIiGnDOM4bZzFctFUBH4G2aw.JDNztfb_AqQXH9NlcvKGnJoId2uCkTd_s8SyqcpRAfLRQI06BMAdZrdq3JuE0cLk2BuJz_3\u0026X-Amz-Signature=13ade34db585ede7100e260b655ce49264c3ffe0305ba26cf8bbf5e289ff2779"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:53 GMT
+      - Tue, 04 Oct 2022 22:25:29 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -125,31 +120,30 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 6fcbe77a-f4eb-48b5-b55d-3d9b1a926930
+      - daf6a2a2-2c32-420d-bbc5-61b8e5c1d3d7
+      - c88daa2867347b5bf25f6287fb51e486
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: '{"-":"golib/lib/iter_test.go","mkdir_parents":true,"size":2230}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Type:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/query.go
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/iter_test.go
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945695","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/b573a5e6-871b-4b95-8108-e0b629c7e2a6?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=S3DT.vVM1LqMtWMvl4N_O8R6LwnVsN75IuPRRKHA1KCVcXtmlHtdqmySWL_DZBqyon9U7Kw.w.HI9v9rDFFjUjGJiQV_qL4je7nPVD05Xnv..D6.7ZN._S6TUSBtYgWy\u0026X-Amz-Signature=d3fbdffcf8a4582d88e5bb8c92958236a14f9db90db549b8bb4e717e64f45832"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:29Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593855973","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/ff8cfbf1-6061-49b5-bbdb-07d57d9daf2a?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222529Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=.pgLMvJwverGMVsGJLBS_HRxPgCjAgwRvlQHymnV9Jp68u6Wu5VoLDfR9eHOrcqtoTLto_EKIoFvMXl52WgIJnl2yn2jDwMaV46N54q3aE46FVVt06lWQfy135eZG0_C\u0026X-Amz-Signature=2d7625f03c40b5e4c6226c5f6e3cecc78f9253b502f0b571c7f9bcf9441bf788"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:53 GMT
+      - Tue, 04 Oct 2022 22:25:29 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -157,31 +151,30 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - e231f6b9-d82c-44c6-b13c-c3e200dc21e7
+      - e63fbe5e-4a0f-4dba-8a20-a7c9cb6bd498
+      - b561a0d1cd401bc93905320df8e254fd
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: '{"-":"golib/lib/params_test.go","mkdir_parents":true,"size":1599}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Type:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/string.go
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/params_test.go
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945696","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/653745ea-9540-47ae-9ce1-bdb754451406?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=z89pqdGUSOO9XwBx_8H6_4kxooVNOlkk3oyMAb8dyn.h9m0JlZLAAgNB7XSZjz4NYuBzAO0IaOY9jeqxyXh4p8c2SF2AfkxwwN7ZOWyGWTnWC0SKUiTRx8Wmbld1_zZQ\u0026X-Amz-Signature=273d45ee72899357f35086f9886bcb0076744932c4c2336b02d2c192a2b793f3"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:29Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593855982","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/a3f900f8-254f-47ee-8705-92548bd64b48?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222529Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=C7mDdX6OsH0eeFRZ7dHGUq6Tu0pjLfznIYyL0amgg7iF2BwFvtmHejsuI8qV7PmWp1uL2QEw5ve7zd9Z2kwR1JPYpWJVxfUIcXZ6yY.ocsNCMTnPn9D.aObN.BWwKrnj\u0026X-Amz-Signature=e5eb3e40dc7dad617151c02050bcc40c991d5989c0eef4bd38f3122010689db7"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:53 GMT
+      - Tue, 04 Oct 2022 22:25:29 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -189,31 +182,30 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 9a85b322-97b7-4477-b678-1a6e23c2d7a7
+      - e945a442-82ed-4268-a6dc-8ea3ecfb3929
+      - 54eb704ea23ef25d551b79e1ae032f96
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: '{"-":"golib/lib/direction/main.go","mkdir_parents":true,"size":254}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Type:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/partsize.go
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/direction/main.go
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945698","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/98d54969-da53-49c5-849d-615ca526745b?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=P8T2enZBJnXhUATtQqbk8dm.XglUKTyo22AIBiGzK_yekVFEX3V_LJztIsbpAgwwaBzd3cspM.V9xYwVmN6gc_aBb9IMYkIAfNuxcEWxLBMgtIsHQB36Db7lWD2TZ4n7\u0026X-Amz-Signature=0f74bf7fb183c4a21246e1d785be1538dd4f43c2636ae885e1580686077e72eb"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:29Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593855986","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/04280d8d-c914-4e0f-b45a-3eb65a857238?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222529Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=99cKo3cACmKHnbf_ETYqj747qkVa9cFBU_o9dej0pzZxWztIkR_XhRvmAy0lpxOkbB22inxt7n4vLg9TKqsatHedqqmTN2XxNQaX4CpfNiKjjqFHD99iBnCzoJRFIIK6\u0026X-Amz-Signature=051accc94150a597e4c44e910d73f7ce9ae6b03284084a798b0823e5c6162bdd"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:53 GMT
+      - Tue, 04 Oct 2022 22:25:29 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -221,31 +213,30 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - ad55d37f-aa0e-41d0-8c85-70c1da0f6975
+      - 5a6be5a6-4fc6-4052-a1d7-207dcca5db29
+      - 9f1274a8fec984e93bc2eb1d377d179c
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: '{"-":"golib/lib/query_test.go","mkdir_parents":true,"size":1448}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Type:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/timer/main.go
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/query_test.go
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945693","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/489b25cb-5b71-4f46-a7ae-53a5ac08f0ab?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=EgBedI5Ay9F1PaVfIREVB6v21AFnQs0Jyfn6xVOkCzREv0xmkiSX5psaUlnP2hTMy6rPdcdMZR3qbyS3wKK5h8lACcnbdorADrMOsjZMh2jCzAmx1D1vNCjbqbDV3Pc2\u0026X-Amz-Signature=b96686eee354bd413931e0f2c7d3b3b8f643706e5f00dbf126d9871c8c639866"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:29Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593855984","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/94caca70-e13a-470f-81db-a670cac2f9e0?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222529Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=KcVyk6j24dhUKivA77TlrxT4relDIuRj9z7FTheTnKOBkoIFc7ussd0dGMzdGaa9_c2TugbK032YlYrei.7YSWouWPQg71PFAKALaUZUtpNzmqqpbZhWJlVE1yx4VsHG\u0026X-Amz-Signature=e8aac2721c7b07c658fc72f96a15838900c912214452405119c82d6002fdc061"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:53 GMT
+      - Tue, 04 Oct 2022 22:25:29 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -253,31 +244,30 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 7c781739-fecc-4a6c-a88d-d3db54e40dc7
+      - d5e142de-7e60-4bc3-b48b-659c96edd185
+      - 4a0fd732e9c25862639c9b395677c0f2
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: '{"-":"golib/lib/path.go","mkdir_parents":true,"size":516}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Type:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/progresswriter.go
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/path.go
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945706","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/4900223b-7b7e-4540-aa50-4bc28030b2a6?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=h8fed1EbjK5ul7.PCaJ5zFd5KO4DTGI6e_3mzjb_Ns_8k6Hy0tHhG7ZsFX8l45B5nXqvU..SowjQAOP6l0vp3NkzPFAUcshmCCj.Ow_q0lr8xhrlnOWw9Bwlom.Qf7QU\u0026X-Amz-Signature=a905a320e923edc8c3a9ed57c4ec44234174a91d65f0561cfd2a6016b3648b15"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:29Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593855993","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/621c6c8b-e2cb-4542-bf7e-115a26cf2e0d?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222529Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=h0BwKgf7eF0pzHqiHvNyshyDUa6y0T1dn20KekXhkYQClqDrJfhaqkKIqQaOlkl87jFuwjZoAOI0aF6D7udidZLe8uVEAZc6YamPXe9hrBvKMXUo5nvZ2PY1jYBp12R8\u0026X-Amz-Signature=f5a778a228103af630ed0218d5a53ef3a9074a3f5ba7ff3a79af2953f2b9b715"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:53 GMT
+      - Tue, 04 Oct 2022 22:25:29 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -285,31 +275,30 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - daccf865-24cf-4bcf-b912-230fb80f65e1
+      - c2e2dd25-934a-4697-aca1-c5b2f61a8f99
+      - 64127bff23c19dbeef5ec230779729fb
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: '{"-":"golib/lib/required_test.go","mkdir_parents":true,"size":511}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Type:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/required.go
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/required_test.go
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945701","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/87936b46-a7e4-4cf6-b0eb-32cf2a8518b2?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=p45KPNdJKkHftrClK.uWHM1FYTvr97kl6VsH7S_GeTf3YPCOpPn2gCL5bcQ_VSXJ9VLZKFIvSwaF6iUb.P.5hyQWg0.J3vMT.T1ypWkHMRye7.WdS9SViBdBEXByWFhZ\u0026X-Amz-Signature=ddda276db549597375921116e9c999788503f2b34faacd23d0f5af783f7addf7"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:29Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593856002","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/89b4075d-8d12-4264-a4c0-27498d79a9bb?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222529Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=rAg4AXyo194fDcnrifDcBRgTjhkEGedOh_0k6qr7.O1CqHqKWd.odkfZF6hC647gS0nFZwjufz5T8BZGlP6yxpLPMhlsddfBhccZCB96wlUoBLMpB.Wpa5Luf98y58VT\u0026X-Amz-Signature=eee2094e663341af95d10cba7e60e42a308ec677b8021ce731d8fb9028aba5ca"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:53 GMT
+      - Tue, 04 Oct 2022 22:25:29 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -317,31 +306,30 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 59fb4294-9ca1-49bd-bc11-bb1248d75476
+      - dd6ee4b8-363b-4452-ad89-a7cd0b2bd3b9
+      - 02946488c59fc0f6dad38c5e35da3502
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: '{"-":"golib/lib/params.go","mkdir_parents":true,"size":1580}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Type:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/direction/main.go
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/params.go
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945710","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/d1bc01d7-9dfe-445e-874d-655a42b8fb75?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=5uHY3i4WvdjeHQL3JbzNUwDmOlZ3fkEZvcNsPDAy4up4rIE9VGQGlvYN6dJ5JQ1Xp4EGTrPcTO378D7vsBT9OUb.LefcIus1kt3stHLWbq6RGQ9T2ElwxW2B08RvGfUi\u0026X-Amz-Signature=094610c3c77090e71401b5a52a1c8960b080b72ac7f5f50d220cfb2cd4e42945"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:29Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593856005","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/e382b041-e1f0-42f9-a518-2c43785141ed?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222529Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=zW1t15RKhFTqKGvCbqE1Y4MV7QoJq2GmheBo3zyBbZGu05zVEwzj7rsDXDk1SNEUoO1OREhE3iPTgsHYne9G5UF3NYxp4jiUH6zqVhb4B0bNQXHErMW0jwYQT0MbgDqb\u0026X-Amz-Signature=9bb6f2ddd1bc485423da62300ff6d7366f61f80b220220befa99dd95b3061f06"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:53 GMT
+      - Tue, 04 Oct 2022 22:25:29 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -349,31 +337,30 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - f344fc8d-af83-4808-ba11-0e7996b66ffd
+      - 49ee5042-341a-4e77-b3ec-779c9846ddb7
+      - 9d8f1281d9be3da269e889ca378fea6a
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: '{"-":"golib/lib/pointers.go","mkdir_parents":true,"size":203}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Type:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/pointers.go
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/pointers.go
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945711","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/8a2e6d02-bbac-4607-bcf5-ef0214afed58?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=_1O9r6qX3gjD3S3q6e0LH3zHdBGKjQQx3Bw0Ct5ptSe50eWAJKJodmpe2D5EOAp8bLBaYskwo_fzUhs6Or15vWixY7XYAZOCHUxzCj.mp5sssI7AMGhygwrs8lsTMJ1h\u0026X-Amz-Signature=bf5166bde03ddb48d64ecb6f656cc16e2df7e7a8be697eb2d230898bd5ebe39c"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:29Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593855974","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/214238aa-8678-4a9a-8c54-8e81a799308b?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222529Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=4RffC57JRG73pzcIv5_Ft_aTuEmXVliORSu3AwgvxLuYH1FNBud_LMDtQ6Wq6tduFb9rM5kLleZKE3boJ9OiKOEXvq.GtxEAAje8q8MYoMGH64HE.4MHV2mSP6veL78J\u0026X-Amz-Signature=9fb2debef83f7807985b813809933a52f2a68c547101ac87a8744ae14b7ef56f"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:53 GMT
+      - Tue, 04 Oct 2022 22:25:29 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -381,31 +368,30 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - fb7c6904-0f1a-4274-bf40-74df2abef0dc
+      - 4895f20d-eae1-4356-adc4-e366f720646f
+      - 884fe3acdc9e65ba1eb00fdae23943d4
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: '{"-":"golib/lib/errorwithoriginalresponse.go","mkdir_parents":true,"size":787}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Type:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/readerctx.go
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/errorwithoriginalresponse.go
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945713","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/3a7f59ea-e345-4a86-8965-94c9126babf0?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=QP7QPLEsrtOVkXtk21B6.wl3.EL0F0QIOPNECv0cW.rF1bAgIz8PIPsykXB9aO5ZNU25dRG.HUJhfCy9NsjrNJfTmBpcxGx2p8HEyqMzT1okPdJKf2ajK661y4c0R5vZ\u0026X-Amz-Signature=5d0f73bf2c8c517e1a573b31494c513d8ab5e209d869a1a0bd88b8753f0c658f"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:29Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593855983","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/abaea641-cc38-49d8-a70a-9445cc9dac02?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222529Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=3KNlpMRlh62uMmg8hyxXwcL9q6_bHtIQZiKVRBBa_eTwaF65uTJtJTumTktFsJafA.Yum3uzH2u6B0lKMZyItRwsyzneokr4ehBrcDCJXY6HzU8d7rrqrNK.W4F9Yvtl\u0026X-Amz-Signature=a496aef76bc1b8d9be8e568ac33ed79a0a774a18538902ebf35af2c2a0ea0718"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:53 GMT
+      - Tue, 04 Oct 2022 22:25:29 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -413,31 +399,30 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 00e924fe-dea4-4c55-9c70-15c9166a14f8
+      - aab02e26-3743-4f9e-9f4a-241833c0a342
+      - 547a1a997a69b2f1ada2ce79a769beb3
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: '{"-":"golib/lib/query.go","mkdir_parents":true,"size":1516}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Type:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/iter.go
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/query.go
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945715","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/6d52cedb-4e01-43e7-b1b3-02afe03bc9e5?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=gpvTIivCF5fuxfOyDQug_m50iHh11iL985XovI_UHOup_1d3fkIe94p4QSosciLzkoE47jgUZWLTLwSRwOeKum51BqaFmFXOag.olf1lwD8ijs4dTU4xW3oDmy8Ojw6Q\u0026X-Amz-Signature=500a5d0e9fa383a13e036b5e9928b20014189ebb48a5dbaec8ecb2dd46c75415"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:29Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593856008","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/84ab9b8a-7a9e-4998-9099-d48161241e3e?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222529Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=ecARy4vjgA8JpMiIxxLILbKLsp6idxH4yPkpO4sCwwmg1p82jAF1q_VUvuQcrbqJdluPZU2B0lkn6PXVTFMk5oqa88R7cJYH05zT7cvnyp3sNEre00xyrEAXWCe6ZuaH\u0026X-Amz-Signature=fd386bbee25c6907b42e134fe369a749ad64861b1658b98a28c2ec8b70b6f6f3"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:53 GMT
+      - Tue, 04 Oct 2022 22:25:29 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -445,31 +430,30 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - da9114b2-fa8a-4f32-9850-42d1e71d0a40
+      - 60f77a3c-d574-4c03-ad5b-aa6485d94328
+      - 94f8ecb7b7511a5d3e68075808d86387
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: '{"-":"golib/lib/string.go","mkdir_parents":true,"size":68}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Type:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/iter_test.go
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/string.go
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945717","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/dfda6f89-fc68-4069-bed4-13f1a13ac8f5?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=0i.ElyPLkSH.qyIOdFR6fISpSZT61wEyav14zCT68u6cqYJ6U.XbAxGX1TSVtTDfP6OfDVA94bIAUTqZALvZfvpj5ssSffGXE.vtUYnMwoiA_nQwia9oahbW7gwQXP2F\u0026X-Amz-Signature=ed27e081458b8269c325949466b06c96875c46494057f6c1e22fc254a2e63470"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:29Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593855999","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/c72405bb-7319-476a-89ea-d8419b4dba9a?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222529Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=BW9SeMAWomaKBXExdenekUM3Ohu5pE8rG4DyKUmhkaAe8pJcHZfwldjsqs7dsktZsdt.51t.gPkZrSc4F_dftsONMMwUKq5Lr6yyzctnUvkzjPZ6YL_6mq6rC6aBHqDS\u0026X-Amz-Signature=e04940978968c805060852d09cff07b5ff2a9447dbd13519cc863d8d12782a50"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:53 GMT
+      - Tue, 04 Oct 2022 22:25:29 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -477,31 +461,660 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - dab7101a-30af-49a9-bd37-1480ee4dc8c2
+      - e8e15af2-60c6-4622-a0ea-732476592c40
+      - ddd411f29681570da95d55c7bc77a2ae
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: "package lib\n\nconst (\n\tBasePart = int64(1024*1024*5 + 1024*1024/3)\n)\n\n//
+      PartSizes return 10k parts that add up to 4.9 TB\nvar PartSizes = partSizes()\n\nfunc
+      partSizes() []int64 {\n\tmaxSize := int64(1024 * 1024 * 1024 * 1024 * 5)\n\ttotalParts
+      := 10_000\n\ttotalSize := int64(0)\n\tvar parts []int64\n\tpartSize := BasePart\n\tvar
+      iter []int\n\titer = append(iter, 0)\n\titer = append(iter, 100)\n\tf := fibonacci()\n\tf()
+      // 0 - skip first two rounds of fib\n\tf() // 100\n\tfor len(parts) < totalParts
+      {\n\t\tperIt := f() * 100\n\t\tfor i := 0; i < perIt; i++ {\n\t\t\tif len(parts)
+      == totalParts {\n\t\t\t\tbreak\n\t\t\t}\n\n\t\t\tremaining := maxSize - totalSize\n\t\t\tif
+      remaining >= partSize {\n\t\t\t\tparts = append(parts, partSize)\n\t\t\t\ttotalSize
+      += partSize\n\t\t\t} else if remaining > 0 {\n\t\t\t\tparts = append(parts,
+      remaining)\n\t\t\t\ttotalSize += remaining\n\t\t\t} else {\n\t\t\t\tbreak\n\t\t\t}\n\t\t}\n\n\t\tif
+      maxSize-totalSize == 0 {\n\t\t\tbreak\n\t\t}\n\t\tpartSize = partSize + partSize\n\t}\n\treturn
+      parts\n}\n\nfunc fibonacci() func() int {\n\tfirst, second := 0, 1\n\treturn
+      func() int {\n\t\tret := first\n\t\tfirst, second = second, first+second\n\t\treturn
+      ret\n\t}\n}\n"
     form: {}
     headers:
       Connection:
       - close
-      Content-Type:
-      - application/json
+      Content-Length:
+      - "1076"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/ef2fcde9-f530-41e7-9f50-b3c56ba69cd6?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222529Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=Lb8w2U0CUyB.rukMyUqwkUQhzj1CDeYqEq_eWmtZ962Cil4Smi7tGESMlOaHMRb4GJIWkspw10NUYdXjbIH0urmRJx3D18cP.xAYh6DT1vT5Cuf_zdC8DCJDOTiyfurT&X-Amz-Signature=6887696034d61489b98e43503b752d067636895e6342349b4e0ae9c036a4bd19
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Etag:
+      - '"91e631425c0e5472b4eb826f5f5e13b4"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - s0x4hnNbPBqx37CQhuIdRrC+irSVnziUEgMaYmG1SUIlqRL+o07KBUWEsPMT4IUFMaDAp1SX3sU=
+      X-Amz-Request-Id:
+      - 0EM4QMXQR4CYVD89
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: "package direction\n\ntype Direction struct {\n\tname   string\n\tSymbol
+      string\n}\n\nvar (\n\tDownloadType = Direction{name: \"download\", Symbol: \"⬆\"}\n\tUploadType
+      \  = Direction{name: \"upload\", Symbol: \"⬆\"}\n)\n\nfunc (t *Direction) Name()
+      string {\n\treturn t.name\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "254"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/04280d8d-c914-4e0f-b45a-3eb65a857238?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222529Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=99cKo3cACmKHnbf_ETYqj747qkVa9cFBU_o9dej0pzZxWztIkR_XhRvmAy0lpxOkbB22inxt7n4vLg9TKqsatHedqqmTN2XxNQaX4CpfNiKjjqFHD99iBnCzoJRFIIK6&X-Amz-Signature=051accc94150a597e4c44e910d73f7ce9ae6b03284084a798b0823e5c6162bdd
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Etag:
+      - '"54abeb068b4f1a45cee6fcacf279478d"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - yiJ5u5yD0kyxqbnuH05Z0IweKpW45tlWRirwneF+6aMWmqIiTWDDtYKXrIPLUGkR4SzKJg9ZGiw=
+      X-Amz-Request-Id:
+      - 0EM80AJD8JNJK71M
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: "package lib\n\nimport (\n\t\"fmt\"\n\t\"testing\"\n\n\t\"github.com/stretchr/testify/assert\"\n)\n\ntype
+      UserExample struct {\n\tUserId int    `json:\"user_id\"`\n\tId     int    `json:\"id\"`\n\tPath
+      \  string `json:\"-\" path:\"path\"`\n}\n\nfunc TestBuildPath(t *testing.T)
+      {\n\ttype args struct {\n\t\tresourcePath string\n\t\tvalues       interface{}\n\t}\n\ttests
+      := []struct {\n\t\tname string\n\t\targs args\n\t\twant string\n\t\terror\n\t}{\n\t\t{\n\t\t\tname:
+      \"_id\",\n\t\t\twant: \"users/2\",\n\t\t\targs: args{\n\t\t\t\t\"users/{user_id}\",\n\t\t\t\tUserExample{UserId:
+      2},\n\t\t\t},\n\t\t},\n\t\t{\n\t\t\tname: \"id\",\n\t\t\twant: \"users/3\",\n\t\t\targs:
+      args{\n\t\t\t\t\"users/{id}\",\n\t\t\t\tUserExample{Id: 3},\n\t\t\t},\n\t\t},\n\t\t{\n\t\t\tname:
+      \"no substitution\",\n\t\t\twant: \"users\",\n\t\t\targs: args{\n\t\t\t\t\"users\",\n\t\t\t\tUserExample{},\n\t\t\t},\n\t\t},\n\t\t{\n\t\t\tname:
+      \"escaping\",\n\t\t\twant: \"root/a/%3F/c\",\n\t\t\targs: args{\n\t\t\t\t\"root/{path}\",\n\t\t\t\tUserExample{Path:
+      \"a/?/c\"}},\n\t\t},\n\t\t{\n\t\t\tname:  \"validating int zero value\",\n\t\t\terror:
+      fmt.Errorf(\"missing required field: UserExample{}.id\"),\n\t\t\targs: args{\n\t\t\t\t\"root/{id}\",\n\t\t\t\tUserExample{Id:
+      0}},\n\t\t},\n\t\t{\n\t\t\tname: \"validating empty path value\",\n\t\t\twant:
+      \"root/\",\n\t\t\targs: args{\n\t\t\t\t\"root/{path}\",\n\t\t\t\tUserExample{}},\n\t\t},\n\t}\n\tfor
+      _, tt := range tests {\n\t\tt.Run(tt.name, func(t *testing.T) {\n\t\t\tgot,
+      err := BuildPath(tt.args.resourcePath, tt.args.values)\n\t\t\tif tt.error !=
+      nil {\n\t\t\t\tassert.Error(t, err, tt.Error())\n\t\t\t} else {\n\t\t\t\tassert.Equalf(t,
+      tt.want, got, \"BuildPath(%v, %v)\", tt.args.resourcePath, tt.args.values)\n\t\t\t}\n\t\t})\n\t}\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "1448"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/94caca70-e13a-470f-81db-a670cac2f9e0?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222529Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=KcVyk6j24dhUKivA77TlrxT4relDIuRj9z7FTheTnKOBkoIFc7ussd0dGMzdGaa9_c2TugbK032YlYrei.7YSWouWPQg71PFAKALaUZUtpNzmqqpbZhWJlVE1yx4VsHG&X-Amz-Signature=e8aac2721c7b07c658fc72f96a15838900c912214452405119c82d6002fdc061
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Etag:
+      - '"8401b1ae1cfe9e6a24b11e329bd3bb1f"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - 2RDkvBH544jLrzs8lph4U+j3mhovYLmI/u7N6Fq9dIvGV99zMqH6KuGYUjBhsD3NkrCqbCKiJaQ=
+      X-Amz-Request-Id:
+      - 0EM7M3V4ZYF15ZXH
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: "package lib\n\nfunc String(string string) *string {\n\treturn &string\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "68"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/c72405bb-7319-476a-89ea-d8419b4dba9a?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222529Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=BW9SeMAWomaKBXExdenekUM3Ohu5pE8rG4DyKUmhkaAe8pJcHZfwldjsqs7dsktZsdt.51t.gPkZrSc4F_dftsONMMwUKq5Lr6yyzctnUvkzjPZ6YL_6mq6rC6aBHqDS&X-Amz-Signature=e04940978968c805060852d09cff07b5ff2a9447dbd13519cc863d8d12782a50
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Etag:
+      - '"cecd1ea94155ea41d1f8f9e0c2f2e0d9"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - nY9UyJYfP5DLaXan8Y58CRljBrWux+EFg4iGIZjcxHo+bSOmk/T3aEAbvCg/Cy1qUSSFzFViFws=
+      X-Amz-Request-Id:
+      - 0EM3HB18YPDB9CMB
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: "package lib\n\nimport (\n\t\"testing\"\n\n\t\"github.com/stretchr/testify/assert\"\n)\n\nfunc
+      TestIter_Next_MaxPages(t *testing.T) {\n\tassert := assert.New(t)\n\tparams
+      := ListParams{Page: 0, PerPage: 5, MaxPages: 2}\n\tit := Iter{}\n\tit.ListParams
+      = &params\n\n\tit.Query = func(Values) (*[]interface{}, string, error) {\n\t\tret
+      := make([]interface{}, params.PerPage)\n\n\t\treturn &ret, \"cursor\", nil\n\t}\n\trecordCount
+      := 0\n\tfor it.Next() {\n\t\trecordCount += 1\n\t}\n\tassert.Equal(int(params.PerPage*params.MaxPages),
+      recordCount)\n\tassert.Equal(nil, it.Err())\n\tassert.Equal(\"cursor\", it.GetCursor())\n}\n\nfunc
+      TestIter_Next_ZeroMaxPages(t *testing.T) {\n\tassert := assert.New(t)\n\tparams
+      := ListParams{Page: 0, PerPage: 2, MaxPages: 0}\n\tpages := make([][]interface{},
+      0)\n\tpages = append(pages, make([]interface{}, params.PerPage))\n\tpages =
+      append(pages, make([]interface{}, params.PerPage))\n\tpages = append(pages,
+      make([]interface{}, 0))\n\tit := Iter{}\n\tit.ListParams = &params\n\n\tit.Query
+      = func(Values) (*[]interface{}, string, error) {\n\t\tret := pages[:1][0]\n\t\tpages
+      = pages[1:]\n\n\t\treturn &ret, \"cursor\", nil\n\t}\n\trecordCount := 0\n\tfor
+      it.Next() {\n\t\trecordCount += 1\n\t}\n\tassert.Equal(4, recordCount)\n}\n\nfunc
+      TestIter_Next_PerPage_of_one(t *testing.T) {\n\tassert := assert.New(t)\n\tparams
+      := ListParams{Page: 0, PerPage: 1, MaxPages: 2}\n\tit := Iter{}\n\tit.ListParams
+      = &params\n\tvar sliceOfSliceInterfaces [2][]interface{}\n\tsliceOfSliceInterfaces[0]
+      = make([]interface{}, params.PerPage)\n\tsliceOfSliceInterfaces[1] = make([]interface{},
+      0)\n\tresultCounter := 0\n\tit.Query = func(Values) (*[]interface{}, string,
+      error) {\n\t\tret := sliceOfSliceInterfaces[resultCounter]\n\t\tresultCounter
+      += 1\n\t\treturn &ret, \"cursor\", nil\n\t}\n\trecordCount := 0\n\tfor it.Next()
+      {\n\t\trecordCount += 1\n\t\tassert.Equal(Interface(), it.Current())\n\t}\n\tassert.Equal(1,
+      recordCount)\n}\n\nfunc TestIter_Next_No_Cursor(t *testing.T) {\n\tassert :=
+      assert.New(t)\n\tparams := ListParams{}\n\tit := Iter{}\n\tit.ListParams = &params\n\tresultCounter
+      := 0\n\tit.Query = func(Values) (*[]interface{}, string, error) {\n\t\tret :=
+      make([]interface{}, 1)\n\t\tresultCounter += 1\n\t\treturn &ret, \"\", nil\n\t}\n\trecordCount
+      := 0\n\tfor it.Next() {\n\t\trecordCount += 1\n\t\tassert.Equal(Interface(),
+      it.Current())\n\t}\n\tassert.Equal(1, recordCount)\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "2230"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/ff8cfbf1-6061-49b5-bbdb-07d57d9daf2a?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222529Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=.pgLMvJwverGMVsGJLBS_HRxPgCjAgwRvlQHymnV9Jp68u6Wu5VoLDfR9eHOrcqtoTLto_EKIoFvMXl52WgIJnl2yn2jDwMaV46N54q3aE46FVVt06lWQfy135eZG0_C&X-Amz-Signature=2d7625f03c40b5e4c6226c5f6e3cecc78f9253b502f0b571c7f9bcf9441bf788
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Etag:
+      - '"dc23f85a71808ff550581773839c7506"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - jlZMPjDE7X8lY4z3MQyC9kIpKf3GYX/tTKKnxa3a1ot/yjTlKk749GXGNF2lu80J10NC9NvlDn8=
+      X-Amz-Request-Id:
+      - 0EM0ATW4X66TB5S8
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: "package lib\n\nimport (\n\t\"io/ioutil\"\n\t\"net/url\"\n\t\"testing\"\n\n\t\"github.com/stretchr/testify/assert\"\n)\n\ntype
+      SubStruct struct {\n\tC string `json:\"c\" url:\"c\"`\n}\n\ntype ParamsStructExample
+      struct {\n\tA string      `json:\"a\" url:\"a\" required:\"true\"`\n\tB string
+      \     `json:\"-\" url:\"-\"`\n\tC []SubStruct `json:\"sub\" url:\"sub\"`\n\tD
+      []string    `json:\"d\" url:\"d\" required:\"true\"`\n}\n\nfunc Test_Params_ToJSON(t
+      *testing.T) {\n\tp := Params{\n\t\tParams: ParamsStructExample{\n\t\t\tA: \"The
+      a value\",\n\t\t\tB: \"The b value\",\n\t\t\tC: []SubStruct{{C: \"the c value\"}},\n\t\t\tD:
+      []string{\"hello\"},\n\t\t},\n\t}\n\n\treader, err := p.ToJSON()\n\tassert.NoError(t,
+      err)\n\n\tb, err := ioutil.ReadAll(reader)\n\tassert.NoError(t, err)\n\tassert.Equal(t,
+      \"{\\\"a\\\":\\\"The a value\\\",\\\"sub\\\":[{\\\"c\\\":\\\"the c value\\\"}],\\\"d\\\":[\\\"hello\\\"]}\",
+      string(b))\n}\n\nfunc Test_Params_ToJSON_Missing_Require(t *testing.T) {\n\tp
+      := Params{\n\t\tParams: ParamsStructExample{\n\t\t\tA: \"The a value\",\n\t\t\tB:
+      \"The b value\",\n\t\t\tC: []SubStruct{{C: \"the c value\"}},\n\t\t},\n\t}\n\n\t_,
+      err := p.ToJSON()\n\tassert.Error(t, err, \"\")\n\n\tp = Params{\n\t\tParams:
+      ParamsStructExample{\n\t\t\tB: \"The b value\",\n\t\t\tC: []SubStruct{{C: \"the
+      c value\"}},\n\t\t\tD: []string{\"hello\"},\n\t\t},\n\t}\n\n\t_, err = p.ToJSON()\n\tassert.Error(t,
+      err, \"\")\n}\n\nfunc Test_Params_ToValues(t *testing.T) {\n\tp := Params{\n\t\tParams:
+      ParamsStructExample{\n\t\t\tA: \"The a value\",\n\t\t\tB: \"The b value\",\n\t\t\tC:
+      []SubStruct{{C: \"the c value\"}},\n\t\t\tD: []string{\"hello\"},\n\t\t},\n\t}\n\n\tvalues,
+      err := p.ToValues()\n\tassert.NoError(t, err)\n\tunescaped, _ := url.QueryUnescape(values.Encode())\n\tassert.Equal(t,
+      \"a=The a value&d[0]=hello&sub[0][c]=the c value\", unescaped)\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "1599"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/a3f900f8-254f-47ee-8705-92548bd64b48?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222529Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=C7mDdX6OsH0eeFRZ7dHGUq6Tu0pjLfznIYyL0amgg7iF2BwFvtmHejsuI8qV7PmWp1uL2QEw5ve7zd9Z2kwR1JPYpWJVxfUIcXZ6yY.ocsNCMTnPn9D.aObN.BWwKrnj&X-Amz-Signature=e5eb3e40dc7dad617151c02050bcc40c991d5989c0eef4bd38f3122010689db7
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Etag:
+      - '"a3b13017693810a39f2cf9fdce341671"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - Yy4GssG6L6vfrsuTXOEV4gve3tSGeLPTkEswAfz6ZPfxEc8NebdRPS1VmBXMN+QAEVzJxusOaVs=
+      X-Amz-Request-Id:
+      - 0EM78PDXRPDXG3QM
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: "package lib\n\nimport (\n\t\"bytes\"\n\t\"encoding/json\"\n\t\"fmt\"\n\t\"io\"\n\t\"net/url\"\n\n\t\"github.com/appscode/go-querystring/query\"\n)\n\ntype
+      Params struct {\n\tParams interface{}\n}\n\ntype Values interface {\n\tToValues()
+      (url.Values, error)\n\tToJSON() (io.Reader, error)\n}\n\ntype ExportValues struct
+      {\n\turl.Values\n}\n\nfunc (m ExportValues) ToValues() (url.Values, error) {\n\treturn
+      m.Values, nil\n}\n\nfunc (m ExportValues) ToJSON() (io.Reader, error) {\n\treturn
+      nil, fmt.Errorf(\"not Implemented\")\n}\n\nfunc (p Params) ToJSON() (io.Reader,
+      error) {\n\t_, err := p.ToValues()\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\tb,
+      err := json.Marshal(p.Params)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\treturn
+      bytes.NewBuffer(b), nil\n}\n\nfunc (p Params) ToValues() (url.Values, error)
+      {\n\tv, err := query.Values(p.Params)\n\tif err != nil {\n\t\treturn url.Values{},
+      err\n\t}\n\n\tif err := CheckRequired(p.Params); err != nil {\n\t\treturn url.Values{},
+      err\n\t}\n\n\treturn removeDash(v), nil\n}\n\nfunc removeDash(params url.Values)
+      url.Values {\n\tfor key := range params {\n\t\tif string(key[0]) == \"-\" {\n\t\t\tparams.Del(key)\n\t\t}\n\t}\n\n\treturn
+      params\n}\n\ntype UnmarshalJSON interface {\n\tUnmarshalJSON(data []byte) error\n}\n\ntype
+      Resource struct {\n\tPath   string\n\tParams interface{}\n\tMethod string\n\tEntity
+      UnmarshalJSON\n}\n\nfunc (r Resource) Out() (ResourceOut, error) {\n\tpath,
+      err := BuildPath(r.Path, r.Params)\n\tif err != nil {\n\t\treturn ResourceOut{},
+      err\n\t}\n\treturn ResourceOut{\n\t\tResource: Resource{\n\t\t\tPath:   path,\n\t\t\tMethod:
+      r.Method,\n\t\t\tEntity: r.Entity,\n\t\t},\n\t\tValues: Params{Params: r.Params},\n\t},
+      nil\n}\n\ntype ResourceOut struct {\n\tResource\n\tValues\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "1580"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/e382b041-e1f0-42f9-a518-2c43785141ed?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222529Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=zW1t15RKhFTqKGvCbqE1Y4MV7QoJq2GmheBo3zyBbZGu05zVEwzj7rsDXDk1SNEUoO1OREhE3iPTgsHYne9G5UF3NYxp4jiUH6zqVhb4B0bNQXHErMW0jwYQT0MbgDqb&X-Amz-Signature=9bb6f2ddd1bc485423da62300ff6d7366f61f80b220220befa99dd95b3061f06
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Etag:
+      - '"8eba3239f8e537d96f49a35117113879"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - SW52BgRNvF1AlRiNdeG9hTt3vRtnrhnZRiQkT+BQDAzNIv1CS8vkI8/pRvjggds3YauqVluATxk=
+      X-Amz-Request-Id:
+      - 0EMBQYEVTHFYW10F
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: "package lib\n\nimport (\n\t\"context\"\n\t\"io\"\n)\n\ntype readerCtx struct
+      {\n\tctx context.Context\n\tr   io.Reader\n}\n\ntype WithContextReader interface
+      {\n\tWithContext(context.Context)\n\tio.Reader\n}\n\nfunc (r *readerCtx) Read(p
+      []byte) (n int, err error) {\n\tif err := r.ctx.Err(); err != nil {\n\t\treturn
+      0, err\n\t}\n\n\twithContext, ok := r.r.(WithContextReader)\n\tif ok {\n\t\twithContext.WithContext(r.ctx)\n\t}\n\treturn
+      r.r.Read(p)\n}\n\n// NewReader gets a context-aware io.Reader.\nfunc NewReader(ctx
+      context.Context, r io.Reader) io.Reader {\n\treturn &readerCtx{ctx: ctx, r:
+      r}\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "552"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/e11a9d7b-26f8-413d-91b4-811a5cf00648?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222529Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=cdfaMsLHS8wU.zux42wI23xiikwF3JH_8ST8bq_yyb.NMVSoq4u6YwclQrh4uTlfnvOnXXRwCcrdxHjRCXbIPHC19FCxKYdCYLk.b7hT9C4dsLZP_As4f52zI3iHIJQO&X-Amz-Signature=c7b53cd0e7a66c98f3373651cc6e3b81ec600a3c3e725972953d6057ca8d16d6
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Etag:
+      - '"87685c7d2090f080b57c948c2745cf70"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - a3homsPJff/4psErpifPGcXvNPoqVzL8godwTCZ459rLrenb8ckhXmFSlwG/W+sGd01tYtg5CfE=
+      X-Amz-Request-Id:
+      - 0EM8YQMSF4E5PPHG
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: "package lib\n\nimport (\n\t\"encoding/json\"\n)\n\ntype ErrorWithOriginalResponse
+      struct {\n\terror\n\toriginalResponse interface{}\n}\n\nfunc (u ErrorWithOriginalResponse)
+      OriginalResponse() interface{} {\n\treturn u.originalResponse\n}\n\nfunc (u
+      ErrorWithOriginalResponse) ProcessError(data []byte, err error, t interface{})
+      error {\n\tunmarshalError, ok := err.(*json.UnmarshalTypeError)\n\n\tif ok {\n\t\tignoreErr
+      := json.Unmarshal(data, &t)\n\t\tif ignoreErr == nil {\n\t\t\treturn ErrorWithOriginalResponse{error:
+      unmarshalError, originalResponse: t}\n\t\t}\n\t}\n\terrorWithOriginalResponse,
+      ok := err.(ErrorWithOriginalResponse)\n\tif ok {\n\t\tignoreErr := json.Unmarshal(data,
+      &t)\n\t\tif ignoreErr == nil {\n\t\t\treturn ErrorWithOriginalResponse{error:
+      errorWithOriginalResponse.error, originalResponse: t}\n\t\t}\n\t}\n\treturn
+      err\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "787"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/abaea641-cc38-49d8-a70a-9445cc9dac02?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222529Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=3KNlpMRlh62uMmg8hyxXwcL9q6_bHtIQZiKVRBBa_eTwaF65uTJtJTumTktFsJafA.Yum3uzH2u6B0lKMZyItRwsyzneokr4ehBrcDCJXY6HzU8d7rrqrNK.W4F9Yvtl&X-Amz-Signature=a496aef76bc1b8d9be8e568ac33ed79a0a774a18538902ebf35af2c2a0ea0718
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Etag:
+      - '"dff034e998616d166c1b7b4c5168f234"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - 9uEF9cbISx/6P9UR7D9dJMuCZlbhNKTvuyX1DqkpDbwU0QtxXJNDht1Sr2Bj4j2blj4ilgzhRiY=
+      X-Amz-Request-Id:
+      - 0EM62D6VTS3Y7KB1
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: "package lib\n\nimport (\n\t\"testing\"\n\n\t\"github.com/stretchr/testify/assert\"\n)\n\ntype
+      A struct {\n\tName string `url:\"name\" required:\"true\"`\n\tAge  int    `url:\"age\"
+      required:\"false\"`\n}\n\nfunc TestCheckRequired_Valid(t *testing.T) {\n\tassert
+      := assert.New(t)\n\ta := A{Name: \"Dustin\", Age: 90}\n\n\terr := CheckRequired(a)\n\tassert.Equal(err,
+      nil)\n}\n\nfunc TestCheckRequired_Invalid(t *testing.T) {\n\tassert := assert.New(t)\n\ta
+      := A{Age: 90}\n\n\terr := CheckRequired(a)\n\tassert.EqualError(err, \"missing
+      required field: A{}.Name\")\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "511"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/89b4075d-8d12-4264-a4c0-27498d79a9bb?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222529Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=rAg4AXyo194fDcnrifDcBRgTjhkEGedOh_0k6qr7.O1CqHqKWd.odkfZF6hC647gS0nFZwjufz5T8BZGlP6yxpLPMhlsddfBhccZCB96wlUoBLMpB.Wpa5Luf98y58VT&X-Amz-Signature=eee2094e663341af95d10cba7e60e42a308ec677b8021ce731d8fb9028aba5ca
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Etag:
+      - '"5ee87120cbc0fcf98de07af90ce2ca13"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - Lk3XDGw6MGWbuACre9nBrJfA4jsb74j82cTg+UbI4ye4xSjcqY+mEClngf8uc9biAja9+4Jkp1I=
+      X-Amz-Request-Id:
+      - 0EM1B9FFDDAR04R1
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: "package test\n\nimport (\n\t\"fmt\"\n\t\"net/http\"\n\t\"os\"\n\t\"path/filepath\"\n\n\tfiles_sdk
+      \"github.com/Files-com/files-sdk-go/v2\"\n\t\"github.com/Files-com/files-sdk-go/v2/lib\"\n\t\"github.com/dnaeon/go-vcr/cassette\"\n\t\"github.com/dnaeon/go-vcr/recorder\"\n)\n\nfunc
+      CreateConfig(fixture string) (files_sdk.Config, *recorder.Recorder, error) {\n\tconfig
+      := files_sdk.Config{}\n\tvar r *recorder.Recorder\n\tvar err error\n\tif os.Getenv(\"GITLAB\")
+      != \"\" {\n\t\tfmt.Println(\"using ModeReplaying\")\n\t\tr, err = recorder.NewAsMode(filepath.Join(\"fixtures\",
+      fixture), recorder.ModeReplaying, nil)\n\t} else {\n\t\tr, err = recorder.New(filepath.Join(\"fixtures\",
+      fixture))\n\t}\n\tif err != nil {\n\t\treturn config, r, err\n\t}\n\n\thttpClient
+      := &http.Client{\n\t\tTransport: r,\n\t}\n\tconfig.Debug = lib.Bool(false)\n\tconfig.SetHttpClient(httpClient)\n\n\tr.AddFilter(func(i
+      *cassette.Interaction) error {\n\t\tdelete(i.Request.Headers, \"X-Filesapi-Key\")\n\t\treturn
+      nil\n\t})\n\treturn config, r, nil\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "926"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/a229d94c-2758-4833-96ea-c43acc217aec?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222529Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=LJ44bNzQ76rnPGdxyzGEYABaM7Cs_dpHDIzASxmtdDqsXl1TCUmh4hCTnni9JxXM4N_prKeo0owUqEhtuMBPKsBzpC24xZyxSmPkNlRjWlJyZrib2t7qKt9hc.KB4._F&X-Amz-Signature=244c091fb3287fe7fb0b1ed6544e1b629402b3e964d4790b8eb281e93894364f
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Etag:
+      - '"750d4591117fab0f5c8d8e1e706bd09a"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - lwqBI69cb9cXYznoyDsvSzowK9qyaM606HUbj973rzn5Whr7hyzjPz6r2DojcePX1mcHiv3+T/g=
+      X-Amz-Request-Id:
+      - 0EM7K73J0TPD403F
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: "package lib\n\nimport (\n\t\"encoding/json\"\n\t\"fmt\"\n\t\"net/url\"\n\t\"reflect\"\n\t\"regexp\"\n\t\"strings\"\n)\n\nvar
+      QueryEscape = url.QueryEscape\n\nfunc PathEscape(path string) string {\n\tif
+      path == \"nil\" {\n\t\treturn \"\"\n\t}\n\tpathParts := strings.Split(path,
+      \"/\")\n\tnewParts := make([]string, len(pathParts))\n\n\tfor i, part := range
+      pathParts {\n\t\tnewParts[i] = url.PathEscape(part)\n\t}\n\n\treturn strings.Join(newParts,
+      \"/\")\n}\n\nfunc BuildPath(resourcePath string, values interface{}) (string,
+      error) {\n\tr := regexp.MustCompile(`\\{(.*)\\}`)\n\tmatches := r.FindSubmatch([]byte(resourcePath))\n\tif
+      len(matches) > 0 {\n\t\tj, err := json.Marshal(&values)\n\t\tif err != nil {\n\t\t\treturn
+      \"\", err\n\t\t}\n\t\tvar inInterface map[string]interface{}\n\t\terr = json.Unmarshal(j,
+      &inInterface)\n\t\tif err != nil {\n\t\t\treturn \"\", err\n\t\t}\n\t\tvalue
+      := inInterface[string(matches[1])]\n\t\tvalueInt, OkInt := value.(float64)\n\t\tif
+      OkInt && valueInt == 0 {\n\t\t\treturn \"\", CreateError(values, string(matches[1]))\n\t\t}\n\n\t\tstringValue
+      := fmt.Sprintf(\"%v\", value)\n\t\tif value == nil {\n\n\t\t\tstringValue =
+      \"\"\n\t\t\tt := reflect.TypeOf(values)\n\t\t\tfor i := 0; i < t.NumField();
+      i++ {\n\t\t\t\tfield := t.Field(i)\n\n\t\t\t\t// Get the field tag value\n\t\t\t\ttag
+      := field.Tag.Get(\"path\")\n\t\t\t\tif tag == string(matches[1]) {\n\t\t\t\t\tstringValue
+      = fmt.Sprintf(\"%v\", reflect.ValueOf(values).FieldByName(field.Name))\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t\tif
+      string(matches[1]) == \"path\" {\n\t\t\tstringValue = PathEscape(stringValue)\n\t\t}\n\t\treturn
+      strings.ReplaceAll(resourcePath, string(matches[0]), stringValue), nil\n\t}\n\n\treturn
+      resourcePath, nil\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "1516"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/84ab9b8a-7a9e-4998-9099-d48161241e3e?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222529Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=ecARy4vjgA8JpMiIxxLILbKLsp6idxH4yPkpO4sCwwmg1p82jAF1q_VUvuQcrbqJdluPZU2B0lkn6PXVTFMk5oqa88R7cJYH05zT7cvnyp3sNEre00xyrEAXWCe6ZuaH&X-Amz-Signature=fd386bbee25c6907b42e134fe369a749ad64861b1658b98a28c2ec8b70b6f6f3
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Etag:
+      - '"0f0089de33b22afb6dd8fd73625d8bee"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - Ogz5dkLFTrdKN1u+HhozL73tS+4Jof37GypU15chSz/SzN8TkkViUDTXqmVF4+awfOwtBbD0HCQ=
+      X-Amz-Request-Id:
+      - 0EM16ABX5KFSQ85W
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: "package lib\n\nimport (\n\t\"os\"\n\t\"path/filepath\"\n\t\"strings\"\n)\n\ntype
+      Path struct {\n\tPath string\n}\n\nfunc (p Path) Pop() string {\n\t_, last :=
+      filepath.Split(strings.TrimSuffix(p.Path, string(os.PathSeparator)))\n\treturn
+      last\n}\n\nfunc (p Path) EndingSlash() bool {\n\tif p.Path == \"\" {\n\t\treturn
+      false\n\t}\n\treturn p.Path[len(p.Path)-1:] == string(os.PathSeparator)\n}\n\nfunc
+      (p Path) Join(str ...string) Path {\n\treturn Path{Path: filepath.Join(p.String(),
+      filepath.Join(str...))}\n}\n\nfunc (p Path) String() string {\n\treturn p.Path\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "516"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/621c6c8b-e2cb-4542-bf7e-115a26cf2e0d?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222529Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=h0BwKgf7eF0pzHqiHvNyshyDUa6y0T1dn20KekXhkYQClqDrJfhaqkKIqQaOlkl87jFuwjZoAOI0aF6D7udidZLe8uVEAZc6YamPXe9hrBvKMXUo5nvZ2PY1jYBp12R8&X-Amz-Signature=f5a778a228103af630ed0218d5a53ef3a9074a3f5ba7ff3a79af2953f2b9b715
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Etag:
+      - '"c086fc61ed2cd6169540da7bdf349393"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - 8YZSGuGuTCOJhHoHDhK1yb0ydgT7wwLuoKv7fv67j5UuBWAV+NKu0Slo92FfyY7AOsq7kWx13gA=
+      X-Amz-Request-Id:
+      - 0EM4JJMCNRQ75VVA
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: "package lib\n\nimport \"time\"\n\nfunc Bool(bool bool) *bool {\n\treturn
+      &bool\n}\n\nfunc UnWrapBool(b *bool) bool {\n\tif b == nil {\n\t\treturn false\n\t}\n\n\treturn
+      *b\n}\n\nfunc Time(t time.Time) *time.Time {\n\treturn &t\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "203"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/214238aa-8678-4a9a-8c54-8e81a799308b?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222529Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=4RffC57JRG73pzcIv5_Ft_aTuEmXVliORSu3AwgvxLuYH1FNBud_LMDtQ6Wq6tduFb9rM5kLleZKE3boJ9OiKOEXvq.GtxEAAje8q8MYoMGH64HE.4MHV2mSP6veL78J&X-Amz-Signature=9fb2debef83f7807985b813809933a52f2a68c547101ac87a8744ae14b7ef56f
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Etag:
+      - '"ac9f5fc82f05209f4108a8d56194d77a"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - H75f5zkW9YGAjHW7wEfZ004FoUP7fJLrSOqzv+gsUCZgyrxDVK+6/gbmcdVgUHvQSSLEnyYSct4=
+      X-Amz-Request-Id:
+      - 0EM81AD1A1J2K9BG
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: "package lib\n\nimport (\n\t\"encoding/json\"\n\t\"fmt\"\n\t\"reflect\"\n\t\"strings\"\n\n\t\"github.com/fatih/structs\"\n)\n\nfunc
+      CheckRequired(iStruct interface{}) error {\n\tvar errors = make([]string, 0)\n\tval
+      := reflect.ValueOf(iStruct)\n\tfor val.Kind() == reflect.Ptr {\n\t\tif val.IsNil()
+      {\n\t\t\treturn nil\n\t\t}\n\t\tval = val.Elem()\n\t}\n\n\tif iStruct == nil
+      {\n\t\treturn nil\n\t}\n\n\tif val.Kind() != reflect.Struct {\n\t\treturn fmt.Errorf(\"CheckRequired
+      expects struct input. Got %v\", val.Kind())\n\t}\n\n\ttyp := val.Type()\n\tfor
+      i := 0; i < typ.NumField(); i++ {\n\t\tsf := typ.Field(i)\n\t\tif sf.PkgPath
+      != \"\" && !sf.Anonymous { // unexported\n\t\t\tcontinue\n\t\t}\n\t\ttag :=
+      sf.Tag.Get(\"required\")\n\t\tm := structs.Map(iStruct)\n\n\t\tjsonValue, err
+      := json.Marshal(m[sf.Name])\n\t\tif err != nil {\n\t\t\treturn err\n\t\t}\n\t\tif
+      tag == \"true\" && (string(jsonValue) == \"null\" || string(jsonValue) == JSONEmptyValue(sf.Type))
+      {\n\t\t\terrors = append(\n\t\t\t\terrors,\n\t\t\t\tCreateError(iStruct, sf.Name).Error(),\n\t\t\t)\n\t\t}\n\t}\n\tif
+      len(errors) != 0 {\n\t\treturn fmt.Errorf(strings.Join(errors, \"\\n\"))\n\t}\n\treturn
+      nil\n}\n\nfunc CreateError(i interface{}, name string) error {\n\tstructName
+      := reflect.TypeOf(i).Name()\n\treturn fmt.Errorf(\"missing required field: %v{}.%v\",
+      structName, name)\n}\n\nfunc JSONEmptyValue(v reflect.Type) string {\n\tswitch
+      v.Kind() {\n\tcase reflect.Map, reflect.Struct:\n\t\treturn \"{}\"\n\tcase reflect.Slice:\n\t\treturn
+      \"[]\"\n\tcase reflect.Int, reflect.Int64:\n\t\treturn \"0\"\n\tcase reflect.String:\n\t\treturn
+      `\"\"`\n\tdefault:\n\t\treturn \"\"\n\t}\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "1457"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/5c6ac6de-cd6a-465f-9e8a-e189647150d5?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222529Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=QrZ8JLgyoLW9YAsg1qWZXGOy2tRBpMOUjIiGnDOM4bZzFctFUBH4G2aw.JDNztfb_AqQXH9NlcvKGnJoId2uCkTd_s8SyqcpRAfLRQI06BMAdZrdq3JuE0cLk2BuJz_3&X-Amz-Signature=13ade34db585ede7100e260b655ce49264c3ffe0305ba26cf8bbf5e289ff2779
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Etag:
+      - '"ac31c1b3832c1e09f462dae391b00ed9"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - kBrOH2eUQiLQjYf8nCGMH0QdGfloP8lrcWzCB6qPxw8VCVad8yFhSJ1CTL5xbY0fWHbp0wQV6KA=
+      X-Amz-Request-Id:
+      - 0EM1KQ8Y321GD15C
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/iter_test.go","action":"end","etags":[{"etag":"dc23f85a71808ff550581773839c7506","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.958303334-07:00","ref":"put-2593855973","size":2230}'
+    form: {}
+    headers:
+      Connection:
+      - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/test/createconfig.go
+    url: https://app.files.com/api/rest/v1/files/golib/lib/iter_test.go
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-09-27T23:52:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-100945716","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/613e348a-a6c0-40db-b305-f384c5cf3276?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20210927T233753Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=XZ2az1f0pzstCqzqKWmJv4XpELhP.5xaJ_bacMns4kC79jMGoOVTNWq2EN6zRBHgBKGZIRlG2WuS7hEfx_nAr2Q8qqVnjlokyb6HfM_4pj9WdLOP.xVYjfjXxUyO2GfN\u0026X-Amz-Signature=ad19b98986622f4e04025faf304453bf15226347282d01d6e15edcac64e47fa1"}]'
+    body: '{"path":"golib/lib/iter_test.go","display_name":"iter_test.go","type":"file","size":2230,"created_at":"2022-10-04T22:25:30Z","mtime":"2022-10-04T22:25:30Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "301"
       Content-Type:
       - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:53 GMT
+      - Tue, 04 Oct 2022 22:25:30 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -509,7 +1122,706 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - bb4280f2-d823-4717-b27e-0104d15b29ff
+      - 72a26c9a-f8f2-497d-8112-6a2532a9d4a9
+      - 45b74b4bf891ab6f26be22caab723c32
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/iter.go","mkdir_parents":true,"size":3483}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/iter.go
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:30Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593856149","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/c6253ca0-b7ca-460f-8f80-7521d3f6ef66?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222530Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=Sq5Ej5U2z.qYvJul1Hk2kVvrERW3yVvFMvFhWTGEXxDbYrO.UX2X_pgpLXpd7.e6Oo5Vt5T7o.VHNAl4r20bCgVopp_2yMVKThottoM7D4.Cl.biaav6TqK8ckR1yYyI\u0026X-Amz-Signature=8e1f07ffa89df2c29c7fca2a513cda7059866da7b80e11d4d2754358a5ccec57"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - c4603617-4d53-4989-b7b2-44b36460f02c
+      - 802423182aa83aa97cf9cbd565ebb98c
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/interface.go","mkdir_parents":true,"size":75}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/interface.go
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:30Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593856143","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/8f5583b9-54ee-4c55-89dc-747094d16843?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222530Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=7R1zPFKGINGJF8w8OChQxj3dSky5oOPD8hZ0X1Tb4ebOJOh4OoOfiYEfykb1FhDd0io7ssZ.scTM4ggJ0ZTFDFVRLBPg1e9oOmOB4YGaAy.oHDgxxw3L6YcmtjngkHZA\u0026X-Amz-Signature=aaf45e0eb02b59cef314e069fa2339b3c36b58a9e35baddd2932ab50e402e4f9"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 888faa85-76c7-4428-9475-f3548cda737f
+      - 44323bb5d72dbd314d30c7b525f3e2d1
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/progresswriter.go","mkdir_parents":true,"size":250}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/progresswriter.go
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:30Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593856159","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/ad790f5a-77b9-4d51-afa3-b605a90864a2?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222530Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=9QkE.LFLKQh3_01wjiKiQ_B.uCzs.ZjmmIUArgAUzHRAINE6oqK5OU1KPMZC.2_ALHB4hWFVuslRjOrTxJcv2j1aZoFtNrRWAA2MwXDxKJ438GZnOASIKlnk4Lk6uWHZ\u0026X-Amz-Signature=d1b4ce313d14dff146aee53fd8af2534944f7438dd2cead126f76ec63e3bbeff"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 0a7876ac-bd8e-4527-9b43-8ca00fe2fb22
+      - 11a9ff99790c4454fa3f77d8d6effb7a
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/partsize_test.go","mkdir_parents":true,"size":397}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/partsize_test.go
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:30Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593856151","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/c2571701-dcb5-422b-af5f-3199302e02b7?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222530Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=uZLNWX8JCEIC42tskMX7Bct6sz.892yQGQWIteYZfZuZ9xsufFIqf2OfIR.uuEcUHEdtMPPOy4.wLpDvqyaDKJvRuy7Dbas2phq53cDzSF98a3SgoIiHN9j2KGHVZGD3\u0026X-Amz-Signature=04477b20e2e94122af95a671c88cf17bf769ae39e35919a7a7d8ad2ca2061824"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 5b5c5c7b-63d9-40ea-8267-1c5b6df3a9fc
+      - e19329e8fb311b38e884dfe975308bf3
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/errorwithoriginalresponse.go","action":"end","etags":[{"etag":"dff034e998616d166c1b7b4c5168f234","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.956507683-07:00","ref":"put-2593855983","size":787}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/errorwithoriginalresponse.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/errorwithoriginalresponse.go","display_name":"errorwithoriginalresponse.go","type":"file","size":787,"created_at":"2022-10-04T22:25:30Z","mtime":"2022-10-04T22:25:30Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "332"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 11e95915-5a2c-4a3c-a4f0-7ec8b0df07c8
+      - 289a92e707d8963ef60221f40579fce1
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/params_test.go","action":"end","etags":[{"etag":"a3b13017693810a39f2cf9fdce341671","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.959731154-07:00","ref":"put-2593855982","size":1599}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/params_test.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/params_test.go","display_name":"params_test.go","type":"file","size":1599,"created_at":"2022-10-04T22:25:30Z","mtime":"2022-10-04T22:25:30Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "305"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 2381ac70-c666-4d9b-9532-753afee3c7c9
+      - 99e858a8de0dbb8f898d5863b08724f2
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/iterchan.go","mkdir_parents":true,"size":744}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/iterchan.go
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:30Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593856167","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/6e63e27d-0a88-4352-ad2a-a54f3b1c8323?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222530Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=7edROanqMkMNWo67Hjc3RwNnS.zCMPCzXq4z._f.ZE37tiFLUMWpvIfdCH6xHq1kVjSykxZzVtqRAI1kN76K2CwSss6_XRw97YV3dxF3WeNf.a4CGF.TM91RoW14QiXg\u0026X-Amz-Signature=ad94f9e665494f4654de6dcc2d93df18368f69142058e2e98c3e6fb2035a8378"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 72fb492a-c3bf-4f8c-bbd6-d350aff96557
+      - 8c485503292b5f8545300f7a6e74fd37
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/responseerrors.go","mkdir_parents":true,"size":1036}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/responseerrors.go
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:30Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593856166","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/a21a50c2-2bb0-4d26-ba49-c2b7f4618621?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222530Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=0fRcBNvPFr3j5.5ovvn0vvlTwCfXjVzUfk7.ImF61UjPiQeECukCAEOXVnUQjWYat0x1JKel_PbI988BA_SbQ13h69luXEsMrQiCAu7qhc_dRnThSK2DGCoXIbefJnKX\u0026X-Amz-Signature=12eccfd3c2b61330753205a1268e0bcc169745573a6f9f36d552b27a6dc53af2"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 24fb994c-0c09-464c-bb71-dea0180e4950
+      - 546519df4010b286a7745bc698f94b27
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/required_test.go","action":"end","etags":[{"etag":"5ee87120cbc0fcf98de07af90ce2ca13","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.964330639-07:00","ref":"put-2593856002","size":511}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/required_test.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/required_test.go","display_name":"required_test.go","type":"file","size":511,"created_at":"2022-10-04T22:25:30Z","mtime":"2022-10-04T22:25:30Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "308"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - c5ab442b-1d74-4326-a70c-81c67484dfd3
+      - 1294e0251b8ca93554b232a3ca667b28
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/path.go","action":"end","etags":[{"etag":"c086fc61ed2cd6169540da7bdf349393","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-10-04T14:36:09.153159546-07:00","ref":"put-2593855993","size":516}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/path.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/path.go","display_name":"path.go","type":"file","size":516,"created_at":"2022-10-04T22:25:30Z","mtime":"2022-10-04T22:25:30Z","provided_mtime":"2022-10-04T21:36:09Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "290"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - d20fa7f1-d1e2-42d9-a64e-d0722daaddb3
+      - b481da57dbba04f3a5a88739c3bbd758
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/params.go","action":"end","etags":[{"etag":"8eba3239f8e537d96f49a35117113879","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.95918908-07:00","ref":"put-2593856005","size":1580}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/params.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/params.go","display_name":"params.go","type":"file","size":1580,"created_at":"2022-10-04T22:25:30Z","mtime":"2022-10-04T22:25:30Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "295"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 4b8c108e-a529-44f9-9ef2-b2be9a9b93a1
+      - 7ff490fad7eb8cb93eeb2ce0007e8525
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/readerctx.go","action":"end","etags":[{"etag":"87685c7d2090f080b57c948c2745cf70","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.963130435-07:00","ref":"put-2593855971","size":552}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/readerctx.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/readerctx.go","display_name":"readerctx.go","type":"file","size":552,"created_at":"2022-10-04T22:25:30Z","mtime":"2022-10-04T22:25:30Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "300"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 45a53f82-dc2b-4ecc-8987-27a452927926
+      - 13a6bab1b0411376573a1290072c81c3
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/query.go","action":"end","etags":[{"etag":"0f0089de33b22afb6dd8fd73625d8bee","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-10-04T13:30:43.693047414-07:00","ref":"put-2593856008","size":1516}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/query.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/query.go","display_name":"query.go","type":"file","size":1516,"created_at":"2022-10-04T22:25:30Z","mtime":"2022-10-04T22:25:30Z","provided_mtime":"2022-10-04T20:30:43Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "293"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - d13b8f2a-d3c1-43c6-9bbd-754570b462ca
+      - 3b9751d1a9553182152d00f71c879e76
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/pointers.go","action":"end","etags":[{"etag":"ac9f5fc82f05209f4108a8d56194d77a","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.961415123-07:00","ref":"put-2593855974","size":203}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/pointers.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/pointers.go","display_name":"pointers.go","type":"file","size":203,"created_at":"2022-10-04T22:25:30Z","mtime":"2022-10-04T22:25:30Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "298"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - f19d9b88-add2-40a1-9479-26d4b4c49939
+      - 697a0bd6dd9a4af12503a2ad42ae6c16
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/direction/main.go","action":"end","etags":[{"etag":"54abeb068b4f1a45cee6fcacf279478d","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.955966794-07:00","ref":"put-2593855986","size":254}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/direction/main.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/direction/main.go","display_name":"main.go","type":"file","size":254,"created_at":"2022-10-04T22:25:30Z","mtime":"2022-10-04T22:25:30Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "300"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - d244e06c-4cb8-47a1-9628-da0e63942ee6
+      - 6be2df0673dd4a94bec6e408355d4494
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/string.go","action":"end","etags":[{"etag":"cecd1ea94155ea41d1f8f9e0c2f2e0d9","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.965275231-07:00","ref":"put-2593855999","size":68}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/string.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/string.go","display_name":"string.go","type":"file","size":68,"created_at":"2022-10-04T22:25:30Z","mtime":"2022-10-04T22:25:30Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "293"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 3b2e5427-75e9-4a38-8a1c-4e588693e679
+      - 605e869e207cabea02c58ee5e0a21022
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/test/createconfig.go","action":"end","etags":[{"etag":"750d4591117fab0f5c8d8e1e706bd09a","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.96584047-07:00","ref":"put-2593855979","size":926}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/test/createconfig.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/test/createconfig.go","display_name":"createconfig.go","type":"file","size":926,"created_at":"2022-10-04T22:25:30Z","mtime":"2022-10-04T22:25:30Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "311"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - d70adeb9-b71b-428c-8e77-acf7dc2b2568
+      - 380e1d6c8caf16e595ea221754351ada
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: "package lib\n\nimport (\n\t\"fmt\"\n\t\"net/http\"\n)\n\nfunc ResponseErrors(res
+      *http.Response, errorFunc ...func(res *http.Response) error) error {\n\tfor
+      _, errFunc := range errorFunc {\n\t\tif err := errFunc(res); err != nil {\n\t\t\treturn
+      err\n\t\t}\n\t}\n\treturn nil\n}\n\nfunc NonOkError(res *http.Response) error
+      {\n\tif res.StatusCode > 299 && res.StatusCode < 200 {\n\t\treturn errorFromBody(res)\n\t}\n\n\treturn
+      nil\n}\n\nfunc IsJSON(res *http.Response) bool {\n\treturn res.Header.Get(\"Content-type\")
+      == \"application/json\"\n}\n\nfunc NonJSONError(res *http.Response) error {\n\tif
+      !IsJSON(res) {\n\t\tif res.StatusCode == 204 {\n\t\t\treturn nil\n\t\t}\n\t\treturn
+      errorFromBody(res)\n\t}\n\n\treturn nil\n}\n\nfunc CloseBody(res *http.Response)
+      {\n\tif res != nil && res.Body != nil {\n\t\tres.Body.Close()\n\t}\n}\n\nfunc
+      errorFromBody(res *http.Response) error {\n\tvar body []byte\n\tif res.ContentLength
+      == -1 {\n\t\tbody = make([]byte, 512)\n\t} else {\n\t\tbody = make([]byte, res.ContentLength)\n\t}\n\t_,
+      err := res.Body.Read(body)\n\tif err == nil {\n\t\treturn fmt.Errorf(string(body))\n\t}
+      else {\n\t\treturn err\n\t}\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "1036"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/a21a50c2-2bb0-4d26-ba49-c2b7f4618621?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222530Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=0fRcBNvPFr3j5.5ovvn0vvlTwCfXjVzUfk7.ImF61UjPiQeECukCAEOXVnUQjWYat0x1JKel_PbI988BA_SbQ13h69luXEsMrQiCAu7qhc_dRnThSK2DGCoXIbefJnKX&X-Amz-Signature=12eccfd3c2b61330753205a1268e0bcc169745573a6f9f36d552b27a6dc53af2
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:31 GMT
+      Etag:
+      - '"2426996c1166a3d1139e832bd720cb8e"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - CRxfGl+rb7pEamZZaisnuqmmUsSdLzGuGOkEavgk70cuxeFcDSayscyu7eIFtMfRW6yI5FWsb6s=
+      X-Amz-Request-Id:
+      - 84PFDF6QY93DA1VG
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: "package lib\n\nimport \"io\"\n\ntype ProgressWriter struct {\n\tWriter
+      \         io.Writer\n\tProgressWatcher func(int64)\n}\n\nfunc (w ProgressWriter)
+      Write(p []byte) (n int, err error) {\n\tn, err = w.Writer.Write(p)\n\n\tw.ProgressWatcher(int64(n))\n\treturn
+      n, err\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "250"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/ad790f5a-77b9-4d51-afa3-b605a90864a2?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222530Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=9QkE.LFLKQh3_01wjiKiQ_B.uCzs.ZjmmIUArgAUzHRAINE6oqK5OU1KPMZC.2_ALHB4hWFVuslRjOrTxJcv2j1aZoFtNrRWAA2MwXDxKJ438GZnOASIKlnk4Lk6uWHZ&X-Amz-Signature=d1b4ce313d14dff146aee53fd8af2534944f7438dd2cead126f76ec63e3bbeff
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:31 GMT
+      Etag:
+      - '"a818d0badee418a848d9dc03b985b244"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - rdeKFGs4euIl3b5YLeHfiLfecyRkJJw+GeI6xAXVYHwbos+d/3C7aMPu5kB9MqKniHeTV0SlTa4=
+      X-Amz-Request-Id:
+      - 84PF42Q1K44NC3G2
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: "package lib\n\ntype ListParams struct {\n\tPage     int64  `json:\"page,omitempty\"
+      url:\"page,omitempty\" required:\"false\"`\n\tPerPage  int64  `json:\"per_page,omitempty\"
+      url:\"per_page,omitempty\" required:\"false\"`\n\tCursor   string `json:\"cursor,omitempty\"
+      url:\"cursor,omitempty\" required:\"false\"`\n\tMaxPages int64  `json:\"-\"
+      url:\"-\"`\n}\n\n// ListParamsContainer is a general interface for which all
+      list parameter\n// structs should comply. They achieve this by embedding a ListParams
+      struct\n// and inheriting its implementation of this interface.\ntype ListParamsContainer
+      interface {\n\tGetListParams() *ListParams\n}\n\n// GetListParams returns a
+      ListParams struct (itself). It exists because any\n// structs that embed ListParams
+      will inherit it, and thus implement the\n// ListParamsContainer interface.\nfunc
+      (p *ListParams) GetListParams() *ListParams {\n\treturn p\n}\n\ntype OnPageError
+      func(error) (*[]interface{}, error)\ntype Query func(params Values) (*[]interface{},
+      string, error)\n\ntype IterI interface {\n\tNext() bool\n\tCurrent() interface{}\n\tErr()
+      error\n}\n\ntype IterPagingI interface {\n\tIterI\n\tEOFPage() bool\n}\n\ntype
+      Iter struct {\n\tQuery\n\tListParams   ListParamsContainer\n\tParams       []interface{}\n\tCurrentIndex
+      int\n\tValues       *[]interface{}\n\tCursor       string\n\tError        error\n\tOnPageError\n}\n\n//
+      Err returns the error, if any,\n// that caused the Iter to stop.\n// It must
+      be inspected\n// after Next returns false.\nfunc (i *Iter) Err() error {\n\treturn
+      i.Error\n}\n\nfunc (i *Iter) Current() interface{} {\n\treturn (*i.Values)[i.CurrentIndex]\n}\n\nfunc
+      (i *Iter) GetParams() *ListParams {\n\treturn i.ListParams.GetListParams()\n}\n\nfunc
+      (i *Iter) ExportParams() (ExportValues, error) {\n\tp := Params{Params: i.GetParams()}\n\tparamValues,
+      err := p.ToValues()\n\tif err != nil {\n\t\treturn ExportValues{}, err\n\t}\n\tlistParamValues,
+      _ := Params{Params: i.ListParams}.ToValues()\n\n\tfor key, value := range paramValues
+      {\n\t\tlistParamValues.Set(key, value[0])\n\t}\n\n\tif i.GetCursor() != \"\"
+      {\n\t\tlistParamValues.Del(\"page\")\n\t}\n\n\treturn ExportValues{Values: listParamValues},
+      nil\n}\n\nfunc (i *Iter) GetPage() bool {\n\tif i.GetParams().MaxPages != 0
+      && i.GetParams().Page == i.GetParams().MaxPages {\n\t\treturn false\n\t}\n\n\ti.CurrentIndex
+      = 0\n\n\ti.GetParams().Page += 1\n\tif i.GetParams().Page == 2 && i.Cursor ==
+      \"\" {\n\t\treturn false\n\t}\n\tparams, _ := i.ExportParams()\n\ti.Values,
+      i.Cursor, i.Error = i.Query(params)\n\ti.SetCursor(i.Cursor)\n\tif i.Error !=
+      nil && i.OnPageError != nil {\n\t\ti.Values, i.Error = i.OnPageError(i.Error)\n\t}\n\treturn
+      i.Error == nil && len(*i.Values) != 0\n}\n\nfunc (i *Iter) EOFPage() bool {\n\treturn
+      len(*i.Values) == i.CurrentIndex+1\n}\n\nfunc (i *Iter) Paging() bool {\n\treturn
+      true\n}\n\nfunc (i *Iter) GetCursor() string {\n\treturn i.GetParams().Cursor\n}\n\nfunc
+      (i *Iter) SetCursor(cursor string) {\n\ti.GetParams().Cursor = cursor\n\ti.Cursor
+      = cursor\n}\n\n// Next iterates the results in i.Current() or i.`ResourceName`().\n//
+      It returns true until there are no results remaining.\n// To adjust the number
+      of results set ListParams.PerPage.\n// To have it auto-paginate set ListParams.MaxPages,
+      default is 1.\n//\n// To iterate over all results use the following pattern.\n//\n//
+      \  for i.Next() {\n//     i.Current()\n//   }\nfunc (i *Iter) Next() bool {\n\tif
+      i.Values == nil {\n\t\treturn i.GetPage() && len(*i.Values) > 0\n\t} else if
+      len(*i.Values) > i.CurrentIndex+1 {\n\t\ti.CurrentIndex += 1\n\t\treturn true\n\t}\n\n\tif
+      i.EOFPage() {\n\t\treturn i.GetPage()\n\t}\n\n\treturn false\n}\n\nfunc (i *Iter)
+      NextPage() bool {\n\treturn i.Cursor != \"\"\n}\n"
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "3483"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/c6253ca0-b7ca-460f-8f80-7521d3f6ef66?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222530Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=Sq5Ej5U2z.qYvJul1Hk2kVvrERW3yVvFMvFhWTGEXxDbYrO.UX2X_pgpLXpd7.e6Oo5Vt5T7o.VHNAl4r20bCgVopp_2yMVKThottoM7D4.Cl.biaav6TqK8ckR1yYyI&X-Amz-Signature=8e1f07ffa89df2c29c7fca2a513cda7059866da7b80e11d4d2754358a5ccec57
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 22:25:31 GMT
+      Etag:
+      - '"1d916158ac0701b5c69aa5f7f0d83bdb"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - 28qheVPy2HtdvcdvvuHAr5aJ8ZjQKD0ivGTfweQNuqL/VehoJ8eIyaY2vC/UH1QLDGKOiRy2afo=
+      X-Amz-Request-Id:
+      - 84P8K6H719NSSWBT
+      X-Amz-Server-Side-Encryption:
+      - AES256
     status: 200 OK
     code: 200
     duration: ""
@@ -525,7 +1837,7 @@ interactions:
       - close
       Content-Length:
       - "397"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/c3c77fd6-d33e-4453-b314-6eb6c763fd73?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210927T233753Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=yukGTcdMgIeKQ41LWdRFRjytqExp58y..by.8Jx9gcd8qhWEDjLut5n0o8LGfFnLueOX95Jm8R54rMi0l9k4vK34u_dglTGwPAOz0TImZyPWUM72nxtkWw6uqP092fWv&X-Amz-Signature=ab59eb0c8e7cf7cc3b8585942757bb5ce4c1b33bd60dc532a9ccba237ee39fb5
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/c2571701-dcb5-422b-af5f-3199302e02b7?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222530Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=uZLNWX8JCEIC42tskMX7Bct6sz.892yQGQWIteYZfZuZ9xsufFIqf2OfIR.uuEcUHEdtMPPOy4.wLpDvqyaDKJvRuy7Dbas2phq53cDzSF98a3SgoIiHN9j2KGHVZGD3&X-Amz-Signature=04477b20e2e94122af95a671c88cf17bf769ae39e35919a7a7d8ad2ca2061824
     method: PUT
   response:
     body: ""
@@ -533,15 +1845,15 @@ interactions:
       Content-Length:
       - "0"
       Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
+      - Tue, 04 Oct 2022 22:25:31 GMT
       Etag:
       - '"4dd39224fa00a070f76d14950571e694"'
       Server:
       - AmazonS3
       X-Amz-Id-2:
-      - G7NSklL3JLHmjJ0emGSnmkDcQYjDxFfKmL6bHpxLfW6CTOBuIkb/FO+2Id4FqUvrdlwG4bmAyjM=
+      - BdJjbxzzUtOt4zosxduSABWhKemtmwhkIRqIOQsyPX7zHxjdKpLcFRkVEm0+eknS/1eWB3IblFQ=
       X-Amz-Request-Id:
-      - C3YZSSP3NFTAPDAS
+      - 84P0F4WEZSDN7C36
       X-Amz-Server-Side-Encryption:
       - AES256
     status: 200 OK
@@ -556,7 +1868,7 @@ interactions:
       - close
       Content-Length:
       - "75"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/5a0c083d-64d6-413d-babf-0828fc32f982?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210927T233753Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=R86PaiJtYWk2aKiN4Qf07lEgikJ._rofr3D_AllxeNnBPLf7Nms6VAyMjNkJH5jvejcQHprd39Me2XTsuBF3SSocEorAh72VpEsDb3XHnK8yMUVLfYvvl5UNv1UDL8NV&X-Amz-Signature=bad9fe0d7260499989dbff012454e845a7b834bdb69dfb555973fa7afcc1df57
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/8f5583b9-54ee-4c55-89dc-747094d16843?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222530Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=7R1zPFKGINGJF8w8OChQxj3dSky5oOPD8hZ0X1Tb4ebOJOh4OoOfiYEfykb1FhDd0io7ssZ.scTM4ggJ0ZTFDFVRLBPg1e9oOmOB4YGaAy.oHDgxxw3L6YcmtjngkHZA&X-Amz-Signature=aaf45e0eb02b59cef314e069fa2339b3c36b58a9e35baddd2932ab50e402e4f9
     method: PUT
   response:
     body: ""
@@ -564,37 +1876,38 @@ interactions:
       Content-Length:
       - "0"
       Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
+      - Tue, 04 Oct 2022 22:25:31 GMT
       Etag:
       - '"f7cb73244af2aafb2ced638dc9658dee"'
       Server:
       - AmazonS3
       X-Amz-Id-2:
-      - XhR45qgKOcy/sV1/c0H3tytqklRJklsZeEgG+X0bJ8+x8LB0mnAfYOhp8fVGne6Pdv9kBc1pAJg=
+      - B66u+glaAq6UjVyYaHR/0tOEPqZRzCzuq8wngkUwLA6O50hbuj3iGCVgTa3+ZZL6j5xHkqIss5E=
       X-Amz-Request-Id:
-      - C3YHFSEYV5VG36EA
+      - 84PCG4KGC4QN3H73
       X-Amz-Server-Side-Encryption:
       - AES256
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: "package lib\n\nimport (\n\t\"testing\"\n\n\t\"github.com/appscode/go-querystring/query\"\n\t\"github.com/stretchr/testify/assert\"\n)\n\ntype
-      A struct {\n\tName   string `url:\"name\" required:\"true\"`\n\tAge    int    `url:\"age\"
-      required:\"false\"`\n\tIgnore int    `url:\"-\" required:\"false\"`\n}\n\nfunc
-      TestCheckRequired_Valid(t *testing.T) {\n\tassert := assert.New(t)\n\ta := A{Name:
-      \"Dustin\", Age: 90, Ignore: 50}\n\tvalues, _ := query.Values(a)\n\n\terr :=
-      CheckRequired(a, &values)\n\tassert.Equal(err, nil)\n}\n\nfunc TestCheckRequired_Invalid(t
-      *testing.T) {\n\tassert := assert.New(t)\n\ta := A{Age: 90}\n\tvalues, _ :=
-      query.Values(a)\n\n\terr := CheckRequired(a, &values)\n\tassert.EqualError(err,
-      \"missing required field: A{}.Name\")\n}\n"
+    body: "package lib\n\nimport \"sync/atomic\"\n\ntype IterChan struct {\n\tSend
+      \     chan interface{}\n\tStop      chan bool\n\tSendError chan error\n\tcurrent
+      \  atomic.Value\n\tError     atomic.Value\n\tStart     func(*IterChan)\n}\n\nfunc
+      (i IterChan) Init() *IterChan {\n\ti.Send = make(chan interface{})\n\ti.Stop
+      = make(chan bool)\n\ti.SendError = make(chan error)\n\n\treturn &i\n}\n\nfunc
+      (i *IterChan) Next() bool {\n\tselect {\n\tcase current := <-i.Send:\n\t\ti.current.Store(current)\n\t\treturn
+      true\n\tcase err := <-i.SendError:\n\t\ti.Error.Store(err)\n\t\treturn false\n\tcase
+      <-i.Stop:\n\t\treturn false\n\t}\n}\n\nfunc (i *IterChan) Current() interface{}
+      {\n\treturn i.current.Load()\n}\n\nfunc (i *IterChan) Err() error {\n\terr :=
+      i.Error.Load()\n\tif err != nil {\n\t\treturn err.(error)\n\t}\n\treturn nil\n}\n"
     form: {}
     headers:
       Connection:
       - close
       Content-Length:
-      - "691"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/4659d9ce-8a5d-439f-b8f7-c0b634afb0b1?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210927T233753Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=hlFdJMA9oduXp5.LAno3GXc30zPv1tTruWoAV4da0CMr_3Vkbzeac15Um11kweKbKmcbB9IpCtHX.6AT8CeJFcyRt59uGI08EtfvtKZxWdGldcyl6geCU2vP2tCsOy7B&X-Amz-Signature=54144badee9e814cb2fa5ce67c3c8b5bca6fcd3007a07c80d12b2122de954b61
+      - "744"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/6e63e27d-0a88-4352-ad2a-a54f3b1c8323?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222530Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=7edROanqMkMNWo67Hjc3RwNnS.zCMPCzXq4z._f.ZE37tiFLUMWpvIfdCH6xHq1kVjSykxZzVtqRAI1kN76K2CwSss6_XRw97YV3dxF3WeNf.a4CGF.TM91RoW14QiXg&X-Amz-Signature=ad94f9e665494f4654de6dcc2d93df18368f69142058e2e98c3e6fb2035a8378
     method: PUT
   response:
     body: ""
@@ -602,79 +1915,345 @@ interactions:
       Content-Length:
       - "0"
       Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
+      - Tue, 04 Oct 2022 22:25:31 GMT
       Etag:
-      - '"129a7a11d2f07ee5446398ff07588c99"'
+      - '"4bcfc384c0347af28fab7aab19ceb1dd"'
       Server:
       - AmazonS3
       X-Amz-Id-2:
-      - 6YB+YDVlVmTTUww4e2nvG0bGAuv2qidPEBJSMGrSM9GwwnBa5z0vsMY722oxGgBI+hizGQtu0wk=
+      - 0TIWnB5++LQSG2B/+Fs+A7U1Wc8FUgA6uyyUoBUdI+iZJ+pmDqSlPfSFkRaJpVtmPfe6O1zxfJ4=
       X-Amz-Request-Id:
-      - C3YVWSK2RP782P7T
+      - 84P52ZGABNBTPGQ7
       X-Amz-Server-Side-Encryption:
       - AES256
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: "package lib\n\nimport (\n\t\"net/url\"\n\n\t\"github.com/appscode/go-querystring/query\"\n)\n\nfunc
-      ExportParams(i interface{}) (url.Values, error) {\n\tv, err := query.Values(i)\n\tif
-      err != nil {\n\t\tpanic(err)\n\t}\n\n\treturn v, CheckRequired(i, &v)\n}\n"
+    body: '{"-":"golib/lib/responseerrors.go","action":"end","etags":[{"etag":"2426996c1166a3d1139e832bd720cb8e","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.964885263-07:00","ref":"put-2593856166","size":1036}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Length:
-      - "231"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/4cf10a64-0ae3-4eba-9292-16630288ea53?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210927T233753Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=Yv4txV3jBCDDw6fi8tcceO0fKQlksJhPwivAlutTRIZMpmC5oLWxp1HFlhPrLDp4sNzo9vbE4tKByKQZuFasDLhR0PB_YRzo.XpEDrouLV96PFTAjmY3SsDzE221s01E&X-Amz-Signature=32e07821505a01c3f172ffaa3728c6b3386914fedf8e9069826136eae44f23b3
-    method: PUT
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/responseerrors.go
+    method: POST
   response:
-    body: ""
+    body: '{"path":"golib/lib/responseerrors.go","display_name":"responseerrors.go","type":"file","size":1036,"created_at":"2022-10-04T22:25:31Z","mtime":"2022-10-04T22:25:31Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
     headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
       Content-Length:
-      - "0"
+      - "311"
+      Content-Type:
+      - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Etag:
-      - '"3cc6728f7554f3ea0f53dabed57b19d2"'
+      - Tue, 04 Oct 2022 22:25:31 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
       Server:
-      - AmazonS3
-      X-Amz-Id-2:
-      - 6QjhufiwKZEb9mzinrkMTglTwMp0UDXRDovpVAHGEx6nOlKygDBHnNP2VSLN4pOvqJel7pSfsTM=
-      X-Amz-Request-Id:
-      - C3YSDVTP68MMZ0VW
-      X-Amz-Server-Side-Encryption:
-      - AES256
-    status: 200 OK
-    code: 200
+      - nginx
+      X-Request-Id:
+      - 5164f109-4591-4dca-ad39-cc7f2c487137
+      - e4478a55c2afa055eb4d14917ea05602
+    status: 201 Created
+    code: 201
     duration: ""
 - request:
-    body: "package lib\n\nfunc String(string string) *string {\n\treturn &string\n}\n"
+    body: '{"-":"golib/lib/iter.go","action":"end","etags":[{"etag":"1d916158ac0701b5c69aa5f7f0d83bdb","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.957591411-07:00","ref":"put-2593856149","size":3483}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Length:
-      - "68"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/653745ea-9540-47ae-9ce1-bdb754451406?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210927T233753Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=z89pqdGUSOO9XwBx_8H6_4kxooVNOlkk3oyMAb8dyn.h9m0JlZLAAgNB7XSZjz4NYuBzAO0IaOY9jeqxyXh4p8c2SF2AfkxwwN7ZOWyGWTnWC0SKUiTRx8Wmbld1_zZQ&X-Amz-Signature=273d45ee72899357f35086f9886bcb0076744932c4c2336b02d2c192a2b793f3
-    method: PUT
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/iter.go
+    method: POST
   response:
-    body: ""
+    body: '{"path":"golib/lib/iter.go","display_name":"iter.go","type":"file","size":3483,"created_at":"2022-10-04T22:25:31Z","mtime":"2022-10-04T22:25:31Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
     headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
       Content-Length:
-      - "0"
+      - "291"
+      Content-Type:
+      - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Etag:
-      - '"cecd1ea94155ea41d1f8f9e0c2f2e0d9"'
+      - Tue, 04 Oct 2022 22:25:31 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
       Server:
-      - AmazonS3
-      X-Amz-Id-2:
-      - 5G4Fdp9D1E1u1n4kWIN4EqV6G3kOVyStmco49K8xNTC+RVChXjSwdn2DcVtdlZyoFyYYzImTp+Y=
-      X-Amz-Request-Id:
-      - C3YQKC0QFJA08QFW
-      X-Amz-Server-Side-Encryption:
-      - AES256
+      - nginx
+      X-Request-Id:
+      - 5144e9d3-21ed-4636-bcb2-b6ef609601b2
+      - b363bf616e41ea491cde5881892d12b4
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/iterchan.go","action":"end","etags":[{"etag":"4bcfc384c0347af28fab7aab19ceb1dd","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.958775699-07:00","ref":"put-2593856167","size":744}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/iterchan.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/iterchan.go","display_name":"iterchan.go","type":"file","size":744,"created_at":"2022-10-04T22:25:31Z","mtime":"2022-10-04T22:25:31Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "298"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:31 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - f2033411-c766-421e-bd18-8b60f1aa7c0c
+      - 9a2460545624ecabdf58ce5dbc75a587
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/partsize_test.go","action":"end","etags":[{"etag":"4dd39224fa00a070f76d14950571e694","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.9608279-07:00","ref":"put-2593856151","size":397}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/partsize_test.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/partsize_test.go","display_name":"partsize_test.go","type":"file","size":397,"created_at":"2022-10-04T22:25:31Z","mtime":"2022-10-04T22:25:31Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "308"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:31 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 2661745b-1b55-4fab-a3b9-92943eba182d
+      - 2ca1aeda4c4c09d7b0bf09e65cba2a7b
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/progresswriter.go","action":"end","etags":[{"etag":"a818d0badee418a848d9dc03b985b244","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.961918031-07:00","ref":"put-2593856159","size":250}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/progresswriter.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/progresswriter.go","display_name":"progresswriter.go","type":"file","size":250,"created_at":"2022-10-04T22:25:31Z","mtime":"2022-10-04T22:25:31Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "310"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:31 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - a9562c35-d96c-4277-bb35-904be00e6263
+      - 7560e303c078602529b134c43e112890
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/interface.go","action":"end","etags":[{"etag":"f7cb73244af2aafb2ced638dc9658dee","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.957017747-07:00","ref":"put-2593856143","size":75}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/interface.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/interface.go","display_name":"interface.go","type":"file","size":75,"created_at":"2022-10-04T22:25:31Z","mtime":"2022-10-04T22:25:31Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "299"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:31 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - bf335fc5-4158-4ea3-acfd-1ecd3cc480f2
+      - 909888fdcc67eaaca5f5b120b0af4ecb
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/partsize.go","action":"end","etags":[{"etag":"91e631425c0e5472b4eb826f5f5e13b4","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.960290561-07:00","ref":"put-2593855969","size":1076}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/partsize.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/partsize.go","display_name":"partsize.go","type":"file","size":1076,"created_at":"2022-10-04T22:25:31Z","mtime":"2022-10-04T22:25:31Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "299"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:31 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - fc14cf77-35da-4e7f-b316-948df5b99fc6
+      - 9d96ceaad86e5c94ab040c2c501c5ee6
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/query_test.go","action":"end","etags":[{"etag":"8401b1ae1cfe9e6a24b11e329bd3bb1f","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.962725196-07:00","ref":"put-2593855984","size":1448}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/query_test.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/query_test.go","display_name":"query_test.go","type":"file","size":1448,"created_at":"2022-10-04T22:25:31Z","mtime":"2022-10-04T22:25:31Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "303"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:31 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - e8f7f2f4-2ebf-4718-a29b-1d6071bbb849
+      - 5d83988235fd43fe83d223950df3211a
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/required.go","action":"end","etags":[{"etag":"ac31c1b3832c1e09f462dae391b00ed9","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.963761883-07:00","ref":"put-2593855977","size":1457}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/required.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/required.go","display_name":"required.go","type":"file","size":1457,"created_at":"2022-10-04T22:25:31Z","mtime":"2022-10-04T22:25:31Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "299"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:31 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 5b0fcd47-ba6c-4c4a-a623-8126b6162c33
+      - d5cbb82eaf92020c144b1081bdfce5ac
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"golib/lib/timer/main.go","mkdir_parents":true,"size":1564}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/golib/lib/timer/main.go
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T22:40:32Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2593856387","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/01f0e791-84b4-4811-ba0a-bafbe8cbc85d?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T222532Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=R04T03cr8IHYvxSVVvtaThviT.AqsCh8EWur5fYegrPlvtau74IqJdrvBTajv1d3.8hkcJx9o9GmOaWs_Hn0USICBIMN6iO6OyMtBR8j0iKzeLEmzgarg.KOctvXGtJQ\u0026X-Amz-Signature=1098c2af1a93d28cbb4ee65eac5b4937e29c7c025dc091aec0f0177f08972205"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:32 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 0b1f403b-ee4a-4128-b634-3d206730b1de
+      - 18f6c023bcb9b3b205e6377a151a5716
     status: 200 OK
     code: 200
     duration: ""
@@ -705,7 +2284,7 @@ interactions:
       - close
       Content-Length:
       - "1564"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/489b25cb-5b71-4f46-a7ae-53a5ac08f0ab?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210927T233753Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=EgBedI5Ay9F1PaVfIREVB6v21AFnQs0Jyfn6xVOkCzREv0xmkiSX5psaUlnP2hTMy6rPdcdMZR3qbyS3wKK5h8lACcnbdorADrMOsjZMh2jCzAmx1D1vNCjbqbDV3Pc2&X-Amz-Signature=b96686eee354bd413931e0f2c7d3b3b8f643706e5f00dbf126d9871c8c639866
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/01f0e791-84b4-4811-ba0a-bafbe8cbc85d?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T222532Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=R04T03cr8IHYvxSVVvtaThviT.AqsCh8EWur5fYegrPlvtau74IqJdrvBTajv1d3.8hkcJx9o9GmOaWs_Hn0USICBIMN6iO6OyMtBR8j0iKzeLEmzgarg.KOctvXGtJQ&X-Amz-Signature=1098c2af1a93d28cbb4ee65eac5b4937e29c7c025dc091aec0f0177f08972205
     method: PUT
   response:
     body: ""
@@ -713,466 +2292,104 @@ interactions:
       Content-Length:
       - "0"
       Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
+      - Tue, 04 Oct 2022 22:25:33 GMT
       Etag:
       - '"174b986566f7e2718cd484f310d7a1c4"'
       Server:
       - AmazonS3
       X-Amz-Id-2:
-      - dE5nd1+LRWVghWTjHIrplIQiKk6zZB1kFuNSK65FEcIlt+yOmi8ymS9L2jfriN2z7IXKbmvSLYY=
+      - OvKU21COAJMJ5I5qUHcanTwl/H/zdeq575O8NpkC5BWURnvFJrqLK3Hp3NdZJB46Jpfz6BIXdt0=
       X-Amz-Request-Id:
-      - C3YN1PR4YZCZZY4K
+      - TPW4856NC81CQBTK
       X-Amz-Server-Side-Encryption:
       - AES256
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: "package lib\n\n// PartSizes return 10k parts that add up to 4.9 TB\nvar
-      PartSizes = partSizes()\n\nfunc partSizes() []int64 {\n\tmaxSize := int64(1024
-      * 1024 * 1024 * 1024 * 5)\n\ttotalParts := 10_000\n\ttotalSize := int64(0)\n\tvar
-      parts []int64\n\tpartSize := int64(1024*1024*5 + 1024*1024/3)\n\tvar iter []int\n\titer
-      = append(iter, 0)\n\titer = append(iter, 100)\n\tf := fibonacci()\n\tf() //
-      0 - skip first two rounds of fib\n\tf() // 100\n\tfor len(parts) < totalParts
-      {\n\t\tperIt := f() * 100\n\t\tfor i := 0; i < perIt; i++ {\n\t\t\tif len(parts)
-      == totalParts {\n\t\t\t\tbreak\n\t\t\t}\n\n\t\t\tremaining := maxSize - totalSize\n\t\t\tif
-      remaining >= partSize {\n\t\t\t\tparts = append(parts, partSize)\n\t\t\t\ttotalSize
-      += partSize\n\t\t\t} else if remaining > 0 {\n\t\t\t\tparts = append(parts,
-      remaining)\n\t\t\t\ttotalSize += remaining\n\t\t\t} else {\n\t\t\t\tbreak\n\t\t\t}\n\t\t}\n\n\t\tif
-      maxSize-totalSize == 0 {\n\t\t\tbreak\n\t\t}\n\t\tpartSize = partSize + partSize\n\t}\n\treturn
-      parts\n}\n\nfunc fibonacci() func() int {\n\tfirst, second := 0, 1\n\treturn
-      func() int {\n\t\tret := first\n\t\tfirst, second = second, first+second\n\t\treturn
-      ret\n\t}\n}\n"
+    body: '{"-":"golib/lib/timer/main.go","action":"end","etags":[{"etag":"174b986566f7e2718cd484f310d7a1c4","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-09-06T16:28:41.966359354-07:00","ref":"put-2593856387","size":1564}'
     form: {}
     headers:
       Connection:
       - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib/lib/timer/main.go
+    method: POST
+  response:
+    body: '{"path":"golib/lib/timer/main.go","display_name":"main.go","type":"file","size":1564,"created_at":"2022-10-04T22:25:33Z","mtime":"2022-10-04T22:25:33Z","provided_mtime":"2022-09-06T23:28:41Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
       Content-Length:
-      - "1044"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/98d54969-da53-49c5-849d-615ca526745b?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210927T233753Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=P8T2enZBJnXhUATtQqbk8dm.XglUKTyo22AIBiGzK_yekVFEX3V_LJztIsbpAgwwaBzd3cspM.V9xYwVmN6gc_aBb9IMYkIAfNuxcEWxLBMgtIsHQB36Db7lWD2TZ4n7&X-Amz-Signature=0f74bf7fb183c4a21246e1d785be1538dd4f43c2636ae885e1580686077e72eb
-    method: PUT
+      - "297"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:33 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 2d42a1fc-5c9b-49d5-9814-d60f0b2d4c98
+      - 93b80806366ae32f1d539883a73569cf
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib
+    method: DELETE
+  response:
+    body: '{"error":"Folder golib not empty","http-code":422,"instance":"19580aa9-b92d-4e7b-bb05-7cb451f7ada6","title":"Folder
+      Not Empty","type":"processing-failure/folder-not-empty"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "172"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 22:25:33 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 19580aa9-b92d-4e7b-bb05-7cb451f7ada6
+      - 6de37201c5a858f983438e3b91f2770b
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/golib?recursive=true
+    method: DELETE
   response:
     body: ""
     headers:
-      Content-Length:
-      - "0"
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Etag:
-      - '"069c58f780d849be45bd14fca5dad20f"'
-      Server:
-      - AmazonS3
-      X-Amz-Id-2:
-      - /6n+LsIK76PExJYWgWAs/Cxwcxfz9z0ycKGYSnVaZG0h02I43737mkcsYJLTTuozs+ItWLiRh8k=
-      X-Amz-Request-Id:
-      - C3YM7MG7Z90PZ3KM
-      X-Amz-Server-Side-Encryption:
-      - AES256
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: "package lib\n\nimport (\n\t\"net/url\"\n\t\"os\"\n\t\"path/filepath\"\n\t\"strings\"\n)\n\nvar
-      QueryEscape = url.QueryEscape\n\nfunc PathEscape(path string) string {\n\tpathParts
-      := strings.Split(path, \"/\")\n\tnewParts := make([]string, len(pathParts))\n\n\tfor
-      i, part := range pathParts {\n\t\tnewParts[i] = url.PathEscape(part)\n\t}\n\n\treturn
-      strings.Join(newParts, \"/\")\n}\n\nfunc BuildPath(resourcePath string, unescapedPath
-      string) string {\n\tviaOS := filepath.Join(resourcePath, PathEscape(unescapedPath))\n\treturn
-      strings.Join(strings.Split(viaOS, string(os.PathSeparator)), \"/\")\n}\n"
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Length:
-      - "549"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/b573a5e6-871b-4b95-8108-e0b629c7e2a6?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210927T233753Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=S3DT.vVM1LqMtWMvl4N_O8R6LwnVsN75IuPRRKHA1KCVcXtmlHtdqmySWL_DZBqyon9U7Kw.w.HI9v9rDFFjUjGJiQV_qL4je7nPVD05Xnv..D6.7ZN._S6TUSBtYgWy&X-Amz-Signature=d3fbdffcf8a4582d88e5bb8c92958236a14f9db90db549b8bb4e717e64f45832
-    method: PUT
-  response:
-    body: ""
-    headers:
-      Content-Length:
-      - "0"
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Etag:
-      - '"896d351744edbb4420bd736284a1a288"'
-      Server:
-      - AmazonS3
-      X-Amz-Id-2:
-      - ZABDtHQbyUtiX20THu857hhV9TA7/8WNCJz4a37F1JgZ+EWIKgEkzxjLvx43Ksezl3y63cKovW0=
-      X-Amz-Request-Id:
-      - C3YSWQP9SNX0JWZN
-      X-Amz-Server-Side-Encryption:
-      - AES256
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: "package direction\n\ntype Type struct {\n\tname   string\n\tSymbol string\n}\n\nvar
-      (\n\tDownloadType = Type{name: \"download\", Symbol: \"⬆\"}\n\tUploadType   =
-      Type{name: \"upload\", Symbol: \"⬆\"}\n)\n\nfunc (t *Type) Name() string {\n\treturn
-      t.name\n}\n"
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Length:
-      - "234"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/d1bc01d7-9dfe-445e-874d-655a42b8fb75?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210927T233753Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=5uHY3i4WvdjeHQL3JbzNUwDmOlZ3fkEZvcNsPDAy4up4rIE9VGQGlvYN6dJ5JQ1Xp4EGTrPcTO378D7vsBT9OUb.LefcIus1kt3stHLWbq6RGQ9T2ElwxW2B08RvGfUi&X-Amz-Signature=094610c3c77090e71401b5a52a1c8960b080b72ac7f5f50d220cfb2cd4e42945
-    method: PUT
-  response:
-    body: ""
-    headers:
-      Content-Length:
-      - "0"
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Etag:
-      - '"5b617a0f7ed3380468c4fa5d28771502"'
-      Server:
-      - AmazonS3
-      X-Amz-Id-2:
-      - 5OAHukp76KKLgzHup5sb0QpIbQqU3s4EKAJw+W9dPSMOI2qf63zlo5xkq0HM+9O+CSd96dKqoQw=
-      X-Amz-Request-Id:
-      - C3YREW5A40QS1Z9F
-      X-Amz-Server-Side-Encryption:
-      - AES256
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: "package lib\n\nimport \"io\"\n\ntype ProgressWriter struct {\n\tWriter
-      \         io.Writer\n\tProgressWatcher func(int64)\n}\n\nfunc (w ProgressWriter)
-      Write(p []byte) (n int, err error) {\n\tn, err = w.Writer.Write(p)\n\n\tw.ProgressWatcher(int64(n))\n\treturn
-      n, err\n}\n"
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Length:
-      - "250"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/4900223b-7b7e-4540-aa50-4bc28030b2a6?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210927T233753Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=h8fed1EbjK5ul7.PCaJ5zFd5KO4DTGI6e_3mzjb_Ns_8k6Hy0tHhG7ZsFX8l45B5nXqvU..SowjQAOP6l0vp3NkzPFAUcshmCCj.Ow_q0lr8xhrlnOWw9Bwlom.Qf7QU&X-Amz-Signature=a905a320e923edc8c3a9ed57c4ec44234174a91d65f0561cfd2a6016b3648b15
-    method: PUT
-  response:
-    body: ""
-    headers:
-      Content-Length:
-      - "0"
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Etag:
-      - '"a818d0badee418a848d9dc03b985b244"'
-      Server:
-      - AmazonS3
-      X-Amz-Id-2:
-      - 21bN0d+uaN9GJeJf9A3xMuHJ2gUIDltHPoO0T+3NV+t4phJ64+wLHklOlV/Q3dmZjGpl1GLNvKw=
-      X-Amz-Request-Id:
-      - C3YZ2PYE3PPYZZRN
-      X-Amz-Server-Side-Encryption:
-      - AES256
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: "package lib\n\nimport (\n\t\"fmt\"\n\t\"net/url\"\n\t\"reflect\"\n\t\"strings\"\n)\n\nfunc
-      CheckRequired(iStruct interface{}, values *url.Values) error {\n\tvar errors
-      = make([]string, 0)\n\tval := reflect.ValueOf(iStruct)\n\tfor val.Kind() ==
-      reflect.Ptr {\n\t\tif val.IsNil() {\n\t\t\treturn nil\n\t\t}\n\t\tval = val.Elem()\n\t}\n\n\tif
-      iStruct == nil {\n\t\treturn nil\n\t}\n\n\tif val.Kind() != reflect.Struct {\n\t\treturn
-      fmt.Errorf(\"CheckRequired expects struct input. Got %v\", val.Kind())\n\t}\n\n\ttyp
-      := val.Type()\n\tfor i := 0; i < typ.NumField(); i++ {\n\t\tsf := typ.Field(i)\n\t\tif
-      sf.PkgPath != \"\" && !sf.Anonymous { // unexported\n\t\t\tcontinue\n\t\t}\n\t\ttag
-      := sf.Tag.Get(\"required\")\n\t\turlTag := sf.Tag.Get(\"url\")\n\t\tkey := strings.Split(urlTag,
-      \",\")[0]\n\n\t\tif tag == \"true\" && values.Get(key) == \"\" {\n\t\t\terrors
-      = append(\n\t\t\t\terrors,\n\t\t\t\tCreateError(iStruct, sf.Name).Error(),\n\t\t\t)\n\t\t}\n\t}\n\tif
-      len(errors) != 0 {\n\t\treturn fmt.Errorf(strings.Join(errors, \"\\n\"))\n\t}\n\treturn
-      nil\n}\n\nfunc CreateError(i interface{}, name string) error {\n\tstructName
-      := reflect.TypeOf(i).Name()\n\treturn fmt.Errorf(\"missing required field: %v{}.%v\",
-      structName, name)\n}\n"
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Length:
-      - "1087"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/87936b46-a7e4-4cf6-b0eb-32cf2a8518b2?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210927T233753Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=p45KPNdJKkHftrClK.uWHM1FYTvr97kl6VsH7S_GeTf3YPCOpPn2gCL5bcQ_VSXJ9VLZKFIvSwaF6iUb.P.5hyQWg0.J3vMT.T1ypWkHMRye7.WdS9SViBdBEXByWFhZ&X-Amz-Signature=ddda276db549597375921116e9c999788503f2b34faacd23d0f5af783f7addf7
-    method: PUT
-  response:
-    body: ""
-    headers:
-      Content-Length:
-      - "0"
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Etag:
-      - '"72556a26959c471a4b0bff38d08e558b"'
-      Server:
-      - AmazonS3
-      X-Amz-Id-2:
-      - BveMKj0VNVOD27BdLRyo7UeSWmed1KzcyhFNdBUOa4TpB4XuaNdsjpgmvnxVFbpNaze2e3AZooA=
-      X-Amz-Request-Id:
-      - C3YZ48K2SY1NT29Z
-      X-Amz-Server-Side-Encryption:
-      - AES256
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: "package lib\n\nfunc Bool(bool bool) *bool {\n\treturn &bool\n}\n"
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Length:
-      - "58"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/8a2e6d02-bbac-4607-bcf5-ef0214afed58?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210927T233753Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=_1O9r6qX3gjD3S3q6e0LH3zHdBGKjQQx3Bw0Ct5ptSe50eWAJKJodmpe2D5EOAp8bLBaYskwo_fzUhs6Or15vWixY7XYAZOCHUxzCj.mp5sssI7AMGhygwrs8lsTMJ1h&X-Amz-Signature=bf5166bde03ddb48d64ecb6f656cc16e2df7e7a8be697eb2d230898bd5ebe39c
-    method: PUT
-  response:
-    body: ""
-    headers:
-      Content-Length:
-      - "0"
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Etag:
-      - '"83789abda0845357c13aa5fa9c8605a2"'
-      Server:
-      - AmazonS3
-      X-Amz-Id-2:
-      - 754Vd0wgzlpqHYt2uPbrU94OHRtiW48UexQzfgqWiFM4SewNzycAZzo0Lb6e5bxRFK/R/SIQqFE=
-      X-Amz-Request-Id:
-      - C3YKR6ZV7R19YVSA
-      X-Amz-Server-Side-Encryption:
-      - AES256
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: "package lib\n\nimport (\n\t\"context\"\n\t\"io\"\n)\n\ntype readerCtx struct
-      {\n\tctx context.Context\n\tr   io.Reader\n}\n\ntype WithContextReader interface
-      {\n\tWithContext(context.Context)\n\tio.Reader\n}\n\nfunc (r *readerCtx) Read(p
-      []byte) (n int, err error) {\n\tif err := r.ctx.Err(); err != nil {\n\t\treturn
-      0, err\n\t}\n\n\twithContext, ok := r.r.(WithContextReader)\n\tif ok {\n\t\twithContext.WithContext(r.ctx)\n\t}\n\treturn
-      r.r.Read(p)\n}\n\n// NewReader gets a context-aware io.Reader.\nfunc NewReader(ctx
-      context.Context, r io.Reader) io.Reader {\n\treturn &readerCtx{ctx: ctx, r:
-      r}\n}\n"
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Length:
-      - "552"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/3a7f59ea-e345-4a86-8965-94c9126babf0?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210927T233753Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=QP7QPLEsrtOVkXtk21B6.wl3.EL0F0QIOPNECv0cW.rF1bAgIz8PIPsykXB9aO5ZNU25dRG.HUJhfCy9NsjrNJfTmBpcxGx2p8HEyqMzT1okPdJKf2ajK661y4c0R5vZ&X-Amz-Signature=5d0f73bf2c8c517e1a573b31494c513d8ab5e209d869a1a0bd88b8753f0c658f
-    method: PUT
-  response:
-    body: ""
-    headers:
-      Content-Length:
-      - "0"
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Etag:
-      - '"87685c7d2090f080b57c948c2745cf70"'
-      Server:
-      - AmazonS3
-      X-Amz-Id-2:
-      - 6VNSGdBE6bRKFPTiVgmJUivMO6tBRmQ2NRgZ64+LtjPsdZsqgUutZqJCFxvXekaqDFjF/1kHcvY=
-      X-Amz-Request-Id:
-      - C3YKVA0ZQZ0MG21C
-      X-Amz-Server-Side-Encryption:
-      - AES256
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: "package test\n\nimport (\n\t\"fmt\"\n\t\"net/http\"\n\t\"os\"\n\t\"path/filepath\"\n\n\tfiles_sdk
-      \"github.com/Files-com/files-sdk-go/v2\"\n\t\"github.com/Files-com/files-sdk-go/v2/lib\"\n\t\"github.com/dnaeon/go-vcr/cassette\"\n\t\"github.com/dnaeon/go-vcr/recorder\"\n)\n\nfunc
-      CreateConfig(fixture string) (files_sdk.Config, *recorder.Recorder, error) {\n\tconfig
-      := files_sdk.Config{}\n\tvar r *recorder.Recorder\n\tvar err error\n\tif os.Getenv(\"GITLAB\")
-      != \"\" {\n\t\tfmt.Println(\"using ModeReplaying\")\n\t\tr, err = recorder.NewAsMode(filepath.Join(\"fixtures\",
-      fixture), recorder.ModeReplaying, nil)\n\t} else {\n\t\tr, err = recorder.New(filepath.Join(\"fixtures\",
-      fixture))\n\t}\n\tif err != nil {\n\t\treturn config, r, err\n\t}\n\n\thttpClient
-      := &http.Client{\n\t\tTransport: r,\n\t}\n\tconfig.Debug = lib.Bool(false)\n\tconfig.SetHttpClient(httpClient)\n\n\tr.AddFilter(func(i
-      *cassette.Interaction) error {\n\t\tdelete(i.Request.Headers, \"X-Filesapi-Key\")\n\t\treturn
-      nil\n\t})\n\treturn config, r, nil\n}\n"
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Length:
-      - "926"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/613e348a-a6c0-40db-b305-f384c5cf3276?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210927T233753Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=XZ2az1f0pzstCqzqKWmJv4XpELhP.5xaJ_bacMns4kC79jMGoOVTNWq2EN6zRBHgBKGZIRlG2WuS7hEfx_nAr2Q8qqVnjlokyb6HfM_4pj9WdLOP.xVYjfjXxUyO2GfN&X-Amz-Signature=ad19b98986622f4e04025faf304453bf15226347282d01d6e15edcac64e47fa1
-    method: PUT
-  response:
-    body: ""
-    headers:
-      Content-Length:
-      - "0"
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Etag:
-      - '"750d4591117fab0f5c8d8e1e706bd09a"'
-      Server:
-      - AmazonS3
-      X-Amz-Id-2:
-      - EwFYUwevrIPE5t84elw1wIQOq4Ru7tBsZIfCfT0vMz+HyOAc53neLOGF5ZyYlTbeM5diXNHoJtk=
-      X-Amz-Request-Id:
-      - C3YZN8MGCDBP7PGB
-      X-Amz-Server-Side-Encryption:
-      - AES256
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: "package lib\n\nimport (\n\t\"net/url\"\n)\n\ntype ListParams struct {\n\tPage
-      \    int64  `json:\"page,omitempty\" url:\"page,omitempty\" required:\"false\"`\n\tPerPage
-      \ int64  `json:\"per_page,omitempty\" url:\"per_page,omitempty\" required:\"false\"`\n\tCursor
-      \  string `json:\"cursor,omitempty\" url:\"cursor,omitempty\" required:\"false\"`\n\tMaxPages
-      int64  `json:\"-\" url:\"-\"`\n}\n\n// ListParamsContainer is a general interface
-      for which all list parameter\n// structs should comply. They achieve this by
-      embedding a ListParams struct\n// and inheriting its implementation of this
-      interface.\ntype ListParamsContainer interface {\n\tGetListParams() *ListParams\n}\n\n//
-      GetListParams returns a ListParams struct (itself). It exists because any\n//
-      structs that embed ListParams will inherit it, and thus implement the\n// ListParamsContainer
-      interface.\nfunc (p *ListParams) GetListParams() *ListParams {\n\treturn p\n}\n\nfunc
-      (p *ListParams) Set(page int64, perPage int64, cursor string, maxPages int64)
-      {\n\tp.Page = page\n\tp.PerPage = perPage\n\tp.Cursor = cursor\n\tp.MaxPages
-      = maxPages\n}\n\ntype Query func() (*[]interface{}, string, error)\n\ntype Iter
-      struct {\n\tQuery\n\tListParams   ListParamsContainer\n\tParams       []interface{}\n\tCurrentIndex
-      int\n\tValues       *[]interface{}\n\tCursor       string\n\tError        error\n}\n\n//
-      Err returns the error, if any,\n// that caused the Iter to stop.\n// It must
-      be inspected\n// after Next returns false.\nfunc (i *Iter) Err() error {\n\treturn
-      i.Error\n}\n\nfunc (i *Iter) Current() interface{} {\n\treturn (*i.Values)[i.CurrentIndex]\n}\n\nfunc
-      (i *Iter) GetParams() *ListParams {\n\treturn i.ListParams.GetListParams()\n}\n\nfunc
-      (i *Iter) ExportParams() (url.Values, error) {\n\tparamValues, err := ExportParams(i.GetParams())\n\tif
-      err != nil {\n\t\treturn paramValues, err\n\t}\n\tlistParamValues, _ := ExportParams(i.ListParams)\n\n\tfor
-      key, value := range paramValues {\n\t\tlistParamValues.Set(key, value[0])\n\t}\n\n\tif
-      i.GetCursor() != \"\" {\n\t\tlistParamValues.Del(\"page\")\n\t}\n\n\treturn
-      listParamValues, nil\n}\n\nfunc (i *Iter) GetPage() bool {\n\tif i.GetParams().MaxPages
-      != 0 && i.GetParams().Page == i.GetParams().MaxPages {\n\t\treturn false\n\t}\n\n\ti.GetParams().Page
-      += 1\n\tif i.GetParams().Page == 2 && i.Cursor == \"\" {\n\t\treturn false\n\t}\n\ti.Values,
-      i.Cursor, i.Error = i.Query()\n\ti.SetCursor(i.Cursor)\n\treturn i.Error ==
-      nil && len(*i.Values) != 0\n}\n\nfunc (i *Iter) EOFPage() bool {\n\treturn len(*i.Values)
-      == i.CurrentIndex+1\n}\n\nfunc (i *Iter) GetCursor() string {\n\treturn i.GetParams().Cursor\n}\n\nfunc
-      (i *Iter) SetCursor(cursor string) {\n\ti.GetParams().Cursor = cursor\n\ti.Cursor
-      = cursor\n}\n\n// Next iterates the results in i.Current() or i.`ResourceName`().\n//
-      It returns true until there are no results remaining.\n// To adjust the number
-      of results set ListParams.PerPage.\n// To have it auto-paginate set ListParams.MaxPages,
-      default is 1.\n//\n// To iterate over all results use the following pattern.\n//\n//
-      \  for i.Next() {\n//     i.Current()\n//   }\nfunc (i *Iter) Next() bool {\n\tif
-      i.Values == nil {\n\t\treturn i.GetPage() && len(*i.Values) > 0\n\t} else if
-      len(*i.Values) > i.CurrentIndex+1 {\n\t\ti.CurrentIndex += 1\n\t\treturn true\n\t}\n\n\tif
-      i.EOFPage() {\n\t\ti.CurrentIndex = 0\n\t\treturn i.GetPage()\n\t}\n\n\treturn
-      false\n}\n"
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Length:
-      - "3166"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/6d52cedb-4e01-43e7-b1b3-02afe03bc9e5?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210927T233753Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=gpvTIivCF5fuxfOyDQug_m50iHh11iL985XovI_UHOup_1d3fkIe94p4QSosciLzkoE47jgUZWLTLwSRwOeKum51BqaFmFXOag.olf1lwD8ijs4dTU4xW3oDmy8Ojw6Q&X-Amz-Signature=500a5d0e9fa383a13e036b5e9928b20014189ebb48a5dbaec8ecb2dd46c75415
-    method: PUT
-  response:
-    body: ""
-    headers:
-      Content-Length:
-      - "0"
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Etag:
-      - '"ebd062314ae4a4ebff111b4b45d836f9"'
-      Server:
-      - AmazonS3
-      X-Amz-Id-2:
-      - Vm6iUckCtqYzXoZ4TzN4uGfY3CsyhQDNxj2A3g6O1DQwt1XIHPEczYUyJ8hDhyv0jKcWkO+WFj0=
-      X-Amz-Request-Id:
-      - C3YV1QQZQJH2252H
-      X-Amz-Server-Side-Encryption:
-      - AES256
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: "package lib\n\nimport (\n\t\"testing\"\n\n\t\"github.com/stretchr/testify/assert\"\n)\n\nfunc
-      TestIter_Next_MaxPages(t *testing.T) {\n\tassert := assert.New(t)\n\tparams
-      := ListParams{}\n\tparams.Set(0, 5, \"\", 2)\n\tit := Iter{}\n\tit.ListParams
-      = &params\n\n\tit.Query = func() (*[]interface{}, string, error) {\n\t\tret
-      := make([]interface{}, params.PerPage)\n\n\t\treturn &ret, \"cursor\", nil\n\t}\n\trecordCount
-      := 0\n\tfor it.Next() {\n\t\trecordCount += 1\n\t}\n\tassert.Equal(int(params.PerPage*params.MaxPages),
-      recordCount)\n\tassert.Equal(nil, it.Err())\n\tassert.Equal(\"cursor\", it.GetCursor())\n}\n\nfunc
-      TestIter_Next_ZeroMaxPages(t *testing.T) {\n\tassert := assert.New(t)\n\tparams
-      := ListParams{}\n\tparams.Set(0, 2, \"\", 0)\n\tpages := make([][]interface{},
-      0)\n\tpages = append(pages, make([]interface{}, params.PerPage))\n\tpages =
-      append(pages, make([]interface{}, params.PerPage))\n\tpages = append(pages,
-      make([]interface{}, 0))\n\tit := Iter{}\n\tit.ListParams = &params\n\n\tit.Query
-      = func() (*[]interface{}, string, error) {\n\t\tret := pages[:1][0]\n\t\tpages
-      = pages[1:]\n\n\t\treturn &ret, \"cursor\", nil\n\t}\n\trecordCount := 0\n\tfor
-      it.Next() {\n\t\trecordCount += 1\n\t}\n\tassert.Equal(4, recordCount)\n}\n\nfunc
-      TestIter_Next_PerPage_of_one(t *testing.T) {\n\tassert := assert.New(t)\n\tparams
-      := ListParams{}\n\tparams.Set(0, 1, \"\", 2)\n\tit := Iter{}\n\tit.ListParams
-      = &params\n\tvar sliceOfSliceInterfaces [2][]interface{}\n\tsliceOfSliceInterfaces[0]
-      = make([]interface{}, params.PerPage)\n\tsliceOfSliceInterfaces[1] = make([]interface{},
-      0)\n\tresultCounter := 0\n\tit.Query = func() (*[]interface{}, string, error)
-      {\n\t\tret := sliceOfSliceInterfaces[resultCounter]\n\t\tresultCounter += 1\n\t\treturn
-      &ret, \"cursor\", nil\n\t}\n\trecordCount := 0\n\tfor it.Next() {\n\t\trecordCount
-      += 1\n\t\tassert.Equal(Interface(), it.Current())\n\t}\n\tassert.Equal(1, recordCount)\n}\n\nfunc
-      TestIter_Next_No_Cursor(t *testing.T) {\n\tassert := assert.New(t)\n\tparams
-      := ListParams{}\n\tit := Iter{}\n\tit.ListParams = &params\n\tresultCounter
-      := 0\n\tit.Query = func() (*[]interface{}, string, error) {\n\t\tret := make([]interface{},
-      1)\n\t\tresultCounter += 1\n\t\treturn &ret, \"\", nil\n\t}\n\trecordCount :=
-      0\n\tfor it.Next() {\n\t\trecordCount += 1\n\t\tassert.Equal(Interface(), it.Current())\n\t}\n\tassert.Equal(1,
-      recordCount)\n}\n"
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Length:
-      - "2185"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/dfda6f89-fc68-4069-bed4-13f1a13ac8f5?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20210927%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20210927T233753Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=0i.ElyPLkSH.qyIOdFR6fISpSZT61wEyav14zCT68u6cqYJ6U.XbAxGX1TSVtTDfP6OfDVA94bIAUTqZALvZfvpj5ssSffGXE.vtUYnMwoiA_nQwia9oahbW7gwQXP2F&X-Amz-Signature=ed27e081458b8269c325949466b06c96875c46494057f6c1e22fc254a2e63470
-    method: PUT
-  response:
-    body: ""
-    headers:
-      Content-Length:
-      - "0"
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Etag:
-      - '"e95e5ed8d3276eb4b8b6b998353ff1d2"'
-      Server:
-      - AmazonS3
-      X-Amz-Id-2:
-      - 5+sUZQK/kY7hFJ+Lpi7mMSEPwLiR7MyM72ZPvmpR45Q5/pagxlihvE7fGWFMFH9vp8qliQVcfLY=
-      X-Amz-Request-Id:
-      - C3YVHQ1TG5Z9CGEX
-      X-Amz-Server-Side-Encryption:
-      - AES256
-    status: 200 OK
-    code: 200
-    duration: ""
-- request:
-    body: '{"action":"end","etags[0][etag]":"\"ebd062314ae4a4ebff111b4b45d836f9\"","etags[0][part]":"1","provided_mtime":"2021-09-27T16:37:53-07:00","ref":"put-100945715","size":"3166"}'
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/iter.go
-    method: POST
-  response:
-    body: '{"path":"golib/iter.go","display_name":"iter.go","type":"file","size":3166,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
-    headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "250"
-      Content-Type:
-      - application/json
       Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
+      - Tue, 04 Oct 2022 22:25:34 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -1180,517 +2397,8 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - e29211ce-358b-4c48-9822-69f03fa642d6
-    status: 201 Created
-    code: 201
-    duration: ""
-- request:
-    body: '{"action":"end","etags[0][etag]":"\"069c58f780d849be45bd14fca5dad20f\"","etags[0][part]":"1","provided_mtime":"2021-09-27T16:37:53-07:00","ref":"put-100945698","size":"1044"}'
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/partsize.go
-    method: POST
-  response:
-    body: '{"path":"golib/partsize.go","display_name":"partsize.go","type":"file","size":1044,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
-    headers:
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "258"
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Expires:
-      - Fri, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - nginx
-      X-Request-Id:
-      - b542e0aa-99f4-43f8-a726-fe5ad5e04e56
-    status: 201 Created
-    code: 201
-    duration: ""
-- request:
-    body: '{"action":"end","etags[0][etag]":"\"129a7a11d2f07ee5446398ff07588c99\"","etags[0][part]":"1","provided_mtime":"2021-09-27T16:37:53-07:00","ref":"put-100945686","size":"691"}'
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/required_test.go
-    method: POST
-  response:
-    body: '{"path":"golib/required_test.go","display_name":"required_test.go","type":"file","size":691,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
-    headers:
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "267"
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Expires:
-      - Fri, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - nginx
-      X-Request-Id:
-      - 45ffbc95-16ec-4581-9cf4-6117431c8870
-    status: 201 Created
-    code: 201
-    duration: ""
-- request:
-    body: '{"action":"end","etags[0][etag]":"\"87685c7d2090f080b57c948c2745cf70\"","etags[0][part]":"1","provided_mtime":"2021-09-27T16:37:53-07:00","ref":"put-100945713","size":"552"}'
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/readerctx.go
-    method: POST
-  response:
-    body: '{"path":"golib/readerctx.go","display_name":"readerctx.go","type":"file","size":552,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
-    headers:
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "259"
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Expires:
-      - Fri, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - nginx
-      X-Request-Id:
-      - 01307ccd-7046-4421-a89f-9096e9d03a09
-    status: 201 Created
-    code: 201
-    duration: ""
-- request:
-    body: '{"action":"end","etags[0][etag]":"\"f7cb73244af2aafb2ced638dc9658dee\"","etags[0][part]":"1","provided_mtime":"2021-09-27T16:37:53-07:00","ref":"put-100945690","size":"75"}'
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/interface.go
-    method: POST
-  response:
-    body: '{"path":"golib/interface.go","display_name":"interface.go","type":"file","size":75,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
-    headers:
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "258"
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Expires:
-      - Fri, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - nginx
-      X-Request-Id:
-      - 4f974311-1172-4278-b8bf-ea9359cea85a
-    status: 201 Created
-    code: 201
-    duration: ""
-- request:
-    body: '{"action":"end","etags[0][etag]":"\"a818d0badee418a848d9dc03b985b244\"","etags[0][part]":"1","provided_mtime":"2021-09-27T16:37:53-07:00","ref":"put-100945706","size":"250"}'
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/progresswriter.go
-    method: POST
-  response:
-    body: '{"path":"golib/progresswriter.go","display_name":"progresswriter.go","type":"file","size":250,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
-    headers:
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "269"
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Expires:
-      - Fri, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - nginx
-      X-Request-Id:
-      - 561ad389-8c22-4209-9b2c-9d785c212e95
-    status: 201 Created
-    code: 201
-    duration: ""
-- request:
-    body: '{"action":"end","etags[0][etag]":"\"83789abda0845357c13aa5fa9c8605a2\"","etags[0][part]":"1","provided_mtime":"2021-09-27T16:37:53-07:00","ref":"put-100945711","size":"58"}'
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/pointers.go
-    method: POST
-  response:
-    body: '{"path":"golib/pointers.go","display_name":"pointers.go","type":"file","size":58,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
-    headers:
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "248"
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Expires:
-      - Fri, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - nginx
-      X-Request-Id:
-      - 857cd683-4f6a-4238-ba2b-489d217abc52
-    status: 201 Created
-    code: 201
-    duration: ""
-- request:
-    body: '{"action":"end","etags[0][etag]":"\"174b986566f7e2718cd484f310d7a1c4\"","etags[0][part]":"1","provided_mtime":"2021-09-27T16:37:53-07:00","ref":"put-100945693","size":"1564"}'
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/timer/main.go
-    method: POST
-  response:
-    body: '{"path":"golib/timer/main.go","display_name":"main.go","type":"file","size":1564,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
-    headers:
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "256"
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Expires:
-      - Fri, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - nginx
-      X-Request-Id:
-      - 904c712a-625c-4f40-a03a-496f00eead0c
-    status: 201 Created
-    code: 201
-    duration: ""
-- request:
-    body: '{"action":"end","etags[0][etag]":"\"3cc6728f7554f3ea0f53dabed57b19d2\"","etags[0][part]":"1","provided_mtime":"2021-09-27T16:37:53-07:00","ref":"put-100945694","size":"231"}'
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/export_params.go
-    method: POST
-  response:
-    body: '{"path":"golib/export_params.go","display_name":"export_params.go","type":"file","size":231,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
-    headers:
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "267"
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Expires:
-      - Fri, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - nginx
-      X-Request-Id:
-      - db819fbe-d2d1-4535-977e-4d125812dab7
-    status: 201 Created
-    code: 201
-    duration: ""
-- request:
-    body: '{"action":"end","etags[0][etag]":"\"5b617a0f7ed3380468c4fa5d28771502\"","etags[0][part]":"1","provided_mtime":"2021-09-27T16:37:53-07:00","ref":"put-100945710","size":"234"}'
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/direction/main.go
-    method: POST
-  response:
-    body: '{"path":"golib/direction/main.go","display_name":"main.go","type":"file","size":234,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
-    headers:
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "259"
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Expires:
-      - Fri, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - nginx
-      X-Request-Id:
-      - 3685f53b-0dba-450e-9860-18de1432c939
-    status: 201 Created
-    code: 201
-    duration: ""
-- request:
-    body: '{"action":"end","etags[0][etag]":"\"e95e5ed8d3276eb4b8b6b998353ff1d2\"","etags[0][part]":"1","provided_mtime":"2021-09-27T16:37:53-07:00","ref":"put-100945717","size":"2185"}'
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/iter_test.go
-    method: POST
-  response:
-    body: '{"path":"golib/iter_test.go","display_name":"iter_test.go","type":"file","size":2185,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
-    headers:
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "260"
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Expires:
-      - Fri, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - nginx
-      X-Request-Id:
-      - f04b6fe9-f9ab-49df-85e7-b09f72635ac4
-    status: 201 Created
-    code: 201
-    duration: ""
-- request:
-    body: '{"action":"end","etags[0][etag]":"\"4dd39224fa00a070f76d14950571e694\"","etags[0][part]":"1","provided_mtime":"2021-09-27T16:37:53-07:00","ref":"put-100945692","size":"397"}'
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/partsize_test.go
-    method: POST
-  response:
-    body: '{"path":"golib/partsize_test.go","display_name":"partsize_test.go","type":"file","size":397,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
-    headers:
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "267"
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Expires:
-      - Fri, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - nginx
-      X-Request-Id:
-      - 6ae6a4ad-ad92-4d12-8feb-cd08f7c2bb8c
-    status: 201 Created
-    code: 201
-    duration: ""
-- request:
-    body: '{"action":"end","etags[0][etag]":"\"896d351744edbb4420bd736284a1a288\"","etags[0][part]":"1","provided_mtime":"2021-09-27T16:37:53-07:00","ref":"put-100945695","size":"549"}'
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/query.go
-    method: POST
-  response:
-    body: '{"path":"golib/query.go","display_name":"query.go","type":"file","size":549,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
-    headers:
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "251"
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Expires:
-      - Fri, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - nginx
-      X-Request-Id:
-      - 8122fd7d-8f6f-4d8e-8388-65c1f375b33c
-    status: 201 Created
-    code: 201
-    duration: ""
-- request:
-    body: '{"action":"end","etags[0][etag]":"\"72556a26959c471a4b0bff38d08e558b\"","etags[0][part]":"1","provided_mtime":"2021-09-27T16:37:53-07:00","ref":"put-100945701","size":"1087"}'
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/required.go
-    method: POST
-  response:
-    body: '{"path":"golib/required.go","display_name":"required.go","type":"file","size":1087,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
-    headers:
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "258"
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Expires:
-      - Fri, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - nginx
-      X-Request-Id:
-      - d8d1dfbf-3c54-4c25-b15a-267f8d6da7b8
-    status: 201 Created
-    code: 201
-    duration: ""
-- request:
-    body: '{"action":"end","etags[0][etag]":"\"750d4591117fab0f5c8d8e1e706bd09a\"","etags[0][part]":"1","provided_mtime":"2021-09-27T16:37:53-07:00","ref":"put-100945716","size":"926"}'
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/test/createconfig.go
-    method: POST
-  response:
-    body: '{"path":"golib/test/createconfig.go","display_name":"createconfig.go","type":"file","size":926,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
-    headers:
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "270"
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Expires:
-      - Fri, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - nginx
-      X-Request-Id:
-      - eecd1cfe-8a42-403f-b012-a27545a76598
-    status: 201 Created
-    code: 201
-    duration: ""
-- request:
-    body: '{"action":"end","etags[0][etag]":"\"cecd1ea94155ea41d1f8f9e0c2f2e0d9\"","etags[0][part]":"1","provided_mtime":"2021-09-27T16:37:53-07:00","ref":"put-100945696","size":"68"}'
-    form: {}
-    headers:
-      Connection:
-      - close
-      Content-Type:
-      - application/json
-      User-Agent:
-      - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/golib/string.go
-    method: POST
-  response:
-    body: '{"path":"golib/string.go","display_name":"string.go","type":"file","size":68,"mtime":"2021-09-27T23:37:54Z","provided_mtime":"2021-09-27T23:37:53Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
-    headers:
-      Cache-Control:
-      - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "252"
-      Content-Type:
-      - application/json
-      Date:
-      - Mon, 27 Sep 2021 23:37:54 GMT
-      Expires:
-      - Fri, 01 Jan 1990 00:00:00 GMT
-      Pragma:
-      - no-cache
-      Server:
-      - nginx
-      X-Request-Id:
-      - 9db6deee-bb4e-4d24-ae0c-b7b31a7672cb
-    status: 201 Created
-    code: 201
+      - f974d059-993c-4bf6-8943-1786427abc70
+      - 0da71cad863e7cae515150ee7764d31f
+    status: 204 No Content
+    code: 204
     duration: ""

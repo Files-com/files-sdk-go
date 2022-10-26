@@ -25,10 +25,6 @@ func PathEscape(path string) string {
 	return strings.Join(newParts, "/")
 }
 
-type Path struct {
-	Path string
-}
-
 func BuildPath(resourcePath string, values interface{}) (string, error) {
 	r := regexp.MustCompile(`\{(.*)\}`)
 	matches := r.FindSubmatch([]byte(resourcePath))

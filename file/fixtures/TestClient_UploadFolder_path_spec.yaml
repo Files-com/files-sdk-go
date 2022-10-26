@@ -1,0 +1,2414 @@
+---
+version: 1
+interactions:
+- request:
+    body: '{"-":"files-dest-copy_foo_to_dest"}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_foo_to_dest
+    method: POST
+  response:
+    body: '{"display_name":"files-dest-copy_foo_to_dest","type":"directory","size":null,"created_at":"2022-10-04T19:03:44Z","crc32":null,"md5":null,"subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "164"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:44 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 65634f9d-d4e0-4072-b66f-5c6d516ce3e9
+      - 6969bb19577b0da36cda0c8c98280b26
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_foo_to_dest/dest"}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_foo_to_dest/dest
+    method: POST
+  response:
+    body: '{"display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:03:45Z","crc32":null,"md5":null,"subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "141"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:45 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - e4ffe0fc-9264-457e-9a60-34332ca898e6
+      - 469cbefa7b382f76785c43098f5b0613
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_foo_to_dest/dest/foo/baz.txt","mkdir_parents":true,"size":15}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/files-dest-copy_foo_to_dest/dest/foo/baz.txt
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T19:18:45Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2592185202","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/93f9190e-308b-4754-8250-aa62b1d50389?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T190345Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=pbFsswWvMcb2H35z8WDogISJUJqIunH0py6u1OMQl4xSECJCnM5F6uVpT2G6x0yrMnaqLunTYpsIXkeFQnsRGjl3kXM4nATc0oAgSk0RQhYeYwLSk2In7Rc.R6z0PnW_\u0026X-Amz-Signature=475e224b6e0c4a0d9341bfa6e6809f873f1bb048c01e825c0c9fbc232d7f6dc2"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:45 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 2f60beec-c5f7-4f42-96c1-cad9f315308a
+      - 5d7a51b798d36bd1c4a89d83a3cfc35d
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: src/foo/baz.txt
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "15"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/93f9190e-308b-4754-8250-aa62b1d50389?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T190345Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=pbFsswWvMcb2H35z8WDogISJUJqIunH0py6u1OMQl4xSECJCnM5F6uVpT2G6x0yrMnaqLunTYpsIXkeFQnsRGjl3kXM4nATc0oAgSk0RQhYeYwLSk2In7Rc.R6z0PnW_&X-Amz-Signature=475e224b6e0c4a0d9341bfa6e6809f873f1bb048c01e825c0c9fbc232d7f6dc2
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 19:03:47 GMT
+      Etag:
+      - '"ddf66d49f5b58593a322d1e85538cc77"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - +FOwboyEY8GK9Y49zXyHhu0JT8LsS8BGKBP5hj92waZaa74DMd5JURQFaCuFSnuvX++EtKE8pDo=
+      X-Amz-Request-Id:
+      - GAQ51K68BQH4QX60
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_foo_to_dest/dest/foo/baz.txt","action":"end","etags":[{"etag":"ddf66d49f5b58593a322d1e85538cc77","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-10-04T19:03:44.375493909Z","ref":"put-2592185202","size":15}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_foo_to_dest/dest/foo/baz.txt
+    method: POST
+  response:
+    body: '{"path":"files-dest-copy_foo_to_dest/dest/foo/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-04T19:03:46Z","mtime":"2022-10-04T19:03:46Z","provided_mtime":"2022-10-04T19:03:44Z","crc32":null,"md5":null,"mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "302"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:46 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - a20ff8c6-a636-4ccf-aa86-8bfc21288f95
+      - 07c8886d4db1afdf1f06dace1682fada
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_foo_to_dest
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_foo_to_dest","display_name":"files-dest-copy_foo_to_dest","type":"directory","size":null,"created_at":"2022-10-04T19:03:44Z","mtime":"2022-10-04T19:03:46Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:47 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 32d7a06d-8d03-47a4-b09b-af12c478a438
+      - 85bcebf77aad95fa28143808d09a35b9
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_foo_to_dest?page=1
+    method: GET
+  response:
+    body: '[{"path":"files-dest-copy_foo_to_dest/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:03:45Z","mtime":"2022-10-04T19:03:46Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:47 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 7b18c2b0-a18a-4cfa-a192-aea56830f5ea
+      - c3821a3c4a2f0e7426f0bcc49bab7d32
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_foo_to_dest/dest?page=1
+    method: GET
+  response:
+    body: '[{"path":"files-dest-copy_foo_to_dest/dest/foo","display_name":"foo","type":"directory","size":null,"created_at":"2022-10-04T19:03:45Z","mtime":"2022-10-04T19:03:46Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:48 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 7c21b8d2-a38e-4055-a31e-d3a448a822a2
+      - 882aa07bd1c69f019c2236cbad69ee71
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_foo_to_dest/dest/foo?page=1
+    method: GET
+  response:
+    body: '[{"path":"files-dest-copy_foo_to_dest/dest/foo/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-04T19:03:46Z","mtime":"2022-10-04T19:03:46Z","provided_mtime":"2022-10-04T19:03:44Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:48 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 2ca56b52-7997-4190-8e13-1697c406985c
+      - 669ce43f164089606bed86b28f01053a
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_foo_to_dest/dest
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_foo_to_dest/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:03:45Z","mtime":"2022-10-04T19:03:46Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:49 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - f406f63e-a570-4904-ae75-2e47c23b7e46
+      - c5751877c2cbc80c9a7ba3e969c070c2
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_foo_to_dest/dest/foo
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_foo_to_dest/dest/foo","display_name":"foo","type":"directory","size":null,"created_at":"2022-10-04T19:03:45Z","mtime":"2022-10-04T19:03:46Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:49 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 7ec21f78-8a1a-40fa-93b8-34c2d10e48fd
+      - 23b72deed5ffb9ab31b6a79eae0b8c52
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_foo_to_dest/dest/foo/baz.txt
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_foo_to_dest/dest/foo/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-04T19:03:46Z","mtime":"2022-10-04T19:03:46Z","provided_mtime":"2022-10-04T19:03:44Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:50 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 4e045d64-4e02-47bf-94a6-92affb00adce
+      - e135418726f0f2e4ae82fa213380473c
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_foo_to_dest?recursive=true
+    method: DELETE
+  response:
+    body: ""
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Date:
+      - Tue, 04 Oct 2022 19:03:50 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 327a6092-f90e-410e-9744-5b88009042ce
+      - 2d70ed127a871598d39a405ee3faed70
+    status: 204 No Content
+    code: 204
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_contents_of_foo_to_dest_foo"}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_foo
+    method: POST
+  response:
+    body: '{"display_name":"files-dest-copy_contents_of_foo_to_dest_foo","type":"directory","size":null,"created_at":"2022-10-04T19:03:51Z","crc32":null,"md5":null,"subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "180"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:51 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - d5d4581a-78d0-449b-bc43-6c374066f301
+      - c0747023bd4a4ac6c94cc3ab51984460
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_contents_of_foo_to_dest_foo/dest"}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_foo/dest
+    method: POST
+  response:
+    body: '{"display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:03:52Z","crc32":null,"md5":null,"subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "141"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:52 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - b8849905-be20-4495-89fe-ba53c1a0d2a2
+      - 91cfd7c2fd8f6b0711282dffc9e8e777
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_contents_of_foo_to_dest_foo/dest/foo"}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_foo/dest/foo
+    method: POST
+  response:
+    body: '{"display_name":"foo","type":"directory","size":null,"created_at":"2022-10-04T19:03:52Z","crc32":null,"md5":null,"subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "140"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:52 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - b07983e9-4d64-465a-b19d-73204624cd4d
+      - e9f2bcf51975dc507909d1e3e661e50d
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_contents_of_foo_to_dest_foo/dest/foo/baz.txt","mkdir_parents":true,"size":15}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/files-dest-copy_contents_of_foo_to_dest_foo/dest/foo/baz.txt
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T19:18:53Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2592186174","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/1c8af310-78db-44c3-b89e-95dc2535d544?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T190353Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=yA.dPqdlJYhHIxpxoLi.nY0bl7svKIcYmEd3SktTzF5b3welvThNOl_148jEVr5oZuetZEcmK72YW48GUN4EZlgPu9W.TyLQfJlL_SWw7yxdwP82TZH_U.8yWnmJ3RWg\u0026X-Amz-Signature=f68d311afbd484e1ca336769df5cf5e1ea459b61c8c21e3238098bbf2f3713d6"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:53 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 26f0eb00-c140-4a21-b06a-0a11f17acff7
+      - e55351e0caa1859a46c932c877c0c452
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: src/foo/baz.txt
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "15"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/1c8af310-78db-44c3-b89e-95dc2535d544?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T190353Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=yA.dPqdlJYhHIxpxoLi.nY0bl7svKIcYmEd3SktTzF5b3welvThNOl_148jEVr5oZuetZEcmK72YW48GUN4EZlgPu9W.TyLQfJlL_SWw7yxdwP82TZH_U.8yWnmJ3RWg&X-Amz-Signature=f68d311afbd484e1ca336769df5cf5e1ea459b61c8c21e3238098bbf2f3713d6
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 19:03:54 GMT
+      Etag:
+      - '"ddf66d49f5b58593a322d1e85538cc77"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - KQb733Gseg4ttfxCKzvlq/blSBFLlOx0jWIW3JLBsx6j14OYHe0+N94duhaOEReDZaEI+cOPCbk=
+      X-Amz-Request-Id:
+      - 4EZF4FC655F53SQ7
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_contents_of_foo_to_dest_foo/dest/foo/baz.txt","action":"end","etags":[{"etag":"ddf66d49f5b58593a322d1e85538cc77","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-10-04T19:03:51.078409642Z","ref":"put-2592186174","size":15}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_contents_of_foo_to_dest_foo/dest/foo/baz.txt
+    method: POST
+  response:
+    body: '{"path":"files-dest-copy_contents_of_foo_to_dest_foo/dest/foo/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-04T19:03:54Z","mtime":"2022-10-04T19:03:54Z","provided_mtime":"2022-10-04T19:03:51Z","crc32":null,"md5":null,"mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "318"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:54 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - d51ba559-cbc0-4766-a7fa-c739a886bf74
+      - 6233c3e91ceb5f0b2f466825793e6d04
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_contents_of_foo_to_dest_foo
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_contents_of_foo_to_dest_foo","display_name":"files-dest-copy_contents_of_foo_to_dest_foo","type":"directory","size":null,"created_at":"2022-10-04T19:03:51Z","mtime":"2022-10-04T19:03:54Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:54 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - ecfb0a96-1193-4ae1-a220-50c0d1047fb4
+      - c79e6640a82ec35b4569bebeef819c76
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_foo?page=1
+    method: GET
+  response:
+    body: '[{"path":"files-dest-copy_contents_of_foo_to_dest_foo/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:03:52Z","mtime":"2022-10-04T19:03:54Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:55 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 0bc17245-f84b-457c-9f14-d1f700edd7b4
+      - 20bf7fa86f583eb110df9439522c5081
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_foo/dest?page=1
+    method: GET
+  response:
+    body: '[{"path":"files-dest-copy_contents_of_foo_to_dest_foo/dest/foo","display_name":"foo","type":"directory","size":null,"created_at":"2022-10-04T19:03:52Z","mtime":"2022-10-04T19:03:54Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:55 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 2b7209ee-c949-4324-ac9e-8821f07d9124
+      - ed96e0923e11a327959f1097acf9638f
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_foo/dest/foo?page=1
+    method: GET
+  response:
+    body: '[{"path":"files-dest-copy_contents_of_foo_to_dest_foo/dest/foo/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-04T19:03:54Z","mtime":"2022-10-04T19:03:54Z","provided_mtime":"2022-10-04T19:03:51Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:56 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - c77e6788-2eec-4317-b710-9ec398c967d7
+      - 8057ee7541aadcc41c396bac18cf88ec
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_contents_of_foo_to_dest_foo/dest
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_contents_of_foo_to_dest_foo/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:03:52Z","mtime":"2022-10-04T19:03:54Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:56 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 374fe8e3-c6cd-4d73-8755-0fb0de68c9f5
+      - 638618bb5a0cad3ea08b258ac2b77917
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_contents_of_foo_to_dest_foo/dest/foo
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_contents_of_foo_to_dest_foo/dest/foo","display_name":"foo","type":"directory","size":null,"created_at":"2022-10-04T19:03:52Z","mtime":"2022-10-04T19:03:54Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:57 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - c8ec96d6-37c4-41d1-8121-2771f25f6a5a
+      - 664d7e295ef1672bd5b83e280c529041
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_contents_of_foo_to_dest_foo/dest/foo/baz.txt
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_contents_of_foo_to_dest_foo/dest/foo/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-04T19:03:54Z","mtime":"2022-10-04T19:03:54Z","provided_mtime":"2022-10-04T19:03:51Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:03:57 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - b8e32018-e49c-4557-a89a-54a05bd23f36
+      - b8020a6a7415e8cff38d1f731f7ab3e5
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_contents_of_foo_to_dest_foo?recursive=true
+    method: DELETE
+  response:
+    body: ""
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Date:
+      - Tue, 04 Oct 2022 19:03:59 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - afdaa350-cf98-4541-9e33-1db7ea686470
+      - f3f2aeec39fa5ee4aa415e125ae086b0
+    status: 204 No Content
+    code: 204
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_contents_of_foo_to_dest_bar"}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_bar
+    method: POST
+  response:
+    body: '{"display_name":"files-dest-copy_contents_of_foo_to_dest_bar","type":"directory","size":null,"created_at":"2022-10-04T19:04:00Z","crc32":null,"md5":null,"subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "180"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:00 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 17d65f6d-8151-46d5-9aa8-0f93dba442a9
+      - 9e1b3a77df0137b94faaefe574d0516f
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_contents_of_foo_to_dest_bar/dest"}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_bar/dest
+    method: POST
+  response:
+    body: '{"display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:04:00Z","crc32":null,"md5":null,"subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "141"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:00 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 55e58ead-5b4e-4155-935e-b7c1cc30cd8a
+      - 27edf765ab6304b31cebc636531fb638
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_contents_of_foo_to_dest_bar/dest/bar"}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_bar/dest/bar
+    method: POST
+  response:
+    body: '{"display_name":"bar","type":"directory","size":null,"created_at":"2022-10-04T19:04:01Z","crc32":null,"md5":null,"subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "140"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:01 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 52de3359-9c1a-4903-81b8-8950d7a44f1b
+      - a61dbc3b16828558f2ba8ecbb0fbe931
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_contents_of_foo_to_dest_bar/dest/bar/baz.txt","mkdir_parents":true,"size":15}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/files-dest-copy_contents_of_foo_to_dest_bar/dest/bar/baz.txt
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T19:19:02Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2592187267","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/0227f448-6472-4987-876b-40ee2c398e8a?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T190402Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=Njij41ElRgU00GATMQuwQXTnnhjUs5F1kMt1a0QzeN0mNGUc8i_B1eYGMvY_J2x1xv_YSZE2N0EzTDHeg8oufnQ8HtTefFh6c2iWChOB7SxPsoDPJsEAMww3ylo45.tZ\u0026X-Amz-Signature=8e224d75944e1ab8f3635ec3ae036013ec3e8ca2a3e41548dfd735d9901c9df2"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:02 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 92c472f7-8872-4b54-b139-286a9c3f6414
+      - f4ec4138eb2827aa57c8e3764ad7bc95
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: src/foo/baz.txt
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "15"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/0227f448-6472-4987-876b-40ee2c398e8a?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T190402Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=Njij41ElRgU00GATMQuwQXTnnhjUs5F1kMt1a0QzeN0mNGUc8i_B1eYGMvY_J2x1xv_YSZE2N0EzTDHeg8oufnQ8HtTefFh6c2iWChOB7SxPsoDPJsEAMww3ylo45.tZ&X-Amz-Signature=8e224d75944e1ab8f3635ec3ae036013ec3e8ca2a3e41548dfd735d9901c9df2
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 19:04:04 GMT
+      Etag:
+      - '"ddf66d49f5b58593a322d1e85538cc77"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - k6m8kowsPFAd6u677sdTiAV5D/99/QzAv/fW6MJYKRHORCUByRnqR68YHGkcINJy5M/UaKoLvZc=
+      X-Amz-Request-Id:
+      - 8FTTJW8VND8AB736
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_contents_of_foo_to_dest_bar/dest/bar/baz.txt","action":"end","etags":[{"etag":"ddf66d49f5b58593a322d1e85538cc77","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-10-04T19:03:59.835299553Z","ref":"put-2592187267","size":15}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_contents_of_foo_to_dest_bar/dest/bar/baz.txt
+    method: POST
+  response:
+    body: '{"path":"files-dest-copy_contents_of_foo_to_dest_bar/dest/bar/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-04T19:04:03Z","mtime":"2022-10-04T19:04:03Z","provided_mtime":"2022-10-04T19:03:59Z","crc32":null,"md5":null,"mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "318"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:03 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 7a61c616-7cc7-4f40-b5f0-30df28ab2c36
+      - 2d10c95a5adaa4a44714a5f2893922d6
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_contents_of_foo_to_dest_bar
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_contents_of_foo_to_dest_bar","display_name":"files-dest-copy_contents_of_foo_to_dest_bar","type":"directory","size":null,"created_at":"2022-10-04T19:04:00Z","mtime":"2022-10-04T19:04:03Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:04 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - dd67cffd-2bab-4800-bdca-f2b107bce8ed
+      - bf70e5a052b285f0ded404ae735e32fc
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_bar?page=1
+    method: GET
+  response:
+    body: '[{"path":"files-dest-copy_contents_of_foo_to_dest_bar/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:04:00Z","mtime":"2022-10-04T19:04:03Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:04 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - f3d5be52-48e8-4136-90ef-66a89963f803
+      - 9bfcca61f91706a6c7c23985db01a7a4
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_bar/dest?page=1
+    method: GET
+  response:
+    body: '[{"path":"files-dest-copy_contents_of_foo_to_dest_bar/dest/bar","display_name":"bar","type":"directory","size":null,"created_at":"2022-10-04T19:04:01Z","mtime":"2022-10-04T19:04:03Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:05 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 2f414ce1-3e16-418f-8118-890e6659f94b
+      - 867b6c431557170634d01a9d7f0d138d
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_bar/dest/bar?page=1
+    method: GET
+  response:
+    body: '[{"path":"files-dest-copy_contents_of_foo_to_dest_bar/dest/bar/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-04T19:04:03Z","mtime":"2022-10-04T19:04:03Z","provided_mtime":"2022-10-04T19:03:59Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:05 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 4effc8ea-2f17-4ddf-87fc-a3fdbc398278
+      - abb716feb6155f1bd4bba5bee49d2b46
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_contents_of_foo_to_dest_bar/dest
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_contents_of_foo_to_dest_bar/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:04:00Z","mtime":"2022-10-04T19:04:03Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:06 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 6f562df5-a805-417a-ac6e-8f8053facc84
+      - 132c8e54bed9a3202668e32f000e1701
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_contents_of_foo_to_dest_bar/dest/bar
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_contents_of_foo_to_dest_bar/dest/bar","display_name":"bar","type":"directory","size":null,"created_at":"2022-10-04T19:04:01Z","mtime":"2022-10-04T19:04:03Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:06 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - a70b6d44-a2ce-421d-81ea-c04c39dea2f2
+      - 0949e88960e9a253eb5d52001d1bef0e
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_contents_of_foo_to_dest_bar/dest/bar/baz.txt
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_contents_of_foo_to_dest_bar/dest/bar/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-04T19:04:03Z","mtime":"2022-10-04T19:04:03Z","provided_mtime":"2022-10-04T19:03:59Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:07 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 0156b8da-8644-47b5-8002-ca43f65df853
+      - 22c33d2538abc193c5b3dbde09f6603d
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_contents_of_foo_to_dest_bar?recursive=true
+    method: DELETE
+  response:
+    body: ""
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Date:
+      - Tue, 04 Oct 2022 19:04:08 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 0e87f1a8-1ae1-4fef-bd7a-68562fdbd8f7
+      - dddc67588abca913dd9ea59d56fe2b98
+    status: 204 No Content
+    code: 204
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_baz.txt_to_dest"}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest
+    method: POST
+  response:
+    body: '{"display_name":"files-dest-copy_baz.txt_to_dest","type":"directory","size":null,"created_at":"2022-10-04T19:04:08Z","crc32":null,"md5":null,"subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "168"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:08 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - a5fcada8-fc14-4eac-a425-65c6e8fe02fc
+      - 7dd760ce017c40047742f7eebab232b1
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_baz.txt_to_dest/dest"}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest/dest
+    method: POST
+  response:
+    body: '{"display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:04:09Z","crc32":null,"md5":null,"subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "141"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:09 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - ab5e7258-c1e6-48a3-b3c3-4f456a5adedb
+      - 77587eeb6111d4e802bd7510c4798372
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest/dest/baz.txt
+    method: GET
+  response:
+    body: '{"error":"Not Found","http-code":404,"instance":"8b357e9a-d5ef-42db-bfb8-61948ebb92df","title":"Not
+      Found","type":"not-found"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:09 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 8b357e9a-d5ef-42db-bfb8-61948ebb92df
+      - 0ff02a4400b5aad0c2f418b4bce4f4b8
+    status: 404 Not Found
+    code: 404
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_baz.txt_to_dest/dest/baz.txt","mkdir_parents":true,"size":15}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/files-dest-copy_baz.txt_to_dest/dest/baz.txt
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T19:19:10Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2592188385","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/514d15fa-21cb-477a-bcdb-4852a0a7bd81?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T190410Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=1zBvn5.Ay.M7IccYWH.s3GENUNu_z3WI1_1GSelC8IwWTRGM_eIwEWOAssd5JcP6UW1YPwRng.axWYArAyqhs3K.bV.DvnepP0W1AA3zqw739FCkIJko7ymhG7z5yLtp\u0026X-Amz-Signature=2ac2745492c98219b1ae64a3f11b89cc8f6d2f5049719c652dda6b752a210bf3"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:10 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 1d0b34c7-4a51-4218-90f0-3efcd79034a8
+      - 11f946c82d2578dc3f6165042a5fcfdd
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: src/foo/baz.txt
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "15"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/514d15fa-21cb-477a-bcdb-4852a0a7bd81?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T190410Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=1zBvn5.Ay.M7IccYWH.s3GENUNu_z3WI1_1GSelC8IwWTRGM_eIwEWOAssd5JcP6UW1YPwRng.axWYArAyqhs3K.bV.DvnepP0W1AA3zqw739FCkIJko7ymhG7z5yLtp&X-Amz-Signature=2ac2745492c98219b1ae64a3f11b89cc8f6d2f5049719c652dda6b752a210bf3
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 19:04:12 GMT
+      Etag:
+      - '"ddf66d49f5b58593a322d1e85538cc77"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - K3FPW64ABAGmyMCwOx/1jJkei7b/9c4PJ7f3iNz0uYglWmYKybhgjyIjWpkEdQuuVhxJdRVXoLM=
+      X-Amz-Request-Id:
+      - 0TBH97QGDDX3BXRB
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_baz.txt_to_dest/dest/baz.txt","action":"end","etags":[{"etag":"ddf66d49f5b58593a322d1e85538cc77","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-10-04T19:04:08.49522988Z","ref":"put-2592188385","size":15}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz.txt_to_dest/dest/baz.txt
+    method: POST
+  response:
+    body: '{"path":"files-dest-copy_baz.txt_to_dest/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-04T19:04:11Z","mtime":"2022-10-04T19:04:11Z","provided_mtime":"2022-10-04T19:04:08Z","crc32":null,"md5":null,"mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "302"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:11 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - fe6b09de-a9b9-47e1-9df3-9e1ffa115968
+      - 3d84b15e3652bf828763bbf7aa325d6a
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_baz.txt_to_dest","display_name":"files-dest-copy_baz.txt_to_dest","type":"directory","size":null,"created_at":"2022-10-04T19:04:08Z","mtime":"2022-10-04T19:04:11Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:12 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - e54010b3-187a-4774-8b6a-b00f4912c5d2
+      - a0b9fff96dc9abf1b2cd80373dfee808
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest?page=1
+    method: GET
+  response:
+    body: '[{"path":"files-dest-copy_baz.txt_to_dest/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:04:09Z","mtime":"2022-10-04T19:04:11Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:13 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 6bb7b8c0-e229-48e2-aa3c-06a7beac56f9
+      - 87e038b3904c8fb220b708134d30b3e6
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest/dest?page=1
+    method: GET
+  response:
+    body: '[{"path":"files-dest-copy_baz.txt_to_dest/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-04T19:04:11Z","mtime":"2022-10-04T19:04:11Z","provided_mtime":"2022-10-04T19:04:08Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:13 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 63657c12-45c4-4a68-b3f3-19f6b3aaeead
+      - 9f538e4663a2dbbb0997237b9e975022
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest/dest
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_baz.txt_to_dest/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:04:09Z","mtime":"2022-10-04T19:04:11Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:14 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - f1a82b69-1cb9-4875-8095-caa081995105
+      - 8183bebf96cd34add16ef98f11e991fb
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest/dest/baz.txt
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_baz.txt_to_dest/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-04T19:04:11Z","mtime":"2022-10-04T19:04:11Z","provided_mtime":"2022-10-04T19:04:08Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:15 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - bdc871c3-80b5-464d-9347-b3b85469c794
+      - 9568a659352ea2512dc7789af3ea509c
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz.txt_to_dest?recursive=true
+    method: DELETE
+  response:
+    body: ""
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Date:
+      - Tue, 04 Oct 2022 19:04:16 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 7728312a-42f0-46e9-adef-5af72da16ecd
+      - ce495bc3df9b836e2a69fb946ddb11c7
+    status: 204 No Content
+    code: 204
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_baz.txt_to_dest_without_name"}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest_without_name
+    method: POST
+  response:
+    body: '{"display_name":"files-dest-copy_baz.txt_to_dest_without_name","type":"directory","size":null,"created_at":"2022-10-04T19:04:16Z","crc32":null,"md5":null,"subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "181"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:16 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 8abb4625-48d6-4744-9b68-08b18700741c
+      - 0593b4a33fcb596b88e4b8474bf20864
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_baz.txt_to_dest_without_name/dest"}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest_without_name/dest
+    method: POST
+  response:
+    body: '{"display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:04:17Z","crc32":null,"md5":null,"subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "141"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:17 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 77c16d09-8c94-4c14-a868-f90043c1f26d
+      - b9f59dbed0973a1cdc820d6193470b9b
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_without_name/dest
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_baz.txt_to_dest_without_name/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:04:17Z","mtime":"2022-10-04T19:04:17Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:18 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 026b8e73-e177-4fdc-8e29-41cbbe02db29
+      - 644872960acede2cde39ba8f5b29bd59
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt","mkdir_parents":true,"size":15}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T19:19:18Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2592189478","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/c2a90c4e-20d5-4462-b9bf-7899037b5881?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T190418Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=l.QXGVKjus35h.dxnRui9_nzSWv2HLLJZaZFf0B8N0b6MsV4GTl8pFbQwobLE42oLcu45rfw3CtwenPu1ohvpATSR2.hLBFIPi9_P94xIRX7AAcs7xbqA.u6KXScritm\u0026X-Amz-Signature=a0fa36432060a4adce4c259391640c04b6aa817bb7c2540955247eb65d2d6eb9"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:18 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 86540c29-b60b-4a17-a1f6-590af8edee58
+      - b901100abd57ff803bf43c5993eec95f
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: src/foo/baz.txt
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "15"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/c2a90c4e-20d5-4462-b9bf-7899037b5881?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T190418Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=l.QXGVKjus35h.dxnRui9_nzSWv2HLLJZaZFf0B8N0b6MsV4GTl8pFbQwobLE42oLcu45rfw3CtwenPu1ohvpATSR2.hLBFIPi9_P94xIRX7AAcs7xbqA.u6KXScritm&X-Amz-Signature=a0fa36432060a4adce4c259391640c04b6aa817bb7c2540955247eb65d2d6eb9
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 19:04:20 GMT
+      Etag:
+      - '"ddf66d49f5b58593a322d1e85538cc77"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - eW3trToprMoNaXYSsdYBFNeZWBtIr4VbPXHUwDRdWwjqB/7XUDXUBuAL8tz3dyaQrIdajmgCFM4=
+      X-Amz-Request-Id:
+      - N3F01BTXEY7Y6K3G
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt","action":"end","etags":[{"etag":"ddf66d49f5b58593a322d1e85538cc77","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-10-04T19:04:16.890124342Z","ref":"put-2592189478","size":15}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt
+    method: POST
+  response:
+    body: '{"path":"files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-04T19:04:20Z","mtime":"2022-10-04T19:04:20Z","provided_mtime":"2022-10-04T19:04:16Z","crc32":null,"md5":null,"mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "315"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:20 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 468715f5-7104-4ba2-a61f-4bd43a1955a4
+      - 00f207845d2edc477a1e076e31817ad5
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_without_name
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_baz.txt_to_dest_without_name","display_name":"files-dest-copy_baz.txt_to_dest_without_name","type":"directory","size":null,"created_at":"2022-10-04T19:04:16Z","mtime":"2022-10-04T19:04:20Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:21 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 1a16d57d-d045-4a61-8926-5290be7529c6
+      - f6ef4cca65883a7fc457fef09e78dca0
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest_without_name?page=1
+    method: GET
+  response:
+    body: '[{"path":"files-dest-copy_baz.txt_to_dest_without_name/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:04:17Z","mtime":"2022-10-04T19:04:20Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:21 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 6e7e8fc5-a8ed-468d-b916-ac477500d221
+      - bdd35b33e02110fff4f98a675358402a
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest_without_name/dest?page=1
+    method: GET
+  response:
+    body: '[{"path":"files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-04T19:04:20Z","mtime":"2022-10-04T19:04:20Z","provided_mtime":"2022-10-04T19:04:16Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:22 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - b7571dd7-134b-42e3-8287-e440e71ebfa8
+      - 51fc335f4d59d380e732430e5b545b02
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_without_name/dest
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_baz.txt_to_dest_without_name/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:04:17Z","mtime":"2022-10-04T19:04:20Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:22 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - bf489051-f253-4377-b53f-c95ab07cf921
+      - ce31f7230725f37955e90763eee50c64
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-04T19:04:20Z","mtime":"2022-10-04T19:04:20Z","provided_mtime":"2022-10-04T19:04:16Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:23 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 2f73141a-eb11-4da1-8654-7d2afdb62e42
+      - d99fffb250261466b22ac161fa9cd650
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz.txt_to_dest_without_name?recursive=true
+    method: DELETE
+  response:
+    body: ""
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Date:
+      - Tue, 04 Oct 2022 19:04:24 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - b7b6e7a6-a063-414f-8c00-69f6d193744c
+      - 0a25c479aeb53ef57c1a20a06db68c2a
+    status: 204 No Content
+    code: 204
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_baz.txt_to_dest_with_rename"}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest_with_rename
+    method: POST
+  response:
+    body: '{"display_name":"files-dest-copy_baz.txt_to_dest_with_rename","type":"directory","size":null,"created_at":"2022-10-04T19:04:24Z","crc32":null,"md5":null,"subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "180"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:24 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - e88c2eb1-be8f-4f0d-b042-fcd7d0c10050
+      - c902800e105e216f48285d5315149a82
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_baz.txt_to_dest_with_rename/dest"}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest_with_rename/dest
+    method: POST
+  response:
+    body: '{"display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:04:25Z","crc32":null,"md5":null,"subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "141"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:25 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - b20111a2-e98f-487e-8675-51fe3ef3e77c
+      - 2341d2eb4c96f66467492f7d4222fff5
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt
+    method: GET
+  response:
+    body: '{"error":"Not Found","http-code":404,"instance":"7d9b0b70-b10b-4ed6-ad27-e9c659a6efb7","title":"Not
+      Found","type":"not-found"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:25 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 7d9b0b70-b10b-4ed6-ad27-e9c659a6efb7
+      - 9cd239a6288a9195b38082357875c9e5
+    status: 404 Not Found
+    code: 404
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt","mkdir_parents":true,"size":15}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-04T19:19:26Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2592190507","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/d61f3a34-c85e-4654-abae-3105bb2943d9?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221004T190426Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=Pzr9ab64wTB56XuJfjg0QepKMicZPXoWd_aMJAKGOVovksqoyN8bRYqJ61uRX7Xo3emvPWgVYnIW06vpbKP27lDdrY9cethNcJEYWV2y1dq4cC1kZtSM.esocq8Wh80v\u0026X-Amz-Signature=7952baa48355dd4c2bcbe1dd773dce3bd1d3553cd29ced17de46e36207c7d20f"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:26 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - d632f9c4-0826-44d7-aa50-ce4b3353093c
+      - 929a5d9e2dc57e794c844890be4778e8
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: src/foo/baz.txt
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "15"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/d61f3a34-c85e-4654-abae-3105bb2943d9?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221004%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221004T190426Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=Pzr9ab64wTB56XuJfjg0QepKMicZPXoWd_aMJAKGOVovksqoyN8bRYqJ61uRX7Xo3emvPWgVYnIW06vpbKP27lDdrY9cethNcJEYWV2y1dq4cC1kZtSM.esocq8Wh80v&X-Amz-Signature=7952baa48355dd4c2bcbe1dd773dce3bd1d3553cd29ced17de46e36207c7d20f
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 04 Oct 2022 19:04:27 GMT
+      Etag:
+      - '"ddf66d49f5b58593a322d1e85538cc77"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - zAm90HX/x5KzeJttCiZXLl0tsT+j3W0Qu4VDDW62iBKlRpC/6B6/IrJrw3/QvyV64mGTjdbaJx0=
+      X-Amz-Request-Id:
+      - Z72AKV0X2EVYK4T4
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"-":"files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt","action":"end","etags":[{"etag":"ddf66d49f5b58593a322d1e85538cc77","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-10-04T19:04:24.363030394Z","ref":"put-2592190507","size":15}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt
+    method: POST
+  response:
+    body: '{"path":"files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt","display_name":"taz.txt","type":"file","size":15,"created_at":"2022-10-04T19:04:27Z","mtime":"2022-10-04T19:04:27Z","provided_mtime":"2022-10-04T19:04:24Z","crc32":null,"md5":null,"mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "314"
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:27 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 83f07c80-0383-480f-92d2-1fbbfbfa65bd
+      - 9b7190b0d4e104ec5118229b1080c7e9
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_with_rename
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_baz.txt_to_dest_with_rename","display_name":"files-dest-copy_baz.txt_to_dest_with_rename","type":"directory","size":null,"created_at":"2022-10-04T19:04:24Z","mtime":"2022-10-04T19:04:27Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:27 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - dad3721e-f4a4-4904-bb91-bf0740c38746
+      - 5a5e2099ea6fd145a23f6d5be4c95e52
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest_with_rename?page=1
+    method: GET
+  response:
+    body: '[{"path":"files-dest-copy_baz.txt_to_dest_with_rename/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:04:25Z","mtime":"2022-10-04T19:04:27Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:28 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 84003017-0641-4e12-b642-12eb395a8d77
+      - be2a6531b9585e379d522389741a60ee
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest_with_rename/dest?page=1
+    method: GET
+  response:
+    body: '[{"path":"files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt","display_name":"taz.txt","type":"file","size":15,"created_at":"2022-10-04T19:04:27Z","mtime":"2022-10-04T19:04:27Z","provided_mtime":"2022-10-04T19:04:24Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:29 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 22ad1e50-3eaf-4183-8db7-daa16b7079ca
+      - 08eef6230c89657952d31b79259d67a0
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_with_rename/dest
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_baz.txt_to_dest_with_rename/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-04T19:04:25Z","mtime":"2022-10-04T19:04:27Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:29 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 28ad909c-6066-41bf-91a4-1151221387be
+      - 4a1c4bac81072c497c747f1bb737a70c
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt
+    method: GET
+  response:
+    body: '{"path":"files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt","display_name":"taz.txt","type":"file","size":15,"created_at":"2022-10-04T19:04:27Z","mtime":"2022-10-04T19:04:27Z","provided_mtime":"2022-10-04T19:04:24Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 04 Oct 2022 19:04:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 5f33d038-d133-4dca-99c4-d637c477fd62
+      - 847e5ee771d1683cfe325cc2ab2ef0e2
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz.txt_to_dest_with_rename?recursive=true
+    method: DELETE
+  response:
+    body: ""
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Date:
+      - Tue, 04 Oct 2022 19:04:30 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 75161bca-1d9a-424b-bd8c-b787417f05f0
+      - 6c8cf6aae93a111d0b9389c236e9b9a4
+    status: 204 No Content
+    code: 204
+    duration: ""

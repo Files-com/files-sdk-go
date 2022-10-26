@@ -8,10 +8,13 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"testing/fstest"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/Files-com/files-sdk-go/v2/lib"
 
@@ -157,6 +160,65 @@ func Test_downloadFolder_ending_in_slash(t *testing.T) {
 	assert.NoError(setup.TearDown())
 }
 
+func TestClient_Downloader_path_spec(t *testing.T) {
+	t.Run("files", func(t *testing.T) {
+		for _, tt := range pathSpec() {
+			t.Run(tt.name, func(t *testing.T) {
+				srcFs := make(fstest.MapFS)
+				filesDest, err := ioutil.TempDir("", "files-dest")
+				assert.NoError(t, err)
+
+				for _, e := range tt.src {
+					fileType := "file"
+					mode := fs.ModePerm
+					if e.dir {
+						fileType = "directory"
+						mode = fs.ModeDir
+					}
+					_, displayName := filepath.Split(e.path)
+					srcFs[e.path] = &fstest.MapFile{
+						Data: nil,
+						Mode: mode,
+						Sys: files_sdk.File{
+							DisplayName: displayName,
+							Path:        e.path,
+							Type:        fileType,
+						},
+					}
+				}
+				for _, e := range tt.dest {
+					if !e.preexisting {
+						continue
+					}
+					if e.dir {
+						err = os.MkdirAll(filepath.Join(filesDest, e.path), 0750)
+					} else {
+						_, err = os.Create(filepath.Join(filesDest, e.path))
+					}
+					assert.NoError(t, err)
+				}
+				params := DownloaderParams{
+					LocalPath:  strings.Join([]string{filesDest, tt.args.dest}, string(os.PathSeparator)),
+					RemotePath: tt.args.src,
+				}
+				t.Logf("RemotePath: %v, LocalPath: %v", params.RemotePath, params.LocalPath)
+				job := downloader(context.Background(), srcFs, params)
+
+				job.Start()
+				job.Wait()
+
+				for _, e := range tt.dest {
+					fileInfo, err := os.Stat(filepath.Join(filesDest, e.path))
+					require.NoError(t, err, e.path)
+					assert.Equal(t, e.dir, fileInfo.IsDir(), e.path)
+				}
+
+				assert.NoError(t, os.RemoveAll(filesDest))
+			})
+		}
+	})
+}
+
 func Test_downloadFolder_more_than_one_file(t *testing.T) {
 	assert := assert.New(t)
 	setup := NewTestSetup()
@@ -197,7 +259,7 @@ func Test_downloadFolder_more_than_one_file(t *testing.T) {
 		},
 	}
 	setup.DownloaderParams = DownloaderParams{
-		RemotePath:     "some-path",
+		RemotePath:     "some-path/",
 		EventsReporter: setup.Reporter(),
 		LocalPath:      setup.RootDestination(),
 		PreserveTimes:  true,
