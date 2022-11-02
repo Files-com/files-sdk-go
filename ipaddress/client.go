@@ -36,6 +36,15 @@ func List(ctx context.Context, params files_sdk.IpAddressListParams) (*Iter, err
 	return (&Client{}).List(ctx, params)
 }
 
+func (c *Client) GetExavaultReserved(ctx context.Context, params files_sdk.IpAddressGetExavaultReservedParams) (publicIpAddressCollection files_sdk.PublicIpAddressCollection, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/ip_addresses/exavault-reserved", Params: params, Entity: &publicIpAddressCollection})
+	return
+}
+
+func GetExavaultReserved(ctx context.Context, params files_sdk.IpAddressGetExavaultReservedParams) (publicIpAddressCollection files_sdk.PublicIpAddressCollection, err error) {
+	return (&Client{}).GetExavaultReserved(ctx, params)
+}
+
 func (c *Client) GetReserved(ctx context.Context, params files_sdk.IpAddressGetReservedParams) (publicIpAddressCollection files_sdk.PublicIpAddressCollection, err error) {
 	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/ip_addresses/reserved", Params: params, Entity: &publicIpAddressCollection})
 	return
