@@ -150,7 +150,42 @@ func Test_downloadFolder_ending_in_slash(t *testing.T) {
 	assert.NoError(setup.reporterCalls[2].err)
 	assert.Equal("some-path/taco.png", setup.reporterCalls[0].File.Path)
 	assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
-	assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
+
+	assert.Equal(true, setup.reporterCalls[0].Job.All(status.Ended...))
+	assert.Equal(int64(100), setup.reporterCalls[0].Job.TransferBytes())
+	assert.Equal(int64(100), setup.reporterCalls[0].Job.TotalBytes())
+
+	assert.NoError(setup.TearDown())
+}
+
+func Test_downloader_RemoteStartingSlash(t *testing.T) {
+	assert := assert.New(t)
+	setup := NewTestSetup()
+	setup.MapFS["some-path"] = &fstest.MapFile{
+		Data:    nil,
+		Mode:    fs.ModeDir,
+		ModTime: time.Time{},
+		Sys:     files_sdk.File{DisplayName: "some-path", Path: "some-path", Type: "directory"},
+	}
+
+	setup.MapFS["some-path/taco.png"] = &fstest.MapFile{
+		Data:    make([]byte, 100),
+		Mode:    fs.ModePerm,
+		ModTime: time.Time{},
+		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "some-path/taco.png", Type: "file", Size: 100},
+	}
+
+	setup.DownloaderParams = DownloaderParams{RemotePath: "/some-path", EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
+	setup.rootDestination = "some-path/"
+	setup.Call()
+
+	assert.Equal(1, setup.reporterCalls[0].Job.Count())
+	assert.Equal(3, len(setup.reporterCalls))
+	assert.Equal(status.Queued, setup.reporterCalls[0].Status)
+	assert.Equal(status.Downloading, setup.reporterCalls[1].Status)
+	assert.Equal(status.Complete, setup.reporterCalls[2].Status)
+	assert.NoError(setup.reporterCalls[2].err)
+	assert.Equal("some-path/taco.png", setup.reporterCalls[0].File.Path)
 	assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
 
 	assert.Equal(true, setup.reporterCalls[0].Job.All(status.Ended...))

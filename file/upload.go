@@ -58,6 +58,7 @@ func (c *Client) Uploader(ctx context.Context, params UploaderParams) *status.Jo
 	job.CodeStart = func() {
 		params.Job = job
 		job.Params = params
+		params.RemotePath = lib.Path{Path: params.RemotePath}.PruneStartingSlash().String()
 		file := &UploadStatus{file: files_sdk.File{}, remotePath: params.RemotePath, localPath: params.LocalPath, status: status.Queued, job: job}
 		expandedPath, err := expand(params.LocalPath)
 		if err != nil {

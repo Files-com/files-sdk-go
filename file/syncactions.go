@@ -16,9 +16,10 @@ import (
 )
 
 // DeleteSource files after a sync
-// job.RegisterFileEvent(func(file status.File) {
-//		log, err := file.DeleteSource{Direction: f.Direction, Config: config}.Call(ctx, f)
-// }, status.Complete, status.Skipped)
+//
+//	job.RegisterFileEvent(func(file status.File) {
+//			log, err := file.DeleteSource{Direction: f.Direction, Config: config}.Call(ctx, f)
+//	}, status.Complete, status.Skipped)
 type DeleteSource struct {
 	direction.Direction
 	Config files_sdk.Config
@@ -38,9 +39,10 @@ func (ad DeleteSource) Call(ctx context.Context, f status.File) (status.Log, err
 }
 
 // MoveSource files after a sync
-// job.RegisterFileEvent(func(file status.File) {
-//		log, err := file.MoveSource{Direction: f.Direction, Config: config}.Call(ctx, f)
-// }, status.Complete, status.Skipped)
+//
+//	job.RegisterFileEvent(func(file status.File) {
+//			log, err := file.MoveSource{Direction: f.Direction, Config: config}.Call(ctx, f)
+//	}, status.Complete, status.Skipped)
 type MoveSource struct {
 	direction.Direction
 	Path   string

@@ -22,6 +22,17 @@ func (p Path) EndingSlash() bool {
 	return p.Path[len(p.Path)-1:] == string(os.PathSeparator)
 }
 
+func (p Path) PruneStartingSlash() Path {
+	if p.Path == "" {
+		return p
+	}
+
+	if p.Path[0:1] == string(os.PathSeparator) {
+		return Path{Path: p.Path[1:]}
+	}
+	return p
+}
+
 func (p Path) Join(str ...string) Path {
 	return Path{Path: filepath.Join(p.String(), filepath.Join(str...))}
 }

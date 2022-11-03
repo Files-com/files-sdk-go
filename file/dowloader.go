@@ -39,7 +39,7 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 		}
 	} else {
 		job.LocalPath = params.LocalPath
-		job.RemotePath = params.RemotePath
+		job.RemotePath = lib.Path{Path: params.RemotePath}.PruneStartingSlash().String()
 		if job.RemotePath == "" {
 			job.RemotePath = "."
 		}

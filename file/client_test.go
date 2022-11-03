@@ -613,6 +613,41 @@ func TestClient_UploadFolder_as_file2(t *testing.T) {
 	defer os.Remove(tempFile.Name())
 }
 
+func TestClient_UploadFolder_RemotePathWithStartingSlash(t *testing.T) {
+	client, r, err := CreateClient("TestClient_UploadFolder_RemotePathWithStartingSlash")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	err = os.MkdirAll(filepath.Join(tmpDir, "test"), 0755)
+	assert.NoError(t, err)
+
+	f1, err := os.Create(filepath.Join(tmpDir, "test/1.text"))
+	f1.Write([]byte("hello 1"))
+	f1.Close()
+
+	f2, err := os.Create(filepath.Join(tmpDir, "test/2.text"))
+	f2.Write([]byte("hello 2"))
+	f2.Close()
+
+	f3, err := os.Create(filepath.Join(tmpDir, "test/3.text"))
+	f3.Write([]byte("hello 3"))
+	f3.Close()
+	job := client.Uploader(context.Background(), UploaderParams{LocalPath: filepath.Join(tmpDir, "test"), RemotePath: "/test", Manager: manager.New(1, 1)})
+	job.Start()
+	job.Wait()
+	assert.NoError(t, job.Statuses[0].Err())
+	assert.Len(t, job.Statuses, 3)
+	dir, _ := filepath.Split(job.Statuses[0].RemotePath())
+	assert.Equal(t, "test/test/", dir)
+}
+
 func TestClient_DownloadFolder(t *testing.T) {
 	client, r, err := CreateClient("TestClient_DownloadFolder")
 	if err != nil {
