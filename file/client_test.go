@@ -648,6 +648,37 @@ func TestClient_UploadFolder_RemotePathWithStartingSlash(t *testing.T) {
 	assert.Equal(t, "test/test/", dir)
 }
 
+func TestClient_UploadFolder_ZeroByteFile(t *testing.T) {
+	client, r, err := CreateClient("TestClient_UploadFolder_ZeroByteFile")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+	err = os.MkdirAll(filepath.Join(tmpDir, "zero_byte_folder"), 0755)
+	assert.NoError(t, err)
+
+	f1, err := os.Create(filepath.Join(tmpDir, "zero_byte_folder/zero-byte-file.text"))
+	f1.Close()
+
+	job := client.Uploader(context.Background(), UploaderParams{LocalPath: filepath.Join(tmpDir, "zero_byte_folder"), RemotePath: "", Manager: manager.New(1, 1)})
+	job.Start()
+	job.Wait()
+	require.Len(t, job.Statuses, 1)
+	assert.NoError(t, job.Statuses[0].Err())
+	assert.Equal(t, "zero_byte_folder/zero-byte-file.text", job.Statuses[0].RemotePath())
+
+	job = client.Downloader(context.Background(), DownloaderParams{RemotePath: "zero_byte_folder", LocalPath: tmpDir + "/"})
+	job.Start()
+	job.Wait()
+	require.Len(t, job.Statuses, 1)
+	assert.NoError(t, job.Statuses[0].Err())
+}
+
 func TestClient_DownloadFolder(t *testing.T) {
 	client, r, err := CreateClient("TestClient_DownloadFolder")
 	if err != nil {

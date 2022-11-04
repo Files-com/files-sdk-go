@@ -40,7 +40,8 @@ func (p Params) ToJSON() (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	return bytes.NewBuffer(b), nil
+	b, err = removeDashJSON(b)
+	return bytes.NewBuffer(b), err
 }
 
 func (p Params) ToValues() (url.Values, error) {
@@ -54,6 +55,22 @@ func (p Params) ToValues() (url.Values, error) {
 	}
 
 	return removeDash(v), nil
+}
+
+func removeDashJSON(b []byte) ([]byte, error) {
+	var m map[string]interface{}
+	err := json.Unmarshal(b, &m)
+	if err != nil {
+		return b, err
+	}
+
+	for key := range m {
+		if key == "-" {
+			delete(m, key)
+		}
+	}
+
+	return json.Marshal(m)
 }
 
 func removeDash(params url.Values) url.Values {

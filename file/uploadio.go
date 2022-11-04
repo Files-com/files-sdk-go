@@ -96,6 +96,9 @@ func (c *Client) UploadIO(parentCtx context.Context, params UploadIOParams) (fil
 			workingParts = append(workingParts, part)
 		}
 		allParts = workingParts
+		if len(workingParts) == 0 {
+			workingParts = append(workingParts, &Part{OffSet: OffSet{}, number: 1})
+		}
 	} else {
 		for _, part := range params.Parts {
 			if part.Successful() {

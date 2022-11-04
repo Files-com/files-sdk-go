@@ -120,9 +120,9 @@ func buildRequest(opts *CallParams) (*http.Request, error) {
 	if err != nil {
 		return &http.Request{}, err
 	}
-
-	if opts.Headers.Get("Content-Length") != "" {
-		c, _ := strconv.ParseInt(opts.Headers.Get("Content-Length"), 10, 64)
+	req.Header = *opts.Headers
+	if req.Header.Get("Content-Length") != "" {
+		c, _ := strconv.ParseInt(req.Header.Get("Content-Length"), 10, 64)
 		req.ContentLength = c
 	}
 
@@ -145,11 +145,12 @@ func buildRequest(opts *CallParams) (*http.Request, error) {
 			req.Body = ioutil.NopCloser(jsonBody)
 			req.Header.Add("Content-Type", "application/json")
 		} else {
-			req.Body = opts.BodyIo
+			if req.ContentLength != 0 {
+				req.Body = opts.BodyIo
+			}
 		}
 	}
 
-	req.Header = *opts.Headers
 	if !opts.StayOpen {
 		req.Header.Set("Connection", "close")
 		req.Close = true

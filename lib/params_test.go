@@ -1,7 +1,7 @@
 package lib
 
 import (
-	"io/ioutil"
+	"io"
 	"net/url"
 	"testing"
 
@@ -17,6 +17,7 @@ type ParamsStructExample struct {
 	B string      `json:"-" url:"-"`
 	C []SubStruct `json:"sub" url:"sub"`
 	D []string    `json:"d" url:"d" required:"true"`
+	E []string    `json:"e,omitempty" url:"e,omitempty" required:"false"`
 }
 
 func Test_Params_ToJSON(t *testing.T) {
@@ -32,9 +33,9 @@ func Test_Params_ToJSON(t *testing.T) {
 	reader, err := p.ToJSON()
 	assert.NoError(t, err)
 
-	b, err := ioutil.ReadAll(reader)
+	b, err := io.ReadAll(reader)
 	assert.NoError(t, err)
-	assert.Equal(t, "{\"a\":\"The a value\",\"sub\":[{\"c\":\"the c value\"}],\"d\":[\"hello\"]}", string(b))
+	assert.Equal(t, "{\"a\":\"The a value\",\"d\":[\"hello\"],\"sub\":[{\"c\":\"the c value\"}]}", string(b))
 }
 
 func Test_Params_ToJSON_Missing_Require(t *testing.T) {
