@@ -45,6 +45,15 @@ func Find(ctx context.Context, params files_sdk.RemoteServerFindParams) (remoteS
 	return (&Client{}).Find(ctx, params)
 }
 
+func (c *Client) FindConfigurationFile(ctx context.Context, params files_sdk.RemoteServerFindConfigurationFileParams) (remoteServerConfigurationFile files_sdk.RemoteServerConfigurationFile, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/remote_servers/{id}/configuration_file", Params: params, Entity: &remoteServerConfigurationFile})
+	return
+}
+
+func FindConfigurationFile(ctx context.Context, params files_sdk.RemoteServerFindConfigurationFileParams) (remoteServerConfigurationFile files_sdk.RemoteServerConfigurationFile, err error) {
+	return (&Client{}).FindConfigurationFile(ctx, params)
+}
+
 func (c *Client) Create(ctx context.Context, params files_sdk.RemoteServerCreateParams) (remoteServer files_sdk.RemoteServer, err error) {
 	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/remote_servers", Params: params, Entity: &remoteServer})
 	return
@@ -52,6 +61,15 @@ func (c *Client) Create(ctx context.Context, params files_sdk.RemoteServerCreate
 
 func Create(ctx context.Context, params files_sdk.RemoteServerCreateParams) (remoteServer files_sdk.RemoteServer, err error) {
 	return (&Client{}).Create(ctx, params)
+}
+
+func (c *Client) ConfigurationFile(ctx context.Context, params files_sdk.RemoteServerConfigurationFileParams) (remoteServerConfigurationFile files_sdk.RemoteServerConfigurationFile, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/remote_servers/{id}/configuration_file", Params: params, Entity: &remoteServerConfigurationFile})
+	return
+}
+
+func ConfigurationFile(ctx context.Context, params files_sdk.RemoteServerConfigurationFileParams) (remoteServerConfigurationFile files_sdk.RemoteServerConfigurationFile, err error) {
+	return (&Client{}).ConfigurationFile(ctx, params)
 }
 
 func (c *Client) Update(ctx context.Context, params files_sdk.RemoteServerUpdateParams) (remoteServer files_sdk.RemoteServer, err error) {
