@@ -9,8 +9,8 @@ import (
 type PublicIpAddress struct {
 	IpAddress   string `json:"ip_address,omitempty" path:"ip_address"`
 	ServerName  string `json:"server_name,omitempty" path:"server_name"`
-	FtpEnabled  string `json:"ftp_enabled,omitempty" path:"ftp_enabled"`
-	SftpEnabled string `json:"sftp_enabled,omitempty" path:"sftp_enabled"`
+	FtpEnabled  *bool  `json:"ftp_enabled,omitempty" path:"ftp_enabled"`
+	SftpEnabled *bool  `json:"sftp_enabled,omitempty" path:"sftp_enabled"`
 }
 
 type PublicIpAddressCollection []PublicIpAddress

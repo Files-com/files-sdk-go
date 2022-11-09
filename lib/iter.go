@@ -125,9 +125,9 @@ func (i *Iter) SetCursor(cursor string) {
 //
 // To iterate over all results use the following pattern.
 //
-//   for i.Next() {
-//     i.Current()
-//   }
+//	for i.Next() {
+//	  i.Current()
+//	}
 func (i *Iter) Next() bool {
 	if i.Values == nil {
 		return i.GetPage() && len(*i.Values) > 0

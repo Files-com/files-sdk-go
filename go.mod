@@ -1,6 +1,6 @@
 module github.com/Files-com/files-sdk-go/v2
 
-go 1.18
+go 1.19
 
 require (
 	github.com/appscode/go-querystring v0.0.0-20170504095604-0126cfb3f1dc
