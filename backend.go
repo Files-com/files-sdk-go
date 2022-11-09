@@ -2,6 +2,7 @@ package files_sdk
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -49,7 +50,7 @@ func Call(ctx context.Context, method string, config Config, resource string, pa
 	if err != nil {
 		return nil, response, err
 	}
-	data, res, err := ParseResponse(response)
+	data, res, err := ParseResponse(response, resource)
 	responseError, ok := err.(ResponseError)
 	if ok {
 		err = responseError
@@ -57,25 +58,31 @@ func Call(ctx context.Context, method string, config Config, resource string, pa
 	return data, res, err
 }
 
-func ParseResponse(res *http.Response) (*[]byte, *http.Response, error) {
+func ParseResponse(res *http.Response, resource string) (*[]byte, *http.Response, error) {
 	defaultValue := make([]byte, 0)
 	if res.StatusCode == 204 {
 		return &defaultValue, res, nil
 	}
-	data, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return &defaultValue, res, err
+	if err := lib.ResponseErrors(res, lib.NonOkError); err != nil {
+		return &defaultValue, res, fmt.Errorf("%v - %v", resource, err)
 	}
-	re := ResponseError{}
-	err = re.UnmarshalJSON(data)
+	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		return &data, res, err
+		return &defaultValue, res, fmt.Errorf("%v - %v", resource, err)
 	}
-	if !re.IsNil() {
-		return &data, res, re
+	if lib.IsJSON(res) {
+		re := ResponseError{}
+
+		err = re.UnmarshalJSON(data)
+		re.Errors = append(re.Errors, ResponseError{Type: resource})
+		if err != nil {
+			return &data, res, err
+		}
+		if !re.IsNil() {
+			return &data, res, re
+		}
 	}
 	return &data, res, err
-
 }
 
 type CallParams struct {
