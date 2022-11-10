@@ -20,13 +20,11 @@ type IpAddressListParams struct {
 }
 
 type IpAddressGetExavaultReservedParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty" path:"cursor"`
-	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty" path:"per_page"`
+	lib.ListParams
 }
 
 type IpAddressGetReservedParams struct {
-	Cursor  string `url:"cursor,omitempty" required:"false" json:"cursor,omitempty" path:"cursor"`
-	PerPage int64  `url:"per_page,omitempty" required:"false" json:"per_page,omitempty" path:"per_page"`
+	lib.ListParams
 }
 
 func (i *IpAddress) UnmarshalJSON(data []byte) error {

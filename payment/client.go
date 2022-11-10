@@ -16,8 +16,8 @@ type Iter struct {
 	*lib.Iter
 }
 
-func (i *Iter) Payment() files_sdk.Payment {
-	return i.Current().(files_sdk.Payment)
+func (i *Iter) AccountLineItem() files_sdk.AccountLineItem {
+	return i.Current().(files_sdk.AccountLineItem)
 }
 
 func (c *Client) List(ctx context.Context, params files_sdk.PaymentListParams) (*Iter, error) {
@@ -27,7 +27,7 @@ func (c *Client) List(ctx context.Context, params files_sdk.PaymentListParams) (
 		return i, err
 	}
 	i.ListParams = &params
-	list := files_sdk.PaymentCollection{}
+	list := files_sdk.AccountLineItemCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }

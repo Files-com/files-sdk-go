@@ -697,12 +697,12 @@ func TestClient_DownloadFolder(t *testing.T) {
 	})
 
 	assert.NoError(err)
-	folders := files_sdk.FolderCollection{}
+	files := files_sdk.FileCollection{}
 	for it.Next() {
-		folders = append(folders, it.Folder())
+		files = append(files, it.File())
 	}
 
-	assert.Len(folders, 2, "something is wrong with cursor")
+	assert.Len(files, 2, "something is wrong with cursor")
 
 	results := runDownloadScenario("TestClient_DownloadFolder", "download/", client)
 	assert.NoError(err)

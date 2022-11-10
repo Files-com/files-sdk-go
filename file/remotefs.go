@@ -178,8 +178,7 @@ func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {
 		return files, io.EOF
 	}
 	for it.Next() && (n <= 0 || n > 0 && n >= f.count) {
-		fl := it.Folder()
-		fi, err := fl.ToFile()
+		fi := it.File()
 		if err != nil {
 			return files, &goFs.PathError{Path: f.Path, Err: err, Op: "readdir"}
 		}

@@ -36,12 +36,19 @@ func List(ctx context.Context, params files_sdk.RequestListParams) (*Iter, error
 	return (&Client{}).List(ctx, params)
 }
 
-func (c *Client) GetFolder(ctx context.Context, params files_sdk.RequestGetFolderParams) (requestCollection files_sdk.RequestCollection, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/requests/folders/{path}", Params: params, Entity: &requestCollection})
-	return
+func (c *Client) GetFolder(ctx context.Context, params files_sdk.RequestGetFolderParams) (*Iter, error) {
+	i := &Iter{Iter: &lib.Iter{}}
+	path, err := lib.BuildPath("/requests/folders/{path}", params)
+	if err != nil {
+		return i, err
+	}
+	i.ListParams = &params
+	list := files_sdk.RequestCollection{}
+	i.Query = listquery.Build(ctx, c.Config, path, &list)
+	return i, nil
 }
 
-func GetFolder(ctx context.Context, params files_sdk.RequestGetFolderParams) (requestCollection files_sdk.RequestCollection, err error) {
+func GetFolder(ctx context.Context, params files_sdk.RequestGetFolderParams) (*Iter, error) {
 	return (&Client{}).GetFolder(ctx, params)
 }
 

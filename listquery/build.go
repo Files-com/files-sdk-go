@@ -30,7 +30,7 @@ func Build(ctx context.Context, config files_sdk.Config, path string, list List)
 		}
 
 		if err := list.UnmarshalJSON(*data); err != nil {
-			return &defaultValue, "", err
+			return &defaultValue, res.Header.Get("X-Files-Cursor"), err
 		}
 		return list.ToSlice(), res.Header.Get("X-Files-Cursor"), nil
 	}

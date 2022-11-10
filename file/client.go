@@ -3,7 +3,7 @@ package file
 import (
 	"context"
 	"io"
-	goFs "io/fs"
+	"io/fs"
 	"net/http"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
@@ -147,7 +147,7 @@ func (c *Client) ListForRecursive(ctx context.Context, params files_sdk.FolderLi
 
 	go func(params files_sdk.FolderListForParams) {
 		f := FS{}.Init(c.Config).WithContext(ctx)
-		err := goFs.WalkDir(f, params.Path, func(path string, d goFs.DirEntry, err error) error {
+		err := fs.WalkDir(f, params.Path, func(path string, d fs.DirEntry, err error) error {
 			if path == "" && err == nil {
 				return nil // Skip root directory
 			}

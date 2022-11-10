@@ -27,11 +27,10 @@ type RequestListParams struct {
 }
 
 type RequestGetFolderParams struct {
-	Cursor  string          `url:"cursor,omitempty" required:"false" json:"cursor,omitempty" path:"cursor"`
-	PerPage int64           `url:"per_page,omitempty" required:"false" json:"per_page,omitempty" path:"per_page"`
-	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Mine    *bool           `url:"mine,omitempty" required:"false" json:"mine,omitempty" path:"mine"`
-	Path    string          `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	SortBy json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Mine   *bool           `url:"mine,omitempty" required:"false" json:"mine,omitempty" path:"mine"`
+	Path   string          `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	lib.ListParams
 }
 
 type RequestCreateParams struct {

@@ -16,8 +16,8 @@ type Iter struct {
 	*lib.Iter
 }
 
-func (i *Iter) Folder() files_sdk.Folder {
-	return i.Current().(files_sdk.Folder)
+func (i *Iter) File() files_sdk.File {
+	return i.Current().(files_sdk.File)
 }
 
 func (c *Client) ListFor(ctx context.Context, params files_sdk.FolderListForParams) (*Iter, error) {
@@ -27,7 +27,7 @@ func (c *Client) ListFor(ctx context.Context, params files_sdk.FolderListForPara
 		return i, err
 	}
 	i.ListParams = &params
-	list := files_sdk.FolderCollection{}
+	list := files_sdk.FileCollection{}
 	i.Query = listquery.Build(ctx, c.Config, path, &list)
 	return i, nil
 }
