@@ -17,6 +17,7 @@ type RemoteServerConfigurationFile struct {
 	PrivateKey    string `json:"private_key,omitempty" path:"private_key"`
 	Status        string `json:"status,omitempty" path:"status"`
 	ConfigVersion string `json:"config_version,omitempty" path:"config_version"`
+	ServerHostKey string `json:"server_host_key,omitempty" path:"server_host_key"`
 }
 
 type RemoteServerConfigurationFileCollection []RemoteServerConfigurationFile
