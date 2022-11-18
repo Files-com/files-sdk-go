@@ -304,6 +304,7 @@ func Test_downloadFolder_more_than_one_file(t *testing.T) {
 	job := setup.Call()
 	job.Wait()
 	statuses := make(map[string]int)
+	var paths []string
 	for _, call := range setup.reporterCalls {
 		i, ok := statuses[call.Status.Name]
 		if ok {
@@ -311,6 +312,7 @@ func Test_downloadFolder_more_than_one_file(t *testing.T) {
 		} else {
 			statuses[call.Status.Name] = 1
 		}
+		paths = append(paths, call.File.Path)
 	}
 	t.Log("it goes through all statuses")
 	{
@@ -324,7 +326,7 @@ func Test_downloadFolder_more_than_one_file(t *testing.T) {
 		stat, err := os.Stat(filepath.Join(setup.tempDir, "taco.png"))
 		assert.NoError(err)
 		assert.Equal(time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC), stat.ModTime().UTC())
-		assert.Contains([]string{setup.reporterCalls[0].File.Path, setup.reporterCalls[1].File.Path}, "some-path/taco.png")
+		assert.Contains(paths, "some-path/taco.png")
 		assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
 	}
 
@@ -333,7 +335,7 @@ func Test_downloadFolder_more_than_one_file(t *testing.T) {
 		stat, err := os.Stat(filepath.Join(setup.tempDir, "pizza.png"))
 		assert.NoError(err)
 		assert.Equal(time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC), stat.ModTime().UTC())
-		assert.Contains([]string{setup.reporterCalls[0].File.Path, setup.reporterCalls[1].File.Path}, "some-path/pizza.png")
+		assert.Contains(paths, "some-path/pizza.png")
 		assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
 	}
 
