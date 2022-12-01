@@ -26,8 +26,8 @@ func TestFS_Open(t *testing.T) {
 		},
 	)
 
-	fs := FS{}.Init(client.Config)
-	fs = fs.WithContext(context.TODO())
+	fs := (&FS{}).Init(client.Config, true)
+	fs = fs.WithContext(context.TODO()).(*FS)
 	f, err := fs.Open("remotefs_test")
 	assert.NoError(err)
 	rf, ok := f.(*ReadDirFile)
@@ -39,7 +39,7 @@ func TestFS_Open(t *testing.T) {
 	info, err := entry[0].Info()
 	assert.NoError(err)
 	assert.Equal("1.text", info.Name())
-	fsFile, ok := entry[0].(File)
+	fsFile, ok := entry[0].(*File)
 	assert.Equal(true, ok)
 	buf := make([]byte, 8)
 	_, err = fsFile.Read(buf)

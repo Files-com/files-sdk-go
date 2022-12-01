@@ -20,7 +20,7 @@ func (i *Iter) InboxUpload() files_sdk.InboxUpload {
 	return i.Current().(files_sdk.InboxUpload)
 }
 
-func (c *Client) List(ctx context.Context, params files_sdk.InboxUploadListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.InboxUploadListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	path, err := lib.BuildPath("/inbox_uploads", params)
 	if err != nil {
@@ -28,10 +28,10 @@ func (c *Client) List(ctx context.Context, params files_sdk.InboxUploadListParam
 	}
 	i.ListParams = &params
 	list := files_sdk.InboxUploadCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func List(ctx context.Context, params files_sdk.InboxUploadListParams) (*Iter, error) {
-	return (&Client{}).List(ctx, params)
+func List(ctx context.Context, params files_sdk.InboxUploadListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).List(ctx, params, opts...)
 }

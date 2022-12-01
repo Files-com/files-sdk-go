@@ -78,8 +78,7 @@ func (am MoveSource) Call(ctx context.Context, f status.File) (status.Log, error
 		)
 		rErr, ok := err.(files_sdk.ResponseError)
 		if ok && rErr.Type == "processing-failure/destination-parent-does-not-exist" {
-			fs := FS{}.Init(am.Config).WithContext(ctx)
-			err = fs.MkdirAll(filepath.Dir(log.Path), 0755)
+			err := (&FS{}).Init(am.Config, true).WithContext(ctx).(*FS).MkdirAll(filepath.Dir(log.Path), 0755)
 			if err != nil {
 				return log, err
 			}

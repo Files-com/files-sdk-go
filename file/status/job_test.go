@@ -53,6 +53,10 @@ func (f StatusFile) Id() string {
 	return f.file.Id
 }
 
+func (f StatusFile) Size() int64 {
+	return f.file.Size
+}
+
 func TestJob_TransferRate(t *testing.T) {
 	assert := assert.New(t)
 	job := Job{}.Init()

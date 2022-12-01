@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"time"
 )
 
 type ResponseError struct {
@@ -36,9 +37,15 @@ type U2fSignRequests struct {
 }
 
 type Data struct {
-	U2fSIgnRequests               []U2fSignRequests `json:"u2f_sign_requests"`
-	PartialSessionId              string            `json:"partial_session_id"`
-	TwoFactorAuthenticationMethod []string          `json:"two_factor_authentication_methods"`
+	U2fSIgnRequests               []U2fSignRequests `json:"u2f_sign_requests,omitempty"`
+	PartialSessionId              string            `json:"partial_session_id,omitempty"`
+	TwoFactorAuthenticationMethod []string          `json:"two_factor_authentication_methods,omitempty"`
+	// Download Request Status
+	BytesTransferred int64     `json:"bytes_transferred"`
+	Status           string    `json:"status"`
+	StartedAt        time.Time `json:"started_at"`
+	CompletedAt      time.Time `json:"completed_at"`
+	TouchedAt        time.Time `json:"touched_at"`
 }
 
 func (e ResponseError) Error() string {

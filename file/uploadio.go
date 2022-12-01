@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -159,66 +158,6 @@ func (c *Client) completeUpload(ctx context.Context, providedMtime *time.Time, e
 		Size:          bytesWritten,
 		MkdirParents:  lib.Bool(true),
 	})
-}
-
-type OffSet struct {
-	off int64
-	len int64
-}
-
-type Part struct {
-	OffSet
-	files_sdk.EtagsParam
-	bytes    int64
-	requests []time.Time
-	error
-	number int64
-}
-
-func (p *Part) Touch() {
-	p.requests = append(p.requests, time.Now())
-}
-
-func (p *Part) Successful() bool {
-	return p.bytes == p.len && p.error == nil
-}
-
-func (p *Part) Clear() {
-	p.bytes = 0
-	p.error = nil
-}
-
-type Parts []*Part
-
-func (p Parts) SuccessfulBytes() (b int64) {
-	for _, part := range p {
-		if part.Successful() {
-			b += part.bytes
-		}
-	}
-
-	return b
-}
-
-func byteOffsetSlice(size int64) []OffSet {
-	partSizes := lib.PartSizes
-	var blockSize int64
-	var offsets []OffSet
-	off := int64(0)
-	blockSize, partSizes = partSizes[0], partSizes[1:]
-	endRange := blockSize
-	for {
-		if off < size {
-			endRange = int64(math.Min(float64(endRange), float64(size)))
-			offsets = append(offsets, OffSet{off: off, len: endRange - off})
-			off = endRange
-			endRange = off + blockSize
-			blockSize, partSizes = partSizes[0], partSizes[1:]
-		} else {
-			break
-		}
-	}
-	return offsets
 }
 
 func (c *Client) createPart(ctx context.Context, reader io.ReadCloser, len int64, fileUploadPart files_sdk.FileUploadPart, lastPart bool) (files_sdk.EtagsParam, int64, error) {

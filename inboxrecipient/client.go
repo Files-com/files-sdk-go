@@ -20,7 +20,7 @@ func (i *Iter) InboxRecipient() files_sdk.InboxRecipient {
 	return i.Current().(files_sdk.InboxRecipient)
 }
 
-func (c *Client) List(ctx context.Context, params files_sdk.InboxRecipientListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.InboxRecipientListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	path, err := lib.BuildPath("/inbox_recipients", params)
 	if err != nil {
@@ -28,19 +28,19 @@ func (c *Client) List(ctx context.Context, params files_sdk.InboxRecipientListPa
 	}
 	i.ListParams = &params
 	list := files_sdk.InboxRecipientCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func List(ctx context.Context, params files_sdk.InboxRecipientListParams) (*Iter, error) {
-	return (&Client{}).List(ctx, params)
+func List(ctx context.Context, params files_sdk.InboxRecipientListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).List(ctx, params, opts...)
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.InboxRecipientCreateParams) (inboxRecipient files_sdk.InboxRecipient, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/inbox_recipients", Params: params, Entity: &inboxRecipient})
+func (c *Client) Create(ctx context.Context, params files_sdk.InboxRecipientCreateParams, opts ...files_sdk.RequestResponseOption) (inboxRecipient files_sdk.InboxRecipient, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/inbox_recipients", Params: params, Entity: &inboxRecipient}, opts...)
 	return
 }
 
-func Create(ctx context.Context, params files_sdk.InboxRecipientCreateParams) (inboxRecipient files_sdk.InboxRecipient, err error) {
-	return (&Client{}).Create(ctx, params)
+func Create(ctx context.Context, params files_sdk.InboxRecipientCreateParams, opts ...files_sdk.RequestResponseOption) (inboxRecipient files_sdk.InboxRecipient, err error) {
+	return (&Client{}).Create(ctx, params, opts...)
 }

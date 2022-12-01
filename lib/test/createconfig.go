@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/Files-com/files-sdk-go/v2/lib"
 	"github.com/dnaeon/go-vcr/cassette"
 	"github.com/dnaeon/go-vcr/recorder"
 )
@@ -29,7 +28,6 @@ func CreateConfig(fixture string) (files_sdk.Config, *recorder.Recorder, error) 
 	httpClient := &http.Client{
 		Transport: r,
 	}
-	config.Debug = lib.Bool(false)
 	config.SetHttpClient(httpClient)
 
 	r.AddFilter(func(i *cassette.Interaction) error {

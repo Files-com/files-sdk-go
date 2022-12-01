@@ -11,7 +11,9 @@ import (
 )
 
 type DownloadStatus struct {
-	fsFile          fs.File
+	fsFile fs.File
+	fs.FS
+	fs.FileInfo
 	file            files_sdk.File
 	status          status.Status
 	job             *status.Job
@@ -24,6 +26,18 @@ type DownloadStatus struct {
 	PreserveTimes   bool
 	error
 	lastError error
+}
+
+func (d *DownloadStatus) Size() (size int64) {
+	if d.FileInfo != nil {
+		size = d.FileInfo.Size()
+	}
+
+	if size <= 0 {
+		size = d.File().Size
+	}
+
+	return
 }
 
 func (d *DownloadStatus) RecentError() error {

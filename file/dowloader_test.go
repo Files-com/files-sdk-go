@@ -2,10 +2,7 @@ package file
 
 import (
 	"context"
-	"fmt"
 	"io/fs"
-	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,39 +11,13 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Files-com/files-sdk-go/v2/lib"
-
-	"github.com/Files-com/files-sdk-go/v2/file/status"
-
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/stretchr/testify/assert"
+	"github.com/Files-com/files-sdk-go/v2/file/status"
+	"github.com/Files-com/files-sdk-go/v2/lib"
 )
-
-type MockerDownloader struct {
-	Calls       []files_sdk.FileDownloadParams
-	ReturnError error
-	*sync.Mutex
-	files []Entity
-}
-
-func (m *MockerDownloader) Download(_ context.Context, p files_sdk.FileDownloadParams) (files_sdk.File, error) {
-	m.Lock()
-	m.Calls = append(m.Calls, p)
-	p.OnDownload(&http.Response{ContentLength: 100})
-	p.Writer.Write([]byte("one hundred bytes-----------------------------------------------------------------------------------"))
-	m.Unlock()
-	return files_sdk.File{}, m.ReturnError
-}
-
-func (m *MockerDownloader) Index(_ context.Context, fileQueue chan Entity, _ string) int {
-	for _, file := range m.files {
-		fileQueue <- file
-	}
-
-	return len(m.files)
-}
 
 type ReporterCall struct {
 	status.File
@@ -60,12 +31,16 @@ type TestSetup struct {
 	DownloaderParams
 	rootDestination string
 	tempDir         string
+	*files_sdk.Config
 }
 
 func NewTestSetup() *TestSetup {
-	t := &TestSetup{}
+	t := &TestSetup{Config: &files_sdk.Config{}}
 	t.MapFS = make(fstest.MapFS)
-	t.TempDir()
+	err := t.TempDir()
+	if err != nil {
+		panic(err)
+	}
 	return t
 }
 
@@ -92,7 +67,7 @@ func (setup *TestSetup) Reporter() status.EventsReporter {
 
 func (setup *TestSetup) TempDir() error {
 	var err error
-	setup.tempDir, err = ioutil.TempDir("", "test")
+	setup.tempDir, err = os.MkdirTemp("", "test")
 
 	return err
 }
@@ -106,6 +81,7 @@ func (setup *TestSetup) Call() *status.Job {
 		context.Background(),
 		setup.MapFS,
 		setup.DownloaderParams,
+		*setup.Config,
 	)
 
 	job.Start()
@@ -122,7 +98,6 @@ func (setup *TestSetup) RootDestination() string {
 }
 
 func Test_downloadFolder_ending_in_slash(t *testing.T) {
-	assert := assert.New(t)
 	setup := NewTestSetup()
 	setup.MapFS["some-path"] = &fstest.MapFile{
 		Data:    nil,
@@ -142,24 +117,23 @@ func Test_downloadFolder_ending_in_slash(t *testing.T) {
 	setup.rootDestination = "some-path/"
 	setup.Call()
 
-	assert.Equal(1, setup.reporterCalls[0].Job.Count())
-	assert.Equal(3, len(setup.reporterCalls))
-	assert.Equal(status.Queued, setup.reporterCalls[0].Status)
-	assert.Equal(status.Downloading, setup.reporterCalls[1].Status)
-	assert.Equal(status.Complete, setup.reporterCalls[2].Status)
-	assert.NoError(setup.reporterCalls[2].err)
-	assert.Equal("some-path/taco.png", setup.reporterCalls[0].File.Path)
-	assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
+	assert.Equal(t, 1, setup.reporterCalls[0].Job.Count())
+	assert.Equal(t, 3, len(setup.reporterCalls))
+	assert.Equal(t, status.Queued, setup.reporterCalls[0].Status)
+	assert.Equal(t, status.Downloading, setup.reporterCalls[1].Status)
+	assert.Equal(t, status.Complete, setup.reporterCalls[2].Status)
+	assert.NoError(t, setup.reporterCalls[2].err)
+	assert.Equal(t, "some-path/taco.png", setup.reporterCalls[0].File.Path)
+	assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
 
-	assert.Equal(true, setup.reporterCalls[0].Job.All(status.Ended...))
-	assert.Equal(int64(100), setup.reporterCalls[0].Job.TransferBytes())
-	assert.Equal(int64(100), setup.reporterCalls[0].Job.TotalBytes())
+	assert.Equal(t, true, setup.reporterCalls[0].Job.All(status.Ended...))
+	assert.Equal(t, int64(100), setup.reporterCalls[0].Job.TransferBytes())
+	assert.Equal(t, int64(100), setup.reporterCalls[0].Job.TotalBytes())
 
-	assert.NoError(setup.TearDown())
+	assert.NoError(t, setup.TearDown())
 }
 
 func Test_downloader_RemoteStartingSlash(t *testing.T) {
-	assert := assert.New(t)
 	setup := NewTestSetup()
 	setup.MapFS["some-path"] = &fstest.MapFile{
 		Data:    nil,
@@ -179,20 +153,20 @@ func Test_downloader_RemoteStartingSlash(t *testing.T) {
 	setup.rootDestination = "some-path/"
 	setup.Call()
 
-	assert.Equal(1, setup.reporterCalls[0].Job.Count())
-	assert.Equal(3, len(setup.reporterCalls))
-	assert.Equal(status.Queued, setup.reporterCalls[0].Status)
-	assert.Equal(status.Downloading, setup.reporterCalls[1].Status)
-	assert.Equal(status.Complete, setup.reporterCalls[2].Status)
-	assert.NoError(setup.reporterCalls[2].err)
-	assert.Equal("some-path/taco.png", setup.reporterCalls[0].File.Path)
-	assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
+	assert.Equal(t, 1, setup.reporterCalls[0].Job.Count())
+	assert.Equal(t, 3, len(setup.reporterCalls))
+	assert.Equal(t, status.Queued, setup.reporterCalls[0].Status)
+	assert.Equal(t, status.Downloading, setup.reporterCalls[1].Status)
+	assert.Equal(t, status.Complete, setup.reporterCalls[2].Status)
+	assert.NoError(t, setup.reporterCalls[2].err)
+	assert.Equal(t, "some-path/taco.png", setup.reporterCalls[0].File.Path)
+	assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
 
-	assert.Equal(true, setup.reporterCalls[0].Job.All(status.Ended...))
-	assert.Equal(int64(100), setup.reporterCalls[0].Job.TransferBytes())
-	assert.Equal(int64(100), setup.reporterCalls[0].Job.TotalBytes())
+	assert.Equal(t, true, setup.reporterCalls[0].Job.All(status.Ended...))
+	assert.Equal(t, int64(100), setup.reporterCalls[0].Job.TransferBytes())
+	assert.Equal(t, int64(100), setup.reporterCalls[0].Job.TotalBytes())
 
-	assert.NoError(setup.TearDown())
+	assert.NoError(t, setup.TearDown())
 }
 
 func TestClient_Downloader_path_spec(t *testing.T) {
@@ -200,7 +174,7 @@ func TestClient_Downloader_path_spec(t *testing.T) {
 		for _, tt := range pathSpec() {
 			t.Run(tt.name, func(t *testing.T) {
 				srcFs := make(fstest.MapFS)
-				filesDest, err := ioutil.TempDir("", "files-dest")
+				filesDest, err := os.MkdirTemp("", "files-dest")
 				assert.NoError(t, err)
 
 				for _, e := range tt.src {
@@ -236,12 +210,20 @@ func TestClient_Downloader_path_spec(t *testing.T) {
 					LocalPath:  strings.Join([]string{filesDest, tt.args.dest}, string(os.PathSeparator)),
 					RemotePath: tt.args.src,
 				}
+				if tt.args.dest == "" {
+					params.LocalPath = ""
+				}
 				t.Logf("RemotePath: %v, LocalPath: %v", params.RemotePath, params.LocalPath)
-				job := downloader(context.Background(), srcFs, params)
+				originalDir, err := os.Getwd()
+				require.NoError(t, err)
+				err = os.Chdir(filesDest)
+				require.NoError(t, err)
+				job := downloader(context.Background(), srcFs, params, files_sdk.Config{})
 
 				job.Start()
 				job.Wait()
-
+				err = os.Chdir(originalDir)
+				require.NoError(t, err)
 				for _, e := range tt.dest {
 					fileInfo, err := os.Stat(filepath.Join(filesDest, e.path))
 					require.NoError(t, err, e.path)
@@ -255,7 +237,6 @@ func TestClient_Downloader_path_spec(t *testing.T) {
 }
 
 func Test_downloadFolder_more_than_one_file(t *testing.T) {
-	assert := assert.New(t)
 	setup := NewTestSetup()
 	setup.MapFS["some-path"] = &fstest.MapFile{
 		Data: nil,
@@ -316,41 +297,40 @@ func Test_downloadFolder_more_than_one_file(t *testing.T) {
 	}
 	t.Log("it goes through all statuses")
 	{
-		assert.Equal(2, setup.reporterCalls[0].Job.Count())
-		assert.Equal(map[string]int{"complete": 2, "downloading": 2, "queued": 2}, statuses)
-		assert.Equal(6, len(setup.reporterCalls))
+		assert.Equal(t, 2, setup.reporterCalls[0].Job.Count())
+		assert.Equal(t, map[string]int{"complete": 2, "downloading": 2, "queued": 2}, statuses)
+		assert.Equal(t, 6, len(setup.reporterCalls))
 	}
 
 	t.Log("it uses Mtime")
 	{
 		stat, err := os.Stat(filepath.Join(setup.tempDir, "taco.png"))
-		assert.NoError(err)
-		assert.Equal(time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC), stat.ModTime().UTC())
-		assert.Contains(paths, "some-path/taco.png")
-		assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
+		assert.NoError(t, err)
+		assert.Equal(t, time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC), stat.ModTime().UTC())
+		assert.Contains(t, paths, "some-path/taco.png")
+		assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
 	}
 
 	t.Log("it uses ProvidedMtime")
 	{
 		stat, err := os.Stat(filepath.Join(setup.tempDir, "pizza.png"))
-		assert.NoError(err)
-		assert.Equal(time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC), stat.ModTime().UTC())
-		assert.Contains(paths, "some-path/pizza.png")
-		assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
+		assert.NoError(t, err)
+		assert.Equal(t, time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC), stat.ModTime().UTC())
+		assert.Contains(t, paths, "some-path/pizza.png")
+		assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
 	}
 
 	t.Log("it all ends with correct bytes transferred")
 	{
-		assert.Equal(true, job.All(status.Ended...))
-		assert.Equal(int64(202), job.TransferBytes())
-		assert.Equal(int64(202), job.TotalBytes())
+		assert.Equal(t, true, job.All(status.Ended...))
+		assert.Equal(t, int64(202), job.TransferBytes())
+		assert.Equal(t, int64(202), job.TotalBytes())
 	}
 
-	assert.NoError(setup.TearDown())
+	assert.NoError(t, setup.TearDown())
 }
 
 func Test_downloadFolder_sync_already_downloaded(t *testing.T) {
-	assert := assert.New(t)
 	setup := NewTestSetup()
 
 	setup.MapFS["taco.png"] = &fstest.MapFile{
@@ -361,21 +341,21 @@ func Test_downloadFolder_sync_already_downloaded(t *testing.T) {
 	setup.DownloaderParams = DownloaderParams{RemotePath: "", Sync: true, EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
 	setup.rootDestination = ""
 	taco, err := os.Create(filepath.Join(setup.tempDir, "taco.png"))
-	assert.NoError(err)
-	taco.Write(make([]byte, 100))
+	assert.NoError(t, err)
+	_, err = taco.Write(make([]byte, 100))
+	require.NoError(t, err)
 	setup.Call()
 
-	assert.Equal(2, len(setup.reporterCalls))
-	assert.NoError(setup.reporterCalls[0].err)
-	assert.Equal(status.Queued, setup.reporterCalls[0].Status)
-	assert.Equal(status.Skipped, setup.reporterCalls[1].Status)
-	assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
+	assert.Equal(t, 2, len(setup.reporterCalls))
+	assert.NoError(t, setup.reporterCalls[0].err)
+	assert.Equal(t, status.Queued, setup.reporterCalls[0].Status)
+	assert.Equal(t, status.Skipped, setup.reporterCalls[1].Status)
+	assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
 
-	assert.NoError(setup.TearDown())
+	assert.NoError(t, setup.TearDown())
 }
 
 func Test_downloadFolder_sync_not_already_downloaded(t *testing.T) {
-	assert := assert.New(t)
 	setup := NewTestSetup()
 	setup.MapFS["taco.png"] = &fstest.MapFile{
 		Data:    make([]byte, 100),
@@ -385,21 +365,20 @@ func Test_downloadFolder_sync_not_already_downloaded(t *testing.T) {
 	setup.DownloaderParams = DownloaderParams{RemotePath: "", Sync: true, EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
 	setup.rootDestination = ""
 	_, err := os.Create(filepath.Join(setup.tempDir, "taco.png"))
-	assert.NoError(err)
+	assert.NoError(t, err)
 	setup.Call()
 
-	assert.Equal(3, len(setup.reporterCalls))
-	assert.Equal("taco.png", setup.reporterCalls[0].File.Path)
-	assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
-	assert.Equal(status.Queued, setup.reporterCalls[0].Status)
-	assert.Equal(status.Downloading, setup.reporterCalls[1].Status)
-	assert.Equal(status.Complete, setup.reporterCalls[2].Status)
+	assert.Equal(t, 3, len(setup.reporterCalls))
+	assert.Equal(t, "taco.png", setup.reporterCalls[0].File.Path)
+	assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
+	assert.Equal(t, status.Queued, setup.reporterCalls[0].Status)
+	assert.Equal(t, status.Downloading, setup.reporterCalls[1].Status)
+	assert.Equal(t, status.Complete, setup.reporterCalls[2].Status)
 
-	assert.NoError(setup.TearDown())
+	assert.NoError(t, setup.TearDown())
 }
 
 func Test_downloadFolder_sync_local_does_not_exist(t *testing.T) {
-	assert := assert.New(t)
 	setup := NewTestSetup()
 	setup.MapFS["taco.png"] = &fstest.MapFile{
 		Data:    make([]byte, 100),
@@ -410,18 +389,17 @@ func Test_downloadFolder_sync_local_does_not_exist(t *testing.T) {
 	setup.rootDestination = ""
 	setup.Call()
 
-	assert.Equal(3, len(setup.reporterCalls))
-	assert.Equal("taco.png", setup.reporterCalls[0].File.Path)
-	assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
-	assert.Equal(status.Queued, setup.reporterCalls[0].Status)
-	assert.Equal(status.Downloading, setup.reporterCalls[1].Status)
-	assert.Equal(status.Complete, setup.reporterCalls[2].Status)
+	assert.Equal(t, 3, len(setup.reporterCalls))
+	assert.Equal(t, "taco.png", setup.reporterCalls[0].File.Path)
+	assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
+	assert.Equal(t, status.Queued, setup.reporterCalls[0].Status)
+	assert.Equal(t, status.Downloading, setup.reporterCalls[1].Status)
+	assert.Equal(t, status.Complete, setup.reporterCalls[2].Status)
 
-	assert.NoError(setup.TearDown())
+	assert.NoError(t, setup.TearDown())
 }
 
 func Test_downloadFolder_download_file(t *testing.T) {
-	assert := assert.New(t)
 	setup := NewTestSetup()
 	setup.MapFS["some-path/taco.png"] = &fstest.MapFile{
 		Data:    make([]byte, 100),
@@ -434,16 +412,15 @@ func Test_downloadFolder_download_file(t *testing.T) {
 
 	job := setup.Call()
 
-	assert.Equal(1, job.Count())
-	assert.Equal(3, len(setup.reporterCalls))
-	assert.Equal("some-path/taco.png", setup.reporterCalls[0].File.Path)
-	assert.Equal(int64(0), setup.reporterCalls[0].TransferBytes)
+	assert.Equal(t, 1, job.Count())
+	assert.Equal(t, 3, len(setup.reporterCalls))
+	assert.Equal(t, "some-path/taco.png", setup.reporterCalls[0].File.Path)
+	assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
 
-	assert.NoError(setup.TearDown())
+	assert.NoError(t, setup.TearDown())
 }
 
 func Test_downloadFolder_OnDownload(t *testing.T) {
-	assert := assert.New(t)
 	setup := NewTestSetup()
 	setup.MapFS["some-path/taco.png"] = &fstest.MapFile{
 		Data:    make([]byte, 100),
@@ -455,31 +432,9 @@ func Test_downloadFolder_OnDownload(t *testing.T) {
 
 	setup.Call()
 
-	assert.Equal(3, len(setup.reporterCalls))
+	assert.Equal(t, 3, len(setup.reporterCalls))
 
-	assert.Equal(int64(100), setup.reporterCalls[2].File.Size, "Updates with real file size")
+	assert.Equal(t, int64(100), setup.reporterCalls[2].File.Size, "Updates with real file size")
 
-	assert.NoError(setup.TearDown())
-}
-
-func Test_tmpDownloadPath(t *testing.T) {
-	assert := assert.New(t)
-
-	path := tmpDownloadPath("you-wont-find-me")
-
-	assert.Equal("you-wont-find-me.download", path)
-	file, err := os.Create("find-me.download")
-	defer func() {
-		os.Remove(file.Name())
-	}()
-	if err != nil {
-		panic(err)
-	}
-	file.Write([]byte("hello"))
-	err = file.Close()
-	if err != nil {
-		panic(err)
-	}
-	path = tmpDownloadPath("find-me")
-	assert.Equal(fmt.Sprintf("find-me (1).download"), path, "it increments a number")
+	assert.NoError(t, setup.TearDown())
 }

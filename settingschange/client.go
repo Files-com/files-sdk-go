@@ -20,7 +20,7 @@ func (i *Iter) SettingsChange() files_sdk.SettingsChange {
 	return i.Current().(files_sdk.SettingsChange)
 }
 
-func (c *Client) List(ctx context.Context, params files_sdk.SettingsChangeListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.SettingsChangeListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	path, err := lib.BuildPath("/settings_changes", params)
 	if err != nil {
@@ -28,10 +28,10 @@ func (c *Client) List(ctx context.Context, params files_sdk.SettingsChangeListPa
 	}
 	i.ListParams = &params
 	list := files_sdk.SettingsChangeCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func List(ctx context.Context, params files_sdk.SettingsChangeListParams) (*Iter, error) {
-	return (&Client{}).List(ctx, params)
+func List(ctx context.Context, params files_sdk.SettingsChangeListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).List(ctx, params, opts...)
 }

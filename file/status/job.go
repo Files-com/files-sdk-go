@@ -27,6 +27,7 @@ type IFile interface {
 	SetStatus(Status, error)
 	TransferBytes() int64
 	File() filesSDK.File
+	Size() int64
 	Id() string
 	LocalPath() string
 	RemotePath() string
@@ -71,6 +72,7 @@ type Job struct {
 	context.CancelFunc
 	Params interface{}
 	Client interface{}
+	Config interface{}
 	EventsReporter
 	directory.Type
 	*manager.Manager
@@ -231,7 +233,7 @@ func (r *Job) TotalBytes(t ...Status) int64 {
 	r.statusesMutex.RLock()
 	for _, s := range r.Statuses {
 		if s.Status().Any(t...) {
-			total += s.File().Size
+			total += s.Size()
 		}
 	}
 	r.statusesMutex.RUnlock()

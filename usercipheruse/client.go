@@ -20,7 +20,7 @@ func (i *Iter) UserCipherUse() files_sdk.UserCipherUse {
 	return i.Current().(files_sdk.UserCipherUse)
 }
 
-func (c *Client) List(ctx context.Context, params files_sdk.UserCipherUseListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.UserCipherUseListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	path, err := lib.BuildPath("/user_cipher_uses", params)
 	if err != nil {
@@ -28,10 +28,10 @@ func (c *Client) List(ctx context.Context, params files_sdk.UserCipherUseListPar
 	}
 	i.ListParams = &params
 	list := files_sdk.UserCipherUseCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func List(ctx context.Context, params files_sdk.UserCipherUseListParams) (*Iter, error) {
-	return (&Client{}).List(ctx, params)
+func List(ctx context.Context, params files_sdk.UserCipherUseListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).List(ctx, params, opts...)
 }

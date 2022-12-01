@@ -20,7 +20,7 @@ func (i *Iter) App() files_sdk.App {
 	return i.Current().(files_sdk.App)
 }
 
-func (c *Client) List(ctx context.Context, params files_sdk.AppListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.AppListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	path, err := lib.BuildPath("/apps", params)
 	if err != nil {
@@ -28,10 +28,10 @@ func (c *Client) List(ctx context.Context, params files_sdk.AppListParams) (*Ite
 	}
 	i.ListParams = &params
 	list := files_sdk.AppCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func List(ctx context.Context, params files_sdk.AppListParams) (*Iter, error) {
-	return (&Client{}).List(ctx, params)
+func List(ctx context.Context, params files_sdk.AppListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).List(ctx, params, opts...)
 }

@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -130,6 +132,21 @@ func pathSpec() []pathSpecTest {
 				{dir: false, path: "dest/taz.txt"},
 			},
 		},
+		{
+			name: "copy baz.txt to current working directory",
+			args: pathSpecArgs{
+				src:  "src/foo/baz.txt",
+				dest: "",
+			},
+			src: []pathSpecEntry{
+				{dir: true, path: "src"},
+				{dir: true, path: "src/foo"},
+				{dir: false, path: "src/foo/baz.txt"},
+			},
+			dest: []pathSpecEntry{
+				{dir: false, path: "baz.txt"},
+			},
+		},
 	}
 }
 
@@ -167,7 +184,16 @@ func TestRsync(t *testing.T) {
 					}
 					assert.NoError(t, err)
 				}
-				cmd := exec.Command("rsync", "-av", strings.Join([]string{rsyncSrc, tt.args.src}, string(os.PathSeparator)), strings.Join([]string{rsyncDest, tt.args.dest}, string(os.PathSeparator)))
+				source := strings.Join([]string{rsyncSrc, tt.args.src}, string(os.PathSeparator))
+				destination := strings.Join([]string{rsyncDest, tt.args.dest}, string(os.PathSeparator))
+				if tt.args.dest == "" {
+					destination = ""
+				}
+				originalDir, err := os.Getwd()
+				require.NoError(t, err)
+				err = os.Chdir(rsyncDest)
+				require.NoError(t, err)
+				cmd := exec.Command("rsync", "-av", source, destination)
 				var cleanedArgs []string
 
 				for _, arg := range cmd.Args {
@@ -185,6 +211,8 @@ func TestRsync(t *testing.T) {
 				if stderr.String() != "" {
 					t.Log(stderr.String())
 				}
+				err = os.Chdir(originalDir)
+				require.NoError(t, err)
 				for _, e := range tt.dest {
 					fileInfo, err := os.Stat(filepath.Join(rsyncDest, e.path))
 					assert.NoError(t, err, e.path)

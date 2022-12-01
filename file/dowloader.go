@@ -2,14 +2,14 @@ package file
 
 import (
 	"context"
-	"fmt"
-	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/Files-com/files-sdk-go/v2/lib/keyvalue"
 
 	"github.com/Files-com/files-sdk-go/v2/lib/direction"
 
@@ -20,13 +20,14 @@ import (
 	"github.com/Files-com/files-sdk-go/v2/lib"
 )
 
-func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *status.Job {
+func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams, config files_sdk.Config) *status.Job {
 	job := status.Job{}.Init()
 	SetJobParams(job, direction.DownloadType, params)
+	job.Config = config
 	jobCtx := job.WithContext(ctx)
-	remoteFs, ok := fileSys.(FS)
+	remoteFs, ok := fileSys.(WithContext)
 	if ok {
-		fileSys = remoteFs.WithContext(jobCtx)
+		fileSys = remoteFs.WithContext(jobCtx).(*FS)
 	}
 	if params.RemoteFile.Path != "" {
 		job.LocalPath = params.LocalPath
@@ -56,10 +57,11 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 				}
 			}
 		}
+		job.LocalPath = lib.ExpandTilde(job.LocalPath)
 		var localType directory.Type
-		stats, err := os.Stat(params.LocalPath)
+		stats, err := os.Stat(job.LocalPath)
 		if os.IsNotExist(err) {
-			if (lib.Path{Path: params.LocalPath}).EndingSlash() { // explicit directory
+			if (lib.Path{Path: job.LocalPath}).EndingSlash() { // explicit directory
 				localType = directory.Dir
 			} else if remoteType == directory.File {
 				localType = directory.File
@@ -74,13 +76,22 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 			}
 		}
 		if (!(lib.Path{Path: params.RemotePath}).EndingSlash() && localType == directory.Dir) || remoteType == directory.File && localType == directory.Dir {
-			job.LocalPath = filepath.Join(job.LocalPath, (lib.Path{Path: params.RemotePath}).Pop())
+			job.LocalPath = filepath.Join(job.LocalPath, (lib.Path{Path: job.RemotePath}).Pop())
 			if remoteType == directory.File {
 				localType = directory.File
 			}
 		}
 
+		// Use relative path
+		if job.LocalPath == "" {
+			job.LocalPath = lib.Path{Path: job.RemotePath}.Pop()
+		}
+
 		job.Type = localType
+		config.Logger().Printf(keyvalue.New(map[string]interface{}{
+			"LocalPath":  job.LocalPath,
+			"RemotePath": job.RemotePath,
+		}))
 	}
 	onComplete := make(chan *DownloadStatus)
 	job.CodeStart = func() {
@@ -98,7 +109,7 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 			}
 			if !d.IsDir() {
 				f, err := fileSys.Open(path)
-				createIndexedStatus(Entity{error: err, File: f}, params, job)
+				createIndexedStatus(Entity{error: err, File: f, FS: fileSys}, params, job)
 			}
 
 			return nil
@@ -128,27 +139,28 @@ func normalizePath(rootDestination string) string {
 }
 
 func createIndexedStatus(f Entity, params DownloaderParams, job *status.Job) {
-	var fi files_sdk.File
-	if f.error == nil {
-		info, err := f.File.Stat()
-		if err != nil {
-			panic(err)
-		}
-		fi = info.Sys().(files_sdk.File)
-	}
-
 	s := &DownloadStatus{
 		error:         f.error,
 		fsFile:        f.File,
-		file:          fi,
-		localPath:     localPath(fi, *job),
-		remotePath:    fi.Path,
+		FS:            f.FS,
 		job:           job,
 		Sync:          params.Sync,
 		status:        status.Indexed,
 		Mutex:         &sync.RWMutex{},
 		PreserveTimes: params.PreserveTimes,
 	}
+	var err error
+	if f.error == nil {
+		s.FileInfo, err = f.File.Stat()
+		if err == nil {
+			s.file = s.FileInfo.Sys().(files_sdk.File)
+			s.localPath = localPath(s.file, *job)
+			s.remotePath = s.file.Path
+		} else {
+			s.SetStatus(status.Errored, err)
+		}
+	}
+
 	job.Add(s)
 }
 
@@ -185,15 +197,16 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 			}
 		}
 
+		remoteStat, remoteStatErr := reportStatus.fsFile.Stat()
+		if remoteStatErr != nil {
+			reportStatus.Job().UpdateStatus(status.Errored, reportStatus, remoteStatErr)
+			return
+		}
+
 		if reportStatus.Job().Sync {
 			localStat, localStatErr := os.Stat(reportStatus.LocalPath())
 			if localStatErr != nil && !os.IsNotExist(localStatErr) {
 				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, localStatErr)
-				return
-			}
-			remoteStat, remoteStatErr := reportStatus.fsFile.Stat()
-			if remoteStatErr != nil {
-				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, remoteStatErr)
 				return
 			}
 			// server is not after local
@@ -203,36 +216,41 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 				return
 			}
 		}
-		downloadParams := files_sdk.FileDownloadParams{Path: reportStatus.RemotePath()}
-
 		tmpName := tmpDownloadPath(reportStatus.LocalPath())
-		var out *os.File
-		out, downloadParams.Writer = openFile(tmpName, reportStatus)
-		written, err := io.Copy(downloadParams.Writer, lib.NewReader(ctx, s.fsFile))
-		if err != nil {
-			reportStatus.Job().StatusFromError(reportStatus, err)
-		} else {
-			reportStatus.SetFinalSize(written)
-		}
-		closeErr := out.Close()
+		config := reportStatus.Job().Config.(files_sdk.Config)
+		config.LogPath(
+			reportStatus.RemotePath(),
+			map[string]interface{}{
+				"LocalTempPath": tmpName,
+			},
+		)
+		writer := openFile(tmpName, reportStatus)
+		downloadParts := (&DownloadParts{}).Init(
+			reportStatus.fsFile,
+			remoteStat,
+			reportStatus.Job().Manager.FilePartsManager,
+			writer,
+			config,
+		)
 
-		if closeErr != nil {
-			reportStatus.Job().UpdateStatus(status.Errored, reportStatus, closeErr)
-		}
+		lib.AnyError(func(err error) {
+			reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
+		},
+			func() error { return downloadParts.Run(ctx) },
+			func() error { return downloadParts.CloseError },
+		)
 
-		closeErr = s.fsFile.Close()
-
-		if closeErr != nil {
-			reportStatus.Job().UpdateStatus(status.Errored, reportStatus, closeErr)
-		}
-
-		if !reportStatus.Status().Is(status.Valid...) {
-			err = os.Remove(tmpName) // Clean up on invalid download
-			if err != nil {
-				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
-			}
-		} else {
-			err = os.Rename(tmpName, reportStatus.LocalPath())
+		if reportStatus.Status().Is(status.Valid...) {
+			reportStatus.SetFinalSize(downloadParts.FinalSize())
+			config := reportStatus.Job().Config.(files_sdk.Config)
+			config.LogPath(
+				reportStatus.RemotePath(),
+				map[string]interface{}{
+					"LocalTempPath": tmpName,
+					"FinalSize":     downloadParts.FinalSize(),
+				},
+			)
+			err := finalizeTmpDownload(tmpName, reportStatus.LocalPath())
 
 			if err == nil && reportStatus.PreserveTimes {
 				var t time.Time
@@ -251,40 +269,26 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 			} else if reportStatus.Status().Is(status.Downloading) {
 				reportStatus.Job().UpdateStatus(status.Complete, reportStatus, nil)
 			}
+		} else {
+			err := os.Remove(tmpName) // Clean up on invalid download
+			if err != nil {
+				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
+			}
 		}
 	}(ctx, s)
 }
 
-func tmpDownloadPath(path string) string {
-	return _tmpDownloadPath(path, 0)
-}
-
-func _tmpDownloadPath(path string, index int) string {
-	var name string
-
-	if index == 0 {
-		name = fmt.Sprintf("%v.download", path)
-	} else {
-		name = fmt.Sprintf("%v (%v).download", path, index)
-	}
-	_, err := os.Stat(name)
-	if os.IsNotExist(err) {
-		return name
-	}
-	return _tmpDownloadPath(path, index+1)
-}
-
-func openFile(partName string, reportStatus *DownloadStatus) (*os.File, lib.ProgressWriter) {
+func openFile(partName string, reportStatus *DownloadStatus) lib.ProgressWriter {
 	out, createErr := os.Create(partName)
 	if createErr != nil {
 		reportStatus.Job().UpdateStatus(status.Errored, reportStatus, createErr)
 	}
-	writer := lib.ProgressWriter{Writer: out}
+	writer := lib.ProgressWriter{WriterAndAt: out}
 	writer.ProgressWatcher = func(incDownloadedBytes int64) {
 		reportStatus.Job().UpdateStatus(status.Downloading, reportStatus, nil)
 		reportStatus.incrementDownloadedBytes(incDownloadedBytes)
 	}
-	return out, writer
+	return writer
 }
 
 func localPath(file files_sdk.File, job status.Job) string {

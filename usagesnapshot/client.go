@@ -20,7 +20,7 @@ func (i *Iter) UsageSnapshot() files_sdk.UsageSnapshot {
 	return i.Current().(files_sdk.UsageSnapshot)
 }
 
-func (c *Client) List(ctx context.Context, params files_sdk.UsageSnapshotListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.UsageSnapshotListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	path, err := lib.BuildPath("/usage_snapshots", params)
 	if err != nil {
@@ -28,10 +28,10 @@ func (c *Client) List(ctx context.Context, params files_sdk.UsageSnapshotListPar
 	}
 	i.ListParams = &params
 	list := files_sdk.UsageSnapshotCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func List(ctx context.Context, params files_sdk.UsageSnapshotListParams) (*Iter, error) {
-	return (&Client{}).List(ctx, params)
+func List(ctx context.Context, params files_sdk.UsageSnapshotListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).List(ctx, params, opts...)
 }

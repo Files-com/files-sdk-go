@@ -11,11 +11,11 @@ type Client struct {
 	files_sdk.Config
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.WebhookTestCreateParams) (webhookTest files_sdk.WebhookTest, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/webhook_tests", Params: params, Entity: &webhookTest})
+func (c *Client) Create(ctx context.Context, params files_sdk.WebhookTestCreateParams, opts ...files_sdk.RequestResponseOption) (webhookTest files_sdk.WebhookTest, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/webhook_tests", Params: params, Entity: &webhookTest}, opts...)
 	return
 }
 
-func Create(ctx context.Context, params files_sdk.WebhookTestCreateParams) (webhookTest files_sdk.WebhookTest, err error) {
-	return (&Client{}).Create(ctx, params)
+func Create(ctx context.Context, params files_sdk.WebhookTestCreateParams, opts ...files_sdk.RequestResponseOption) (webhookTest files_sdk.WebhookTest, err error) {
+	return (&Client{}).Create(ctx, params, opts...)
 }

@@ -2,6 +2,7 @@ package file
 
 import (
 	"context"
+	"io"
 	"io/fs"
 	"os"
 
@@ -29,8 +30,10 @@ func (c *Client) DownloadToFile(ctx context.Context, params files_sdk.FileDownlo
 	if err != nil {
 		return files_sdk.File{}, err
 	}
-	params.Writer = out
-	return c.Download(ctx, params)
+	return c.Download(ctx, params, files_sdk.ResponseBodyOption(func(closer io.ReadCloser) error {
+		_, err := io.Copy(out, closer)
+		return err
+	}))
 }
 
 type DownloaderParams struct {
@@ -45,10 +48,11 @@ type DownloaderParams struct {
 }
 
 func (c *Client) Downloader(ctx context.Context, params DownloaderParams) *status.Job {
-	return downloader(ctx, FS{}.Init(c.Config), params)
+	return downloader(ctx, (&FS{}).Init(c.Config, true), params, c.Config)
 }
 
 type Entity struct {
 	fs.File
+	fs.FS
 	error
 }

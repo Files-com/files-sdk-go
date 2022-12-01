@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 
@@ -14,12 +13,12 @@ import (
 	"moul.io/http2curl"
 )
 
-func Resource(ctx context.Context, config Config, resource lib.Resource) error {
+func Resource(ctx context.Context, config Config, resource lib.Resource, opt ...RequestResponseOption) error {
 	out, err := resource.Out()
 	if err != nil {
 		return err
 	}
-	data, res, err := Call(ctx, resource.Method, config, out.Path, out.Values)
+	data, res, err := Call(ctx, resource.Method, config, out.Path, out.Values, opt...)
 	defer lib.CloseBody(res)
 	if err != nil {
 		return err
@@ -31,10 +30,10 @@ func Resource(ctx context.Context, config Config, resource lib.Resource) error {
 	return out.Entity.UnmarshalJSON(*data)
 }
 
-func Call(ctx context.Context, method string, config Config, resource string, params lib.Values) (*[]byte, *http.Response, error) {
+func Call(ctx context.Context, method string, config Config, resource string, params lib.Values, opts ...RequestResponseOption) (*[]byte, *http.Response, error) {
 	defaultHeaders := &http.Header{}
 	config.SetHeaders(defaultHeaders)
-	opts := &CallParams{
+	callParams := &CallParams{
 		Method:  method,
 		Config:  config,
 		Uri:     config.RootPath() + resource,
@@ -42,11 +41,11 @@ func Call(ctx context.Context, method string, config Config, resource string, pa
 		Headers: defaultHeaders,
 		Context: ctx,
 	}
-	request, err := buildRequest(opts)
+	request, err := buildRequest(callParams)
 	if err != nil {
 		return nil, &http.Response{}, err
 	}
-	response, err := config.GetHttpClient().Do(request)
+	response, err := WrapRequestOptions(config.GetHttpClient(), request, opts...)
 	if err != nil {
 		return nil, response, err
 	}
@@ -149,7 +148,7 @@ func buildRequest(opts *CallParams) (*http.Request, error) {
 			if err != nil {
 				return &http.Request{}, err
 			}
-			req.Body = ioutil.NopCloser(jsonBody)
+			req.Body = io.NopCloser(jsonBody)
 			req.Header.Add("Content-Type", "application/json")
 		} else {
 			if req.ContentLength != 0 {
@@ -177,7 +176,7 @@ func debugLog(bodyIsJson bool, req *http.Request, config Config, params lib.Valu
 		if err != nil {
 			panic(err)
 		}
-		clonedReq.Body = ioutil.NopCloser(jsonBody)
+		clonedReq.Body = io.NopCloser(jsonBody)
 	}
 	command, err := http2curl.GetCurlCommand(clonedReq)
 	if err != nil {

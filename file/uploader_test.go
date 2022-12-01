@@ -22,7 +22,7 @@ func (m *MockUploader) UploadIO(context.Context, UploadIOParams) (files_sdk.File
 	return files_sdk.File{}, files_sdk.FileUploadPart{}, Parts{}, nil
 }
 
-func (m *MockUploader) Find(context.Context, files_sdk.FileFindParams) (files_sdk.File, error) {
+func (m *MockUploader) Find(context.Context, files_sdk.FileFindParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
 	return m.File, m.findError
 }
 

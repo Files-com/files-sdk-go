@@ -141,10 +141,11 @@ func TestClient_UploadFolder_path_spec(t *testing.T) {
 						"/", "_", -1,
 					),
 				)
+				os.MkdirAll(filesDest, 0755)
 				folderClient := folder.Client{Config: client.Config}
 				_, err := folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filesDest})
 				ignoreSomeErrors(err)
-				localSrc, err := ioutil.TempDir("", "local-src")
+				localSrc, err := os.MkdirTemp("", "local-src")
 				assert.NoError(t, err)
 
 				for _, e := range tt.src {
@@ -180,13 +181,15 @@ func TestClient_UploadFolder_path_spec(t *testing.T) {
 					LocalPath:  strings.Join([]string{localSrc, tt.args.src}, string(os.PathSeparator)),
 					RemotePath: filepath.Join(filesDest, tt.args.dest),
 				}
+				if tt.args.dest == "" {
+					params.RemotePath = ""
+				}
 				job := client.Uploader(context.Background(), params)
 
 				t.Logf("RemotePath: %v, LocalPath: %v", params.RemotePath, params.LocalPath)
 
 				job.Start()
 				job.Wait()
-
 				assert.Len(t, job.Statuses, 1)
 				assert.NoError(t, job.Statuses[0].Err())
 				it, err := client.ListForRecursive(context.Background(), files_sdk.FolderListForParams{Path: filesDest})
@@ -195,14 +198,23 @@ func TestClient_UploadFolder_path_spec(t *testing.T) {
 					fmt.Println(it.Current().(files_sdk.File).Path)
 					assert.NoError(t, it.Err())
 				}
+				var filePath string
 				for _, e := range tt.dest {
-					file, err := client.Find(context.Background(), files_sdk.FileFindParams{Path: filepath.Join(filesDest, e.path)})
+					if tt.args.dest == "" {
+						filePath = e.path
+					} else {
+						filePath = filepath.Join(filesDest, e.path)
+					}
+					file, err := client.Find(context.Background(), files_sdk.FileFindParams{Path: filePath})
 					assert.NoError(t, err)
 					assert.Equal(t, e.dir, file.Type == "directory", e.path)
 				}
 
 				assert.NoError(t, os.RemoveAll(localSrc))
 				assert.NoError(t, client.Delete(context.Background(), files_sdk.FileDeleteParams{Path: filesDest, Recursive: lib.Bool(true)}))
+				if tt.args.dest == "" {
+					assert.NoError(t, client.Delete(context.Background(), files_sdk.FileDeleteParams{Path: filePath, Recursive: lib.Bool(true)}))
+				}
 			})
 		}
 	})
@@ -235,7 +247,7 @@ func TestClient_UploadFolder(t *testing.T) {
 
 	job.Start()
 	job.Wait()
-	files, err := ioutil.ReadDir("../lib")
+	files, err := os.ReadDir("../lib")
 	assert.NoError(err)
 	gitIgnore, err := ignore.New()
 	assert.NoError(err)
@@ -271,7 +283,7 @@ func TestClient_UploadFolder_Dot(t *testing.T) {
 	defer r.Stop()
 
 	assert := assert.New(t)
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -338,7 +350,7 @@ func TestClient_UploadFolder_Relative(t *testing.T) {
 	defer r.Stop()
 
 	assert := assert.New(t)
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -413,13 +425,13 @@ func TestClient_UploadFile(t *testing.T) {
 	assert.Equal(int64(1102), job.TotalBytes())
 	assert.Equal(true, job.All(status.Ended...))
 
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	tempFile, err := ioutil.TempFile(tmpDir, "LICENSE")
+	tempFile, err := os.CreateTemp(tmpDir, "LICENSE")
 	if err != nil {
 		panic(err)
 	}
@@ -431,11 +443,11 @@ func TestClient_UploadFile(t *testing.T) {
 
 	assert.Equal(file.DisplayName, "LICENSE")
 
-	downloadData, err := ioutil.ReadFile(tempFile.Name())
+	downloadData, err := os.ReadFile(tempFile.Name())
 	if err != nil {
 		panic(err)
 	}
-	localData, err := ioutil.ReadFile(uploadPath)
+	localData, err := os.ReadFile(uploadPath)
 	if err != nil {
 		panic(err)
 	}
@@ -451,7 +463,7 @@ func TestClient_UploadFile_To_Existing_Dir(t *testing.T) {
 	defer r.Stop()
 	assert := assert.New(t)
 
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -466,7 +478,7 @@ func TestClient_UploadFile_To_Existing_Dir(t *testing.T) {
 	job := client.Uploader(context.Background(), UploaderParams{LocalPath: uploadPath, RemotePath: "docs"})
 	job.Start()
 	job.Wait()
-	tempFile, err := ioutil.TempFile(tmpDir, "LICENSE")
+	tempFile, err := os.CreateTemp(tmpDir, "LICENSE")
 	if err != nil {
 		panic(err)
 	}
@@ -475,11 +487,11 @@ func TestClient_UploadFile_To_Existing_Dir(t *testing.T) {
 
 	assert.Equal(file.DisplayName, "LICENSE")
 
-	downloadData, err := ioutil.ReadFile(tempFile.Name())
+	downloadData, err := os.ReadFile(tempFile.Name())
 	if err != nil {
 		panic(err)
 	}
-	localData, err := ioutil.ReadFile(uploadPath)
+	localData, err := os.ReadFile(uploadPath)
 	if err != nil {
 		panic(err)
 	}
@@ -495,7 +507,7 @@ func TestClient_UploadFile_To_NonExistingPath(t *testing.T) {
 	defer r.Stop()
 	assert := assert.New(t)
 
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -536,7 +548,7 @@ func TestClient_UploadFile_To_NonExistingPath_WithSlash(t *testing.T) {
 	defer r.Stop()
 	assert := assert.New(t)
 
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -549,7 +561,7 @@ func TestClient_UploadFile_To_NonExistingPath_WithSlash(t *testing.T) {
 	defer deletePath(client, "docs")
 	job.Start()
 	job.Wait()
-	tempFile, err := ioutil.TempFile(tmpDir, "LICENSE")
+	tempFile, err := os.CreateTemp(tmpDir, "LICENSE")
 	if err != nil {
 		panic(err)
 	}
@@ -559,11 +571,11 @@ func TestClient_UploadFile_To_NonExistingPath_WithSlash(t *testing.T) {
 	assert.Equal("file", file.Type)
 	assert.Equal("LICENSE", file.DisplayName)
 
-	downloadData, err := ioutil.ReadFile(tempFile.Name())
+	downloadData, err := os.ReadFile(tempFile.Name())
 	if err != nil {
 		panic(err)
 	}
-	localData, err := ioutil.ReadFile(uploadPath)
+	localData, err := os.ReadFile(uploadPath)
 	if err != nil {
 		panic(err)
 	}
@@ -578,7 +590,7 @@ func TestClient_UploadFolder_as_file2(t *testing.T) {
 	}
 	defer r.Stop()
 	assert := assert.New(t)
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -721,27 +733,27 @@ func TestClient_DownloadFolder_Smart(t *testing.T) {
 
 	buildScenario("TestClient_DownloadFolder_Smart", client)
 
-	assert := assert.New(t)
-
 	results := runDownloadScenario(filepath.Join("TestClient_DownloadFolder_Smart", "nested_1", "nested_2", "3.text"), "download/", client)
 
-	assert.Len(results["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"], 3)
-	assert.Equal(int64(9), results["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"][2].TransferBytes)
+	assert.Len(t, results["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"], 3)
+	assert.Equal(t, int64(9), results["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"][2].TransferBytes)
 
 	results2 := runDownloadScenario(filepath.Join("TestClient_DownloadFolder_Smart", "nested_1", "nested_2")+"/", "download", client)
 
-	assert.NoError(err)
+	assert.NoError(t, err)
 
 	path, err := os.Getwd()
-	assert.NoError(err)
+	assert.NoError(t, err)
 
-	assert.Equal(int64(9), results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"][2].TransferBytes)
-	assert.Equal(filepath.Join(path, "download/3.text"), results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"][2].LocalPath)
+	require.Len(t, results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"], 3)
+	assert.Equal(t, int64(9), results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"][2].TransferBytes)
+	assert.Equal(t, filepath.Join(path, "download/3.text"), results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/3.text"][2].LocalPath)
 	fileInfo, err := os.Stat(filepath.Join(path, "download/3.text"))
 	require.NoError(t, err)
-	assert.Equal(int64(9), fileInfo.Size())
-	assert.Equal(int64(9), results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text"][2].TransferBytes)
-	assert.Equal(filepath.Join(path, "download/nested_3/4.text"), results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text"][2].LocalPath)
+	assert.Equal(t, int64(9), fileInfo.Size())
+	require.Len(t, results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text"], 3)
+	assert.Equal(t, int64(9), results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text"][2].TransferBytes)
+	assert.Equal(t, filepath.Join(path, "download/nested_3/4.text"), results2["TestClient_DownloadFolder_Smart/nested_1/nested_2/nested_3/4.text"][2].LocalPath)
 }
 
 func TestClient_DownloadFolder_file_to_file(t *testing.T) {
@@ -802,7 +814,7 @@ func TestClient_DownloadFolder_file_only(t *testing.T) {
 	assert := assert.New(t)
 	results := runDownloadScenario("i am at the root.text", "", client)
 	assert.NoError(err)
-
+	require.Len(t, results["i am at the root.text"], 3)
 	assert.Equal(int64(5), results["i am at the root.text"][2].TransferBytes)
 	os.RemoveAll("i am at the root.text")
 }
@@ -821,9 +833,10 @@ func TestClient_Downloader_Delete_Source(t *testing.T) {
 	_, _, _, err = client.UploadIO(
 		context.Background(),
 		UploadIOParams{
-			Path:   filepath.Join("test-delete-source", "test.text"),
-			Reader: strings.NewReader("testing 3"),
-			Size:   int64(9),
+			Path:          filepath.Join("test-delete-source", "test.text"),
+			Reader:        strings.NewReader("testing 3"),
+			Size:          int64(9),
+			ProvidedMtime: time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC),
 		},
 	)
 	assert.NoError(err)
@@ -844,6 +857,7 @@ func TestClient_Downloader_Delete_Source(t *testing.T) {
 	assert.Equal(fi.RemotePath, log.Path)
 
 	_, err = client.Find(context.Background(), files_sdk.FileFindParams{Path: filepath.Join("test-delete-source", "test.text")})
+	require.NotNil(t, err)
 	assert.Equal("Not Found - `Not Found`", err.Error())
 	os.RemoveAll("test.text")
 }
@@ -862,9 +876,10 @@ func TestClient_Downloader_Move_Source(t *testing.T) {
 	_, _, _, err = client.UploadIO(
 		context.Background(),
 		UploadIOParams{
-			Path:   filepath.Join("test-move-source", "test.text"),
-			Reader: strings.NewReader("testing 3"),
-			Size:   int64(9),
+			Path:          filepath.Join("test-move-source", "test.text"),
+			Reader:        strings.NewReader("testing 3"),
+			Size:          int64(9),
+			ProvidedMtime: time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC),
 		},
 	)
 	assert.NoError(err)
@@ -879,7 +894,7 @@ func TestClient_Downloader_Move_Source(t *testing.T) {
 	job.Start()
 	job.Wait()
 
-	assert.NoError(err)
+	require.NoError(t, err)
 	assert.Equal("move source", log.Action)
 	assert.Equal("test-moved-source/test.text", log.Path)
 
@@ -897,7 +912,7 @@ func TestClient_UploadFolder_Move_Source(t *testing.T) {
 	}
 	defer r.Stop()
 	assert := assert.New(t)
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -935,7 +950,7 @@ func TestClient_UploadFolder_Move_Source_Missing_Dir(t *testing.T) {
 	defer r.Stop()
 	assert := assert.New(t)
 
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -979,7 +994,7 @@ func TestClient_Downloader_Move_Source_Missing_Dir(t *testing.T) {
 	defer r.Stop()
 	assert := assert.New(t)
 
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -990,7 +1005,13 @@ func TestClient_Downloader_Move_Source_Missing_Dir(t *testing.T) {
 
 	logChan := make(chan status.Log)
 	errChan := make(chan error)
-	job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "TestClient_Downloader_Move_Source_Missing_Dir", LocalPath: filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir") + "/"})
+	job := client.Downloader(
+		context.Background(),
+		DownloaderParams{
+			RemotePath: "TestClient_Downloader_Move_Source_Missing_Dir",
+			LocalPath:  filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir") + "/",
+		},
+	)
 	job.RegisterFileEvent(func(f status.File) {
 		moveLog, err := MoveSource{Config: client.Config, Direction: job.Direction, Path: "TestClient_Downloader_Move_Source_Missing_Dir-moved"}.Call(context.Background(), f)
 		logChan <- moveLog
@@ -1033,7 +1054,7 @@ func TestClient_UploadFile_Delete_Source(t *testing.T) {
 	}
 	defer r.Stop()
 	assert := assert.New(t)
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1073,7 +1094,7 @@ func TestClient_ListForRecursive(t *testing.T) {
 		files = append(files, it.Current().(files_sdk.File))
 	}
 
-	assert.Equal(len(files), 6)
+	require.Equal(t, len(files), 6)
 	assert.Equal(files[0].Path, "TestClient_ListForRecursive")
 	assert.Equal(files[1].Path, "TestClient_ListForRecursive/nested_1")
 	assert.Equal(files[2].Path, "TestClient_ListForRecursive/nested_1/nested_2")

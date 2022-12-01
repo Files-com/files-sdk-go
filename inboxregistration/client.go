@@ -20,7 +20,7 @@ func (i *Iter) InboxRegistration() files_sdk.InboxRegistration {
 	return i.Current().(files_sdk.InboxRegistration)
 }
 
-func (c *Client) List(ctx context.Context, params files_sdk.InboxRegistrationListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.InboxRegistrationListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	path, err := lib.BuildPath("/inbox_registrations", params)
 	if err != nil {
@@ -28,10 +28,10 @@ func (c *Client) List(ctx context.Context, params files_sdk.InboxRegistrationLis
 	}
 	i.ListParams = &params
 	list := files_sdk.InboxRegistrationCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func List(ctx context.Context, params files_sdk.InboxRegistrationListParams) (*Iter, error) {
-	return (&Client{}).List(ctx, params)
+func List(ctx context.Context, params files_sdk.InboxRegistrationListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).List(ctx, params, opts...)
 }

@@ -20,7 +20,7 @@ func (i *Iter) AccountLineItem() files_sdk.AccountLineItem {
 	return i.Current().(files_sdk.AccountLineItem)
 }
 
-func (c *Client) List(ctx context.Context, params files_sdk.PaymentListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.PaymentListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	path, err := lib.BuildPath("/payments", params)
 	if err != nil {
@@ -28,19 +28,19 @@ func (c *Client) List(ctx context.Context, params files_sdk.PaymentListParams) (
 	}
 	i.ListParams = &params
 	list := files_sdk.AccountLineItemCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func List(ctx context.Context, params files_sdk.PaymentListParams) (*Iter, error) {
-	return (&Client{}).List(ctx, params)
+func List(ctx context.Context, params files_sdk.PaymentListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).List(ctx, params, opts...)
 }
 
-func (c *Client) Find(ctx context.Context, params files_sdk.PaymentFindParams) (accountLineItem files_sdk.AccountLineItem, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/payments/{id}", Params: params, Entity: &accountLineItem})
+func (c *Client) Find(ctx context.Context, params files_sdk.PaymentFindParams, opts ...files_sdk.RequestResponseOption) (accountLineItem files_sdk.AccountLineItem, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/payments/{id}", Params: params, Entity: &accountLineItem}, opts...)
 	return
 }
 
-func Find(ctx context.Context, params files_sdk.PaymentFindParams) (accountLineItem files_sdk.AccountLineItem, err error) {
-	return (&Client{}).Find(ctx, params)
+func Find(ctx context.Context, params files_sdk.PaymentFindParams, opts ...files_sdk.RequestResponseOption) (accountLineItem files_sdk.AccountLineItem, err error) {
+	return (&Client{}).Find(ctx, params, opts...)
 }

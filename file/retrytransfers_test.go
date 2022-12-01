@@ -126,7 +126,7 @@ func TestRetryTransfers(t *testing.T) {
 }
 
 func buildDownloadTest(test func(*status.Job)) {
-	job := status.Job{Direction: direction.DownloadType, Manager: manager.Default()}.Init()
+	job := status.Job{Direction: direction.DownloadType, Manager: manager.Default(), Config: files_sdk.Config{}}.Init()
 	temps := make([]string, 3)
 	statuses := []status.Status{status.Errored, status.Complete, status.Queued}
 	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")

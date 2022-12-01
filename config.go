@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	libLog "github.com/Files-com/files-sdk-go/v2/lib/logpath"
 	"github.com/hashicorp/go-retryablehttp"
 )
 
@@ -40,7 +41,7 @@ type Config struct {
 	rawClient         *retryablehttp.Client
 	AdditionalHeaders map[string]string
 	logger            Logger
-	Debug             *bool
+	Debug             bool
 	UserAgent         string
 	Environment
 }
@@ -73,7 +74,7 @@ func (n NullLogger) Printf(_ string, _ ...interface{}) {
 }
 
 func (c *Config) InDebug() bool {
-	return c.Debug != nil && *c.Debug || (os.Getenv("FILES_SDK_DEBUG") != "")
+	return c.Debug || (os.Getenv("FILES_SDK_DEBUG") != "")
 }
 
 func (c *Config) Logger() retryablehttp.Logger {
@@ -86,6 +87,10 @@ func (c *Config) Logger() retryablehttp.Logger {
 		c.SetLogger(NullLogger{})
 	}
 	return c.logger
+}
+
+func (c *Config) LogPath(path string, args map[string]interface{}) {
+	c.Logger().Printf(libLog.New(path, args))
 }
 
 func (c *Config) SetLogger(l Logger) {

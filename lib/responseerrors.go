@@ -1,9 +1,17 @@
 package lib
 
 import (
+	"errors"
 	"fmt"
+	"io"
+	"math"
 	"net/http"
 )
+
+type ResponseError struct {
+	StatusCode int
+	error
+}
 
 func ResponseErrors(res *http.Response, errorFunc ...func(res *http.Response) error) error {
 	for _, errFunc := range errorFunc {
@@ -20,6 +28,26 @@ func NonOkError(res *http.Response) error {
 	}
 
 	return nil
+}
+
+func NotStatus(status int) func(res *http.Response) error {
+	return func(res *http.Response) error {
+		if res.StatusCode != status {
+			return errorFromBody(res)
+		}
+
+		return nil
+	}
+}
+
+func IsStatus(status int) func(res *http.Response) error {
+	return func(res *http.Response) error {
+		if res.StatusCode == status {
+			return errorFromBody(res)
+		}
+
+		return nil
+	}
 }
 
 func IsJSON(res *http.Response) bool {
@@ -45,15 +73,12 @@ func CloseBody(res *http.Response) {
 
 func errorFromBody(res *http.Response) error {
 	var body []byte
-	if res.ContentLength == -1 {
-		body = make([]byte, 512)
+	body = make([]byte, int(math.Max(float64(res.ContentLength), float64(512))))
+	_, err := io.ReadFull(res.Body, body)
+	defer CloseBody(res)
+	if err == nil || errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+		return ResponseError{StatusCode: res.StatusCode, error: fmt.Errorf(string(body))}
 	} else {
-		body = make([]byte, res.ContentLength)
-	}
-	_, err := res.Body.Read(body)
-	if err == nil {
-		return fmt.Errorf(string(body))
-	} else {
-		return err
+		return ResponseError{StatusCode: res.StatusCode, error: err}
 	}
 }

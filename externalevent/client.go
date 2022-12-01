@@ -20,7 +20,7 @@ func (i *Iter) ExternalEvent() files_sdk.ExternalEvent {
 	return i.Current().(files_sdk.ExternalEvent)
 }
 
-func (c *Client) List(ctx context.Context, params files_sdk.ExternalEventListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.ExternalEventListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	path, err := lib.BuildPath("/external_events", params)
 	if err != nil {
@@ -28,28 +28,28 @@ func (c *Client) List(ctx context.Context, params files_sdk.ExternalEventListPar
 	}
 	i.ListParams = &params
 	list := files_sdk.ExternalEventCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func List(ctx context.Context, params files_sdk.ExternalEventListParams) (*Iter, error) {
-	return (&Client{}).List(ctx, params)
+func List(ctx context.Context, params files_sdk.ExternalEventListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).List(ctx, params, opts...)
 }
 
-func (c *Client) Find(ctx context.Context, params files_sdk.ExternalEventFindParams) (externalEvent files_sdk.ExternalEvent, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/external_events/{id}", Params: params, Entity: &externalEvent})
+func (c *Client) Find(ctx context.Context, params files_sdk.ExternalEventFindParams, opts ...files_sdk.RequestResponseOption) (externalEvent files_sdk.ExternalEvent, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/external_events/{id}", Params: params, Entity: &externalEvent}, opts...)
 	return
 }
 
-func Find(ctx context.Context, params files_sdk.ExternalEventFindParams) (externalEvent files_sdk.ExternalEvent, err error) {
-	return (&Client{}).Find(ctx, params)
+func Find(ctx context.Context, params files_sdk.ExternalEventFindParams, opts ...files_sdk.RequestResponseOption) (externalEvent files_sdk.ExternalEvent, err error) {
+	return (&Client{}).Find(ctx, params, opts...)
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.ExternalEventCreateParams) (externalEvent files_sdk.ExternalEvent, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/external_events", Params: params, Entity: &externalEvent})
+func (c *Client) Create(ctx context.Context, params files_sdk.ExternalEventCreateParams, opts ...files_sdk.RequestResponseOption) (externalEvent files_sdk.ExternalEvent, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/external_events", Params: params, Entity: &externalEvent}, opts...)
 	return
 }
 
-func Create(ctx context.Context, params files_sdk.ExternalEventCreateParams) (externalEvent files_sdk.ExternalEvent, err error) {
-	return (&Client{}).Create(ctx, params)
+func Create(ctx context.Context, params files_sdk.ExternalEventCreateParams, opts ...files_sdk.RequestResponseOption) (externalEvent files_sdk.ExternalEvent, err error) {
+	return (&Client{}).Create(ctx, params, opts...)
 }

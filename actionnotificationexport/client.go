@@ -11,20 +11,20 @@ type Client struct {
 	files_sdk.Config
 }
 
-func (c *Client) Find(ctx context.Context, params files_sdk.ActionNotificationExportFindParams) (actionNotificationExport files_sdk.ActionNotificationExport, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/action_notification_exports/{id}", Params: params, Entity: &actionNotificationExport})
+func (c *Client) Find(ctx context.Context, params files_sdk.ActionNotificationExportFindParams, opts ...files_sdk.RequestResponseOption) (actionNotificationExport files_sdk.ActionNotificationExport, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/action_notification_exports/{id}", Params: params, Entity: &actionNotificationExport}, opts...)
 	return
 }
 
-func Find(ctx context.Context, params files_sdk.ActionNotificationExportFindParams) (actionNotificationExport files_sdk.ActionNotificationExport, err error) {
-	return (&Client{}).Find(ctx, params)
+func Find(ctx context.Context, params files_sdk.ActionNotificationExportFindParams, opts ...files_sdk.RequestResponseOption) (actionNotificationExport files_sdk.ActionNotificationExport, err error) {
+	return (&Client{}).Find(ctx, params, opts...)
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.ActionNotificationExportCreateParams) (actionNotificationExport files_sdk.ActionNotificationExport, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/action_notification_exports", Params: params, Entity: &actionNotificationExport})
+func (c *Client) Create(ctx context.Context, params files_sdk.ActionNotificationExportCreateParams, opts ...files_sdk.RequestResponseOption) (actionNotificationExport files_sdk.ActionNotificationExport, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/action_notification_exports", Params: params, Entity: &actionNotificationExport}, opts...)
 	return
 }
 
-func Create(ctx context.Context, params files_sdk.ActionNotificationExportCreateParams) (actionNotificationExport files_sdk.ActionNotificationExport, err error) {
-	return (&Client{}).Create(ctx, params)
+func Create(ctx context.Context, params files_sdk.ActionNotificationExportCreateParams, opts ...files_sdk.RequestResponseOption) (actionNotificationExport files_sdk.ActionNotificationExport, err error) {
+	return (&Client{}).Create(ctx, params, opts...)
 }

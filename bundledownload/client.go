@@ -20,7 +20,7 @@ func (i *Iter) BundleDownload() files_sdk.BundleDownload {
 	return i.Current().(files_sdk.BundleDownload)
 }
 
-func (c *Client) List(ctx context.Context, params files_sdk.BundleDownloadListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.BundleDownloadListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	path, err := lib.BuildPath("/bundle_downloads", params)
 	if err != nil {
@@ -28,10 +28,10 @@ func (c *Client) List(ctx context.Context, params files_sdk.BundleDownloadListPa
 	}
 	i.ListParams = &params
 	list := files_sdk.BundleDownloadCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func List(ctx context.Context, params files_sdk.BundleDownloadListParams) (*Iter, error) {
-	return (&Client{}).List(ctx, params)
+func List(ctx context.Context, params files_sdk.BundleDownloadListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).List(ctx, params, opts...)
 }

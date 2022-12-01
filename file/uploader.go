@@ -20,7 +20,7 @@ import (
 
 type Uploader interface {
 	UploadIO(context.Context, UploadIOParams) (files_sdk.File, files_sdk.FileUploadPart, Parts, error)
-	Find(context.Context, files_sdk.FileFindParams) (files_sdk.File, error)
+	Find(context.Context, files_sdk.FileFindParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error)
 }
 
 func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *status.Job {

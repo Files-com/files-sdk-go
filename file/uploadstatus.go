@@ -27,6 +27,10 @@ type UploadStatus struct {
 	missingStat bool
 }
 
+func (u *UploadStatus) Size() int64 {
+	return u.File().Size
+}
+
 func (u *UploadStatus) RecentError() error {
 	if u.error != nil {
 		return u.error

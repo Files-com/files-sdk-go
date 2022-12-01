@@ -2,28 +2,26 @@
 version: 1
 interactions:
 - request:
-    body: '{}'
+    body: '{"-":"docs"}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Direction:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/folders/docs
     method: POST
   response:
-    body: '{"display_name":"docs","type":"directory","size":null,"crc32":null,"md5":null,"subfolders_locked?":false}'
+    body: '{"display_name":"docs","type":"directory","size":null,"created_at":"2022-10-25T23:42:34Z","crc32":null,"md5":null,"subfolders_locked?":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Length:
-      - "105"
+      - "141"
       Content-Type:
       - application/json
       Date:
-      - Wed, 13 Oct 2021 22:34:07 GMT
+      - Tue, 25 Oct 2022 23:42:34 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -31,7 +29,8 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - da78b6db-9f33-4ed5-820f-7e1ca246733c
+      - f8b7cff2-1a0b-44db-abc2-1b9093a6d91c
+      - 0186cd0f21bbefe53cd83038605d3508
     status: 201 Created
     code: 201
     duration: ""
@@ -46,14 +45,14 @@ interactions:
     url: https://app.files.com/api/rest/v1/file_actions/metadata/docs
     method: GET
   response:
-    body: '{"path":"docs","display_name":"docs","type":"directory","size":null,"mtime":"2021-10-13T22:34:07Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"rwd","subfolders_locked?":false}'
+    body: '{"path":"docs","display_name":"docs","type":"directory","size":null,"created_at":"2022-10-25T23:42:34Z","mtime":"2022-10-25T23:42:34Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Wed, 13 Oct 2021 22:34:10 GMT
+      - Tue, 25 Oct 2022 23:42:35 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -61,31 +60,30 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 2d7f5746-dee9-4d3e-b2d3-26371d5ed63b
+      - 0628f80f-68b9-4e97-8356-85aa28fb1176
+      - 8f9c1464533950eb49c683f40ebd85a8
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"mkdir_parents":"true"}'
+    body: '{"-":"docs/LICENSE","mkdir_parents":true,"size":1102}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Direction:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/file_actions/begin_upload/docs/LICENSE
     method: POST
   response:
-    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2021-10-13T22:49:11Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-206753522","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/8f26aac6-5cd1-473d-a8ac-4cc5ccf8246c?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20211013%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20211013T223411Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=MzimauuYpiY7sZOlh5rniX5QRgPa9skjlwaf_o4vGBDcm4UlzkyZUszAzgexqlXMLDE6G5.Jgx6IDcHs6rx2rw9lY9ljL_X9tQIXCMd51dyDrCwaoyIomXHtXo0OYA0Y\u0026X-Amz-Signature=22ad3706eeb481e45513e90ac812d43e323e4d6e9cfc13186ca71b4f8f0f59ed"}]'
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-25T23:57:35Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2820833924","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/d4e1604b-27fd-4d08-888f-3eb4bf79b94a?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221025%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221025T234235Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=PuwVc9s5_gujjtpK4RLa3Qj8NfNQNllgBvj_p5cGBllP1Ss60n2qBRUER5FJ1RWHnglGTwVJeL9p5zyekut68BHsu5x9knBVf0yveWCi.P4Ok9NU08MlzkCnKNEBrvcA\u0026X-Amz-Signature=3f314bff1fb165ff859ec3b8f3b1196d7de207a9f71d0b8d552100a819097908"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Wed, 13 Oct 2021 22:34:11 GMT
+      - Tue, 25 Oct 2022 23:42:35 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -93,7 +91,8 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 87a1317d-85d7-47b6-8595-edc66edffb3c
+      - f3d8c46e-0671-4605-838d-d02092a9441b
+      - da7c38859f540b7f082270ccf9a83216
     status: 200 OK
     code: 200
     duration: ""
@@ -126,7 +125,7 @@ interactions:
       - close
       Content-Length:
       - "1102"
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/8f26aac6-5cd1-473d-a8ac-4cc5ccf8246c?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20211013%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20211013T223411Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=MzimauuYpiY7sZOlh5rniX5QRgPa9skjlwaf_o4vGBDcm4UlzkyZUszAzgexqlXMLDE6G5.Jgx6IDcHs6rx2rw9lY9ljL_X9tQIXCMd51dyDrCwaoyIomXHtXo0OYA0Y&X-Amz-Signature=22ad3706eeb481e45513e90ac812d43e323e4d6e9cfc13186ca71b4f8f0f59ed
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/d4e1604b-27fd-4d08-888f-3eb4bf79b94a?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221025%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221025T234235Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=PuwVc9s5_gujjtpK4RLa3Qj8NfNQNllgBvj_p5cGBllP1Ss60n2qBRUER5FJ1RWHnglGTwVJeL9p5zyekut68BHsu5x9knBVf0yveWCi.P4Ok9NU08MlzkCnKNEBrvcA&X-Amz-Signature=3f314bff1fb165ff859ec3b8f3b1196d7de207a9f71d0b8d552100a819097908
     method: PUT
   response:
     body: ""
@@ -134,43 +133,41 @@ interactions:
       Content-Length:
       - "0"
       Date:
-      - Wed, 13 Oct 2021 22:34:12 GMT
+      - Tue, 25 Oct 2022 23:42:36 GMT
       Etag:
       - '"5b1e5439f3483c0b3e5af1d44889d0f7"'
       Server:
       - AmazonS3
       X-Amz-Id-2:
-      - drFSuq3PTbepMeaobHhqqxrGzuDifB2ZTm7S4KNTOjG2GCqanlKepDD1bifww7asNUIuSav7KlQ=
+      - axLLmZHBFk2PjljIqK3XAoYTTt57RQ0Wpr4NrOUdjyzXxVzte7RyK+S2WdoMAd6uWLiJN62SBnA=
       X-Amz-Request-Id:
-      - YVWW86YASCSQBR4A
+      - 0NNAR9N831S5XTQQ
       X-Amz-Server-Side-Encryption:
       - AES256
     status: 200 OK
     code: 200
     duration: ""
 - request:
-    body: '{"action":"end","etags[0][etag]":"5b1e5439f3483c0b3e5af1d44889d0f7","etags[0][part]":"1","provided_mtime":"2021-10-13T15:34:11-07:00","ref":"put-206753522","size":"1102"}'
+    body: '{"-":"docs/LICENSE","action":"end","etags":[{"etag":"5b1e5439f3483c0b3e5af1d44889d0f7","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-10-25T16:39:08.86287787-07:00","ref":"put-2820833924","size":1102}'
     form: {}
     headers:
       Connection:
       - close
-      Content-Direction:
-      - application/json
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
     url: https://app.files.com/api/rest/v1/files/docs/LICENSE
     method: POST
   response:
-    body: '{"path":"docs/LICENSE","display_name":"LICENSE","type":"file","size":1102,"mtime":"2021-10-13T22:34:12Z","provided_mtime":"2021-10-13T22:34:11Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd"}'
+    body: '{"path":"docs/LICENSE","display_name":"LICENSE","type":"file","size":1102,"created_at":"2022-10-25T23:42:36Z","mtime":"2022-10-25T23:42:36Z","provided_mtime":"2022-10-25T23:39:08Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Length:
-      - "249"
+      - "286"
       Content-Type:
       - application/json
       Date:
-      - Wed, 13 Oct 2021 22:34:12 GMT
+      - Tue, 25 Oct 2022 23:42:36 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -178,7 +175,8 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 2523c69c-b82a-44b7-9f44-dca02ef8f170
+      - a6b2695a-0007-447c-9213-c7f28ea79ebf
+      - aa754c355b18f943245f3fc6c951d7af
     status: 201 Created
     code: 201
     duration: ""
@@ -193,14 +191,14 @@ interactions:
     url: https://app.files.com/api/rest/v1/files/docs/LICENSE
     method: GET
   response:
-    body: '{"path":"docs/LICENSE","display_name":"LICENSE","type":"file","size":1102,"mtime":"2021-10-13T22:34:12Z","provided_mtime":"2021-10-13T22:34:11Z","crc32":"32107119","md5":"5b1e5439f3483c0b3e5af1d44889d0f7","mime_type":"application/octet-stream","region":"us-east-1","permissions":"rwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/8f26aac6-5cd1-473d-a8ac-4cc5ccf8246c?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20211013%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20211013T223412Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22LICENSE%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=9205b7d2491f74a5feacd03c2016fb5f8b08128d446be3083dd56201cc784a49"}'
+    body: '{"path":"docs/LICENSE","display_name":"LICENSE","type":"file","size":1102,"created_at":"2022-10-25T23:42:36Z","mtime":"2022-10-25T23:42:36Z","provided_mtime":"2022-10-25T23:39:08Z","crc32":"32107119","md5":"5b1e5439f3483c0b3e5af1d44889d0f7","mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/d4e1604b-27fd-4d08-888f-3eb4bf79b94a?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221025%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221025T234236Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22LICENSE%22\u0026response-content-type=application%2Foctet-stream\u0026X-Amz-Signature=ea9f973750247dae07607222bb103392d84c67c442c98d341a62671f3e97382c"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Content-Type:
       - application/json
       Date:
-      - Wed, 13 Oct 2021 22:34:12 GMT
+      - Tue, 25 Oct 2022 23:42:36 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -208,7 +206,8 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 18729839-58cf-4654-98f0-dff2385a7c8e
+      - 3d9f13d4-fa1c-4945-b03c-d067d6e2d0d7
+      - d881f4a2fad2ffd7b57aca19145364ec
     status: 200 OK
     code: 200
     duration: ""
@@ -216,7 +215,7 @@ interactions:
     body: ""
     form: {}
     headers: {}
-    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37868/8f26aac6-5cd1-473d-a8ac-4cc5ccf8246c?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20211013%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20211013T223412Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%22LICENSE%22&response-content-type=application%2Foctet-stream&X-Amz-Signature=9205b7d2491f74a5feacd03c2016fb5f8b08128d446be3083dd56201cc784a49
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/d4e1604b-27fd-4d08-888f-3eb4bf79b94a?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221025%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20221025T234236Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%22LICENSE%22&response-content-type=application%2Foctet-stream&X-Amz-Signature=ea9f973750247dae07607222bb103392d84c67c442c98d341a62671f3e97382c
     method: GET
   response:
     body: |
@@ -253,15 +252,15 @@ interactions:
       Content-Type:
       - application/octet-stream
       Date:
-      - Wed, 13 Oct 2021 22:34:13 GMT
+      - Tue, 25 Oct 2022 23:42:38 GMT
       Etag:
       - '"271a2e273e57cb8d4d3b15f6d01195f5-1"'
       Last-Modified:
-      - Wed, 13 Oct 2021 22:34:12 GMT
+      - Tue, 25 Oct 2022 23:42:36 GMT
       Server:
       - AmazonS3
       X-Amz-Id-2:
-      - E1fivL9nHy5oGBNAzDO7w3dVLc/zS+eoQeZRLLKiLPG5OlkZnAfc+mbt/ONuRWXC23iuzd5+z1U=
+      - qP81M14DdJ1q27hHRT2hQH5APZxreEaPVb0qgfbdE1VTSx9hZE4WB5QTDGkRpwbnEHSYP/02Aqg=
       X-Amz-Meta-X-Amz-Meta-Gid:
       - "65534"
       X-Amz-Meta-X-Amz-Meta-Mode:
@@ -269,7 +268,7 @@ interactions:
       X-Amz-Meta-X-Amz-Meta-Uid:
       - "65534"
       X-Amz-Request-Id:
-      - 4CX58NDDEXDPH0BS
+      - ZYBE5ABHCPQW3S3B
       X-Amz-Server-Side-Encryption:
       - AES256
       X-Amz-Version-Id:
@@ -288,7 +287,7 @@ interactions:
     url: https://app.files.com/api/rest/v1/files/docs
     method: DELETE
   response:
-    body: '{"error":"Folder docs not empty","http-code":422,"instance":"03f1aabe-7e03-40d5-ab6e-ef829cad4352","title":"Folder
+    body: '{"error":"Folder docs not empty","http-code":422,"instance":"a865fe1a-6a0b-4e67-aa40-f582b5145ee5","title":"Folder
       Not Empty","type":"processing-failure/folder-not-empty"}'
     headers:
       Cache-Control:
@@ -298,7 +297,7 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 13 Oct 2021 22:34:13 GMT
+      - Tue, 25 Oct 2022 23:42:37 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -306,7 +305,8 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - 03f1aabe-7e03-40d5-ab6e-ef829cad4352
+      - a865fe1a-6a0b-4e67-aa40-f582b5145ee5
+      - a2576a2781ed5c1ffcdab1276cb4bd50
     status: 422 Unprocessable Entity
     code: 422
     duration: ""
@@ -326,7 +326,7 @@ interactions:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
       Date:
-      - Wed, 13 Oct 2021 22:34:13 GMT
+      - Tue, 25 Oct 2022 23:42:37 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
@@ -334,7 +334,8 @@ interactions:
       Server:
       - nginx
       X-Request-Id:
-      - bd4570d2-0329-4da5-879b-5a86b4dd346d
+      - b385df60-8dc7-41e5-acb4-bb17ea9bd1c2
+      - 8ae9c3ee981113a160b1d23e8411d41d
     status: 204 No Content
     code: 204
     duration: ""

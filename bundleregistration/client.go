@@ -20,7 +20,7 @@ func (i *Iter) BundleRegistration() files_sdk.BundleRegistration {
 	return i.Current().(files_sdk.BundleRegistration)
 }
 
-func (c *Client) List(ctx context.Context, params files_sdk.BundleRegistrationListParams) (*Iter, error) {
+func (c *Client) List(ctx context.Context, params files_sdk.BundleRegistrationListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &lib.Iter{}}
 	path, err := lib.BuildPath("/bundle_registrations", params)
 	if err != nil {
@@ -28,10 +28,10 @@ func (c *Client) List(ctx context.Context, params files_sdk.BundleRegistrationLi
 	}
 	i.ListParams = &params
 	list := files_sdk.BundleRegistrationCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list)
+	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func List(ctx context.Context, params files_sdk.BundleRegistrationListParams) (*Iter, error) {
-	return (&Client{}).List(ctx, params)
+func List(ctx context.Context, params files_sdk.BundleRegistrationListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).List(ctx, params, opts...)
 }
