@@ -8,3 +8,5 @@ go get -d -v
 go install golang.org/x/tools/cmd/goimports@latest
 goimports -w .
 gofmt -s -w .
+go mod tidy
+go mod download
