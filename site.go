@@ -21,10 +21,12 @@ type Site struct {
 	AllowedCountries                     string          `json:"allowed_countries,omitempty" path:"allowed_countries"`
 	AllowedIps                           string          `json:"allowed_ips,omitempty" path:"allowed_ips"`
 	AskAboutOverwrites                   *bool           `json:"ask_about_overwrites,omitempty" path:"ask_about_overwrites"`
+	BundleActivityNotifications          string          `json:"bundle_activity_notifications,omitempty" path:"bundle_activity_notifications"`
 	BundleExpiration                     int64           `json:"bundle_expiration,omitempty" path:"bundle_expiration"`
 	BundlePasswordRequired               *bool           `json:"bundle_password_required,omitempty" path:"bundle_password_required"`
 	BundleRegistrationNotifications      string          `json:"bundle_registration_notifications,omitempty" path:"bundle_registration_notifications"`
 	BundleRequireShareRecipient          *bool           `json:"bundle_require_share_recipient,omitempty" path:"bundle_require_share_recipient"`
+	BundleUploadReceiptNotifications     string          `json:"bundle_upload_receipt_notifications,omitempty" path:"bundle_upload_receipt_notifications"`
 	BundleWatermarkAttachment            Image           `json:"bundle_watermark_attachment,omitempty" path:"bundle_watermark_attachment"`
 	BundleWatermarkValue                 json.RawMessage `json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value"`
 	Color2Left                           string          `json:"color2_left,omitempty" path:"color2_left"`
@@ -213,6 +215,8 @@ type SiteUpdateParams struct {
 	BundlePasswordRequired               *bool           `url:"bundle_password_required,omitempty" required:"false" json:"bundle_password_required,omitempty" path:"bundle_password_required"`
 	BundleRequireShareRecipient          *bool           `url:"bundle_require_share_recipient,omitempty" required:"false" json:"bundle_require_share_recipient,omitempty" path:"bundle_require_share_recipient"`
 	BundleRegistrationNotifications      string          `url:"bundle_registration_notifications,omitempty" required:"false" json:"bundle_registration_notifications,omitempty" path:"bundle_registration_notifications"`
+	BundleActivityNotifications          string          `url:"bundle_activity_notifications,omitempty" required:"false" json:"bundle_activity_notifications,omitempty" path:"bundle_activity_notifications"`
+	BundleUploadReceiptNotifications     string          `url:"bundle_upload_receipt_notifications,omitempty" required:"false" json:"bundle_upload_receipt_notifications,omitempty" path:"bundle_upload_receipt_notifications"`
 	PasswordRequirementsApplyToBundles   *bool           `url:"password_requirements_apply_to_bundles,omitempty" required:"false" json:"password_requirements_apply_to_bundles,omitempty" path:"password_requirements_apply_to_bundles"`
 	OptOutGlobal                         *bool           `url:"opt_out_global,omitempty" required:"false" json:"opt_out_global,omitempty" path:"opt_out_global"`
 	UseProvidedModifiedAt                *bool           `url:"use_provided_modified_at,omitempty" required:"false" json:"use_provided_modified_at,omitempty" path:"use_provided_modified_at"`
