@@ -67,7 +67,7 @@ type User struct {
 	TypeOf2fa                        string     `json:"type_of_2fa,omitempty" path:"type_of_2fa"`
 	UpdatedAt                        *time.Time `json:"updated_at,omitempty" path:"updated_at"`
 	UserRoot                         string     `json:"user_root,omitempty" path:"user_root"`
-	DaysRemainingUntilPasswordExpire *time.Time `json:"days_remaining_until_password_expire,omitempty" path:"days_remaining_until_password_expire"`
+	DaysRemainingUntilPasswordExpire int64      `json:"days_remaining_until_password_expire,omitempty" path:"days_remaining_until_password_expire"`
 	PasswordExpireAt                 *time.Time `json:"password_expire_at,omitempty" path:"password_expire_at"`
 	AvatarFile                       io.Reader  `json:"avatar_file,omitempty" path:"avatar_file"`
 	AvatarDelete                     *bool      `json:"avatar_delete,omitempty" path:"avatar_delete"`
