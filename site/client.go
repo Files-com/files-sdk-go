@@ -37,3 +37,12 @@ func (c *Client) Update(ctx context.Context, params files_sdk.SiteUpdateParams, 
 func Update(ctx context.Context, params files_sdk.SiteUpdateParams, opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
 	return (&Client{}).Update(ctx, params, opts...)
 }
+
+func (c *Client) UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/site", Params: params, Entity: &site}, opts...)
+	return
+}
+
+func UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
+	return (&Client{}).UpdateWithMap(ctx, params, opts...)
+}

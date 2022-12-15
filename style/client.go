@@ -29,6 +29,15 @@ func Update(ctx context.Context, params files_sdk.StyleUpdateParams, opts ...fil
 	return (&Client{}).Update(ctx, params, opts...)
 }
 
+func (c *Client) UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (style files_sdk.Style, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/styles/{path}", Params: params, Entity: &style}, opts...)
+	return
+}
+
+func UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (style files_sdk.Style, err error) {
+	return (&Client{}).UpdateWithMap(ctx, params, opts...)
+}
+
 func (c *Client) Delete(ctx context.Context, params files_sdk.StyleDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
 	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/styles/{path}", Params: params, Entity: nil}, opts...)
 	return

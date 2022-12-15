@@ -63,6 +63,15 @@ func Update(ctx context.Context, params files_sdk.FormFieldSetUpdateParams, opts
 	return (&Client{}).Update(ctx, params, opts...)
 }
 
+func (c *Client) UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (formFieldSet files_sdk.FormFieldSet, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/form_field_sets/{id}", Params: params, Entity: &formFieldSet}, opts...)
+	return
+}
+
+func UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (formFieldSet files_sdk.FormFieldSet, err error) {
+	return (&Client{}).UpdateWithMap(ctx, params, opts...)
+}
+
 func (c *Client) Delete(ctx context.Context, params files_sdk.FormFieldSetDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
 	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/form_field_sets/{id}", Params: params, Entity: nil}, opts...)
 	return

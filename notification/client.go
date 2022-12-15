@@ -63,6 +63,15 @@ func Update(ctx context.Context, params files_sdk.NotificationUpdateParams, opts
 	return (&Client{}).Update(ctx, params, opts...)
 }
 
+func (c *Client) UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (notification files_sdk.Notification, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/notifications/{id}", Params: params, Entity: &notification}, opts...)
+	return
+}
+
+func UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (notification files_sdk.Notification, err error) {
+	return (&Client{}).UpdateWithMap(ctx, params, opts...)
+}
+
 func (c *Client) Delete(ctx context.Context, params files_sdk.NotificationDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
 	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/notifications/{id}", Params: params, Entity: nil}, opts...)
 	return

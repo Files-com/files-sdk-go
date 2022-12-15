@@ -54,6 +54,15 @@ func Update(ctx context.Context, params files_sdk.GroupUserUpdateParams, opts ..
 	return (&Client{}).Update(ctx, params, opts...)
 }
 
+func (c *Client) UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (groupUser files_sdk.GroupUser, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/group_users/{id}", Params: params, Entity: &groupUser}, opts...)
+	return
+}
+
+func UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (groupUser files_sdk.GroupUser, err error) {
+	return (&Client{}).UpdateWithMap(ctx, params, opts...)
+}
+
 func (c *Client) Delete(ctx context.Context, params files_sdk.GroupUserDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
 	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/group_users/{id}", Params: params, Entity: nil}, opts...)
 	return

@@ -23,6 +23,10 @@ func CheckRequired(iStruct interface{}) error {
 		return nil
 	}
 
+	if val.Kind() == reflect.Map {
+		return nil
+	}
+
 	if val.Kind() != reflect.Struct {
 		return fmt.Errorf("CheckRequired expects struct input. Got %v", val.Kind())
 	}

@@ -63,6 +63,15 @@ func Update(ctx context.Context, params files_sdk.ClickwrapUpdateParams, opts ..
 	return (&Client{}).Update(ctx, params, opts...)
 }
 
+func (c *Client) UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (clickwrap files_sdk.Clickwrap, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/clickwraps/{id}", Params: params, Entity: &clickwrap}, opts...)
+	return
+}
+
+func UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (clickwrap files_sdk.Clickwrap, err error) {
+	return (&Client{}).UpdateWithMap(ctx, params, opts...)
+}
+
 func (c *Client) Delete(ctx context.Context, params files_sdk.ClickwrapDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
 	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/clickwraps/{id}", Params: params, Entity: nil}, opts...)
 	return

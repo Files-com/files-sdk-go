@@ -72,6 +72,15 @@ func UpdateCurrent(ctx context.Context, params files_sdk.ApiKeyUpdateCurrentPara
 	return (&Client{}).UpdateCurrent(ctx, params, opts...)
 }
 
+func (c *Client) UpdateCurrentWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/api_key", Params: params, Entity: &apiKey}, opts...)
+	return
+}
+
+func UpdateCurrentWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
+	return (&Client{}).UpdateCurrentWithMap(ctx, params, opts...)
+}
+
 func (c *Client) Update(ctx context.Context, params files_sdk.ApiKeyUpdateParams, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
 	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/api_keys/{id}", Params: params, Entity: &apiKey}, opts...)
 	return
@@ -79,6 +88,15 @@ func (c *Client) Update(ctx context.Context, params files_sdk.ApiKeyUpdateParams
 
 func Update(ctx context.Context, params files_sdk.ApiKeyUpdateParams, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
 	return (&Client{}).Update(ctx, params, opts...)
+}
+
+func (c *Client) UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/api_keys/{id}", Params: params, Entity: &apiKey}, opts...)
+	return
+}
+
+func UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
+	return (&Client{}).UpdateWithMap(ctx, params, opts...)
 }
 
 func (c *Client) DeleteCurrent(ctx context.Context, opts ...files_sdk.RequestResponseOption) (err error) {

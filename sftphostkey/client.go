@@ -63,6 +63,15 @@ func Update(ctx context.Context, params files_sdk.SftpHostKeyUpdateParams, opts 
 	return (&Client{}).Update(ctx, params, opts...)
 }
 
+func (c *Client) UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (sftpHostKey files_sdk.SftpHostKey, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/sftp_host_keys/{id}", Params: params, Entity: &sftpHostKey}, opts...)
+	return
+}
+
+func UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (sftpHostKey files_sdk.SftpHostKey, err error) {
+	return (&Client{}).UpdateWithMap(ctx, params, opts...)
+}
+
 func (c *Client) Delete(ctx context.Context, params files_sdk.SftpHostKeyDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
 	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/sftp_host_keys/{id}", Params: params, Entity: nil}, opts...)
 	return
