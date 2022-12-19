@@ -12,7 +12,6 @@ type PaymentLineItem struct {
 	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at"`
 	InvoiceId int64      `json:"invoice_id,omitempty" path:"invoice_id"`
 	PaymentId int64      `json:"payment_id,omitempty" path:"payment_id"`
-	UpdatedAt *time.Time `json:"updated_at,omitempty" path:"updated_at"`
 }
 
 type PaymentLineItemCollection []PaymentLineItem

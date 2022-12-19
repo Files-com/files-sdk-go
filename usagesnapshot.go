@@ -11,13 +11,9 @@ type UsageSnapshot struct {
 	Id                           int64           `json:"id,omitempty" path:"id"`
 	StartAt                      *time.Time      `json:"start_at,omitempty" path:"start_at"`
 	EndAt                        *time.Time      `json:"end_at,omitempty" path:"end_at"`
-	CreatedAt                    *time.Time      `json:"created_at,omitempty" path:"created_at"`
 	HighWaterUserCount           string          `json:"high_water_user_count,omitempty" path:"high_water_user_count"`
 	CurrentStorage               string          `json:"current_storage,omitempty" path:"current_storage"`
 	HighWaterStorage             string          `json:"high_water_storage,omitempty" path:"high_water_storage"`
-	TotalDownloads               int64           `json:"total_downloads,omitempty" path:"total_downloads"`
-	TotalUploads                 int64           `json:"total_uploads,omitempty" path:"total_uploads"`
-	UpdatedAt                    *time.Time      `json:"updated_at,omitempty" path:"updated_at"`
 	UsageByTopLevelDir           json.RawMessage `json:"usage_by_top_level_dir,omitempty" path:"usage_by_top_level_dir"`
 	RootStorage                  string          `json:"root_storage,omitempty" path:"root_storage"`
 	DeletedFilesCountedInMinimum string          `json:"deleted_files_counted_in_minimum,omitempty" path:"deleted_files_counted_in_minimum"`

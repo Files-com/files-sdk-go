@@ -65,7 +65,6 @@ type User struct {
 	ExternallyManaged                *bool      `json:"externally_managed,omitempty" path:"externally_managed"`
 	TimeZone                         string     `json:"time_zone,omitempty" path:"time_zone"`
 	TypeOf2fa                        string     `json:"type_of_2fa,omitempty" path:"type_of_2fa"`
-	UpdatedAt                        *time.Time `json:"updated_at,omitempty" path:"updated_at"`
 	UserRoot                         string     `json:"user_root,omitempty" path:"user_root"`
 	DaysRemainingUntilPasswordExpire int64      `json:"days_remaining_until_password_expire,omitempty" path:"days_remaining_until_password_expire"`
 	PasswordExpireAt                 *time.Time `json:"password_expire_at,omitempty" path:"password_expire_at"`
