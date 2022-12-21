@@ -2,6 +2,7 @@ package files_sdk
 
 import (
 	"encoding/json"
+	"time"
 
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
@@ -17,6 +18,7 @@ type InboxRegistration struct {
 	InboxId          int64           `json:"inbox_id,omitempty" path:"inbox_id"`
 	InboxRecipientId int64           `json:"inbox_recipient_id,omitempty" path:"inbox_recipient_id"`
 	InboxTitle       string          `json:"inbox_title,omitempty" path:"inbox_title"`
+	CreatedAt        *time.Time      `json:"created_at,omitempty" path:"created_at"`
 }
 
 type InboxRegistrationCollection []InboxRegistration

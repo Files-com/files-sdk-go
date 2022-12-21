@@ -2,6 +2,7 @@ package files_sdk
 
 import (
 	"encoding/json"
+	"time"
 
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
@@ -19,6 +20,7 @@ type BundleRegistration struct {
 	BundleCode        string          `json:"bundle_code,omitempty" path:"bundle_code"`
 	BundleId          int64           `json:"bundle_id,omitempty" path:"bundle_id"`
 	BundleRecipientId int64           `json:"bundle_recipient_id,omitempty" path:"bundle_recipient_id"`
+	CreatedAt         *time.Time      `json:"created_at,omitempty" path:"created_at"`
 }
 
 type BundleRegistrationCollection []BundleRegistration

@@ -29,6 +29,7 @@ type Bundle struct {
 	MaxUses                         int64           `json:"max_uses,omitempty" path:"max_uses"`
 	Note                            string          `json:"note,omitempty" path:"note"`
 	PathTemplate                    string          `json:"path_template,omitempty" path:"path_template"`
+	SendEmailReceiptToUploader      *bool           `json:"send_email_receipt_to_uploader,omitempty" path:"send_email_receipt_to_uploader"`
 	UserId                          int64           `json:"user_id,omitempty" path:"user_id"`
 	Username                        string          `json:"username,omitempty" path:"username"`
 	ClickwrapId                     int64           `json:"clickwrap_id,omitempty" path:"clickwrap_id"`
@@ -96,6 +97,7 @@ type BundleCreateParams struct {
 	ClickwrapId                     int64                 `url:"clickwrap_id,omitempty" required:"false" json:"clickwrap_id,omitempty" path:"clickwrap_id"`
 	InboxId                         int64                 `url:"inbox_id,omitempty" required:"false" json:"inbox_id,omitempty" path:"inbox_id"`
 	RequireShareRecipient           *bool                 `url:"require_share_recipient,omitempty" required:"false" json:"require_share_recipient,omitempty" path:"require_share_recipient"`
+	SendEmailReceiptToUploader      *bool                 `url:"send_email_receipt_to_uploader,omitempty" required:"false" json:"send_email_receipt_to_uploader,omitempty" path:"send_email_receipt_to_uploader"`
 	SkipEmail                       *bool                 `url:"skip_email,omitempty" required:"false" json:"skip_email,omitempty" path:"skip_email"`
 	SkipName                        *bool                 `url:"skip_name,omitempty" required:"false" json:"skip_name,omitempty" path:"skip_name"`
 	SkipCompany                     *bool                 `url:"skip_company,omitempty" required:"false" json:"skip_company,omitempty" path:"skip_company"`
@@ -128,9 +130,10 @@ type BundleUpdateParams struct {
 	PreviewOnly                     *bool                 `url:"preview_only,omitempty" required:"false" json:"preview_only,omitempty" path:"preview_only"`
 	RequireRegistration             *bool                 `url:"require_registration,omitempty" required:"false" json:"require_registration,omitempty" path:"require_registration"`
 	RequireShareRecipient           *bool                 `url:"require_share_recipient,omitempty" required:"false" json:"require_share_recipient,omitempty" path:"require_share_recipient"`
+	SendEmailReceiptToUploader      *bool                 `url:"send_email_receipt_to_uploader,omitempty" required:"false" json:"send_email_receipt_to_uploader,omitempty" path:"send_email_receipt_to_uploader"`
+	SkipCompany                     *bool                 `url:"skip_company,omitempty" required:"false" json:"skip_company,omitempty" path:"skip_company"`
 	SkipEmail                       *bool                 `url:"skip_email,omitempty" required:"false" json:"skip_email,omitempty" path:"skip_email"`
 	SkipName                        *bool                 `url:"skip_name,omitempty" required:"false" json:"skip_name,omitempty" path:"skip_name"`
-	SkipCompany                     *bool                 `url:"skip_company,omitempty" required:"false" json:"skip_company,omitempty" path:"skip_company"`
 	WatermarkAttachmentDelete       *bool                 `url:"watermark_attachment_delete,omitempty" required:"false" json:"watermark_attachment_delete,omitempty" path:"watermark_attachment_delete"`
 	WatermarkAttachmentFile         io.Writer             `url:"watermark_attachment_file,omitempty" required:"false" json:"watermark_attachment_file,omitempty" path:"watermark_attachment_file"`
 }

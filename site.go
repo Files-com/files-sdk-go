@@ -127,6 +127,7 @@ type Site struct {
 	SmtpPort                             int64           `json:"smtp_port,omitempty" path:"smtp_port"`
 	SmtpUsername                         string          `json:"smtp_username,omitempty" path:"smtp_username"`
 	SessionExpiry                        string          `json:"session_expiry,omitempty" path:"session_expiry"`
+	SessionExpiryMinutes                 int64           `json:"session_expiry_minutes,omitempty" path:"session_expiry_minutes"`
 	SslRequired                          *bool           `json:"ssl_required,omitempty" path:"ssl_required"`
 	Subdomain                            string          `json:"subdomain,omitempty" path:"subdomain"`
 	SwitchToPlanDate                     *time.Time      `json:"switch_to_plan_date,omitempty" path:"switch_to_plan_date"`
