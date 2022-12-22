@@ -10,6 +10,7 @@ type BundleNotification struct {
 	BundleId             int64 `json:"bundle_id,omitempty" path:"bundle_id"`
 	Id                   int64 `json:"id,omitempty" path:"id"`
 	NotifyOnRegistration *bool `json:"notify_on_registration,omitempty" path:"notify_on_registration"`
+	NotifyOnUpload       *bool `json:"notify_on_upload,omitempty" path:"notify_on_upload"`
 	UserId               int64 `json:"user_id,omitempty" path:"user_id"`
 }
 
@@ -28,7 +29,14 @@ type BundleNotificationFindParams struct {
 type BundleNotificationCreateParams struct {
 	UserId               int64 `url:"user_id,omitempty" required:"true" json:"user_id,omitempty" path:"user_id"`
 	NotifyOnRegistration *bool `url:"notify_on_registration,omitempty" required:"false" json:"notify_on_registration,omitempty" path:"notify_on_registration"`
+	NotifyOnUpload       *bool `url:"notify_on_upload,omitempty" required:"false" json:"notify_on_upload,omitempty" path:"notify_on_upload"`
 	BundleId             int64 `url:"bundle_id,omitempty" required:"true" json:"bundle_id,omitempty" path:"bundle_id"`
+}
+
+type BundleNotificationUpdateParams struct {
+	Id                   int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	NotifyOnRegistration *bool `url:"notify_on_registration,omitempty" required:"false" json:"notify_on_registration,omitempty" path:"notify_on_registration"`
+	NotifyOnUpload       *bool `url:"notify_on_upload,omitempty" required:"false" json:"notify_on_upload,omitempty" path:"notify_on_upload"`
 }
 
 type BundleNotificationDeleteParams struct {

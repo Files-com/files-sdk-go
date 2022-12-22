@@ -54,6 +54,24 @@ func Create(ctx context.Context, params files_sdk.BundleNotificationCreateParams
 	return (&Client{}).Create(ctx, params, opts...)
 }
 
+func (c *Client) Update(ctx context.Context, params files_sdk.BundleNotificationUpdateParams, opts ...files_sdk.RequestResponseOption) (bundleNotification files_sdk.BundleNotification, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/bundle_notifications/{id}", Params: params, Entity: &bundleNotification}, opts...)
+	return
+}
+
+func Update(ctx context.Context, params files_sdk.BundleNotificationUpdateParams, opts ...files_sdk.RequestResponseOption) (bundleNotification files_sdk.BundleNotification, err error) {
+	return (&Client{}).Update(ctx, params, opts...)
+}
+
+func (c *Client) UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (bundleNotification files_sdk.BundleNotification, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/bundle_notifications/{id}", Params: params, Entity: &bundleNotification}, opts...)
+	return
+}
+
+func UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (bundleNotification files_sdk.BundleNotification, err error) {
+	return (&Client{}).UpdateWithMap(ctx, params, opts...)
+}
+
 func (c *Client) Delete(ctx context.Context, params files_sdk.BundleNotificationDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
 	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/bundle_notifications/{id}", Params: params, Entity: nil}, opts...)
 	return
