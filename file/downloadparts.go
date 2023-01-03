@@ -473,9 +473,17 @@ func (d *DownloadParts) downloadFile() error {
 		return nil
 	}
 
-	d.FileInfo, err = d.File.Stat()
-	if err != nil {
-		return err
+	realTime, ok := d.File.(RealTimeStat)
+	if ok {
+		d.FileInfo, err = realTime.RealTimeStat()
+		if err != nil {
+			return err
+		}
+	} else {
+		d.FileInfo, err = d.File.Stat()
+		if err != nil {
+			return err
+		}
 	}
 	if !d.SizeGuess() {
 		if d.FileInfo.Size() != d.totalWritten {

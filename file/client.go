@@ -93,6 +93,9 @@ func (c *Client) DownloadRequestStatus(ctx context.Context, fileDownloadUrl stri
 		return re, err
 	}
 	resp, err := files_sdk.WrapRequestOptions(c.Config.GetHttpClient(), request, opts...)
+	if err != nil {
+		return re, err
+	}
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return re, err
@@ -240,7 +243,7 @@ func (c *Client) ListForRecursive(ctx context.Context, params files_sdk.FolderLi
 	it := lib.IterChan{}.Init()
 
 	go func(params files_sdk.FolderListForParams) {
-		f := (&FS{}).Init(c.Config, false).WithContext(ctx).(*FS)
+		f := (&FS{}).Init(c.Config, true).WithContext(ctx).(*FS)
 		err := fs.WalkDir(f, params.Path, func(path string, d fs.DirEntry, err error) error {
 			if path == "" && err == nil {
 				return nil // Skip root directory

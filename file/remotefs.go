@@ -100,7 +100,7 @@ func (i Info) Name() string {
 }
 
 func (i Info) Size() int64 {
-	if i.realSize == -1 {
+	if i.realSize < 0 {
 		return i.File.Size
 	}
 	return i.realSize
@@ -136,7 +136,11 @@ func (i Info) Sys() interface{} {
 	return i.File
 }
 
-func (f *File) Stat() (goFs.FileInfo, error) {
+type RealTimeStat interface {
+	RealTimeStat() (goFs.FileInfo, error)
+}
+
+func (f *File) RealTimeStat() (goFs.FileInfo, error) {
 	var err error
 	if f.safeFile().Type == "directory" {
 		return Info{File: *f.File, realSize: f.realSize}, err
@@ -155,6 +159,10 @@ func (f *File) Stat() (goFs.FileInfo, error) {
 	f.stat = true
 	f.realSize = tempFile.Size
 	return Info{File: *f.File, realSize: f.realSize}, err
+}
+
+func (f *File) Stat() (goFs.FileInfo, error) {
+	return Info{File: *f.File, realSize: -2}, nil
 }
 
 func (f *File) Read(b []byte) (n int, err error) {
