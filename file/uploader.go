@@ -2,6 +2,8 @@ package file
 
 import (
 	"context"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,7 +21,7 @@ import (
 )
 
 type Uploader interface {
-	UploadIO(context.Context, UploadIOParams) (files_sdk.File, files_sdk.FileUploadPart, Parts, error)
+	UploadIO(context.Context, UploadIOParams) (files_sdk.File, files_sdk.FileUploadPart, Parts, []error, error)
 	Find(context.Context, files_sdk.FileFindParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error)
 }
 
@@ -30,7 +32,8 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 	} else {
 		job = params.Job
 	}
-	SetJobParams(job, direction.UploadType, params)
+	SetJobParams(job, direction.UploadType, params, params.Config.Logger())
+	job.Config = params.Config
 	jobCtx := job.WithContext(parentCtx)
 
 	fi, statErr := os.Stat(params.LocalPath)
@@ -53,7 +56,7 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 		job.Scan()
 
 		go enqueueIndexedUploads(job, jobCtx, onComplete)
-		status.WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy), false) })
+		status.WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, job.RetryPolicy.(RetryPolicy), false) })
 
 		metaFile := &UploadStatus{
 			job:       job,
@@ -143,9 +146,9 @@ func remotePath(ctx context.Context, localPath string, remotePath string, c Uplo
 
 func enqueueIndexedUploads(job *status.Job, jobCtx context.Context, onComplete chan *UploadStatus) {
 	for !job.EndScanning.Called() || job.Count(status.Indexed) > 0 {
-		f, ok := job.Find(status.Indexed)
+		f, ok := job.EnqueueNext()
 		if ok {
-			enqueueUpload(jobCtx, job, f.(*UploadStatus), onComplete)
+			go enqueueUpload(jobCtx, job, f.(*UploadStatus), onComplete)
 		}
 	}
 }
@@ -162,7 +165,7 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 		onComplete <- uploadStatus
 		return
 	}
-	go func() {
+	func() {
 		var localFile *os.File
 		var err error
 		defer func() {
@@ -190,7 +193,8 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 			uploadStatus.Job().UpdateStatus(status.Errored, uploadStatus, err)
 			return
 		}
-		_, uploadStatus.FileUploadPart, uploadStatus.Parts, err = uploadStatus.UploadIO(
+		var otherErrors []error
+		_, uploadStatus.FileUploadPart, uploadStatus.Parts, otherErrors, err = uploadStatus.UploadIO(
 			ctx, UploadIOParams{
 				Path:           uploadStatus.RemotePath(),
 				Reader:         localFile,
@@ -202,6 +206,11 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 				ProvidedMtime:  stats.ModTime(),
 			})
 		if err != nil {
+			if len(otherErrors) > 0 {
+				for _, otherErr := range otherErrors {
+					uploadStatus.Job().StatusFromError(uploadStatus, otherErr)
+				}
+			}
 			uploadStatus.Job().StatusFromError(uploadStatus, err)
 		} else {
 			uploadStatus.SetUploadedBytes(uploadStatus.Parts.SuccessfulBytes())
@@ -216,61 +225,84 @@ func walkPaginated(ctx context.Context, localFolderPath string, destinationRootP
 			if ctx.Err() != nil {
 				return ctx.Err()
 			}
-			dir, filename := filepath.Split(path)
-
-			if localFolderPath == dir && filename == "" {
-				return nil
-			}
 
 			if de.IsDir() || !de.IsRegular() {
 				return nil
 			}
 
-			var destination string
-			var baseDestination string
-			if localFolderPath != "." {
-				baseDestination = strings.TrimPrefix(path, localFolderPath)
-			} else if path != "." {
-				baseDestination = path
-			}
-			baseDestination = strings.TrimLeft(baseDestination, "/")
-			baseDestination = strings.TrimPrefix(baseDestination, "/")
-			if destinationRootPath == "" {
-				destination = baseDestination
-			} else {
-				destination = filepath.Join(destinationRootPath, baseDestination)
+			uploadStatus, ok := buildUploadStatus(path, localFolderPath, destinationRootPath, c, job, params)
+			if !ok {
+				return nil
 			}
 
-			if destination == "." {
-				destination = filename
-			}
-
+			uploadStatus.file.Type = "file"
 			info, err := os.Stat(filepath.Join(path))
-
-			uploadStatus := UploadStatus{
-				Uploader:   c,
-				job:        job,
-				remotePath: destination,
-				localPath:  path,
-				Sync:       params.Sync,
-				status:     status.Indexed,
-				Mutex:      &sync.RWMutex{},
-				error:      err,
-			}
-
 			if err != nil {
-				uploadStatus.file = files_sdk.File{Type: "file", DisplayName: filepath.Base(destination), Path: destination}
 				uploadStatus.missingStat = true
 				uploadStatus.error = err
 			} else {
-				uploadStatus.file = files_sdk.File{Type: "file", DisplayName: filepath.Base(destination), Path: destination, Size: info.Size(), Mtime: lib.Time(info.ModTime())}
+				uploadStatus.file.Size = info.Size()
+				uploadStatus.file.Mtime = lib.Time(info.ModTime())
 			}
 			job.Add(&uploadStatus)
 			return nil
 		},
 		Unsorted: true, // (optional) set true for faster yet non-deterministic enumeration (see godoc)
+		ErrorCallback: func(path string, err error) godirwalk.ErrorAction {
+			if errors.Is(err, fs.ErrPermission) {
+				uploadStatus, _ := buildUploadStatus(path, localFolderPath, destinationRootPath, c, job, params)
+				uploadStatus.missingStat = true
+				uploadStatus.error = err
+				job.Add(&uploadStatus)
+				return godirwalk.SkipNode
+			}
+			return godirwalk.Halt
+		},
 	})
 	return err
+}
+
+func buildUploadStatus(path string, localFolderPath string, destinationRootPath string, c Uploader, job *status.Job, params UploaderParams) (UploadStatus, bool) {
+	dir, filename := filepath.Split(path)
+
+	if localFolderPath == dir && filename == "" {
+		return UploadStatus{}, false
+	}
+
+	destination := buildDestination(path, localFolderPath, destinationRootPath, filename)
+	uploadStatus := UploadStatus{
+		Uploader:   c,
+		job:        job,
+		remotePath: destination,
+		localPath:  path,
+		Sync:       params.Sync,
+		status:     status.Indexed,
+		Mutex:      &sync.RWMutex{},
+		file:       files_sdk.File{Path: destination, DisplayName: filepath.Base(destination)},
+	}
+	return uploadStatus, true
+}
+
+func buildDestination(path string, localFolderPath string, destinationRootPath string, filename string) string {
+	var destination string
+	var baseDestination string
+	if localFolderPath != "." {
+		baseDestination = strings.TrimPrefix(path, localFolderPath)
+	} else if path != "." {
+		baseDestination = path
+	}
+	baseDestination = strings.TrimLeft(baseDestination, "/")
+	baseDestination = strings.TrimPrefix(baseDestination, "/")
+	if destinationRootPath == "" {
+		destination = baseDestination
+	} else {
+		destination = filepath.Join(destinationRootPath, baseDestination)
+	}
+
+	if destination == "." {
+		destination = filename
+	}
+	return destination
 }
 
 func skipOrIgnore(downloadCtx context.Context, uploadStatus *UploadStatus) bool {

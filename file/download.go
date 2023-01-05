@@ -20,7 +20,7 @@ func (c *Client) DownloadRetry(ctx context.Context, job status.Job) *status.Job 
 			Sync:           newJob.Sync,
 			Manager:        newJob.Manager,
 			LocalPath:      newJob.LocalPath,
-			RetryPolicy:    RetryPolicy(newJob.RetryPolicy),
+			RetryPolicy:    newJob.RetryPolicy.(RetryPolicy),
 			EventsReporter: newJob.EventsReporter,
 		})
 }
@@ -45,10 +45,11 @@ type DownloaderParams struct {
 	RetryPolicy
 	*manager.Manager
 	status.EventsReporter
+	files_sdk.Config
 }
 
 func (c *Client) Downloader(ctx context.Context, params DownloaderParams) *status.Job {
-	return downloader(ctx, (&FS{}).Init(c.Config, true), params, c.Config)
+	return downloader(ctx, (&FS{}).Init(c.Config, true), params)
 }
 
 type Entity struct {

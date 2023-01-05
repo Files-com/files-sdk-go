@@ -24,8 +24,9 @@ func (c *Client) UploadRetry(ctx context.Context, job status.Job) *status.Job {
 			RemotePath:     newJob.RemotePath,
 			EventsReporter: newJob.EventsReporter,
 			Manager:        newJob.Manager,
-			RetryPolicy:    RetryPolicy(newJob.RetryPolicy),
+			RetryPolicy:    newJob.RetryPolicy.(RetryPolicy),
 			Ignore:         newJob.Params.(UploaderParams).Ignore,
+			Config:         c.Config,
 		},
 	)
 }
@@ -39,6 +40,7 @@ type UploaderParams struct {
 	RetryPolicy
 	status.EventsReporter
 	*manager.Manager
+	files_sdk.Config
 }
 
 func expand(path string) (string, error) {
@@ -54,7 +56,8 @@ func expand(path string) (string, error) {
 
 func (c *Client) Uploader(ctx context.Context, params UploaderParams) *status.Job {
 	job := status.Job{}.Init()
-	SetJobParams(job, direction.UploadType, params)
+	SetJobParams(job, direction.UploadType, params, params.Config.Logger())
+	job.Config = params.Config
 	job.CodeStart = func() {
 		params.Job = job
 		job.Params = params

@@ -2,10 +2,11 @@ package status
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/hashicorp/go-retryablehttp"
 
 	"github.com/bradfitz/iter"
 
@@ -70,23 +71,26 @@ type Job struct {
 	Sync          bool
 	CodeStart     func()
 	context.CancelFunc
-	Params interface{}
-	Client interface{}
-	Config interface{}
+	cancelMutex *sync.Mutex
+	Params      interface{}
+	Client      interface{}
+	Config      interface{}
 	EventsReporter
 	directory.Type
 	*manager.Manager
-	RetryPolicy string
+	RetryPolicy interface{}
 	*ignore.GitIgnore
 	Started     *Signal
 	Finished    *Signal
 	Canceled    *Signal
 	Scanning    *Signal
 	EndScanning *Signal
+	retryablehttp.Logger
 }
 
 func (r Job) Init() *Job {
 	r.statusesMutex = &sync.RWMutex{}
+	r.cancelMutex = &sync.Mutex{}
 	r.Id = sid.IdBase64()
 	r.EventsReporter = make(map[Status][]Reporter)
 	r.Timer = timer.New()
@@ -148,7 +152,9 @@ func (r *Job) Finish() {
 
 func (r *Job) Cancel() {
 	r.Canceled.call(r.Timer.Stop())
+	r.cancelMutex.Lock()
 	r.CancelFunc()
+	r.cancelMutex.Unlock()
 }
 
 func (r *Job) Reset() {
@@ -175,7 +181,9 @@ func (r *Job) SubscribeAll() Subscriptions {
 
 func (r *Job) WithContext(ctx context.Context) context.Context {
 	jobCtx, cancel := context.WithCancel(ctx)
+	r.cancelMutex.Lock()
 	r.CancelFunc = cancel
+	r.cancelMutex.Unlock()
 	return jobCtx
 }
 
@@ -194,9 +202,6 @@ func (r *Job) UpdateStatus(status Status, file IFile, err error) {
 	if err != nil && strings.Contains(err.Error(), "context canceled") {
 		err = nil
 		status = Canceled
-	}
-	if err != nil && errors.Unwrap(err) != nil {
-		err = UnwrappedError{error: errors.Unwrap(err), OriginalError: err}
 	}
 	file.SetStatus(status, err)
 	callbacks, ok := r.EventsReporter[status]
@@ -224,6 +229,9 @@ func (r *Job) Count(t ...Status) int {
 
 func (r *Job) Add(report IFile) {
 	r.statusesMutex.Lock()
+	if r.EndScanning.Called() {
+		panic("adding new file after Scanning is complete")
+	}
 	r.Statuses = append(r.Statuses, report)
 	r.statusesMutex.Unlock()
 }
@@ -340,6 +348,29 @@ func (r *Job) Find(t Status) (IFile, bool) {
 	return nil, false
 }
 
+func (r *Job) EnqueueNext() (f IFile, ok bool) {
+	r.statusesMutex.Lock()
+	defer func() {
+		r.statusesMutex.Unlock()
+		if f != nil {
+			// Call UpdateStatus to run event callbacks, which needs to be done outside the mutex.
+			r.UpdateStatus(Queued, f, nil)
+		}
+	}()
+
+	for _, s := range r.Statuses {
+		if s.Status().Any(Indexed) {
+			f = s
+			ok = true
+			// The status must be changed within the mutex in order that it's not reused.
+			s.SetStatus(Queued, nil)
+			break
+		}
+	}
+
+	return
+}
+
 func (r *Job) Sub(t ...Status) *Job {
 	var sub []IFile
 	r.statusesMutex.RLock()
@@ -349,7 +380,10 @@ func (r *Job) Sub(t ...Status) *Job {
 		}
 	}
 	r.statusesMutex.RUnlock()
+	// Causes WARNING: DATA RACE. I need to understand and fix later.
+	r.cancelMutex.Lock()
 	newJob := *r
+	r.cancelMutex.Unlock()
 	newJob.Statuses = sub
 	return &newJob
 }
@@ -384,7 +418,8 @@ func WaitTellFinished[T any](job *Job, onStatusComplete chan T, beforeCallingFin
 	event := job.EndScanning.Subscribe()
 	go func() {
 		wait := waitForAndCount(event, onStatusComplete)
-		for range iter.N(len(job.Statuses) - wait) {
+		n := len(job.Statuses) - wait
+		for range iter.N(n) {
 			<-onStatusComplete
 		}
 		close(onStatusComplete)

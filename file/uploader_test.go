@@ -15,11 +15,12 @@ import (
 
 type MockUploader struct {
 	files_sdk.File
-	findError files_sdk.ResponseError
+	findError   files_sdk.ResponseError
+	uploadError error
 }
 
-func (m *MockUploader) UploadIO(context.Context, UploadIOParams) (files_sdk.File, files_sdk.FileUploadPart, Parts, error) {
-	return files_sdk.File{}, files_sdk.FileUploadPart{}, Parts{}, nil
+func (m *MockUploader) UploadIO(context.Context, UploadIOParams) (files_sdk.File, files_sdk.FileUploadPart, Parts, []error, error) {
+	return files_sdk.File{}, files_sdk.FileUploadPart{}, Parts{}, []error{}, m.uploadError
 }
 
 func (m *MockUploader) Find(context.Context, files_sdk.FileFindParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error) {

@@ -70,7 +70,7 @@ func buildScenario(base string, client *Client) {
 	_, err = folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filepath.Join(base, "nested_1", "nested_2", "nested_3")})
 	ignoreSomeErrors(err)
 
-	_, _, _, err = client.UploadIO(
+	_, _, _, _, err = client.UploadIO(
 		context.Background(),
 		UploadIOParams{
 			Path:   filepath.Join(base, "nested_1", "nested_2", "3.text"),
@@ -79,7 +79,7 @@ func buildScenario(base string, client *Client) {
 		},
 	)
 	ignoreSomeErrors(err)
-	_, _, _, err = client.UploadIO(
+	_, _, _, _, err = client.UploadIO(
 		context.Background(),
 		UploadIOParams{
 			Path:   filepath.Join(base, "nested_1", "nested_2", "nested_3", "4.text"),
@@ -166,7 +166,7 @@ func TestClient_UploadFolder_path_spec(t *testing.T) {
 						_, err := folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filepath.Join(filesDest, e.path)})
 						ignoreSomeErrors(err)
 					} else {
-						_, _, _, err = client.UploadIO(
+						_, _, _, _, err = client.UploadIO(
 							context.Background(),
 							UploadIOParams{
 								Path:   filepath.Join(filesDest, e.path),
@@ -800,7 +800,7 @@ func TestClient_DownloadFolder_file_only(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer r.Stop()
-	_, _, _, err = client.UploadIO(
+	_, _, _, _, err = client.UploadIO(
 		context.Background(),
 		UploadIOParams{
 			Path:          filepath.Join("i am at the root.text"),
@@ -830,7 +830,7 @@ func TestClient_Downloader_Delete_Source(t *testing.T) {
 	folderClient := folder.Client{Config: client.Config}
 
 	folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: "test-delete-source"})
-	_, _, _, err = client.UploadIO(
+	_, _, _, _, err = client.UploadIO(
 		context.Background(),
 		UploadIOParams{
 			Path:          filepath.Join("test-delete-source", "test.text"),
@@ -873,7 +873,7 @@ func TestClient_Downloader_Move_Source(t *testing.T) {
 	folderClient := folder.Client{Config: client.Config}
 
 	folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: "test-move-source"})
-	_, _, _, err = client.UploadIO(
+	_, _, _, _, err = client.UploadIO(
 		context.Background(),
 		UploadIOParams{
 			Path:          filepath.Join("test-move-source", "test.text"),

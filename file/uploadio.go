@@ -28,7 +28,7 @@ type UploadIOParams struct {
 	files_sdk.FileUploadPart
 }
 
-func (c *Client) UploadIO(parentCtx context.Context, params UploadIOParams) (files_sdk.File, files_sdk.FileUploadPart, Parts, error) {
+func (c *Client) UploadIO(parentCtx context.Context, params UploadIOParams) (files_sdk.File, files_sdk.FileUploadPart, Parts, []error, error) {
 	var workingParts Parts
 	var allParts Parts
 
@@ -62,7 +62,7 @@ func (c *Client) UploadIO(parentCtx context.Context, params UploadIOParams) (fil
 		)
 	}
 	if err != nil {
-		return files_sdk.File{}, fileUploadPart, workingParts, err
+		return files_sdk.File{}, fileUploadPart, workingParts, []error{}, err
 	}
 	fileUploadPart.Path = params.Path
 	ctx, cancel := context.WithCancel(parentCtx)
@@ -123,21 +123,36 @@ func (c *Client) UploadIO(parentCtx context.Context, params UploadIOParams) (fil
 		}
 	}()
 
+	var firstError error
+	var otherErrors []error
+
 	for range workingParts {
 		select {
-		case <-ctx.Done():
-			return files_sdk.File{}, fileUploadPart, allParts, ctx.Err()
 		case err = <-onError:
-			cancel()
-			return files_sdk.File{}, fileUploadPart, allParts, err
+			if firstError == nil {
+				cancel()
+				firstError = err
+			} else {
+				otherErrors = append(otherErrors, err)
+			}
+
+			if strings.Contains(err.Error(), "File Upload Not Found") {
+				etags = []files_sdk.EtagsParam{}
+				allParts = Parts{}
+				fileUploadPart = files_sdk.FileUploadPart{}
+			}
 		case part := <-onComplete:
 			etags = append(etags, part.EtagsParam)
 			bytesWritten += part.bytes
 		}
 	}
 
+	if firstError != nil {
+		return files_sdk.File{}, fileUploadPart, allParts, otherErrors, err
+	}
+
 	f, err := c.completeUpload(ctx, &params.ProvidedMtime, etags, bytesWritten, fileUploadPart.Path, fileUploadPart.Ref)
-	return f, fileUploadPart, allParts, err
+	return f, fileUploadPart, allParts, []error{}, err
 }
 
 func (c *Client) startUpload(ctx context.Context, beginUpload files_sdk.FileBeginUploadParams) (files_sdk.FileUploadPart, error) {

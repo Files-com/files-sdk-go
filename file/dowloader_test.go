@@ -81,7 +81,6 @@ func (setup *TestSetup) Call() *status.Job {
 		context.Background(),
 		setup.MapFS,
 		setup.DownloaderParams,
-		*setup.Config,
 	)
 
 	job.Start()
@@ -218,7 +217,7 @@ func TestClient_Downloader_path_spec(t *testing.T) {
 				require.NoError(t, err)
 				err = os.Chdir(filesDest)
 				require.NoError(t, err)
-				job := downloader(context.Background(), srcFs, params, files_sdk.Config{})
+				job := downloader(context.Background(), srcFs, params)
 
 				job.Start()
 				job.Wait()

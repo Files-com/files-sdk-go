@@ -20,10 +20,10 @@ import (
 	"github.com/Files-com/files-sdk-go/v2/lib"
 )
 
-func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams, config files_sdk.Config) *status.Job {
+func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *status.Job {
 	job := status.Job{}.Init()
-	SetJobParams(job, direction.DownloadType, params)
-	job.Config = config
+	SetJobParams(job, direction.DownloadType, params, params.Config.Logger())
+	job.Config = params.Config
 	jobCtx := job.WithContext(ctx)
 	remoteFs, ok := fileSys.(WithContext)
 	if ok {
@@ -88,7 +88,7 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams, con
 		}
 
 		job.Type = localType
-		config.Logger().Printf(keyvalue.New(map[string]interface{}{
+		job.Logger.Printf(keyvalue.New(map[string]interface{}{
 			"LocalPath":  job.LocalPath,
 			"RemotePath": job.RemotePath,
 		}))
@@ -97,7 +97,7 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams, con
 	job.CodeStart = func() {
 		job.Scan()
 		go enqueueIndexedDownloads(job, jobCtx, onComplete)
-		status.WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, RetryPolicy(job.RetryPolicy), false) })
+		status.WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, job.RetryPolicy.(RetryPolicy), false) })
 
 		fs.WalkDir(fileSys, strings.TrimSuffix(job.RemotePath, "/"), func(path string, d fs.DirEntry, err error) error {
 			if job.Canceled.Called() {
@@ -123,9 +123,9 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams, con
 
 func enqueueIndexedDownloads(job *status.Job, jobCtx context.Context, onComplete chan *DownloadStatus) {
 	for !job.EndScanning.Called() || job.Count(status.Indexed) > 0 {
-		f, ok := job.Find(status.Indexed)
+		f, ok := job.EnqueueNext()
 		if ok {
-			enqueueDownload(jobCtx, job, f.(*DownloadStatus), onComplete)
+			go enqueueDownload(jobCtx, job, f.(*DownloadStatus), onComplete)
 		}
 	}
 }
@@ -170,9 +170,8 @@ func enqueueDownload(ctx context.Context, job *status.Job, downloadStatus *Downl
 		signal <- downloadStatus
 		return
 	}
-	job.UpdateStatus(status.Queued, downloadStatus, nil)
 	if manager.Wait(ctx, job.FilesManager) {
-		go downloadFolderItem(ctx, signal, downloadStatus)
+		downloadFolderItem(ctx, signal, downloadStatus)
 	} else {
 		job.UpdateStatus(status.Canceled, downloadStatus, nil)
 		signal <- downloadStatus
