@@ -43,8 +43,9 @@ type FolderListForParams struct {
 }
 
 type FolderCreateParams struct {
-	Path         string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
-	MkdirParents *bool  `url:"mkdir_parents,omitempty" required:"false" json:"mkdir_parents,omitempty" path:"mkdir_parents"`
+	Path          string     `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	MkdirParents  *bool      `url:"mkdir_parents,omitempty" required:"false" json:"mkdir_parents,omitempty" path:"mkdir_parents"`
+	ProvidedMtime *time.Time `url:"provided_mtime,omitempty" required:"false" json:"provided_mtime,omitempty" path:"provided_mtime"`
 }
 
 func (f *Folder) ToFile() (File, error) {
