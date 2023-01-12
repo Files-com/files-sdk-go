@@ -286,6 +286,7 @@ type SiteUpdateParams struct {
 	LdapPasswordChange                   string          `url:"ldap_password_change,omitempty" required:"false" json:"ldap_password_change,omitempty" path:"ldap_password_change"`
 	LdapPasswordChangeConfirmation       string          `url:"ldap_password_change_confirmation,omitempty" required:"false" json:"ldap_password_change_confirmation,omitempty" path:"ldap_password_change_confirmation"`
 	SmtpPassword                         string          `url:"smtp_password,omitempty" required:"false" json:"smtp_password,omitempty" path:"smtp_password"`
+	SessionExpiryMinutes                 int64           `url:"session_expiry_minutes,omitempty" required:"false" json:"session_expiry_minutes,omitempty" path:"session_expiry_minutes"`
 }
 
 func (s *Site) UnmarshalJSON(data []byte) error {
