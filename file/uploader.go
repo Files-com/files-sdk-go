@@ -32,7 +32,7 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 	} else {
 		job = params.Job
 	}
-	SetJobParams(job, direction.UploadType, params, params.Config.Logger())
+	SetJobParams(job, direction.UploadType, params, params.Config.Logger(), (&FS{}).Init(params.Config, true))
 	job.Config = params.Config
 	jobCtx := job.WithContext(parentCtx)
 
@@ -175,7 +175,7 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 			job.FilesManager.Done()
 			onComplete <- uploadStatus
 		}()
-		if skipOrIgnore(ctx, uploadStatus) {
+		if skipOrIgnore(uploadStatus) {
 			return
 		}
 		localFile, err = os.Open(uploadStatus.LocalPath())
@@ -305,16 +305,16 @@ func buildDestination(path string, localFolderPath string, destinationRootPath s
 	return destination
 }
 
-func skipOrIgnore(downloadCtx context.Context, uploadStatus *UploadStatus) bool {
+func skipOrIgnore(uploadStatus *UploadStatus) bool {
 	if uploadStatus.Job().MatchesPath(uploadStatus.LocalPath()) {
 		uploadStatus.Job().UpdateStatus(status.Ignored, uploadStatus, nil)
 		return true
 	}
 
 	if uploadStatus.Sync {
-		file, err := uploadStatus.Find(downloadCtx, files_sdk.FileFindParams{Path: uploadStatus.RemotePath()})
+		file, found, err := uploadStatus.Job().FindRemoteFile(uploadStatus)
 		responseError, ok := err.(files_sdk.ResponseError)
-		if ok && responseError.Type == "not-found" {
+		if !found || (ok && responseError.Type == "not-found") {
 			return false
 		}
 		// local is not after server

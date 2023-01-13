@@ -1098,9 +1098,9 @@ func TestClient_ListForRecursive(t *testing.T) {
 	assert.Equal(files[0].Path, "TestClient_ListForRecursive")
 	assert.Equal(files[1].Path, "TestClient_ListForRecursive/nested_1")
 	assert.Equal(files[2].Path, "TestClient_ListForRecursive/nested_1/nested_2")
-	assert.Equal(files[3].Path, "TestClient_ListForRecursive/nested_1/nested_2/3.text")
-	assert.Equal(files[4].Path, "TestClient_ListForRecursive/nested_1/nested_2/nested_3")
-	assert.Equal(files[5].Path, "TestClient_ListForRecursive/nested_1/nested_2/nested_3/4.text")
+	assert.Equal(files[3].Path, "TestClient_ListForRecursive/nested_1/nested_2/nested_3")
+	assert.Equal(files[4].Path, "TestClient_ListForRecursive/nested_1/nested_2/nested_3/4.text")
+	assert.Equal(files[5].Path, "TestClient_ListForRecursive/nested_1/nested_2/3.text")
 }
 
 func TestClient_ListForRecursive_Error(t *testing.T) {

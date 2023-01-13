@@ -26,6 +26,7 @@ type FS struct {
 	context.Context
 	Root     string
 	cache    map[string]*File
+	cacheDir map[string][]goFs.DirEntry
 	useCache bool
 }
 
@@ -41,11 +42,12 @@ type WithContext interface {
 }
 
 func (f *FS) WithContext(ctx context.Context) interface{} {
-	return &FS{Context: ctx, Config: f.Config, cache: f.cache, useCache: f.useCache}
+	return &FS{Context: ctx, Config: f.Config, cache: f.cache, useCache: f.useCache, cacheDir: f.cacheDir}
 }
 
 func (f *FS) ClearCache() {
 	f.cache = make(map[string]*File)
+	f.cacheDir = make(map[string][]goFs.DirEntry)
 }
 
 type File struct {
@@ -339,7 +341,7 @@ func (f *File) WithContext(ctx context.Context) interface{} {
 }
 
 func (f *FS) Open(name string) (goFs.File, error) {
-	file, ok := f.cache[name]
+	file, ok := f.cache[filepath.Clean(name)]
 	if ok {
 		if file.IsDir() {
 			return &ReadDirFile{File: file}, nil
@@ -360,13 +362,29 @@ func (f *FS) Open(name string) (goFs.File, error) {
 
 	file = (&File{File: &fileInfo, FS: f}).Init()
 	if f.useCache {
-		f.cache[name] = file
+		f.cache[filepath.Clean(name)] = file
 	}
 	if fileInfo.Type == "directory" {
 		return &ReadDirFile{File: file}, nil
 	} else {
 		return file, nil
 	}
+}
+
+func (f *FS) ReadDir(name string) ([]goFs.DirEntry, error) {
+	dirs, ok := f.cacheDir[filepath.Clean(name)]
+	if ok {
+		return dirs, nil
+	}
+
+	dirs, err := ReadDirFile{File: (&File{File: &files_sdk.File{Path: name}, FS: f}).Init()}.ReadDir(0)
+	if err != nil {
+		return dirs, err
+	}
+	if f.useCache {
+		f.cacheDir[filepath.Clean(name)] = dirs
+	}
+	return dirs, nil
 }
 
 func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {
@@ -392,7 +410,7 @@ func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {
 			// There is a bug in the API that it could return a nested file not in the current directory.
 			file := (&File{File: &fi, FS: f.FS}).Init()
 			if f.useCache {
-				f.cache[fi.Path] = file
+				f.cache[filepath.Clean(fi.Path)] = file
 			}
 			files = append(files, file)
 		}

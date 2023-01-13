@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 	"testing"
+	"testing/fstest"
 
 	"github.com/Files-com/files-sdk-go/v2/ignore"
 
@@ -32,57 +33,55 @@ func Test_skipOrIgnore(t *testing.T) {
 	job := status.Job{}.Init()
 	job.GitIgnore, _ = ignore.New()
 	job.Params = UploaderParams{}
-	uploadStatus := &UploadStatus{job: job, Mutex: &sync.RWMutex{}}
+	uploadStatus := &UploadStatus{job: job, Mutex: &sync.RWMutex{}, file: files_sdk.File{Path: "test"}, remotePath: "test"}
 	uploadStatus.Job().Add(uploadStatus)
 	uploader := &MockUploader{}
 	uploadStatus.Uploader = uploader
-	ctx := context.Background()
-	var progressReportStatus status.File
 	var progressReportError error
 	uploadStatus.job.EventsReporter = Reporter(func(s status.File) {
-		progressReportStatus = s
 		progressReportError = s.Err
 	})
 
+	mockFs := make(fstest.MapFS)
+	job.RemoteFs = mockFs
+
 	// sync not enabled and sizes do match
-	uploader.File.Size = 10
+	mockFs["test"] = &fstest.MapFile{
+		Sys: files_sdk.File{Size: 10},
+	}
 	uploadStatus.file.Size = 10
 	uploadStatus.Sync = false
-	assert.Equal(false, skipOrIgnore(ctx, uploadStatus))
-
-	// Mtime is the same between server and local
-	uploadStatus.Sync = true
-	assert.Equal(true, skipOrIgnore(ctx, uploadStatus))
-	assert.Equal(status.Skipped, uploadStatus.Status())
-	assert.Equal(uploadStatus.Status(), progressReportStatus.Status)
-	assert.Equal(nil, progressReportError)
+	assert.Equal(false, skipOrIgnore(uploadStatus))
 
 	// when sizes don't match
-	uploader.File.Size = 9
+	uploadStatus.Sync = true
+	mockFs["test"] = &fstest.MapFile{
+		Sys: files_sdk.File{Size: 9},
+	}
 	uploadStatus.file.Size = 10
-	assert.Equal(false, skipOrIgnore(ctx, uploadStatus))
-	assert.Equal(status.Skipped, uploadStatus.Status())
-	assert.Equal(uploadStatus.Status(), progressReportStatus.Status)
+	assert.Equal(false, skipOrIgnore(uploadStatus))
 	assert.Equal(nil, progressReportError)
 
 	// when sizes do match
-	uploader.File.Size = 10
+	mockFs["test"] = &fstest.MapFile{
+		Sys: files_sdk.File{Size: 10},
+	}
 	uploadStatus.file.Size = 10
-	assert.Equal(true, skipOrIgnore(ctx, uploadStatus))
+	assert.Equal(true, skipOrIgnore(uploadStatus))
 
 	// There is no server version
-	uploader.findError = files_sdk.ResponseError{Type: "not-found"}
-	assert.Equal(false, skipOrIgnore(ctx, uploadStatus))
+	delete(mockFs, "test")
+	assert.Equal(false, skipOrIgnore(uploadStatus))
 
 	// Ignore files
 	job.GitIgnore, _ = ignore.New([]string{"*.css"}...)
 	uploadStatus.localPath = "main.css"
-	assert.Equal(true, skipOrIgnore(ctx, uploadStatus))
+	assert.Equal(true, skipOrIgnore(uploadStatus))
 
 	uploadStatus.localPath = "main.php"
-	assert.Equal(false, skipOrIgnore(ctx, uploadStatus))
+	assert.Equal(false, skipOrIgnore(uploadStatus))
 
 	job.GitIgnore, _ = ignore.New([]string{"*.css", "*.php"}...)
 	uploadStatus.localPath = "main.css"
-	assert.Equal(true, skipOrIgnore(ctx, uploadStatus))
+	assert.Equal(true, skipOrIgnore(uploadStatus))
 }

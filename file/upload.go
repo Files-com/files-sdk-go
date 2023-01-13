@@ -56,7 +56,7 @@ func expand(path string) (string, error) {
 
 func (c *Client) Uploader(ctx context.Context, params UploaderParams) *status.Job {
 	job := status.Job{}.Init()
-	SetJobParams(job, direction.UploadType, params, params.Config.Logger())
+	SetJobParams(job, direction.UploadType, params, params.Config.Logger(), (&FS{}).Init(c.Config, true))
 	job.Config = params.Config
 	job.CodeStart = func() {
 		params.Job = job

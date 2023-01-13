@@ -2,6 +2,8 @@ package status
 
 import (
 	"context"
+	"io/fs"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -63,13 +65,14 @@ type Subscriptions struct {
 type Job struct {
 	Id string
 	*timer.Timer
-	Statuses      []IFile
-	Direction     direction.Direction
-	statusesMutex *sync.RWMutex
-	LocalPath     string
-	RemotePath    string
-	Sync          bool
-	CodeStart     func()
+	Statuses         []IFile
+	Direction        direction.Direction
+	statusesMutex    *sync.RWMutex
+	remoteFilesMutex *sync.Mutex
+	LocalPath        string
+	RemotePath       string
+	Sync             bool
+	CodeStart        func()
 	context.CancelFunc
 	cancelMutex *sync.Mutex
 	Params      interface{}
@@ -86,11 +89,13 @@ type Job struct {
 	Scanning    *Signal
 	EndScanning *Signal
 	retryablehttp.Logger
+	RemoteFs fs.FS
 }
 
 func (r Job) Init() *Job {
 	r.statusesMutex = &sync.RWMutex{}
 	r.cancelMutex = &sync.Mutex{}
+	r.remoteFilesMutex = &sync.Mutex{}
 	r.Id = sid.IdBase64()
 	r.EventsReporter = make(map[Status][]Reporter)
 	r.Timer = timer.New()
@@ -412,6 +417,33 @@ func (r *Job) StatusFromError(s IFile, err error) {
 	} else {
 		r.UpdateStatus(Errored, s, err)
 	}
+}
+
+func (r *Job) FindRemoteFile(file IFile) (filesSDK.File, bool, error) {
+	r.remoteFilesMutex.Lock()
+	defer r.remoteFilesMutex.Unlock()
+	dir, _ := filepath.Split(file.RemotePath())
+	if dir == "" {
+		dir = "."
+	}
+	entries, err := fs.ReadDir(r.RemoteFs, dir)
+	if err != nil {
+		return filesSDK.File{}, false, err
+	}
+
+	for _, entry := range entries {
+		entryPath := filepath.Join(dir, entry.Name())
+		if !entry.IsDir() && filepath.Clean(entryPath) == filepath.Clean(file.RemotePath()) {
+			info, err := entry.Info()
+			if err != nil {
+				return filesSDK.File{}, false, err
+			}
+
+			return info.Sys().(filesSDK.File), true, nil
+		}
+	}
+
+	return filesSDK.File{}, false, err
 }
 
 func WaitTellFinished[T any](job *Job, onStatusComplete chan T, beforeCallingFinish func()) {
