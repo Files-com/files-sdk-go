@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Files-com/files-sdk-go/v2/lib"
+
 	"github.com/hashicorp/go-retryablehttp"
 
 	"github.com/bradfitz/iter"
@@ -420,30 +422,41 @@ func (r *Job) StatusFromError(s IFile, err error) {
 }
 
 func (r *Job) FindRemoteFile(file IFile) (filesSDK.File, bool, error) {
-	r.remoteFilesMutex.Lock()
-	defer r.remoteFilesMutex.Unlock()
-	dir, _ := filepath.Split(file.RemotePath())
-	if dir == "" {
-		dir = "."
-	}
-	entries, err := fs.ReadDir(r.RemoteFs, dir)
-	if err != nil {
-		return filesSDK.File{}, false, err
-	}
+	if r.Type == directory.File {
+		entry, err := r.RemoteFs.Open(file.RemotePath())
+		if err != nil {
+			return filesSDK.File{}, false, err
+		}
+		info, err := entry.Stat()
+		if err != nil {
+			return filesSDK.File{}, false, err
+		}
 
-	for _, entry := range entries {
-		entryPath := filepath.Join(dir, entry.Name())
-		if !entry.IsDir() && filepath.Clean(entryPath) == filepath.Clean(file.RemotePath()) {
-			info, err := entry.Info()
-			if err != nil {
-				return filesSDK.File{}, false, err
+		return info.Sys().(filesSDK.File), true, nil
+	} else {
+		r.remoteFilesMutex.Lock()
+		defer r.remoteFilesMutex.Unlock()
+		dir, _ := filepath.Split(file.RemotePath())
+		dir = lib.Path{Path: dir}.PruneEndingSlash().ConvertEmptyToRoot().String()
+		entries, err := fs.ReadDir(r.RemoteFs, dir)
+		if err != nil {
+			return filesSDK.File{}, false, err
+		}
+
+		for _, entry := range entries {
+			entryPath := filepath.Join(dir, entry.Name())
+			if !entry.IsDir() && filepath.Clean(entryPath) == filepath.Clean(file.RemotePath()) {
+				info, err := entry.Info()
+				if err != nil {
+					return filesSDK.File{}, false, err
+				}
+
+				return info.Sys().(filesSDK.File), true, nil
 			}
-
-			return info.Sys().(filesSDK.File), true, nil
 		}
 	}
 
-	return filesSDK.File{}, false, err
+	return filesSDK.File{}, false, nil
 }
 
 func WaitTellFinished[T any](job *Job, onStatusComplete chan T, beforeCallingFinish func()) {

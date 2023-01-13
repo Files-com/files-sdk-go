@@ -33,6 +33,22 @@ func (p Path) PruneStartingSlash() Path {
 	return p
 }
 
+func (p Path) PruneEndingSlash() Path {
+	if !p.EndingSlash() {
+		return Path{Path: p.Path}
+	}
+
+	return Path{Path: p.Path[0 : len(p.Path)-1]}
+}
+
+func (p Path) ConvertEmptyToRoot() Path {
+	if p.Path == "" {
+		return Path{Path: "."}
+	}
+
+	return p
+}
+
 func (p Path) Join(str ...string) Path {
 	return Path{Path: filepath.Join(p.String(), filepath.Join(str...))}
 }

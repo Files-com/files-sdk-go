@@ -315,6 +315,7 @@ func skipOrIgnore(uploadStatus *UploadStatus) bool {
 		file, found, err := uploadStatus.Job().FindRemoteFile(uploadStatus)
 		responseError, ok := err.(files_sdk.ResponseError)
 		if !found || (ok && responseError.Type == "not-found") {
+			uploadStatus.Job().Logger.Printf("sync %v not found on destination", uploadStatus.RemotePath())
 			return false
 		}
 		// local is not after server
@@ -323,6 +324,7 @@ func skipOrIgnore(uploadStatus *UploadStatus) bool {
 			uploadStatus.Job().UpdateStatus(status.Skipped, uploadStatus, nil)
 			return true
 		}
+		uploadStatus.Job().Logger.Printf("sync %v found on destination with non matching sizes: local: %v, remote: %v", uploadStatus.RemotePath(), uploadStatus.File().Size, file.Size)
 	}
 	return false
 }

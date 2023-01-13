@@ -2,9 +2,12 @@ package file
 
 import (
 	"context"
+	"io/fs"
 	"sync"
 	"testing"
 	"testing/fstest"
+
+	"github.com/Files-com/files-sdk-go/v2/directory"
 
 	"github.com/Files-com/files-sdk-go/v2/ignore"
 
@@ -30,7 +33,7 @@ func (m *MockUploader) Find(context.Context, files_sdk.FileFindParams, ...files_
 
 func Test_skipOrIgnore(t *testing.T) {
 	assert := assert.New(t)
-	job := status.Job{}.Init()
+	job := status.Job{Logger: (&files_sdk.Config{}).Logger()}.Init()
 	job.GitIgnore, _ = ignore.New()
 	job.Params = UploaderParams{}
 	uploadStatus := &UploadStatus{job: job, Mutex: &sync.RWMutex{}, file: files_sdk.File{Path: "test"}, remotePath: "test"}
@@ -72,6 +75,32 @@ func Test_skipOrIgnore(t *testing.T) {
 	// There is no server version
 	delete(mockFs, "test")
 	assert.Equal(false, skipOrIgnore(uploadStatus))
+
+	// when sizes do match on a deeply nested path
+	oldUploadStatus := *uploadStatus
+	uploadStatus = &UploadStatus{job: job, Mutex: &sync.RWMutex{}, file: files_sdk.File{Path: "test/path/test"}, remotePath: "test/path/test"}
+	uploadStatus.Sync = true
+	mockFs["test/path/test"] = &fstest.MapFile{
+		Sys: files_sdk.File{Size: 10},
+	}
+	mockFs["test/path"] = &fstest.MapFile{
+		Sys:  files_sdk.File{Size: 10},
+		Mode: fs.ModeDir,
+	}
+	uploadStatus.file.Size = 10
+	assert.Equal(true, skipOrIgnore(uploadStatus))
+	uploadStatus = &oldUploadStatus
+
+	// when transfer is a single file
+	uploadStatus.job.Type = directory.File
+	uploadStatus.Sync = true
+	mockFs["test"] = &fstest.MapFile{
+		Sys: files_sdk.File{Size: 10},
+	}
+	uploadStatus.file.Size = 10
+	assert.Equal(true, skipOrIgnore(uploadStatus))
+	uploadStatus.job.Type = directory.Dir
+	uploadStatus.Sync = false
 
 	// Ignore files
 	job.GitIgnore, _ = ignore.New([]string{"*.css"}...)

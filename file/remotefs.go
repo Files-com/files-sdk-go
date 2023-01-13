@@ -341,6 +341,9 @@ func (f *File) WithContext(ctx context.Context) interface{} {
 }
 
 func (f *FS) Open(name string) (goFs.File, error) {
+	if name == "." {
+		name = ""
+	}
 	file, ok := f.cache[filepath.Clean(name)]
 	if ok {
 		if file.IsDir() {
@@ -372,6 +375,9 @@ func (f *FS) Open(name string) (goFs.File, error) {
 }
 
 func (f *FS) ReadDir(name string) ([]goFs.DirEntry, error) {
+	if name == "." {
+		name = ""
+	}
 	dirs, ok := f.cacheDir[filepath.Clean(name)]
 	if ok {
 		return dirs, nil

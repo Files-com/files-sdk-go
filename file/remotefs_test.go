@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -55,4 +57,10 @@ func TestFS_Open(t *testing.T) {
 	assert.NoError(err)
 
 	assert.Equal("testing 3", string(buf))
+
+	_, err = fs.ReadDir(".")
+	require.NoError(t, err)
+
+	_, err = fs.Open(".")
+	require.NoError(t, err)
 }
