@@ -291,8 +291,8 @@ func buildDestination(path string, localFolderPath string, destinationRootPath s
 	} else if path != "." {
 		baseDestination = path
 	}
-	baseDestination = strings.TrimLeft(baseDestination, "/")
-	baseDestination = strings.TrimPrefix(baseDestination, "/")
+	baseDestination = strings.TrimLeft(baseDestination, string(os.PathSeparator))
+	baseDestination = strings.TrimPrefix(baseDestination, string(os.PathSeparator))
 	if destinationRootPath == "" {
 		destination = baseDestination
 	} else {
@@ -302,7 +302,7 @@ func buildDestination(path string, localFolderPath string, destinationRootPath s
 	if destination == "." {
 		destination = filename
 	}
-	return destination
+	return lib.Path{Path: destination}.NormalizePathSystemForAPI().String()
 }
 
 func skipOrIgnore(uploadStatus *UploadStatus) bool {
