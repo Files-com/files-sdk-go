@@ -9,8 +9,6 @@ import (
 	"strings"
 )
 
-var QueryEscape = url.QueryEscape
-
 func PathEscape(path string) string {
 	if path == "nil" {
 		return ""
@@ -22,7 +20,7 @@ func PathEscape(path string) string {
 		newParts[i] = url.PathEscape(part)
 	}
 
-	return strings.Join(newParts, "/")
+	return Path{Path: strings.Join(newParts, "/")}.PruneStartingSlash().String()
 }
 
 func BuildPath(resourcePath string, values interface{}) (string, error) {

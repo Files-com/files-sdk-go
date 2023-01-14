@@ -56,6 +56,13 @@ func TestBuildPath(t *testing.T) {
 				UserExample{Path: "a/?/c"}},
 		},
 		{
+			name: "root path",
+			want: "root/a/my-path",
+			args: args{
+				"root/{path}",
+				UserExample{Path: "/a/my-path"}},
+		},
+		{
 			name:  "validating int zero value",
 			error: fmt.Errorf("missing required field: UserExample{}.id"),
 			args: args{
