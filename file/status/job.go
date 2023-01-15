@@ -436,7 +436,6 @@ func (r *Job) FindRemoteFile(file IFile) (filesSDK.File, bool, error) {
 		r.remoteFilesMutex.Lock()
 		defer r.remoteFilesMutex.Unlock()
 
-		strings.Split(file.RemotePath(), "/")
 		dir, _ := lib.UrlLastSegment(file.RemotePath())
 		entries, err := fs.ReadDir(r.RemoteFs, lib.Path{Path: dir}.ConvertEmptyToRoot().String())
 		if err != nil {
@@ -444,7 +443,7 @@ func (r *Job) FindRemoteFile(file IFile) (filesSDK.File, bool, error) {
 		}
 
 		for _, entry := range entries {
-			if !entry.IsDir() && lib.UrlJoinNoEscape(dir, entry.Name()) == file.RemotePath() {
+			if !entry.IsDir() && strings.EqualFold(lib.UrlJoinNoEscape(dir, entry.Name()), file.RemotePath()) {
 				info, err := entry.Info()
 				if err != nil {
 					panic(err)

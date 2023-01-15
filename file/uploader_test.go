@@ -48,69 +48,87 @@ func Test_skipOrIgnore(t *testing.T) {
 	mockFs := make(fstest.MapFS)
 	job.RemoteFs = mockFs
 
-	// sync not enabled and sizes do match
-	mockFs["test"] = &fstest.MapFile{
-		Sys: files_sdk.File{Size: 10},
-	}
-	uploadStatus.file.Size = 10
-	uploadStatus.Sync = false
-	assert.Equal(false, skipOrIgnore(uploadStatus))
+	t.Run("sync not enabled and sizes do match", func(t *testing.T) {
+		mockFs["test"] = &fstest.MapFile{
+			Sys: files_sdk.File{Size: 10},
+		}
+		uploadStatus.file.Size = 10
+		uploadStatus.Sync = false
+		assert.Equal(false, skipOrIgnore(uploadStatus))
+	})
 
-	// when sizes don't match
-	uploadStatus.Sync = true
-	mockFs["test"] = &fstest.MapFile{
-		Sys: files_sdk.File{Size: 9},
-	}
-	uploadStatus.file.Size = 10
-	assert.Equal(false, skipOrIgnore(uploadStatus))
-	assert.Equal(nil, progressReportError)
+	t.Run("when sizes don't match", func(t *testing.T) {
+		uploadStatus.Sync = true
+		mockFs["test"] = &fstest.MapFile{
+			Sys: files_sdk.File{Size: 9},
+		}
+		uploadStatus.file.Size = 10
+		assert.Equal(false, skipOrIgnore(uploadStatus))
+		assert.Equal(nil, progressReportError)
+	})
 
-	// when sizes do match
-	mockFs["test"] = &fstest.MapFile{
-		Sys: files_sdk.File{Size: 10},
-	}
-	uploadStatus.file.Size = 10
-	assert.Equal(true, skipOrIgnore(uploadStatus))
+	t.Run("when sizes do match", func(t *testing.T) {
+		mockFs["test"] = &fstest.MapFile{
+			Sys: files_sdk.File{Size: 10},
+		}
+		uploadStatus.file.Size = 10
+		assert.Equal(true, skipOrIgnore(uploadStatus))
+	})
 
-	// There is no server version
-	delete(mockFs, "test")
-	assert.Equal(false, skipOrIgnore(uploadStatus))
+	t.Run("There is no server version", func(t *testing.T) {
+		delete(mockFs, "test")
+		assert.Equal(false, skipOrIgnore(uploadStatus))
+	})
 
-	// when sizes do match on a deeply nested path
-	oldUploadStatus := *uploadStatus
-	uploadStatus = &UploadStatus{job: job, Mutex: &sync.RWMutex{}, file: files_sdk.File{Path: "test/path/test"}, remotePath: "test/path/test"}
-	uploadStatus.Sync = true
-	mockFs["test/path/test"] = &fstest.MapFile{
-		Sys: files_sdk.File{Size: 10},
-	}
-	mockFs["test/path"] = &fstest.MapFile{
-		Sys:  files_sdk.File{Size: 10},
-		Mode: fs.ModeDir,
-	}
-	uploadStatus.file.Size = 10
-	assert.Equal(true, skipOrIgnore(uploadStatus))
-	uploadStatus = &oldUploadStatus
+	t.Run("when sizes do match on a deeply nested path", func(t *testing.T) {
+		oldUploadStatus := *uploadStatus
+		uploadStatus = &UploadStatus{job: job, Mutex: &sync.RWMutex{}, file: files_sdk.File{Path: "test/path/test"}, remotePath: "test/path/test"}
+		uploadStatus.Sync = true
+		mockFs["test/path/test"] = &fstest.MapFile{
+			Sys: files_sdk.File{Size: 10},
+		}
+		mockFs["test/path"] = &fstest.MapFile{
+			Sys:  files_sdk.File{Size: 10},
+			Mode: fs.ModeDir,
+		}
+		uploadStatus.file.Size = 10
+		assert.Equal(true, skipOrIgnore(uploadStatus))
+		uploadStatus = &oldUploadStatus
+	})
 
-	// when transfer is a single file
-	uploadStatus.job.Type = directory.File
-	uploadStatus.Sync = true
-	mockFs["test"] = &fstest.MapFile{
-		Sys: files_sdk.File{Size: 10},
-	}
-	uploadStatus.file.Size = 10
-	assert.Equal(true, skipOrIgnore(uploadStatus))
-	uploadStatus.job.Type = directory.Dir
-	uploadStatus.Sync = false
+	t.Run("when transfer is a single file", func(t *testing.T) {
+		uploadStatus.job.Type = directory.File
+		uploadStatus.Sync = true
+		mockFs["test"] = &fstest.MapFile{
+			Sys: files_sdk.File{Size: 10},
+		}
+		uploadStatus.file.Size = 10
+		assert.Equal(true, skipOrIgnore(uploadStatus))
+		uploadStatus.job.Type = directory.Dir
+		uploadStatus.Sync = false
+	})
 
-	// Ignore files
-	job.GitIgnore, _ = ignore.New([]string{"*.css"}...)
-	uploadStatus.localPath = "main.css"
-	assert.Equal(true, skipOrIgnore(uploadStatus))
+	t.Run("case insensitive", func(t *testing.T) {
+		uploadStatus.job.Type = directory.Dir
+		uploadStatus.Sync = true
+		mockFs["Test"] = &fstest.MapFile{
+			Sys: files_sdk.File{Size: 10},
+		}
+		uploadStatus.file.Size = 10
+		assert.Equal(true, skipOrIgnore(uploadStatus))
+		uploadStatus.Sync = false
+	})
 
-	uploadStatus.localPath = "main.php"
-	assert.Equal(false, skipOrIgnore(uploadStatus))
+	t.Run("Ignore files", func(t *testing.T) {
+		job.GitIgnore, _ = ignore.New([]string{"*.css"}...)
+		uploadStatus.localPath = "main.css"
+		assert.Equal(true, skipOrIgnore(uploadStatus))
 
-	job.GitIgnore, _ = ignore.New([]string{"*.css", "*.php"}...)
-	uploadStatus.localPath = "main.css"
-	assert.Equal(true, skipOrIgnore(uploadStatus))
+		uploadStatus.localPath = "main.php"
+		assert.Equal(false, skipOrIgnore(uploadStatus))
+
+		job.GitIgnore, _ = ignore.New([]string{"*.css", "*.php"}...)
+		uploadStatus.localPath = "main.css"
+		assert.Equal(true, skipOrIgnore(uploadStatus))
+	})
 }
