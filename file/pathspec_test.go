@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -31,117 +32,117 @@ type pathSpecTest struct {
 	src  []pathSpecEntry
 }
 
-func pathSpec() []pathSpecTest {
+func pathSpec(srcPathSeparator string, destPathSeparator string) []pathSpecTest {
 	return []pathSpecTest{
 		{
 			name: "copy foo to dest",
 			args: pathSpecArgs{
-				src:  "src/foo",
+				src:  join(srcPathSeparator, "src", "foo"),
 				dest: "dest",
 			},
 			src: []pathSpecEntry{
 				{dir: true, path: "src"},
-				{dir: true, path: "src/foo"},
-				{dir: false, path: "src/foo/baz.txt"},
+				{dir: true, path: join(srcPathSeparator, "src", "foo")},
+				{dir: false, path: join(srcPathSeparator, "src", "foo", "baz.txt")},
 			},
 			dest: []pathSpecEntry{
 				{dir: true, path: "dest", preexisting: true},
-				{dir: true, path: "dest/foo"},
-				{dir: false, path: "dest/foo/baz.txt"},
+				{dir: true, path: join(destPathSeparator, "dest", "foo")},
+				{dir: false, path: join(destPathSeparator, "dest", "foo", "baz.txt")},
 			},
 		},
 		{
 			name: "copy contents of foo to dest/foo",
 			args: pathSpecArgs{
-				src:  "src/foo/",
-				dest: "dest/foo",
+				src:  join(srcPathSeparator, "src", "foo") + srcPathSeparator,
+				dest: join(destPathSeparator, "dest", "foo"),
 			},
 			src: []pathSpecEntry{
 				{dir: true, path: "src"},
-				{dir: true, path: "src/foo"},
-				{dir: false, path: "src/foo/baz.txt"},
+				{dir: true, path: join(srcPathSeparator, "src", "foo")},
+				{dir: false, path: join(srcPathSeparator, "src", "foo", "baz.txt")},
 			},
 			dest: []pathSpecEntry{
 				{dir: true, path: "dest", preexisting: true},
-				{dir: true, path: "dest/foo", preexisting: true},
-				{dir: false, path: "dest/foo/baz.txt"},
+				{dir: true, path: join(destPathSeparator, "dest", "foo"), preexisting: true},
+				{dir: false, path: join(destPathSeparator, "dest", "foo", "baz.txt")},
 			},
 		},
 		{
 			name: "copy contents of foo to dest/bar",
 			args: pathSpecArgs{
-				src:  "src/foo/",
-				dest: "dest/bar",
+				src:  join(srcPathSeparator, "src", "foo") + srcPathSeparator,
+				dest: join(destPathSeparator, "dest", "bar"),
 			},
 			src: []pathSpecEntry{
 				{dir: true, path: "src"},
-				{dir: true, path: "src/foo"},
-				{dir: false, path: "src/foo/baz.txt"},
+				{dir: true, path: join(srcPathSeparator, "src", "foo")},
+				{dir: false, path: join(srcPathSeparator, "src", "foo", "baz.txt")},
 			},
 			dest: []pathSpecEntry{
 				{dir: true, path: "dest", preexisting: true},
-				{dir: true, path: "dest/bar", preexisting: true},
-				{dir: false, path: "dest/bar/baz.txt"},
+				{dir: true, path: join(destPathSeparator, "dest", "bar"), preexisting: true},
+				{dir: false, path: join(destPathSeparator, "dest", "bar", "baz.txt")},
 			},
 		},
 		{
 			name: "copy baz.txt to dest",
 			args: pathSpecArgs{
-				src:  "src/foo/baz.txt",
-				dest: "dest/baz.txt",
+				src:  join(srcPathSeparator, "src", "foo", "baz.txt"),
+				dest: join(destPathSeparator, "dest", "baz.txt"),
 			},
 			src: []pathSpecEntry{
-				{dir: true, path: "src"},
-				{dir: true, path: "src/foo"},
-				{dir: false, path: "src/foo/baz.txt"},
+				{dir: true, path: join(srcPathSeparator, "src")},
+				{dir: true, path: join(srcPathSeparator, "src", "foo")},
+				{dir: false, path: join(srcPathSeparator, "src", "foo", "baz.txt")},
 			},
 			dest: []pathSpecEntry{
 				{dir: true, path: "dest", preexisting: true},
-				{dir: false, path: "dest/baz.txt"},
+				{dir: false, path: join(destPathSeparator, "dest", "baz.txt")},
 			},
 		},
 		{
 			name: "copy baz.txt to dest without name",
 			args: pathSpecArgs{
-				src:  "src/foo/baz.txt",
-				dest: "dest/",
+				src:  join(srcPathSeparator, "src", "foo", "baz.txt"),
+				dest: "dest" + destPathSeparator,
 			},
 			src: []pathSpecEntry{
 				{dir: true, path: "src"},
-				{dir: true, path: "src/foo"},
-				{dir: false, path: "src/foo/baz.txt"},
+				{dir: true, path: join(srcPathSeparator, "src", "foo")},
+				{dir: false, path: join(srcPathSeparator, "src", "foo", "baz.txt")},
 			},
 			dest: []pathSpecEntry{
 				{dir: true, path: "dest", preexisting: true},
-				{dir: false, path: "dest/baz.txt"},
+				{dir: false, path: join(destPathSeparator, "dest", "baz.txt")},
 			},
 		},
 		{
 			name: "copy baz.txt to dest with rename",
 			args: pathSpecArgs{
-				src:  "src/foo/baz.txt",
-				dest: "dest/taz.txt",
+				src:  join(srcPathSeparator, "src", "foo", "baz.txt"),
+				dest: join(destPathSeparator, "dest", "taz.txt"),
 			},
 			src: []pathSpecEntry{
 				{dir: true, path: "src"},
-				{dir: true, path: "src/foo"},
-				{dir: false, path: "src/foo/baz.txt"},
+				{dir: true, path: join(srcPathSeparator, "src", "foo")},
+				{dir: false, path: join(srcPathSeparator, "src", "foo", "baz.txt")},
 			},
 			dest: []pathSpecEntry{
 				{dir: true, path: "dest", preexisting: true},
-				{dir: false, path: "dest/taz.txt"},
+				{dir: false, path: join(destPathSeparator, "dest/taz.txt")},
 			},
 		},
 		{
 			name: "copy baz.txt to current working directory",
 			args: pathSpecArgs{
-				src:  "src/foo/baz.txt",
+				src:  join(srcPathSeparator, "src", "foo", "baz.txt"),
 				dest: "",
 			},
 			src: []pathSpecEntry{
 				{dir: true, path: "src"},
-				{dir: true, path: "src/foo"},
-				{dir: false, path: "src/foo/baz.txt"},
+				{dir: true, path: join(srcPathSeparator, "src", "foo")},
+				{dir: false, path: join(srcPathSeparator, "src", "foo", "baz.txt")},
 			},
 			dest: []pathSpecEntry{
 				{dir: false, path: "baz.txt"},
@@ -158,7 +159,8 @@ func TestRsync(t *testing.T) {
 	}
 
 	t.Run("rsync", func(t *testing.T) {
-		for _, tt := range pathSpec() {
+		mutex := &sync.Mutex{}
+		for _, tt := range pathSpec(string(os.PathSeparator), string(os.PathSeparator)) {
 			t.Run(tt.name, func(t *testing.T) {
 				rsyncSrc, err := ioutil.TempDir("", "rsync-src")
 				assert.NoError(t, err)
@@ -171,7 +173,7 @@ func TestRsync(t *testing.T) {
 					} else {
 						_, err = os.Create(filepath.Join(rsyncSrc, e.path))
 					}
-					assert.NoError(t, err)
+					require.NoError(t, err)
 				}
 				for _, e := range tt.dest {
 					if !e.preexisting {
@@ -182,15 +184,17 @@ func TestRsync(t *testing.T) {
 					} else {
 						_, err = os.Create(filepath.Join(rsyncDest, e.path))
 					}
-					assert.NoError(t, err)
+					require.NoError(t, err)
 				}
-				source := strings.Join([]string{rsyncSrc, tt.args.src}, string(os.PathSeparator))
-				destination := strings.Join([]string{rsyncDest, tt.args.dest}, string(os.PathSeparator))
+
+				source := join(string(os.PathSeparator), rsyncSrc, tt.args.src)
+				destination := join(string(os.PathSeparator), rsyncDest, tt.args.dest)
 				if tt.args.dest == "" {
 					destination = ""
 				}
 				originalDir, err := os.Getwd()
 				require.NoError(t, err)
+				mutex.Lock()
 				err = os.Chdir(rsyncDest)
 				require.NoError(t, err)
 				cmd := exec.Command("rsync", "-av", source, destination)
@@ -213,9 +217,10 @@ func TestRsync(t *testing.T) {
 				}
 				err = os.Chdir(originalDir)
 				require.NoError(t, err)
+				mutex.Unlock()
 				for _, e := range tt.dest {
 					fileInfo, err := os.Stat(filepath.Join(rsyncDest, e.path))
-					assert.NoError(t, err, e.path)
+					require.NoError(t, err, e.path)
 					assert.Equal(t, e.dir, fileInfo.IsDir(), e.path)
 				}
 
@@ -224,4 +229,12 @@ func TestRsync(t *testing.T) {
 			})
 		}
 	})
+}
+
+func join(pathSeparator string, parts ...string) string {
+	if parts[len(parts)-1] == pathSeparator {
+		return strings.Join(parts, pathSeparator) + pathSeparator
+	} else {
+		return strings.Join(parts, pathSeparator)
+	}
 }

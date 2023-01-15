@@ -56,3 +56,9 @@ func (p Path) Join(str ...string) Path {
 func (p Path) String() string {
 	return p.Path
 }
+
+func (p Path) NormalizePathSystemForAPI() Path {
+	return Path{
+		Path: UrlJoinNoEscape(strings.Split(filepath.Clean(p.Path), string(os.PathSeparator))...),
+	}.PruneStartingSlash()
+}

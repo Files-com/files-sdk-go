@@ -9,6 +9,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/Files-com/files-sdk-go/v2/lib"
+
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/directory"
 	"github.com/Files-com/files-sdk-go/v2/file/status"
@@ -74,7 +76,7 @@ func (am MoveSource) Call(ctx context.Context, f status.File) (status.Log, error
 		client := &Client{Config: am.Config}
 		_, err := client.Move(
 			ctx,
-			files_sdk.FileMoveParams{Path: f.RemotePath, Destination: log.Path},
+			files_sdk.FileMoveParams{Path: f.RemotePath, Destination: lib.Path{Path: log.Path}.NormalizePathSystemForAPI().String()},
 		)
 		rErr, ok := err.(files_sdk.ResponseError)
 		if ok && rErr.Type == "processing-failure/destination-parent-does-not-exist" {
@@ -85,7 +87,7 @@ func (am MoveSource) Call(ctx context.Context, f status.File) (status.Log, error
 			return am.Call(ctx, f)
 		}
 		if ok && rErr.Type == "processing-failure/destination-exists" {
-			err := client.Delete(ctx, files_sdk.FileDeleteParams{Path: log.Path})
+			err := client.Delete(ctx, files_sdk.FileDeleteParams{Path: lib.Path{Path: log.Path}.NormalizePathSystemForAPI().String()})
 			if err != nil {
 				return log, err
 			}
@@ -100,7 +102,9 @@ func (am MoveSource) Call(ctx context.Context, f status.File) (status.Log, error
 func (am MoveSource) movePath(f status.File) string {
 	switch f.Job.Type {
 	case directory.Dir:
-		return filepath.Join(am.Path, strings.TrimPrefix(f.RemotePath, f.Job.RemotePath))
+		return filepath.Join(
+			append([]string{am.Path}, strings.Split(strings.TrimPrefix(f.RemotePath, f.Job.RemotePath), "/")...)...,
+		)
 	case directory.File:
 		return am.Path
 	default:

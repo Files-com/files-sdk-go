@@ -1790,17 +1790,17 @@ interactions:
     code: 204
     duration: ""
 - request:
-    body: '{"-":"files-dest-copy_baz.txt_to_dest"}'
+    body: '{"-":"files-dest-copy_baz-txt_to_dest"}'
     form: {}
     headers:
       Connection:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest
     method: POST
   response:
-    body: '{"display_name":"files-dest-copy_baz.txt_to_dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:36Z","crc32":null,"md5":null,"subfolders_locked?":false,"is_locked":false}'
+    body: '{"display_name":"files-dest-copy_baz-txt_to_dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:36Z","crc32":null,"md5":null,"subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -1823,14 +1823,14 @@ interactions:
     code: 201
     duration: ""
 - request:
-    body: '{"-":"files-dest-copy_baz.txt_to_dest/dest"}'
+    body: '{"-":"files-dest-copy_baz-txt_to_dest/dest"}'
     form: {}
     headers:
       Connection:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest/dest
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest/dest
     method: POST
   response:
     body: '{"display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:36Z","crc32":null,"md5":null,"subfolders_locked?":false,"is_locked":false}'
@@ -1863,7 +1863,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest/dest/baz.txt
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest/dest/baz.txt
     method: GET
   response:
     body: '{"error":"Not Found","http-code":404,"instance":"5a52febd-4219-4250-ac0e-84792247c8e0","title":"Not
@@ -1888,14 +1888,14 @@ interactions:
     code: 404
     duration: ""
 - request:
-    body: '{"-":"files-dest-copy_baz.txt_to_dest/dest/baz.txt","mkdir_parents":true,"size":15}'
+    body: '{"-":"files-dest-copy_baz-txt_to_dest/dest/baz.txt","mkdir_parents":true,"size":15}'
     form: {}
     headers:
       Connection:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/files-dest-copy_baz.txt_to_dest/dest/baz.txt
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/files-dest-copy_baz-txt_to_dest/dest/baz.txt
     method: POST
   response:
     body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-31T17:36:37Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2893843056","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/5ea617d9-00f8-4554-b3b4-80df4e0ab41e?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221031%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221031T172137Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=_5iUIXebNVmy9JRPuZXcvBwqUScmqtn7S._eMdM4Lt1FnrC_b9h3kEI7tssojS8h.Vo0N7AYdRqi6CUBH7bzW.RkxQEm4ysiVd.ge.8Yv9FbHCbXNMlnF03g24hz1ZiO\u0026X-Amz-Signature=4e71901aa610cf61072ff3ed082e2a956374da20b335a472917c49ce13db59c3"}]'
@@ -1949,17 +1949,17 @@ interactions:
     code: 200
     duration: ""
 - request:
-    body: '{"-":"files-dest-copy_baz.txt_to_dest/dest/baz.txt","action":"end","etags":[{"etag":"ddf66d49f5b58593a322d1e85538cc77","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-10-31T10:21:36.347525729-07:00","ref":"put-2893843056","size":15}'
+    body: '{"-":"files-dest-copy_baz-txt_to_dest/dest/baz.txt","action":"end","etags":[{"etag":"ddf66d49f5b58593a322d1e85538cc77","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-10-31T10:21:36.347525729-07:00","ref":"put-2893843056","size":15}'
     form: {}
     headers:
       Connection:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz.txt_to_dest/dest/baz.txt
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz-txt_to_dest/dest/baz.txt
     method: POST
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:38Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":"2022-10-31T17:21:36Z","crc32":null,"md5":null,"mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:38Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":"2022-10-31T17:21:36Z","crc32":null,"md5":null,"mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -1989,10 +1989,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest","display_name":"files-dest-copy_baz.txt_to_dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:36Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest","display_name":"files-dest-copy_baz-txt_to_dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:36Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2020,10 +2020,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest","display_name":"files-dest-copy_baz.txt_to_dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:36Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest","display_name":"files-dest-copy_baz-txt_to_dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:36Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2051,10 +2051,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest?page=1
     method: GET
   response:
-    body: '[{"path":"files-dest-copy_baz.txt_to_dest/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:36Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
+    body: '[{"path":"files-dest-copy_baz-txt_to_dest/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:36Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2082,10 +2082,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest/dest
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest/dest
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:36Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:36Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2113,10 +2113,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest/dest?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest/dest?page=1
     method: GET
   response:
-    body: '[{"path":"files-dest-copy_baz.txt_to_dest/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:38Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":"2022-10-31T17:21:36Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
+    body: '[{"path":"files-dest-copy_baz-txt_to_dest/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:38Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":"2022-10-31T17:21:36Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2144,10 +2144,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz.txt_to_dest/dest/baz.txt
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz-txt_to_dest/dest/baz.txt
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:38Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":"2022-10-31T17:21:36Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/5ea617d9-00f8-4554-b3b4-80df4e0ab41e?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221031%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221031T172141Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22baz.txt%22\u0026response-content-type=text%2Fplain\u0026X-Amz-Signature=70c93455dd913a69c3f84ef3cd42f1514a421d4fc09735cc38c834ebbb59e4ac"}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:38Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":"2022-10-31T17:21:36Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/5ea617d9-00f8-4554-b3b4-80df4e0ab41e?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221031%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221031T172141Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22baz.txt%22\u0026response-content-type=text%2Fplain\u0026X-Amz-Signature=70c93455dd913a69c3f84ef3cd42f1514a421d4fc09735cc38c834ebbb59e4ac"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2219,10 +2219,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest/dest
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest/dest
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:36Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:36Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2250,10 +2250,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest/dest/baz.txt
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest/dest/baz.txt
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:38Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":"2022-10-31T17:21:36Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:38Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":"2022-10-31T17:21:36Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2281,7 +2281,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz.txt_to_dest?recursive=true
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz-txt_to_dest?recursive=true
     method: DELETE
   response:
     body: ""
@@ -2303,17 +2303,17 @@ interactions:
     code: 204
     duration: ""
 - request:
-    body: '{"-":"files-dest-copy_baz.txt_to_dest_without_name"}'
+    body: '{"-":"files-dest-copy_baz-txt_to_dest_without_name"}'
     form: {}
     headers:
       Connection:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest_without_name
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest_without_name
     method: POST
   response:
-    body: '{"display_name":"files-dest-copy_baz.txt_to_dest_without_name","type":"directory","size":null,"created_at":"2022-10-31T17:21:43Z","crc32":null,"md5":null,"subfolders_locked?":false,"is_locked":false}'
+    body: '{"display_name":"files-dest-copy_baz-txt_to_dest_without_name","type":"directory","size":null,"created_at":"2022-10-31T17:21:43Z","crc32":null,"md5":null,"subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2336,14 +2336,14 @@ interactions:
     code: 201
     duration: ""
 - request:
-    body: '{"-":"files-dest-copy_baz.txt_to_dest_without_name/dest"}'
+    body: '{"-":"files-dest-copy_baz-txt_to_dest_without_name/dest"}'
     form: {}
     headers:
       Connection:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest_without_name/dest
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest_without_name/dest
     method: POST
   response:
     body: '{"display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:43Z","crc32":null,"md5":null,"subfolders_locked?":false,"is_locked":false}'
@@ -2376,10 +2376,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_without_name/dest
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest_without_name/dest
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest_without_name/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:43Z","mtime":"2022-10-31T17:21:43Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest_without_name/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:43Z","mtime":"2022-10-31T17:21:43Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2400,14 +2400,14 @@ interactions:
     code: 200
     duration: ""
 - request:
-    body: '{"-":"files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt","mkdir_parents":true,"size":15}'
+    body: '{"-":"files-dest-copy_baz-txt_to_dest_without_name/dest/baz.txt","mkdir_parents":true,"size":15}'
     form: {}
     headers:
       Connection:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/files-dest-copy_baz-txt_to_dest_without_name/dest/baz.txt
     method: POST
   response:
     body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-31T17:36:44Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2893844517","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/5ce64570-441f-403c-90d0-745f70c5eaca?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221031%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221031T172144Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=uAEsU4OLom9T0hp9QCYYwGI1V9e00vU2I7vhzQP7WmlCX4h9bOYQcP2fvO9ACXLJllLve16nMUybwI55hQ6adZjYTVfv1Aa7j3uq_GFmCRLiS0Agj8pUrYfactZU46NU\u0026X-Amz-Signature=9d1e985deed408a4f2632417530d2276d69763a50bb5bec51aad5e9f7be84597"}]'
@@ -2461,17 +2461,17 @@ interactions:
     code: 200
     duration: ""
 - request:
-    body: '{"-":"files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt","action":"end","etags":[{"etag":"ddf66d49f5b58593a322d1e85538cc77","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-10-31T10:21:43.151976594-07:00","ref":"put-2893844517","size":15}'
+    body: '{"-":"files-dest-copy_baz-txt_to_dest_without_name/dest/baz.txt","action":"end","etags":[{"etag":"ddf66d49f5b58593a322d1e85538cc77","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-10-31T10:21:43.151976594-07:00","ref":"put-2893844517","size":15}'
     form: {}
     headers:
       Connection:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz-txt_to_dest_without_name/dest/baz.txt
     method: POST
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:45Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":"2022-10-31T17:21:43Z","crc32":null,"md5":null,"mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest_without_name/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:45Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":"2022-10-31T17:21:43Z","crc32":null,"md5":null,"mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2501,10 +2501,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_without_name
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest_without_name
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest_without_name","display_name":"files-dest-copy_baz.txt_to_dest_without_name","type":"directory","size":null,"created_at":"2022-10-31T17:21:43Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest_without_name","display_name":"files-dest-copy_baz-txt_to_dest_without_name","type":"directory","size":null,"created_at":"2022-10-31T17:21:43Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2532,10 +2532,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_without_name
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest_without_name
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest_without_name","display_name":"files-dest-copy_baz.txt_to_dest_without_name","type":"directory","size":null,"created_at":"2022-10-31T17:21:43Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest_without_name","display_name":"files-dest-copy_baz-txt_to_dest_without_name","type":"directory","size":null,"created_at":"2022-10-31T17:21:43Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2563,10 +2563,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest_without_name?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest_without_name?page=1
     method: GET
   response:
-    body: '[{"path":"files-dest-copy_baz.txt_to_dest_without_name/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:43Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
+    body: '[{"path":"files-dest-copy_baz-txt_to_dest_without_name/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:43Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2594,10 +2594,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_without_name/dest
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest_without_name/dest
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest_without_name/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:43Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest_without_name/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:43Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2625,10 +2625,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest_without_name/dest?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest_without_name/dest?page=1
     method: GET
   response:
-    body: '[{"path":"files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:45Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":"2022-10-31T17:21:43Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
+    body: '[{"path":"files-dest-copy_baz-txt_to_dest_without_name/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:45Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":"2022-10-31T17:21:43Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2656,10 +2656,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz-txt_to_dest_without_name/dest/baz.txt
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:45Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":"2022-10-31T17:21:43Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/5ce64570-441f-403c-90d0-745f70c5eaca?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221031%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221031T172148Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22baz.txt%22\u0026response-content-type=text%2Fplain\u0026X-Amz-Signature=acfa3c332ddf9ab49169aed5f64b6a22f3f3c36b44675391851d0b6da9b0122e"}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest_without_name/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:45Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":"2022-10-31T17:21:43Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/5ce64570-441f-403c-90d0-745f70c5eaca?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221031%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221031T172148Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22baz.txt%22\u0026response-content-type=text%2Fplain\u0026X-Amz-Signature=acfa3c332ddf9ab49169aed5f64b6a22f3f3c36b44675391851d0b6da9b0122e"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2731,10 +2731,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_without_name/dest
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest_without_name/dest
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest_without_name/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:43Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest_without_name/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:43Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2762,10 +2762,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest_without_name/dest/baz.txt
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest_without_name/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:45Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":"2022-10-31T17:21:43Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest_without_name/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:45Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":"2022-10-31T17:21:43Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2793,7 +2793,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz.txt_to_dest_without_name?recursive=true
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz-txt_to_dest_without_name?recursive=true
     method: DELETE
   response:
     body: ""
@@ -2815,17 +2815,17 @@ interactions:
     code: 204
     duration: ""
 - request:
-    body: '{"-":"files-dest-copy_baz.txt_to_dest_with_rename"}'
+    body: '{"-":"files-dest-copy_baz-txt_to_dest_with_rename"}'
     form: {}
     headers:
       Connection:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest_with_rename
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest_with_rename
     method: POST
   response:
-    body: '{"display_name":"files-dest-copy_baz.txt_to_dest_with_rename","type":"directory","size":null,"created_at":"2022-10-31T17:21:50Z","crc32":null,"md5":null,"subfolders_locked?":false,"is_locked":false}'
+    body: '{"display_name":"files-dest-copy_baz-txt_to_dest_with_rename","type":"directory","size":null,"created_at":"2022-10-31T17:21:50Z","crc32":null,"md5":null,"subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -2848,14 +2848,14 @@ interactions:
     code: 201
     duration: ""
 - request:
-    body: '{"-":"files-dest-copy_baz.txt_to_dest_with_rename/dest"}'
+    body: '{"-":"files-dest-copy_baz-txt_to_dest_with_rename/dest"}'
     form: {}
     headers:
       Connection:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest_with_rename/dest
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest_with_rename/dest
     method: POST
   response:
     body: '{"display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:51Z","crc32":null,"md5":null,"subfolders_locked?":false,"is_locked":false}'
@@ -2888,7 +2888,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest_with_rename/dest/taz.txt
     method: GET
   response:
     body: '{"error":"Not Found","http-code":404,"instance":"b1f1e5bc-ea5c-4a39-83f6-246de300ef94","title":"Not
@@ -2913,14 +2913,14 @@ interactions:
     code: 404
     duration: ""
 - request:
-    body: '{"-":"files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt","mkdir_parents":true,"size":15}'
+    body: '{"-":"files-dest-copy_baz-txt_to_dest_with_rename/dest/taz.txt","mkdir_parents":true,"size":15}'
     form: {}
     headers:
       Connection:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/files-dest-copy_baz-txt_to_dest_with_rename/dest/taz.txt
     method: POST
   response:
     body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2022-10-31T17:36:52Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-2893846129","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/331f1d01-2100-466a-b3c9-43d473dede77?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221031%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221031T172152Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=DTzco9vG.vS6SQ4JA5dRKY7PDPw.850Q0a_LwpPAl5k1FSUkYuuHkwXraon7LCy9fLhttXp7kQKukabCTsfKMXLyIUrKAx_BLv4r1JbWPes6N.JGxjvunlIRml_3UsDr\u0026X-Amz-Signature=7aeb7f08a3afd2dff3a8fd5af9b92241bb207c6b64dedb2f3c781b459ffe134d"}]'
@@ -2974,17 +2974,17 @@ interactions:
     code: 200
     duration: ""
 - request:
-    body: '{"-":"files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt","action":"end","etags":[{"etag":"ddf66d49f5b58593a322d1e85538cc77","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-10-31T10:21:50.506532648-07:00","ref":"put-2893846129","size":15}'
+    body: '{"-":"files-dest-copy_baz-txt_to_dest_with_rename/dest/taz.txt","action":"end","etags":[{"etag":"ddf66d49f5b58593a322d1e85538cc77","part":"1"}],"mkdir_parents":true,"provided_mtime":"2022-10-31T10:21:50.506532648-07:00","ref":"put-2893846129","size":15}'
     form: {}
     headers:
       Connection:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz-txt_to_dest_with_rename/dest/taz.txt
     method: POST
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt","display_name":"taz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:52Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":"2022-10-31T17:21:50Z","crc32":null,"md5":null,"mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest_with_rename/dest/taz.txt","display_name":"taz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:52Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":"2022-10-31T17:21:50Z","crc32":null,"md5":null,"mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -3014,10 +3014,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_with_rename
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest_with_rename
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest_with_rename","display_name":"files-dest-copy_baz.txt_to_dest_with_rename","type":"directory","size":null,"created_at":"2022-10-31T17:21:50Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest_with_rename","display_name":"files-dest-copy_baz-txt_to_dest_with_rename","type":"directory","size":null,"created_at":"2022-10-31T17:21:50Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -3045,10 +3045,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_with_rename
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest_with_rename
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest_with_rename","display_name":"files-dest-copy_baz.txt_to_dest_with_rename","type":"directory","size":null,"created_at":"2022-10-31T17:21:50Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest_with_rename","display_name":"files-dest-copy_baz-txt_to_dest_with_rename","type":"directory","size":null,"created_at":"2022-10-31T17:21:50Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -3076,10 +3076,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest_with_rename?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest_with_rename?page=1
     method: GET
   response:
-    body: '[{"path":"files-dest-copy_baz.txt_to_dest_with_rename/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:51Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
+    body: '[{"path":"files-dest-copy_baz-txt_to_dest_with_rename/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:51Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -3107,10 +3107,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_with_rename/dest
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest_with_rename/dest
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest_with_rename/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:51Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest_with_rename/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:51Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -3138,10 +3138,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_dest_with_rename/dest?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest_with_rename/dest?page=1
     method: GET
   response:
-    body: '[{"path":"files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt","display_name":"taz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:52Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":"2022-10-31T17:21:50Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
+    body: '[{"path":"files-dest-copy_baz-txt_to_dest_with_rename/dest/taz.txt","display_name":"taz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:52Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":"2022-10-31T17:21:50Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -3169,10 +3169,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz-txt_to_dest_with_rename/dest/taz.txt
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt","display_name":"taz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:52Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":"2022-10-31T17:21:50Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/331f1d01-2100-466a-b3c9-43d473dede77?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221031%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221031T172155Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22taz.txt%22\u0026response-content-type=text%2Fplain\u0026X-Amz-Signature=6718349881c4ecc31f78ce8dcf99830061fc1ac269137a1a05f3ba1081c51d76"}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest_with_rename/dest/taz.txt","display_name":"taz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:52Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":"2022-10-31T17:21:50Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/331f1d01-2100-466a-b3c9-43d473dede77?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20221031%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20221031T172155Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22taz.txt%22\u0026response-content-type=text%2Fplain\u0026X-Amz-Signature=6718349881c4ecc31f78ce8dcf99830061fc1ac269137a1a05f3ba1081c51d76"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -3244,10 +3244,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_with_rename/dest
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest_with_rename/dest
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest_with_rename/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:51Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest_with_rename/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:51Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -3275,10 +3275,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_dest_with_rename/dest/taz.txt
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_dest_with_rename/dest/taz.txt","display_name":"taz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:52Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":"2022-10-31T17:21:50Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    body: '{"path":"files-dest-copy_baz-txt_to_dest_with_rename/dest/taz.txt","display_name":"taz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:52Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":"2022-10-31T17:21:50Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -3306,7 +3306,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz.txt_to_dest_with_rename?recursive=true
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz-txt_to_dest_with_rename?recursive=true
     method: DELETE
   response:
     body: ""
@@ -3328,17 +3328,17 @@ interactions:
     code: 204
     duration: ""
 - request:
-    body: '{"-":"files-dest-copy_baz.txt_to_current_working_directory"}'
+    body: '{"-":"files-dest-copy_baz-txt_to_current_working_directory"}'
     form: {}
     headers:
       Connection:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_current_working_directory
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_current_working_directory
     method: POST
   response:
-    body: '{"display_name":"files-dest-copy_baz.txt_to_current_working_directory","type":"directory","size":null,"created_at":"2022-10-31T17:21:57Z","crc32":null,"md5":null,"subfolders_locked?":false,"is_locked":false}'
+    body: '{"display_name":"files-dest-copy_baz-txt_to_current_working_directory","type":"directory","size":null,"created_at":"2022-10-31T17:21:57Z","crc32":null,"md5":null,"subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -3491,10 +3491,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_current_working_directory
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_current_working_directory
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_current_working_directory","display_name":"files-dest-copy_baz.txt_to_current_working_directory","type":"directory","size":null,"created_at":"2022-10-31T17:21:57Z","mtime":"2022-10-31T17:21:57Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    body: '{"path":"files-dest-copy_baz-txt_to_current_working_directory","display_name":"files-dest-copy_baz-txt_to_current_working_directory","type":"directory","size":null,"created_at":"2022-10-31T17:21:57Z","mtime":"2022-10-31T17:21:57Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -3522,10 +3522,10 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz.txt_to_current_working_directory
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/files-dest-copy_baz-txt_to_current_working_directory
     method: GET
   response:
-    body: '{"path":"files-dest-copy_baz.txt_to_current_working_directory","display_name":"files-dest-copy_baz.txt_to_current_working_directory","type":"directory","size":null,"created_at":"2022-10-31T17:21:57Z","mtime":"2022-10-31T17:21:57Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    body: '{"path":"files-dest-copy_baz-txt_to_current_working_directory","display_name":"files-dest-copy_baz-txt_to_current_working_directory","type":"directory","size":null,"created_at":"2022-10-31T17:21:57Z","mtime":"2022-10-31T17:21:57Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -3553,7 +3553,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz.txt_to_current_working_directory?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_current_working_directory?page=1
     method: GET
   response:
     body: '[]'
@@ -3617,7 +3617,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz.txt_to_current_working_directory?recursive=true
+    url: https://app.files.com/api/rest/v1/files/files-dest-copy_baz-txt_to_current_working_directory?recursive=true
     method: DELETE
   response:
     body: ""

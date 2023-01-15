@@ -3,7 +3,6 @@ package status
 import (
 	"context"
 	"io/fs"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -436,18 +435,19 @@ func (r *Job) FindRemoteFile(file IFile) (filesSDK.File, bool, error) {
 	} else {
 		r.remoteFilesMutex.Lock()
 		defer r.remoteFilesMutex.Unlock()
-		dir, _ := filepath.Split(file.RemotePath())
-		dir = lib.Path{Path: dir}.PruneEndingSlash().ConvertEmptyToRoot().String()
-		entries, err := fs.ReadDir(r.RemoteFs, dir)
+
+		strings.Split(file.RemotePath(), "/")
+		dir, _ := lib.UrlLastSegment(file.RemotePath())
+		entries, err := fs.ReadDir(r.RemoteFs, lib.Path{Path: dir}.ConvertEmptyToRoot().String())
 		if err != nil {
 			return filesSDK.File{}, false, err
 		}
 
 		for _, entry := range entries {
-			entryPath := filepath.Join(dir, entry.Name())
-			if !entry.IsDir() && filepath.Clean(entryPath) == filepath.Clean(file.RemotePath()) {
+			if !entry.IsDir() && lib.UrlJoinNoEscape(dir, entry.Name()) == file.RemotePath() {
 				info, err := entry.Info()
 				if err != nil {
+					panic(err)
 					return filesSDK.File{}, false, err
 				}
 

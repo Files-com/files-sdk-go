@@ -148,10 +148,14 @@ func Test_downloader_RemoteStartingSlash(t *testing.T) {
 		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "some-path/taco.png", Type: "file", Size: 100},
 	}
 
-	setup.DownloaderParams = DownloaderParams{RemotePath: "/some-path", EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
-	setup.rootDestination = "some-path/"
+	setup.DownloaderParams = DownloaderParams{RemotePath: "some-path", EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
+	setup.rootDestination = "some-path" + string(os.PathSeparator)
 	setup.Call()
 
+	fi, ok := setup.reporterCalls[0].Find(status.Errored)
+	if ok {
+		require.NoError(t, fi.Err())
+	}
 	assert.Equal(t, 1, setup.reporterCalls[0].Job.Count())
 	assert.Equal(t, 3, len(setup.reporterCalls))
 	assert.Equal(t, status.Queued, setup.reporterCalls[0].Status)
@@ -170,7 +174,7 @@ func Test_downloader_RemoteStartingSlash(t *testing.T) {
 
 func TestClient_Downloader_path_spec(t *testing.T) {
 	t.Run("files", func(t *testing.T) {
-		for _, tt := range pathSpec() {
+		for _, tt := range pathSpec("/", string(os.PathSeparator)) {
 			t.Run(tt.name, func(t *testing.T) {
 				srcFs := make(fstest.MapFS)
 				filesDest, err := os.MkdirTemp("", "files-dest")
@@ -305,7 +309,7 @@ func Test_downloadFolder_more_than_one_file(t *testing.T) {
 	{
 		stat, err := os.Stat(filepath.Join(setup.tempDir, "taco.png"))
 		assert.NoError(t, err)
-		assert.Equal(t, time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC), stat.ModTime().UTC())
+		assert.Equal(t, time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC).Truncate(time.Millisecond), stat.ModTime().UTC().Truncate(time.Millisecond))
 		assert.Contains(t, paths, "some-path/taco.png")
 		assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
 	}
@@ -314,7 +318,7 @@ func Test_downloadFolder_more_than_one_file(t *testing.T) {
 	{
 		stat, err := os.Stat(filepath.Join(setup.tempDir, "pizza.png"))
 		assert.NoError(t, err)
-		assert.Equal(t, time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC), stat.ModTime().UTC())
+		assert.Equal(t, time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC).Truncate(time.Millisecond), stat.ModTime().UTC().Truncate(time.Millisecond))
 		assert.Contains(t, paths, "some-path/pizza.png")
 		assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
 	}
@@ -343,6 +347,7 @@ func Test_downloadFolder_sync_already_downloaded(t *testing.T) {
 	assert.NoError(t, err)
 	_, err = taco.Write(make([]byte, 100))
 	require.NoError(t, err)
+	require.NoError(t, taco.Close())
 	setup.Call()
 
 	assert.Equal(t, 2, len(setup.reporterCalls))
@@ -363,8 +368,9 @@ func Test_downloadFolder_sync_not_already_downloaded(t *testing.T) {
 	}
 	setup.DownloaderParams = DownloaderParams{RemotePath: "", Sync: true, EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
 	setup.rootDestination = ""
-	_, err := os.Create(filepath.Join(setup.tempDir, "taco.png"))
+	taco, err := os.Create(filepath.Join(setup.tempDir, "taco.png"))
 	assert.NoError(t, err)
+	assert.NoError(t, taco.Close())
 	setup.Call()
 
 	assert.Equal(t, 3, len(setup.reporterCalls))

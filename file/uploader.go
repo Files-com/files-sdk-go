@@ -44,7 +44,7 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 		//When the local/dest has a trailing slash
 		if !(lib.Path{Path: params.LocalPath}).EndingSlash() {
 			_, lastDir := filepath.Split(params.LocalPath)
-			params.RemotePath = filepath.Join(params.RemotePath, lastDir)
+			params.RemotePath = lib.UrlJoinNoEscape(params.RemotePath, lastDir)
 		}
 
 	} else {
@@ -132,10 +132,10 @@ func remotePath(ctx context.Context, localPath string, remotePath string, c Uplo
 		remoteFile, err := c.Find(ctx, files_sdk.FileFindParams{Path: remotePath})
 		responseError, ok := err.(files_sdk.ResponseError)
 		if remoteFile.Type == "directory" {
-			destination = filepath.Join(remotePath, localFileName)
+			destination = lib.UrlJoinNoEscape(remotePath, localFileName)
 		} else if ok && responseError.Type == "not-found" {
 			if destination[len(destination)-1:] == "/" {
-				destination = filepath.Join(remotePath, localFileName)
+				destination = lib.UrlJoinNoEscape(remotePath, localFileName)
 			}
 		} else if err != nil {
 			return "", err
@@ -214,6 +214,9 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 			uploadStatus.Job().StatusFromError(uploadStatus, err)
 		} else {
 			uploadStatus.SetUploadedBytes(uploadStatus.Parts.SuccessfulBytes())
+			if localFile != nil {
+				localFile.Close()
+			}
 			uploadStatus.Job().UpdateStatus(status.Complete, uploadStatus, nil)
 		}
 	}()

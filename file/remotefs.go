@@ -8,7 +8,6 @@ import (
 	"io"
 	goFs "io/fs"
 	"net/http"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -344,28 +343,28 @@ func (f *FS) Open(name string) (goFs.File, error) {
 	if name == "." {
 		name = ""
 	}
-	file, ok := f.cache[filepath.Clean(name)]
+	file, ok := f.cache[name]
 	if ok {
 		if file.IsDir() {
 			return &ReadDirFile{File: file}, nil
 		}
 		return file, nil
 	}
-	path := filepath.Join(f.Root, name)
-	var fileInfo files_sdk.File
+	path := lib.UrlJoinNoEscape(f.Root, name)
 	var err error
+	var fileInfo files_sdk.File
 	if path == "" { // skip call on root path
 		fileInfo = files_sdk.File{Type: "directory"}
 	} else {
-		fileInfo, err = (&Client{Config: f.Config}).Find(f.Context, files_sdk.FileFindParams{Path: filepath.Join(f.Root, name)})
+		fileInfo, err = (&Client{Config: f.Config}).Find(f.Context, files_sdk.FileFindParams{Path: path})
 		if err != nil {
-			return (&File{File: &fileInfo, FS: f}).Init(), &goFs.PathError{Path: fileInfo.Path, Err: err, Op: "open"}
+			return &File{}, &goFs.PathError{Path: fileInfo.Path, Err: err, Op: "open"}
 		}
 	}
 
 	file = (&File{File: &fileInfo, FS: f}).Init()
 	if f.useCache {
-		f.cache[filepath.Clean(name)] = file
+		f.cache[name] = file
 	}
 	if fileInfo.Type == "directory" {
 		return &ReadDirFile{File: file}, nil
@@ -378,7 +377,7 @@ func (f *FS) ReadDir(name string) ([]goFs.DirEntry, error) {
 	if name == "." {
 		name = ""
 	}
-	dirs, ok := f.cacheDir[filepath.Clean(name)]
+	dirs, ok := f.cacheDir[name]
 	if ok {
 		return dirs, nil
 	}
@@ -388,7 +387,7 @@ func (f *FS) ReadDir(name string) ([]goFs.DirEntry, error) {
 		return dirs, err
 	}
 	if f.useCache {
-		f.cacheDir[filepath.Clean(name)] = dirs
+		f.cacheDir[name] = dirs
 	}
 	return dirs, nil
 }
@@ -411,12 +410,13 @@ func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {
 		if err != nil {
 			return files, &goFs.PathError{Path: f.Path, Err: err, Op: "readdir"}
 		}
-		dir, _ := filepath.Split(fi.Path)
-		if filepath.Clean(dir) == filepath.Clean(f.Path) {
+		parts := strings.Split(fi.Path, "/")
+		dir := strings.Join(parts[0:len(parts)-1], "/")
+		if dir == strings.TrimSuffix(f.Path, "/") {
 			// There is a bug in the API that it could return a nested file not in the current directory.
 			file := (&File{File: &fi, FS: f.FS}).Init()
 			if f.useCache {
-				f.cache[filepath.Clean(fi.Path)] = file
+				f.cache[fi.Path] = file
 			}
 			files = append(files, file)
 		}
@@ -437,13 +437,13 @@ func (f *FS) MkdirAll(dir string, _ goFs.FileMode) error {
 			break
 		}
 		folderClient := folder.Client{Config: f.Config}
-		_, err := folderClient.Create(f.Context, files_sdk.FolderCreateParams{Path: filepath.Join(parentPath, dirPath)})
+		_, err := folderClient.Create(f.Context, files_sdk.FolderCreateParams{Path: lib.UrlJoinNoEscape(parentPath, dirPath)})
 		rErr, ok := err.(files_sdk.ResponseError)
 		if err != nil && ok && rErr.Type != "processing-failure/destination-exists" {
 			return err
 		}
 
-		parentPath = filepath.Join(parentPath, dirPath)
+		parentPath = lib.UrlJoinNoEscape(parentPath, dirPath)
 	}
 	return nil
 }

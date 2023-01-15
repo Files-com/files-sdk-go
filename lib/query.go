@@ -9,9 +9,9 @@ import (
 	"strings"
 )
 
-func PathEscape(path string) string {
+func PathEscape(path string) (string, error) {
 	if path == "nil" {
-		return ""
+		return "", nil
 	}
 	pathParts := strings.Split(path, "/")
 	newParts := make([]string, len(pathParts))
@@ -19,8 +19,17 @@ func PathEscape(path string) string {
 	for i, part := range pathParts {
 		newParts[i] = url.PathEscape(part)
 	}
+	var err error
+	if len(newParts) > 1 {
+		path, err = url.JoinPath(newParts[0], newParts[1:]...)
+		if err != nil {
+			return path, err
+		}
+	} else {
+		path = newParts[0]
+	}
 
-	return Path{Path: strings.Join(newParts, "/")}.PruneStartingSlash().String()
+	return Path{Path: path}.PruneStartingSlash().String(), nil
 }
 
 func BuildPath(resourcePath string, values interface{}) (string, error) {
@@ -58,7 +67,10 @@ func BuildPath(resourcePath string, values interface{}) (string, error) {
 			}
 		}
 		if string(matches[1]) == "path" {
-			stringValue = PathEscape(stringValue)
+			stringValue, err = PathEscape(stringValue)
+			if err != nil {
+				return "", err
+			}
 		}
 		return strings.ReplaceAll(resourcePath, string(matches[0]), stringValue), nil
 	}

@@ -76,6 +76,13 @@ func TestBuildPath(t *testing.T) {
 				"root/{path}",
 				UserExample{}},
 		},
+		{
+			name: "escaping spaces",
+			want: "root/a%20file%20name.text",
+			args: args{
+				"root/{path}",
+				UserExample{Path: "a file name.text"}},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
