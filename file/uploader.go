@@ -182,16 +182,6 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 			uploadStatus.Job().UpdateStatus(status.Errored, uploadStatus, err)
 			return
 		}
-		if ctx.Err() != nil {
-			job.UpdateStatus(status.Canceled, uploadStatus, nil)
-			return
-		}
-
-		stats, err := os.Stat(uploadStatus.LocalPath())
-		if err != nil {
-			uploadStatus.Job().UpdateStatus(status.Errored, uploadStatus, err)
-			return
-		}
 		var otherErrors []error
 		_, uploadStatus.FileUploadPart, uploadStatus.Parts, otherErrors, err = uploadStatus.UploadIO(
 			ctx, UploadIOParams{
@@ -202,7 +192,7 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 				Manager:        job.FilePartsManager,
 				Parts:          uploadStatus.Parts,
 				FileUploadPart: uploadStatus.FileUploadPart,
-				ProvidedMtime:  stats.ModTime(),
+				ProvidedMtime:  *uploadStatus.File().Mtime,
 			})
 		if err != nil {
 			if len(otherErrors) > 0 {

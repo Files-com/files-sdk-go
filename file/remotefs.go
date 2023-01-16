@@ -23,10 +23,11 @@ import (
 type FS struct {
 	files_sdk.Config
 	context.Context
-	Root     string
-	cache    map[string]*File
-	cacheDir map[string][]goFs.DirEntry
-	useCache bool
+	Root       string
+	cache      sync.Map
+	cacheDir   sync.Map
+	useCache   bool
+	cacheMutex *lib.KeyedMutex
 }
 
 func (f *FS) Init(config files_sdk.Config, cache bool) *FS {
@@ -41,12 +42,14 @@ type WithContext interface {
 }
 
 func (f *FS) WithContext(ctx context.Context) interface{} {
-	return &FS{Context: ctx, Config: f.Config, cache: f.cache, useCache: f.useCache, cacheDir: f.cacheDir}
+	return &FS{Context: ctx, Config: f.Config, cache: f.cache, useCache: f.useCache, cacheDir: f.cacheDir, cacheMutex: f.cacheMutex}
 }
 
 func (f *FS) ClearCache() {
-	f.cache = make(map[string]*File)
-	f.cacheDir = make(map[string][]goFs.DirEntry)
+	f.cache = sync.Map{}
+	f.cacheDir = sync.Map{}
+	m := lib.NewKeyedMutex()
+	f.cacheMutex = &m
 }
 
 type File struct {
@@ -343,8 +346,9 @@ func (f *FS) Open(name string) (goFs.File, error) {
 	if name == "." {
 		name = ""
 	}
-	file, ok := f.cache[name]
+	result, ok := f.cache.Load(name)
 	if ok {
+		file := result.(*File)
 		if file.IsDir() {
 			return &ReadDirFile{File: file}, nil
 		}
@@ -362,9 +366,9 @@ func (f *FS) Open(name string) (goFs.File, error) {
 		}
 	}
 
-	file = (&File{File: &fileInfo, FS: f}).Init()
+	file := (&File{File: &fileInfo, FS: f}).Init()
 	if f.useCache {
-		f.cache[name] = file
+		f.cache.Store(path, file)
 	}
 	if fileInfo.Type == "directory" {
 		return &ReadDirFile{File: file}, nil
@@ -377,9 +381,14 @@ func (f *FS) ReadDir(name string) ([]goFs.DirEntry, error) {
 	if name == "." {
 		name = ""
 	}
-	dirs, ok := f.cacheDir[name]
-	if ok {
-		return dirs, nil
+	if f.useCache {
+		f.cacheMutex.Lock(name)
+		defer f.cacheMutex.Unlock(name)
+
+		dirs, ok := f.cacheDir.Load(name)
+		if ok {
+			return dirs.([]goFs.DirEntry), nil
+		}
 	}
 
 	dirs, err := ReadDirFile{File: (&File{File: &files_sdk.File{Path: name}, FS: f}).Init()}.ReadDir(0)
@@ -387,7 +396,7 @@ func (f *FS) ReadDir(name string) ([]goFs.DirEntry, error) {
 		return dirs, err
 	}
 	if f.useCache {
-		f.cacheDir[name] = dirs
+		f.cacheDir.Store(name, dirs)
 	}
 	return dirs, nil
 }
@@ -416,7 +425,7 @@ func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {
 			// There is a bug in the API that it could return a nested file not in the current directory.
 			file := (&File{File: &fi, FS: f.FS}).Init()
 			if f.useCache {
-				f.cache[fi.Path] = file
+				f.cache.Store(fi.Path, file)
 			}
 			files = append(files, file)
 		}

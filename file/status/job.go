@@ -66,14 +66,13 @@ type Subscriptions struct {
 type Job struct {
 	Id string
 	*timer.Timer
-	Statuses         []IFile
-	Direction        direction.Direction
-	statusesMutex    *sync.RWMutex
-	remoteFilesMutex *sync.Mutex
-	LocalPath        string
-	RemotePath       string
-	Sync             bool
-	CodeStart        func()
+	Statuses      []IFile
+	Direction     direction.Direction
+	statusesMutex *sync.RWMutex
+	LocalPath     string
+	RemotePath    string
+	Sync          bool
+	CodeStart     func()
 	context.CancelFunc
 	cancelMutex *sync.Mutex
 	Params      interface{}
@@ -96,7 +95,6 @@ type Job struct {
 func (r Job) Init() *Job {
 	r.statusesMutex = &sync.RWMutex{}
 	r.cancelMutex = &sync.Mutex{}
-	r.remoteFilesMutex = &sync.Mutex{}
 	r.Id = sid.IdBase64()
 	r.EventsReporter = make(map[Status][]Reporter)
 	r.Timer = timer.New()
@@ -433,9 +431,6 @@ func (r *Job) FindRemoteFile(file IFile) (filesSDK.File, bool, error) {
 
 		return info.Sys().(filesSDK.File), true, nil
 	} else {
-		r.remoteFilesMutex.Lock()
-		defer r.remoteFilesMutex.Unlock()
-
 		dir, _ := lib.UrlLastSegment(file.RemotePath())
 		entries, err := fs.ReadDir(r.RemoteFs, lib.Path{Path: dir}.ConvertEmptyToRoot().String())
 		if err != nil {

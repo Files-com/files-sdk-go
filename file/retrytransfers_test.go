@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Files-com/files-sdk-go/v2/lib"
+
 	"github.com/Files-com/files-sdk-go/v2/lib/timer"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
@@ -203,7 +205,7 @@ func buildUploadTest(test func(*status.Job, *MockUploader), statuses ...status.S
 		}
 		temps = append(temps, tempFile.Name())
 		tempFile.Close()
-		job.Add(&UploadStatus{Mutex: &sync.RWMutex{}, Uploader: uploader, lastByte: time.Now(), localPath: tempFile.Name(), status: s, job: job, file: files_sdk.File{DisplayName: fmt.Sprintf("%v.txt", i)}})
+		job.Add(&UploadStatus{Mutex: &sync.RWMutex{}, Uploader: uploader, lastByte: time.Now(), localPath: tempFile.Name(), status: s, job: job, file: files_sdk.File{DisplayName: fmt.Sprintf("%v.txt", i), Mtime: lib.Time(time.Now())}})
 	}
 
 	test(job, uploader)
