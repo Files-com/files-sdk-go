@@ -11,6 +11,11 @@ import (
 
 type StatusFile struct {
 	file File
+	Changes
+}
+
+func (f StatusFile) StatusChanges() Changes {
+	return f.Changes
 }
 
 func (f StatusFile) SetStatus(status Status, _ error) {
@@ -57,6 +62,10 @@ func (f StatusFile) Size() int64 {
 	return f.file.Size
 }
 
+func (f StatusFile) EndedAt() time.Time {
+	return time.Time{}
+}
+
 func TestJob_TransferRate(t *testing.T) {
 	assert := assert.New(t)
 	job := Job{}.Init()
@@ -80,7 +89,7 @@ func TestJob_ETA(t *testing.T) {
 			TransferBytes: 1000,
 			LastByte:      time.Now(),
 			Status:        Downloading,
-			File:          files_sdk.File{Size: 10000},
+			Size:          10000,
 		},
 	}
 	job.Add(file)
@@ -99,7 +108,7 @@ func TestJob_ElapsedTime(t *testing.T) {
 			TransferBytes: 1000,
 			LastByte:      time.Now(),
 			Status:        Complete,
-			File:          files_sdk.File{Size: 10000},
+			Size:          10000,
 		},
 	}
 	file.file.TransferBytes = +5000

@@ -29,6 +29,7 @@ type EventsReporter map[Status][]Reporter
 
 type IFile interface {
 	SetStatus(Status, error)
+	StatusChanges() Changes
 	TransferBytes() int64
 	File() filesSDK.File
 	Size() int64
@@ -37,6 +38,7 @@ type IFile interface {
 	RemotePath() string
 	Status() Status
 	LastByte() time.Time
+	EndedAt() time.Time
 	Err() error
 	Job() *Job
 }
@@ -51,7 +53,11 @@ func ToStatusFile(f IFile) File {
 		Job:           f.Job(),
 		Status:        f.Status(),
 		LastByte:      f.LastByte(),
-		Err:           f.Err(),
+		EndedAt:       f.EndedAt(),
+		Err:           MashableError{error: f.Err()}.Err(),
+		Size:          f.Size(),
+		StatusName:    f.Status().Name,
+		Attempts:      f.StatusChanges().Count(Queued),
 	}
 }
 
@@ -208,6 +214,10 @@ func (r *Job) UpdateStatus(status Status, file IFile, err error) {
 		status = Canceled
 	}
 	file.SetStatus(status, err)
+	r.statusCallbacks(status, file)
+}
+
+func (r *Job) statusCallbacks(status Status, file IFile) {
 	callbacks, ok := r.EventsReporter[status]
 	if ok {
 		for _, callback := range callbacks {
@@ -357,8 +367,8 @@ func (r *Job) EnqueueNext() (f IFile, ok bool) {
 	defer func() {
 		r.statusesMutex.Unlock()
 		if f != nil {
-			// Call UpdateStatus to run event callbacks, which needs to be done outside the mutex.
-			r.UpdateStatus(Queued, f, nil)
+			// Call statusCallbacks to run event callbacks, which needs to be done outside the mutex.
+			r.statusCallbacks(Queued, f)
 		}
 	}()
 

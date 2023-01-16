@@ -37,6 +37,7 @@ type UploaderParams struct {
 	Sync       bool
 	LocalPath  string
 	RemotePath string
+	DryRun     bool
 	RetryPolicy
 	status.EventsReporter
 	*manager.Manager

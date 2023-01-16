@@ -22,10 +22,19 @@ type DownloadStatus struct {
 	remotePath      string
 	Sync            bool
 	lastByte        time.Time
+	endedAt         time.Time
 	Mutex           *sync.RWMutex
 	PreserveTimes   bool
 	error
 	lastError error
+	dryRun    bool
+	status.Changes
+}
+
+var _ status.IFile = &DownloadStatus{}
+
+func (d *DownloadStatus) EndedAt() time.Time {
+	return d.endedAt
 }
 
 func (d *DownloadStatus) Size() (size int64) {
@@ -64,6 +73,19 @@ func (d *DownloadStatus) SetStatus(s status.Status, err error) {
 		d.DownloadedBytes = 0
 		d.lastByte = time.Time{}
 	}
+
+	if s.Is(status.Ended...) {
+		d.endedAt = time.Now()
+	}
+
+	d.Changes = append(d.Changes, status.Change{Status: d.status, Err: d.error, Time: time.Now()})
+}
+
+func (d *DownloadStatus) StatusChanges() status.Changes {
+	d.Mutex.RLock()
+	defer d.Mutex.RUnlock()
+
+	return d.Changes
 }
 
 func (d *DownloadStatus) Id() string {

@@ -46,6 +46,7 @@ type DownloaderParams struct {
 	*manager.Manager
 	status.EventsReporter
 	files_sdk.Config
+	DryRun bool
 }
 
 func (c *Client) Downloader(ctx context.Context, params DownloaderParams) *status.Job {

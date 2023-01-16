@@ -158,7 +158,6 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 		onComplete <- uploadStatus
 		return
 	}
-	job.UpdateStatus(status.Queued, uploadStatus, nil)
 	if !manager.Wait(ctx, job.FilesManager) {
 		job.UpdateStatus(status.Canceled, uploadStatus, nil)
 		onComplete <- uploadStatus
@@ -175,6 +174,10 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 			onComplete <- uploadStatus
 		}()
 		if skipOrIgnore(uploadStatus) {
+			return
+		}
+		if uploadStatus.dryRun {
+			uploadStatus.Job().UpdateStatus(status.Complete, uploadStatus, nil)
 			return
 		}
 		localFile, err = os.Open(uploadStatus.LocalPath())
@@ -267,6 +270,7 @@ func buildUploadStatus(path string, localFolderPath string, destinationRootPath 
 		status:     status.Indexed,
 		Mutex:      &sync.RWMutex{},
 		file:       files_sdk.File{Path: destination, DisplayName: filepath.Base(destination)},
+		dryRun:     params.DryRun,
 	}
 	return uploadStatus, true
 }

@@ -25,6 +25,15 @@ type UploadStatus struct {
 	error
 	lastError   error
 	missingStat bool
+	dryRun      bool
+	status.Changes
+	endedAt time.Time
+}
+
+var _ status.IFile = &UploadStatus{}
+
+func (u *UploadStatus) EndedAt() time.Time {
+	return u.endedAt
 }
 
 func (u *UploadStatus) Size() int64 {
@@ -95,6 +104,19 @@ func (u *UploadStatus) SetStatus(s status.Status, err error) {
 		u.uploadedBytes = 0
 		u.lastByte = time.Time{}
 	}
+
+	if s.Is(status.Ended...) {
+		u.endedAt = time.Now()
+	}
+
+	u.Changes = append(u.Changes, status.Change{Status: u.status, Err: u.error, Time: time.Now()})
+}
+
+func (u *UploadStatus) StatusChanges() status.Changes {
+	u.Mutex.RLock()
+	defer u.Mutex.RUnlock()
+
+	return u.Changes
 }
 
 func (u *UploadStatus) Id() string {

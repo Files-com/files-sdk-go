@@ -377,6 +377,11 @@ func (f *FS) Open(name string) (goFs.File, error) {
 	}
 }
 
+type DirEntryError struct {
+	DirEntries []goFs.DirEntry
+	error
+}
+
 func (f *FS) ReadDir(name string) ([]goFs.DirEntry, error) {
 	if name == "." {
 		name = ""
@@ -387,18 +392,16 @@ func (f *FS) ReadDir(name string) ([]goFs.DirEntry, error) {
 
 		dirs, ok := f.cacheDir.Load(name)
 		if ok {
-			return dirs.([]goFs.DirEntry), nil
+			dirEntryError := dirs.(DirEntryError)
+			return dirEntryError.DirEntries, dirEntryError.error
 		}
 	}
 
 	dirs, err := ReadDirFile{File: (&File{File: &files_sdk.File{Path: name}, FS: f}).Init()}.ReadDir(0)
-	if err != nil {
-		return dirs, err
-	}
 	if f.useCache {
-		f.cacheDir.Store(name, dirs)
+		f.cacheDir.Store(name, DirEntryError{dirs, err})
 	}
-	return dirs, nil
+	return dirs, err
 }
 
 func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {

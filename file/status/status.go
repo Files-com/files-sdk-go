@@ -23,7 +23,7 @@ var (
 	Valid    = []Status{Indexed, Queued, Retrying, Downloading, Uploading, Complete}
 	Invalid  = []Status{Null, Canceled, Errored, Skipped, Ignored}
 	Running  = []Status{Downloading, Uploading}
-	Ended    = []Status{Complete, Canceled, Errored}
+	Ended    = []Status{Complete, Canceled, Errored, Skipped, Ignored}
 )
 
 func (e Status) String() string {

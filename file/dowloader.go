@@ -148,6 +148,7 @@ func createIndexedStatus(f Entity, params DownloaderParams, job *status.Job) {
 		status:        status.Indexed,
 		Mutex:         &sync.RWMutex{},
 		PreserveTimes: params.PreserveTimes,
+		dryRun:        params.DryRun,
 	}
 	var err error
 	if f.error == nil {
@@ -215,6 +216,12 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 				return
 			}
 		}
+
+		if reportStatus.dryRun {
+			reportStatus.Job().UpdateStatus(status.Complete, reportStatus, nil)
+			return
+		}
+
 		tmpName := tmpDownloadPath(reportStatus.LocalPath())
 		config := reportStatus.Job().Config.(files_sdk.Config)
 		config.LogPath(
