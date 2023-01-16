@@ -10,7 +10,6 @@ require (
 	github.com/fatih/structs v1.1.0
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/itchyny/timefmt-go v0.1.4
-	github.com/karrick/godirwalk v1.16.1
 	github.com/lpar/date v1.0.0
 	github.com/sabhiram/go-gitignore v0.0.0-20201211210132-54b8a0bf510f
 	github.com/samber/lo v1.33.0

@@ -17,7 +17,6 @@ import (
 	"github.com/Files-com/files-sdk-go/v2/file/status"
 	"github.com/Files-com/files-sdk-go/v2/ignore"
 	"github.com/Files-com/files-sdk-go/v2/lib/direction"
-	"github.com/karrick/godirwalk"
 )
 
 type Uploader interface {
@@ -223,44 +222,40 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 }
 
 func walkPaginated(ctx context.Context, localFolderPath string, destinationRootPath string, job *status.Job, params UploaderParams, c Uploader) error {
-	err := godirwalk.Walk(localFolderPath, &godirwalk.Options{
-		Callback: func(path string, de *godirwalk.Dirent) error {
-			if ctx.Err() != nil {
-				return ctx.Err()
-			}
-
-			if de.IsDir() || !de.IsRegular() {
-				return nil
-			}
-
-			uploadStatus, ok := buildUploadStatus(path, localFolderPath, destinationRootPath, c, job, params)
-			if !ok {
-				return nil
-			}
-
-			uploadStatus.file.Type = "file"
-			info, err := os.Stat(filepath.Join(path))
-			if err != nil {
-				uploadStatus.missingStat = true
-				uploadStatus.error = err
-			} else {
-				uploadStatus.file.Size = info.Size()
-				uploadStatus.file.Mtime = lib.Time(info.ModTime())
-			}
-			job.Add(&uploadStatus)
-			return nil
-		},
-		Unsorted: true, // (optional) set true for faster yet non-deterministic enumeration (see godoc)
-		ErrorCallback: func(path string, err error) godirwalk.ErrorAction {
+	err := fs.WalkDir(os.DirFS(localFolderPath), ".", func(name string, d fs.DirEntry, err error) error {
+		path := filepath.Join(localFolderPath, name)
+		uploadStatus, ok := buildUploadStatus(path, localFolderPath, destinationRootPath, c, job, params)
+		if err != nil {
 			if errors.Is(err, fs.ErrPermission) {
-				uploadStatus, _ := buildUploadStatus(path, localFolderPath, destinationRootPath, c, job, params)
-				uploadStatus.missingStat = true
-				uploadStatus.error = err
+				job.UpdateStatus(status.Errored, &uploadStatus, err)
 				job.Add(&uploadStatus)
-				return godirwalk.SkipNode
+				return fs.SkipDir
 			}
-			return godirwalk.Halt
-		},
+			return err
+		}
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
+		if d.IsDir() || !d.Type().IsRegular() {
+			return nil
+		}
+
+		if !ok {
+			return nil
+		}
+
+		uploadStatus.file.Type = "file"
+		info, err := d.Info()
+		if err != nil {
+			uploadStatus.missingStat = true
+			uploadStatus.error = err
+		} else {
+			uploadStatus.file.Size = info.Size()
+			uploadStatus.file.Mtime = lib.Time(info.ModTime())
+		}
+		job.Add(&uploadStatus)
+		return nil
 	})
 	return err
 }
