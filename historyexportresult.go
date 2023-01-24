@@ -9,6 +9,7 @@ import (
 type HistoryExportResult struct {
 	Id                  int64  `json:"id,omitempty" path:"id"`
 	CreatedAt           int64  `json:"created_at,omitempty" path:"created_at"`
+	CreatedAtIso8601    int64  `json:"created_at_iso8601,omitempty" path:"created_at_iso8601"`
 	UserId              int64  `json:"user_id,omitempty" path:"user_id"`
 	FileId              int64  `json:"file_id,omitempty" path:"file_id"`
 	ParentId            int64  `json:"parent_id,omitempty" path:"parent_id"`
