@@ -27,7 +27,7 @@ type BundleNotificationFindParams struct {
 }
 
 type BundleNotificationCreateParams struct {
-	UserId               int64 `url:"user_id,omitempty" required:"true" json:"user_id,omitempty" path:"user_id"`
+	UserId               int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
 	NotifyOnRegistration *bool `url:"notify_on_registration,omitempty" required:"false" json:"notify_on_registration,omitempty" path:"notify_on_registration"`
 	NotifyOnUpload       *bool `url:"notify_on_upload,omitempty" required:"false" json:"notify_on_upload,omitempty" path:"notify_on_upload"`
 	BundleId             int64 `url:"bundle_id,omitempty" required:"true" json:"bundle_id,omitempty" path:"bundle_id"`
