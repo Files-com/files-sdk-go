@@ -44,6 +44,7 @@ type Config struct {
 	Debug             bool
 	UserAgent         string
 	Environment
+	FeatureFlags map[string]bool
 }
 
 func (c *Config) SetHttpClient(client *http.Client) {
@@ -130,5 +131,25 @@ func (c *Config) SetHeaders(headers *http.Header) {
 
 	for key, value := range c.AdditionalHeaders {
 		headers.Set(key, value)
+	}
+}
+
+func (c *Config) FeatureFlag(flag string) bool {
+	var flags map[string]bool
+	if c.FeatureFlags == nil {
+		flags = FeatureFlags()
+	} else {
+		flags = c.FeatureFlags
+	}
+	value, ok := flags[flag]
+	if !ok {
+		panic(fmt.Sprintf("feature flag `%v` is not a valid flag", flag))
+	}
+	return value
+}
+
+func FeatureFlags() map[string]bool {
+	return map[string]bool{
+		"incremental-updates": false,
 	}
 }

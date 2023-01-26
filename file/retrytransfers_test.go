@@ -183,7 +183,7 @@ func buildDownloadTest(test func(*status.Job)) {
 }
 
 func buildUploadTest(test func(*status.Job, *MockUploader), statuses ...status.Status) {
-	job := status.Job{Direction: direction.UploadType, Manager: manager.Default(), Params: UploaderParams{}, Logger: (&files_sdk.Config{}).Logger()}.Init()
+	job := status.Job{Direction: direction.UploadType, Manager: manager.Default(), Params: UploaderParams{}, Config: files_sdk.Config{}, Logger: (&files_sdk.Config{}).Logger()}.Init()
 	job.GitIgnore, _ = ignore.New()
 	var temps []string
 	if len(statuses) == 0 {

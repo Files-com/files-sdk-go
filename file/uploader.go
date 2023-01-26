@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/Files-com/files-sdk-go/v2/lib"
 
@@ -173,7 +174,8 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 			job.FilesManager.Done()
 			onComplete <- uploadStatus
 		}()
-		if skipOrIgnore(uploadStatus) {
+		config := job.Config.(files_sdk.Config)
+		if skipOrIgnore(uploadStatus, config.FeatureFlag("incremental-updates")) {
 			return
 		}
 		if uploadStatus.dryRun {
@@ -297,7 +299,7 @@ func buildDestination(path string, localFolderPath string, destinationRootPath s
 	return lib.Path{Path: destination}.NormalizePathSystemForAPI().String()
 }
 
-func skipOrIgnore(uploadStatus *UploadStatus) bool {
+func skipOrIgnore(uploadStatus *UploadStatus, incrementalUpdates bool) bool {
 	if uploadStatus.Job().MatchesPath(uploadStatus.LocalPath()) {
 		uploadStatus.Job().UpdateStatus(status.Ignored, uploadStatus, nil)
 		return true
@@ -314,7 +316,18 @@ func skipOrIgnore(uploadStatus *UploadStatus) bool {
 		if uploadStatus.File().Size == file.Size {
 			// Server version is the same or newer
 			uploadStatus.Job().UpdateStatus(status.Skipped, uploadStatus, nil)
+			uploadStatus.Job().Logger.Printf("sync %v size match", uploadStatus.RemotePath())
 			return true
+		}
+		if incrementalUpdates && file.Mtime != nil && !file.Mtime.IsZero() {
+			if file.Mtime.After(*uploadStatus.File().Mtime) {
+				uploadStatus.Job().Logger.Printf("sync incremental-updates %v server has a newer version", uploadStatus.RemotePath())
+				return true
+			}
+			if file.Mtime.Truncate(time.Minute).Equal(uploadStatus.File().Mtime.Truncate(time.Minute)) {
+				uploadStatus.Job().Logger.Printf("sync incremental-updates %v both times are within the same minute", uploadStatus.RemotePath())
+				return true
+			}
 		}
 		uploadStatus.Job().Logger.Printf("sync %v found on destination with non matching sizes: local: %v, remote: %v", uploadStatus.RemotePath(), uploadStatus.File().Size, file.Size)
 	}
