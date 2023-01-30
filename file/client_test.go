@@ -145,7 +145,6 @@ func TestClient_UploadFolder_path_spec(t *testing.T) {
 						"/", "_", -1,
 					),
 				)
-				os.MkdirAll(filesDest, 0755)
 				folderClient := folder.Client{Config: client.Config}
 				_, err := folderClient.Create(context.Background(), files_sdk.FolderCreateParams{Path: filesDest})
 				ignoreSomeErrors(err)
@@ -872,10 +871,14 @@ func TestClient_Downloader_Delete_Source(t *testing.T) {
 			ProvidedMtime: time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC),
 		},
 	)
-	assert.NoError(err)
+
+	require.NoError(t, err)
+	localPath, err := os.MkdirTemp("", "TestClient_Downloader_Delete_Source")
+	require.NoError(t, err)
+
 	job := client.Downloader(
 		context.Background(),
-		DownloaderParams{RemotePath: "test-delete-source", LocalPath: ""},
+		DownloaderParams{RemotePath: "test-delete-source", LocalPath: localPath},
 	)
 	var fi status.File
 	var log status.Log
@@ -915,10 +918,12 @@ func TestClient_Downloader_Move_Source(t *testing.T) {
 			ProvidedMtime: time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC),
 		},
 	)
-	assert.NoError(err)
+	require.NoError(t, err)
+	localPath, err := os.MkdirTemp("", "TestClient_Downloader_Move_Source")
+	require.NoError(t, err)
 	job := client.Downloader(
 		context.Background(),
-		DownloaderParams{RemotePath: "test-move-source", LocalPath: ""},
+		DownloaderParams{RemotePath: "test-move-source", LocalPath: localPath},
 	)
 	var log status.Log
 	job.RegisterFileEvent(func(f status.File) {
