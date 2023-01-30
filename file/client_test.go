@@ -886,8 +886,9 @@ func TestClient_Downloader_Delete_Source(t *testing.T) {
 		fi = f
 		log, err = DeleteSource{Config: client.Config, Direction: job.Direction}.Call(context.Background(), f)
 	}, status.Complete)
+	finished := job.Finished.Subscribe()
 	job.Start()
-	<-job.Finished.Subscribe()
+	<-finished
 	assert.NoError(err)
 	assert.Equal("delete source", log.Action)
 	assert.Equal(fi.RemotePath, log.Path)
