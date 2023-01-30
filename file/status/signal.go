@@ -27,12 +27,12 @@ func (s *Signal) When() time.Time {
 
 func (s *Signal) call(t time.Time) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	if s.called {
 		panic("already called")
 	}
 	s.when = t
 	s.called = true
+	s.mu.Unlock()
 	for _, ch := range s.subs {
 		ch <- t
 	}
