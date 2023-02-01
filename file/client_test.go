@@ -3,6 +3,8 @@ package file
 import (
 	"context"
 	"fmt"
+	"io"
+	fs2 "io/fs"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -417,8 +419,8 @@ func TestClient_UploadFolder_Relative(t *testing.T) {
 	deletePath(client, "relative")
 }
 
-func TestClient_UploadFile(t *testing.T) {
-	client, r, err := CreateClient("TestClient_UploadFile")
+func TestClient_Uploader(t *testing.T) {
+	client, r, err := CreateClient("TestClient_Uploader")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1175,4 +1177,30 @@ func TestClient_ListForRecursive_Root(t *testing.T) {
 		files = append(files, it.Current().(files_sdk.File))
 		assert.NotEqual(it.Current().(files_sdk.File).Path, "")
 	}
+}
+
+func TestClient_UploadFile(t *testing.T) {
+	client, r, err := CreateClient("TestClient_UploadFile")
+	if err != nil {
+		t.Fatal(err)
+	}
+	fileName := filepath.Join(t.TempDir(), "anything")
+	file, err := os.Create(fileName)
+	require.NoError(t, err)
+	file.Write([]byte("anything"))
+	file.Close()
+
+	err = client.UploadFile(context.Background(), fileName, "test/anything")
+	require.NoError(t, err)
+
+	sdkFile, err := client.Find(context.Background(), files_sdk.FileFindParams{Path: "test/anything"})
+	require.NoError(t, err)
+	require.Equal(t, sdkFile.DisplayName, "anything")
+	fs := (&FS{}).Init(client.Config, false).WithContext(context.Background()).(fs2.FS)
+	fsFile, err := fs.Open("test/anything")
+	require.NoError(t, err)
+	fileBytes, err := io.ReadAll(fsFile)
+	require.NoError(t, err)
+	require.Equal(t, "anything", string(fileBytes))
+	r.Stop()
 }

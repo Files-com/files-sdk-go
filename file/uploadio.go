@@ -164,6 +164,10 @@ func (c *Client) startUpload(ctx context.Context, beginUpload files_sdk.FileBegi
 }
 
 func (c *Client) completeUpload(ctx context.Context, providedMtime *time.Time, etags []files_sdk.EtagsParam, bytesWritten int64, path string, ref string) (files_sdk.File, error) {
+	if providedMtime.IsZero() {
+		providedMtime = nil
+	}
+
 	return c.Create(ctx, files_sdk.FileCreateParams{
 		ProvidedMtime: providedMtime,
 		EtagsParam:    etags,

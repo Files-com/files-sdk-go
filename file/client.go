@@ -3,13 +3,16 @@ package file
 import (
 	"context"
 	"io"
-	"io/fs"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
+
+	"io/fs"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/downloadurl"
+	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/Files-com/files-sdk-go/v2/folder"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
@@ -263,4 +266,34 @@ func (c *Client) ListForRecursive(ctx context.Context, params files_sdk.FolderLi
 		it.Stop <- true
 	}(params)
 	return it, nil
+}
+
+func (c *Client) UploadFile(ctx context.Context, sourcePath string, destinationPath string, opts ...func(UploadIOParams) UploadIOParams) error {
+	file, err := os.Open(sourcePath)
+	if err != nil {
+		return err
+	}
+	info, err := file.Stat()
+	if err != nil {
+		return err
+	}
+	return c.Upload(ctx, file, destinationPath, append(opts, func(params UploadIOParams) UploadIOParams {
+		params.Size = info.Size()
+		return params
+	})...)
+}
+
+func (c *Client) Upload(ctx context.Context, reader io.ReaderAt, destinationPath string, opts ...func(UploadIOParams) UploadIOParams) error {
+	params := UploadIOParams{
+		Path:    destinationPath,
+		Reader:  reader,
+		Manager: manager.Default().FilePartsManager,
+	}
+
+	for _, opt := range opts {
+		params = opt(params)
+	}
+	_, _, _, _, err := c.UploadIO(ctx, params)
+
+	return err
 }

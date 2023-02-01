@@ -90,7 +90,7 @@ import (
 func main() {
     client := file.Client{}
     uploadPath := "file-to-upload.txt"
-    destinationPath := nil // Defaults to filename of uploadPath
+    destinationPath := "file-to-upload.txt"
     fileEntry, err := client.UploadFile(context.Background(), uploadPath, destinationPath)
     if err != nil {
         panic(err)
