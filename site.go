@@ -92,6 +92,7 @@ type Site struct {
 	NextBillingAmount                    string          `json:"next_billing_amount,omitempty" path:"next_billing_amount"`
 	NextBillingDate                      string          `json:"next_billing_date,omitempty" path:"next_billing_date"`
 	OfficeIntegrationAvailable           *bool           `json:"office_integration_available,omitempty" path:"office_integration_available"`
+	OfficeIntegrationType                string          `json:"office_integration_type,omitempty" path:"office_integration_type"`
 	OncehubLink                          string          `json:"oncehub_link,omitempty" path:"oncehub_link"`
 	OptOutGlobal                         *bool           `json:"opt_out_global,omitempty" path:"opt_out_global"`
 	OverageNotifiedAt                    *time.Time      `json:"overage_notified_at,omitempty" path:"overage_notified_at"`
@@ -183,6 +184,7 @@ type SiteUpdateParams struct {
 	FolderPermissionsGroupsOnly          *bool           `url:"folder_permissions_groups_only,omitempty" required:"false" json:"folder_permissions_groups_only,omitempty" path:"folder_permissions_groups_only"`
 	WelcomeScreen                        string          `url:"welcome_screen,omitempty" required:"false" json:"welcome_screen,omitempty" path:"welcome_screen"`
 	OfficeIntegrationAvailable           *bool           `url:"office_integration_available,omitempty" required:"false" json:"office_integration_available,omitempty" path:"office_integration_available"`
+	OfficeIntegrationType                string          `url:"office_integration_type,omitempty" required:"false" json:"office_integration_type,omitempty" path:"office_integration_type"`
 	PinAllRemoteServersToSiteRegion      *bool           `url:"pin_all_remote_servers_to_site_region,omitempty" required:"false" json:"pin_all_remote_servers_to_site_region,omitempty" path:"pin_all_remote_servers_to_site_region"`
 	MotdText                             string          `url:"motd_text,omitempty" required:"false" json:"motd_text,omitempty" path:"motd_text"`
 	MotdUseForFtp                        *bool           `url:"motd_use_for_ftp,omitempty" required:"false" json:"motd_use_for_ftp,omitempty" path:"motd_use_for_ftp"`
