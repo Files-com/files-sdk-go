@@ -233,6 +233,7 @@ type RemoteServerConfigurationFileParams struct {
 	PrivateKey    string `url:"private_key,omitempty" required:"false" json:"private_key,omitempty" path:"private_key"`
 	PublicKey     string `url:"public_key,omitempty" required:"false" json:"public_key,omitempty" path:"public_key"`
 	ServerHostKey string `url:"server_host_key,omitempty" required:"false" json:"server_host_key,omitempty" path:"server_host_key"`
+	Subdomain     string `url:"subdomain,omitempty" required:"false" json:"subdomain,omitempty" path:"subdomain"`
 }
 
 type RemoteServerUpdateParams struct {
