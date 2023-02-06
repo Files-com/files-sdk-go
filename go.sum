@@ -51,8 +51,8 @@ github.com/stretchr/testify v1.7.1/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/
 github.com/stretchr/testify v1.8.0 h1:pSgiaMZlXftHpm5L7V1+rVB+AZJydKsMxsQBIJw4PKk=
 github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO+kdMU+MU=
 github.com/thoas/go-funk v0.9.1 h1:O549iLZqPpTUQ10ykd26sZhzD+rmR5pWhuElrhbC20M=
-github.com/zenthangplus/goccm v0.0.0-20200608171100-39e9e08b694a h1:zxtrEyAn+PXzLBBXUrjamhu1+ZdkOt0nltXvCWh7JvY=
-github.com/zenthangplus/goccm v0.0.0-20200608171100-39e9e08b694a/go.mod h1:PPYr3s9FhH/9fs7kfozlHKs2VXzk4Foyzb3Mke/Bg0U=
+github.com/zenthangplus/goccm v1.1.3 h1:66XVj24yexO2fCkBum8b+y6tOJ7Giq05LIn2vn3whGE=
+github.com/zenthangplus/goccm v1.1.3/go.mod h1:DUzu/BC4TkgUfXP8J1P6Md73Djt+0l0CHq001Pt4weA=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 h1:3MTrJm4PyNL9NBqvYDSj3DHl46qQakyfqfWo4jgfaEM=
 golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17/go.mod h1:lgLbSvA5ygNOMpwM/9anMpWVlVJ7Z+cHWq/eFuinpGE=

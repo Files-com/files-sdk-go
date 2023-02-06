@@ -1,0 +1,942 @@
+---
+version: 1
+interactions:
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/tmp
+    method: POST
+  response:
+    body: '{"error":"The destination exists.","http-code":422,"instance":"12d34ae1-4298-4f4d-8163-00f2eedd289f","title":"Destination
+      Exists","type":"processing-failure/destination-exists"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "177"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:43 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Files-Error-Class:
+      - processing-failure/destination-exists
+      X-Request-Id:
+      - 12d34ae1-4298-4f4d-8163-00f2eedd289f
+      - f97ea1b8c788db8f3c4b0ca838cf1219
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory
+    method: POST
+  response:
+    body: '{"display_name":"TestDownload-downloader-copy_baz.txt_to_current_working_directory","type":"directory","size":null,"created_at":"2023-02-06T17:10:43Z","crc32":null,"md5":null,"subfolders_locked?":false,"is_locked":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "220"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:43 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 9ac9b097-65e5-4158-9513-c1f2e0fc42ba
+      - c74e6bac93825c1fb39c8b3bb0727bf0
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/tmp
+    method: POST
+  response:
+    body: '{"error":"The destination exists.","http-code":422,"instance":"797d3182-c7f8-4a84-9260-6672288d61be","title":"Destination
+      Exists","type":"processing-failure/destination-exists"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "177"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:44 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Files-Error-Class:
+      - processing-failure/destination-exists
+      X-Request-Id:
+      - 797d3182-c7f8-4a84-9260-6672288d61be
+      - 819d425c14918b5db13a0d1d4d3f012b
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory
+    method: POST
+  response:
+    body: '{"error":"The destination exists.","http-code":422,"instance":"47569fff-b5d1-4821-8b6b-fbd75e91b717","title":"Destination
+      Exists","type":"processing-failure/destination-exists"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "177"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:44 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Files-Error-Class:
+      - processing-failure/destination-exists
+      X-Request-Id:
+      - 47569fff-b5d1-4821-8b6b-fbd75e91b717
+      - 97c957dd9b9cf1dd511fa81b48d50e76
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root
+    method: POST
+  response:
+    body: '{"display_name":"src-root","type":"directory","size":null,"created_at":"2023-02-06T17:10:44Z","crc32":null,"md5":null,"subfolders_locked?":false,"is_locked":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "163"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:44 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 558aa94f-2524-4a11-9048-8f7cf2cc1b57
+      - 2fe59ab6cc2dc0fbbeb3114b3cad4fcc
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/tmp
+    method: POST
+  response:
+    body: '{"error":"The destination exists.","http-code":422,"instance":"5c3ea9ab-58f3-482b-8003-2331ff62d349","title":"Destination
+      Exists","type":"processing-failure/destination-exists"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "177"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:45 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Files-Error-Class:
+      - processing-failure/destination-exists
+      X-Request-Id:
+      - 5c3ea9ab-58f3-482b-8003-2331ff62d349
+      - a340431a4b65fea99b82506fd37b6aa7
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory
+    method: POST
+  response:
+    body: '{"error":"The destination exists.","http-code":422,"instance":"352b6048-18f6-4e42-8ae2-f8ef4e8c4d15","title":"Destination
+      Exists","type":"processing-failure/destination-exists"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "177"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:45 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Files-Error-Class:
+      - processing-failure/destination-exists
+      X-Request-Id:
+      - 352b6048-18f6-4e42-8ae2-f8ef4e8c4d15
+      - fa65a9aaeff0108ea53d7361e4a58954
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root
+    method: POST
+  response:
+    body: '{"error":"The destination exists.","http-code":422,"instance":"89211dc0-57d7-42b6-b5eb-36285cde541b","title":"Destination
+      Exists","type":"processing-failure/destination-exists"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "177"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:45 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Files-Error-Class:
+      - processing-failure/destination-exists
+      X-Request-Id:
+      - 89211dc0-57d7-42b6-b5eb-36285cde541b
+      - 4ad0111727af1fc3dad48fd5bda7b62e
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src
+    method: POST
+  response:
+    body: '{"display_name":"Src","type":"directory","size":null,"created_at":"2023-02-06T17:10:46Z","crc32":null,"md5":null,"subfolders_locked?":false,"is_locked":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "158"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:46 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - e7a161e4-5164-4e7a-98a4-7560985f2606
+      - 573242c78dd7ce9da5f34179dd782bef
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/tmp
+    method: POST
+  response:
+    body: '{"error":"The destination exists.","http-code":422,"instance":"8337db7e-caf5-4de9-bb22-c8d95443eb8b","title":"Destination
+      Exists","type":"processing-failure/destination-exists"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "177"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:46 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Files-Error-Class:
+      - processing-failure/destination-exists
+      X-Request-Id:
+      - 8337db7e-caf5-4de9-bb22-c8d95443eb8b
+      - 79c83b6030f48c053bbeeb0562d6b63d
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory
+    method: POST
+  response:
+    body: '{"error":"The destination exists.","http-code":422,"instance":"17e4a61f-4e38-4770-b044-7c09518b1f71","title":"Destination
+      Exists","type":"processing-failure/destination-exists"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "177"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:47 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Files-Error-Class:
+      - processing-failure/destination-exists
+      X-Request-Id:
+      - 17e4a61f-4e38-4770-b044-7c09518b1f71
+      - 92669fddcbcb08f38ebe02485d47d2b5
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root
+    method: POST
+  response:
+    body: '{"error":"The destination exists.","http-code":422,"instance":"03f9d707-a5b5-4b4f-a07a-60e9ea7acf77","title":"Destination
+      Exists","type":"processing-failure/destination-exists"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "177"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:47 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Files-Error-Class:
+      - processing-failure/destination-exists
+      X-Request-Id:
+      - 03f9d707-a5b5-4b4f-a07a-60e9ea7acf77
+      - 405477bb1647efff9d5cd19640bacd38
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src
+    method: POST
+  response:
+    body: '{"error":"The destination exists.","http-code":422,"instance":"256947ea-0efb-4416-92a9-60ed231f319a","title":"Destination
+      Exists","type":"processing-failure/destination-exists"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "177"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:47 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Files-Error-Class:
+      - processing-failure/destination-exists
+      X-Request-Id:
+      - 256947ea-0efb-4416-92a9-60ed231f319a
+      - e29873266d61dbe1b8f91ea1c272e957
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo
+    method: POST
+  response:
+    body: '{"display_name":"foo","type":"directory","size":null,"created_at":"2023-02-06T17:10:48Z","crc32":null,"md5":null,"subfolders_locked?":false,"is_locked":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "158"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:48 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 989626ab-5756-48a2-814a-eab026afed87
+      - 92378fe6db581482b719ceaefb744f2c
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"mkdir_parents":true}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo/baz.txt
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2023-02-06T17:25:48Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-4118476954","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/f73299ac-3d57-4a3a-84ce-86d16c761d76?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20230206%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20230206T171048Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=3eUDnzGGCzuBwtNqgsdywHIhTlnnTMzJeDyoOAMk6BJ3EkpQMK7wZSTe5a3M2CvvAVGW_kL_koVoy.IC4gmGk.C3E3CKRlE7xHi_OYP_izsFfge2m9_RvJI2XdlurM2r\u0026X-Amz-Signature=bc7f726f956fec9c23bd6629c7ea3ac52caeaf0afcc3979241ca94aa4d7cf15c"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:48 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - c669bec7-a105-4392-a4a1-b6ee5abe545b
+      - 34aa962f0f8b4c00a3baefa85748a6b5
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Length:
+      - "0"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/f73299ac-3d57-4a3a-84ce-86d16c761d76?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20230206%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230206T171048Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=3eUDnzGGCzuBwtNqgsdywHIhTlnnTMzJeDyoOAMk6BJ3EkpQMK7wZSTe5a3M2CvvAVGW_kL_koVoy.IC4gmGk.C3E3CKRlE7xHi_OYP_izsFfge2m9_RvJI2XdlurM2r&X-Amz-Signature=bc7f726f956fec9c23bd6629c7ea3ac52caeaf0afcc3979241ca94aa4d7cf15c
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Mon, 06 Feb 2023 17:10:50 GMT
+      Etag:
+      - '"d41d8cd98f00b204e9800998ecf8427e"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - MZR1Bzu6wnhqa3t2ViCtPgqw6UPPFSoElrcpj/bpznMhe3nqxRKoJCN/CSkLNW5dXHk5q/Ig9g4=
+      X-Amz-Request-Id:
+      - 7SS30D66WDMCWX2A
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"action":"end","etags":[{"etag":"d41d8cd98f00b204e9800998ecf8427e","part":"1"}],"mkdir_parents":true,"ref":"put-4118476954"}'
+    form: {}
+    headers:
+      Connection:
+      - close
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo/baz.txt
+    method: POST
+  response:
+    body: '{"path":"tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo/baz.txt","display_name":"baz.txt","type":"file","size":0,"created_at":"2023-02-06T17:10:49Z","mtime":"2023-02-06T17:10:49Z","provided_mtime":null,"crc32":null,"md5":null,"mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "333"
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:49 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - fdf83302-8a5d-4c2e-b84c-25b1c87f8162
+      - a0be5a5924027d0c2489225ae33c58f8
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo/baz.txt
+    method: GET
+  response:
+    body: '{"path":"tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo/baz.txt","display_name":"baz.txt","type":"file","size":0,"created_at":"2023-02-06T17:10:49Z","mtime":"2023-02-06T17:10:49Z","provided_mtime":null,"crc32":"0","md5":"d41d8cd98f00b204e9800998ecf8427e","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:50 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 3aa87fec-a7ad-4a9d-860a-8acb54595e6a
+      - 52bebded59957d80bbada3e1b4007764
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo/baz.txt
+    method: GET
+  response:
+    body: '{"path":"tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo/baz.txt","display_name":"baz.txt","type":"file","size":0,"created_at":"2023-02-06T17:10:49Z","mtime":"2023-02-06T17:10:49Z","provided_mtime":null,"crc32":"0","md5":"d41d8cd98f00b204e9800998ecf8427e","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:50 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 7b2fe701-8e84-4af2-ae93-a7ed235d4f6f
+      - b3046ae6aa436690740b5b002b9c56f4
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo/baz.txt
+    method: GET
+  response:
+    body: '{"path":"tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo/baz.txt","display_name":"baz.txt","type":"file","size":0,"created_at":"2023-02-06T17:10:49Z","mtime":"2023-02-06T17:10:49Z","provided_mtime":null,"crc32":"0","md5":"d41d8cd98f00b204e9800998ecf8427e","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:50 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - a7b7e2f5-dcdf-4e6f-968a-7ae00c7e799b
+      - 630a531566e13ceed0d8dc2cd1d118ec
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo/baz.txt
+    method: GET
+  response:
+    body: '{"path":"tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo/baz.txt","display_name":"baz.txt","type":"file","size":0,"created_at":"2023-02-06T17:10:49Z","mtime":"2023-02-06T17:10:49Z","provided_mtime":null,"crc32":"0","md5":"d41d8cd98f00b204e9800998ecf8427e","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd","download_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/f73299ac-3d57-4a3a-84ce-86d16c761d76?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20230206%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20230206T171051Z\u0026X-Amz-Expires=60\u0026X-Amz-SignedHeaders=host\u0026response-cache-control=no-cache%2C%20no-store\u0026response-content-disposition=attachment%3B%20filename%3D%22baz.txt%22\u0026response-content-type=text%2Fplain\u0026X-Amz-Signature=9db61d25c8b7ab6549e4180be98a53227a753e031e126a389a5c945182287231"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:51 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - de14d4df-75d9-430d-9ee8-f217597f7603
+      - ea921a63108a34e9be79bad1c9925b18
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers: {}
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/f73299ac-3d57-4a3a-84ce-86d16c761d76?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20230206%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230206T171051Z&X-Amz-Expires=60&X-Amz-SignedHeaders=host&response-cache-control=no-cache%2C%20no-store&response-content-disposition=attachment%3B%20filename%3D%22baz.txt%22&response-content-type=text%2Fplain&X-Amz-Signature=9db61d25c8b7ab6549e4180be98a53227a753e031e126a389a5c945182287231
+    method: GET
+  response:
+    body: ""
+    headers:
+      Accept-Ranges:
+      - bytes
+      Cache-Control:
+      - no-cache, no-store
+      Content-Disposition:
+      - attachment; filename="baz.txt"
+      Content-Length:
+      - "0"
+      Content-Type:
+      - text/plain
+      Date:
+      - Mon, 06 Feb 2023 17:10:52 GMT
+      Etag:
+      - '"59adb24ef3cdbe0297f05b395827453f-1"'
+      Last-Modified:
+      - Mon, 06 Feb 2023 17:10:49 GMT
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - 0GSPtRID/JBRPpK+dCzd7g8Tof7Zq0Km+RfosrvgJ+i3nUc61ZywUknyIeXJAwyl36Fe5na2WJM=
+      X-Amz-Meta-X-Amz-Meta-Gid:
+      - "65534"
+      X-Amz-Meta-X-Amz-Meta-Mode:
+      - "33188"
+      X-Amz-Meta-X-Amz-Meta-Uid:
+      - "65534"
+      X-Amz-Request-Id:
+      - 2Y315075R5CYHNMV
+      X-Amz-Server-Side-Encryption:
+      - AES256
+      X-Amz-Version-Id:
+      - "null"
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo/baz.txt
+    method: GET
+  response:
+    body: '{"path":"tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo/baz.txt","display_name":"baz.txt","type":"file","size":0,"created_at":"2023-02-06T17:10:49Z","mtime":"2023-02-06T17:10:49Z","provided_mtime":null,"crc32":"0","md5":"d41d8cd98f00b204e9800998ecf8427e","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:52 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - d276a0b8-77fd-4c9a-8ef5-8fb3a1a29308
+      - ed943cd522fe3446f355e63f318b8886
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src
+    method: GET
+  response:
+    body: '{"path":"tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src","display_name":"Src","type":"directory","size":null,"created_at":"2023-02-06T17:10:46Z","mtime":"2023-02-06T17:10:49Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:52 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - a0e0a1cf-9fe9-4dfc-bc9f-a5b5cdd5f74b
+      - 33e6500c099297b81de1d171c67052b6
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src?page=1
+    method: GET
+  response:
+    body: '[{"path":"tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo","display_name":"foo","type":"directory","size":null,"created_at":"2023-02-06T17:10:48Z","mtime":"2023-02-06T17:10:49Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:52 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - c03d4b73-5338-49db-bdc9-dadc9012f3a4
+      - 8b68e0de9856f940bf021b852210738f
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/folders/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo?page=1
+    method: GET
+  response:
+    body: '[{"path":"tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root/Src/foo/baz.txt","display_name":"baz.txt","type":"file","size":0,"created_at":"2023-02-06T17:10:49Z","mtime":"2023-02-06T17:10:49Z","provided_mtime":null,"crc32":"0","md5":"d41d8cd98f00b204e9800998ecf8427e","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Mon, 06 Feb 2023 17:10:53 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - 09dc717b-db2a-4d1e-8c5a-fc830e0beee9
+      - 8da9d4b3f0767be82162bc1f6deb1c78
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      Connection:
+      - close
+      User-Agent:
+      - Files.com Go SDK 2.0.0-beta
+    url: https://app.files.com/api/rest/v1/files/tmp/TestDownload-downloader-copy_baz.txt_to_current_working_directory/src-root?recursive=true
+    method: DELETE
+  response:
+    body: ""
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Date:
+      - Mon, 06 Feb 2023 17:10:53 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - nginx
+      X-Request-Id:
+      - b94fdfa1-32d6-49cd-83f6-39b5fa177d03
+      - a513ebb73a1041f839532c61990dd45c
+    status: 204 No Content
+    code: 204
+    duration: ""

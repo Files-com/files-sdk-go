@@ -2,8 +2,6 @@ package file
 
 import (
 	"context"
-	"errors"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -102,18 +100,38 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 			job.Add(metaFile)
 			job.UpdateStatus(status.Indexed, metaFile, nil)
 		} else {
-			var walkErr error
-			walkErr = walkPaginated(
-				jobCtx,
-				params.LocalPath,
-				params.RemotePath,
-				job,
-				params,
-				c,
-			)
-			if walkErr != nil {
+			it := (&lib.Walk[lib.DirEntry]{
+				FS:                 os.DirFS(params.LocalPath),
+				ConcurrencyManager: job.Manager.DirectoryListingManager,
+				WalkFile:           lib.DirEntryWalkFile,
+			}).Walk(jobCtx)
+
+			for it.Next() {
+				dirEntry := it.Current()
+				uploadStatus, ok := buildUploadStatus(filepath.Join(params.LocalPath, dirEntry.Path()), params.LocalPath, params.RemotePath, c, job, params)
+				if it.Err() != nil {
+					job.UpdateStatus(status.Errored, &uploadStatus, it.Err())
+					job.Add(&uploadStatus)
+				}
+
+				if !ok {
+					continue
+				}
+
+				uploadStatus.file.Type = "file"
+				if dirEntry.Error() != nil {
+					uploadStatus.missingStat = true
+					uploadStatus.error = err
+				} else {
+					uploadStatus.file.Size = dirEntry.FileInfo.Size()
+					uploadStatus.file.Mtime = lib.Time(dirEntry.FileInfo.ModTime())
+				}
+				job.Add(&uploadStatus)
+			}
+
+			if it.Err() != nil {
 				job.Add(metaFile)
-				job.UpdateStatus(status.Errored, metaFile, walkErr)
+				job.UpdateStatus(status.Errored, metaFile, it.Err())
 			}
 		}
 
@@ -129,7 +147,7 @@ func remotePath(ctx context.Context, localPath string, remotePath string, c Uplo
 	if remotePath == "" {
 		destination = localFileName
 	} else {
-		remoteFile, err := c.Find(ctx, files_sdk.FileFindParams{Path: remotePath})
+		remoteFile, err := c.Find(ctx, files_sdk.FileFindParams{Path: strings.TrimSuffix(remotePath, "/")})
 		responseError, ok := err.(files_sdk.ResponseError)
 		if remoteFile.Type == "directory" {
 			destination = lib.UrlJoinNoEscape(remotePath, localFileName)
@@ -214,45 +232,6 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 			uploadStatus.Job().UpdateStatus(status.Complete, uploadStatus, nil)
 		}
 	}()
-}
-
-func walkPaginated(ctx context.Context, localFolderPath string, destinationRootPath string, job *status.Job, params UploaderParams, c Uploader) error {
-	err := fs.WalkDir(os.DirFS(localFolderPath), ".", func(name string, d fs.DirEntry, err error) error {
-		path := filepath.Join(localFolderPath, name)
-		uploadStatus, ok := buildUploadStatus(path, localFolderPath, destinationRootPath, c, job, params)
-		if err != nil {
-			if errors.Is(err, fs.ErrPermission) {
-				job.UpdateStatus(status.Errored, &uploadStatus, err)
-				job.Add(&uploadStatus)
-				return fs.SkipDir
-			}
-			return err
-		}
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
-
-		if d.IsDir() || !d.Type().IsRegular() {
-			return nil
-		}
-
-		if !ok {
-			return nil
-		}
-
-		uploadStatus.file.Type = "file"
-		info, err := d.Info()
-		if err != nil {
-			uploadStatus.missingStat = true
-			uploadStatus.error = err
-		} else {
-			uploadStatus.file.Size = info.Size()
-			uploadStatus.file.Mtime = lib.Time(info.ModTime())
-		}
-		job.Add(&uploadStatus)
-		return nil
-	})
-	return err
 }
 
 func buildUploadStatus(path string, localFolderPath string, destinationRootPath string, c Uploader, job *status.Job, params UploaderParams) (UploadStatus, bool) {

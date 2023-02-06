@@ -1,13 +1,17 @@
 package file
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	goFs "io/fs"
+	"math"
+	"math/rand"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -24,8 +28,8 @@ type FS struct {
 	files_sdk.Config
 	context.Context
 	Root       string
-	cache      sync.Map
-	cacheDir   sync.Map
+	cache      *sync.Map
+	cacheDir   *sync.Map
 	useCache   bool
 	cacheMutex *lib.KeyedMutex
 }
@@ -46,8 +50,8 @@ func (f *FS) WithContext(ctx context.Context) interface{} {
 }
 
 func (f *FS) ClearCache() {
-	f.cache = sync.Map{}
-	f.cacheDir = sync.Map{}
+	f.cache = &sync.Map{}
+	f.cacheDir = &sync.Map{}
 	m := lib.NewKeyedMutex()
 	f.cacheMutex = &m
 }
@@ -458,4 +462,90 @@ func (f *FS) MkdirAll(dir string, _ goFs.FileMode) error {
 		parentPath = lib.UrlJoinNoEscape(parentPath, dirPath)
 	}
 	return nil
+}
+
+func (f *FS) PathSeparator() string {
+	return "/"
+}
+
+var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func randSeq(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
+
+func (f *FS) MkdirTemp(dir, pattern string) (string, error) {
+	if dir == "" {
+		dir = filepath.Join(f.TempDir(), randSeq(10))
+	}
+	path := f.PathJoin(dir, pattern)
+	return path, f.MkdirAll(path, 0750)
+}
+
+type WritableFile struct {
+	*Client
+	*FS
+	path string
+	*bytes.Buffer
+}
+
+func (w WritableFile) init() WritableFile {
+	w.Buffer = bytes.NewBuffer([]byte{})
+	return w
+}
+
+func (w WritableFile) Write(p []byte) (int, error) {
+	return w.Buffer.Write(p)
+}
+
+func (w WritableFile) Close() (err error) {
+	return w.Client.Upload(w.Context, bytes.NewReader(w.Buffer.Bytes()), w.path, func(params UploadIOParams) UploadIOParams {
+		params.Size = int64(w.Buffer.Len())
+		return params
+	})
+}
+
+// Create Not for performant use cases.
+func (f *FS) Create(path string) (io.WriteCloser, error) {
+	return WritableFile{FS: f, Client: &Client{Config: f.Config}, path: path}.init(), nil
+}
+
+func (f *FS) RemoveAll(path string) error {
+	return (&Client{Config: f.Config}).Delete(f.Context, files_sdk.FileDeleteParams{Path: path, Recursive: lib.Bool(true)})
+}
+
+func (f *FS) Remove(path string) error {
+	return (&Client{Config: f.Config}).Delete(f.Context, files_sdk.FileDeleteParams{Path: path})
+}
+
+func (f *FS) PathJoin(s ...string) string {
+	return lib.UrlJoinNoEscape(s...)
+}
+
+func (f *FS) RelPath(parent, child string) (string, error) {
+	path := strings.Replace(child, parent, "", 1)
+	if path == "" {
+		return ".", nil
+	}
+	path = strings.TrimSuffix(path, f.PathSeparator())
+	path = strings.TrimPrefix(path, f.PathSeparator())
+	return path, nil
+}
+
+func (f *FS) SplitPath(path string) (string, string) {
+	if path == "" {
+		return "", ""
+	}
+
+	parts := strings.Split(path, f.PathSeparator())
+
+	return f.PathJoin(parts[:int(math.Min(float64(len(parts)-2), float64(len(parts))))]...), parts[len(parts)-1]
+}
+
+func (f *FS) TempDir() string {
+	return "tmp"
 }

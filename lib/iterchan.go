@@ -2,24 +2,24 @@ package lib
 
 import "sync/atomic"
 
-type IterChan struct {
+type IterChan[T any] struct {
 	Send      chan interface{}
 	Stop      chan bool
 	SendError chan error
 	current   atomic.Value
 	Error     atomic.Value
-	Start     func(*IterChan)
+	Start     func(*IterChan[T])
 }
 
-func (i IterChan) Init() *IterChan {
+func (i *IterChan[T]) Init() *IterChan[T] {
 	i.Send = make(chan interface{})
 	i.Stop = make(chan bool)
 	i.SendError = make(chan error)
 
-	return &i
+	return i
 }
 
-func (i *IterChan) Next() bool {
+func (i *IterChan[T]) Next() bool {
 	select {
 	case current := <-i.Send:
 		i.current.Store(current)
@@ -32,11 +32,11 @@ func (i *IterChan) Next() bool {
 	}
 }
 
-func (i *IterChan) Current() interface{} {
-	return i.current.Load()
+func (i *IterChan[T]) Current() T {
+	return i.current.Load().(T)
 }
 
-func (i *IterChan) Err() error {
+func (i *IterChan[T]) Err() error {
 	err := i.Error.Load()
 	if err != nil {
 		return err.(error)

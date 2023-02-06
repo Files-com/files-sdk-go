@@ -2,10 +2,10 @@ package file
 
 import (
 	"context"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"testing"
 	"testing/fstest"
@@ -170,73 +170,6 @@ func Test_downloader_RemoteStartingSlash(t *testing.T) {
 	assert.Equal(t, int64(100), setup.reporterCalls[0].Job.TotalBytes())
 
 	assert.NoError(t, setup.TearDown())
-}
-
-func TestClient_Downloader_path_spec(t *testing.T) {
-	t.Run("files", func(t *testing.T) {
-		for _, tt := range pathSpec("/", string(os.PathSeparator)) {
-			t.Run(tt.name, func(t *testing.T) {
-				srcFs := make(fstest.MapFS)
-				filesDest, err := os.MkdirTemp("", "files-dest")
-				assert.NoError(t, err)
-
-				for _, e := range tt.src {
-					fileType := "file"
-					mode := fs.ModePerm
-					if e.dir {
-						fileType = "directory"
-						mode = fs.ModeDir
-					}
-					_, displayName := filepath.Split(e.path)
-					srcFs[e.path] = &fstest.MapFile{
-						Data: nil,
-						Mode: mode,
-						Sys: files_sdk.File{
-							DisplayName: displayName,
-							Path:        e.path,
-							Type:        fileType,
-						},
-					}
-				}
-				for _, e := range tt.dest {
-					if !e.preexisting {
-						continue
-					}
-					if e.dir {
-						err = os.MkdirAll(filepath.Join(filesDest, e.path), 0750)
-					} else {
-						_, err = os.Create(filepath.Join(filesDest, e.path))
-					}
-					assert.NoError(t, err)
-				}
-				params := DownloaderParams{
-					LocalPath:  strings.Join([]string{filesDest, tt.args.dest}, string(os.PathSeparator)),
-					RemotePath: tt.args.src,
-				}
-				if tt.args.dest == "" {
-					params.LocalPath = ""
-				}
-				t.Logf("RemotePath: %v, LocalPath: %v", params.RemotePath, params.LocalPath)
-				originalDir, err := os.Getwd()
-				require.NoError(t, err)
-				err = os.Chdir(filesDest)
-				require.NoError(t, err)
-				job := downloader(context.Background(), srcFs, params)
-
-				job.Start()
-				job.Wait()
-				err = os.Chdir(originalDir)
-				require.NoError(t, err)
-				for _, e := range tt.dest {
-					fileInfo, err := os.Stat(filepath.Join(filesDest, e.path))
-					require.NoError(t, err, e.path)
-					assert.Equal(t, e.dir, fileInfo.IsDir(), e.path)
-				}
-
-				assert.NoError(t, os.RemoveAll(filesDest))
-			})
-		}
-	})
 }
 
 func Test_downloadFolder_more_than_one_file(t *testing.T) {
@@ -442,4 +375,61 @@ func Test_downloadFolder_OnDownload(t *testing.T) {
 	assert.Equal(t, int64(100), setup.reporterCalls[2].File.Size, "Updates with real file size")
 
 	assert.NoError(t, setup.TearDown())
+}
+
+func TestDownload(t *testing.T) {
+	mutex := &sync.Mutex{}
+	t.Run("downloader", func(t *testing.T) {
+		sourceFs := &FS{Context: context.Background()}
+		destinationFs := lib.ReadWriteFs(lib.LocalFileSystem{})
+		for _, tt := range lib.PathSpec(sourceFs.PathSeparator(), destinationFs.PathSeparator()) {
+			t.Run(tt.Name, func(t *testing.T) {
+				client, r, err := CreateClient(t.Name())
+				if err != nil {
+					t.Fatal(err)
+				}
+				config := client.Config
+				sourceFs := (&FS{Context: context.Background()}).Init(config, false)
+				lib.BuildPathSpecTest(t, mutex, tt, sourceFs, destinationFs, func(source, destination string) lib.Cmd {
+					return &CmdRunner{
+						run: func() *status.Job {
+							return downloader(context.Background(), sourceFs, DownloaderParams{RemotePath: source, LocalPath: destination})
+						},
+						args: []string{source, destination},
+					}
+				})
+				r.Stop()
+			})
+		}
+	})
+}
+
+type CmdRunner struct {
+	run    func() *status.Job
+	stderr io.Writer
+	stdout io.Writer
+	args   []string
+	*status.Job
+}
+
+func (c *CmdRunner) Run() error {
+	c.Job = c.run()
+	c.Job.Start()
+	c.Job.Wait()
+	for _, f := range c.Job.Sub(status.Errored).Statuses {
+		c.stderr.Write([]byte(f.Err().Error()))
+	}
+	return nil
+}
+
+func (c *CmdRunner) Args() []string {
+	return c.args
+}
+
+func (c *CmdRunner) SetOut(w io.Writer) {
+	c.stdout = w
+}
+
+func (c *CmdRunner) SetErr(stderr io.Writer) {
+	c.stderr = stderr
 }

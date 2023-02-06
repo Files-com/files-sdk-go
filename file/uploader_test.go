@@ -261,3 +261,30 @@ func Test_skipOrIgnore(t *testing.T) {
 		})
 	})
 }
+
+func TestUploader(t *testing.T) {
+	mutex := &sync.Mutex{}
+	t.Run("uploader", func(t *testing.T) {
+		sourceFs := lib.ReadWriteFs(lib.LocalFileSystem{})
+		destinationFs := &FS{Context: context.Background()}
+		for _, tt := range lib.PathSpec(sourceFs.PathSeparator(), destinationFs.PathSeparator()) {
+			t.Run(tt.Name, func(t *testing.T) {
+				client, r, err := CreateClient(t.Name())
+				if err != nil {
+					t.Fatal(err)
+				}
+				config := client.Config
+				destinationFs = (&FS{Context: context.Background()}).Init(config, true)
+				lib.BuildPathSpecTest(t, mutex, tt, sourceFs, destinationFs, func(source, destination string) lib.Cmd {
+					return &CmdRunner{
+						run: func() *status.Job {
+							return client.Uploader(context.Background(), UploaderParams{LocalPath: source, RemotePath: destination, Config: config})
+						},
+						args: []string{source, destination},
+					}
+				})
+				r.Stop()
+			})
+		}
+	})
+}

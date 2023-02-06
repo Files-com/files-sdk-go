@@ -227,17 +227,17 @@ func (r *Job) statusCallbacks(status Status, file IFile) {
 }
 
 func (r *Job) Count(t ...Status) int {
+	r.statusesMutex.RLock()
+	defer r.statusesMutex.RUnlock()
 	if len(t) == 0 {
 		return len(r.Statuses)
 	}
 	var total int
-	r.statusesMutex.RLock()
 	for _, s := range r.Statuses {
 		if s.Status().Any(t...) {
 			total += 1
 		}
 	}
-	r.statusesMutex.RUnlock()
 	return total
 }
 

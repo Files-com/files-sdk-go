@@ -243,29 +243,23 @@ func (c *Client) ListFor(ctx context.Context, params files_sdk.FolderListForPara
 }
 
 func (c *Client) ListForRecursive(ctx context.Context, params files_sdk.FolderListForParams) (lib.IterI, error) {
-	it := lib.IterChan{}.Init()
-
-	go func(params files_sdk.FolderListForParams) {
-		f := (&FS{}).Init(c.Config, false).WithContext(ctx).(*FS)
-		err := fs.WalkDir(f, params.Path, func(path string, d fs.DirEntry, err error) error {
-			if path == "" && err == nil {
-				return nil // Skip root directory
-			}
-
+	if params.ConcurrencyManager == nil {
+		params.ConcurrencyManager = manager.Default().FilePartsManager
+	}
+	return (&lib.Walk[interface{}]{
+		FS:                 (&FS{}).Init(c.Config, true).WithContext(ctx).(*FS),
+		Root:               lib.UrlJoinNoEscape(params.Path),
+		ConcurrencyManager: params.ConcurrencyManager,
+		ListDirectories:    true,
+		WalkFile: func(d fs.DirEntry, path string) (interface{}, error) {
+			info, err := d.Info()
 			if err == nil {
-				info, _ := d.Info()
-				it.Send <- info.Sys()
+				return info.Sys(), err
 			} else {
-				it.SendError <- err
+				return nil, err
 			}
-			return err
-		})
-		if err != nil {
-			it.Error.Store(err)
-		}
-		it.Stop <- true
-	}(params)
-	return it, nil
+		},
+	}).Walk(ctx), nil
 }
 
 func (c *Client) UploadFile(ctx context.Context, sourcePath string, destinationPath string, opts ...func(UploadIOParams) UploadIOParams) error {

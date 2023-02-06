@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -99,21 +98,40 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 		go enqueueIndexedDownloads(job, jobCtx, onComplete)
 		status.WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, job.RetryPolicy.(RetryPolicy), false) })
 
-		fs.WalkDir(fileSys, strings.TrimSuffix(job.RemotePath, "/"), func(path string, d fs.DirEntry, err error) error {
-			if job.Canceled.Called() {
-				return jobCtx.Err()
-			}
-			if err != nil {
-				createIndexedStatus(Entity{error: err}, params, job)
-				return err
-			}
-			if !d.IsDir() {
-				f, err := fileSys.Open(path)
-				createIndexedStatus(Entity{error: err, File: f, FS: fileSys}, params, job)
+		it := (&lib.Walk[lib.DirEntry]{
+			FS:                 fileSys,
+			Root:               lib.UrlJoinNoEscape(job.RemotePath),
+			ConcurrencyManager: job.Manager.FilePartsManager,
+			WalkFile:           lib.DirEntryWalkFile,
+		}).Walk(jobCtx)
+
+		for it.Next() {
+			dirEntry := it.Current()
+			if it.Err() != nil {
+				createIndexedStatus(Entity{error: it.Err()}, params, job)
 			}
 
-			return nil
-		})
+			f, err := fileSys.Open(dirEntry.Path())
+			createIndexedStatus(Entity{error: err, File: f, FS: fileSys}, params, job)
+		}
+
+		if it.Err() != nil {
+			metaFile := &DownloadStatus{
+				job:        job,
+				status:     status.Errored,
+				localPath:  params.LocalPath,
+				remotePath: params.RemotePath,
+				Sync:       params.Sync,
+				Mutex:      &sync.RWMutex{},
+			}
+			metaFile.file = files_sdk.File{
+				DisplayName: filepath.Base(params.LocalPath),
+				Type:        job.Direction.Name(),
+				Path:        params.RemotePath,
+			}
+			job.Add(metaFile)
+			job.UpdateStatus(status.Errored, metaFile, it.Err())
+		}
 
 		job.EndScan()
 	}
