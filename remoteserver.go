@@ -53,6 +53,7 @@ type RemoteServer struct {
 	FilesAgentPermissionSet           string `json:"files_agent_permission_set,omitempty" path:"files_agent_permission_set"`
 	FilesAgentRoot                    string `json:"files_agent_root,omitempty" path:"files_agent_root"`
 	FilesAgentApiToken                string `json:"files_agent_api_token,omitempty" path:"files_agent_api_token"`
+	FilebaseBucket                    string `json:"filebase_bucket,omitempty" path:"filebase_bucket"`
 	AwsSecretKey                      string `json:"aws_secret_key,omitempty" path:"aws_secret_key"`
 	Password                          string `json:"password,omitempty" path:"password"`
 	PrivateKey                        string `json:"private_key,omitempty" path:"private_key"`
@@ -109,6 +110,7 @@ func (u RemoteServerServerTypeEnum) Enum() map[string]RemoteServerServerTypeEnum
 		"s3_compatible":        RemoteServerServerTypeEnum("s3_compatible"),
 		"azure_files":          RemoteServerServerTypeEnum("azure_files"),
 		"files_agent":          RemoteServerServerTypeEnum("files_agent"),
+		"filebase":             RemoteServerServerTypeEnum("filebase"),
 	}
 }
 
