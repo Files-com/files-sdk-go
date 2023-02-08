@@ -54,6 +54,7 @@ type RemoteServer struct {
 	FilesAgentRoot                    string `json:"files_agent_root,omitempty" path:"files_agent_root"`
 	FilesAgentApiToken                string `json:"files_agent_api_token,omitempty" path:"files_agent_api_token"`
 	FilebaseBucket                    string `json:"filebase_bucket,omitempty" path:"filebase_bucket"`
+	FilebaseAccessKey                 string `json:"filebase_access_key,omitempty" path:"filebase_access_key"`
 	AwsSecretKey                      string `json:"aws_secret_key,omitempty" path:"aws_secret_key"`
 	Password                          string `json:"password,omitempty" path:"password"`
 	PrivateKey                        string `json:"private_key,omitempty" path:"private_key"`
@@ -68,6 +69,7 @@ type RemoteServer struct {
 	AzureBlobStorageAccessKey         string `json:"azure_blob_storage_access_key,omitempty" path:"azure_blob_storage_access_key"`
 	AzureFilesStorageAccessKey        string `json:"azure_files_storage_access_key,omitempty" path:"azure_files_storage_access_key"`
 	S3CompatibleSecretKey             string `json:"s3_compatible_secret_key,omitempty" path:"s3_compatible_secret_key"`
+	FilebaseSecretKey                 string `json:"filebase_secret_key,omitempty" path:"filebase_secret_key"`
 }
 
 type RemoteServerCollection []RemoteServer
@@ -220,6 +222,9 @@ type RemoteServerCreateParams struct {
 	S3CompatibleSecretKey             string                                  `url:"s3_compatible_secret_key,omitempty" required:"false" json:"s3_compatible_secret_key,omitempty" path:"s3_compatible_secret_key"`
 	FilesAgentRoot                    string                                  `url:"files_agent_root,omitempty" required:"false" json:"files_agent_root,omitempty" path:"files_agent_root"`
 	FilesAgentPermissionSet           RemoteServerFilesAgentPermissionSetEnum `url:"files_agent_permission_set,omitempty" required:"false" json:"files_agent_permission_set,omitempty" path:"files_agent_permission_set"`
+	FilebaseAccessKey                 string                                  `url:"filebase_access_key,omitempty" required:"false" json:"filebase_access_key,omitempty" path:"filebase_access_key"`
+	FilebaseSecretKey                 string                                  `url:"filebase_secret_key,omitempty" required:"false" json:"filebase_secret_key,omitempty" path:"filebase_secret_key"`
+	FilebaseBucket                    string                                  `url:"filebase_bucket,omitempty" required:"false" json:"filebase_bucket,omitempty" path:"filebase_bucket"`
 }
 
 // Post local changes, check in, and download configuration file (used by some Remote Server integrations, such as the Files.com Agent)
@@ -291,6 +296,9 @@ type RemoteServerUpdateParams struct {
 	S3CompatibleSecretKey             string                                  `url:"s3_compatible_secret_key,omitempty" required:"false" json:"s3_compatible_secret_key,omitempty" path:"s3_compatible_secret_key"`
 	FilesAgentRoot                    string                                  `url:"files_agent_root,omitempty" required:"false" json:"files_agent_root,omitempty" path:"files_agent_root"`
 	FilesAgentPermissionSet           RemoteServerFilesAgentPermissionSetEnum `url:"files_agent_permission_set,omitempty" required:"false" json:"files_agent_permission_set,omitempty" path:"files_agent_permission_set"`
+	FilebaseAccessKey                 string                                  `url:"filebase_access_key,omitempty" required:"false" json:"filebase_access_key,omitempty" path:"filebase_access_key"`
+	FilebaseSecretKey                 string                                  `url:"filebase_secret_key,omitempty" required:"false" json:"filebase_secret_key,omitempty" path:"filebase_secret_key"`
+	FilebaseBucket                    string                                  `url:"filebase_bucket,omitempty" required:"false" json:"filebase_bucket,omitempty" path:"filebase_bucket"`
 }
 
 type RemoteServerDeleteParams struct {
