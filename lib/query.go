@@ -29,7 +29,7 @@ func PathEscape(path string) (string, error) {
 		path = newParts[0]
 	}
 
-	return Path{Path: path}.PruneStartingSlash().String(), nil
+	return NewUrlPath(path).PruneStartingSlash().String(), nil
 }
 
 func BuildPath(resourcePath string, values interface{}) (string, error) {

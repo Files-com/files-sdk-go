@@ -39,7 +39,7 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 		}
 	} else {
 		job.LocalPath = params.LocalPath
-		job.RemotePath = lib.Path{Path: params.RemotePath}.PruneStartingSlash().String()
+		job.RemotePath = lib.NewUrlPath(params.RemotePath).PruneStartingSlash().String()
 		if job.RemotePath == "" {
 			job.RemotePath = "."
 		}
@@ -74,8 +74,8 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 				localType = directory.File
 			}
 		}
-		if (!(lib.Path{Path: params.RemotePath}).EndingSlash() && localType == directory.Dir) || remoteType == directory.File && localType == directory.Dir {
-			job.LocalPath = filepath.Join(job.LocalPath, (lib.Path{Path: job.RemotePath}).Pop())
+		if (!lib.NewUrlPath(params.RemotePath).EndingSlash() && localType == directory.Dir) || remoteType == directory.File && localType == directory.Dir {
+			job.LocalPath = filepath.Join(job.LocalPath, lib.NewUrlPath(job.RemotePath).SwitchPathSeparator(string(os.PathSeparator)).Pop())
 			if remoteType == directory.File {
 				localType = directory.File
 			}
@@ -83,7 +83,7 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 
 		// Use relative path
 		if job.LocalPath == "" {
-			job.LocalPath = lib.Path{Path: job.RemotePath}.Pop()
+			job.LocalPath = lib.NewUrlPath(job.RemotePath).SwitchPathSeparator(string(os.PathSeparator)).Pop()
 		}
 
 		job.Type = localType

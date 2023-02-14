@@ -593,7 +593,7 @@ func TestClient_UploadFolder_ZeroByteFile(t *testing.T) {
 	assert.NoError(t, job.Statuses[0].Err())
 	assert.Equal(t, "zero_byte_folder/zero-byte-file.text", job.Statuses[0].RemotePath())
 
-	job = client.Downloader(context.Background(), DownloaderParams{RemotePath: "zero_byte_folder", LocalPath: tmpDir + "/"})
+	job = client.Downloader(context.Background(), DownloaderParams{RemotePath: "zero_byte_folder", LocalPath: tmpDir + string(os.PathSeparator)})
 	job.Start()
 	job.Wait()
 	require.Len(t, job.Statuses, 1)
@@ -945,7 +945,7 @@ func TestClient_Downloader_Move_Source_Missing_Dir(t *testing.T) {
 		context.Background(),
 		DownloaderParams{
 			RemotePath: "TestClient_Downloader_Move_Source_Missing_Dir",
-			LocalPath:  filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir") + "/",
+			LocalPath:  filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir") + string(os.PathSeparator),
 		},
 	)
 	job.RegisterFileEvent(func(f status.File) {

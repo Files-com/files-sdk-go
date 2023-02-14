@@ -147,7 +147,7 @@ func remotePath(ctx context.Context, localPath string, remotePath string, c Uplo
 	if remotePath == "" {
 		destination = localFileName
 	} else {
-		remoteFile, err := c.Find(ctx, files_sdk.FileFindParams{Path: strings.TrimSuffix(remotePath, "/")})
+		remoteFile, err := c.Find(ctx, files_sdk.FileFindParams{Path: lib.NewUrlPath(remotePath).PruneEndingSlash().String()})
 		responseError, ok := err.(files_sdk.ResponseError)
 		if remoteFile.Type == "directory" {
 			destination = lib.UrlJoinNoEscape(remotePath, localFileName)

@@ -64,7 +64,9 @@ func BuildPathSpecTest(t *testing.T, mutex *sync.Mutex, tt PathSpecTest, sourceF
 		if e.Dir {
 			err = destinationFs.MkdirAll(destinationFs.PathJoin(destRoot, e.path), 0750)
 		} else {
-			_, err = destinationFs.Create(destinationFs.PathJoin(destRoot, e.path))
+			var f io.WriteCloser
+			f, err = destinationFs.Create(destinationFs.PathJoin(destRoot, e.path))
+			err = f.Close()
 		}
 		require.NoError(t, err)
 	}
@@ -111,6 +113,7 @@ func BuildPathSpecTest(t *testing.T, mutex *sync.Mutex, tt PathSpecTest, sourceF
 	} else {
 		sourceDir, _ = sourceFs.SplitPath(source)
 	}
+	require.NoError(t, sourceFile.Close())
 	t.Log("\tSource")
 	if _, ok := os.LookupEnv("FULL_PATHS"); ok && (destDirChanged || sourceDirChanged) {
 		t.Logf("\t\tPWD: %v", sourceRoot)
@@ -135,6 +138,7 @@ func BuildPathSpecTest(t *testing.T, mutex *sync.Mutex, tt PathSpecTest, sourceF
 	} else {
 		destinationDir, _ = destinationFs.SplitPath(destination)
 	}
+	require.NoError(t, destFile.Close())
 
 	t.Log("\tDestination")
 	err = fs.WalkDir(destinationFs, destinationDir, func(path string, d fs.DirEntry, err error) error {
@@ -166,6 +170,7 @@ func BuildPathSpecTest(t *testing.T, mutex *sync.Mutex, tt PathSpecTest, sourceF
 		fileStat, err := file.Stat()
 		require.NoError(t, err, e.path)
 		assert.Equal(t, e.Dir, fileStat.IsDir(), e.path)
+		require.NoError(t, file.Close())
 	}
 
 	assert.NoError(t, sourceFs.RemoveAll(sourceRoot))
@@ -229,7 +234,7 @@ func PathSpec(srcPathSeparator string, destPathSeparator string) []PathSpecTest 
 			Name: "copy foo to dest (with destination slash)",
 			Args: PathSpecArgs{
 				Src:  join(srcPathSeparator, "src", "foo"),
-				Dest: join(destPathSeparator, "dest") + srcPathSeparator,
+				Dest: join(destPathSeparator, "dest") + destPathSeparator,
 			},
 			Src: []PathSpecEntry{
 				{Dir: true, path: "src"},
@@ -287,7 +292,7 @@ func PathSpec(srcPathSeparator string, destPathSeparator string) []PathSpecTest 
 			},
 			Dest: []PathSpecEntry{
 				{Dir: true, path: "Dest", Preexisting: true},
-				{Dir: false, path: join(destPathSeparator, "Dest/taz.txt")},
+				{Dir: false, path: join(destPathSeparator, "Dest", "taz.txt")},
 			},
 		},
 		{
@@ -342,22 +347,22 @@ func PathSpec(srcPathSeparator string, destPathSeparator string) []PathSpecTest 
 		{
 			Name: "copy foo to dest with nested directories and files",
 			Args: PathSpecArgs{
-				Src:  "src/foo",
+				Src:  join(srcPathSeparator, "src", "foo"),
 				Dest: "dest",
 			},
 			Src: []PathSpecEntry{
 				{Dir: true, path: "src"},
-				{Dir: true, path: "src/foo"},
-				{Dir: false, path: "src/foo/baz.txt"},
-				{Dir: true, path: "src/foo/bar"},
-				{Dir: false, path: "src/foo/bar/lo.txt"},
+				{Dir: true, path: join(srcPathSeparator, "src", "foo")},
+				{Dir: false, path: join(srcPathSeparator, "src", "foo", "baz.txt")},
+				{Dir: true, path: join(srcPathSeparator, "src", "foo", "bar")},
+				{Dir: false, path: join(srcPathSeparator, "src", "foo", "bar", "lo.txt")},
 			},
 			Dest: []PathSpecEntry{
 				{Dir: true, path: "dest", Preexisting: true},
-				{Dir: true, path: "dest/foo"},
-				{Dir: false, path: "dest/foo/baz.txt"},
-				{Dir: true, path: "dest/foo/bar"},
-				{Dir: false, path: "dest/foo/bar/lo.txt"},
+				{Dir: true, path: join(destPathSeparator, "dest", "foo")},
+				{Dir: false, path: join(destPathSeparator, "dest", "foo", "baz.txt")},
+				{Dir: true, path: join(destPathSeparator, "dest", "foo", "bar")},
+				{Dir: false, path: join(destPathSeparator, "dest", "foo", "bar", "lo.txt")},
 			},
 		},
 	}
