@@ -246,8 +246,19 @@ func (c *Client) ListForRecursive(ctx context.Context, params files_sdk.FolderLi
 	if params.ConcurrencyManager == nil {
 		params.ConcurrencyManager = manager.Default().FilePartsManager
 	}
+	// Find the path first for recursive operations
+	fsi := (&FS{}).Init(c.Config, true).WithContext(ctx).(*FS)
+	fStat, err := fs.Stat(fsi, params.Path)
+	if err != nil {
+		return nil, err
+	}
+	// The path is a directory and the literal strings do not match use our returned path
+	if fStat.Sys().(files_sdk.File).Type == "directory" && fStat.Sys().(files_sdk.File).Path != params.Path {
+		params.Path = fStat.Sys().(files_sdk.File).Path
+	}
+
 	return (&lib.Walk[interface{}]{
-		FS:                 (&FS{}).Init(c.Config, true).WithContext(ctx).(*FS),
+		FS:                 fsi,
 		Root:               lib.UrlJoinNoEscape(params.Path),
 		ConcurrencyManager: params.ConcurrencyManager,
 		ListDirectories:    true,

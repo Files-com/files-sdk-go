@@ -350,7 +350,7 @@ func (f *FS) Open(name string) (goFs.File, error) {
 	if name == "." {
 		name = ""
 	}
-	result, ok := f.cache.Load(name)
+	result, ok := f.cache.Load(strings.ToLower(name))
 	if ok {
 		file := result.(*File)
 		if file.IsDir() {
@@ -372,7 +372,7 @@ func (f *FS) Open(name string) (goFs.File, error) {
 
 	file := (&File{File: &fileInfo, FS: f}).Init()
 	if f.useCache {
-		f.cache.Store(path, file)
+		f.cache.Store(strings.ToLower(path), file)
 	}
 	if fileInfo.Type == "directory" {
 		return &ReadDirFile{File: file}, nil
@@ -390,11 +390,12 @@ func (f *FS) ReadDir(name string) ([]goFs.DirEntry, error) {
 	if name == "." {
 		name = ""
 	}
+	cacheName := strings.ToLower(name)
 	if f.useCache {
-		f.cacheMutex.Lock(name)
-		defer f.cacheMutex.Unlock(name)
+		f.cacheMutex.Lock(cacheName)
+		defer f.cacheMutex.Unlock(cacheName)
 
-		dirs, ok := f.cacheDir.Load(name)
+		dirs, ok := f.cacheDir.Load(cacheName)
 		if ok {
 			dirEntryError := dirs.(DirEntryError)
 			return dirEntryError.DirEntries, dirEntryError.error
@@ -403,7 +404,7 @@ func (f *FS) ReadDir(name string) ([]goFs.DirEntry, error) {
 
 	dirs, err := ReadDirFile{File: (&File{File: &files_sdk.File{Path: name}, FS: f}).Init()}.ReadDir(0)
 	if f.useCache {
-		f.cacheDir.Store(name, DirEntryError{dirs, err})
+		f.cacheDir.Store(cacheName, DirEntryError{dirs, err})
 	}
 	return dirs, err
 }
@@ -432,7 +433,7 @@ func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {
 			// There is a bug in the API that it could return a nested file not in the current directory.
 			file := (&File{File: &fi, FS: f.FS}).Init()
 			if f.useCache {
-				f.cache.Store(fi.Path, file)
+				f.cache.Store(strings.ToLower(fi.Path), file)
 			}
 			files = append(files, file)
 		}

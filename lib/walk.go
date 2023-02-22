@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"strings"
 
+	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/zenthangplus/goccm"
 )
 
@@ -42,29 +44,29 @@ func (w *Walk[T]) Walk(ctx context.Context) *IterChan[T] {
 		w.Queue.Push(w.Root)
 	}
 
+	waitGroup := manager.WithWaitGroup(w.ConcurrencyManager)
+
 	go func() {
 		for {
 			if ctx.Err() != nil {
 				return
 			}
 			if dir := w.Queue.Pop(); dir != "" {
-				w.Wait()
+				waitGroup.Add()
 				go func() {
 					err := w.walkDir(ctx, dir, it)
 					if err != nil {
 						it.SendError <- err
 					}
-					w.Done()
+					waitGroup.Done()
 				}()
 			}
 
-			if it.Err() != nil {
-				w.WaitAllDone()
-				break
-			}
-
-			if w.Len() == 0 && w.RunningCount() == 0 {
-				break
+			if w.Len() == 0 {
+				waitGroup.Wait()
+				if w.Len() == 0 {
+					break
+				}
 			}
 		}
 		it.Stop <- true
@@ -88,9 +90,8 @@ func (w *Walk[T]) walkDir(ctx context.Context, dir string, it *IterChan[T]) erro
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-
-		if path == dir && d.IsDir() {
-			if path == w.Root && w.ListDirectories {
+		if strings.EqualFold(path, dir) && d.IsDir() {
+			if strings.EqualFold(path, w.Root) && w.ListDirectories {
 				w.send(d, path, it)
 			}
 			return nil

@@ -1043,6 +1043,33 @@ func TestClient_ListForRecursive(t *testing.T) {
 	assert.Contains(paths, "TestClient_ListForRecursive/nested_1/nested_2/3.text")
 }
 
+func TestClient_ListForRecursiveInsensitive(t *testing.T) {
+	client, r, err := CreateClient("TestClient_ListForRecursiveInsensitive")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	assert := assert.New(t)
+	buildScenario("TestClient_ListForRecursiveInsensitive", client)
+
+	it, err := client.ListForRecursive(context.Background(), files_sdk.FolderListForParams{Path: "/TestcLient_listforrecursiveinseNsitive"})
+	var files []files_sdk.File
+	for it.Next() {
+		files = append(files, it.Current().(files_sdk.File))
+	}
+
+	require.Equal(t, 6, len(files))
+	paths := lo.Map[files_sdk.File, string](files, func(item files_sdk.File, index int) string {
+		return item.Path
+	})
+	assert.Contains(paths, "TestClient_ListForRecursiveInsensitive")
+	assert.Contains(paths, "TestClient_ListForRecursiveInsensitive/nested_1")
+	assert.Contains(paths, "TestClient_ListForRecursiveInsensitive/nested_1/nested_2")
+	assert.Contains(paths, "TestClient_ListForRecursiveInsensitive/nested_1/nested_2/nested_3")
+	assert.Contains(paths, "TestClient_ListForRecursiveInsensitive/nested_1/nested_2/nested_3/4.text")
+	assert.Contains(paths, "TestClient_ListForRecursiveInsensitive/nested_1/nested_2/3.text")
+}
+
 func TestClient_ListForRecursive_Error(t *testing.T) {
 	client, r, err := CreateClient("TestClient_ListForRecursive_Error")
 	if err != nil {
@@ -1052,12 +1079,14 @@ func TestClient_ListForRecursive_Error(t *testing.T) {
 	assert := assert.New(t)
 	it, err := client.ListForRecursive(context.Background(), files_sdk.FolderListForParams{Path: "TestClient_ListForRecursive-Not-Found"})
 	var files []files_sdk.File
-	for it.Next() {
-		files = append(files, it.Current().(files_sdk.File))
+	if err == nil {
+		for it.Next() {
+			files = append(files, it.Current().(files_sdk.File))
+		}
 	}
 
 	assert.Equal(len(files), 0)
-	assert.Equal(it.Err().Error(), "open : Authentication Required - `Unauthorized. The API key or Session token is either missing or invalid.`")
+	assert.Equal(err.Error(), "open : Authentication Required - `Unauthorized. The API key or Session token is either missing or invalid.`")
 }
 
 func TestClient_ListForRecursive_Root(t *testing.T) {
