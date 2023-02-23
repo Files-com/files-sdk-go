@@ -70,14 +70,14 @@ func TestJob_TransferRate(t *testing.T) {
 	assert := assert.New(t)
 	job := Job{}.Init()
 	job.Timer.Start()
-	file := StatusFile{file: File{LastByte: time.Now(), TransferBytes: 1000}}
+	file := StatusFile{file: File{LastByte: time.Now(), TransferBytes: 1000, Status: Downloading}}
 	job.Add(file)
 	time.Sleep(1 * time.Second)
 	assert.InDelta(int64(1000), job.TransferRate(), 100)
 	assert.Equal(false, job.Idle(), "Nothing has happened recently so rate is zero")
 
-	time.Sleep(3500 * time.Millisecond)
-	assert.Equal(true, job.Idle(), "Nothing has happened recently so rate is zero")
+	time.Sleep(500 * time.Millisecond)
+	assert.Equal(true, job.Idle(-(time.Millisecond * 500)), "Nothing has happened recently so rate is zero")
 }
 
 func TestJob_ETA(t *testing.T) {

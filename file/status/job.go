@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	libLog "github.com/Files-com/files-sdk-go/v2/lib/logpath"
+
 	"github.com/Files-com/files-sdk-go/v2/lib"
 
 	"github.com/hashicorp/go-retryablehttp"
@@ -209,10 +211,19 @@ type UnwrappedError struct {
 }
 
 func (r *Job) UpdateStatus(status Status, file IFile, err error) {
+	if status == file.Status() && err == nil && file.Err() == nil {
+		return
+	}
 	if err != nil && strings.Contains(err.Error(), "context canceled") {
 		err = nil
 		status = Canceled
 	}
+	r.Logger.Printf(libLog.New(
+		file.File().Path,
+		map[string]interface{}{
+			"status": status,
+			"error":  err,
+		}))
 	file.SetStatus(status, err)
 	r.statusCallbacks(status, file)
 }
@@ -284,7 +295,7 @@ func (r *Job) mostRecentBytes(t ...Status) (recent time.Time) {
 		if !s.Status().Any(t...) {
 			continue
 		}
-		if recent.IsZero() || recent.Before(s.LastByte()) {
+		if (recent.IsZero() || recent.Before(s.LastByte())) && !s.LastByte().IsZero() {
 			recent = s.LastByte()
 		}
 	}
@@ -292,8 +303,14 @@ func (r *Job) mostRecentBytes(t ...Status) (recent time.Time) {
 	return
 }
 
-func (r *Job) Idle(t ...Status) bool {
-	return r.mostRecentBytes(t...).Before(time.Now().Add(time.Duration(-3500) * time.Millisecond))
+func (r *Job) Idle(durations ...time.Duration) bool {
+	duration := time.Duration(-5) * time.Second
+	if len(durations) == 1 {
+		duration = durations[0]
+	}
+	now := time.Now()
+	lastByte := r.mostRecentBytes(append(Running, Complete)...)
+	return lastByte.Before(now.Add(duration))
 }
 
 func (r *Job) TransferRate(t ...Status) int64 {
