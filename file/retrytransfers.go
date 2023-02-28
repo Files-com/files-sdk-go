@@ -52,8 +52,8 @@ func RetryByStatus(ctx context.Context, job *status.Job, signalEvents bool, poli
 		default:
 			panic("invalid direction")
 		}
-		if len(job.Sub(s...).Statuses) > 0 {
-			job.Logger.Printf("retry (%v): backing off %v sec", i, policy.WaitSec(i))
+		if len(job.Sub(s...).Statuses) > 0 && i+1 != policy.RetryCount {
+			job.Logger.Printf("retry (%v): backing off %v sec", i+1, policy.WaitSec(i))
 			time.Sleep(policy.WaitSec(i))
 		} else {
 			return
