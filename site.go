@@ -29,6 +29,7 @@ type Site struct {
 	BundleUploadReceiptNotifications     string          `json:"bundle_upload_receipt_notifications,omitempty" path:"bundle_upload_receipt_notifications"`
 	BundleWatermarkAttachment            Image           `json:"bundle_watermark_attachment,omitempty" path:"bundle_watermark_attachment"`
 	BundleWatermarkValue                 json.RawMessage `json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value"`
+	UploadsViaEmailAuthentication        *bool           `json:"uploads_via_email_authentication,omitempty" path:"uploads_via_email_authentication"`
 	Color2Left                           string          `json:"color2_left,omitempty" path:"color2_left"`
 	Color2Link                           string          `json:"color2_link,omitempty" path:"color2_link"`
 	Color2Text                           string          `json:"color2_text,omitempty" path:"color2_text"`
@@ -272,6 +273,7 @@ type SiteUpdateParams struct {
 	LdapGroupExclusion                   string          `url:"ldap_group_exclusion,omitempty" required:"false" json:"ldap_group_exclusion,omitempty" path:"ldap_group_exclusion"`
 	LdapGroupInclusion                   string          `url:"ldap_group_inclusion,omitempty" required:"false" json:"ldap_group_inclusion,omitempty" path:"ldap_group_inclusion"`
 	LdapBaseDn                           string          `url:"ldap_base_dn,omitempty" required:"false" json:"ldap_base_dn,omitempty" path:"ldap_base_dn"`
+	UploadsViaEmailAuthentication        *bool           `url:"uploads_via_email_authentication,omitempty" required:"false" json:"uploads_via_email_authentication,omitempty" path:"uploads_via_email_authentication"`
 	Icon16File                           io.Writer       `url:"icon16_file,omitempty" required:"false" json:"icon16_file,omitempty" path:"icon16_file"`
 	Icon16Delete                         *bool           `url:"icon16_delete,omitempty" required:"false" json:"icon16_delete,omitempty" path:"icon16_delete"`
 	Icon32File                           io.Writer       `url:"icon32_file,omitempty" required:"false" json:"icon32_file,omitempty" path:"icon32_file"`
