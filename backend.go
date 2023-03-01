@@ -62,25 +62,14 @@ func ParseResponse(res *http.Response, resource string) (*[]byte, *http.Response
 	if res.StatusCode == 204 {
 		return &defaultValue, res, nil
 	}
-	if err := lib.ResponseErrors(res, lib.NonOkError); err != nil {
-		return &defaultValue, res, fmt.Errorf("%v - %v", resource, err)
+	nonOkError := lib.NonOkErrorCustom(func(err error) error {
+		return fmt.Errorf("%v - %v", resource, err)
+	})
+
+	if err := lib.ResponseErrors(res, APIError(), nonOkError); err != nil {
+		return &defaultValue, res, err
 	}
 	data, err := io.ReadAll(res.Body)
-	if err != nil {
-		return &defaultValue, res, fmt.Errorf("%v - %v", resource, err)
-	}
-	if lib.IsJSON(res) {
-		re := ResponseError{}
-
-		err = re.UnmarshalJSON(data)
-		re.Errors = append(re.Errors, ResponseError{Type: resource})
-		if err != nil {
-			return &data, res, err
-		}
-		if !re.IsNil() {
-			return &data, res, re
-		}
-	}
 	return &data, res, err
 }
 

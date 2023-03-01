@@ -3,8 +3,12 @@ package files_sdk
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 type ResponseError struct {
@@ -89,4 +93,35 @@ func (e *ResponseError) UnmarshalJSON(data []byte) error {
 
 	*e = ResponseError(v)
 	return nil
+}
+
+func APIError(callbacks ...func(ResponseError) ResponseError) func(res *http.Response) error {
+	return func(res *http.Response) error {
+		if lib.IsNonOkStatus(res) && lib.IsHTML(res) && res.Header.Get("X-Request-Id") != "" && res.Header.Get("Server") == "nginx" {
+			return fmt.Errorf("files.com Server error - request id: %v", res.Header.Get("X-Request-Id"))
+		}
+
+		if lib.IsNonOkStatus(res) && lib.IsJSON(res) {
+			data, err := io.ReadAll(res.Body)
+			if err != nil {
+				return lib.NonOkError(res)
+			}
+
+			re := ResponseError{}
+
+			err = re.UnmarshalJSON(data)
+			if err != nil {
+				return lib.NonOkError(res)
+			}
+
+			if re.IsNil() {
+				return lib.NonOkError(res)
+			}
+			for _, callback := range callbacks {
+				re = callback(re)
+			}
+			return re
+		}
+		return nil
+	}
 }

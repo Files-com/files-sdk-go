@@ -2,9 +2,7 @@ package file
 
 import (
 	"context"
-	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -215,12 +213,8 @@ func (c *Client) createPart(ctx context.Context, reader io.ReadCloser, len int64
 		return files_sdk.EtagsParam{}, len, err
 	}
 
-	if res.StatusCode != 200 {
-		out, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			return files_sdk.EtagsParam{}, len, err
-		}
-		return files_sdk.EtagsParam{}, len, fmt.Errorf(string(out))
+	if err := lib.ResponseErrors(res, files_sdk.APIError(), lib.NonOkError); err != nil {
+		return files_sdk.EtagsParam{}, len, err
 	}
 	etag := strings.Trim(res.Header.Get("Etag"), "\"")
 	if etag == "" {

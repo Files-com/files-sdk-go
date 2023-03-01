@@ -261,7 +261,7 @@ func (f *File) ReadAt(p []byte, off int64) (n int, err error) {
 		},
 		files_sdk.RequestHeadersOption(headers),
 		files_sdk.ResponseOption(func(response *http.Response) error {
-			if err := lib.ResponseErrors(response, lib.IsStatus(http.StatusForbidden), lib.NotStatus(http.StatusPartialContent)); err != nil {
+			if err := lib.ResponseErrors(response, lib.IsStatus(http.StatusForbidden), lib.NotStatus(http.StatusPartialContent), files_sdk.APIError()); err != nil {
 				return &goFs.PathError{Path: f.File.Path, Err: err, Op: "ReadAt"}
 			}
 			n, err = io.ReadFull(response.Body, p)
