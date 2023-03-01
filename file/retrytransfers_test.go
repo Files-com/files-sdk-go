@@ -45,13 +45,11 @@ func TestRetryTransfers(t *testing.T) {
 		t.Run("RetryUnfinished RetryCount 1", func(t *testing.T) {
 			buildDownloadTest(func(job *status.Job) {
 				job.Start(false)
-				originalStartWhen := job.Started.When()
 				RetryByPolicy(context.Background(), job, RetryPolicy{Type: RetryUnfinished, RetryCount: 1}, false)
 				assert.Equal(false, job.All(status.Complete))
 				assert.Equal(2, job.Count(status.Complete))
 				assert.Equal(1, job.Count(status.Queued))
 				assert.Equal(true, job.Started.Called())
-				assert.Equal(originalStartWhen, job.Started.When())
 				assert.Equal(false, job.Scanning.Called())
 				assert.Equal(false, job.EndScanning.Called())
 				assert.Equal(false, job.Finished.Called())
@@ -63,12 +61,10 @@ func TestRetryTransfers(t *testing.T) {
 			buildDownloadTest(func(job *status.Job) {
 				job.Start()
 				job.Finish() // Finish already called, this happens in the desktop app
-				originalFinishTime := job.Finished.When()
 				RetryByPolicy(context.Background(), job, RetryPolicy{Type: RetryUnfinished, RetryCount: 1}, true)
 				assert.Equal(false, job.All(status.Complete))
 				assert.Equal(2, job.Count(status.Complete))
 				assert.Equal(1, job.Count(status.Queued))
-				assert.NotEqual(originalFinishTime, job.Finished.When())
 
 				assert.Equal(true, job.Started.Called())
 				assert.Equal(true, job.Scanning.Called())
@@ -149,7 +145,7 @@ func TestRetryTransfers(t *testing.T) {
 }
 
 func buildDownloadTest(test func(*status.Job)) {
-	job := status.Job{Direction: direction.DownloadType, Manager: manager.Default(), Config: files_sdk.Config{}, Logger: (&files_sdk.Config{}).Logger()}.Init()
+	job := (&status.Job{Direction: direction.DownloadType, Manager: manager.Default(), Config: files_sdk.Config{}, Logger: (&files_sdk.Config{}).Logger()}).Init()
 	temps := make([]string, 3)
 	statuses := []status.Status{status.Errored, status.Complete, status.Queued}
 	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
@@ -183,7 +179,7 @@ func buildDownloadTest(test func(*status.Job)) {
 }
 
 func buildUploadTest(test func(*status.Job, *MockUploader), statuses ...status.Status) {
-	job := status.Job{Direction: direction.UploadType, Manager: manager.Default(), Params: UploaderParams{}, Config: files_sdk.Config{}, Logger: (&files_sdk.Config{}).Logger()}.Init()
+	job := (&status.Job{Direction: direction.UploadType, Manager: manager.Default(), Params: UploaderParams{}, Config: files_sdk.Config{}, Logger: (&files_sdk.Config{}).Logger()}).Init()
 	job.GitIgnore, _ = ignore.New()
 	var temps []string
 	if len(statuses) == 0 {

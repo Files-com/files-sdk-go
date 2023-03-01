@@ -20,7 +20,7 @@ import (
 )
 
 func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *status.Job {
-	job := status.Job{}.Init()
+	job := (&status.Job{}).Init()
 	SetJobParams(job, direction.DownloadType, params, params.Config.Logger(), fileSys)
 	job.Config = params.Config
 	jobCtx := job.WithContext(ctx)

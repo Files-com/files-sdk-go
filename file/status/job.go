@@ -91,27 +91,27 @@ type Job struct {
 	*manager.Manager
 	RetryPolicy interface{}
 	*ignore.GitIgnore
-	Started     *Signal
-	Finished    *Signal
-	Canceled    *Signal
-	Scanning    *Signal
-	EndScanning *Signal
+	Started     *lib.Signal
+	Finished    *lib.Signal
+	Canceled    *lib.Signal
+	Scanning    *lib.Signal
+	EndScanning *lib.Signal
 	retryablehttp.Logger
 	RemoteFs fs.FS
 }
 
-func (r Job) Init() *Job {
+func (r *Job) Init() *Job {
 	r.statusesMutex = &sync.RWMutex{}
 	r.cancelMutex = &sync.Mutex{}
 	r.Id = sid.IdBase64()
 	r.EventsReporter = make(map[Status][]Reporter)
 	r.Timer = timer.New()
-	r.Started = &Signal{}
-	r.Finished = &Signal{}
-	r.Canceled = &Signal{}
-	r.Scanning = &Signal{}
-	r.EndScanning = &Signal{}
-	return &r
+	r.Started = (&lib.Signal{}).Init()
+	r.Finished = (&lib.Signal{}).Init()
+	r.Canceled = (&lib.Signal{}).Init()
+	r.Scanning = (&lib.Signal{}).Init()
+	r.EndScanning = (&lib.Signal{}).Init()
+	return r
 }
 
 func (r *Job) SetManager(m *manager.Manager) {
@@ -144,26 +144,26 @@ func (r *Job) ClearStatuses() Job {
 }
 
 func (r *Job) Scan() {
-	r.Scanning.call(time.Now())
+	r.Scanning.Call()
 }
 
 func (r *Job) EndScan() {
-	r.EndScanning.call(time.Now())
+	r.EndScanning.Call()
 }
 
 func (r *Job) Start(ignoreCodeStart ...bool) {
-	r.Started.call(r.Timer.Start())
+	r.Started.Call()
 	if r.CodeStart != nil && len(ignoreCodeStart) == 0 {
 		r.CodeStart()
 	}
 }
 
 func (r *Job) Finish() {
-	r.Finished.call(r.Timer.Stop())
+	r.Finished.Call()
 }
 
 func (r *Job) Cancel() {
-	r.Canceled.call(r.Timer.Stop())
+	r.Canceled.Call()
 	r.cancelMutex.Lock()
 	r.CancelFunc()
 	r.cancelMutex.Unlock()
@@ -174,21 +174,11 @@ func (r *Job) Reset() {
 }
 
 func (r *Job) Wait() {
-	r.Finished.Wait()
+	<-r.Finished.C
 }
 
 func (r *Job) Job() *Job {
 	return r
-}
-
-func (r *Job) SubscribeAll() Subscriptions {
-	return Subscriptions{
-		Started:     r.Started.Subscribe(),
-		Finished:    r.Finished.Subscribe(),
-		Canceled:    r.Canceled.Subscribe(),
-		Scanning:    r.Scanning.Subscribe(),
-		EndScanning: r.EndScanning.Subscribe(),
-	}
 }
 
 func (r *Job) WithContext(ctx context.Context) context.Context {
@@ -481,9 +471,8 @@ func (r *Job) FindRemoteFile(file IFile) (filesSDK.File, bool, error) {
 }
 
 func WaitTellFinished[T any](job *Job, onStatusComplete chan T, beforeCallingFinish func()) {
-	event := job.EndScanning.Subscribe()
 	go func() {
-		wait := waitForAndCount(event, onStatusComplete)
+		wait := waitForAndCount(job.EndScanning.C, onStatusComplete)
 		n := len(job.Statuses) - wait
 		for range iter.N(n) {
 			<-onStatusComplete

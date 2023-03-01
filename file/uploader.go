@@ -26,7 +26,7 @@ type Uploader interface {
 func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *status.Job {
 	var job *status.Job
 	if params.Job == nil {
-		job = status.Job{}.Init()
+		job = (&status.Job{}).Init()
 	} else {
 		job = params.Job
 	}

@@ -39,7 +39,7 @@ func Test_skipOrIgnore(t *testing.T) {
 	var progressReportError error
 
 	init := func() (*UploadStatus, fstest.MapFS, *status.Job) {
-		job := status.Job{Logger: (&files_sdk.Config{}).Logger()}.Init()
+		job := (&status.Job{Logger: (&files_sdk.Config{}).Logger()}).Init()
 		job.GitIgnore, _ = ignore.New()
 		job.Params = UploaderParams{}
 		uploadStatus := &UploadStatus{job: job, Mutex: &sync.RWMutex{}, file: files_sdk.File{Path: "test"}, remotePath: "test"}
