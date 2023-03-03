@@ -24,6 +24,7 @@ type Automation struct {
 	Description            string          `json:"description,omitempty" path:"description"`
 	Path                   string          `json:"path,omitempty" path:"path"`
 	UserId                 int64           `json:"user_id,omitempty" path:"user_id"`
+	SyncIds                []int64         `json:"sync_ids,omitempty" path:"sync_ids"`
 	UserIds                []int64         `json:"user_ids,omitempty" path:"user_ids"`
 	GroupIds               []int64         `json:"group_ids,omitempty" path:"group_ids"`
 	WebhookUrl             string          `json:"webhook_url,omitempty" path:"webhook_url"`
@@ -67,6 +68,7 @@ func (u AutomationEnum) Enum() map[string]AutomationEnum {
 		"copy_file":        AutomationEnum("copy_file"),
 		"move_file":        AutomationEnum("move_file"),
 		"as2_send":         AutomationEnum("as2_send"),
+		"run_sync":         AutomationEnum("run_sync"),
 	}
 }
 
@@ -95,6 +97,7 @@ type AutomationCreateParams struct {
 	DestinationReplaceTo   string                `url:"destination_replace_to,omitempty" required:"false" json:"destination_replace_to,omitempty" path:"destination_replace_to"`
 	Interval               string                `url:"interval,omitempty" required:"false" json:"interval,omitempty" path:"interval"`
 	Path                   string                `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
+	SyncIds                string                `url:"sync_ids,omitempty" required:"false" json:"sync_ids,omitempty" path:"sync_ids"`
 	UserIds                string                `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty" path:"user_ids"`
 	GroupIds               string                `url:"group_ids,omitempty" required:"false" json:"group_ids,omitempty" path:"group_ids"`
 	Schedule               json.RawMessage       `url:"schedule,omitempty" required:"false" json:"schedule,omitempty" path:"schedule"`
@@ -116,6 +119,7 @@ type AutomationUpdateParams struct {
 	DestinationReplaceTo   string                `url:"destination_replace_to,omitempty" required:"false" json:"destination_replace_to,omitempty" path:"destination_replace_to"`
 	Interval               string                `url:"interval,omitempty" required:"false" json:"interval,omitempty" path:"interval"`
 	Path                   string                `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
+	SyncIds                string                `url:"sync_ids,omitempty" required:"false" json:"sync_ids,omitempty" path:"sync_ids"`
 	UserIds                string                `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty" path:"user_ids"`
 	GroupIds               string                `url:"group_ids,omitempty" required:"false" json:"group_ids,omitempty" path:"group_ids"`
 	Schedule               json.RawMessage       `url:"schedule,omitempty" required:"false" json:"schedule,omitempty" path:"schedule"`
