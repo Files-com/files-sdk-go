@@ -101,7 +101,7 @@ func TestJob_ETA(t *testing.T) {
 func TestJob_ElapsedTime(t *testing.T) {
 	assert := assert.New(t)
 	job := (&Job{}).Init()
-	job.Timer.Start()
+	job.Start()
 
 	file := StatusFile{
 		file: File{
@@ -116,7 +116,7 @@ func TestJob_ElapsedTime(t *testing.T) {
 	file.file.TransferBytes = +5000
 	time.Sleep(1 * time.Second)
 	file.file.Status = Complete
-	job.Timer.Stop()
+	job.Stop()
 
 	job.Add(file)
 	assert.InDelta(2000, job.ElapsedTime().Milliseconds(), 100)

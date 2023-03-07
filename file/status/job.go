@@ -152,6 +152,7 @@ func (r *Job) EndScan() {
 }
 
 func (r *Job) Start(ignoreCodeStart ...bool) {
+	r.Timer.Start()
 	r.Started.Call()
 	if r.CodeStart != nil && len(ignoreCodeStart) == 0 {
 		r.CodeStart()
