@@ -12,6 +12,7 @@ type As2Partner struct {
 	Name                       string `json:"name,omitempty" path:"name"`
 	Uri                        string `json:"uri,omitempty" path:"uri"`
 	ServerCertificate          string `json:"server_certificate,omitempty" path:"server_certificate"`
+	EnableDedicatedIps         *bool  `json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
 	HexPublicCertificateSerial string `json:"hex_public_certificate_serial,omitempty" path:"hex_public_certificate_serial"`
 	PublicCertificateMd5       string `json:"public_certificate_md5,omitempty" path:"public_certificate_md5"`
 	PublicCertificateSubject   string `json:"public_certificate_subject,omitempty" path:"public_certificate_subject"`
@@ -33,19 +34,21 @@ type As2PartnerFindParams struct {
 }
 
 type As2PartnerCreateParams struct {
-	Name              string `url:"name,omitempty" required:"true" json:"name,omitempty" path:"name"`
-	Uri               string `url:"uri,omitempty" required:"true" json:"uri,omitempty" path:"uri"`
-	PublicCertificate string `url:"public_certificate,omitempty" required:"true" json:"public_certificate,omitempty" path:"public_certificate"`
-	As2StationId      int64  `url:"as2_station_id,omitempty" required:"true" json:"as2_station_id,omitempty" path:"as2_station_id"`
-	ServerCertificate string `url:"server_certificate,omitempty" required:"false" json:"server_certificate,omitempty" path:"server_certificate"`
+	Name               string `url:"name,omitempty" required:"true" json:"name,omitempty" path:"name"`
+	Uri                string `url:"uri,omitempty" required:"true" json:"uri,omitempty" path:"uri"`
+	PublicCertificate  string `url:"public_certificate,omitempty" required:"true" json:"public_certificate,omitempty" path:"public_certificate"`
+	As2StationId       int64  `url:"as2_station_id,omitempty" required:"true" json:"as2_station_id,omitempty" path:"as2_station_id"`
+	ServerCertificate  string `url:"server_certificate,omitempty" required:"false" json:"server_certificate,omitempty" path:"server_certificate"`
+	EnableDedicatedIps *bool  `url:"enable_dedicated_ips,omitempty" required:"false" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
 }
 
 type As2PartnerUpdateParams struct {
-	Id                int64  `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
-	Name              string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	Uri               string `url:"uri,omitempty" required:"false" json:"uri,omitempty" path:"uri"`
-	ServerCertificate string `url:"server_certificate,omitempty" required:"false" json:"server_certificate,omitempty" path:"server_certificate"`
-	PublicCertificate string `url:"public_certificate,omitempty" required:"false" json:"public_certificate,omitempty" path:"public_certificate"`
+	Id                 int64  `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Name               string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
+	Uri                string `url:"uri,omitempty" required:"false" json:"uri,omitempty" path:"uri"`
+	ServerCertificate  string `url:"server_certificate,omitempty" required:"false" json:"server_certificate,omitempty" path:"server_certificate"`
+	PublicCertificate  string `url:"public_certificate,omitempty" required:"false" json:"public_certificate,omitempty" path:"public_certificate"`
+	EnableDedicatedIps *bool  `url:"enable_dedicated_ips,omitempty" required:"false" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
 }
 
 type As2PartnerDeleteParams struct {
