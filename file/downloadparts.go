@@ -6,31 +6,27 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"math"
+	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/panjf2000/ants/v2"
+
+	"github.com/samber/lo"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/Files-com/files-sdk-go/v2/lib"
-	"github.com/samber/lo"
-	"github.com/zenthangplus/goccm"
 )
 
 const (
-	DownloadPartChunkSize         = int64(1024 * 1024 * 5)
-	DownloadPartLimit             = 15
-	DownloadPartLimitForSizeGuess = 10
-)
-
-const (
-	NotRun = iota
-	RunSuccess
-	RunError
+	DownloadPartChunkSize = int64(1024 * 1024 * 5)
+	DownloadPartLimit     = 25
 )
 
 type DownloadParts struct {
-	globalWait goccm.ConcurrencyManager
+	globalWait manager.ConcurrencyManager
 	context.CancelFunc
 	context.Context
 	queueCancel  context.CancelFunc
@@ -38,26 +34,28 @@ type DownloadParts struct {
 	fs.File
 	fs.FileInfo
 	lib.WriterAndAt
-	totalWritten         int64
-	parts                []*Part
-	queue                chan *Part
-	finishedParts        chan *Part
-	firstPartSuccessChan chan int
-	firstPartSuccess     int
-	runningPartLimit     int
-	CloseError           error
+	totalWritten  int64
+	parts         []*Part
+	queue         chan *Part
+	finishedParts chan *Part
+	CloseError    error
 	files_sdk.Config
+	fileManager *ants.Pool
+	*sync.RWMutex
+	queueLock      *sync.Mutex
+	partsCompleted uint32
+	path           string
 }
 
-func (d *DownloadParts) Init(file fs.File, info fs.FileInfo, globalWait goccm.ConcurrencyManager, writer lib.WriterAndAt, config files_sdk.Config) *DownloadParts {
+func (d *DownloadParts) Init(file fs.File, info fs.FileInfo, globalWait manager.ConcurrencyManager, writer lib.WriterAndAt, config files_sdk.Config) *DownloadParts {
 	d.File = file
 	d.FileInfo = info
+	d.path = info.Name()
 	d.globalWait = globalWait
 	d.WriterAndAt = writer
-	d.setRunningPartLimit()
-	d.firstPartSuccessChan = make(chan int, 1)
-	d.firstPartSuccess = NotRun
 	d.Config = config
+	d.RWMutex = &sync.RWMutex{}
+	d.queueLock = &sync.Mutex{}
 	return d
 }
 
@@ -66,23 +64,22 @@ func (d *DownloadParts) Run(ctx context.Context) error {
 	d.queueContext, d.queueCancel = context.WithCancel(d.Context)
 	defer func() {
 		d.Config.LogPath(
-			d.FileInfo.Name(),
+			d.path,
 			map[string]interface{}{
 				"message":  "Finished canceling context and closing file",
-				"realSize": d.totalWritten,
+				"realSize": atomic.LoadInt64(&d.totalWritten),
 			},
 		)
 		d.CancelFunc()
 		d.CloseError = d.WriterAndAt.Close()
+		d.fileManager.Release()
 	}()
-	d.Config.LogPath(
-		d.FileInfo.Name(),
-		map[string]interface{}{
-			"size":      d.FileInfo.Size(),
-			"SizeGuess": d.SizeGuess(),
-		},
-	)
-	if d.FileInfo.Size() <= DownloadPartChunkSize || d.SizeGuess() {
+	var err error
+	d.fileManager, err = ants.NewPool(lo.Min[int](append([]int{}, DownloadPartLimit, d.globalWait.Max())))
+	if err != nil {
+		return err
+	}
+	if d.downloadFileCutOff() {
 		return d.downloadFile()
 	} else {
 		d.buildParts()
@@ -92,87 +89,83 @@ func (d *DownloadParts) Run(ctx context.Context) error {
 	}
 }
 
-func (d *DownloadParts) FinalSize() int64 {
-	return d.totalWritten
+func (d *DownloadParts) downloadFileCutOff() bool {
+	// Don't break up file if running part serially.
+	if d.fileManager.Cap() == 1 {
+		return true
+	}
+
+	return d.FileInfo.Size() <= DownloadPartChunkSize*2
 }
 
-func (d *DownloadParts) setRunningPartLimit() {
-	if d.SizeGuess() {
-		d.runningPartLimit = DownloadPartLimitForSizeGuess
-	} else {
-		d.runningPartLimit = DownloadPartLimit
-	}
+func (d *DownloadParts) FinalSize() int64 {
+	return atomic.LoadInt64(&d.totalWritten)
 }
 
 func (d *DownloadParts) waitForParts() error {
+	var err error
 	for i := range d.parts {
 		part := <-d.finishedParts
-		if part.error != nil {
-			d.TriggerFirstSuccess(RunError)
-			return part.error
+		if part.Err() != nil && !errors.Is(part.Err(), context.Canceled) {
+			err = part.Err()
 		}
-
-		d.TriggerFirstSuccess(RunSuccess)
+		atomic.AddUint32(&d.partsCompleted, 1)
 		d.Config.LogPath(
-			d.FileInfo.Name(),
+			d.path,
 			map[string]interface{}{
-				"RunningParts":  d.runningParts(),
-				"limit":         d.runningPartLimit,
+				"RunningParts":  d.fileManager.Running(),
+				"limit":         d.fileManager.Cap(),
 				"parts":         len(d.parts),
-				"Written":       d.totalWritten,
+				"Written":       atomic.LoadInt64(&d.totalWritten),
 				"PartFinished":  part.number,
 				"partBytes":     part.bytes,
 				"PartsFinished": i + 1,
+				"error":         part.Err(),
 			},
 		)
 	}
-
+	close(d.queue)
+	if err != nil {
+		return err
+	}
 	return d.realSizeOverLap()
 }
 
 func (d *DownloadParts) realSizeOverLap() error {
 	lastPart := d.parts[len(d.parts)-1]
 	d.Config.LogPath(
-		d.FileInfo.Name(),
+		d.path,
 		map[string]interface{}{
 			"message":  "starting realSizeOverLap",
 			"size":     d.FileInfo.Size(),
-			"realSize": d.totalWritten,
+			"realSize": atomic.LoadInt64(&d.totalWritten),
 		},
 	)
 	defer func() {
 		d.Config.LogPath(
-			d.FileInfo.Name(),
+			d.path,
 			map[string]interface{}{
 				"message":  "finishing realSizeOverLap",
 				"size":     d.FileInfo.Size(),
-				"realSize": d.totalWritten,
+				"realSize": atomic.LoadInt64(&d.totalWritten),
 			},
 		)
 	}()
 	for {
-		d.Config.LogPath(
-			d.FileInfo.Name(),
-			map[string]interface{}{
-				"message":      "finishing realSizeOverLap",
-				"SizeGuess":    d.SizeGuess(),
-				"queueStopped": d.queueContext.Err() != nil,
-				"lastBytes":    lastPart.bytes,
-				"lastLen":      lastPart.len,
-			},
-		)
-		if d.SizeGuess() && d.queueContext.Err() == nil && lastPart.bytes != 0 {
+		if d.FileInfo.(UntrustedSize).UntrustedSize() && d.queueContext.Err() == nil && lastPart.bytes == lastPart.len {
+			d.queueLock.Lock()
 			d.queue = make(chan *Part, 1)
+			d.queueLock.Unlock()
 			d.finishedParts = make(chan *Part, 1)
 			nextPart := &Part{number: lastPart.number + 1, OffSet: OffSet{off: lastPart.off + lastPart.bytes, len: DownloadPartChunkSize}}
-			d.Config.LogPath(d.FileInfo.Name(), map[string]interface{}{"message": "Next Part for size guess", "part": nextPart.number})
+			d.Config.LogPath(d.path, map[string]interface{}{"message": "Next Part for size guess", "part": nextPart.number})
 			d.parts = append(d.parts, nextPart)
 
 			go d.processPart(nextPart.Start(d.Context), true)
 			select {
 			case lastPart = <-d.finishedParts:
 				if lastPart.error != nil {
-					if lastPart.error == io.EOF {
+					if lastPart.error == io.EOF || errors.Is(lastPart.error, UntrustedSizeRangeRequestSizeSentReceived) {
 						return nil
 					}
 					return lastPart.error
@@ -186,6 +179,9 @@ func (d *DownloadParts) realSizeOverLap() error {
 				}
 			}
 		} else {
+			if d.FileInfo.Size() != atomic.LoadInt64(&d.totalWritten) && !d.FileInfo.(UntrustedSize).UntrustedSize() {
+				return fmt.Errorf("server reported size does not match downloaded file. - expected: %v, actual: %v", d.FileInfo.Size(), atomic.LoadInt64(&d.totalWritten))
+			}
 			return nil
 		}
 	}
@@ -199,9 +195,14 @@ func (d *DownloadParts) addPartsToQueue() {
 
 func (d *DownloadParts) listenOnQueue() {
 	go func() {
+		d.queueLock.Lock()
+		defer d.queueLock.Unlock()
 		for {
 			select {
 			case part := <-d.queue:
+				if part == nil {
+					return
+				}
 				if d.queueContext.Err() != nil {
 					d.finishedParts <- part
 					continue
@@ -210,103 +211,160 @@ func (d *DownloadParts) listenOnQueue() {
 					panic(part)
 				}
 				if len(part.requests) > 3 {
-					d.Config.LogPath(d.FileInfo.Name(), map[string]interface{}{"message": "Maxed out reties", "part": part.number})
+					d.Config.LogPath(d.path, map[string]interface{}{"message": "Maxed out reties", "part": part.number})
 					d.finishedParts <- part
 				} else {
+					if part.Context.Err() != nil {
+						d.finishedParts <- part.Done()
+						continue
+					}
 					part.Clear()
-					d.waitOnPerPartLimit()
-					if d.runningParts() != 0 && d.runningParts()%5 == 0 {
-						time.Sleep(time.Duration(100*d.runningParts()) * time.Millisecond)
-					}
-					if d.anyTimeouts() {
-						d.runningPartLimit = int(math.Max(float64(1), math.Ceil(float64(d.runningPartLimit/2))))
-						time.Sleep(time.Duration(100*d.runningParts()) * time.Millisecond)
+					d.globalWait.Wait()
+					d.fileManager.Submit(func() {
 						d.stateLog()
-					}
-					d.waitOnPerPartLimit()
-					if manager.Wait(d.Context, d.globalWait) {
-						go d.processPart(part.Start(d.Context), false)
-						if d.WaitOnFirstSuccess() == RunError {
-							break
-						}
-					} else {
-						break
-					}
+						d.processPart(part.Start(), false)
+						d.globalWait.Done()
+					})
+
+					d.slowDownTellFirstPart(part)
 				}
 			}
 		}
 	}()
 }
 
-func (d *DownloadParts) waitOnPerPartLimit() {
-	t := time.Now()
+func (d *DownloadParts) slowDownTellFirstPart(part *Part) {
+	// One request needs to return the header for MaxConnections.
+	// Once there finishedParts can be tuned to that value. So slow down to give time to get that value.
+	if atomic.LoadUint32(&d.partsCompleted) != 0 || d.parts[0].Err() != nil {
+		return
+	}
+	startTime := time.Now()
+	timeout := startTime.Add(time.Duration((part.number)*250) * time.Millisecond)
+	ctx, cancel := context.WithDeadline(d.Context, timeout)
+	defer cancel()
+
 	for {
-		if d.runningParts() < d.runningPartLimit {
-			break
-		}
-		if time.Now().After(t.Add(time.Second * 5)) {
-			t = time.Now()
-			d.stateLog()
+		select {
+		case <-ctx.Done():
+			d.Config.LogPath(d.path, map[string]interface{}{"message": fmt.Sprintf("Part1 to Finish: stopped waited %v after part %v", time.Now().Sub(startTime).Truncate(time.Microsecond), part.number)})
+			return
+		default:
+			if atomic.LoadUint32(&d.partsCompleted) != 0 || d.parts[0].Err() != nil {
+				d.Config.LogPath(d.path, map[string]interface{}{"message": fmt.Sprintf("Part1 to Finish: finish after waiting %v after part %v", time.Now().Sub(startTime).Truncate(time.Microsecond), part.number)})
+				cancel()
+				return
+			}
 		}
 	}
 }
 
-func (d *DownloadParts) stateLog() {
+func (d *DownloadParts) stateLog(extraState ...map[string]interface{}) {
 	d.Config.LogPath(
-		d.FileInfo.Name(),
-		d.state(),
+		d.path,
+		lo.Assign[string, interface{}](append(extraState, d.state())...),
 	)
 }
 
 func (d *DownloadParts) state() map[string]interface{} {
 	return map[string]interface{}{
-		"RunningParts": d.runningParts(),
-		"limit":        d.runningPartLimit,
+		"RunningParts": d.fileManager.Running(),
+		"limit":        d.fileManager.Cap(),
 		"parts":        len(d.parts),
-		"written":      d.totalWritten,
+		"written":      atomic.LoadInt64(&d.totalWritten),
+		"completed":    atomic.LoadUint32(&d.partsCompleted),
 	}
-}
-
-func (d *DownloadParts) SizeGuess() bool {
-	if untrusted, ok := d.FileInfo.(UntrustedSize); ok {
-		return untrusted.UntrustedSize()
-	}
-	return false
 }
 
 func (d *DownloadParts) buildParts() {
 	size := d.FileInfo.Size()
-	if d.SizeGuess() {
-		d.Config.LogPath(d.FileInfo.Name(), map[string]interface{}{
-			"message": "Using size guess",
-			"size":    size,
-		})
-	}
 	for i, offset := range byteChunkSlice(size, DownloadPartChunkSize) {
-		d.parts = append(d.parts, &Part{OffSet: offset, number: int64(i) + 1})
+		d.parts = append(d.parts, (&Part{OffSet: offset, number: int64(i) + 1}).WithContext(d.Context))
 	}
 
 	d.finishedParts = make(chan *Part, len(d.parts))
 	d.queue = make(chan *Part, len(d.parts))
+	d.stateLog()
 }
 
-func (d *DownloadParts) runningParts() int {
-	var running int
-	for _, part := range d.parts {
-		if part.processing {
-			running += 1
+func (d *DownloadParts) processPart(part *Part, UnexpectedEOF bool) {
+	d.processRanger(part, d.File.(ReaderRange), UnexpectedEOF)
+}
+
+func (d *DownloadParts) processRanger(part *Part, ranger ReaderRange, UnexpectedEOF bool) {
+	withContext, ok := ranger.(lib.FileWithContext)
+	if ok {
+		partCtx, partCancel := context.WithCancel(part.Context)
+		defer partCancel()
+		ranger = withContext.WithContext(partCtx).(ReaderRange)
+	}
+	r, err := ranger.ReaderRange(part.off, part.len+part.off-1)
+	if d.requeueOnError(part, err, UnexpectedEOF) {
+		return
+	}
+	if f, ok := ranger.(*File); ok {
+		if f.MaxConnections != 0 && d.fileManager.Cap() > f.MaxConnections {
+			d.fileManager.Tune(f.MaxConnections)
+			d.stateLog(map[string]interface{}{"message": "tuning pool"})
 		}
 	}
+	info, _ := ranger.Stat()
+	sizeTrustInfo, ok := info.(UntrustedSize)
+	if ok && sizeTrustInfo.SizeTrust() != NullSizeTrust {
+		d.RWMutex.Lock()
+		d.FileInfo = sizeTrustInfo
+		d.RWMutex.Unlock()
+	}
 
-	return running
+	wn, err := lib.CopyAt(d.WriterAndAt, part.off, r)
+	part.bytes = wn
+	atomic.AddInt64(&d.totalWritten, wn)
+	part.SetError(r.Close())
+	if sizeTrustInfo.UntrustedSize() && part.Err() != nil {
+		d.verifySizeAndUpdateParts(part)
+	}
+
+	if d.requeueOnError(part, err, UnexpectedEOF) {
+		return
+	}
+
+	d.finishedParts <- part.Done()
 }
 
-func (d *DownloadParts) anyTimeouts() bool {
-	for _, part := range d.parts {
-		if part.error == nil {
-			continue
+func (d *DownloadParts) verifySizeAndUpdateParts(part *Part) {
+	if errors.Is(part.Err(), UntrustedSizeRangeRequestSizeSentLessThanExpected) {
+		d.Config.LogPath(
+			d.path,
+			map[string]interface{}{"error": part.Err(), "part": part.number},
+		)
+		d.queueCancel()
+		// cancelAll greater parts
+		for _, p := range d.parts[part.number:] {
+			d.Config.LogPath(
+				d.path,
+				map[string]interface{}{"message": "canceling invalid part", "part": p.number},
+			)
+			p.CancelFunc()
 		}
-		if part.error == context.DeadlineExceeded {
+		part.SetError(nil)
+	}
+}
+
+func (d *DownloadParts) requeueOnError(part *Part, err error, UnexpectedEOF bool) bool {
+	for _, err := range []error{err, part.Err()} {
+		if err != nil && !errors.Is(err, io.EOF) {
+			if strings.Contains(err.Error(), "stream error") {
+				return false
+			}
+			if UnexpectedEOF && errors.Is(err, io.ErrUnexpectedEOF) {
+				return false
+			}
+			part.SetError(err)
+			d.Config.LogPath(
+				d.path,
+				map[string]interface{}{"message": "requeuing", "error": part.Err(), "part": part.number},
+			)
+			d.queue <- part.Done() // either timeout or stream error try part again.
 			return true
 		}
 	}
@@ -314,151 +372,10 @@ func (d *DownloadParts) anyTimeouts() bool {
 	return false
 }
 
-func (d *DownloadParts) processPart(part *Part, UnexpectedEOF bool) {
-	ranger, ok := d.File.(ReaderRange)
-	if ok {
-		d.processRanger(part, ranger, UnexpectedEOF)
-	} else {
-		d.processDefault(part, UnexpectedEOF)
-	}
-	d.globalWait.Done()
-}
-
-func (d *DownloadParts) partRequestTimeoutValue() time.Duration {
-	if d.runningPartLimit <= 6 {
-		return time.Second * 60
-	} else {
-		// Get stricter with more running part in order to not lock up on a slow server with many connections.
-		return time.Second * time.Duration(
-			math.Max(15, 60-float64(d.runningParts())),
-		)
-	}
-}
-
-func (d *DownloadParts) processRanger(part *Part, ranger ReaderRange, UnexpectedEOF bool) {
-	withContext, ok := ranger.(WithContext)
-	if ok {
-		timeoutValue := d.partRequestTimeoutValue()
-
-		d.Config.LogPath(
-			d.FileInfo.Name(),
-			lo.Assign(d.state(), map[string]interface{}{
-				"message":      "starting readerRange",
-				"TimeOutValue": timeoutValue,
-			}),
-		)
-		partCtx, partCancel := context.WithTimeout(part.Context, timeoutValue)
-		defer partCancel()
-		ranger = withContext.WithContext(partCtx).(ReaderRange)
-	}
-	r, err := ranger.ReaderRange(part.off, part.len+part.off-1)
-	if d.readInitCheck(part, err, "readRange") {
-		return
-	}
-	defer r.Close()
-
-	wn, err := lib.CopyAt(d.WriterAndAt, part.off, r)
-	part.bytes = wn
-	atomic.AddInt64(&d.totalWritten, wn)
-	if d.requeueOnError(part, err, "copyAt", UnexpectedEOF) {
-		return
-	}
-	d.verifySizeAndUpdateParts(part, wn)
-
-	d.finishedParts <- part.Done()
-}
-
-func (d *DownloadParts) verifySizeAndUpdateParts(part *Part, wn int64) {
-	if wn < part.len {
-		d.Config.LogPath(
-			d.FileInfo.Name(),
-			map[string]interface{}{"message": "returned less than expected", "part": part.number},
-		)
-		d.queueCancel()
-		// cancelAll greater parts
-		for _, p := range d.parts[part.number:] {
-			d.Config.LogPath(
-				d.FileInfo.Name(),
-				map[string]interface{}{"message": "canceling invalid part", "part": part.number},
-			)
-			p.CancelFunc()
-		}
-	}
-}
-
-func (d *DownloadParts) readInitCheck(part *Part, err error, op string) bool {
-	if err != nil {
-		part.error = &fs.PathError{
-			Path: d.FileInfo.Name(),
-			Err:  err,
-			Op:   op,
-		}
-		if errors.Is(err, context.DeadlineExceeded) {
-			d.queue <- part.Done()
-		} else {
-			d.finishedParts <- part.Done() // the request is already retried 3 times internally
-		}
-		return true
-	}
-	return false
-}
-
-func (d *DownloadParts) requeueOnError(part *Part, err error, op string, UnexpectedEOF bool) bool {
-	if err != nil && !errors.Is(err, io.EOF) {
-		if UnexpectedEOF && errors.Is(err, io.ErrUnexpectedEOF) {
-			return false
-		}
-		part.error = &fs.PathError{
-			Path: d.FileInfo.Name(),
-			Err:  err,
-			Op:   op,
-		}
-		d.Config.LogPath(
-			d.FileInfo.Name(),
-			map[string]interface{}{"message": "requeuing", "error": part.error, "part": part.number},
-		)
-		d.queue <- part.Done() // either timeout or stream error try part again.
-		return true
-	}
-
-	return false
-}
-
-// This is just a stub to use the default fs.File. It works the same just won't provide realtime progress.
-func (d *DownloadParts) processDefault(part *Part, UnexpectedEOF bool) {
-	buf := make([]byte, part.len)
-	readAtCloser, ok := d.File.(lib.ReaderAtCloser)
-	if !ok {
-		panic(fmt.Errorf("can't convert fs.File to lib.ReaderAtCloser"))
-	}
-	timeoutValue := d.partRequestTimeoutValue()
-	d.Config.LogPath(
-		d.FileInfo.Name(),
-		map[string]interface{}{"message": "readAt request", "TimeOutValue": timeoutValue, "part": part.number},
-	)
-	partCtx, partCancel := context.WithTimeout(d.Context, timeoutValue)
-	defer partCancel()
-	rn, err := lib.NewReaderAt(partCtx, readAtCloser).ReadAt(buf, part.off)
-	part.bytes += int64(rn)
-	if d.readInitCheck(part, err, "readerAt") {
-		return
-	}
-	defer readAtCloser.Close()
-	wn, err := d.WriterAndAt.WriteAt(buf, part.off)
-
-	atomic.AddInt64(&d.totalWritten, int64(wn))
-	if d.requeueOnError(part, err, "copyAt", UnexpectedEOF) {
-		return
-	}
-	d.verifySizeAndUpdateParts(part, int64(wn))
-
-	d.finishedParts <- part.Done()
-}
-
 func (d *DownloadParts) downloadFile() error {
-	withContext, ok := d.File.(WithContext)
+	withContext, ok := d.File.(lib.FileWithContext)
 	if ok {
-		d.File = withContext.WithContext(d.Context).(fs.File)
+		d.File = withContext.WithContext(d.Context)
 	}
 	n, err := io.Copy(d.WriterAndAt, d.File)
 	atomic.AddInt64(&d.totalWritten, n)
@@ -469,47 +386,15 @@ func (d *DownloadParts) downloadFile() error {
 	if err != nil {
 		return err
 	}
-	if !d.SizeGuess() {
-		return nil
+
+	info, _ := d.File.Stat()
+	sizeTrustInfo, ok := info.(UntrustedSize)
+	if ok && sizeTrustInfo.SizeTrust() != NullSizeTrust {
+		d.FileInfo = sizeTrustInfo
 	}
 
-	realTime, ok := d.File.(RealTimeStat)
-	if ok {
-		d.FileInfo, err = realTime.RealTimeStat()
-		if err != nil {
-			return err
-		}
-	} else {
-		d.FileInfo, err = d.File.Stat()
-		if err != nil {
-			return err
-		}
-	}
-	if !d.SizeGuess() {
-		if d.FileInfo.Size() != d.totalWritten {
-			return fmt.Errorf("server reported size does not match downloaded file. - expected: %v, actual: %v", d.FileInfo.Size(), d.totalWritten)
-		}
+	if d.FileInfo.Size() != atomic.LoadInt64(&d.totalWritten) {
+		return fmt.Errorf("server reported size does not match downloaded file. - expected: %v, actual: %v", d.FileInfo.Size(), atomic.LoadInt64(&d.totalWritten))
 	}
 	return nil
-}
-
-func (d *DownloadParts) WaitOnFirstSuccess() int {
-	if d.firstPartSuccess > 0 {
-		return d.firstPartSuccess
-	}
-
-	d.firstPartSuccess = <-d.firstPartSuccessChan
-	return d.firstPartSuccess
-}
-
-func (d *DownloadParts) TriggerFirstSuccess(status int) {
-	if d.firstPartSuccess > 0 {
-		return
-	}
-
-	d.Config.LogPath(
-		d.FileInfo.Name(),
-		map[string]interface{}{"message": "TriggerFirstSuccess", "status": status},
-	)
-	d.firstPartSuccessChan <- status
 }

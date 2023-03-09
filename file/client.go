@@ -44,7 +44,7 @@ func Get(ctx context.Context, Path string) (files_sdk.File, error) {
 }
 
 // File{}.Size and File{}.Mtime are not always up to date. This calls HEAD on File{}.DownloadUri to get the latest info.
-// Some Download URLs won't support HEAD. In this case the size is reported as -1. The size can be known post download
+// Some Download URLs won't support HEAD. In this case the size is reported as UntrustedSizeValue. The size can be known post download
 // using Client{}.DownloadRequestStatus. This applies to the remote mount types FTP, SFTP, and WebDAV.
 func (c *Client) FileStats(ctx context.Context, file files_sdk.File) (files_sdk.File, error) {
 	var err error
@@ -60,7 +60,7 @@ func (c *Client) FileStats(ctx context.Context, file files_sdk.File) (files_sdk.
 		}),
 		files_sdk.ResponseOption(func(response *http.Response) error {
 			if response.StatusCode == 422 {
-				size = -1 // Size is unknown
+				size = int64(UntrustedSizeValue)
 				return nil
 			}
 			if err := lib.ResponseErrors(response, lib.NonOkError); err != nil {
@@ -95,6 +95,9 @@ func (c *Client) DownloadRequestStatus(ctx context.Context, fileDownloadUrl stri
 	if err != nil {
 		return re, err
 	}
+
+	c.SetHeaders(&request.Header)
+
 	resp, err := files_sdk.WrapRequestOptions(c.Config.GetHttpClient(), request, opts...)
 	if err != nil {
 		return re, err
@@ -154,6 +157,8 @@ func (c *Client) Download(ctx context.Context, params files_sdk.FileDownloadPara
 	if err != nil {
 		return params.File, err
 	}
+
+	c.SetHeaders(&request.Header)
 
 	_, err = files_sdk.WrapRequestOptions(c.Config.GetHttpClient(), request, opts...)
 

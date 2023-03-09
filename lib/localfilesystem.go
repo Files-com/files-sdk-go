@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"context"
 	"io"
 	"io/fs"
 	"os"
@@ -85,4 +86,12 @@ func (w LocalFileSystem) SplitPath(path string) (string, string) {
 
 func (w LocalFileSystem) TempDir() string {
 	return os.TempDir()
+}
+
+type FSWithContext interface {
+	WithContext(ctx context.Context) fs.FS
+}
+
+type FileWithContext interface {
+	WithContext(ctx context.Context) fs.File
 }

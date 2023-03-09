@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -22,6 +23,14 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/folder"
+)
+
+type SizeTrust int
+
+const (
+	NullSizeTrust SizeTrust = iota
+	UntrustedSizeValue
+	TrustedSizeValue
 )
 
 type FS struct {
@@ -41,10 +50,6 @@ func (f *FS) Init(config files_sdk.Config, cache bool) *FS {
 	return f
 }
 
-type WithContext interface {
-	WithContext(ctx context.Context) interface{}
-}
-
 func (f *FS) WithContext(ctx context.Context) interface{} {
 	return &FS{Context: ctx, Config: f.Config, cache: f.cache, useCache: f.useCache, cacheDir: f.cacheDir, cacheMutex: f.cacheMutex}
 }
@@ -61,9 +66,11 @@ type File struct {
 	*FS
 	io.ReadCloser
 	downloadRequestId string
+	MaxConnections    int
 	stat              bool
 	fileMutex         *sync.Mutex
-	realSize          int64
+	SizeTrust
+	serverBytesSent int64
 }
 
 type ReadDirFile struct {
@@ -79,6 +86,7 @@ func (f *File) safeFile() files_sdk.File {
 
 func (f *File) Init() *File {
 	f.fileMutex = &sync.Mutex{}
+	f.SizeTrust = NullSizeTrust
 	return f
 }
 
@@ -100,7 +108,7 @@ func (f *File) Info() (goFs.FileInfo, error) {
 
 type Info struct {
 	files_sdk.File
-	realSize int64
+	sizeTrust SizeTrust
 }
 
 func (i Info) Name() string {
@@ -108,18 +116,21 @@ func (i Info) Name() string {
 }
 
 func (i Info) Size() int64 {
-	if i.realSize < 0 {
-		return i.File.Size
-	}
-	return i.realSize
+	return i.File.Size
 }
 
 type UntrustedSize interface {
 	UntrustedSize() bool
+	SizeTrust() SizeTrust
+	goFs.FileInfo
 }
 
 func (i Info) UntrustedSize() bool {
-	return i.realSize == -1
+	return i.sizeTrust == UntrustedSizeValue || i.sizeTrust == NullSizeTrust
+}
+
+func (i Info) SizeTrust() SizeTrust {
+	return i.sizeTrust
 }
 
 type PossibleSize interface {
@@ -133,6 +144,7 @@ func (i Info) PossibleSize() int64 {
 func (i Info) Mode() goFs.FileMode {
 	return goFs.ModePerm
 }
+
 func (i Info) ModTime() time.Time {
 	return *i.File.Mtime
 }
@@ -140,85 +152,133 @@ func (i Info) ModTime() time.Time {
 func (i Info) IsDir() bool {
 	return i.File.Type == "directory"
 }
+
 func (i Info) Sys() interface{} {
 	return i.File
 }
 
-type RealTimeStat interface {
-	RealTimeStat() (goFs.FileInfo, error)
-}
-
-func (f *File) RealTimeStat() (goFs.FileInfo, error) {
-	var err error
-	if f.safeFile().Type == "directory" {
-		return Info{File: *f.File, realSize: f.realSize}, err
-	}
-	if f.stat {
-		return Info{File: *f.File, realSize: f.realSize}, err
+func (i Info) RemoteMount() bool {
+	if i.Crc32 != "" { // Detect if is Files.com native file.
+		return false
 	}
 
-	f.fileMutex.Lock()
-	defer f.fileMutex.Unlock()
-
-	statCtx, cancel := context.WithTimeout(f.Context, time.Second*15)
-	defer cancel()
-	var tempFile files_sdk.File
-	tempFile, err = (&Client{Config: f.Config}).FileStats(statCtx, *f.File)
-	f.stat = true
-	f.realSize = tempFile.Size
-	return Info{File: *f.File, realSize: f.realSize}, err
+	return true
 }
 
 func (f *File) Stat() (goFs.FileInfo, error) {
-	return Info{File: *f.File, realSize: -2}, nil
+	f.fileMutex.Lock()
+	defer f.fileMutex.Unlock()
+	return Info{File: *f.File, sizeTrust: f.SizeTrust}, nil
 }
 
 func (f *File) Read(b []byte) (n int, err error) {
 	f.fileMutex.Lock()
-	if f.ReadCloser == nil {
-		*f.File, err = (&Client{Config: f.Config}).Download(
-			f.Context,
-			files_sdk.FileDownloadParams{File: *f.File},
-			files_sdk.ResponseOption(func(response *http.Response) error {
-				if err := lib.ResponseErrors(response, lib.IsStatus(http.StatusForbidden), lib.NotStatus(http.StatusOK)); err != nil {
-					return &goFs.PathError{Path: f.File.Path, Err: err, Op: "read"}
-				}
-				f.downloadRequestId = response.Header.Get("X-Files-Download-Request-Id")
-				f.ReadCloser = response.Body
-				return nil
-			}),
-		)
-	}
+	defer f.fileMutex.Unlock()
 
-	if downloadRequestExpired(err) {
-		f.Config.LogPath(f.File.Path, map[string]interface{}{"message": "downloadRequestExpired", "error": err})
-		f.fileMutex.Unlock()
-		f.File.DownloadUri = "" // force a new query
-		err = f.downloadURI()
-		if err != nil {
-			return n, err
+	if f.ReadCloser == nil {
+		err = f.readCloserInit()
+		if downloadRequestExpired(err) {
+			f.Config.LogPath(f.File.Path, map[string]interface{}{"message": "downloadRequestExpired", "error": err})
+			f.File.DownloadUri = "" // force a new query
+			*f.File, err = (&Client{Config: f.Config}).DownloadUri(f.Context, files_sdk.FileDownloadParams{File: *f.File})
+			if err == nil {
+				err = f.readCloserInit()
+			}
 		}
 
-		return f.Read(b)
+		if err != nil {
+			status, statusErr := (&Client{Config: f.Config}).DownloadRequestStatus(f.Context, f.File.DownloadUri, f.downloadRequestId)
+			if statusErr != nil {
+				return n, err
+			}
+			if !status.IsNil() {
+				return n, status
+			}
+
+			return
+		}
 	}
 
-	if err != nil {
+	return f.ReadCloser.Read(b)
+}
+
+func parseSize(response *http.Response) (size int64, sizeTrust SizeTrust) {
+	var err error
+
+	if response.StatusCode == http.StatusPartialContent {
+		if contentRange := response.Header.Get("Content-Range"); contentRange != "" {
+			rangeParts := strings.SplitN(contentRange, "/", 2)
+			if len(rangeParts) == 2 {
+				size, err = strconv.ParseInt(rangeParts[1], 10, 64)
+				if err == nil {
+					sizeTrust = TrustedSizeValue
+					return
+				}
+			}
+		}
+	} else if response.ContentLength > -1 {
+		sizeTrust = TrustedSizeValue
+		size = response.ContentLength
+
 		return
 	}
 
-	defer f.fileMutex.Unlock()
-	return f.ReadCloser.Read(b)
+	// For some remote mounts file size information cannot be trusted and will not be returned.
+	// In order to ensure the total file was received after a download `Client{}.DownloadRequestStatus` should be called.
+	sizeTrust = UntrustedSizeValue
+
+	return
+}
+
+func parseMaxConnections(response *http.Response) int {
+	maxConnections, _ := strconv.Atoi(response.Header.Get("X-Files-Max-Connections"))
+	return maxConnections
+}
+
+func (f *File) readCloserInit() (err error) {
+	*f.File, err = (&Client{Config: f.Config}).Download(
+		f.Context,
+		files_sdk.FileDownloadParams{File: *f.File},
+		files_sdk.ResponseOption(func(response *http.Response) error {
+			f.MaxConnections = parseMaxConnections(response)
+			f.downloadRequestId = response.Header.Get("X-Files-Download-Request-Id")
+			f.Size, f.SizeTrust = parseSize(response)
+			if err := lib.ResponseErrors(response, files_sdk.APIError(), lib.NotStatus(http.StatusOK)); err != nil {
+				return &goFs.PathError{Path: f.File.Path, Err: err, Op: "read"}
+			}
+
+			f.ReadCloser = &ReadWrapper{ReadCloser: response.Body}
+			return nil
+		}),
+	)
+	return err
 }
 
 type ReaderRange interface {
 	ReaderRange(off int64, end int64) (io.ReadCloser, error)
+	goFs.File
+}
+
+type ReadAtLeastWrapper struct {
+	io.ReadCloser
+	io.Reader
+}
+
+func (r ReadAtLeastWrapper) Close() error {
+	return r.ReadCloser.Close()
+}
+
+func (f ReadAtLeastWrapper) Read(b []byte) (n int, err error) {
+	return f.Reader.Read(b)
 }
 
 func (f *File) ReaderRange(off int64, end int64) (r io.ReadCloser, err error) {
-	err = f.downloadURI()
-	if err != nil {
+	if err = f.downloadURI(); err != nil {
 		return
 	}
+	f.fileMutex.Lock()
+	rangerReaderCloser := ReaderCloserDownloadStatus{file: f, expectedSize: (end + 1) - off, rangeRequest: true, ReadWrapper: &ReadWrapper{}}
+
 	headers := &http.Header{}
 	headers.Set("Range", fmt.Sprintf("bytes=%v-%v", off, end))
 	_, err = (&Client{Config: f.Config}).Download(
@@ -226,14 +286,18 @@ func (f *File) ReaderRange(off int64, end int64) (r io.ReadCloser, err error) {
 		files_sdk.FileDownloadParams{File: *f.File},
 		files_sdk.RequestHeadersOption(headers),
 		files_sdk.ResponseOption(func(response *http.Response) error {
-			if err := lib.ResponseErrors(response, lib.IsStatus(http.StatusForbidden), lib.NotStatus(http.StatusPartialContent)); err != nil {
+			f.downloadRequestId = response.Header.Get("X-Files-Download-Request-Id")
+			rangerReaderCloser.file.downloadRequestId = response.Header.Get("X-Files-Download-Request-Id")
+			f.MaxConnections = parseMaxConnections(response)
+			f.Size, f.SizeTrust = parseSize(response)
+			if err := lib.ResponseErrors(response, lib.IsStatus(http.StatusForbidden), files_sdk.APIError(), lib.NotStatus(http.StatusPartialContent)); err != nil {
 				return &goFs.PathError{Path: f.File.Path, Err: err, Op: "ReaderRange"}
 			}
-			r = response.Body
+			rangerReaderCloser.ReadCloser = &ReadWrapper{ReadCloser: response.Body}
 			return nil
 		}),
 	)
-
+	f.fileMutex.Unlock()
 	if downloadRequestExpired(err) {
 		f.Config.LogPath(f.File.Path, map[string]interface{}{"message": "downloadRequestExpired", "error": err})
 		f.File.DownloadUri = "" // force a new query
@@ -244,7 +308,116 @@ func (f *File) ReaderRange(off int64, end int64) (r io.ReadCloser, err error) {
 
 		return f.ReaderRange(off, end)
 	}
-	return r, err
+	return rangerReaderCloser, err
+}
+
+type ReadWrapper struct {
+	io.ReadCloser
+	read int
+}
+
+func (r *ReadWrapper) Read(p []byte) (n int, err error) {
+	n, err = r.ReadCloser.Read(p)
+	r.read += n
+	return
+}
+
+type ReaderCloserDownloadStatus struct {
+	*ReadWrapper
+	file         *File
+	expectedSize int64
+	rangeRequest bool
+	UntrustedSizeRangeRequestSize
+}
+
+type UntrustedSizeRangeRequestSize struct {
+	ExpectedSize int64
+	SentSize     int64
+	ReceivedSize int64
+}
+
+func (u UntrustedSizeRangeRequestSize) VerifyReceived() error {
+	if u.ReceivedSize != u.SentSize {
+		return errors.Join(UntrustedSizeRangeRequestSizeSentReceived, fmt.Errorf("expected %v bytes sent %v received", u.SentSize, u.ReceivedSize))
+	}
+	return nil
+}
+
+var UntrustedSizeRangeRequestSizeSentReceived = fmt.Errorf("received size did not match server send size")
+
+func (u UntrustedSizeRangeRequestSize) Mismatch() error {
+	if u.ExpectedSize > u.SentSize {
+		return UntrustedSizeRangeRequestSizeSentLessThanExpected
+	}
+	if u.ExpectedSize < u.SentSize {
+		return UntrustedSizeRangeRequestSizeSentMoreThanExpected
+	}
+	return nil
+}
+
+var UntrustedSizeRangeRequestSizeSentMoreThanExpected = fmt.Errorf("server send more than expected")
+
+var UntrustedSizeRangeRequestSizeSentLessThanExpected = fmt.Errorf("server send less than expected")
+
+func (r ReaderCloserDownloadStatus) Close() error {
+	if r.ReadCloser == nil {
+		return nil
+	}
+	err := r.ReadCloser.Close()
+	defer func() { r.ReadCloser = nil }()
+	if err != nil {
+		return err
+	}
+
+	if r.file.downloadRequestId == "" {
+		return nil
+	}
+
+	info, err := r.file.Info()
+	if err != nil {
+		return err
+	}
+
+	if untrustedInfo, ok := info.(UntrustedSize); ok && (untrustedInfo.UntrustedSize() || untrustedInfo.SizeTrust() == NullSizeTrust) {
+		status, err := (&Client{Config: r.file.Config}).DownloadRequestStatus(r.file.Context, r.file.DownloadUri, r.file.downloadRequestId)
+		if err != nil {
+			return err
+		}
+		if !status.IsNil() || status.Data.Status != "completed" {
+			return status
+		}
+		r.UntrustedSizeRangeRequestSize = UntrustedSizeRangeRequestSize{
+			r.expectedSize,
+			status.Data.BytesTransferred,
+			int64(r.ReadWrapper.read),
+		}
+
+		if err := r.UntrustedSizeRangeRequestSize.VerifyReceived(); err != nil {
+			return err
+		}
+
+		// The true size can only be known after the server determines that the full file has been sent without any errors.
+		if r.rangeRequest {
+			if err := r.UntrustedSizeRangeRequestSize.Mismatch(); err != nil {
+				return err
+			}
+
+			if r.file.SizeTrust == UntrustedSizeValue {
+				r.file.serverBytesSent += status.Data.BytesTransferred
+			}
+		} else {
+			r.file.SizeTrust = TrustedSizeValue
+			r.file.Size = status.Data.BytesTransferred
+		}
+
+		if dataBytes, err := json.Marshal(status.Data); err == nil {
+			dataMap := make(map[string]interface{})
+			if err = json.Unmarshal(dataBytes, &dataMap); err == nil {
+				r.file.Config.LogPath(info.Name(), lo.Assign(dataMap, map[string]interface{}{"message": "download request server status"}))
+			}
+		}
+	}
+	return nil
 }
 
 func (f *File) ReadAt(p []byte, off int64) (n int, err error) {
@@ -305,41 +478,18 @@ func (f *File) downloadURI() (err error) {
 }
 
 func (f *File) Close() error {
-	if f.ReadCloser == nil {
-		return nil
-	}
+	f.fileMutex.Lock()
+	f.fileMutex.Unlock()
 	defer func() { f.ReadCloser = nil }()
-	err := f.ReadCloser.Close()
-
-	if err != nil {
-		return err
+	switch f.ReadCloser.(type) {
+	case *ReadWrapper:
+		return ReaderCloserDownloadStatus{ReadWrapper: f.ReadCloser.(*ReadWrapper), file: f}.Close()
+	default:
+		return ReaderCloserDownloadStatus{ReadWrapper: &ReadWrapper{ReadCloser: f.ReadCloser}, file: f}.Close()
 	}
-
-	info, err := f.Info()
-	if err == nil && info.(UntrustedSize).UntrustedSize() {
-		status, err := (&Client{Config: f.Config}).DownloadRequestStatus(f.Context, f.File.DownloadUri, f.downloadRequestId)
-		if err != nil {
-			return err
-		}
-		if !status.IsNil() {
-			return status
-		}
-
-		if status.Data.Status == "completed" {
-			f.realSize = status.Data.BytesTransferred
-			if dataBytes, err := json.Marshal(status.Data); err == nil {
-				dataMap := make(map[string]interface{})
-				if err = json.Unmarshal(dataBytes, &dataMap); err == nil {
-					f.Config.LogPath(info.Name(), lo.Assign(dataMap, map[string]interface{}{"message": "download request server status"}))
-				}
-			}
-		} else {
-			return fmt.Errorf("server reported transfer '%v'", status.Data.Status)
-		}
-	}
-	return err
 }
-func (f *File) WithContext(ctx context.Context) interface{} {
+
+func (f *File) WithContext(ctx context.Context) goFs.File {
 	newF := *f
 	fs := *newF.FS
 	newF.FS = fs.WithContext(ctx).(*FS)

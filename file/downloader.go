@@ -24,9 +24,9 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 	SetJobParams(job, direction.DownloadType, params, params.Config.Logger(), fileSys)
 	job.Config = params.Config
 	jobCtx := job.WithContext(ctx)
-	remoteFs, ok := fileSys.(WithContext)
+	remoteFs, ok := fileSys.(lib.FSWithContext)
 	if ok {
-		fileSys = remoteFs.WithContext(jobCtx).(*FS)
+		fileSys = remoteFs.WithContext(jobCtx)
 	}
 	if params.RemoteFile.Path != "" {
 		job.LocalPath = params.LocalPath

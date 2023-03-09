@@ -11,6 +11,8 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/Files-com/files-sdk-go/v2/file/manager"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -172,209 +174,393 @@ func Test_downloader_RemoteStartingSlash(t *testing.T) {
 	assert.NoError(t, setup.TearDown())
 }
 
-func Test_downloadFolder_more_than_one_file(t *testing.T) {
-	setup := NewTestSetup()
-	setup.MapFS["some-path"] = &fstest.MapFile{
-		Data: nil,
-		Mode: fs.ModeDir,
-		Sys: files_sdk.File{
-			DisplayName:   "some-path",
-			Path:          "some-path",
-			Type:          "directory",
-			ProvidedMtime: lib.Time(time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC)),
-			Mtime:         lib.Time(time.Now()),
-		},
-	}
-
-	setup.MapFS["some-path/taco.png"] = &fstest.MapFile{
-		Data: make([]byte, 100),
-		Mode: fs.ModePerm,
-		Sys: files_sdk.File{
-			DisplayName: "taco.png",
-			Path:        "some-path/taco.png",
-			Type:        "file",
-			Size:        100,
-			Mtime:       lib.Time(time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC)),
-		},
-	}
-
-	setup.MapFS["some-path/pizza.png"] = &fstest.MapFile{
-		Data: make([]byte, 102),
-		Mode: fs.ModePerm,
-		Sys: files_sdk.File{
-			DisplayName:   "pizza.png",
-			Path:          "some-path/pizza.png",
-			Type:          "file",
-			Size:          102,
-			ProvidedMtime: lib.Time(time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC)),
-			Mtime:         lib.Time(time.Now()),
-		},
-	}
-	setup.DownloaderParams = DownloaderParams{
-		RemotePath:     "some-path/",
-		EventsReporter: setup.Reporter(),
-		LocalPath:      setup.RootDestination(),
-		PreserveTimes:  true,
-	}
-	setup.rootDestination = "some-path"
-
-	job := setup.Call()
-	job.Wait()
-	statuses := make(map[string]int)
-	var paths []string
-	for _, call := range setup.reporterCalls {
-		i, ok := statuses[call.Status.Name]
-		if ok {
-			statuses[call.Status.Name] = i + 1
-		} else {
-			statuses[call.Status.Name] = 1
+func TestClient_Downloader(t *testing.T) {
+	t.Run("small file with size", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["small-file-with-size.txt"] = mockFile{
+			SizeTrust: TrustedSizeValue,
+			File:      files_sdk.File{Size: 1999},
 		}
-		paths = append(paths, call.File.Path)
-	}
-	t.Log("it goes through all statuses")
-	{
-		assert.Equal(t, 2, setup.reporterCalls[0].Job.Count())
-		assert.Equal(t, map[string]int{"complete": 2, "downloading": 2, "queued": 2}, statuses)
-		assert.Equal(t, 6, len(setup.reporterCalls))
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "small-file-with-size.txt", LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		f, err := os.Open(filepath.Join(root, "small-file-with-size.txt"))
+		require.NoError(t, err)
+		stat, err := f.Stat()
+		require.NoError(t, err)
+		assert.Equal(t, int64(1999), stat.Size())
+	})
+
+	t.Run("large file with size", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["large-file-with-size.txt"] = mockFile{
+			SizeTrust: TrustedSizeValue,
+			File:      files_sdk.File{Size: 19999999},
+		}
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-size.txt", LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		f, err := os.Open(filepath.Join(root, "large-file-with-size.txt"))
+		require.NoError(t, err)
+		stat, err := f.Stat()
+		require.NoError(t, err)
+		assert.Equal(t, int64(19999999), stat.Size())
+	})
+
+	t.Run("large file with size with max concurrent connections of 1", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["large-file-with-size.txt"] = mockFile{
+			SizeTrust:      TrustedSizeValue,
+			File:           files_sdk.File{Size: 1024 * 1024 * 100},
+			MaxConnections: 1,
+		}
+		m := manager.Build(1, 1)
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-size.txt", LocalPath: root + "/", Manager: m})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		f, err := os.Open(filepath.Join(root, "large-file-with-size.txt"))
+		require.NoError(t, err)
+		stat, err := f.Stat()
+		require.NoError(t, err)
+		assert.Equal(t, int64(1024*1024*100), stat.Size())
+		assert.Len(t, server.TrackRequest["/download/:download_id"], 1)
+	})
+
+	t.Run("large file with size with max connections", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["large-file-with-size.txt"] = mockFile{
+			SizeTrust:      TrustedSizeValue,
+			File:           files_sdk.File{Size: 1024 * 1024 * 50},
+			MaxConnections: 1,
+		}
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-size.txt", LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		f, err := os.Open(filepath.Join(root, "large-file-with-size.txt"))
+		require.NoError(t, err)
+		stat, err := f.Stat()
+		require.NoError(t, err)
+		assert.Equal(t, int64(1024*1024*50), stat.Size())
+	})
+
+	t.Run("large file with no size", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["large-file-with-no-size.txt"] = mockFile{
+			SizeTrust: UntrustedSizeValue,
+			File:      files_sdk.File{Size: 19999999},
+		}
+
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		f, err := os.Open(filepath.Join(root, "large-file-with-no-size.txt"))
+		require.NoError(t, err)
+		stat, err := f.Stat()
+		require.NoError(t, err)
+		assert.Equal(t, int64(19999999), stat.Size())
+	})
+
+	t.Run("large file with no size - extra parts are canceled", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		realSize := int64((1024 * 1024 * 5) - 256)
+		server.MockFiles["large-file-with-no-size.txt"] = mockFile{
+			SizeTrust: UntrustedSizeValue,
+			File:      files_sdk.File{Size: 1024 * 1024 * 100},
+			RealSize:  &realSize,
+		}
+
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		f, err := os.Open(filepath.Join(root, "large-file-with-no-size.txt"))
+		require.NoError(t, err)
+		stat, err := f.Stat()
+		require.NoError(t, err)
+		assert.Equal(t, realSize, stat.Size())
+	})
+
+	t.Run("large file with no size - client does not receive all bytes server reported to send", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		serverBytesSent := int64((1024 * 1024 * 5) + 256)
+		server.MockFiles["large-file-with-no-size.txt"] = mockFile{
+			SizeTrust:       UntrustedSizeValue,
+			File:            files_sdk.File{Size: 1024 * 1024 * 15},
+			ServerBytesSent: &serverBytesSent,
+		}
+
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.EqualError(t, job.Statuses[0].Err(), `received size did not match server send size
+expected 5243136 bytes sent 5242880 received`)
+		_, err := os.Open(filepath.Join(root, "large-file-with-no-size.txt"))
+		require.Error(t, err)
+	})
+
+	t.Run("large file with no size - client received more bytes than server reported to send", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		serverBytesSent := int64(1024 * 1024 * 4)
+		server.MockFiles["large-file-with-no-size.txt"] = mockFile{
+			SizeTrust:       UntrustedSizeValue,
+			File:            files_sdk.File{Size: 1024 * 1024 * 15},
+			ServerBytesSent: &serverBytesSent,
+		}
+
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.EqualError(t, job.Statuses[0].Err(), `received size did not match server send size
+expected 4194304 bytes sent 5242880 received`)
+		_, err := os.Open(filepath.Join(root, "large-file-with-no-size.txt"))
+		require.Error(t, err)
+	})
+
+	t.Run("large file with bad size info real size is bigger", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		realSize := int64(20000000)
+		server.MockFiles["file-with-mismatch-size-bigger"] = mockFile{
+			SizeTrust: UntrustedSizeValue,
+			File:      files_sdk.File{Size: 19999999},
+			RealSize:  &realSize,
+		}
+
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "file-with-mismatch-size-bigger", LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		require.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		f, err := os.Open(filepath.Join(root, "file-with-mismatch-size-bigger"))
+		require.NoError(t, err)
+		stat, err := f.Stat()
+		require.NoError(t, err)
+		assert.Equal(t, int64(20000000), stat.Size())
+	})
+
+	t.Run("large file with bad size info real size is smaller", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		realSize := int64(19999999)
+		server.MockFiles["file-with-mismatch-size-smaller"] = mockFile{
+			SizeTrust: UntrustedSizeValue,
+			File:      files_sdk.File{Size: 20000000},
+			RealSize:  &realSize,
+		}
+
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "file-with-mismatch-size-smaller", LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		require.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		f, err := os.Open(filepath.Join(root, "file-with-mismatch-size-smaller"))
+		require.NoError(t, err)
+		stat, err := f.Stat()
+		require.NoError(t, err)
+		assert.Equal(t, int64(19999999), stat.Size())
+	})
+
+	multipleFiles := func(relativeRoot string, t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles[filepath.Join(relativeRoot, "file1")] = mockFile{
+			SizeTrust: TrustedSizeValue,
+			File:      files_sdk.File{Size: 6},
+		}
+		server.MockFiles[filepath.Join(relativeRoot, "file2")] = mockFile{
+			SizeTrust: TrustedSizeValue,
+			File:      files_sdk.File{Size: 1024 * 1024},
+		}
+		server.MockFiles[filepath.Join(relativeRoot, "file3")] = mockFile{
+			SizeTrust: TrustedSizeValue,
+			File:      files_sdk.File{Size: 1024 * 1024 * 2},
+		}
+		server.MockFiles[filepath.Join(relativeRoot, "file4")] = mockFile{
+			SizeTrust: TrustedSizeValue,
+			File:      files_sdk.File{Size: 1024 * 1024 * 10},
+		}
+		server.MockFiles[filepath.Join(relativeRoot, "file5")] = mockFile{
+			SizeTrust: TrustedSizeValue,
+			File:      files_sdk.File{Size: 100},
+		}
+		if relativeRoot != "" {
+			server.MockFiles[relativeRoot] = mockFile{
+				File: files_sdk.File{Type: "directory"},
+			}
+		}
+
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: relativeRoot, LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 5)
+		require.NoError(t, job.Statuses[0].Err())
+
+		for k, v := range server.MockFiles {
+			f, err := os.Open(filepath.Join(root, k))
+			require.NoError(t, err)
+			stat, err := f.Stat()
+			require.NoError(t, err)
+			if !stat.IsDir() {
+				assert.Equal(t, v.Size, stat.Size())
+			}
+		}
 	}
 
-	t.Log("it uses Mtime")
-	{
-		stat, err := os.Stat(filepath.Join(setup.tempDir, "taco.png"))
+	t.Run("list folder from a path", func(t *testing.T) {
+		multipleFiles("a-root", t)
+	})
+
+	t.Run("multiple files from root", func(t *testing.T) {
+		multipleFiles("", t)
+	})
+
+	t.Run("PreserveTimes with mtime", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		mtime := time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC).Truncate(time.Millisecond)
+		server.MockFiles["small-file-with-size.txt"] = mockFile{
+			SizeTrust: TrustedSizeValue,
+			File:      files_sdk.File{Size: 1999, Mtime: &mtime},
+		}
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "small-file-with-size.txt", LocalPath: root + "/", PreserveTimes: true})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		f, err := os.Open(filepath.Join(root, "small-file-with-size.txt"))
+		require.NoError(t, err)
+		stat, err := f.Stat()
+		require.NoError(t, err)
+		assert.Equal(t, int64(1999), stat.Size())
+		assert.Equal(t, mtime, stat.ModTime().UTC())
+	})
+
+	t.Run("PreserveTimes with providedMtime", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		providedMtime := time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC).Truncate(time.Millisecond)
+		server.MockFiles["small-file-with-size.txt"] = mockFile{
+			SizeTrust: TrustedSizeValue,
+			File:      files_sdk.File{Size: 1999, Mtime: lib.Time(time.Now()), ProvidedMtime: &providedMtime},
+		}
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "small-file-with-size.txt", LocalPath: root + "/", PreserveTimes: true})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		f, err := os.Open(filepath.Join(root, "small-file-with-size.txt"))
+		require.NoError(t, err)
+		stat, err := f.Stat()
+		require.NoError(t, err)
+		assert.Equal(t, int64(1999), stat.Size())
+		assert.Equal(t, providedMtime, stat.ModTime().UTC())
+	})
+
+	t.Run("sync already downloaded", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["taco.png"] = mockFile{
+			SizeTrust: TrustedSizeValue,
+			File:      files_sdk.File{Size: 100},
+		}
+		taco, err := os.Create(filepath.Join(root, "taco.png"))
 		assert.NoError(t, err)
-		assert.Equal(t, time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC).Truncate(time.Millisecond), stat.ModTime().UTC().Truncate(time.Millisecond))
-		assert.Contains(t, paths, "some-path/taco.png")
-		assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
-	}
+		_, err = taco.Write(make([]byte, 100))
+		require.NoError(t, err)
+		require.NoError(t, taco.Close())
+		job := client.Downloader(context.Background(), DownloaderParams{Sync: true, RemotePath: "taco.png", LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		assert.Equal(t, status.Skipped, job.Statuses[0].Status())
+	})
 
-	t.Log("it uses ProvidedMtime")
-	{
-		stat, err := os.Stat(filepath.Join(setup.tempDir, "pizza.png"))
+	t.Run("sync does not exist locally", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["taco.png"] = mockFile{
+			SizeTrust: TrustedSizeValue,
+			File:      files_sdk.File{Size: 100},
+		}
+		job := client.Downloader(context.Background(), DownloaderParams{Sync: true, RemotePath: "taco.png", LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		assert.Equal(t, status.Complete, job.Statuses[0].Status())
+	})
+
+	t.Run("sync is out of date locally by size", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["taco.png"] = mockFile{
+			SizeTrust: TrustedSizeValue,
+			File:      files_sdk.File{Size: 100},
+		}
+		taco, err := os.Create(filepath.Join(root, "taco.png"))
 		assert.NoError(t, err)
-		assert.Equal(t, time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC).Truncate(time.Millisecond), stat.ModTime().UTC().Truncate(time.Millisecond))
-		assert.Contains(t, paths, "some-path/pizza.png")
-		assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
-	}
-
-	t.Log("it all ends with correct bytes transferred")
-	{
-		assert.Equal(t, true, job.All(status.Ended...))
-		assert.Equal(t, int64(202), job.TransferBytes())
-		assert.Equal(t, int64(202), job.TotalBytes())
-	}
-
-	assert.NoError(t, setup.TearDown())
-}
-
-func Test_downloadFolder_sync_already_downloaded(t *testing.T) {
-	setup := NewTestSetup()
-
-	setup.MapFS["taco.png"] = &fstest.MapFile{
-		Data: make([]byte, 100),
-		Mode: fs.ModePerm,
-		Sys:  files_sdk.File{DisplayName: "taco.png", Path: "taco.png", Type: "file", Size: 100},
-	}
-	setup.DownloaderParams = DownloaderParams{RemotePath: "", Sync: true, EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
-	setup.rootDestination = ""
-	taco, err := os.Create(filepath.Join(setup.tempDir, "taco.png"))
-	assert.NoError(t, err)
-	_, err = taco.Write(make([]byte, 100))
-	require.NoError(t, err)
-	require.NoError(t, taco.Close())
-	setup.Call()
-
-	assert.Equal(t, 2, len(setup.reporterCalls))
-	assert.NoError(t, setup.reporterCalls[0].err)
-	assert.Equal(t, status.Queued, setup.reporterCalls[0].Status)
-	assert.Equal(t, status.Skipped, setup.reporterCalls[1].Status)
-	assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
-
-	assert.NoError(t, setup.TearDown())
-}
-
-func Test_downloadFolder_sync_not_already_downloaded(t *testing.T) {
-	setup := NewTestSetup()
-	setup.MapFS["taco.png"] = &fstest.MapFile{
-		Data:    make([]byte, 100),
-		ModTime: time.Now().AddDate(0, 1, 0),
-		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "taco.png", Type: "file", Size: 100},
-	}
-	setup.DownloaderParams = DownloaderParams{RemotePath: "", Sync: true, EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
-	setup.rootDestination = ""
-	taco, err := os.Create(filepath.Join(setup.tempDir, "taco.png"))
-	assert.NoError(t, err)
-	assert.NoError(t, taco.Close())
-	setup.Call()
-
-	assert.Equal(t, 3, len(setup.reporterCalls))
-	assert.Equal(t, "taco.png", setup.reporterCalls[0].File.Path)
-	assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
-	assert.Equal(t, status.Queued, setup.reporterCalls[0].Status)
-	assert.Equal(t, status.Downloading, setup.reporterCalls[1].Status)
-	assert.Equal(t, status.Complete, setup.reporterCalls[2].Status)
-
-	assert.NoError(t, setup.TearDown())
-}
-
-func Test_downloadFolder_sync_local_does_not_exist(t *testing.T) {
-	setup := NewTestSetup()
-	setup.MapFS["taco.png"] = &fstest.MapFile{
-		Data:    make([]byte, 100),
-		ModTime: time.Now().AddDate(0, 1, 0),
-		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "taco.png", Type: "file", Size: 100},
-	}
-	setup.DownloaderParams = DownloaderParams{RemotePath: "", Sync: true, EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
-	setup.rootDestination = ""
-	setup.Call()
-
-	assert.Equal(t, 3, len(setup.reporterCalls))
-	assert.Equal(t, "taco.png", setup.reporterCalls[0].File.Path)
-	assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
-	assert.Equal(t, status.Queued, setup.reporterCalls[0].Status)
-	assert.Equal(t, status.Downloading, setup.reporterCalls[1].Status)
-	assert.Equal(t, status.Complete, setup.reporterCalls[2].Status)
-
-	assert.NoError(t, setup.TearDown())
-}
-
-func Test_downloadFolder_download_file(t *testing.T) {
-	setup := NewTestSetup()
-	setup.MapFS["some-path/taco.png"] = &fstest.MapFile{
-		Data:    make([]byte, 100),
-		Mode:    fs.ModePerm,
-		ModTime: time.Time{},
-		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "some-path/taco.png", Type: "file", Size: 100},
-	}
-	setup.DownloaderParams = DownloaderParams{RemotePath: "some-path", EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
-	setup.rootDestination = "taco.png"
-
-	job := setup.Call()
-
-	assert.Equal(t, 1, job.Count())
-	assert.Equal(t, 3, len(setup.reporterCalls))
-	assert.Equal(t, "some-path/taco.png", setup.reporterCalls[0].File.Path)
-	assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
-
-	assert.NoError(t, setup.TearDown())
-}
-
-func Test_downloadFolder_OnDownload(t *testing.T) {
-	setup := NewTestSetup()
-	setup.MapFS["some-path/taco.png"] = &fstest.MapFile{
-		Data:    make([]byte, 100),
-		ModTime: time.Time{},
-		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "some-path/taco.png", Type: "file", Size: 100},
-	}
-	setup.DownloaderParams = DownloaderParams{RemotePath: "some-path", EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
-	setup.rootDestination = "taco.png"
-
-	setup.Call()
-
-	assert.Equal(t, 3, len(setup.reporterCalls))
-
-	assert.Equal(t, int64(100), setup.reporterCalls[2].File.Size, "Updates with real file size")
-
-	assert.NoError(t, setup.TearDown())
+		require.NoError(t, taco.Close())
+		job := client.Downloader(context.Background(), DownloaderParams{Sync: true, RemotePath: "taco.png", LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		assert.Equal(t, status.Complete, job.Statuses[0].Status())
+	})
 }
 
 func TestDownload(t *testing.T) {

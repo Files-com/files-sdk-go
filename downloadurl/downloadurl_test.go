@@ -23,7 +23,7 @@ func TestDownloadUrl_New(t *testing.T) {
 			name: "amazon s3 date",
 			args: args{
 				url: func(t *testing.T, ti time.Time) string {
-					u, err := url.ParseRequestURI(fmt.Sprintf("https://example.com?%v=%v", AmazonS3Date, timefmt.Format(ti, TimeDateFormat)))
+					u, err := url.ParseRequestURI(fmt.Sprintf("https://example.com?%v=%v&%v=%v", amazonS3.date, timefmt.Format(time.Now().UTC(), timeDateFormat), amazonS3.expire, 3*60))
 					assert.NoError(t, err)
 					return u.String()
 				},
@@ -34,7 +34,7 @@ func TestDownloadUrl_New(t *testing.T) {
 			name: "files date",
 			args: args{
 				url: func(t *testing.T, ti time.Time) string {
-					u, err := url.ParseRequestURI(fmt.Sprintf("https://example.com?%v=%v", FilesDate, timefmt.Format(ti, TimeDateFormat)))
+					u, err := url.ParseRequestURI(fmt.Sprintf("https://example.com?%v=%v", filesDate.date, timefmt.Format(time.Now().Add(time.Minute*3).UTC(), timeDateFormat)))
 					assert.NoError(t, err)
 					return u.String()
 				},
@@ -45,7 +45,18 @@ func TestDownloadUrl_New(t *testing.T) {
 			name: "google date",
 			args: args{
 				url: func(t *testing.T, ti time.Time) string {
-					u, err := url.ParseRequestURI(fmt.Sprintf("https://example.com?%v=%v", GoogleDate, timefmt.Format(ti, TimeDateFormat)))
+					u, err := url.ParseRequestURI(fmt.Sprintf("https://example.com?%v=%v&%v=%v", googleDate.date, timefmt.Format(time.Now().UTC(), timeDateFormat), googleDate.expire, 3*60))
+					assert.NoError(t, err)
+					return u.String()
+				},
+			},
+			Time: time.Now().Add(time.Minute * 3).UTC(),
+		},
+		{
+			name: "azure blob storage",
+			args: args{
+				url: func(t *testing.T, ti time.Time) string {
+					u, err := url.ParseRequestURI(fmt.Sprintf("https://filescomtests.blob.core.windows.net/testazureremote/ntie3buw/file-to-download.txt?sp=se=%v", timefmt.Format(time.Now().Add(time.Minute*3).UTC(), timeDateFormat)))
 					assert.NoError(t, err)
 					return u.String()
 				},

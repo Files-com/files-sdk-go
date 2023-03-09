@@ -50,6 +50,7 @@ type DownloaderParams struct {
 }
 
 func (c *Client) Downloader(ctx context.Context, params DownloaderParams) *status.Job {
+	params.Config = c.Config
 	return downloader(ctx, (&FS{}).Init(c.Config, true), params)
 }
 

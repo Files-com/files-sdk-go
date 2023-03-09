@@ -2,6 +2,7 @@ package downloadurl
 
 import (
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/itchyny/timefmt-go"
@@ -21,15 +22,6 @@ func New(urlStr string) (d *URL, err error) {
 
 	err = d.parseTime()
 
-	if err != nil {
-		return
-	}
-
-	err = d.parseTime()
-
-	if err != nil {
-		return
-	}
 	return
 }
 
@@ -41,19 +33,43 @@ func (d *URL) parseUrl(urlStr string) (err error) {
 	return
 }
 
-const (
-	AmazonS3Date   = "X-Amz-Date"
-	FilesDate      = "X-Files-Date"
-	GoogleDate     = "X-Goog-Date"
-	TimeDateFormat = "%Y%m%dT%H%M%SZ"
+type expire struct {
+	date       string
+	expire     string
+	expireDate string
+}
+
+var (
+	amazonS3       = expire{"X-Amz-Date", "X-Amz-Expires", ""}
+	filesDate      = expire{"X-Files-Date", "X-Files-Expires", ""}
+	googleDate     = expire{"X-Goog-Date", "X-Goog-Expires", ""}
+	azureBlob      = expire{"sp", "", "se"}
+	timeDateFormat = "%Y%m%dT%H%M%SZ"
 )
 
-var Dates = []string{AmazonS3Date, FilesDate, GoogleDate}
+var Dates = []expire{amazonS3, filesDate, googleDate, azureBlob}
 
 func (d *URL) parseTime() (err error) {
-	for _, date := range Dates {
-		expires := d.URL.Query().Get(date)
-		d.Time, err = timefmt.Parse(expires, TimeDateFormat)
+	for _, parser := range Dates {
+		date := d.URL.Query().Get(parser.date)
+		if parser.expireDate != "" {
+			query := (&url.URL{RawQuery: date}).Query()
+			if len(query[parser.expireDate]) == 1 {
+				d.Time, err = timefmt.Parse(query[parser.expireDate][0], timeDateFormat)
+			} else {
+				continue
+			}
+		} else {
+			d.Time, err = timefmt.Parse(date, timeDateFormat)
+		}
+
+		if parser.expire != "" {
+			duration, err := strconv.Atoi(d.URL.Query().Get(parser.expire))
+			if err == nil {
+				t := time.Second * time.Duration(duration)
+				d.Time = d.Time.Add(t)
+			}
+		}
 		if err == nil {
 			break
 		}

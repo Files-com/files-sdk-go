@@ -14,16 +14,29 @@ var (
 )
 
 type Manager struct {
-	FilesManager            goccm.ConcurrencyManager
-	FilePartsManager        goccm.ConcurrencyManager
-	DirectoryListingManager goccm.ConcurrencyManager
+	FilesManager            ConcurrencyManager
+	FilePartsManager        ConcurrencyManager
+	DirectoryListingManager ConcurrencyManager
+}
+
+type ConcurrencyManager struct {
+	goccm.ConcurrencyManager
+	maxGoRoutines int
+}
+
+func (ConcurrencyManager) New(maxGoRoutines int) ConcurrencyManager {
+	return ConcurrencyManager{goccm.New(maxGoRoutines), maxGoRoutines}
+}
+
+func (c ConcurrencyManager) Max() int {
+	return c.maxGoRoutines
 }
 
 func New(files, fileParts, directoryListing int) *Manager {
 	return &Manager{
-		FilesManager:            goccm.New(files),
-		FilePartsManager:        goccm.New(fileParts),
-		DirectoryListingManager: goccm.New(directoryListing),
+		FilesManager:            ConcurrencyManager{}.New(files),
+		FilePartsManager:        ConcurrencyManager{}.New(fileParts),
+		DirectoryListingManager: ConcurrencyManager{}.New(directoryListing),
 	}
 }
 
@@ -35,7 +48,7 @@ func Sync() *Manager {
 	return New(1, 1, 1)
 }
 
-func Wait(ctx context.Context, manager goccm.ConcurrencyManager) bool {
+func Wait(ctx context.Context, manager ConcurrencyManager) bool {
 	if ctx.Err() != nil {
 		return false
 	}
@@ -49,8 +62,8 @@ func Wait(ctx context.Context, manager goccm.ConcurrencyManager) bool {
 func Build(maxConcurrentConnections, maxConcurrentDirectoryLists int) *Manager {
 	maxConcurrentConnections = int(math.Max(float64(maxConcurrentConnections), 1))
 	return &Manager{
-		FilesManager:            goccm.New(int(math.Max(float64(maxConcurrentConnections/2), 1))),
-		FilePartsManager:        goccm.New(maxConcurrentConnections),
-		DirectoryListingManager: goccm.New(int(math.Max(float64(maxConcurrentDirectoryLists), 1))),
+		FilesManager:            ConcurrencyManager{}.New(int(math.Max(float64(maxConcurrentConnections/2), 1))),
+		FilePartsManager:        ConcurrencyManager{}.New(maxConcurrentConnections),
+		DirectoryListingManager: ConcurrencyManager{}.New(int(math.Max(float64(maxConcurrentDirectoryLists), 1))),
 	}
 }

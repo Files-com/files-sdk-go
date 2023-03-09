@@ -3,6 +3,7 @@ package file
 import (
 	"context"
 	"math"
+	"sync"
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
@@ -24,6 +25,7 @@ type Part struct {
 	processing bool
 	context.Context
 	context.CancelFunc
+	*sync.RWMutex
 }
 
 func (p *Part) Done() *Part {
@@ -31,9 +33,17 @@ func (p *Part) Done() *Part {
 	return p
 }
 
-func (p *Part) Start(ctx context.Context) *Part {
+func (p *Part) Start(ctx ...context.Context) *Part {
 	p.Touch()
 	p.processing = true
+	if len(ctx) == 1 {
+		p.WithContext(ctx[0])
+	}
+	return p
+}
+
+func (p *Part) WithContext(ctx context.Context) *Part {
+	p.RWMutex = &sync.RWMutex{}
 	p.Context, p.CancelFunc = context.WithCancel(ctx)
 	return p
 }
@@ -49,6 +59,21 @@ func (p *Part) Successful() bool {
 func (p *Part) Clear() {
 	p.bytes = 0
 	p.error = nil
+}
+
+func (p *Part) SetError(err error) {
+	p.Lock()
+	defer p.Unlock()
+	p.error = err
+}
+
+func (p *Part) Err() error {
+	p.RLock()
+	defer p.RUnlock()
+	if p.error != nil {
+		return p.error
+	}
+	return p.Context.Err()
 }
 
 type Parts []*Part
