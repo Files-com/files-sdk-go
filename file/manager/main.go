@@ -21,11 +21,15 @@ type Manager struct {
 
 type ConcurrencyManager struct {
 	goccm.ConcurrencyManager
-	maxGoRoutines int
+	maxGoRoutines               int
+	DownloadFilesAsSingleStream bool
 }
 
-func (ConcurrencyManager) New(maxGoRoutines int) ConcurrencyManager {
-	return ConcurrencyManager{goccm.New(maxGoRoutines), maxGoRoutines}
+func (ConcurrencyManager) New(maxGoRoutines int, downloadFilesAsSingleStream ...bool) ConcurrencyManager {
+	if len(downloadFilesAsSingleStream) == 0 {
+		downloadFilesAsSingleStream = append(downloadFilesAsSingleStream, false)
+	}
+	return ConcurrencyManager{ConcurrencyManager: goccm.New(maxGoRoutines), maxGoRoutines: maxGoRoutines, DownloadFilesAsSingleStream: downloadFilesAsSingleStream[0]}
 }
 
 func (c ConcurrencyManager) Max() int {
@@ -59,11 +63,11 @@ func Wait(ctx context.Context, manager ConcurrencyManager) bool {
 	return true
 }
 
-func Build(maxConcurrentConnections, maxConcurrentDirectoryLists int) *Manager {
+func Build(maxConcurrentConnections, maxConcurrentDirectoryLists int, downloadFilesAsSingleStream ...bool) *Manager {
 	maxConcurrentConnections = int(math.Max(float64(maxConcurrentConnections), 1))
 	return &Manager{
-		FilesManager:            ConcurrencyManager{}.New(int(math.Max(float64(maxConcurrentConnections/2), 1))),
-		FilePartsManager:        ConcurrencyManager{}.New(maxConcurrentConnections),
+		FilesManager:            ConcurrencyManager{}.New(maxConcurrentConnections),
+		FilePartsManager:        ConcurrencyManager{}.New(maxConcurrentConnections, downloadFilesAsSingleStream...),
 		DirectoryListingManager: ConcurrencyManager{}.New(int(math.Max(float64(maxConcurrentDirectoryLists), 1))),
 	}
 }

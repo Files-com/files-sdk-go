@@ -91,7 +91,7 @@ func (d *DownloadParts) Run(ctx context.Context) error {
 
 func (d *DownloadParts) downloadFileCutOff() bool {
 	// Don't break up file if running part serially.
-	if d.fileManager.Cap() == 1 {
+	if d.fileManager.Cap() == 1 || d.globalWait.DownloadFilesAsSingleStream {
 		return true
 	}
 

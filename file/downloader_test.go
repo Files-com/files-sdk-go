@@ -241,7 +241,7 @@ func TestClient_Downloader(t *testing.T) {
 		assert.Len(t, server.TrackRequest["/download/:download_id"], 1)
 	})
 
-	t.Run("large file with size with max connections", func(t *testing.T) {
+	t.Run("large file with size with max concurrent connections of 1", func(t *testing.T) {
 		root := t.TempDir()
 		server := FakeDownloadServer{T: t}.Do()
 		defer server.Shutdown()
@@ -251,7 +251,8 @@ func TestClient_Downloader(t *testing.T) {
 			File:           files_sdk.File{Size: 1024 * 1024 * 50},
 			MaxConnections: 1,
 		}
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-size.txt", LocalPath: root + "/"})
+		m := manager.Build(1, 1)
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-size.txt", LocalPath: root + "/", Manager: m})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
@@ -261,6 +262,30 @@ func TestClient_Downloader(t *testing.T) {
 		stat, err := f.Stat()
 		require.NoError(t, err)
 		assert.Equal(t, int64(1024*1024*50), stat.Size())
+		assert.Len(t, server.TrackRequest["/download/:download_id"], 1)
+	})
+
+	t.Run("large file with size DownloadFilesAsSingleStream", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["large-file-with-size.txt"] = mockFile{
+			SizeTrust: TrustedSizeValue,
+			File:      files_sdk.File{Size: 1024 * 1024 * 50},
+		}
+		m := manager.Build(10, 1, true)
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-size.txt", LocalPath: root + "/", Manager: m})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		f, err := os.Open(filepath.Join(root, "large-file-with-size.txt"))
+		require.NoError(t, err)
+		stat, err := f.Stat()
+		require.NoError(t, err)
+		assert.Equal(t, int64(1024*1024*50), stat.Size())
+		assert.Len(t, server.TrackRequest["/download/:download_id"], 1)
 	})
 
 	t.Run("large file with no size", func(t *testing.T) {

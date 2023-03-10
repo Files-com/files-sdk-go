@@ -379,7 +379,9 @@ func (r ReaderCloserDownloadStatus) Close() error {
 	}
 
 	if untrustedInfo, ok := info.(UntrustedSize); ok && (untrustedInfo.UntrustedSize() || untrustedInfo.SizeTrust() == NullSizeTrust) {
+		r.file.fileMutex.Lock()
 		status, err := (&Client{Config: r.file.Config}).DownloadRequestStatus(r.file.Context, r.file.DownloadUri, r.file.downloadRequestId)
+		r.file.fileMutex.Unlock()
 		if err != nil {
 			return err
 		}

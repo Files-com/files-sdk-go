@@ -160,7 +160,7 @@ func (f FakeDownloadServer) GetFile(file mockFile) (r io.Reader, contentLengthOk
 func (f FakeDownloadServer) trackRequest(c *gin.Context) {
 	f.traceMutex.Lock()
 	defer f.traceMutex.Unlock()
-	f.TrackRequest[c.FullPath()] = append(f.TrackRequest[c.HandlerName()], c.Request.URL.String())
+	f.TrackRequest[c.FullPath()] = append(f.TrackRequest[c.FullPath()], c.Request.URL.String())
 }
 
 func (f FakeDownloadServer) Routes() {
