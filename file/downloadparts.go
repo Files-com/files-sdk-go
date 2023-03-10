@@ -303,7 +303,7 @@ func (d *DownloadParts) processRanger(part *Part, ranger ReaderRange, Unexpected
 		return
 	}
 	if f, ok := ranger.(*File); ok {
-		if f.MaxConnections != 0 && d.fileManager.Cap() > f.MaxConnections {
+		if f.MaxConnections != 0 && d.fileManager.Cap() > lo.Min[int](append([]int{}, DownloadPartLimit, d.globalWait.Max(), f.MaxConnections)) {
 			d.fileManager.Tune(f.MaxConnections)
 			d.stateLog(map[string]interface{}{"message": "tuning pool"})
 		}
