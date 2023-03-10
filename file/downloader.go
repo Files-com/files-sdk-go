@@ -131,6 +131,7 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 			}
 			job.Add(metaFile)
 			job.UpdateStatus(status.Errored, metaFile, it.Err())
+			onComplete <- metaFile
 		}
 
 		job.EndScan()
