@@ -22,11 +22,7 @@ type PermissionCollection []Permission
 type PermissionListParams struct {
 	SortBy        json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter        json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterGt      json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq    json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterLike    json.RawMessage `url:"filter_like,omitempty" required:"false" json:"filter_like,omitempty" path:"filter_like"`
-	FilterLt      json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq    json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	FilterPrefix  json.RawMessage `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	Path          string          `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
 	GroupId       string          `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
 	UserId        string          `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`

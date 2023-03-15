@@ -163,6 +163,10 @@ func (f FakeDownloadServer) trackRequest(c *gin.Context) {
 	f.TrackRequest[c.FullPath()] = append(f.TrackRequest[c.FullPath()], c.Request.URL.String())
 }
 
+func (f FakeDownloadServer) GetRouter() *gin.Engine {
+	return f.router
+}
+
 func (f FakeDownloadServer) Routes() {
 	f.router.GET("/api/rest/v1/files/*path", func(c *gin.Context) {
 		f.trackRequest(c)

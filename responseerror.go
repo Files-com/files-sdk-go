@@ -60,6 +60,12 @@ func (e ResponseError) IsNil() bool {
 	return e.ErrorMessage == ""
 }
 
+func (e ResponseError) Is(err error) bool {
+	_, ok := err.(ResponseError)
+
+	return ok
+}
+
 func (e *ResponseError) UnmarshalJSON(data []byte) error {
 	type re ResponseError
 	var v re

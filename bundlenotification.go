@@ -17,8 +17,10 @@ type BundleNotification struct {
 type BundleNotificationCollection []BundleNotification
 
 type BundleNotificationListParams struct {
-	UserId   int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	BundleId int64 `url:"bundle_id,omitempty" required:"false" json:"bundle_id,omitempty" path:"bundle_id"`
+	UserId   int64           `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	SortBy   json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	BundleId string          `url:"bundle_id,omitempty" required:"false" json:"bundle_id,omitempty" path:"bundle_id"`
+	Filter   json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	lib.ListParams
 }
 
