@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -187,6 +188,15 @@ func (c *Client) createPart(ctx context.Context, reader io.ReadCloser, len int64
 		fileUploadPart.PartNumber = partNumber
 		if err != nil {
 			return files_sdk.EtagsParam{}, int64(0), err
+		}
+	}
+	u, err := url.Parse(fileUploadPart.UploadUri)
+	if err == nil {
+		q := u.Query()
+		if q.Get("partNumber") == "" {
+			q.Add("part_number", strconv.FormatInt(partNumber, 10))
+			u.RawQuery = q.Encode()
+			fileUploadPart.UploadUri = u.String()
 		}
 	}
 
