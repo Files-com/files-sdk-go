@@ -16,6 +16,7 @@ type FileUploadPart struct {
 	HttpMethod         string          `json:"http_method,omitempty" path:"http_method"`
 	NextPartsize       int64           `json:"next_partsize,omitempty" path:"next_partsize"`
 	ParallelParts      *bool           `json:"parallel_parts,omitempty" path:"parallel_parts"`
+	RetryParts         *bool           `json:"retry_parts,omitempty" path:"retry_parts"`
 	Parameters         json.RawMessage `json:"parameters,omitempty" path:"parameters"`
 	PartNumber         int64           `json:"part_number,omitempty" path:"part_number"`
 	Partsize           int64           `json:"partsize,omitempty" path:"partsize"`
