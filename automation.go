@@ -22,6 +22,7 @@ type Automation struct {
 	DestinationReplaceFrom string          `json:"destination_replace_from,omitempty" path:"destination_replace_from"`
 	DestinationReplaceTo   string          `json:"destination_replace_to,omitempty" path:"destination_replace_to"`
 	Description            string          `json:"description,omitempty" path:"description"`
+	RecurringDay           int64           `json:"recurring_day,omitempty" path:"recurring_day"`
 	Path                   string          `json:"path,omitempty" path:"path"`
 	UserId                 int64           `json:"user_id,omitempty" path:"user_id"`
 	SyncIds                []int64         `json:"sync_ids,omitempty" path:"sync_ids"`
@@ -106,6 +107,7 @@ type AutomationCreateParams struct {
 	Trigger                AutomationTriggerEnum `url:"trigger,omitempty" required:"false" json:"trigger,omitempty" path:"trigger"`
 	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false" json:"trigger_actions,omitempty" path:"trigger_actions"`
 	Value                  json.RawMessage       `url:"value,omitempty" required:"false" json:"value,omitempty" path:"value"`
+	RecurringDay           int64                 `url:"recurring_day,omitempty" required:"false" json:"recurring_day,omitempty" path:"recurring_day"`
 	Automation             AutomationEnum        `url:"automation,omitempty" required:"true" json:"automation,omitempty" path:"automation"`
 }
 
@@ -128,6 +130,7 @@ type AutomationUpdateParams struct {
 	Trigger                AutomationTriggerEnum `url:"trigger,omitempty" required:"false" json:"trigger,omitempty" path:"trigger"`
 	TriggerActions         []string              `url:"trigger_actions,omitempty" required:"false" json:"trigger_actions,omitempty" path:"trigger_actions"`
 	Value                  json.RawMessage       `url:"value,omitempty" required:"false" json:"value,omitempty" path:"value"`
+	RecurringDay           int64                 `url:"recurring_day,omitempty" required:"false" json:"recurring_day,omitempty" path:"recurring_day"`
 	Automation             AutomationEnum        `url:"automation,omitempty" required:"false" json:"automation,omitempty" path:"automation"`
 }
 

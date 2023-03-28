@@ -96,7 +96,10 @@ func (d *DownloadStatus) Id() string {
 
 func (d *DownloadStatus) incrementDownloadedBytes(b int64) {
 	d.Mutex.Lock()
-	d.lastByte = time.Now()
+	if b > 0 {
+		d.lastByte = time.Now()
+	}
+
 	d.DownloadedBytes += b
 	d.Mutex.Unlock()
 }

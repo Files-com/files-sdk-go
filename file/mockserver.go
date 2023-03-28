@@ -71,9 +71,18 @@ type mockFile struct {
 	files_sdk.File
 	RealSize *int64
 	SizeTrust
+	ForceRequestStatus  string
+	ForceRequestMessage string
 	ServerBytesSent     *int64
 	MaxConnections      int
 	MaxConnectionsMutex *sync.Mutex
+}
+
+func (m mockFile) Completed() string {
+	if m.ForceRequestStatus != "" {
+		return m.ForceRequestStatus
+	}
+	return "completed"
 }
 
 type TestLogger struct {
@@ -279,7 +288,7 @@ func (f FakeDownloadServer) Routes() {
 		}
 
 		c.Header("X-Files-Download-Request-Id", downloadRequestId)
-		responseError := files_sdk.ResponseError{}
+		responseError := files_sdk.ResponseError{ErrorMessage: downloadJob.ForceRequestMessage}
 		extraHeaders := map[string]string{}
 		if contentLengthOk {
 			if okRange && contentLength < int64(end) {
@@ -315,7 +324,7 @@ func (f FakeDownloadServer) Routes() {
 
 				n, err := reader.Read(buf)
 				if err == io.EOF {
-					responseError.Data.Status = "completed"
+					responseError.Data.Status = downloadJob.Completed()
 					finish()
 					return false
 				}

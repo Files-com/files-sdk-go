@@ -318,7 +318,7 @@ func (d *DownloadParts) processRanger(part *Part, ranger ReaderRange, Unexpected
 
 	wn, err := lib.CopyAt(d.WriterAndAt, part.off, r)
 	part.bytes = wn
-	atomic.AddInt64(&d.totalWritten, wn)
+
 	part.SetError(r.Close())
 	if sizeTrustInfo.UntrustedSize() && part.Err() != nil {
 		d.verifySizeAndUpdateParts(part)
@@ -328,6 +328,7 @@ func (d *DownloadParts) processRanger(part *Part, ranger ReaderRange, Unexpected
 		return
 	}
 
+	atomic.AddInt64(&d.totalWritten, wn)
 	d.finishedParts <- part.Done()
 }
 
@@ -359,11 +360,17 @@ func (d *DownloadParts) requeueOnError(part *Part, err error, UnexpectedEOF bool
 			if UnexpectedEOF && errors.Is(err, io.ErrUnexpectedEOF) {
 				return false
 			}
-			part.SetError(err)
+			if part.error == nil {
+				part.SetError(err)
+			}
 			d.Config.LogPath(
 				d.path,
 				map[string]interface{}{"message": "requeuing", "error": part.Err(), "part": part.number},
 			)
+			progressWriter, ok := d.WriterAndAt.(lib.ProgressWriter)
+			if ok {
+				progressWriter.ProgressWatcher(-part.bytes)
+			}
 			d.queue <- part.Done() // either timeout or stream error try part again.
 			return true
 		}

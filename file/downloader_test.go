@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
+	"github.com/samber/lo"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -376,6 +377,83 @@ expected 5243136 bytes sent 5242880 received`)
 expected 4194304 bytes sent 5242880 received`)
 		_, err := os.Open(filepath.Join(root, "large-file-with-no-size.txt"))
 		require.Error(t, err)
+	})
+
+	t.Run("large file with no size - when sever has invalid request status", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		serverBytesSent := int64(1024 * 1024 * 4)
+		server.MockFiles["large-file-with-no-size.txt"] = mockFile{
+			SizeTrust:          UntrustedSizeValue,
+			File:               files_sdk.File{Size: 1024 * 1024 * 15},
+			ServerBytesSent:    &serverBytesSent,
+			ForceRequestStatus: "started",
+		}
+
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		f, err := os.Open(filepath.Join(root, "large-file-with-no-size.txt"))
+		require.NoError(t, err)
+		stat, err := f.Stat()
+		require.NoError(t, err)
+		assert.Equal(t, int64(1024*1024*15), stat.Size())
+	})
+
+	t.Run("large file with no size - when sever has failed request status", func(t *testing.T) {
+		root := t.TempDir()
+		server := FakeDownloadServer{T: t}.Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["large-file-with-no-size.txt"] = mockFile{
+			SizeTrust:           UntrustedSizeValue,
+			File:                files_sdk.File{Size: 1024 * 1024 * 15},
+			ForceRequestStatus:  "failed",
+			ForceRequestMessage: "problem",
+		}
+		var events []status.File
+		eventReporter := make(status.EventsReporter)
+		for _, s := range status.Included {
+			eventReporter[s] = append(eventReporter[s], func(file status.File) {
+				events = append(events, file)
+			})
+		}
+
+		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/", EventsReporter: eventReporter})
+		transferBytes := []string{"zero"}
+		wait := make(chan bool)
+		go func() {
+			for {
+				select {
+				case <-job.Finished.C:
+					wait <- true
+					return
+				default:
+					bytes := job.TransferBytes()
+					if bytes > 0 && transferBytes[len(transferBytes)-1] == "zero" {
+						transferBytes = append(transferBytes, "bytes")
+					}
+					if bytes == 0 && transferBytes[len(transferBytes)-1] != "zero" {
+						transferBytes = append(transferBytes, "zero")
+					}
+				}
+			}
+		}()
+
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		assert.Error(t, job.Statuses[0].Err(), `received size did not match server send size
+expected 4194304 bytes sent 5242880 received`)
+		assert.Equal(t, []int64{0, 0, 0}, lo.Map[status.File, int64](events, func(item status.File, index int) int64 { return item.TransferBytes }))
+		assert.Equal(t, []string{"queued", "downloading", "errored"}, lo.Map[status.File, string](events, func(item status.File, index int) string { return item.StatusName }))
+		<-wait
+		assert.GreaterOrEqual(t, lo.Count[string](transferBytes, "zero"), 2, "After error transfer bytes are set to zero")
+		assert.GreaterOrEqual(t, lo.Count[string](transferBytes, "bytes"), 2, "After error transfer bytes are set to zero")
 	})
 
 	t.Run("large file with bad size info real size is bigger", func(t *testing.T) {

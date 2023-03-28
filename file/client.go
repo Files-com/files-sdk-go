@@ -111,7 +111,9 @@ func (c *Client) DownloadRequestStatus(ctx context.Context, fileDownloadUrl stri
 		if err != nil {
 			return re, err
 		}
-		re.Errors = append(re.Errors, files_sdk.ResponseError{Type: "download request status"})
+		if re.Type == "" && !re.IsNil() {
+			re.Type = "download request status"
+		}
 	}
 	return re, err
 }

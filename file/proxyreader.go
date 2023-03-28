@@ -42,6 +42,7 @@ func (x *ProxyReader) Read(p []byte) (int, error) {
 	}
 
 	if err != nil {
+		x.onRead(-int64(x.read))
 		return n, err
 	}
 

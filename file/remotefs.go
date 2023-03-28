@@ -334,18 +334,38 @@ type UntrustedSizeRangeRequestSize struct {
 	ExpectedSize int64
 	SentSize     int64
 	ReceivedSize int64
+	Status       string
 }
 
 func (u UntrustedSizeRangeRequestSize) VerifyReceived() error {
-	if u.ReceivedSize != u.SentSize {
+	if u.Status == "started" { // Race condition where server does not record download status. Trust what we asked for and got is correct.
+		if u.ReceivedSize != u.ExpectedSize {
+			errors.Join(UntrustedSizeRangeRequestSizeExpectedReceived, fmt.Errorf("expected %v bytes %v received", u.ExpectedSize, u.ReceivedSize))
+		}
+	} else if u.ReceivedSize != u.SentSize {
 		return errors.Join(UntrustedSizeRangeRequestSizeSentReceived, fmt.Errorf("expected %v bytes sent %v received", u.SentSize, u.ReceivedSize))
 	}
 	return nil
 }
 
+func (u UntrustedSizeRangeRequestSize) Log() map[string]interface{} {
+	return map[string]interface{}{
+		"expected_size":  u.ExpectedSize,
+		"sent_size":      u.SentSize,
+		"received_size":  u.ReceivedSize,
+		"VerifyReceived": u.VerifyReceived(),
+		"Mismatch":       u.Mismatch(),
+		"Status":         u.Status,
+	}
+}
+
+var UntrustedSizeRangeRequestSizeExpectedReceived = fmt.Errorf("received size did not match server expected size")
 var UntrustedSizeRangeRequestSizeSentReceived = fmt.Errorf("received size did not match server send size")
 
 func (u UntrustedSizeRangeRequestSize) Mismatch() error {
+	if u.Status == "started" {
+		return nil
+	}
 	if u.ExpectedSize > u.SentSize {
 		return UntrustedSizeRangeRequestSizeSentLessThanExpected
 	}
@@ -385,22 +405,25 @@ func (r ReaderCloserDownloadStatus) Close() error {
 		if err != nil {
 			return err
 		}
-		if !status.IsNil() || status.Data.Status != "completed" {
+		if !status.IsNil() && (status.Data.Status == "failed" || status.Data.Status == "error") {
 			return status
 		}
 		r.UntrustedSizeRangeRequestSize = UntrustedSizeRangeRequestSize{
 			r.expectedSize,
 			status.Data.BytesTransferred,
 			int64(r.ReadWrapper.read),
+			status.Data.Status,
 		}
 
 		if err := r.UntrustedSizeRangeRequestSize.VerifyReceived(); err != nil {
+			r.file.Config.LogPath(info.Name(), r.UntrustedSizeRangeRequestSize.Log())
 			return err
 		}
 
 		// The true size can only be known after the server determines that the full file has been sent without any errors.
 		if r.rangeRequest {
 			if err := r.UntrustedSizeRangeRequestSize.Mismatch(); err != nil {
+				r.file.Config.LogPath(info.Name(), r.UntrustedSizeRangeRequestSize.Log())
 				return err
 			}
 
