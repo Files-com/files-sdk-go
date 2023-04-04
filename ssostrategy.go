@@ -59,12 +59,12 @@ type SsoStrategyListParams struct {
 }
 
 type SsoStrategyFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 // Synchronize provisioning data with the SSO remote server
 type SsoStrategySyncParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (s *SsoStrategy) UnmarshalJSON(data []byte) error {

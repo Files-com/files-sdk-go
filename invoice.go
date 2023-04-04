@@ -31,7 +31,7 @@ type InvoiceListParams struct {
 }
 
 type InvoiceFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (i *Invoice) UnmarshalJSON(data []byte) error {

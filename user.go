@@ -152,7 +152,7 @@ type UserListParams struct {
 }
 
 type UserFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type UserCreateParams struct {
@@ -204,21 +204,21 @@ type UserCreateParams struct {
 
 // Unlock user who has been locked out due to failed logins
 type UserUnlockParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 // Resend user welcome email
 type UserResendWelcomeEmailParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 // Trigger 2FA Reset process for user who has lost access to their existing 2FA methods
 type UserUser2faResetParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type UserUpdateParams struct {
-	Id                         int64                        `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id                         int64                        `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	AvatarFile                 io.Writer                    `url:"avatar_file,omitempty" required:"false" json:"avatar_file,omitempty" path:"avatar_file"`
 	AvatarDelete               *bool                        `url:"avatar_delete,omitempty" required:"false" json:"avatar_delete,omitempty" path:"avatar_delete"`
 	ChangePassword             string                       `url:"change_password,omitempty" required:"false" json:"change_password,omitempty" path:"change_password"`
@@ -266,7 +266,7 @@ type UserUpdateParams struct {
 }
 
 type UserDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (u *User) UnmarshalJSON(data []byte) error {

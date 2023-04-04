@@ -29,7 +29,7 @@ type RequestListParams struct {
 type RequestGetFolderParams struct {
 	SortBy json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Mine   *bool           `url:"mine,omitempty" required:"false" json:"mine,omitempty" path:"mine"`
-	Path   string          `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path   string          `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	lib.ListParams
 }
 
@@ -41,7 +41,7 @@ type RequestCreateParams struct {
 }
 
 type RequestDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (r *Request) UnmarshalJSON(data []byte) error {

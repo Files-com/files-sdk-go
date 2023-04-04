@@ -25,7 +25,7 @@ type BundleNotificationListParams struct {
 }
 
 type BundleNotificationFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type BundleNotificationCreateParams struct {
@@ -36,13 +36,13 @@ type BundleNotificationCreateParams struct {
 }
 
 type BundleNotificationUpdateParams struct {
-	Id                   int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id                   int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	NotifyOnRegistration *bool `url:"notify_on_registration,omitempty" required:"false" json:"notify_on_registration,omitempty" path:"notify_on_registration"`
 	NotifyOnUpload       *bool `url:"notify_on_upload,omitempty" required:"false" json:"notify_on_upload,omitempty" path:"notify_on_upload"`
 }
 
 type BundleNotificationDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (b *BundleNotification) UnmarshalJSON(data []byte) error {

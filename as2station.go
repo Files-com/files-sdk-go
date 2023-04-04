@@ -32,7 +32,7 @@ type As2StationListParams struct {
 }
 
 type As2StationFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type As2StationCreateParams struct {
@@ -43,7 +43,7 @@ type As2StationCreateParams struct {
 }
 
 type As2StationUpdateParams struct {
-	Id                 int64  `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id                 int64  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	Name               string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 	PublicCertificate  string `url:"public_certificate,omitempty" required:"false" json:"public_certificate,omitempty" path:"public_certificate"`
 	PrivateKey         string `url:"private_key,omitempty" required:"false" json:"private_key,omitempty" path:"private_key"`
@@ -51,7 +51,7 @@ type As2StationUpdateParams struct {
 }
 
 type As2StationDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (a *As2Station) UnmarshalJSON(data []byte) error {

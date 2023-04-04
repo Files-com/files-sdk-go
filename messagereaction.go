@@ -21,7 +21,7 @@ type MessageReactionListParams struct {
 }
 
 type MessageReactionFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type MessageReactionCreateParams struct {
@@ -30,7 +30,7 @@ type MessageReactionCreateParams struct {
 }
 
 type MessageReactionDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (m *MessageReaction) UnmarshalJSON(data []byte) error {

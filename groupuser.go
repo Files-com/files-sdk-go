@@ -30,14 +30,14 @@ type GroupUserCreateParams struct {
 }
 
 type GroupUserUpdateParams struct {
-	Id      int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id      int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	GroupId int64 `url:"group_id,omitempty" required:"true" json:"group_id,omitempty" path:"group_id"`
 	UserId  int64 `url:"user_id,omitempty" required:"true" json:"user_id,omitempty" path:"user_id"`
 	Admin   *bool `url:"admin,omitempty" required:"false" json:"admin,omitempty" path:"admin"`
 }
 
 type GroupUserDeleteParams struct {
-	Id      int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id      int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	GroupId int64 `url:"group_id,omitempty" required:"true" json:"group_id,omitempty" path:"group_id"`
 	UserId  int64 `url:"user_id,omitempty" required:"true" json:"user_id,omitempty" path:"user_id"`
 }

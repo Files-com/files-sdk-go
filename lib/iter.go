@@ -68,7 +68,11 @@ func (i *Iter) ExportParams() (ExportValues, error) {
 	if err != nil {
 		return ExportValues{}, err
 	}
-	listParamValues, _ := Params{Params: i.ListParams}.ToValues()
+	listParamValues, err := Params{Params: i.ListParams}.ToValues()
+
+	if err != nil {
+		return ExportValues{}, err
+	}
 
 	for key, value := range paramValues {
 		listParamValues.Set(key, value[0])

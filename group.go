@@ -26,7 +26,7 @@ type GroupListParams struct {
 }
 
 type GroupFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type GroupCreateParams struct {
@@ -37,7 +37,7 @@ type GroupCreateParams struct {
 }
 
 type GroupUpdateParams struct {
-	Id       int64  `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id       int64  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	Name     string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 	Notes    string `url:"notes,omitempty" required:"false" json:"notes,omitempty" path:"notes"`
 	UserIds  string `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty" path:"user_ids"`
@@ -45,7 +45,7 @@ type GroupUpdateParams struct {
 }
 
 type GroupDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (g *Group) UnmarshalJSON(data []byte) error {

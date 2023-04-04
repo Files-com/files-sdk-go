@@ -24,7 +24,7 @@ type MessageListParams struct {
 }
 
 type MessageFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type MessageCreateParams struct {
@@ -35,14 +35,14 @@ type MessageCreateParams struct {
 }
 
 type MessageUpdateParams struct {
-	Id        int64  `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id        int64  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	ProjectId int64  `url:"project_id,omitempty" required:"true" json:"project_id,omitempty" path:"project_id"`
 	Subject   string `url:"subject,omitempty" required:"true" json:"subject,omitempty" path:"subject"`
 	Body      string `url:"body,omitempty" required:"true" json:"body,omitempty" path:"body"`
 }
 
 type MessageDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (m *Message) UnmarshalJSON(data []byte) error {

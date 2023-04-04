@@ -33,19 +33,19 @@ type Folder struct {
 type FolderCollection []Folder
 
 type FolderListForParams struct {
-	Path               string                   `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path               string                   `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	Filter             string                   `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	PreviewSize        string                   `url:"preview_size,omitempty" required:"false" json:"preview_size,omitempty" path:"preview_size"`
 	Search             string                   `url:"search,omitempty" required:"false" json:"search,omitempty" path:"search"`
 	SearchAll          *bool                    `url:"search_all,omitempty" required:"false" json:"search_all,omitempty" path:"search_all"`
 	WithPreviews       *bool                    `url:"with_previews,omitempty" required:"false" json:"with_previews,omitempty" path:"with_previews"`
 	WithPriorityColor  *bool                    `url:"with_priority_color,omitempty" required:"false" json:"with_priority_color,omitempty" path:"with_priority_color"`
-	ConcurrencyManager goccm.ConcurrencyManager `url:"-,omitempty" required:"false" json:"-,omitempty"`
+	ConcurrencyManager goccm.ConcurrencyManager `url:"-" required:"false" json:"-"`
 	lib.ListParams
 }
 
 type FolderCreateParams struct {
-	Path          string     `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path          string     `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	MkdirParents  *bool      `url:"mkdir_parents,omitempty" required:"false" json:"mkdir_parents,omitempty" path:"mkdir_parents"`
 	ProvidedMtime *time.Time `url:"provided_mtime,omitempty" required:"false" json:"provided_mtime,omitempty" path:"provided_mtime"`
 }

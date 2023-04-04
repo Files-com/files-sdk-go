@@ -46,7 +46,7 @@ type EtagsParam struct {
 
 // Download file
 type FileDownloadParams struct {
-	Path              string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path              string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	Action            string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	PreviewSize       string `url:"preview_size,omitempty" required:"false" json:"preview_size,omitempty" path:"preview_size"`
 	WithPreviews      *bool  `url:"with_previews,omitempty" required:"false" json:"with_previews,omitempty" path:"with_previews"`
@@ -55,7 +55,7 @@ type FileDownloadParams struct {
 }
 
 type FileCreateParams struct {
-	Path          string       `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path          string       `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	Action        string       `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	EtagsParam    []EtagsParam `url:"etags,omitempty" required:"false" json:"etags,omitempty" path:"etags"`
 	Length        int64        `url:"length,omitempty" required:"false" json:"length,omitempty" path:"length"`
@@ -71,18 +71,18 @@ type FileCreateParams struct {
 }
 
 type FileUpdateParams struct {
-	Path          string     `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path          string     `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	ProvidedMtime *time.Time `url:"provided_mtime,omitempty" required:"false" json:"provided_mtime,omitempty" path:"provided_mtime"`
 	PriorityColor string     `url:"priority_color,omitempty" required:"false" json:"priority_color,omitempty" path:"priority_color"`
 }
 
 type FileDeleteParams struct {
-	Path      string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path      string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	Recursive *bool  `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
 }
 
 type FileFindParams struct {
-	Path              string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path              string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	PreviewSize       string `url:"preview_size,omitempty" required:"false" json:"preview_size,omitempty" path:"preview_size"`
 	WithPreviews      *bool  `url:"with_previews,omitempty" required:"false" json:"with_previews,omitempty" path:"with_previews"`
 	WithPriorityColor *bool  `url:"with_priority_color,omitempty" required:"false" json:"with_priority_color,omitempty" path:"with_priority_color"`
@@ -90,20 +90,20 @@ type FileFindParams struct {
 
 // Copy file/folder
 type FileCopyParams struct {
-	Path        string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path        string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	Destination string `url:"destination,omitempty" required:"true" json:"destination,omitempty" path:"destination"`
 	Structure   *bool  `url:"structure,omitempty" required:"false" json:"structure,omitempty" path:"structure"`
 }
 
 // Move file/folder
 type FileMoveParams struct {
-	Path        string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path        string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	Destination string `url:"destination,omitempty" required:"true" json:"destination,omitempty" path:"destination"`
 }
 
 // Begin file upload
 type FileBeginUploadParams struct {
-	Path         string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path         string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	MkdirParents *bool  `url:"mkdir_parents,omitempty" required:"false" json:"mkdir_parents,omitempty" path:"mkdir_parents"`
 	Part         int64  `url:"part,omitempty" required:"false" json:"part,omitempty" path:"part"`
 	Parts        int64  `url:"parts,omitempty" required:"false" json:"parts,omitempty" path:"parts"`

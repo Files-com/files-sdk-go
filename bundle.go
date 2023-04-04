@@ -75,7 +75,7 @@ type BundleListParams struct {
 }
 
 type BundleFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type BundleCreateParams struct {
@@ -105,14 +105,14 @@ type BundleCreateParams struct {
 
 // Send email(s) with a link to bundle
 type BundleShareParams struct {
-	Id         int64           `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id         int64           `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	To         []string        `url:"to,omitempty" required:"false" json:"to,omitempty" path:"to"`
 	Note       string          `url:"note,omitempty" required:"false" json:"note,omitempty" path:"note"`
 	Recipients json.RawMessage `url:"recipients,omitempty" required:"false" json:"recipients,omitempty" path:"recipients"`
 }
 
 type BundleUpdateParams struct {
-	Id                              int64                 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id                              int64                 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	Paths                           []string              `url:"paths,omitempty" required:"false" json:"paths,omitempty" path:"paths"`
 	Password                        string                `url:"password,omitempty" required:"false" json:"password,omitempty" path:"password"`
 	FormFieldSetId                  int64                 `url:"form_field_set_id,omitempty" required:"false" json:"form_field_set_id,omitempty" path:"form_field_set_id"`
@@ -138,7 +138,7 @@ type BundleUpdateParams struct {
 }
 
 type BundleDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (b *Bundle) UnmarshalJSON(data []byte) error {

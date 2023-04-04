@@ -18,7 +18,7 @@ type ProjectListParams struct {
 }
 
 type ProjectFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type ProjectCreateParams struct {
@@ -26,12 +26,12 @@ type ProjectCreateParams struct {
 }
 
 type ProjectUpdateParams struct {
-	Id           int64  `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id           int64  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	GlobalAccess string `url:"global_access,omitempty" required:"true" json:"global_access,omitempty" path:"global_access"`
 }
 
 type ProjectDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (p *Project) UnmarshalJSON(data []byte) error {

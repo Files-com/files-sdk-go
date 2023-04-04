@@ -22,7 +22,7 @@ type MessageCommentListParams struct {
 }
 
 type MessageCommentFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type MessageCommentCreateParams struct {
@@ -31,12 +31,12 @@ type MessageCommentCreateParams struct {
 }
 
 type MessageCommentUpdateParams struct {
-	Id   int64  `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id   int64  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	Body string `url:"body,omitempty" required:"true" json:"body,omitempty" path:"body"`
 }
 
 type MessageCommentDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (m *MessageComment) UnmarshalJSON(data []byte) error {

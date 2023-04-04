@@ -20,7 +20,7 @@ type UserRequestListParams struct {
 }
 
 type UserRequestFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type UserRequestCreateParams struct {
@@ -30,7 +30,7 @@ type UserRequestCreateParams struct {
 }
 
 type UserRequestDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (u *UserRequest) UnmarshalJSON(data []byte) error {

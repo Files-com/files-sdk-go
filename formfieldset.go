@@ -25,7 +25,7 @@ type FormFieldSetListParams struct {
 }
 
 type FormFieldSetFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type FormFieldSetCreateParams struct {
@@ -38,7 +38,7 @@ type FormFieldSetCreateParams struct {
 }
 
 type FormFieldSetUpdateParams struct {
-	Id          int64           `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id          int64           `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	Title       string          `url:"title,omitempty" required:"" json:"title,omitempty" path:"title"`
 	SkipEmail   *bool           `url:"skip_email,omitempty" required:"" json:"skip_email,omitempty" path:"skip_email"`
 	SkipName    *bool           `url:"skip_name,omitempty" required:"" json:"skip_name,omitempty" path:"skip_name"`
@@ -47,7 +47,7 @@ type FormFieldSetUpdateParams struct {
 }
 
 type FormFieldSetDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (f *FormFieldSet) UnmarshalJSON(data []byte) error {

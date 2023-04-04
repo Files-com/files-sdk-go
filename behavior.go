@@ -30,14 +30,14 @@ type BehaviorListParams struct {
 }
 
 type BehaviorFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type BehaviorListForParams struct {
 	SortBy       json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	FilterPrefix json.RawMessage `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	Path         string          `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path         string          `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	Recursive    string          `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
 	Behavior     string          `url:"behavior,omitempty" required:"false" json:"behavior,omitempty" path:"behavior"`
 	lib.ListParams
@@ -62,7 +62,7 @@ type BehaviorWebhookTestParams struct {
 }
 
 type BehaviorUpdateParams struct {
-	Id               int64     `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id               int64     `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	Value            string    `url:"value,omitempty" required:"false" json:"value,omitempty" path:"value"`
 	AttachmentFile   io.Writer `url:"attachment_file,omitempty" required:"false" json:"attachment_file,omitempty" path:"attachment_file"`
 	Name             string    `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
@@ -73,7 +73,7 @@ type BehaviorUpdateParams struct {
 }
 
 type BehaviorDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (b *Behavior) UnmarshalJSON(data []byte) error {

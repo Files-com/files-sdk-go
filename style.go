@@ -18,16 +18,16 @@ type Style struct {
 type StyleCollection []Style
 
 type StyleFindParams struct {
-	Path string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 }
 
 type StyleUpdateParams struct {
-	Path string    `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path string    `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	File io.Writer `url:"file,omitempty" required:"true" json:"file,omitempty" path:"file"`
 }
 
 type StyleDeleteParams struct {
-	Path string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 }
 
 func (s *Style) UnmarshalJSON(data []byte) error {

@@ -45,7 +45,7 @@ type NotificationListParams struct {
 }
 
 type NotificationFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type NotificationCreateParams struct {
@@ -69,7 +69,7 @@ type NotificationCreateParams struct {
 }
 
 type NotificationUpdateParams struct {
-	Id                       int64    `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id                       int64    `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	NotifyOnCopy             *bool    `url:"notify_on_copy,omitempty" required:"false" json:"notify_on_copy,omitempty" path:"notify_on_copy"`
 	NotifyOnDelete           *bool    `url:"notify_on_delete,omitempty" required:"false" json:"notify_on_delete,omitempty" path:"notify_on_delete"`
 	NotifyOnDownload         *bool    `url:"notify_on_download,omitempty" required:"false" json:"notify_on_download,omitempty" path:"notify_on_download"`
@@ -86,7 +86,7 @@ type NotificationUpdateParams struct {
 }
 
 type NotificationDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (n *Notification) UnmarshalJSON(data []byte) error {

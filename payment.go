@@ -31,7 +31,7 @@ type PaymentListParams struct {
 }
 
 type PaymentFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (p *Payment) UnmarshalJSON(data []byte) error {

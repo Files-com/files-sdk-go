@@ -86,7 +86,7 @@ type AutomationListParams struct {
 }
 
 type AutomationFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type AutomationCreateParams struct {
@@ -112,7 +112,7 @@ type AutomationCreateParams struct {
 }
 
 type AutomationUpdateParams struct {
-	Id                     int64                 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id                     int64                 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	Source                 string                `url:"source,omitempty" required:"false" json:"source,omitempty" path:"source"`
 	Destination            string                `url:"destination,omitempty" required:"false" json:"destination,omitempty" path:"destination"`
 	Destinations           []string              `url:"destinations,omitempty" required:"false" json:"destinations,omitempty" path:"destinations"`
@@ -135,7 +135,7 @@ type AutomationUpdateParams struct {
 }
 
 type AutomationDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (a *Automation) UnmarshalJSON(data []byte) error {

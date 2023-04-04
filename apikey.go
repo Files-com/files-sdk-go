@@ -54,7 +54,7 @@ type ApiKeyListParams struct {
 }
 
 type ApiKeyFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type ApiKeyCreateParams struct {
@@ -73,7 +73,7 @@ type ApiKeyUpdateCurrentParams struct {
 }
 
 type ApiKeyUpdateParams struct {
-	Id            int64                   `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id            int64                   `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	Name          string                  `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 	Description   string                  `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
 	ExpiresAt     *time.Time              `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty" path:"expires_at"`
@@ -81,7 +81,7 @@ type ApiKeyUpdateParams struct {
 }
 
 type ApiKeyDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (a *ApiKey) UnmarshalJSON(data []byte) error {

@@ -40,7 +40,7 @@ type PermissionCreateParams struct {
 }
 
 type PermissionDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (p *Permission) UnmarshalJSON(data []byte) error {

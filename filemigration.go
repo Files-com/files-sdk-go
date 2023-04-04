@@ -21,7 +21,7 @@ type FileMigration struct {
 type FileMigrationCollection []FileMigration
 
 type FileMigrationFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (f *FileMigration) UnmarshalJSON(data []byte) error {

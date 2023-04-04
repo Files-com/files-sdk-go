@@ -30,7 +30,7 @@ type HistoryListForFileParams struct {
 	EndAt   *time.Time      `url:"end_at,omitempty" required:"false" json:"end_at,omitempty" path:"end_at"`
 	Display string          `url:"display,omitempty" required:"false" json:"display,omitempty" path:"display"`
 	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Path    string          `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path    string          `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	lib.ListParams
 }
 
@@ -39,7 +39,7 @@ type HistoryListForFolderParams struct {
 	EndAt   *time.Time      `url:"end_at,omitempty" required:"false" json:"end_at,omitempty" path:"end_at"`
 	Display string          `url:"display,omitempty" required:"false" json:"display,omitempty" path:"display"`
 	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Path    string          `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path    string          `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	lib.ListParams
 }
 
@@ -48,7 +48,7 @@ type HistoryListForUserParams struct {
 	EndAt   *time.Time      `url:"end_at,omitempty" required:"false" json:"end_at,omitempty" path:"end_at"`
 	Display string          `url:"display,omitempty" required:"false" json:"display,omitempty" path:"display"`
 	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	UserId  int64           `url:"-,omitempty" required:"true" json:"-,omitempty" path:"user_id"`
+	UserId  int64           `url:"-,omitempty" required:"false" json:"-,omitempty" path:"user_id"`
 	lib.ListParams
 }
 

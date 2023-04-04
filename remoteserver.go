@@ -163,11 +163,11 @@ type RemoteServerListParams struct {
 }
 
 type RemoteServerFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type RemoteServerFindConfigurationFileParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type RemoteServerCreateParams struct {
@@ -229,7 +229,7 @@ type RemoteServerCreateParams struct {
 
 // Post local changes, check in, and download configuration file (used by some Remote Server integrations, such as the Files.com Agent)
 type RemoteServerConfigurationFileParams struct {
-	Id            int64  `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id            int64  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	ApiToken      string `url:"api_token,omitempty" required:"false" json:"api_token,omitempty" path:"api_token"`
 	PermissionSet string `url:"permission_set,omitempty" required:"false" json:"permission_set,omitempty" path:"permission_set"`
 	Root          string `url:"root,omitempty" required:"false" json:"root,omitempty" path:"root"`
@@ -244,7 +244,7 @@ type RemoteServerConfigurationFileParams struct {
 }
 
 type RemoteServerUpdateParams struct {
-	Id                                int64                                   `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id                                int64                                   `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	AwsAccessKey                      string                                  `url:"aws_access_key,omitempty" required:"false" json:"aws_access_key,omitempty" path:"aws_access_key"`
 	AwsSecretKey                      string                                  `url:"aws_secret_key,omitempty" required:"false" json:"aws_secret_key,omitempty" path:"aws_secret_key"`
 	Password                          string                                  `url:"password,omitempty" required:"false" json:"password,omitempty" path:"password"`
@@ -302,7 +302,7 @@ type RemoteServerUpdateParams struct {
 }
 
 type RemoteServerDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (r *RemoteServer) UnmarshalJSON(data []byte) error {

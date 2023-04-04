@@ -30,7 +30,7 @@ type As2PartnerListParams struct {
 }
 
 type As2PartnerFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type As2PartnerCreateParams struct {
@@ -43,7 +43,7 @@ type As2PartnerCreateParams struct {
 }
 
 type As2PartnerUpdateParams struct {
-	Id                 int64  `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id                 int64  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	Name               string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 	Uri                string `url:"uri,omitempty" required:"false" json:"uri,omitempty" path:"uri"`
 	ServerCertificate  string `url:"server_certificate,omitempty" required:"false" json:"server_certificate,omitempty" path:"server_certificate"`
@@ -52,7 +52,7 @@ type As2PartnerUpdateParams struct {
 }
 
 type As2PartnerDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (a *As2Partner) UnmarshalJSON(data []byte) error {

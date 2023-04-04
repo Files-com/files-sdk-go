@@ -24,7 +24,7 @@ type PublicKeyListParams struct {
 }
 
 type PublicKeyFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type PublicKeyCreateParams struct {
@@ -34,12 +34,12 @@ type PublicKeyCreateParams struct {
 }
 
 type PublicKeyUpdateParams struct {
-	Id    int64  `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id    int64  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	Title string `url:"title,omitempty" required:"true" json:"title,omitempty" path:"title"`
 }
 
 type PublicKeyDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 func (p *PublicKey) UnmarshalJSON(data []byte) error {

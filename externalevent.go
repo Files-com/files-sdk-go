@@ -51,7 +51,7 @@ type ExternalEventListParams struct {
 }
 
 type ExternalEventFindParams struct {
-	Id int64 `url:"-,omitempty" required:"true" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
 type ExternalEventCreateParams struct {

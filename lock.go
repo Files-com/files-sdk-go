@@ -24,13 +24,13 @@ type Lock struct {
 type LockCollection []Lock
 
 type LockListForParams struct {
-	Path            string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path            string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	IncludeChildren *bool  `url:"include_children,omitempty" required:"false" json:"include_children,omitempty" path:"include_children"`
 	lib.ListParams
 }
 
 type LockCreateParams struct {
-	Path                 string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path                 string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	AllowAccessByAnyUser *bool  `url:"allow_access_by_any_user,omitempty" required:"false" json:"allow_access_by_any_user,omitempty" path:"allow_access_by_any_user"`
 	Exclusive            *bool  `url:"exclusive,omitempty" required:"false" json:"exclusive,omitempty" path:"exclusive"`
 	Recursive            string `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
@@ -38,7 +38,7 @@ type LockCreateParams struct {
 }
 
 type LockDeleteParams struct {
-	Path  string `url:"-,omitempty" required:"true" json:"-,omitempty" path:"path"`
+	Path  string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	Token string `url:"token,omitempty" required:"true" json:"token,omitempty" path:"token"`
 }
 
