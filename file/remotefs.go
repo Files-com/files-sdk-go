@@ -525,7 +525,7 @@ func (f *FS) Open(name string) (goFs.File, error) {
 	if name == "." {
 		name = ""
 	}
-	result, ok := f.cache.Load(strings.ToLower(name))
+	result, ok := f.cache.Load(lib.NormalizeForComparison(name))
 	if ok {
 		file := result.(*File)
 		if file.IsDir() {
@@ -547,7 +547,7 @@ func (f *FS) Open(name string) (goFs.File, error) {
 
 	file := (&File{File: &fileInfo, FS: f}).Init()
 	if f.useCache {
-		f.cache.Store(strings.ToLower(path), file)
+		f.cache.Store(lib.NormalizeForComparison(path), file)
 	}
 	if fileInfo.Type == "directory" {
 		return &ReadDirFile{File: file}, nil
@@ -565,7 +565,7 @@ func (f *FS) ReadDir(name string) ([]goFs.DirEntry, error) {
 	if name == "." {
 		name = ""
 	}
-	cacheName := strings.ToLower(name)
+	cacheName := lib.NormalizeForComparison(name)
 	if f.useCache {
 		f.cacheMutex.Lock(cacheName)
 		defer f.cacheMutex.Unlock(cacheName)
@@ -604,11 +604,11 @@ func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {
 		}
 		parts := strings.Split(fi.Path, "/")
 		dir := strings.Join(parts[0:len(parts)-1], "/")
-		if dir == strings.TrimSuffix(f.Path, "/") {
+		if lib.NormalizeForComparison(dir) == lib.NormalizeForComparison(f.Path) {
 			// There is a bug in the API that it could return a nested file not in the current directory.
 			file := (&File{File: &fi, FS: f.FS}).Init()
 			if f.useCache {
-				f.cache.Store(strings.ToLower(fi.Path), file)
+				f.cache.Store(lib.NormalizeForComparison(fi.Path), file)
 			}
 			files = append(files, file)
 		}
