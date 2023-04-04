@@ -27,7 +27,7 @@ func transliterate(r rune, transliterationMap map[rune]string) string {
 	return string(r)
 }
 
-func normalizeForComparison(path string) string {
+func NormalizeForComparison(path string) string {
 	transliterationMap := createTransliterationMap()
 
 	// Normalize Algorithm

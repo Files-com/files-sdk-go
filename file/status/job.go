@@ -456,7 +456,7 @@ func (r *Job) FindRemoteFile(file IFile) (filesSDK.File, bool, error) {
 		}
 
 		for _, entry := range entries {
-			if !entry.IsDir() && strings.EqualFold(lib.UrlJoinNoEscape(dir, entry.Name()), file.RemotePath()) {
+			if !entry.IsDir() && lib.NormalizeForComparison(lib.UrlJoinNoEscape(dir, entry.Name())) == lib.NormalizeForComparison(file.RemotePath()) {
 				info, err := entry.Info()
 				if err != nil {
 					panic(err)

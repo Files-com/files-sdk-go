@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"io/fs"
-	"strings"
 
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/zenthangplus/goccm"
@@ -90,8 +89,8 @@ func (w *Walk[T]) walkDir(ctx context.Context, dir string, it *IterChan[T]) erro
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
-		if strings.EqualFold(path, dir) && d.IsDir() {
-			if strings.EqualFold(path, w.Root) && w.ListDirectories {
+		if NormalizeForComparison(path) == NormalizeForComparison(dir) && d.IsDir() {
+			if NormalizeForComparison(path) == NormalizeForComparison(w.Root) && w.ListDirectories {
 				w.send(d, path, it)
 			}
 			return nil

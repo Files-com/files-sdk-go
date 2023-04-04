@@ -207,7 +207,7 @@ func (f FakeDownloadServer) Routes() {
 		var files []files_sdk.File
 		for k, v := range f.MockFiles {
 			dir, _ := filepath.Split(k)
-			if strings.EqualFold(filepath.Clean(path), filepath.Clean(dir)) {
+			if lib.NormalizeForComparison(filepath.Clean(path)) == lib.NormalizeForComparison(filepath.Clean(dir)) {
 				if v.Path == "" {
 					v.Path = k
 					v.DisplayName = filepath.Base(k)
