@@ -96,8 +96,6 @@ type Site struct {
 	OfficeIntegrationType                string          `json:"office_integration_type,omitempty" path:"office_integration_type"`
 	OncehubLink                          string          `json:"oncehub_link,omitempty" path:"oncehub_link"`
 	OptOutGlobal                         *bool           `json:"opt_out_global,omitempty" path:"opt_out_global"`
-	OverageNotifiedAt                    *time.Time      `json:"overage_notified_at,omitempty" path:"overage_notified_at"`
-	OverageNotify                        *bool           `json:"overage_notify,omitempty" path:"overage_notify"`
 	Overdue                              *bool           `json:"overdue,omitempty" path:"overdue"`
 	PasswordMinLength                    int64           `json:"password_min_length,omitempty" path:"password_min_length"`
 	PasswordRequireLetter                *bool           `json:"password_require_letter,omitempty" path:"password_require_letter"`
@@ -166,7 +164,6 @@ type SiteUpdateParams struct {
 	ReplyToEmail                         string          `url:"reply_to_email,omitempty" required:"false" json:"reply_to_email,omitempty" path:"reply_to_email"`
 	AllowBundleNames                     *bool           `url:"allow_bundle_names,omitempty" required:"false" json:"allow_bundle_names,omitempty" path:"allow_bundle_names"`
 	BundleExpiration                     int64           `url:"bundle_expiration,omitempty" required:"false" json:"bundle_expiration,omitempty" path:"bundle_expiration"`
-	OverageNotify                        *bool           `url:"overage_notify,omitempty" required:"false" json:"overage_notify,omitempty" path:"overage_notify"`
 	WelcomeEmailEnabled                  *bool           `url:"welcome_email_enabled,omitempty" required:"false" json:"welcome_email_enabled,omitempty" path:"welcome_email_enabled"`
 	AskAboutOverwrites                   *bool           `url:"ask_about_overwrites,omitempty" required:"false" json:"ask_about_overwrites,omitempty" path:"ask_about_overwrites"`
 	ShowRequestAccessLink                *bool           `url:"show_request_access_link,omitempty" required:"false" json:"show_request_access_link,omitempty" path:"show_request_access_link"`
