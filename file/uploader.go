@@ -83,7 +83,7 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 		if job.Type == directory.File {
 			metaFile.file = files_sdk.File{
 				DisplayName: filepath.Base(params.LocalPath),
-				Type:        job.Direction.Name(),
+				Type:        "file",
 				Mtime:       lib.Time(fi.ModTime()),
 				Size:        fi.Size(),
 				Path:        params.RemotePath,
@@ -96,7 +96,7 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 				job.Finish()
 				return
 			}
-
+			metaFile.file.Path = metaFile.remotePath
 			job.Add(metaFile)
 			job.UpdateStatus(status.Indexed, metaFile, nil)
 		} else {

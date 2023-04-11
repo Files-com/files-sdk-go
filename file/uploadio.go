@@ -2,9 +2,11 @@ package file
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -80,6 +82,10 @@ func (c *Client) UploadIO(parentCtx context.Context, params UploadIOParams) (fil
 			if *fileUploadPart.ParallelParts {
 				params.Manager.Done()
 			}
+			var pathErr *os.PathError
+			if errors.As(part.error, &pathErr) {
+				part.error = pathErr
+			}
 			onError <- part.error
 			return
 		}
@@ -147,7 +153,7 @@ func (c *Client) UploadIO(parentCtx context.Context, params UploadIOParams) (fil
 	}
 
 	if firstError != nil {
-		return files_sdk.File{}, fileUploadPart, allParts, otherErrors, err
+		return files_sdk.File{}, fileUploadPart, allParts, otherErrors, firstError
 	}
 
 	f, err := c.completeUpload(ctx, &params.ProvidedMtime, etags, bytesWritten, fileUploadPart.Path, fileUploadPart.Ref)
