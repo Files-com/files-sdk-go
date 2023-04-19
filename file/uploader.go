@@ -172,14 +172,18 @@ func enqueueIndexedUploads(job *status.Job, jobCtx context.Context, onComplete c
 }
 
 func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadStatus, onComplete chan *UploadStatus) {
+	finish := func() {
+		job.FilesManager.Done()
+		onComplete <- uploadStatus
+	}
 	if uploadStatus.error != nil || uploadStatus.missingStat {
 		job.UpdateStatus(status.Errored, uploadStatus, uploadStatus.RecentError())
-		onComplete <- uploadStatus
+		finish()
 		return
 	}
 	if !manager.Wait(ctx, job.FilesManager) {
 		job.UpdateStatus(status.Canceled, uploadStatus, nil)
-		onComplete <- uploadStatus
+		finish()
 		return
 	}
 	func() {
@@ -189,8 +193,7 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 			if localFile != nil {
 				localFile.Close()
 			}
-			job.FilesManager.Done()
-			onComplete <- uploadStatus
+			finish()
 		}()
 		config := job.Config.(files_sdk.Config)
 		if skipOrIgnore(uploadStatus, config.FeatureFlag("incremental-updates")) {

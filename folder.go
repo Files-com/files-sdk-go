@@ -36,6 +36,7 @@ type FolderListForParams struct {
 	Path               string                   `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	Filter             string                   `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	PreviewSize        string                   `url:"preview_size,omitempty" required:"false" json:"preview_size,omitempty" path:"preview_size"`
+	SortBy             json.RawMessage          `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Search             string                   `url:"search,omitempty" required:"false" json:"search,omitempty" path:"search"`
 	SearchAll          *bool                    `url:"search_all,omitempty" required:"false" json:"search_all,omitempty" path:"search_all"`
 	WithPreviews       *bool                    `url:"with_previews,omitempty" required:"false" json:"with_previews,omitempty" path:"with_previews"`

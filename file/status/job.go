@@ -175,7 +175,10 @@ func (r *Job) Reset() {
 }
 
 func (r *Job) Wait() {
-	<-r.Finished.C
+	select {
+	case <-r.Finished.C:
+	case <-r.Canceled.C:
+	}
 }
 
 func (r *Job) Job() *Job {
