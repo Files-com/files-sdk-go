@@ -36,39 +36,39 @@ func List(ctx context.Context, params files_sdk.SnapshotListParams, opts ...file
 	return (&Client{}).List(ctx, params, opts...)
 }
 
-func (c *Client) Find(ctx context.Context, params files_sdk.SnapshotFindParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/snapshots/{id}", Params: params, Entity: nil}, opts...)
+func (c *Client) Find(ctx context.Context, params files_sdk.SnapshotFindParams, opts ...files_sdk.RequestResponseOption) (snapshot files_sdk.Snapshot, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/snapshots/{id}", Params: params, Entity: &snapshot}, opts...)
 	return
 }
 
-func Find(ctx context.Context, params files_sdk.SnapshotFindParams, opts ...files_sdk.RequestResponseOption) (err error) {
+func Find(ctx context.Context, params files_sdk.SnapshotFindParams, opts ...files_sdk.RequestResponseOption) (snapshot files_sdk.Snapshot, err error) {
 	return (&Client{}).Find(ctx, params, opts...)
 }
 
-func (c *Client) Create(ctx context.Context, opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/snapshots", Params: lib.Interface(), Entity: nil}, opts...)
+func (c *Client) Create(ctx context.Context, opts ...files_sdk.RequestResponseOption) (snapshot files_sdk.Snapshot, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/snapshots", Params: lib.Interface(), Entity: &snapshot}, opts...)
 	return
 }
 
-func Create(ctx context.Context, opts ...files_sdk.RequestResponseOption) (err error) {
+func Create(ctx context.Context, opts ...files_sdk.RequestResponseOption) (snapshot files_sdk.Snapshot, err error) {
 	return (&Client{}).Create(ctx, opts...)
 }
 
-func (c *Client) Update(ctx context.Context, params files_sdk.SnapshotUpdateParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/snapshots/{id}", Params: params, Entity: nil}, opts...)
+func (c *Client) Update(ctx context.Context, params files_sdk.SnapshotUpdateParams, opts ...files_sdk.RequestResponseOption) (snapshot files_sdk.Snapshot, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/snapshots/{id}", Params: params, Entity: &snapshot}, opts...)
 	return
 }
 
-func Update(ctx context.Context, params files_sdk.SnapshotUpdateParams, opts ...files_sdk.RequestResponseOption) (err error) {
+func Update(ctx context.Context, params files_sdk.SnapshotUpdateParams, opts ...files_sdk.RequestResponseOption) (snapshot files_sdk.Snapshot, err error) {
 	return (&Client{}).Update(ctx, params, opts...)
 }
 
-func (c *Client) UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/snapshots/{id}", Params: params, Entity: nil}, opts...)
+func (c *Client) UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (snapshot files_sdk.Snapshot, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/snapshots/{id}", Params: params, Entity: &snapshot}, opts...)
 	return
 }
 
-func UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (err error) {
+func UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (snapshot files_sdk.Snapshot, err error) {
 	return (&Client{}).UpdateWithMap(ctx, params, opts...)
 }
 

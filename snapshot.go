@@ -2,12 +2,18 @@ package files_sdk
 
 import (
 	"encoding/json"
+	"time"
 
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 type Snapshot struct {
-	Id int64 `json:"id,omitempty" path:"id"`
+	ExpiresAt   *time.Time `json:"expires_at,omitempty" path:"expires_at"`
+	FinalizedAt *time.Time `json:"finalized_at,omitempty" path:"finalized_at"`
+	Name        string     `json:"name,omitempty" path:"name"`
+	UserId      int64      `json:"user_id,omitempty" path:"user_id"`
+	BundleId    int64      `json:"bundle_id,omitempty" path:"bundle_id"`
+	Id          int64      `json:"id,omitempty" path:"id"`
 }
 
 type SnapshotCollection []Snapshot
