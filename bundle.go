@@ -30,6 +30,7 @@ type Bundle struct {
 	Note                            string          `json:"note,omitempty" path:"note"`
 	PathTemplate                    string          `json:"path_template,omitempty" path:"path_template"`
 	SendEmailReceiptToUploader      *bool           `json:"send_email_receipt_to_uploader,omitempty" path:"send_email_receipt_to_uploader"`
+	SnapshotId                      int64           `json:"snapshot_id,omitempty" path:"snapshot_id"`
 	UserId                          int64           `json:"user_id,omitempty" path:"user_id"`
 	Username                        string          `json:"username,omitempty" path:"username"`
 	ClickwrapId                     int64           `json:"clickwrap_id,omitempty" path:"clickwrap_id"`
@@ -40,6 +41,8 @@ type Bundle struct {
 	Paths                           []string        `json:"paths,omitempty" path:"paths"`
 	Password                        string          `json:"password,omitempty" path:"password"`
 	FormFieldSetId                  int64           `json:"form_field_set_id,omitempty" path:"form_field_set_id"`
+	CreateSnapshot                  *bool           `json:"create_snapshot,omitempty" path:"create_snapshot"`
+	FinalizeSnapshot                *bool           `json:"finalize_snapshot,omitempty" path:"finalize_snapshot"`
 	WatermarkAttachmentFile         io.Reader       `json:"watermark_attachment_file,omitempty" path:"watermark_attachment_file"`
 	WatermarkAttachmentDelete       *bool           `json:"watermark_attachment_delete,omitempty" path:"watermark_attachment_delete"`
 }
@@ -83,8 +86,10 @@ type BundleCreateParams struct {
 	Paths                           []string              `url:"paths,omitempty" required:"true" json:"paths,omitempty" path:"paths"`
 	Password                        string                `url:"password,omitempty" required:"false" json:"password,omitempty" path:"password"`
 	FormFieldSetId                  int64                 `url:"form_field_set_id,omitempty" required:"false" json:"form_field_set_id,omitempty" path:"form_field_set_id"`
+	CreateSnapshot                  *bool                 `url:"create_snapshot,omitempty" required:"false" json:"create_snapshot,omitempty" path:"create_snapshot"`
 	DontSeparateSubmissionsByFolder *bool                 `url:"dont_separate_submissions_by_folder,omitempty" required:"false" json:"dont_separate_submissions_by_folder,omitempty" path:"dont_separate_submissions_by_folder"`
 	ExpiresAt                       *time.Time            `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty" path:"expires_at"`
+	FinalizeSnapshot                *bool                 `url:"finalize_snapshot,omitempty" required:"false" json:"finalize_snapshot,omitempty" path:"finalize_snapshot"`
 	MaxUses                         int64                 `url:"max_uses,omitempty" required:"false" json:"max_uses,omitempty" path:"max_uses"`
 	Description                     string                `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
 	Note                            string                `url:"note,omitempty" required:"false" json:"note,omitempty" path:"note"`
@@ -118,9 +123,11 @@ type BundleUpdateParams struct {
 	FormFieldSetId                  int64                 `url:"form_field_set_id,omitempty" required:"false" json:"form_field_set_id,omitempty" path:"form_field_set_id"`
 	ClickwrapId                     int64                 `url:"clickwrap_id,omitempty" required:"false" json:"clickwrap_id,omitempty" path:"clickwrap_id"`
 	Code                            string                `url:"code,omitempty" required:"false" json:"code,omitempty" path:"code"`
+	CreateSnapshot                  *bool                 `url:"create_snapshot,omitempty" required:"false" json:"create_snapshot,omitempty" path:"create_snapshot"`
 	Description                     string                `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
 	DontSeparateSubmissionsByFolder *bool                 `url:"dont_separate_submissions_by_folder,omitempty" required:"false" json:"dont_separate_submissions_by_folder,omitempty" path:"dont_separate_submissions_by_folder"`
 	ExpiresAt                       *time.Time            `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty" path:"expires_at"`
+	FinalizeSnapshot                *bool                 `url:"finalize_snapshot,omitempty" required:"false" json:"finalize_snapshot,omitempty" path:"finalize_snapshot"`
 	InboxId                         int64                 `url:"inbox_id,omitempty" required:"false" json:"inbox_id,omitempty" path:"inbox_id"`
 	MaxUses                         int64                 `url:"max_uses,omitempty" required:"false" json:"max_uses,omitempty" path:"max_uses"`
 	Note                            string                `url:"note,omitempty" required:"false" json:"note,omitempty" path:"note"`
