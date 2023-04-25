@@ -541,7 +541,7 @@ func (f *FS) Open(name string) (goFs.File, error) {
 	} else {
 		fileInfo, err = (&Client{Config: f.Config}).Find(f.Context, files_sdk.FileFindParams{Path: path})
 		if err != nil {
-			return &File{}, &goFs.PathError{Path: fileInfo.Path, Err: err, Op: "open"}
+			return &File{}, &goFs.PathError{Path: path, Err: err, Op: "open"}
 		}
 	}
 
@@ -578,7 +578,7 @@ func (f *FS) ReadDir(name string) ([]goFs.DirEntry, error) {
 	}
 
 	dirs, err := ReadDirFile{File: (&File{File: &files_sdk.File{Path: name}, FS: f}).Init()}.ReadDir(0)
-	if f.useCache {
+	if f.useCache && errors.Is(err, files_sdk.ResponseError{}) {
 		f.cacheDir.Store(cacheName, DirEntryError{dirs, err})
 	}
 	return dirs, err

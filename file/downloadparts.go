@@ -11,13 +11,13 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Files-com/files-sdk-go/v2/file/manager"
+	"github.com/Files-com/files-sdk-go/v2/lib"
 	"github.com/panjf2000/ants/v2"
 
 	"github.com/samber/lo"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/Files-com/files-sdk-go/v2/file/manager"
-	"github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 const (

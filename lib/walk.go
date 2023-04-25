@@ -4,19 +4,16 @@ import (
 	"context"
 	"errors"
 	"io/fs"
-
-	"github.com/Files-com/files-sdk-go/v2/file/manager"
-	"github.com/zenthangplus/goccm"
 )
 
 type Walk[T any] struct {
 	fs.FS
 	Queue[string]
 	IterChan[T]
-	goccm.ConcurrencyManager
-	Root            string
-	WalkFile        func(d fs.DirEntry, path string) (T, error)
-	ListDirectories bool
+	ConcurrencyManager ConcurrencyManagerWithSubWorker
+	Root               string
+	WalkFile           func(d fs.DirEntry, path string, err error) (T, error)
+	ListDirectories    bool
 }
 
 type DirEntry struct {
@@ -26,7 +23,7 @@ type DirEntry struct {
 	error
 }
 
-func (d DirEntry) Error() error {
+func (d DirEntry) Err() error {
 	return d.error
 }
 
@@ -34,41 +31,47 @@ func (d DirEntry) Path() string {
 	return d.path
 }
 
-func (w *Walk[T]) Walk(ctx context.Context) *IterChan[T] {
+func (w *Walk[T]) Walk(parentCtx context.Context) *IterChan[T] {
 	w.Queue.Init(1)
-	it := (&IterChan[T]{}).Init()
+	it := (&IterChan[T]{}).Init(parentCtx)
 	if w.Root == "" {
 		w.Queue.Push(".")
 	} else {
 		w.Queue.Push(w.Root)
 	}
 
-	waitGroup := manager.WithWaitGroup(w.ConcurrencyManager)
+	waitGroup := w.ConcurrencyManager.NewSubWorker()
 
 	go func() {
+		defer it.Stop()
 		for {
-			if ctx.Err() != nil {
-				return
+			if it.Context.Err() != nil {
+				break
 			}
 			if dir := w.Queue.Pop(); dir != "" {
-				waitGroup.Add()
-				go func() {
-					err := w.walkDir(ctx, dir, it)
-					if err != nil {
-						it.SendError <- err
-					}
-					waitGroup.Done()
-				}()
+				if waitGroup.WaitWithContext(parentCtx) {
+					go func() {
+						err := w.walkDir(it.Context, dir, it)
+						if err != nil && !errors.Is(err, context.Canceled) {
+							it.SendError <- err
+						}
+						waitGroup.Done()
+					}()
+				}
 			}
 
 			if w.Len() == 0 {
-				waitGroup.Wait()
-				if w.Len() == 0 {
-					break
+				for {
+					if waitGroup.WaitForADone() {
+						if w.Len() != 0 {
+							break
+						}
+					} else {
+						return
+					}
 				}
 			}
 		}
-		it.Stop <- true
 	}()
 	return it
 }
@@ -76,29 +79,29 @@ func (w *Walk[T]) Walk(ctx context.Context) *IterChan[T] {
 func (w *Walk[T]) walkDir(ctx context.Context, dir string, it *IterChan[T]) error {
 	return fs.WalkDir(w.FS, dir, func(path string, d fs.DirEntry, err error) error {
 		if ctx.Err() != nil {
-			return ctx.Err()
+			return nil
 		}
 		if err != nil {
-			if errors.Is(err, fs.ErrPermission) {
-				it.Send <- DirEntry{d, nil, path, err}
-				return fs.SkipDir
+			if err := w.send(ctx, d, path, it, err); err != nil {
+				return err
 			}
-			return err
+			return fs.SkipDir
 		}
 
-		if ctx.Err() != nil {
-			return ctx.Err()
-		}
 		if NormalizeForComparison(path) == NormalizeForComparison(dir) && d.IsDir() {
 			if NormalizeForComparison(path) == NormalizeForComparison(w.Root) && w.ListDirectories {
-				w.send(d, path, it)
+				if err := w.send(ctx, d, path, it, nil); err != nil {
+					return err
+				}
 			}
 			return nil
 		}
 
 		if d.IsDir() && path != "." {
 			if w.ListDirectories {
-				w.send(d, path, it)
+				if err := w.send(ctx, d, path, it, nil); err != nil {
+					return err
+				}
 			}
 			w.Queue.Push(path)
 			return fs.SkipDir
@@ -108,22 +111,32 @@ func (w *Walk[T]) walkDir(ctx context.Context, dir string, it *IterChan[T]) erro
 			return nil
 		}
 
-		w.send(d, path, it)
+		if err := w.send(ctx, d, path, it, nil); err != nil {
+			return err
+		}
 
 		return nil
 	})
 }
 
-func (w *Walk[T]) send(d fs.DirEntry, path string, it *IterChan[T]) {
-	toSend, err := w.WalkFile(d, path)
-	if err != nil {
-		it.SendError <- err
+func (w *Walk[T]) send(ctx context.Context, d fs.DirEntry, path string, it *IterChan[T], err error) error {
+	toSend, err := w.WalkFile(d, path, err)
+	if err == nil {
+		select {
+		case <-ctx.Done():
+		default:
+			it.Send <- toSend
+		}
+		return nil
 	} else {
-		it.Send <- toSend
+		return err
 	}
 }
 
-func DirEntryWalkFile(d fs.DirEntry, path string) (DirEntry, error) {
+func DirEntryWalkFile(d fs.DirEntry, path string, err error) (DirEntry, error) {
+	if err != nil {
+		return DirEntry{DirEntry: d, FileInfo: nil, path: path, error: err}, nil
+	}
 	info, err := d.Info()
-	return DirEntry{DirEntry: d, FileInfo: info, path: path, error: err}, err
+	return DirEntry{DirEntry: d, FileInfo: info, path: path, error: err}, nil
 }

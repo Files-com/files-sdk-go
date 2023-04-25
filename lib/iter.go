@@ -30,6 +30,13 @@ type IterI interface {
 	Err() error
 }
 
+type TypedIterI[T any] interface {
+	Next() bool
+	Current() interface{}
+	Resource() T
+	Err() error
+}
+
 type IterPagingI interface {
 	IterI
 	EOFPage() bool

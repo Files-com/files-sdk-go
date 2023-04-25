@@ -16,10 +16,8 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/lib"
-	"github.com/stretchr/testify/assert"
-	"github.com/zenthangplus/goccm"
-
 	"github.com/snabb/httpreaderat"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestClient_UploadIO_Cancel_Restart(t *testing.T) {
@@ -42,7 +40,7 @@ func TestClient_UploadIO_Cancel_Restart(t *testing.T) {
 		Path:     "VirtualBox.dmg",
 		Reader:   f,
 		Size:     f.Size(),
-		Manager:  goccm.New(4),
+		Manager:  lib.NewConstrainedWorkGroup(4),
 		Progress: progress,
 	}
 	var fi files_sdk.File
@@ -139,7 +137,7 @@ func TestClient_UploadIO_Cancel_Restart_Expired(t *testing.T) {
 		Path:     "VirtualBox.dmg",
 		Reader:   f,
 		Size:     f.Size(),
-		Manager:  goccm.New(4),
+		Manager:  lib.NewConstrainedWorkGroup(4),
 		Progress: progress,
 	}
 

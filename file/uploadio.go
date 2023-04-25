@@ -15,7 +15,6 @@ import (
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/Files-com/files-sdk-go/v2/file/status"
 	"github.com/Files-com/files-sdk-go/v2/lib"
-	"github.com/zenthangplus/goccm"
 )
 
 type UploadIOParams struct {
@@ -23,7 +22,7 @@ type UploadIOParams struct {
 	Reader        io.ReaderAt
 	Size          int64
 	Progress      func(int64)
-	Manager       goccm.ConcurrencyManager
+	Manager       lib.ConcurrencyManager
 	ProvidedMtime time.Time
 	Parts
 	files_sdk.FileUploadPart

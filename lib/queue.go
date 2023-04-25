@@ -19,6 +19,10 @@ func (q *queue[T]) Pop() T {
 	return el
 }
 
+func (q *queue[T]) Clear() {
+	*q = queue[T]{}
+}
+
 type Queue[T any] struct {
 	queue queue[T]
 	*sync.RWMutex
@@ -46,4 +50,10 @@ func (q *Queue[T]) Pop() T {
 	q.Lock()
 	defer q.Unlock()
 	return q.queue.Pop()
+}
+
+func (q *Queue[T]) Clear() {
+	q.Lock()
+	defer q.Unlock()
+	*q = Queue[T]{}
 }

@@ -17,7 +17,6 @@ require (
 	github.com/samber/lo v1.33.0
 	github.com/snabb/httpreaderat v1.0.1
 	github.com/stretchr/testify v1.8.1
-	github.com/zenthangplus/goccm v1.1.3
 	golang.org/x/text v0.7.0
 	moul.io/http2curl v1.0.0
 )

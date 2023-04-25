@@ -102,7 +102,7 @@ func retryErroredIfSomeCompleted(ctx context.Context, job *status.Job, signalEve
 	RetryByPolicy(ctx, job, RetryPolicy{Type: RetryUnfinished, RetryCount: policy.RetryCount}, signalEvents)
 }
 
-func enqueueByStatus(ctx context.Context, job *status.Job, signalEvents bool, enqueue func(status.IFile, context.Context), onComplete func(), s ...status.Status) {
+func enqueueByStatus(ctx context.Context, job *status.Job, signalEvents bool, enqueue func(status.IFile, context.Context), waitForComplete func(), s ...status.Status) {
 	if job.Count(s...) == 0 {
 		return
 	}
@@ -125,14 +125,16 @@ func enqueueByStatus(ctx context.Context, job *status.Job, signalEvents bool, en
 	job.Logger.Printf("retrying %v files (%v)", strings.Join(types, ", "), len(files))
 
 	for _, file := range files {
-		count += 1
-		go enqueue(file, jobCtx)
+		if job.FilesManager.WaitWithContext(jobCtx) {
+			count += 1
+			go enqueue(file, jobCtx)
+		}
 	}
 	if signalEvents {
 		job.EndScan()
 	}
 	for range iter.N(count) {
-		onComplete()
+		waitForComplete()
 	}
 	if signalEvents {
 		job.Finish()

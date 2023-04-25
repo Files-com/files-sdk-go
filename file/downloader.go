@@ -14,7 +14,6 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/directory"
-	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/Files-com/files-sdk-go/v2/file/status"
 	"github.com/Files-com/files-sdk-go/v2/lib"
 )
@@ -106,13 +105,12 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 		}).Walk(jobCtx)
 
 		for it.Next() {
-			dirEntry := it.Current()
-			if it.Err() != nil {
-				createIndexedStatus(Entity{error: it.Err()}, params, job)
+			if it.Resource().Err() != nil {
+				createIndexedStatus(Entity{error: it.Resource().Err()}, params, job)
+			} else {
+				f, err := fileSys.Open(it.Resource().Path())
+				createIndexedStatus(Entity{error: err, File: f, FS: fileSys}, params, job)
 			}
-
-			f, err := fileSys.Open(dirEntry.Path())
-			createIndexedStatus(Entity{error: err, File: f, FS: fileSys}, params, job)
 		}
 
 		if it.Err() != nil {
@@ -142,9 +140,13 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 
 func enqueueIndexedDownloads(job *status.Job, jobCtx context.Context, onComplete chan *DownloadStatus) {
 	for !job.EndScanning.Called() || job.Count(status.Indexed) > 0 {
-		f, ok := job.EnqueueNext()
-		if ok {
-			go enqueueDownload(jobCtx, job, f.(*DownloadStatus), onComplete)
+		if f, ok := job.EnqueueNext(); ok {
+			if job.FilesManager.WaitWithContext(jobCtx) {
+				go enqueueDownload(jobCtx, job, f.(*DownloadStatus), onComplete)
+			} else {
+				job.UpdateStatus(status.Canceled, f.(*DownloadStatus), nil)
+				onComplete <- f.(*DownloadStatus)
+			}
 		}
 	}
 }
@@ -190,12 +192,8 @@ func enqueueDownload(ctx context.Context, job *status.Job, downloadStatus *Downl
 		signal <- downloadStatus
 		return
 	}
-	if manager.Wait(ctx, job.FilesManager) {
-		downloadFolderItem(ctx, signal, downloadStatus)
-	} else {
-		job.UpdateStatus(status.Canceled, downloadStatus, nil)
-		signal <- downloadStatus
-	}
+
+	downloadFolderItem(ctx, signal, downloadStatus)
 }
 
 func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *DownloadStatus) {

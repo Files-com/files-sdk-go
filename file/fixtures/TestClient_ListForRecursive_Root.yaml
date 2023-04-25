@@ -12,27 +12,25 @@ interactions:
     url: https://app.files.com/api/rest/v1/folders/?page=1
     method: GET
   response:
-    body: '{"error":"Unauthorized. The API key or Session token is either missing
-      or invalid.","http-code":401,"instance":"9a3a1dbd-df02-4951-9853-10a286ca61c9","title":"Authentication
-      Required","type":"not-authenticated/authentication-required"}'
+    body: '[{"path":"aws-sftp","display_name":"aws-sftp","type":"directory","size":null,"created_at":"2022-02-07T19:13:01Z","mtime":"2022-02-07T19:13:01Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false},{"path":"azure","display_name":"azure","type":"directory","size":null,"created_at":null,"mtime":"2023-01-02T19:03:42Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
-      Content-Length:
-      - "235"
       Content-Type:
       - application/json
       Date:
-      - Tue, 04 Oct 2022 22:36:28 GMT
+      - Fri, 21 Apr 2023 21:35:23 GMT
       Expires:
       - Fri, 01 Jan 1990 00:00:00 GMT
       Pragma:
       - no-cache
       Server:
-      - nginx
+      - files.com
+      X-Files-Cached-Response:
+      - "1682112627"
       X-Request-Id:
-      - 9a3a1dbd-df02-4951-9853-10a286ca61c9
-      - 45fea963afc88c482f80597a98ae67a2
-    status: 401 Unauthorized
-    code: 401
+      - eb894677-c3cf-4166-846b-0fdfb795edae
+      - 4f8308feaab7e31ffc1fb18c8c7ef5d8
+    status: 200 OK
+    code: 200
     duration: ""

@@ -12,7 +12,6 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/directory"
-	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/Files-com/files-sdk-go/v2/file/status"
 	"github.com/Files-com/files-sdk-go/v2/ignore"
 	"github.com/Files-com/files-sdk-go/v2/lib/direction"
@@ -107,24 +106,18 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 			}).Walk(jobCtx)
 
 			for it.Next() {
-				dirEntry := it.Current()
-				uploadStatus, ok := buildUploadStatus(filepath.Join(params.LocalPath, dirEntry.Path()), params.LocalPath, params.RemotePath, c, job, params)
-				if it.Err() != nil {
-					job.UpdateStatus(status.Errored, &uploadStatus, it.Err())
-					job.Add(&uploadStatus)
-				}
-
+				uploadStatus, ok := buildUploadStatus(filepath.Join(params.LocalPath, it.Resource().Path()), params.LocalPath, params.RemotePath, c, job, params)
 				if !ok {
 					continue
 				}
 
 				uploadStatus.file.Type = "file"
-				if dirEntry.Error() != nil {
+				if it.Resource().Err() != nil {
 					uploadStatus.missingStat = true
-					uploadStatus.error = err
+					uploadStatus.error = it.Resource().Err()
 				} else {
-					uploadStatus.file.Size = dirEntry.FileInfo.Size()
-					uploadStatus.file.Mtime = lib.Time(dirEntry.FileInfo.ModTime())
+					uploadStatus.file.Size = it.Resource().FileInfo.Size()
+					uploadStatus.file.Mtime = lib.Time(it.Resource().FileInfo.ModTime())
 				}
 				job.Add(&uploadStatus)
 			}
@@ -164,9 +157,13 @@ func remotePath(ctx context.Context, localPath string, remotePath string, c Uplo
 
 func enqueueIndexedUploads(job *status.Job, jobCtx context.Context, onComplete chan *UploadStatus) {
 	for !job.EndScanning.Called() || job.Count(status.Indexed) > 0 {
-		f, ok := job.EnqueueNext()
-		if ok {
-			go enqueueUpload(jobCtx, job, f.(*UploadStatus), onComplete)
+		if f, ok := job.EnqueueNext(); ok {
+			if job.FilesManager.WaitWithContext(jobCtx) {
+				go enqueueUpload(jobCtx, job, f.(*UploadStatus), onComplete)
+			} else {
+				job.UpdateStatus(status.Canceled, f.(*UploadStatus), nil)
+				onComplete <- f.(*UploadStatus)
+			}
 		}
 	}
 }
@@ -178,11 +175,6 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 	}
 	if uploadStatus.error != nil || uploadStatus.missingStat {
 		job.UpdateStatus(status.Errored, uploadStatus, uploadStatus.RecentError())
-		finish()
-		return
-	}
-	if !manager.Wait(ctx, job.FilesManager) {
-		job.UpdateStatus(status.Canceled, uploadStatus, nil)
 		finish()
 		return
 	}

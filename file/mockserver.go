@@ -54,6 +54,7 @@ type FakeDownloadServer struct {
 	*testing.T
 	TrackRequest map[string][]string
 	traceMutex   *sync.Mutex
+	setup        *sync.Mutex
 }
 
 type download struct {
@@ -99,6 +100,7 @@ func (t TestLogger) Write(p []byte) (n int, err error) {
 }
 
 func (f FakeDownloadServer) Do() FakeDownloadServer {
+	f.setup = &sync.Mutex{}
 	f.MockFiles = make(map[string]mockFile)
 	f.TrackRequest = make(map[string][]string)
 	f.traceMutex = &sync.Mutex{}
@@ -107,11 +109,13 @@ func (f FakeDownloadServer) Do() FakeDownloadServer {
 	f.router.Use(gin.LoggerWithWriter(TestLogger{f.T}))
 	f.Routes()
 	serverPort += 1
+	f.setup.Lock()
 	f.Port = serverPort
 	f.Server = &http.Server{
 		Addr:    fmt.Sprintf("localhost:%v", f.Port),
 		Handler: f.router,
 	}
+	f.setup.Unlock()
 	go func() {
 		var err error
 		ctx, _ := context.WithTimeout(context.Background(), time.Second)
@@ -123,12 +127,14 @@ func (f FakeDownloadServer) Do() FakeDownloadServer {
 			default:
 				err = f.Server.ListenAndServe()
 				if err != nil && strings.Contains(err.Error(), "address already in use") {
+					f.setup.Lock()
 					serverPort += 1
 					f.Port = serverPort
 					f.Server = &http.Server{
 						Addr:    fmt.Sprintf("localhost:%v", f.Port),
 						Handler: f.router,
 					}
+					f.setup.Unlock()
 				} else if err != nil && err != http.ErrServerClosed {
 					log.Fatalf("listen: %s\n", err)
 					return
@@ -142,6 +148,8 @@ func (f FakeDownloadServer) Do() FakeDownloadServer {
 }
 
 func (f FakeDownloadServer) Client() *Client {
+	f.setup.Lock()
+	defer f.setup.Unlock()
 	client := &Client{}
 	httpClient := http.Client{}
 	httpClient.Transport = &CustomTransport{Addr: f.Server.Addr}
@@ -377,6 +385,8 @@ func (f FakeDownloadServer) Routes() {
 }
 
 func (f FakeDownloadServer) Shutdown() error {
+	f.setup.Lock()
+	defer f.setup.Unlock()
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	return f.Server.Shutdown(ctx)

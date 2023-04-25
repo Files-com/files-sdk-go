@@ -1,21 +1,24 @@
 package lib
 
-import "sync/atomic"
+import (
+	"context"
+	"sync/atomic"
+)
 
 type IterChan[T any] struct {
-	Send      chan interface{}
-	Stop      chan bool
+	Send      chan T
 	SendError chan error
 	current   atomic.Value
 	Error     atomic.Value
 	Start     func(*IterChan[T])
+	context.Context
+	Stop context.CancelFunc
 }
 
-func (i *IterChan[T]) Init() *IterChan[T] {
-	i.Send = make(chan interface{})
-	i.Stop = make(chan bool)
+func (i *IterChan[T]) Init(ctx context.Context) *IterChan[T] {
+	i.Send = make(chan T)
 	i.SendError = make(chan error)
-
+	i.Context, i.Stop = context.WithCancel(ctx)
 	return i
 }
 
@@ -23,16 +26,20 @@ func (i *IterChan[T]) Next() bool {
 	select {
 	case current := <-i.Send:
 		i.current.Store(current)
-		return true
 	case err := <-i.SendError:
 		i.Error.Store(err)
-		return false
-	case <-i.Stop:
+	case <-i.Done():
 		return false
 	}
+
+	return true
 }
 
-func (i *IterChan[T]) Current() T {
+func (i *IterChan[T]) Current() interface{} {
+	return i.current.Load()
+}
+
+func (i *IterChan[T]) Resource() T {
 	return i.current.Load().(T)
 }
 

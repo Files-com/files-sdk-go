@@ -1,10 +1,9 @@
 package manager
 
 import (
-	"context"
 	"math"
 
-	"github.com/zenthangplus/goccm"
+	"github.com/Files-com/files-sdk-go/v2/lib"
 )
 
 var (
@@ -20,8 +19,7 @@ type Manager struct {
 }
 
 type ConcurrencyManager struct {
-	goccm.ConcurrencyManager
-	maxGoRoutines               int
+	*lib.ConstrainedWorkGroup
 	DownloadFilesAsSingleStream bool
 }
 
@@ -29,11 +27,12 @@ func (ConcurrencyManager) New(maxGoRoutines int, downloadFilesAsSingleStream ...
 	if len(downloadFilesAsSingleStream) == 0 {
 		downloadFilesAsSingleStream = append(downloadFilesAsSingleStream, false)
 	}
-	return ConcurrencyManager{ConcurrencyManager: goccm.New(maxGoRoutines), maxGoRoutines: maxGoRoutines, DownloadFilesAsSingleStream: downloadFilesAsSingleStream[0]}
+
+	return ConcurrencyManager{ConstrainedWorkGroup: lib.NewConstrainedWorkGroup(maxGoRoutines), DownloadFilesAsSingleStream: downloadFilesAsSingleStream[0]}
 }
 
 func (c ConcurrencyManager) Max() int {
-	return c.maxGoRoutines
+	return c.ConstrainedWorkGroup.Max()
 }
 
 func New(files, fileParts, directoryListing int) *Manager {
@@ -50,17 +49,6 @@ func Default() *Manager {
 
 func Sync() *Manager {
 	return New(1, 1, 1)
-}
-
-func Wait(ctx context.Context, manager ConcurrencyManager) bool {
-	if ctx.Err() != nil {
-		return false
-	}
-	manager.Wait()
-	if ctx.Err() != nil {
-		return false
-	}
-	return true
 }
 
 func Build(maxConcurrentConnections, maxConcurrentDirectoryLists int, downloadFilesAsSingleStream ...bool) *Manager {

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
-	"github.com/zenthangplus/goccm"
 )
 
 type Folder struct {
@@ -33,15 +32,15 @@ type Folder struct {
 type FolderCollection []Folder
 
 type FolderListForParams struct {
-	Path               string                   `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
-	Filter             string                   `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	PreviewSize        string                   `url:"preview_size,omitempty" required:"false" json:"preview_size,omitempty" path:"preview_size"`
-	SortBy             json.RawMessage          `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Search             string                   `url:"search,omitempty" required:"false" json:"search,omitempty" path:"search"`
-	SearchAll          *bool                    `url:"search_all,omitempty" required:"false" json:"search_all,omitempty" path:"search_all"`
-	WithPreviews       *bool                    `url:"with_previews,omitempty" required:"false" json:"with_previews,omitempty" path:"with_previews"`
-	WithPriorityColor  *bool                    `url:"with_priority_color,omitempty" required:"false" json:"with_priority_color,omitempty" path:"with_priority_color"`
-	ConcurrencyManager goccm.ConcurrencyManager `url:"-" required:"false" json:"-"`
+	Path               string                              `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
+	Filter             string                              `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	PreviewSize        string                              `url:"preview_size,omitempty" required:"false" json:"preview_size,omitempty" path:"preview_size"`
+	SortBy             json.RawMessage                     `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Search             string                              `url:"search,omitempty" required:"false" json:"search,omitempty" path:"search"`
+	SearchAll          *bool                               `url:"search_all,omitempty" required:"false" json:"search_all,omitempty" path:"search_all"`
+	WithPreviews       *bool                               `url:"with_previews,omitempty" required:"false" json:"with_previews,omitempty" path:"with_previews"`
+	WithPriorityColor  *bool                               `url:"with_priority_color,omitempty" required:"false" json:"with_priority_color,omitempty" path:"with_priority_color"`
+	ConcurrencyManager lib.ConcurrencyManagerWithSubWorker `url:"-" required:"false" json:"-"`
 	lib.ListParams
 }
 

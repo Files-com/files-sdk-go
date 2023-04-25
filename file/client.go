@@ -249,7 +249,16 @@ func (c *Client) ListFor(ctx context.Context, params files_sdk.FolderListForPara
 	return client.ListFor(ctx, params)
 }
 
-func (c *Client) ListForRecursive(ctx context.Context, params files_sdk.FolderListForParams) (lib.IterI, error) {
+type RecursiveItem struct {
+	files_sdk.File
+	error
+}
+
+func (r RecursiveItem) Err() error {
+	return r.error
+}
+
+func (c *Client) ListForRecursive(ctx context.Context, params files_sdk.FolderListForParams) (lib.TypedIterI[RecursiveItem], error) {
 	if params.ConcurrencyManager == nil {
 		params.ConcurrencyManager = manager.Default().FilePartsManager
 	}
@@ -264,17 +273,19 @@ func (c *Client) ListForRecursive(ctx context.Context, params files_sdk.FolderLi
 		params.Path = fStat.Sys().(files_sdk.File).Path
 	}
 
-	return (&lib.Walk[interface{}]{
+	return (&lib.Walk[RecursiveItem]{
 		FS:                 fsi,
 		Root:               lib.UrlJoinNoEscape(params.Path),
 		ConcurrencyManager: params.ConcurrencyManager,
 		ListDirectories:    true,
-		WalkFile: func(d fs.DirEntry, path string) (interface{}, error) {
-			info, err := d.Info()
-			if err == nil {
-				return info.Sys(), err
+		WalkFile: func(d fs.DirEntry, path string, err error) (RecursiveItem, error) {
+			info, infoErr := d.Info()
+			if infoErr == nil {
+				return RecursiveItem{info.Sys().(files_sdk.File), err}, nil
+			} else if err != nil {
+				return RecursiveItem{}, err
 			} else {
-				return nil, err
+				return RecursiveItem{}, infoErr
 			}
 		},
 	}).Walk(ctx), nil

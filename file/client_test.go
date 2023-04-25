@@ -1025,13 +1025,13 @@ func TestClient_ListForRecursive(t *testing.T) {
 	buildScenario("TestClient_ListForRecursive", client)
 
 	it, err := client.ListForRecursive(context.Background(), files_sdk.FolderListForParams{Path: "/TestClient_ListForRecursive"})
-	var files []files_sdk.File
+	var files []RecursiveItem
 	for it.Next() {
-		files = append(files, it.Current().(files_sdk.File))
+		files = append(files, it.Resource())
 	}
 
 	require.Equal(t, 6, len(files))
-	paths := lo.Map[files_sdk.File, string](files, func(item files_sdk.File, index int) string {
+	paths := lo.Map[RecursiveItem, string](files, func(item RecursiveItem, index int) string {
 		return item.Path
 	})
 	assert.Contains(paths, "TestClient_ListForRecursive")
@@ -1052,13 +1052,13 @@ func TestClient_ListForRecursiveInsensitive(t *testing.T) {
 	buildScenario("TestClient_ListForRecursiveInsensitive", client)
 
 	it, err := client.ListForRecursive(context.Background(), files_sdk.FolderListForParams{Path: "/TestcLient_listforrecursiveinseNsitive"})
-	var files []files_sdk.File
+	var files []RecursiveItem
 	for it.Next() {
-		files = append(files, it.Current().(files_sdk.File))
+		files = append(files, it.Resource())
 	}
 
 	require.Equal(t, 6, len(files))
-	paths := lo.Map[files_sdk.File, string](files, func(item files_sdk.File, index int) string {
+	paths := lo.Map[RecursiveItem, string](files, func(item RecursiveItem, index int) string {
 		return item.Path
 	})
 	assert.Contains(paths, "TestClient_ListForRecursiveInsensitive")
@@ -1077,15 +1077,15 @@ func TestClient_ListForRecursive_Error(t *testing.T) {
 	defer r.Stop()
 	assert := assert.New(t)
 	it, err := client.ListForRecursive(context.Background(), files_sdk.FolderListForParams{Path: "TestClient_ListForRecursive-Not-Found"})
-	var files []files_sdk.File
+	var files []interface{}
 	if err == nil {
 		for it.Next() {
-			files = append(files, it.Current().(files_sdk.File))
+			files = append(files, it.Current())
 		}
 	}
 
 	assert.Equal(len(files), 0)
-	assert.Equal(err.Error(), "open : Authentication Required - `Unauthorized. The API key or Session token is either missing or invalid.`")
+	assert.Equal("open TestClient_ListForRecursive-Not-Found: Authentication Required - `Unauthorized. The API key or Session token is either missing or invalid.`", err.Error())
 }
 
 func TestClient_ListForRecursive_Root(t *testing.T) {
@@ -1095,12 +1095,24 @@ func TestClient_ListForRecursive_Root(t *testing.T) {
 	}
 	defer r.Stop()
 	assert := assert.New(t)
-	it, err := client.ListForRecursive(context.Background(), files_sdk.FolderListForParams{Path: ""})
-	var files []files_sdk.File
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	it, err := client.ListForRecursive(ctx, files_sdk.FolderListForParams{Path: ""})
+	recursiveItems := make([]RecursiveItem, 0)
 	for it.Next() {
-		files = append(files, it.Current().(files_sdk.File))
-		assert.NotEqual(it.Current().(files_sdk.File).Path, "")
+		if it.Err() != nil {
+			assert.NoError(it.Err())
+			continue
+		}
+
+		recursiveItems = append(recursiveItems, it.Resource())
+		assert.NotEqual(it.Resource().Path, "")
+		cancel()
 	}
+	files := lo.Map[RecursiveItem, files_sdk.File](recursiveItems, func(item RecursiveItem, index int) files_sdk.File {
+		return item.File
+	})
+	assert.Len(files, 1)
 }
 
 func TestClient_UploadFile(t *testing.T) {
