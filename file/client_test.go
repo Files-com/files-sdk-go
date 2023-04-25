@@ -1107,12 +1107,18 @@ func TestClient_ListForRecursive_Root(t *testing.T) {
 
 		recursiveItems = append(recursiveItems, it.Resource())
 		assert.NotEqual(it.Resource().Path, "")
-		cancel()
 	}
-	files := lo.Map[RecursiveItem, files_sdk.File](recursiveItems, func(item RecursiveItem, index int) files_sdk.File {
-		return item.File
+	paths := lo.Map[RecursiveItem, string](recursiveItems, func(item RecursiveItem, index int) string {
+		return item.Path
 	})
-	assert.Len(files, 1)
+	assert.Len(paths, 4)
+	errs := lo.Map[RecursiveItem, error](recursiveItems, func(item RecursiveItem, index int) error {
+		return item.Err()
+	})
+	errs = lo.Reject[error](errs, func(err error, index int) bool {
+		return err == nil
+	})
+	assert.ElementsMatch([]string{"azure", "aws-sftp"}, []string{errs[0].(*fs2.PathError).Path, errs[1].(*fs2.PathError).Path})
 }
 
 func TestClient_UploadFile(t *testing.T) {
