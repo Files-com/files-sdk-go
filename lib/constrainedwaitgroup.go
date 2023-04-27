@@ -25,6 +25,8 @@ func (cw *ConstrainedWorkGroup) Wait() {
 }
 
 func (cw *ConstrainedWorkGroup) Done() {
+	cw.cond.L.Lock()
+	defer cw.cond.L.Unlock()
 	cw.wg.Done()
 	<-cw.sem
 	cw.cond.Signal()
@@ -64,11 +66,12 @@ func (cw *ConstrainedWorkGroup) NewSubWorker() ConcurrencyManager {
 }
 
 func (cw *ConstrainedWorkGroup) WaitForADone() bool {
+	cw.cond.L.Lock()
+	defer cw.cond.L.Unlock()
 	if cw.RunningCount() == 0 {
 		return false
 	}
-	cw.cond.L.Lock()
-	defer cw.cond.L.Unlock()
+
 	cw.cond.Wait()
 	return true
 }
@@ -96,6 +99,8 @@ func (sw *SubWorker) WaitWithContext(ctx context.Context) bool {
 }
 
 func (sw *SubWorker) Done() {
+	sw.cond.L.Lock()
+	defer sw.cond.L.Unlock()
 	atomic.AddInt32(&sw.runningCount, -1)
 	sw.wg.Done()
 	sw.cw.Done()
@@ -108,11 +113,11 @@ func (sw *SubWorker) WaitAllDone() {
 
 // WaitForADone Blocks until at least one goroutine has completed.
 func (sw *SubWorker) WaitForADone() bool {
+	sw.cond.L.Lock()
+	defer sw.cond.L.Unlock()
 	if sw.RunningCount() == 0 {
 		return false
 	}
-	sw.cond.L.Lock()
-	defer sw.cond.L.Unlock()
 	sw.cond.Wait()
 	return true
 }
