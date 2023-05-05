@@ -150,6 +150,7 @@ type Site struct {
 	WelcomeScreen                        string          `json:"welcome_screen,omitempty" path:"welcome_screen"`
 	WindowsModeFtp                       *bool           `json:"windows_mode_ftp,omitempty" path:"windows_mode_ftp"`
 	DisableUsersFromInactivityPeriodDays int64           `json:"disable_users_from_inactivity_period_days,omitempty" path:"disable_users_from_inactivity_period_days"`
+	GroupAdminsCanSetUserPassword        *bool           `json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password"`
 }
 
 type SiteCollection []Site
@@ -233,6 +234,7 @@ type SiteUpdateParams struct {
 	SftpHostKeyType                      string          `url:"sftp_host_key_type,omitempty" required:"false" json:"sftp_host_key_type,omitempty" path:"sftp_host_key_type"`
 	ActiveSftpHostKeyId                  int64           `url:"active_sftp_host_key_id,omitempty" required:"false" json:"active_sftp_host_key_id,omitempty" path:"active_sftp_host_key_id"`
 	BundleWatermarkValue                 json.RawMessage `url:"bundle_watermark_value,omitempty" required:"false" json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value"`
+	GroupAdminsCanSetUserPassword        *bool           `url:"group_admins_can_set_user_password,omitempty" required:"false" json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password"`
 	Allowed2faMethodSms                  *bool           `url:"allowed_2fa_method_sms,omitempty" required:"false" json:"allowed_2fa_method_sms,omitempty" path:"allowed_2fa_method_sms"`
 	Allowed2faMethodU2f                  *bool           `url:"allowed_2fa_method_u2f,omitempty" required:"false" json:"allowed_2fa_method_u2f,omitempty" path:"allowed_2fa_method_u2f"`
 	Allowed2faMethodTotp                 *bool           `url:"allowed_2fa_method_totp,omitempty" required:"false" json:"allowed_2fa_method_totp,omitempty" path:"allowed_2fa_method_totp"`
