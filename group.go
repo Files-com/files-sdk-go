@@ -15,6 +15,10 @@ type Group struct {
 	Usernames string `json:"usernames,omitempty" path:"usernames"`
 }
 
+func (g Group) Identifier() interface{} {
+	return g.Id
+}
+
 type GroupCollection []Group
 
 type GroupListParams struct {
@@ -22,7 +26,7 @@ type GroupListParams struct {
 	Filter       json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	FilterPrefix json.RawMessage `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	Ids          string          `url:"ids,omitempty" required:"false" json:"ids,omitempty" path:"ids"`
-	lib.ListParams
+	ListParams
 }
 
 type GroupFindParams struct {

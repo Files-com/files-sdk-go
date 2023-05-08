@@ -25,10 +25,14 @@ type UsageSnapshot struct {
 	SyncBytesSent                string          `json:"sync_bytes_sent,omitempty" path:"sync_bytes_sent"`
 }
 
+func (u UsageSnapshot) Identifier() interface{} {
+	return u.Id
+}
+
 type UsageSnapshotCollection []UsageSnapshot
 
 type UsageSnapshotListParams struct {
-	lib.ListParams
+	ListParams
 }
 
 func (u *UsageSnapshot) UnmarshalJSON(data []byte) error {

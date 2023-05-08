@@ -244,21 +244,42 @@ func BeginUpload(ctx context.Context, params files_sdk.FileBeginUploadParams, op
 	return (&Client{}).BeginUpload(ctx, params, opts...)
 }
 
-func (c *Client) ListFor(ctx context.Context, params files_sdk.FolderListForParams) (*folder.Iter, error) {
-	client := folder.Client{Config: c.Config}
-	return client.ListFor(ctx, params)
+type Iter struct {
+	*folder.Iter
+}
+
+var _ files_sdk.ResourceIterator = Iter{}
+var _ files_sdk.ResourceLoader = Iter{}
+
+func (i Iter) LoadResource(identifier interface{}, opts ...files_sdk.RequestResponseOption) (interface{}, error) {
+	params := files_sdk.FileFindParams{}
+	if path, ok := identifier.(string); ok {
+		params.Path = path
+	}
+
+	return (&Client{Config: i.Config}).Find(context.Background(), params, opts...)
+}
+
+func (i Iter) Iterate(identifier interface{}, opts ...files_sdk.RequestResponseOption) (files_sdk.IterI, error) {
+	it, err := i.Iter.Iterate(identifier, opts...)
+	return Iter{Iter: it.(*folder.Iter)}, err
+}
+
+func (c *Client) ListFor(ctx context.Context, params files_sdk.FolderListForParams, opts ...files_sdk.RequestResponseOption) (Iter, error) {
+	it, err := (&folder.Client{Config: c.Config}).ListFor(ctx, params, opts...)
+	return Iter{Iter: it}, err
 }
 
 type RecursiveItem struct {
 	files_sdk.File
-	error
+	error `json:"error"`
 }
 
 func (r RecursiveItem) Err() error {
 	return r.error
 }
 
-func (c *Client) ListForRecursive(ctx context.Context, params files_sdk.FolderListForParams) (lib.TypedIterI[RecursiveItem], error) {
+func (c *Client) ListForRecursive(ctx context.Context, params files_sdk.FolderListForParams) (files_sdk.TypedIterI[RecursiveItem], error) {
 	if params.ConcurrencyManager == nil {
 		params.ConcurrencyManager = manager.Default().FilePartsManager
 	}

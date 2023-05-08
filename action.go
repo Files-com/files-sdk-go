@@ -23,6 +23,10 @@ type Action struct {
 	Interface   string     `json:"interface,omitempty" path:"interface"`
 }
 
+func (a Action) Identifier() interface{} {
+	return a.Id
+}
+
 type ActionCollection []Action
 
 func (a *Action) UnmarshalJSON(data []byte) error {

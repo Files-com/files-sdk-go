@@ -25,10 +25,14 @@ type As2Station struct {
 	PrivateKeyPassword         string `json:"private_key_password,omitempty" path:"private_key_password"`
 }
 
+func (a As2Station) Identifier() interface{} {
+	return a.Id
+}
+
 type As2StationCollection []As2Station
 
 type As2StationListParams struct {
-	lib.ListParams
+	ListParams
 }
 
 type As2StationFindParams struct {

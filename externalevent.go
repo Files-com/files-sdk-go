@@ -21,6 +21,10 @@ type ExternalEvent struct {
 	RemoteServerType string     `json:"remote_server_type,omitempty" path:"remote_server_type"`
 }
 
+func (e ExternalEvent) Identifier() interface{} {
+	return e.Id
+}
+
 type ExternalEventCollection []ExternalEvent
 
 type ExternalEventStatusEnum string
@@ -47,7 +51,7 @@ type ExternalEventListParams struct {
 	FilterPrefix json.RawMessage `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	FilterLt     json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
 	FilterLteq   json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
-	lib.ListParams
+	ListParams
 }
 
 type ExternalEventFindParams struct {

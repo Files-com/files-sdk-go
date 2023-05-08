@@ -37,6 +37,10 @@ type File struct {
 	WithRename       *bool      `json:"with_rename,omitempty" path:"with_rename"`
 }
 
+func (f File) Identifier() interface{} {
+	return f.Path
+}
+
 type FileCollection []File
 
 type EtagsParam struct {
@@ -121,6 +125,14 @@ func (f File) ToFolder() (Folder, error) {
 	folder := Folder{}
 	folder.UnmarshalJSON(bodyBytes)
 	return folder, nil
+}
+
+func (f File) String() string {
+	return f.Path
+}
+
+func (f File) Iterable() bool {
+	return f.Type == "directory"
 }
 
 func (f *File) UnmarshalJSON(data []byte) error {

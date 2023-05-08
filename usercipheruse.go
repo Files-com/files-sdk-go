@@ -16,11 +16,15 @@ type UserCipherUse struct {
 	UserId         int64      `json:"user_id,omitempty" path:"user_id"`
 }
 
+func (u UserCipherUse) Identifier() interface{} {
+	return u.Id
+}
+
 type UserCipherUseCollection []UserCipherUse
 
 type UserCipherUseListParams struct {
 	UserId int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	lib.ListParams
+	ListParams
 }
 
 func (u *UserCipherUse) UnmarshalJSON(data []byte) error {

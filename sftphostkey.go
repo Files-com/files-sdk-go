@@ -14,10 +14,14 @@ type SftpHostKey struct {
 	PrivateKey        string `json:"private_key,omitempty" path:"private_key"`
 }
 
+func (s SftpHostKey) Identifier() interface{} {
+	return s.Id
+}
+
 type SftpHostKeyCollection []SftpHostKey
 
 type SftpHostKeyListParams struct {
-	lib.ListParams
+	ListParams
 }
 
 type SftpHostKeyFindParams struct {

@@ -16,11 +16,15 @@ type PublicKey struct {
 	PublicKey   string     `json:"public_key,omitempty" path:"public_key"`
 }
 
+func (p PublicKey) Identifier() interface{} {
+	return p.Id
+}
+
 type PublicKeyCollection []PublicKey
 
 type PublicKeyListParams struct {
 	UserId int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	lib.ListParams
+	ListParams
 }
 
 type PublicKeyFindParams struct {

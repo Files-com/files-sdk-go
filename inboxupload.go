@@ -13,6 +13,10 @@ type InboxUpload struct {
 	CreatedAt         *time.Time        `json:"created_at,omitempty" path:"created_at"`
 }
 
+func (i InboxUpload) Identifier() interface{} {
+	return i.Path
+}
+
 type InboxUploadCollection []InboxUpload
 
 type InboxUploadListParams struct {
@@ -24,7 +28,7 @@ type InboxUploadListParams struct {
 	FilterLteq          json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	InboxRegistrationId int64           `url:"inbox_registration_id,omitempty" required:"false" json:"inbox_registration_id,omitempty" path:"inbox_registration_id"`
 	InboxId             int64           `url:"inbox_id,omitempty" required:"false" json:"inbox_id,omitempty" path:"inbox_id"`
-	lib.ListParams
+	ListParams
 }
 
 func (i *InboxUpload) UnmarshalJSON(data []byte) error {

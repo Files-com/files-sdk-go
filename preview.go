@@ -14,6 +14,10 @@ type Preview struct {
 	Size        string `json:"size,omitempty" path:"size"`
 }
 
+func (p Preview) Identifier() interface{} {
+	return p.Id
+}
+
 type PreviewCollection []Preview
 
 func (p *Preview) UnmarshalJSON(data []byte) error {

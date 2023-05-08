@@ -72,6 +72,10 @@ type RemoteServer struct {
 	FilebaseSecretKey                 string `json:"filebase_secret_key,omitempty" path:"filebase_secret_key"`
 }
 
+func (r RemoteServer) Identifier() interface{} {
+	return r.Id
+}
+
 type RemoteServerCollection []RemoteServer
 
 type RemoteServerServerCertificateEnum string
@@ -159,7 +163,7 @@ func (u RemoteServerFilesAgentPermissionSetEnum) Enum() map[string]RemoteServerF
 }
 
 type RemoteServerListParams struct {
-	lib.ListParams
+	ListParams
 }
 
 type RemoteServerFindParams struct {

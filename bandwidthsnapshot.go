@@ -19,6 +19,10 @@ type BandwidthSnapshot struct {
 	LoggedAt          *time.Time `json:"logged_at,omitempty" path:"logged_at"`
 }
 
+func (b BandwidthSnapshot) Identifier() interface{} {
+	return b.Id
+}
+
 type BandwidthSnapshotCollection []BandwidthSnapshot
 
 type BandwidthSnapshotListParams struct {
@@ -28,7 +32,7 @@ type BandwidthSnapshotListParams struct {
 	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
 	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
 	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
-	lib.ListParams
+	ListParams
 }
 
 func (b *BandwidthSnapshot) UnmarshalJSON(data []byte) error {

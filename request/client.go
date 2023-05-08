@@ -13,7 +13,12 @@ type Client struct {
 }
 
 type Iter struct {
-	*lib.Iter
+	*files_sdk.Iter
+	*Client
+}
+
+func (i *Iter) Reload(opts ...files_sdk.RequestResponseOption) files_sdk.IterI {
+	return &Iter{Iter: i.Iter.Reload(opts...).(*files_sdk.Iter), Client: i.Client}
 }
 
 func (i *Iter) Request() files_sdk.Request {
@@ -21,7 +26,7 @@ func (i *Iter) Request() files_sdk.Request {
 }
 
 func (c *Client) List(ctx context.Context, params files_sdk.RequestListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &lib.Iter{}}
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/requests", params)
 	if err != nil {
 		return i, err
@@ -37,7 +42,7 @@ func List(ctx context.Context, params files_sdk.RequestListParams, opts ...files
 }
 
 func (c *Client) GetFolder(ctx context.Context, params files_sdk.RequestGetFolderParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &lib.Iter{}}
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/requests/folders/{path}", params)
 	if err != nil {
 		return i, err

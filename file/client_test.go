@@ -610,10 +610,9 @@ func TestClient_DownloadFolder(t *testing.T) {
 	buildScenario("TestClient_DownloadFolder", client)
 
 	assert := assert.New(t)
-	folderClient := folder.Client{Config: client.Config}
 
-	it, err := folderClient.ListFor(context.Background(), files_sdk.FolderListForParams{
-		ListParams: lib.ListParams{PerPage: 1},
+	it, err := client.ListFor(context.Background(), files_sdk.FolderListForParams{
+		ListParams: files_sdk.ListParams{PerPage: 1},
 		Path:       "TestClient_DownloadFolder/nested_1/nested_2",
 	})
 
@@ -1144,5 +1143,48 @@ func TestClient_UploadFile(t *testing.T) {
 	fileBytes, err := io.ReadAll(fsFile)
 	require.NoError(t, err)
 	require.Equal(t, "anything", string(fileBytes))
+	r.Stop()
+}
+
+func TestClient_ListFor(t *testing.T) {
+	client, r, err := CreateClient("TestClient_ListFor")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	buildScenario("TestClient_DownloadFolder", client)
+
+	assert := assert.New(t)
+
+	it, err := client.ListFor(context.Background(), files_sdk.FolderListForParams{
+		ListParams: files_sdk.ListParams{PerPage: 1},
+		Path:       "TestClient_DownloadFolder/nested_1/nested_2",
+	})
+
+	assert.NoError(err)
+	var files []files_sdk.File
+	for it.Next() {
+		if it.File().Type == "directory" {
+			subIt, _ := it.Iterate(it.File().Identifier())
+			for subIt.Next() {
+				subFile := subIt.Current().(files_sdk.File)
+				files = append(files, subFile)
+				loadedFile, err := it.LoadResource(subFile.Identifier())
+				assert.NoError(err)
+				assert.Equal(subFile, loadedFile, "LoadResource with Identifier matches file from list")
+			}
+		}
+		files = append(files, it.File())
+
+	}
+	paths := lo.Map[files_sdk.File, string](files, func(item files_sdk.File, index int) string {
+		return item.Path
+	})
+	assert.Equal([]string{
+		"TestClient_DownloadFolder/nested_1/nested_2/nested_3/4.text",
+		"TestClient_DownloadFolder/nested_1/nested_2/nested_3",
+		"TestClient_DownloadFolder/nested_1/nested_2/3.text",
+	}, paths)
+
 	r.Stop()
 }

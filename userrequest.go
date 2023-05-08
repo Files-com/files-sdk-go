@@ -13,10 +13,14 @@ type UserRequest struct {
 	Details string `json:"details,omitempty" path:"details"`
 }
 
+func (u UserRequest) Identifier() interface{} {
+	return u.Id
+}
+
 type UserRequestCollection []UserRequest
 
 type UserRequestListParams struct {
-	lib.ListParams
+	ListParams
 }
 
 type UserRequestFindParams struct {

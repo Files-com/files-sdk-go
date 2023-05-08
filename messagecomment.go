@@ -13,12 +13,16 @@ type MessageComment struct {
 	UserId    int64    `json:"user_id,omitempty" path:"user_id"`
 }
 
+func (m MessageComment) Identifier() interface{} {
+	return m.Id
+}
+
 type MessageCommentCollection []MessageComment
 
 type MessageCommentListParams struct {
 	UserId    int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
 	MessageId int64 `url:"message_id,omitempty" required:"true" json:"message_id,omitempty" path:"message_id"`
-	lib.ListParams
+	ListParams
 }
 
 type MessageCommentFindParams struct {

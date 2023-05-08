@@ -13,18 +13,22 @@ type IpAddress struct {
 	IpAddresses    []string `json:"ip_addresses,omitempty" path:"ip_addresses"`
 }
 
+func (i IpAddress) Identifier() interface{} {
+	return i.Id
+}
+
 type IpAddressCollection []IpAddress
 
 type IpAddressListParams struct {
-	lib.ListParams
+	ListParams
 }
 
 type IpAddressGetExavaultReservedParams struct {
-	lib.ListParams
+	ListParams
 }
 
 type IpAddressGetReservedParams struct {
-	lib.ListParams
+	ListParams
 }
 
 func (i *IpAddress) UnmarshalJSON(data []byte) error {

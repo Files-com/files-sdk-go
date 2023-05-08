@@ -13,6 +13,8 @@ type PublicIpAddress struct {
 	SftpEnabled *bool  `json:"sftp_enabled,omitempty" path:"sftp_enabled"`
 }
 
+// Identifier no path or id
+
 type PublicIpAddressCollection []PublicIpAddress
 
 func (p *PublicIpAddress) UnmarshalJSON(data []byte) error {

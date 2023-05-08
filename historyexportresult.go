@@ -33,12 +33,16 @@ type HistoryExportResult struct {
 	TargetUserId        int64  `json:"target_user_id,omitempty" path:"target_user_id"`
 }
 
+func (h HistoryExportResult) Identifier() interface{} {
+	return h.Id
+}
+
 type HistoryExportResultCollection []HistoryExportResult
 
 type HistoryExportResultListParams struct {
 	UserId          int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
 	HistoryExportId int64 `url:"history_export_id,omitempty" required:"true" json:"history_export_id,omitempty" path:"history_export_id"`
-	lib.ListParams
+	ListParams
 }
 
 func (h *HistoryExportResult) UnmarshalJSON(data []byte) error {

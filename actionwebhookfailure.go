@@ -9,6 +9,8 @@ import (
 type ActionWebhookFailure struct {
 }
 
+// Identifier no path or id
+
 type ActionWebhookFailureCollection []ActionWebhookFailure
 
 // retry Action Webhook Failure

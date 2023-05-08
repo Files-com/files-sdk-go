@@ -23,6 +23,10 @@ type History struct {
 	Interface   string     `json:"interface,omitempty" path:"interface"`
 }
 
+func (h History) Identifier() interface{} {
+	return h.Id
+}
+
 type HistoryCollection []History
 
 type HistoryListForFileParams struct {
@@ -31,7 +35,7 @@ type HistoryListForFileParams struct {
 	Display string          `url:"display,omitempty" required:"false" json:"display,omitempty" path:"display"`
 	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Path    string          `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
-	lib.ListParams
+	ListParams
 }
 
 type HistoryListForFolderParams struct {
@@ -40,7 +44,7 @@ type HistoryListForFolderParams struct {
 	Display string          `url:"display,omitempty" required:"false" json:"display,omitempty" path:"display"`
 	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Path    string          `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
-	lib.ListParams
+	ListParams
 }
 
 type HistoryListForUserParams struct {
@@ -49,7 +53,7 @@ type HistoryListForUserParams struct {
 	Display string          `url:"display,omitempty" required:"false" json:"display,omitempty" path:"display"`
 	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	UserId  int64           `url:"-,omitempty" required:"false" json:"-,omitempty" path:"user_id"`
-	lib.ListParams
+	ListParams
 }
 
 type HistoryListLoginsParams struct {
@@ -57,7 +61,7 @@ type HistoryListLoginsParams struct {
 	EndAt   *time.Time      `url:"end_at,omitempty" required:"false" json:"end_at,omitempty" path:"end_at"`
 	Display string          `url:"display,omitempty" required:"false" json:"display,omitempty" path:"display"`
 	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	lib.ListParams
+	ListParams
 }
 
 type HistoryListParams struct {
@@ -67,7 +71,7 @@ type HistoryListParams struct {
 	SortBy       json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	FilterPrefix json.RawMessage `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	lib.ListParams
+	ListParams
 }
 
 func (h *History) UnmarshalJSON(data []byte) error {

@@ -11,6 +11,8 @@ type Image struct {
 	Uri  string `json:"uri,omitempty" path:"uri"`
 }
 
+// Identifier no path or id
+
 type ImageCollection []Image
 
 func (i *Image) UnmarshalJSON(data []byte) error {

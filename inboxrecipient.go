@@ -17,13 +17,15 @@ type InboxRecipient struct {
 	ShareAfterCreate *bool      `json:"share_after_create,omitempty" path:"share_after_create"`
 }
 
+// Identifier no path or id
+
 type InboxRecipientCollection []InboxRecipient
 
 type InboxRecipientListParams struct {
 	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter  json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	InboxId int64           `url:"inbox_id,omitempty" required:"true" json:"inbox_id,omitempty" path:"inbox_id"`
-	lib.ListParams
+	ListParams
 }
 
 type InboxRecipientCreateParams struct {

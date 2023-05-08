@@ -13,7 +13,12 @@ type Client struct {
 }
 
 type Iter struct {
-	*lib.Iter
+	*files_sdk.Iter
+	*Client
+}
+
+func (i *Iter) Reload(opts ...files_sdk.RequestResponseOption) files_sdk.IterI {
+	return &Iter{Iter: i.Iter.Reload(opts...).(*files_sdk.Iter), Client: i.Client}
 }
 
 func (i *Iter) SettingsChange() files_sdk.SettingsChange {
@@ -21,7 +26,7 @@ func (i *Iter) SettingsChange() files_sdk.SettingsChange {
 }
 
 func (c *Client) List(ctx context.Context, params files_sdk.SettingsChangeListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &lib.Iter{}}
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/settings_changes", params)
 	if err != nil {
 		return i, err

@@ -11,6 +11,8 @@ type Errors struct {
 	Messages []string `json:"messages,omitempty" path:"messages"`
 }
 
+// Identifier no path or id
+
 type ErrorsCollection []Errors
 
 func (e *Errors) UnmarshalJSON(data []byte) error {

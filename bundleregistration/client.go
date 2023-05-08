@@ -13,7 +13,12 @@ type Client struct {
 }
 
 type Iter struct {
-	*lib.Iter
+	*files_sdk.Iter
+	*Client
+}
+
+func (i *Iter) Reload(opts ...files_sdk.RequestResponseOption) files_sdk.IterI {
+	return &Iter{Iter: i.Iter.Reload(opts...).(*files_sdk.Iter), Client: i.Client}
 }
 
 func (i *Iter) BundleRegistration() files_sdk.BundleRegistration {
@@ -21,7 +26,7 @@ func (i *Iter) BundleRegistration() files_sdk.BundleRegistration {
 }
 
 func (c *Client) List(ctx context.Context, params files_sdk.BundleRegistrationListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &lib.Iter{}}
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/bundle_registrations", params)
 	if err != nil {
 		return i, err

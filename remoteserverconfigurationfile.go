@@ -21,6 +21,10 @@ type RemoteServerConfigurationFile struct {
 	Subdomain     string `json:"subdomain,omitempty" path:"subdomain"`
 }
 
+func (r RemoteServerConfigurationFile) Identifier() interface{} {
+	return r.Id
+}
+
 type RemoteServerConfigurationFileCollection []RemoteServerConfigurationFile
 
 func (r *RemoteServerConfigurationFile) UnmarshalJSON(data []byte) error {

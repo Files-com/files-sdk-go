@@ -23,10 +23,14 @@ type As2Partner struct {
 	PublicCertificate          string `json:"public_certificate,omitempty" path:"public_certificate"`
 }
 
+func (a As2Partner) Identifier() interface{} {
+	return a.Id
+}
+
 type As2PartnerCollection []As2Partner
 
 type As2PartnerListParams struct {
-	lib.ListParams
+	ListParams
 }
 
 type As2PartnerFindParams struct {

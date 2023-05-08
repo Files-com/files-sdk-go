@@ -31,6 +31,10 @@ type Notification struct {
 	SuppressedEmail          *bool    `json:"suppressed_email,omitempty" path:"suppressed_email"`
 }
 
+func (n Notification) Identifier() interface{} {
+	return n.Id
+}
+
 type NotificationCollection []Notification
 
 type NotificationListParams struct {
@@ -41,7 +45,7 @@ type NotificationListParams struct {
 	FilterPrefix     json.RawMessage `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	Path             string          `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
 	IncludeAncestors *bool           `url:"include_ancestors,omitempty" required:"false" json:"include_ancestors,omitempty" path:"include_ancestors"`
-	lib.ListParams
+	ListParams
 }
 
 type NotificationFindParams struct {

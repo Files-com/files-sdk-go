@@ -45,6 +45,10 @@ type As2IncomingMessage struct {
 	MdnResponseUri              string          `json:"mdn_response_uri,omitempty" path:"mdn_response_uri"`
 }
 
+func (a As2IncomingMessage) Identifier() interface{} {
+	return a.Id
+}
+
 type As2IncomingMessageCollection []As2IncomingMessage
 
 type As2IncomingMessageListParams struct {
@@ -55,7 +59,7 @@ type As2IncomingMessageListParams struct {
 	FilterLt     json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
 	FilterLteq   json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	As2PartnerId int64           `url:"as2_partner_id,omitempty" required:"false" json:"as2_partner_id,omitempty" path:"as2_partner_id"`
-	lib.ListParams
+	ListParams
 }
 
 func (a *As2IncomingMessage) UnmarshalJSON(data []byte) error {

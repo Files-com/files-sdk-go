@@ -13,15 +13,28 @@ type Client struct {
 }
 
 type Iter struct {
-	*lib.Iter
+	*files_sdk.Iter
+	*Client
+}
+
+func (i *Iter) Reload(opts ...files_sdk.RequestResponseOption) files_sdk.IterI {
+	return &Iter{Iter: i.Iter.Reload(opts...).(*files_sdk.Iter), Client: i.Client}
 }
 
 func (i *Iter) File() files_sdk.File {
 	return i.Current().(files_sdk.File)
 }
 
+func (i *Iter) Iterate(identifier interface{}, opts ...files_sdk.RequestResponseOption) (files_sdk.IterI, error) {
+	params := files_sdk.FolderListForParams{}
+	if path, ok := identifier.(string); ok {
+		params.Path = path
+	}
+	return i.Client.ListFor(context.Background(), params, opts...)
+}
+
 func (c *Client) ListFor(ctx context.Context, params files_sdk.FolderListForParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &lib.Iter{}}
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/folders/{path}", params)
 	if err != nil {
 		return i, err

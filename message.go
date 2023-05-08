@@ -15,12 +15,16 @@ type Message struct {
 	ProjectId int64    `json:"project_id,omitempty" path:"project_id"`
 }
 
+func (m Message) Identifier() interface{} {
+	return m.Id
+}
+
 type MessageCollection []Message
 
 type MessageListParams struct {
 	UserId    int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
 	ProjectId int64 `url:"project_id,omitempty" required:"true" json:"project_id,omitempty" path:"project_id"`
-	lib.ListParams
+	ListParams
 }
 
 type MessageFindParams struct {

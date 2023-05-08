@@ -16,6 +16,10 @@ type AutomationRun struct {
 	StatusMessagesUrl string     `json:"status_messages_url,omitempty" path:"status_messages_url"`
 }
 
+func (a AutomationRun) Identifier() interface{} {
+	return a.Id
+}
+
 type AutomationRunCollection []AutomationRun
 
 type AutomationRunListParams struct {
@@ -23,7 +27,7 @@ type AutomationRunListParams struct {
 	SortBy       json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	AutomationId int64           `url:"automation_id,omitempty" required:"true" json:"automation_id,omitempty" path:"automation_id"`
 	Filter       json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	lib.ListParams
+	ListParams
 }
 
 type AutomationRunFindParams struct {

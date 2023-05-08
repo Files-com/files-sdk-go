@@ -16,10 +16,14 @@ type Snapshot struct {
 	Id          int64      `json:"id,omitempty" path:"id"`
 }
 
+func (s Snapshot) Identifier() interface{} {
+	return s.Id
+}
+
 type SnapshotCollection []Snapshot
 
 type SnapshotListParams struct {
-	lib.ListParams
+	ListParams
 }
 
 type SnapshotFindParams struct {

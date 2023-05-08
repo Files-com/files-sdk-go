@@ -19,6 +19,10 @@ type Behavior struct {
 	AttachmentDelete *bool           `json:"attachment_delete,omitempty" path:"attachment_delete"`
 }
 
+func (b Behavior) Identifier() interface{} {
+	return b.Id
+}
+
 type BehaviorCollection []Behavior
 
 type BehaviorListParams struct {
@@ -26,7 +30,7 @@ type BehaviorListParams struct {
 	Behavior     string          `url:"behavior,omitempty" required:"false" json:"behavior,omitempty" path:"behavior"`
 	Filter       json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	FilterPrefix json.RawMessage `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	lib.ListParams
+	ListParams
 }
 
 type BehaviorFindParams struct {
@@ -40,7 +44,7 @@ type BehaviorListForParams struct {
 	Path         string          `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	Recursive    string          `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
 	Behavior     string          `url:"behavior,omitempty" required:"false" json:"behavior,omitempty" path:"behavior"`
-	lib.ListParams
+	ListParams
 }
 
 type BehaviorCreateParams struct {

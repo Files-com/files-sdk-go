@@ -15,6 +15,8 @@ type SettingsChange struct {
 	Username           string     `json:"username,omitempty" path:"username"`
 }
 
+// Identifier no path or id
+
 type SettingsChangeCollection []SettingsChange
 
 type SettingsChangeListParams struct {
@@ -22,7 +24,7 @@ type SettingsChangeListParams struct {
 	ApiKeyId string          `url:"api_key_id,omitempty" required:"false" json:"api_key_id,omitempty" path:"api_key_id"`
 	UserId   string          `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
 	Filter   json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	lib.ListParams
+	ListParams
 }
 
 func (s *SettingsChange) UnmarshalJSON(data []byte) error {

@@ -11,6 +11,8 @@ type FileAction struct {
 	FileMigrationId int64  `json:"file_migration_id,omitempty" path:"file_migration_id"`
 }
 
+// Identifier no path or id
+
 type FileActionCollection []FileAction
 
 func (f *FileAction) UnmarshalJSON(data []byte) error {

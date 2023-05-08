@@ -23,12 +23,14 @@ type BundleRegistration struct {
 	CreatedAt         *time.Time      `json:"created_at,omitempty" path:"created_at"`
 }
 
+// Identifier no path or id
+
 type BundleRegistrationCollection []BundleRegistration
 
 type BundleRegistrationListParams struct {
 	UserId   int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
 	BundleId int64 `url:"bundle_id,omitempty" required:"false" json:"bundle_id,omitempty" path:"bundle_id"`
-	lib.ListParams
+	ListParams
 }
 
 func (b *BundleRegistration) UnmarshalJSON(data []byte) error {

@@ -153,6 +153,8 @@ type Site struct {
 	GroupAdminsCanSetUserPassword        *bool           `json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password"`
 }
 
+// Identifier no path or id
+
 type SiteCollection []Site
 
 type SiteUpdateParams struct {

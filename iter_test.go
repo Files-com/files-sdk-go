@@ -1,7 +1,9 @@
-package lib
+package files_sdk
 
 import (
 	"testing"
+
+	"github.com/Files-com/files-sdk-go/v2/lib"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -12,7 +14,7 @@ func TestIter_Next_MaxPages(t *testing.T) {
 	it := Iter{}
 	it.ListParams = &params
 
-	it.Query = func(Values) (*[]interface{}, string, error) {
+	it.Query = func(lib.Values, ...RequestResponseOption) (*[]interface{}, string, error) {
 		ret := make([]interface{}, params.PerPage)
 
 		return &ret, "cursor", nil
@@ -36,7 +38,7 @@ func TestIter_Next_ZeroMaxPages(t *testing.T) {
 	it := Iter{}
 	it.ListParams = &params
 
-	it.Query = func(Values) (*[]interface{}, string, error) {
+	it.Query = func(lib.Values, ...RequestResponseOption) (*[]interface{}, string, error) {
 		ret := pages[:1][0]
 		pages = pages[1:]
 
@@ -58,7 +60,7 @@ func TestIter_Next_PerPage_of_one(t *testing.T) {
 	sliceOfSliceInterfaces[0] = make([]interface{}, params.PerPage)
 	sliceOfSliceInterfaces[1] = make([]interface{}, 0)
 	resultCounter := 0
-	it.Query = func(Values) (*[]interface{}, string, error) {
+	it.Query = func(lib.Values, ...RequestResponseOption) (*[]interface{}, string, error) {
 		ret := sliceOfSliceInterfaces[resultCounter]
 		resultCounter += 1
 		return &ret, "cursor", nil
@@ -66,7 +68,7 @@ func TestIter_Next_PerPage_of_one(t *testing.T) {
 	recordCount := 0
 	for it.Next() {
 		recordCount += 1
-		assert.Equal(Interface(), it.Current())
+		assert.Equal(lib.Interface(), it.Current())
 	}
 	assert.Equal(1, recordCount)
 }
@@ -77,7 +79,7 @@ func TestIter_Next_No_Cursor(t *testing.T) {
 	it := Iter{}
 	it.ListParams = &params
 	resultCounter := 0
-	it.Query = func(Values) (*[]interface{}, string, error) {
+	it.Query = func(lib.Values, ...RequestResponseOption) (*[]interface{}, string, error) {
 		ret := make([]interface{}, 1)
 		resultCounter += 1
 		return &ret, "", nil
@@ -85,7 +87,7 @@ func TestIter_Next_No_Cursor(t *testing.T) {
 	recordCount := 0
 	for it.Next() {
 		recordCount += 1
-		assert.Equal(Interface(), it.Current())
+		assert.Equal(lib.Interface(), it.Current())
 	}
 	assert.Equal(1, recordCount)
 }

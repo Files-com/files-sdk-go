@@ -18,6 +18,8 @@ type BundleRecipient struct {
 	ShareAfterCreate *bool      `json:"share_after_create,omitempty" path:"share_after_create"`
 }
 
+// Identifier no path or id
+
 type BundleRecipientCollection []BundleRecipient
 
 type BundleRecipientListParams struct {
@@ -25,7 +27,7 @@ type BundleRecipientListParams struct {
 	SortBy   json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter   json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	BundleId int64           `url:"bundle_id,omitempty" required:"true" json:"bundle_id,omitempty" path:"bundle_id"`
-	lib.ListParams
+	ListParams
 }
 
 type BundleRecipientCreateParams struct {

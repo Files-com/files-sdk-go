@@ -15,6 +15,10 @@ type Clickwrap struct {
 	UseWithInboxes string `json:"use_with_inboxes,omitempty" path:"use_with_inboxes"`
 }
 
+func (c Clickwrap) Identifier() interface{} {
+	return c.Id
+}
+
 type ClickwrapCollection []Clickwrap
 
 type ClickwrapUseWithBundlesEnum string
@@ -59,7 +63,7 @@ func (u ClickwrapUseWithUsersEnum) Enum() map[string]ClickwrapUseWithUsersEnum {
 }
 
 type ClickwrapListParams struct {
-	lib.ListParams
+	ListParams
 }
 
 type ClickwrapFindParams struct {

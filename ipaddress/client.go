@@ -13,7 +13,12 @@ type Client struct {
 }
 
 type Iter struct {
-	*lib.Iter
+	*files_sdk.Iter
+	*Client
+}
+
+func (i *Iter) Reload(opts ...files_sdk.RequestResponseOption) files_sdk.IterI {
+	return &Iter{Iter: i.Iter.Reload(opts...).(*files_sdk.Iter), Client: i.Client}
 }
 
 func (i *Iter) IpAddress() files_sdk.IpAddress {
@@ -21,7 +26,7 @@ func (i *Iter) IpAddress() files_sdk.IpAddress {
 }
 
 func (c *Client) List(ctx context.Context, params files_sdk.IpAddressListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &lib.Iter{}}
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/ip_addresses", params)
 	if err != nil {
 		return i, err
@@ -41,7 +46,7 @@ func (i *Iter) PublicIpAddress() files_sdk.PublicIpAddress {
 }
 
 func (c *Client) GetExavaultReserved(ctx context.Context, params files_sdk.IpAddressGetExavaultReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &lib.Iter{}}
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/ip_addresses/exavault-reserved", params)
 	if err != nil {
 		return i, err
@@ -57,7 +62,7 @@ func GetExavaultReserved(ctx context.Context, params files_sdk.IpAddressGetExava
 }
 
 func (c *Client) GetReserved(ctx context.Context, params files_sdk.IpAddressGetReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &lib.Iter{}}
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/ip_addresses/reserved", params)
 	if err != nil {
 		return i, err

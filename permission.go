@@ -17,6 +17,10 @@ type Permission struct {
 	Recursive  *bool  `json:"recursive,omitempty" path:"recursive"`
 }
 
+func (p Permission) Identifier() interface{} {
+	return p.Id
+}
+
 type PermissionCollection []Permission
 
 type PermissionListParams struct {
@@ -27,7 +31,7 @@ type PermissionListParams struct {
 	GroupId       string          `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
 	UserId        string          `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
 	IncludeGroups *bool           `url:"include_groups,omitempty" required:"false" json:"include_groups,omitempty" path:"include_groups"`
-	lib.ListParams
+	ListParams
 }
 
 type PermissionCreateParams struct {

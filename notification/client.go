@@ -13,15 +13,28 @@ type Client struct {
 }
 
 type Iter struct {
-	*lib.Iter
+	*files_sdk.Iter
+	*Client
+}
+
+func (i *Iter) Reload(opts ...files_sdk.RequestResponseOption) files_sdk.IterI {
+	return &Iter{Iter: i.Iter.Reload(opts...).(*files_sdk.Iter), Client: i.Client}
 }
 
 func (i *Iter) Notification() files_sdk.Notification {
 	return i.Current().(files_sdk.Notification)
 }
 
+func (i *Iter) LoadResource(identifier interface{}, opts ...files_sdk.RequestResponseOption) (interface{}, error) {
+	params := files_sdk.NotificationFindParams{}
+	if id, ok := identifier.(int64); ok {
+		params.Id = id
+	}
+	return i.Client.Find(context.Background(), params, opts...)
+}
+
 func (c *Client) List(ctx context.Context, params files_sdk.NotificationListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &lib.Iter{}}
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/notifications", params)
 	if err != nil {
 		return i, err

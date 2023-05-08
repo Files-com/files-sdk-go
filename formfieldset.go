@@ -17,11 +17,15 @@ type FormFieldSet struct {
 	UserId      int64    `json:"user_id,omitempty" path:"user_id"`
 }
 
+func (f FormFieldSet) Identifier() interface{} {
+	return f.Id
+}
+
 type FormFieldSetCollection []FormFieldSet
 
 type FormFieldSetListParams struct {
 	UserId int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	lib.ListParams
+	ListParams
 }
 
 type FormFieldSetFindParams struct {

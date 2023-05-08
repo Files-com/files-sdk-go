@@ -25,13 +25,15 @@ type App struct {
 	Featured            *bool           `json:"featured,omitempty" path:"featured"`
 }
 
+// Identifier no path or id
+
 type AppCollection []App
 
 type AppListParams struct {
 	SortBy       json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	FilterPrefix json.RawMessage `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	lib.ListParams
+	ListParams
 }
 
 func (a *App) UnmarshalJSON(data []byte) error {

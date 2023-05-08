@@ -11,10 +11,14 @@ type Project struct {
 	GlobalAccess string `json:"global_access,omitempty" path:"global_access"`
 }
 
+func (p Project) Identifier() interface{} {
+	return p.Id
+}
+
 type ProjectCollection []Project
 
 type ProjectListParams struct {
-	lib.ListParams
+	ListParams
 }
 
 type ProjectFindParams struct {

@@ -17,6 +17,10 @@ type Session struct {
 	PartialSessionId    string `json:"partial_session_id,omitempty" path:"partial_session_id"`
 }
 
+func (s Session) Identifier() interface{} {
+	return s.Id
+}
+
 type SessionCollection []Session
 
 type SessionCreateParams struct {

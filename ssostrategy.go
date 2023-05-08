@@ -52,10 +52,14 @@ type SsoStrategy struct {
 	LdapUsernameField              string `json:"ldap_username_field,omitempty" path:"ldap_username_field"`
 }
 
+func (s SsoStrategy) Identifier() interface{} {
+	return s.Id
+}
+
 type SsoStrategyCollection []SsoStrategy
 
 type SsoStrategyListParams struct {
-	lib.ListParams
+	ListParams
 }
 
 type SsoStrategyFindParams struct {

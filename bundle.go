@@ -47,6 +47,10 @@ type Bundle struct {
 	WatermarkAttachmentDelete       *bool           `json:"watermark_attachment_delete,omitempty" path:"watermark_attachment_delete"`
 }
 
+func (b Bundle) Identifier() interface{} {
+	return b.Id
+}
+
 type BundleCollection []Bundle
 
 type BundlePermissionsEnum string
@@ -74,7 +78,7 @@ type BundleListParams struct {
 	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
 	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
 	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
-	lib.ListParams
+	ListParams
 }
 
 type BundleFindParams struct {

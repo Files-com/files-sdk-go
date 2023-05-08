@@ -18,6 +18,10 @@ type FileMigration struct {
 	LogUrl     string `json:"log_url,omitempty" path:"log_url"`
 }
 
+func (f FileMigration) Identifier() interface{} {
+	return f.Id
+}
+
 type FileMigrationCollection []FileMigration
 
 type FileMigrationFindParams struct {

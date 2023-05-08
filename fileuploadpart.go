@@ -25,6 +25,10 @@ type FileUploadPart struct {
 	UploadUri          string          `json:"upload_uri,omitempty" path:"upload_uri"`
 }
 
+func (f FileUploadPart) Identifier() interface{} {
+	return f.Path
+}
+
 type FileUploadPartCollection []FileUploadPart
 
 func (f *FileUploadPart) UnmarshalJSON(data []byte) error {

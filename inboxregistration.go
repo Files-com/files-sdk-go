@@ -21,11 +21,13 @@ type InboxRegistration struct {
 	CreatedAt        *time.Time      `json:"created_at,omitempty" path:"created_at"`
 }
 
+// Identifier no path or id
+
 type InboxRegistrationCollection []InboxRegistration
 
 type InboxRegistrationListParams struct {
 	FolderBehaviorId int64 `url:"folder_behavior_id,omitempty" required:"false" json:"folder_behavior_id,omitempty" path:"folder_behavior_id"`
-	lib.ListParams
+	ListParams
 }
 
 func (i *InboxRegistration) UnmarshalJSON(data []byte) error {

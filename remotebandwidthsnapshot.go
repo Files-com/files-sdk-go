@@ -15,6 +15,10 @@ type RemoteBandwidthSnapshot struct {
 	RemoteServerId    int64      `json:"remote_server_id,omitempty" path:"remote_server_id"`
 }
 
+func (r RemoteBandwidthSnapshot) Identifier() interface{} {
+	return r.Id
+}
+
 type RemoteBandwidthSnapshotCollection []RemoteBandwidthSnapshot
 
 type RemoteBandwidthSnapshotListParams struct {
@@ -24,7 +28,7 @@ type RemoteBandwidthSnapshotListParams struct {
 	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
 	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
 	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
-	lib.ListParams
+	ListParams
 }
 
 func (r *RemoteBandwidthSnapshot) UnmarshalJSON(data []byte) error {

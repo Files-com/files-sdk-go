@@ -10,6 +10,8 @@ type Auto struct {
 	Dynamic json.RawMessage `json:"dynamic,omitempty" path:"dynamic"`
 }
 
+// Identifier no path or id
+
 type AutoCollection []Auto
 
 func (a *Auto) UnmarshalJSON(data []byte) error {

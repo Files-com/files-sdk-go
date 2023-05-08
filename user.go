@@ -80,6 +80,10 @@ type User struct {
 	AnnouncementsRead                *bool      `json:"announcements_read,omitempty" path:"announcements_read"`
 }
 
+func (u User) Identifier() interface{} {
+	return u.Id
+}
+
 type UserCollection []User
 
 type QParam struct {
@@ -148,7 +152,7 @@ type UserListParams struct {
 	Ids          string          `url:"ids,omitempty" required:"false" json:"ids,omitempty" path:"ids"`
 	QParam       QParam          `url:"q,omitempty" required:"false" json:"q,omitempty" path:"q"`
 	Search       string          `url:"search,omitempty" required:"false" json:"search,omitempty" path:"search"`
-	lib.ListParams
+	ListParams
 }
 
 type UserFindParams struct {

@@ -16,6 +16,8 @@ type Status struct {
 	ClickwrapBody string   `json:"clickwrap_body,omitempty" path:"clickwrap_body"`
 }
 
+// Identifier no path or id
+
 type StatusCollection []Status
 
 func (s *Status) UnmarshalJSON(data []byte) error {

@@ -14,6 +14,10 @@ type BundleNotification struct {
 	UserId               int64 `json:"user_id,omitempty" path:"user_id"`
 }
 
+func (b BundleNotification) Identifier() interface{} {
+	return b.Id
+}
+
 type BundleNotificationCollection []BundleNotification
 
 type BundleNotificationListParams struct {
@@ -21,7 +25,7 @@ type BundleNotificationListParams struct {
 	SortBy   json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	BundleId string          `url:"bundle_id,omitempty" required:"false" json:"bundle_id,omitempty" path:"bundle_id"`
 	Filter   json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	lib.ListParams
+	ListParams
 }
 
 type BundleNotificationFindParams struct {

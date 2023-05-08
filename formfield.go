@@ -17,6 +17,10 @@ type FormField struct {
 	FormFieldSetId   int64    `json:"form_field_set_id,omitempty" path:"form_field_set_id"`
 }
 
+func (f FormField) Identifier() interface{} {
+	return f.Id
+}
+
 type FormFieldCollection []FormField
 
 func (f *FormField) UnmarshalJSON(data []byte) error {

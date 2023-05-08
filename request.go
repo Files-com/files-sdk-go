@@ -17,20 +17,24 @@ type Request struct {
 	GroupIds        string `json:"group_ids,omitempty" path:"group_ids"`
 }
 
+func (r Request) Identifier() interface{} {
+	return r.Id
+}
+
 type RequestCollection []Request
 
 type RequestListParams struct {
 	SortBy json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Mine   *bool           `url:"mine,omitempty" required:"false" json:"mine,omitempty" path:"mine"`
 	Path   string          `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
-	lib.ListParams
+	ListParams
 }
 
 type RequestGetFolderParams struct {
 	SortBy json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Mine   *bool           `url:"mine,omitempty" required:"false" json:"mine,omitempty" path:"mine"`
 	Path   string          `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
-	lib.ListParams
+	ListParams
 }
 
 type RequestCreateParams struct {

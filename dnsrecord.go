@@ -13,10 +13,14 @@ type DnsRecord struct {
 	Value  string `json:"value,omitempty" path:"value"`
 }
 
+func (d DnsRecord) Identifier() interface{} {
+	return d.Id
+}
+
 type DnsRecordCollection []DnsRecord
 
 type DnsRecordListParams struct {
-	lib.ListParams
+	ListParams
 }
 
 func (d *DnsRecord) UnmarshalJSON(data []byte) error {

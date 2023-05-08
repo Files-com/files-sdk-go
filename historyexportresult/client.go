@@ -13,7 +13,12 @@ type Client struct {
 }
 
 type Iter struct {
-	*lib.Iter
+	*files_sdk.Iter
+	*Client
+}
+
+func (i *Iter) Reload(opts ...files_sdk.RequestResponseOption) files_sdk.IterI {
+	return &Iter{Iter: i.Iter.Reload(opts...).(*files_sdk.Iter), Client: i.Client}
 }
 
 func (i *Iter) HistoryExportResult() files_sdk.HistoryExportResult {
@@ -21,7 +26,7 @@ func (i *Iter) HistoryExportResult() files_sdk.HistoryExportResult {
 }
 
 func (c *Client) List(ctx context.Context, params files_sdk.HistoryExportResultListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &lib.Iter{}}
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/history_export_results", params)
 	if err != nil {
 		return i, err

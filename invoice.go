@@ -24,10 +24,14 @@ type Invoice struct {
 	UpdatedAt         *time.Time `json:"updated_at,omitempty" path:"updated_at"`
 }
 
+func (i Invoice) Identifier() interface{} {
+	return i.Id
+}
+
 type InvoiceCollection []Invoice
 
 type InvoiceListParams struct {
-	lib.ListParams
+	ListParams
 }
 
 type InvoiceFindParams struct {

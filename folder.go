@@ -29,6 +29,10 @@ type Folder struct {
 	MkdirParents     *bool      `json:"mkdir_parents,omitempty" path:"mkdir_parents"`
 }
 
+func (f Folder) Identifier() interface{} {
+	return f.Path
+}
+
 type FolderCollection []Folder
 
 type FolderListForParams struct {
@@ -41,7 +45,7 @@ type FolderListForParams struct {
 	WithPreviews       *bool                               `url:"with_previews,omitempty" required:"false" json:"with_previews,omitempty" path:"with_previews"`
 	WithPriorityColor  *bool                               `url:"with_priority_color,omitempty" required:"false" json:"with_priority_color,omitempty" path:"with_priority_color"`
 	ConcurrencyManager lib.ConcurrencyManagerWithSubWorker `url:"-" required:"false" json:"-"`
-	lib.ListParams
+	ListParams
 }
 
 type FolderCreateParams struct {

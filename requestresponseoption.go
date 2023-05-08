@@ -1,6 +1,7 @@
 package files_sdk
 
 import (
+	"context"
 	"io"
 	"net/http"
 )
@@ -30,6 +31,13 @@ func RequestHeadersOption(headers *http.Header) RequestResponseOption {
 		for k, v := range *headers {
 			req.Header.Set(k, v[0])
 		}
+		return nil
+	})
+}
+
+func WithContext(ctx context.Context) RequestResponseOption {
+	return RequestOption(func(req *http.Request) error {
+		req.WithContext(ctx)
 		return nil
 	})
 }

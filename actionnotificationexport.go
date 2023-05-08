@@ -24,6 +24,10 @@ type ActionNotificationExport struct {
 	UserId             int64      `json:"user_id,omitempty" path:"user_id"`
 }
 
+func (a ActionNotificationExport) Identifier() interface{} {
+	return a.Id
+}
+
 type ActionNotificationExportCollection []ActionNotificationExport
 
 type ActionNotificationExportFindParams struct {

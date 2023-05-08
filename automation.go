@@ -34,6 +34,10 @@ type Automation struct {
 	Destination            string          `json:"destination,omitempty" path:"destination"`
 }
 
+func (a Automation) Identifier() interface{} {
+	return a.Id
+}
+
 type AutomationCollection []Automation
 
 type AutomationTriggerEnum string
@@ -82,7 +86,7 @@ type AutomationListParams struct {
 	FilterLt    json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
 	FilterLteq  json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	WithDeleted *bool           `url:"with_deleted,omitempty" required:"false" json:"with_deleted,omitempty" path:"with_deleted"`
-	lib.ListParams
+	ListParams
 }
 
 type AutomationFindParams struct {

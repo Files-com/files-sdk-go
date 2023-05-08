@@ -61,6 +61,31 @@ func TestClient_Update(t *testing.T) {
 	assert.Equal(lib.Bool(false), user.SftpPermission)
 }
 
+func TestClient_List(t *testing.T) {
+	client, r, err := createClient("TestClient_List")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+
+	assert := assert.New(t)
+
+	_, err = findOrCreateUser(client, files_sdk.UserCreateParams{Username: "test-list-user"})
+	assert.NoError(err)
+
+	it, err := client.List(context.Background(), files_sdk.UserListParams{})
+	assert.NoError(err)
+	var users []files_sdk.User
+	for it.Next() {
+		users = append(users, it.User())
+		loaderUser, err := it.LoadResource(it.User().Identifier())
+		assert.NoError(err)
+		assert.Equal(loaderUser, it.User())
+	}
+	assert.NoError(it.Err())
+	assert.Len(users, 1)
+}
+
 func findOrCreateUser(client *Client, params files_sdk.UserCreateParams) (files_sdk.User, error) {
 	user, err := findUser(client, params)
 	if err != nil && err.Error() == "user not found" {

@@ -41,6 +41,6 @@ func (c *Client) Wait(ctx context.Context, fileAction files_sdk.FileAction, stat
 	}
 }
 
-func (c *Client) LogIterator(ctx context.Context, f files_sdk.FileMigration) lib.IterI {
+func (c *Client) LogIterator(ctx context.Context, f files_sdk.FileMigration) files_sdk.IterI {
 	return files_sdk.FilesMigrationLogIter{FileMigration: f, Context: ctx, Config: c.Config}.Init()
 }

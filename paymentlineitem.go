@@ -14,6 +14,8 @@ type PaymentLineItem struct {
 	PaymentId int64      `json:"payment_id,omitempty" path:"payment_id"`
 }
 
+// Identifier no path or id
+
 type PaymentLineItemCollection []PaymentLineItem
 
 func (p *PaymentLineItem) UnmarshalJSON(data []byte) error {

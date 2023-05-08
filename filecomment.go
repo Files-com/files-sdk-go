@@ -13,11 +13,15 @@ type FileComment struct {
 	Path      string   `json:"path,omitempty" path:"path"`
 }
 
+func (f FileComment) Identifier() interface{} {
+	return f.Id
+}
+
 type FileCommentCollection []FileComment
 
 type FileCommentListForParams struct {
 	Path string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
-	lib.ListParams
+	ListParams
 }
 
 type FileCommentCreateParams struct {

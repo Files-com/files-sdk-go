@@ -12,12 +12,16 @@ type MessageCommentReaction struct {
 	UserId int64  `json:"user_id,omitempty" path:"user_id"`
 }
 
+func (m MessageCommentReaction) Identifier() interface{} {
+	return m.Id
+}
+
 type MessageCommentReactionCollection []MessageCommentReaction
 
 type MessageCommentReactionListParams struct {
 	UserId           int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
 	MessageCommentId int64 `url:"message_comment_id,omitempty" required:"true" json:"message_comment_id,omitempty" path:"message_comment_id"`
-	lib.ListParams
+	ListParams
 }
 
 type MessageCommentReactionFindParams struct {

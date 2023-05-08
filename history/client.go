@@ -13,7 +13,12 @@ type Client struct {
 }
 
 type Iter struct {
-	*lib.Iter
+	*files_sdk.Iter
+	*Client
+}
+
+func (i *Iter) Reload(opts ...files_sdk.RequestResponseOption) files_sdk.IterI {
+	return &Iter{Iter: i.Iter.Reload(opts...).(*files_sdk.Iter), Client: i.Client}
 }
 
 func (i *Iter) Action() files_sdk.Action {
@@ -21,7 +26,7 @@ func (i *Iter) Action() files_sdk.Action {
 }
 
 func (c *Client) ListForFile(ctx context.Context, params files_sdk.HistoryListForFileParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &lib.Iter{}}
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/history/files/{path}", params)
 	if err != nil {
 		return i, err
@@ -37,7 +42,7 @@ func ListForFile(ctx context.Context, params files_sdk.HistoryListForFileParams,
 }
 
 func (c *Client) ListForFolder(ctx context.Context, params files_sdk.HistoryListForFolderParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &lib.Iter{}}
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/history/folders/{path}", params)
 	if err != nil {
 		return i, err
@@ -53,7 +58,7 @@ func ListForFolder(ctx context.Context, params files_sdk.HistoryListForFolderPar
 }
 
 func (c *Client) ListForUser(ctx context.Context, params files_sdk.HistoryListForUserParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &lib.Iter{}}
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/history/users/{user_id}", params)
 	if err != nil {
 		return i, err
@@ -69,7 +74,7 @@ func ListForUser(ctx context.Context, params files_sdk.HistoryListForUserParams,
 }
 
 func (c *Client) ListLogins(ctx context.Context, params files_sdk.HistoryListLoginsParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &lib.Iter{}}
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/history/login", params)
 	if err != nil {
 		return i, err
@@ -85,7 +90,7 @@ func ListLogins(ctx context.Context, params files_sdk.HistoryListLoginsParams, o
 }
 
 func (c *Client) List(ctx context.Context, params files_sdk.HistoryListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &lib.Iter{}}
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/history", params)
 	if err != nil {
 		return i, err

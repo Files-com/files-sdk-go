@@ -19,6 +19,8 @@ type InvoiceLineItem struct {
 	Site           string     `json:"site,omitempty" path:"site"`
 }
 
+// Identifier no path or id
+
 type InvoiceLineItemCollection []InvoiceLineItem
 
 func (i *InvoiceLineItem) UnmarshalJSON(data []byte) error {

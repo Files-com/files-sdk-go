@@ -23,6 +23,10 @@ type ApiKey struct {
 	UserId           int64      `json:"user_id,omitempty" path:"user_id"`
 }
 
+func (a ApiKey) Identifier() interface{} {
+	return a.Id
+}
+
 type ApiKeyCollection []ApiKey
 
 type ApiKeyPermissionSetEnum string
@@ -50,7 +54,7 @@ type ApiKeyListParams struct {
 	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
 	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
 	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
-	lib.ListParams
+	ListParams
 }
 
 type ApiKeyFindParams struct {

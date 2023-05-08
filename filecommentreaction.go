@@ -13,6 +13,10 @@ type FileCommentReaction struct {
 	FileCommentId int64  `json:"file_comment_id,omitempty" path:"file_comment_id"`
 }
 
+func (f FileCommentReaction) Identifier() interface{} {
+	return f.Id
+}
+
 type FileCommentReactionCollection []FileCommentReaction
 
 type FileCommentReactionCreateParams struct {

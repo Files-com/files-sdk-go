@@ -14,6 +14,10 @@ type BundleDownload struct {
 	CreatedAt          *time.Time         `json:"created_at,omitempty" path:"created_at"`
 }
 
+func (b BundleDownload) Identifier() interface{} {
+	return b.Path
+}
+
 type BundleDownloadCollection []BundleDownload
 
 type BundleDownloadListParams struct {
@@ -25,7 +29,7 @@ type BundleDownloadListParams struct {
 	FilterLteq           json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	BundleId             int64           `url:"bundle_id,omitempty" required:"false" json:"bundle_id,omitempty" path:"bundle_id"`
 	BundleRegistrationId int64           `url:"bundle_registration_id,omitempty" required:"false" json:"bundle_registration_id,omitempty" path:"bundle_registration_id"`
-	lib.ListParams
+	ListParams
 }
 
 func (b *BundleDownload) UnmarshalJSON(data []byte) error {

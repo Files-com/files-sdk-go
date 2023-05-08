@@ -1,4 +1,8 @@
-package lib
+package files_sdk
+
+import (
+	"github.com/Files-com/files-sdk-go/v2/lib"
+)
 
 type ListParams struct {
 	Page     int64  `json:"page,omitempty" url:"page,omitempty" required:"false"`
@@ -22,13 +26,15 @@ func (p *ListParams) GetListParams() *ListParams {
 }
 
 type OnPageError func(error) (*[]interface{}, error)
-type Query func(params Values) (*[]interface{}, string, error)
+type Query func(params lib.Values, opts ...RequestResponseOption) (*[]interface{}, string, error)
 
 type IterI interface {
 	Next() bool
 	Current() interface{}
 	Err() error
 }
+
+var _ IterI = (*Iter)(nil)
 
 type TypedIterI[T any] interface {
 	Next() bool
@@ -42,6 +48,30 @@ type IterPagingI interface {
 	EOFPage() bool
 }
 
+var _ IterPagingI = (*Iter)(nil)
+
+type ResourceIterator interface {
+	Iterate(interface{}, ...RequestResponseOption) (IterI, error)
+}
+
+type ReloadIterator interface {
+	Reload(opts ...RequestResponseOption) IterI
+}
+
+var _ ReloadIterator = (*Iter)(nil)
+
+type ResourceLoader interface {
+	LoadResource(interface{}, ...RequestResponseOption) (interface{}, error)
+}
+
+type Identifier interface {
+	Identifier() interface{}
+}
+
+type Iterable interface {
+	Iterable() bool
+}
+
 type Iter struct {
 	Query
 	ListParams   ListParamsContainer
@@ -51,6 +81,7 @@ type Iter struct {
 	Cursor       string
 	Error        error
 	OnPageError
+	requestResponseOptions []RequestResponseOption
 }
 
 // Err returns the error, if any,
@@ -69,16 +100,16 @@ func (i *Iter) GetParams() *ListParams {
 	return i.ListParams.GetListParams()
 }
 
-func (i *Iter) ExportParams() (ExportValues, error) {
-	p := Params{Params: i.GetParams()}
+func (i *Iter) ExportParams() (lib.ExportValues, error) {
+	p := lib.Params{Params: i.GetParams()}
 	paramValues, err := p.ToValues()
 	if err != nil {
-		return ExportValues{}, err
+		return lib.ExportValues{}, err
 	}
-	listParamValues, err := Params{Params: i.ListParams}.ToValues()
+	listParamValues, err := lib.Params{Params: i.ListParams}.ToValues()
 
 	if err != nil {
-		return ExportValues{}, err
+		return lib.ExportValues{}, err
 	}
 
 	for key, value := range paramValues {
@@ -89,7 +120,7 @@ func (i *Iter) ExportParams() (ExportValues, error) {
 		listParamValues.Del("page")
 	}
 
-	return ExportValues{Values: listParamValues}, nil
+	return lib.ExportValues{Values: listParamValues}, nil
 }
 
 func (i *Iter) GetPage() bool {
@@ -104,7 +135,7 @@ func (i *Iter) GetPage() bool {
 		return false
 	}
 	params, _ := i.ExportParams()
-	i.Values, i.Cursor, i.Error = i.Query(params)
+	i.Values, i.Cursor, i.Error = i.Query(params, i.requestResponseOptions...)
 	i.SetCursor(i.Cursor)
 	if i.Error != nil && i.OnPageError != nil {
 		i.Values, i.Error = i.OnPageError(i.Error)
@@ -156,4 +187,12 @@ func (i *Iter) Next() bool {
 
 func (i *Iter) NextPage() bool {
 	return i.Cursor != ""
+}
+
+// Reload ignores any id passed in and creates a new reset Iter
+func (i *Iter) Reload(opts ...RequestResponseOption) IterI {
+	newIter := *i
+	newIter.ListParams = &ListParams{}
+	newIter.requestResponseOptions = opts
+	return &newIter
 }

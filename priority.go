@@ -11,11 +11,15 @@ type Priority struct {
 	Color string `json:"color,omitempty" path:"color"`
 }
 
+func (p Priority) Identifier() interface{} {
+	return p.Path
+}
+
 type PriorityCollection []Priority
 
 type PriorityListParams struct {
 	Path string `url:"path,omitempty" required:"true" json:"path,omitempty" path:"path"`
-	lib.ListParams
+	ListParams
 }
 
 func (p *Priority) UnmarshalJSON(data []byte) error {

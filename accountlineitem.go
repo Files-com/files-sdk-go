@@ -24,6 +24,10 @@ type AccountLineItem struct {
 	UpdatedAt         *time.Time `json:"updated_at,omitempty" path:"updated_at"`
 }
 
+func (a AccountLineItem) Identifier() interface{} {
+	return a.Id
+}
+
 type AccountLineItemCollection []AccountLineItem
 
 func (a *AccountLineItem) UnmarshalJSON(data []byte) error {

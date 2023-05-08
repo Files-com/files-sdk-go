@@ -23,6 +23,8 @@ type WebhookTest struct {
 	Action        string          `json:"action,omitempty" path:"action"`
 }
 
+// Identifier no path or id
+
 type WebhookTestCollection []WebhookTest
 
 type WebhookTestCreateParams struct {

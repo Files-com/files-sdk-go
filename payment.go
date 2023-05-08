@@ -24,10 +24,14 @@ type Payment struct {
 	UpdatedAt         *time.Time `json:"updated_at,omitempty" path:"updated_at"`
 }
 
+func (p Payment) Identifier() interface{} {
+	return p.Id
+}
+
 type PaymentCollection []Payment
 
 type PaymentListParams struct {
-	lib.ListParams
+	ListParams
 }
 
 type PaymentFindParams struct {

@@ -15,6 +15,10 @@ type Style struct {
 	File      io.Reader `json:"file,omitempty" path:"file"`
 }
 
+func (s Style) Identifier() interface{} {
+	return s.Id
+}
+
 type StyleCollection []Style
 
 type StyleFindParams struct {

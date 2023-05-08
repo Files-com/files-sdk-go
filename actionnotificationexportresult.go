@@ -19,12 +19,16 @@ type ActionNotificationExportResult struct {
 	Folder         string `json:"folder,omitempty" path:"folder"`
 }
 
+func (a ActionNotificationExportResult) Identifier() interface{} {
+	return a.Id
+}
+
 type ActionNotificationExportResultCollection []ActionNotificationExportResult
 
 type ActionNotificationExportResultListParams struct {
 	UserId                     int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
 	ActionNotificationExportId int64 `url:"action_notification_export_id,omitempty" required:"true" json:"action_notification_export_id,omitempty" path:"action_notification_export_id"`
-	lib.ListParams
+	ListParams
 }
 
 func (a *ActionNotificationExportResult) UnmarshalJSON(data []byte) error {

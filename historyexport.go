@@ -36,6 +36,10 @@ type HistoryExport struct {
 	UserId                   int64      `json:"user_id,omitempty" path:"user_id"`
 }
 
+func (h HistoryExport) Identifier() interface{} {
+	return h.Id
+}
+
 type HistoryExportCollection []HistoryExport
 
 type HistoryExportFindParams struct {
