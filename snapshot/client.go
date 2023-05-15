@@ -58,13 +58,13 @@ func Find(ctx context.Context, params files_sdk.SnapshotFindParams, opts ...file
 	return (&Client{}).Find(ctx, params, opts...)
 }
 
-func (c *Client) Create(ctx context.Context, opts ...files_sdk.RequestResponseOption) (snapshot files_sdk.Snapshot, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/snapshots", Params: lib.Interface(), Entity: &snapshot}, opts...)
+func (c *Client) Create(ctx context.Context, params files_sdk.SnapshotCreateParams, opts ...files_sdk.RequestResponseOption) (snapshot files_sdk.Snapshot, err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/snapshots", Params: params, Entity: &snapshot}, opts...)
 	return
 }
 
-func Create(ctx context.Context, opts ...files_sdk.RequestResponseOption) (snapshot files_sdk.Snapshot, err error) {
-	return (&Client{}).Create(ctx, opts...)
+func Create(ctx context.Context, params files_sdk.SnapshotCreateParams, opts ...files_sdk.RequestResponseOption) (snapshot files_sdk.Snapshot, err error) {
+	return (&Client{}).Create(ctx, params, opts...)
 }
 
 func (c *Client) Update(ctx context.Context, params files_sdk.SnapshotUpdateParams, opts ...files_sdk.RequestResponseOption) (snapshot files_sdk.Snapshot, err error) {

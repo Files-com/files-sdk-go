@@ -13,6 +13,7 @@ type Snapshot struct {
 	Name        string     `json:"name,omitempty" path:"name"`
 	UserId      int64      `json:"user_id,omitempty" path:"user_id"`
 	BundleId    int64      `json:"bundle_id,omitempty" path:"bundle_id"`
+	Paths       []string   `json:"paths,omitempty" path:"paths"`
 	Id          int64      `json:"id,omitempty" path:"id"`
 }
 
@@ -30,8 +31,17 @@ type SnapshotFindParams struct {
 	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
 
+type SnapshotCreateParams struct {
+	ExpiresAt *time.Time `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty" path:"expires_at"`
+	Name      string     `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
+	Paths     []string   `url:"paths,omitempty" required:"false" json:"paths,omitempty" path:"paths"`
+}
+
 type SnapshotUpdateParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id        int64      `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	ExpiresAt *time.Time `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty" path:"expires_at"`
+	Name      string     `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
+	Paths     []string   `url:"paths,omitempty" required:"false" json:"paths,omitempty" path:"paths"`
 }
 
 type SnapshotDeleteParams struct {
