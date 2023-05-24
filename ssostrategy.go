@@ -34,6 +34,7 @@ type SsoStrategy struct {
 	ProvisionGroupRequired         string `json:"provision_group_required,omitempty" path:"provision_group_required"`
 	ProvisionEmailSignupGroups     string `json:"provision_email_signup_groups,omitempty" path:"provision_email_signup_groups"`
 	ProvisionSiteAdminGroups       string `json:"provision_site_admin_groups,omitempty" path:"provision_site_admin_groups"`
+	ProvisionGroupAdminGroups      string `json:"provision_group_admin_groups,omitempty" path:"provision_group_admin_groups"`
 	ProvisionAttachmentsPermission *bool  `json:"provision_attachments_permission,omitempty" path:"provision_attachments_permission"`
 	ProvisionDavPermission         *bool  `json:"provision_dav_permission,omitempty" path:"provision_dav_permission"`
 	ProvisionFtpPermission         *bool  `json:"provision_ftp_permission,omitempty" path:"provision_ftp_permission"`
