@@ -111,6 +111,7 @@ type Site struct {
 	Require2fa                             *bool           `json:"require_2fa,omitempty" path:"require_2fa"`
 	Require2faStopTime                     *time.Time      `json:"require_2fa_stop_time,omitempty" path:"require_2fa_stop_time"`
 	Require2faUserType                     string          `json:"require_2fa_user_type,omitempty" path:"require_2fa_user_type"`
+	RequireLogoutFromBundlesAndInboxes     *bool           `json:"require_logout_from_bundles_and_inboxes,omitempty" path:"require_logout_from_bundles_and_inboxes"`
 	Session                                Session         `json:"session,omitempty" path:"session"`
 	SessionPinnedByIp                      *bool           `json:"session_pinned_by_ip,omitempty" path:"session_pinned_by_ip"`
 	SftpEnabled                            *bool           `json:"sftp_enabled,omitempty" path:"sftp_enabled"`
@@ -213,6 +214,7 @@ type SiteUpdateParams struct {
 	PasswordRequireSpecial                 *bool           `url:"password_require_special,omitempty" required:"false" json:"password_require_special,omitempty" path:"password_require_special"`
 	PasswordRequireNumber                  *bool           `url:"password_require_number,omitempty" required:"false" json:"password_require_number,omitempty" path:"password_require_number"`
 	PasswordRequireUnbreached              *bool           `url:"password_require_unbreached,omitempty" required:"false" json:"password_require_unbreached,omitempty" path:"password_require_unbreached"`
+	RequireLogoutFromBundlesAndInboxes     *bool           `url:"require_logout_from_bundles_and_inboxes,omitempty" required:"false" json:"require_logout_from_bundles_and_inboxes,omitempty" path:"require_logout_from_bundles_and_inboxes"`
 	SftpUserRootEnabled                    *bool           `url:"sftp_user_root_enabled,omitempty" required:"false" json:"sftp_user_root_enabled,omitempty" path:"sftp_user_root_enabled"`
 	DisablePasswordReset                   *bool           `url:"disable_password_reset,omitempty" required:"false" json:"disable_password_reset,omitempty" path:"disable_password_reset"`
 	ImmutableFiles                         *bool           `url:"immutable_files,omitempty" required:"false" json:"immutable_files,omitempty" path:"immutable_files"`
