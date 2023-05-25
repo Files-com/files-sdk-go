@@ -55,6 +55,7 @@ type RemoteServer struct {
 	FilesAgentApiToken                string `json:"files_agent_api_token,omitempty" path:"files_agent_api_token"`
 	FilebaseBucket                    string `json:"filebase_bucket,omitempty" path:"filebase_bucket"`
 	FilebaseAccessKey                 string `json:"filebase_access_key,omitempty" path:"filebase_access_key"`
+	DropboxTeams                      *bool  `json:"dropbox_teams,omitempty" path:"dropbox_teams"`
 	AwsSecretKey                      string `json:"aws_secret_key,omitempty" path:"aws_secret_key"`
 	Password                          string `json:"password,omitempty" path:"password"`
 	PrivateKey                        string `json:"private_key,omitempty" path:"private_key"`
@@ -229,6 +230,7 @@ type RemoteServerCreateParams struct {
 	FilebaseAccessKey                 string                                  `url:"filebase_access_key,omitempty" required:"false" json:"filebase_access_key,omitempty" path:"filebase_access_key"`
 	FilebaseSecretKey                 string                                  `url:"filebase_secret_key,omitempty" required:"false" json:"filebase_secret_key,omitempty" path:"filebase_secret_key"`
 	FilebaseBucket                    string                                  `url:"filebase_bucket,omitempty" required:"false" json:"filebase_bucket,omitempty" path:"filebase_bucket"`
+	DropboxTeams                      *bool                                   `url:"dropbox_teams,omitempty" required:"false" json:"dropbox_teams,omitempty" path:"dropbox_teams"`
 }
 
 // Post local changes, check in, and download configuration file (used by some Remote Server integrations, such as the Files.com Agent)
@@ -303,6 +305,7 @@ type RemoteServerUpdateParams struct {
 	FilebaseAccessKey                 string                                  `url:"filebase_access_key,omitempty" required:"false" json:"filebase_access_key,omitempty" path:"filebase_access_key"`
 	FilebaseSecretKey                 string                                  `url:"filebase_secret_key,omitempty" required:"false" json:"filebase_secret_key,omitempty" path:"filebase_secret_key"`
 	FilebaseBucket                    string                                  `url:"filebase_bucket,omitempty" required:"false" json:"filebase_bucket,omitempty" path:"filebase_bucket"`
+	DropboxTeams                      *bool                                   `url:"dropbox_teams,omitempty" required:"false" json:"dropbox_teams,omitempty" path:"dropbox_teams"`
 }
 
 type RemoteServerDeleteParams struct {
