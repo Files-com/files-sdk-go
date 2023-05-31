@@ -55,6 +55,9 @@ type RemoteServer struct {
 	FilesAgentApiToken                string `json:"files_agent_api_token,omitempty" path:"files_agent_api_token"`
 	FilebaseBucket                    string `json:"filebase_bucket,omitempty" path:"filebase_bucket"`
 	FilebaseAccessKey                 string `json:"filebase_access_key,omitempty" path:"filebase_access_key"`
+	CloudflareBucket                  string `json:"cloudflare_bucket,omitempty" path:"cloudflare_bucket"`
+	CloudflareAccessKey               string `json:"cloudflare_access_key,omitempty" path:"cloudflare_access_key"`
+	CloudflareEndpoint                string `json:"cloudflare_endpoint,omitempty" path:"cloudflare_endpoint"`
 	DropboxTeams                      *bool  `json:"dropbox_teams,omitempty" path:"dropbox_teams"`
 	AwsSecretKey                      string `json:"aws_secret_key,omitempty" path:"aws_secret_key"`
 	Password                          string `json:"password,omitempty" path:"password"`
@@ -71,6 +74,7 @@ type RemoteServer struct {
 	AzureFilesStorageAccessKey        string `json:"azure_files_storage_access_key,omitempty" path:"azure_files_storage_access_key"`
 	S3CompatibleSecretKey             string `json:"s3_compatible_secret_key,omitempty" path:"s3_compatible_secret_key"`
 	FilebaseSecretKey                 string `json:"filebase_secret_key,omitempty" path:"filebase_secret_key"`
+	CloudflareSecretKey               string `json:"cloudflare_secret_key,omitempty" path:"cloudflare_secret_key"`
 }
 
 func (r RemoteServer) Identifier() interface{} {
@@ -118,6 +122,7 @@ func (u RemoteServerServerTypeEnum) Enum() map[string]RemoteServerServerTypeEnum
 		"azure_files":          RemoteServerServerTypeEnum("azure_files"),
 		"files_agent":          RemoteServerServerTypeEnum("files_agent"),
 		"filebase":             RemoteServerServerTypeEnum("filebase"),
+		"cloudflare":           RemoteServerServerTypeEnum("cloudflare"),
 	}
 }
 
@@ -230,6 +235,10 @@ type RemoteServerCreateParams struct {
 	FilebaseAccessKey                 string                                  `url:"filebase_access_key,omitempty" required:"false" json:"filebase_access_key,omitempty" path:"filebase_access_key"`
 	FilebaseSecretKey                 string                                  `url:"filebase_secret_key,omitempty" required:"false" json:"filebase_secret_key,omitempty" path:"filebase_secret_key"`
 	FilebaseBucket                    string                                  `url:"filebase_bucket,omitempty" required:"false" json:"filebase_bucket,omitempty" path:"filebase_bucket"`
+	CloudflareAccessKey               string                                  `url:"cloudflare_access_key,omitempty" required:"false" json:"cloudflare_access_key,omitempty" path:"cloudflare_access_key"`
+	CloudflareSecretKey               string                                  `url:"cloudflare_secret_key,omitempty" required:"false" json:"cloudflare_secret_key,omitempty" path:"cloudflare_secret_key"`
+	CloudflareBucket                  string                                  `url:"cloudflare_bucket,omitempty" required:"false" json:"cloudflare_bucket,omitempty" path:"cloudflare_bucket"`
+	CloudflareEndpoint                string                                  `url:"cloudflare_endpoint,omitempty" required:"false" json:"cloudflare_endpoint,omitempty" path:"cloudflare_endpoint"`
 	DropboxTeams                      *bool                                   `url:"dropbox_teams,omitempty" required:"false" json:"dropbox_teams,omitempty" path:"dropbox_teams"`
 }
 
@@ -305,6 +314,10 @@ type RemoteServerUpdateParams struct {
 	FilebaseAccessKey                 string                                  `url:"filebase_access_key,omitempty" required:"false" json:"filebase_access_key,omitempty" path:"filebase_access_key"`
 	FilebaseSecretKey                 string                                  `url:"filebase_secret_key,omitempty" required:"false" json:"filebase_secret_key,omitempty" path:"filebase_secret_key"`
 	FilebaseBucket                    string                                  `url:"filebase_bucket,omitempty" required:"false" json:"filebase_bucket,omitempty" path:"filebase_bucket"`
+	CloudflareAccessKey               string                                  `url:"cloudflare_access_key,omitempty" required:"false" json:"cloudflare_access_key,omitempty" path:"cloudflare_access_key"`
+	CloudflareSecretKey               string                                  `url:"cloudflare_secret_key,omitempty" required:"false" json:"cloudflare_secret_key,omitempty" path:"cloudflare_secret_key"`
+	CloudflareBucket                  string                                  `url:"cloudflare_bucket,omitempty" required:"false" json:"cloudflare_bucket,omitempty" path:"cloudflare_bucket"`
+	CloudflareEndpoint                string                                  `url:"cloudflare_endpoint,omitempty" required:"false" json:"cloudflare_endpoint,omitempty" path:"cloudflare_endpoint"`
 	DropboxTeams                      *bool                                   `url:"dropbox_teams,omitempty" required:"false" json:"dropbox_teams,omitempty" path:"dropbox_teams"`
 }
 
