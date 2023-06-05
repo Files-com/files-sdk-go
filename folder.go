@@ -64,6 +64,10 @@ func (f *Folder) ToFile() (File, error) {
 	return file, nil
 }
 
+func (f Folder) IsDir() bool {
+	return f.Type == "directory"
+}
+
 func (f *Folder) UnmarshalJSON(data []byte) error {
 	type folder Folder
 	var v folder

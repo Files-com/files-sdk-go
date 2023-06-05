@@ -132,6 +132,10 @@ func (f File) String() string {
 }
 
 func (f File) Iterable() bool {
+	return f.IsDir()
+}
+
+func (f File) IsDir() bool {
 	return f.Type == "directory"
 }
 
