@@ -12,6 +12,7 @@ type Bundle struct {
 	Code                            string          `json:"code,omitempty" path:"code"`
 	Url                             string          `json:"url,omitempty" path:"url"`
 	Description                     string          `json:"description,omitempty" path:"description"`
+	ExpiresAt                       *time.Time      `json:"expires_at,omitempty" path:"expires_at"`
 	PasswordProtected               *bool           `json:"password_protected,omitempty" path:"password_protected"`
 	Permissions                     string          `json:"permissions,omitempty" path:"permissions"`
 	PreviewOnly                     *bool           `json:"preview_only,omitempty" path:"preview_only"`
@@ -25,7 +26,6 @@ type Bundle struct {
 	Id                              int64           `json:"id,omitempty" path:"id"`
 	CreatedAt                       *time.Time      `json:"created_at,omitempty" path:"created_at"`
 	DontSeparateSubmissionsByFolder *bool           `json:"dont_separate_submissions_by_folder,omitempty" path:"dont_separate_submissions_by_folder"`
-	ExpiresAt                       *time.Time      `json:"expires_at,omitempty" path:"expires_at"`
 	MaxUses                         int64           `json:"max_uses,omitempty" path:"max_uses"`
 	Note                            string          `json:"note,omitempty" path:"note"`
 	PathTemplate                    string          `json:"path_template,omitempty" path:"path_template"`
