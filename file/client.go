@@ -3,17 +3,18 @@ package file
 import (
 	"context"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 
-	"io/fs"
-
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/downloadurl"
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/Files-com/files-sdk-go/v2/folder"
+
+	"os"
+
+	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
 
