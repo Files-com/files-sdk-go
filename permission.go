@@ -7,14 +7,14 @@ import (
 )
 
 type Permission struct {
-	Id         int64  `json:"id,omitempty" path:"id"`
-	Path       string `json:"path,omitempty" path:"path"`
-	UserId     int64  `json:"user_id,omitempty" path:"user_id"`
-	Username   string `json:"username,omitempty" path:"username"`
-	GroupId    int64  `json:"group_id,omitempty" path:"group_id"`
-	GroupName  string `json:"group_name,omitempty" path:"group_name"`
-	Permission string `json:"permission,omitempty" path:"permission"`
-	Recursive  *bool  `json:"recursive,omitempty" path:"recursive"`
+	Id         int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Path       string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	UserId     int64  `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	Username   string `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
+	GroupId    int64  `json:"group_id,omitempty" path:"group_id,omitempty" url:"group_id,omitempty"`
+	GroupName  string `json:"group_name,omitempty" path:"group_name,omitempty" url:"group_name,omitempty"`
+	Permission string `json:"permission,omitempty" path:"permission,omitempty" url:"permission,omitempty"`
+	Recursive  *bool  `json:"recursive,omitempty" path:"recursive,omitempty" url:"recursive,omitempty"`
 }
 
 func (p Permission) Identifier() interface{} {
@@ -24,13 +24,13 @@ func (p Permission) Identifier() interface{} {
 type PermissionCollection []Permission
 
 type PermissionListParams struct {
-	SortBy        json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter        json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterPrefix  json.RawMessage `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	Path          string          `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
-	GroupId       string          `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
-	UserId        string          `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	IncludeGroups *bool           `url:"include_groups,omitempty" required:"false" json:"include_groups,omitempty" path:"include_groups"`
+	SortBy        map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter        Permission             `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	FilterPrefix  map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	Path          string                 `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
+	GroupId       string                 `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
+	UserId        string                 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	IncludeGroups *bool                  `url:"include_groups,omitempty" required:"false" json:"include_groups,omitempty" path:"include_groups"`
 	ListParams
 }
 

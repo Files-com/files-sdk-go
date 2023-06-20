@@ -8,19 +8,19 @@ import (
 )
 
 type ApiKey struct {
-	Id               int64      `json:"id,omitempty" path:"id"`
-	DescriptiveLabel string     `json:"descriptive_label,omitempty" path:"descriptive_label"`
-	Description      string     `json:"description,omitempty" path:"description"`
-	CreatedAt        *time.Time `json:"created_at,omitempty" path:"created_at"`
-	ExpiresAt        *time.Time `json:"expires_at,omitempty" path:"expires_at"`
-	Key              string     `json:"key,omitempty" path:"key"`
-	LastUseAt        *time.Time `json:"last_use_at,omitempty" path:"last_use_at"`
-	Name             string     `json:"name,omitempty" path:"name"`
-	Path             string     `json:"path,omitempty" path:"path"`
-	PermissionSet    string     `json:"permission_set,omitempty" path:"permission_set"`
-	Platform         string     `json:"platform,omitempty" path:"platform"`
-	Url              string     `json:"url,omitempty" path:"url"`
-	UserId           int64      `json:"user_id,omitempty" path:"user_id"`
+	Id               int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	DescriptiveLabel string     `json:"descriptive_label,omitempty" path:"descriptive_label,omitempty" url:"descriptive_label,omitempty"`
+	Description      string     `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
+	CreatedAt        *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	ExpiresAt        *time.Time `json:"expires_at,omitempty" path:"expires_at,omitempty" url:"expires_at,omitempty"`
+	Key              string     `json:"key,omitempty" path:"key,omitempty" url:"key,omitempty"`
+	LastUseAt        *time.Time `json:"last_use_at,omitempty" path:"last_use_at,omitempty" url:"last_use_at,omitempty"`
+	Name             string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Path             string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	PermissionSet    string     `json:"permission_set,omitempty" path:"permission_set,omitempty" url:"permission_set,omitempty"`
+	Platform         string     `json:"platform,omitempty" path:"platform,omitempty" url:"platform,omitempty"`
+	Url              string     `json:"url,omitempty" path:"url,omitempty" url:"url,omitempty"`
+	UserId           int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 }
 
 func (a ApiKey) Identifier() interface{} {
@@ -47,13 +47,13 @@ func (u ApiKeyPermissionSetEnum) Enum() map[string]ApiKeyPermissionSetEnum {
 }
 
 type ApiKeyListParams struct {
-	UserId     int64           `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter     json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	UserId     int64                  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	SortBy     map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter     ApiKey                 `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	FilterGt   map[string]interface{} `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq map[string]interface{} `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterLt   map[string]interface{} `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq map[string]interface{} `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 

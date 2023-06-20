@@ -7,10 +7,10 @@ import (
 )
 
 type DnsRecord struct {
-	Id     string `json:"id,omitempty" path:"id"`
-	Domain string `json:"domain,omitempty" path:"domain"`
-	Rrtype string `json:"rrtype,omitempty" path:"rrtype"`
-	Value  string `json:"value,omitempty" path:"value"`
+	Id     string `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Domain string `json:"domain,omitempty" path:"domain,omitempty" url:"domain,omitempty"`
+	Rrtype string `json:"rrtype,omitempty" path:"rrtype,omitempty" url:"rrtype,omitempty"`
+	Value  string `json:"value,omitempty" path:"value,omitempty" url:"value,omitempty"`
 }
 
 func (d DnsRecord) Identifier() interface{} {

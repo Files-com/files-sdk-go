@@ -7,11 +7,11 @@ import (
 )
 
 type SftpHostKey struct {
-	Id                int64  `json:"id,omitempty" path:"id"`
-	Name              string `json:"name,omitempty" path:"name"`
-	FingerprintMd5    string `json:"fingerprint_md5,omitempty" path:"fingerprint_md5"`
-	FingerprintSha256 string `json:"fingerprint_sha256,omitempty" path:"fingerprint_sha256"`
-	PrivateKey        string `json:"private_key,omitempty" path:"private_key"`
+	Id                int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Name              string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	FingerprintMd5    string `json:"fingerprint_md5,omitempty" path:"fingerprint_md5,omitempty" url:"fingerprint_md5,omitempty"`
+	FingerprintSha256 string `json:"fingerprint_sha256,omitempty" path:"fingerprint_sha256,omitempty" url:"fingerprint_sha256,omitempty"`
+	PrivateKey        string `json:"private_key,omitempty" path:"private_key,omitempty" url:"private_key,omitempty"`
 }
 
 func (s SftpHostKey) Identifier() interface{} {

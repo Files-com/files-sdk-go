@@ -7,14 +7,14 @@ import (
 )
 
 type FormField struct {
-	Id               int64    `json:"id,omitempty" path:"id"`
-	Label            string   `json:"label,omitempty" path:"label"`
-	Required         *bool    `json:"required,omitempty" path:"required"`
-	HelpText         string   `json:"help_text,omitempty" path:"help_text"`
-	FieldType        string   `json:"field_type,omitempty" path:"field_type"`
-	OptionsForSelect []string `json:"options_for_select,omitempty" path:"options_for_select"`
-	DefaultOption    string   `json:"default_option,omitempty" path:"default_option"`
-	FormFieldSetId   int64    `json:"form_field_set_id,omitempty" path:"form_field_set_id"`
+	Id               int64    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Label            string   `json:"label,omitempty" path:"label,omitempty" url:"label,omitempty"`
+	Required         *bool    `json:"required,omitempty" path:"required,omitempty" url:"required,omitempty"`
+	HelpText         string   `json:"help_text,omitempty" path:"help_text,omitempty" url:"help_text,omitempty"`
+	FieldType        string   `json:"field_type,omitempty" path:"field_type,omitempty" url:"field_type,omitempty"`
+	OptionsForSelect []string `json:"options_for_select,omitempty" path:"options_for_select,omitempty" url:"options_for_select,omitempty"`
+	DefaultOption    string   `json:"default_option,omitempty" path:"default_option,omitempty" url:"default_option,omitempty"`
+	FormFieldSetId   int64    `json:"form_field_set_id,omitempty" path:"form_field_set_id,omitempty" url:"form_field_set_id,omitempty"`
 }
 
 func (f FormField) Identifier() interface{} {

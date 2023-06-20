@@ -7,11 +7,11 @@ import (
 )
 
 type Preview struct {
-	Id          int64  `json:"id,omitempty" path:"id"`
-	Status      string `json:"status,omitempty" path:"status"`
-	DownloadUri string `json:"download_uri,omitempty" path:"download_uri"`
-	Type        string `json:"type,omitempty" path:"type"`
-	Size        string `json:"size,omitempty" path:"size"`
+	Id          int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Status      string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	DownloadUri string `json:"download_uri,omitempty" path:"download_uri,omitempty" url:"download_uri,omitempty"`
+	Type        string `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
+	Size        string `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
 }
 
 func (p Preview) Identifier() interface{} {

@@ -7,11 +7,11 @@ import (
 )
 
 type BundleNotification struct {
-	BundleId             int64 `json:"bundle_id,omitempty" path:"bundle_id"`
-	Id                   int64 `json:"id,omitempty" path:"id"`
-	NotifyOnRegistration *bool `json:"notify_on_registration,omitempty" path:"notify_on_registration"`
-	NotifyOnUpload       *bool `json:"notify_on_upload,omitempty" path:"notify_on_upload"`
-	UserId               int64 `json:"user_id,omitempty" path:"user_id"`
+	BundleId             int64 `json:"bundle_id,omitempty" path:"bundle_id,omitempty" url:"bundle_id,omitempty"`
+	Id                   int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	NotifyOnRegistration *bool `json:"notify_on_registration,omitempty" path:"notify_on_registration,omitempty" url:"notify_on_registration,omitempty"`
+	NotifyOnUpload       *bool `json:"notify_on_upload,omitempty" path:"notify_on_upload,omitempty" url:"notify_on_upload,omitempty"`
+	UserId               int64 `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 }
 
 func (b BundleNotification) Identifier() interface{} {
@@ -21,10 +21,9 @@ func (b BundleNotification) Identifier() interface{} {
 type BundleNotificationCollection []BundleNotification
 
 type BundleNotificationListParams struct {
-	UserId   int64           `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	SortBy   json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	BundleId string          `url:"bundle_id,omitempty" required:"false" json:"bundle_id,omitempty" path:"bundle_id"`
-	Filter   json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	UserId int64                  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	SortBy map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter BundleNotification     `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 

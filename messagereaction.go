@@ -7,9 +7,9 @@ import (
 )
 
 type MessageReaction struct {
-	Id     int64  `json:"id,omitempty" path:"id"`
-	Emoji  string `json:"emoji,omitempty" path:"emoji"`
-	UserId int64  `json:"user_id,omitempty" path:"user_id"`
+	Id     int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Emoji  string `json:"emoji,omitempty" path:"emoji,omitempty" url:"emoji,omitempty"`
+	UserId int64  `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 }
 
 func (m MessageReaction) Identifier() interface{} {

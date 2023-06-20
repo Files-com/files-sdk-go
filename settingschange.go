@@ -8,11 +8,12 @@ import (
 )
 
 type SettingsChange struct {
-	Changes            []string   `json:"changes,omitempty" path:"changes"`
-	CreatedAt          *time.Time `json:"created_at,omitempty" path:"created_at"`
-	UserId             int64      `json:"user_id,omitempty" path:"user_id"`
-	UserIsFilesSupport *bool      `json:"user_is_files_support,omitempty" path:"user_is_files_support"`
-	Username           string     `json:"username,omitempty" path:"username"`
+	Changes            []string   `json:"changes,omitempty" path:"changes,omitempty" url:"changes,omitempty"`
+	CreatedAt          *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	UserId             int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	ApiKeyId           int64      `json:"api_key_id,omitempty" path:"api_key_id,omitempty" url:"api_key_id,omitempty"`
+	UserIsFilesSupport *bool      `json:"user_is_files_support,omitempty" path:"user_is_files_support,omitempty" url:"user_is_files_support,omitempty"`
+	Username           string     `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
 }
 
 // Identifier no path or id
@@ -20,10 +21,8 @@ type SettingsChange struct {
 type SettingsChangeCollection []SettingsChange
 
 type SettingsChangeListParams struct {
-	SortBy   json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	ApiKeyId string          `url:"api_key_id,omitempty" required:"false" json:"api_key_id,omitempty" path:"api_key_id"`
-	UserId   string          `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	Filter   json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	SortBy map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter SettingsChange         `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 

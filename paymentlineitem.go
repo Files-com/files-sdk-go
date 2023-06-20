@@ -8,10 +8,10 @@ import (
 )
 
 type PaymentLineItem struct {
-	Amount    string     `json:"amount,omitempty" path:"amount"`
-	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at"`
-	InvoiceId int64      `json:"invoice_id,omitempty" path:"invoice_id"`
-	PaymentId int64      `json:"payment_id,omitempty" path:"payment_id"`
+	Amount    string     `json:"amount,omitempty" path:"amount,omitempty" url:"amount,omitempty"`
+	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	InvoiceId int64      `json:"invoice_id,omitempty" path:"invoice_id,omitempty" url:"invoice_id,omitempty"`
+	PaymentId int64      `json:"payment_id,omitempty" path:"payment_id,omitempty" url:"payment_id,omitempty"`
 }
 
 // Identifier no path or id

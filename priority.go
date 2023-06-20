@@ -7,8 +7,8 @@ import (
 )
 
 type Priority struct {
-	Path  string `json:"path,omitempty" path:"path"`
-	Color string `json:"color,omitempty" path:"color"`
+	Path  string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	Color string `json:"color,omitempty" path:"color,omitempty" url:"color,omitempty"`
 }
 
 func (p Priority) Identifier() interface{} {

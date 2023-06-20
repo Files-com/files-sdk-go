@@ -8,17 +8,17 @@ import (
 )
 
 type ExternalEvent struct {
-	Id               int64      `json:"id,omitempty" path:"id"`
-	EventType        string     `json:"event_type,omitempty" path:"event_type"`
-	Status           string     `json:"status,omitempty" path:"status"`
-	Body             string     `json:"body,omitempty" path:"body"`
-	CreatedAt        *time.Time `json:"created_at,omitempty" path:"created_at"`
-	BodyUrl          string     `json:"body_url,omitempty" path:"body_url"`
-	FolderBehaviorId int64      `json:"folder_behavior_id,omitempty" path:"folder_behavior_id"`
-	SuccessfulFiles  int64      `json:"successful_files,omitempty" path:"successful_files"`
-	ErroredFiles     int64      `json:"errored_files,omitempty" path:"errored_files"`
-	BytesSynced      int64      `json:"bytes_synced,omitempty" path:"bytes_synced"`
-	RemoteServerType string     `json:"remote_server_type,omitempty" path:"remote_server_type"`
+	Id               int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	EventType        string     `json:"event_type,omitempty" path:"event_type,omitempty" url:"event_type,omitempty"`
+	Status           string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	Body             string     `json:"body,omitempty" path:"body,omitempty" url:"body,omitempty"`
+	CreatedAt        *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	BodyUrl          string     `json:"body_url,omitempty" path:"body_url,omitempty" url:"body_url,omitempty"`
+	FolderBehaviorId int64      `json:"folder_behavior_id,omitempty" path:"folder_behavior_id,omitempty" url:"folder_behavior_id,omitempty"`
+	SuccessfulFiles  int64      `json:"successful_files,omitempty" path:"successful_files,omitempty" url:"successful_files,omitempty"`
+	ErroredFiles     int64      `json:"errored_files,omitempty" path:"errored_files,omitempty" url:"errored_files,omitempty"`
+	BytesSynced      int64      `json:"bytes_synced,omitempty" path:"bytes_synced,omitempty" url:"bytes_synced,omitempty"`
+	RemoteServerType string     `json:"remote_server_type,omitempty" path:"remote_server_type,omitempty" url:"remote_server_type,omitempty"`
 }
 
 func (e ExternalEvent) Identifier() interface{} {
@@ -44,13 +44,13 @@ func (u ExternalEventStatusEnum) Enum() map[string]ExternalEventStatusEnum {
 }
 
 type ExternalEventListParams struct {
-	SortBy       json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter       json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterGt     json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq   json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterPrefix json.RawMessage `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	FilterLt     json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq   json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	SortBy       map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter       ExternalEvent          `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	FilterGt     map[string]interface{} `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq   map[string]interface{} `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	FilterLt     map[string]interface{} `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq   map[string]interface{} `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 

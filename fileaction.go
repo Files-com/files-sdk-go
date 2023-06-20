@@ -7,8 +7,8 @@ import (
 )
 
 type FileAction struct {
-	Status          string `json:"status,omitempty" path:"status"`
-	FileMigrationId int64  `json:"file_migration_id,omitempty" path:"file_migration_id"`
+	Status          string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	FileMigrationId int64  `json:"file_migration_id,omitempty" path:"file_migration_id,omitempty" url:"file_migration_id,omitempty"`
 }
 
 // Identifier no path or id

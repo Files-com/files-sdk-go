@@ -7,22 +7,22 @@ import (
 )
 
 type As2Station struct {
-	Id                         int64  `json:"id,omitempty" path:"id"`
-	Name                       string `json:"name,omitempty" path:"name"`
-	Uri                        string `json:"uri,omitempty" path:"uri"`
-	Domain                     string `json:"domain,omitempty" path:"domain"`
-	HexPublicCertificateSerial string `json:"hex_public_certificate_serial,omitempty" path:"hex_public_certificate_serial"`
-	PublicCertificateMd5       string `json:"public_certificate_md5,omitempty" path:"public_certificate_md5"`
-	PrivateKeyMd5              string `json:"private_key_md5,omitempty" path:"private_key_md5"`
-	PublicCertificateSubject   string `json:"public_certificate_subject,omitempty" path:"public_certificate_subject"`
-	PublicCertificateIssuer    string `json:"public_certificate_issuer,omitempty" path:"public_certificate_issuer"`
-	PublicCertificateSerial    string `json:"public_certificate_serial,omitempty" path:"public_certificate_serial"`
-	PublicCertificateNotBefore string `json:"public_certificate_not_before,omitempty" path:"public_certificate_not_before"`
-	PublicCertificateNotAfter  string `json:"public_certificate_not_after,omitempty" path:"public_certificate_not_after"`
-	PrivateKeyPasswordMd5      string `json:"private_key_password_md5,omitempty" path:"private_key_password_md5"`
-	PublicCertificate          string `json:"public_certificate,omitempty" path:"public_certificate"`
-	PrivateKey                 string `json:"private_key,omitempty" path:"private_key"`
-	PrivateKeyPassword         string `json:"private_key_password,omitempty" path:"private_key_password"`
+	Id                         int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Name                       string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Uri                        string `json:"uri,omitempty" path:"uri,omitempty" url:"uri,omitempty"`
+	Domain                     string `json:"domain,omitempty" path:"domain,omitempty" url:"domain,omitempty"`
+	HexPublicCertificateSerial string `json:"hex_public_certificate_serial,omitempty" path:"hex_public_certificate_serial,omitempty" url:"hex_public_certificate_serial,omitempty"`
+	PublicCertificateMd5       string `json:"public_certificate_md5,omitempty" path:"public_certificate_md5,omitempty" url:"public_certificate_md5,omitempty"`
+	PrivateKeyMd5              string `json:"private_key_md5,omitempty" path:"private_key_md5,omitempty" url:"private_key_md5,omitempty"`
+	PublicCertificateSubject   string `json:"public_certificate_subject,omitempty" path:"public_certificate_subject,omitempty" url:"public_certificate_subject,omitempty"`
+	PublicCertificateIssuer    string `json:"public_certificate_issuer,omitempty" path:"public_certificate_issuer,omitempty" url:"public_certificate_issuer,omitempty"`
+	PublicCertificateSerial    string `json:"public_certificate_serial,omitempty" path:"public_certificate_serial,omitempty" url:"public_certificate_serial,omitempty"`
+	PublicCertificateNotBefore string `json:"public_certificate_not_before,omitempty" path:"public_certificate_not_before,omitempty" url:"public_certificate_not_before,omitempty"`
+	PublicCertificateNotAfter  string `json:"public_certificate_not_after,omitempty" path:"public_certificate_not_after,omitempty" url:"public_certificate_not_after,omitempty"`
+	PrivateKeyPasswordMd5      string `json:"private_key_password_md5,omitempty" path:"private_key_password_md5,omitempty" url:"private_key_password_md5,omitempty"`
+	PublicCertificate          string `json:"public_certificate,omitempty" path:"public_certificate,omitempty" url:"public_certificate,omitempty"`
+	PrivateKey                 string `json:"private_key,omitempty" path:"private_key,omitempty" url:"private_key,omitempty"`
+	PrivateKeyPassword         string `json:"private_key_password,omitempty" path:"private_key_password,omitempty" url:"private_key_password,omitempty"`
 }
 
 func (a As2Station) Identifier() interface{} {

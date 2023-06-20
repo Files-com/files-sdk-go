@@ -7,18 +7,18 @@ import (
 )
 
 type Lock struct {
-	Path                 string `json:"path,omitempty" path:"path"`
-	Timeout              int64  `json:"timeout,omitempty" path:"timeout"`
-	Depth                string `json:"depth,omitempty" path:"depth"`
-	Recursive            *bool  `json:"recursive,omitempty" path:"recursive"`
-	Owner                string `json:"owner,omitempty" path:"owner"`
-	Scope                string `json:"scope,omitempty" path:"scope"`
-	Exclusive            *bool  `json:"exclusive,omitempty" path:"exclusive"`
-	Token                string `json:"token,omitempty" path:"token"`
-	Type                 string `json:"type,omitempty" path:"type"`
-	AllowAccessByAnyUser *bool  `json:"allow_access_by_any_user,omitempty" path:"allow_access_by_any_user"`
-	UserId               int64  `json:"user_id,omitempty" path:"user_id"`
-	Username             string `json:"username,omitempty" path:"username"`
+	Path                 string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	Timeout              int64  `json:"timeout,omitempty" path:"timeout,omitempty" url:"timeout,omitempty"`
+	Depth                string `json:"depth,omitempty" path:"depth,omitempty" url:"depth,omitempty"`
+	Recursive            *bool  `json:"recursive,omitempty" path:"recursive,omitempty" url:"recursive,omitempty"`
+	Owner                string `json:"owner,omitempty" path:"owner,omitempty" url:"owner,omitempty"`
+	Scope                string `json:"scope,omitempty" path:"scope,omitempty" url:"scope,omitempty"`
+	Exclusive            *bool  `json:"exclusive,omitempty" path:"exclusive,omitempty" url:"exclusive,omitempty"`
+	Token                string `json:"token,omitempty" path:"token,omitempty" url:"token,omitempty"`
+	Type                 string `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
+	AllowAccessByAnyUser *bool  `json:"allow_access_by_any_user,omitempty" path:"allow_access_by_any_user,omitempty" url:"allow_access_by_any_user,omitempty"`
+	UserId               int64  `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	Username             string `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
 }
 
 func (l Lock) Identifier() interface{} {

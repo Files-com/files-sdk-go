@@ -8,15 +8,15 @@ import (
 )
 
 type Behavior struct {
-	Id               int64           `json:"id,omitempty" path:"id"`
-	Path             string          `json:"path,omitempty" path:"path"`
-	AttachmentUrl    string          `json:"attachment_url,omitempty" path:"attachment_url"`
-	Behavior         string          `json:"behavior,omitempty" path:"behavior"`
-	Name             string          `json:"name,omitempty" path:"name"`
-	Description      string          `json:"description,omitempty" path:"description"`
-	Value            json.RawMessage `json:"value,omitempty" path:"value"`
-	AttachmentFile   io.Reader       `json:"attachment_file,omitempty" path:"attachment_file"`
-	AttachmentDelete *bool           `json:"attachment_delete,omitempty" path:"attachment_delete"`
+	Id               int64                  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Path             string                 `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	AttachmentUrl    string                 `json:"attachment_url,omitempty" path:"attachment_url,omitempty" url:"attachment_url,omitempty"`
+	Behavior         string                 `json:"behavior,omitempty" path:"behavior,omitempty" url:"behavior,omitempty"`
+	Name             string                 `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Description      string                 `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
+	Value            map[string]interface{} `json:"value,omitempty" path:"value,omitempty" url:"value,omitempty"`
+	AttachmentFile   io.Reader              `json:"attachment_file,omitempty" path:"attachment_file,omitempty" url:"attachment_file,omitempty"`
+	AttachmentDelete *bool                  `json:"attachment_delete,omitempty" path:"attachment_delete,omitempty" url:"attachment_delete,omitempty"`
 }
 
 func (b Behavior) Identifier() interface{} {
@@ -26,10 +26,9 @@ func (b Behavior) Identifier() interface{} {
 type BehaviorCollection []Behavior
 
 type BehaviorListParams struct {
-	SortBy       json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Behavior     string          `url:"behavior,omitempty" required:"false" json:"behavior,omitempty" path:"behavior"`
-	Filter       json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterPrefix json.RawMessage `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	SortBy       map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter       Behavior               `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	ListParams
 }
 
@@ -38,12 +37,12 @@ type BehaviorFindParams struct {
 }
 
 type BehaviorListForParams struct {
-	SortBy       json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter       json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterPrefix json.RawMessage `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	Path         string          `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
-	Recursive    string          `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
-	Behavior     string          `url:"behavior,omitempty" required:"false" json:"behavior,omitempty" path:"behavior"`
+	SortBy       map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter       Behavior               `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	Path         string                 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
+	Recursive    string                 `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
+	Behavior     string                 `url:"behavior,omitempty" required:"false" json:"behavior,omitempty" path:"behavior"`
 	ListParams
 }
 
@@ -57,12 +56,12 @@ type BehaviorCreateParams struct {
 }
 
 type BehaviorWebhookTestParams struct {
-	Url      string          `url:"url,omitempty" required:"true" json:"url,omitempty" path:"url"`
-	Method   string          `url:"method,omitempty" required:"false" json:"method,omitempty" path:"method"`
-	Encoding string          `url:"encoding,omitempty" required:"false" json:"encoding,omitempty" path:"encoding"`
-	Headers  json.RawMessage `url:"headers,omitempty" required:"false" json:"headers,omitempty" path:"headers"`
-	Body     json.RawMessage `url:"body,omitempty" required:"false" json:"body,omitempty" path:"body"`
-	Action   string          `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
+	Url      string                 `url:"url,omitempty" required:"true" json:"url,omitempty" path:"url"`
+	Method   string                 `url:"method,omitempty" required:"false" json:"method,omitempty" path:"method"`
+	Encoding string                 `url:"encoding,omitempty" required:"false" json:"encoding,omitempty" path:"encoding"`
+	Headers  map[string]interface{} `url:"headers,omitempty" required:"false" json:"headers,omitempty" path:"headers"`
+	Body     map[string]interface{} `url:"body,omitempty" required:"false" json:"body,omitempty" path:"body"`
+	Action   string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 }
 
 type BehaviorUpdateParams struct {

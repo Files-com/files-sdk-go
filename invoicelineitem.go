@@ -8,15 +8,15 @@ import (
 )
 
 type InvoiceLineItem struct {
-	Amount         string     `json:"amount,omitempty" path:"amount"`
-	CreatedAt      *time.Time `json:"created_at,omitempty" path:"created_at"`
-	Description    string     `json:"description,omitempty" path:"description"`
-	Type           string     `json:"type,omitempty" path:"type"`
-	ServiceEndAt   *time.Time `json:"service_end_at,omitempty" path:"service_end_at"`
-	ServiceStartAt *time.Time `json:"service_start_at,omitempty" path:"service_start_at"`
-	UpdatedAt      *time.Time `json:"updated_at,omitempty" path:"updated_at"`
-	Plan           string     `json:"plan,omitempty" path:"plan"`
-	Site           string     `json:"site,omitempty" path:"site"`
+	Amount         string     `json:"amount,omitempty" path:"amount,omitempty" url:"amount,omitempty"`
+	CreatedAt      *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	Description    string     `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
+	Type           string     `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
+	ServiceEndAt   *time.Time `json:"service_end_at,omitempty" path:"service_end_at,omitempty" url:"service_end_at,omitempty"`
+	ServiceStartAt *time.Time `json:"service_start_at,omitempty" path:"service_start_at,omitempty" url:"service_start_at,omitempty"`
+	UpdatedAt      *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
+	Plan           string     `json:"plan,omitempty" path:"plan,omitempty" url:"plan,omitempty"`
+	Site           string     `json:"site,omitempty" path:"site,omitempty" url:"site,omitempty"`
 }
 
 // Identifier no path or id

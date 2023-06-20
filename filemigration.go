@@ -7,15 +7,15 @@ import (
 )
 
 type FileMigration struct {
-	Id         int64  `json:"id,omitempty" path:"id"`
-	Path       string `json:"path,omitempty" path:"path"`
-	DestPath   string `json:"dest_path,omitempty" path:"dest_path"`
-	FilesMoved int64  `json:"files_moved,omitempty" path:"files_moved"`
-	FilesTotal int64  `json:"files_total,omitempty" path:"files_total"`
-	Operation  string `json:"operation,omitempty" path:"operation"`
-	Region     string `json:"region,omitempty" path:"region"`
-	Status     string `json:"status,omitempty" path:"status"`
-	LogUrl     string `json:"log_url,omitempty" path:"log_url"`
+	Id         int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Path       string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	DestPath   string `json:"dest_path,omitempty" path:"dest_path,omitempty" url:"dest_path,omitempty"`
+	FilesMoved int64  `json:"files_moved,omitempty" path:"files_moved,omitempty" url:"files_moved,omitempty"`
+	FilesTotal int64  `json:"files_total,omitempty" path:"files_total,omitempty" url:"files_total,omitempty"`
+	Operation  string `json:"operation,omitempty" path:"operation,omitempty" url:"operation,omitempty"`
+	Region     string `json:"region,omitempty" path:"region,omitempty" url:"region,omitempty"`
+	Status     string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	LogUrl     string `json:"log_url,omitempty" path:"log_url,omitempty" url:"log_url,omitempty"`
 }
 
 func (f FileMigration) Identifier() interface{} {

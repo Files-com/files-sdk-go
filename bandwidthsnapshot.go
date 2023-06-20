@@ -8,15 +8,15 @@ import (
 )
 
 type BandwidthSnapshot struct {
-	Id                int64      `json:"id,omitempty" path:"id"`
-	BytesReceived     string     `json:"bytes_received,omitempty" path:"bytes_received"`
-	BytesSent         string     `json:"bytes_sent,omitempty" path:"bytes_sent"`
-	SyncBytesReceived string     `json:"sync_bytes_received,omitempty" path:"sync_bytes_received"`
-	SyncBytesSent     string     `json:"sync_bytes_sent,omitempty" path:"sync_bytes_sent"`
-	RequestsGet       string     `json:"requests_get,omitempty" path:"requests_get"`
-	RequestsPut       string     `json:"requests_put,omitempty" path:"requests_put"`
-	RequestsOther     string     `json:"requests_other,omitempty" path:"requests_other"`
-	LoggedAt          *time.Time `json:"logged_at,omitempty" path:"logged_at"`
+	Id                int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	BytesReceived     string     `json:"bytes_received,omitempty" path:"bytes_received,omitempty" url:"bytes_received,omitempty"`
+	BytesSent         string     `json:"bytes_sent,omitempty" path:"bytes_sent,omitempty" url:"bytes_sent,omitempty"`
+	SyncBytesReceived string     `json:"sync_bytes_received,omitempty" path:"sync_bytes_received,omitempty" url:"sync_bytes_received,omitempty"`
+	SyncBytesSent     string     `json:"sync_bytes_sent,omitempty" path:"sync_bytes_sent,omitempty" url:"sync_bytes_sent,omitempty"`
+	RequestsGet       string     `json:"requests_get,omitempty" path:"requests_get,omitempty" url:"requests_get,omitempty"`
+	RequestsPut       string     `json:"requests_put,omitempty" path:"requests_put,omitempty" url:"requests_put,omitempty"`
+	RequestsOther     string     `json:"requests_other,omitempty" path:"requests_other,omitempty" url:"requests_other,omitempty"`
+	LoggedAt          *time.Time `json:"logged_at,omitempty" path:"logged_at,omitempty" url:"logged_at,omitempty"`
 }
 
 func (b BandwidthSnapshot) Identifier() interface{} {
@@ -26,12 +26,12 @@ func (b BandwidthSnapshot) Identifier() interface{} {
 type BandwidthSnapshotCollection []BandwidthSnapshot
 
 type BandwidthSnapshotListParams struct {
-	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter     json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	SortBy     map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter     BandwidthSnapshot      `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	FilterGt   map[string]interface{} `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq map[string]interface{} `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterLt   map[string]interface{} `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq map[string]interface{} `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 

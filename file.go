@@ -8,33 +8,33 @@ import (
 )
 
 type File struct {
-	Path             string     `json:"path,omitempty" path:"path"`
-	DisplayName      string     `json:"display_name,omitempty" path:"display_name"`
-	Type             string     `json:"type,omitempty" path:"type"`
-	Size             int64      `json:"size,omitempty" path:"size"`
-	CreatedAt        *time.Time `json:"created_at,omitempty" path:"created_at"`
-	Mtime            *time.Time `json:"mtime,omitempty" path:"mtime"`
-	ProvidedMtime    *time.Time `json:"provided_mtime,omitempty" path:"provided_mtime"`
-	Crc32            string     `json:"crc32,omitempty" path:"crc32"`
-	Md5              string     `json:"md5,omitempty" path:"md5"`
-	MimeType         string     `json:"mime_type,omitempty" path:"mime_type"`
-	Region           string     `json:"region,omitempty" path:"region"`
-	Permissions      string     `json:"permissions,omitempty" path:"permissions"`
-	SubfoldersLocked *bool      `json:"subfolders_locked?,omitempty" path:"subfolders_locked?"`
-	IsLocked         *bool      `json:"is_locked,omitempty" path:"is_locked"`
-	DownloadUri      string     `json:"download_uri,omitempty" path:"download_uri"`
-	PriorityColor    string     `json:"priority_color,omitempty" path:"priority_color"`
-	PreviewId        int64      `json:"preview_id,omitempty" path:"preview_id"`
-	Preview          Preview    `json:"preview,omitempty" path:"preview"`
-	Action           string     `json:"action,omitempty" path:"action"`
-	Length           int64      `json:"length,omitempty" path:"length"`
-	MkdirParents     *bool      `json:"mkdir_parents,omitempty" path:"mkdir_parents"`
-	Part             int64      `json:"part,omitempty" path:"part"`
-	Parts            int64      `json:"parts,omitempty" path:"parts"`
-	Ref              string     `json:"ref,omitempty" path:"ref"`
-	Restart          int64      `json:"restart,omitempty" path:"restart"`
-	Structure        string     `json:"structure,omitempty" path:"structure"`
-	WithRename       *bool      `json:"with_rename,omitempty" path:"with_rename"`
+	Path             string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	DisplayName      string     `json:"display_name,omitempty" path:"display_name,omitempty" url:"display_name,omitempty"`
+	Type             string     `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
+	Size             int64      `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
+	CreatedAt        *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	Mtime            *time.Time `json:"mtime,omitempty" path:"mtime,omitempty" url:"mtime,omitempty"`
+	ProvidedMtime    *time.Time `json:"provided_mtime,omitempty" path:"provided_mtime,omitempty" url:"provided_mtime,omitempty"`
+	Crc32            string     `json:"crc32,omitempty" path:"crc32,omitempty" url:"crc32,omitempty"`
+	Md5              string     `json:"md5,omitempty" path:"md5,omitempty" url:"md5,omitempty"`
+	MimeType         string     `json:"mime_type,omitempty" path:"mime_type,omitempty" url:"mime_type,omitempty"`
+	Region           string     `json:"region,omitempty" path:"region,omitempty" url:"region,omitempty"`
+	Permissions      string     `json:"permissions,omitempty" path:"permissions,omitempty" url:"permissions,omitempty"`
+	SubfoldersLocked *bool      `json:"subfolders_locked?,omitempty" path:"subfolders_locked?,omitempty" url:"subfolders_locked?,omitempty"`
+	IsLocked         *bool      `json:"is_locked,omitempty" path:"is_locked,omitempty" url:"is_locked,omitempty"`
+	DownloadUri      string     `json:"download_uri,omitempty" path:"download_uri,omitempty" url:"download_uri,omitempty"`
+	PriorityColor    string     `json:"priority_color,omitempty" path:"priority_color,omitempty" url:"priority_color,omitempty"`
+	PreviewId        int64      `json:"preview_id,omitempty" path:"preview_id,omitempty" url:"preview_id,omitempty"`
+	Preview          Preview    `json:"preview,omitempty" path:"preview,omitempty" url:"preview,omitempty"`
+	Action           string     `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
+	Length           int64      `json:"length,omitempty" path:"length,omitempty" url:"length,omitempty"`
+	MkdirParents     *bool      `json:"mkdir_parents,omitempty" path:"mkdir_parents,omitempty" url:"mkdir_parents,omitempty"`
+	Part             int64      `json:"part,omitempty" path:"part,omitempty" url:"part,omitempty"`
+	Parts            int64      `json:"parts,omitempty" path:"parts,omitempty" url:"parts,omitempty"`
+	Ref              string     `json:"ref,omitempty" path:"ref,omitempty" url:"ref,omitempty"`
+	Restart          int64      `json:"restart,omitempty" path:"restart,omitempty" url:"restart,omitempty"`
+	Structure        string     `json:"structure,omitempty" path:"structure,omitempty" url:"structure,omitempty"`
+	WithRename       *bool      `json:"with_rename,omitempty" path:"with_rename,omitempty" url:"with_rename,omitempty"`
 }
 
 func (f File) Identifier() interface{} {

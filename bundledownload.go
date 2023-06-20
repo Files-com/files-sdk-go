@@ -8,10 +8,10 @@ import (
 )
 
 type BundleDownload struct {
-	BundleRegistration BundleRegistration `json:"bundle_registration,omitempty" path:"bundle_registration"`
-	DownloadMethod     string             `json:"download_method,omitempty" path:"download_method"`
-	Path               string             `json:"path,omitempty" path:"path"`
-	CreatedAt          *time.Time         `json:"created_at,omitempty" path:"created_at"`
+	BundleRegistration BundleRegistration `json:"bundle_registration,omitempty" path:"bundle_registration,omitempty" url:"bundle_registration,omitempty"`
+	DownloadMethod     string             `json:"download_method,omitempty" path:"download_method,omitempty" url:"download_method,omitempty"`
+	Path               string             `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	CreatedAt          *time.Time         `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
 func (b BundleDownload) Identifier() interface{} {
@@ -21,14 +21,14 @@ func (b BundleDownload) Identifier() interface{} {
 type BundleDownloadCollection []BundleDownload
 
 type BundleDownloadListParams struct {
-	SortBy               json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter               json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterGt             json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq           json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterLt             json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq           json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
-	BundleId             int64           `url:"bundle_id,omitempty" required:"false" json:"bundle_id,omitempty" path:"bundle_id"`
-	BundleRegistrationId int64           `url:"bundle_registration_id,omitempty" required:"false" json:"bundle_registration_id,omitempty" path:"bundle_registration_id"`
+	SortBy               map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter               BundleDownload         `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	FilterGt             map[string]interface{} `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq           map[string]interface{} `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterLt             map[string]interface{} `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq           map[string]interface{} `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	BundleId             int64                  `url:"bundle_id,omitempty" required:"false" json:"bundle_id,omitempty" path:"bundle_id"`
+	BundleRegistrationId int64                  `url:"bundle_registration_id,omitempty" required:"false" json:"bundle_registration_id,omitempty" path:"bundle_registration_id"`
 	ListParams
 }
 

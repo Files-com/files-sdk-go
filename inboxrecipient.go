@@ -8,13 +8,13 @@ import (
 )
 
 type InboxRecipient struct {
-	Company          string     `json:"company,omitempty" path:"company"`
-	Name             string     `json:"name,omitempty" path:"name"`
-	Note             string     `json:"note,omitempty" path:"note"`
-	Recipient        string     `json:"recipient,omitempty" path:"recipient"`
-	SentAt           *time.Time `json:"sent_at,omitempty" path:"sent_at"`
-	InboxId          int64      `json:"inbox_id,omitempty" path:"inbox_id"`
-	ShareAfterCreate *bool      `json:"share_after_create,omitempty" path:"share_after_create"`
+	Company          string     `json:"company,omitempty" path:"company,omitempty" url:"company,omitempty"`
+	Name             string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Note             string     `json:"note,omitempty" path:"note,omitempty" url:"note,omitempty"`
+	Recipient        string     `json:"recipient,omitempty" path:"recipient,omitempty" url:"recipient,omitempty"`
+	SentAt           *time.Time `json:"sent_at,omitempty" path:"sent_at,omitempty" url:"sent_at,omitempty"`
+	InboxId          int64      `json:"inbox_id,omitempty" path:"inbox_id,omitempty" url:"inbox_id,omitempty"`
+	ShareAfterCreate *bool      `json:"share_after_create,omitempty" path:"share_after_create,omitempty" url:"share_after_create,omitempty"`
 }
 
 // Identifier no path or id
@@ -22,9 +22,9 @@ type InboxRecipient struct {
 type InboxRecipientCollection []InboxRecipient
 
 type InboxRecipientListParams struct {
-	SortBy  json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter  json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	InboxId int64           `url:"inbox_id,omitempty" required:"true" json:"inbox_id,omitempty" path:"inbox_id"`
+	SortBy  map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter  InboxRecipient         `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	InboxId int64                  `url:"inbox_id,omitempty" required:"true" json:"inbox_id,omitempty" path:"inbox_id"`
 	ListParams
 }
 

@@ -7,12 +7,12 @@ import (
 )
 
 type Clickwrap struct {
-	Id             int64  `json:"id,omitempty" path:"id"`
-	Name           string `json:"name,omitempty" path:"name"`
-	Body           string `json:"body,omitempty" path:"body"`
-	UseWithUsers   string `json:"use_with_users,omitempty" path:"use_with_users"`
-	UseWithBundles string `json:"use_with_bundles,omitempty" path:"use_with_bundles"`
-	UseWithInboxes string `json:"use_with_inboxes,omitempty" path:"use_with_inboxes"`
+	Id             int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Name           string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Body           string `json:"body,omitempty" path:"body,omitempty" url:"body,omitempty"`
+	UseWithUsers   string `json:"use_with_users,omitempty" path:"use_with_users,omitempty" url:"use_with_users,omitempty"`
+	UseWithBundles string `json:"use_with_bundles,omitempty" path:"use_with_bundles,omitempty" url:"use_with_bundles,omitempty"`
+	UseWithInboxes string `json:"use_with_inboxes,omitempty" path:"use_with_inboxes,omitempty" url:"use_with_inboxes,omitempty"`
 }
 
 func (c Clickwrap) Identifier() interface{} {

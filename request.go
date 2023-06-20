@@ -7,14 +7,14 @@ import (
 )
 
 type Request struct {
-	Id              int64  `json:"id,omitempty" path:"id"`
-	Path            string `json:"path,omitempty" path:"path"`
-	Source          string `json:"source,omitempty" path:"source"`
-	Destination     string `json:"destination,omitempty" path:"destination"`
-	AutomationId    string `json:"automation_id,omitempty" path:"automation_id"`
-	UserDisplayName string `json:"user_display_name,omitempty" path:"user_display_name"`
-	UserIds         string `json:"user_ids,omitempty" path:"user_ids"`
-	GroupIds        string `json:"group_ids,omitempty" path:"group_ids"`
+	Id              int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Path            string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	Source          string `json:"source,omitempty" path:"source,omitempty" url:"source,omitempty"`
+	Destination     string `json:"destination,omitempty" path:"destination,omitempty" url:"destination,omitempty"`
+	AutomationId    string `json:"automation_id,omitempty" path:"automation_id,omitempty" url:"automation_id,omitempty"`
+	UserDisplayName string `json:"user_display_name,omitempty" path:"user_display_name,omitempty" url:"user_display_name,omitempty"`
+	UserIds         string `json:"user_ids,omitempty" path:"user_ids,omitempty" url:"user_ids,omitempty"`
+	GroupIds        string `json:"group_ids,omitempty" path:"group_ids,omitempty" url:"group_ids,omitempty"`
 }
 
 func (r Request) Identifier() interface{} {
@@ -24,16 +24,16 @@ func (r Request) Identifier() interface{} {
 type RequestCollection []Request
 
 type RequestListParams struct {
-	SortBy json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Mine   *bool           `url:"mine,omitempty" required:"false" json:"mine,omitempty" path:"mine"`
-	Path   string          `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
+	SortBy map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Mine   *bool                  `url:"mine,omitempty" required:"false" json:"mine,omitempty" path:"mine"`
+	Path   string                 `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
 	ListParams
 }
 
 type RequestGetFolderParams struct {
-	SortBy json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Mine   *bool           `url:"mine,omitempty" required:"false" json:"mine,omitempty" path:"mine"`
-	Path   string          `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
+	SortBy map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Mine   *bool                  `url:"mine,omitempty" required:"false" json:"mine,omitempty" path:"mine"`
+	Path   string                 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	ListParams
 }
 

@@ -8,19 +8,19 @@ import (
 )
 
 type Action struct {
-	Id          int64      `json:"id,omitempty" path:"id"`
-	Path        string     `json:"path,omitempty" path:"path"`
-	When        *time.Time `json:"when,omitempty" path:"when"`
-	Destination string     `json:"destination,omitempty" path:"destination"`
-	Display     string     `json:"display,omitempty" path:"display"`
-	Ip          string     `json:"ip,omitempty" path:"ip"`
-	Source      string     `json:"source,omitempty" path:"source"`
-	Targets     []string   `json:"targets,omitempty" path:"targets"`
-	UserId      int64      `json:"user_id,omitempty" path:"user_id"`
-	Username    string     `json:"username,omitempty" path:"username"`
-	Action      string     `json:"action,omitempty" path:"action"`
-	FailureType string     `json:"failure_type,omitempty" path:"failure_type"`
-	Interface   string     `json:"interface,omitempty" path:"interface"`
+	Id          int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Path        string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	When        *time.Time `json:"when,omitempty" path:"when,omitempty" url:"when,omitempty"`
+	Destination string     `json:"destination,omitempty" path:"destination,omitempty" url:"destination,omitempty"`
+	Display     string     `json:"display,omitempty" path:"display,omitempty" url:"display,omitempty"`
+	Ip          string     `json:"ip,omitempty" path:"ip,omitempty" url:"ip,omitempty"`
+	Source      string     `json:"source,omitempty" path:"source,omitempty" url:"source,omitempty"`
+	Targets     []string   `json:"targets,omitempty" path:"targets,omitempty" url:"targets,omitempty"`
+	UserId      int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	Username    string     `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
+	Action      string     `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
+	FailureType string     `json:"failure_type,omitempty" path:"failure_type,omitempty" url:"failure_type,omitempty"`
+	Interface   string     `json:"interface,omitempty" path:"interface,omitempty" url:"interface,omitempty"`
 }
 
 func (a Action) Identifier() interface{} {

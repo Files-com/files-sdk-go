@@ -8,11 +8,11 @@ import (
 )
 
 type Style struct {
-	Id        int64     `json:"id,omitempty" path:"id"`
-	Path      string    `json:"path,omitempty" path:"path"`
-	Logo      Image     `json:"logo,omitempty" path:"logo"`
-	Thumbnail Image     `json:"thumbnail,omitempty" path:"thumbnail"`
-	File      io.Reader `json:"file,omitempty" path:"file"`
+	Id        int64     `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Path      string    `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	Logo      Image     `json:"logo,omitempty" path:"logo,omitempty" url:"logo,omitempty"`
+	Thumbnail Image     `json:"thumbnail,omitempty" path:"thumbnail,omitempty" url:"thumbnail,omitempty"`
+	File      io.Reader `json:"file,omitempty" path:"file,omitempty" url:"file,omitempty"`
 }
 
 func (s Style) Identifier() interface{} {

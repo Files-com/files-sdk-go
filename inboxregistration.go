@@ -8,17 +8,17 @@ import (
 )
 
 type InboxRegistration struct {
-	Code             string          `json:"code,omitempty" path:"code"`
-	Name             string          `json:"name,omitempty" path:"name"`
-	Company          string          `json:"company,omitempty" path:"company"`
-	Email            string          `json:"email,omitempty" path:"email"`
-	ClickwrapBody    string          `json:"clickwrap_body,omitempty" path:"clickwrap_body"`
-	FormFieldSetId   int64           `json:"form_field_set_id,omitempty" path:"form_field_set_id"`
-	FormFieldData    json.RawMessage `json:"form_field_data,omitempty" path:"form_field_data"`
-	InboxId          int64           `json:"inbox_id,omitempty" path:"inbox_id"`
-	InboxRecipientId int64           `json:"inbox_recipient_id,omitempty" path:"inbox_recipient_id"`
-	InboxTitle       string          `json:"inbox_title,omitempty" path:"inbox_title"`
-	CreatedAt        *time.Time      `json:"created_at,omitempty" path:"created_at"`
+	Code             string                 `json:"code,omitempty" path:"code,omitempty" url:"code,omitempty"`
+	Name             string                 `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Company          string                 `json:"company,omitempty" path:"company,omitempty" url:"company,omitempty"`
+	Email            string                 `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
+	ClickwrapBody    string                 `json:"clickwrap_body,omitempty" path:"clickwrap_body,omitempty" url:"clickwrap_body,omitempty"`
+	FormFieldSetId   int64                  `json:"form_field_set_id,omitempty" path:"form_field_set_id,omitempty" url:"form_field_set_id,omitempty"`
+	FormFieldData    map[string]interface{} `json:"form_field_data,omitempty" path:"form_field_data,omitempty" url:"form_field_data,omitempty"`
+	InboxId          int64                  `json:"inbox_id,omitempty" path:"inbox_id,omitempty" url:"inbox_id,omitempty"`
+	InboxRecipientId int64                  `json:"inbox_recipient_id,omitempty" path:"inbox_recipient_id,omitempty" url:"inbox_recipient_id,omitempty"`
+	InboxTitle       string                 `json:"inbox_title,omitempty" path:"inbox_title,omitempty" url:"inbox_title,omitempty"`
+	CreatedAt        *time.Time             `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
 // Identifier no path or id

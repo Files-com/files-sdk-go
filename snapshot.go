@@ -8,13 +8,13 @@ import (
 )
 
 type Snapshot struct {
-	Id          int64      `json:"id,omitempty" path:"id"`
-	ExpiresAt   *time.Time `json:"expires_at,omitempty" path:"expires_at"`
-	FinalizedAt *time.Time `json:"finalized_at,omitempty" path:"finalized_at"`
-	Name        string     `json:"name,omitempty" path:"name"`
-	UserId      int64      `json:"user_id,omitempty" path:"user_id"`
-	BundleId    int64      `json:"bundle_id,omitempty" path:"bundle_id"`
-	Paths       []string   `json:"paths,omitempty" path:"paths"`
+	Id          int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	ExpiresAt   *time.Time `json:"expires_at,omitempty" path:"expires_at,omitempty" url:"expires_at,omitempty"`
+	FinalizedAt *time.Time `json:"finalized_at,omitempty" path:"finalized_at,omitempty" url:"finalized_at,omitempty"`
+	Name        string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	UserId      int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	BundleId    int64      `json:"bundle_id,omitempty" path:"bundle_id,omitempty" url:"bundle_id,omitempty"`
+	Paths       []string   `json:"paths,omitempty" path:"paths,omitempty" url:"paths,omitempty"`
 }
 
 func (s Snapshot) Identifier() interface{} {

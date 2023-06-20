@@ -7,8 +7,8 @@ import (
 )
 
 type Image struct {
-	Name string `json:"name,omitempty" path:"name"`
-	Uri  string `json:"uri,omitempty" path:"uri"`
+	Name string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Uri  string `json:"uri,omitempty" path:"uri,omitempty" url:"uri,omitempty"`
 }
 
 // Identifier no path or id

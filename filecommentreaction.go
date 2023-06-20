@@ -7,10 +7,10 @@ import (
 )
 
 type FileCommentReaction struct {
-	Id            int64  `json:"id,omitempty" path:"id"`
-	Emoji         string `json:"emoji,omitempty" path:"emoji"`
-	UserId        int64  `json:"user_id,omitempty" path:"user_id"`
-	FileCommentId int64  `json:"file_comment_id,omitempty" path:"file_comment_id"`
+	Id            int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Emoji         string `json:"emoji,omitempty" path:"emoji,omitempty" url:"emoji,omitempty"`
+	UserId        int64  `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	FileCommentId int64  `json:"file_comment_id,omitempty" path:"file_comment_id,omitempty" url:"file_comment_id,omitempty"`
 }
 
 func (f FileCommentReaction) Identifier() interface{} {

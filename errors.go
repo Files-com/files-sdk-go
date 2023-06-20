@@ -7,8 +7,8 @@ import (
 )
 
 type Errors struct {
-	Fields   []string `json:"fields,omitempty" path:"fields"`
-	Messages []string `json:"messages,omitempty" path:"messages"`
+	Fields   []string `json:"fields,omitempty" path:"fields,omitempty" url:"fields,omitempty"`
+	Messages []string `json:"messages,omitempty" path:"messages,omitempty" url:"messages,omitempty"`
 }
 
 // Identifier no path or id

@@ -7,10 +7,10 @@ import (
 )
 
 type IpAddress struct {
-	Id             string   `json:"id,omitempty" path:"id"`
-	AssociatedWith string   `json:"associated_with,omitempty" path:"associated_with"`
-	GroupId        int64    `json:"group_id,omitempty" path:"group_id"`
-	IpAddresses    []string `json:"ip_addresses,omitempty" path:"ip_addresses"`
+	Id             string   `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	AssociatedWith string   `json:"associated_with,omitempty" path:"associated_with,omitempty" url:"associated_with,omitempty"`
+	GroupId        int64    `json:"group_id,omitempty" path:"group_id,omitempty" url:"group_id,omitempty"`
+	IpAddresses    []string `json:"ip_addresses,omitempty" path:"ip_addresses,omitempty" url:"ip_addresses,omitempty"`
 }
 
 func (i IpAddress) Identifier() interface{} {

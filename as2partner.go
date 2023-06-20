@@ -7,20 +7,20 @@ import (
 )
 
 type As2Partner struct {
-	Id                         int64  `json:"id,omitempty" path:"id"`
-	As2StationId               int64  `json:"as2_station_id,omitempty" path:"as2_station_id"`
-	Name                       string `json:"name,omitempty" path:"name"`
-	Uri                        string `json:"uri,omitempty" path:"uri"`
-	ServerCertificate          string `json:"server_certificate,omitempty" path:"server_certificate"`
-	EnableDedicatedIps         *bool  `json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
-	HexPublicCertificateSerial string `json:"hex_public_certificate_serial,omitempty" path:"hex_public_certificate_serial"`
-	PublicCertificateMd5       string `json:"public_certificate_md5,omitempty" path:"public_certificate_md5"`
-	PublicCertificateSubject   string `json:"public_certificate_subject,omitempty" path:"public_certificate_subject"`
-	PublicCertificateIssuer    string `json:"public_certificate_issuer,omitempty" path:"public_certificate_issuer"`
-	PublicCertificateSerial    string `json:"public_certificate_serial,omitempty" path:"public_certificate_serial"`
-	PublicCertificateNotBefore string `json:"public_certificate_not_before,omitempty" path:"public_certificate_not_before"`
-	PublicCertificateNotAfter  string `json:"public_certificate_not_after,omitempty" path:"public_certificate_not_after"`
-	PublicCertificate          string `json:"public_certificate,omitempty" path:"public_certificate"`
+	Id                         int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	As2StationId               int64  `json:"as2_station_id,omitempty" path:"as2_station_id,omitempty" url:"as2_station_id,omitempty"`
+	Name                       string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Uri                        string `json:"uri,omitempty" path:"uri,omitempty" url:"uri,omitempty"`
+	ServerCertificate          string `json:"server_certificate,omitempty" path:"server_certificate,omitempty" url:"server_certificate,omitempty"`
+	EnableDedicatedIps         *bool  `json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips,omitempty" url:"enable_dedicated_ips,omitempty"`
+	HexPublicCertificateSerial string `json:"hex_public_certificate_serial,omitempty" path:"hex_public_certificate_serial,omitempty" url:"hex_public_certificate_serial,omitempty"`
+	PublicCertificateMd5       string `json:"public_certificate_md5,omitempty" path:"public_certificate_md5,omitempty" url:"public_certificate_md5,omitempty"`
+	PublicCertificateSubject   string `json:"public_certificate_subject,omitempty" path:"public_certificate_subject,omitempty" url:"public_certificate_subject,omitempty"`
+	PublicCertificateIssuer    string `json:"public_certificate_issuer,omitempty" path:"public_certificate_issuer,omitempty" url:"public_certificate_issuer,omitempty"`
+	PublicCertificateSerial    string `json:"public_certificate_serial,omitempty" path:"public_certificate_serial,omitempty" url:"public_certificate_serial,omitempty"`
+	PublicCertificateNotBefore string `json:"public_certificate_not_before,omitempty" path:"public_certificate_not_before,omitempty" url:"public_certificate_not_before,omitempty"`
+	PublicCertificateNotAfter  string `json:"public_certificate_not_after,omitempty" path:"public_certificate_not_after,omitempty" url:"public_certificate_not_after,omitempty"`
+	PublicCertificate          string `json:"public_certificate,omitempty" path:"public_certificate,omitempty" url:"public_certificate,omitempty"`
 }
 
 func (a As2Partner) Identifier() interface{} {

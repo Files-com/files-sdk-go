@@ -7,14 +7,14 @@ import (
 )
 
 type Session struct {
-	Id                  string `json:"id,omitempty" path:"id"`
-	Language            string `json:"language,omitempty" path:"language"`
-	ReadOnly            *bool  `json:"read_only,omitempty" path:"read_only"`
-	SftpInsecureCiphers *bool  `json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers"`
-	Username            string `json:"username,omitempty" path:"username"`
-	Password            string `json:"password,omitempty" path:"password"`
-	Otp                 string `json:"otp,omitempty" path:"otp"`
-	PartialSessionId    string `json:"partial_session_id,omitempty" path:"partial_session_id"`
+	Id                  string `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Language            string `json:"language,omitempty" path:"language,omitempty" url:"language,omitempty"`
+	ReadOnly            *bool  `json:"read_only,omitempty" path:"read_only,omitempty" url:"read_only,omitempty"`
+	SftpInsecureCiphers *bool  `json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers,omitempty" url:"sftp_insecure_ciphers,omitempty"`
+	Username            string `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
+	Password            string `json:"password,omitempty" path:"password,omitempty" url:"password,omitempty"`
+	Otp                 string `json:"otp,omitempty" path:"otp,omitempty" url:"otp,omitempty"`
+	PartialSessionId    string `json:"partial_session_id,omitempty" path:"partial_session_id,omitempty" url:"partial_session_id,omitempty"`
 }
 
 func (s Session) Identifier() interface{} {

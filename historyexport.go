@@ -8,32 +8,32 @@ import (
 )
 
 type HistoryExport struct {
-	Id                       int64      `json:"id,omitempty" path:"id"`
-	HistoryVersion           string     `json:"history_version,omitempty" path:"history_version"`
-	StartAt                  *time.Time `json:"start_at,omitempty" path:"start_at"`
-	EndAt                    *time.Time `json:"end_at,omitempty" path:"end_at"`
-	Status                   string     `json:"status,omitempty" path:"status"`
-	QueryAction              string     `json:"query_action,omitempty" path:"query_action"`
-	QueryInterface           string     `json:"query_interface,omitempty" path:"query_interface"`
-	QueryUserId              string     `json:"query_user_id,omitempty" path:"query_user_id"`
-	QueryFileId              string     `json:"query_file_id,omitempty" path:"query_file_id"`
-	QueryParentId            string     `json:"query_parent_id,omitempty" path:"query_parent_id"`
-	QueryPath                string     `json:"query_path,omitempty" path:"query_path"`
-	QueryFolder              string     `json:"query_folder,omitempty" path:"query_folder"`
-	QuerySrc                 string     `json:"query_src,omitempty" path:"query_src"`
-	QueryDestination         string     `json:"query_destination,omitempty" path:"query_destination"`
-	QueryIp                  string     `json:"query_ip,omitempty" path:"query_ip"`
-	QueryUsername            string     `json:"query_username,omitempty" path:"query_username"`
-	QueryFailureType         string     `json:"query_failure_type,omitempty" path:"query_failure_type"`
-	QueryTargetId            string     `json:"query_target_id,omitempty" path:"query_target_id"`
-	QueryTargetName          string     `json:"query_target_name,omitempty" path:"query_target_name"`
-	QueryTargetPermission    string     `json:"query_target_permission,omitempty" path:"query_target_permission"`
-	QueryTargetUserId        string     `json:"query_target_user_id,omitempty" path:"query_target_user_id"`
-	QueryTargetUsername      string     `json:"query_target_username,omitempty" path:"query_target_username"`
-	QueryTargetPlatform      string     `json:"query_target_platform,omitempty" path:"query_target_platform"`
-	QueryTargetPermissionSet string     `json:"query_target_permission_set,omitempty" path:"query_target_permission_set"`
-	ResultsUrl               string     `json:"results_url,omitempty" path:"results_url"`
-	UserId                   int64      `json:"user_id,omitempty" path:"user_id"`
+	Id                       int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	HistoryVersion           string     `json:"history_version,omitempty" path:"history_version,omitempty" url:"history_version,omitempty"`
+	StartAt                  *time.Time `json:"start_at,omitempty" path:"start_at,omitempty" url:"start_at,omitempty"`
+	EndAt                    *time.Time `json:"end_at,omitempty" path:"end_at,omitempty" url:"end_at,omitempty"`
+	Status                   string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	QueryAction              string     `json:"query_action,omitempty" path:"query_action,omitempty" url:"query_action,omitempty"`
+	QueryInterface           string     `json:"query_interface,omitempty" path:"query_interface,omitempty" url:"query_interface,omitempty"`
+	QueryUserId              string     `json:"query_user_id,omitempty" path:"query_user_id,omitempty" url:"query_user_id,omitempty"`
+	QueryFileId              string     `json:"query_file_id,omitempty" path:"query_file_id,omitempty" url:"query_file_id,omitempty"`
+	QueryParentId            string     `json:"query_parent_id,omitempty" path:"query_parent_id,omitempty" url:"query_parent_id,omitempty"`
+	QueryPath                string     `json:"query_path,omitempty" path:"query_path,omitempty" url:"query_path,omitempty"`
+	QueryFolder              string     `json:"query_folder,omitempty" path:"query_folder,omitempty" url:"query_folder,omitempty"`
+	QuerySrc                 string     `json:"query_src,omitempty" path:"query_src,omitempty" url:"query_src,omitempty"`
+	QueryDestination         string     `json:"query_destination,omitempty" path:"query_destination,omitempty" url:"query_destination,omitempty"`
+	QueryIp                  string     `json:"query_ip,omitempty" path:"query_ip,omitempty" url:"query_ip,omitempty"`
+	QueryUsername            string     `json:"query_username,omitempty" path:"query_username,omitempty" url:"query_username,omitempty"`
+	QueryFailureType         string     `json:"query_failure_type,omitempty" path:"query_failure_type,omitempty" url:"query_failure_type,omitempty"`
+	QueryTargetId            string     `json:"query_target_id,omitempty" path:"query_target_id,omitempty" url:"query_target_id,omitempty"`
+	QueryTargetName          string     `json:"query_target_name,omitempty" path:"query_target_name,omitempty" url:"query_target_name,omitempty"`
+	QueryTargetPermission    string     `json:"query_target_permission,omitempty" path:"query_target_permission,omitempty" url:"query_target_permission,omitempty"`
+	QueryTargetUserId        string     `json:"query_target_user_id,omitempty" path:"query_target_user_id,omitempty" url:"query_target_user_id,omitempty"`
+	QueryTargetUsername      string     `json:"query_target_username,omitempty" path:"query_target_username,omitempty" url:"query_target_username,omitempty"`
+	QueryTargetPlatform      string     `json:"query_target_platform,omitempty" path:"query_target_platform,omitempty" url:"query_target_platform,omitempty"`
+	QueryTargetPermissionSet string     `json:"query_target_permission_set,omitempty" path:"query_target_permission_set,omitempty" url:"query_target_permission_set,omitempty"`
+	ResultsUrl               string     `json:"results_url,omitempty" path:"results_url,omitempty" url:"results_url,omitempty"`
+	UserId                   int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 }
 
 func (h HistoryExport) Identifier() interface{} {

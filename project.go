@@ -7,8 +7,8 @@ import (
 )
 
 type Project struct {
-	Id           int64  `json:"id,omitempty" path:"id"`
-	GlobalAccess string `json:"global_access,omitempty" path:"global_access"`
+	Id           int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	GlobalAccess string `json:"global_access,omitempty" path:"global_access,omitempty" url:"global_access,omitempty"`
 }
 
 func (p Project) Identifier() interface{} {

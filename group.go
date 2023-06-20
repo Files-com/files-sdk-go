@@ -7,12 +7,12 @@ import (
 )
 
 type Group struct {
-	Id        int64  `json:"id,omitempty" path:"id"`
-	Name      string `json:"name,omitempty" path:"name"`
-	AdminIds  string `json:"admin_ids,omitempty" path:"admin_ids"`
-	Notes     string `json:"notes,omitempty" path:"notes"`
-	UserIds   string `json:"user_ids,omitempty" path:"user_ids"`
-	Usernames string `json:"usernames,omitempty" path:"usernames"`
+	Id        int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Name      string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	AdminIds  string `json:"admin_ids,omitempty" path:"admin_ids,omitempty" url:"admin_ids,omitempty"`
+	Notes     string `json:"notes,omitempty" path:"notes,omitempty" url:"notes,omitempty"`
+	UserIds   string `json:"user_ids,omitempty" path:"user_ids,omitempty" url:"user_ids,omitempty"`
+	Usernames string `json:"usernames,omitempty" path:"usernames,omitempty" url:"usernames,omitempty"`
 }
 
 func (g Group) Identifier() interface{} {
@@ -22,10 +22,10 @@ func (g Group) Identifier() interface{} {
 type GroupCollection []Group
 
 type GroupListParams struct {
-	SortBy       json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter       json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterPrefix json.RawMessage `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	Ids          string          `url:"ids,omitempty" required:"false" json:"ids,omitempty" path:"ids"`
+	SortBy       map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter       Group                  `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	Ids          string                 `url:"ids,omitempty" required:"false" json:"ids,omitempty" path:"ids"`
 	ListParams
 }
 

@@ -8,12 +8,12 @@ import (
 )
 
 type UserCipherUse struct {
-	Id             int64      `json:"id,omitempty" path:"id"`
-	ProtocolCipher string     `json:"protocol_cipher,omitempty" path:"protocol_cipher"`
-	CreatedAt      *time.Time `json:"created_at,omitempty" path:"created_at"`
-	Interface      string     `json:"interface,omitempty" path:"interface"`
-	UpdatedAt      *time.Time `json:"updated_at,omitempty" path:"updated_at"`
-	UserId         int64      `json:"user_id,omitempty" path:"user_id"`
+	Id             int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	ProtocolCipher string     `json:"protocol_cipher,omitempty" path:"protocol_cipher,omitempty" url:"protocol_cipher,omitempty"`
+	CreatedAt      *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	Interface      string     `json:"interface,omitempty" path:"interface,omitempty" url:"interface,omitempty"`
+	UpdatedAt      *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
+	UserId         int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 }
 
 func (u UserCipherUse) Identifier() interface{} {

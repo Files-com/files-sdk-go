@@ -7,16 +7,16 @@ import (
 )
 
 type ActionNotificationExportResult struct {
-	Id             int64  `json:"id,omitempty" path:"id"`
-	CreatedAt      int64  `json:"created_at,omitempty" path:"created_at"`
-	Status         int64  `json:"status,omitempty" path:"status"`
-	Message        string `json:"message,omitempty" path:"message"`
-	Success        *bool  `json:"success,omitempty" path:"success"`
-	RequestHeaders string `json:"request_headers,omitempty" path:"request_headers"`
-	RequestMethod  string `json:"request_method,omitempty" path:"request_method"`
-	RequestUrl     string `json:"request_url,omitempty" path:"request_url"`
-	Path           string `json:"path,omitempty" path:"path"`
-	Folder         string `json:"folder,omitempty" path:"folder"`
+	Id             int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	CreatedAt      int64  `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	Status         int64  `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	Message        string `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
+	Success        *bool  `json:"success,omitempty" path:"success,omitempty" url:"success,omitempty"`
+	RequestHeaders string `json:"request_headers,omitempty" path:"request_headers,omitempty" url:"request_headers,omitempty"`
+	RequestMethod  string `json:"request_method,omitempty" path:"request_method,omitempty" url:"request_method,omitempty"`
+	RequestUrl     string `json:"request_url,omitempty" path:"request_url,omitempty" url:"request_url,omitempty"`
+	Path           string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	Folder         string `json:"folder,omitempty" path:"folder,omitempty" url:"folder,omitempty"`
 }
 
 func (a ActionNotificationExportResult) Identifier() interface{} {

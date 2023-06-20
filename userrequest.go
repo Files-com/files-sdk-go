@@ -7,10 +7,10 @@ import (
 )
 
 type UserRequest struct {
-	Id      int64  `json:"id,omitempty" path:"id"`
-	Name    string `json:"name,omitempty" path:"name"`
-	Email   string `json:"email,omitempty" path:"email"`
-	Details string `json:"details,omitempty" path:"details"`
+	Id      int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Name    string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Email   string `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
+	Details string `json:"details,omitempty" path:"details,omitempty" url:"details,omitempty"`
 }
 
 func (u UserRequest) Identifier() interface{} {

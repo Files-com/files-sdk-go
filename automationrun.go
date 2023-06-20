@@ -8,12 +8,12 @@ import (
 )
 
 type AutomationRun struct {
-	Id                int64      `json:"id,omitempty" path:"id"`
-	AutomationId      int64      `json:"automation_id,omitempty" path:"automation_id"`
-	CompletedAt       *time.Time `json:"completed_at,omitempty" path:"completed_at"`
-	CreatedAt         *time.Time `json:"created_at,omitempty" path:"created_at"`
-	Status            string     `json:"status,omitempty" path:"status"`
-	StatusMessagesUrl string     `json:"status_messages_url,omitempty" path:"status_messages_url"`
+	Id                int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	AutomationId      int64      `json:"automation_id,omitempty" path:"automation_id,omitempty" url:"automation_id,omitempty"`
+	CompletedAt       *time.Time `json:"completed_at,omitempty" path:"completed_at,omitempty" url:"completed_at,omitempty"`
+	CreatedAt         *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	Status            string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	StatusMessagesUrl string     `json:"status_messages_url,omitempty" path:"status_messages_url,omitempty" url:"status_messages_url,omitempty"`
 }
 
 func (a AutomationRun) Identifier() interface{} {
@@ -23,10 +23,10 @@ func (a AutomationRun) Identifier() interface{} {
 type AutomationRunCollection []AutomationRun
 
 type AutomationRunListParams struct {
-	UserId       int64           `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	SortBy       json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	AutomationId int64           `url:"automation_id,omitempty" required:"true" json:"automation_id,omitempty" path:"automation_id"`
-	Filter       json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	UserId       int64                  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	SortBy       map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter       AutomationRun          `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	AutomationId int64                  `url:"automation_id,omitempty" required:"true" json:"automation_id,omitempty" path:"automation_id"`
 	ListParams
 }
 

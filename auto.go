@@ -7,7 +7,7 @@ import (
 )
 
 type Auto struct {
-	Dynamic json.RawMessage `json:"dynamic,omitempty" path:"dynamic"`
+	Dynamic map[string]interface{} `json:"dynamic,omitempty" path:"dynamic,omitempty" url:"dynamic,omitempty"`
 }
 
 // Identifier no path or id

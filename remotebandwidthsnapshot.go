@@ -8,11 +8,11 @@ import (
 )
 
 type RemoteBandwidthSnapshot struct {
-	Id                int64      `json:"id,omitempty" path:"id"`
-	SyncBytesReceived string     `json:"sync_bytes_received,omitempty" path:"sync_bytes_received"`
-	SyncBytesSent     string     `json:"sync_bytes_sent,omitempty" path:"sync_bytes_sent"`
-	LoggedAt          *time.Time `json:"logged_at,omitempty" path:"logged_at"`
-	RemoteServerId    int64      `json:"remote_server_id,omitempty" path:"remote_server_id"`
+	Id                int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	SyncBytesReceived string     `json:"sync_bytes_received,omitempty" path:"sync_bytes_received,omitempty" url:"sync_bytes_received,omitempty"`
+	SyncBytesSent     string     `json:"sync_bytes_sent,omitempty" path:"sync_bytes_sent,omitempty" url:"sync_bytes_sent,omitempty"`
+	LoggedAt          *time.Time `json:"logged_at,omitempty" path:"logged_at,omitempty" url:"logged_at,omitempty"`
+	RemoteServerId    int64      `json:"remote_server_id,omitempty" path:"remote_server_id,omitempty" url:"remote_server_id,omitempty"`
 }
 
 func (r RemoteBandwidthSnapshot) Identifier() interface{} {
@@ -22,12 +22,12 @@ func (r RemoteBandwidthSnapshot) Identifier() interface{} {
 type RemoteBandwidthSnapshotCollection []RemoteBandwidthSnapshot
 
 type RemoteBandwidthSnapshotListParams struct {
-	SortBy     json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter     json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterGt   json.RawMessage `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq json.RawMessage `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterLt   json.RawMessage `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq json.RawMessage `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	SortBy     map[string]interface{}  `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter     RemoteBandwidthSnapshot `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	FilterGt   map[string]interface{}  `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq map[string]interface{}  `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterLt   map[string]interface{}  `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq map[string]interface{}  `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 

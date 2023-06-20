@@ -8,14 +8,14 @@ import (
 )
 
 type BundleRecipient struct {
-	Company          string     `json:"company,omitempty" path:"company"`
-	Name             string     `json:"name,omitempty" path:"name"`
-	Note             string     `json:"note,omitempty" path:"note"`
-	Recipient        string     `json:"recipient,omitempty" path:"recipient"`
-	SentAt           *time.Time `json:"sent_at,omitempty" path:"sent_at"`
-	UserId           int64      `json:"user_id,omitempty" path:"user_id"`
-	BundleId         int64      `json:"bundle_id,omitempty" path:"bundle_id"`
-	ShareAfterCreate *bool      `json:"share_after_create,omitempty" path:"share_after_create"`
+	Company          string     `json:"company,omitempty" path:"company,omitempty" url:"company,omitempty"`
+	Name             string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Note             string     `json:"note,omitempty" path:"note,omitempty" url:"note,omitempty"`
+	Recipient        string     `json:"recipient,omitempty" path:"recipient,omitempty" url:"recipient,omitempty"`
+	SentAt           *time.Time `json:"sent_at,omitempty" path:"sent_at,omitempty" url:"sent_at,omitempty"`
+	UserId           int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	BundleId         int64      `json:"bundle_id,omitempty" path:"bundle_id,omitempty" url:"bundle_id,omitempty"`
+	ShareAfterCreate *bool      `json:"share_after_create,omitempty" path:"share_after_create,omitempty" url:"share_after_create,omitempty"`
 }
 
 // Identifier no path or id
@@ -23,10 +23,10 @@ type BundleRecipient struct {
 type BundleRecipientCollection []BundleRecipient
 
 type BundleRecipientListParams struct {
-	UserId   int64           `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	SortBy   json.RawMessage `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter   json.RawMessage `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	BundleId int64           `url:"bundle_id,omitempty" required:"true" json:"bundle_id,omitempty" path:"bundle_id"`
+	UserId   int64                  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	SortBy   map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter   BundleRecipient        `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	BundleId int64                  `url:"bundle_id,omitempty" required:"true" json:"bundle_id,omitempty" path:"bundle_id"`
 	ListParams
 }
 
