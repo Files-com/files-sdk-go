@@ -114,6 +114,11 @@ type AutomationCreateParams struct {
 	Automation             AutomationEnum         `url:"automation,omitempty" required:"true" json:"automation,omitempty" path:"automation"`
 }
 
+// Manually run automation
+type AutomationManualRunParams struct {
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+}
+
 type AutomationUpdateParams struct {
 	Id                     int64                  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	Source                 string                 `url:"source,omitempty" required:"false" json:"source,omitempty" path:"source"`

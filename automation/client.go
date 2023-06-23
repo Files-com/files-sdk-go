@@ -67,6 +67,15 @@ func Create(ctx context.Context, params files_sdk.AutomationCreateParams, opts .
 	return (&Client{}).Create(ctx, params, opts...)
 }
 
+func (c *Client) ManualRun(ctx context.Context, params files_sdk.AutomationManualRunParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/automations/{id}/manual_run", Params: params, Entity: nil}, opts...)
+	return
+}
+
+func ManualRun(ctx context.Context, params files_sdk.AutomationManualRunParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	return (&Client{}).ManualRun(ctx, params, opts...)
+}
+
 func (c *Client) Update(ctx context.Context, params files_sdk.AutomationUpdateParams, opts ...files_sdk.RequestResponseOption) (automation files_sdk.Automation, err error) {
 	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/automations/{id}", Params: params, Entity: &automation}, opts...)
 	return
