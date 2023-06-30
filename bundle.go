@@ -18,6 +18,7 @@ type Bundle struct {
 	PreviewOnly                     *bool                  `json:"preview_only,omitempty" path:"preview_only,omitempty" url:"preview_only,omitempty"`
 	RequireRegistration             *bool                  `json:"require_registration,omitempty" path:"require_registration,omitempty" url:"require_registration,omitempty"`
 	RequireShareRecipient           *bool                  `json:"require_share_recipient,omitempty" path:"require_share_recipient,omitempty" url:"require_share_recipient,omitempty"`
+	RequireLogout                   *bool                  `json:"require_logout,omitempty" path:"require_logout,omitempty" url:"require_logout,omitempty"`
 	ClickwrapBody                   string                 `json:"clickwrap_body,omitempty" path:"clickwrap_body,omitempty" url:"clickwrap_body,omitempty"`
 	FormFieldSet                    FormFieldSet           `json:"form_field_set,omitempty" path:"form_field_set,omitempty" url:"form_field_set,omitempty"`
 	SkipName                        *bool                  `json:"skip_name,omitempty" path:"skip_name,omitempty" url:"skip_name,omitempty"`

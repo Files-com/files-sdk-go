@@ -105,7 +105,6 @@ func (u UserAuthenticationMethodEnum) String() string {
 func (u UserAuthenticationMethodEnum) Enum() map[string]UserAuthenticationMethodEnum {
 	return map[string]UserAuthenticationMethodEnum{
 		"password":                    UserAuthenticationMethodEnum("password"),
-		"unused_former_ldap":          UserAuthenticationMethodEnum("unused_former_ldap"),
 		"sso":                         UserAuthenticationMethodEnum("sso"),
 		"none":                        UserAuthenticationMethodEnum("none"),
 		"email_signup":                UserAuthenticationMethodEnum("email_signup"),
