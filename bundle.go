@@ -10,6 +10,11 @@ import (
 
 type Bundle struct {
 	Code                            string                 `json:"code,omitempty" path:"code,omitempty" url:"code,omitempty"`
+	ColorLeft                       string                 `json:"color_left,omitempty" path:"color_left,omitempty" url:"color_left,omitempty"`
+	ColorLink                       string                 `json:"color_link,omitempty" path:"color_link,omitempty" url:"color_link,omitempty"`
+	ColorText                       string                 `json:"color_text,omitempty" path:"color_text,omitempty" url:"color_text,omitempty"`
+	ColorTop                        string                 `json:"color_top,omitempty" path:"color_top,omitempty" url:"color_top,omitempty"`
+	ColorTopText                    string                 `json:"color_top_text,omitempty" path:"color_top_text,omitempty" url:"color_top_text,omitempty"`
 	Url                             string                 `json:"url,omitempty" path:"url,omitempty" url:"url,omitempty"`
 	Description                     string                 `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
 	ExpiresAt                       *time.Time             `json:"expires_at,omitempty" path:"expires_at,omitempty" url:"expires_at,omitempty"`
