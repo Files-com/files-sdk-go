@@ -48,7 +48,6 @@ func (u AutomationTriggerEnum) String() string {
 
 func (u AutomationTriggerEnum) Enum() map[string]AutomationTriggerEnum {
 	return map[string]AutomationTriggerEnum{
-		"realtime":        AutomationTriggerEnum("realtime"),
 		"daily":           AutomationTriggerEnum("daily"),
 		"custom_schedule": AutomationTriggerEnum("custom_schedule"),
 		"webhook":         AutomationTriggerEnum("webhook"),
@@ -65,15 +64,12 @@ func (u AutomationEnum) String() string {
 
 func (u AutomationEnum) Enum() map[string]AutomationEnum {
 	return map[string]AutomationEnum{
-		"create_folder":    AutomationEnum("create_folder"),
-		"request_file":     AutomationEnum("request_file"),
-		"request_move":     AutomationEnum("request_move"),
-		"copy_newest_file": AutomationEnum("copy_newest_file"),
-		"delete_file":      AutomationEnum("delete_file"),
-		"copy_file":        AutomationEnum("copy_file"),
-		"move_file":        AutomationEnum("move_file"),
-		"as2_send":         AutomationEnum("as2_send"),
-		"run_sync":         AutomationEnum("run_sync"),
+		"create_folder": AutomationEnum("create_folder"),
+		"delete_file":   AutomationEnum("delete_file"),
+		"copy_file":     AutomationEnum("copy_file"),
+		"move_file":     AutomationEnum("move_file"),
+		"as2_send":      AutomationEnum("as2_send"),
+		"run_sync":      AutomationEnum("run_sync"),
 	}
 }
 
