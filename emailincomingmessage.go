@@ -8,12 +8,14 @@ import (
 )
 
 type EmailIncomingMessage struct {
-	Id        int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	InboxId   int64      `json:"inbox_id,omitempty" path:"inbox_id,omitempty" url:"inbox_id,omitempty"`
-	Sender    string     `json:"sender,omitempty" path:"sender,omitempty" url:"sender,omitempty"`
-	Status    string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
-	Message   string     `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
-	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	Id         int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	InboxId    int64      `json:"inbox_id,omitempty" path:"inbox_id,omitempty" url:"inbox_id,omitempty"`
+	Sender     string     `json:"sender,omitempty" path:"sender,omitempty" url:"sender,omitempty"`
+	SenderName string     `json:"sender_name,omitempty" path:"sender_name,omitempty" url:"sender_name,omitempty"`
+	Status     string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	Body       string     `json:"body,omitempty" path:"body,omitempty" url:"body,omitempty"`
+	Message    string     `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
+	CreatedAt  *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
 func (e EmailIncomingMessage) Identifier() interface{} {
