@@ -7,30 +7,31 @@ import (
 )
 
 type HistoryExportResult struct {
-	Id                  int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	CreatedAt           int64  `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	CreatedAtIso8601    string `json:"created_at_iso8601,omitempty" path:"created_at_iso8601,omitempty" url:"created_at_iso8601,omitempty"`
-	UserId              int64  `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
-	FileId              int64  `json:"file_id,omitempty" path:"file_id,omitempty" url:"file_id,omitempty"`
-	ParentId            int64  `json:"parent_id,omitempty" path:"parent_id,omitempty" url:"parent_id,omitempty"`
-	Path                string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
-	Folder              string `json:"folder,omitempty" path:"folder,omitempty" url:"folder,omitempty"`
-	Src                 string `json:"src,omitempty" path:"src,omitempty" url:"src,omitempty"`
-	Destination         string `json:"destination,omitempty" path:"destination,omitempty" url:"destination,omitempty"`
-	Ip                  string `json:"ip,omitempty" path:"ip,omitempty" url:"ip,omitempty"`
-	Username            string `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
-	Action              string `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
-	FailureType         string `json:"failure_type,omitempty" path:"failure_type,omitempty" url:"failure_type,omitempty"`
-	Interface           string `json:"interface,omitempty" path:"interface,omitempty" url:"interface,omitempty"`
-	TargetId            int64  `json:"target_id,omitempty" path:"target_id,omitempty" url:"target_id,omitempty"`
-	TargetName          string `json:"target_name,omitempty" path:"target_name,omitempty" url:"target_name,omitempty"`
-	TargetPermission    string `json:"target_permission,omitempty" path:"target_permission,omitempty" url:"target_permission,omitempty"`
-	TargetRecursive     *bool  `json:"target_recursive,omitempty" path:"target_recursive,omitempty" url:"target_recursive,omitempty"`
-	TargetExpiresAt     int64  `json:"target_expires_at,omitempty" path:"target_expires_at,omitempty" url:"target_expires_at,omitempty"`
-	TargetPermissionSet string `json:"target_permission_set,omitempty" path:"target_permission_set,omitempty" url:"target_permission_set,omitempty"`
-	TargetPlatform      string `json:"target_platform,omitempty" path:"target_platform,omitempty" url:"target_platform,omitempty"`
-	TargetUsername      string `json:"target_username,omitempty" path:"target_username,omitempty" url:"target_username,omitempty"`
-	TargetUserId        int64  `json:"target_user_id,omitempty" path:"target_user_id,omitempty" url:"target_user_id,omitempty"`
+	Id                     int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	CreatedAt              int64  `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	CreatedAtIso8601       string `json:"created_at_iso8601,omitempty" path:"created_at_iso8601,omitempty" url:"created_at_iso8601,omitempty"`
+	UserId                 int64  `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	FileId                 int64  `json:"file_id,omitempty" path:"file_id,omitempty" url:"file_id,omitempty"`
+	ParentId               int64  `json:"parent_id,omitempty" path:"parent_id,omitempty" url:"parent_id,omitempty"`
+	Path                   string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	Folder                 string `json:"folder,omitempty" path:"folder,omitempty" url:"folder,omitempty"`
+	Src                    string `json:"src,omitempty" path:"src,omitempty" url:"src,omitempty"`
+	Destination            string `json:"destination,omitempty" path:"destination,omitempty" url:"destination,omitempty"`
+	Ip                     string `json:"ip,omitempty" path:"ip,omitempty" url:"ip,omitempty"`
+	Username               string `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
+	Action                 string `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
+	FailureType            string `json:"failure_type,omitempty" path:"failure_type,omitempty" url:"failure_type,omitempty"`
+	Interface              string `json:"interface,omitempty" path:"interface,omitempty" url:"interface,omitempty"`
+	TargetId               int64  `json:"target_id,omitempty" path:"target_id,omitempty" url:"target_id,omitempty"`
+	TargetName             string `json:"target_name,omitempty" path:"target_name,omitempty" url:"target_name,omitempty"`
+	TargetPermission       string `json:"target_permission,omitempty" path:"target_permission,omitempty" url:"target_permission,omitempty"`
+	TargetRecursive        *bool  `json:"target_recursive,omitempty" path:"target_recursive,omitempty" url:"target_recursive,omitempty"`
+	TargetExpiresAt        int64  `json:"target_expires_at,omitempty" path:"target_expires_at,omitempty" url:"target_expires_at,omitempty"`
+	TargetExpiresAtIso8601 string `json:"target_expires_at_iso8601,omitempty" path:"target_expires_at_iso8601,omitempty" url:"target_expires_at_iso8601,omitempty"`
+	TargetPermissionSet    string `json:"target_permission_set,omitempty" path:"target_permission_set,omitempty" url:"target_permission_set,omitempty"`
+	TargetPlatform         string `json:"target_platform,omitempty" path:"target_platform,omitempty" url:"target_platform,omitempty"`
+	TargetUsername         string `json:"target_username,omitempty" path:"target_username,omitempty" url:"target_username,omitempty"`
+	TargetUserId           int64  `json:"target_user_id,omitempty" path:"target_user_id,omitempty" url:"target_user_id,omitempty"`
 }
 
 func (h HistoryExportResult) Identifier() interface{} {
