@@ -51,6 +51,7 @@ type User struct {
 	PublicKeysCount                  int64      `json:"public_keys_count,omitempty" path:"public_keys_count,omitempty" url:"public_keys_count,omitempty"`
 	ReceiveAdminAlerts               *bool      `json:"receive_admin_alerts,omitempty" path:"receive_admin_alerts,omitempty" url:"receive_admin_alerts,omitempty"`
 	Require2fa                       string     `json:"require_2fa,omitempty" path:"require_2fa,omitempty" url:"require_2fa,omitempty"`
+	RequireLoginBy                   *time.Time `json:"require_login_by,omitempty" path:"require_login_by,omitempty" url:"require_login_by,omitempty"`
 	Active2fa                        *bool      `json:"active_2fa,omitempty" path:"active_2fa,omitempty" url:"active_2fa,omitempty"`
 	RequirePasswordChange            *bool      `json:"require_password_change,omitempty" path:"require_password_change,omitempty" url:"require_password_change,omitempty"`
 	PasswordExpired                  *bool      `json:"password_expired,omitempty" path:"password_expired,omitempty" url:"password_expired,omitempty"`
