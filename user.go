@@ -191,6 +191,7 @@ type UserCreateParams struct {
 	OfficeIntegrationEnabled   *bool                        `url:"office_integration_enabled,omitempty" required:"false" json:"office_integration_enabled,omitempty" path:"office_integration_enabled"`
 	PasswordValidityDays       int64                        `url:"password_validity_days,omitempty" required:"false" json:"password_validity_days,omitempty" path:"password_validity_days"`
 	ReceiveAdminAlerts         *bool                        `url:"receive_admin_alerts,omitempty" required:"false" json:"receive_admin_alerts,omitempty" path:"receive_admin_alerts"`
+	RequireLoginBy             *time.Time                   `url:"require_login_by,omitempty" required:"false" json:"require_login_by,omitempty" path:"require_login_by"`
 	RequirePasswordChange      *bool                        `url:"require_password_change,omitempty" required:"false" json:"require_password_change,omitempty" path:"require_password_change"`
 	RestapiPermission          *bool                        `url:"restapi_permission,omitempty" required:"false" json:"restapi_permission,omitempty" path:"restapi_permission"`
 	SelfManaged                *bool                        `url:"self_managed,omitempty" required:"false" json:"self_managed,omitempty" path:"self_managed"`
@@ -254,6 +255,7 @@ type UserUpdateParams struct {
 	OfficeIntegrationEnabled   *bool                        `url:"office_integration_enabled,omitempty" required:"false" json:"office_integration_enabled,omitempty" path:"office_integration_enabled"`
 	PasswordValidityDays       int64                        `url:"password_validity_days,omitempty" required:"false" json:"password_validity_days,omitempty" path:"password_validity_days"`
 	ReceiveAdminAlerts         *bool                        `url:"receive_admin_alerts,omitempty" required:"false" json:"receive_admin_alerts,omitempty" path:"receive_admin_alerts"`
+	RequireLoginBy             *time.Time                   `url:"require_login_by,omitempty" required:"false" json:"require_login_by,omitempty" path:"require_login_by"`
 	RequirePasswordChange      *bool                        `url:"require_password_change,omitempty" required:"false" json:"require_password_change,omitempty" path:"require_password_change"`
 	RestapiPermission          *bool                        `url:"restapi_permission,omitempty" required:"false" json:"restapi_permission,omitempty" path:"restapi_permission"`
 	SelfManaged                *bool                        `url:"self_managed,omitempty" required:"false" json:"self_managed,omitempty" path:"self_managed"`
