@@ -49,7 +49,6 @@ func NewTestSetup() *TestSetup {
 
 func (setup *TestSetup) Reporter() status.EventsReporter {
 	m := sync.Mutex{}
-	events := make(status.EventsReporter)
 
 	callback := func(status status.File) {
 		m.Lock()
@@ -57,15 +56,7 @@ func (setup *TestSetup) Reporter() status.EventsReporter {
 		m.Unlock()
 	}
 
-	for _, s := range status.Included {
-		events[s] = append(events[s], callback)
-	}
-
-	for _, s := range status.Excluded {
-		events[s] = append(events[s], callback)
-	}
-
-	return events
+	return status.CreateFileEvents(callback, append(status.Excluded, status.Included...)...)
 }
 
 func (setup *TestSetup) TempDir() error {
@@ -416,12 +407,12 @@ expected 4194304 bytes sent 5242880 received`)
 			ForceRequestMessage: "problem",
 		}
 		var events []status.File
-		eventReporter := make(status.EventsReporter)
-		for _, s := range status.Included {
-			eventReporter[s] = append(eventReporter[s], func(file status.File) {
+		eventReporter := status.CreateFileEvents(
+			func(file status.File) {
 				events = append(events, file)
-			})
-		}
+			},
+			status.Included...,
+		)
 
 		job := client.Downloader(DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/", EventsReporter: eventReporter})
 		transferBytes := []string{"zero"}

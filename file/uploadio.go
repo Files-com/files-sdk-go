@@ -431,7 +431,6 @@ func (u *uploadIO) createPart(ctx context.Context, reader io.ReadCloser, len int
 
 func uploadProgress(uploadStatus *UploadStatus) func(bytesCount int64) {
 	return func(bytesCount int64) {
-		uploadStatus.incrementDownloadedBytes(bytesCount)
-		uploadStatus.Job().UpdateStatus(status.Uploading, uploadStatus, nil)
+		uploadStatus.Job().UpdateStatusWithBytes(status.Uploading, uploadStatus, bytesCount)
 	}
 }

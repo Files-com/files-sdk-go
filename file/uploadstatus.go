@@ -26,13 +26,18 @@ type UploadStatus struct {
 	missingStat bool
 	dryRun      bool
 	status.Changes
-	endedAt time.Time
+	endedAt   time.Time
+	startedAt time.Time
 }
 
 var _ status.IFile = &UploadStatus{}
 
 func (u *UploadStatus) EndedAt() time.Time {
 	return u.endedAt
+}
+
+func (u *UploadStatus) StartedAt() time.Time {
+	return u.startedAt
 }
 
 func (u *UploadStatus) Size() int64 {
@@ -99,6 +104,10 @@ func (u *UploadStatus) SetStatus(s status.Status, err error) {
 		u.error = err
 	}
 
+	if s.Is(status.Uploading) && u.startedAt.IsZero() {
+		u.startedAt = time.Now()
+	}
+
 	if s.Is(status.Retrying) {
 		u.uploadedBytes = 0
 		u.lastByte = time.Time{}
@@ -122,11 +131,15 @@ func (u *UploadStatus) Id() string {
 	return u.job.Id + ":" + u.file.Path
 }
 
-func (u *UploadStatus) incrementDownloadedBytes(b int64) {
+func (u *UploadStatus) incrementUploadedBytes(b int64) {
 	u.Mutex.Lock()
 	defer u.Mutex.Unlock()
 	u.lastByte = time.Now()
 	u.uploadedBytes += b
+}
+
+func (u *UploadStatus) IncrementTransferBytes(b int64) {
+	u.incrementUploadedBytes(b)
 }
 
 func (u *UploadStatus) SetUploadedBytes(b int64) {

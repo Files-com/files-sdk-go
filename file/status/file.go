@@ -15,7 +15,8 @@ type File struct {
 	Size          int64         `json:"size_bytes"`
 	LocalPath     string        `json:"local_path"`
 	RemotePath    string        `json:"remote_path"`
-	EndedAt       time.Time     `json:"transferred_at"`
+	EndedAt       time.Time     `json:"completed_at"`
+	StartedAt     time.Time     `json:"started_at"`
 	Err           error         `json:"error"`
 	Id            string        `json:"-"`
 	Attempts      int           `json:"attempts"`

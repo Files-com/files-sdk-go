@@ -5,6 +5,14 @@ type Status struct {
 	Value int
 }
 
+func (e Status) Status() Status {
+	return e
+}
+
+type GetStatus interface {
+	Status() Status
+}
+
 var (
 	Null        = Status{"", -1}
 	Indexed     = Status{"indexed", 0}
@@ -18,35 +26,35 @@ var (
 	Canceled    = Status{"canceled", 5}
 	Errored     = Status{"errored", 5}
 
-	Included = []Status{Indexed, Queued, Retrying, Downloading, Uploading, Complete, Canceled, Errored}
-	Excluded = []Status{Skipped, Ignored}
-	Valid    = []Status{Indexed, Queued, Retrying, Downloading, Uploading, Complete}
-	Invalid  = []Status{Null, Canceled, Errored, Skipped, Ignored}
-	Running  = []Status{Downloading, Uploading}
-	Ended    = []Status{Complete, Canceled, Errored, Skipped, Ignored}
+	Included = []GetStatus{Indexed, Queued, Retrying, Downloading, Uploading, Complete, Canceled, Errored}
+	Excluded = []GetStatus{Skipped, Ignored}
+	Valid    = []GetStatus{Indexed, Queued, Retrying, Downloading, Uploading, Complete}
+	Invalid  = []GetStatus{Null, Canceled, Errored, Skipped, Ignored}
+	Running  = []GetStatus{Downloading, Uploading}
+	Ended    = []GetStatus{Complete, Canceled, Errored, Skipped, Ignored}
 )
 
 func (e Status) String() string {
 	return e.Name
 }
 
-func (e Status) Has(statuses ...Status) bool {
+func (e Status) Has(statuses ...GetStatus) bool {
 	return e.Any(statuses...)
 }
 
-func (e Status) Is(statuses ...Status) bool {
+func (e Status) Is(statuses ...GetStatus) bool {
 	return e.Any(statuses...)
 }
 
-func (e Status) IsNot(statuses ...Status) bool {
+func (e Status) IsNot(statuses ...GetStatus) bool {
 	return !e.Any(statuses...)
 }
 
-func (e Status) is(status Status) bool {
-	return e.Name == status.Name
+func (e Status) is(status GetStatus) bool {
+	return e.Name == status.Status().Name
 }
 
-func (e Status) Any(statuses ...Status) bool {
+func (e Status) Any(statuses ...GetStatus) bool {
 	if len(statuses) == 0 {
 		return true
 	}
@@ -58,14 +66,14 @@ func (e Status) Any(statuses ...Status) bool {
 	return false
 }
 
-func SetStatus(old Status, new Status, err error) (Status, bool) {
+func SetStatus(old GetStatus, new GetStatus, err error) (Status, bool) {
 	var setError bool
-	if err != nil || new.Is(Retrying) {
+	if err != nil || new.Status().Is(Retrying) {
 		setError = true
 	}
-	if old.Is(Errored) && new.Is(Running...) {
+	if old.Status().Is(Errored) && new.Status().Is(Running...) {
 		new = old
 	}
 
-	return new, setError
+	return new.Status(), setError
 }

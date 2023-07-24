@@ -27,12 +27,18 @@ import (
 	filesSDK "github.com/Files-com/files-sdk-go/v2"
 )
 
-type EventsReporter map[Status][]Reporter
+type EventsReporter map[Status][]reporterSettings
+
+type reporterSettings struct {
+	OnBytesChange bool
+	Reporter
+}
 
 type IFile interface {
 	SetStatus(Status, error)
 	StatusChanges() Changes
 	TransferBytes() int64
+	IncrementTransferBytes(int64)
 	File() filesSDK.File
 	Size() int64
 	Id() string
@@ -41,6 +47,7 @@ type IFile interface {
 	Status() Status
 	LastByte() time.Time
 	EndedAt() time.Time
+	StartedAt() time.Time
 	Err() error
 	Job() *Job
 }
@@ -56,6 +63,7 @@ func ToStatusFile(f IFile) File {
 		Status:        f.Status(),
 		LastByte:      f.LastByte(),
 		EndedAt:       f.EndedAt(),
+		StartedAt:     f.StartedAt(),
 		Err:           MashableError{error: f.Err()}.Err(),
 		Size:          f.Size(),
 		StatusName:    f.Status().Name,
@@ -104,7 +112,7 @@ func (r *Job) Init() *Job {
 	r.statusesMutex = &sync.RWMutex{}
 	r.cancelMutex = &sync.Mutex{}
 	r.Id = sid.IdBase64()
-	r.EventsReporter = make(map[Status][]Reporter)
+	r.EventsReporter = make(map[Status][]reporterSettings)
 	r.Timer = timer.New()
 	r.Started = (&lib.Signal{}).Init()
 	r.Finished = (&lib.Signal{}).Init()
@@ -193,9 +201,31 @@ func (r *Job) WithContext(ctx context.Context) context.Context {
 	return jobCtx
 }
 
-func (r *Job) RegisterFileEvent(callback Reporter, events ...Status) {
+func OnBytesChange(event GetStatus) GetStatus {
+	return onBytesChange{GetStatus: event}
+}
+
+type onBytesChange struct {
+	GetStatus
+}
+
+func CreateFileEvents(callback Reporter, events ...GetStatus) EventsReporter {
+	eventsReporter := make(EventsReporter)
 	for _, event := range events {
-		r.EventsReporter[event] = append(r.EventsReporter[event], callback)
+		s := event.Status()
+		switch event.(type) {
+		case onBytesChange:
+			eventsReporter[s] = append(eventsReporter[s], reporterSettings{Reporter: callback, OnBytesChange: true})
+		default:
+			eventsReporter[s] = append(eventsReporter[s], reporterSettings{Reporter: callback})
+		}
+	}
+	return eventsReporter
+}
+
+func (r *Job) RegisterFileEvent(callback Reporter, events ...GetStatus) {
+	for k, v := range CreateFileEvents(callback, events...) {
+		r.EventsReporter[k] = append(r.EventsReporter[k], v...)
 	}
 }
 
@@ -204,7 +234,23 @@ type UnwrappedError struct {
 	OriginalError error
 }
 
-func (r *Job) UpdateStatus(status Status, file IFile, err error) {
+func (r *Job) UpdateStatusWithBytes(status GetStatus, file IFile, bytesCount int64) {
+	file.IncrementTransferBytes(bytesCount)
+	if status != file.Status() {
+		r.UpdateStatus(status, file, nil)
+	} else {
+		callbacks, ok := r.EventsReporter[status.Status()]
+		if ok {
+			for _, callback := range callbacks {
+				if callback.OnBytesChange {
+					callback.Reporter(ToStatusFile(file))
+				}
+			}
+		}
+	}
+}
+
+func (r *Job) UpdateStatus(status GetStatus, file IFile, err error) {
 	if status == file.Status() && err == nil && file.Err() == nil {
 		return
 	}
@@ -218,20 +264,20 @@ func (r *Job) UpdateStatus(status Status, file IFile, err error) {
 			"status": status,
 			"error":  err,
 		}))
-	file.SetStatus(status, err)
+	file.SetStatus(status.Status(), err)
 	r.statusCallbacks(status, file)
 }
 
-func (r *Job) statusCallbacks(status Status, file IFile) {
-	callbacks, ok := r.EventsReporter[status]
+func (r *Job) statusCallbacks(status GetStatus, file IFile) {
+	callbacks, ok := r.EventsReporter[status.Status()]
 	if ok {
 		for _, callback := range callbacks {
-			callback(ToStatusFile(file))
+			callback.Reporter(ToStatusFile(file))
 		}
 	}
 }
 
-func (r *Job) Count(t ...Status) int {
+func (r *Job) Count(t ...GetStatus) int {
 	r.statusesMutex.RLock()
 	defer r.statusesMutex.RUnlock()
 	if len(t) == 0 {
@@ -255,7 +301,7 @@ func (r *Job) Add(report IFile) {
 	r.statusesMutex.Unlock()
 }
 
-func (r *Job) TotalBytes(t ...Status) int64 {
+func (r *Job) TotalBytes(t ...GetStatus) int64 {
 	var total int64
 	r.statusesMutex.RLock()
 	for _, s := range r.Statuses {
@@ -267,11 +313,11 @@ func (r *Job) TotalBytes(t ...Status) int64 {
 	return total
 }
 
-func (r *Job) RemainingBytes(t ...Status) int64 {
+func (r *Job) RemainingBytes(t ...GetStatus) int64 {
 	return r.TotalBytes(t...) - r.TransferBytes(t...)
 }
 
-func (r *Job) TransferBytes(t ...Status) int64 {
+func (r *Job) TransferBytes(t ...GetStatus) int64 {
 	var transferBytes int64
 	r.statusesMutex.RLock()
 	for _, s := range r.Statuses {
@@ -283,7 +329,7 @@ func (r *Job) TransferBytes(t ...Status) int64 {
 	return transferBytes
 }
 
-func (r *Job) mostRecentBytes(t ...Status) (recent time.Time) {
+func (r *Job) mostRecentBytes(t ...GetStatus) (recent time.Time) {
 	r.statusesMutex.RLock()
 	for _, s := range r.Statuses {
 		if !s.Status().Any(t...) {
@@ -307,7 +353,7 @@ func (r *Job) Idle(durations ...time.Duration) bool {
 	return lastByte.Before(now.Add(duration))
 }
 
-func (r *Job) TransferRate(t ...Status) int64 {
+func (r *Job) TransferRate(t ...GetStatus) int64 {
 	millisecondsSinceStart := time.Now().Sub(r.LastStart()).Milliseconds()
 	bytesPerMilliseconds := float64(r.TransferBytes(t...)) / float64(millisecondsSinceStart)
 	bytesPerSecond := bytesPerMilliseconds * float64(1000)
@@ -318,7 +364,7 @@ func (r *Job) TransferRate(t ...Status) int64 {
 	return int64(bytesPerSecond)
 }
 
-func (r *Job) ETA(t ...Status) time.Duration {
+func (r *Job) ETA(t ...GetStatus) time.Duration {
 	transferRate := r.TransferRate(t...)
 	if transferRate == 0 {
 		return 0
@@ -335,7 +381,7 @@ func (r *Job) ElapsedTime() time.Duration {
 	return r.Elapsed()
 }
 
-func (r *Job) All(t ...Status) bool {
+func (r *Job) All(t ...GetStatus) bool {
 	allEnded := true
 	r.statusesMutex.RLock()
 	for _, s := range r.Statuses {
@@ -348,7 +394,7 @@ func (r *Job) All(t ...Status) bool {
 	return allEnded
 }
 
-func (r *Job) Any(t ...Status) (b bool) {
+func (r *Job) Any(t ...GetStatus) (b bool) {
 	r.statusesMutex.RLock()
 	for _, s := range r.Statuses {
 		if s.Status().Any(t...) {
@@ -360,7 +406,7 @@ func (r *Job) Any(t ...Status) (b bool) {
 	return
 }
 
-func (r *Job) Find(t Status) (IFile, bool) {
+func (r *Job) Find(t GetStatus) (IFile, bool) {
 	r.statusesMutex.RLock()
 	defer r.statusesMutex.RUnlock()
 
@@ -396,7 +442,7 @@ func (r *Job) EnqueueNext() (f IFile, ok bool) {
 	return
 }
 
-func (r *Job) Sub(t ...Status) *Job {
+func (r *Job) Sub(t ...GetStatus) *Job {
 	var sub []IFile
 	r.statusesMutex.RLock()
 	for _, s := range r.Statuses {
@@ -423,7 +469,7 @@ func (r *Job) Files() []filesSDK.File {
 	return files
 }
 
-func (r *Job) Percentage(t ...Status) int {
+func (r *Job) Percentage(t ...GetStatus) int {
 	p := int((float64(r.TransferBytes(t...)) / float64(r.TotalBytes(t...))) * float64(100))
 	if p < 0 {
 		return 0

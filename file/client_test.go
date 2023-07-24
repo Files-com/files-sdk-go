@@ -115,17 +115,7 @@ func runDownloadScenario(path string, destination string, client *Client) map[st
 }
 
 func Reporter(callback status.Reporter) status.EventsReporter {
-	events := make(status.EventsReporter)
-
-	for _, s := range status.Included {
-		events[s] = append(events[s], callback)
-	}
-
-	for _, s := range status.Excluded {
-		events[s] = append(events[s], callback)
-	}
-
-	return events
+	return status.CreateFileEvents(callback, append(status.Excluded, append(status.Included, status.OnBytesChange(status.Uploading))...)...)
 }
 
 func TestClient_UploadFolder(t *testing.T) {

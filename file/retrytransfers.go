@@ -36,13 +36,13 @@ func RetryByPolicy(ctx context.Context, job *status.Job, policy RetryPolicy, sig
 	case RetryAll:
 		RetryByStatus(ctx, job, signalEvents, policy, status.Included...)
 	case RetryUnfinished:
-		RetryByStatus(ctx, job, signalEvents, policy, append(status.Running, []status.Status{status.Errored, status.Canceled}...)...)
+		RetryByStatus(ctx, job, signalEvents, policy, append(status.Running, []status.GetStatus{status.Errored, status.Canceled}...)...)
 	case RetryErroredIfSomeCompleted:
 		retryErroredIfSomeCompleted(ctx, job, signalEvents, policy)
 	}
 }
 
-func RetryByStatus(ctx context.Context, job *status.Job, signalEvents bool, policy RetryPolicy, s ...status.Status) {
+func RetryByStatus(ctx context.Context, job *status.Job, signalEvents bool, policy RetryPolicy, s ...status.GetStatus) {
 	for i := range iter.N(policy.RetryCount) {
 		switch job.Direction {
 		case direction.DownloadType:
@@ -61,7 +61,7 @@ func RetryByStatus(ctx context.Context, job *status.Job, signalEvents bool, poli
 	}
 }
 
-func retryUpload(ctx context.Context, job *status.Job, signalEvents bool, s []status.Status) {
+func retryUpload(ctx context.Context, job *status.Job, signalEvents bool, s []status.GetStatus) {
 	onComplete := make(chan *UploadStatus)
 	defer close(onComplete)
 	enqueueByStatus(ctx, job, signalEvents,
@@ -75,7 +75,7 @@ func retryUpload(ctx context.Context, job *status.Job, signalEvents bool, s []st
 	)
 }
 
-func retryDownload(ctx context.Context, job *status.Job, signalEvents bool, s []status.Status) {
+func retryDownload(ctx context.Context, job *status.Job, signalEvents bool, s []status.GetStatus) {
 	onComplete := make(chan *DownloadStatus)
 	defer close(onComplete)
 	enqueueByStatus(ctx, job, signalEvents,
@@ -102,7 +102,7 @@ func retryErroredIfSomeCompleted(ctx context.Context, job *status.Job, signalEve
 	RetryByPolicy(ctx, job, RetryPolicy{Type: RetryUnfinished, RetryCount: policy.RetryCount}, signalEvents)
 }
 
-func enqueueByStatus(ctx context.Context, job *status.Job, signalEvents bool, enqueue func(status.IFile, context.Context), waitForComplete func(), s ...status.Status) {
+func enqueueByStatus(ctx context.Context, job *status.Job, signalEvents bool, enqueue func(status.IFile, context.Context), waitForComplete func(), s ...status.GetStatus) {
 	if job.Count(s...) == 0 {
 		return
 	}
@@ -120,7 +120,7 @@ func enqueueByStatus(ctx context.Context, job *status.Job, signalEvents bool, en
 
 	var types []string
 	for _, st := range s {
-		types = append(types, st.String())
+		types = append(types, st.Status().String())
 	}
 	job.Logger.Printf("retrying %v files (%v)", strings.Join(types, ", "), len(files))
 

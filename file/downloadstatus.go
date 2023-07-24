@@ -23,6 +23,7 @@ type DownloadStatus struct {
 	Sync            bool
 	lastByte        time.Time
 	endedAt         time.Time
+	startedAt       time.Time
 	Mutex           *sync.RWMutex
 	PreserveTimes   bool
 	error
@@ -35,6 +36,10 @@ var _ status.IFile = &DownloadStatus{}
 
 func (d *DownloadStatus) EndedAt() time.Time {
 	return d.endedAt
+}
+
+func (d *DownloadStatus) StartedAt() time.Time {
+	return d.startedAt
 }
 
 func (d *DownloadStatus) Size() (size int64) {
@@ -67,6 +72,10 @@ func (d *DownloadStatus) SetStatus(s status.Status, err error) {
 			d.lastError = d.error
 		}
 		d.error = err
+	}
+
+	if s.Is(status.Downloading) && d.startedAt.IsZero() {
+		d.startedAt = time.Now()
 	}
 
 	if s.Is(status.Retrying) {
@@ -102,6 +111,10 @@ func (d *DownloadStatus) incrementDownloadedBytes(b int64) {
 
 	d.DownloadedBytes += b
 	d.Mutex.Unlock()
+}
+
+func (d *DownloadStatus) IncrementTransferBytes(b int64) {
+	d.incrementDownloadedBytes(b)
 }
 
 func (d *DownloadStatus) TransferBytes() int64 {

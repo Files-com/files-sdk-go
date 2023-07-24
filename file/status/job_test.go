@@ -26,6 +26,8 @@ func (f StatusFile) TransferBytes() int64 {
 	return f.file.TransferBytes
 }
 
+func (f StatusFile) IncrementTransferBytes(int64) {}
+
 func (f StatusFile) File() files_sdk.File {
 	return f.file.File
 }
@@ -63,6 +65,10 @@ func (f StatusFile) Size() int64 {
 }
 
 func (f StatusFile) EndedAt() time.Time {
+	return time.Time{}
+}
+
+func (f StatusFile) StartedAt() time.Time {
 	return time.Time{}
 }
 
