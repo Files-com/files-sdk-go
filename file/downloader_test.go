@@ -178,14 +178,14 @@ func Test_downloader_RemoteStartingSlash(t *testing.T) {
 func TestClient_Downloader(t *testing.T) {
 	t.Run("small file with size", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["small-file-with-size.txt"] = mockFile{
 			SizeTrust: TrustedSizeValue,
 			File:      files_sdk.File{Size: 1999},
 		}
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "small-file-with-size.txt", LocalPath: root + "/"})
+		job := client.Downloader(DownloaderParams{RemotePath: "small-file-with-size.txt", LocalPath: root + "/"})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
@@ -199,14 +199,14 @@ func TestClient_Downloader(t *testing.T) {
 
 	t.Run("large file with size", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["large-file-with-size.txt"] = mockFile{
 			SizeTrust: TrustedSizeValue,
 			File:      files_sdk.File{Size: 19999999},
 		}
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-size.txt", LocalPath: root + "/"})
+		job := client.Downloader(DownloaderParams{RemotePath: "large-file-with-size.txt", LocalPath: root + "/"})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
@@ -220,7 +220,7 @@ func TestClient_Downloader(t *testing.T) {
 
 	t.Run("large file with size with max concurrent connections of 1", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["large-file-with-size.txt"] = mockFile{
@@ -229,7 +229,7 @@ func TestClient_Downloader(t *testing.T) {
 			MaxConnections: 1,
 		}
 		m := manager.Build(1, 1)
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-size.txt", LocalPath: root + "/", Manager: m})
+		job := client.Downloader(DownloaderParams{RemotePath: "large-file-with-size.txt", LocalPath: root + "/", Manager: m})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
@@ -244,7 +244,7 @@ func TestClient_Downloader(t *testing.T) {
 
 	t.Run("large file with size with max concurrent connections of 1", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["large-file-with-size.txt"] = mockFile{
@@ -253,7 +253,7 @@ func TestClient_Downloader(t *testing.T) {
 			MaxConnections: 1,
 		}
 		m := manager.Build(1, 1)
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-size.txt", LocalPath: root + "/", Manager: m})
+		job := client.Downloader(DownloaderParams{RemotePath: "large-file-with-size.txt", LocalPath: root + "/", Manager: m})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
@@ -268,7 +268,7 @@ func TestClient_Downloader(t *testing.T) {
 
 	t.Run("large file with size DownloadFilesAsSingleStream", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["large-file-with-size.txt"] = mockFile{
@@ -276,7 +276,7 @@ func TestClient_Downloader(t *testing.T) {
 			File:      files_sdk.File{Size: 1024 * 1024 * 50},
 		}
 		m := manager.Build(10, 1, true)
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-size.txt", LocalPath: root + "/", Manager: m})
+		job := client.Downloader(DownloaderParams{RemotePath: "large-file-with-size.txt", LocalPath: root + "/", Manager: m})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
@@ -291,7 +291,7 @@ func TestClient_Downloader(t *testing.T) {
 
 	t.Run("large file with no size", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["large-file-with-no-size.txt"] = mockFile{
@@ -299,7 +299,7 @@ func TestClient_Downloader(t *testing.T) {
 			File:      files_sdk.File{Size: 19999999},
 		}
 
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
+		job := client.Downloader(DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
@@ -313,7 +313,7 @@ func TestClient_Downloader(t *testing.T) {
 
 	t.Run("large file with no size - extra parts are canceled", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		realSize := int64((1024 * 1024 * 5) - 256)
@@ -323,7 +323,7 @@ func TestClient_Downloader(t *testing.T) {
 			RealSize:  &realSize,
 		}
 
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
+		job := client.Downloader(DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
@@ -337,7 +337,7 @@ func TestClient_Downloader(t *testing.T) {
 
 	t.Run("large file with no size - client does not receive all bytes server reported to send", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		serverBytesSent := int64((1024 * 1024 * 5) + 256)
@@ -347,7 +347,7 @@ func TestClient_Downloader(t *testing.T) {
 			ServerBytesSent: &serverBytesSent,
 		}
 
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
+		job := client.Downloader(DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
@@ -359,7 +359,7 @@ expected 5243136 bytes sent 5242880 received`)
 
 	t.Run("large file with no size - client received more bytes than server reported to send", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		serverBytesSent := int64(1024 * 1024 * 4)
@@ -369,7 +369,7 @@ expected 5243136 bytes sent 5242880 received`)
 			ServerBytesSent: &serverBytesSent,
 		}
 
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
+		job := client.Downloader(DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
@@ -381,7 +381,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("large file with no size - when sever has invalid request status", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		serverBytesSent := int64(1024 * 1024 * 4)
@@ -392,7 +392,7 @@ expected 4194304 bytes sent 5242880 received`)
 			ForceRequestStatus: "started",
 		}
 
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
+		job := client.Downloader(DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
@@ -406,7 +406,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("large file with no size - when sever has failed request status", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["large-file-with-no-size.txt"] = mockFile{
@@ -423,7 +423,7 @@ expected 4194304 bytes sent 5242880 received`)
 			})
 		}
 
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/", EventsReporter: eventReporter})
+		job := client.Downloader(DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/", EventsReporter: eventReporter})
 		transferBytes := []string{"zero"}
 		wait := make(chan bool)
 		go func() {
@@ -458,7 +458,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("large file with bad size info real size is bigger", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		realSize := int64(20000000)
@@ -468,7 +468,7 @@ expected 4194304 bytes sent 5242880 received`)
 			RealSize:  &realSize,
 		}
 
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "file-with-mismatch-size-bigger", LocalPath: root + "/"})
+		job := client.Downloader(DownloaderParams{RemotePath: "file-with-mismatch-size-bigger", LocalPath: root + "/"})
 		job.Start()
 		job.Wait()
 		require.Len(t, job.Statuses, 1)
@@ -482,7 +482,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("large file with bad size info real size is smaller", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		realSize := int64(19999999)
@@ -492,7 +492,7 @@ expected 4194304 bytes sent 5242880 received`)
 			RealSize:  &realSize,
 		}
 
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "file-with-mismatch-size-smaller", LocalPath: root + "/"})
+		job := client.Downloader(DownloaderParams{RemotePath: "file-with-mismatch-size-smaller", LocalPath: root + "/"})
 		job.Start()
 		job.Wait()
 		require.Len(t, job.Statuses, 1)
@@ -506,7 +506,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	multipleFiles := func(relativeRoot string, t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles[filepath.Join(relativeRoot, "file1")] = mockFile{
@@ -535,7 +535,7 @@ expected 4194304 bytes sent 5242880 received`)
 			}
 		}
 
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: relativeRoot, LocalPath: root + "/"})
+		job := client.Downloader(DownloaderParams{RemotePath: relativeRoot, LocalPath: root + "/"})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 5)
@@ -562,7 +562,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("PreserveTimes with mtime", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		mtime := time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC).Truncate(time.Millisecond)
@@ -570,7 +570,7 @@ expected 4194304 bytes sent 5242880 received`)
 			SizeTrust: TrustedSizeValue,
 			File:      files_sdk.File{Size: 1999, Mtime: &mtime},
 		}
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "small-file-with-size.txt", LocalPath: root + "/", PreserveTimes: true})
+		job := client.Downloader(DownloaderParams{RemotePath: "small-file-with-size.txt", LocalPath: root + "/", PreserveTimes: true})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
@@ -585,7 +585,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("PreserveTimes with providedMtime", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		providedMtime := time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC).Truncate(time.Millisecond)
@@ -593,7 +593,7 @@ expected 4194304 bytes sent 5242880 received`)
 			SizeTrust: TrustedSizeValue,
 			File:      files_sdk.File{Size: 1999, Mtime: lib.Time(time.Now()), ProvidedMtime: &providedMtime},
 		}
-		job := client.Downloader(context.Background(), DownloaderParams{RemotePath: "small-file-with-size.txt", LocalPath: root + "/", PreserveTimes: true})
+		job := client.Downloader(DownloaderParams{RemotePath: "small-file-with-size.txt", LocalPath: root + "/", PreserveTimes: true})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
@@ -608,7 +608,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("sync already downloaded", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["taco.png"] = mockFile{
@@ -620,7 +620,7 @@ expected 4194304 bytes sent 5242880 received`)
 		_, err = taco.Write(make([]byte, 100))
 		require.NoError(t, err)
 		require.NoError(t, taco.Close())
-		job := client.Downloader(context.Background(), DownloaderParams{Sync: true, RemotePath: "taco.png", LocalPath: root + "/"})
+		job := client.Downloader(DownloaderParams{Sync: true, RemotePath: "taco.png", LocalPath: root + "/"})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
@@ -630,14 +630,14 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("sync does not exist locally", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["taco.png"] = mockFile{
 			SizeTrust: TrustedSizeValue,
 			File:      files_sdk.File{Size: 100},
 		}
-		job := client.Downloader(context.Background(), DownloaderParams{Sync: true, RemotePath: "taco.png", LocalPath: root + "/"})
+		job := client.Downloader(DownloaderParams{Sync: true, RemotePath: "taco.png", LocalPath: root + "/"})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
@@ -647,7 +647,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("sync is out of date locally by size", func(t *testing.T) {
 		root := t.TempDir()
-		server := FakeDownloadServer{T: t}.Do()
+		server := (&FakeDownloadServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["taco.png"] = mockFile{
@@ -657,7 +657,7 @@ expected 4194304 bytes sent 5242880 received`)
 		taco, err := os.Create(filepath.Join(root, "taco.png"))
 		assert.NoError(t, err)
 		require.NoError(t, taco.Close())
-		job := client.Downloader(context.Background(), DownloaderParams{Sync: true, RemotePath: "taco.png", LocalPath: root + "/"})
+		job := client.Downloader(DownloaderParams{Sync: true, RemotePath: "taco.png", LocalPath: root + "/"})
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)

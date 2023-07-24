@@ -19,13 +19,10 @@ func TestFS_Open(t *testing.T) {
 	defer r.Stop()
 
 	assert := assert.New(t)
-	client.UploadIO(
-		context.Background(),
-		UploadIOParams{
-			Path:   filepath.Join("remotefs_test", "1.text"),
-			Reader: strings.NewReader("testing 3"),
-			Size:   int64(9),
-		},
+	client.Upload(
+		UploadWithReader(strings.NewReader("testing 3")),
+		UploadWithSize(9),
+		UploadWithDestinationPath(filepath.Join("remotefs_test", "1.text")),
 	)
 
 	fs := (&FS{}).Init(client.Config, true)

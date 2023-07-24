@@ -1,7 +1,7 @@
 package lib
 
 const (
-	BasePart = int64(1024*1024*5 + 1024*1024/3)
+	BasePart = int64(1024 * 1024 * 5)
 )
 
 // PartSizes return 10k parts that add up to 4.9 TB

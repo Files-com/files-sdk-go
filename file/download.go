@@ -1,7 +1,6 @@
 package file
 
 import (
-	"context"
 	"io"
 	"io/fs"
 	"os"
@@ -12,9 +11,9 @@ import (
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 )
 
-func (c *Client) DownloadRetry(ctx context.Context, job status.Job) *status.Job {
+func (c *Client) DownloadRetry(job status.Job, opts ...files_sdk.RequestResponseOption) *status.Job {
 	newJob := job.ClearStatuses()
-	return c.Downloader(ctx,
+	return c.Downloader(
 		DownloaderParams{
 			RemotePath:     newJob.RemotePath,
 			Sync:           newJob.Sync,
@@ -22,18 +21,19 @@ func (c *Client) DownloadRetry(ctx context.Context, job status.Job) *status.Job 
 			LocalPath:      newJob.LocalPath,
 			RetryPolicy:    newJob.RetryPolicy.(RetryPolicy),
 			EventsReporter: newJob.EventsReporter,
-		})
+		},
+		opts...)
 }
 
-func (c *Client) DownloadToFile(ctx context.Context, params files_sdk.FileDownloadParams, filePath string) (files_sdk.File, error) {
+func (c *Client) DownloadToFile(params files_sdk.FileDownloadParams, filePath string, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
 	out, err := os.Create(filePath)
 	if err != nil {
 		return files_sdk.File{}, err
 	}
-	return c.Download(ctx, params, files_sdk.ResponseBodyOption(func(closer io.ReadCloser) error {
+	return c.Download(params, append(opts, files_sdk.ResponseBodyOption(func(closer io.ReadCloser) error {
 		_, err := io.Copy(out, closer)
 		return err
-	}))
+	}))...)
 }
 
 type DownloaderParams struct {
@@ -49,9 +49,9 @@ type DownloaderParams struct {
 	DryRun bool
 }
 
-func (c *Client) Downloader(ctx context.Context, params DownloaderParams) *status.Job {
+func (c *Client) Downloader(params DownloaderParams, opts ...files_sdk.RequestResponseOption) *status.Job {
 	params.Config = c.Config
-	return downloader(ctx, (&FS{}).Init(c.Config, true), params)
+	return downloader(files_sdk.ContextOption(opts), (&FS{}).Init(c.Config, true), params)
 }
 
 type Entity struct {

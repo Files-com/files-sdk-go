@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -33,6 +34,17 @@ func CreateConfig(fixture string) (files_sdk.Config, *recorder.Recorder, error) 
 	r.AddFilter(func(i *cassette.Interaction) error {
 		delete(i.Request.Headers, "X-Filesapi-Key")
 		return nil
+	})
+	r.SetMatcher(func(r *http.Request, i cassette.Request) bool {
+		if cassette.DefaultMatcher(r, i) {
+			if r.Body != nil {
+				io.ReadAll(r.Body)
+				r.Body.Close()
+			}
+
+			return true
+		}
+		return false
 	})
 	return config, r, nil
 }

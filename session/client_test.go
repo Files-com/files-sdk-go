@@ -1,7 +1,6 @@
 package session
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -49,6 +48,6 @@ func TestClient_Delete(t *testing.T) {
 	assert := assert.New(t)
 	os.Unsetenv("FILES_API_KEY")
 	client.Config.SessionId = "9f799aff7f518514a0b6b5cfd1047e73dddd5cf5"
-	err = client.Delete(context.Background())
+	err = client.Delete()
 	assert.Nil(err, "logout returns success")
 }

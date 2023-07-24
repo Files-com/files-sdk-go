@@ -21,11 +21,13 @@ type Part struct {
 	bytes    int64
 	requests []time.Time
 	error
-	number     int64
+	number     int
 	processing bool
 	context.Context
 	context.CancelFunc
 	*sync.RWMutex
+	final bool
+	ProxyReader
 }
 
 func (p *Part) Done() *Part {
@@ -73,6 +75,7 @@ func (p *Part) Err() error {
 	if p.error != nil {
 		return p.error
 	}
+
 	return p.Context.Err()
 }
 
@@ -88,47 +91,70 @@ func (p Parts) SuccessfulBytes() (b int64) {
 	return b
 }
 
-func byteOffsetSlice(size int64) []OffSet {
-	partSizes := lib.PartSizes
-	var blockSize int64
-	var offsets []OffSet
-	off := int64(0)
-	blockSize, partSizes = partSizes[0], partSizes[1:]
-	endRange := blockSize
-	for {
-		if off < size {
-			endRange = int64(math.Min(float64(endRange), float64(size)))
-			offsets = append(offsets, OffSet{off: off, len: endRange - off})
-			off = endRange
-			endRange = off + blockSize
-			blockSize, partSizes = partSizes[0], partSizes[1:]
-		} else {
-			break
-		}
-	}
-	return offsets
+type ByteOffset struct {
+	PartSizes []int64
 }
 
-func byteChunkSlice(size int64, defaultChunkSize int64) []OffSet {
-	var blockSize int64
-	var offsets []OffSet
-	off := int64(0)
+func (b ByteOffset) WithDefaultChunkSize(size *int64, off int64, index int, defaultChunkSize int64) Iterator {
+	return func() (OffSet, Iterator, int) {
+		// if size is nil or off is still less than size
+		if size == nil || off < *size {
+			endRange := off + b.PartSizes[index]
 
-	if size < defaultChunkSize {
-		blockSize = size
-	} else {
-		blockSize = defaultChunkSize
-	}
-	endRange := blockSize
-	for {
-		if off < size {
-			endRange = int64(math.Min(float64(endRange), float64(size)))
-			offsets = append(offsets, OffSet{off: off, len: endRange - off})
+			if size != nil && *size > endRange {
+				endRange = defaultChunkSize
+			}
+
+			// if size is not nil, limit endRange by size
+			if size != nil {
+				endRange = int64(math.Min(float64(endRange), float64(*size)))
+			}
+
+			offset := OffSet{off: off, len: endRange - off}
+
 			off = endRange
-			endRange = off + blockSize
-		} else {
-			break
+
+			// if there are no more partSizes or off is already more than size, return nil iterator
+			if index >= len(lib.PartSizes)-1 || (size != nil && off >= *size) {
+				return offset, nil, index + 1
+			}
+
+			return offset, b.Resume(size, off, index+1), index
 		}
+
+		return OffSet{}, nil, index
 	}
-	return offsets
 }
+
+func (b ByteOffset) BySize(size *int64) Iterator {
+	return b.Resume(size, 0, 0)
+}
+
+func (b ByteOffset) Resume(size *int64, off int64, index int) Iterator {
+	return func() (OffSet, Iterator, int) {
+		// if size is nil or off is still less than size
+		if size == nil || off < *size {
+			endRange := off + b.PartSizes[index]
+
+			// if size is not nil, limit endRange by size
+			if size != nil {
+				endRange = int64(math.Min(float64(endRange), float64(*size)))
+			}
+
+			offset := OffSet{off: off, len: endRange - off}
+
+			off = endRange
+
+			// if there are no more partSizes or off is already more than size, return nil iterator
+			if index >= len(lib.PartSizes)-1 || (size != nil && off >= *size) {
+				return offset, nil, index
+			}
+
+			return offset, b.Resume(size, off, index+1), index
+		}
+
+		return OffSet{}, nil, index
+	}
+}
+
+type Iterator func() (OffSet, Iterator, int)

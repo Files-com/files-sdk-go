@@ -278,8 +278,15 @@ func (d *DownloadParts) state() map[string]interface{} {
 
 func (d *DownloadParts) buildParts() {
 	size := d.FileInfo.Size()
-	for i, offset := range byteChunkSlice(size, DownloadPartChunkSize) {
-		d.parts = append(d.parts, (&Part{OffSet: offset, number: int64(i) + 1}).WithContext(d.Context))
+	iter := (ByteOffset{PartSizes: lib.PartSizes}).BySize(&size)
+
+	for {
+		offset, next, i := iter()
+		d.parts = append(d.parts, (&Part{OffSet: offset, number: i + 1}).WithContext(d.Context))
+		if next == nil {
+			break
+		}
+		iter = next
 	}
 
 	d.finishedParts = make(chan *Part, len(d.parts))

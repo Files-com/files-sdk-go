@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -21,7 +22,7 @@ import (
 	"github.com/samber/lo"
 )
 
-var serverPort = 50001
+var serverPort = uint32(50001)
 
 type randomReader struct {
 	n int
@@ -99,7 +100,7 @@ func (t TestLogger) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func (f FakeDownloadServer) Do() FakeDownloadServer {
+func (f *FakeDownloadServer) Do() *FakeDownloadServer {
 	f.setup = &sync.Mutex{}
 	f.MockFiles = make(map[string]mockFile)
 	f.TrackRequest = make(map[string][]string)
@@ -110,15 +111,32 @@ func (f FakeDownloadServer) Do() FakeDownloadServer {
 	f.Routes()
 	serverPort += 1
 	f.setup.Lock()
-	f.Port = serverPort
+	f.Port = int(atomic.LoadUint32(&serverPort))
 	f.Server = &http.Server{
 		Addr:    fmt.Sprintf("localhost:%v", f.Port),
 		Handler: f.router,
 	}
-	f.setup.Unlock()
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*120)
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				panic(ctx.Err())
+			default:
+				httpClient := http.Client{}
+				httpClient.Transport = &CustomTransport{Addr: fmt.Sprintf("localhost:%v", int(atomic.LoadUint32(&serverPort)))}
+				res, err := httpClient.Get("https://" + fmt.Sprintf("localhost:%v", int(atomic.LoadUint32(&serverPort))) + "/ping")
+				if err == nil && res.StatusCode == 200 {
+					f.setup.Unlock()
+					return
+				}
+			}
+		}
+	}()
 	go func() {
 		var err error
-		ctx, _ := context.WithTimeout(context.Background(), time.Second)
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -127,14 +145,12 @@ func (f FakeDownloadServer) Do() FakeDownloadServer {
 			default:
 				err = f.Server.ListenAndServe()
 				if err != nil && strings.Contains(err.Error(), "address already in use") {
-					f.setup.Lock()
-					serverPort += 1
-					f.Port = serverPort
+					atomic.AddUint32(&serverPort, 1)
+					f.Port = int(atomic.LoadUint32(&serverPort))
 					f.Server = &http.Server{
 						Addr:    fmt.Sprintf("localhost:%v", f.Port),
 						Handler: f.router,
 					}
-					f.setup.Unlock()
 				} else if err != nil && err != http.ErrServerClosed {
 					log.Fatalf("listen: %s\n", err)
 					return
@@ -147,7 +163,7 @@ func (f FakeDownloadServer) Do() FakeDownloadServer {
 	return f
 }
 
-func (f FakeDownloadServer) Client() *Client {
+func (f *FakeDownloadServer) Client() *Client {
 	f.setup.Lock()
 	defer f.setup.Unlock()
 	client := &Client{}
@@ -158,7 +174,7 @@ func (f FakeDownloadServer) Client() *Client {
 	return client
 }
 
-func (f FakeDownloadServer) GetFile(file mockFile) (r io.Reader, contentLengthOk bool, contentLength int64, realSize int64, err error) {
+func (f *FakeDownloadServer) GetFile(file mockFile) (r io.Reader, contentLengthOk bool, contentLength int64, realSize int64, err error) {
 	if file.SizeTrust == NullSizeTrust || file.SizeTrust == TrustedSizeValue {
 		contentLengthOk = true
 	}
@@ -174,17 +190,18 @@ func (f FakeDownloadServer) GetFile(file mockFile) (r io.Reader, contentLengthOk
 	return
 }
 
-func (f FakeDownloadServer) trackRequest(c *gin.Context) {
+func (f *FakeDownloadServer) trackRequest(c *gin.Context) {
 	f.traceMutex.Lock()
 	defer f.traceMutex.Unlock()
 	f.TrackRequest[c.FullPath()] = append(f.TrackRequest[c.FullPath()], c.Request.URL.String())
 }
 
-func (f FakeDownloadServer) GetRouter() *gin.Engine {
+func (f *FakeDownloadServer) GetRouter() *gin.Engine {
 	return f.router
 }
 
-func (f FakeDownloadServer) Routes() {
+func (f *FakeDownloadServer) Routes() {
+	//Download Context
 	f.router.GET("/api/rest/v1/files/*path", func(c *gin.Context) {
 		f.trackRequest(c)
 		path := strings.TrimPrefix(c.Param("path"), "/")
@@ -243,7 +260,6 @@ func (f FakeDownloadServer) Routes() {
 		} else {
 			c.JSON(http.StatusNotFound, nil)
 		}
-
 	})
 	f.router.GET("/download/:download_id/:download_request_id", func(c *gin.Context) {
 		f.trackRequest(c)
@@ -382,9 +398,63 @@ func (f FakeDownloadServer) Routes() {
 		}
 		c.Status(http.StatusOK)
 	})
+	//	Upload Context
+	f.router.POST("/api/rest/v1/files/*path", func(c *gin.Context) {
+		f.trackRequest(c)
+		path := strings.TrimPrefix(c.Param("path"), "/")
+		file, ok := f.MockFiles[path]
+		if ok {
+			if file.Path == "" {
+				file.Path = path
+				file.DisplayName = filepath.Base(path)
+			}
+			c.JSON(http.StatusOK, file)
+		} else {
+			c.JSON(http.StatusNotFound, nil)
+		}
+	})
+	f.router.POST("/api/rest/v1/file_actions/begin_upload/*path", func(c *gin.Context) {
+		f.trackRequest(c)
+		path := strings.TrimPrefix(c.Param("path"), "/")
+		_, ok := f.MockFiles[path]
+
+		if ok {
+			c.JSON(http.StatusOK, files_sdk.FileUploadPartCollection{
+				files_sdk.FileUploadPart{
+					HttpMethod:    "POST",
+					Path:          path,
+					UploadUri:     "https://" + lib.UrlJoinNoEscape(f.Server.Addr, "upload", path),
+					ParallelParts: lib.Bool(true),
+					Expires:       time.Now().Add(time.Hour).Format(time.RFC3339),
+				},
+			})
+		} else {
+			c.JSON(http.StatusNotFound, nil)
+		}
+	})
+	f.router.POST("upload/*path", func(c *gin.Context) {
+		f.trackRequest(c)
+		path := strings.TrimPrefix(c.Param("path"), "/")
+		_, ok := f.MockFiles[path]
+		if ok {
+			b, err := io.ReadAll(c.Request.Body)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, map[string]interface{}{"message": err.Error()})
+			}
+			if c.Request.ContentLength != int64(len(b)) {
+				c.JSON(http.StatusBadRequest, map[string]interface{}{"message": "Content-Length did not match body"})
+			}
+			c.Status(http.StatusOK)
+		} else {
+			c.JSON(http.StatusNotFound, nil)
+		}
+	})
+	f.router.GET("/ping", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
 }
 
-func (f FakeDownloadServer) Shutdown() error {
+func (f *FakeDownloadServer) Shutdown() error {
 	f.setup.Lock()
 	defer f.setup.Unlock()
 	ctx, cancel := context.WithCancel(context.Background())

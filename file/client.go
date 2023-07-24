@@ -1,7 +1,6 @@
 package file
 
 import (
-	"context"
 	"io"
 	"io/fs"
 	"net/http"
@@ -12,8 +11,6 @@ import (
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/Files-com/files-sdk-go/v2/folder"
 
-	"os"
-
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
@@ -22,13 +19,13 @@ type Client struct {
 	files_sdk.Config
 }
 
-func (c *Client) Get(ctx context.Context, Path string) (files_sdk.File, error) {
+func (c *Client) Get(Path string, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
 	file := files_sdk.File{}
 	path, err := lib.BuildPath("/files/{path}", map[string]string{"path": Path})
 	if err != nil {
 		return file, err
 	}
-	data, _, err := files_sdk.Call(ctx, "GET", c.Config, path, lib.Params{Params: lib.Interface()})
+	data, _, err := files_sdk.Call("GET", c.Config, path, lib.Params{Params: lib.Interface()}, opts...)
 	if err != nil {
 		return file, err
 	}
@@ -39,43 +36,44 @@ func (c *Client) Get(ctx context.Context, Path string) (files_sdk.File, error) {
 	return file, nil
 }
 
-func Get(ctx context.Context, Path string) (files_sdk.File, error) {
+func Get(Path string, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
 	client := Client{}
-	return client.Get(ctx, Path)
+	return client.Get(Path, opts...)
 }
 
 // File{}.Size and File{}.Mtime are not always up to date. This calls HEAD on File{}.DownloadUri to get the latest info.
 // Some Download URLs won't support HEAD. In this case the size is reported as UntrustedSizeValue. The size can be known post download
 // using Client{}.DownloadRequestStatus. This applies to the remote mount types FTP, SFTP, and WebDAV.
-func (c *Client) FileStats(ctx context.Context, file files_sdk.File) (files_sdk.File, error) {
+func (c *Client) FileStats(file files_sdk.File, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
 	var err error
 	var size int64
 	file, err = c.Download(
-		ctx,
 		files_sdk.FileDownloadParams{File: file},
-		files_sdk.RequestOption(func(req *http.Request) error {
-			if req.URL.Host != "s3.amazonaws.com" {
-				req.Method = "HEAD"
-			}
-			return nil
-		}),
-		files_sdk.ResponseOption(func(response *http.Response) error {
-			if response.StatusCode == 422 {
-				size = int64(UntrustedSizeValue)
-				return nil
-			}
-			if err := lib.ResponseErrors(response, lib.NonOkError); err != nil {
-				return err
-			}
-			size = response.ContentLength
-			if response.Header.Get("Last-Modified") != "" {
-				mtime, err := time.Parse(time.RFC1123, response.Header.Get("Last-Modified"))
-				if err == nil {
-					file.Mtime = &mtime
+		append(opts,
+			files_sdk.RequestOption(func(req *http.Request) error {
+				if req.URL.Host != "s3.amazonaws.com" {
+					req.Method = "HEAD"
 				}
-			}
-			return response.Body.Close()
-		}),
+				return nil
+			}),
+			files_sdk.ResponseOption(func(response *http.Response) error {
+				if response.StatusCode == 422 {
+					size = int64(UntrustedSizeValue)
+					return nil
+				}
+				if err := lib.ResponseErrors(response, lib.NonOkError); err != nil {
+					return err
+				}
+				size = response.ContentLength
+				if response.Header.Get("Last-Modified") != "" {
+					mtime, err := time.Parse(time.RFC1123, response.Header.Get("Last-Modified"))
+					if err == nil {
+						file.Mtime = &mtime
+					}
+				}
+				return response.Body.Close()
+			}),
+		)...,
 	)
 	if err == nil {
 		file.Size = size
@@ -83,7 +81,7 @@ func (c *Client) FileStats(ctx context.Context, file files_sdk.File) (files_sdk.
 	return file, err
 }
 
-func (c *Client) DownloadRequestStatus(ctx context.Context, fileDownloadUrl string, downloadRequestId string, opts ...files_sdk.RequestResponseOption) (files_sdk.ResponseError, error) {
+func (c *Client) DownloadRequestStatus(fileDownloadUrl string, downloadRequestId string, opts ...files_sdk.RequestResponseOption) (files_sdk.ResponseError, error) {
 	re := files_sdk.ResponseError{}
 	uri, err := url.Parse(fileDownloadUrl)
 	if err != nil {
@@ -92,7 +90,7 @@ func (c *Client) DownloadRequestStatus(ctx context.Context, fileDownloadUrl stri
 
 	uri = uri.JoinPath(downloadRequestId)
 
-	request, err := http.NewRequestWithContext(ctx, "GET", uri.String(), nil)
+	request, err := http.NewRequest("GET", uri.String(), nil)
 	if err != nil {
 		return re, err
 	}
@@ -119,21 +117,21 @@ func (c *Client) DownloadRequestStatus(ctx context.Context, fileDownloadUrl stri
 	return re, err
 }
 
-func (c *Client) DownloadUri(ctx context.Context, params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+func (c *Client) DownloadUri(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
 	var err error
 	if params.Path == "" {
 		params.Path = params.File.Path
 	}
 
 	if params.File.DownloadUri == "" {
-		err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/files/{path}", Params: params, Entity: &params.File}, opts...)
+		err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/files/{path}", Params: params, Entity: &params.File}, opts...)
 		return params.File, err
 	} else {
 		url, parseErr := downloadurl.New(params.File.DownloadUri)
 		remaining, valid := url.Valid(time.Millisecond * 100)
 		if parseErr == nil {
 			if !valid {
-				err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/files/{path}", Params: params, Entity: &params.File})
+				err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/files/{path}", Params: params, Entity: &params.File})
 				if params.File.DownloadUri == url.URL.String() {
 					c.LogPath(params.Path, map[string]interface{}{"message": "URL was expired. Fetched a new URL but it didn't change", "Remaining": remaining, "Time": url.Time})
 				} else {
@@ -146,17 +144,17 @@ func (c *Client) DownloadUri(ctx context.Context, params files_sdk.FileDownloadP
 	return params.File, err
 }
 
-func (c *Client) Download(ctx context.Context, params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+func (c *Client) Download(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
 	if params.Path == "" {
 		params.Path = params.File.Path
 	}
 	var err error
 
-	params.File, err = c.DownloadUri(ctx, params)
+	params.File, err = c.DownloadUri(params, files_sdk.WithContext(files_sdk.ContextOption(opts)))
 	if err != nil {
 		return params.File, err
 	}
-	request, err := http.NewRequestWithContext(ctx, "GET", params.File.DownloadUri, nil)
+	request, err := http.NewRequest("GET", params.File.DownloadUri, nil)
 	if err != nil {
 		return params.File, err
 	}
@@ -168,81 +166,81 @@ func (c *Client) Download(ctx context.Context, params files_sdk.FileDownloadPara
 	return params.File, err
 }
 
-func Download(ctx context.Context, params files_sdk.FileDownloadParams) (files_sdk.File, error) {
+func Download(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
 	client := Client{}
-	return client.Download(ctx, params)
+	return client.Download(params, opts...)
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.FileCreateParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/files/{path}", Params: params, Entity: &file}, opts...)
+func (c *Client) Create(params files_sdk.FileCreateParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/files/{path}", Params: params, Entity: &file}, opts...)
 	return
 }
 
-func Create(ctx context.Context, params files_sdk.FileCreateParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
-	return (&Client{}).Create(ctx, params, opts...)
+func Create(params files_sdk.FileCreateParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
+	return (&Client{}).Create(params, opts...)
 }
 
-func (c *Client) Update(ctx context.Context, params files_sdk.FileUpdateParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/files/{path}", Params: params, Entity: &file}, opts...)
+func (c *Client) Update(params files_sdk.FileUpdateParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/files/{path}", Params: params, Entity: &file}, opts...)
 	return
 }
 
-func Update(ctx context.Context, params files_sdk.FileUpdateParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
-	return (&Client{}).Update(ctx, params, opts...)
+func Update(params files_sdk.FileUpdateParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
+	return (&Client{}).Update(params, opts...)
 }
 
-func (c *Client) UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/files/{path}", Params: params, Entity: &file}, opts...)
+func (c *Client) UpdateWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/files/{path}", Params: params, Entity: &file}, opts...)
 	return
 }
 
-func UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
-	return (&Client{}).UpdateWithMap(ctx, params, opts...)
+func UpdateWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
+	return (&Client{}).UpdateWithMap(params, opts...)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/files/{path}", Params: params, Entity: nil}, opts...)
+func (c *Client) Delete(params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "DELETE", Path: "/files/{path}", Params: params, Entity: nil}, opts...)
 	return
 }
 
-func Delete(ctx context.Context, params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	return (&Client{}).Delete(ctx, params, opts...)
+func Delete(params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	return (&Client{}).Delete(params, opts...)
 }
 
-func (c *Client) Find(ctx context.Context, params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/file_actions/metadata/{path}", Params: params, Entity: &file}, opts...)
+func (c *Client) Find(params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/file_actions/metadata/{path}", Params: params, Entity: &file}, opts...)
 	return
 }
 
-func Find(ctx context.Context, params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
-	return (&Client{}).Find(ctx, params, opts...)
+func Find(params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
+	return (&Client{}).Find(params, opts...)
 }
 
-func (c *Client) Copy(ctx context.Context, params files_sdk.FileCopyParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/file_actions/copy/{path}", Params: params, Entity: &fileAction}, opts...)
+func (c *Client) Copy(params files_sdk.FileCopyParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/copy/{path}", Params: params, Entity: &fileAction}, opts...)
 	return
 }
 
-func Copy(ctx context.Context, params files_sdk.FileCopyParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	return (&Client{}).Copy(ctx, params, opts...)
+func Copy(params files_sdk.FileCopyParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	return (&Client{}).Copy(params, opts...)
 }
 
-func (c *Client) Move(ctx context.Context, params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/file_actions/move/{path}", Params: params, Entity: &fileAction}, opts...)
+func (c *Client) Move(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/move/{path}", Params: params, Entity: &fileAction}, opts...)
 	return
 }
 
-func Move(ctx context.Context, params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	return (&Client{}).Move(ctx, params, opts...)
+func Move(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	return (&Client{}).Move(params, opts...)
 }
 
-func (c *Client) BeginUpload(ctx context.Context, params files_sdk.FileBeginUploadParams, opts ...files_sdk.RequestResponseOption) (fileUploadPartCollection files_sdk.FileUploadPartCollection, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/file_actions/begin_upload/{path}", Params: params, Entity: &fileUploadPartCollection}, opts...)
+func (c *Client) BeginUpload(params files_sdk.FileBeginUploadParams, opts ...files_sdk.RequestResponseOption) (fileUploadPartCollection files_sdk.FileUploadPartCollection, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/begin_upload/{path}", Params: params, Entity: &fileUploadPartCollection}, opts...)
 	return
 }
 
-func BeginUpload(ctx context.Context, params files_sdk.FileBeginUploadParams, opts ...files_sdk.RequestResponseOption) (fileUploadPartCollection files_sdk.FileUploadPartCollection, err error) {
-	return (&Client{}).BeginUpload(ctx, params, opts...)
+func BeginUpload(params files_sdk.FileBeginUploadParams, opts ...files_sdk.RequestResponseOption) (fileUploadPartCollection files_sdk.FileUploadPartCollection, err error) {
+	return (&Client{}).BeginUpload(params, opts...)
 }
 
 type Iter struct {
@@ -258,7 +256,7 @@ func (i Iter) LoadResource(identifier interface{}, opts ...files_sdk.RequestResp
 		params.Path = path
 	}
 
-	return (&Client{Config: i.Config}).Find(context.Background(), params, opts...)
+	return (&Client{Config: i.Config}).Find(params, opts...)
 }
 
 func (i Iter) Iterate(identifier interface{}, opts ...files_sdk.RequestResponseOption) (files_sdk.IterI, error) {
@@ -266,8 +264,8 @@ func (i Iter) Iterate(identifier interface{}, opts ...files_sdk.RequestResponseO
 	return Iter{Iter: it.(*folder.Iter)}, err
 }
 
-func (c *Client) ListFor(ctx context.Context, params files_sdk.FolderListForParams, opts ...files_sdk.RequestResponseOption) (Iter, error) {
-	it, err := (&folder.Client{Config: c.Config}).ListFor(ctx, params, opts...)
+func (c *Client) ListFor(params files_sdk.FolderListForParams, opts ...files_sdk.RequestResponseOption) (Iter, error) {
+	it, err := (&folder.Client{Config: c.Config}).ListFor(params, opts...)
 	return Iter{Iter: it}, err
 }
 
@@ -280,12 +278,12 @@ func (r RecursiveItem) Err() error {
 	return r.error
 }
 
-func (c *Client) ListForRecursive(ctx context.Context, params files_sdk.FolderListForParams) (files_sdk.TypedIterI[RecursiveItem], error) {
+func (c *Client) ListForRecursive(params files_sdk.FolderListForParams, opts ...files_sdk.RequestResponseOption) (files_sdk.TypedIterI[RecursiveItem], error) {
 	if params.ConcurrencyManager == nil {
 		params.ConcurrencyManager = manager.Default().FilePartsManager
 	}
 	// Find the path first for recursive operations
-	fsi := (&FS{}).Init(c.Config, true).WithContext(ctx).(*FS)
+	fsi := (&FS{}).Init(c.Config, true).WithContext(files_sdk.ContextOption(opts)).(*FS)
 	fStat, err := fs.Stat(fsi, params.Path)
 	if err != nil {
 		return nil, err
@@ -310,35 +308,5 @@ func (c *Client) ListForRecursive(ctx context.Context, params files_sdk.FolderLi
 				return RecursiveItem{}, infoErr
 			}
 		},
-	}).Walk(ctx), nil
-}
-
-func (c *Client) UploadFile(ctx context.Context, sourcePath string, destinationPath string, opts ...func(UploadIOParams) UploadIOParams) error {
-	file, err := os.Open(sourcePath)
-	if err != nil {
-		return err
-	}
-	info, err := file.Stat()
-	if err != nil {
-		return err
-	}
-	return c.Upload(ctx, file, destinationPath, append(opts, func(params UploadIOParams) UploadIOParams {
-		params.Size = info.Size()
-		return params
-	})...)
-}
-
-func (c *Client) Upload(ctx context.Context, reader io.ReaderAt, destinationPath string, opts ...func(UploadIOParams) UploadIOParams) error {
-	params := UploadIOParams{
-		Path:    destinationPath,
-		Reader:  reader,
-		Manager: manager.Default().FilePartsManager,
-	}
-
-	for _, opt := range opts {
-		params = opt(params)
-	}
-	_, _, _, _, err := c.UploadIO(ctx, params)
-
-	return err
+	}).Walk(files_sdk.ContextOption(opts)), nil
 }

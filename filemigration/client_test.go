@@ -1,7 +1,6 @@
 package file_migration
 
 import (
-	"context"
 	"testing"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
@@ -32,7 +31,7 @@ func TestClient_Wait(t *testing.T) {
 	//
 	fileAction := files_sdk.FileAction{Status: "in_progress", FileMigrationId: 11}
 
-	migration, err := client.Wait(context.Background(), fileAction, statusFunc)
+	migration, err := client.Wait(fileAction, statusFunc)
 
 	assert.Error(err, "Not Found - `Not Found`")
 	assert.Equal("", migration.Status)
@@ -40,7 +39,7 @@ func TestClient_Wait(t *testing.T) {
 	//
 	fileAction = files_sdk.FileAction{Status: "in_progress", FileMigrationId: 12}
 
-	migration, err = client.Wait(context.Background(), fileAction, statusFunc)
+	migration, err = client.Wait(fileAction, statusFunc)
 
 	assert.NoError(err)
 	assert.Equal("completed", migrationPassedToFunc.Status)
@@ -52,7 +51,7 @@ func TestClient_Wait(t *testing.T) {
 	//
 	fileAction = files_sdk.FileAction{Status: "completed", FileMigrationId: 13}
 
-	migration, err = client.Wait(context.Background(), fileAction, statusFunc)
+	migration, err = client.Wait(fileAction, statusFunc)
 
 	assert.NoError(err)
 	assert.Equal("completed", migration.Status)
@@ -61,7 +60,7 @@ func TestClient_Wait(t *testing.T) {
 	//
 	fileAction = files_sdk.FileAction{FileMigrationId: 14}
 
-	migration, err = client.Wait(context.Background(), fileAction, statusFunc)
+	migration, err = client.Wait(fileAction, statusFunc)
 
 	assert.NoError(err)
 	assert.Equal("failed", migration.Status)
@@ -70,7 +69,7 @@ func TestClient_Wait(t *testing.T) {
 	//
 	fileAction = files_sdk.FileAction{FileMigrationId: 15}
 
-	migration, err = client.Wait(context.Background(), fileAction, statusFunc)
+	migration, err = client.Wait(fileAction, statusFunc)
 
 	assert.NoError(err)
 	assert.Equal("completed", migration.Status)

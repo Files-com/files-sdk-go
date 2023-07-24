@@ -1,8 +1,6 @@
 package invoice
 
 import (
-	"context"
-
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
 	listquery "github.com/Files-com/files-sdk-go/v2/listquery"
@@ -30,10 +28,10 @@ func (i *Iter) LoadResource(identifier interface{}, opts ...files_sdk.RequestRes
 	if id, ok := identifier.(int64); ok {
 		params.Id = id
 	}
-	return i.Client.Find(context.Background(), params, opts...)
+	return i.Client.Find(params, opts...)
 }
 
-func (c *Client) List(ctx context.Context, params files_sdk.InvoiceListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+func (c *Client) List(params files_sdk.InvoiceListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/invoices", params)
 	if err != nil {
@@ -41,19 +39,19 @@ func (c *Client) List(ctx context.Context, params files_sdk.InvoiceListParams, o
 	}
 	i.ListParams = &params
 	list := files_sdk.AccountLineItemCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
+	i.Query = listquery.Build(c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func List(ctx context.Context, params files_sdk.InvoiceListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	return (&Client{}).List(ctx, params, opts...)
+func List(params files_sdk.InvoiceListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).List(params, opts...)
 }
 
-func (c *Client) Find(ctx context.Context, params files_sdk.InvoiceFindParams, opts ...files_sdk.RequestResponseOption) (accountLineItem files_sdk.AccountLineItem, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/invoices/{id}", Params: params, Entity: &accountLineItem}, opts...)
+func (c *Client) Find(params files_sdk.InvoiceFindParams, opts ...files_sdk.RequestResponseOption) (accountLineItem files_sdk.AccountLineItem, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/invoices/{id}", Params: params, Entity: &accountLineItem}, opts...)
 	return
 }
 
-func Find(ctx context.Context, params files_sdk.InvoiceFindParams, opts ...files_sdk.RequestResponseOption) (accountLineItem files_sdk.AccountLineItem, err error) {
-	return (&Client{}).Find(ctx, params, opts...)
+func Find(params files_sdk.InvoiceFindParams, opts ...files_sdk.RequestResponseOption) (accountLineItem files_sdk.AccountLineItem, err error) {
+	return (&Client{}).Find(params, opts...)
 }

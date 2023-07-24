@@ -12,16 +12,16 @@ type Client struct {
 	files_sdk.Config
 }
 
-func (c *Client) Find(ctx context.Context, params files_sdk.FileMigrationFindParams, opts ...files_sdk.RequestResponseOption) (fileMigration files_sdk.FileMigration, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/file_migrations/{id}", Params: params, Entity: &fileMigration}, opts...)
+func (c *Client) Find(params files_sdk.FileMigrationFindParams, opts ...files_sdk.RequestResponseOption) (fileMigration files_sdk.FileMigration, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/file_migrations/{id}", Params: params, Entity: &fileMigration}, opts...)
 	return
 }
 
-func Find(ctx context.Context, params files_sdk.FileMigrationFindParams, opts ...files_sdk.RequestResponseOption) (fileMigration files_sdk.FileMigration, err error) {
-	return (&Client{}).Find(ctx, params, opts...)
+func Find(params files_sdk.FileMigrationFindParams, opts ...files_sdk.RequestResponseOption) (fileMigration files_sdk.FileMigration, err error) {
+	return (&Client{}).Find(params, opts...)
 }
 
-func (c *Client) Wait(ctx context.Context, fileAction files_sdk.FileAction, status func(files_sdk.FileMigration)) (files_sdk.FileMigration, error) {
+func (c *Client) Wait(fileAction files_sdk.FileAction, status func(files_sdk.FileMigration), opts ...files_sdk.RequestResponseOption) (files_sdk.FileMigration, error) {
 	var err error
 	var migration files_sdk.FileMigration
 	migration.Status = fileAction.Status
@@ -30,7 +30,7 @@ func (c *Client) Wait(ctx context.Context, fileAction files_sdk.FileAction, stat
 		return migration, nil
 	}
 	for {
-		migration, err = c.Find(ctx, files_sdk.FileMigrationFindParams{Id: fileAction.FileMigrationId})
+		migration, err = c.Find(files_sdk.FileMigrationFindParams{Id: fileAction.FileMigrationId}, opts...)
 		if err == nil {
 			status(migration)
 		}

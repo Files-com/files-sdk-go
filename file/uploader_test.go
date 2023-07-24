@@ -1,6 +1,7 @@
 package file
 
 import (
+	"bytes"
 	"context"
 	"io/fs"
 	"math"
@@ -8,6 +9,8 @@ import (
 	"testing"
 	"testing/fstest"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/Files-com/files-sdk-go/v2/lib"
 
@@ -27,11 +30,11 @@ type MockUploader struct {
 	uploadError error
 }
 
-func (m *MockUploader) UploadIO(context.Context, UploadIOParams) (files_sdk.File, files_sdk.FileUploadPart, Parts, []error, error) {
-	return files_sdk.File{}, files_sdk.FileUploadPart{}, Parts{}, []error{}, m.uploadError
+func (m *MockUploader) UploadWithResume(...UploadOption) (UploadResumable, error) {
+	return UploadResumable{}, m.uploadError
 }
 
-func (m *MockUploader) Find(context.Context, files_sdk.FileFindParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+func (m *MockUploader) Find(files_sdk.FileFindParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
 	return m.File, m.findError
 }
 
@@ -278,7 +281,7 @@ func TestUploader(t *testing.T) {
 				lib.BuildPathSpecTest(t, mutex, tt, sourceFs, destinationFs, func(source, destination string) lib.Cmd {
 					return &CmdRunner{
 						run: func() *status.Job {
-							return client.Uploader(context.Background(), UploaderParams{LocalPath: source, RemotePath: destination, Config: config})
+							return client.Uploader(UploaderParams{LocalPath: source, RemotePath: destination, Config: config})
 						},
 						args: []string{source, destination},
 					}
@@ -286,5 +289,207 @@ func TestUploader(t *testing.T) {
 				r.Stop()
 			})
 		}
+	})
+}
+
+type ReaderWithOutLen struct {
+	buffer *bytes.Buffer
+}
+
+func (r ReaderWithOutLen) Read(p []byte) (n int, err error) {
+	return r.buffer.Read(p)
+}
+
+type ReaderAtWithOutLen struct {
+	buffer *bytes.Buffer
+}
+
+func (r ReaderAtWithOutLen) ReadAt(p []byte, off int64) (n int, err error) {
+	return bytes.NewReader(r.buffer.Bytes()).ReadAt(p, off)
+}
+
+func TestUploadReader(t *testing.T) {
+	t.Run("reader with nil size", func(t *testing.T) {
+		server := (&FakeDownloadServer{T: t}).Do()
+		defer server.Shutdown()
+		server.MockFiles["reader-no-size.txt"] = mockFile{File: files_sdk.File{Size: 5}}
+		client := server.Client()
+		u, err := client.UploadWithResume(
+			func(io uploadIO) (uploadIO, error) {
+				io.PartSizes = []int64{2, 4, 8, 16, 32}
+				return io, nil
+			},
+			UploadWithReader(ReaderWithOutLen{buffer: bytes.NewBufferString("Hello")}),
+			UploadWithDestinationPath("reader-no-size.txt"),
+			UploadWithManager(lib.NewConstrainedWorkGroup(2)),
+		)
+
+		require.NoError(t, err)
+
+		assert.Equal(t, server.TrackRequest["/upload/*path"], []string{"/upload/reader-no-size.txt?part_number=1", "/upload/reader-no-size.txt?part_number=2"})
+		assert.Equal(t, "reader-no-size.txt", u.File.Path)
+		assert.Equal(t, int64(5), u.Size)
+		assert.Len(t, u.Parts, 0, "individual parts are not retryable with nil size")
+		assert.Equal(t, "reader-no-size.txt", u.FileUploadPart.Path)
+	})
+
+	t.Run("reader with size present", func(t *testing.T) {
+		server := (&FakeDownloadServer{T: t}).Do()
+		defer server.Shutdown()
+		server.MockFiles["reader-size.txt"] = mockFile{File: files_sdk.File{Size: 10}}
+		client := server.Client()
+		u, err := client.UploadWithResume(
+			func(io uploadIO) (uploadIO, error) {
+				io.PartSizes = []int64{2, 4, 8, 16, 32}
+				return io, nil
+			},
+			UploadWithReader(bytes.NewBufferString("0123456789")),
+			UploadWithDestinationPath("reader-size.txt"),
+			UploadWithManager(lib.NewConstrainedWorkGroup(2)),
+		)
+
+		require.NoError(t, err)
+
+		assert.Equal(t, server.TrackRequest["/upload/*path"], []string{"/upload/reader-size.txt?part_number=1", "/upload/reader-size.txt?part_number=2", "/upload/reader-size.txt?part_number=3"})
+		assert.Equal(t, "reader-size.txt", u.File.Path)
+		assert.Equal(t, int64(10), u.Size)
+		assert.Len(t, u.Parts, 0, "individual parts are not retryable with nil size")
+		assert.Equal(t, "reader-size.txt", u.FileUploadPart.Path)
+	})
+
+	t.Run("io.ReaderAt and no size", func(t *testing.T) {
+		server := (&FakeDownloadServer{T: t}).Do()
+		defer server.Shutdown()
+		server.MockFiles["reader-at_no-size.txt"] = mockFile{File: files_sdk.File{Size: 10}}
+		client := server.Client()
+		u, err := client.UploadWithResume(
+			func(io uploadIO) (uploadIO, error) {
+				io.PartSizes = []int64{2, 4, 8, 16, 32}
+				return io, nil
+			},
+			UploadWithReaderAt(ReaderAtWithOutLen{buffer: bytes.NewBufferString("0123456789")}),
+			UploadWithDestinationPath("reader-at_no-size.txt"),
+			UploadWithManager(lib.NewConstrainedWorkGroup(2)),
+		)
+
+		require.NoError(t, err)
+
+		assert.Equal(t, server.TrackRequest["/upload/*path"], []string{"/upload/reader-at_no-size.txt?part_number=1", "/upload/reader-at_no-size.txt?part_number=2", "/upload/reader-at_no-size.txt?part_number=3"})
+		assert.Equal(t, "reader-at_no-size.txt", u.File.Path)
+		assert.Equal(t, int64(10), u.Size)
+		assert.Len(t, u.Parts, 0, "individual parts are not retryable with nil size")
+		assert.Equal(t, "reader-at_no-size.txt", u.FileUploadPart.Path)
+	})
+
+	t.Run("io.ReaderAt and size", func(t *testing.T) {
+		server := (&FakeDownloadServer{T: t}).Do()
+		defer server.Shutdown()
+		server.MockFiles["reader-at-size.txt"] = mockFile{File: files_sdk.File{Size: 10}}
+		client := server.Client()
+		u, err := client.UploadWithResume(
+			func(io uploadIO) (uploadIO, error) {
+				io.PartSizes = []int64{2, 4, 8, 16, 32}
+				return io, nil
+			},
+			UploadWithReaderAt(bytes.NewReader(bytes.NewBufferString("0123456789").Bytes())),
+			UploadWithDestinationPath("reader-at-size.txt"),
+			UploadWithSize(10),
+			UploadWithManager(lib.NewConstrainedWorkGroup(2)),
+		)
+
+		require.NoError(t, err)
+
+		assert.Equal(t, server.TrackRequest["/upload/*path"], []string{"/upload/reader-at-size.txt?part_number=1", "/upload/reader-at-size.txt?part_number=2", "/upload/reader-at-size.txt?part_number=3"})
+		assert.Equal(t, "reader-at-size.txt", u.File.Path)
+		assert.Equal(t, int64(10), u.Size)
+		assert.Len(t, u.Parts, 3, "individual parts are not retryable with nil size")
+		assert.Equal(t, "reader-at-size.txt", u.FileUploadPart.Path)
+	})
+
+	t.Run("io.ReaderAt and size with resume", func(t *testing.T) {
+		server := (&FakeDownloadServer{T: t}).Do()
+		defer server.Shutdown()
+		server.MockFiles["reader-at-size.txt"] = mockFile{File: files_sdk.File{Size: 10}}
+		progressMutex := sync.Mutex{}
+		bytesUploaded := []int64{0, 0}
+		ctx, cancel := context.WithCancel(context.Background())
+		client := server.Client()
+		u, err := client.UploadWithResume(
+			func(io uploadIO) (uploadIO, error) {
+				io.PartSizes = []int64{2, 4, 8, 16, 32}
+				return io, nil
+			},
+			UploadWithReaderAt(bytes.NewReader(bytes.NewBufferString("0123456789").Bytes())),
+			UploadWithDestinationPath("reader-at-size.txt"),
+			UploadWithSize(10),
+			UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+			UploadWithContext(ctx),
+			UploadRewindAllProgressOnFailure(),
+			UploadWithProgress(func(i int64) {
+				progressMutex.Lock()
+				defer progressMutex.Unlock()
+				bytesUploaded[0] += i
+
+				if bytesUploaded[0] > 5 {
+					cancel()
+				}
+			}),
+		)
+		cancel()
+		require.ErrorIs(t, err, context.Canceled)
+
+		assert.Len(t, u.Parts, 3)
+		assert.Equal(t, int64(0), bytesUploaded[0])
+		assert.Equal(t, "reader-at-size.txt", u.FileUploadPart.Path)
+
+		// Retry
+		ctx, cancel = context.WithCancel(context.Background())
+		u, err = client.UploadWithResume(
+			func(io uploadIO) (uploadIO, error) {
+				io.PartSizes = []int64{2, 4, 8, 16, 32}
+				return io, nil
+			},
+			UploadWithReaderAt(bytes.NewReader(bytes.NewBufferString("0123456789").Bytes())),
+			UploadWithDestinationPath("reader-at-size.txt"),
+			UploadWithSize(10),
+			UploadWithManager(lib.NewConstrainedWorkGroup(2)),
+			UploadWithContext(ctx),
+			UploadWithProgress(func(i int64) {
+				progressMutex.Lock()
+				defer progressMutex.Unlock()
+				bytesUploaded[1] += i
+			}),
+			UploadWithResume(u),
+		)
+
+		assert.ElementsMatch(t, []string{"/upload/reader-at-size.txt?part_number=1", "/upload/reader-at-size.txt?part_number=2", "/upload/reader-at-size.txt?part_number=2", "/upload/reader-at-size.txt?part_number=3"}, server.TrackRequest["/upload/*path"])
+		assert.Equal(t, "reader-at-size.txt", u.File.Path)
+		assert.Equal(t, int64(10), u.Size)
+		assert.Len(t, u.Parts, 3)
+		assert.Equal(t, bytesUploaded[1], u.Parts.SuccessfulBytes())
+		assert.Equal(t, bytesUploaded[0]+bytesUploaded[1], u.Size)
+		assert.Equal(t, "reader-at-size.txt", u.FileUploadPart.Path)
+	})
+
+	t.Run("missing UploadWithDestinationPath", func(t *testing.T) {
+		server := (&FakeDownloadServer{T: t}).Do()
+		defer server.Shutdown()
+		client := server.Client()
+
+		err := client.Upload(
+			UploadWithReader(ReaderWithOutLen{buffer: bytes.NewBufferString("Hello")}),
+		)
+		assert.Equal(t, "UploadWithDestinationPath is required", err.Error())
+	})
+
+	t.Run("missing reader", func(t *testing.T) {
+		server := (&FakeDownloadServer{T: t}).Do()
+		defer server.Shutdown()
+		client := server.Client()
+
+		err := client.Upload(
+			UploadWithDestinationPath("reader-no-size.txt"),
+		)
+		assert.Equal(t, "UploadWithReader or UploadWithReaderAt required", err.Error())
 	})
 }

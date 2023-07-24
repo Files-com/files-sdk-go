@@ -1,8 +1,6 @@
 package permission
 
 import (
-	"context"
-
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
 	listquery "github.com/Files-com/files-sdk-go/v2/listquery"
@@ -25,7 +23,7 @@ func (i *Iter) Permission() files_sdk.Permission {
 	return i.Current().(files_sdk.Permission)
 }
 
-func (c *Client) List(ctx context.Context, params files_sdk.PermissionListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+func (c *Client) List(params files_sdk.PermissionListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/permissions", params)
 	if err != nil {
@@ -33,28 +31,28 @@ func (c *Client) List(ctx context.Context, params files_sdk.PermissionListParams
 	}
 	i.ListParams = &params
 	list := files_sdk.PermissionCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
+	i.Query = listquery.Build(c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func List(ctx context.Context, params files_sdk.PermissionListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	return (&Client{}).List(ctx, params, opts...)
+func List(params files_sdk.PermissionListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).List(params, opts...)
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.PermissionCreateParams, opts ...files_sdk.RequestResponseOption) (permission files_sdk.Permission, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/permissions", Params: params, Entity: &permission}, opts...)
+func (c *Client) Create(params files_sdk.PermissionCreateParams, opts ...files_sdk.RequestResponseOption) (permission files_sdk.Permission, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/permissions", Params: params, Entity: &permission}, opts...)
 	return
 }
 
-func Create(ctx context.Context, params files_sdk.PermissionCreateParams, opts ...files_sdk.RequestResponseOption) (permission files_sdk.Permission, err error) {
-	return (&Client{}).Create(ctx, params, opts...)
+func Create(params files_sdk.PermissionCreateParams, opts ...files_sdk.RequestResponseOption) (permission files_sdk.Permission, err error) {
+	return (&Client{}).Create(params, opts...)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.PermissionDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/permissions/{id}", Params: params, Entity: nil}, opts...)
+func (c *Client) Delete(params files_sdk.PermissionDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "DELETE", Path: "/permissions/{id}", Params: params, Entity: nil}, opts...)
 	return
 }
 
-func Delete(ctx context.Context, params files_sdk.PermissionDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	return (&Client{}).Delete(ctx, params, opts...)
+func Delete(params files_sdk.PermissionDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	return (&Client{}).Delete(params, opts...)
 }

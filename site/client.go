@@ -1,8 +1,6 @@
 package site
 
 import (
-	"context"
-
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
 )
@@ -11,38 +9,38 @@ type Client struct {
 	files_sdk.Config
 }
 
-func (c *Client) Get(ctx context.Context, opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/site", Params: lib.Interface(), Entity: &site}, opts...)
+func (c *Client) Get(opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/site", Params: lib.Interface(), Entity: &site}, opts...)
 	return
 }
 
-func Get(ctx context.Context, opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
-	return (&Client{}).Get(ctx, opts...)
+func Get(opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
+	return (&Client{}).Get(opts...)
 }
 
-func (c *Client) GetUsage(ctx context.Context, opts ...files_sdk.RequestResponseOption) (usageSnapshot files_sdk.UsageSnapshot, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "GET", Path: "/site/usage", Params: lib.Interface(), Entity: &usageSnapshot}, opts...)
+func (c *Client) GetUsage(opts ...files_sdk.RequestResponseOption) (usageSnapshot files_sdk.UsageSnapshot, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/site/usage", Params: lib.Interface(), Entity: &usageSnapshot}, opts...)
 	return
 }
 
-func GetUsage(ctx context.Context, opts ...files_sdk.RequestResponseOption) (usageSnapshot files_sdk.UsageSnapshot, err error) {
-	return (&Client{}).GetUsage(ctx, opts...)
+func GetUsage(opts ...files_sdk.RequestResponseOption) (usageSnapshot files_sdk.UsageSnapshot, err error) {
+	return (&Client{}).GetUsage(opts...)
 }
 
-func (c *Client) Update(ctx context.Context, params files_sdk.SiteUpdateParams, opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/site", Params: params, Entity: &site}, opts...)
+func (c *Client) Update(params files_sdk.SiteUpdateParams, opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/site", Params: params, Entity: &site}, opts...)
 	return
 }
 
-func Update(ctx context.Context, params files_sdk.SiteUpdateParams, opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
-	return (&Client{}).Update(ctx, params, opts...)
+func Update(params files_sdk.SiteUpdateParams, opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
+	return (&Client{}).Update(params, opts...)
 }
 
-func (c *Client) UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "PATCH", Path: "/site", Params: params, Entity: &site}, opts...)
+func (c *Client) UpdateWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/site", Params: params, Entity: &site}, opts...)
 	return
 }
 
-func UpdateWithMap(ctx context.Context, params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
-	return (&Client{}).UpdateWithMap(ctx, params, opts...)
+func UpdateWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
+	return (&Client{}).UpdateWithMap(params, opts...)
 }

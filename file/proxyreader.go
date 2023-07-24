@@ -4,26 +4,54 @@ import (
 	"io"
 )
 
-type ProxyReader struct {
+type ProxyReader interface {
+	io.ReadCloser
+	Len() int
+	BytesRead() int
+}
+
+type ProxyReaderAt struct {
 	io.ReaderAt
 	off    int64
 	len    int64
 	onRead func(i int64)
 	read   int
 	closed bool
+	eof    bool
 }
 
-func (x *ProxyReader) Len() int {
+type ProxyRead struct {
+	io.Reader
+	len    int64
+	onRead func(i int64)
+	read   int
+	closed bool
+	eof    bool
+}
+
+func (x *ProxyReaderAt) Len() int {
 	return int(x.len)
 }
 
-func (x *ProxyReader) Seek(offset int64, whence int) (int64, error) {
+func (x *ProxyRead) Len() int {
+	return int(x.len)
+}
+
+func (x *ProxyReaderAt) BytesRead() int {
+	return x.read
+}
+
+func (x *ProxyRead) BytesRead() int {
+	return x.read
+}
+
+func (x *ProxyReaderAt) Seek(offset int64, whence int) (int64, error) {
 	x.onRead(-int64(x.read - int(offset))) // rewind progress
 	x.read = int(offset)
 	return offset, nil
 }
 
-func (x *ProxyReader) Read(p []byte) (int, error) {
+func (x *ProxyReaderAt) Read(p []byte) (int, error) {
 	if x.closed {
 		x.onRead(-int64(x.read)) // rewind progress
 		x.read = 0
@@ -41,8 +69,11 @@ func (x *ProxyReader) Read(p []byte) (int, error) {
 		n, err = x.ReadAt(p, x.off+int64(x.read))
 	}
 
+	if err == io.EOF {
+		x.eof = true
+	}
+
 	if err != nil {
-		x.onRead(-int64(x.read))
 		return n, err
 	}
 
@@ -53,7 +84,34 @@ func (x *ProxyReader) Read(p []byte) (int, error) {
 	return n, nil
 }
 
-func (x *ProxyReader) Close() error {
+func (x *ProxyRead) Read(p []byte) (int, error) {
+	if x.read == x.Len() || x.closed {
+		return 0, io.EOF
+	}
+
+	n, err := x.Reader.Read(p[0 : x.Len()-x.read])
+	if err == io.EOF {
+		x.eof = true
+	}
+
+	if err != nil {
+		return n, err
+	}
+
+	x.read += n
+	if x.onRead != nil {
+		x.onRead(int64(n))
+	}
+
+	return n, err
+}
+
+func (x *ProxyReaderAt) Close() error {
+	x.closed = true
+	return nil
+}
+
+func (x *ProxyRead) Close() error {
 	x.closed = true
 	return nil
 }

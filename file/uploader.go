@@ -18,8 +18,8 @@ import (
 )
 
 type Uploader interface {
-	UploadIO(context.Context, UploadIOParams) (files_sdk.File, files_sdk.FileUploadPart, Parts, []error, error)
-	Find(context.Context, files_sdk.FileFindParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error)
+	UploadWithResume(...UploadOption) (UploadResumable, error)
+	Find(files_sdk.FileFindParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error)
 }
 
 func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *status.Job {
@@ -87,7 +87,7 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 				Size:        fi.Size(),
 				Path:        params.RemotePath,
 			}
-			metaFile.remotePath, err = remotePath(jobCtx, params.LocalPath, params.RemotePath, c)
+			metaFile.remotePath, err = remotePath(jobCtx, params, c, job)
 			if err != nil {
 				job.Add(metaFile)
 				job.UpdateStatus(status.Errored, metaFile, err)
@@ -134,19 +134,26 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 	return job
 }
 
-func remotePath(ctx context.Context, localPath string, remotePath string, c Uploader) (string, error) {
-	destination := remotePath
-	_, localFileName := filepath.Split(localPath)
-	if remotePath == "" {
+func remotePath(ctx context.Context, params UploaderParams, c Uploader, job *status.Job) (string, error) {
+	destination := params.RemotePath
+	_, localFileName := filepath.Split(params.LocalPath)
+	if params.RemotePath == "" {
 		destination = localFileName
 	} else {
-		remoteFile, err := c.Find(ctx, files_sdk.FileFindParams{Path: lib.NewUrlPath(remotePath).PruneEndingSlash().String()})
+		var err error
+		var remoteFile files_sdk.File
+		if job.FilePartsManager.WaitWithContext(ctx) {
+			remoteFile, err = c.Find(files_sdk.FileFindParams{Path: lib.NewUrlPath(params.RemotePath).PruneEndingSlash().String()}, files_sdk.WithContext(ctx))
+			job.FilePartsManager.Done()
+		} else {
+			return "", ctx.Err()
+		}
 		responseError, ok := err.(files_sdk.ResponseError)
 		if remoteFile.Type == "directory" {
-			destination = lib.UrlJoinNoEscape(remotePath, localFileName)
+			destination = lib.UrlJoinNoEscape(params.RemotePath, localFileName)
 		} else if ok && responseError.Type == "not-found" {
 			if destination[len(destination)-1:] == "/" {
-				destination = lib.UrlJoinNoEscape(remotePath, localFileName)
+				destination = lib.UrlJoinNoEscape(params.RemotePath, localFileName)
 			}
 		} else if err != nil {
 			return "", err
@@ -200,24 +207,17 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 			uploadStatus.Job().UpdateStatus(status.Errored, uploadStatus, err)
 			return
 		}
-		var otherErrors []error
-		_, uploadStatus.FileUploadPart, uploadStatus.Parts, otherErrors, err = uploadStatus.UploadIO(
-			ctx, UploadIOParams{
-				Path:           uploadStatus.RemotePath(),
-				Reader:         localFile,
-				Size:           uploadStatus.File().Size,
-				Progress:       uploadProgress(uploadStatus),
-				Manager:        job.FilePartsManager,
-				Parts:          uploadStatus.Parts,
-				FileUploadPart: uploadStatus.FileUploadPart,
-				ProvidedMtime:  *uploadStatus.File().Mtime,
-			})
+		uploadStatus.UploadResumable, err = uploadStatus.UploadWithResume(
+			UploadWithContext(ctx),
+			UploadWithManager(job.FilePartsManager),
+			UploadWithReaderAt(localFile),
+			UploadWithSize(uploadStatus.File().Size),
+			UploadWithResume(uploadStatus.UploadResumable),
+			UploadWithProgress(uploadProgress(uploadStatus)),
+			UploadWithProvidedMtime(*uploadStatus.File().Mtime),
+			UploadWithDestinationPath(uploadStatus.RemotePath()),
+		)
 		if err != nil {
-			if len(otherErrors) > 0 {
-				for _, otherErr := range otherErrors {
-					uploadStatus.Job().StatusFromError(uploadStatus, otherErr)
-				}
-			}
 			uploadStatus.Job().StatusFromError(uploadStatus, err)
 		} else {
 			uploadStatus.SetUploadedBytes(uploadStatus.Parts.SuccessfulBytes())

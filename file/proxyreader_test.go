@@ -14,7 +14,7 @@ func TestProxyReader_Read_1(t *testing.T) {
 
 	localFile, err := os.Open("../LICENSE")
 	assert.NoError(err)
-	reader := &ProxyReader{
+	reader := &ProxyReaderAt{
 		ReaderAt: localFile,
 		off:      100,
 		len:      101,
@@ -33,7 +33,7 @@ func TestProxyReader_Read_2(t *testing.T) {
 
 	localFile, err := os.Open("../LICENSE")
 	assert.NoError(err)
-	reader := &ProxyReader{
+	reader := &ProxyReaderAt{
 		ReaderAt: localFile,
 		off:      10,
 		len:      1000,
@@ -51,7 +51,7 @@ func TestProxyReader_Read_OnRead(t *testing.T) {
 	var read int64
 	localFile, err := os.Open("../LICENSE")
 	assert.NoError(err)
-	reader := &ProxyReader{
+	reader := &ProxyReaderAt{
 		ReaderAt: localFile,
 		off:      10,
 		len:      1000,
@@ -74,7 +74,7 @@ func TestProxyReader_Read_OnRead(t *testing.T) {
 }
 
 func TestProxyReader_ReadWithOnRead(t *testing.T) {
-	data := []byte("This is a test string for the ProxyReader implementation.")
+	data := []byte("This is a test string for the ProxyReaderAt implementation.")
 	readerAt := bytes.NewReader(data)
 
 	var bytesRead int64
@@ -82,7 +82,7 @@ func TestProxyReader_ReadWithOnRead(t *testing.T) {
 		bytesRead += i
 	}
 
-	proxyReader := &ProxyReader{
+	proxyReader := &ProxyReaderAt{
 		ReaderAt: readerAt,
 		off:      0,
 		len:      int64(len(data)),
@@ -93,7 +93,7 @@ func TestProxyReader_ReadWithOnRead(t *testing.T) {
 	n, err := proxyReader.Read(buf)
 
 	if err != nil {
-		t.Errorf("Error reading from ProxyReader: %v", err)
+		t.Errorf("Error reading from ProxyReaderAt: %v", err)
 	}
 
 	if n != 10 {
@@ -110,7 +110,7 @@ func TestProxyReader_ReadWithOnRead(t *testing.T) {
 }
 
 func TestProxyReader_SeekWithOnRead(t *testing.T) {
-	data := []byte("This is a test string for the ProxyReader implementation.")
+	data := []byte("This is a test string for the ProxyReaderAt implementation.")
 	readerAt := bytes.NewReader(data)
 
 	var bytesRead int64
@@ -118,7 +118,7 @@ func TestProxyReader_SeekWithOnRead(t *testing.T) {
 		bytesRead += i
 	}
 
-	proxyReader := &ProxyReader{
+	proxyReader := &ProxyReaderAt{
 		ReaderAt: readerAt,
 		off:      0,
 		len:      int64(len(data)),
@@ -128,7 +128,7 @@ func TestProxyReader_SeekWithOnRead(t *testing.T) {
 	_, err := proxyReader.Seek(4, io.SeekStart)
 
 	if err != nil {
-		t.Errorf("Error seeking ProxyReader: %v", err)
+		t.Errorf("Error seeking ProxyReaderAt: %v", err)
 	}
 
 	if bytesRead != 4 {
@@ -139,7 +139,7 @@ func TestProxyReader_SeekWithOnRead(t *testing.T) {
 	n, err := proxyReader.Read(buf)
 
 	if err != nil {
-		t.Errorf("Error reading from ProxyReader: %v", err)
+		t.Errorf("Error reading from ProxyReaderAt: %v", err)
 	}
 
 	if n != 4 {
@@ -156,7 +156,7 @@ func TestProxyReader_SeekWithOnRead(t *testing.T) {
 }
 
 func TestProxyReader_CloseWithOnRead(t *testing.T) {
-	data := []byte("This is a test string for the ProxyReader implementation.")
+	data := []byte("This is a test string for the ProxyReaderAt implementation.")
 	readerAt := bytes.NewReader(data)
 
 	var bytesRead int64
@@ -164,7 +164,7 @@ func TestProxyReader_CloseWithOnRead(t *testing.T) {
 		bytesRead += i
 	}
 
-	proxyReader := &ProxyReader{
+	proxyReader := &ProxyReaderAt{
 		ReaderAt: readerAt,
 		off:      0,
 		len:      int64(len(data)),
@@ -175,7 +175,7 @@ func TestProxyReader_CloseWithOnRead(t *testing.T) {
 	n, err := proxyReader.Read(buf)
 
 	if err != nil {
-		t.Errorf("Error reading from ProxyReader: %v", err)
+		t.Errorf("Error reading from ProxyReaderAt: %v", err)
 	}
 
 	if n != 10 {
@@ -188,7 +188,7 @@ func TestProxyReader_CloseWithOnRead(t *testing.T) {
 
 	err = proxyReader.Close()
 	if err != nil {
-		t.Errorf("Error closing ProxyReader: %v", err)
+		t.Errorf("Error closing ProxyReaderAt: %v", err)
 	}
 
 	// Since the onRead callback is not called during Close(), bytesRead remains the same.

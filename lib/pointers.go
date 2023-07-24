@@ -17,3 +17,7 @@ func UnWrapBool(b *bool) bool {
 func Time(t time.Time) *time.Time {
 	return &t
 }
+
+func Int64(i int64) *int64 {
+	return &i
+}

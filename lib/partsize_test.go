@@ -15,7 +15,7 @@ func Test_PartSize(t *testing.T) {
 		testSize += b
 	}
 
-	assert.Equal("4.90", fmt.Sprintf("%.2f", float64(testSize)/1024/1024/1024/1024))
+	assert.Equal("4.59", fmt.Sprintf("%.2f", float64(testSize)/1024/1024/1024/1024))
 	assert.Equal(len(s), 10_000)
 	assert.LessOrEqual(testSize, int64(1024*1024*1024*1024*5))
 }

@@ -1,8 +1,6 @@
 package history
 
 import (
-	"context"
-
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
 	listquery "github.com/Files-com/files-sdk-go/v2/listquery"
@@ -25,7 +23,7 @@ func (i *Iter) Action() files_sdk.Action {
 	return i.Current().(files_sdk.Action)
 }
 
-func (c *Client) ListForFile(ctx context.Context, params files_sdk.HistoryListForFileParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+func (c *Client) ListForFile(params files_sdk.HistoryListForFileParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/history/files/{path}", params)
 	if err != nil {
@@ -33,15 +31,15 @@ func (c *Client) ListForFile(ctx context.Context, params files_sdk.HistoryListFo
 	}
 	i.ListParams = &params
 	list := files_sdk.ActionCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
+	i.Query = listquery.Build(c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func ListForFile(ctx context.Context, params files_sdk.HistoryListForFileParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	return (&Client{}).ListForFile(ctx, params, opts...)
+func ListForFile(params files_sdk.HistoryListForFileParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).ListForFile(params, opts...)
 }
 
-func (c *Client) ListForFolder(ctx context.Context, params files_sdk.HistoryListForFolderParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+func (c *Client) ListForFolder(params files_sdk.HistoryListForFolderParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/history/folders/{path}", params)
 	if err != nil {
@@ -49,15 +47,15 @@ func (c *Client) ListForFolder(ctx context.Context, params files_sdk.HistoryList
 	}
 	i.ListParams = &params
 	list := files_sdk.ActionCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
+	i.Query = listquery.Build(c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func ListForFolder(ctx context.Context, params files_sdk.HistoryListForFolderParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	return (&Client{}).ListForFolder(ctx, params, opts...)
+func ListForFolder(params files_sdk.HistoryListForFolderParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).ListForFolder(params, opts...)
 }
 
-func (c *Client) ListForUser(ctx context.Context, params files_sdk.HistoryListForUserParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+func (c *Client) ListForUser(params files_sdk.HistoryListForUserParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/history/users/{user_id}", params)
 	if err != nil {
@@ -65,15 +63,15 @@ func (c *Client) ListForUser(ctx context.Context, params files_sdk.HistoryListFo
 	}
 	i.ListParams = &params
 	list := files_sdk.ActionCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
+	i.Query = listquery.Build(c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func ListForUser(ctx context.Context, params files_sdk.HistoryListForUserParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	return (&Client{}).ListForUser(ctx, params, opts...)
+func ListForUser(params files_sdk.HistoryListForUserParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).ListForUser(params, opts...)
 }
 
-func (c *Client) ListLogins(ctx context.Context, params files_sdk.HistoryListLoginsParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+func (c *Client) ListLogins(params files_sdk.HistoryListLoginsParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/history/login", params)
 	if err != nil {
@@ -81,15 +79,15 @@ func (c *Client) ListLogins(ctx context.Context, params files_sdk.HistoryListLog
 	}
 	i.ListParams = &params
 	list := files_sdk.ActionCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
+	i.Query = listquery.Build(c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func ListLogins(ctx context.Context, params files_sdk.HistoryListLoginsParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	return (&Client{}).ListLogins(ctx, params, opts...)
+func ListLogins(params files_sdk.HistoryListLoginsParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).ListLogins(params, opts...)
 }
 
-func (c *Client) List(ctx context.Context, params files_sdk.HistoryListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+func (c *Client) List(params files_sdk.HistoryListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/history", params)
 	if err != nil {
@@ -97,10 +95,10 @@ func (c *Client) List(ctx context.Context, params files_sdk.HistoryListParams, o
 	}
 	i.ListParams = &params
 	list := files_sdk.ActionCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
+	i.Query = listquery.Build(c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func List(ctx context.Context, params files_sdk.HistoryListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	return (&Client{}).List(ctx, params, opts...)
+func List(params files_sdk.HistoryListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).List(params, opts...)
 }

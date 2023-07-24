@@ -1,7 +1,6 @@
 package user
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -49,7 +48,6 @@ func TestClient_Update(t *testing.T) {
 	assert.Equal(lib.Bool(true), user.SftpPermission)
 
 	user, err = client.Update(
-		context.Background(),
 		files_sdk.UserUpdateParams{
 			Id:             user.Id,
 			SftpPermission: lib.Bool(false),
@@ -73,7 +71,7 @@ func TestClient_List(t *testing.T) {
 	_, err = findOrCreateUser(client, files_sdk.UserCreateParams{Username: "test-list-user"})
 	assert.NoError(err)
 
-	it, err := client.List(context.Background(), files_sdk.UserListParams{})
+	it, err := client.List(files_sdk.UserListParams{})
 	assert.NoError(err)
 	var users []files_sdk.User
 	for it.Next() {
@@ -90,7 +88,6 @@ func findOrCreateUser(client *Client, params files_sdk.UserCreateParams) (files_
 	user, err := findUser(client, params)
 	if err != nil && err.Error() == "user not found" {
 		return client.Create(
-			context.Background(),
 			params,
 		)
 	}
@@ -99,7 +96,6 @@ func findOrCreateUser(client *Client, params files_sdk.UserCreateParams) (files_
 
 func findUser(client *Client, params files_sdk.UserCreateParams) (files_sdk.User, error) {
 	it, err := client.List(
-		context.Background(),
 		files_sdk.UserListParams{},
 	)
 

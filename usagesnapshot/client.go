@@ -1,8 +1,6 @@
 package usage_snapshot
 
 import (
-	"context"
-
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
 	listquery "github.com/Files-com/files-sdk-go/v2/listquery"
@@ -25,7 +23,7 @@ func (i *Iter) UsageSnapshot() files_sdk.UsageSnapshot {
 	return i.Current().(files_sdk.UsageSnapshot)
 }
 
-func (c *Client) List(ctx context.Context, params files_sdk.UsageSnapshotListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+func (c *Client) List(params files_sdk.UsageSnapshotListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/usage_snapshots", params)
 	if err != nil {
@@ -33,10 +31,10 @@ func (c *Client) List(ctx context.Context, params files_sdk.UsageSnapshotListPar
 	}
 	i.ListParams = &params
 	list := files_sdk.UsageSnapshotCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
+	i.Query = listquery.Build(c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func List(ctx context.Context, params files_sdk.UsageSnapshotListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	return (&Client{}).List(ctx, params, opts...)
+func List(params files_sdk.UsageSnapshotListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).List(params, opts...)
 }

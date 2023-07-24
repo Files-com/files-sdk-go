@@ -1,7 +1,6 @@
 package file
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -27,13 +26,13 @@ type DeleteSource struct {
 	Config files_sdk.Config
 }
 
-func (ad DeleteSource) Call(ctx context.Context, f status.File) (status.Log, error) {
+func (ad DeleteSource) Call(f status.File, opts ...files_sdk.RequestResponseOption) (status.Log, error) {
 	switch f.Direction {
 	case direction.UploadType:
 		return status.Log{Path: f.LocalPath, Action: "delete source"}, os.Remove(f.LocalPath)
 	case direction.DownloadType:
 		client := Client{Config: ad.Config}
-		err := client.Delete(ctx, files_sdk.FileDeleteParams{Path: f.RemotePath})
+		err := client.Delete(files_sdk.FileDeleteParams{Path: f.RemotePath}, opts...)
 		return status.Log{Path: f.RemotePath, Action: "delete source"}, err
 	default:
 		panic(fmt.Sprintf("unknown direction %v", f.Direction))
@@ -51,7 +50,7 @@ type MoveSource struct {
 	Config files_sdk.Config
 }
 
-func (am MoveSource) Call(ctx context.Context, f status.File) (status.Log, error) {
+func (am MoveSource) Call(f status.File, opts ...files_sdk.RequestResponseOption) (status.Log, error) {
 	var err error
 	log := status.Log{Action: "move source"}
 	log.Path = am.movePath(f)
@@ -69,29 +68,29 @@ func (am MoveSource) Call(ctx context.Context, f status.File) (status.Log, error
 			if err != nil {
 				return log, err
 			}
-			return am.Call(ctx, f)
+			return am.Call(f, opts...)
 		}
 		return log, err
 	case direction.DownloadType:
 		client := &Client{Config: am.Config}
 		_, err := client.Move(
-			ctx,
 			files_sdk.FileMoveParams{Path: f.RemotePath, Destination: lib.Path{Path: log.Path}.NormalizePathSystemForAPI().String()},
+			opts...,
 		)
 		rErr, ok := err.(files_sdk.ResponseError)
 		if ok && rErr.Type == "processing-failure/destination-parent-does-not-exist" {
-			err := (&FS{}).Init(am.Config, true).WithContext(ctx).(*FS).MkdirAll(filepath.Dir(log.Path), 0755)
+			err := (&FS{}).Init(am.Config, true).WithContext(files_sdk.ContextOption(opts)).(*FS).MkdirAll(filepath.Dir(log.Path), 0755)
 			if err != nil {
 				return log, err
 			}
-			return am.Call(ctx, f)
+			return am.Call(f, opts...)
 		}
 		if ok && rErr.Type == "processing-failure/destination-exists" {
-			err := client.Delete(ctx, files_sdk.FileDeleteParams{Path: lib.Path{Path: log.Path}.NormalizePathSystemForAPI().String()})
+			err := client.Delete(files_sdk.FileDeleteParams{Path: lib.Path{Path: log.Path}.NormalizePathSystemForAPI().String()}, opts...)
 			if err != nil {
 				return log, err
 			}
-			return am.Call(ctx, f)
+			return am.Call(f, opts...)
 		}
 		return log, err
 	default:

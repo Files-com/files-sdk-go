@@ -180,14 +180,14 @@ func (f *File) Read(b []byte) (n int, err error) {
 		if downloadRequestExpired(err) {
 			f.Config.LogPath(f.File.Path, map[string]interface{}{"message": "downloadRequestExpired", "error": err})
 			f.File.DownloadUri = "" // force a new query
-			*f.File, err = (&Client{Config: f.Config}).DownloadUri(f.Context, files_sdk.FileDownloadParams{File: *f.File})
+			*f.File, err = (&Client{Config: f.Config}).DownloadUri(files_sdk.FileDownloadParams{File: *f.File}, files_sdk.WithContext(f.Context))
 			if err == nil {
 				err = f.readCloserInit()
 			}
 		}
 
 		if err != nil {
-			status, statusErr := (&Client{Config: f.Config}).DownloadRequestStatus(f.Context, f.File.DownloadUri, f.downloadRequestId)
+			status, statusErr := (&Client{Config: f.Config}).DownloadRequestStatus(f.File.DownloadUri, f.downloadRequestId, files_sdk.WithContext(f.Context))
 			if statusErr != nil {
 				return n, err
 			}
@@ -237,8 +237,8 @@ func parseMaxConnections(response *http.Response) int {
 
 func (f *File) readCloserInit() (err error) {
 	*f.File, err = (&Client{Config: f.Config}).Download(
-		f.Context,
 		files_sdk.FileDownloadParams{File: *f.File},
+		files_sdk.WithContext(f.Context),
 		files_sdk.ResponseOption(func(response *http.Response) error {
 			f.MaxConnections = parseMaxConnections(response)
 			f.downloadRequestId = response.Header.Get("X-Files-Download-Request-Id")
@@ -282,8 +282,8 @@ func (f *File) ReaderRange(off int64, end int64) (r io.ReadCloser, err error) {
 	headers := &http.Header{}
 	headers.Set("Range", fmt.Sprintf("bytes=%v-%v", off, end))
 	_, err = (&Client{Config: f.Config}).Download(
-		f.Context,
 		files_sdk.FileDownloadParams{File: *f.File},
+		files_sdk.WithContext(f.Context),
 		files_sdk.RequestHeadersOption(headers),
 		files_sdk.ResponseOption(func(response *http.Response) error {
 			f.downloadRequestId = response.Header.Get("X-Files-Download-Request-Id")
@@ -400,7 +400,8 @@ func (r ReaderCloserDownloadStatus) Close() error {
 
 	if untrustedInfo, ok := info.(UntrustedSize); ok && (untrustedInfo.UntrustedSize() || untrustedInfo.SizeTrust() == NullSizeTrust) {
 		r.file.fileMutex.Lock()
-		status, err := (&Client{Config: r.file.Config}).DownloadRequestStatus(r.file.Context, r.file.DownloadUri, r.file.downloadRequestId)
+
+		status, err := (&Client{Config: r.file.Config}).DownloadRequestStatus(r.file.DownloadUri, r.file.downloadRequestId, files_sdk.WithContext(r.file.Context))
 		r.file.fileMutex.Unlock()
 		if err != nil {
 			return err
@@ -453,10 +454,10 @@ func (f *File) ReadAt(p []byte, off int64) (n int, err error) {
 	headers := &http.Header{}
 	headers.Set("Range", fmt.Sprintf("bytes=%v-%v", off, int64(len(p))+off-1))
 	_, err = (&Client{Config: f.Config}).Download(
-		f.Context,
 		files_sdk.FileDownloadParams{
 			File: *f.File,
 		},
+		files_sdk.WithContext(f.Context),
 		files_sdk.RequestHeadersOption(headers),
 		files_sdk.ResponseOption(func(response *http.Response) error {
 			if err := lib.ResponseErrors(response, lib.IsStatus(http.StatusForbidden), lib.NotStatus(http.StatusPartialContent), files_sdk.APIError()); err != nil {
@@ -497,7 +498,7 @@ func downloadRequestExpired(err error) bool {
 
 func (f *File) downloadURI() (err error) {
 	f.fileMutex.Lock()
-	*f.File, err = (&Client{Config: f.Config}).DownloadUri(f.Context, files_sdk.FileDownloadParams{File: *f.File})
+	*f.File, err = (&Client{Config: f.Config}).DownloadUri(files_sdk.FileDownloadParams{File: *f.File}, files_sdk.WithContext(f.Context))
 	f.fileMutex.Unlock()
 	return
 }
@@ -539,7 +540,7 @@ func (f *FS) Open(name string) (goFs.File, error) {
 	if path == "" { // skip call on root path
 		fileInfo = files_sdk.File{Type: "directory"}
 	} else {
-		fileInfo, err = (&Client{Config: f.Config}).Find(f.Context, files_sdk.FileFindParams{Path: path})
+		fileInfo, err = (&Client{Config: f.Config}).Find(files_sdk.FileFindParams{Path: path}, files_sdk.WithContext(f.Context))
 		if err != nil {
 			return &File{}, &goFs.PathError{Path: path, Err: err, Op: "open"}
 		}
@@ -590,7 +591,7 @@ func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {
 		return files, &goFs.PathError{Path: f.Path, Err: f.Context.Err(), Op: "readdir"}
 	}
 	folderClient := folder.Client{Config: f.Config}
-	it, err := folderClient.ListFor(f.Context, files_sdk.FolderListForParams{Path: f.Path})
+	it, err := folderClient.ListFor(files_sdk.FolderListForParams{Path: f.Path}, files_sdk.WithContext(f.Context))
 	if err != nil {
 		return files, &goFs.PathError{Path: f.Path, Err: err, Op: "readdir"}
 	}
@@ -629,7 +630,7 @@ func (f *FS) MkdirAll(dir string, _ goFs.FileMode) error {
 			break
 		}
 		folderClient := folder.Client{Config: f.Config}
-		_, err := folderClient.Create(f.Context, files_sdk.FolderCreateParams{Path: lib.UrlJoinNoEscape(parentPath, dirPath)})
+		_, err := folderClient.Create(files_sdk.FolderCreateParams{Path: lib.UrlJoinNoEscape(parentPath, dirPath)}, files_sdk.WithContext(f.Context))
 		rErr, ok := err.(files_sdk.ResponseError)
 		if err != nil && ok && rErr.Type != "processing-failure/destination-exists" {
 			return err
@@ -679,10 +680,12 @@ func (w WritableFile) Write(p []byte) (int, error) {
 }
 
 func (w WritableFile) Close() (err error) {
-	return w.Client.Upload(w.Context, bytes.NewReader(w.Buffer.Bytes()), w.path, func(params UploadIOParams) UploadIOParams {
-		params.Size = int64(w.Buffer.Len())
-		return params
-	})
+	return w.Client.Upload(
+		UploadWithContext(w.Context),
+		UploadWithReader(bytes.NewReader(w.Buffer.Bytes())),
+		UploadWithDestinationPath(w.path),
+		UploadWithSize(int64(w.Buffer.Len())),
+	)
 }
 
 // Create Not for performant use cases.
@@ -691,11 +694,11 @@ func (f *FS) Create(path string) (io.WriteCloser, error) {
 }
 
 func (f *FS) RemoveAll(path string) error {
-	return (&Client{Config: f.Config}).Delete(f.Context, files_sdk.FileDeleteParams{Path: path, Recursive: lib.Bool(true)})
+	return (&Client{Config: f.Config}).Delete(files_sdk.FileDeleteParams{Path: path, Recursive: lib.Bool(true)}, files_sdk.WithContext(f.Context))
 }
 
 func (f *FS) Remove(path string) error {
-	return (&Client{Config: f.Config}).Delete(f.Context, files_sdk.FileDeleteParams{Path: path})
+	return (&Client{Config: f.Config}).Delete(files_sdk.FileDeleteParams{Path: path}, files_sdk.WithContext(f.Context))
 }
 
 func (f *FS) PathJoin(s ...string) string {

@@ -1,8 +1,6 @@
 package lock
 
 import (
-	"context"
-
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	lib "github.com/Files-com/files-sdk-go/v2/lib"
 	listquery "github.com/Files-com/files-sdk-go/v2/listquery"
@@ -30,10 +28,10 @@ func (i *Iter) Iterate(identifier interface{}, opts ...files_sdk.RequestResponse
 	if path, ok := identifier.(string); ok {
 		params.Path = path
 	}
-	return i.Client.ListFor(context.Background(), params, opts...)
+	return i.Client.ListFor(params, opts...)
 }
 
-func (c *Client) ListFor(ctx context.Context, params files_sdk.LockListForParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+func (c *Client) ListFor(params files_sdk.LockListForParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/locks/{path}", params)
 	if err != nil {
@@ -41,28 +39,28 @@ func (c *Client) ListFor(ctx context.Context, params files_sdk.LockListForParams
 	}
 	i.ListParams = &params
 	list := files_sdk.LockCollection{}
-	i.Query = listquery.Build(ctx, c.Config, path, &list, opts...)
+	i.Query = listquery.Build(c.Config, path, &list, opts...)
 	return i, nil
 }
 
-func ListFor(ctx context.Context, params files_sdk.LockListForParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	return (&Client{}).ListFor(ctx, params, opts...)
+func ListFor(params files_sdk.LockListForParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).ListFor(params, opts...)
 }
 
-func (c *Client) Create(ctx context.Context, params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (lock files_sdk.Lock, err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "POST", Path: "/locks/{path}", Params: params, Entity: &lock}, opts...)
+func (c *Client) Create(params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (lock files_sdk.Lock, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/locks/{path}", Params: params, Entity: &lock}, opts...)
 	return
 }
 
-func Create(ctx context.Context, params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (lock files_sdk.Lock, err error) {
-	return (&Client{}).Create(ctx, params, opts...)
+func Create(params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (lock files_sdk.Lock, err error) {
+	return (&Client{}).Create(params, opts...)
 }
 
-func (c *Client) Delete(ctx context.Context, params files_sdk.LockDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(ctx, c.Config, lib.Resource{Method: "DELETE", Path: "/locks/{path}", Params: params, Entity: nil}, opts...)
+func (c *Client) Delete(params files_sdk.LockDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "DELETE", Path: "/locks/{path}", Params: params, Entity: nil}, opts...)
 	return
 }
 
-func Delete(ctx context.Context, params files_sdk.LockDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	return (&Client{}).Delete(ctx, params, opts...)
+func Delete(params files_sdk.LockDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	return (&Client{}).Delete(params, opts...)
 }

@@ -2,7 +2,6 @@ package folder
 
 import (
 	"bytes"
-	"context"
 	"log"
 	"testing"
 
@@ -14,7 +13,6 @@ import (
 
 func TestClient_ListFor(t *testing.T) {
 	type args struct {
-		ctx    context.Context
 		params files_sdk.FolderListForParams
 		opts   []files_sdk.RequestResponseOption
 	}
@@ -27,13 +25,13 @@ func TestClient_ListFor(t *testing.T) {
 		{
 			"without path it send fields",
 			files_sdk.Config{},
-			args{ctx: context.Background(), params: files_sdk.FolderListForParams{WithPreviews: lib.Bool(true)}, opts: []files_sdk.RequestResponseOption{}},
+			args{params: files_sdk.FolderListForParams{WithPreviews: lib.Bool(true)}, opts: []files_sdk.RequestResponseOption{}},
 			"with_preview",
 		},
 		{
 			"with path it send fields",
 			files_sdk.Config{},
-			args{ctx: context.Background(), params: files_sdk.FolderListForParams{Path: "anything", WithPreviews: lib.Bool(true)}, opts: []files_sdk.RequestResponseOption{}},
+			args{params: files_sdk.FolderListForParams{Path: "anything", WithPreviews: lib.Bool(true)}, opts: []files_sdk.RequestResponseOption{}},
 			"with_preview",
 		},
 	}
@@ -48,7 +46,7 @@ func TestClient_ListFor(t *testing.T) {
 				Config: tt.Config,
 			}
 
-			it, err := c.ListFor(tt.args.ctx, tt.args.params, tt.args.opts...)
+			it, err := c.ListFor(tt.args.params, tt.args.opts...)
 			require.NoError(t, err)
 			it.GetPage()
 			assert.Contains(t, buf.String(), tt.debugOutput)

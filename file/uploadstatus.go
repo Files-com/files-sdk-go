@@ -19,8 +19,7 @@ type UploadStatus struct {
 	Sync          bool
 	lastByte      time.Time
 	Uploader
-	Parts
-	files_sdk.FileUploadPart
+	UploadResumable
 	Mutex *sync.RWMutex
 	error
 	lastError   error

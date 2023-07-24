@@ -13,12 +13,12 @@ import (
 	"moul.io/http2curl"
 )
 
-func Resource(ctx context.Context, config Config, resource lib.Resource, opt ...RequestResponseOption) error {
+func Resource(config Config, resource lib.Resource, opt ...RequestResponseOption) error {
 	out, err := resource.Out()
 	if err != nil {
 		return err
 	}
-	data, res, err := Call(ctx, resource.Method, config, out.Path, out.Values, opt...)
+	data, res, err := Call(resource.Method, config, out.Path, out.Values, opt...)
 	defer lib.CloseBody(res)
 	if err != nil {
 		return err
@@ -30,7 +30,7 @@ func Resource(ctx context.Context, config Config, resource lib.Resource, opt ...
 	return out.Entity.UnmarshalJSON(*data)
 }
 
-func Call(ctx context.Context, method string, config Config, resource string, params lib.Values, opts ...RequestResponseOption) (*[]byte, *http.Response, error) {
+func Call(method string, config Config, resource string, params lib.Values, opts ...RequestResponseOption) (*[]byte, *http.Response, error) {
 	defaultHeaders := &http.Header{}
 	config.SetHeaders(defaultHeaders)
 	callParams := &CallParams{
@@ -39,7 +39,6 @@ func Call(ctx context.Context, method string, config Config, resource string, pa
 		Uri:     config.RootPath() + resource,
 		Params:  params,
 		Headers: defaultHeaders,
-		Context: ctx,
 	}
 	request, err := buildRequest(callParams)
 	if err != nil {
