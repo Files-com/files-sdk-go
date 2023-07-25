@@ -25,6 +25,7 @@ type Site struct {
 	BundleExpiration                       int64                  `json:"bundle_expiration,omitempty" path:"bundle_expiration,omitempty" url:"bundle_expiration,omitempty"`
 	BundlePasswordRequired                 *bool                  `json:"bundle_password_required,omitempty" path:"bundle_password_required,omitempty" url:"bundle_password_required,omitempty"`
 	BundleRegistrationNotifications        string                 `json:"bundle_registration_notifications,omitempty" path:"bundle_registration_notifications,omitempty" url:"bundle_registration_notifications,omitempty"`
+	BundleRequireRegistration              *bool                  `json:"bundle_require_registration,omitempty" path:"bundle_require_registration,omitempty" url:"bundle_require_registration,omitempty"`
 	BundleRequireShareRecipient            *bool                  `json:"bundle_require_share_recipient,omitempty" path:"bundle_require_share_recipient,omitempty" url:"bundle_require_share_recipient,omitempty"`
 	BundleUploadReceiptNotifications       string                 `json:"bundle_upload_receipt_notifications,omitempty" path:"bundle_upload_receipt_notifications,omitempty" url:"bundle_upload_receipt_notifications,omitempty"`
 	BundleWatermarkAttachment              Image                  `json:"bundle_watermark_attachment,omitempty" path:"bundle_watermark_attachment,omitempty" url:"bundle_watermark_attachment,omitempty"`
@@ -220,6 +221,7 @@ type SiteUpdateParams struct {
 	ImmutableFiles                         *bool                  `url:"immutable_files,omitempty" required:"false" json:"immutable_files,omitempty" path:"immutable_files"`
 	SessionPinnedByIp                      *bool                  `url:"session_pinned_by_ip,omitempty" required:"false" json:"session_pinned_by_ip,omitempty" path:"session_pinned_by_ip"`
 	BundlePasswordRequired                 *bool                  `url:"bundle_password_required,omitempty" required:"false" json:"bundle_password_required,omitempty" path:"bundle_password_required"`
+	BundleRequireRegistration              *bool                  `url:"bundle_require_registration,omitempty" required:"false" json:"bundle_require_registration,omitempty" path:"bundle_require_registration"`
 	BundleRequireShareRecipient            *bool                  `url:"bundle_require_share_recipient,omitempty" required:"false" json:"bundle_require_share_recipient,omitempty" path:"bundle_require_share_recipient"`
 	BundleRegistrationNotifications        string                 `url:"bundle_registration_notifications,omitempty" required:"false" json:"bundle_registration_notifications,omitempty" path:"bundle_registration_notifications"`
 	BundleActivityNotifications            string                 `url:"bundle_activity_notifications,omitempty" required:"false" json:"bundle_activity_notifications,omitempty" path:"bundle_activity_notifications"`

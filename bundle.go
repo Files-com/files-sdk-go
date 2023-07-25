@@ -28,6 +28,7 @@ type Bundle struct {
 	FormFieldSet                    FormFieldSet           `json:"form_field_set,omitempty" path:"form_field_set,omitempty" url:"form_field_set,omitempty"`
 	SkipName                        *bool                  `json:"skip_name,omitempty" path:"skip_name,omitempty" url:"skip_name,omitempty"`
 	SkipEmail                       *bool                  `json:"skip_email,omitempty" path:"skip_email,omitempty" url:"skip_email,omitempty"`
+	StartAccessOnDate               *time.Time             `json:"start_access_on_date,omitempty" path:"start_access_on_date,omitempty" url:"start_access_on_date,omitempty"`
 	SkipCompany                     *bool                  `json:"skip_company,omitempty" path:"skip_company,omitempty" url:"skip_company,omitempty"`
 	Id                              int64                  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	CreatedAt                       *time.Time             `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
@@ -115,6 +116,7 @@ type BundleCreateParams struct {
 	SkipEmail                       *bool                 `url:"skip_email,omitempty" required:"false" json:"skip_email,omitempty" path:"skip_email"`
 	SkipName                        *bool                 `url:"skip_name,omitempty" required:"false" json:"skip_name,omitempty" path:"skip_name"`
 	SkipCompany                     *bool                 `url:"skip_company,omitempty" required:"false" json:"skip_company,omitempty" path:"skip_company"`
+	StartAccessOnDate               *time.Time            `url:"start_access_on_date,omitempty" required:"false" json:"start_access_on_date,omitempty" path:"start_access_on_date"`
 	SnapshotId                      int64                 `url:"snapshot_id,omitempty" required:"false" json:"snapshot_id,omitempty" path:"snapshot_id"`
 	WatermarkAttachmentFile         io.Writer             `url:"watermark_attachment_file,omitempty" required:"false" json:"watermark_attachment_file,omitempty" path:"watermark_attachment_file"`
 }
