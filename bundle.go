@@ -151,6 +151,7 @@ type BundleUpdateParams struct {
 	RequireShareRecipient           *bool                 `url:"require_share_recipient,omitempty" required:"false" json:"require_share_recipient,omitempty" path:"require_share_recipient"`
 	SendEmailReceiptToUploader      *bool                 `url:"send_email_receipt_to_uploader,omitempty" required:"false" json:"send_email_receipt_to_uploader,omitempty" path:"send_email_receipt_to_uploader"`
 	SkipCompany                     *bool                 `url:"skip_company,omitempty" required:"false" json:"skip_company,omitempty" path:"skip_company"`
+	StartAccessOnDate               *time.Time            `url:"start_access_on_date,omitempty" required:"false" json:"start_access_on_date,omitempty" path:"start_access_on_date"`
 	SkipEmail                       *bool                 `url:"skip_email,omitempty" required:"false" json:"skip_email,omitempty" path:"skip_email"`
 	SkipName                        *bool                 `url:"skip_name,omitempty" required:"false" json:"skip_name,omitempty" path:"skip_name"`
 	WatermarkAttachmentDelete       *bool                 `url:"watermark_attachment_delete,omitempty" required:"false" json:"watermark_attachment_delete,omitempty" path:"watermark_attachment_delete"`
