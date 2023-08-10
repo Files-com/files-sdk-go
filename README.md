@@ -133,3 +133,4 @@ func main() {
 docker build . --tag files-sdk-go:latest
 docker run --workdir /app --volume ${PWD}:/app -it files-sdk-go
 ```
+
