@@ -1,7 +1,6 @@
 package files_sdk
 
 import (
-	_ "embed"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,8 +11,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-//go:embed _VERSION
-var VERSION string
+var VERSION = "1.0"
 
 const (
 	UserAgent   = "Files.com Go SDK"
