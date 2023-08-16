@@ -28,9 +28,9 @@ type PermissionListParams struct {
 	Filter        Permission             `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	FilterPrefix  map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	Path          string                 `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
+	IncludeGroups *bool                  `url:"include_groups,omitempty" required:"false" json:"include_groups,omitempty" path:"include_groups"`
 	GroupId       string                 `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
 	UserId        string                 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	IncludeGroups *bool                  `url:"include_groups,omitempty" required:"false" json:"include_groups,omitempty" path:"include_groups"`
 	ListParams
 }
 
