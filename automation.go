@@ -32,6 +32,7 @@ type Automation struct {
 	TriggerActions         []string               `json:"trigger_actions,omitempty" path:"trigger_actions,omitempty" url:"trigger_actions,omitempty"`
 	Value                  map[string]interface{} `json:"value,omitempty" path:"value,omitempty" url:"value,omitempty"`
 	Destination            string                 `json:"destination,omitempty" path:"destination,omitempty" url:"destination,omitempty"`
+	ClonedFrom             int64                  `json:"cloned_from,omitempty" path:"cloned_from,omitempty" url:"cloned_from,omitempty"`
 }
 
 func (a Automation) Identifier() interface{} {
@@ -74,6 +75,7 @@ func (u AutomationEnum) Enum() map[string]AutomationEnum {
 }
 
 type AutomationListParams struct {
+	Action      string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy      map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter      Automation             `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	FilterGt    map[string]interface{} `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -108,6 +110,7 @@ type AutomationCreateParams struct {
 	Value                  map[string]interface{} `url:"value,omitempty" required:"false" json:"value,omitempty" path:"value"`
 	RecurringDay           int64                  `url:"recurring_day,omitempty" required:"false" json:"recurring_day,omitempty" path:"recurring_day"`
 	Automation             AutomationEnum         `url:"automation,omitempty" required:"true" json:"automation,omitempty" path:"automation"`
+	ClonedFrom             int64                  `url:"cloned_from,omitempty" required:"false" json:"cloned_from,omitempty" path:"cloned_from"`
 }
 
 // Manually run automation

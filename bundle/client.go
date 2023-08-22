@@ -56,6 +56,15 @@ func Find(params files_sdk.BundleFindParams, opts ...files_sdk.RequestResponseOp
 	return (&Client{}).Find(params, opts...)
 }
 
+func (c *Client) GetInfo(params files_sdk.BundleGetInfoParams, opts ...files_sdk.RequestResponseOption) (bundle files_sdk.Bundle, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/bundles/info", Params: params, Entity: &bundle}, opts...)
+	return
+}
+
+func GetInfo(params files_sdk.BundleGetInfoParams, opts ...files_sdk.RequestResponseOption) (bundle files_sdk.Bundle, err error) {
+	return (&Client{}).GetInfo(params, opts...)
+}
+
 func (c *Client) Create(params files_sdk.BundleCreateParams, opts ...files_sdk.RequestResponseOption) (bundle files_sdk.Bundle, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/bundles", Params: params, Entity: &bundle}, opts...)
 	return
