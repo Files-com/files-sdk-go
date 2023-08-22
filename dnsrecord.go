@@ -20,7 +20,6 @@ func (d DnsRecord) Identifier() interface{} {
 type DnsRecordCollection []DnsRecord
 
 type DnsRecordListParams struct {
-	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 

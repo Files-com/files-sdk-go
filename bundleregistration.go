@@ -8,21 +8,19 @@ import (
 )
 
 type BundleRegistration struct {
-	Code                            string                 `json:"code,omitempty" path:"code,omitempty" url:"code,omitempty"`
-	Name                            string                 `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
-	Company                         string                 `json:"company,omitempty" path:"company,omitempty" url:"company,omitempty"`
-	Email                           string                 `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
-	Ip                              string                 `json:"ip,omitempty" path:"ip,omitempty" url:"ip,omitempty"`
-	InboxCode                       string                 `json:"inbox_code,omitempty" path:"inbox_code,omitempty" url:"inbox_code,omitempty"`
-	ClickwrapBody                   string                 `json:"clickwrap_body,omitempty" path:"clickwrap_body,omitempty" url:"clickwrap_body,omitempty"`
-	FormFieldSetId                  int64                  `json:"form_field_set_id,omitempty" path:"form_field_set_id,omitempty" url:"form_field_set_id,omitempty"`
-	FormFieldData                   map[string]interface{} `json:"form_field_data,omitempty" path:"form_field_data,omitempty" url:"form_field_data,omitempty"`
-	BundleCode                      string                 `json:"bundle_code,omitempty" path:"bundle_code,omitempty" url:"bundle_code,omitempty"`
-	BundleId                        int64                  `json:"bundle_id,omitempty" path:"bundle_id,omitempty" url:"bundle_id,omitempty"`
-	BundleRecipientId               int64                  `json:"bundle_recipient_id,omitempty" path:"bundle_recipient_id,omitempty" url:"bundle_recipient_id,omitempty"`
-	CreatedAt                       *time.Time             `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	BundleRecipientRegistrationCode string                 `json:"bundle_recipient_registration_code,omitempty" path:"bundle_recipient_registration_code,omitempty" url:"bundle_recipient_registration_code,omitempty"`
-	Password                        string                 `json:"password,omitempty" path:"password,omitempty" url:"password,omitempty"`
+	Code              string                 `json:"code,omitempty" path:"code,omitempty" url:"code,omitempty"`
+	Name              string                 `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Company           string                 `json:"company,omitempty" path:"company,omitempty" url:"company,omitempty"`
+	Email             string                 `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
+	Ip                string                 `json:"ip,omitempty" path:"ip,omitempty" url:"ip,omitempty"`
+	InboxCode         string                 `json:"inbox_code,omitempty" path:"inbox_code,omitempty" url:"inbox_code,omitempty"`
+	ClickwrapBody     string                 `json:"clickwrap_body,omitempty" path:"clickwrap_body,omitempty" url:"clickwrap_body,omitempty"`
+	FormFieldSetId    int64                  `json:"form_field_set_id,omitempty" path:"form_field_set_id,omitempty" url:"form_field_set_id,omitempty"`
+	FormFieldData     map[string]interface{} `json:"form_field_data,omitempty" path:"form_field_data,omitempty" url:"form_field_data,omitempty"`
+	BundleCode        string                 `json:"bundle_code,omitempty" path:"bundle_code,omitempty" url:"bundle_code,omitempty"`
+	BundleId          int64                  `json:"bundle_id,omitempty" path:"bundle_id,omitempty" url:"bundle_id,omitempty"`
+	BundleRecipientId int64                  `json:"bundle_recipient_id,omitempty" path:"bundle_recipient_id,omitempty" url:"bundle_recipient_id,omitempty"`
+	CreatedAt         *time.Time             `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
 // Identifier no path or id
@@ -30,24 +28,9 @@ type BundleRegistration struct {
 type BundleRegistrationCollection []BundleRegistration
 
 type BundleRegistrationListParams struct {
-	UserId   int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	Action   string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
-	BundleId int64  `url:"bundle_id,omitempty" required:"false" json:"bundle_id,omitempty" path:"bundle_id"`
+	UserId   int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	BundleId int64 `url:"bundle_id,omitempty" required:"false" json:"bundle_id,omitempty" path:"bundle_id"`
 	ListParams
-}
-
-type BundleRegistrationCreateParams struct {
-	BundleRecipientRegistrationCode string `url:"bundle_recipient_registration_code,omitempty" required:"false" json:"bundle_recipient_registration_code,omitempty" path:"bundle_recipient_registration_code"`
-	Password                        string `url:"password,omitempty" required:"false" json:"password,omitempty" path:"password"`
-	Company                         string `url:"company,omitempty" required:"false" json:"company,omitempty" path:"company"`
-	Email                           string `url:"email,omitempty" required:"false" json:"email,omitempty" path:"email"`
-	Name                            string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	BundleCode                      string `url:"bundle_code,omitempty" required:"true" json:"bundle_code,omitempty" path:"bundle_code"`
-}
-
-type BundleRegistrationLastActivityParams struct {
-	BundleRegistrationCode string `url:"bundle_registration_code,omitempty" required:"true" json:"bundle_registration_code,omitempty" path:"bundle_registration_code"`
-	UploadInProgress       *bool  `url:"upload_in_progress,omitempty" required:"false" json:"upload_in_progress,omitempty" path:"upload_in_progress"`
 }
 
 func (b *BundleRegistration) UnmarshalJSON(data []byte) error {

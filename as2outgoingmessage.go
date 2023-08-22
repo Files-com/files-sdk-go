@@ -48,7 +48,6 @@ func (a As2OutgoingMessage) Identifier() interface{} {
 type As2OutgoingMessageCollection []As2OutgoingMessage
 
 type As2OutgoingMessageListParams struct {
-	Action       string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy       map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       As2OutgoingMessage     `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	FilterGt     map[string]interface{} `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`

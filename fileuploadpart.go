@@ -23,7 +23,6 @@ type FileUploadPart struct {
 	Path               string                 `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	Ref                string                 `json:"ref,omitempty" path:"ref,omitempty" url:"ref,omitempty"`
 	UploadUri          string                 `json:"upload_uri,omitempty" path:"upload_uri,omitempty" url:"upload_uri,omitempty"`
-	InternalUploadUri  string                 `json:"internal_upload_uri,omitempty" path:"internal_upload_uri,omitempty" url:"internal_upload_uri,omitempty"`
 }
 
 func (f FileUploadPart) Identifier() interface{} {

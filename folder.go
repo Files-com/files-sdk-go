@@ -8,30 +8,25 @@ import (
 )
 
 type Folder struct {
-	Path                   string                 `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
-	DisplayName            string                 `json:"display_name,omitempty" path:"display_name,omitempty" url:"display_name,omitempty"`
-	Type                   string                 `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
-	Size                   int64                  `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
-	CreatedAt              *time.Time             `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	Mtime                  *time.Time             `json:"mtime,omitempty" path:"mtime,omitempty" url:"mtime,omitempty"`
-	ProvidedMtime          *time.Time             `json:"provided_mtime,omitempty" path:"provided_mtime,omitempty" url:"provided_mtime,omitempty"`
-	Crc32                  string                 `json:"crc32,omitempty" path:"crc32,omitempty" url:"crc32,omitempty"`
-	Md5                    string                 `json:"md5,omitempty" path:"md5,omitempty" url:"md5,omitempty"`
-	MimeType               string                 `json:"mime_type,omitempty" path:"mime_type,omitempty" url:"mime_type,omitempty"`
-	Region                 string                 `json:"region,omitempty" path:"region,omitempty" url:"region,omitempty"`
-	Permissions            string                 `json:"permissions,omitempty" path:"permissions,omitempty" url:"permissions,omitempty"`
-	SubfoldersLocked       *bool                  `json:"subfolders_locked?,omitempty" path:"subfolders_locked?,omitempty" url:"subfolders_locked?,omitempty"`
-	IsLocked               *bool                  `json:"is_locked,omitempty" path:"is_locked,omitempty" url:"is_locked,omitempty"`
-	RemoteServerId         int64                  `json:"remote_server_id,omitempty" path:"remote_server_id,omitempty" url:"remote_server_id,omitempty"`
-	Headers                map[string]interface{} `json:"headers,omitempty" path:"headers,omitempty" url:"headers,omitempty"`
-	SocksIps               map[string]interface{} `json:"socks_ips,omitempty" path:"socks_ips,omitempty" url:"socks_ips,omitempty"`
-	InternalDownloadUri    string                 `json:"internal_download_uri,omitempty" path:"internal_download_uri,omitempty" url:"internal_download_uri,omitempty"`
-	DownloadUri            string                 `json:"download_uri,omitempty" path:"download_uri,omitempty" url:"download_uri,omitempty"`
-	PriorityColor          string                 `json:"priority_color,omitempty" path:"priority_color,omitempty" url:"priority_color,omitempty"`
-	PreviewId              int64                  `json:"preview_id,omitempty" path:"preview_id,omitempty" url:"preview_id,omitempty"`
-	Preview                Preview                `json:"preview,omitempty" path:"preview,omitempty" url:"preview,omitempty"`
-	MkdirParents           *bool                  `json:"mkdir_parents,omitempty" path:"mkdir_parents,omitempty" url:"mkdir_parents,omitempty"`
-	BundleRegistrationCode string                 `json:"bundle_registration_code,omitempty" path:"bundle_registration_code,omitempty" url:"bundle_registration_code,omitempty"`
+	Path             string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	DisplayName      string     `json:"display_name,omitempty" path:"display_name,omitempty" url:"display_name,omitempty"`
+	Type             string     `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
+	Size             int64      `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
+	CreatedAt        *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	Mtime            *time.Time `json:"mtime,omitempty" path:"mtime,omitempty" url:"mtime,omitempty"`
+	ProvidedMtime    *time.Time `json:"provided_mtime,omitempty" path:"provided_mtime,omitempty" url:"provided_mtime,omitempty"`
+	Crc32            string     `json:"crc32,omitempty" path:"crc32,omitempty" url:"crc32,omitempty"`
+	Md5              string     `json:"md5,omitempty" path:"md5,omitempty" url:"md5,omitempty"`
+	MimeType         string     `json:"mime_type,omitempty" path:"mime_type,omitempty" url:"mime_type,omitempty"`
+	Region           string     `json:"region,omitempty" path:"region,omitempty" url:"region,omitempty"`
+	Permissions      string     `json:"permissions,omitempty" path:"permissions,omitempty" url:"permissions,omitempty"`
+	SubfoldersLocked *bool      `json:"subfolders_locked?,omitempty" path:"subfolders_locked?,omitempty" url:"subfolders_locked?,omitempty"`
+	IsLocked         *bool      `json:"is_locked,omitempty" path:"is_locked,omitempty" url:"is_locked,omitempty"`
+	DownloadUri      string     `json:"download_uri,omitempty" path:"download_uri,omitempty" url:"download_uri,omitempty"`
+	PriorityColor    string     `json:"priority_color,omitempty" path:"priority_color,omitempty" url:"priority_color,omitempty"`
+	PreviewId        int64      `json:"preview_id,omitempty" path:"preview_id,omitempty" url:"preview_id,omitempty"`
+	Preview          Preview    `json:"preview,omitempty" path:"preview,omitempty" url:"preview,omitempty"`
+	MkdirParents     *bool      `json:"mkdir_parents,omitempty" path:"mkdir_parents,omitempty" url:"mkdir_parents,omitempty"`
 }
 
 func (f Folder) Identifier() interface{} {
@@ -41,25 +36,22 @@ func (f Folder) Identifier() interface{} {
 type FolderCollection []Folder
 
 type FolderListForParams struct {
-	Action                 string                              `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
-	Path                   string                              `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
-	BundleRegistrationCode string                              `url:"bundle_registration_code,omitempty" required:"false" json:"bundle_registration_code,omitempty" path:"bundle_registration_code"`
-	Filter                 string                              `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	PreviewSize            string                              `url:"preview_size,omitempty" required:"false" json:"preview_size,omitempty" path:"preview_size"`
-	SortBy                 map[string]interface{}              `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Search                 string                              `url:"search,omitempty" required:"false" json:"search,omitempty" path:"search"`
-	SearchAll              *bool                               `url:"search_all,omitempty" required:"false" json:"search_all,omitempty" path:"search_all"`
-	WithPreviews           *bool                               `url:"with_previews,omitempty" required:"false" json:"with_previews,omitempty" path:"with_previews"`
-	WithPriorityColor      *bool                               `url:"with_priority_color,omitempty" required:"false" json:"with_priority_color,omitempty" path:"with_priority_color"`
-	ConcurrencyManager     lib.ConcurrencyManagerWithSubWorker `url:"-" required:"false" json:"-"`
+	Path               string                              `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
+	Filter             string                              `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	PreviewSize        string                              `url:"preview_size,omitempty" required:"false" json:"preview_size,omitempty" path:"preview_size"`
+	SortBy             map[string]interface{}              `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Search             string                              `url:"search,omitempty" required:"false" json:"search,omitempty" path:"search"`
+	SearchAll          *bool                               `url:"search_all,omitempty" required:"false" json:"search_all,omitempty" path:"search_all"`
+	WithPreviews       *bool                               `url:"with_previews,omitempty" required:"false" json:"with_previews,omitempty" path:"with_previews"`
+	WithPriorityColor  *bool                               `url:"with_priority_color,omitempty" required:"false" json:"with_priority_color,omitempty" path:"with_priority_color"`
+	ConcurrencyManager lib.ConcurrencyManagerWithSubWorker `url:"-" required:"false" json:"-"`
 	ListParams
 }
 
 type FolderCreateParams struct {
-	Path                   string     `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
-	MkdirParents           *bool      `url:"mkdir_parents,omitempty" required:"false" json:"mkdir_parents,omitempty" path:"mkdir_parents"`
-	ProvidedMtime          *time.Time `url:"provided_mtime,omitempty" required:"false" json:"provided_mtime,omitempty" path:"provided_mtime"`
-	BundleRegistrationCode string     `url:"bundle_registration_code,omitempty" required:"false" json:"bundle_registration_code,omitempty" path:"bundle_registration_code"`
+	Path          string     `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
+	MkdirParents  *bool      `url:"mkdir_parents,omitempty" required:"false" json:"mkdir_parents,omitempty" path:"mkdir_parents"`
+	ProvidedMtime *time.Time `url:"provided_mtime,omitempty" required:"false" json:"provided_mtime,omitempty" path:"provided_mtime"`
 }
 
 func (f *Folder) ToFile() (File, error) {
