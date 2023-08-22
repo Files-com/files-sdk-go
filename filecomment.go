@@ -20,7 +20,8 @@ func (f FileComment) Identifier() interface{} {
 type FileCommentCollection []FileComment
 
 type FileCommentListForParams struct {
-	Path string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
+	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
+	Path   string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	ListParams
 }
 

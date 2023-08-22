@@ -21,6 +21,7 @@ func (s SftpHostKey) Identifier() interface{} {
 type SftpHostKeyCollection []SftpHostKey
 
 type SftpHostKeyListParams struct {
+	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 

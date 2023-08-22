@@ -38,3 +38,12 @@ func (c *Client) List(params files_sdk.InboxRegistrationListParams, opts ...file
 func List(params files_sdk.InboxRegistrationListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	return (&Client{}).List(params, opts...)
 }
+
+func (c *Client) Create(params files_sdk.InboxRegistrationCreateParams, opts ...files_sdk.RequestResponseOption) (inboxRegistration files_sdk.InboxRegistration, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/inbox_registrations", Params: params, Entity: &inboxRegistration}, opts...)
+	return
+}
+
+func Create(params files_sdk.InboxRegistrationCreateParams, opts ...files_sdk.RequestResponseOption) (inboxRegistration files_sdk.InboxRegistration, err error) {
+	return (&Client{}).Create(params, opts...)
+}

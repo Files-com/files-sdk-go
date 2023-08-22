@@ -43,6 +43,22 @@ func (i *Iter) PublicIpAddress() files_sdk.PublicIpAddress {
 	return i.Current().(files_sdk.PublicIpAddress)
 }
 
+func (c *Client) GetActive(params files_sdk.IpAddressGetActiveParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
+	path, err := lib.BuildPath("/ip_addresses/active", params)
+	if err != nil {
+		return i, err
+	}
+	i.ListParams = &params
+	list := files_sdk.PublicIpAddressCollection{}
+	i.Query = listquery.Build(c.Config, path, &list, opts...)
+	return i, nil
+}
+
+func GetActive(params files_sdk.IpAddressGetActiveParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).GetActive(params, opts...)
+}
+
 func (c *Client) GetExavaultReserved(params files_sdk.IpAddressGetExavaultReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/ip_addresses/exavault-reserved", params)

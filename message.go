@@ -22,8 +22,9 @@ func (m Message) Identifier() interface{} {
 type MessageCollection []Message
 
 type MessageListParams struct {
-	UserId    int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	ProjectId int64 `url:"project_id,omitempty" required:"true" json:"project_id,omitempty" path:"project_id"`
+	UserId    int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	Action    string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
+	ProjectId int64  `url:"project_id,omitempty" required:"true" json:"project_id,omitempty" path:"project_id"`
 	ListParams
 }
 

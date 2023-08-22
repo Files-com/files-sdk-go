@@ -207,6 +207,15 @@ func Delete(params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponse
 	return (&Client{}).Delete(params, opts...)
 }
 
+func (c *Client) FindId(params files_sdk.FileFindIdParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/file_actions/id/{id}", Params: params, Entity: &file}, opts...)
+	return
+}
+
+func FindId(params files_sdk.FileFindIdParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
+	return (&Client{}).FindId(params, opts...)
+}
+
 func (c *Client) Find(params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/file_actions/metadata/{path}", Params: params, Entity: &file}, opts...)
 	return

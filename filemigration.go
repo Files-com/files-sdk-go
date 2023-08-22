@@ -24,6 +24,12 @@ func (f FileMigration) Identifier() interface{} {
 
 type FileMigrationCollection []FileMigration
 
+type FileMigrationListParams struct {
+	UserId int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
+	ListParams
+}
+
 type FileMigrationFindParams struct {
 	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 }
