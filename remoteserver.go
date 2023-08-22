@@ -174,6 +174,7 @@ func (u RemoteServerFilesAgentPermissionSetEnum) Enum() map[string]RemoteServerF
 }
 
 type RemoteServerListParams struct {
+	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 
@@ -265,6 +266,75 @@ type RemoteServerConfigurationFileParams struct {
 	PublicKey     string `url:"public_key,omitempty" required:"false" json:"public_key,omitempty" path:"public_key"`
 	ServerHostKey string `url:"server_host_key,omitempty" required:"false" json:"server_host_key,omitempty" path:"server_host_key"`
 	Subdomain     string `url:"subdomain,omitempty" required:"false" json:"subdomain,omitempty" path:"subdomain"`
+}
+
+type RemoteServerListForTestingParams struct {
+	RemoteServerId                    int64  `url:"remote_server_id,omitempty" required:"false" json:"remote_server_id,omitempty" path:"remote_server_id"`
+	Root                              string `url:"root,omitempty" required:"false" json:"root,omitempty" path:"root"`
+	AwsAccessKey                      string `url:"aws_access_key,omitempty" required:"false" json:"aws_access_key,omitempty" path:"aws_access_key"`
+	AwsSecretKey                      string `url:"aws_secret_key,omitempty" required:"false" json:"aws_secret_key,omitempty" path:"aws_secret_key"`
+	Password                          string `url:"password,omitempty" required:"false" json:"password,omitempty" path:"password"`
+	PrivateKey                        string `url:"private_key,omitempty" required:"false" json:"private_key,omitempty" path:"private_key"`
+	PrivateKeyPassphrase              string `url:"private_key_passphrase,omitempty" required:"false" json:"private_key_passphrase,omitempty" path:"private_key_passphrase"`
+	SslCertificate                    string `url:"ssl_certificate,omitempty" required:"false" json:"ssl_certificate,omitempty" path:"ssl_certificate"`
+	GoogleCloudStorageCredentialsJson string `url:"google_cloud_storage_credentials_json,omitempty" required:"false" json:"google_cloud_storage_credentials_json,omitempty" path:"google_cloud_storage_credentials_json"`
+	WasabiAccessKey                   string `url:"wasabi_access_key,omitempty" required:"false" json:"wasabi_access_key,omitempty" path:"wasabi_access_key"`
+	WasabiSecretKey                   string `url:"wasabi_secret_key,omitempty" required:"false" json:"wasabi_secret_key,omitempty" path:"wasabi_secret_key"`
+	BackblazeB2KeyId                  string `url:"backblaze_b2_key_id,omitempty" required:"false" json:"backblaze_b2_key_id,omitempty" path:"backblaze_b2_key_id"`
+	BackblazeB2ApplicationKey         string `url:"backblaze_b2_application_key,omitempty" required:"false" json:"backblaze_b2_application_key,omitempty" path:"backblaze_b2_application_key"`
+	RackspaceApiKey                   string `url:"rackspace_api_key,omitempty" required:"false" json:"rackspace_api_key,omitempty" path:"rackspace_api_key"`
+	ResetAuthentication               *bool  `url:"reset_authentication,omitempty" required:"false" json:"reset_authentication,omitempty" path:"reset_authentication"`
+	AzureBlobStorageAccessKey         string `url:"azure_blob_storage_access_key,omitempty" required:"false" json:"azure_blob_storage_access_key,omitempty" path:"azure_blob_storage_access_key"`
+	AzureFilesStorageAccessKey        string `url:"azure_files_storage_access_key,omitempty" required:"false" json:"azure_files_storage_access_key,omitempty" path:"azure_files_storage_access_key"`
+	Hostname                          string `url:"hostname,omitempty" required:"false" json:"hostname,omitempty" path:"hostname"`
+	Name                              string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
+	PinToSiteRegion                   *bool  `url:"pin_to_site_region,omitempty" required:"false" json:"pin_to_site_region,omitempty" path:"pin_to_site_region"`
+	MaxConnections                    int64  `url:"max_connections,omitempty" required:"false" json:"max_connections,omitempty" path:"max_connections"`
+	Port                              int64  `url:"port,omitempty" required:"false" json:"port,omitempty" path:"port"`
+	S3Bucket                          string `url:"s3_bucket,omitempty" required:"false" json:"s3_bucket,omitempty" path:"s3_bucket"`
+	S3Region                          string `url:"s3_region,omitempty" required:"false" json:"s3_region,omitempty" path:"s3_region"`
+	ServerCertificate                 string `url:"server_certificate,omitempty" required:"false" json:"server_certificate,omitempty" path:"server_certificate"`
+	ServerHostKey                     string `url:"server_host_key,omitempty" required:"false" json:"server_host_key,omitempty" path:"server_host_key"`
+	ServerType                        string `url:"server_type,omitempty" required:"false" json:"server_type,omitempty" path:"server_type"`
+	Ssl                               string `url:"ssl,omitempty" required:"false" json:"ssl,omitempty" path:"ssl"`
+	Username                          string `url:"username,omitempty" required:"false" json:"username,omitempty" path:"username"`
+	GoogleCloudStorageBucket          string `url:"google_cloud_storage_bucket,omitempty" required:"false" json:"google_cloud_storage_bucket,omitempty" path:"google_cloud_storage_bucket"`
+	GoogleCloudStorageProjectId       string `url:"google_cloud_storage_project_id,omitempty" required:"false" json:"google_cloud_storage_project_id,omitempty" path:"google_cloud_storage_project_id"`
+	BackblazeB2Bucket                 string `url:"backblaze_b2_bucket,omitempty" required:"false" json:"backblaze_b2_bucket,omitempty" path:"backblaze_b2_bucket"`
+	BackblazeB2S3Endpoint             string `url:"backblaze_b2_s3_endpoint,omitempty" required:"false" json:"backblaze_b2_s3_endpoint,omitempty" path:"backblaze_b2_s3_endpoint"`
+	WasabiBucket                      string `url:"wasabi_bucket,omitempty" required:"false" json:"wasabi_bucket,omitempty" path:"wasabi_bucket"`
+	WasabiRegion                      string `url:"wasabi_region,omitempty" required:"false" json:"wasabi_region,omitempty" path:"wasabi_region"`
+	RackspaceUsername                 string `url:"rackspace_username,omitempty" required:"false" json:"rackspace_username,omitempty" path:"rackspace_username"`
+	RackspaceRegion                   string `url:"rackspace_region,omitempty" required:"false" json:"rackspace_region,omitempty" path:"rackspace_region"`
+	RackspaceContainer                string `url:"rackspace_container,omitempty" required:"false" json:"rackspace_container,omitempty" path:"rackspace_container"`
+	OneDriveAccountType               string `url:"one_drive_account_type,omitempty" required:"false" json:"one_drive_account_type,omitempty" path:"one_drive_account_type"`
+	AzureBlobStorageAccount           string `url:"azure_blob_storage_account,omitempty" required:"false" json:"azure_blob_storage_account,omitempty" path:"azure_blob_storage_account"`
+	AzureBlobStorageContainer         string `url:"azure_blob_storage_container,omitempty" required:"false" json:"azure_blob_storage_container,omitempty" path:"azure_blob_storage_container"`
+	AzureBlobStorageSasToken          string `url:"azure_blob_storage_sas_token,omitempty" required:"false" json:"azure_blob_storage_sas_token,omitempty" path:"azure_blob_storage_sas_token"`
+	AzureFilesStorageAccount          string `url:"azure_files_storage_account,omitempty" required:"false" json:"azure_files_storage_account,omitempty" path:"azure_files_storage_account"`
+	AzureFilesStorageShareName        string `url:"azure_files_storage_share_name,omitempty" required:"false" json:"azure_files_storage_share_name,omitempty" path:"azure_files_storage_share_name"`
+	AzureFilesStorageSasToken         string `url:"azure_files_storage_sas_token,omitempty" required:"false" json:"azure_files_storage_sas_token,omitempty" path:"azure_files_storage_sas_token"`
+	S3CompatibleBucket                string `url:"s3_compatible_bucket,omitempty" required:"false" json:"s3_compatible_bucket,omitempty" path:"s3_compatible_bucket"`
+	S3CompatibleEndpoint              string `url:"s3_compatible_endpoint,omitempty" required:"false" json:"s3_compatible_endpoint,omitempty" path:"s3_compatible_endpoint"`
+	S3CompatibleAccessKey             string `url:"s3_compatible_access_key,omitempty" required:"false" json:"s3_compatible_access_key,omitempty" path:"s3_compatible_access_key"`
+	S3CompatibleSecretKey             string `url:"s3_compatible_secret_key,omitempty" required:"false" json:"s3_compatible_secret_key,omitempty" path:"s3_compatible_secret_key"`
+	S3CompatibleRegion                string `url:"s3_compatible_region,omitempty" required:"false" json:"s3_compatible_region,omitempty" path:"s3_compatible_region"`
+	EnableDedicatedIps                *bool  `url:"enable_dedicated_ips,omitempty" required:"false" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
+	FilesAgentPublicKey               string `url:"files_agent_public_key,omitempty" required:"false" json:"files_agent_public_key,omitempty" path:"files_agent_public_key"`
+	FilesAgentApiToken                string `url:"files_agent_api_token,omitempty" required:"false" json:"files_agent_api_token,omitempty" path:"files_agent_api_token"`
+	FilesAgentRoot                    string `url:"files_agent_root,omitempty" required:"false" json:"files_agent_root,omitempty" path:"files_agent_root"`
+	FilebaseAccessKey                 string `url:"filebase_access_key,omitempty" required:"false" json:"filebase_access_key,omitempty" path:"filebase_access_key"`
+	FilebaseSecretKey                 string `url:"filebase_secret_key,omitempty" required:"false" json:"filebase_secret_key,omitempty" path:"filebase_secret_key"`
+	FilebaseBucket                    string `url:"filebase_bucket,omitempty" required:"false" json:"filebase_bucket,omitempty" path:"filebase_bucket"`
+	CloudflareAccessKey               string `url:"cloudflare_access_key,omitempty" required:"false" json:"cloudflare_access_key,omitempty" path:"cloudflare_access_key"`
+	CloudflareSecretKey               string `url:"cloudflare_secret_key,omitempty" required:"false" json:"cloudflare_secret_key,omitempty" path:"cloudflare_secret_key"`
+	CloudflareBucket                  string `url:"cloudflare_bucket,omitempty" required:"false" json:"cloudflare_bucket,omitempty" path:"cloudflare_bucket"`
+	CloudflareEndpoint                string `url:"cloudflare_endpoint,omitempty" required:"false" json:"cloudflare_endpoint,omitempty" path:"cloudflare_endpoint"`
+	DropboxTeams                      *bool  `url:"dropbox_teams,omitempty" required:"false" json:"dropbox_teams,omitempty" path:"dropbox_teams"`
+	LinodeAccessKey                   string `url:"linode_access_key,omitempty" required:"false" json:"linode_access_key,omitempty" path:"linode_access_key"`
+	LinodeSecretKey                   string `url:"linode_secret_key,omitempty" required:"false" json:"linode_secret_key,omitempty" path:"linode_secret_key"`
+	LinodeBucket                      string `url:"linode_bucket,omitempty" required:"false" json:"linode_bucket,omitempty" path:"linode_bucket"`
+	LinodeRegion                      string `url:"linode_region,omitempty" required:"false" json:"linode_region,omitempty" path:"linode_region"`
 }
 
 type RemoteServerUpdateParams struct {

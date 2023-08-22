@@ -20,6 +20,35 @@ func (p Preview) Identifier() interface{} {
 
 type PreviewCollection []Preview
 
+type PreviewSizeEnum string
+
+func (u PreviewSizeEnum) String() string {
+	return string(u)
+}
+
+func (u PreviewSizeEnum) Enum() map[string]PreviewSizeEnum {
+	return map[string]PreviewSizeEnum{
+		"small":  PreviewSizeEnum("small"),
+		"large":  PreviewSizeEnum("large"),
+		"xlarge": PreviewSizeEnum("xlarge"),
+		"pdf":    PreviewSizeEnum("pdf"),
+	}
+}
+
+type PreviewListParams struct {
+	Action                 string          `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
+	Ids                    string          `url:"ids,omitempty" required:"true" json:"ids,omitempty" path:"ids"`
+	BundleRegistrationCode string          `url:"bundle_registration_code,omitempty" required:"false" json:"bundle_registration_code,omitempty" path:"bundle_registration_code"`
+	Size                   PreviewSizeEnum `url:"size,omitempty" required:"false" json:"size,omitempty" path:"size"`
+	ListParams
+}
+
+type PreviewFindParams struct {
+	Id                     int64           `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	BundleRegistrationCode string          `url:"bundle_registration_code,omitempty" required:"false" json:"bundle_registration_code,omitempty" path:"bundle_registration_code"`
+	Size                   PreviewSizeEnum `url:"size,omitempty" required:"false" json:"size,omitempty" path:"size"`
+}
+
 func (p *Preview) UnmarshalJSON(data []byte) error {
 	type preview Preview
 	var v preview

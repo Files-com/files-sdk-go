@@ -38,3 +38,21 @@ func (c *Client) List(params files_sdk.BundleRegistrationListParams, opts ...fil
 func List(params files_sdk.BundleRegistrationListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	return (&Client{}).List(params, opts...)
 }
+
+func (c *Client) Create(params files_sdk.BundleRegistrationCreateParams, opts ...files_sdk.RequestResponseOption) (bundleRegistration files_sdk.BundleRegistration, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/bundle_registrations", Params: params, Entity: &bundleRegistration}, opts...)
+	return
+}
+
+func Create(params files_sdk.BundleRegistrationCreateParams, opts ...files_sdk.RequestResponseOption) (bundleRegistration files_sdk.BundleRegistration, err error) {
+	return (&Client{}).Create(params, opts...)
+}
+
+func (c *Client) LastActivity(params files_sdk.BundleRegistrationLastActivityParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/bundle_registrations/last_activity", Params: params, Entity: nil}, opts...)
+	return
+}
+
+func LastActivity(params files_sdk.BundleRegistrationLastActivityParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	return (&Client{}).LastActivity(params, opts...)
+}

@@ -22,7 +22,8 @@ func (s ShareGroup) Identifier() interface{} {
 type ShareGroupCollection []ShareGroup
 
 type ShareGroupListParams struct {
-	UserId int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	UserId int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 

@@ -30,6 +30,7 @@ func (a As2Partner) Identifier() interface{} {
 type As2PartnerCollection []As2Partner
 
 type As2PartnerListParams struct {
+	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 

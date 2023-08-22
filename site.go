@@ -154,11 +154,58 @@ type Site struct {
 	WindowsModeFtp                         *bool                  `json:"windows_mode_ftp,omitempty" path:"windows_mode_ftp,omitempty" url:"windows_mode_ftp,omitempty"`
 	DisableUsersFromInactivityPeriodDays   int64                  `json:"disable_users_from_inactivity_period_days,omitempty" path:"disable_users_from_inactivity_period_days,omitempty" url:"disable_users_from_inactivity_period_days,omitempty"`
 	GroupAdminsCanSetUserPassword          *bool                  `json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password,omitempty" url:"group_admins_can_set_user_password,omitempty"`
+	LeadCookieCode                         string                 `json:"lead_cookie_code,omitempty" path:"lead_cookie_code,omitempty" url:"lead_cookie_code,omitempty"`
+	Username                               string                 `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
+	Password                               string                 `json:"password,omitempty" path:"password,omitempty" url:"password,omitempty"`
+	UtmTerm                                string                 `json:"utm_term,omitempty" path:"utm_term,omitempty" url:"utm_term,omitempty"`
+	UtmSource                              string                 `json:"utm_source,omitempty" path:"utm_source,omitempty" url:"utm_source,omitempty"`
+	UtmContent                             string                 `json:"utm_content,omitempty" path:"utm_content,omitempty" url:"utm_content,omitempty"`
+	UtmMedium                              string                 `json:"utm_medium,omitempty" path:"utm_medium,omitempty" url:"utm_medium,omitempty"`
+	UtmCampaign                            string                 `json:"utm_campaign,omitempty" path:"utm_campaign,omitempty" url:"utm_campaign,omitempty"`
+	UtmDomain                              string                 `json:"utm_domain,omitempty" path:"utm_domain,omitempty" url:"utm_domain,omitempty"`
+	Gclid                                  string                 `json:"gclid,omitempty" path:"gclid,omitempty" url:"gclid,omitempty"`
+	ClickCookieCode                        string                 `json:"click_cookie_code,omitempty" path:"click_cookie_code,omitempty" url:"click_cookie_code,omitempty"`
+	PlanId                                 int64                  `json:"plan_id,omitempty" path:"plan_id,omitempty" url:"plan_id,omitempty"`
 }
 
 // Identifier no path or id
 
 type SiteCollection []Site
+
+type SiteGetPlanParams struct {
+	Currency string `url:"currency,omitempty" required:"false" json:"currency,omitempty" path:"currency"`
+}
+
+type SiteGetPaypalExpressInfoParams struct {
+	PaypalToken string `url:"paypal_token,omitempty" required:"true" json:"paypal_token,omitempty" path:"paypal_token"`
+}
+
+type SiteGetPaypalExpressParams struct {
+	ReturnToUrl string `url:"return_to_url,omitempty" required:"true" json:"return_to_url,omitempty" path:"return_to_url"`
+	PlanId      int64  `url:"plan_id,omitempty" required:"false" json:"plan_id,omitempty" path:"plan_id"`
+}
+
+type SiteCreateParams struct {
+	Name            string `url:"name,omitempty" required:"true" json:"name,omitempty" path:"name"`
+	Email           string `url:"email,omitempty" required:"true" json:"email,omitempty" path:"email"`
+	LeadCookieCode  string `url:"lead_cookie_code,omitempty" required:"true" json:"lead_cookie_code,omitempty" path:"lead_cookie_code"`
+	ReplyToEmail    string `url:"reply_to_email,omitempty" required:"false" json:"reply_to_email,omitempty" path:"reply_to_email"`
+	Phone           string `url:"phone,omitempty" required:"false" json:"phone,omitempty" path:"phone"`
+	ContactName     string `url:"contact_name,omitempty" required:"false" json:"contact_name,omitempty" path:"contact_name"`
+	Username        string `url:"username,omitempty" required:"false" json:"username,omitempty" path:"username"`
+	Password        string `url:"password,omitempty" required:"false" json:"password,omitempty" path:"password"`
+	Currency        string `url:"currency,omitempty" required:"false" json:"currency,omitempty" path:"currency"`
+	Language        string `url:"language,omitempty" required:"false" json:"language,omitempty" path:"language"`
+	UtmTerm         string `url:"utm_term,omitempty" required:"false" json:"utm_term,omitempty" path:"utm_term"`
+	UtmSource       string `url:"utm_source,omitempty" required:"false" json:"utm_source,omitempty" path:"utm_source"`
+	UtmContent      string `url:"utm_content,omitempty" required:"false" json:"utm_content,omitempty" path:"utm_content"`
+	UtmMedium       string `url:"utm_medium,omitempty" required:"false" json:"utm_medium,omitempty" path:"utm_medium"`
+	UtmCampaign     string `url:"utm_campaign,omitempty" required:"false" json:"utm_campaign,omitempty" path:"utm_campaign"`
+	UtmDomain       string `url:"utm_domain,omitempty" required:"false" json:"utm_domain,omitempty" path:"utm_domain"`
+	Gclid           string `url:"gclid,omitempty" required:"false" json:"gclid,omitempty" path:"gclid"`
+	ClickCookieCode string `url:"click_cookie_code,omitempty" required:"false" json:"click_cookie_code,omitempty" path:"click_cookie_code"`
+	PlanId          int64  `url:"plan_id,omitempty" required:"false" json:"plan_id,omitempty" path:"plan_id"`
+}
 
 type SiteUpdateParams struct {
 	Name                                   string                 `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
@@ -298,6 +345,10 @@ type SiteUpdateParams struct {
 	LdapPasswordChangeConfirmation         string                 `url:"ldap_password_change_confirmation,omitempty" required:"false" json:"ldap_password_change_confirmation,omitempty" path:"ldap_password_change_confirmation"`
 	SmtpPassword                           string                 `url:"smtp_password,omitempty" required:"false" json:"smtp_password,omitempty" path:"smtp_password"`
 	SessionExpiryMinutes                   int64                  `url:"session_expiry_minutes,omitempty" required:"false" json:"session_expiry_minutes,omitempty" path:"session_expiry_minutes"`
+}
+
+type SiteDeleteParams struct {
+	Reason string `url:"reason,omitempty" required:"false" json:"reason,omitempty" path:"reason"`
 }
 
 func (s *Site) UnmarshalJSON(data []byte) error {

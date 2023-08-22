@@ -1,0 +1,1 @@
+package email_preference_bundle_notification
