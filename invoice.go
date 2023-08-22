@@ -31,7 +31,6 @@ func (i Invoice) Identifier() interface{} {
 type InvoiceCollection []Invoice
 
 type InvoiceListParams struct {
-	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 

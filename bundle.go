@@ -77,21 +77,8 @@ func (u BundlePermissionsEnum) Enum() map[string]BundlePermissionsEnum {
 	}
 }
 
-type BundleMethodEnum string
-
-func (u BundleMethodEnum) String() string {
-	return string(u)
-}
-
-func (u BundleMethodEnum) Enum() map[string]BundleMethodEnum {
-	return map[string]BundleMethodEnum{
-		"email": BundleMethodEnum("email"),
-	}
-}
-
 type BundleListParams struct {
 	UserId     int64                  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	Action     string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy     map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter     Bundle                 `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	FilterGt   map[string]interface{} `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -103,12 +90,6 @@ type BundleListParams struct {
 
 type BundleFindParams struct {
 	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-}
-
-type BundleGetInfoParams struct {
-	Code                   string `url:"code,omitempty" required:"true" json:"code,omitempty" path:"code"`
-	BundleRegistrationCode string `url:"bundle_registration_code,omitempty" required:"false" json:"bundle_registration_code,omitempty" path:"bundle_registration_code"`
-	RecipientCode          string `url:"recipient_code,omitempty" required:"false" json:"recipient_code,omitempty" path:"recipient_code"`
 }
 
 type BundleCreateParams struct {
@@ -145,7 +126,6 @@ type BundleShareParams struct {
 	Id         int64                    `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	To         []string                 `url:"to,omitempty" required:"false" json:"to,omitempty" path:"to"`
 	Note       string                   `url:"note,omitempty" required:"false" json:"note,omitempty" path:"note"`
-	Method     BundleMethodEnum         `url:"method,omitempty" required:"false" json:"method,omitempty" path:"method"`
 	Recipients []map[string]interface{} `url:"recipients,omitempty" required:"false" json:"recipients,omitempty" path:"recipients"`
 }
 

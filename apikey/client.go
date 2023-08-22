@@ -47,15 +47,6 @@ func List(params files_sdk.ApiKeyListParams, opts ...files_sdk.RequestResponseOp
 	return (&Client{}).List(params, opts...)
 }
 
-func (c *Client) Find(params files_sdk.ApiKeyFindParams, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/api_keys/{id}", Params: params, Entity: &apiKey}, opts...)
-	return
-}
-
-func Find(params files_sdk.ApiKeyFindParams, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
-	return (&Client{}).Find(params, opts...)
-}
-
 func (c *Client) FindCurrent(opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/api_key", Params: lib.Interface(), Entity: &apiKey}, opts...)
 	return
@@ -65,6 +56,15 @@ func FindCurrent(opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiK
 	return (&Client{}).FindCurrent(opts...)
 }
 
+func (c *Client) Find(params files_sdk.ApiKeyFindParams, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/api_keys/{id}", Params: params, Entity: &apiKey}, opts...)
+	return
+}
+
+func Find(params files_sdk.ApiKeyFindParams, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
+	return (&Client{}).Find(params, opts...)
+}
+
 func (c *Client) Create(params files_sdk.ApiKeyCreateParams, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/api_keys", Params: params, Entity: &apiKey}, opts...)
 	return
@@ -72,24 +72,6 @@ func (c *Client) Create(params files_sdk.ApiKeyCreateParams, opts ...files_sdk.R
 
 func Create(params files_sdk.ApiKeyCreateParams, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
 	return (&Client{}).Create(params, opts...)
-}
-
-func (c *Client) Update(params files_sdk.ApiKeyUpdateParams, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/api_keys/{id}", Params: params, Entity: &apiKey}, opts...)
-	return
-}
-
-func Update(params files_sdk.ApiKeyUpdateParams, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
-	return (&Client{}).Update(params, opts...)
-}
-
-func (c *Client) UpdateWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/api_keys/{id}", Params: params, Entity: &apiKey}, opts...)
-	return
-}
-
-func UpdateWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
-	return (&Client{}).UpdateWithMap(params, opts...)
 }
 
 func (c *Client) UpdateCurrent(params files_sdk.ApiKeyUpdateCurrentParams, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
@@ -110,13 +92,22 @@ func UpdateCurrentWithMap(params map[string]interface{}, opts ...files_sdk.Reque
 	return (&Client{}).UpdateCurrentWithMap(params, opts...)
 }
 
-func (c *Client) Delete(params files_sdk.ApiKeyDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "DELETE", Path: "/api_keys/{id}", Params: params, Entity: nil}, opts...)
+func (c *Client) Update(params files_sdk.ApiKeyUpdateParams, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/api_keys/{id}", Params: params, Entity: &apiKey}, opts...)
 	return
 }
 
-func Delete(params files_sdk.ApiKeyDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	return (&Client{}).Delete(params, opts...)
+func Update(params files_sdk.ApiKeyUpdateParams, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
+	return (&Client{}).Update(params, opts...)
+}
+
+func (c *Client) UpdateWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/api_keys/{id}", Params: params, Entity: &apiKey}, opts...)
+	return
+}
+
+func UpdateWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
+	return (&Client{}).UpdateWithMap(params, opts...)
 }
 
 func (c *Client) DeleteCurrent(opts ...files_sdk.RequestResponseOption) (err error) {
@@ -126,4 +117,13 @@ func (c *Client) DeleteCurrent(opts ...files_sdk.RequestResponseOption) (err err
 
 func DeleteCurrent(opts ...files_sdk.RequestResponseOption) (err error) {
 	return (&Client{}).DeleteCurrent(opts...)
+}
+
+func (c *Client) Delete(params files_sdk.ApiKeyDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "DELETE", Path: "/api_keys/{id}", Params: params, Entity: nil}, opts...)
+	return
+}
+
+func Delete(params files_sdk.ApiKeyDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	return (&Client{}).Delete(params, opts...)
 }

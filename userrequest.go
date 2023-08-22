@@ -20,7 +20,6 @@ func (u UserRequest) Identifier() interface{} {
 type UserRequestCollection []UserRequest
 
 type UserRequestListParams struct {
-	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 

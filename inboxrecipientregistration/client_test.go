@@ -1,1 +1,0 @@
-package inbox_recipient_registration
