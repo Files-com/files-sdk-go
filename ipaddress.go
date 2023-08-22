@@ -20,22 +20,14 @@ func (i IpAddress) Identifier() interface{} {
 type IpAddressCollection []IpAddress
 
 type IpAddressListParams struct {
-	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
-	ListParams
-}
-
-type IpAddressGetActiveParams struct {
-	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 
 type IpAddressGetExavaultReservedParams struct {
-	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 
 type IpAddressGetReservedParams struct {
-	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 

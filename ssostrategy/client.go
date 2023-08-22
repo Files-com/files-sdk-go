@@ -56,15 +56,6 @@ func Find(params files_sdk.SsoStrategyFindParams, opts ...files_sdk.RequestRespo
 	return (&Client{}).Find(params, opts...)
 }
 
-func (c *Client) Create(params files_sdk.SsoStrategyCreateParams, opts ...files_sdk.RequestResponseOption) (ssoStrategy files_sdk.SsoStrategy, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/sso_strategies", Params: params, Entity: &ssoStrategy}, opts...)
-	return
-}
-
-func Create(params files_sdk.SsoStrategyCreateParams, opts ...files_sdk.RequestResponseOption) (ssoStrategy files_sdk.SsoStrategy, err error) {
-	return (&Client{}).Create(params, opts...)
-}
-
 func (c *Client) Sync(params files_sdk.SsoStrategySyncParams, opts ...files_sdk.RequestResponseOption) (err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/sso_strategies/{id}/sync", Params: params, Entity: nil}, opts...)
 	return
@@ -72,31 +63,4 @@ func (c *Client) Sync(params files_sdk.SsoStrategySyncParams, opts ...files_sdk.
 
 func Sync(params files_sdk.SsoStrategySyncParams, opts ...files_sdk.RequestResponseOption) (err error) {
 	return (&Client{}).Sync(params, opts...)
-}
-
-func (c *Client) Update(params files_sdk.SsoStrategyUpdateParams, opts ...files_sdk.RequestResponseOption) (ssoStrategy files_sdk.SsoStrategy, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/sso_strategies/{id}", Params: params, Entity: &ssoStrategy}, opts...)
-	return
-}
-
-func Update(params files_sdk.SsoStrategyUpdateParams, opts ...files_sdk.RequestResponseOption) (ssoStrategy files_sdk.SsoStrategy, err error) {
-	return (&Client{}).Update(params, opts...)
-}
-
-func (c *Client) UpdateWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (ssoStrategy files_sdk.SsoStrategy, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/sso_strategies/{id}", Params: params, Entity: &ssoStrategy}, opts...)
-	return
-}
-
-func UpdateWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (ssoStrategy files_sdk.SsoStrategy, err error) {
-	return (&Client{}).UpdateWithMap(params, opts...)
-}
-
-func (c *Client) Delete(params files_sdk.SsoStrategyDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "DELETE", Path: "/sso_strategies/{id}", Params: params, Entity: nil}, opts...)
-	return
-}
-
-func Delete(params files_sdk.SsoStrategyDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	return (&Client{}).Delete(params, opts...)
 }

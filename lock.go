@@ -28,7 +28,6 @@ func (l Lock) Identifier() interface{} {
 type LockCollection []Lock
 
 type LockListForParams struct {
-	Action          string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	Path            string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	IncludeChildren *bool  `url:"include_children,omitempty" required:"false" json:"include_children,omitempty" path:"include_children"`
 	ListParams
@@ -36,14 +35,9 @@ type LockListForParams struct {
 
 type LockCreateParams struct {
 	Path                 string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
-	Token                string `url:"token,omitempty" required:"false" json:"token,omitempty" path:"token"`
-	Type                 string `url:"type,omitempty" required:"false" json:"type,omitempty" path:"type"`
 	AllowAccessByAnyUser *bool  `url:"allow_access_by_any_user,omitempty" required:"false" json:"allow_access_by_any_user,omitempty" path:"allow_access_by_any_user"`
-	Scope                string `url:"scope,omitempty" required:"false" json:"scope,omitempty" path:"scope"`
 	Exclusive            *bool  `url:"exclusive,omitempty" required:"false" json:"exclusive,omitempty" path:"exclusive"`
-	Depth                string `url:"depth,omitempty" required:"false" json:"depth,omitempty" path:"depth"`
 	Recursive            string `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
-	Owner                string `url:"owner,omitempty" required:"false" json:"owner,omitempty" path:"owner"`
 	Timeout              int64  `url:"timeout,omitempty" required:"false" json:"timeout,omitempty" path:"timeout"`
 }
 

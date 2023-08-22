@@ -24,8 +24,7 @@ func (f FormFieldSet) Identifier() interface{} {
 type FormFieldSetCollection []FormFieldSet
 
 type FormFieldSetListParams struct {
-	UserId int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
+	UserId int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
 	ListParams
 }
 

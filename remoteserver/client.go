@@ -83,15 +83,6 @@ func ConfigurationFile(params files_sdk.RemoteServerConfigurationFileParams, opt
 	return (&Client{}).ConfigurationFile(params, opts...)
 }
 
-func (c *Client) ListForTesting(params files_sdk.RemoteServerListForTestingParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/remote_servers/list_for_testing", Params: params, Entity: &file}, opts...)
-	return
-}
-
-func ListForTesting(params files_sdk.RemoteServerListForTestingParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
-	return (&Client{}).ListForTesting(params, opts...)
-}
-
 func (c *Client) Update(params files_sdk.RemoteServerUpdateParams, opts ...files_sdk.RequestResponseOption) (remoteServer files_sdk.RemoteServer, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/remote_servers/{id}", Params: params, Entity: &remoteServer}, opts...)
 	return

@@ -12,8 +12,7 @@ type GroupUser struct {
 	UserId    int64    `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	Admin     *bool    `json:"admin,omitempty" path:"admin,omitempty" url:"admin,omitempty"`
 	Usernames []string `json:"usernames,omitempty" path:"usernames,omitempty" url:"usernames,omitempty"`
-	Name      string   `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
-	Id        string   `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Id        int64    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 }
 
 func (g GroupUser) Identifier() interface{} {
@@ -23,9 +22,8 @@ func (g GroupUser) Identifier() interface{} {
 type GroupUserCollection []GroupUser
 
 type GroupUserListParams struct {
-	UserId  int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	Action  string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
-	GroupId int64  `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
+	UserId  int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	GroupId int64 `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
 	ListParams
 }
 

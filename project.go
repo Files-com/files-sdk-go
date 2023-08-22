@@ -18,7 +18,6 @@ func (p Project) Identifier() interface{} {
 type ProjectCollection []Project
 
 type ProjectListParams struct {
-	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 
