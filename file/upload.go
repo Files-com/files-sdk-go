@@ -8,13 +8,11 @@ import (
 	"path/filepath"
 	"time"
 
-	lib "github.com/Files-com/files-sdk-go/v2/lib"
-	"github.com/Files-com/files-sdk-go/v2/lib/direction"
-
+	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/Files-com/files-sdk-go/v2/file/status"
-
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
+	lib "github.com/Files-com/files-sdk-go/v2/lib"
+	"github.com/Files-com/files-sdk-go/v2/lib/direction"
 )
 
 type UploadOption func(uploadIO) (uploadIO, error)
@@ -166,7 +164,8 @@ func (c *Client) UploadRetry(job status.Job, opts ...files_sdk.RequestResponseOp
 }
 
 type UploaderParams struct {
-	Ignore []string
+	Ignore  []string
+	Include []string
 	*status.Job
 	Sync       bool
 	LocalPath  string

@@ -10,15 +10,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Files-com/files-sdk-go/v2/lib"
-
-	"github.com/Files-com/files-sdk-go/v2/lib/timer"
-
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/Files-com/files-sdk-go/v2/file/status"
 	"github.com/Files-com/files-sdk-go/v2/ignore"
+	"github.com/Files-com/files-sdk-go/v2/lib"
 	"github.com/Files-com/files-sdk-go/v2/lib/direction"
+	"github.com/Files-com/files-sdk-go/v2/lib/timer"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -180,7 +178,7 @@ func buildDownloadTest(test func(*status.Job)) {
 
 func buildUploadTest(test func(*status.Job, *MockUploader), statuses ...status.Status) {
 	job := (&status.Job{Direction: direction.UploadType, Manager: manager.Default(), Params: UploaderParams{}, Config: files_sdk.Config{}, Logger: (&files_sdk.Config{}).Logger()}).Init()
-	job.GitIgnore, _ = ignore.New()
+	job.Ignore, _ = ignore.New()
 	var temps []string
 	if len(statuses) == 0 {
 		statuses = []status.Status{status.Errored, status.Complete, status.Queued}

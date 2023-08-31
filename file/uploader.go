@@ -8,12 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Files-com/files-sdk-go/v2/lib"
-
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/directory"
 	"github.com/Files-com/files-sdk-go/v2/file/status"
 	"github.com/Files-com/files-sdk-go/v2/ignore"
+	"github.com/Files-com/files-sdk-go/v2/lib"
 	"github.com/Files-com/files-sdk-go/v2/lib/direction"
 )
 
@@ -71,7 +70,10 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 			return
 		}
 		var err error
-		job.GitIgnore, err = ignore.New(params.Ignore...)
+		job.Ignore, err = ignore.New(params.Ignore...)
+		if len(params.Include) > 0 {
+			job.Include, err = ignore.New(params.Include...)
+		}
 		if err != nil {
 			job.Add(metaFile)
 			job.UpdateStatus(status.Errored, metaFile, err)
@@ -274,7 +276,12 @@ func buildDestination(path string, localFolderPath string, destinationRootPath s
 }
 
 func skipOrIgnore(uploadStatus *UploadStatus, incrementalUpdates bool) bool {
-	if uploadStatus.Job().MatchesPath(uploadStatus.LocalPath()) {
+	if uploadStatus.Job().Ignore.MatchesPath(uploadStatus.LocalPath()) {
+		uploadStatus.Job().UpdateStatus(status.Ignored, uploadStatus, nil)
+		return true
+	}
+
+	if uploadStatus.Job().Include != nil && !uploadStatus.Job().Include.MatchesPath(uploadStatus.LocalPath()) {
 		uploadStatus.Job().UpdateStatus(status.Ignored, uploadStatus, nil)
 		return true
 	}

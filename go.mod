@@ -17,6 +17,7 @@ require (
 	github.com/samber/lo v1.33.0
 	github.com/snabb/httpreaderat v1.0.1
 	github.com/stretchr/testify v1.8.1
+	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17
 	golang.org/x/text v0.7.0
 	moul.io/http2curl v1.0.0
 )
@@ -45,7 +46,6 @@ require (
 	github.com/ugorji/go/codec v1.2.9 // indirect
 	golang.org/x/arch v0.0.0-20210923205945-b76863e36670 // indirect
 	golang.org/x/crypto v0.5.0 // indirect
-	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect

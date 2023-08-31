@@ -7,24 +7,17 @@ import (
 	"sync"
 	"time"
 
-	libLog "github.com/Files-com/files-sdk-go/v2/lib/logpath"
-
-	"github.com/Files-com/files-sdk-go/v2/lib"
-
-	"github.com/hashicorp/go-retryablehttp"
-
-	"github.com/bradfitz/iter"
-
-	"github.com/Files-com/files-sdk-go/v2/lib/timer"
-
-	"github.com/Files-com/files-sdk-go/v2/file/manager"
-	"github.com/chilts/sid"
-	ignore "github.com/sabhiram/go-gitignore"
-
-	"github.com/Files-com/files-sdk-go/v2/directory"
-	"github.com/Files-com/files-sdk-go/v2/lib/direction"
-
 	filesSDK "github.com/Files-com/files-sdk-go/v2"
+	"github.com/Files-com/files-sdk-go/v2/directory"
+	"github.com/Files-com/files-sdk-go/v2/file/manager"
+	"github.com/Files-com/files-sdk-go/v2/lib"
+	"github.com/Files-com/files-sdk-go/v2/lib/direction"
+	libLog "github.com/Files-com/files-sdk-go/v2/lib/logpath"
+	"github.com/Files-com/files-sdk-go/v2/lib/timer"
+	"github.com/bradfitz/iter"
+	"github.com/chilts/sid"
+	"github.com/hashicorp/go-retryablehttp"
+	ignore "github.com/sabhiram/go-gitignore"
 )
 
 type EventsReporter map[Status][]reporterSettings
@@ -98,7 +91,8 @@ type Job struct {
 	directory.Type
 	*manager.Manager
 	RetryPolicy interface{}
-	*ignore.GitIgnore
+	Ignore      *ignore.GitIgnore
+	Include     *ignore.GitIgnore
 	Started     *lib.Signal
 	Finished    *lib.Signal
 	Canceled    *lib.Signal

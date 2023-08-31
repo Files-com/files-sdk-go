@@ -10,18 +10,14 @@ import (
 	"testing/fstest"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
-	"github.com/Files-com/files-sdk-go/v2/lib"
-
-	"github.com/Files-com/files-sdk-go/v2/directory"
-
-	"github.com/Files-com/files-sdk-go/v2/ignore"
-
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
+	"github.com/Files-com/files-sdk-go/v2/directory"
 	"github.com/Files-com/files-sdk-go/v2/file/status"
-
+	"github.com/Files-com/files-sdk-go/v2/ignore"
+	"github.com/Files-com/files-sdk-go/v2/lib"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/exp/slices"
 )
 
 type MockUploader struct {
@@ -43,7 +39,7 @@ func Test_skipOrIgnore(t *testing.T) {
 
 	init := func() (*UploadStatus, fstest.MapFS, *status.Job) {
 		job := (&status.Job{Logger: (&files_sdk.Config{}).Logger()}).Init()
-		job.GitIgnore, _ = ignore.New()
+		job.Ignore, _ = ignore.New()
 		job.Params = UploaderParams{}
 		uploadStatus := &UploadStatus{job: job, Mutex: &sync.RWMutex{}, file: files_sdk.File{Path: "test"}, remotePath: "test"}
 		uploadStatus.Job().Add(uploadStatus)
@@ -132,14 +128,14 @@ func Test_skipOrIgnore(t *testing.T) {
 	})
 
 	t.Run("Ignore files", func(t *testing.T) {
-		job.GitIgnore, _ = ignore.New([]string{"*.css"}...)
+		job.Ignore, _ = ignore.New([]string{"*.css"}...)
 		uploadStatus.localPath = "main.css"
 		assert.Equal(true, skipOrIgnore(uploadStatus, false))
 
 		uploadStatus.localPath = "main.php"
 		assert.Equal(false, skipOrIgnore(uploadStatus, false))
 
-		job.GitIgnore, _ = ignore.New([]string{"*.css", "*.php"}...)
+		job.Ignore, _ = ignore.New([]string{"*.css", "*.php"}...)
 		uploadStatus.localPath = "main.css"
 		assert.Equal(true, skipOrIgnore(uploadStatus, false))
 	})
@@ -398,8 +394,10 @@ func TestUploadReader(t *testing.T) {
 		)
 
 		require.NoError(t, err)
-
-		assert.Equal(t, server.TrackRequest["/upload/*path"], []string{"/upload/reader-at-size.txt?part_number=1", "/upload/reader-at-size.txt?part_number=2", "/upload/reader-at-size.txt?part_number=3"})
+		expectation := []string{"/upload/reader-at-size.txt?part_number=1", "/upload/reader-at-size.txt?part_number=2", "/upload/reader-at-size.txt?part_number=3"}
+		slices.Sort(expectation)
+		slices.Sort(server.TrackRequest["/upload/*path"])
+		assert.Equal(t, expectation, server.TrackRequest["/upload/*path"])
 		assert.Equal(t, "reader-at-size.txt", u.File.Path)
 		assert.Equal(t, int64(10), u.Size)
 		assert.Len(t, u.Parts, 3, "individual parts are not retryable with nil size")
