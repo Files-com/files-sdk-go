@@ -11,15 +11,13 @@ import (
 	"testing/fstest"
 	"time"
 
-	"github.com/Files-com/files-sdk-go/v2/file/manager"
-	"github.com/samber/lo"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
+	"github.com/Files-com/files-sdk-go/v2/file/manager"
 	"github.com/Files-com/files-sdk-go/v2/file/status"
 	"github.com/Files-com/files-sdk-go/v2/lib"
+	"github.com/samber/lo"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type ReporterCall struct {
@@ -169,7 +167,7 @@ func Test_downloader_RemoteStartingSlash(t *testing.T) {
 func TestClient_Downloader(t *testing.T) {
 	t.Run("small file with size", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["small-file-with-size.txt"] = mockFile{
@@ -190,7 +188,7 @@ func TestClient_Downloader(t *testing.T) {
 
 	t.Run("large file with size", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["large-file-with-size.txt"] = mockFile{
@@ -211,7 +209,7 @@ func TestClient_Downloader(t *testing.T) {
 
 	t.Run("large file with size with max concurrent connections of 1", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["large-file-with-size.txt"] = mockFile{
@@ -235,7 +233,7 @@ func TestClient_Downloader(t *testing.T) {
 
 	t.Run("large file with size with max concurrent connections of 1", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["large-file-with-size.txt"] = mockFile{
@@ -259,7 +257,7 @@ func TestClient_Downloader(t *testing.T) {
 
 	t.Run("large file with size DownloadFilesAsSingleStream", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["large-file-with-size.txt"] = mockFile{
@@ -282,7 +280,7 @@ func TestClient_Downloader(t *testing.T) {
 
 	t.Run("large file with no size", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["large-file-with-no-size.txt"] = mockFile{
@@ -304,7 +302,7 @@ func TestClient_Downloader(t *testing.T) {
 
 	t.Run("large file with no size - extra parts are canceled", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		realSize := int64((1024 * 1024 * 5) - 256)
@@ -328,7 +326,7 @@ func TestClient_Downloader(t *testing.T) {
 
 	t.Run("large file with no size - client does not receive all bytes server reported to send", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		serverBytesSent := int64((1024 * 1024 * 5) + 256)
@@ -350,7 +348,7 @@ expected 5243136 bytes sent 5242880 received`)
 
 	t.Run("large file with no size - client received more bytes than server reported to send", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		serverBytesSent := int64(1024 * 1024 * 4)
@@ -372,7 +370,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("large file with no size - when sever has invalid request status", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		serverBytesSent := int64(1024 * 1024 * 4)
@@ -397,7 +395,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("large file with no size - when sever has failed request status", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["large-file-with-no-size.txt"] = mockFile{
@@ -449,7 +447,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("large file with bad size info real size is bigger", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		realSize := int64(20000000)
@@ -473,7 +471,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("large file with bad size info real size is smaller", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		realSize := int64(19999999)
@@ -497,7 +495,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	multipleFiles := func(relativeRoot string, t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles[filepath.Join(relativeRoot, "file1")] = mockFile{
@@ -553,7 +551,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("PreserveTimes with mtime", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		mtime := time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC).Truncate(time.Millisecond)
@@ -576,7 +574,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("PreserveTimes with providedMtime", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		providedMtime := time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC).Truncate(time.Millisecond)
@@ -599,7 +597,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("sync already downloaded", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["taco.png"] = mockFile{
@@ -621,7 +619,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("sync does not exist locally", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["taco.png"] = mockFile{
@@ -638,7 +636,7 @@ expected 4194304 bytes sent 5242880 received`)
 
 	t.Run("sync is out of date locally by size", func(t *testing.T) {
 		root := t.TempDir()
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 		server.MockFiles["taco.png"] = mockFile{

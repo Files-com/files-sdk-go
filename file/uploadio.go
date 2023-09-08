@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
@@ -51,9 +52,13 @@ type uploadIO struct {
 	etags                      []files_sdk.EtagsParam
 	file                       files_sdk.File
 	RewindAllProgressOnFailure bool
+	disableParallelParts       bool
+	notResumable               *atomic.Bool
 }
 
 func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
+	u.notResumable = &atomic.Bool{}
+	u.notResumable.Store(false)
 	if u.Path == "" {
 		return u.UploadResumable(), errors.New("UploadWithDestinationPath is required")
 	}
@@ -117,6 +122,9 @@ func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
 }
 
 func (u *uploadIO) UploadResumable() UploadResumable {
+	if u.notResumable.Load() {
+		return UploadResumable{File: u.file}
+	}
 	return UploadResumable{Parts: u.Parts, FileUploadPart: u.FileUploadPart, File: u.file}
 }
 
@@ -164,9 +172,8 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 
 				if strings.Contains(part.Error(), "File Upload Not Found") {
 					cancelParts(part.error)
-					u.etags = []files_sdk.EtagsParam{}
-					u.Parts = Parts{}
-					u.FileUploadPart = files_sdk.FileUploadPart{}
+
+					u.notResumable.Store(true)
 				}
 			}
 		}
@@ -200,7 +207,7 @@ func (u *uploadIO) buildReader(offset OffSet) ProxyReader {
 	var readerAtOk bool
 
 	if readerAt, readerAtOk = u.ReaderAt(); !readerAtOk {
-		u.ParallelParts = lib.Bool(false)
+		u.disableParallelParts = true
 	}
 
 	if u.Size == nil {
@@ -258,7 +265,7 @@ type PartRunnerReturn int
 
 func (u *uploadIO) manageUpdatePart(ctx context.Context, part *Part, wait lib.ConcurrencyManager) bool {
 	if wait.WaitWithContext(ctx) {
-		if *u.FileUploadPart.ParallelParts && u.Size != nil {
+		if *u.FileUploadPart.ParallelParts && !u.disableParallelParts && u.Size != nil {
 			go func() {
 				u.runUploadPart(ctx, part)
 				wait.Done()
@@ -280,16 +287,38 @@ func (u *uploadIO) manageUpdatePart(ctx context.Context, part *Part, wait lib.Co
 func (u *uploadIO) runUploadPart(ctx context.Context, part *Part) {
 	fileUploadPart := u.FileUploadPart
 	fileUploadPart.PartNumber = int64(part.number)
-	part.EtagsParam, part.error = u.createPart(ctx, part.ProxyReader, int64(part.ProxyReader.Len()), fileUploadPart, part.final)
-	part.bytes = int64(part.ProxyReader.BytesRead())
-	part.Touch()
-	if part.error != nil {
+	maxRetries := 2
+	retryCount := 0
+
+	for retryCount <= maxRetries {
+		part.EtagsParam, part.error = u.createPart(ctx, part.ProxyReader, int64(part.ProxyReader.Len()), fileUploadPart, part.final)
+
+		if part.error == nil {
+			break
+		}
+
 		var pathErr *os.PathError
 		if errors.As(part.error, &pathErr) {
 			part.error = pathErr
 		}
+
+		var s3Err lib.S3Error
+		expires, _ := time.Parse(time.RFC3339, u.FileUploadPart.Expires)
+		if errors.As(part.error, &s3Err) && part.ProxyReader.Rewind() && time.Now().Before(expires) {
+			if s3Err.Code == "RequestTimeout" {
+				retryCount++
+				if retryCount > maxRetries {
+					break
+				}
+				u.LogPath(u.Path, map[string]interface{}{"error": s3Err.Error(), "message": "retrying"})
+				continue
+			}
+		}
+		break
 	}
 
+	part.bytes = int64(part.ProxyReader.BytesRead())
+	part.Touch()
 	u.onComplete <- part
 }
 
@@ -409,7 +438,7 @@ func (u *uploadIO) createPart(ctx context.Context, reader io.ReadCloser, len int
 	if err != nil {
 		return files_sdk.EtagsParam{}, err
 	}
-	if err := lib.ResponseErrors(res, files_sdk.APIError(), lib.NonOkError); err != nil {
+	if err := lib.ResponseErrors(res, files_sdk.APIError(), lib.S3XMLError, lib.NonOkError); err != nil {
 		return files_sdk.EtagsParam{}, err
 	}
 	etag := strings.Trim(res.Header.Get("Etag"), "\"")

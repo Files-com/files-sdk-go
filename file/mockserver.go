@@ -3,15 +3,17 @@ package file
 import (
 	"context"
 	"crypto/rand"
+	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -21,8 +23,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
 )
-
-var serverPort = uint32(50001)
 
 type randomReader struct {
 	n int
@@ -45,17 +45,22 @@ func (r *randomReader) Read(p []byte) (int, error) {
 	return len(p), nil
 }
 
-type FakeDownloadServer struct {
+type CustomResponse struct {
+	Status      int
+	Body        []byte
+	ContentType string
+}
+
+type MockAPIServer struct {
 	router *gin.Engine
 	Addr   string
-	*http.Server
-	Port      int
-	downloads *lib.Map[download]
-	MockFiles map[string]mockFile
+	*httptest.Server
+	downloads       *lib.Map[download]
+	MockFiles       map[string]mockFile
+	customResponses map[string]func(ctx *gin.Context, model interface{}) bool
 	*testing.T
 	TrackRequest map[string][]string
 	traceMutex   *sync.Mutex
-	setup        *sync.Mutex
 }
 
 type download struct {
@@ -100,81 +105,39 @@ func (t TestLogger) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func (f *FakeDownloadServer) Do() *FakeDownloadServer {
-	f.setup = &sync.Mutex{}
+func (f *MockAPIServer) Do() *MockAPIServer {
+	gin.SetMode(gin.TestMode)
 	f.MockFiles = make(map[string]mockFile)
+	f.customResponses = make(map[string]func(ctx *gin.Context, model interface{}) bool)
 	f.TrackRequest = make(map[string][]string)
 	f.traceMutex = &sync.Mutex{}
 	f.downloads = &lib.Map[download]{}
 	f.router = gin.New()
 	f.router.Use(gin.LoggerWithWriter(TestLogger{f.T}))
 	f.Routes()
-	serverPort += 1
-	f.setup.Lock()
-	f.Port = int(atomic.LoadUint32(&serverPort))
-	f.Server = &http.Server{
-		Addr:    fmt.Sprintf("localhost:%v", f.Port),
-		Handler: f.router,
-	}
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*120)
+	f.Server = httptest.NewServer(f.router)
 
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				panic(ctx.Err())
-			default:
-				httpClient := http.Client{}
-				httpClient.Transport = &CustomTransport{Addr: fmt.Sprintf("localhost:%v", int(atomic.LoadUint32(&serverPort)))}
-				res, err := httpClient.Get("https://" + fmt.Sprintf("localhost:%v", int(atomic.LoadUint32(&serverPort))) + "/ping")
-				if err == nil && res.StatusCode == 200 {
-					f.setup.Unlock()
-					return
-				}
-			}
-		}
-	}()
-	go func() {
-		var err error
-
-		for {
-			select {
-			case <-ctx.Done():
-				log.Fatalf("listen: %s\n", err)
-				return
-			default:
-				err = f.Server.ListenAndServe()
-				if err != nil && strings.Contains(err.Error(), "address already in use") {
-					atomic.AddUint32(&serverPort, 1)
-					f.Port = int(atomic.LoadUint32(&serverPort))
-					f.Server = &http.Server{
-						Addr:    fmt.Sprintf("localhost:%v", f.Port),
-						Handler: f.router,
-					}
-				} else if err != nil && err != http.ErrServerClosed {
-					log.Fatalf("listen: %s\n", err)
-					return
-				} else {
-					return
-				}
-			}
-		}
-	}()
 	return f
 }
 
-func (f *FakeDownloadServer) Client() *Client {
-	f.setup.Lock()
-	defer f.setup.Unlock()
+func (f *MockAPIServer) MockRoute(path string, call func(ctx *gin.Context, model interface{}) bool) {
+	f.customResponses[path] = call
+}
+
+func (f *MockAPIServer) Client() *Client {
 	client := &Client{}
 	httpClient := http.Client{}
-	httpClient.Transport = &CustomTransport{Addr: f.Server.Addr}
+	if u, err := url.Parse(f.Server.URL); err != nil {
+		f.T.Fatal(err.Error())
+	} else {
+		httpClient.Transport = &CustomTransport{URL: u}
+	}
 	client.Config.SetHttpClient(&httpClient)
 	client.Config.SetLogger(TestLogger{f.T})
 	return client
 }
 
-func (f *FakeDownloadServer) GetFile(file mockFile) (r io.Reader, contentLengthOk bool, contentLength int64, realSize int64, err error) {
+func (f *MockAPIServer) GetFile(file mockFile) (r io.Reader, contentLengthOk bool, contentLength int64, realSize int64, err error) {
 	if file.SizeTrust == NullSizeTrust || file.SizeTrust == TrustedSizeValue {
 		contentLengthOk = true
 	}
@@ -190,22 +153,24 @@ func (f *FakeDownloadServer) GetFile(file mockFile) (r io.Reader, contentLengthO
 	return
 }
 
-func (f *FakeDownloadServer) trackRequest(c *gin.Context) {
+func (f *MockAPIServer) trackRequest(c *gin.Context) {
 	f.traceMutex.Lock()
 	defer f.traceMutex.Unlock()
 	f.TrackRequest[c.FullPath()] = append(f.TrackRequest[c.FullPath()], c.Request.URL.String())
 }
 
-func (f *FakeDownloadServer) GetRouter() *gin.Engine {
+func (f *MockAPIServer) GetRouter() *gin.Engine {
 	return f.router
 }
 
-func (f *FakeDownloadServer) Routes() {
+func (f *MockAPIServer) Routes() {
 	//Download Context
 	f.router.GET("/api/rest/v1/files/*path", func(c *gin.Context) {
 		f.trackRequest(c)
 		path := strings.TrimPrefix(c.Param("path"), "/")
-
+		if f.customResponse(c, nil) {
+			return
+		}
 		file, ok := f.MockFiles[path]
 		if ok {
 			if file.Path == "" {
@@ -229,6 +194,10 @@ func (f *FakeDownloadServer) Routes() {
 		f.trackRequest(c)
 		path := strings.TrimPrefix(c.Param("path"), "/")
 
+		if f.customResponse(c, nil) {
+			return
+		}
+
 		var files []files_sdk.File
 		for k, v := range f.MockFiles {
 			dir, _ := filepath.Split(k)
@@ -250,6 +219,11 @@ func (f *FakeDownloadServer) Routes() {
 	f.router.GET("/api/rest/v1/file_actions/metadata/*path", func(c *gin.Context) {
 		f.trackRequest(c)
 		path := strings.TrimPrefix(c.Param("path"), "/")
+
+		if f.customResponse(c, nil) {
+			return
+		}
+
 		file, ok := f.MockFiles[path]
 		if ok {
 			if file.Path == "" {
@@ -402,6 +376,17 @@ func (f *FakeDownloadServer) Routes() {
 	f.router.POST("/api/rest/v1/files/*path", func(c *gin.Context) {
 		f.trackRequest(c)
 		path := strings.TrimPrefix(c.Param("path"), "/")
+
+		var fileCreate files_sdk.FileCreateParams
+
+		if err := c.BindJSON(&fileCreate); err != nil {
+			c.JSON(http.StatusBadRequest, map[string]interface{}{"message": err.Error()})
+		}
+
+		if f.customResponse(c, fileCreate) {
+			return
+		}
+
 		file, ok := f.MockFiles[path]
 		if ok {
 			if file.Path == "" {
@@ -416,14 +401,33 @@ func (f *FakeDownloadServer) Routes() {
 	f.router.POST("/api/rest/v1/file_actions/begin_upload/*path", func(c *gin.Context) {
 		f.trackRequest(c)
 		path := strings.TrimPrefix(c.Param("path"), "/")
+
+		var beginUpload files_sdk.FileBeginUploadParams
+
+		if err := c.BindJSON(&beginUpload); err != nil {
+			c.JSON(http.StatusBadRequest, map[string]interface{}{"message": err.Error()})
+		}
+
+		beginUpload.Path = path
+
+		if f.customResponse(c, beginUpload) {
+			return
+		}
+
 		_, ok := f.MockFiles[path]
+		_, parentOk := f.MockFiles[filepath.Dir(path)]
+
+		if !ok && (filepath.Dir(path) == "." || parentOk || *beginUpload.MkdirParents == true) {
+			f.MockFiles[path] = mockFile{File: files_sdk.File{Path: path, DisplayName: filepath.Base(path), Size: beginUpload.Size}}
+			ok = true
+		}
 
 		if ok {
 			c.JSON(http.StatusOK, files_sdk.FileUploadPartCollection{
 				files_sdk.FileUploadPart{
 					HttpMethod:    "POST",
 					Path:          path,
-					UploadUri:     "https://" + lib.UrlJoinNoEscape(f.Server.Addr, "upload", path),
+					UploadUri:     lib.UrlJoinNoEscape(f.Server.URL, "upload", path),
 					ParallelParts: lib.Bool(true),
 					Expires:       time.Now().Add(time.Hour).Format(time.RFC3339),
 				},
@@ -435,15 +439,33 @@ func (f *FakeDownloadServer) Routes() {
 	f.router.POST("upload/*path", func(c *gin.Context) {
 		f.trackRequest(c)
 		path := strings.TrimPrefix(c.Param("path"), "/")
+
+		if f.customResponse(c, nil) {
+			return
+		}
+
 		_, ok := f.MockFiles[path]
 		if ok {
-			b, err := io.ReadAll(c.Request.Body)
+			ctx, cancel := context.WithTimeout(c, time.Millisecond*100)
+			defer cancel()
+
+			b, err := io.Copy(io.Discard, &readerCtx{r: c.Request.Body, ctx: ctx})
 			if err != nil {
-				c.JSON(http.StatusBadRequest, map[string]interface{}{"message": err.Error()})
+				if errors.Is(err, context.DeadlineExceeded) {
+					c.XML(http.StatusBadRequest, lib.S3Error{
+						XMLName: xml.Name{Local: "Error"},
+						Message: "Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed.",
+						Code:    "RequestTimeout",
+					},
+					)
+				} else {
+					c.Data(http.StatusBadRequest, "text", []byte(err.Error()))
+				}
 			}
-			if c.Request.ContentLength != int64(len(b)) {
+			if c.Request.ContentLength != b {
 				c.JSON(http.StatusBadRequest, map[string]interface{}{"message": "Content-Length did not match body"})
 			}
+			c.Header("Etag", sid.IdBase64())
 			c.Status(http.StatusOK)
 		} else {
 			c.JSON(http.StatusNotFound, nil)
@@ -454,21 +476,36 @@ func (f *FakeDownloadServer) Routes() {
 	})
 }
 
-func (f *FakeDownloadServer) Shutdown() error {
-	f.setup.Lock()
-	defer f.setup.Unlock()
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	return f.Server.Shutdown(ctx)
+type readerCtx struct {
+	ctx context.Context
+	r   io.Reader
+}
+
+func (r *readerCtx) Read(p []byte) (n int, err error) {
+	if err := r.ctx.Err(); err != nil {
+		return 0, err
+	}
+	return r.r.Read(p)
+}
+
+func (f *MockAPIServer) customResponse(c *gin.Context, model interface{}) bool {
+	if mock, ok := f.customResponses[c.Request.URL.Path]; ok {
+		return mock(c, model)
+	}
+	return false
+}
+
+func (f *MockAPIServer) Shutdown() {
+	f.Server.Close()
 }
 
 type CustomTransport struct {
 	http.Transport
-	Addr string
+	*url.URL
 }
 
 func (t *CustomTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.URL.Host = t.Addr
+	req.URL.Host = t.URL.Host
 	req.URL.Scheme = "http"
 
 	return t.Transport.RoundTrip(req)

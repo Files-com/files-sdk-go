@@ -8,6 +8,7 @@ type ProxyReader interface {
 	io.ReadCloser
 	Len() int
 	BytesRead() int
+	Rewind() bool
 }
 
 type ProxyReaderAt struct {
@@ -27,6 +28,16 @@ type ProxyRead struct {
 	read   int
 	closed bool
 	eof    bool
+}
+
+func (x *ProxyReaderAt) Rewind() bool {
+	x.onRead(int64(-x.read))
+	x.read = 0
+	return true
+}
+
+func (x *ProxyRead) Rewind() bool {
+	return x.read == 0
 }
 
 func (x *ProxyReaderAt) Len() int {

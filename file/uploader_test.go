@@ -3,8 +3,10 @@ package file
 import (
 	"bytes"
 	"context"
+	"io"
 	"io/fs"
 	"math"
+	"net/http"
 	"sync"
 	"testing"
 	"testing/fstest"
@@ -15,6 +17,7 @@ import (
 	"github.com/Files-com/files-sdk-go/v2/file/status"
 	"github.com/Files-com/files-sdk-go/v2/ignore"
 	"github.com/Files-com/files-sdk-go/v2/lib"
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/slices"
@@ -306,7 +309,7 @@ func (r ReaderAtWithOutLen) ReadAt(p []byte, off int64) (n int, err error) {
 
 func TestUploadReader(t *testing.T) {
 	t.Run("reader with nil size", func(t *testing.T) {
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		server.MockFiles["reader-no-size.txt"] = mockFile{File: files_sdk.File{Size: 5}}
 		client := server.Client()
@@ -330,7 +333,7 @@ func TestUploadReader(t *testing.T) {
 	})
 
 	t.Run("reader with size present", func(t *testing.T) {
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		server.MockFiles["reader-size.txt"] = mockFile{File: files_sdk.File{Size: 10}}
 		client := server.Client()
@@ -354,7 +357,7 @@ func TestUploadReader(t *testing.T) {
 	})
 
 	t.Run("io.ReaderAt and no size", func(t *testing.T) {
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		server.MockFiles["reader-at_no-size.txt"] = mockFile{File: files_sdk.File{Size: 10}}
 		client := server.Client()
@@ -378,7 +381,7 @@ func TestUploadReader(t *testing.T) {
 	})
 
 	t.Run("io.ReaderAt and size", func(t *testing.T) {
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		server.MockFiles["reader-at-size.txt"] = mockFile{File: files_sdk.File{Size: 10}}
 		client := server.Client()
@@ -405,7 +408,7 @@ func TestUploadReader(t *testing.T) {
 	})
 
 	t.Run("io.ReaderAt and size with resume", func(t *testing.T) {
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		server.MockFiles["reader-at-size.txt"] = mockFile{File: files_sdk.File{Size: 10}}
 		progressMutex := sync.Mutex{}
@@ -470,7 +473,7 @@ func TestUploadReader(t *testing.T) {
 	})
 
 	t.Run("missing UploadWithDestinationPath", func(t *testing.T) {
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 
@@ -481,7 +484,7 @@ func TestUploadReader(t *testing.T) {
 	})
 
 	t.Run("missing reader", func(t *testing.T) {
-		server := (&FakeDownloadServer{T: t}).Do()
+		server := (&MockAPIServer{T: t}).Do()
 		defer server.Shutdown()
 		client := server.Client()
 
@@ -489,5 +492,105 @@ func TestUploadReader(t *testing.T) {
 			UploadWithDestinationPath("reader-no-size.txt"),
 		)
 		assert.Equal(t, "UploadWithReader or UploadWithReaderAt required", err.Error())
+	})
+
+	accessDenied := CustomResponse{
+		Status:      http.StatusForbidden,
+		ContentType: "application/xml",
+		Body:        []byte(`<?xml version="1.0" encoding="UTF-8"?> <Error><Code>AccessDenied</Code><Message>Request has expired</Message><X-Amz-Expires>900</X-Amz-Expires><Expires>2023-09-06T05:27:01Z</Expires><ServerTime>2023-09-06T05:27:21Z</ServerTime><RequestId>DCZ7NV6P08Y6SKY2</RequestId><HostId>a0ww8xPnO34ZC2to9wizy501VJcZicTFKdohzq5P7SArZuXJ7cCo6GpJbUXITjkyFHNPla8Sd1U=</HostId></Error>`),
+	}
+
+	t.Run("socket connection error", func(t *testing.T) {
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+
+		r, w := io.Pipe()
+		defer w.Close()
+		defer r.Close()
+		go func() {
+			for {
+				// Simulate a slow disk access
+				w.Write([]byte("1"))
+				time.Sleep(time.Millisecond * 10)
+			}
+		}()
+
+		client := server.Client()
+		u, err := client.UploadWithResume(
+			UploadWithSize(1024),
+			UploadWithReader(r),
+			UploadWithDestinationPath("file.bak"),
+			UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+		)
+
+		assert.Equal(t, lib.S3Error{Message: "Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed.", Code: "RequestTimeout"}.Error(), err.Error())
+		assert.Equal(t, "file.bak", u.FileUploadPart.Path)
+	})
+
+	t.Run("socket connection error recovers after retry", func(t *testing.T) {
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+
+		client := server.Client()
+		u, err := client.UploadWithResume(
+			UploadWithSize(1024),
+			UploadWithReaderAt(bytes.NewReader(make([]byte, 1024))),
+			UploadWithDestinationPath("file.bak"),
+			UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+		)
+
+		assert.NoError(t, err)
+		assert.Equal(t, "file.bak", u.FileUploadPart.Path)
+	})
+
+	t.Run("request expired error", func(t *testing.T) {
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+		server.MockRoute("/upload/file.bak", func(c *gin.Context, _ interface{}) bool {
+			c.Data(accessDenied.Status, accessDenied.ContentType, accessDenied.Body)
+			return true
+		})
+
+		client := server.Client()
+		u, err := client.UploadWithResume(
+			UploadWithReader(bytes.NewBufferString("0123456789")),
+			UploadWithDestinationPath("file.bak"),
+			UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+		)
+
+		assert.Equal(t, lib.S3Error{Message: "Request has expired", Code: "AccessDenied"}.Error(), err.Error())
+		assert.Equal(t, "file.bak", u.FileUploadPart.Path)
+	})
+
+	t.Run("File Upload Not Found", func(t *testing.T) {
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+		var partCount int
+		server.MockRoute("/api/rest/v1/file_actions/begin_upload/file.bak", func(c *gin.Context, model interface{}) bool {
+			partCount += 1
+			if beginUpload, ok := model.(files_sdk.FileBeginUploadParams); ok {
+				if beginUpload.Part == 0 {
+					return false
+				}
+			}
+
+			c.Data(http.StatusNotFound, "text", []byte("File Upload Not Found"))
+			return true
+		})
+
+		client := server.Client()
+		u, err := client.UploadWithResume(
+			func(io uploadIO) (uploadIO, error) {
+				io.PartSizes = []int64{2, 4, 8, 16, 32}
+				return io, nil
+			},
+			UploadWithReader(bytes.NewBufferString("0123456789")),
+			UploadWithDestinationPath("file.bak"),
+			UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+		)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "File Upload Not Found", "it invalidates any resuming")
+		assert.Len(t, u.Parts, 0)
+		assert.Equal(t, partCount, 3)
 	})
 }

@@ -17,12 +17,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/samber/lo"
-
-	"github.com/Files-com/files-sdk-go/v2/lib"
-
 	files_sdk "github.com/Files-com/files-sdk-go/v2"
 	"github.com/Files-com/files-sdk-go/v2/folder"
+	"github.com/Files-com/files-sdk-go/v2/lib"
+	"github.com/samber/lo"
 )
 
 type SizeTrust int

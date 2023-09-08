@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -82,6 +83,29 @@ func IsHTML(res *http.Response) bool {
 
 func IsJSON(res *http.Response) bool {
 	return strings.Contains(res.Header.Get("Content-type"), "application/json")
+}
+
+func IsXML(res *http.Response) bool {
+	return strings.Contains(res.Header.Get("Content-type"), "application/xml") || strings.Contains(res.Header.Get("Content-type"), "text/xml")
+}
+
+func S3XMLError(res *http.Response) error {
+	if IsNonOkStatus(res) && IsXML(res) {
+		body, err := io.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+
+		var s3Err S3Error
+		if err := xml.Unmarshal(body, &s3Err); err != nil {
+			return err
+		}
+		if s3Err.Empty() {
+			return ResponseError{StatusCode: res.StatusCode, err: fmt.Errorf(strings.ReplaceAll(string(body), "\n", " "))}
+		}
+		return s3Err
+	}
+	return nil
 }
 
 func NonJSONError(res *http.Response) error {
