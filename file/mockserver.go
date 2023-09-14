@@ -121,6 +121,8 @@ func (f *MockAPIServer) Do() *MockAPIServer {
 }
 
 func (f *MockAPIServer) MockRoute(path string, call func(ctx *gin.Context, model interface{}) bool) {
+	f.traceMutex.Lock()
+	defer f.traceMutex.Unlock()
 	f.customResponses[path] = call
 }
 
@@ -422,15 +424,19 @@ func (f *MockAPIServer) Routes() {
 			ok = true
 		}
 
+		if beginUpload.Part == 0 {
+			beginUpload.Part = 1
+		}
+
 		if ok {
 			c.JSON(http.StatusOK, files_sdk.FileUploadPartCollection{
 				files_sdk.FileUploadPart{
 					HttpMethod:    "POST",
 					Path:          path,
-					UploadUri:     lib.UrlJoinNoEscape(f.Server.URL, "upload", path),
+					UploadUri:     fmt.Sprintf("%v?part_number=%v", lib.UrlJoinNoEscape(f.Server.URL, "upload", path), beginUpload.Part),
 					ParallelParts: lib.Bool(true),
 					Expires:       time.Now().Add(time.Hour).Format(time.RFC3339),
-					PartNumber:    1,
+					PartNumber:    beginUpload.Part,
 				},
 			})
 		} else {
@@ -490,6 +496,8 @@ func (r *readerCtx) Read(p []byte) (n int, err error) {
 }
 
 func (f *MockAPIServer) customResponse(c *gin.Context, model interface{}) bool {
+	f.traceMutex.Lock()
+	defer f.traceMutex.Unlock()
 	if mock, ok := f.customResponses[c.Request.URL.Path]; ok {
 		return mock(c, model)
 	}

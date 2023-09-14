@@ -13,7 +13,7 @@ require (
 	github.com/itchyny/timefmt-go v0.1.4
 	github.com/lpar/date v1.0.0
 	github.com/panjf2000/ants/v2 v2.7.1
-	github.com/sabhiram/go-gitignore v0.0.0-20201211210132-54b8a0bf510f
+	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
 	github.com/samber/lo v1.33.0
 	github.com/snabb/httpreaderat v1.0.1
 	github.com/stretchr/testify v1.8.1

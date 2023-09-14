@@ -86,7 +86,7 @@ func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
 		u.MkdirParents = lib.Bool(true)
 	}
 	var err error
-	if time.Now().After(u.FileUploadPart.UploadExpires()) || !lib.UnWrapBool(u.FileUploadPart.ParallelParts) {
+	if time.Now().After(u.FileUploadPart.UploadExpires()) || u.isRemoteMount(u.FileUploadPart) {
 		u.Parts = Parts{} // parts are invalidated
 		if u.Manager.WaitWithContext(ctx) {
 			u.FileUploadPart, err = u.startUpload(
@@ -191,7 +191,19 @@ func (u *uploadIO) partBuilder(offset OffSet, final bool, number int) *Part {
 	if number == 1 {
 		part.FileUploadPart = u.FileUploadPart
 	} else {
-		part.FileUploadPart = files_sdk.FileUploadPart{Path: u.FileUploadPart.Path, Ref: u.FileUploadPart.Ref, PartNumber: int64(number), ParallelParts: lib.Bool(lib.UnWrapBool(u.ParallelParts))}
+		part.FileUploadPart = files_sdk.FileUploadPart{
+			HttpMethod:    u.FileUploadPart.HttpMethod,
+			Path:          u.FileUploadPart.Path,
+			Ref:           u.FileUploadPart.Ref,
+			PartNumber:    int64(number),
+			ParallelParts: lib.Bool(lib.UnWrapBool(u.ParallelParts)),
+		}
+
+		if u.usesSameUrl(u.FileUploadPart) {
+			part.FileUploadPart.UploadUri = u.FileUploadPart.UploadUri
+			part.Expires = u.FileUploadPart.Expires
+			u.ensurePartNumber(part)
+		}
 	}
 
 	// Parts are stored so a retry can pick up failed parts. Since io.Reader is a stream is better to just retry the whole file
@@ -200,6 +212,18 @@ func (u *uploadIO) partBuilder(offset OffSet, final bool, number int) *Part {
 	}
 
 	return part
+}
+
+func (u *uploadIO) ensurePartNumber(part *Part) {
+	uri, err := url.Parse(part.UploadUri)
+	if err == nil {
+		q := uri.Query()
+		q.Del("part_number")
+		q.Del("partNumber")
+		q.Add("part_number", strconv.FormatInt(part.PartNumber, 10))
+		uri.RawQuery = q.Encode()
+		part.UploadUri = uri.String()
+	}
 }
 
 func (u *uploadIO) buildReader(offset OffSet) ProxyReader {
@@ -380,15 +404,7 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 	var err error
 	// Stub for test fixtures being expired
 	if part.PartNumber != 1 {
-		isExpired := part.ExpiresTime().IsZero() || part.ExpiresTime().Before(time.Now())
-
-		// Remote Mounts use the same URL
-		isRemoteMount := *part.ParallelParts
-
-		// This upload could be retrying
-		shouldRetryUpload := isExpired || isRemoteMount
-
-		if shouldRetryUpload {
+		if time.Now().After(part.ExpiresTime()) {
 			params := files_sdk.FileBeginUploadParams{
 				Path:         part.Path,
 				Ref:          part.Ref,
@@ -404,16 +420,6 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 			}
 		}
 	}
-	uri, err := url.Parse(part.UploadUri)
-	if err == nil {
-		q := uri.Query()
-		if q.Get("partNumber") == "" {
-			q.Add("part_number", strconv.FormatInt(part.PartNumber, 10))
-			uri.RawQuery = q.Encode()
-			part.UploadUri = uri.String()
-		}
-	}
-
 	headers := http.Header{}
 	headers.Add("Content-Length", strconv.FormatInt(int64(part.ProxyReader.Len()), 10))
 	res, err := files_sdk.CallRaw(
@@ -447,6 +453,17 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 		Etag: etag,
 		Part: strconv.FormatInt(part.PartNumber, 10),
 	}, nil
+}
+
+func (u *uploadIO) usesSameUrl(file files_sdk.FileUploadPart) bool {
+	// Remote Mounts use the same URL
+	usesSameURL := u.isRemoteMount(file)
+	return usesSameURL
+}
+
+func (u *uploadIO) isRemoteMount(file files_sdk.FileUploadPart) bool {
+	isRemoteMount := !lib.UnWrapBool(file.ParallelParts)
+	return isRemoteMount
 }
 
 func uploadProgress(uploadStatus *UploadStatus) func(bytesCount int64) {

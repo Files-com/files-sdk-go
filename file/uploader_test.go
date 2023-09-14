@@ -3,10 +3,12 @@ package file
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"io/fs"
 	"math"
 	"net/http"
+	"strings"
 	"sync"
 	"testing"
 	"testing/fstest"
@@ -407,68 +409,133 @@ func TestUploadReader(t *testing.T) {
 	})
 
 	t.Run("io.ReaderAt and size with resume", func(t *testing.T) {
-		server := (&MockAPIServer{T: t}).Do()
-		defer server.Shutdown()
-		server.MockFiles["reader-at-size.txt"] = mockFile{File: files_sdk.File{Size: 10}}
-		progressMutex := sync.Mutex{}
-		bytesUploaded := []int64{0, 0}
-		ctx, cancel := context.WithCancel(context.Background())
-		client := server.Client()
-		u, err := client.UploadWithResume(
-			func(io uploadIO) (uploadIO, error) {
-				io.PartSizes = []int64{2, 4, 8, 16, 32}
-				return io, nil
-			},
-			UploadWithReaderAt(bytes.NewReader(bytes.NewBufferString("0123456789").Bytes())),
-			UploadWithDestinationPath("reader-at-size.txt"),
-			UploadWithSize(10),
-			UploadWithManager(lib.NewConstrainedWorkGroup(1)),
-			UploadWithContext(ctx),
-			UploadRewindAllProgressOnFailure(),
-			UploadWithProgress(func(i int64) {
-				progressMutex.Lock()
-				defer progressMutex.Unlock()
-				bytesUploaded[0] += i
+		firstTry := func(t *testing.T, filename string) (context.Context, context.CancelFunc, *Client, *MockAPIServer, UploadResumable) {
+			ctx, cancel := context.WithCancel(context.Background())
+			server := (&MockAPIServer{T: t}).Do()
+			client := server.Client()
 
-				if bytesUploaded[0] > 5 {
+			server.MockFiles[filename] = mockFile{File: files_sdk.File{Size: 10}}
+			progressMutex := sync.Mutex{}
+			bytesUploaded := []int64{0, 0}
+
+			firstTry, err := client.UploadWithResume(
+				func(io uploadIO) (uploadIO, error) {
+					io.PartSizes = []int64{2, 4, 8, 16, 32}
+					return io, nil
+				},
+				UploadWithReaderAt(bytes.NewReader(bytes.NewBufferString("0123456789").Bytes())),
+				UploadWithDestinationPath(filename),
+				UploadWithSize(10),
+				UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+				UploadWithContext(ctx),
+				UploadRewindAllProgressOnFailure(),
+				UploadWithProgress(func(i int64) {
+					progressMutex.Lock()
+					defer progressMutex.Unlock()
+					bytesUploaded[0] += i
+
+					if bytesUploaded[0] > 5 {
+						cancel()
+					}
+				}),
+			)
+			cancel()
+			require.ErrorIs(t, err, context.Canceled)
+
+			assert.Len(t, firstTry.Parts, 3)
+			assert.Equal(t, int64(2), firstTry.Parts.SuccessfulBytes())
+			assert.Equal(t, int64(0), bytesUploaded[0])
+			assert.Equal(t, filename, firstTry.FileUploadPart.Path)
+			server.CloseClientConnections()
+			ctx, cancel = context.WithCancel(context.Background())
+			// The last request might still be processing
+			time.Sleep(10 * time.Millisecond)
+			return ctx, func() {
+					server.CloseClientConnections()
 					cancel()
-				}
-			}),
-		)
-		cancel()
-		require.ErrorIs(t, err, context.Canceled)
-
-		assert.Len(t, u.Parts, 3)
-		assert.Equal(t, int64(0), bytesUploaded[0])
-		assert.Equal(t, "reader-at-size.txt", u.FileUploadPart.Path)
-
+				}, client,
+				server,
+				firstTry
+		}
 		// Retry
-		ctx, cancel = context.WithCancel(context.Background())
-		u, err = client.UploadWithResume(
-			func(io uploadIO) (uploadIO, error) {
-				io.PartSizes = []int64{2, 4, 8, 16, 32}
-				return io, nil
-			},
-			UploadWithReaderAt(bytes.NewReader(bytes.NewBufferString("0123456789").Bytes())),
-			UploadWithDestinationPath("reader-at-size.txt"),
-			UploadWithSize(10),
-			UploadWithManager(lib.NewConstrainedWorkGroup(2)),
-			UploadWithContext(ctx),
-			UploadWithProgress(func(i int64) {
-				progressMutex.Lock()
-				defer progressMutex.Unlock()
-				bytesUploaded[1] += i
-			}),
-			UploadWithResume(u),
-		)
+		retry := func(ctx context.Context, u UploadResumable, client *Client) (UploadResumable, error) {
+			return client.UploadWithResume(
+				func(io uploadIO) (uploadIO, error) {
+					io.PartSizes = []int64{2, 4, 8, 16, 32}
+					return io, nil
+				},
+				UploadWithReaderAt(bytes.NewReader(bytes.NewBufferString("0123456789").Bytes())),
+				UploadWithDestinationPath(u.FileUploadPart.Path),
+				UploadWithSize(10),
+				UploadWithManager(lib.NewConstrainedWorkGroup(2)),
+				UploadWithContext(ctx),
+				UploadWithResume(u),
+			)
+		}
 
-		assert.ElementsMatch(t, []string{"/upload/reader-at-size.txt?part_number=1", "/upload/reader-at-size.txt?part_number=2", "/upload/reader-at-size.txt?part_number=2", "/upload/reader-at-size.txt?part_number=3"}, server.TrackRequest["/upload/*path"])
-		assert.Equal(t, "reader-at-size.txt", u.File.Path)
-		assert.Equal(t, int64(10), u.Size)
-		assert.Len(t, u.Parts, 3)
-		assert.Equal(t, bytesUploaded[1], u.Parts.SuccessfulBytes())
-		assert.Equal(t, bytesUploaded[0]+bytesUploaded[1], u.Size)
-		assert.Equal(t, "reader-at-size.txt", u.FileUploadPart.Path)
+		t.Run("native", func(t *testing.T) {
+			ctx, cancel, client, server, resume := firstTry(t, "native-file")
+			defer cancel()
+
+			server.traceMutex.Lock()
+			server.TrackRequest = make(map[string][]string)
+			server.traceMutex.Unlock()
+			var beginUploadRequests []files_sdk.FileBeginUploadParams
+
+			server.MockRoute("/api/rest/v1/file_actions/begin_upload/native-file", func(ctx *gin.Context, model interface{}) bool {
+				beginUploadRequests = append(beginUploadRequests, model.(files_sdk.FileBeginUploadParams))
+				return false
+			})
+
+			u, err := retry(ctx, resume, client)
+			require.NoError(t, err)
+
+			assert.ElementsMatch(t, []string{"/api/rest/v1/file_actions/begin_upload/native-file"}, server.TrackRequest["/api/rest/v1/file_actions/begin_upload/*path"], "only requests part 3")
+			assert.ElementsMatch(t, []string{"/upload/native-file?part_number=2", "/upload/native-file?part_number=3"}, server.TrackRequest["/upload/*path"], "1 already succeed rest are uploaded")
+			assert.Equal(t, "native-file", u.File.Path)
+			assert.Equal(t, int64(10), u.Size)
+			assert.Len(t, u.Parts, 3)
+			assert.Equal(t, "native-file", u.FileUploadPart.Path)
+		})
+
+		t.Run("remote_mount", func(t *testing.T) {
+			ctx, cancel, client, server, resume := firstTry(t, "remote_mount-file")
+			defer cancel()
+
+			resume.FileUploadPart.ParallelParts = lib.Bool(false)
+			server.traceMutex.Lock()
+			server.TrackRequest = make(map[string][]string)
+			server.traceMutex.Unlock()
+			server.MockRoute("/api/rest/v1/file_actions/begin_upload/remote_mount-file", func(ctx *gin.Context, model interface{}) bool {
+				file := model.(files_sdk.FileBeginUploadParams)
+				if file.Part == 0 {
+					file.Part = 1
+				}
+				path := strings.TrimPrefix(ctx.Param("path"), "/")
+				ctx.JSON(http.StatusOK, files_sdk.FileUploadPartCollection{
+					files_sdk.FileUploadPart{
+						HttpMethod:    "POST",
+						Path:          path,
+						UploadUri:     fmt.Sprintf("%v?part_number=%v", lib.UrlJoinNoEscape(server.URL, "upload", path), file.Part),
+						ParallelParts: lib.Bool(false),
+						Expires:       time.Now().Add(time.Hour).Format(time.RFC3339),
+						PartNumber:    file.Part,
+					},
+				})
+				return true
+			})
+
+			u, err := retry(ctx, resume, client)
+			require.NoError(t, err)
+
+			assert.ElementsMatch(t, []string{"/api/rest/v1/file_actions/begin_upload/remote_mount-file"}, server.TrackRequest["/api/rest/v1/file_actions/begin_upload/*path"], "upload is invalided because of ParallelParts")
+			assert.ElementsMatch(t, []string{"/upload/remote_mount-file?part_number=1", "/upload/remote_mount-file?part_number=2", "/upload/remote_mount-file?part_number=3"}, server.TrackRequest["/upload/*path"], "all parts are uploaded")
+			assert.Equal(t, "remote_mount-file", u.File.Path)
+			assert.Equal(t, int64(10), u.Size)
+			assert.Len(t, u.Parts, 3)
+			assert.Equal(t, int64(10), u.Parts.SuccessfulBytes())
+			assert.Equal(t, "remote_mount-file", u.FileUploadPart.Path)
+		})
 	})
 
 	t.Run("missing UploadWithDestinationPath", func(t *testing.T) {
