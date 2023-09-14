@@ -3,7 +3,7 @@ package manager
 import (
 	"math"
 
-	"github.com/Files-com/files-sdk-go/v2/lib"
+	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
 var (

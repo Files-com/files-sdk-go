@@ -1,8 +1,8 @@
 package action_notification_export
 
 import (
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	lib "github.com/Files-com/files-sdk-go/v2/lib"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
 type Client struct {

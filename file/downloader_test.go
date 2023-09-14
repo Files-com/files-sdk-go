@@ -11,17 +11,17 @@ import (
 	"testing/fstest"
 	"time"
 
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/Files-com/files-sdk-go/v2/file/manager"
-	"github.com/Files-com/files-sdk-go/v2/file/status"
-	"github.com/Files-com/files-sdk-go/v2/lib"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/file/manager"
+	"github.com/Files-com/files-sdk-go/v3/file/status"
+	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type ReporterCall struct {
-	status.File
+	JobFile
 	err error
 }
 
@@ -32,11 +32,11 @@ type TestSetup struct {
 	DownloaderParams
 	rootDestination string
 	tempDir         string
-	*files_sdk.Config
+	files_sdk.Config
 }
 
 func NewTestSetup() *TestSetup {
-	t := &TestSetup{Config: &files_sdk.Config{}}
+	t := &TestSetup{Config: files_sdk.Config{}.Init()}
 	t.MapFS = make(fstest.MapFS)
 	err := t.TempDir()
 	if err != nil {
@@ -45,16 +45,16 @@ func NewTestSetup() *TestSetup {
 	return t
 }
 
-func (setup *TestSetup) Reporter() status.EventsReporter {
+func (setup *TestSetup) Reporter() EventsReporter {
 	m := sync.Mutex{}
 
-	callback := func(status status.File) {
+	callback := func(status JobFile) {
 		m.Lock()
-		setup.reporterCalls = append(setup.reporterCalls, ReporterCall{File: status})
+		setup.reporterCalls = append(setup.reporterCalls, ReporterCall{JobFile: status})
 		m.Unlock()
 	}
 
-	return status.CreateFileEvents(callback, append(status.Excluded, status.Included...)...)
+	return CreateFileEvents(callback, append(status.Excluded, status.Included...)...)
 }
 
 func (setup *TestSetup) TempDir() error {
@@ -68,7 +68,8 @@ func (setup *TestSetup) TearDown() error {
 	return os.RemoveAll(setup.tempDir)
 }
 
-func (setup *TestSetup) Call() *status.Job {
+func (setup *TestSetup) Call() *Job {
+	setup.DownloaderParams.config = setup.Config
 	job := downloader(
 		context.Background(),
 		setup.MapFS,
@@ -404,9 +405,9 @@ expected 4194304 bytes sent 5242880 received`)
 			ForceRequestStatus:  "failed",
 			ForceRequestMessage: "problem",
 		}
-		var events []status.File
-		eventReporter := status.CreateFileEvents(
-			func(file status.File) {
+		var events []JobFile
+		eventReporter := CreateFileEvents(
+			func(file JobFile) {
 				events = append(events, file)
 			},
 			status.Included...,
@@ -438,8 +439,8 @@ expected 4194304 bytes sent 5242880 received`)
 		assert.Len(t, job.Statuses, 1)
 		assert.Error(t, job.Statuses[0].Err(), `received size did not match server send size
 expected 4194304 bytes sent 5242880 received`)
-		assert.Equal(t, []int64{0, 0, 0}, lo.Map[status.File, int64](events, func(item status.File, index int) int64 { return item.TransferBytes }))
-		assert.Equal(t, []string{"queued", "downloading", "errored"}, lo.Map[status.File, string](events, func(item status.File, index int) string { return item.StatusName }))
+		assert.Equal(t, []int64{0, 32768, 0}, lo.Map[JobFile, int64](events, func(item JobFile, index int) int64 { return item.TransferBytes }))
+		assert.Equal(t, []string{"queued", "downloading", "errored"}, lo.Map[JobFile, string](events, func(item JobFile, index int) string { return item.StatusName }))
 		<-wait
 		assert.GreaterOrEqual(t, lo.Count[string](transferBytes, "zero"), 2, "After error transfer bytes are set to zero")
 		assert.GreaterOrEqual(t, lo.Count[string](transferBytes, "bytes"), 2, "After error transfer bytes are set to zero")
@@ -670,8 +671,8 @@ func TestDownload(t *testing.T) {
 				sourceFs := (&FS{Context: context.Background()}).Init(config, false)
 				lib.BuildPathSpecTest(t, mutex, tt, sourceFs, destinationFs, func(source, destination string) lib.Cmd {
 					return &CmdRunner{
-						run: func() *status.Job {
-							return downloader(context.Background(), sourceFs, DownloaderParams{RemotePath: source, LocalPath: destination})
+						run: func() *Job {
+							return downloader(context.Background(), sourceFs, DownloaderParams{config: config, RemotePath: source, LocalPath: destination})
 						},
 						args: []string{source, destination},
 					}
@@ -683,11 +684,11 @@ func TestDownload(t *testing.T) {
 }
 
 type CmdRunner struct {
-	run    func() *status.Job
+	run    func() *Job
 	stderr io.Writer
 	stdout io.Writer
 	args   []string
-	*status.Job
+	*Job
 }
 
 func (c *CmdRunner) Run() error {

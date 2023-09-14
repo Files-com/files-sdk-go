@@ -8,20 +8,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Files-com/files-sdk-go/v2/lib/keyvalue"
-
-	"github.com/Files-com/files-sdk-go/v2/lib/direction"
-
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/Files-com/files-sdk-go/v2/directory"
-	"github.com/Files-com/files-sdk-go/v2/file/status"
-	"github.com/Files-com/files-sdk-go/v2/lib"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/directory"
+	"github.com/Files-com/files-sdk-go/v3/file/status"
+	"github.com/Files-com/files-sdk-go/v3/lib"
+	"github.com/Files-com/files-sdk-go/v3/lib/direction"
+	"github.com/Files-com/files-sdk-go/v3/lib/keyvalue"
 )
 
-func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *status.Job {
-	job := (&status.Job{}).Init()
-	SetJobParams(job, direction.DownloadType, params, params.Config.Logger(), fileSys)
-	job.Config = params.Config
+func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *Job {
+	job := (&Job{}).Init()
+	SetJobParams(job, direction.DownloadType, params, params.config.Logger, fileSys)
+	job.Config = params.config
 	jobCtx := job.WithContext(ctx)
 	remoteFs, ok := fileSys.(lib.FSWithContext)
 	if ok {
@@ -95,7 +93,7 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 	job.CodeStart = func() {
 		job.Scan()
 		go enqueueIndexedDownloads(job, jobCtx, onComplete)
-		status.WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, job.RetryPolicy.(RetryPolicy), false) })
+		WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, job.RetryPolicy.(RetryPolicy), false) })
 
 		it := (&lib.Walk[lib.DirEntry]{
 			FS:                 fileSys,
@@ -138,7 +136,7 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *st
 	return job
 }
 
-func enqueueIndexedDownloads(job *status.Job, jobCtx context.Context, onComplete chan *DownloadStatus) {
+func enqueueIndexedDownloads(job *Job, jobCtx context.Context, onComplete chan *DownloadStatus) {
 	for !job.EndScanning.Called() || job.Count(status.Indexed) > 0 {
 		if f, ok := job.EnqueueNext(); ok {
 			if job.FilesManager.WaitWithContext(jobCtx) {
@@ -159,7 +157,7 @@ func normalizePath(rootDestination string) string {
 	return rootDestination
 }
 
-func createIndexedStatus(f Entity, params DownloaderParams, job *status.Job) {
+func createIndexedStatus(f Entity, params DownloaderParams, job *Job) {
 	s := &DownloadStatus{
 		error:         f.error,
 		fsFile:        f.File,
@@ -186,7 +184,7 @@ func createIndexedStatus(f Entity, params DownloaderParams, job *status.Job) {
 	job.Add(s)
 }
 
-func enqueueDownload(ctx context.Context, job *status.Job, downloadStatus *DownloadStatus, signal chan *DownloadStatus) {
+func enqueueDownload(ctx context.Context, job *Job, downloadStatus *DownloadStatus, signal chan *DownloadStatus) {
 	if downloadStatus.error != nil || downloadStatus.fsFile == nil {
 		job.UpdateStatus(status.Errored, downloadStatus, downloadStatus.RecentError())
 		signal <- downloadStatus
@@ -240,8 +238,7 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 		}
 
 		tmpName := tmpDownloadPath(reportStatus.LocalPath())
-		config := reportStatus.Job().Config.(files_sdk.Config)
-		config.LogPath(
+		reportStatus.Job().Config.LogPath(
 			reportStatus.RemotePath(),
 			map[string]interface{}{
 				"LocalTempPath": tmpName,
@@ -253,7 +250,7 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 			remoteStat,
 			reportStatus.Job().Manager.FilePartsManager,
 			writer,
-			config,
+			reportStatus.Job().Config,
 		)
 
 		lib.AnyError(func(err error) {
@@ -265,8 +262,7 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 
 		if reportStatus.Status().Is(status.Valid...) {
 			reportStatus.SetFinalSize(downloadParts.FinalSize())
-			config := reportStatus.Job().Config.(files_sdk.Config)
-			config.LogPath(
+			reportStatus.Job().Config.LogPath(
 				reportStatus.RemotePath(),
 				map[string]interface{}{
 					"LocalTempPath": tmpName,
@@ -308,13 +304,12 @@ func openFile(partName string, reportStatus *DownloadStatus) lib.ProgressWriter 
 	}
 	writer := lib.ProgressWriter{WriterAndAt: out}
 	writer.ProgressWatcher = func(incDownloadedBytes int64) {
-		reportStatus.Job().UpdateStatus(status.Downloading, reportStatus, nil)
-		reportStatus.incrementDownloadedBytes(incDownloadedBytes)
+		reportStatus.Job().UpdateStatusWithBytes(status.Downloading, reportStatus, incDownloadedBytes)
 	}
 	return writer
 }
 
-func localPath(file files_sdk.File, job status.Job) string {
+func localPath(file files_sdk.File, job Job) string {
 	var path string
 	if job.Type == directory.File {
 		path = job.LocalPath
@@ -325,7 +320,7 @@ func localPath(file files_sdk.File, job status.Job) string {
 	return path
 }
 
-func relativePath(job status.Job, file files_sdk.File) string {
+func relativePath(job Job, file files_sdk.File) string {
 	relativePath, err := filepath.Rel(job.RemotePath, file.Path)
 	if err != nil {
 		panic(err)

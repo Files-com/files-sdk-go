@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"time"
 
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/Files-com/files-sdk-go/v2/file/manager"
-	"github.com/Files-com/files-sdk-go/v2/file/status"
-	lib "github.com/Files-com/files-sdk-go/v2/lib"
-	"github.com/Files-com/files-sdk-go/v2/lib/direction"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/file/manager"
+	"github.com/Files-com/files-sdk-go/v3/file/status"
+	lib "github.com/Files-com/files-sdk-go/v3/lib"
+	"github.com/Files-com/files-sdk-go/v3/lib/direction"
 )
 
 type UploadOption func(uploadIO) (uploadIO, error)
@@ -146,7 +146,7 @@ func (c *Client) UploadFile(sourcePath string, destinationPath string, opts ...U
 	return c.Upload(append(opts, UploadWithFile(sourcePath), UploadWithDestinationPath(destinationPath))...)
 }
 
-func (c *Client) UploadRetry(job status.Job, opts ...files_sdk.RequestResponseOption) *status.Job {
+func (c *Client) UploadRetry(job Job, opts ...files_sdk.RequestResponseOption) *Job {
 	newJob := job.ClearStatuses()
 	return c.Uploader(
 		UploaderParams{
@@ -157,7 +157,6 @@ func (c *Client) UploadRetry(job status.Job, opts ...files_sdk.RequestResponseOp
 			Manager:        newJob.Manager,
 			RetryPolicy:    newJob.RetryPolicy.(RetryPolicy),
 			Ignore:         newJob.Params.(UploaderParams).Ignore,
-			Config:         c.Config,
 		},
 		opts...,
 	)
@@ -166,15 +165,15 @@ func (c *Client) UploadRetry(job status.Job, opts ...files_sdk.RequestResponseOp
 type UploaderParams struct {
 	Ignore  []string
 	Include []string
-	*status.Job
+	*Job
 	Sync       bool
 	LocalPath  string
 	RemotePath string
 	DryRun     bool
 	RetryPolicy
-	status.EventsReporter
+	EventsReporter
 	*manager.Manager
-	files_sdk.Config
+	config files_sdk.Config
 }
 
 func expand(path string) (string, error) {
@@ -188,10 +187,11 @@ func expand(path string) (string, error) {
 	return filepath.Join(usr.HomeDir, path[1:]), nil
 }
 
-func (c *Client) Uploader(params UploaderParams, opts ...files_sdk.RequestResponseOption) *status.Job {
-	job := (&status.Job{}).Init()
-	SetJobParams(job, direction.UploadType, params, params.Config.Logger(), (&FS{}).Init(c.Config, true))
-	job.Config = params.Config
+func (c *Client) Uploader(params UploaderParams, opts ...files_sdk.RequestResponseOption) *Job {
+	job := (&Job{}).Init()
+	params.config = c.Config
+	SetJobParams(job, direction.UploadType, params, c.Logger, (&FS{}).Init(c.Config, true))
+	job.Config = params.config
 	job.CodeStart = func() {
 		params.Job = job
 		job.Params = params

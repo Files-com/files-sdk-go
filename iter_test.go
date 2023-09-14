@@ -3,8 +3,7 @@ package files_sdk
 import (
 	"testing"
 
-	"github.com/Files-com/files-sdk-go/v2/lib"
-
+	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -2,6 +2,7 @@ package file
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	fs2 "io/fs"
@@ -15,21 +16,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/samber/lo"
-
-	"github.com/stretchr/testify/require"
-
-	"github.com/Files-com/files-sdk-go/v2/ignore"
-
-	"github.com/Files-com/files-sdk-go/v2/file/manager"
-	"github.com/Files-com/files-sdk-go/v2/file/status"
-	"github.com/Files-com/files-sdk-go/v2/lib/test"
-
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/Files-com/files-sdk-go/v2/folder"
-	"github.com/Files-com/files-sdk-go/v2/lib"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/file/manager"
+	"github.com/Files-com/files-sdk-go/v3/file/status"
+	"github.com/Files-com/files-sdk-go/v3/folder"
+	"github.com/Files-com/files-sdk-go/v3/ignore"
+	"github.com/Files-com/files-sdk-go/v3/lib"
+	"github.com/Files-com/files-sdk-go/v3/lib/test"
 	recorder "github.com/dnaeon/go-vcr/recorder"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func CreateClient(fixture string) (client *Client, r *recorder.Recorder, err error) {
@@ -41,13 +38,14 @@ func CreateClient(fixture string) (client *Client, r *recorder.Recorder, err err
 
 func deletePath(client *Client, path string) {
 	err := client.Delete(files_sdk.FileDeleteParams{Path: path})
-	responseError, ok := err.(files_sdk.ResponseError)
+	var responseError files_sdk.ResponseError
+	ok := errors.As(err, &responseError)
 	if ok && responseError.Type == "not-found" {
 	} else if ok && responseError.Type == "processing-failure/folder-not-empty" {
 		err = client.Delete(files_sdk.FileDeleteParams{Path: path, Recursive: lib.Bool(true)})
-		responseError, ok = err.(files_sdk.ResponseError)
+		ok = errors.As(err, &responseError)
 		if ok && responseError.Type == "not-found" {
-
+			//noop
 		} else if ok {
 			panic(err)
 		}
@@ -94,18 +92,18 @@ func buildScenario(base string, client *Client) {
 	ignoreSomeErrors(err)
 }
 
-func runDownloadScenario(path string, destination string, client *Client) map[string][]status.File {
+func runDownloadScenario(path string, destination string, client *Client) map[string][]JobFile {
 	m := &sync.Mutex{}
-	results := make(map[string][]status.File)
+	results := make(map[string][]JobFile)
 
-	reporter := func(r status.File) {
+	reporter := func(r JobFile) {
 		m.Lock()
 		results[r.File.Path] = append(results[r.File.Path], r)
 		m.Unlock()
 	}
 
 	job := client.Downloader(
-		DownloaderParams{RemotePath: path, LocalPath: destination, EventsReporter: Reporter(reporter)},
+		DownloaderParams{RemotePath: path, LocalPath: destination, EventsReporter: CreateReporter(reporter)},
 	)
 
 	job.Start()
@@ -114,8 +112,8 @@ func runDownloadScenario(path string, destination string, client *Client) map[st
 	return results
 }
 
-func Reporter(callback status.Reporter) status.EventsReporter {
-	return status.CreateFileEvents(callback, append(status.Excluded, append(status.Included, status.OnBytesChange(status.Uploading))...)...)
+func CreateReporter(callback Reporter) EventsReporter {
+	return CreateFileEvents(callback, append(status.Excluded, append(status.Included, OnBytesChange(status.Uploading))...)...)
 }
 
 func TestClient_UploadFolder(t *testing.T) {
@@ -133,9 +131,9 @@ func TestClient_UploadFolder(t *testing.T) {
 		UploaderParams{
 			LocalPath:  "../lib",
 			RemotePath: "golib",
-			EventsReporter: Reporter(func(status status.File) {
+			EventsReporter: CreateReporter(func(status JobFile) {
 				resultsMapMutex.Lock()
-				results[status.RemotePath] = append(results[status.RemotePath], ReporterCall{File: status, err: status.Err})
+				results[status.RemotePath] = append(results[status.RemotePath], ReporterCall{JobFile: status, err: status.Err})
 				resultsMapMutex.Unlock()
 			}),
 			Manager: manager.Default(),
@@ -216,7 +214,7 @@ func TestClient_UploadFolder_Dot(t *testing.T) {
 		UploaderParams{
 			LocalPath:  "." + string(os.PathSeparator),
 			RemotePath: "go-from-dot",
-			EventsReporter: Reporter(func(s status.File) {
+			EventsReporter: CreateReporter(func(s JobFile) {
 				resultsMapMutex.Lock()
 				require.NoError(t, s.Err)
 
@@ -276,7 +274,7 @@ func TestClient_UploadFolder_Relative(t *testing.T) {
 		UploaderParams{
 			LocalPath:  "relative" + string(os.PathSeparator),
 			RemotePath: "relative",
-			EventsReporter: Reporter(func(status status.File) {
+			EventsReporter: CreateReporter(func(status JobFile) {
 				resultsMapMutex.Lock()
 				results[status.File.Path] = append(results[status.File.Path], status.TransferBytes)
 				resultsMapMutex.Unlock()
@@ -754,9 +752,9 @@ func TestClient_Downloader_Delete_Source(t *testing.T) {
 	job := client.Downloader(
 		DownloaderParams{RemotePath: "test-delete-source", LocalPath: localPath},
 	)
-	var fi status.File
+	var fi JobFile
 	var log status.Log
-	job.RegisterFileEvent(func(f status.File) {
+	job.RegisterFileEvent(func(f JobFile) {
 		fi = f
 		log, err = DeleteSource{Config: client.Config, Direction: job.Direction}.Call(f)
 	}, status.Complete)
@@ -797,7 +795,7 @@ func TestClient_Downloader_Move_Source(t *testing.T) {
 		DownloaderParams{RemotePath: "test-move-source", LocalPath: localPath},
 	)
 	var log status.Log
-	job.RegisterFileEvent(func(f status.File) {
+	job.RegisterFileEvent(func(f JobFile) {
 		log, err = MoveSource{Config: client.Config, Direction: job.Direction, Path: "test-moved-source"}.Call(f)
 	}, status.Complete)
 	job.Start()
@@ -837,7 +835,7 @@ func TestClient_UploadFolder_Move_Source(t *testing.T) {
 	tempFile.Write([]byte("testing"))
 	require.NoError(t, tempFile.Close())
 	job := client.Uploader(UploaderParams{LocalPath: tempFile.Name()})
-	job.RegisterFileEvent(func(f status.File) {
+	job.RegisterFileEvent(func(f JobFile) {
 		fmt.Println("RegisterFileEvent")
 		log, err = MoveSource{Config: client.Config, Direction: job.Direction, Path: filepath.Join(tmpDir, "move-source", "test-moved-source.text")}.Call(f)
 	}, status.Complete)
@@ -875,7 +873,7 @@ func TestClient_UploadFolder_Move_Source_Missing_Dir(t *testing.T) {
 	tempFile.Write([]byte("testing"))
 	tempFile.Close()
 	job := client.Uploader(UploaderParams{LocalPath: filepath.Join(tmpDir, "move-source-dir") + string(os.PathSeparator)})
-	job.RegisterFileEvent(func(f status.File) {
+	job.RegisterFileEvent(func(f JobFile) {
 		log, err = MoveSource{Config: client.Config, Direction: job.Direction, Path: filepath.Join(tmpDir, "moved-source-dir")}.Call(f)
 	}, status.Complete)
 	job.Start()
@@ -922,7 +920,7 @@ func TestClient_Downloader_Move_Source_Missing_Dir(t *testing.T) {
 			LocalPath:  filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir") + string(os.PathSeparator),
 		},
 	)
-	job.RegisterFileEvent(func(f status.File) {
+	job.RegisterFileEvent(func(f JobFile) {
 		moveLog, err := MoveSource{Config: client.Config, Direction: job.Direction, Path: "TestClient_Downloader_Move_Source_Missing_Dir-moved"}.Call(f)
 		logChan <- moveLog
 		errChan <- err
@@ -974,9 +972,9 @@ func TestClient_UploadFile_Delete_Source(t *testing.T) {
 	tempFile, err := os.Create(filepath.Join(tmpDir, "upload-delete-source.text"))
 	tempFile.Write([]byte("testing"))
 	require.NoError(t, tempFile.Close())
-	var fi status.File
+	var fi JobFile
 	job := client.Uploader(UploaderParams{LocalPath: tempFile.Name()})
-	job.RegisterFileEvent(func(f status.File) {
+	job.RegisterFileEvent(func(f JobFile) {
 		fi = f
 		log, err = DeleteSource{Config: client.Config, Direction: job.Direction}.Call(f)
 	}, status.Complete)

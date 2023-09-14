@@ -10,13 +10,13 @@ import (
 	"testing"
 	"time"
 
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/Files-com/files-sdk-go/v2/file/manager"
-	"github.com/Files-com/files-sdk-go/v2/file/status"
-	"github.com/Files-com/files-sdk-go/v2/ignore"
-	"github.com/Files-com/files-sdk-go/v2/lib"
-	"github.com/Files-com/files-sdk-go/v2/lib/direction"
-	"github.com/Files-com/files-sdk-go/v2/lib/timer"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/file/manager"
+	"github.com/Files-com/files-sdk-go/v3/file/status"
+	"github.com/Files-com/files-sdk-go/v3/ignore"
+	"github.com/Files-com/files-sdk-go/v3/lib"
+	"github.com/Files-com/files-sdk-go/v3/lib/direction"
+	"github.com/Files-com/files-sdk-go/v3/lib/timer"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,11 +24,11 @@ func TestRetryTransfers(t *testing.T) {
 	assert := assert.New(t)
 	t.Run("downloads", func(t *testing.T) {
 		t.Run("RetryAll RetryCount 1", func(t *testing.T) {
-			buildDownloadTest(func(job *status.Job) {
-				events := status.EventsReporter{}
+			buildDownloadTest(func(job *Job) {
+				events := EventsReporter{}
 				eventsMutex := sync.Mutex{}
 				var retryingEvents []status.Status
-				job.RegisterFileEvent(func(file status.File) {
+				job.RegisterFileEvent(func(file JobFile) {
 					eventsMutex.Lock()
 					defer eventsMutex.Unlock()
 					retryingEvents = append(retryingEvents, file.Status)
@@ -41,7 +41,7 @@ func TestRetryTransfers(t *testing.T) {
 		})
 
 		t.Run("RetryUnfinished RetryCount 1", func(t *testing.T) {
-			buildDownloadTest(func(job *status.Job) {
+			buildDownloadTest(func(job *Job) {
 				job.Start(false)
 				RetryByPolicy(context.Background(), job, RetryPolicy{Type: RetryUnfinished, RetryCount: 1}, false)
 				assert.Equal(false, job.All(status.Complete))
@@ -56,7 +56,7 @@ func TestRetryTransfers(t *testing.T) {
 		})
 
 		t.Run("RetryUnfinished RetryCount 1 signalEvents true", func(t *testing.T) {
-			buildDownloadTest(func(job *status.Job) {
+			buildDownloadTest(func(job *Job) {
 				job.Start()
 				job.Finish() // Finish already called, this happens in the desktop app
 				RetryByPolicy(context.Background(), job, RetryPolicy{Type: RetryUnfinished, RetryCount: 1}, true)
@@ -70,38 +70,17 @@ func TestRetryTransfers(t *testing.T) {
 				assert.Equal(true, job.Finished.Called())
 			})
 		})
-
-		t.Run("RetryErroredIfSomeCompleted RetryCount 1", func(t *testing.T) {
-			buildDownloadTest(func(job *status.Job) {
-				RetryByPolicy(context.Background(), job, RetryPolicy{Type: RetryErroredIfSomeCompleted, RetryCount: 1}, false)
-				assert.Equal(false, job.All(status.Complete))
-				assert.Equal(2, job.Count(status.Complete))
-				assert.Equal(1, job.Count(status.Queued))
-			})
-		})
-
-		t.Run("RetryErroredIfSomeCompleted RetryCount 1", func(t *testing.T) {
-			buildDownloadTest(func(job *status.Job) {
-				job.Statuses[0].(*DownloadStatus).lastByte = time.Time{}
-				job.Statuses[1].(*DownloadStatus).lastByte = time.Time{}
-				job.Statuses[2].(*DownloadStatus).lastByte = time.Time{}
-				RetryByPolicy(context.Background(), job, RetryPolicy{Type: RetryErroredIfSomeCompleted, RetryCount: 1}, false)
-				assert.Equal(1, job.Count(status.Complete))
-				assert.Equal(1, job.Count(status.Queued))
-				assert.Equal(1, job.Count(status.Errored), "is not retried because completed happened before this error not after")
-			})
-		})
 	})
 	t.Run("uploads", func(t *testing.T) {
 		t.Run("RetryAll RetryCount 1", func(t *testing.T) {
-			buildUploadTest(func(job *status.Job, _ *MockUploader) {
+			buildUploadTest(func(job *Job, _ *MockUploader) {
 				RetryByPolicy(context.Background(), job, RetryPolicy{Type: RetryAll, RetryCount: 1}, false)
 				assert.Equal(true, job.All(status.Complete))
 			})
 		})
 
 		t.Run("RetryUnfinished RetryCount 1", func(t *testing.T) {
-			buildUploadTest(func(job *status.Job, _ *MockUploader) {
+			buildUploadTest(func(job *Job, _ *MockUploader) {
 				RetryByPolicy(context.Background(), job, RetryPolicy{Type: RetryUnfinished, RetryCount: 1}, false)
 				assert.Equal(false, job.All(status.Complete))
 				assert.Equal(2, job.Count(status.Complete))
@@ -111,7 +90,7 @@ func TestRetryTransfers(t *testing.T) {
 		})
 
 		t.Run("RetryUnfinished RetryCount 2", func(t *testing.T) {
-			buildUploadTest(func(job *status.Job, uploader *MockUploader) {
+			buildUploadTest(func(job *Job, uploader *MockUploader) {
 				uploader.uploadError = fmt.Errorf("bad things")
 				RetryByPolicy(context.Background(), job, RetryPolicy{Type: RetryUnfinished, RetryCount: 2, Backoff: -1}, false)
 				assert.Equal(false, job.All(status.Complete))
@@ -122,7 +101,7 @@ func TestRetryTransfers(t *testing.T) {
 		})
 
 		t.Run("RetryUnfinished RetryCount 1", func(t *testing.T) {
-			buildUploadTest(func(job *status.Job, _ *MockUploader) {
+			buildUploadTest(func(job *Job, _ *MockUploader) {
 				startTime := time.Now().AddDate(0, -1, 0)
 				endTime := time.Now().AddDate(0, -1, 0)
 				job.Timer.Runs = timer.Runs{timer.Run{
@@ -142,8 +121,8 @@ func TestRetryTransfers(t *testing.T) {
 	})
 }
 
-func buildDownloadTest(test func(*status.Job)) {
-	job := (&status.Job{Direction: direction.DownloadType, Manager: manager.Default(), Config: files_sdk.Config{}, Logger: (&files_sdk.Config{}).Logger()}).Init()
+func buildDownloadTest(test func(*Job)) {
+	job := (&Job{Direction: direction.DownloadType, Manager: manager.Default(), Config: files_sdk.Config{}.Init(), Logger: lib.NullLogger{}}).Init()
 	temps := make([]string, 3)
 	statuses := []status.Status{status.Errored, status.Complete, status.Queued}
 	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
@@ -165,7 +144,7 @@ func buildDownloadTest(test func(*status.Job)) {
 			panic(err)
 		}
 		tempFile.Close()
-		job.Add(&DownloadStatus{Mutex: &sync.RWMutex{}, lastByte: time.Now(), localPath: tempFile.Name(), fsFile: localFile, status: s, job: job, file: files_sdk.File{DisplayName: fmt.Sprintf("%v.txt", i)}})
+		job.Add(&DownloadStatus{Mutex: &sync.RWMutex{}, localPath: tempFile.Name(), fsFile: localFile, status: s, job: job, file: files_sdk.File{DisplayName: fmt.Sprintf("%v.txt", i)}})
 	}
 
 	test(job)
@@ -176,8 +155,8 @@ func buildDownloadTest(test func(*status.Job)) {
 	os.RemoveAll(tmpDir)
 }
 
-func buildUploadTest(test func(*status.Job, *MockUploader), statuses ...status.Status) {
-	job := (&status.Job{Direction: direction.UploadType, Manager: manager.Default(), Params: UploaderParams{}, Config: files_sdk.Config{}, Logger: (&files_sdk.Config{}).Logger()}).Init()
+func buildUploadTest(test func(*Job, *MockUploader), statuses ...status.Status) {
+	job := (&Job{Direction: direction.UploadType, Manager: manager.Default(), Params: UploaderParams{}, Config: files_sdk.Config{}.Init(), Logger: lib.NullLogger{}}).Init()
 	job.Ignore, _ = ignore.New()
 	var temps []string
 	if len(statuses) == 0 {
@@ -199,7 +178,7 @@ func buildUploadTest(test func(*status.Job, *MockUploader), statuses ...status.S
 		}
 		temps = append(temps, tempFile.Name())
 		tempFile.Close()
-		job.Add(&UploadStatus{Mutex: &sync.RWMutex{}, Uploader: uploader, lastByte: time.Now(), localPath: tempFile.Name(), status: s, job: job, file: files_sdk.File{DisplayName: fmt.Sprintf("%v.txt", i), Mtime: lib.Time(time.Now())}})
+		job.Add(&UploadStatus{Mutex: &sync.RWMutex{}, Uploader: uploader, localPath: tempFile.Name(), status: s, job: job, file: files_sdk.File{DisplayName: fmt.Sprintf("%v.txt", i), Mtime: lib.Time(time.Now())}})
 	}
 
 	test(job, uploader)

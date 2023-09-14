@@ -17,8 +17,8 @@ import (
 	"testing"
 	"time"
 
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/Files-com/files-sdk-go/v2/lib"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/chilts/sid"
 	"github.com/gin-gonic/gin"
 	"github.com/samber/lo"
@@ -125,15 +125,15 @@ func (f *MockAPIServer) MockRoute(path string, call func(ctx *gin.Context, model
 }
 
 func (f *MockAPIServer) Client() *Client {
-	client := &Client{}
+	client := &Client{Config: files_sdk.Config{}.Init()}
 	httpClient := http.Client{}
 	if u, err := url.Parse(f.Server.URL); err != nil {
 		f.T.Fatal(err.Error())
 	} else {
 		httpClient.Transport = &CustomTransport{URL: u}
 	}
-	client.Config.SetHttpClient(&httpClient)
-	client.Config.SetLogger(TestLogger{f.T})
+	client.Config.Logger = TestLogger{f.T}
+	client.Config = client.Config.SetCustomClient(&httpClient)
 	return client
 }
 
@@ -430,6 +430,7 @@ func (f *MockAPIServer) Routes() {
 					UploadUri:     lib.UrlJoinNoEscape(f.Server.URL, "upload", path),
 					ParallelParts: lib.Bool(true),
 					Expires:       time.Now().Add(time.Hour).Format(time.RFC3339),
+					PartNumber:    1,
 				},
 			})
 		} else {

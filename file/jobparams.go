@@ -3,12 +3,11 @@ package file
 import (
 	"io/fs"
 
-	"github.com/Files-com/files-sdk-go/v2/file/status"
-	"github.com/Files-com/files-sdk-go/v2/lib/direction"
+	"github.com/Files-com/files-sdk-go/v3/lib/direction"
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-func SetJobParams(r *status.Job, d direction.Direction, params interface{}, logger retryablehttp.Logger, remoteFs fs.FS) {
+func SetJobParams(r *Job, d direction.Direction, params interface{}, logger retryablehttp.Logger, remoteFs fs.FS) {
 	r.Params = params
 	r.Direction = d
 	r.Logger = logger
@@ -31,5 +30,4 @@ func SetJobParams(r *status.Job, d direction.Direction, params interface{}, logg
 		r.RemotePath = p.RemotePath
 		r.Sync = p.Sync
 	}
-
 }

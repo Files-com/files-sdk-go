@@ -2,14 +2,14 @@ package files_sdk
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strconv"
 
-	lib "github.com/Files-com/files-sdk-go/v2/lib"
+	lib "github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/hashicorp/go-retryablehttp"
-
 	"moul.io/http2curl"
 )
 
@@ -44,12 +44,13 @@ func Call(method string, config Config, resource string, params lib.Values, opts
 	if err != nil {
 		return nil, &http.Response{}, err
 	}
-	response, err := WrapRequestOptions(config.GetHttpClient(), request, opts...)
+	response, err := WrapRequestOptions(config, request, opts...)
 	if err != nil {
 		return nil, response, err
 	}
 	data, res, err := ParseResponse(response, resource)
-	responseError, ok := err.(ResponseError)
+	var responseError ResponseError
+	ok := errors.As(err, &responseError)
 	if ok {
 		err = responseError
 	}
@@ -73,13 +74,12 @@ func ParseResponse(res *http.Response, resource string) (*[]byte, *http.Response
 }
 
 type CallParams struct {
-	Method   string
-	Config   Config
-	Uri      string
-	Params   lib.Values
-	BodyIo   io.ReadCloser
-	Headers  *http.Header
-	StayOpen bool
+	Method  string
+	Config  Config
+	Uri     string
+	Params  lib.Values
+	BodyIo  io.ReadCloser
+	Headers *http.Header
 	context.Context
 }
 
@@ -88,13 +88,9 @@ func CallRaw(params *CallParams) (*http.Response, error) {
 	if err != nil {
 		return &http.Response{}, err
 	}
-	if request.Body != nil {
-		retryRequest := &retryablehttp.Request{Request: request}
-		retryRequest.Body = request.Body
-		return params.Config.GetRawClient().Do(retryRequest)
-	} else {
-		return params.Config.GetHttpClient().Do(request)
-	}
+	retryRequest := &retryablehttp.Request{Request: request}
+	retryRequest.Body = request.Body
+	return params.Config.Client.Do(retryRequest)
 }
 
 func buildRequest(opts *CallParams) (*http.Request, error) {
@@ -145,11 +141,6 @@ func buildRequest(opts *CallParams) (*http.Request, error) {
 		}
 	}
 
-	if !opts.StayOpen {
-		req.Header.Set("Connection", "close")
-		req.Close = true
-	}
-
 	if opts.Config.InDebug() {
 		defer debugLog(bodyIsJson, req, opts.Config, opts.Params)
 	}
@@ -170,5 +161,5 @@ func debugLog(bodyIsJson bool, req *http.Request, config Config, params lib.Valu
 	if err != nil {
 		panic(err)
 	}
-	config.Logger().Printf(" %v", command)
+	config.Printf(" %v", command)
 }

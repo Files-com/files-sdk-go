@@ -8,12 +8,12 @@ import (
 	"sync"
 	"time"
 
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/Files-com/files-sdk-go/v2/directory"
-	"github.com/Files-com/files-sdk-go/v2/file/status"
-	"github.com/Files-com/files-sdk-go/v2/ignore"
-	"github.com/Files-com/files-sdk-go/v2/lib"
-	"github.com/Files-com/files-sdk-go/v2/lib/direction"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/directory"
+	"github.com/Files-com/files-sdk-go/v3/file/status"
+	"github.com/Files-com/files-sdk-go/v3/ignore"
+	"github.com/Files-com/files-sdk-go/v3/lib"
+	"github.com/Files-com/files-sdk-go/v3/lib/direction"
 )
 
 type Uploader interface {
@@ -21,15 +21,15 @@ type Uploader interface {
 	Find(files_sdk.FileFindParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error)
 }
 
-func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *status.Job {
-	var job *status.Job
+func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *Job {
+	var job *Job
 	if params.Job == nil {
-		job = (&status.Job{}).Init()
+		job = (&Job{}).Init()
 	} else {
 		job = params.Job
 	}
-	SetJobParams(job, direction.UploadType, params, params.Config.Logger(), (&FS{}).Init(params.Config, true))
-	job.Config = params.Config
+	SetJobParams(job, direction.UploadType, params, params.config.Logger, (&FS{}).Init(params.config, true))
+	job.Config = params.config
 	jobCtx := job.WithContext(parentCtx)
 
 	fi, statErr := os.Stat(params.LocalPath)
@@ -52,7 +52,7 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 		job.Scan()
 
 		go enqueueIndexedUploads(job, jobCtx, onComplete)
-		status.WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, job.RetryPolicy.(RetryPolicy), false) })
+		WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, job.RetryPolicy.(RetryPolicy), false) })
 
 		metaFile := &UploadStatus{
 			job:       job,
@@ -136,7 +136,7 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *sta
 	return job
 }
 
-func remotePath(ctx context.Context, params UploaderParams, c Uploader, job *status.Job) (string, error) {
+func remotePath(ctx context.Context, params UploaderParams, c Uploader, job *Job) (string, error) {
 	destination := params.RemotePath
 	_, localFileName := filepath.Split(params.LocalPath)
 	if params.RemotePath == "" {
@@ -164,7 +164,7 @@ func remotePath(ctx context.Context, params UploaderParams, c Uploader, job *sta
 	return destination, nil
 }
 
-func enqueueIndexedUploads(job *status.Job, jobCtx context.Context, onComplete chan *UploadStatus) {
+func enqueueIndexedUploads(job *Job, jobCtx context.Context, onComplete chan *UploadStatus) {
 	for !job.EndScanning.Called() || job.Count(status.Indexed) > 0 {
 		if f, ok := job.EnqueueNext(); ok {
 			if job.FilesManager.WaitWithContext(jobCtx) {
@@ -177,7 +177,7 @@ func enqueueIndexedUploads(job *status.Job, jobCtx context.Context, onComplete c
 	}
 }
 
-func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadStatus, onComplete chan *UploadStatus) {
+func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, onComplete chan *UploadStatus) {
 	finish := func() {
 		job.FilesManager.Done()
 		onComplete <- uploadStatus
@@ -196,8 +196,7 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 			}
 			finish()
 		}()
-		config := job.Config.(files_sdk.Config)
-		if skipOrIgnore(uploadStatus, config.FeatureFlag("incremental-updates")) {
+		if skipOrIgnore(uploadStatus, job.Config.FeatureFlag("incremental-updates")) {
 			return
 		}
 		if uploadStatus.dryRun {
@@ -231,7 +230,7 @@ func enqueueUpload(ctx context.Context, job *status.Job, uploadStatus *UploadSta
 	}()
 }
 
-func buildUploadStatus(path string, localFolderPath string, destinationRootPath string, c Uploader, job *status.Job, params UploaderParams) (UploadStatus, bool) {
+func buildUploadStatus(path string, localFolderPath string, destinationRootPath string, c Uploader, job *Job, params UploaderParams) (UploadStatus, bool) {
 	dir, filename := filepath.Split(path)
 
 	if localFolderPath == dir && filename == "" {

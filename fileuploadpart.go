@@ -2,8 +2,9 @@ package files_sdk
 
 import (
 	"encoding/json"
+	"time"
 
-	lib "github.com/Files-com/files-sdk-go/v2/lib"
+	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
 type FileUploadPart struct {
@@ -31,6 +32,21 @@ func (f FileUploadPart) Identifier() interface{} {
 
 type FileUploadPartCollection []FileUploadPart
 
+const UploadPartExpires = time.Minute * 15
+const UploadObjectExpires = time.Minute * (24 * 3)
+
+func (f FileUploadPart) ExpiresTime() time.Time {
+	partExpires, _ := time.Parse(time.RFC3339, f.Expires)
+	return partExpires
+}
+
+// UploadExpires only valid on first part request
+func (f FileUploadPart) UploadExpires() time.Time {
+	if f.ExpiresTime().IsZero() {
+		return time.Time{}
+	}
+	return f.ExpiresTime().Add(-(UploadPartExpires)).Add(UploadObjectExpires)
+}
 func (f *FileUploadPart) UnmarshalJSON(data []byte) error {
 	type fileUploadPart FileUploadPart
 	var v fileUploadPart

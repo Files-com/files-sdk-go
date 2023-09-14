@@ -5,9 +5,8 @@ import (
 	"sync"
 	"time"
 
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-
-	"github.com/Files-com/files-sdk-go/v2/file/status"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/file/status"
 )
 
 type DownloadStatus struct {
@@ -16,12 +15,11 @@ type DownloadStatus struct {
 	fs.FileInfo
 	file            files_sdk.File
 	status          status.Status
-	job             *status.Job
+	job             *Job
 	DownloadedBytes int64
 	localPath       string
 	remotePath      string
 	Sync            bool
-	lastByte        time.Time
 	endedAt         time.Time
 	startedAt       time.Time
 	Mutex           *sync.RWMutex
@@ -32,7 +30,7 @@ type DownloadStatus struct {
 	status.Changes
 }
 
-var _ status.IFile = &DownloadStatus{}
+var _ IFile = &DownloadStatus{}
 
 func (d *DownloadStatus) EndedAt() time.Time {
 	return d.endedAt
@@ -80,7 +78,6 @@ func (d *DownloadStatus) SetStatus(s status.Status, err error) {
 
 	if s.Is(status.Retrying) {
 		d.DownloadedBytes = 0
-		d.lastByte = time.Time{}
 	}
 
 	if s.Is(status.Ended...) {
@@ -105,10 +102,6 @@ func (d *DownloadStatus) Id() string {
 
 func (d *DownloadStatus) incrementDownloadedBytes(b int64) {
 	d.Mutex.Lock()
-	if b > 0 {
-		d.lastByte = time.Now()
-	}
-
 	d.DownloadedBytes += b
 	d.Mutex.Unlock()
 }
@@ -143,19 +136,13 @@ func (d *DownloadStatus) Status() status.Status {
 	return d.status
 }
 
-func (d *DownloadStatus) LastByte() time.Time {
-	d.Mutex.RLock()
-	defer d.Mutex.RUnlock()
-	return d.lastByte
-}
-
 func (d *DownloadStatus) Err() error {
 	d.Mutex.RLock()
 	defer d.Mutex.RUnlock()
 	return d.error
 }
 
-func (d *DownloadStatus) Job() *status.Job {
+func (d *DownloadStatus) Job() *Job {
 	return d.job
 }
 

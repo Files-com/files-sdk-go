@@ -1,15 +1,15 @@
-package status
+package file
 
 import (
+	"encoding/json"
 	"sync"
 	"time"
 
-	"encoding/json"
-
-	filesSDK "github.com/Files-com/files-sdk-go/v2"
+	filesSDK "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/file/status"
 )
 
-type File struct {
+type JobFile struct {
 	StatusName    string        `json:"status"`
 	TransferBytes int64         `json:"transferred_bytes"`
 	Size          int64         `json:"size_bytes"`
@@ -22,7 +22,7 @@ type File struct {
 	Attempts      int           `json:"attempts"`
 	Mutex         *sync.RWMutex `json:"-"`
 	LastByte      time.Time     `json:"-"`
-	Status        `json:"-"`
+	status.Status `json:"-"`
 	filesSDK.File `json:"-"`
 	*Job          `json:"-"`
 }
@@ -31,16 +31,16 @@ type MashableError struct {
 	error
 }
 
-func (me MashableError) MarshalJSON() ([]byte, error) {
-	return json.Marshal(me.Error())
+func (m MashableError) MarshalJSON() ([]byte, error) {
+	return json.Marshal(m.Err())
 }
 
-func (me MashableError) Err() error {
-	if me.error == nil {
+func (m MashableError) Err() error {
+	if m.error == nil {
 		return nil
 	}
 
-	return me
+	return m
 }
 
-type Reporter func(File)
+type Reporter func(JobFile)

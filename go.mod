@@ -1,4 +1,4 @@
-module github.com/Files-com/files-sdk-go/v2
+module github.com/Files-com/files-sdk-go/v3
 
 go 1.20
 
@@ -17,6 +17,7 @@ require (
 	github.com/samber/lo v1.33.0
 	github.com/snabb/httpreaderat v1.0.1
 	github.com/stretchr/testify v1.8.1
+	github.com/tunabay/go-infounit v1.1.3
 	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17
 	golang.org/x/text v0.7.0
 	moul.io/http2curl v1.0.0
@@ -49,6 +50,6 @@ require (
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sys v0.5.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
-	gopkg.in/yaml.v2 v2.2.8 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

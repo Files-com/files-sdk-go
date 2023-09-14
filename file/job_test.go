@@ -1,24 +1,25 @@
-package status
+package file
 
 import (
 	"testing"
 	"time"
 
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/file/status"
+	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/stretchr/testify/assert"
 )
 
 type StatusFile struct {
-	file File
-	Changes
+	file JobFile
+	status.Changes
 }
 
-func (f StatusFile) StatusChanges() Changes {
+func (f StatusFile) StatusChanges() status.Changes {
 	return f.Changes
 }
 
-func (f StatusFile) SetStatus(status Status, _ error) {
+func (f StatusFile) SetStatus(status status.Status, _ error) {
 	f.file.Status = status
 }
 
@@ -40,7 +41,7 @@ func (f StatusFile) RemotePath() string {
 	return f.file.RemotePath
 }
 
-func (f StatusFile) Status() Status {
+func (f StatusFile) Status() status.Status {
 	return f.file.Status
 }
 
@@ -74,34 +75,32 @@ func (f StatusFile) StartedAt() time.Time {
 
 func TestJob_TransferRate(t *testing.T) {
 	assert := assert.New(t)
-	job := (&Job{}).Init()
+	job := (&Job{Logger: lib.NullLogger{}}).Init()
 	job.Timer.Start()
-	file := StatusFile{file: File{LastByte: time.Now(), TransferBytes: 1000, Status: Downloading}}
+	file := StatusFile{file: JobFile{LastByte: time.Now(), Status: status.Downloading}}
 	job.Add(file)
+	job.UpdateStatusWithBytes(status.Uploading, file, 1000)
+	assert.InDelta(int64(200), job.TransferRate(), 100)
 	time.Sleep(1 * time.Second)
-	assert.InDelta(int64(1000), job.TransferRate(), 100)
+	assert.InDelta(int64(200), job.TransferRate(), 100)
 	assert.Equal(false, job.Idle(), "Nothing has happened recently so rate is zero")
-
-	time.Sleep(500 * time.Millisecond)
-	assert.Equal(true, job.Idle(-(time.Millisecond * 500)), "Nothing has happened recently so rate is zero")
 }
 
 func TestJob_ETA(t *testing.T) {
 	assert := assert.New(t)
-	job := (&Job{}).Init()
+	job := (&Job{Logger: lib.NullLogger{}}).Init()
 	job.Timer.Start()
 	file := StatusFile{
-		file: File{
-			TransferBytes: 1000,
-			LastByte:      time.Now(),
-			Status:        Downloading,
-			Size:          10000,
+		file: JobFile{
+			LastByte: time.Now(),
+			Status:   status.Downloading,
+			Size:     10000,
 		},
 	}
 	job.Add(file)
-
+	job.UpdateStatusWithBytes(status.Uploading, file, 1000)
 	time.Sleep(1 * time.Second)
-	assert.InDelta(9000, job.ETA().Milliseconds(), 100)
+	assert.InDelta(50000, job.ETA().Milliseconds(), 100)
 }
 
 func TestJob_ElapsedTime(t *testing.T) {
@@ -110,10 +109,10 @@ func TestJob_ElapsedTime(t *testing.T) {
 	job.Start()
 
 	file := StatusFile{
-		file: File{
+		file: JobFile{
 			TransferBytes: 1000,
 			LastByte:      time.Now(),
-			Status:        Complete,
+			Status:        status.Complete,
 			Size:          10000,
 		},
 	}
@@ -121,7 +120,7 @@ func TestJob_ElapsedTime(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	file.file.TransferBytes = +5000
 	time.Sleep(1 * time.Second)
-	file.file.Status = Complete
+	file.file.Status = status.Complete
 	job.Stop()
 
 	job.Add(file)
@@ -132,7 +131,7 @@ func TestJob_TotalBytes(t *testing.T) {
 	assert := assert.New(t)
 	job := (&Job{}).Init()
 	file := StatusFile{}
-	file.file.Status = Complete
+	file.file.Status = status.Complete
 	file.file.Size = 10000
 	job.Add(file)
 	job.Add(file)
@@ -144,7 +143,7 @@ func TestJob_RemainingBytes(t *testing.T) {
 	assert := assert.New(t)
 	job := (&Job{}).Init()
 	file := StatusFile{}
-	file.file.Status = Complete
+	file.file.Status = status.Complete
 	file.file.Size = 10000
 	job.Add(file)
 	file.file.TransferBytes = +5000
@@ -158,15 +157,15 @@ func TestJob_Count(t *testing.T) {
 	assert := assert.New(t)
 	job := (&Job{}).Init()
 	file := StatusFile{}
-	file.file.Status = Complete
+	file.file.Status = status.Complete
 	file.file.Size = 10000
 	job.Add(file)
 	job.Add(file)
-	file.file.Status = Queued
+	file.file.Status = status.Queued
 	job.Add(file)
-	file.file.Status = Errored
+	file.file.Status = status.Errored
 	job.Add(file)
-	assert.Equal(3, job.Count(Ended...))
+	assert.Equal(3, job.Count(status.Ended...))
 	assert.Equal(4, job.Count())
 }
 
@@ -174,58 +173,58 @@ func TestJob_Sub(t *testing.T) {
 	assert := assert.New(t)
 	job := (&Job{}).Init()
 	file := StatusFile{}
-	file.file.Status = Complete
+	file.file.Status = status.Complete
 	file.file.Size = 10000
 	job.Add(file)
 	job.Add(file)
-	file.file.Status = Queued
+	file.file.Status = status.Queued
 	job.Add(file)
-	file.file.Status = Errored
+	file.file.Status = status.Errored
 	job.Add(file)
-	file.file.Status = Ignored
+	file.file.Status = status.Ignored
 	job.Add(file)
-	file.file.Status = Skipped
+	file.file.Status = status.Skipped
 	job.Add(file)
-	assert.Equal(3, job.Sub(Valid...).Count())
-	assert.Equal(2, job.Sub(Valid...).Count(Ended...))
-	assert.Equal(2, job.Sub(Excluded...).Count())
-	assert.Equal(1, job.Sub(Excluded...).Count(Skipped))
+	assert.Equal(3, job.Sub(status.Valid...).Count())
+	assert.Equal(2, job.Sub(status.Valid...).Count(status.Ended...))
+	assert.Equal(2, job.Sub(status.Excluded...).Count())
+	assert.Equal(1, job.Sub(status.Excluded...).Count(status.Skipped))
 	assert.Equal(6, job.Count())
-	assert.Equal(true, job.Any(Skipped))
-	assert.Equal(true, job.Any(Ignored))
-	assert.Equal(false, job.Any(Running...))
+	assert.Equal(true, job.Any(status.Skipped))
+	assert.Equal(true, job.Any(status.Ignored))
+	assert.Equal(false, job.Any(status.Running...))
 }
 
 func TestJob_Percentage(t *testing.T) {
 	assert := assert.New(t)
 	job := (&Job{}).Init()
 	file := StatusFile{}
-	file.file.Status = Complete
+	file.file.Status = status.Complete
 	file.file.Size = 100
 	file.file.TransferBytes = 100
 	job.Add(file)
 	job.Add(file)
 	file.file.TransferBytes = 0
-	file.file.Status = Queued
+	file.file.Status = status.Queued
 	job.Add(file)
 	file.file.TransferBytes = 50
-	file.file.Status = Errored
+	file.file.Status = status.Errored
 	job.Add(file)
 	file.file.TransferBytes = 0
-	file.file.Status = Ignored
+	file.file.Status = status.Ignored
 	job.Add(file)
 	file.file.TransferBytes = 0
-	file.file.Status = Skipped
+	file.file.Status = status.Skipped
 	job.Add(file)
-	assert.Equal(62, job.Percentage(Included...)) // 250 / 400
+	assert.Equal(62, job.Percentage(status.Included...)) // 250 / 400
 
 	job = (&Job{}).Init()
 	file = StatusFile{}
-	file.file.Status = Canceled
+	file.file.Status = status.Canceled
 	file.file.Size = 100
 	file.file.TransferBytes = 1
 	job.Add(file)
-	assert.Equal(1, job.Percentage(Included...))
+	assert.Equal(1, job.Percentage(status.Included...))
 }
 
 func TestJob_Called(t *testing.T) {

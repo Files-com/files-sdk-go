@@ -4,15 +4,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Files-com/files-sdk-go/v2/file/status"
-
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/file/status"
 )
 
 type UploadStatus struct {
 	file          files_sdk.File
 	status        status.Status
-	job           *status.Job
+	job           *Job
 	localPath     string
 	remotePath    string
 	uploadedBytes int64
@@ -30,7 +29,7 @@ type UploadStatus struct {
 	startedAt time.Time
 }
 
-var _ status.IFile = &UploadStatus{}
+var _ IFile = &UploadStatus{}
 
 func (u *UploadStatus) EndedAt() time.Time {
 	return u.endedAt
@@ -52,7 +51,7 @@ func (u *UploadStatus) RecentError() error {
 	return u.lastError
 }
 
-func (u *UploadStatus) Job() *status.Job {
+func (u *UploadStatus) Job() *Job {
 	return u.job
 }
 
@@ -134,7 +133,9 @@ func (u *UploadStatus) Id() string {
 func (u *UploadStatus) incrementUploadedBytes(b int64) {
 	u.Mutex.Lock()
 	defer u.Mutex.Unlock()
-	u.lastByte = time.Now()
+	if b > 0 {
+		u.lastByte = time.Now()
+	}
 	u.uploadedBytes += b
 }
 

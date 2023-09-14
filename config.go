@@ -2,16 +2,16 @@ package files_sdk
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
 
-	libLog "github.com/Files-com/files-sdk-go/v2/lib/logpath"
+	"github.com/Files-com/files-sdk-go/v3/lib"
+	libLog "github.com/Files-com/files-sdk-go/v3/lib/logpath"
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "2.1.2"
+var VERSION = "3.0.0"
 
 const (
 	UserAgent   = "Files.com Go SDK"
@@ -21,105 +21,74 @@ const (
 
 var GlobalConfig Config
 
-type HttpClient interface {
-	Do(*http.Request) (*http.Response, error)
-	Get(string) (*http.Response, error)
-}
-
-type Logger interface {
-	Printf(string, ...interface{})
+func init() {
+	GlobalConfig = Config{}.Init()
 }
 
 type Config struct {
-	APIKey            string `header:"X-FilesAPI-Key"`
-	SessionId         string `header:"X-FilesAPI-Auth"`
-	Endpoint          string
-	Subdomain         string
-	standardClient    HttpClient
-	rawClient         *retryablehttp.Client
-	AdditionalHeaders map[string]string
-	logger            Logger
-	Debug             bool
-	UserAgent         string
-	Environment
-	FeatureFlags map[string]bool
+	APIKey           string `header:"X-FilesAPI-Key" json:"api_key"`
+	SessionId        string `header:"X-FilesAPI-Auth" json:"session_id"`
+	Subdomain        string `json:"subdomain"`
+	EndpointOverride string `json:"endpoint_override"`
+	*retryablehttp.Client
+	AdditionalHeaders map[string]string `json:"additional_headers"`
+	lib.Logger
+	Debug        bool   `json:"debug"`
+	UserAgent    string `json:"user_agents"`
+	Environment  `json:"environment"`
+	FeatureFlags map[string]bool `json:"feature_flags"`
 }
 
-func (c *Config) SetHttpClient(client *http.Client) {
-	c.GetRawClient().HTTPClient = client
-}
-
-func (c *Config) GetHttpClient() HttpClient {
-	if c.standardClient == nil {
-		c.standardClient = c.GetRawClient().StandardClient()
+func (c Config) Init() Config {
+	if c.Logger == nil {
+		c.Logger = lib.NullLogger{}
 	}
-	return c.standardClient
-}
-
-func (c *Config) GetRawClient() *retryablehttp.Client {
-	if c.rawClient == nil {
-		c.rawClient = retryablehttp.NewClient()
-		c.rawClient.ErrorHandler = retryablehttp.PassthroughErrorHandler
-		c.rawClient.Logger = c.Logger()
-		c.rawClient.RetryMax = 3
+	if c.Client == nil {
+		c.Client = lib.DefaultRetryableHttp(c)
 	}
 
-	return c.rawClient
+	if c.FeatureFlags == nil {
+		c.FeatureFlags = FeatureFlags()
+	}
+
+	c.UserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
+
+	return c
 }
 
-type NullLogger struct{}
-
-func (n NullLogger) Printf(_ string, _ ...interface{}) {
+func (c Config) Endpoint() string {
+	return lib.DefaultString(
+		c.EndpointOverride,
+		strings.Replace(c.Environment.Endpoint(), "{SUBDOMAIN}", lib.DefaultString(c.Subdomain, DefaultSite), 1),
+	)
 }
 
-func (c *Config) InDebug() bool {
+func (c Config) Do(req *http.Request) (*http.Response, error) {
+	return c.Client.StandardClient().Do(req)
+}
+
+func (c Config) SetCustomClient(client *http.Client) Config {
+	c.Client = lib.DefaultRetryableHttp(c, client)
+	return c
+}
+
+func (c Config) InDebug() bool {
 	return c.Debug || (os.Getenv("FILES_SDK_DEBUG") != "")
 }
 
-func (c *Config) Logger() retryablehttp.Logger {
-	if c.logger != nil {
-		return c.logger
-	}
-	if c.InDebug() {
-		c.SetLogger(log.New(os.Stderr, "", log.LstdFlags))
-	} else {
-		c.SetLogger(NullLogger{})
-	}
-	return c.logger
+func (c Config) LogPath(path string, args map[string]interface{}) {
+	c.Logger.Printf(libLog.New(path, args))
 }
 
-func (c *Config) LogPath(path string, args map[string]interface{}) {
-	c.Logger().Printf(libLog.New(path, args))
+func (c Config) RootPath() string {
+	return c.Endpoint() + APIPath
 }
 
-func (c *Config) SetLogger(l Logger) {
-	c.logger = l
+func (c Config) GetAPIKey() string {
+	return lib.DefaultString(c.APIKey, os.Getenv("FILES_API_KEY"))
 }
 
-func (c *Config) RootPath() string {
-	if c.Subdomain == "" {
-		c.Subdomain = DefaultSite
-	}
-	if c.Endpoint == "" {
-		c.Endpoint = strings.Replace(c.Environment.Endpoint(), "{SUBDOMAIN}", c.Subdomain, 1)
-	}
-	return c.Endpoint + APIPath
-}
-
-func (c *Config) GetAPIKey() string {
-	if c.APIKey != "" {
-		return c.APIKey
-	}
-	if os.Getenv("FILES_API_KEY") != "" {
-		return os.Getenv("FILES_API_KEY")
-	}
-	return ""
-}
-
-func (c *Config) SetHeaders(headers *http.Header) {
-	if c.UserAgent == "" {
-		c.UserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
-	}
+func (c Config) SetHeaders(headers *http.Header) {
 	headers.Set("User-Agent", c.UserAgent)
 	if c.GetAPIKey() != "" {
 		headers.Set("X-FilesAPI-Key", c.GetAPIKey())
@@ -132,14 +101,8 @@ func (c *Config) SetHeaders(headers *http.Header) {
 	}
 }
 
-func (c *Config) FeatureFlag(flag string) bool {
-	var flags map[string]bool
-	if c.FeatureFlags == nil {
-		flags = FeatureFlags()
-	} else {
-		flags = c.FeatureFlags
-	}
-	value, ok := flags[flag]
+func (c Config) FeatureFlag(flag string) bool {
+	value, ok := c.FeatureFlags[flag]
 	if !ok {
 		panic(fmt.Sprintf("feature flag `%v` is not a valid flag", flag))
 	}

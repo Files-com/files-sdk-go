@@ -5,13 +5,11 @@ import (
 	"io/fs"
 	"os"
 
-	"github.com/Files-com/files-sdk-go/v2/file/manager"
-	"github.com/Files-com/files-sdk-go/v2/file/status"
-
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/file/manager"
 )
 
-func (c *Client) DownloadRetry(job status.Job, opts ...files_sdk.RequestResponseOption) *status.Job {
+func (c *Client) DownloadRetry(job Job, opts ...files_sdk.RequestResponseOption) *Job {
 	newJob := job.ClearStatuses()
 	return c.Downloader(
 		DownloaderParams{
@@ -44,13 +42,13 @@ type DownloaderParams struct {
 	PreserveTimes bool
 	RetryPolicy
 	*manager.Manager
-	status.EventsReporter
-	files_sdk.Config
+	EventsReporter
+	config files_sdk.Config
 	DryRun bool
 }
 
-func (c *Client) Downloader(params DownloaderParams, opts ...files_sdk.RequestResponseOption) *status.Job {
-	params.Config = c.Config
+func (c *Client) Downloader(params DownloaderParams, opts ...files_sdk.RequestResponseOption) *Job {
+	params.config = c.Config
 	return downloader(files_sdk.ContextOption(opts), (&FS{}).Init(c.Config, true), params)
 }
 

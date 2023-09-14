@@ -7,13 +7,12 @@ import (
 	"os"
 	"path/filepath"
 
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/dnaeon/go-vcr/cassette"
 	"github.com/dnaeon/go-vcr/recorder"
 )
 
 func CreateConfig(fixture string) (files_sdk.Config, *recorder.Recorder, error) {
-	config := files_sdk.Config{}
 	var r *recorder.Recorder
 	var err error
 	if os.Getenv("GITLAB") != "" {
@@ -23,13 +22,12 @@ func CreateConfig(fixture string) (files_sdk.Config, *recorder.Recorder, error) 
 		r, err = recorder.New(filepath.Join("fixtures", fixture))
 	}
 	if err != nil {
-		return config, r, err
+		return files_sdk.Config{}, r, err
 	}
 
-	httpClient := &http.Client{
+	config := files_sdk.Config{}.Init().SetCustomClient(&http.Client{
 		Transport: r,
-	}
-	config.SetHttpClient(httpClient)
+	})
 
 	r.AddFilter(func(i *cassette.Interaction) error {
 		delete(i.Request.Headers, "X-Filesapi-Key")

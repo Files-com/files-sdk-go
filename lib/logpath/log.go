@@ -3,7 +3,7 @@ package logpath
 import (
 	"fmt"
 
-	"github.com/Files-com/files-sdk-go/v2/lib/keyvalue"
+	"github.com/Files-com/files-sdk-go/v3/lib/keyvalue"
 )
 
 func New(path string, args map[string]interface{}) string {

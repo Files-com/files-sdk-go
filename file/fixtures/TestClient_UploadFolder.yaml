@@ -892,7 +892,7 @@ interactions:
     duration: ""
 - request:
     body: "package test\n\nimport (\n\t\"fmt\"\n\t\"net/http\"\n\t\"os\"\n\t\"path/filepath\"\n\n\tfiles_sdk
-      \"github.com/Files-com/files-sdk-go/v2\"\n\t\"github.com/Files-com/files-sdk-go/v2/lib\"\n\t\"github.com/dnaeon/go-vcr/cassette\"\n\t\"github.com/dnaeon/go-vcr/recorder\"\n)\n\nfunc
+      \"github.com/Files-com/files-sdk-go/v3\"\n\t\"github.com/Files-com/files-sdk-go/v3/lib\"\n\t\"github.com/dnaeon/go-vcr/cassette\"\n\t\"github.com/dnaeon/go-vcr/recorder\"\n)\n\nfunc
       CreateConfig(fixture string) (files_sdk.Config, *recorder.Recorder, error) {\n\tconfig
       := files_sdk.Config{}\n\tvar r *recorder.Recorder\n\tvar err error\n\tif os.Getenv(\"GITLAB\")
       != \"\" {\n\t\tfmt.Println(\"using ModeReplaying\")\n\t\tr, err = recorder.NewAsMode(filepath.Join(\"fixtures\",

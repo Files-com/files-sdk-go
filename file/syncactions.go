@@ -8,12 +8,11 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/Files-com/files-sdk-go/v2/lib"
-
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/Files-com/files-sdk-go/v2/directory"
-	"github.com/Files-com/files-sdk-go/v2/file/status"
-	"github.com/Files-com/files-sdk-go/v2/lib/direction"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/directory"
+	"github.com/Files-com/files-sdk-go/v3/file/status"
+	"github.com/Files-com/files-sdk-go/v3/lib"
+	"github.com/Files-com/files-sdk-go/v3/lib/direction"
 )
 
 // DeleteSource files after a sync
@@ -26,7 +25,7 @@ type DeleteSource struct {
 	Config files_sdk.Config
 }
 
-func (ad DeleteSource) Call(f status.File, opts ...files_sdk.RequestResponseOption) (status.Log, error) {
+func (ad DeleteSource) Call(f JobFile, opts ...files_sdk.RequestResponseOption) (status.Log, error) {
 	switch f.Direction {
 	case direction.UploadType:
 		return status.Log{Path: f.LocalPath, Action: "delete source"}, os.Remove(f.LocalPath)
@@ -50,7 +49,7 @@ type MoveSource struct {
 	Config files_sdk.Config
 }
 
-func (am MoveSource) Call(f status.File, opts ...files_sdk.RequestResponseOption) (status.Log, error) {
+func (am MoveSource) Call(f JobFile, opts ...files_sdk.RequestResponseOption) (status.Log, error) {
 	var err error
 	log := status.Log{Action: "move source"}
 	log.Path = am.movePath(f)
@@ -98,7 +97,7 @@ func (am MoveSource) Call(f status.File, opts ...files_sdk.RequestResponseOption
 	}
 }
 
-func (am MoveSource) movePath(f status.File) string {
+func (am MoveSource) movePath(f JobFile) string {
 	switch f.Job.Type {
 	case directory.Dir:
 		return filepath.Join(

@@ -15,8 +15,8 @@ Then, reference files-sdk-go in a Go program with `import`:
 
 ``` go
 import (
-    "github.com/Files-com/files-sdk-go/v2"
-    "github.com/Files-com/files-sdk-go/v2/folder"
+    "github.com/Files-com/files-sdk-go/v3"
+    "github.com/Files-com/files-sdk-go/v3/folder"
 )
 ```
 
@@ -37,21 +37,21 @@ export FILES_API_KEY="XXXX-XXXX..."
 
 ```go 
 import (
-    "github.com/Files-com/files-sdk-go/v2"
+    "github.com/Files-com/files-sdk-go/v3"
 )
 
- files_sdk.APIKey = "XXXX-XXXX..."
+ files_sdk.GlobalConfig.APIKey = "XXXX-XXXX..."
 ```
 
 #### Set Per Client
 
 ```go 
 import (
-    "github.com/Files-com/files-sdk-go/v2"
-    "github.com/Files-com/files-sdk-go/v2/file"
+    "github.com/Files-com/files-sdk-go/v3"
+    "github.com/Files-com/files-sdk-go/v3/file"
 )
 
-config := files_sdk.Config{APIKey: "XXXX-XXXX..."}
+config := files_sdk.Config{APIKey: "XXXX-XXXX..."}.Init()
 client := file.Client{Config: config}
 ```
 
@@ -59,8 +59,8 @@ client := file.Client{Config: config}
 
 ```go 
 import (
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	folder "github.com/Files-com/files-sdk-go/v2/folder"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	folder "github.com/Files-com/files-sdk-go/v3/folder"
     "fmt"
 )
 
@@ -82,12 +82,12 @@ func main() {
 ### Upload a File
 ```go 
 import (
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	file "github.com/Files-com/files-sdk-go/v2/file"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	file "github.com/Files-com/files-sdk-go/v3/file"
 )
 
 func main() {
-    client := file.Client{}
+    client := file.Client{Config: files_sdk.GlobalConfig}
     uploadPath := "file-to-upload.txt"
     destinationPath := "file-to-upload.txt"
     err := client.Upload(UploadWithFile(uploadPath), UploadWithDestinationPath(destinationPath))
@@ -100,10 +100,10 @@ func main() {
 #### Via io.Reader
 
 ```go 
-import file "github.com/Files-com/files-sdk-go/v2/file"
+import file "github.com/Files-com/files-sdk-go/v3/file"
 
 func main() {
-    client := file.Client{}
+    client := file.Client{Config: files_sdk.GlobalConfig}
     io := strings.NewReader("my file contents")
     destinationPath := "my-file.txt"
     err := client.Upload(UploadWithReader(io), UploadWithDestinationPath(destinationPath))
@@ -115,10 +115,10 @@ func main() {
 
 ### Download a File
 ```go 
-import file "github.com/Files-com/files-sdk-go/v2/file"
+import file "github.com/Files-com/files-sdk-go/v3/file"
 
 func main() {
-    client := file.Client{}
+    client := file.Client{Config: files_sdk.GlobalConfig}
     downloadPath := "file-to-download.txt"
     fileEntry, err := client.DownloadToFile(files_sdk.FileDownloadParams{Path: "file-to-download.txt"}, downloadPath)
     if err != nil {

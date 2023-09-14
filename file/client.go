@@ -7,12 +7,12 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/Files-com/files-sdk-go/v2/downloadurl"
-	"github.com/Files-com/files-sdk-go/v2/file/manager"
-	"github.com/Files-com/files-sdk-go/v2/folder"
+	"github.com/Files-com/files-sdk-go/v3/downloadurl"
+	"github.com/Files-com/files-sdk-go/v3/file/manager"
+	"github.com/Files-com/files-sdk-go/v3/folder"
 
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	lib "github.com/Files-com/files-sdk-go/v2/lib"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
 type Client struct {
@@ -97,7 +97,7 @@ func (c *Client) DownloadRequestStatus(fileDownloadUrl string, downloadRequestId
 
 	c.SetHeaders(&request.Header)
 
-	resp, err := files_sdk.WrapRequestOptions(c.Config.GetHttpClient(), request, opts...)
+	resp, err := files_sdk.WrapRequestOptions(c.Config, request, opts...)
 	if err != nil {
 		return re, err
 	}
@@ -161,7 +161,7 @@ func (c *Client) Download(params files_sdk.FileDownloadParams, opts ...files_sdk
 
 	c.SetHeaders(&request.Header)
 
-	_, err = files_sdk.WrapRequestOptions(c.Config.GetHttpClient(), request, opts...)
+	_, err = files_sdk.WrapRequestOptions(c.Config, request, opts...)
 
 	return params.File, err
 }

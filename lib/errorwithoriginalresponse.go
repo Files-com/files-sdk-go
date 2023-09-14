@@ -2,6 +2,7 @@ package lib
 
 import (
 	"encoding/json"
+	"errors"
 )
 
 type ErrorWithOriginalResponse struct {
@@ -14,7 +15,8 @@ func (u ErrorWithOriginalResponse) OriginalResponse() interface{} {
 }
 
 func (u ErrorWithOriginalResponse) ProcessError(data []byte, err error, t interface{}) error {
-	unmarshalError, ok := err.(*json.UnmarshalTypeError)
+	var unmarshalError *json.UnmarshalTypeError
+	ok := errors.As(err, &unmarshalError)
 
 	if ok {
 		ignoreErr := json.Unmarshal(data, &t)
@@ -22,7 +24,8 @@ func (u ErrorWithOriginalResponse) ProcessError(data []byte, err error, t interf
 			return ErrorWithOriginalResponse{error: unmarshalError, originalResponse: t}
 		}
 	}
-	errorWithOriginalResponse, ok := err.(ErrorWithOriginalResponse)
+	var errorWithOriginalResponse ErrorWithOriginalResponse
+	ok = errors.As(err, &errorWithOriginalResponse)
 	if ok {
 		ignoreErr := json.Unmarshal(data, &t)
 		if ignoreErr == nil {

@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/Files-com/files-sdk-go/v2/lib"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
 type OffSet struct {
@@ -27,6 +27,7 @@ type Part struct {
 	context.CancelFunc
 	*sync.RWMutex
 	final bool
+	files_sdk.FileUploadPart
 	ProxyReader
 }
 

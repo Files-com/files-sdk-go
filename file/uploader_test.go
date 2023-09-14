@@ -12,11 +12,10 @@ import (
 	"testing/fstest"
 	"time"
 
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/Files-com/files-sdk-go/v2/directory"
-	"github.com/Files-com/files-sdk-go/v2/file/status"
-	"github.com/Files-com/files-sdk-go/v2/ignore"
-	"github.com/Files-com/files-sdk-go/v2/lib"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/directory"
+	"github.com/Files-com/files-sdk-go/v3/ignore"
+	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,15 +39,15 @@ func (m *MockUploader) Find(files_sdk.FileFindParams, ...files_sdk.RequestRespon
 func Test_skipOrIgnore(t *testing.T) {
 	var progressReportError error
 
-	init := func() (*UploadStatus, fstest.MapFS, *status.Job) {
-		job := (&status.Job{Logger: (&files_sdk.Config{}).Logger()}).Init()
+	init := func() (*UploadStatus, fstest.MapFS, *Job) {
+		job := (&Job{Logger: files_sdk.Config{}.Init().Logger}).Init()
 		job.Ignore, _ = ignore.New()
 		job.Params = UploaderParams{}
 		uploadStatus := &UploadStatus{job: job, Mutex: &sync.RWMutex{}, file: files_sdk.File{Path: "test"}, remotePath: "test"}
 		uploadStatus.Job().Add(uploadStatus)
 		uploader := &MockUploader{}
 		uploadStatus.Uploader = uploader
-		uploadStatus.job.EventsReporter = Reporter(func(s status.File) {
+		uploadStatus.job.EventsReporter = CreateReporter(func(s JobFile) {
 			progressReportError = s.Err
 		})
 
@@ -279,8 +278,8 @@ func TestUploader(t *testing.T) {
 				destinationFs = (&FS{Context: context.Background()}).Init(config, true)
 				lib.BuildPathSpecTest(t, mutex, tt, sourceFs, destinationFs, func(source, destination string) lib.Cmd {
 					return &CmdRunner{
-						run: func() *status.Job {
-							return client.Uploader(UploaderParams{LocalPath: source, RemotePath: destination, Config: config})
+						run: func() *Job {
+							return client.Uploader(UploaderParams{LocalPath: source, RemotePath: destination, config: config})
 						},
 						args: []string{source, destination},
 					}

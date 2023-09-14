@@ -13,10 +13,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/Files-com/files-sdk-go/v2/file/manager"
-	"github.com/Files-com/files-sdk-go/v2/file/status"
-	"github.com/Files-com/files-sdk-go/v2/lib"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/file/manager"
+	"github.com/Files-com/files-sdk-go/v3/file/status"
+	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
 type Progress func(int64)
@@ -82,20 +82,12 @@ func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
 		defaultSize = *u.Size
 	}
 
-	var expires time.Time
-	var err error
-	if u.FileUploadPart.Expires != "" {
-		expires, _ = time.Parse(time.RFC3339, u.FileUploadPart.Expires)
-	}
-	if !time.Now().Before(expires) || !lib.UnWrapBool(u.FileUploadPart.ParallelParts) {
-		u.Parts = Parts{} // parts are invalidated
-	}
-
 	if u.MkdirParents == nil {
 		u.MkdirParents = lib.Bool(true)
 	}
-
-	if expires.IsZero() || !time.Now().Before(expires) {
+	var err error
+	if time.Now().After(u.FileUploadPart.UploadExpires()) || !lib.UnWrapBool(u.FileUploadPart.ParallelParts) {
+		u.Parts = Parts{} // parts are invalidated
 		if u.Manager.WaitWithContext(ctx) {
 			u.FileUploadPart, err = u.startUpload(
 				ctx,
@@ -193,7 +185,15 @@ func (u *uploadIO) ReaderAt() (io.ReaderAt, bool) {
 }
 
 func (u *uploadIO) partBuilder(offset OffSet, final bool, number int) *Part {
-	part := &Part{OffSet: offset, number: number, final: final, ProxyReader: u.buildReader(offset)}
+	part := &Part{
+		OffSet: offset, number: number, final: final, ProxyReader: u.buildReader(offset),
+	}
+	if number == 1 {
+		part.FileUploadPart = u.FileUploadPart
+	} else {
+		part.FileUploadPart = files_sdk.FileUploadPart{Path: u.FileUploadPart.Path, Ref: u.FileUploadPart.Ref, PartNumber: int64(number), ParallelParts: lib.Bool(lib.UnWrapBool(u.ParallelParts))}
+	}
+
 	// Parts are stored so a retry can pick up failed parts. Since io.Reader is a stream is better to just retry the whole file
 	if _, readerAtOk := u.ReaderAt(); readerAtOk && u.Size != nil {
 		u.Parts = append(u.Parts, part)
@@ -285,40 +285,16 @@ func (u *uploadIO) manageUpdatePart(ctx context.Context, part *Part, wait lib.Co
 }
 
 func (u *uploadIO) runUploadPart(ctx context.Context, part *Part) {
-	fileUploadPart := u.FileUploadPart
-	fileUploadPart.PartNumber = int64(part.number)
-	maxRetries := 2
-	retryCount := 0
-
-	for retryCount <= maxRetries {
-		part.EtagsParam, part.error = u.createPart(ctx, part.ProxyReader, int64(part.ProxyReader.Len()), fileUploadPart, part.final)
-
-		if part.error == nil {
-			break
-		}
-
+	part.EtagsParam, part.error = u.uploadPart(ctx, part)
+	part.bytes = int64(part.ProxyReader.BytesRead())
+	part.Touch()
+	if part.error != nil {
 		var pathErr *os.PathError
 		if errors.As(part.error, &pathErr) {
 			part.error = pathErr
 		}
-
-		var s3Err lib.S3Error
-		expires, _ := time.Parse(time.RFC3339, u.FileUploadPart.Expires)
-		if errors.As(part.error, &s3Err) && part.ProxyReader.Rewind() && time.Now().Before(expires) {
-			if s3Err.Code == "RequestTimeout" {
-				retryCount++
-				if retryCount > maxRetries {
-					break
-				}
-				u.LogPath(u.Path, map[string]interface{}{"error": s3Err.Error(), "message": "retrying"})
-				continue
-			}
-		}
-		break
 	}
 
-	part.bytes = int64(part.ProxyReader.BytesRead())
-	part.Touch()
 	u.onComplete <- part
 }
 
@@ -400,39 +376,54 @@ func (u *uploadIO) completeUpload(ctx context.Context, providedMtime *time.Time,
 	}, files_sdk.WithContext(ctx))
 }
 
-func (u *uploadIO) createPart(ctx context.Context, reader io.ReadCloser, len int64, fileUploadPart files_sdk.FileUploadPart, lastPart bool) (files_sdk.EtagsParam, error) {
-	partNumber := fileUploadPart.PartNumber
+func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsParam, error) {
 	var err error
-	if partNumber != 1 && *fileUploadPart.ParallelParts { // Remote Mounts use the same url
-		fileUploadPart, err = u.startUpload(
-			ctx, files_sdk.FileBeginUploadParams{Path: fileUploadPart.Path, Ref: fileUploadPart.Ref, Part: fileUploadPart.PartNumber, MkdirParents: lib.Bool(true)},
-		)
-		fileUploadPart.PartNumber = partNumber
-		if err != nil {
-			return files_sdk.EtagsParam{}, err
+	// Stub for test fixtures being expired
+	if part.PartNumber != 1 {
+		isExpired := part.ExpiresTime().IsZero() || part.ExpiresTime().Before(time.Now())
+
+		// Remote Mounts use the same URL
+		isRemoteMount := *part.ParallelParts
+
+		// This upload could be retrying
+		shouldRetryUpload := isExpired || isRemoteMount
+
+		if shouldRetryUpload {
+			params := files_sdk.FileBeginUploadParams{
+				Path:         part.Path,
+				Ref:          part.Ref,
+				Part:         part.PartNumber,
+				MkdirParents: lib.Bool(true),
+			}
+
+			part.FileUploadPart, err = u.startUpload(ctx, params)
+			part.FileUploadPart.PartNumber = int64(part.number) // Ensure it didn't change PartNumber
+
+			if err != nil {
+				return files_sdk.EtagsParam{}, err
+			}
 		}
 	}
-	uri, err := url.Parse(fileUploadPart.UploadUri)
+	uri, err := url.Parse(part.UploadUri)
 	if err == nil {
 		q := uri.Query()
 		if q.Get("partNumber") == "" {
-			q.Add("part_number", strconv.FormatInt(partNumber, 10))
+			q.Add("part_number", strconv.FormatInt(part.PartNumber, 10))
 			uri.RawQuery = q.Encode()
-			fileUploadPart.UploadUri = uri.String()
+			part.UploadUri = uri.String()
 		}
 	}
 
 	headers := http.Header{}
-	headers.Add("Content-Length", strconv.FormatInt(len, 10))
+	headers.Add("Content-Length", strconv.FormatInt(int64(part.ProxyReader.Len()), 10))
 	res, err := files_sdk.CallRaw(
 		&files_sdk.CallParams{
-			Method:   fileUploadPart.HttpMethod,
-			Config:   u.Config,
-			Uri:      fileUploadPart.UploadUri,
-			BodyIo:   reader,
-			Headers:  &headers,
-			Context:  ctx,
-			StayOpen: !*fileUploadPart.ParallelParts && !lastPart, // Since Remote Mounts use the same url only close the connection on the last part.
+			Method:  part.HttpMethod,
+			Config:  u.Config,
+			Uri:     part.UploadUri,
+			BodyIo:  part.ProxyReader,
+			Headers: &headers,
+			Context: ctx,
 		},
 	)
 	if err != nil {
@@ -454,7 +445,7 @@ func (u *uploadIO) createPart(ctx context.Context, reader io.ReadCloser, len int
 	}
 	return files_sdk.EtagsParam{
 		Etag: etag,
-		Part: strconv.FormatInt(fileUploadPart.PartNumber, 10),
+		Part: strconv.FormatInt(part.PartNumber, 10),
 	}, nil
 }
 

@@ -5,8 +5,8 @@ import (
 	"log"
 	"testing"
 
-	files_sdk "github.com/Files-com/files-sdk-go/v2"
-	"github.com/Files-com/files-sdk-go/v2/lib"
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,13 +24,13 @@ func TestClient_ListFor(t *testing.T) {
 	}{
 		{
 			"without path it send fields",
-			files_sdk.Config{},
+			files_sdk.Config{}.Init(),
 			args{params: files_sdk.FolderListForParams{WithPreviews: lib.Bool(true)}, opts: []files_sdk.RequestResponseOption{}},
 			"with_preview",
 		},
 		{
 			"with path it send fields",
-			files_sdk.Config{},
+			files_sdk.Config{}.Init(),
 			args{params: files_sdk.FolderListForParams{Path: "anything", WithPreviews: lib.Bool(true)}, opts: []files_sdk.RequestResponseOption{}},
 			"with_preview",
 		},
@@ -41,7 +41,7 @@ func TestClient_ListFor(t *testing.T) {
 			var buf bytes.Buffer
 			logger := log.New(&buf, "InMemoryLogger: ", log.LstdFlags)
 
-			tt.Config.SetLogger(logger)
+			tt.Config.Logger = logger
 			c := &Client{
 				Config: tt.Config,
 			}

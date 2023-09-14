@@ -3,7 +3,7 @@ package files_sdk
 import (
 	"encoding/json"
 
-	lib "github.com/Files-com/files-sdk-go/v2/lib"
+	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
 type DnsRecord struct {

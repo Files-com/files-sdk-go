@@ -49,7 +49,7 @@ func (l FilesMigrationLogIter) Init() *FilesMigrationLogIter {
 			l.error = err
 			return &l
 		}
-		resp, err := l.Config.GetHttpClient().Do(req)
+		resp, err := l.Config.Do(req)
 		if err != nil {
 			l.error = err
 			return &l

@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Files-com/files-sdk-go/v2/file/status"
-	"github.com/Files-com/files-sdk-go/v2/lib/direction"
+	"github.com/Files-com/files-sdk-go/v3/file/status"
+	"github.com/Files-com/files-sdk-go/v3/lib/direction"
 	"github.com/bradfitz/iter"
 )
 
@@ -26,23 +26,20 @@ func (p RetryPolicy) WaitSec(retry int) time.Duration {
 type RetryPolicyType string
 
 const (
-	RetryAll                    = RetryPolicyType("RetryAll")
-	RetryUnfinished             = RetryPolicyType("RetryUnfinished")
-	RetryErroredIfSomeCompleted = RetryPolicyType("RetryErroredIfSomeCompleted")
+	RetryAll        = RetryPolicyType("RetryAll")
+	RetryUnfinished = RetryPolicyType("RetryUnfinished")
 )
 
-func RetryByPolicy(ctx context.Context, job *status.Job, policy RetryPolicy, signalEvents bool) {
+func RetryByPolicy(ctx context.Context, job *Job, policy RetryPolicy, signalEvents bool) {
 	switch policy.Type {
 	case RetryAll:
 		RetryByStatus(ctx, job, signalEvents, policy, status.Included...)
 	case RetryUnfinished:
 		RetryByStatus(ctx, job, signalEvents, policy, append(status.Running, []status.GetStatus{status.Errored, status.Canceled}...)...)
-	case RetryErroredIfSomeCompleted:
-		retryErroredIfSomeCompleted(ctx, job, signalEvents, policy)
 	}
 }
 
-func RetryByStatus(ctx context.Context, job *status.Job, signalEvents bool, policy RetryPolicy, s ...status.GetStatus) {
+func RetryByStatus(ctx context.Context, job *Job, signalEvents bool, policy RetryPolicy, s ...status.GetStatus) {
 	for i := range iter.N(policy.RetryCount) {
 		switch job.Direction {
 		case direction.DownloadType:
@@ -61,11 +58,11 @@ func RetryByStatus(ctx context.Context, job *status.Job, signalEvents bool, poli
 	}
 }
 
-func retryUpload(ctx context.Context, job *status.Job, signalEvents bool, s []status.GetStatus) {
+func retryUpload(ctx context.Context, job *Job, signalEvents bool, s []status.GetStatus) {
 	onComplete := make(chan *UploadStatus)
 	defer close(onComplete)
 	enqueueByStatus(ctx, job, signalEvents,
-		func(s status.IFile, jobCxt context.Context) {
+		func(s IFile, jobCxt context.Context) {
 			job.UpdateStatus(status.Retrying, s.(*UploadStatus), nil)
 			enqueueUpload(jobCxt, job, s.(*UploadStatus), onComplete)
 		}, func() {
@@ -75,11 +72,11 @@ func retryUpload(ctx context.Context, job *status.Job, signalEvents bool, s []st
 	)
 }
 
-func retryDownload(ctx context.Context, job *status.Job, signalEvents bool, s []status.GetStatus) {
+func retryDownload(ctx context.Context, job *Job, signalEvents bool, s []status.GetStatus) {
 	onComplete := make(chan *DownloadStatus)
 	defer close(onComplete)
 	enqueueByStatus(ctx, job, signalEvents,
-		func(s status.IFile, jobCxt context.Context) {
+		func(s IFile, jobCxt context.Context) {
 			job.UpdateStatus(status.Retrying, s.(*DownloadStatus), nil)
 			enqueueDownload(jobCxt, job, s.(*DownloadStatus), onComplete)
 		}, func() {
@@ -89,20 +86,7 @@ func retryDownload(ctx context.Context, job *status.Job, signalEvents bool, s []
 	)
 }
 
-func retryErroredIfSomeCompleted(ctx context.Context, job *status.Job, signalEvents bool, policy RetryPolicy) {
-	lastFailure := time.Time{}
-	for _, s := range job.Sub(status.Errored).Statuses {
-		if lastFailure.Before(s.LastByte()) {
-			lastFailure = s.LastByte()
-		}
-	}
-	if lastFailure.IsZero() {
-		return
-	}
-	RetryByPolicy(ctx, job, RetryPolicy{Type: RetryUnfinished, RetryCount: policy.RetryCount}, signalEvents)
-}
-
-func enqueueByStatus(ctx context.Context, job *status.Job, signalEvents bool, enqueue func(status.IFile, context.Context), waitForComplete func(), s ...status.GetStatus) {
+func enqueueByStatus(ctx context.Context, job *Job, signalEvents bool, enqueue func(IFile, context.Context), waitForComplete func(), s ...status.GetStatus) {
 	if job.Count(s...) == 0 {
 		return
 	}

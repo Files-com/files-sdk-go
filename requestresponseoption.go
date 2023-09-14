@@ -58,7 +58,7 @@ func ResponseBodyOption(opt func(io.ReadCloser) error) RequestResponseOption {
 	})
 }
 
-func WrapRequestOptions(client HttpClient, request *http.Request, opts ...RequestResponseOption) (*http.Response, error) {
+func WrapRequestOptions(config Config, request *http.Request, opts ...RequestResponseOption) (*http.Response, error) {
 	for _, opt := range opts {
 		err := opt(&requestResponseOption{Request: request})
 		if err != nil {
@@ -66,7 +66,7 @@ func WrapRequestOptions(client HttpClient, request *http.Request, opts ...Reques
 		}
 	}
 
-	resp, err := client.Do(request)
+	resp, err := config.Do(request)
 	if err != nil {
 		return resp, err
 	}
