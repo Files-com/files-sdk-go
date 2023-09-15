@@ -167,6 +167,7 @@ type UploaderParams struct {
 	Include []string
 	*Job
 	Sync       bool
+	LocalPaths []string
 	LocalPath  string
 	RemotePath string
 	DryRun     bool

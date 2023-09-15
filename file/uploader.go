@@ -2,6 +2,7 @@ package file
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -34,17 +35,21 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *Job
 
 	fi, statErr := os.Stat(params.LocalPath)
 
-	if statErr == nil && fi.IsDir() {
-		job.Type = directory.Dir
-
-		//When the local/dest has a trailing slash
-		if !(lib.Path{Path: params.LocalPath}).EndingSlash() {
-			_, lastDir := filepath.Split(params.LocalPath)
-			params.RemotePath = lib.UrlJoinNoEscape(params.RemotePath, lastDir)
-		}
-
+	if len(params.LocalPaths) > 0 {
+		job.Type = directory.Files
 	} else {
-		job.Type = directory.File
+		if statErr == nil && fi.IsDir() {
+			job.Type = directory.Dir
+
+			//When the local/dest has a trailing slash
+			if !(lib.Path{Path: params.LocalPath}).EndingSlash() {
+				_, lastDir := filepath.Split(params.LocalPath)
+				params.RemotePath = lib.UrlJoinNoEscape(params.RemotePath, lastDir)
+			}
+
+		} else {
+			job.Type = directory.File
+		}
 	}
 	job.Client = c
 	onComplete := make(chan *UploadStatus)
@@ -71,15 +76,22 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *Job
 		}
 		var err error
 		job.Ignore, err = ignore.New(params.Ignore...)
-		if len(params.Include) > 0 {
-			job.Include, err = ignore.New(params.Include...)
-		}
 		if err != nil {
 			job.Add(metaFile)
 			job.UpdateStatus(status.Errored, metaFile, err)
 			job.EndScan()
 			job.Finish()
 			return
+		}
+		if len(params.Include) > 0 {
+			job.Include, err = ignore.New(params.Include...)
+			if err != nil {
+				job.Add(metaFile)
+				job.UpdateStatus(status.Errored, metaFile, err)
+				job.EndScan()
+				job.Finish()
+				return
+			}
 		}
 		if job.Type == directory.File {
 			metaFile.file = files_sdk.File{
@@ -100,6 +112,24 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *Job
 			metaFile.file.Path = metaFile.remotePath
 			job.Add(metaFile)
 			job.UpdateStatus(status.Indexed, metaFile, nil)
+		} else if job.Type == directory.Files {
+			for _, path := range params.LocalPaths {
+				file, err := os.Stat(path)
+				uploadStatus, ok := buildUploadStatus(path, params.LocalPath, params.RemotePath, c, job, params)
+				if !ok {
+					continue
+				}
+
+				uploadStatus.file.Type = "file"
+				if err != nil {
+					uploadStatus.missingStat = true
+					uploadStatus.error = err
+				} else {
+					uploadStatus.file.Size = file.Size()
+					uploadStatus.file.Mtime = lib.Time(fi.ModTime())
+				}
+				job.Add(&uploadStatus)
+			}
 		} else {
 			it := (&lib.Walk[lib.DirEntry]{
 				FS:                 os.DirFS(params.LocalPath),
@@ -150,7 +180,8 @@ func remotePath(ctx context.Context, params UploaderParams, c Uploader, job *Job
 		} else {
 			return "", ctx.Err()
 		}
-		responseError, ok := err.(files_sdk.ResponseError)
+		var responseError files_sdk.ResponseError
+		ok := errors.As(err, &responseError)
 		if remoteFile.Type == "directory" {
 			destination = lib.UrlJoinNoEscape(params.RemotePath, localFileName)
 		} else if ok && responseError.Type == "not-found" {
@@ -287,7 +318,8 @@ func skipOrIgnore(uploadStatus *UploadStatus, incrementalUpdates bool) bool {
 
 	if uploadStatus.Sync {
 		file, found, err := uploadStatus.Job().FindRemoteFile(uploadStatus)
-		responseError, ok := err.(files_sdk.ResponseError)
+		var responseError files_sdk.ResponseError
+		ok := errors.As(err, &responseError)
 		if !found || (ok && responseError.Type == "not-found") {
 			uploadStatus.Job().Logger.Printf("sync %v not found on destination", uploadStatus.RemotePath())
 			return false

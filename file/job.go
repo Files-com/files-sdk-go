@@ -465,11 +465,7 @@ func (r *Job) Sub(t ...status.GetStatus) *Job {
 		}
 	}
 	r.statusesMutex.RUnlock()
-	// Causes WARNING: DATA RACE. I need to understand and fix later.
-	r.cancelMutex.Lock()
-	newJob := *r
-	r.cancelMutex.Unlock()
-	newJob.Statuses = sub
+	newJob := Job{Statuses: sub, statusesMutex: &sync.RWMutex{}}
 	return &newJob
 }
 

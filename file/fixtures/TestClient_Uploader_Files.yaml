@@ -1,0 +1,183 @@
+---
+version: 1
+interactions:
+- request:
+    body: '{"mkdir_parents":true,"size":24}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/1%20%281%29.text
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2023-09-15T17:55:27Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"retry_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-6157051246","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/b355f887-57e3-464b-9796-ade6119f0319?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20230915%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20230915T174027Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=JbOIX0nRTt0khAjcaiXe1QPZ4HfFK_XBpZ7v2PNAXf8lqvi8SwrWljQKivc_C4Q.N3cF6Tm6SzyS0J7Fko8KdscLXBSK405ub2ROKI7BuwDEmKshhFbjIcsJEVIEi74q\u0026X-Amz-Signature=00af7004901c109d04433ebf7763c71f69545895068188c60c259d5f6634c021"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 15 Sep 2023 17:40:27 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - files.com
+      X-Request-Id:
+      - 88db41fa8f149006385001f59da0621b
+      - 88db41fa8f149006385001f59da0621b
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"mkdir_parents":true,"size":24}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/2.text
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2023-09-15T17:55:27Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"retry_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-6157051247","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/ef7ee12c-e7be-4ace-93c2-e978694b488a?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20230915%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20230915T174027Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=sg.DslD_iP3HFemXmNWAXOY6MPC2YsMAL8QEPT80a9Ji5qQSP7ylZ7xB5lH91YCU6O_B_j0sKyBpcs.qBB8qt..knel6i219berZ70ncc9HatEb7irpYhLVs6sJbbMKN\u0026X-Amz-Signature=a507de8e0ae7a5c87c6914844b0e754922fa0a5ce37b129e1c12cda03dd97d6c"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 15 Sep 2023 17:40:27 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - files.com
+      X-Request-Id:
+      - 048c122d0fa19f658134b357ae4d9600
+      - 048c122d0fa19f658134b357ae4d9600
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: hello how are you doing?
+    form: {}
+    headers:
+      Content-Length:
+      - "24"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/b355f887-57e3-464b-9796-ade6119f0319?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20230915%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230915T174027Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=JbOIX0nRTt0khAjcaiXe1QPZ4HfFK_XBpZ7v2PNAXf8lqvi8SwrWljQKivc_C4Q.N3cF6Tm6SzyS0J7Fko8KdscLXBSK405ub2ROKI7BuwDEmKshhFbjIcsJEVIEi74q&X-Amz-Signature=00af7004901c109d04433ebf7763c71f69545895068188c60c259d5f6634c021
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Fri, 15 Sep 2023 17:40:29 GMT
+      Etag:
+      - '"5045cf51883b32c692d1b38d57993daf"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - 3lnELHayEn49S4SDPJx3K2cNmhCaGwSe4h6njJoINywh9hwN5XRCgdzFRMxf7mhXbGuO3hC2x24=
+      X-Amz-Request-Id:
+      - BR28C8VRJY7WRXWN
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: hello how are you doing?
+    form: {}
+    headers:
+      Content-Length:
+      - "24"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/ef7ee12c-e7be-4ace-93c2-e978694b488a?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20230915%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230915T174027Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=sg.DslD_iP3HFemXmNWAXOY6MPC2YsMAL8QEPT80a9Ji5qQSP7ylZ7xB5lH91YCU6O_B_j0sKyBpcs.qBB8qt..knel6i219berZ70ncc9HatEb7irpYhLVs6sJbbMKN&X-Amz-Signature=a507de8e0ae7a5c87c6914844b0e754922fa0a5ce37b129e1c12cda03dd97d6c
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Fri, 15 Sep 2023 17:40:29 GMT
+      Etag:
+      - '"5045cf51883b32c692d1b38d57993daf"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - 95ugQnuhiEI9ufpZxLbANQLxShla2HHoCxZRgT3Ey9nvayReizAjHFY5jarwgmMBmgVcGW6CGEM=
+      X-Amz-Request-Id:
+      - BR2F33MHF9H5QSWH
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"action":"end","etags":[{"etag":"5045cf51883b32c692d1b38d57993daf","part":"1"}],"mkdir_parents":true,"provided_mtime":"2023-09-15T10:40:27.314218814-07:00","ref":"put-6157051246","size":24}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/files/1%20%281%29.text
+    method: POST
+  response:
+    body: '{"path":"1 (1).text","display_name":"1 (1).text","type":"file","size":24,"created_at":"2023-09-15T17:40:28Z","mtime":"2023-09-15T17:40:28Z","provided_mtime":"2023-09-15T17:40:27Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 15 Sep 2023 17:40:28 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - files.com
+      X-Request-Id:
+      - 776152f4ef5489d9830739931cc276ca
+      - 776152f4ef5489d9830739931cc276ca
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"action":"end","etags":[{"etag":"5045cf51883b32c692d1b38d57993daf","part":"1"}],"mkdir_parents":true,"provided_mtime":"2023-09-15T10:40:27.314218814-07:00","ref":"put-6157051247","size":24}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/files/2.text
+    method: POST
+  response:
+    body: '{"path":"2.text","display_name":"2.text","type":"file","size":24,"created_at":"2023-09-15T17:40:28Z","mtime":"2023-09-15T17:40:28Z","provided_mtime":"2023-09-15T17:40:27Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 15 Sep 2023 17:40:28 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - files.com
+      X-Request-Id:
+      - a007f940b97a4f69200b0db6bf5e7c2b
+      - a007f940b97a4f69200b0db6bf5e7c2b
+    status: 200 OK
+    code: 200
+    duration: ""

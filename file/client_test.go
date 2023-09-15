@@ -970,6 +970,7 @@ func TestClient_UploadFile_Delete_Source(t *testing.T) {
 
 	var log status.Log
 	tempFile, err := os.Create(filepath.Join(tmpDir, "upload-delete-source.text"))
+	assert.NoError(err)
 	tempFile.Write([]byte("testing"))
 	require.NoError(t, tempFile.Close())
 	var fi JobFile
@@ -986,6 +987,45 @@ func TestClient_UploadFile_Delete_Source(t *testing.T) {
 	assert.Equal(fi.LocalPath, log.Path)
 	tempFile.Close()
 	os.Remove(tempFile.Name())
+}
+
+func TestClient_Uploader_Files(t *testing.T) {
+	client, r, err := CreateClient("TestClient_Uploader_Files")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	assert := assert.New(t)
+	tmpDir := t.TempDir()
+
+	filesAndStatus := []struct {
+		name   string
+		status string
+		size   int
+	}{{name: "1 (1).text", status: "complete", size: 24}, {name: "2.text", status: "complete", size: 24}, {name: "3.pdf", status: "ignored"}}
+	var filePaths []string
+	for _, file := range filesAndStatus {
+		f, err := os.Create(filepath.Join(tmpDir, file.name))
+		assert.NoError(err)
+		f.Write([]byte("hello how are you doing?"))
+		f.Close()
+		if file.status == "complete" {
+			filePaths = append(filePaths, f.Name())
+		}
+	}
+
+	job := client.Uploader(UploaderParams{LocalPath: tmpDir, LocalPaths: filePaths})
+	job.Start()
+	job.Wait()
+
+	assert.Len(job.Statuses, 2)
+	assert.Equal(filePaths[0], job.Statuses[0].LocalPath())
+	assert.Equal(status.Complete, job.Statuses[0].Status())
+	assert.NoError(job.Statuses[0].Err())
+
+	assert.Equal(filePaths[1], job.Statuses[1].LocalPath())
+	assert.Equal(status.Complete, job.Statuses[1].Status())
+	assert.NoError(job.Statuses[1].Err())
 }
 
 func TestClient_ListForRecursive(t *testing.T) {

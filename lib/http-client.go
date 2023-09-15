@@ -65,11 +65,11 @@ func DefaultRetryableHttp(logger Logger, client ...*http.Client) *retryablehttp.
 
 func defaultPooledClient() *http.Client {
 	return &http.Client{
-		Transport: defaultPooledTransport(),
+		Transport: DefaultPooledTransport(),
 	}
 }
 
-func defaultPooledTransport() *Transport {
+func DefaultPooledTransport() *Transport {
 	transport := &Transport{
 		Transport: &http.Transport{
 			Proxy:                 http.ProxyFromEnvironment,
@@ -78,7 +78,7 @@ func defaultPooledTransport() *Transport {
 			TLSHandshakeTimeout:   10 * time.Second,
 			ExpectContinueTimeout: 1 * time.Second,
 			MaxIdleConnsPerHost:   75,
-			MaxConnsPerHost:       100,
+			MaxConnsPerHost:       75,
 		},
 		Connections: make(map[string]int),
 		Dialer: &net.Dialer{

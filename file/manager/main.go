@@ -2,8 +2,10 @@ package manager
 
 import (
 	"math"
+	"net/http"
 
 	"github.com/Files-com/files-sdk-go/v3/lib"
+	"github.com/dnaeon/go-vcr/recorder"
 )
 
 var (
@@ -57,5 +59,21 @@ func Build(maxConcurrentConnections, maxConcurrentDirectoryLists int, downloadFi
 		FilesManager:            ConcurrencyManager{}.New(maxConcurrentConnections),
 		FilePartsManager:        ConcurrencyManager{}.New(maxConcurrentConnections, downloadFilesAsSingleStream...),
 		DirectoryListingManager: ConcurrencyManager{}.New(int(math.Max(float64(maxConcurrentDirectoryLists), 1))),
+	}
+}
+
+func (m *Manager) CreateMatchingClient(client *http.Client) *http.Client {
+	switch t := client.Transport.(type) {
+	case *lib.Transport:
+		t.MaxConnsPerHost = m.FilePartsManager.Max()
+		return client
+	case *recorder.Recorder:
+		// Can't modify VCR in Test mode.
+		return client
+	default:
+		defaultTransport := lib.DefaultPooledTransport()
+		defaultTransport.MaxConnsPerHost = m.FilePartsManager.Max()
+		client.Transport = defaultTransport
+		return client
 	}
 }
