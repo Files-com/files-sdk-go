@@ -87,6 +87,7 @@ type Site struct {
 	LdapUsernameField                      string                 `json:"ldap_username_field,omitempty" path:"ldap_username_field,omitempty" url:"ldap_username_field,omitempty"`
 	LoginHelpText                          string                 `json:"login_help_text,omitempty" path:"login_help_text,omitempty" url:"login_help_text,omitempty"`
 	Logo                                   Image                  `json:"logo,omitempty" path:"logo,omitempty" url:"logo,omitempty"`
+	LoginPageBackgroundImage               Image                  `json:"login_page_background_image,omitempty" path:"login_page_background_image,omitempty" url:"login_page_background_image,omitempty"`
 	MaxPriorPasswords                      int64                  `json:"max_prior_passwords,omitempty" path:"max_prior_passwords,omitempty" url:"max_prior_passwords,omitempty"`
 	MotdText                               string                 `json:"motd_text,omitempty" path:"motd_text,omitempty" url:"motd_text,omitempty"`
 	MotdUseForFtp                          *bool                  `json:"motd_use_for_ftp,omitempty" path:"motd_use_for_ftp,omitempty" url:"motd_use_for_ftp,omitempty"`
@@ -293,6 +294,8 @@ type SiteUpdateParams struct {
 	LogoDelete                             *bool                  `url:"logo_delete,omitempty" required:"false" json:"logo_delete,omitempty" path:"logo_delete"`
 	BundleWatermarkAttachmentFile          io.Writer              `url:"bundle_watermark_attachment_file,omitempty" required:"false" json:"bundle_watermark_attachment_file,omitempty" path:"bundle_watermark_attachment_file"`
 	BundleWatermarkAttachmentDelete        *bool                  `url:"bundle_watermark_attachment_delete,omitempty" required:"false" json:"bundle_watermark_attachment_delete,omitempty" path:"bundle_watermark_attachment_delete"`
+	LoginPageBackgroundImageFile           io.Writer              `url:"login_page_background_image_file,omitempty" required:"false" json:"login_page_background_image_file,omitempty" path:"login_page_background_image_file"`
+	LoginPageBackgroundImageDelete         *bool                  `url:"login_page_background_image_delete,omitempty" required:"false" json:"login_page_background_image_delete,omitempty" path:"login_page_background_image_delete"`
 	Disable2faWithDelay                    *bool                  `url:"disable_2fa_with_delay,omitempty" required:"false" json:"disable_2fa_with_delay,omitempty" path:"disable_2fa_with_delay"`
 	LdapPasswordChange                     string                 `url:"ldap_password_change,omitempty" required:"false" json:"ldap_password_change,omitempty" path:"ldap_password_change"`
 	LdapPasswordChangeConfirmation         string                 `url:"ldap_password_change_confirmation,omitempty" required:"false" json:"ldap_password_change_confirmation,omitempty" path:"ldap_password_change_confirmation"`
