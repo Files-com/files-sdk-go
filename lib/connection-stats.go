@@ -5,22 +5,23 @@ import (
 	"net"
 	"net/http"
 	"sync"
+	"sync/atomic"
 )
 
 type Transport struct {
 	*http.Transport
 	*net.Dialer
-	Connections map[string]int
-	mu          sync.Mutex
+	connections map[string]*int32
+	mu          sync.RWMutex
 }
 
 func (t *Transport) GetConnectionStats() map[string]int {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	copiedMap := make(map[string]int)
+	t.mu.RLock()
+	defer t.mu.RUnlock() // Keep the read lock for the entire function
 
-	for key, value := range t.Connections {
-		copiedMap[key] = value
+	copiedMap := make(map[string]int)
+	for key, value := range t.connections {
+		copiedMap[key] = int(atomic.LoadInt32(value))
 	}
 	return copiedMap
 }
@@ -28,11 +29,17 @@ func (t *Transport) GetConnectionStats() map[string]int {
 func (t *Transport) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
 	conn, err := t.Dialer.DialContext(ctx, network, address)
 
-	t.mu.Lock()
-	defer t.mu.Unlock()
 	if err == nil {
-		t.Connections[address]++
-		return &Conn{Conn: conn, Transport: t, address: address}, err
+		t.mu.Lock()
+		counter, ok := t.connections[address]
+		if !ok {
+			intCounter := int32(0)
+			counter = &intCounter
+			t.connections[address] = counter
+		}
+		t.mu.Unlock()
+		atomic.AddInt32(counter, 1)
+		return &Conn{Conn: conn, counter: counter}, err
 	}
 
 	return conn, err
@@ -40,18 +47,13 @@ func (t *Transport) DialContext(ctx context.Context, network, address string) (n
 
 type Conn struct {
 	net.Conn
-	*Transport
-	address string
+	counter *int32
 	sync.Once
 }
 
 func (c *Conn) Close() (err error) {
 	err = c.Conn.Close()
-	c.Do(func() {
-		c.mu.Lock()
-		defer c.mu.Unlock()
-		c.Transport.Connections[c.address]--
-	})
+	c.Do(func() { atomic.AddInt32(c.counter, -1) })
 
 	return
 }

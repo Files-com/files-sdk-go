@@ -45,10 +45,6 @@ func (f StatusFile) Status() status.Status {
 	return f.file.Status
 }
 
-func (f StatusFile) LastByte() time.Time {
-	return f.file.LastByte
-}
-
 func (f StatusFile) Err() error {
 	return f.file.Err
 }
@@ -77,7 +73,7 @@ func TestJob_TransferRate(t *testing.T) {
 	assert := assert.New(t)
 	job := (&Job{Logger: lib.NullLogger{}}).Init()
 	job.Timer.Start()
-	file := StatusFile{file: JobFile{LastByte: time.Now(), Status: status.Downloading}}
+	file := StatusFile{file: JobFile{Status: status.Downloading}}
 	job.Add(file)
 	job.UpdateStatusWithBytes(status.Uploading, file, 1000)
 	assert.InDelta(int64(200), job.TransferRate(), 100)
@@ -92,9 +88,8 @@ func TestJob_ETA(t *testing.T) {
 	job.Timer.Start()
 	file := StatusFile{
 		file: JobFile{
-			LastByte: time.Now(),
-			Status:   status.Downloading,
-			Size:     10000,
+			Status: status.Downloading,
+			Size:   10000,
 		},
 	}
 	job.Add(file)
@@ -111,7 +106,6 @@ func TestJob_ElapsedTime(t *testing.T) {
 	file := StatusFile{
 		file: JobFile{
 			TransferBytes: 1000,
-			LastByte:      time.Now(),
 			Status:        status.Complete,
 			Size:          10000,
 		},

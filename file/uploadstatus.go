@@ -16,7 +16,6 @@ type UploadStatus struct {
 	remotePath    string
 	uploadedBytes int64
 	Sync          bool
-	lastByte      time.Time
 	Uploader
 	UploadResumable
 	Mutex *sync.RWMutex
@@ -79,12 +78,6 @@ func (u *UploadStatus) Status() status.Status {
 	return u.status
 }
 
-func (u *UploadStatus) LastByte() time.Time {
-	u.Mutex.RLock()
-	defer u.Mutex.RUnlock()
-	return u.lastByte
-}
-
 func (u *UploadStatus) Err() error {
 	u.Mutex.RLock()
 	defer u.Mutex.RUnlock()
@@ -109,7 +102,6 @@ func (u *UploadStatus) SetStatus(s status.Status, err error) {
 
 	if s.Is(status.Retrying) {
 		u.uploadedBytes = 0
-		u.lastByte = time.Time{}
 	}
 
 	if s.Is(status.Ended...) {
@@ -133,9 +125,6 @@ func (u *UploadStatus) Id() string {
 func (u *UploadStatus) incrementUploadedBytes(b int64) {
 	u.Mutex.Lock()
 	defer u.Mutex.Unlock()
-	if b > 0 {
-		u.lastByte = time.Now()
-	}
 	u.uploadedBytes += b
 }
 

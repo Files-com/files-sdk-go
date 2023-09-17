@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -163,6 +162,7 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 				allErrors = errors.Join(allErrors, part.error)
 
 				if strings.Contains(part.Error(), "File Upload Not Found") {
+					u.LogPath(u.Path, map[string]interface{}{"error": part.Error(), "message": "canceling all other parts"})
 					cancelParts(part.error)
 
 					u.notResumable.Store(true)
@@ -309,13 +309,29 @@ func (u *uploadIO) manageUpdatePart(ctx context.Context, part *Part, wait lib.Co
 }
 
 func (u *uploadIO) runUploadPart(ctx context.Context, part *Part) {
-	part.EtagsParam, part.error = u.uploadPart(ctx, part)
-	part.bytes = int64(part.ProxyReader.BytesRead())
-	part.Touch()
-	if part.error != nil {
-		var pathErr *os.PathError
-		if errors.As(part.error, &pathErr) {
-			part.error = pathErr
+	runCount := 0
+	for {
+		runCount++
+		part.EtagsParam, part.error = u.uploadPart(ctx, part)
+		part.bytes = int64(part.ProxyReader.BytesRead())
+		part.Touch()
+		if part.error == nil && runCount < 3 {
+			break
+		} else if lib.S3ErrorIsRequestHasExpired(part.error) {
+			part.FileUploadPart.Expires = ""
+			part.FileUploadPart.UploadUri = ""
+			if part.ProxyReader.Rewind() {
+				u.LogPath(u.Path, map[string]interface{}{
+					"error":       part.error,
+					"part_number": part.PartNumber,
+					"run_count":   runCount,
+					"message":     "clearing upload_uri and fetching new one",
+				})
+			} else {
+				break
+			}
+		} else {
+			break
 		}
 	}
 
@@ -403,7 +419,7 @@ func (u *uploadIO) completeUpload(ctx context.Context, providedMtime *time.Time,
 func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsParam, error) {
 	var err error
 	// Stub for test fixtures being expired
-	if part.PartNumber != 1 {
+	if part.PartNumber != 1 || part.UploadUri == "" {
 		if time.Now().After(part.ExpiresTime()) {
 			params := files_sdk.FileBeginUploadParams{
 				Path:         part.Path,

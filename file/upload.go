@@ -163,17 +163,27 @@ func (c *Client) UploadRetry(job Job, opts ...files_sdk.RequestResponseOption) *
 }
 
 type UploaderParams struct {
-	Ignore  []string
+	// Ignore gitignore formatted pattern
+	Ignore []string
+	// Include gitignore formatted pattern
 	Include []string
-	*Job
-	Sync       bool
+	// Sync compare destination and only upload if different or non-existent.
+	Sync bool
+	// LocalPaths files or directories to upload.
 	LocalPaths []string
-	LocalPath  string
+	// LocalPath a file or directory to recursively upload.
+	LocalPath string
+	// RemotePath destination path for files.com, formatted `/` path separator.
 	RemotePath string
-	DryRun     bool
+	// DryRun see what files would be uploaded.
+	DryRun bool
+	// RetryPolicy config for retrying errored uploads.
 	RetryPolicy
+	// EventsReporter log file events
 	EventsReporter
+	// Manager limit concurrency
 	*manager.Manager
+	*Job
 	config files_sdk.Config
 }
 

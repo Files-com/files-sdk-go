@@ -1014,7 +1014,7 @@ func TestClient_Uploader_Files(t *testing.T) {
 		}
 	}
 
-	job := client.Uploader(UploaderParams{LocalPath: tmpDir, LocalPaths: filePaths})
+	job := client.Uploader(UploaderParams{LocalPath: tmpDir + string(os.PathSeparator), LocalPaths: filePaths})
 	job.Start()
 	job.Wait()
 
@@ -1026,6 +1026,65 @@ func TestClient_Uploader_Files(t *testing.T) {
 	assert.Equal(filePaths[1], job.Statuses[1].LocalPath())
 	assert.Equal(status.Complete, job.Statuses[1].Status())
 	assert.NoError(job.Statuses[1].Err())
+}
+
+func TestClient_Uploader_Directories(t *testing.T) {
+	client, r, err := CreateClient("TestClient_Uploader_Directories")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	assert := assert.New(t)
+	tmpDir := t.TempDir()
+
+	filesAndStatus := []struct {
+		name   string
+		status string
+		size   int
+	}{{name: "A/1.text", status: "complete", size: 24}, {name: "B/2.text", status: "complete", size: 24}, {name: "B/Z/4.text", status: "complete", size: 24}, {name: "3.text", status: "complete", size: 24}}
+	for index, file := range filesAndStatus {
+		file.name = filepath.Join(tmpDir, file.name)
+		require.NoError(t, os.MkdirAll(filepath.Dir(file.name), 0750))
+		filesAndStatus[index] = file
+		f, err := os.Create(file.name)
+		assert.NoError(err)
+		f.Write([]byte("hello how are you doing?"))
+		f.Close()
+	}
+
+	job := client.Uploader(
+		UploaderParams{
+			LocalPath: tmpDir + string(os.PathSeparator),
+			LocalPaths: []string{
+				filepath.Join(tmpDir, "A") + string(os.PathSeparator),
+				filepath.Join(tmpDir, "B") + string(os.PathSeparator),
+				filepath.Join(tmpDir, "3.text"),
+			},
+		},
+	)
+	job.Start()
+	job.Wait()
+
+	require.Equal(t, 4, len(job.Statuses), "the right number of files did not upload")
+	assert.Equal(filesAndStatus[0].name, job.Statuses[0].LocalPath())
+	assert.Equal("1.text", job.Statuses[0].RemotePath())
+	assert.Equal(status.Complete, job.Statuses[0].Status())
+	assert.NoError(job.Statuses[0].Err())
+
+	assert.Equal(filesAndStatus[1].name, job.Statuses[1].LocalPath())
+	assert.Equal("2.text", job.Statuses[1].RemotePath())
+	assert.Equal(status.Complete, job.Statuses[1].Status())
+	assert.NoError(job.Statuses[1].Err())
+
+	assert.Equal(filesAndStatus[2].name, job.Statuses[2].LocalPath())
+	assert.Equal("Z/4.text", job.Statuses[2].RemotePath())
+	assert.Equal(status.Complete, job.Statuses[2].Status())
+	assert.NoError(job.Statuses[2].Err())
+
+	assert.Equal(filesAndStatus[3].name, job.Statuses[3].LocalPath())
+	assert.Equal("3.text", job.Statuses[3].RemotePath())
+	assert.Equal(status.Complete, job.Statuses[3].Status())
+	assert.NoError(job.Statuses[3].Err())
 }
 
 func TestClient_ListForRecursive(t *testing.T) {

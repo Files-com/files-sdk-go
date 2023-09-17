@@ -21,7 +21,6 @@ type JobFile struct {
 	Id            string        `json:"-"`
 	Attempts      int           `json:"attempts"`
 	Mutex         *sync.RWMutex `json:"-"`
-	LastByte      time.Time     `json:"-"`
 	status.Status `json:"-"`
 	filesSDK.File `json:"-"`
 	*Job          `json:"-"`

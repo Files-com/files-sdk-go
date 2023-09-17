@@ -80,7 +80,7 @@ func DefaultPooledTransport() *Transport {
 			MaxIdleConnsPerHost:   75,
 			MaxConnsPerHost:       75,
 		},
-		Connections: make(map[string]int),
+		connections: make(map[string]*int32),
 		Dialer: &net.Dialer{
 			Timeout: 30 * time.Second,
 		},
