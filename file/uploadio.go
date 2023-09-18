@@ -86,6 +86,15 @@ func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
 	}
 	var err error
 	if time.Now().After(u.FileUploadPart.UploadExpires()) || u.isRemoteMount(u.FileUploadPart) {
+		if len(u.Parts) > 0 {
+			u.LogPath(u.Path, map[string]interface{}{
+				"timestamp":     time.Now(),
+				"event":         "check resumablity",
+				"isRemoteMount": u.isRemoteMount(u.FileUploadPart),
+				"expired":       time.Now().After(u.FileUploadPart.UploadExpires()),
+				"message":       "parts are invalidated must start over",
+			})
+		}
 		u.Parts = Parts{} // parts are invalidated
 		if u.Manager.WaitWithContext(ctx) {
 			u.FileUploadPart, err = u.startUpload(
@@ -98,7 +107,7 @@ func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
 			)
 			u.Manager.Done()
 		} else {
-			return u.UploadResumable(), ctx.Err()
+			err = ctx.Err()
 		}
 		if err != nil {
 			return u.UploadResumable(), err
@@ -137,6 +146,12 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 		case <-u.partsFinished:
 			close(u.onComplete)
 			if allErrors != nil {
+				u.LogPath(u.Path, map[string]interface{}{
+					"timestamp": time.Now(),
+					"error":     allErrors.Error(),
+					"event":     "partsFinished",
+					"message":   "rewindSuccessfulParts",
+				})
 				u.rewindSuccessfulParts()
 				return u.UploadResumable(), allErrors
 			}
@@ -146,10 +161,22 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 				u.file, err = u.completeUpload(ctx, &u.ProvidedMtime, u.etags, u.bytesWritten, u.Path, u.FileUploadPart.Ref)
 				u.Manager.Done()
 				if err != nil {
+					u.LogPath(u.Path, map[string]interface{}{
+						"timestamp": time.Now(),
+						"error":     err.Error(),
+						"event":     "complete upload",
+						"message":   "rewindSuccessfulParts",
+					})
 					u.rewindSuccessfulParts()
 				}
 				return u.UploadResumable(), err
 			} else {
+				u.LogPath(u.Path, map[string]interface{}{
+					"timestamp": time.Now(),
+					"error":     ctx.Err(),
+					"event":     "complete upload",
+					"message":   "rewindSuccessfulParts",
+				})
 				u.rewindSuccessfulParts()
 				return u.UploadResumable(), ctx.Err()
 			}
@@ -161,8 +188,14 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 				u.Progress(-part.bytes)
 				allErrors = errors.Join(allErrors, part.error)
 
+				u.LogPath(u.Path, map[string]interface{}{
+					"timestamp": time.Now(),
+					"error":     part.Error(),
+					"part":      part.PartNumber,
+					"event":     "onComplete",
+				})
+
 				if strings.Contains(part.Error(), "File Upload Not Found") {
-					u.LogPath(u.Path, map[string]interface{}{"error": part.Error(), "message": "canceling all other parts"})
 					cancelParts(part.error)
 
 					u.notResumable.Store(true)
@@ -322,10 +355,11 @@ func (u *uploadIO) runUploadPart(ctx context.Context, part *Part) {
 			part.FileUploadPart.UploadUri = ""
 			if part.ProxyReader.Rewind() {
 				u.LogPath(u.Path, map[string]interface{}{
-					"error":       part.error,
-					"part_number": part.PartNumber,
-					"run_count":   runCount,
-					"message":     "clearing upload_uri and fetching new one",
+					"timestamp": time.Now(),
+					"error":     part.error,
+					"part":      part.PartNumber,
+					"run_count": runCount,
+					"message":   "clearing upload_uri and fetching new one",
 				})
 			} else {
 				break
@@ -421,6 +455,14 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 	// Stub for test fixtures being expired
 	if part.PartNumber != 1 || part.UploadUri == "" {
 		if time.Now().After(part.ExpiresTime()) {
+			u.LogPath(u.Path, map[string]interface{}{
+				"timestamp":           time.Now(),
+				"message":             "canceling all other parts",
+				"part":                part.PartNumber,
+				"event":               "uploadPart",
+				"previous_upload_uri": part.UploadUri != "",
+				"expired":             time.Now().After(part.ExpiresTime()),
+			})
 			params := files_sdk.FileBeginUploadParams{
 				Path:         part.Path,
 				Ref:          part.Ref,

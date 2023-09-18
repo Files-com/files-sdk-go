@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.0.4"
+var VERSION = "3.0.5"
 
 const (
 	UserAgent   = "Files.com Go SDK"
