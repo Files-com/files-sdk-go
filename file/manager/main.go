@@ -10,7 +10,7 @@ import (
 
 var (
 	ConcurrentFiles         = 50
-	ConcurrentFileParts     = 75
+	ConcurrentFileParts     = 50
 	ConcurrentDirectoryList = 100
 )
 
