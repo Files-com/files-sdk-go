@@ -23,6 +23,7 @@ type Site struct {
 	AskAboutOverwrites                     *bool                  `json:"ask_about_overwrites,omitempty" path:"ask_about_overwrites,omitempty" url:"ask_about_overwrites,omitempty"`
 	BundleActivityNotifications            string                 `json:"bundle_activity_notifications,omitempty" path:"bundle_activity_notifications,omitempty" url:"bundle_activity_notifications,omitempty"`
 	BundleExpiration                       int64                  `json:"bundle_expiration,omitempty" path:"bundle_expiration,omitempty" url:"bundle_expiration,omitempty"`
+	BundleNotFoundMessage                  string                 `json:"bundle_not_found_message,omitempty" path:"bundle_not_found_message,omitempty" url:"bundle_not_found_message,omitempty"`
 	BundlePasswordRequired                 *bool                  `json:"bundle_password_required,omitempty" path:"bundle_password_required,omitempty" url:"bundle_password_required,omitempty"`
 	BundleRegistrationNotifications        string                 `json:"bundle_registration_notifications,omitempty" path:"bundle_registration_notifications,omitempty" url:"bundle_registration_notifications,omitempty"`
 	BundleRequireRegistration              *bool                  `json:"bundle_require_registration,omitempty" path:"bundle_require_registration,omitempty" url:"bundle_require_registration,omitempty"`
@@ -221,6 +222,7 @@ type SiteUpdateParams struct {
 	DisablePasswordReset                   *bool                  `url:"disable_password_reset,omitempty" required:"false" json:"disable_password_reset,omitempty" path:"disable_password_reset"`
 	ImmutableFiles                         *bool                  `url:"immutable_files,omitempty" required:"false" json:"immutable_files,omitempty" path:"immutable_files"`
 	SessionPinnedByIp                      *bool                  `url:"session_pinned_by_ip,omitempty" required:"false" json:"session_pinned_by_ip,omitempty" path:"session_pinned_by_ip"`
+	BundleNotFoundMessage                  string                 `url:"bundle_not_found_message,omitempty" required:"false" json:"bundle_not_found_message,omitempty" path:"bundle_not_found_message"`
 	BundlePasswordRequired                 *bool                  `url:"bundle_password_required,omitempty" required:"false" json:"bundle_password_required,omitempty" path:"bundle_password_required"`
 	BundleRequireRegistration              *bool                  `url:"bundle_require_registration,omitempty" required:"false" json:"bundle_require_registration,omitempty" path:"bundle_require_registration"`
 	BundleRequireShareRecipient            *bool                  `url:"bundle_require_share_recipient,omitempty" required:"false" json:"bundle_require_share_recipient,omitempty" path:"bundle_require_share_recipient"`
