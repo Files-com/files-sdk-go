@@ -8,9 +8,10 @@ import (
 )
 
 type UserExample struct {
-	UserId int    `json:"user_id"`
-	Id     int    `json:"id"`
-	Path   string `json:"-" path:"path"`
+	UserId     int     `json:"user_id"`
+	Id         int     `json:"id"`
+	FloatValue float64 `json:"float_value"`
+	Path       string  `json:"-" path:"path"`
 }
 
 func TestBuildPath(t *testing.T) {
@@ -26,10 +27,10 @@ func TestBuildPath(t *testing.T) {
 	}{
 		{
 			name: "_id",
-			want: "users/2",
+			want: "users/3",
 			args: args{
 				"users/{user_id}",
-				UserExample{UserId: 2},
+				UserExample{UserId: 3},
 			},
 		},
 		{
@@ -38,6 +39,14 @@ func TestBuildPath(t *testing.T) {
 			args: args{
 				"users/{id}",
 				UserExample{Id: 3},
+			},
+		},
+		{
+			name: "id with large value",
+			want: "users/3922799",
+			args: args{
+				"users/{id}",
+				UserExample{Id: 3922799},
 			},
 		},
 		{
@@ -63,6 +72,13 @@ func TestBuildPath(t *testing.T) {
 				UserExample{Path: "/a/my-path"}},
 		},
 		{
+			name: "empty path",
+			want: "root/",
+			args: args{
+				"root/{path}",
+				UserExample{Path: ""}},
+		},
+		{
 			name:  "validating int zero value",
 			error: fmt.Errorf("missing required field: UserExample{}.id"),
 			args: args{
@@ -82,6 +98,13 @@ func TestBuildPath(t *testing.T) {
 			args: args{
 				"root/{path}",
 				UserExample{Path: "a file name.text"}},
+		},
+		{
+			name: "given a map",
+			want: "root/a/my-path",
+			args: args{
+				"root/{path}",
+				map[string]interface{}{"path": "a/my-path"}},
 		},
 	}
 	for _, tt := range tests {

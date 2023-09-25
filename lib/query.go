@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -33,47 +32,85 @@ func PathEscape(path string) (string, error) {
 }
 
 func BuildPath(resourcePath string, values interface{}) (string, error) {
-	r := regexp.MustCompile(`\{(.*)\}`)
-	matches := r.FindSubmatch([]byte(resourcePath))
-	if len(matches) > 0 {
-		j, err := json.Marshal(&values)
-		if err != nil {
-			return "", err
-		}
-		var inInterface map[string]interface{}
-		err = json.Unmarshal(j, &inInterface)
-		if err != nil {
-			return "", err
-		}
-		value := inInterface[string(matches[1])]
-		valueInt, OkInt := value.(float64)
-		if OkInt && valueInt == 0 {
-			return "", CreateError(values, string(matches[1]))
+	// Regular expression to find placeholders
+	r := regexp.MustCompile(`\{(.+?)\}`) // Use non-greedy match to capture individual placeholders
+
+	// Iterate over placeholders and replace them
+	var unreplacedPlaceholders []string
+	matches := r.FindAllSubmatch([]byte(resourcePath), -1)
+	for _, match := range matches {
+		// Extract placeholder name
+		placeholder := string(match[1])
+
+		var value interface{}
+		var exists bool
+		if m, ok := values.(map[string]interface{}); ok {
+			value, exists = m[placeholder]
+		} else if pathValue, err := findTag(values, "path", placeholder); err == nil {
+			exists = true
+			value = pathValue
+		} else if jsonValue, err := findTag(values, "json", placeholder); err == nil {
+			exists = true
+			value = jsonValue
 		}
 
-		stringValue := fmt.Sprintf("%v", value)
-		if value == nil {
+		if !exists {
+			// path is allowed to be empty because that can represent the root path.
+			if placeholder == "path" {
+				resourcePath = strings.Replace(resourcePath, string(match[0]), "", 1)
+			} else {
+				unreplacedPlaceholders = append(unreplacedPlaceholders, placeholder)
+			}
+			continue
+		}
 
-			stringValue = ""
-			t := reflect.TypeOf(values)
-			for i := 0; i < t.NumField(); i++ {
-				field := t.Field(i)
-
-				// Get the field tag value
-				tag := field.Tag.Get("path")
-				if tag == string(matches[1]) {
-					stringValue = fmt.Sprintf("%v", reflect.ValueOf(values).FieldByName(field.Name))
+		// Convert value to string
+		var stringValue string
+		switch v := value.(type) {
+		case string:
+			var err error
+			if placeholder == "path" {
+				stringValue, err = PathEscape(v)
+				if err != nil {
+					return "", err
 				}
 			}
+		default:
+			stringValue = fmt.Sprintf("%v", v)
 		}
-		if string(matches[1]) == "path" {
-			stringValue, err = PathEscape(stringValue)
-			if err != nil {
-				return "", err
-			}
-		}
-		return strings.ReplaceAll(resourcePath, string(matches[0]), stringValue), nil
+
+		// Replace placeholder in resourcePath
+		resourcePath = strings.Replace(resourcePath, string(match[0]), stringValue, 1)
+	}
+
+	// Check if there are unreplaced placeholders
+	if len(unreplacedPlaceholders) > 0 {
+		return "", fmt.Errorf("placeholders %v were not replaced", unreplacedPlaceholders)
 	}
 
 	return resourcePath, nil
+}
+
+func findTag(s interface{}, tag string, value string) (interface{}, error) {
+	val := reflect.ValueOf(s)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+
+	if val.Kind() != reflect.Struct {
+		return "", fmt.Errorf("expected struct or pointer to struct, got %v", val.Kind())
+	}
+
+	typ := val.Type()
+	for i := 0; i < val.NumField(); i++ {
+		tag := typ.Field(i).Tag.Get(tag)
+		if tag != "" && tag == value {
+			fieldVal := val.Field(i)
+			if !fieldVal.IsZero() {
+				return fieldVal.Interface(), nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("`%v` tag not found in struct", tag)
 }
