@@ -12,6 +12,7 @@ type InboxRegistration struct {
 	Name             string                 `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Company          string                 `json:"company,omitempty" path:"company,omitempty" url:"company,omitempty"`
 	Email            string                 `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
+	Ip               string                 `json:"ip,omitempty" path:"ip,omitempty" url:"ip,omitempty"`
 	ClickwrapBody    string                 `json:"clickwrap_body,omitempty" path:"clickwrap_body,omitempty" url:"clickwrap_body,omitempty"`
 	FormFieldSetId   int64                  `json:"form_field_set_id,omitempty" path:"form_field_set_id,omitempty" url:"form_field_set_id,omitempty"`
 	FormFieldData    map[string]interface{} `json:"form_field_data,omitempty" path:"form_field_data,omitempty" url:"form_field_data,omitempty"`
