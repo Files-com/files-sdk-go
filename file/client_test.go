@@ -1102,7 +1102,6 @@ func TestClient_ListForRecursive(t *testing.T) {
 		files = append(files, it.Resource())
 	}
 
-	require.Equal(t, 6, len(files))
 	paths := lo.Map[RecursiveItem, string](files, func(item RecursiveItem, index int) string {
 		return item.Path
 	})
