@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strconv"
 
-	lib "github.com/Files-com/files-sdk-go/v3/lib"
+	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/hashicorp/go-retryablehttp"
-	"moul.io/http2curl"
+	"github.com/moul/http2curl"
 )
 
 func Resource(config Config, resource lib.Resource, opt ...RequestResponseOption) error {

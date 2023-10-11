@@ -12,6 +12,7 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/itchyny/timefmt-go v0.1.4
 	github.com/lpar/date v1.0.0
+	github.com/moul/http2curl v1.0.0
 	github.com/panjf2000/ants/v2 v2.7.1
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
 	github.com/samber/lo v1.33.0
@@ -20,7 +21,6 @@ require (
 	github.com/tunabay/go-infounit v1.1.3
 	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17
 	golang.org/x/text v0.7.0
-	moul.io/http2curl v1.0.0
 )
 
 require (
