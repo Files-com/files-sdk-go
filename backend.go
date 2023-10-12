@@ -10,7 +10,7 @@ import (
 
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/hashicorp/go-retryablehttp"
-	"github.com/moul/http2curl"
+	"moul.io/http2curl/v2"
 )
 
 func Resource(config Config, resource lib.Resource, opt ...RequestResponseOption) error {
