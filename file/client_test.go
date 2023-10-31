@@ -55,7 +55,7 @@ func deletePath(client *Client, path string) {
 }
 
 func ignoreSomeErrors(err error) {
-	if err != nil && !files_sdk.IsDestinationExistsError(err) {
+	if err != nil && !files_sdk.IsExist(err) {
 		panic(err)
 	}
 }

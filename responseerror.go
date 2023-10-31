@@ -2,10 +2,12 @@ package files_sdk
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Files-com/files-sdk-go/v3/lib"
@@ -24,9 +26,16 @@ const (
 	DestinationExists = "processing-failure/destination-exists"
 )
 
-func IsDestinationExistsError(err error) bool {
-	re, ok := err.(ResponseError)
+func IsExist(err error) bool {
+	var re ResponseError
+	ok := errors.As(err, &re)
 	return ok && re.Type == DestinationExists
+}
+
+func IsNotExist(err error) bool {
+	var re ResponseError
+	ok := errors.As(err, &re)
+	return ok && strings.Split(re.Type, "/")[0] == "not-found"
 }
 
 type SignRequest struct {

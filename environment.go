@@ -5,15 +5,15 @@ type Environment int64
 const (
 	Production Environment = iota
 	Staging
-	Local
+	Development
 )
 
 func NewEnvironment(env string) Environment {
 	switch env {
 	case "staging":
 		return Staging
-	case "local":
-		return Local
+	case "development":
+		return Development
 	default:
 		return Production
 	}
@@ -23,25 +23,25 @@ func (e Environment) String() string {
 	switch e {
 	case Staging:
 		return "staging"
-	case Local:
-		return "local"
+	case Development:
+		return "development"
 	default:
 		return "production"
 	}
 }
 
 const (
-	ProductionEndpoint = "https://{SUBDOMAIN}.files.com"
-	localEndpoint      = "https://{SUBDOMAIN}.filesrails.test"
-	stagingEndpoint    = "https://{SUBDOMAIN}.filesstaging.av"
+	ProductionEndpoint  = "https://{SUBDOMAIN}.files.com"
+	developmentEndpoint = "https://{SUBDOMAIN}.filesrails.test"
+	stagingEndpoint     = "https://{SUBDOMAIN}.filesstaging.av"
 )
 
 func (e Environment) Endpoint() string {
 	switch e {
 	case Staging:
 		return stagingEndpoint
-	case Local:
-		return localEndpoint
+	case Development:
+		return developmentEndpoint
 	default:
 		return ProductionEndpoint
 	}
