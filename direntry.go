@@ -14,6 +14,9 @@ func (f DirEntry) Mode() fs.FileMode {
 }
 
 func (f DirEntry) ModTime() time.Time {
+	if f.File.Mtime == nil {
+		return time.Time{}
+	}
 	return *f.File.Mtime
 }
 
