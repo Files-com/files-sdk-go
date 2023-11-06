@@ -204,7 +204,7 @@ type UserCreateParams struct {
 	Require2fa                 UserRequire2faEnum           `url:"require_2fa,omitempty" required:"false" json:"require_2fa,omitempty" path:"require_2fa"`
 	TimeZone                   string                       `url:"time_zone,omitempty" required:"false" json:"time_zone,omitempty" path:"time_zone"`
 	UserRoot                   string                       `url:"user_root,omitempty" required:"false" json:"user_root,omitempty" path:"user_root"`
-	Username                   string                       `url:"username,omitempty" required:"false" json:"username,omitempty" path:"username"`
+	Username                   string                       `url:"username,omitempty" required:"true" json:"username,omitempty" path:"username"`
 }
 
 // Unlock user who has been locked out due to failed logins

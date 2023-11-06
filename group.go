@@ -34,18 +34,18 @@ type GroupFindParams struct {
 }
 
 type GroupCreateParams struct {
-	Name     string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 	Notes    string `url:"notes,omitempty" required:"false" json:"notes,omitempty" path:"notes"`
 	UserIds  string `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty" path:"user_ids"`
 	AdminIds string `url:"admin_ids,omitempty" required:"false" json:"admin_ids,omitempty" path:"admin_ids"`
+	Name     string `url:"name,omitempty" required:"true" json:"name,omitempty" path:"name"`
 }
 
 type GroupUpdateParams struct {
 	Id       int64  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	Name     string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 	Notes    string `url:"notes,omitempty" required:"false" json:"notes,omitempty" path:"notes"`
 	UserIds  string `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty" path:"user_ids"`
 	AdminIds string `url:"admin_ids,omitempty" required:"false" json:"admin_ids,omitempty" path:"admin_ids"`
+	Name     string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 }
 
 type GroupDeleteParams struct {
