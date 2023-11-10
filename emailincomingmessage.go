@@ -16,6 +16,7 @@ type EmailIncomingMessage struct {
 	Body       string     `json:"body,omitempty" path:"body,omitempty" url:"body,omitempty"`
 	Message    string     `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
 	CreatedAt  *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	InboxTitle string     `json:"inbox_title,omitempty" path:"inbox_title,omitempty" url:"inbox_title,omitempty"`
 }
 
 func (e EmailIncomingMessage) Identifier() interface{} {
