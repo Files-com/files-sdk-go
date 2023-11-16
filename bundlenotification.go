@@ -21,7 +21,6 @@ func (b BundleNotification) Identifier() interface{} {
 type BundleNotificationCollection []BundleNotification
 
 type BundleNotificationListParams struct {
-	UserId int64                  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
 	SortBy map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter BundleNotification     `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	ListParams
@@ -32,10 +31,10 @@ type BundleNotificationFindParams struct {
 }
 
 type BundleNotificationCreateParams struct {
-	UserId               int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
 	NotifyOnRegistration *bool `url:"notify_on_registration,omitempty" required:"false" json:"notify_on_registration,omitempty" path:"notify_on_registration"`
 	NotifyOnUpload       *bool `url:"notify_on_upload,omitempty" required:"false" json:"notify_on_upload,omitempty" path:"notify_on_upload"`
 	BundleId             int64 `url:"bundle_id,omitempty" required:"true" json:"bundle_id,omitempty" path:"bundle_id"`
+	UserId               int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
 }
 
 type BundleNotificationUpdateParams struct {

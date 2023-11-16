@@ -23,7 +23,6 @@ func (a AutomationRun) Identifier() interface{} {
 type AutomationRunCollection []AutomationRun
 
 type AutomationRunListParams struct {
-	UserId       int64                  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
 	SortBy       map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       AutomationRun          `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	AutomationId int64                  `url:"automation_id,omitempty" required:"true" json:"automation_id,omitempty" path:"automation_id"`
