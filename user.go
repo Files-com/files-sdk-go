@@ -87,16 +87,6 @@ func (u User) Identifier() interface{} {
 
 type UserCollection []User
 
-type QParam struct {
-	Username             string `url:"username,omitempty" json:"username,omitempty" path:"username"`
-	Email                string `url:"email,omitempty" json:"email,omitempty" path:"email"`
-	Notes                string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
-	Admin                string `url:"admin,omitempty" json:"admin,omitempty" path:"admin"`
-	AllowedIps           string `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
-	PasswordValidityDays string `url:"password_validity_days,omitempty" json:"password_validity_days,omitempty" path:"password_validity_days"`
-	SslRequired          string `url:"ssl_required,omitempty" json:"ssl_required,omitempty" path:"ssl_required"`
-}
-
 type UserAuthenticationMethodEnum string
 
 func (u UserAuthenticationMethodEnum) String() string {
@@ -150,7 +140,6 @@ type UserListParams struct {
 	FilterLt     map[string]interface{} `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
 	FilterLteq   map[string]interface{} `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	Ids          string                 `url:"ids,omitempty" required:"false" json:"ids,omitempty" path:"ids"`
-	QParam       QParam                 `url:"q,omitempty" required:"false" json:"q,omitempty" path:"q"`
 	Search       string                 `url:"search,omitempty" required:"false" json:"search,omitempty" path:"search"`
 	ListParams
 }
