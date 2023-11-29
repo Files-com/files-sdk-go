@@ -27,7 +27,7 @@ toolchain will resolve and fetch the files module automatically.
 
 ### Setting API Key
 
-#### Setting by ENV 
+#### Setting by ENV
 
 ``` sh
 export FILES_API_KEY="XXXX-XXXX..."
@@ -35,7 +35,7 @@ export FILES_API_KEY="XXXX-XXXX..."
 
 #### Set Global Variable
 
-```go 
+```go
 import (
     "github.com/Files-com/files-sdk-go/v3"
 )
@@ -45,7 +45,7 @@ import (
 
 #### Set Per Client
 
-```go 
+```go
 import (
     "github.com/Files-com/files-sdk-go/v3"
     "github.com/Files-com/files-sdk-go/v3/file"
@@ -57,7 +57,7 @@ client := file.Client{Config: config}
 
 ### List
 
-```go 
+```go
 import (
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	folder "github.com/Files-com/files-sdk-go/v3/folder"
@@ -80,7 +80,7 @@ func main() {
 ```
 
 ### Upload a File
-```go 
+```go
 import (
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	file "github.com/Files-com/files-sdk-go/v3/file"
@@ -99,7 +99,7 @@ func main() {
 
 #### Via io.Reader
 
-```go 
+```go
 import file "github.com/Files-com/files-sdk-go/v3/file"
 
 func main() {
@@ -114,7 +114,7 @@ func main() {
 ```
 
 ### Download a File
-```go 
+```go
 import file "github.com/Files-com/files-sdk-go/v3/file"
 
 func main() {
@@ -133,4 +133,3 @@ func main() {
 docker build . --tag files-sdk-go:latest
 docker run --workdir /app --volume ${PWD}:/app -it files-sdk-go
 ```
-
