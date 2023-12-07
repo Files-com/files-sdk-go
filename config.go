@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.1.10"
+var VERSION = "3.1.11"
 
 const (
 	UserAgent   = "Files.com Go SDK"
@@ -57,9 +57,13 @@ func (c Config) Init() Config {
 }
 
 func (c Config) Endpoint() string {
+	if c.EndpointOverride != "" && !strings.HasPrefix(c.EndpointOverride, "https://") && !strings.HasPrefix(c.EndpointOverride, "http://") {
+		c.EndpointOverride = "https://" + c.EndpointOverride
+	}
+
 	return lib.DefaultString(
 		c.EndpointOverride,
-		strings.Replace(c.Environment.Endpoint(), "{SUBDOMAIN}", lib.DefaultString(c.Subdomain, DefaultSite), 1),
+		strings.Replace(c.Environment.Endpoint(), "{{SUBDOMAIN}}", lib.DefaultString(c.Subdomain, DefaultSite), 1),
 	)
 }
 

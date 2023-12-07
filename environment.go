@@ -31,9 +31,9 @@ func (e Environment) String() string {
 }
 
 const (
-	ProductionEndpoint  = "https://{SUBDOMAIN}.files.com"
-	developmentEndpoint = "https://{SUBDOMAIN}.filesrails.test"
-	stagingEndpoint     = "https://{SUBDOMAIN}.filesstaging.av"
+	ProductionEndpoint  = "https://{{SUBDOMAIN}}.files.com"
+	developmentEndpoint = "https://{{SUBDOMAIN}}.filesrails.test"
+	stagingEndpoint     = "https://{{SUBDOMAIN}}.filesstaging.av"
 )
 
 func (e Environment) Endpoint() string {
