@@ -17,6 +17,7 @@ type Site struct {
 	Allowed2faMethodYubi                     *bool                  `json:"allowed_2fa_method_yubi,omitempty" path:"allowed_2fa_method_yubi,omitempty" url:"allowed_2fa_method_yubi,omitempty"`
 	Allowed2faMethodBypassForFtpSftpDav      *bool                  `json:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty" path:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty" url:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty"`
 	AdminUserId                              int64                  `json:"admin_user_id,omitempty" path:"admin_user_id,omitempty" url:"admin_user_id,omitempty"`
+	AdminsBypassLockedSubfolders             *bool                  `json:"admins_bypass_locked_subfolders,omitempty" path:"admins_bypass_locked_subfolders,omitempty" url:"admins_bypass_locked_subfolders,omitempty"`
 	AllowBundleNames                         *bool                  `json:"allow_bundle_names,omitempty" path:"allow_bundle_names,omitempty" url:"allow_bundle_names,omitempty"`
 	AllowedCountries                         string                 `json:"allowed_countries,omitempty" path:"allowed_countries,omitempty" url:"allowed_countries,omitempty"`
 	AllowedIps                               string                 `json:"allowed_ips,omitempty" path:"allowed_ips,omitempty" url:"allowed_ips,omitempty"`
@@ -250,6 +251,7 @@ type SiteUpdateParams struct {
 	GroupAdminsCanSetUserPassword            *bool                  `url:"group_admins_can_set_user_password,omitempty" required:"false" json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password"`
 	BundleRecipientBlacklistFreeEmailDomains *bool                  `url:"bundle_recipient_blacklist_free_email_domains,omitempty" required:"false" json:"bundle_recipient_blacklist_free_email_domains,omitempty" path:"bundle_recipient_blacklist_free_email_domains"`
 	BundleRecipientBlacklistDomains          []string               `url:"bundle_recipient_blacklist_domains,omitempty" required:"false" json:"bundle_recipient_blacklist_domains,omitempty" path:"bundle_recipient_blacklist_domains"`
+	AdminsBypassLockedSubfolders             *bool                  `url:"admins_bypass_locked_subfolders,omitempty" required:"false" json:"admins_bypass_locked_subfolders,omitempty" path:"admins_bypass_locked_subfolders"`
 	Allowed2faMethodSms                      *bool                  `url:"allowed_2fa_method_sms,omitempty" required:"false" json:"allowed_2fa_method_sms,omitempty" path:"allowed_2fa_method_sms"`
 	Allowed2faMethodU2f                      *bool                  `url:"allowed_2fa_method_u2f,omitempty" required:"false" json:"allowed_2fa_method_u2f,omitempty" path:"allowed_2fa_method_u2f"`
 	Allowed2faMethodTotp                     *bool                  `url:"allowed_2fa_method_totp,omitempty" required:"false" json:"allowed_2fa_method_totp,omitempty" path:"allowed_2fa_method_totp"`
