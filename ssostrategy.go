@@ -12,6 +12,7 @@ type SsoStrategy struct {
 	Label                          string `json:"label,omitempty" path:"label,omitempty" url:"label,omitempty"`
 	LogoUrl                        string `json:"logo_url,omitempty" path:"logo_url,omitempty" url:"logo_url,omitempty"`
 	Id                             int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	UserCount                      int64  `json:"user_count,omitempty" path:"user_count,omitempty" url:"user_count,omitempty"`
 	SamlProviderCertFingerprint    string `json:"saml_provider_cert_fingerprint,omitempty" path:"saml_provider_cert_fingerprint,omitempty" url:"saml_provider_cert_fingerprint,omitempty"`
 	SamlProviderIssuerUrl          string `json:"saml_provider_issuer_url,omitempty" path:"saml_provider_issuer_url,omitempty" url:"saml_provider_issuer_url,omitempty"`
 	SamlProviderMetadataContent    string `json:"saml_provider_metadata_content,omitempty" path:"saml_provider_metadata_content,omitempty" url:"saml_provider_metadata_content,omitempty"`
