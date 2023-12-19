@@ -247,6 +247,7 @@ type SiteUpdateParams struct {
 	SftpEnabled                              *bool                  `url:"sftp_enabled,omitempty" required:"false" json:"sftp_enabled,omitempty" path:"sftp_enabled"`
 	SftpHostKeyType                          string                 `url:"sftp_host_key_type,omitempty" required:"false" json:"sftp_host_key_type,omitempty" path:"sftp_host_key_type"`
 	ActiveSftpHostKeyId                      int64                  `url:"active_sftp_host_key_id,omitempty" required:"false" json:"active_sftp_host_key_id,omitempty" path:"active_sftp_host_key_id"`
+	ProtocolAccessGroupsOnly                 *bool                  `url:"protocol_access_groups_only,omitempty" required:"false" json:"protocol_access_groups_only,omitempty" path:"protocol_access_groups_only"`
 	BundleWatermarkValue                     map[string]interface{} `url:"bundle_watermark_value,omitempty" required:"false" json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value"`
 	GroupAdminsCanSetUserPassword            *bool                  `url:"group_admins_can_set_user_password,omitempty" required:"false" json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password"`
 	BundleRecipientBlacklistFreeEmailDomains *bool                  `url:"bundle_recipient_blacklist_free_email_domains,omitempty" required:"false" json:"bundle_recipient_blacklist_free_email_domains,omitempty" path:"bundle_recipient_blacklist_free_email_domains"`
