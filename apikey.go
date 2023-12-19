@@ -16,11 +16,11 @@ type ApiKey struct {
 	Key              string     `json:"key,omitempty" path:"key,omitempty" url:"key,omitempty"`
 	LastUseAt        *time.Time `json:"last_use_at,omitempty" path:"last_use_at,omitempty" url:"last_use_at,omitempty"`
 	Name             string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
-	Path             string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	PermissionSet    string     `json:"permission_set,omitempty" path:"permission_set,omitempty" url:"permission_set,omitempty"`
 	Platform         string     `json:"platform,omitempty" path:"platform,omitempty" url:"platform,omitempty"`
 	Url              string     `json:"url,omitempty" path:"url,omitempty" url:"url,omitempty"`
 	UserId           int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	Path             string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 }
 
 func (a ApiKey) Identifier() interface{} {
