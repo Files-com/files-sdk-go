@@ -20,7 +20,6 @@ type ApiKey struct {
 	Platform         string     `json:"platform,omitempty" path:"platform,omitempty" url:"platform,omitempty"`
 	Url              string     `json:"url,omitempty" path:"url,omitempty" url:"url,omitempty"`
 	UserId           int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
-	Path             string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 }
 
 func (a ApiKey) Identifier() interface{} {
@@ -67,7 +66,6 @@ type ApiKeyCreateParams struct {
 	Description   string                  `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
 	ExpiresAt     *time.Time              `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty" path:"expires_at"`
 	PermissionSet ApiKeyPermissionSetEnum `url:"permission_set,omitempty" required:"false" json:"permission_set,omitempty" path:"permission_set"`
-	Path          string                  `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
 }
 
 type ApiKeyUpdateCurrentParams struct {
