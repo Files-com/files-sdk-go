@@ -8,13 +8,14 @@ import (
 )
 
 type PublicKey struct {
-	Id          int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Title       string     `json:"title,omitempty" path:"title,omitempty" url:"title,omitempty"`
-	CreatedAt   *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	Fingerprint string     `json:"fingerprint,omitempty" path:"fingerprint,omitempty" url:"fingerprint,omitempty"`
-	Username    string     `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
-	UserId      int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
-	PublicKey   string     `json:"public_key,omitempty" path:"public_key,omitempty" url:"public_key,omitempty"`
+	Id                int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Title             string     `json:"title,omitempty" path:"title,omitempty" url:"title,omitempty"`
+	CreatedAt         *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	Fingerprint       string     `json:"fingerprint,omitempty" path:"fingerprint,omitempty" url:"fingerprint,omitempty"`
+	FingerprintSha256 string     `json:"fingerprint_sha256,omitempty" path:"fingerprint_sha256,omitempty" url:"fingerprint_sha256,omitempty"`
+	Username          string     `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
+	UserId            int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	PublicKey         string     `json:"public_key,omitempty" path:"public_key,omitempty" url:"public_key,omitempty"`
 }
 
 func (p PublicKey) Identifier() interface{} {
