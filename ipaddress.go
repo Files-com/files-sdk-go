@@ -23,6 +23,10 @@ type IpAddressListParams struct {
 	ListParams
 }
 
+type IpAddressGetSmartfileReservedParams struct {
+	ListParams
+}
+
 type IpAddressGetExavaultReservedParams struct {
 	ListParams
 }
