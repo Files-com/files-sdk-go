@@ -44,6 +44,8 @@ type Site struct {
 	CreatedAt                                *time.Time             `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 	Currency                                 string                 `json:"currency,omitempty" path:"currency,omitempty" url:"currency,omitempty"`
 	CustomNamespace                          *bool                  `json:"custom_namespace,omitempty" path:"custom_namespace,omitempty" url:"custom_namespace,omitempty"`
+	DavEnabled                               *bool                  `json:"dav_enabled,omitempty" path:"dav_enabled,omitempty" url:"dav_enabled,omitempty"`
+	DavUserRootEnabled                       *bool                  `json:"dav_user_root_enabled,omitempty" path:"dav_user_root_enabled,omitempty" url:"dav_user_root_enabled,omitempty"`
 	DaysToRetainBackups                      int64                  `json:"days_to_retain_backups,omitempty" path:"days_to_retain_backups,omitempty" url:"days_to_retain_backups,omitempty"`
 	DefaultTimeZone                          string                 `json:"default_time_zone,omitempty" path:"default_time_zone,omitempty" url:"default_time_zone,omitempty"`
 	DesktopApp                               *bool                  `json:"desktop_app,omitempty" path:"desktop_app,omitempty" url:"desktop_app,omitempty"`
@@ -221,6 +223,7 @@ type SiteUpdateParams struct {
 	PasswordRequireNumber                    *bool                  `url:"password_require_number,omitempty" required:"false" json:"password_require_number,omitempty" path:"password_require_number"`
 	PasswordRequireUnbreached                *bool                  `url:"password_require_unbreached,omitempty" required:"false" json:"password_require_unbreached,omitempty" path:"password_require_unbreached"`
 	RequireLogoutFromBundlesAndInboxes       *bool                  `url:"require_logout_from_bundles_and_inboxes,omitempty" required:"false" json:"require_logout_from_bundles_and_inboxes,omitempty" path:"require_logout_from_bundles_and_inboxes"`
+	DavUserRootEnabled                       *bool                  `url:"dav_user_root_enabled,omitempty" required:"false" json:"dav_user_root_enabled,omitempty" path:"dav_user_root_enabled"`
 	SftpUserRootEnabled                      *bool                  `url:"sftp_user_root_enabled,omitempty" required:"false" json:"sftp_user_root_enabled,omitempty" path:"sftp_user_root_enabled"`
 	DisablePasswordReset                     *bool                  `url:"disable_password_reset,omitempty" required:"false" json:"disable_password_reset,omitempty" path:"disable_password_reset"`
 	ImmutableFiles                           *bool                  `url:"immutable_files,omitempty" required:"false" json:"immutable_files,omitempty" path:"immutable_files"`
@@ -243,6 +246,7 @@ type SiteUpdateParams struct {
 	SharingEnabled                           *bool                  `url:"sharing_enabled,omitempty" required:"false" json:"sharing_enabled,omitempty" path:"sharing_enabled"`
 	UserRequestsEnabled                      *bool                  `url:"user_requests_enabled,omitempty" required:"false" json:"user_requests_enabled,omitempty" path:"user_requests_enabled"`
 	UserRequestsNotifyAdmins                 *bool                  `url:"user_requests_notify_admins,omitempty" required:"false" json:"user_requests_notify_admins,omitempty" path:"user_requests_notify_admins"`
+	DavEnabled                               *bool                  `url:"dav_enabled,omitempty" required:"false" json:"dav_enabled,omitempty" path:"dav_enabled"`
 	FtpEnabled                               *bool                  `url:"ftp_enabled,omitempty" required:"false" json:"ftp_enabled,omitempty" path:"ftp_enabled"`
 	SftpEnabled                              *bool                  `url:"sftp_enabled,omitempty" required:"false" json:"sftp_enabled,omitempty" path:"sftp_enabled"`
 	SftpHostKeyType                          string                 `url:"sftp_host_key_type,omitempty" required:"false" json:"sftp_host_key_type,omitempty" path:"sftp_host_key_type"`
