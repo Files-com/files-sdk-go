@@ -1,31 +1,39 @@
-//go:build !darwin
-
 package file
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
+	"time"
 )
 
-func tmpDownloadPath(path string) string {
-	return _tmpDownloadPath(path, 0)
-}
+const TempDownloadExtension = "download"
 
-func _tmpDownloadPath(path string, index int) string {
-	var name string
+// tmpDownloadPath Generates a unique temporary download path for a given file path by appending a ".download" extension and, if necessary, additional identifiers to avoid name conflicts.
+func tmpDownloadPath(path string) (string, error) {
+	var index int
+	randGenerator := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	if index == 0 {
-		name = fmt.Sprintf("%v.download", path)
-	} else {
-		name = fmt.Sprintf("%v (%v).download", path, index)
+	for {
+		var tempPath, uniqueness string
+		if index == 0 {
+			tempPath = fmt.Sprintf("%v.%v", path, TempDownloadExtension)
+		} else if index > 25 {
+			return "", fmt.Errorf("unable to create a unique temporary path after 25 attempts, consider deleting existing .%v files; attempted path: %v", TempDownloadExtension, path)
+		} else {
+			if index > 10 {
+				for i := 0; i < 4; i++ {
+					uniqueness += string(rune(randGenerator.Intn(26) + 'a'))
+				}
+			} else {
+				uniqueness = fmt.Sprintf("%v", index)
+			}
+			tempPath = fmt.Sprintf("%v (%v).%v", path, uniqueness, TempDownloadExtension)
+		}
+
+		if _, err := os.Stat(tempPath); os.IsNotExist(err) {
+			return tmpDownloadPathOnNotExist(path, tempPath)
+		}
+		index++
 	}
-	_, err := os.Stat(name)
-	if os.IsNotExist(err) {
-		return name
-	}
-	return _tmpDownloadPath(path, index+1)
-}
-
-func finalizeTmpDownload(tmpName string, finalPath string) error {
-	return os.Rename(tmpName, finalPath)
 }

@@ -1,4 +1,4 @@
-//go:build darwin
+//go:build !darwin
 
 package file
 
@@ -17,7 +17,7 @@ func Test_tmpDownloadPath(t *testing.T) {
 		dir := t.TempDir()
 		path, err := tmpDownloadPath(filepath.Join(dir, "you-wont-find-me"))
 		require.NoError(t, err)
-		assert.Equal(t, filepath.Join(dir, "you-wont-find-me.download/you-wont-find-me"), path)
+		assert.Equal(t, filepath.Join(dir, "you-wont-find-me.download"), path)
 	})
 
 	t.Run("it increments a number", func(t *testing.T) {
@@ -31,7 +31,7 @@ func Test_tmpDownloadPath(t *testing.T) {
 		}
 		path, err := tmpDownloadPath(filepath.Join(dir, "find-me"))
 		require.NoError(t, err)
-		assert.Equal(t, fmt.Sprintf(filepath.Join(dir, "find-me (1).download/find-me")), path, "it increments a number")
+		assert.Equal(t, fmt.Sprintf(filepath.Join(dir, "find-me (1).download")), path, "it increments a number")
 	})
 
 	t.Run("it increments a number lots of times", func(t *testing.T) {
@@ -46,6 +46,6 @@ func Test_tmpDownloadPath(t *testing.T) {
 
 		path, err := tmpDownloadPath(filepath.Join(dir, "find-me"))
 		require.NoError(t, err)
-		assert.NotEqual(t, fmt.Sprintf(filepath.Join(dir, "find-me (11).download/find-me")), path)
+		assert.NotEqual(t, fmt.Sprintf(filepath.Join(dir, "find-me (11).download")), path)
 	})
 }

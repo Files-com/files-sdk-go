@@ -237,7 +237,11 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 			return
 		}
 
-		tmpName := tmpDownloadPath(reportStatus.LocalPath())
+		tmpName, err := tmpDownloadPath(reportStatus.LocalPath())
+		if err != nil {
+			reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
+			return
+		}
 		reportStatus.Job().Config.LogPath(
 			reportStatus.RemotePath(),
 			map[string]interface{}{
