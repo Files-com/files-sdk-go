@@ -145,7 +145,6 @@ type Site struct {
 	TlsDisabled                              *bool                  `json:"tls_disabled,omitempty" path:"tls_disabled,omitempty" url:"tls_disabled,omitempty"`
 	TrialDaysLeft                            int64                  `json:"trial_days_left,omitempty" path:"trial_days_left,omitempty" url:"trial_days_left,omitempty"`
 	TrialUntil                               *time.Time             `json:"trial_until,omitempty" path:"trial_until,omitempty" url:"trial_until,omitempty"`
-	UpdatedAt                                *time.Time             `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 	UseProvidedModifiedAt                    *bool                  `json:"use_provided_modified_at,omitempty" path:"use_provided_modified_at,omitempty" url:"use_provided_modified_at,omitempty"`
 	User                                     User                   `json:"user,omitempty" path:"user,omitempty" url:"user,omitempty"`
 	UserLockout                              *bool                  `json:"user_lockout,omitempty" path:"user_lockout,omitempty" url:"user_lockout,omitempty"`

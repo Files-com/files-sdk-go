@@ -21,7 +21,6 @@ type Invoice struct {
 	PaymentType       string     `json:"payment_type,omitempty" path:"payment_type,omitempty" url:"payment_type,omitempty"`
 	SiteName          string     `json:"site_name,omitempty" path:"site_name,omitempty" url:"site_name,omitempty"`
 	Type              string     `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
-	UpdatedAt         *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
 func (i Invoice) Identifier() interface{} {

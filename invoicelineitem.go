@@ -14,7 +14,6 @@ type InvoiceLineItem struct {
 	Type           string     `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
 	ServiceEndAt   *time.Time `json:"service_end_at,omitempty" path:"service_end_at,omitempty" url:"service_end_at,omitempty"`
 	ServiceStartAt *time.Time `json:"service_start_at,omitempty" path:"service_start_at,omitempty" url:"service_start_at,omitempty"`
-	UpdatedAt      *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 	Plan           string     `json:"plan,omitempty" path:"plan,omitempty" url:"plan,omitempty"`
 	Site           string     `json:"site,omitempty" path:"site,omitempty" url:"site,omitempty"`
 }
