@@ -15,6 +15,7 @@ type Site struct {
 	Allowed2faMethodU2f                      *bool                  `json:"allowed_2fa_method_u2f,omitempty" path:"allowed_2fa_method_u2f,omitempty" url:"allowed_2fa_method_u2f,omitempty"`
 	Allowed2faMethodWebauthn                 *bool                  `json:"allowed_2fa_method_webauthn,omitempty" path:"allowed_2fa_method_webauthn,omitempty" url:"allowed_2fa_method_webauthn,omitempty"`
 	Allowed2faMethodYubi                     *bool                  `json:"allowed_2fa_method_yubi,omitempty" path:"allowed_2fa_method_yubi,omitempty" url:"allowed_2fa_method_yubi,omitempty"`
+	Allowed2faMethodEmail                    *bool                  `json:"allowed_2fa_method_email,omitempty" path:"allowed_2fa_method_email,omitempty" url:"allowed_2fa_method_email,omitempty"`
 	Allowed2faMethodBypassForFtpSftpDav      *bool                  `json:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty" path:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty" url:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty"`
 	AdminUserId                              int64                  `json:"admin_user_id,omitempty" path:"admin_user_id,omitempty" url:"admin_user_id,omitempty"`
 	AdminsBypassLockedSubfolders             *bool                  `json:"admins_bypass_locked_subfolders,omitempty" path:"admins_bypass_locked_subfolders,omitempty" url:"admins_bypass_locked_subfolders,omitempty"`
@@ -262,6 +263,7 @@ type SiteUpdateParams struct {
 	Allowed2faMethodTotp                     *bool                  `url:"allowed_2fa_method_totp,omitempty" required:"false" json:"allowed_2fa_method_totp,omitempty" path:"allowed_2fa_method_totp"`
 	Allowed2faMethodWebauthn                 *bool                  `url:"allowed_2fa_method_webauthn,omitempty" required:"false" json:"allowed_2fa_method_webauthn,omitempty" path:"allowed_2fa_method_webauthn"`
 	Allowed2faMethodYubi                     *bool                  `url:"allowed_2fa_method_yubi,omitempty" required:"false" json:"allowed_2fa_method_yubi,omitempty" path:"allowed_2fa_method_yubi"`
+	Allowed2faMethodEmail                    *bool                  `url:"allowed_2fa_method_email,omitempty" required:"false" json:"allowed_2fa_method_email,omitempty" path:"allowed_2fa_method_email"`
 	Allowed2faMethodBypassForFtpSftpDav      *bool                  `url:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty" required:"false" json:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty" path:"allowed_2fa_method_bypass_for_ftp_sftp_dav"`
 	Require2fa                               *bool                  `url:"require_2fa,omitempty" required:"false" json:"require_2fa,omitempty" path:"require_2fa"`
 	Require2faUserType                       string                 `url:"require_2fa_user_type,omitempty" required:"false" json:"require_2fa_user_type,omitempty" path:"require_2fa_user_type"`
