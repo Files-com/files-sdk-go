@@ -201,6 +201,7 @@ type SiteUpdateParams struct {
 	MotdText                                 string                 `url:"motd_text,omitempty" required:"false" json:"motd_text,omitempty" path:"motd_text"`
 	MotdUseForFtp                            *bool                  `url:"motd_use_for_ftp,omitempty" required:"false" json:"motd_use_for_ftp,omitempty" path:"motd_use_for_ftp"`
 	MotdUseForSftp                           *bool                  `url:"motd_use_for_sftp,omitempty" required:"false" json:"motd_use_for_sftp,omitempty" path:"motd_use_for_sftp"`
+	LeftNavigationVisibility                 map[string]interface{} `url:"left_navigation_visibility,omitempty" required:"false" json:"left_navigation_visibility,omitempty" path:"left_navigation_visibility"`
 	SessionExpiry                            string                 `url:"session_expiry,omitempty" required:"false" json:"session_expiry,omitempty" path:"session_expiry"`
 	SslRequired                              *bool                  `url:"ssl_required,omitempty" required:"false" json:"ssl_required,omitempty" path:"ssl_required"`
 	TlsDisabled                              *bool                  `url:"tls_disabled,omitempty" required:"false" json:"tls_disabled,omitempty" path:"tls_disabled"`

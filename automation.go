@@ -23,7 +23,9 @@ type Automation struct {
 	Name                             string                 `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Path                             string                 `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	RecurringDay                     int64                  `json:"recurring_day,omitempty" path:"recurring_day,omitempty" url:"recurring_day,omitempty"`
-	Schedule                         map[string]interface{} `json:"schedule,omitempty" path:"schedule,omitempty" url:"schedule,omitempty"`
+	ScheduleDaysOfWeek               []int64                `json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week,omitempty" url:"schedule_days_of_week,omitempty"`
+	ScheduleTimesOfDay               []string               `json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day,omitempty" url:"schedule_times_of_day,omitempty"`
+	ScheduleTimeZone                 string                 `json:"schedule_time_zone,omitempty" path:"schedule_time_zone,omitempty" url:"schedule_time_zone,omitempty"`
 	Source                           string                 `json:"source,omitempty" path:"source,omitempty" url:"source,omitempty"`
 	SyncIds                          []int64                `json:"sync_ids,omitempty" path:"sync_ids,omitempty" url:"sync_ids,omitempty"`
 	TriggerActions                   []string               `json:"trigger_actions,omitempty" path:"trigger_actions,omitempty" url:"trigger_actions,omitempty"`
@@ -100,7 +102,9 @@ type AutomationCreateParams struct {
 	SyncIds                          string                 `url:"sync_ids,omitempty" required:"false" json:"sync_ids,omitempty" path:"sync_ids"`
 	UserIds                          string                 `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty" path:"user_ids"`
 	GroupIds                         string                 `url:"group_ids,omitempty" required:"false" json:"group_ids,omitempty" path:"group_ids"`
-	Schedule                         map[string]interface{} `url:"schedule,omitempty" required:"false" json:"schedule,omitempty" path:"schedule"`
+	ScheduleDaysOfWeek               []int64                `url:"schedule_days_of_week,omitempty" required:"false" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
+	ScheduleTimesOfDay               []string               `url:"schedule_times_of_day,omitempty" required:"false" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
+	ScheduleTimeZone                 string                 `url:"schedule_time_zone,omitempty" required:"false" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
 	AlwaysOverwriteSizeMatchingFiles *bool                  `url:"always_overwrite_size_matching_files,omitempty" required:"false" json:"always_overwrite_size_matching_files,omitempty" path:"always_overwrite_size_matching_files"`
 	Description                      string                 `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
 	Disabled                         *bool                  `url:"disabled,omitempty" required:"false" json:"disabled,omitempty" path:"disabled"`
@@ -129,7 +133,9 @@ type AutomationUpdateParams struct {
 	SyncIds                          string                 `url:"sync_ids,omitempty" required:"false" json:"sync_ids,omitempty" path:"sync_ids"`
 	UserIds                          string                 `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty" path:"user_ids"`
 	GroupIds                         string                 `url:"group_ids,omitempty" required:"false" json:"group_ids,omitempty" path:"group_ids"`
-	Schedule                         map[string]interface{} `url:"schedule,omitempty" required:"false" json:"schedule,omitempty" path:"schedule"`
+	ScheduleDaysOfWeek               []int64                `url:"schedule_days_of_week,omitempty" required:"false" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
+	ScheduleTimesOfDay               []string               `url:"schedule_times_of_day,omitempty" required:"false" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
+	ScheduleTimeZone                 string                 `url:"schedule_time_zone,omitempty" required:"false" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
 	AlwaysOverwriteSizeMatchingFiles *bool                  `url:"always_overwrite_size_matching_files,omitempty" required:"false" json:"always_overwrite_size_matching_files,omitempty" path:"always_overwrite_size_matching_files"`
 	Description                      string                 `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
 	Disabled                         *bool                  `url:"disabled,omitempty" required:"false" json:"disabled,omitempty" path:"disabled"`
