@@ -23,6 +23,8 @@ type Automation struct {
 	Name                             string                 `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Path                             string                 `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	RecurringDay                     int64                  `json:"recurring_day,omitempty" path:"recurring_day,omitempty" url:"recurring_day,omitempty"`
+	Schedule                         map[string]interface{} `json:"schedule,omitempty" path:"schedule,omitempty" url:"schedule,omitempty"`
+	HumanReadableSchedule            string                 `json:"human_readable_schedule,omitempty" path:"human_readable_schedule,omitempty" url:"human_readable_schedule,omitempty"`
 	ScheduleDaysOfWeek               []int64                `json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week,omitempty" url:"schedule_days_of_week,omitempty"`
 	ScheduleTimesOfDay               []string               `json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day,omitempty" url:"schedule_times_of_day,omitempty"`
 	ScheduleTimeZone                 string                 `json:"schedule_time_zone,omitempty" path:"schedule_time_zone,omitempty" url:"schedule_time_zone,omitempty"`
