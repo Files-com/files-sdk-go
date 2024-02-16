@@ -8,12 +8,16 @@ import (
 )
 
 type AutomationRun struct {
-	Id                int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	AutomationId      int64      `json:"automation_id,omitempty" path:"automation_id,omitempty" url:"automation_id,omitempty"`
-	CompletedAt       *time.Time `json:"completed_at,omitempty" path:"completed_at,omitempty" url:"completed_at,omitempty"`
-	CreatedAt         *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	Status            string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
-	StatusMessagesUrl string     `json:"status_messages_url,omitempty" path:"status_messages_url,omitempty" url:"status_messages_url,omitempty"`
+	Id                   int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	AutomationId         int64      `json:"automation_id,omitempty" path:"automation_id,omitempty" url:"automation_id,omitempty"`
+	CompletedAt          *time.Time `json:"completed_at,omitempty" path:"completed_at,omitempty" url:"completed_at,omitempty"`
+	CreatedAt            *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	Runtime              *time.Time `json:"runtime,omitempty" path:"runtime,omitempty" url:"runtime,omitempty"`
+	Status               string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	RunStage             string     `json:"run_stage,omitempty" path:"run_stage,omitempty" url:"run_stage,omitempty"`
+	SuccessfulOperations int64      `json:"successful_operations,omitempty" path:"successful_operations,omitempty" url:"successful_operations,omitempty"`
+	FailedOperations     int64      `json:"failed_operations,omitempty" path:"failed_operations,omitempty" url:"failed_operations,omitempty"`
+	StatusMessagesUrl    string     `json:"status_messages_url,omitempty" path:"status_messages_url,omitempty" url:"status_messages_url,omitempty"`
 }
 
 func (a AutomationRun) Identifier() interface{} {
