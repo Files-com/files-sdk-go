@@ -117,6 +117,7 @@ type Site struct {
 	Phone                                    string                 `json:"phone,omitempty" path:"phone,omitempty" url:"phone,omitempty"`
 	PinAllRemoteServersToSiteRegion          *bool                  `json:"pin_all_remote_servers_to_site_region,omitempty" path:"pin_all_remote_servers_to_site_region,omitempty" url:"pin_all_remote_servers_to_site_region,omitempty"`
 	PreventRootPermissionsForNonSiteAdmins   *bool                  `json:"prevent_root_permissions_for_non_site_admins,omitempty" path:"prevent_root_permissions_for_non_site_admins,omitempty" url:"prevent_root_permissions_for_non_site_admins,omitempty"`
+	ProtocolAccessGroupsOnly                 *bool                  `json:"protocol_access_groups_only,omitempty" path:"protocol_access_groups_only,omitempty" url:"protocol_access_groups_only,omitempty"`
 	Require2fa                               *bool                  `json:"require_2fa,omitempty" path:"require_2fa,omitempty" url:"require_2fa,omitempty"`
 	Require2faStopTime                       *time.Time             `json:"require_2fa_stop_time,omitempty" path:"require_2fa_stop_time,omitempty" url:"require_2fa_stop_time,omitempty"`
 	Require2faUserType                       string                 `json:"require_2fa_user_type,omitempty" path:"require_2fa_user_type,omitempty" url:"require_2fa_user_type,omitempty"`
