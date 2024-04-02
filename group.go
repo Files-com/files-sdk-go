@@ -9,6 +9,7 @@ import (
 type Group struct {
 	Id                int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name              string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	AllowedIps        string `json:"allowed_ips,omitempty" path:"allowed_ips,omitempty" url:"allowed_ips,omitempty"`
 	AdminIds          string `json:"admin_ids,omitempty" path:"admin_ids,omitempty" url:"admin_ids,omitempty"`
 	Notes             string `json:"notes,omitempty" path:"notes,omitempty" url:"notes,omitempty"`
 	UserIds           string `json:"user_ids,omitempty" path:"user_ids,omitempty" url:"user_ids,omitempty"`
@@ -45,6 +46,7 @@ type GroupCreateParams struct {
 	SftpPermission    *bool  `url:"sftp_permission,omitempty" required:"false" json:"sftp_permission,omitempty" path:"sftp_permission"`
 	DavPermission     *bool  `url:"dav_permission,omitempty" required:"false" json:"dav_permission,omitempty" path:"dav_permission"`
 	RestapiPermission *bool  `url:"restapi_permission,omitempty" required:"false" json:"restapi_permission,omitempty" path:"restapi_permission"`
+	AllowedIps        string `url:"allowed_ips,omitempty" required:"false" json:"allowed_ips,omitempty" path:"allowed_ips"`
 	Name              string `url:"name,omitempty" required:"true" json:"name,omitempty" path:"name"`
 }
 
@@ -57,6 +59,7 @@ type GroupUpdateParams struct {
 	SftpPermission    *bool  `url:"sftp_permission,omitempty" required:"false" json:"sftp_permission,omitempty" path:"sftp_permission"`
 	DavPermission     *bool  `url:"dav_permission,omitempty" required:"false" json:"dav_permission,omitempty" path:"dav_permission"`
 	RestapiPermission *bool  `url:"restapi_permission,omitempty" required:"false" json:"restapi_permission,omitempty" path:"restapi_permission"`
+	AllowedIps        string `url:"allowed_ips,omitempty" required:"false" json:"allowed_ips,omitempty" path:"allowed_ips"`
 	Name              string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 }
 
