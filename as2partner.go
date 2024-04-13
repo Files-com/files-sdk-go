@@ -12,6 +12,7 @@ type As2Partner struct {
 	Name                       string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Uri                        string `json:"uri,omitempty" path:"uri,omitempty" url:"uri,omitempty"`
 	ServerCertificate          string `json:"server_certificate,omitempty" path:"server_certificate,omitempty" url:"server_certificate,omitempty"`
+	MdnValidationLevel         string `json:"mdn_validation_level,omitempty" path:"mdn_validation_level,omitempty" url:"mdn_validation_level,omitempty"`
 	EnableDedicatedIps         *bool  `json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips,omitempty" url:"enable_dedicated_ips,omitempty"`
 	HexPublicCertificateSerial string `json:"hex_public_certificate_serial,omitempty" path:"hex_public_certificate_serial,omitempty" url:"hex_public_certificate_serial,omitempty"`
 	PublicCertificateMd5       string `json:"public_certificate_md5,omitempty" path:"public_certificate_md5,omitempty" url:"public_certificate_md5,omitempty"`
@@ -43,6 +44,7 @@ type As2PartnerCreateParams struct {
 	PublicCertificate  string `url:"public_certificate,omitempty" required:"true" json:"public_certificate,omitempty" path:"public_certificate"`
 	As2StationId       int64  `url:"as2_station_id,omitempty" required:"true" json:"as2_station_id,omitempty" path:"as2_station_id"`
 	ServerCertificate  string `url:"server_certificate,omitempty" required:"false" json:"server_certificate,omitempty" path:"server_certificate"`
+	MdnValidationLevel string `url:"mdn_validation_level,omitempty" required:"false" json:"mdn_validation_level,omitempty" path:"mdn_validation_level"`
 	EnableDedicatedIps *bool  `url:"enable_dedicated_ips,omitempty" required:"false" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
 }
 
@@ -51,6 +53,7 @@ type As2PartnerUpdateParams struct {
 	Name               string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 	Uri                string `url:"uri,omitempty" required:"false" json:"uri,omitempty" path:"uri"`
 	ServerCertificate  string `url:"server_certificate,omitempty" required:"false" json:"server_certificate,omitempty" path:"server_certificate"`
+	MdnValidationLevel string `url:"mdn_validation_level,omitempty" required:"false" json:"mdn_validation_level,omitempty" path:"mdn_validation_level"`
 	PublicCertificate  string `url:"public_certificate,omitempty" required:"false" json:"public_certificate,omitempty" path:"public_certificate"`
 	EnableDedicatedIps *bool  `url:"enable_dedicated_ips,omitempty" required:"false" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
 }
