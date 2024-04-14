@@ -258,16 +258,9 @@ type RemoteServerCreateParams struct {
 // Post local changes, check in, and download configuration file (used by some Remote Server integrations, such as the Files.com Agent)
 type RemoteServerConfigurationFileParams struct {
 	Id            int64  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	ApiToken      string `url:"api_token,omitempty" required:"false" json:"api_token,omitempty" path:"api_token"`
 	PermissionSet string `url:"permission_set,omitempty" required:"false" json:"permission_set,omitempty" path:"permission_set"`
 	Root          string `url:"root,omitempty" required:"false" json:"root,omitempty" path:"root"`
-	Hostname      string `url:"hostname,omitempty" required:"false" json:"hostname,omitempty" path:"hostname"`
-	Port          int64  `url:"port,omitempty" required:"false" json:"port,omitempty" path:"port"`
-	Status        string `url:"status,omitempty" required:"false" json:"status,omitempty" path:"status"`
-	ConfigVersion string `url:"config_version,omitempty" required:"false" json:"config_version,omitempty" path:"config_version"`
 	PrivateKey    string `url:"private_key,omitempty" required:"false" json:"private_key,omitempty" path:"private_key"`
-	PublicKey     string `url:"public_key,omitempty" required:"false" json:"public_key,omitempty" path:"public_key"`
-	ServerHostKey string `url:"server_host_key,omitempty" required:"false" json:"server_host_key,omitempty" path:"server_host_key"`
 	Subdomain     string `url:"subdomain,omitempty" required:"false" json:"subdomain,omitempty" path:"subdomain"`
 }
 
