@@ -36,6 +36,7 @@ type Bundle struct {
 	MaxUses                         int64                  `json:"max_uses,omitempty" path:"max_uses,omitempty" url:"max_uses,omitempty"`
 	Note                            string                 `json:"note,omitempty" path:"note,omitempty" url:"note,omitempty"`
 	PathTemplate                    string                 `json:"path_template,omitempty" path:"path_template,omitempty" url:"path_template,omitempty"`
+	PathTemplateTimeZone            string                 `json:"path_template_time_zone,omitempty" path:"path_template_time_zone,omitempty" url:"path_template_time_zone,omitempty"`
 	SendEmailReceiptToUploader      *bool                  `json:"send_email_receipt_to_uploader,omitempty" path:"send_email_receipt_to_uploader,omitempty" url:"send_email_receipt_to_uploader,omitempty"`
 	SnapshotId                      int64                  `json:"snapshot_id,omitempty" path:"snapshot_id,omitempty" url:"snapshot_id,omitempty"`
 	UserId                          int64                  `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
@@ -106,6 +107,7 @@ type BundleCreateParams struct {
 	Note                            string                `url:"note,omitempty" required:"false" json:"note,omitempty" path:"note"`
 	Code                            string                `url:"code,omitempty" required:"false" json:"code,omitempty" path:"code"`
 	PathTemplate                    string                `url:"path_template,omitempty" required:"false" json:"path_template,omitempty" path:"path_template"`
+	PathTemplateTimeZone            string                `url:"path_template_time_zone,omitempty" required:"false" json:"path_template_time_zone,omitempty" path:"path_template_time_zone"`
 	Permissions                     BundlePermissionsEnum `url:"permissions,omitempty" required:"false" json:"permissions,omitempty" path:"permissions"`
 	PreviewOnly                     *bool                 `url:"preview_only,omitempty" required:"false" json:"preview_only,omitempty" path:"preview_only"`
 	RequireRegistration             *bool                 `url:"require_registration,omitempty" required:"false" json:"require_registration,omitempty" path:"require_registration"`
@@ -145,6 +147,7 @@ type BundleUpdateParams struct {
 	MaxUses                         int64                 `url:"max_uses,omitempty" required:"false" json:"max_uses,omitempty" path:"max_uses"`
 	Note                            string                `url:"note,omitempty" required:"false" json:"note,omitempty" path:"note"`
 	PathTemplate                    string                `url:"path_template,omitempty" required:"false" json:"path_template,omitempty" path:"path_template"`
+	PathTemplateTimeZone            string                `url:"path_template_time_zone,omitempty" required:"false" json:"path_template_time_zone,omitempty" path:"path_template_time_zone"`
 	Permissions                     BundlePermissionsEnum `url:"permissions,omitempty" required:"false" json:"permissions,omitempty" path:"permissions"`
 	PreviewOnly                     *bool                 `url:"preview_only,omitempty" required:"false" json:"preview_only,omitempty" path:"preview_only"`
 	RequireRegistration             *bool                 `url:"require_registration,omitempty" required:"false" json:"require_registration,omitempty" path:"require_registration"`
