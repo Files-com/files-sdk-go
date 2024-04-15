@@ -8,15 +8,16 @@ import (
 )
 
 type Behavior struct {
-	Id               int64                  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Path             string                 `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
-	AttachmentUrl    string                 `json:"attachment_url,omitempty" path:"attachment_url,omitempty" url:"attachment_url,omitempty"`
-	Behavior         string                 `json:"behavior,omitempty" path:"behavior,omitempty" url:"behavior,omitempty"`
-	Name             string                 `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
-	Description      string                 `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
-	Value            map[string]interface{} `json:"value,omitempty" path:"value,omitempty" url:"value,omitempty"`
-	AttachmentFile   io.Reader              `json:"attachment_file,omitempty" path:"attachment_file,omitempty" url:"attachment_file,omitempty"`
-	AttachmentDelete *bool                  `json:"attachment_delete,omitempty" path:"attachment_delete,omitempty" url:"attachment_delete,omitempty"`
+	Id                          int64                  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Path                        string                 `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	AttachmentUrl               string                 `json:"attachment_url,omitempty" path:"attachment_url,omitempty" url:"attachment_url,omitempty"`
+	Behavior                    string                 `json:"behavior,omitempty" path:"behavior,omitempty" url:"behavior,omitempty"`
+	Name                        string                 `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Description                 string                 `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
+	Value                       map[string]interface{} `json:"value,omitempty" path:"value,omitempty" url:"value,omitempty"`
+	DisableParentFolderBehavior *bool                  `json:"disable_parent_folder_behavior,omitempty" path:"disable_parent_folder_behavior,omitempty" url:"disable_parent_folder_behavior,omitempty"`
+	AttachmentFile              io.Reader              `json:"attachment_file,omitempty" path:"attachment_file,omitempty" url:"attachment_file,omitempty"`
+	AttachmentDelete            *bool                  `json:"attachment_delete,omitempty" path:"attachment_delete,omitempty" url:"attachment_delete,omitempty"`
 }
 
 func (b Behavior) Identifier() interface{} {
