@@ -11,6 +11,7 @@ type UserRequest struct {
 	Name    string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Email   string `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
 	Details string `json:"details,omitempty" path:"details,omitempty" url:"details,omitempty"`
+	Company string `json:"company,omitempty" path:"company,omitempty" url:"company,omitempty"`
 }
 
 func (u UserRequest) Identifier() interface{} {
@@ -31,6 +32,7 @@ type UserRequestCreateParams struct {
 	Name    string `url:"name,omitempty" required:"true" json:"name,omitempty" path:"name"`
 	Email   string `url:"email,omitempty" required:"true" json:"email,omitempty" path:"email"`
 	Details string `url:"details,omitempty" required:"true" json:"details,omitempty" path:"details"`
+	Company string `url:"company,omitempty" required:"false" json:"company,omitempty" path:"company"`
 }
 
 type UserRequestDeleteParams struct {
