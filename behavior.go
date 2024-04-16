@@ -48,12 +48,13 @@ type BehaviorListForParams struct {
 }
 
 type BehaviorCreateParams struct {
-	Value          string    `url:"value,omitempty" required:"false" json:"value,omitempty" path:"value"`
-	AttachmentFile io.Writer `url:"attachment_file,omitempty" required:"false" json:"attachment_file,omitempty" path:"attachment_file"`
-	Name           string    `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	Description    string    `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
-	Path           string    `url:"path,omitempty" required:"true" json:"path,omitempty" path:"path"`
-	Behavior       string    `url:"behavior,omitempty" required:"true" json:"behavior,omitempty" path:"behavior"`
+	Value                       string    `url:"value,omitempty" required:"false" json:"value,omitempty" path:"value"`
+	AttachmentFile              io.Writer `url:"attachment_file,omitempty" required:"false" json:"attachment_file,omitempty" path:"attachment_file"`
+	DisableParentFolderBehavior *bool     `url:"disable_parent_folder_behavior,omitempty" required:"false" json:"disable_parent_folder_behavior,omitempty" path:"disable_parent_folder_behavior"`
+	Name                        string    `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
+	Description                 string    `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
+	Path                        string    `url:"path,omitempty" required:"true" json:"path,omitempty" path:"path"`
+	Behavior                    string    `url:"behavior,omitempty" required:"true" json:"behavior,omitempty" path:"behavior"`
 }
 
 type BehaviorWebhookTestParams struct {
@@ -66,14 +67,15 @@ type BehaviorWebhookTestParams struct {
 }
 
 type BehaviorUpdateParams struct {
-	Id               int64     `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	Value            string    `url:"value,omitempty" required:"false" json:"value,omitempty" path:"value"`
-	AttachmentFile   io.Writer `url:"attachment_file,omitempty" required:"false" json:"attachment_file,omitempty" path:"attachment_file"`
-	Name             string    `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	Description      string    `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
-	Behavior         string    `url:"behavior,omitempty" required:"false" json:"behavior,omitempty" path:"behavior"`
-	Path             string    `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
-	AttachmentDelete *bool     `url:"attachment_delete,omitempty" required:"false" json:"attachment_delete,omitempty" path:"attachment_delete"`
+	Id                          int64     `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Value                       string    `url:"value,omitempty" required:"false" json:"value,omitempty" path:"value"`
+	AttachmentFile              io.Writer `url:"attachment_file,omitempty" required:"false" json:"attachment_file,omitempty" path:"attachment_file"`
+	DisableParentFolderBehavior *bool     `url:"disable_parent_folder_behavior,omitempty" required:"false" json:"disable_parent_folder_behavior,omitempty" path:"disable_parent_folder_behavior"`
+	Name                        string    `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
+	Description                 string    `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
+	Behavior                    string    `url:"behavior,omitempty" required:"false" json:"behavior,omitempty" path:"behavior"`
+	Path                        string    `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
+	AttachmentDelete            *bool     `url:"attachment_delete,omitempty" required:"false" json:"attachment_delete,omitempty" path:"attachment_delete"`
 }
 
 type BehaviorDeleteParams struct {
