@@ -154,6 +154,8 @@ type Site struct {
 	UserLockoutWithin                        int64                  `json:"user_lockout_within,omitempty" path:"user_lockout_within,omitempty" url:"user_lockout_within,omitempty"`
 	UserRequestsEnabled                      *bool                  `json:"user_requests_enabled,omitempty" path:"user_requests_enabled,omitempty" url:"user_requests_enabled,omitempty"`
 	UserRequestsNotifyAdmins                 *bool                  `json:"user_requests_notify_admins,omitempty" path:"user_requests_notify_admins,omitempty" url:"user_requests_notify_admins,omitempty"`
+	UsersCanCreateApiKeys                    *bool                  `json:"users_can_create_api_keys,omitempty" path:"users_can_create_api_keys,omitempty" url:"users_can_create_api_keys,omitempty"`
+	UsersCanCreateSshKeys                    *bool                  `json:"users_can_create_ssh_keys,omitempty" path:"users_can_create_ssh_keys,omitempty" url:"users_can_create_ssh_keys,omitempty"`
 	WelcomeCustomText                        string                 `json:"welcome_custom_text,omitempty" path:"welcome_custom_text,omitempty" url:"welcome_custom_text,omitempty"`
 	WelcomeEmailCc                           string                 `json:"welcome_email_cc,omitempty" path:"welcome_email_cc,omitempty" url:"welcome_email_cc,omitempty"`
 	WelcomeEmailSubject                      string                 `json:"welcome_email_subject,omitempty" path:"welcome_email_subject,omitempty" url:"welcome_email_subject,omitempty"`
@@ -251,6 +253,8 @@ type SiteUpdateParams struct {
 	DavEnabled                               *bool                  `url:"dav_enabled,omitempty" required:"false" json:"dav_enabled,omitempty" path:"dav_enabled"`
 	FtpEnabled                               *bool                  `url:"ftp_enabled,omitempty" required:"false" json:"ftp_enabled,omitempty" path:"ftp_enabled"`
 	SftpEnabled                              *bool                  `url:"sftp_enabled,omitempty" required:"false" json:"sftp_enabled,omitempty" path:"sftp_enabled"`
+	UsersCanCreateApiKeys                    *bool                  `url:"users_can_create_api_keys,omitempty" required:"false" json:"users_can_create_api_keys,omitempty" path:"users_can_create_api_keys"`
+	UsersCanCreateSshKeys                    *bool                  `url:"users_can_create_ssh_keys,omitempty" required:"false" json:"users_can_create_ssh_keys,omitempty" path:"users_can_create_ssh_keys"`
 	SftpHostKeyType                          string                 `url:"sftp_host_key_type,omitempty" required:"false" json:"sftp_host_key_type,omitempty" path:"sftp_host_key_type"`
 	ActiveSftpHostKeyId                      int64                  `url:"active_sftp_host_key_id,omitempty" required:"false" json:"active_sftp_host_key_id,omitempty" path:"active_sftp_host_key_id"`
 	ProtocolAccessGroupsOnly                 *bool                  `url:"protocol_access_groups_only,omitempty" required:"false" json:"protocol_access_groups_only,omitempty" path:"protocol_access_groups_only"`

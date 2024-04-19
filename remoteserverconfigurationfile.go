@@ -24,6 +24,13 @@ type RemoteServerConfigurationFile struct {
 	MaxConcurrentJobs       int64  `json:"max_concurrent_jobs,omitempty" path:"max_concurrent_jobs,omitempty" url:"max_concurrent_jobs,omitempty"`
 	GracefulShutdownTimeout int64  `json:"graceful_shutdown_timeout,omitempty" path:"graceful_shutdown_timeout,omitempty" url:"graceful_shutdown_timeout,omitempty"`
 	TransferRateLimit       string `json:"transfer_rate_limit,omitempty" path:"transfer_rate_limit,omitempty" url:"transfer_rate_limit,omitempty"`
+	ApiToken                string `json:"api_token,omitempty" path:"api_token,omitempty" url:"api_token,omitempty"`
+	Port                    int64  `json:"port,omitempty" path:"port,omitempty" url:"port,omitempty"`
+	Hostname                string `json:"hostname,omitempty" path:"hostname,omitempty" url:"hostname,omitempty"`
+	PublicKey               string `json:"public_key,omitempty" path:"public_key,omitempty" url:"public_key,omitempty"`
+	Status                  string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	ServerHostKey           string `json:"server_host_key,omitempty" path:"server_host_key,omitempty" url:"server_host_key,omitempty"`
+	ConfigVersion           string `json:"config_version,omitempty" path:"config_version,omitempty" url:"config_version,omitempty"`
 }
 
 func (r RemoteServerConfigurationFile) Identifier() interface{} {
