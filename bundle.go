@@ -47,6 +47,7 @@ type Bundle struct {
 	WatermarkValue                  map[string]interface{} `json:"watermark_value,omitempty" path:"watermark_value,omitempty" url:"watermark_value,omitempty"`
 	HasInbox                        *bool                  `json:"has_inbox,omitempty" path:"has_inbox,omitempty" url:"has_inbox,omitempty"`
 	Paths                           []string               `json:"paths,omitempty" path:"paths,omitempty" url:"paths,omitempty"`
+	Bundlepaths                     BundlePath             `json:"bundlepaths,omitempty" path:"bundlepaths,omitempty" url:"bundlepaths,omitempty"`
 	Password                        string                 `json:"password,omitempty" path:"password,omitempty" url:"password,omitempty"`
 	FormFieldSetId                  int64                  `json:"form_field_set_id,omitempty" path:"form_field_set_id,omitempty" url:"form_field_set_id,omitempty"`
 	CreateSnapshot                  *bool                  `json:"create_snapshot,omitempty" path:"create_snapshot,omitempty" url:"create_snapshot,omitempty"`
