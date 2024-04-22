@@ -2,6 +2,7 @@ package file
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -669,12 +670,12 @@ func TestDownload(t *testing.T) {
 				}
 				config := client.Config
 				sourceFs := (&FS{Context: context.Background()}).Init(config, false)
-				lib.BuildPathSpecTest(t, mutex, tt, sourceFs, destinationFs, func(source, destination string) lib.Cmd {
+				lib.BuildPathSpecTest(t, mutex, tt, sourceFs, destinationFs, func(args lib.PathSpecArgs) lib.Cmd {
 					return &CmdRunner{
 						run: func() *Job {
-							return downloader(context.Background(), sourceFs, DownloaderParams{config: config, RemotePath: source, LocalPath: destination})
+							return downloader(context.Background(), sourceFs, DownloaderParams{config: config, RemotePath: args.Src, LocalPath: args.Dest, PreserveTimes: args.PreserveTimes})
 						},
-						args: []string{source, destination},
+						args: []string{args.Src, args.Dest, "--times", fmt.Sprintf("%v", args.PreserveTimes)},
 					}
 				})
 				r.Stop()

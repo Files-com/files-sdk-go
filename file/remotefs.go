@@ -143,10 +143,6 @@ func (i Info) Mode() goFs.FileMode {
 	return goFs.ModePerm
 }
 
-func (i Info) ModTime() time.Time {
-	return *i.File.Mtime
-}
-
 func (i Info) IsDir() bool {
 	return i.File.Type == "directory"
 }
@@ -725,4 +721,12 @@ func (f *FS) SplitPath(path string) (string, string) {
 
 func (f *FS) TempDir() string {
 	return "tmp"
+}
+
+func (f *FS) Chtimes(name string, _atime time.Time, mtime time.Time) error {
+	_, err := (&Client{Config: f.Config}).Update(files_sdk.FileUpdateParams{Path: name, ProvidedMtime: &mtime}, files_sdk.WithContext(f.Context))
+	if err != nil {
+		return &goFs.PathError{Path: name, Err: err, Op: "chtimes"}
+	}
+	return nil
 }

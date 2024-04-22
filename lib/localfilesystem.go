@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 type WritableFs interface {
@@ -19,6 +20,7 @@ type WritableFs interface {
 	PathJoin(...string) string
 	RelPath(parent, child string) (string, error)
 	SplitPath(path string) (string, string)
+	Chtimes(name string, atime time.Time, mtime time.Time) error
 }
 
 type StatefulDirectory interface {
@@ -86,6 +88,10 @@ func (w LocalFileSystem) SplitPath(path string) (string, string) {
 
 func (w LocalFileSystem) TempDir() string {
 	return os.TempDir()
+}
+
+func (w LocalFileSystem) Chtimes(name string, atime time.Time, mtime time.Time) error {
+	return os.Chtimes(name, atime, mtime)
 }
 
 type FSWithContext interface {

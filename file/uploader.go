@@ -252,16 +252,21 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 			uploadStatus.Job().UpdateStatus(status.Errored, uploadStatus, err)
 			return
 		}
-		uploadStatus.UploadResumable, err = uploadStatus.UploadWithResume(
+		opts := []UploadOption{
 			UploadWithContext(ctx),
 			UploadWithManager(job.FilePartsManager),
 			UploadWithReaderAt(localFile),
 			UploadWithSize(uploadStatus.File().Size),
 			UploadWithResume(uploadStatus.UploadResumable),
 			UploadWithProgress(uploadProgress(uploadStatus)),
-			UploadWithProvidedMtime(*uploadStatus.File().Mtime),
 			UploadWithDestinationPath(uploadStatus.RemotePath()),
-		)
+		}
+
+		if params, ok := job.Params.(UploaderParams); ok && params.PreserveTimes {
+			opts = append(opts, UploadWithProvidedMtime(*uploadStatus.File().Mtime))
+		}
+
+		uploadStatus.UploadResumable, err = uploadStatus.UploadWithResume(opts...)
 		if err != nil {
 			uploadStatus.Job().StatusFromError(uploadStatus, err)
 		} else {
@@ -344,12 +349,12 @@ func skipOrIgnore(uploadStatus *UploadStatus, incrementalUpdates bool) bool {
 			uploadStatus.Job().Logger.Printf("sync %v size match", uploadStatus.RemotePath())
 			return true
 		}
-		if incrementalUpdates && file.Mtime != nil && !file.Mtime.IsZero() {
-			if file.Mtime.After(*uploadStatus.File().Mtime) {
+		if incrementalUpdates && !file.ModTime().IsZero() {
+			if file.ModTime().After(*uploadStatus.File().Mtime) {
 				uploadStatus.Job().Logger.Printf("sync incremental-updates %v server has a newer version", uploadStatus.RemotePath())
 				return true
 			}
-			if file.Mtime.Truncate(time.Minute).Equal(uploadStatus.File().Mtime.Truncate(time.Minute)) {
+			if file.ModTime().Truncate(time.Minute).Equal(uploadStatus.File().Mtime.Truncate(time.Minute)) {
 				uploadStatus.Job().Logger.Printf("sync incremental-updates %v both times are within the same minute", uploadStatus.RemotePath())
 				return true
 			}

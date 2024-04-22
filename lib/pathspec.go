@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
@@ -19,10 +20,12 @@ type PathSpecEntry struct {
 	Dir         bool
 	path        string
 	Preexisting bool
+	Mtime       time.Time
 }
 type PathSpecArgs struct {
-	Src  string
-	Dest string
+	Src           string
+	Dest          string
+	PreserveTimes bool
 }
 
 type PathSpecTest struct {
@@ -32,7 +35,7 @@ type PathSpecTest struct {
 	Src  []PathSpecEntry
 }
 
-func BuildPathSpecTest(t *testing.T, mutex *sync.Mutex, tt PathSpecTest, sourceFs ReadWriteFs, destinationFs ReadWriteFs, cmdBuilder func(source, destination string) Cmd) {
+func BuildPathSpecTest(t *testing.T, mutex *sync.Mutex, tt PathSpecTest, sourceFs ReadWriteFs, destinationFs ReadWriteFs, cmdBuilder func(PathSpecArgs) Cmd) {
 	t.Log(tt.Name)
 
 	sourceTmpDir := sourceFs.PathJoin(sourceFs.TempDir(), strings.ReplaceAll(t.Name(), "/", "-"))
@@ -49,26 +52,29 @@ func BuildPathSpecTest(t *testing.T, mutex *sync.Mutex, tt PathSpecTest, sourceF
 
 	for _, e := range tt.Src {
 		if e.Dir {
-			err = sourceFs.MkdirAll(sourceFs.PathJoin(sourceRoot, e.path), 0750)
+			require.NoError(t, sourceFs.MkdirAll(sourceFs.PathJoin(sourceRoot, e.path), 0750))
 		} else {
 			var f io.WriteCloser
 			f, err = sourceFs.Create(sourceFs.PathJoin(sourceRoot, e.path))
-			err = f.Close()
+			require.NoError(t, err)
+			require.NoError(t, f.Close())
+			if tt.Args.PreserveTimes && !e.Mtime.IsZero() {
+				require.NoError(t, sourceFs.Chtimes(sourceFs.PathJoin(sourceRoot, e.path), e.Mtime, e.Mtime))
+			}
 		}
-		require.NoError(t, err)
 	}
 	for _, e := range tt.Dest {
 		if !e.Preexisting {
 			continue
 		}
 		if e.Dir {
-			err = destinationFs.MkdirAll(destinationFs.PathJoin(destRoot, e.path), 0750)
+			require.NoError(t, destinationFs.MkdirAll(destinationFs.PathJoin(destRoot, e.path), 0750))
 		} else {
 			var f io.WriteCloser
 			f, err = destinationFs.Create(destinationFs.PathJoin(destRoot, e.path))
-			err = f.Close()
+			require.NoError(t, err)
+			require.NoError(t, f.Close())
 		}
-		require.NoError(t, err)
 	}
 
 	source := join(sourceFs.PathSeparator(), sourceRoot, tt.Args.Src)
@@ -84,8 +90,8 @@ func BuildPathSpecTest(t *testing.T, mutex *sync.Mutex, tt PathSpecTest, sourceF
 		destination = ""
 	}
 
-	relativePathCommand := cmdBuilder(tt.Args.Src, tt.Args.Dest)
-	fullPathCommand := cmdBuilder(source, destination)
+	relativePathCommand := cmdBuilder(PathSpecArgs{Src: tt.Args.Src, Dest: tt.Args.Dest, PreserveTimes: tt.Args.PreserveTimes})
+	fullPathCommand := cmdBuilder(PathSpecArgs{Src: source, Dest: destination, PreserveTimes: tt.Args.PreserveTimes})
 
 	if _, ok := os.LookupEnv("FULL_PATHS"); ok {
 		t.Log(fullPathCommand.Args())
@@ -170,6 +176,9 @@ func BuildPathSpecTest(t *testing.T, mutex *sync.Mutex, tt PathSpecTest, sourceF
 		fileStat, err := file.Stat()
 		require.NoError(t, err, e.path)
 		assert.Equal(t, e.Dir, fileStat.IsDir(), e.path)
+		if tt.Args.PreserveTimes && !e.Mtime.IsZero() {
+			assert.Equal(t, e.Mtime, fileStat.ModTime().UTC())
+		}
 		require.NoError(t, file.Close())
 	}
 
@@ -194,6 +203,24 @@ func PathSpec(srcPathSeparator string, destPathSeparator string) []PathSpecTest 
 				{Dir: true, path: "Dest", Preexisting: true},
 				{Dir: true, path: join(destPathSeparator, "Dest", "foo")},
 				{Dir: false, path: join(destPathSeparator, "Dest", "foo", "baz.txt")},
+			},
+		},
+		{
+			Name: "copy foo to Dest with PreserveTimes",
+			Args: PathSpecArgs{
+				Src:           join(srcPathSeparator, "Src", "foo"),
+				Dest:          "Dest",
+				PreserveTimes: true,
+			},
+			Src: []PathSpecEntry{
+				{Dir: true, path: "Src"},
+				{Dir: true, path: join(srcPathSeparator, "Src", "foo")},
+				{Dir: false, path: join(srcPathSeparator, "Src", "foo", "baz.txt"), Mtime: time.Date(2010, 11, 17, 20, 34, 58, 0, time.UTC)},
+			},
+			Dest: []PathSpecEntry{
+				{Dir: true, path: "Dest", Preexisting: true},
+				{Dir: true, path: join(destPathSeparator, "Dest", "foo")},
+				{Dir: false, path: join(destPathSeparator, "Dest", "foo", "baz.txt"), Mtime: time.Date(2010, 11, 17, 20, 34, 58, 0, time.UTC)},
 			},
 		},
 		{

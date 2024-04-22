@@ -184,7 +184,8 @@ type UploaderParams struct {
 	// Manager limit concurrency
 	*manager.Manager
 	*Job
-	config files_sdk.Config
+	config        files_sdk.Config
+	PreserveTimes bool
 }
 
 func expand(path string) (string, error) {

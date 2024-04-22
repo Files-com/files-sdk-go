@@ -278,12 +278,12 @@ func TestUploader(t *testing.T) {
 				}
 				config := client.Config
 				destinationFs = (&FS{Context: context.Background()}).Init(config, true)
-				lib.BuildPathSpecTest(t, mutex, tt, sourceFs, destinationFs, func(source, destination string) lib.Cmd {
+				lib.BuildPathSpecTest(t, mutex, tt, sourceFs, destinationFs, func(args lib.PathSpecArgs) lib.Cmd {
 					return &CmdRunner{
 						run: func() *Job {
-							return client.Uploader(UploaderParams{LocalPath: source, RemotePath: destination, config: config})
+							return client.Uploader(UploaderParams{LocalPath: args.Src, RemotePath: args.Dest, config: config, PreserveTimes: args.PreserveTimes})
 						},
-						args: []string{source, destination},
+						args: []string{args.Src, args.Dest, "--times", fmt.Sprintf("%v", args.PreserveTimes)},
 					}
 				})
 				r.Stop()

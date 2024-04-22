@@ -139,6 +139,16 @@ func (f File) IsDir() bool {
 	return f.Type == "directory"
 }
 
+func (f File) ModTime() time.Time {
+	if f.ProvidedMtime != nil {
+		return *f.ProvidedMtime
+	}
+	if f.Mtime != nil {
+		return *f.Mtime
+	}
+	return time.Time{}
+}
+
 func (f *File) UnmarshalJSON(data []byte) error {
 	type file File
 	var v file
