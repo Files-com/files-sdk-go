@@ -128,6 +128,7 @@ type Site struct {
 	SftpHostKeyType                          string                 `json:"sftp_host_key_type,omitempty" path:"sftp_host_key_type,omitempty" url:"sftp_host_key_type,omitempty"`
 	ActiveSftpHostKeyId                      int64                  `json:"active_sftp_host_key_id,omitempty" path:"active_sftp_host_key_id,omitempty" url:"active_sftp_host_key_id,omitempty"`
 	SftpInsecureCiphers                      *bool                  `json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers,omitempty" url:"sftp_insecure_ciphers,omitempty"`
+	SftpInsecureDiffieHellman                *bool                  `json:"sftp_insecure_diffie_hellman,omitempty" path:"sftp_insecure_diffie_hellman,omitempty" url:"sftp_insecure_diffie_hellman,omitempty"`
 	SftpUserRootEnabled                      *bool                  `json:"sftp_user_root_enabled,omitempty" path:"sftp_user_root_enabled,omitempty" url:"sftp_user_root_enabled,omitempty"`
 	SharingEnabled                           *bool                  `json:"sharing_enabled,omitempty" path:"sharing_enabled,omitempty" url:"sharing_enabled,omitempty"`
 	ShowRequestAccessLink                    *bool                  `json:"show_request_access_link,omitempty" path:"show_request_access_link,omitempty" url:"show_request_access_link,omitempty"`
@@ -208,6 +209,7 @@ type SiteUpdateParams struct {
 	SslRequired                              *bool                  `url:"ssl_required,omitempty" required:"false" json:"ssl_required,omitempty" path:"ssl_required"`
 	TlsDisabled                              *bool                  `url:"tls_disabled,omitempty" required:"false" json:"tls_disabled,omitempty" path:"tls_disabled"`
 	SftpInsecureCiphers                      *bool                  `url:"sftp_insecure_ciphers,omitempty" required:"false" json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers"`
+	SftpInsecureDiffieHellman                *bool                  `url:"sftp_insecure_diffie_hellman,omitempty" required:"false" json:"sftp_insecure_diffie_hellman,omitempty" path:"sftp_insecure_diffie_hellman"`
 	DisableFilesCertificateGeneration        *bool                  `url:"disable_files_certificate_generation,omitempty" required:"false" json:"disable_files_certificate_generation,omitempty" path:"disable_files_certificate_generation"`
 	UserLockout                              *bool                  `url:"user_lockout,omitempty" required:"false" json:"user_lockout,omitempty" path:"user_lockout"`
 	UserLockoutTries                         int64                  `url:"user_lockout_tries,omitempty" required:"false" json:"user_lockout_tries,omitempty" path:"user_lockout_tries"`
