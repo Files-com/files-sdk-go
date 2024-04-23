@@ -65,6 +65,15 @@ func Create(params files_sdk.SnapshotCreateParams, opts ...files_sdk.RequestResp
 	return (&Client{}).Create(params, opts...)
 }
 
+func (c *Client) Finalize(params files_sdk.SnapshotFinalizeParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/snapshots/{id}/finalize", Params: params, Entity: nil}, opts...)
+	return
+}
+
+func Finalize(params files_sdk.SnapshotFinalizeParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	return (&Client{}).Finalize(params, opts...)
+}
+
 func (c *Client) Update(params files_sdk.SnapshotUpdateParams, opts ...files_sdk.RequestResponseOption) (snapshot files_sdk.Snapshot, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/snapshots/{id}", Params: params, Entity: &snapshot}, opts...)
 	return

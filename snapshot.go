@@ -37,6 +37,11 @@ type SnapshotCreateParams struct {
 	Paths     []string   `url:"paths,omitempty" required:"false" json:"paths,omitempty" path:"paths"`
 }
 
+// Finalize Snapshot
+type SnapshotFinalizeParams struct {
+	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+}
+
 type SnapshotUpdateParams struct {
 	Id        int64      `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	ExpiresAt *time.Time `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty" path:"expires_at"`
