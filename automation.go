@@ -24,6 +24,7 @@ type Automation struct {
 	Name                             string                 `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	OverwriteFiles                   *bool                  `json:"overwrite_files,omitempty" path:"overwrite_files,omitempty" url:"overwrite_files,omitempty"`
 	Path                             string                 `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	PathTimeZone                     string                 `json:"path_time_zone,omitempty" path:"path_time_zone,omitempty" url:"path_time_zone,omitempty"`
 	RecurringDay                     int64                  `json:"recurring_day,omitempty" path:"recurring_day,omitempty" url:"recurring_day,omitempty"`
 	Schedule                         map[string]interface{} `json:"schedule,omitempty" path:"schedule,omitempty" url:"schedule,omitempty"`
 	HumanReadableSchedule            string                 `json:"human_readable_schedule,omitempty" path:"human_readable_schedule,omitempty" url:"human_readable_schedule,omitempty"`
@@ -115,6 +116,7 @@ type AutomationCreateParams struct {
 	IgnoreLockedFolders              *bool                  `url:"ignore_locked_folders,omitempty" required:"false" json:"ignore_locked_folders,omitempty" path:"ignore_locked_folders"`
 	Name                             string                 `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 	OverwriteFiles                   *bool                  `url:"overwrite_files,omitempty" required:"false" json:"overwrite_files,omitempty" path:"overwrite_files"`
+	PathTimeZone                     string                 `url:"path_time_zone,omitempty" required:"false" json:"path_time_zone,omitempty" path:"path_time_zone"`
 	Trigger                          AutomationTriggerEnum  `url:"trigger,omitempty" required:"false" json:"trigger,omitempty" path:"trigger"`
 	TriggerActions                   []string               `url:"trigger_actions,omitempty" required:"false" json:"trigger_actions,omitempty" path:"trigger_actions"`
 	Value                            map[string]interface{} `url:"value,omitempty" required:"false" json:"value,omitempty" path:"value"`
@@ -148,6 +150,7 @@ type AutomationUpdateParams struct {
 	IgnoreLockedFolders              *bool                  `url:"ignore_locked_folders,omitempty" required:"false" json:"ignore_locked_folders,omitempty" path:"ignore_locked_folders"`
 	Name                             string                 `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 	OverwriteFiles                   *bool                  `url:"overwrite_files,omitempty" required:"false" json:"overwrite_files,omitempty" path:"overwrite_files"`
+	PathTimeZone                     string                 `url:"path_time_zone,omitempty" required:"false" json:"path_time_zone,omitempty" path:"path_time_zone"`
 	Trigger                          AutomationTriggerEnum  `url:"trigger,omitempty" required:"false" json:"trigger,omitempty" path:"trigger"`
 	TriggerActions                   []string               `url:"trigger_actions,omitempty" required:"false" json:"trigger_actions,omitempty" path:"trigger_actions"`
 	Value                            map[string]interface{} `url:"value,omitempty" required:"false" json:"value,omitempty" path:"value"`
