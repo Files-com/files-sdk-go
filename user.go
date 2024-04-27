@@ -101,6 +101,7 @@ func (u UserAuthenticationMethodEnum) Enum() map[string]UserAuthenticationMethod
 		"none":                        UserAuthenticationMethodEnum("none"),
 		"email_signup":                UserAuthenticationMethodEnum("email_signup"),
 		"password_with_imported_hash": UserAuthenticationMethodEnum("password_with_imported_hash"),
+		"password_and_ssh_key":        UserAuthenticationMethodEnum("password_and_ssh_key"),
 	}
 }
 

@@ -17,10 +17,12 @@ type ApiRequestLog struct {
 	RequestPath   string     `json:"request_path,omitempty" path:"request_path,omitempty" url:"request_path,omitempty"`
 	RequestIp     string     `json:"request_ip,omitempty" path:"request_ip,omitempty" url:"request_ip,omitempty"`
 	RequestHost   string     `json:"request_host,omitempty" path:"request_host,omitempty" url:"request_host,omitempty"`
+	RequestId     string     `json:"request_id,omitempty" path:"request_id,omitempty" url:"request_id,omitempty"`
 	ApiName       string     `json:"api_name,omitempty" path:"api_name,omitempty" url:"api_name,omitempty"`
 	UserAgent     string     `json:"user_agent,omitempty" path:"user_agent,omitempty" url:"user_agent,omitempty"`
 	ErrorType     string     `json:"error_type,omitempty" path:"error_type,omitempty" url:"error_type,omitempty"`
 	ResponseCode  int64      `json:"response_code,omitempty" path:"response_code,omitempty" url:"response_code,omitempty"`
+	Success       *bool      `json:"success,omitempty" path:"success,omitempty" url:"success,omitempty"`
 	DurationMs    int64      `json:"duration_ms,omitempty" path:"duration_ms,omitempty" url:"duration_ms,omitempty"`
 }
 
