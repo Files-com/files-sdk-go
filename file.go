@@ -97,12 +97,14 @@ type FileCopyParams struct {
 	Path        string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	Destination string `url:"destination,omitempty" required:"true" json:"destination,omitempty" path:"destination"`
 	Structure   *bool  `url:"structure,omitempty" required:"false" json:"structure,omitempty" path:"structure"`
+	Overwrite   *bool  `url:"overwrite,omitempty" required:"false" json:"overwrite,omitempty" path:"overwrite"`
 }
 
 // Move file/folder
 type FileMoveParams struct {
 	Path        string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	Destination string `url:"destination,omitempty" required:"true" json:"destination,omitempty" path:"destination"`
+	Overwrite   *bool  `url:"overwrite,omitempty" required:"false" json:"overwrite,omitempty" path:"overwrite"`
 }
 
 // Begin file upload
