@@ -17,6 +17,7 @@ type ExavaultApiRequestLog struct {
 	ErrorMessage  string     `json:"error_message,omitempty" path:"error_message,omitempty" url:"error_message,omitempty"`
 	UserAgent     string     `json:"user_agent,omitempty" path:"user_agent,omitempty" url:"user_agent,omitempty"`
 	ResponseCode  int64      `json:"response_code,omitempty" path:"response_code,omitempty" url:"response_code,omitempty"`
+	Success       *bool      `json:"success,omitempty" path:"success,omitempty" url:"success,omitempty"`
 	DurationMs    int64      `json:"duration_ms,omitempty" path:"duration_ms,omitempty" url:"duration_ms,omitempty"`
 }
 
