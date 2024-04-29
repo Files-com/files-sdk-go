@@ -10,6 +10,7 @@ import (
 
 type Site struct {
 	Name                                     string                 `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	AdditionalTextFileTypes                  []string               `json:"additional_text_file_types,omitempty" path:"additional_text_file_types,omitempty" url:"additional_text_file_types,omitempty"`
 	Allowed2faMethodSms                      *bool                  `json:"allowed_2fa_method_sms,omitempty" path:"allowed_2fa_method_sms,omitempty" url:"allowed_2fa_method_sms,omitempty"`
 	Allowed2faMethodTotp                     *bool                  `json:"allowed_2fa_method_totp,omitempty" path:"allowed_2fa_method_totp,omitempty" url:"allowed_2fa_method_totp,omitempty"`
 	Allowed2faMethodU2f                      *bool                  `json:"allowed_2fa_method_u2f,omitempty" path:"allowed_2fa_method_u2f,omitempty" url:"allowed_2fa_method_u2f,omitempty"`
@@ -205,6 +206,7 @@ type SiteUpdateParams struct {
 	MotdUseForFtp                            *bool                  `url:"motd_use_for_ftp,omitempty" required:"false" json:"motd_use_for_ftp,omitempty" path:"motd_use_for_ftp"`
 	MotdUseForSftp                           *bool                  `url:"motd_use_for_sftp,omitempty" required:"false" json:"motd_use_for_sftp,omitempty" path:"motd_use_for_sftp"`
 	LeftNavigationVisibility                 map[string]interface{} `url:"left_navigation_visibility,omitempty" required:"false" json:"left_navigation_visibility,omitempty" path:"left_navigation_visibility"`
+	AdditionalTextFileTypes                  []string               `url:"additional_text_file_types,omitempty" required:"false" json:"additional_text_file_types,omitempty" path:"additional_text_file_types"`
 	SessionExpiry                            string                 `url:"session_expiry,omitempty" required:"false" json:"session_expiry,omitempty" path:"session_expiry"`
 	SslRequired                              *bool                  `url:"ssl_required,omitempty" required:"false" json:"ssl_required,omitempty" path:"ssl_required"`
 	TlsDisabled                              *bool                  `url:"tls_disabled,omitempty" required:"false" json:"tls_disabled,omitempty" path:"tls_disabled"`
