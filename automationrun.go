@@ -12,7 +12,7 @@ type AutomationRun struct {
 	AutomationId         int64      `json:"automation_id,omitempty" path:"automation_id,omitempty" url:"automation_id,omitempty"`
 	CompletedAt          *time.Time `json:"completed_at,omitempty" path:"completed_at,omitempty" url:"completed_at,omitempty"`
 	CreatedAt            *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	Runtime              *time.Time `json:"runtime,omitempty" path:"runtime,omitempty" url:"runtime,omitempty"`
+	Runtime              string     `json:"runtime,omitempty" path:"runtime,omitempty" url:"runtime,omitempty"`
 	Status               string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
 	RunStage             string     `json:"run_stage,omitempty" path:"run_stage,omitempty" url:"run_stage,omitempty"`
 	SuccessfulOperations int64      `json:"successful_operations,omitempty" path:"successful_operations,omitempty" url:"successful_operations,omitempty"`
