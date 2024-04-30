@@ -16,6 +16,7 @@ type Behavior struct {
 	Description                 string                 `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
 	Value                       map[string]interface{} `json:"value,omitempty" path:"value,omitempty" url:"value,omitempty"`
 	DisableParentFolderBehavior *bool                  `json:"disable_parent_folder_behavior,omitempty" path:"disable_parent_folder_behavior,omitempty" url:"disable_parent_folder_behavior,omitempty"`
+	Recursive                   *bool                  `json:"recursive,omitempty" path:"recursive,omitempty" url:"recursive,omitempty"`
 	AttachmentFile              io.Reader              `json:"attachment_file,omitempty" path:"attachment_file,omitempty" url:"attachment_file,omitempty"`
 	AttachmentDelete            *bool                  `json:"attachment_delete,omitempty" path:"attachment_delete,omitempty" url:"attachment_delete,omitempty"`
 }
@@ -38,12 +39,12 @@ type BehaviorFindParams struct {
 }
 
 type BehaviorListForParams struct {
-	SortBy       map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter       Behavior               `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	Path         string                 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
-	Recursive    string                 `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
-	Behavior     string                 `url:"behavior,omitempty" required:"false" json:"behavior,omitempty" path:"behavior"`
+	SortBy            map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter            Behavior               `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	FilterPrefix      map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	Path              string                 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
+	AncestorBehaviors string                 `url:"ancestor_behaviors,omitempty" required:"false" json:"ancestor_behaviors,omitempty" path:"ancestor_behaviors"`
+	Behavior          string                 `url:"behavior,omitempty" required:"false" json:"behavior,omitempty" path:"behavior"`
 	ListParams
 }
 
@@ -51,6 +52,7 @@ type BehaviorCreateParams struct {
 	Value                       string    `url:"value,omitempty" required:"false" json:"value,omitempty" path:"value"`
 	AttachmentFile              io.Writer `url:"attachment_file,omitempty" required:"false" json:"attachment_file,omitempty" path:"attachment_file"`
 	DisableParentFolderBehavior *bool     `url:"disable_parent_folder_behavior,omitempty" required:"false" json:"disable_parent_folder_behavior,omitempty" path:"disable_parent_folder_behavior"`
+	Recursive                   *bool     `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
 	Name                        string    `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 	Description                 string    `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
 	Path                        string    `url:"path,omitempty" required:"true" json:"path,omitempty" path:"path"`
@@ -71,6 +73,7 @@ type BehaviorUpdateParams struct {
 	Value                       string    `url:"value,omitempty" required:"false" json:"value,omitempty" path:"value"`
 	AttachmentFile              io.Writer `url:"attachment_file,omitempty" required:"false" json:"attachment_file,omitempty" path:"attachment_file"`
 	DisableParentFolderBehavior *bool     `url:"disable_parent_folder_behavior,omitempty" required:"false" json:"disable_parent_folder_behavior,omitempty" path:"disable_parent_folder_behavior"`
+	Recursive                   *bool     `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
 	Name                        string    `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 	Description                 string    `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
 	Behavior                    string    `url:"behavior,omitempty" required:"false" json:"behavior,omitempty" path:"behavior"`
