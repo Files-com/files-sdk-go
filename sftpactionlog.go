@@ -10,7 +10,7 @@ import (
 type SftpActionLog struct {
 	Timestamp            *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
 	RemoteIp             string     `json:"remote_ip,omitempty" path:"remote_ip,omitempty" url:"remote_ip,omitempty"`
-	User                 string     `json:"user,omitempty" path:"user,omitempty" url:"user,omitempty"`
+	Username             string     `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
 	SessionUid           string     `json:"session_uid,omitempty" path:"session_uid,omitempty" url:"session_uid,omitempty"`
 	SeqId                int64      `json:"seq_id,omitempty" path:"seq_id,omitempty" url:"seq_id,omitempty"`
 	AuthMethod           string     `json:"auth_method,omitempty" path:"auth_method,omitempty" url:"auth_method,omitempty"`
@@ -30,6 +30,7 @@ type SftpActionLog struct {
 	Offset               string     `json:"offset,omitempty" path:"offset,omitempty" url:"offset,omitempty"`
 	Length               string     `json:"length,omitempty" path:"length,omitempty" url:"length,omitempty"`
 	DataLength           string     `json:"data_length,omitempty" path:"data_length,omitempty" url:"data_length,omitempty"`
+	EntriesReturned      int64      `json:"entries_returned,omitempty" path:"entries_returned,omitempty" url:"entries_returned,omitempty"`
 	Success              string     `json:"success,omitempty" path:"success,omitempty" url:"success,omitempty"`
 	DurationMs           int64      `json:"duration_ms,omitempty" path:"duration_ms,omitempty" url:"duration_ms,omitempty"`
 }
