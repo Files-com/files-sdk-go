@@ -24,6 +24,7 @@ type User struct {
 	CreatedAt                        *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 	DavPermission                    *bool      `json:"dav_permission,omitempty" path:"dav_permission,omitempty" url:"dav_permission,omitempty"`
 	Disabled                         *bool      `json:"disabled,omitempty" path:"disabled,omitempty" url:"disabled,omitempty"`
+	DisabledExpiredOrInactive        *bool      `json:"disabled_expired_or_inactive,omitempty" path:"disabled_expired_or_inactive,omitempty" url:"disabled_expired_or_inactive,omitempty"`
 	Email                            string     `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
 	FirstLoginAt                     *time.Time `json:"first_login_at,omitempty" path:"first_login_at,omitempty" url:"first_login_at,omitempty"`
 	FtpPermission                    *bool      `json:"ftp_permission,omitempty" path:"ftp_permission,omitempty" url:"ftp_permission,omitempty"`
