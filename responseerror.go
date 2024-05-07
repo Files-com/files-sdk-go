@@ -14,12 +14,12 @@ import (
 )
 
 type ResponseError struct {
-	Type         string          `json:"type"`
-	Title        string          `json:"title"`
-	ErrorMessage string          `json:"error"`
-	HttpCode     int             `json:"http-code"`
-	Errors       []ResponseError `json:"errors"`
-	Data         Data            `json:"data"`
+	Type         string          `json:"type,omitempty"`
+	Title        string          `json:"title,omitempty"`
+	ErrorMessage string          `json:"error,omitempty"`
+	HttpCode     int             `json:"http-code,omitempty"`
+	Errors       []ResponseError `json:"errors,omitempty"`
+	Data         Data            `json:"data,omitempty"`
 }
 
 const (
@@ -55,11 +55,11 @@ type Data struct {
 	TwoFactorAuthenticationMethod []string          `json:"two_factor_authentication_methods,omitempty"`
 	Host                          string            `json:"host,omitempty"`
 	// Download Request Status
-	BytesTransferred int64     `json:"bytes_transferred"`
-	Status           string    `json:"status"`
-	StartedAt        time.Time `json:"started_at"`
-	CompletedAt      time.Time `json:"completed_at"`
-	TouchedAt        time.Time `json:"touched_at"`
+	BytesTransferred int64     `json:"bytes_transferred,omitempty"`
+	Status           string    `json:"status,omitempty"`
+	StartedAt        time.Time `json:"started_at,omitempty"`
+	CompletedAt      time.Time `json:"completed_at,omitempty"`
+	TouchedAt        time.Time `json:"touched_at,omitempty"`
 }
 
 func (e ResponseError) Error() string {
@@ -71,9 +71,8 @@ func (e ResponseError) IsNil() bool {
 }
 
 func (e ResponseError) Is(err error) bool {
-	_, ok := err.(ResponseError)
-
-	return ok
+	var responseError ResponseError
+	return errors.As(err, &responseError)
 }
 
 func (e *ResponseError) UnmarshalJSON(data []byte) error {
