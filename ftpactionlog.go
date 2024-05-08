@@ -12,7 +12,7 @@ type FtpActionLog struct {
 	RemoteIp        string     `json:"remote_ip,omitempty" path:"remote_ip,omitempty" url:"remote_ip,omitempty"`
 	ServerIp        string     `json:"server_ip,omitempty" path:"server_ip,omitempty" url:"server_ip,omitempty"`
 	Username        string     `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
-	SessionUid      string     `json:"session_uid,omitempty" path:"session_uid,omitempty" url:"session_uid,omitempty"`
+	SessionUuid     string     `json:"session_uuid,omitempty" path:"session_uuid,omitempty" url:"session_uuid,omitempty"`
 	SeqId           int64      `json:"seq_id,omitempty" path:"seq_id,omitempty" url:"seq_id,omitempty"`
 	ActionType      string     `json:"action_type,omitempty" path:"action_type,omitempty" url:"action_type,omitempty"`
 	Path            string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
