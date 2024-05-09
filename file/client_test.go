@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"io"
 	fs2 "io/fs"
-	"io/ioutil"
 	"log"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -153,7 +151,9 @@ func TestClient_UploadFolder(t *testing.T) {
 		if gitIgnore.MatchesPath(f.Name()) {
 			continue
 		}
-		lastStatuses, ok := results[fmt.Sprintf("golib/%v", f.Name())]
+		remotePath := fmt.Sprintf("golib/lib/%v", f.Name())
+		assert.Contains(results, remotePath)
+		lastStatuses, ok := results[remotePath]
 		if !ok {
 			continue
 		}
@@ -164,8 +164,6 @@ func TestClient_UploadFolder(t *testing.T) {
 			assert.Equal(status.Complete, lastStatus.Status)
 			assert.NoError(lastStatus.Err)
 		}
-
-		assert.Contains(results, fmt.Sprintf("golib/%v", f.Name()))
 	}
 	deletePath(client, "golib")
 }
@@ -189,19 +187,19 @@ func TestClient_UploadFolder_Dot(t *testing.T) {
 	err = os.MkdirAll(filepath.Join(tmpDir, "dot"), 0755)
 	assert.NoError(err)
 
-	f1, err := os.Create(filepath.Join(tmpDir, "dot/1.text"))
+	f1, _ := os.Create(filepath.Join(tmpDir, "dot/1.text"))
 	f1.Write([]byte("hello 1"))
 	f1.Close()
 
-	f2, err := os.Create(filepath.Join(tmpDir, "dot/2.text"))
+	f2, _ := os.Create(filepath.Join(tmpDir, "dot/2.text"))
 	f2.Write([]byte("hello 2"))
 	f2.Close()
 
-	f3, err := os.Create(filepath.Join(tmpDir, "dot/3.text"))
+	f3, _ := os.Create(filepath.Join(tmpDir, "dot/3.text"))
 	f3.Write([]byte("hello 3"))
 	f3.Close()
 
-	currentPwd, err := os.Getwd()
+	currentPwd, _ := os.Getwd()
 	err = os.Chdir(filepath.Join(tmpDir, "dot"))
 	defer func() {
 		os.Chdir(currentPwd)
@@ -209,7 +207,9 @@ func TestClient_UploadFolder_Dot(t *testing.T) {
 	}()
 	assert.NoError(err)
 
-	ctx, _ := context.WithTimeout(context.Background(), 90*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	defer cancel()
+
 	job := client.Uploader(
 		UploaderParams{
 			LocalPath:  "." + string(os.PathSeparator),
@@ -253,19 +253,19 @@ func TestClient_UploadFolder_Relative(t *testing.T) {
 	err = os.MkdirAll(filepath.Join(tmpDir, "relative"), 0755)
 	assert.NoError(err)
 
-	f1, err := os.Create(filepath.Join(tmpDir, "relative", "1.text"))
+	f1, _ := os.Create(filepath.Join(tmpDir, "relative", "1.text"))
 	f1.Write([]byte("hello 1"))
 	f1.Close()
 
-	f2, err := os.Create(filepath.Join(tmpDir, "relative", "2.text"))
+	f2, _ := os.Create(filepath.Join(tmpDir, "relative", "2.text"))
 	f2.Write([]byte("hello 2"))
 	f2.Close()
 
-	f3, err := os.Create(filepath.Join(tmpDir, "relative", "3.text"))
+	f3, _ := os.Create(filepath.Join(tmpDir, "relative", "3.text"))
 	f3.Write([]byte("hello 3"))
 	f3.Close()
 
-	currentPwd, err := os.Getwd()
+	currentPwd, _ := os.Getwd()
 	err = os.Chdir(tmpDir)
 	defer os.Chdir(currentPwd)
 	assert.NoError(err)
@@ -323,9 +323,6 @@ func TestClient_Uploader(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	tempFile, err := os.CreateTemp(tmpDir, "LICENSE")
-	if err != nil {
-		panic(err)
-	}
 	if err != nil {
 		panic(err)
 	}
@@ -410,20 +407,19 @@ func TestClient_UploadFile_To_NonExistingPath(t *testing.T) {
 	defer deletePath(client, "taco")
 	job.Start()
 	job.Wait()
-	tempFile, err := ioutil.TempFile(tmpDir, "LICENSE")
-	downloadPath, err := filepath.Abs(filepath.Dir(tempFile.Name()))
+	tempFile, _ := os.CreateTemp(tmpDir, "LICENSE")
+	_, err = filepath.Abs(filepath.Dir(tempFile.Name()))
 	if err != nil {
 		panic(err)
 	}
-	downloadPath = path.Join(downloadPath, tempFile.Name())
 	file, err := client.DownloadToFile(files_sdk.FileDownloadParams{Path: "taco"}, tempFile.Name())
 	assert.NoError(err)
 
 	assert.Equal("taco", file.DisplayName, "because the docs did not exist as a folder it becomes the file")
 
-	downloadData, err := ioutil.ReadFile(tempFile.Name())
+	downloadData, err := os.ReadFile(tempFile.Name())
 	assert.NoError(err)
-	localData, err := ioutil.ReadFile(uploadPath)
+	localData, err := os.ReadFile(uploadPath)
 	if err != nil {
 		panic(err)
 	}
@@ -495,7 +491,7 @@ func TestClient_UploadFolder_as_file2(t *testing.T) {
 	assert.Equal(int64(1102), job.TransferBytes())
 	assert.Equal(int64(1102), job.TotalBytes())
 
-	tempFile, err := ioutil.TempFile(tmpDir, "LICENSE")
+	tempFile, err := os.CreateTemp(tmpDir, "LICENSE")
 	if err != nil {
 		panic(err)
 	}
@@ -504,11 +500,11 @@ func TestClient_UploadFolder_as_file2(t *testing.T) {
 
 	assert.Equal(file.DisplayName, "LICENSE")
 
-	downloadData, err := ioutil.ReadFile(tempFile.Name())
+	downloadData, err := os.ReadFile(tempFile.Name())
 	if err != nil {
 		panic(err)
 	}
-	localData, err := ioutil.ReadFile(uploadPath)
+	localData, err := os.ReadFile(uploadPath)
 	if err != nil {
 		panic(err)
 	}
@@ -531,15 +527,15 @@ func TestClient_UploadFolder_RemotePathWithStartingSlash(t *testing.T) {
 	err = os.MkdirAll(filepath.Join(tmpDir, "test"), 0755)
 	assert.NoError(t, err)
 
-	f1, err := os.Create(filepath.Join(tmpDir, "test", "1.text"))
+	f1, _ := os.Create(filepath.Join(tmpDir, "test", "1.text"))
 	f1.Write([]byte("hello 1"))
 	f1.Close()
 
-	f2, err := os.Create(filepath.Join(tmpDir, "test", "2.text"))
+	f2, _ := os.Create(filepath.Join(tmpDir, "test", "2.text"))
 	f2.Write([]byte("hello 2"))
 	f2.Close()
 
-	f3, err := os.Create(filepath.Join(tmpDir, "test", "3.text"))
+	f3, _ := os.Create(filepath.Join(tmpDir, "test", "3.text"))
 	f3.Write([]byte("hello 3"))
 	f3.Close()
 	job := client.Uploader(UploaderParams{LocalPath: filepath.Join(tmpDir, "test"), RemotePath: "/test", Manager: manager.Sync()})
@@ -565,7 +561,7 @@ func TestClient_UploadFolder_ZeroByteFile(t *testing.T) {
 	err = os.MkdirAll(filepath.Join(tmpDir, "zero_byte_folder"), 0755)
 	assert.NoError(t, err)
 
-	f1, err := os.Create(filepath.Join(tmpDir, "zero_byte_folder", "zero-byte-file.text"))
+	f1, _ := os.Create(filepath.Join(tmpDir, "zero_byte_folder", "zero-byte-file.text"))
 	f1.Close()
 
 	job := client.Uploader(UploaderParams{LocalPath: filepath.Join(tmpDir, "zero_byte_folder"), RemotePath: "", Manager: manager.Sync()})
@@ -661,7 +657,7 @@ func TestClient_DownloadFolder_file_to_file(t *testing.T) {
 	buildScenario("TestClient_DownloadFolder_file_to_file", client)
 	assert := assert.New(t)
 
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "client_test")
+	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -1096,7 +1092,7 @@ func TestClient_ListForRecursive(t *testing.T) {
 	assert := assert.New(t)
 	buildScenario("TestClient_ListForRecursive", client)
 
-	it, err := client.ListForRecursive(files_sdk.FolderListForParams{Path: "/TestClient_ListForRecursive"})
+	it, _ := client.ListForRecursive(files_sdk.FolderListForParams{Path: "/TestClient_ListForRecursive"})
 	var files []RecursiveItem
 	for it.Next() {
 		files = append(files, it.Resource())
@@ -1122,7 +1118,7 @@ func TestClient_ListForRecursiveInsensitive(t *testing.T) {
 	assert := assert.New(t)
 	buildScenario("TestClient_ListForRecursiveInsensitive", client)
 
-	it, err := client.ListForRecursive(files_sdk.FolderListForParams{Path: "/TestcLient_listforrecursiveinseNsitive"})
+	it, _ := client.ListForRecursive(files_sdk.FolderListForParams{Path: "/TestcLient_listforrecursiveinseNsitive"})
 	var files []RecursiveItem
 	for it.Next() {
 		files = append(files, it.Resource())
@@ -1168,7 +1164,7 @@ func TestClient_ListForRecursive_Root(t *testing.T) {
 	assert := assert.New(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	it, err := client.ListForRecursive(files_sdk.FolderListForParams{Path: ""}, files_sdk.WithContext(ctx))
+	it, _ := client.ListForRecursive(files_sdk.FolderListForParams{Path: ""}, files_sdk.WithContext(ctx))
 	recursiveItems := make([]RecursiveItem, 0)
 	for it.Next() {
 		if it.Err() != nil {
