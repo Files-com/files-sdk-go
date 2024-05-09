@@ -24,6 +24,11 @@ type BundleActionCollection []BundleAction
 
 type BundleActionListParams struct {
 	SortBy               map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	Filter               BundleAction           `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	FilterGt             map[string]interface{} `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq           map[string]interface{} `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterLt             map[string]interface{} `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq           map[string]interface{} `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	BundleId             int64                  `url:"bundle_id,omitempty" required:"false" json:"bundle_id,omitempty" path:"bundle_id"`
 	BundleRegistrationId int64                  `url:"bundle_registration_id,omitempty" required:"false" json:"bundle_registration_id,omitempty" path:"bundle_registration_id"`
 	ListParams
