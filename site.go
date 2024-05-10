@@ -24,6 +24,7 @@ type Site struct {
 	AllowBundleNames                         *bool                  `json:"allow_bundle_names,omitempty" path:"allow_bundle_names,omitempty" url:"allow_bundle_names,omitempty"`
 	AllowedCountries                         string                 `json:"allowed_countries,omitempty" path:"allowed_countries,omitempty" url:"allowed_countries,omitempty"`
 	AllowedIps                               string                 `json:"allowed_ips,omitempty" path:"allowed_ips,omitempty" url:"allowed_ips,omitempty"`
+	AlwaysMkdirParents                       *bool                  `json:"always_mkdir_parents,omitempty" path:"always_mkdir_parents,omitempty" url:"always_mkdir_parents,omitempty"`
 	AskAboutOverwrites                       *bool                  `json:"ask_about_overwrites,omitempty" path:"ask_about_overwrites,omitempty" url:"ask_about_overwrites,omitempty"`
 	BundleActivityNotifications              string                 `json:"bundle_activity_notifications,omitempty" path:"bundle_activity_notifications,omitempty" url:"bundle_activity_notifications,omitempty"`
 	BundleExpiration                         int64                  `json:"bundle_expiration,omitempty" path:"bundle_expiration,omitempty" url:"bundle_expiration,omitempty"`
@@ -186,6 +187,7 @@ type SiteUpdateParams struct {
 	WelcomeEmailEnabled                      *bool                  `url:"welcome_email_enabled,omitempty" required:"false" json:"welcome_email_enabled,omitempty" path:"welcome_email_enabled"`
 	AskAboutOverwrites                       *bool                  `url:"ask_about_overwrites,omitempty" required:"false" json:"ask_about_overwrites,omitempty" path:"ask_about_overwrites"`
 	ShowRequestAccessLink                    *bool                  `url:"show_request_access_link,omitempty" required:"false" json:"show_request_access_link,omitempty" path:"show_request_access_link"`
+	AlwaysMkdirParents                       *bool                  `url:"always_mkdir_parents,omitempty" required:"false" json:"always_mkdir_parents,omitempty" path:"always_mkdir_parents"`
 	WelcomeEmailCc                           string                 `url:"welcome_email_cc,omitempty" required:"false" json:"welcome_email_cc,omitempty" path:"welcome_email_cc"`
 	WelcomeEmailSubject                      string                 `url:"welcome_email_subject,omitempty" required:"false" json:"welcome_email_subject,omitempty" path:"welcome_email_subject"`
 	WelcomeCustomText                        string                 `url:"welcome_custom_text,omitempty" required:"false" json:"welcome_custom_text,omitempty" path:"welcome_custom_text"`
