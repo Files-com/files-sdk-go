@@ -9,6 +9,7 @@ import (
 
 type ApiRequestLog struct {
 	Timestamp     *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
+	ApiKeyId      string     `json:"api_key_id,omitempty" path:"api_key_id,omitempty" url:"api_key_id,omitempty"`
 	ApiKeyPrefix  string     `json:"api_key_prefix,omitempty" path:"api_key_prefix,omitempty" url:"api_key_prefix,omitempty"`
 	UserId        int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	Username      string     `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
