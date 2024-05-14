@@ -75,7 +75,7 @@ func (x *ProxyReaderAt) Read(p []byte) (int, error) {
 	var n int
 	var err error
 	if len(p) > x.Len()-x.read {
-		n, err = x.ReadAt(p[0:x.Len()-x.read], x.off+int64(x.read))
+		n, err = x.ReadAt(p[:min(x.Len()-x.read, len(p))], x.off+int64(x.read))
 	} else {
 		n, err = x.ReadAt(p, x.off+int64(x.read))
 	}
@@ -100,7 +100,7 @@ func (x *ProxyRead) Read(p []byte) (int, error) {
 		return 0, io.EOF
 	}
 
-	n, err := x.Reader.Read(p[0 : x.Len()-x.read])
+	n, err := x.Reader.Read(p[:min(x.Len()-x.read, len(p))])
 	if err == io.EOF {
 		x.eof = true
 	}
