@@ -14,6 +14,7 @@ type FtpActionLog struct {
 	Username        string     `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
 	SessionUuid     string     `json:"session_uuid,omitempty" path:"session_uuid,omitempty" url:"session_uuid,omitempty"`
 	SeqId           int64      `json:"seq_id,omitempty" path:"seq_id,omitempty" url:"seq_id,omitempty"`
+	AuthCiphers     string     `json:"auth_ciphers,omitempty" path:"auth_ciphers,omitempty" url:"auth_ciphers,omitempty"`
 	ActionType      string     `json:"action_type,omitempty" path:"action_type,omitempty" url:"action_type,omitempty"`
 	Path            string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	TruePath        string     `json:"true_path,omitempty" path:"true_path,omitempty" url:"true_path,omitempty"`
