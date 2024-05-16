@@ -64,12 +64,14 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *Jo
 			} else {
 				localType = directory.Dir // implicit directory
 			}
-		} else {
+		} else if err == nil {
 			if stats.IsDir() {
 				localType = directory.Dir
 			} else {
 				localType = directory.File
 			}
+		} else {
+			// Propagating this error is difficult, but this error will happen again in CodeStart.
 		}
 		if (!lib.NewUrlPath(params.RemotePath).EndingSlash() && localType == directory.Dir) || remoteType == directory.File && localType == directory.Dir {
 			job.LocalPath = filepath.Join(job.LocalPath, lib.NewUrlPath(job.RemotePath).SwitchPathSeparator(string(os.PathSeparator)).Pop())
