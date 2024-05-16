@@ -8,33 +8,48 @@ import (
 )
 
 type File struct {
-	Path             string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
-	DisplayName      string     `json:"display_name,omitempty" path:"display_name,omitempty" url:"display_name,omitempty"`
-	Type             string     `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
-	Size             int64      `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
-	CreatedAt        *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	Mtime            *time.Time `json:"mtime,omitempty" path:"mtime,omitempty" url:"mtime,omitempty"`
-	ProvidedMtime    *time.Time `json:"provided_mtime,omitempty" path:"provided_mtime,omitempty" url:"provided_mtime,omitempty"`
-	Crc32            string     `json:"crc32,omitempty" path:"crc32,omitempty" url:"crc32,omitempty"`
-	Md5              string     `json:"md5,omitempty" path:"md5,omitempty" url:"md5,omitempty"`
-	MimeType         string     `json:"mime_type,omitempty" path:"mime_type,omitempty" url:"mime_type,omitempty"`
-	Region           string     `json:"region,omitempty" path:"region,omitempty" url:"region,omitempty"`
-	Permissions      string     `json:"permissions,omitempty" path:"permissions,omitempty" url:"permissions,omitempty"`
-	SubfoldersLocked *bool      `json:"subfolders_locked?,omitempty" path:"subfolders_locked?,omitempty" url:"subfolders_locked?,omitempty"`
-	IsLocked         *bool      `json:"is_locked,omitempty" path:"is_locked,omitempty" url:"is_locked,omitempty"`
-	DownloadUri      string     `json:"download_uri,omitempty" path:"download_uri,omitempty" url:"download_uri,omitempty"`
-	PriorityColor    string     `json:"priority_color,omitempty" path:"priority_color,omitempty" url:"priority_color,omitempty"`
-	PreviewId        int64      `json:"preview_id,omitempty" path:"preview_id,omitempty" url:"preview_id,omitempty"`
-	Preview          Preview    `json:"preview,omitempty" path:"preview,omitempty" url:"preview,omitempty"`
-	Action           string     `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
-	Length           int64      `json:"length,omitempty" path:"length,omitempty" url:"length,omitempty"`
-	MkdirParents     *bool      `json:"mkdir_parents,omitempty" path:"mkdir_parents,omitempty" url:"mkdir_parents,omitempty"`
-	Part             int64      `json:"part,omitempty" path:"part,omitempty" url:"part,omitempty"`
-	Parts            int64      `json:"parts,omitempty" path:"parts,omitempty" url:"parts,omitempty"`
-	Ref              string     `json:"ref,omitempty" path:"ref,omitempty" url:"ref,omitempty"`
-	Restart          int64      `json:"restart,omitempty" path:"restart,omitempty" url:"restart,omitempty"`
-	Structure        string     `json:"structure,omitempty" path:"structure,omitempty" url:"structure,omitempty"`
-	WithRename       *bool      `json:"with_rename,omitempty" path:"with_rename,omitempty" url:"with_rename,omitempty"`
+	Path                               string                 `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	CreatedById                        int64                  `json:"created_by_id,omitempty" path:"created_by_id,omitempty" url:"created_by_id,omitempty"`
+	CreatedByApiKeyId                  int64                  `json:"created_by_api_key_id,omitempty" path:"created_by_api_key_id,omitempty" url:"created_by_api_key_id,omitempty"`
+	CreatedByAs2IncomingMessageId      int64                  `json:"created_by_as2_incoming_message_id,omitempty" path:"created_by_as2_incoming_message_id,omitempty" url:"created_by_as2_incoming_message_id,omitempty"`
+	CreatedByAutomationId              int64                  `json:"created_by_automation_id,omitempty" path:"created_by_automation_id,omitempty" url:"created_by_automation_id,omitempty"`
+	CreatedByBundleRegistrationId      int64                  `json:"created_by_bundle_registration_id,omitempty" path:"created_by_bundle_registration_id,omitempty" url:"created_by_bundle_registration_id,omitempty"`
+	CreatedByInboxId                   int64                  `json:"created_by_inbox_id,omitempty" path:"created_by_inbox_id,omitempty" url:"created_by_inbox_id,omitempty"`
+	CreatedByRemoteServerId            int64                  `json:"created_by_remote_server_id,omitempty" path:"created_by_remote_server_id,omitempty" url:"created_by_remote_server_id,omitempty"`
+	CreatedByRemoteServerSyncId        int64                  `json:"created_by_remote_server_sync_id,omitempty" path:"created_by_remote_server_sync_id,omitempty" url:"created_by_remote_server_sync_id,omitempty"`
+	CustomMetadata                     map[string]interface{} `json:"custom_metadata,omitempty" path:"custom_metadata,omitempty" url:"custom_metadata,omitempty"`
+	DisplayName                        string                 `json:"display_name,omitempty" path:"display_name,omitempty" url:"display_name,omitempty"`
+	Type                               string                 `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
+	Size                               int64                  `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
+	CreatedAt                          *time.Time             `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	LastModifiedById                   int64                  `json:"last_modified_by_id,omitempty" path:"last_modified_by_id,omitempty" url:"last_modified_by_id,omitempty"`
+	LastModifiedByApiKeyId             int64                  `json:"last_modified_by_api_key_id,omitempty" path:"last_modified_by_api_key_id,omitempty" url:"last_modified_by_api_key_id,omitempty"`
+	LastModifiedByAutomationId         int64                  `json:"last_modified_by_automation_id,omitempty" path:"last_modified_by_automation_id,omitempty" url:"last_modified_by_automation_id,omitempty"`
+	LastModifiedByBundleRegistrationId int64                  `json:"last_modified_by_bundle_registration_id,omitempty" path:"last_modified_by_bundle_registration_id,omitempty" url:"last_modified_by_bundle_registration_id,omitempty"`
+	LastModifiedByRemoteServerId       int64                  `json:"last_modified_by_remote_server_id,omitempty" path:"last_modified_by_remote_server_id,omitempty" url:"last_modified_by_remote_server_id,omitempty"`
+	LastModifiedByRemoteServerSyncId   int64                  `json:"last_modified_by_remote_server_sync_id,omitempty" path:"last_modified_by_remote_server_sync_id,omitempty" url:"last_modified_by_remote_server_sync_id,omitempty"`
+	Mtime                              *time.Time             `json:"mtime,omitempty" path:"mtime,omitempty" url:"mtime,omitempty"`
+	ProvidedMtime                      *time.Time             `json:"provided_mtime,omitempty" path:"provided_mtime,omitempty" url:"provided_mtime,omitempty"`
+	Crc32                              string                 `json:"crc32,omitempty" path:"crc32,omitempty" url:"crc32,omitempty"`
+	Md5                                string                 `json:"md5,omitempty" path:"md5,omitempty" url:"md5,omitempty"`
+	MimeType                           string                 `json:"mime_type,omitempty" path:"mime_type,omitempty" url:"mime_type,omitempty"`
+	Region                             string                 `json:"region,omitempty" path:"region,omitempty" url:"region,omitempty"`
+	Permissions                        string                 `json:"permissions,omitempty" path:"permissions,omitempty" url:"permissions,omitempty"`
+	SubfoldersLocked                   *bool                  `json:"subfolders_locked?,omitempty" path:"subfolders_locked?,omitempty" url:"subfolders_locked?,omitempty"`
+	IsLocked                           *bool                  `json:"is_locked,omitempty" path:"is_locked,omitempty" url:"is_locked,omitempty"`
+	DownloadUri                        string                 `json:"download_uri,omitempty" path:"download_uri,omitempty" url:"download_uri,omitempty"`
+	PriorityColor                      string                 `json:"priority_color,omitempty" path:"priority_color,omitempty" url:"priority_color,omitempty"`
+	PreviewId                          int64                  `json:"preview_id,omitempty" path:"preview_id,omitempty" url:"preview_id,omitempty"`
+	Preview                            Preview                `json:"preview,omitempty" path:"preview,omitempty" url:"preview,omitempty"`
+	Action                             string                 `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
+	Length                             int64                  `json:"length,omitempty" path:"length,omitempty" url:"length,omitempty"`
+	MkdirParents                       *bool                  `json:"mkdir_parents,omitempty" path:"mkdir_parents,omitempty" url:"mkdir_parents,omitempty"`
+	Part                               int64                  `json:"part,omitempty" path:"part,omitempty" url:"part,omitempty"`
+	Parts                              int64                  `json:"parts,omitempty" path:"parts,omitempty" url:"parts,omitempty"`
+	Ref                                string                 `json:"ref,omitempty" path:"ref,omitempty" url:"ref,omitempty"`
+	Restart                            int64                  `json:"restart,omitempty" path:"restart,omitempty" url:"restart,omitempty"`
+	Structure                          string                 `json:"structure,omitempty" path:"structure,omitempty" url:"structure,omitempty"`
+	WithRename                         *bool                  `json:"with_rename,omitempty" path:"with_rename,omitempty" url:"with_rename,omitempty"`
 }
 
 func (f File) Identifier() interface{} {
@@ -75,9 +90,10 @@ type FileCreateParams struct {
 }
 
 type FileUpdateParams struct {
-	Path          string     `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
-	ProvidedMtime *time.Time `url:"provided_mtime,omitempty" required:"false" json:"provided_mtime,omitempty" path:"provided_mtime"`
-	PriorityColor string     `url:"priority_color,omitempty" required:"false" json:"priority_color,omitempty" path:"priority_color"`
+	Path           string                 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
+	CustomMetadata map[string]interface{} `url:"custom_metadata,omitempty" required:"false" json:"custom_metadata,omitempty" path:"custom_metadata"`
+	ProvidedMtime  *time.Time             `url:"provided_mtime,omitempty" required:"false" json:"provided_mtime,omitempty" path:"provided_mtime"`
+	PriorityColor  string                 `url:"priority_color,omitempty" required:"false" json:"priority_color,omitempty" path:"priority_color"`
 }
 
 type FileDeleteParams struct {
