@@ -7,14 +7,14 @@ import (
 )
 
 type FormFieldSet struct {
-	Id          int64    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Title       string   `json:"title,omitempty" path:"title,omitempty" url:"title,omitempty"`
-	FormLayout  []int64  `json:"form_layout,omitempty" path:"form_layout,omitempty" url:"form_layout,omitempty"`
-	FormFields  []string `json:"form_fields,omitempty" path:"form_fields,omitempty" url:"form_fields,omitempty"`
-	SkipName    *bool    `json:"skip_name,omitempty" path:"skip_name,omitempty" url:"skip_name,omitempty"`
-	SkipEmail   *bool    `json:"skip_email,omitempty" path:"skip_email,omitempty" url:"skip_email,omitempty"`
-	SkipCompany *bool    `json:"skip_company,omitempty" path:"skip_company,omitempty" url:"skip_company,omitempty"`
-	UserId      int64    `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	Id          int64                    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Title       string                   `json:"title,omitempty" path:"title,omitempty" url:"title,omitempty"`
+	FormLayout  []int64                  `json:"form_layout,omitempty" path:"form_layout,omitempty" url:"form_layout,omitempty"`
+	FormFields  []map[string]interface{} `json:"form_fields,omitempty" path:"form_fields,omitempty" url:"form_fields,omitempty"`
+	SkipName    *bool                    `json:"skip_name,omitempty" path:"skip_name,omitempty" url:"skip_name,omitempty"`
+	SkipEmail   *bool                    `json:"skip_email,omitempty" path:"skip_email,omitempty" url:"skip_email,omitempty"`
+	SkipCompany *bool                    `json:"skip_company,omitempty" path:"skip_company,omitempty" url:"skip_company,omitempty"`
+	UserId      int64                    `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 }
 
 func (f FormFieldSet) Identifier() interface{} {
