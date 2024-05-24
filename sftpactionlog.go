@@ -26,7 +26,7 @@ type SftpActionLog struct {
 	Size                string     `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
 	DataLength          string     `json:"data_length,omitempty" path:"data_length,omitempty" url:"data_length,omitempty"`
 	EntriesReturned     int64      `json:"entries_returned,omitempty" path:"entries_returned,omitempty" url:"entries_returned,omitempty"`
-	Success             string     `json:"success,omitempty" path:"success,omitempty" url:"success,omitempty"`
+	Success             *bool      `json:"success,omitempty" path:"success,omitempty" url:"success,omitempty"`
 	DurationMs          int64      `json:"duration_ms,omitempty" path:"duration_ms,omitempty" url:"duration_ms,omitempty"`
 }
 
