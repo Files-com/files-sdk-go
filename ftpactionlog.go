@@ -21,7 +21,7 @@ type FtpActionLog struct {
 	Name            string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Cmd             string     `json:"cmd,omitempty" path:"cmd,omitempty" url:"cmd,omitempty"`
 	Param           string     `json:"param,omitempty" path:"param,omitempty" url:"param,omitempty"`
-	ResponseCode    string     `json:"responseCode,omitempty" path:"responseCode,omitempty" url:"responseCode,omitempty"`
+	ResponseCode    int64      `json:"responseCode,omitempty" path:"responseCode,omitempty" url:"responseCode,omitempty"`
 	ResponseMessage string     `json:"responseMessage,omitempty" path:"responseMessage,omitempty" url:"responseMessage,omitempty"`
 	EntriesReturned int64      `json:"entries_returned,omitempty" path:"entries_returned,omitempty" url:"entries_returned,omitempty"`
 	Success         *bool      `json:"success,omitempty" path:"success,omitempty" url:"success,omitempty"`
