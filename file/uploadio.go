@@ -455,14 +455,15 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 	// Stub for test fixtures being expired
 	if part.PartNumber != 1 || part.UploadUri == "" {
 		if time.Now().After(part.ExpiresTime()) {
-			u.LogPath(u.Path, map[string]interface{}{
-				"timestamp":           time.Now(),
-				"message":             "canceling all other parts",
-				"part":                part.PartNumber,
-				"event":               "uploadPart",
-				"previous_upload_uri": part.UploadUri != "",
-				"expired":             time.Now().After(part.ExpiresTime()),
-			})
+			if !part.ExpiresTime().IsZero() {
+				u.LogPath(u.Path, map[string]interface{}{
+					"timestamp":           time.Now(),
+					"part":                part.PartNumber,
+					"event":               "uploadPart",
+					"previous_upload_uri": part.UploadUri != "",
+					"expired":             time.Now().After(part.ExpiresTime()),
+				})
+			}
 			params := files_sdk.FileBeginUploadParams{
 				Path:         part.Path,
 				Ref:          part.Ref,
