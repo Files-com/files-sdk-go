@@ -23,8 +23,8 @@ type SftpActionLog struct {
 	SftpResponseCode    string     `json:"sftp_response_code,omitempty" path:"sftp_response_code,omitempty" url:"sftp_response_code,omitempty"`
 	SftpResponseMessage string     `json:"sftp_response_message,omitempty" path:"sftp_response_message,omitempty" url:"sftp_response_message,omitempty"`
 	Md5                 string     `json:"md5,omitempty" path:"md5,omitempty" url:"md5,omitempty"`
-	Size                string     `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
-	DataLength          string     `json:"data_length,omitempty" path:"data_length,omitempty" url:"data_length,omitempty"`
+	Size                int64      `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
+	DataLength          int64      `json:"data_length,omitempty" path:"data_length,omitempty" url:"data_length,omitempty"`
 	EntriesReturned     int64      `json:"entries_returned,omitempty" path:"entries_returned,omitempty" url:"entries_returned,omitempty"`
 	Success             *bool      `json:"success,omitempty" path:"success,omitempty" url:"success,omitempty"`
 	DurationMs          int64      `json:"duration_ms,omitempty" path:"duration_ms,omitempty" url:"duration_ms,omitempty"`
