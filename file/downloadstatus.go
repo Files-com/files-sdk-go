@@ -20,6 +20,7 @@ type DownloadStatus struct {
 	localPath       string
 	remotePath      string
 	Sync            bool
+	NoOverwrite     bool
 	endedAt         time.Time
 	startedAt       time.Time
 	Mutex           *sync.RWMutex

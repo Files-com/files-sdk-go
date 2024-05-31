@@ -16,6 +16,7 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/directory"
+	"github.com/Files-com/files-sdk-go/v3/file/status"
 	"github.com/Files-com/files-sdk-go/v3/ignore"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/gin-gonic/gin"
@@ -38,7 +39,7 @@ func (m *MockUploader) Find(files_sdk.FileFindParams, ...files_sdk.RequestRespon
 	return m.File, m.findError
 }
 
-func Test_skipOrIgnore(t *testing.T) {
+func Test_excludeFile(t *testing.T) {
 	var progressReportError error
 
 	init := func() (*UploadStatus, fstest.MapFS, *Job) {
@@ -66,7 +67,7 @@ func Test_skipOrIgnore(t *testing.T) {
 		}
 		uploadStatus.file.Size = 10
 		uploadStatus.Sync = false
-		assert.Equal(false, skipOrIgnore(uploadStatus, false))
+		assert.Equal(false, excludeFile(uploadStatus, false))
 	})
 
 	t.Run("when sizes don't match", func(t *testing.T) {
@@ -75,7 +76,7 @@ func Test_skipOrIgnore(t *testing.T) {
 			Sys: files_sdk.File{Size: 9},
 		}
 		uploadStatus.file.Size = 10
-		assert.Equal(false, skipOrIgnore(uploadStatus, false))
+		assert.Equal(false, excludeFile(uploadStatus, false))
 		assert.Equal(nil, progressReportError)
 	})
 
@@ -84,12 +85,12 @@ func Test_skipOrIgnore(t *testing.T) {
 			Sys: files_sdk.File{Size: 10},
 		}
 		uploadStatus.file.Size = 10
-		assert.Equal(true, skipOrIgnore(uploadStatus, false))
+		assert.Equal(true, excludeFile(uploadStatus, false))
 	})
 
 	t.Run("There is no server version", func(t *testing.T) {
 		delete(mockFs, "test")
-		assert.Equal(false, skipOrIgnore(uploadStatus, false))
+		assert.Equal(false, excludeFile(uploadStatus, false))
 	})
 
 	t.Run("when sizes do match on a deeply nested path", func(t *testing.T) {
@@ -104,7 +105,7 @@ func Test_skipOrIgnore(t *testing.T) {
 			Mode: fs.ModeDir,
 		}
 		uploadStatus.file.Size = 10
-		assert.Equal(true, skipOrIgnore(uploadStatus, false))
+		assert.Equal(true, excludeFile(uploadStatus, false))
 		uploadStatus = &oldUploadStatus
 	})
 
@@ -115,7 +116,7 @@ func Test_skipOrIgnore(t *testing.T) {
 			Sys: files_sdk.File{Size: 10},
 		}
 		uploadStatus.file.Size = 10
-		assert.Equal(true, skipOrIgnore(uploadStatus, false))
+		assert.Equal(true, excludeFile(uploadStatus, false))
 		uploadStatus.job.Type = directory.Dir
 		uploadStatus.Sync = false
 	})
@@ -127,21 +128,21 @@ func Test_skipOrIgnore(t *testing.T) {
 			Sys: files_sdk.File{Size: 10},
 		}
 		uploadStatus.file.Size = 10
-		assert.Equal(true, skipOrIgnore(uploadStatus, false))
+		assert.Equal(true, excludeFile(uploadStatus, false))
 		uploadStatus.Sync = false
 	})
 
 	t.Run("Ignore files", func(t *testing.T) {
 		job.Ignore, _ = ignore.New([]string{"*.css"}...)
 		uploadStatus.localPath = "main.css"
-		assert.Equal(true, skipOrIgnore(uploadStatus, false))
+		assert.Equal(true, excludeFile(uploadStatus, false))
 
 		uploadStatus.localPath = "main.php"
-		assert.Equal(false, skipOrIgnore(uploadStatus, false))
+		assert.Equal(false, excludeFile(uploadStatus, false))
 
 		job.Ignore, _ = ignore.New([]string{"*.css", "*.php"}...)
 		uploadStatus.localPath = "main.css"
-		assert.Equal(true, skipOrIgnore(uploadStatus, false))
+		assert.Equal(true, excludeFile(uploadStatus, false))
 	})
 
 	t.Run("FeatureFlag incremental-updates", func(t *testing.T) {
@@ -159,7 +160,7 @@ func Test_skipOrIgnore(t *testing.T) {
 				uploadStatus.Sync = true
 				uploadStatus.file.Size = 10
 				uploadStatus.file.Mtime = &args.sourceMtime
-				skip := skipOrIgnore(uploadStatus, true)
+				skip := excludeFile(uploadStatus, true)
 				if args.destinationMtime != nil {
 					diff := args.destinationMtime.Sub(args.sourceMtime)
 					diff = time.Duration(math.Abs(float64(diff))).Truncate(time.Millisecond)
@@ -262,6 +263,24 @@ func Test_skipOrIgnore(t *testing.T) {
 				)
 			})
 		})
+	})
+
+	t.Run("No overwrite file exists", func(t *testing.T) {
+		uploadStatus, mockFs, _ := init()
+		mockFs["test"] = &fstest.MapFile{
+			Sys: files_sdk.File{},
+		}
+		uploadStatus.NoOverwrite = true
+		assert.Equal(true, excludeFile(uploadStatus, false))
+		assert.Equal(status.FileExists, uploadStatus.Status())
+	})
+
+	t.Run("No overwrite file does not exists", func(t *testing.T) {
+		uploadStatus, _, _ := init()
+		uploadStatus.NoOverwrite = true
+		uploadStatus.status = status.Queued
+		assert.Equal(false, excludeFile(uploadStatus, false))
+		assert.Equal(status.Queued, uploadStatus.Status())
 	})
 }
 

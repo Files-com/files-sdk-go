@@ -40,6 +40,7 @@ type DownloaderParams struct {
 	LocalPath     string
 	Sync          bool
 	PreserveTimes bool
+	NoOverwrite   bool
 	RetryPolicy
 	*manager.Manager
 	EventsReporter

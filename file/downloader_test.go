@@ -656,6 +656,41 @@ expected 4194304 bytes sent 5242880 received`)
 		assert.Equal(t, status.Complete, job.Statuses[0].Status())
 	})
 
+	t.Run("no overwrite file exists", func(t *testing.T) {
+		root := t.TempDir()
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["taco.png"] = mockFile{
+			File: files_sdk.File{},
+		}
+		taco, err := os.Create(filepath.Join(root, "taco.png"))
+		assert.NoError(t, err)
+		require.NoError(t, taco.Close())
+		job := client.Downloader(DownloaderParams{NoOverwrite: true, RemotePath: "taco.png", LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		assert.Equal(t, status.FileExists, job.Statuses[0].Status())
+	})
+
+	t.Run("no overwrite file does not exists", func(t *testing.T) {
+		root := t.TempDir()
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["taco.png"] = mockFile{
+			File: files_sdk.File{},
+		}
+		job := client.Downloader(DownloaderParams{NoOverwrite: true, RemotePath: "taco.png", LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+		assert.Equal(t, status.Queued, job.Statuses[0].Status())
+	})
+
 	t.Run("local directory is privileged", func(t *testing.T) {
 		root := t.TempDir()
 		server := (&MockAPIServer{T: t}).Do()

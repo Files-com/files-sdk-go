@@ -177,6 +177,8 @@ type UploaderParams struct {
 	RemotePath string
 	// DryRun see what files would be uploaded.
 	DryRun bool
+	// NoOverwrite do not overwrite existing files.
+	NoOverwrite bool
 	// RetryPolicy config for retrying errored uploads.
 	RetryPolicy
 	// EventsReporter log file events

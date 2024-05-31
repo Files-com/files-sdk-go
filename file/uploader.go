@@ -59,12 +59,13 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *Job
 		WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, job.RetryPolicy.(RetryPolicy), false) })
 
 		metaFile := UploadStatus{
-			job:       job,
-			status:    status.Errored,
-			localPath: params.LocalPath,
-			Sync:      params.Sync,
-			Uploader:  c,
-			Mutex:     &sync.RWMutex{},
+			job:         job,
+			status:      status.Errored,
+			localPath:   params.LocalPath,
+			Sync:        params.Sync,
+			NoOverwrite: params.NoOverwrite,
+			Uploader:    c,
+			Mutex:       &sync.RWMutex{},
 		}
 		if errorJob(job, metaFile, statErr) {
 			return
@@ -240,7 +241,7 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 			}
 			finish()
 		}()
-		if skipOrIgnore(uploadStatus, job.Config.FeatureFlag("incremental-updates")) {
+		if excludeFile(uploadStatus, job.Config.FeatureFlag("incremental-updates")) {
 			return
 		}
 		if uploadStatus.dryRun {
@@ -323,7 +324,7 @@ func buildDestination(path string, localFolderPath string, destinationRootPath s
 	return lib.Path{Path: destination}.NormalizePathSystemForAPI().String()
 }
 
-func skipOrIgnore(uploadStatus *UploadStatus, incrementalUpdates bool) bool {
+func excludeFile(uploadStatus *UploadStatus, incrementalUpdates bool) bool {
 	if uploadStatus.Job().Ignore.MatchesPath(uploadStatus.LocalPath()) {
 		uploadStatus.Job().UpdateStatus(status.Ignored, uploadStatus, nil)
 		return true
@@ -332,6 +333,15 @@ func skipOrIgnore(uploadStatus *UploadStatus, incrementalUpdates bool) bool {
 	if uploadStatus.Job().Include != nil && !uploadStatus.Job().Include.MatchesPath(uploadStatus.LocalPath()) {
 		uploadStatus.Job().UpdateStatus(status.Ignored, uploadStatus, nil)
 		return true
+	}
+
+	if uploadStatus.NoOverwrite {
+		_, found, err := uploadStatus.Job().FindRemoteFile(uploadStatus)
+		if found {
+			uploadStatus.Job().UpdateStatus(status.FileExists, uploadStatus, err)
+			return true
+		}
+		return false
 	}
 
 	if uploadStatus.Sync {

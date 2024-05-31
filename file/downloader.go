@@ -115,12 +115,13 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *Jo
 
 		if it.Err() != nil {
 			metaFile := &DownloadStatus{
-				job:        job,
-				status:     status.Errored,
-				localPath:  params.LocalPath,
-				remotePath: params.RemotePath,
-				Sync:       params.Sync,
-				Mutex:      &sync.RWMutex{},
+				job:         job,
+				status:      status.Errored,
+				localPath:   params.LocalPath,
+				remotePath:  params.RemotePath,
+				Sync:        params.Sync,
+				NoOverwrite: params.NoOverwrite,
+				Mutex:       &sync.RWMutex{},
 			}
 			metaFile.file = files_sdk.File{
 				DisplayName: filepath.Base(params.LocalPath),
@@ -166,6 +167,7 @@ func createIndexedStatus(f Entity, params DownloaderParams, job *Job) {
 		FS:            f.FS,
 		job:           job,
 		Sync:          params.Sync,
+		NoOverwrite:   params.NoOverwrite,
 		status:        status.Indexed,
 		Mutex:         &sync.RWMutex{},
 		PreserveTimes: params.PreserveTimes,
@@ -218,6 +220,18 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 		if remoteStatErr != nil {
 			reportStatus.Job().UpdateStatus(status.Errored, reportStatus, remoteStatErr)
 			return
+		}
+
+		if reportStatus.NoOverwrite {
+			_, localStatErr := os.Stat(reportStatus.LocalPath())
+			if localStatErr == nil {
+				reportStatus.Job().UpdateStatus(status.FileExists, reportStatus, localStatErr)
+				return
+			}
+			if !os.IsNotExist(localStatErr) {
+				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, localStatErr)
+				return
+			}
 		}
 
 		if reportStatus.Job().Sync {

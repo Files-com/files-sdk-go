@@ -21,17 +21,18 @@ var (
 	Downloading = Status{"downloading", 2}
 	Uploading   = Status{"uploading", 2}
 	Skipped     = Status{"skipped", 3}
+	FileExists  = Status{"file exists", 3}
 	Ignored     = Status{"ignored", 3}
 	Complete    = Status{"complete", 4}
 	Canceled    = Status{"canceled", 5}
 	Errored     = Status{"errored", 5}
 
 	Included = []GetStatus{Indexed, Queued, Retrying, Downloading, Uploading, Complete, Canceled, Errored}
-	Excluded = []GetStatus{Skipped, Ignored}
+	Excluded = []GetStatus{Skipped, Ignored, FileExists}
 	Valid    = []GetStatus{Indexed, Queued, Retrying, Downloading, Uploading, Complete}
-	Invalid  = []GetStatus{Null, Canceled, Errored, Skipped, Ignored}
+	Invalid  = []GetStatus{Null, Canceled, Errored, Skipped, Ignored, FileExists}
 	Running  = []GetStatus{Downloading, Uploading}
-	Ended    = []GetStatus{Complete, Canceled, Errored, Skipped, Ignored}
+	Ended    = []GetStatus{Complete, Canceled, Errored, Skipped, Ignored, FileExists}
 )
 
 func (e Status) String() string {

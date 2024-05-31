@@ -16,6 +16,7 @@ type UploadStatus struct {
 	remotePath    string
 	uploadedBytes int64
 	Sync          bool
+	NoOverwrite   bool
 	Uploader
 	UploadResumable
 	Mutex *sync.RWMutex
