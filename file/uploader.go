@@ -289,15 +289,16 @@ func buildUploadStatus(path string, localFolderPath string, destinationRootPath 
 
 	destination := buildDestination(path, localFolderPath, destinationRootPath, filename)
 	uploadStatus := UploadStatus{
-		Uploader:   c,
-		job:        job,
-		remotePath: destination,
-		localPath:  path,
-		Sync:       params.Sync,
-		status:     status.Indexed,
-		Mutex:      &sync.RWMutex{},
-		file:       files_sdk.File{Path: destination, DisplayName: filepath.Base(destination)},
-		dryRun:     params.DryRun,
+		Uploader:    c,
+		job:         job,
+		remotePath:  destination,
+		localPath:   path,
+		Sync:        params.Sync,
+		status:      status.Indexed,
+		Mutex:       &sync.RWMutex{},
+		file:        files_sdk.File{Path: destination, DisplayName: filepath.Base(destination)},
+		dryRun:      params.DryRun,
+		NoOverwrite: params.NoOverwrite,
 	}
 	return uploadStatus, true
 }
