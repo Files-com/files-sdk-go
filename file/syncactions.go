@@ -38,6 +38,58 @@ func (ad DeleteSource) Call(f JobFile, opts ...files_sdk.RequestResponseOption) 
 	}
 }
 
+// DeleteEmptySourceFolders folder after a sync
+//
+//	job.RegisterFileEvent(func(file status.File) {
+//			log, err := file.DeleteEmptySourceFolders{Direction: f.Direction, Config: config}.Call(ctx, f)
+//	}, status.Complete, status.Skipped)
+type DeleteEmptySourceFolders struct {
+	direction.Direction
+	Config files_sdk.Config
+}
+
+func (ad DeleteEmptySourceFolders) Call(f JobFile, opts ...files_sdk.RequestResponseOption) (status.Log, error) {
+	switch f.Direction {
+	case direction.UploadType:
+		localFolder := filepath.Dir(f.LocalPath)
+		err := filepath.Walk(localFolder, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if info.IsDir() {
+				return removeEmptyDir(path, info)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return status.Log{Path: localFolder, Action: "delete source folder"}, err
+		}
+		return status.Log{Path: localFolder, Action: "delete source folder"}, os.Remove(localFolder)
+	case direction.DownloadType:
+		remoteFolder := filepath.Dir(f.RemotePath)
+		client := Client{Config: ad.Config}
+		err := client.Delete(files_sdk.FileDeleteParams{Path: remoteFolder, Recursive: lib.Bool(true)}, opts...)
+		return status.Log{Path: remoteFolder, Action: "delete source folder"}, err
+	default:
+		panic(fmt.Sprintf("unknown direction %v", f.Direction))
+	}
+}
+
+func removeEmptyDir(path string, info os.FileInfo) error {
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return err
+	}
+
+	if len(files) != 0 {
+		return nil
+	}
+
+	return os.Remove(path)
+}
+
 // MoveSource files after a sync
 //
 //	job.RegisterFileEvent(func(file status.File) {

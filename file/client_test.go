@@ -766,6 +766,52 @@ func TestClient_Downloader_Delete_Source(t *testing.T) {
 	os.RemoveAll("test.text")
 }
 
+func TestClient_Downloader_Delete_Source_Folder(t *testing.T) {
+	client, r, err := CreateClient("TestClient_Downloader_Delete_Source_Folder")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	assert := assert.New(t)
+
+	folderClient := folder.Client{Config: client.Config}
+
+	folderClient.Create(files_sdk.FolderCreateParams{Path: "test-delete-source-folder"})
+
+	err = client.Upload(
+		UploadWithSize(9),
+		UploadWithDestinationPath(lib.UrlJoinNoEscape("test-delete-source-folder", "test.text")),
+		UploadWithProvidedMtime(time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC)),
+		UploadWithReader(strings.NewReader("testing 3")),
+	)
+
+	require.NoError(t, err)
+	localPath, err := os.MkdirTemp("", "TestClient_Downloader_Delete_Source_Folder")
+	require.NoError(t, err)
+
+	job := client.Downloader(
+		DownloaderParams{RemotePath: "test-delete-source-folder", LocalPath: localPath},
+	)
+	var fi JobFile
+	var log status.Log
+
+	job.RegisterFileEvent(func(f JobFile) {
+		fi = f
+		DeleteSource{Config: client.Config, Direction: job.Direction}.Call(f)
+		log, err = DeleteEmptySourceFolders{Config: client.Config, Direction: job.Direction}.Call(f)
+	}, status.Complete)
+	job.Start()
+	<-job.Finished.C
+	assert.NoError(err)
+	assert.Equal("delete source folder", log.Action)
+	assert.Equal(filepath.Dir(fi.RemotePath), log.Path)
+
+	_, err = client.Find(files_sdk.FileFindParams{Path: lib.UrlJoinNoEscape("test-delete-source", "test.text")})
+	require.NotNil(t, err)
+	assert.Equal("Not Found - `Not Found.  This may be related to your permissions.`", err.Error())
+	os.RemoveAll("test.text")
+}
+
 func TestClient_Downloader_Move_Source(t *testing.T) {
 	client, r, err := CreateClient("TestClient_Downloader_Move_Source")
 	if err != nil {
@@ -1081,6 +1127,90 @@ func TestClient_Uploader_Directories(t *testing.T) {
 	assert.Equal("3.text", job.Statuses[3].RemotePath())
 	assert.Equal(status.Complete, job.Statuses[3].Status())
 	assert.NoError(job.Statuses[3].Err())
+}
+
+// This starts with the following directory structure in tmp
+// - empty_dir/
+// - A/
+//   - 1.text
+//
+// - B/
+//   - 2.text
+//   - Z/
+//   - 4.text
+//   - empty_dir/
+//
+// A, and B should be completely removed because there was a file uploaded from those hierarchies
+// empty_dir/ does not get removed because there were no files uploaded from that directory.
+func TestClient_Uploader_Directories_With_DeleteSource(t *testing.T) {
+	client, r, err := CreateClient("TestClient_Uploader_Directories_With_DeleteSource")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer r.Stop()
+	assert := assert.New(t)
+	tmpDir := t.TempDir()
+	require.NoError(t, os.Mkdir(filepath.Join(tmpDir, "empty_dir"), 0750))
+
+	filesAndStatus := []struct {
+		name   string
+		status string
+		size   int
+	}{{name: "A/1.text", status: "complete", size: 24}, {name: "B/2.text", status: "complete", size: 24}, {name: "B/Z/4.text", status: "complete", size: 24}}
+	for index, file := range filesAndStatus {
+		file.name = filepath.Join(tmpDir, file.name)
+		require.NoError(t, os.MkdirAll(filepath.Dir(file.name), 0750))
+		filesAndStatus[index] = file
+		f, err := os.Create(file.name)
+		assert.NoError(err)
+		f.Write([]byte("hello how are you doing?"))
+		f.Close()
+	}
+	require.NoError(t, os.Mkdir(filepath.Join(tmpDir, "A", "empty_dir"), 0750))
+	require.NoError(t, os.Mkdir(filepath.Join(tmpDir, "B", "Z", "empty_dir"), 0750))
+
+	job := client.Uploader(
+		UploaderParams{
+			LocalPath: tmpDir + string(os.PathSeparator),
+			LocalPaths: []string{
+				filepath.Join(tmpDir, "A") + string(os.PathSeparator),
+				filepath.Join(tmpDir, "B") + string(os.PathSeparator),
+			},
+		},
+	)
+
+	job.RegisterFileEvent(func(f JobFile) {
+		DeleteSource{Config: client.Config, Direction: job.Direction}.Call(f)
+		DeleteEmptySourceFolders{Config: client.Config, Direction: job.Direction}.Call(f)
+	}, status.Complete)
+
+	job.Start()
+	job.Wait()
+
+	require.Equal(t, 3, len(job.Statuses), "the right number of files did not upload")
+	assert.Equal(filesAndStatus[0].name, job.Statuses[0].LocalPath())
+	assert.Equal("1.text", job.Statuses[0].RemotePath())
+	assert.Equal(status.Complete, job.Statuses[0].Status())
+	assert.NoError(job.Statuses[0].Err())
+
+	assert.Equal(filesAndStatus[1].name, job.Statuses[1].LocalPath())
+	assert.Equal("2.text", job.Statuses[1].RemotePath())
+	assert.Equal(status.Complete, job.Statuses[1].Status())
+	assert.NoError(job.Statuses[1].Err())
+
+	assert.Equal(filesAndStatus[2].name, job.Statuses[2].LocalPath())
+	assert.Equal("Z/4.text", job.Statuses[2].RemotePath())
+	assert.Equal(status.Complete, job.Statuses[2].Status())
+	assert.NoError(job.Statuses[2].Err())
+
+	_, dirErr := os.Stat(filepath.Join(tmpDir, "empty_dir"))
+	assert.Equal(false, os.IsNotExist(dirErr))
+
+	for _, path := range []string{filepath.Join("A", "empty_dir"), filepath.Join("A", "1.text"), filepath.Join("B", "1.text"), filepath.Join("B", "Z", "1.text"), filepath.Join("B", "Z", "empty_dir"), filepath.Join("B", "Z")} {
+		_, dirErr = os.Stat(filepath.Join(tmpDir, path))
+		assert.Equal(true, os.IsNotExist(dirErr))
+	}
 }
 
 func TestClient_ListForRecursive(t *testing.T) {
