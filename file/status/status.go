@@ -21,7 +21,7 @@ var (
 	Downloading = Status{"downloading", 2}
 	Uploading   = Status{"uploading", 2}
 	Skipped     = Status{"skipped", 3}
-	FileExists  = Status{"file exists", 3}
+	FileExists  = Status{"file_exists", 3}
 	Ignored     = Status{"ignored", 3}
 	Complete    = Status{"complete", 4}
 	Canceled    = Status{"canceled", 5}
