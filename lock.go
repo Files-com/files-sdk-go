@@ -37,7 +37,7 @@ type LockCreateParams struct {
 	Path                 string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	AllowAccessByAnyUser *bool  `url:"allow_access_by_any_user,omitempty" required:"false" json:"allow_access_by_any_user,omitempty" path:"allow_access_by_any_user"`
 	Exclusive            *bool  `url:"exclusive,omitempty" required:"false" json:"exclusive,omitempty" path:"exclusive"`
-	Recursive            string `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
+	Recursive            *bool  `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
 	Timeout              int64  `url:"timeout,omitempty" required:"false" json:"timeout,omitempty" path:"timeout"`
 }
 
