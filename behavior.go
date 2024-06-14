@@ -76,8 +76,6 @@ type BehaviorUpdateParams struct {
 	Recursive                   *bool     `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
 	Name                        string    `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 	Description                 string    `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
-	Behavior                    string    `url:"behavior,omitempty" required:"false" json:"behavior,omitempty" path:"behavior"`
-	Path                        string    `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
 	AttachmentDelete            *bool     `url:"attachment_delete,omitempty" required:"false" json:"attachment_delete,omitempty" path:"attachment_delete"`
 }
 
