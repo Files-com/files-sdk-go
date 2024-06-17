@@ -2,12 +2,13 @@ package file
 
 import (
 	"io"
+	"sync/atomic"
 )
 
 type ProxyReader interface {
 	io.ReadCloser
 	Len() int
-	BytesRead() int
+	BytesRead() int64
 	Rewind() bool
 }
 
@@ -16,28 +17,26 @@ type ProxyReaderAt struct {
 	off    int64
 	len    int64
 	onRead func(i int64)
-	read   int
-	closed bool
-	eof    bool
+	read   int64
+	closed atomic.Bool
 }
 
 type ProxyRead struct {
 	io.Reader
 	len    int64
 	onRead func(i int64)
-	read   int
-	closed bool
-	eof    bool
+	read   int64
+	closed atomic.Bool
 }
 
 func (x *ProxyReaderAt) Rewind() bool {
-	x.onRead(int64(-x.read))
-	x.read = 0
+	x.onRead(-x.BytesRead())
+	atomic.StoreInt64(&x.read, 0)
 	return true
 }
 
 func (x *ProxyRead) Rewind() bool {
-	return x.read == 0
+	return atomic.LoadInt64(&x.read) == 0
 }
 
 func (x *ProxyReaderAt) Len() int {
@@ -48,47 +47,43 @@ func (x *ProxyRead) Len() int {
 	return int(x.len)
 }
 
-func (x *ProxyReaderAt) BytesRead() int {
-	return x.read
+func (x *ProxyReaderAt) BytesRead() int64 {
+	return atomic.LoadInt64(&x.read)
 }
 
-func (x *ProxyRead) BytesRead() int {
-	return x.read
+func (x *ProxyRead) BytesRead() int64 {
+	return atomic.LoadInt64(&x.read)
 }
 
 func (x *ProxyReaderAt) Seek(offset int64, whence int) (int64, error) {
-	x.onRead(-int64(x.read - int(offset))) // rewind progress
-	x.read = int(offset)
+	x.onRead(-(x.BytesRead() - offset)) // rewind progress
+	atomic.StoreInt64(&x.read, offset)
 	return offset, nil
 }
 
 func (x *ProxyReaderAt) Read(p []byte) (int, error) {
-	if x.closed {
-		x.onRead(-int64(x.read)) // rewind progress
-		x.read = 0
-		x.closed = false
+	if x.closed.Load() {
+		x.onRead(-x.BytesRead()) // rewind progress
+		atomic.StoreInt64(&x.read, 0)
+		x.closed.Store(false)
 	}
 
-	if x.read == x.Len() {
+	if x.BytesRead() == x.len {
 		return 0, io.EOF
 	}
 	var n int
 	var err error
-	if len(p) > x.Len()-x.read {
-		n, err = x.ReadAt(p[:min(x.Len()-x.read, len(p))], x.off+int64(x.read))
+	if int64(len(p)) > x.len-x.BytesRead() {
+		n, err = x.ReadAt(p[:min(x.len-x.BytesRead(), int64(len(p)))], x.off+x.BytesRead())
 	} else {
-		n, err = x.ReadAt(p, x.off+int64(x.read))
-	}
-
-	if err == io.EOF {
-		x.eof = true
+		n, err = x.ReadAt(p, x.off+x.BytesRead())
 	}
 
 	if err != nil {
 		return n, err
 	}
 
-	x.read += n
+	atomic.AddInt64(&x.read, int64(n))
 	if x.onRead != nil {
 		x.onRead(int64(n))
 	}
@@ -96,20 +91,17 @@ func (x *ProxyReaderAt) Read(p []byte) (int, error) {
 }
 
 func (x *ProxyRead) Read(p []byte) (int, error) {
-	if x.read == x.Len() || x.closed {
+	if x.BytesRead() == x.len || x.closed.Load() {
 		return 0, io.EOF
 	}
 
-	n, err := x.Reader.Read(p[:min(x.Len()-x.read, len(p))])
-	if err == io.EOF {
-		x.eof = true
-	}
+	n, err := x.Reader.Read(p[:min(x.len-x.BytesRead(), int64(len(p)))])
 
 	if err != nil {
 		return n, err
 	}
 
-	x.read += n
+	atomic.AddInt64(&x.read, int64(n))
 	if x.onRead != nil {
 		x.onRead(int64(n))
 	}
@@ -118,11 +110,11 @@ func (x *ProxyRead) Read(p []byte) (int, error) {
 }
 
 func (x *ProxyReaderAt) Close() error {
-	x.closed = true
+	x.closed.Store(true)
 	return nil
 }
 
 func (x *ProxyRead) Close() error {
-	x.closed = true
+	x.closed.Store(true)
 	return nil
 }

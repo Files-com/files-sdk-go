@@ -62,7 +62,7 @@ func (f *FS) ClearCache() {
 type File struct {
 	*files_sdk.File
 	*FS
-	io.ReadCloser
+	ReadCloser        lib.AtomicValue[io.ReadCloser]
 	downloadRequestId string
 	MaxConnections    int
 	stat              bool
@@ -166,34 +166,39 @@ func (f *File) Stat() (goFs.FileInfo, error) {
 }
 
 func (f *File) Read(b []byte) (n int, err error) {
-	f.fileMutex.Lock()
-	defer f.fileMutex.Unlock()
-
-	if f.ReadCloser == nil {
-		err = f.readCloserInit()
+	f.ReadCloser.CompareAndUpdate(nil, func() io.ReadCloser {
+		var readCloser io.ReadCloser
+		readCloser, err = f.readCloserInit()
 		if downloadRequestExpired(err) {
 			f.Config.LogPath(f.File.Path, map[string]interface{}{"message": "downloadRequestExpired", "error": err})
+			f.fileMutex.Lock()
+
 			f.File.DownloadUri = "" // force a new query
 			*f.File, err = (&Client{Config: f.Config}).DownloadUri(files_sdk.FileDownloadParams{File: *f.File}, files_sdk.WithContext(f.Context))
 			if err == nil {
-				err = f.readCloserInit()
+				readCloser, err = f.readCloserInit()
 			}
+			f.fileMutex.Unlock()
 		}
 
 		if err != nil {
+			readCloser = nil
 			status, statusErr := (&Client{Config: f.Config}).DownloadRequestStatus(f.File.DownloadUri, f.downloadRequestId, files_sdk.WithContext(f.Context))
 			if statusErr != nil {
-				return n, err
+				err = statusErr
 			}
 			if !status.IsNil() {
-				return n, status
+				err = status
 			}
-
-			return
 		}
+		return readCloser
+	})
+
+	if err != nil {
+		return
 	}
 
-	return f.ReadCloser.Read(b)
+	return f.ReadCloser.Load().Read(b)
 }
 
 func parseSize(response *http.Response) (size int64, sizeTrust SizeTrust) {
@@ -229,7 +234,7 @@ func parseMaxConnections(response *http.Response) int {
 	return maxConnections
 }
 
-func (f *File) readCloserInit() (err error) {
+func (f *File) readCloserInit() (readCloser io.ReadCloser, err error) {
 	*f.File, err = (&Client{Config: f.Config}).Download(
 		files_sdk.FileDownloadParams{File: *f.File},
 		files_sdk.WithContext(f.Context),
@@ -241,11 +246,11 @@ func (f *File) readCloserInit() (err error) {
 				return &goFs.PathError{Path: f.File.Path, Err: err, Op: "read"}
 			}
 
-			f.ReadCloser = &ReadWrapper{ReadCloser: response.Body}
+			readCloser = &ReadWrapper{ReadCloser: response.Body}
 			return nil
 		}),
 	)
-	return err
+	return readCloser, err
 }
 
 type ReaderRange interface {
@@ -486,7 +491,8 @@ func downloadRequestExpired(err error) bool {
 	if err == nil {
 		return false
 	}
-	responseErr, ok := errors.Unwrap(err).(lib.ResponseError)
+	var responseErr lib.ResponseError
+	ok := errors.As(errors.Unwrap(err), &responseErr)
 	return ok && responseErr.StatusCode == http.StatusForbidden
 }
 
@@ -500,12 +506,12 @@ func (f *File) downloadURI() (err error) {
 func (f *File) Close() error {
 	f.fileMutex.Lock()
 	f.fileMutex.Unlock()
-	defer func() { f.ReadCloser = nil }()
-	switch f.ReadCloser.(type) {
+	defer func() { f.ReadCloser.Store(nil) }()
+	switch t := f.ReadCloser.Load().(type) {
 	case *ReadWrapper:
-		return ReaderCloserDownloadStatus{ReadWrapper: f.ReadCloser.(*ReadWrapper), file: f}.Close()
+		return ReaderCloserDownloadStatus{ReadWrapper: t, file: f}.Close()
 	default:
-		return ReaderCloserDownloadStatus{ReadWrapper: &ReadWrapper{ReadCloser: f.ReadCloser}, file: f}.Close()
+		return ReaderCloserDownloadStatus{ReadWrapper: &ReadWrapper{ReadCloser: t}, file: f}.Close()
 	}
 }
 
