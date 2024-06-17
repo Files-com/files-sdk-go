@@ -67,7 +67,7 @@ func Test_excludeFile(t *testing.T) {
 		}
 		uploadStatus.file.Size = 10
 		uploadStatus.Sync = false
-		assert.Equal(false, excludeFile(uploadStatus, false))
+		assert.False(excludeFile(uploadStatus, false))
 	})
 
 	t.Run("when sizes don't match", func(t *testing.T) {
@@ -76,7 +76,7 @@ func Test_excludeFile(t *testing.T) {
 			Sys: files_sdk.File{Size: 9},
 		}
 		uploadStatus.file.Size = 10
-		assert.Equal(false, excludeFile(uploadStatus, false))
+		assert.False(excludeFile(uploadStatus, false))
 		assert.Equal(nil, progressReportError)
 	})
 
@@ -85,12 +85,12 @@ func Test_excludeFile(t *testing.T) {
 			Sys: files_sdk.File{Size: 10},
 		}
 		uploadStatus.file.Size = 10
-		assert.Equal(true, excludeFile(uploadStatus, false))
+		assert.True(excludeFile(uploadStatus, false))
 	})
 
 	t.Run("There is no server version", func(t *testing.T) {
 		delete(mockFs, "test")
-		assert.Equal(false, excludeFile(uploadStatus, false))
+		assert.False(excludeFile(uploadStatus, false))
 	})
 
 	t.Run("when sizes do match on a deeply nested path", func(t *testing.T) {
@@ -105,7 +105,7 @@ func Test_excludeFile(t *testing.T) {
 			Mode: fs.ModeDir,
 		}
 		uploadStatus.file.Size = 10
-		assert.Equal(true, excludeFile(uploadStatus, false))
+		assert.True(excludeFile(uploadStatus, false))
 		uploadStatus = &oldUploadStatus
 	})
 
@@ -116,7 +116,7 @@ func Test_excludeFile(t *testing.T) {
 			Sys: files_sdk.File{Size: 10},
 		}
 		uploadStatus.file.Size = 10
-		assert.Equal(true, excludeFile(uploadStatus, false))
+		assert.True(excludeFile(uploadStatus, false))
 		uploadStatus.job.Type = directory.Dir
 		uploadStatus.Sync = false
 	})
@@ -128,21 +128,21 @@ func Test_excludeFile(t *testing.T) {
 			Sys: files_sdk.File{Size: 10},
 		}
 		uploadStatus.file.Size = 10
-		assert.Equal(true, excludeFile(uploadStatus, false))
+		assert.True(excludeFile(uploadStatus, false))
 		uploadStatus.Sync = false
 	})
 
 	t.Run("Ignore files", func(t *testing.T) {
 		job.Ignore, _ = ignore.New([]string{"*.css"}...)
 		uploadStatus.localPath = "main.css"
-		assert.Equal(true, excludeFile(uploadStatus, false))
+		assert.True(excludeFile(uploadStatus, false))
 
 		uploadStatus.localPath = "main.php"
-		assert.Equal(false, excludeFile(uploadStatus, false))
+		assert.False(excludeFile(uploadStatus, false))
 
 		job.Ignore, _ = ignore.New([]string{"*.css", "*.php"}...)
 		uploadStatus.localPath = "main.css"
-		assert.Equal(true, excludeFile(uploadStatus, false))
+		assert.True(excludeFile(uploadStatus, false))
 	})
 
 	t.Run("FeatureFlag incremental-updates", func(t *testing.T) {
@@ -271,7 +271,7 @@ func Test_excludeFile(t *testing.T) {
 			Sys: files_sdk.File{},
 		}
 		uploadStatus.NoOverwrite = true
-		assert.Equal(true, excludeFile(uploadStatus, false))
+		assert.True(excludeFile(uploadStatus, false))
 		assert.Equal(status.FileExists, uploadStatus.Status())
 	})
 
@@ -279,7 +279,7 @@ func Test_excludeFile(t *testing.T) {
 		uploadStatus, _, _ := init()
 		uploadStatus.NoOverwrite = true
 		uploadStatus.status = status.Queued
-		assert.Equal(false, excludeFile(uploadStatus, false))
+		assert.False(excludeFile(uploadStatus, false))
 		assert.Equal(status.Queued, uploadStatus.Status())
 	})
 }

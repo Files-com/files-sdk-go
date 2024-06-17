@@ -101,7 +101,7 @@ func TestResponseError1_UnmarshalJSON(t *testing.T) {
 	assert.Equal("not-authenticated/two-factor-authentication-error", subject.Type)
 	assert.Equal("Two Factor Authentication Error", subject.Title)
 	assert.Equal("Two Factor Authentication Error", subject.Errors[0].Title)
-	assert.Equal(false, subject.IsNil())
+	assert.False(subject.IsNil())
 }
 
 func TestResponseError2_UnmarshalJSON(t *testing.T) {
@@ -115,7 +115,7 @@ func TestResponseError2_UnmarshalJSON(t *testing.T) {
 	assert.Equal("processing-failure/model-save-error", subject.Type)
 	assert.Equal("Model Save Error", subject.Title)
 	assert.Equal("Hidden reason can't be blank2", subject.Errors[0].ErrorMessage)
-	assert.Equal(false, subject.IsNil())
+	assert.False(subject.IsNil())
 }
 
 func TestResponseError3_UnmarshalJSON(t *testing.T) {
@@ -128,7 +128,7 @@ func TestResponseError3_UnmarshalJSON(t *testing.T) {
 	assert.Equal("Internal server error, please contact support or the person who created your account.", subject.ErrorMessage)
 	assert.Equal(int(500), subject.HttpCode)
 	assert.Equal("", subject.Type)
-	assert.Equal(false, subject.IsNil())
+	assert.False(subject.IsNil())
 }
 
 func TestResponseError_UnmarshalJSON_Error(t *testing.T) {
@@ -140,7 +140,7 @@ func TestResponseError_UnmarshalJSON_Error(t *testing.T) {
 	assert.Equal(err.Error(), "unexpected end of JSON input")
 	assert.Equal("", subject.ErrorMessage)
 	assert.Equal("", subject.Type)
-	assert.Equal(true, subject.IsNil())
+	assert.True(subject.IsNil(), "Empty ErrorMessage should make IsNil() true")
 }
 
 func TestResponseError_UnmarshalJSON_Error2(t *testing.T) {
@@ -152,7 +152,7 @@ func TestResponseError_UnmarshalJSON_Error2(t *testing.T) {
 	assert.Error(err)
 	assert.Equal("", subject.ErrorMessage)
 	assert.Equal("", subject.Type)
-	assert.Equal(true, subject.IsNil())
+	assert.True(subject.IsNil(), "Empty ErrorMessage should make IsNil() true")
 }
 
 func TestResponseError_UnmarshalJSON_Error3(t *testing.T) {
@@ -164,7 +164,7 @@ func TestResponseError_UnmarshalJSON_Error3(t *testing.T) {
 	assert.Nil(err, "The response is not an error, but a list response.")
 	assert.Equal("", subject.ErrorMessage)
 	assert.Equal("", subject.Type)
-	assert.Equal(true, subject.IsNil())
+	assert.True(subject.IsNil(), "Empty ErrorMessage should make IsNil() true")
 }
 
 func TestResponseError_UnmarshalJSON_Error4(t *testing.T) {
@@ -176,5 +176,5 @@ func TestResponseError_UnmarshalJSON_Error4(t *testing.T) {
 	assert.Error(err, "\n<body></body>\n")
 	assert.Equal("", subject.ErrorMessage)
 	assert.Equal("", subject.Type)
-	assert.Equal(true, subject.IsNil())
+	assert.True(subject.IsNil(), "Empty ErrorMessage should make IsNil() true")
 }

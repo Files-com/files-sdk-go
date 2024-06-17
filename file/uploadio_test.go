@@ -133,7 +133,7 @@ func TestClient_UploadIO_Cancel_Restart(t *testing.T) {
 				assert.Equal(1, len(part.requests))
 			}
 		}
-		assert.Equal(true, part.Successful())
+		assert.True(part.Successful())
 		assert.LessOrEqual(len(part.requests), 2)
 		uploadedBytes += part.bytes
 		assert.NoError(part.error)
@@ -229,7 +229,7 @@ func TestClient_UploadIO_Cancel_Restart_Expired(t *testing.T) {
 				assert.Equal(1, len(part.requests))
 			}
 		}
-		assert.Equal(true, part.Successful())
+		assert.True(part.Successful())
 		assert.LessOrEqual(len(part.requests), 2)
 		uploadedBytes += part.bytes
 		assert.NoError(part.error)

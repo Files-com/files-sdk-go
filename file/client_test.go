@@ -289,7 +289,7 @@ func TestClient_UploadFolder_Relative(t *testing.T) {
 	assert.Equal(int64(7), job.Statuses[1].TransferBytes())
 	assert.Equal(int64(7), job.Statuses[2].TransferBytes())
 	assert.Equal(int64(21), job.TotalBytes(status.Valid...))
-	assert.Equal(true, job.All(status.Ended...))
+	assert.True(job.All(status.Ended...), "All jobs should have ended")
 
 	deletePath(client, "relative")
 }
@@ -306,15 +306,15 @@ func TestClient_Uploader(t *testing.T) {
 	job := client.Uploader(UploaderParams{LocalPath: uploadPath})
 	job.Start()
 	job.Wait()
-	assert.Equal(true, job.Started.Called())
-	assert.Equal(true, job.Scanning.Called())
-	assert.Equal(true, job.EndScanning.Called())
-	assert.Equal(true, job.Finished.Called())
-	assert.Equal(false, job.Canceled.Called())
+	assert.True(job.Started.Called(), "Job did not start")
+	assert.True(job.Scanning.Called(), "Job did not start scanning")
+	assert.True(job.EndScanning.Called(), "Job did not end scanning")
+	assert.True(job.Finished.Called(), "Job was not finished")
+	assert.False(job.Canceled.Called(), "Job should not have been cancelled")
 	assert.Equal("LICENSE", job.Files()[0].DisplayName)
 	assert.Equal(1, job.Count())
 	assert.Equal(int64(1102), job.TotalBytes())
-	assert.Equal(true, job.All(status.Ended...))
+	assert.True(job.All(status.Ended...), "All jobs should have ended")
 
 	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
@@ -883,7 +883,7 @@ func TestClient_UploadFolder_Move_Source(t *testing.T) {
 	}, status.Complete)
 	job.Start()
 	job.Wait()
-	assert.Equal(false, job.Any(status.Errored))
+	assert.False(job.Any(status.Errored), "A job errored")
 	assert.NoError(err)
 	assert.Equal("move source", log.Action)
 	assert.Equal(filepath.Join(tmpDir, "move-source", "test-moved-source.text"), log.Path)
@@ -931,10 +931,10 @@ func TestClient_UploadFolder_Move_Source_Missing_Dir(t *testing.T) {
 	stat, err := os.Stat(log.Path)
 	assert.NoError(err)
 	assert.Equal("upload-move-source.text", stat.Name())
-	assert.Equal(false, stat.IsDir())
+	assert.Falsef(stat.IsDir(), "%s is a directory.", log.Path)
 
 	_, err = os.Stat(filepath.Join(tmpDir, "move-source-dir", "upload-move-source.text"))
-	assert.Equal(true, os.IsNotExist(err))
+	assert.Truef(os.IsNotExist(err), "%s/%s was not deleted", "move-source-dir", "upload-move-source.text")
 }
 
 func TestClient_Downloader_Move_Source_Missing_Dir(t *testing.T) {
@@ -989,7 +989,7 @@ func TestClient_Downloader_Move_Source_Missing_Dir(t *testing.T) {
 
 	job.Wait()
 
-	assert.Equal(false, job.Any(status.Errored))
+	assert.False(job.Any(status.Errored), "A job errored")
 
 	movedDir, err := client.Find(files_sdk.FileFindParams{Path: "TestClient_Downloader_Move_Source_Missing_Dir-moved"})
 	assert.NoError(err)
@@ -1023,7 +1023,7 @@ func TestClient_UploadFile_Delete_Source(t *testing.T) {
 	}, status.Complete)
 	job.Start()
 	job.Wait()
-	assert.Equal(false, job.Any(status.Errored))
+	assert.False(job.Any(status.Errored), "A job errored")
 	assert.NoError(err)
 	assert.Equal("delete source", log.Action)
 	assert.Equal(fi.LocalPath, log.Path)
@@ -1151,6 +1151,7 @@ func TestClient_Uploader_Directories_With_DeleteSource(t *testing.T) {
 	defer r.Stop()
 	assert := assert.New(t)
 	tmpDir := t.TempDir()
+	fmt.Printf("TmpDir: %s", tmpDir)
 	require.NoError(t, os.Mkdir(filepath.Join(tmpDir, "empty_dir"), 0750))
 
 	filesAndStatus := []struct {
@@ -1205,11 +1206,11 @@ func TestClient_Uploader_Directories_With_DeleteSource(t *testing.T) {
 	assert.NoError(job.Statuses[2].Err())
 
 	_, dirErr := os.Stat(filepath.Join(tmpDir, "empty_dir"))
-	assert.Equal(false, os.IsNotExist(dirErr))
+	assert.False(os.IsNotExist(dirErr), "empty_dir should exist")
 
 	for _, path := range []string{filepath.Join("A", "empty_dir"), filepath.Join("A", "1.text"), filepath.Join("B", "1.text"), filepath.Join("B", "Z", "1.text"), filepath.Join("B", "Z", "empty_dir"), filepath.Join("B", "Z")} {
 		_, dirErr = os.Stat(filepath.Join(tmpDir, path))
-		assert.Equal(true, os.IsNotExist(dirErr))
+		assert.Truef(os.IsNotExist(dirErr), "%s should not exist", path)
 	}
 }
 

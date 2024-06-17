@@ -79,7 +79,7 @@ func TestJob_TransferRate(t *testing.T) {
 	assert.InDelta(int64(200), job.TransferRate(), 100)
 	time.Sleep(1 * time.Second)
 	assert.InDelta(int64(200), job.TransferRate(), 100)
-	assert.Equal(false, job.Idle(), "Nothing has happened recently so rate is zero")
+	assert.False(job.Idle(), "Nothing has happened recently so rate is zero")
 }
 
 func TestJob_ETA(t *testing.T) {
@@ -184,9 +184,9 @@ func TestJob_Sub(t *testing.T) {
 	assert.Equal(2, job.Sub(status.Excluded...).Count())
 	assert.Equal(1, job.Sub(status.Excluded...).Count(status.Skipped))
 	assert.Equal(6, job.Count())
-	assert.Equal(true, job.Any(status.Skipped))
-	assert.Equal(true, job.Any(status.Ignored))
-	assert.Equal(false, job.Any(status.Running...))
+	assert.True(job.Any(status.Skipped), "A job should be skipped")
+	assert.True(job.Any(status.Ignored), "A job should be ignored")
+	assert.False(job.Any(status.Running...), "No jobs should be running")
 }
 
 func TestJob_Percentage(t *testing.T) {
@@ -227,11 +227,11 @@ func TestJob_Called(t *testing.T) {
 
 	job.Start()
 
-	assert.Equal(true, job.Started.Called())
-	assert.Equal(false, job.Finished.Called())
+	assert.True(job.Started.Called())
+	assert.False(job.Finished.Called())
 	job.Finish()
-	assert.Equal(true, job.Finished.Called())
+	assert.True(job.Finished.Called())
 	job.ClearCalled()
-	assert.Equal(false, job.Started.Called())
-	assert.Equal(false, job.Finished.Called())
+	assert.False(job.Started.Called())
+	assert.False(job.Finished.Called())
 }

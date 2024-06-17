@@ -35,7 +35,7 @@ func TestRetryTransfers(t *testing.T) {
 				}, status.Retrying)
 				job.SetEventsReporter(events)
 				RetryByPolicy(context.Background(), job, RetryPolicy{Type: RetryAll, RetryCount: 1}, false)
-				assert.Equal(true, job.All(status.Complete))
+				assert.True(job.All(status.Complete))
 				assert.Equal(3, len(retryingEvents), "sets a retrying status before starting")
 			})
 		})
@@ -44,13 +44,13 @@ func TestRetryTransfers(t *testing.T) {
 			buildDownloadTest(func(job *Job) {
 				job.Start(false)
 				RetryByPolicy(context.Background(), job, RetryPolicy{Type: RetryUnfinished, RetryCount: 1}, false)
-				assert.Equal(false, job.All(status.Complete))
+				assert.False(job.All(status.Complete))
 				assert.Equal(2, job.Count(status.Complete))
 				assert.Equal(1, job.Count(status.Queued))
-				assert.Equal(true, job.Started.Called())
-				assert.Equal(false, job.Scanning.Called())
-				assert.Equal(false, job.EndScanning.Called())
-				assert.Equal(false, job.Finished.Called())
+				assert.True(job.Started.Called())
+				assert.False(job.Scanning.Called())
+				assert.False(job.EndScanning.Called())
+				assert.False(job.Finished.Called())
 				job.Finish()
 			})
 		})
@@ -60,14 +60,14 @@ func TestRetryTransfers(t *testing.T) {
 				job.Start()
 				job.Finish() // Finish already called, this happens in the desktop app
 				RetryByPolicy(context.Background(), job, RetryPolicy{Type: RetryUnfinished, RetryCount: 1}, true)
-				assert.Equal(false, job.All(status.Complete))
+				assert.False(job.All(status.Complete))
 				assert.Equal(2, job.Count(status.Complete))
 				assert.Equal(1, job.Count(status.Queued))
 
-				assert.Equal(true, job.Started.Called())
-				assert.Equal(true, job.Scanning.Called())
-				assert.Equal(true, job.EndScanning.Called())
-				assert.Equal(true, job.Finished.Called())
+				assert.True(job.Started.Called())
+				assert.True(job.Scanning.Called())
+				assert.True(job.EndScanning.Called())
+				assert.True(job.Finished.Called())
 			})
 		})
 	})
@@ -75,17 +75,17 @@ func TestRetryTransfers(t *testing.T) {
 		t.Run("RetryAll RetryCount 1", func(t *testing.T) {
 			buildUploadTest(func(job *Job, _ *MockUploader) {
 				RetryByPolicy(context.Background(), job, RetryPolicy{Type: RetryAll, RetryCount: 1}, false)
-				assert.Equal(true, job.All(status.Complete))
+				assert.True(job.All(status.Complete))
 			})
 		})
 
 		t.Run("RetryUnfinished RetryCount 1", func(t *testing.T) {
 			buildUploadTest(func(job *Job, _ *MockUploader) {
 				RetryByPolicy(context.Background(), job, RetryPolicy{Type: RetryUnfinished, RetryCount: 1}, false)
-				assert.Equal(false, job.All(status.Complete))
+				assert.False(job.All(status.Complete))
 				assert.Equal(2, job.Count(status.Complete))
 				assert.Equal(1, job.Count(status.Queued))
-				assert.Equal(false, job.Running(), "does change the original time")
+				assert.False(job.Running(), "does change the original time")
 			})
 		})
 
@@ -93,10 +93,10 @@ func TestRetryTransfers(t *testing.T) {
 			buildUploadTest(func(job *Job, uploader *MockUploader) {
 				uploader.uploadError = fmt.Errorf("bad things")
 				RetryByPolicy(context.Background(), job, RetryPolicy{Type: RetryUnfinished, RetryCount: 2, Backoff: -1}, false)
-				assert.Equal(false, job.All(status.Complete))
+				assert.False(job.All(status.Complete))
 				assert.Equal(1, job.Count(status.Complete))
 				assert.Equal(2, job.Count(status.Errored))
-				assert.Equal(false, job.Running(), "does change the original time")
+				assert.False(job.Running(), "does change the original time")
 			}, status.Errored, status.Errored, status.Complete)
 		})
 
@@ -111,7 +111,7 @@ func TestRetryTransfers(t *testing.T) {
 				uploadStatusErrored := job.Statuses[0].(*UploadStatus)
 				uploadStatusErrored.status = status.Complete
 				RetryByPolicy(context.Background(), job, RetryPolicy{Type: RetryUnfinished, RetryCount: 1}, false)
-				assert.Equal(false, job.All(status.Complete))
+				assert.False(job.All(status.Complete))
 				assert.Equal(2, job.Count(status.Complete))
 				assert.Equal(1, job.Count(status.Queued))
 				assert.Equal(startTime, job.StartTime(), "does not change the original time")

@@ -3,6 +3,7 @@ package file
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -52,15 +53,14 @@ func (ad DeleteEmptySourceFolders) Call(f JobFile, opts ...files_sdk.RequestResp
 	switch f.Direction {
 	case direction.UploadType:
 		localFolder := filepath.Dir(f.LocalPath)
-		err := filepath.Walk(localFolder, func(path string, info os.FileInfo, err error) error {
+		err := filepath.WalkDir(localFolder, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
 
-			if info.IsDir() {
-				return removeEmptyDir(path, info)
+			if d.IsDir() {
+				return removeEmptyDir(path)
 			}
-
 			return nil
 		})
 		if err != nil {
@@ -77,7 +77,7 @@ func (ad DeleteEmptySourceFolders) Call(f JobFile, opts ...files_sdk.RequestResp
 	}
 }
 
-func removeEmptyDir(path string, info os.FileInfo) error {
+func removeEmptyDir(path string) error {
 	files, err := os.ReadDir(path)
 	if err != nil {
 		return err
