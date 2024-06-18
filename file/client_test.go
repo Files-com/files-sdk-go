@@ -1143,6 +1143,7 @@ func TestClient_Uploader_Directories(t *testing.T) {
 // A, and B should be completely removed because there was a file uploaded from those hierarchies
 // empty_dir/ does not get removed because there were no files uploaded from that directory.
 func TestClient_Uploader_Directories_With_DeleteSource(t *testing.T) {
+	t.Skip("Skip: Flaky until https://gitlab.av/repository/files-sdk-generator/-/merge_requests/977 ships")
 	client, r, err := CreateClient("TestClient_Uploader_Directories_With_DeleteSource")
 	if err != nil {
 		t.Fatal(err)
