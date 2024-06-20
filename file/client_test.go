@@ -798,12 +798,12 @@ func TestClient_Downloader_Delete_Source_Folder(t *testing.T) {
 	job.RegisterFileEvent(func(f JobFile) {
 		fi = f
 		DeleteSource{Config: client.Config, Direction: job.Direction}.Call(f)
-		log, err = DeleteEmptySourceFolders{Config: client.Config, Direction: job.Direction}.Call(f)
 	}, status.Complete)
 	job.Start()
 	<-job.Finished.C
+
+	log, err = DeleteEmptySourceFolders{Config: client.Config, Direction: job.Direction}.Call(*job)
 	assert.NoError(err)
-	assert.Equal("delete source folder", log.Action)
 	assert.Equal(filepath.Dir(fi.RemotePath), log.Path)
 
 	_, err = client.Find(files_sdk.FileFindParams{Path: lib.UrlJoinNoEscape("test-delete-source", "test.text")})
@@ -1141,7 +1141,7 @@ func TestClient_Uploader_Directories(t *testing.T) {
 //   - empty_dir/
 //
 // A, and B should be completely removed because there was a file uploaded from those hierarchies
-// empty_dir/ does not get removed because there were no files uploaded from that directory.
+// empty_dir/ does get removed because there were no files in that directory and it's part of the source pathj.
 func TestClient_Uploader_Directories_With_DeleteSource(t *testing.T) {
 	t.Skip("Skip: Flaky until https://gitlab.av/repository/files-sdk-generator/-/merge_requests/977 ships")
 	client, r, err := CreateClient("TestClient_Uploader_Directories_With_DeleteSource")
@@ -1152,7 +1152,7 @@ func TestClient_Uploader_Directories_With_DeleteSource(t *testing.T) {
 	defer r.Stop()
 	assert := assert.New(t)
 	tmpDir := t.TempDir()
-	fmt.Printf("TmpDir: %s", tmpDir)
+
 	require.NoError(t, os.Mkdir(filepath.Join(tmpDir, "empty_dir"), 0750))
 
 	filesAndStatus := []struct {
@@ -1184,7 +1184,6 @@ func TestClient_Uploader_Directories_With_DeleteSource(t *testing.T) {
 
 	job.RegisterFileEvent(func(f JobFile) {
 		DeleteSource{Config: client.Config, Direction: job.Direction}.Call(f)
-		DeleteEmptySourceFolders{Config: client.Config, Direction: job.Direction}.Call(f)
 	}, status.Complete)
 
 	job.Start()
@@ -1206,11 +1205,10 @@ func TestClient_Uploader_Directories_With_DeleteSource(t *testing.T) {
 	assert.Equal(status.Complete, job.Statuses[2].Status())
 	assert.NoError(job.Statuses[2].Err())
 
-	_, dirErr := os.Stat(filepath.Join(tmpDir, "empty_dir"))
-	assert.False(os.IsNotExist(dirErr), "empty_dir should exist")
+	DeleteEmptySourceFolders{Config: client.Config, Direction: job.Direction}.Call(*job)
 
-	for _, path := range []string{filepath.Join("A", "empty_dir"), filepath.Join("A", "1.text"), filepath.Join("B", "1.text"), filepath.Join("B", "Z", "1.text"), filepath.Join("B", "Z", "empty_dir"), filepath.Join("B", "Z")} {
-		_, dirErr = os.Stat(filepath.Join(tmpDir, path))
+	for _, path := range []string{filepath.Join(tmpDir, "empty_dir"), filepath.Join("A", "empty_dir"), filepath.Join("A", "1.text"), filepath.Join("B", "1.text"), filepath.Join("B", "Z", "1.text"), filepath.Join("B", "Z", "empty_dir"), filepath.Join("B", "Z")} {
+		_, dirErr := os.Stat(filepath.Join(tmpDir, path))
 		assert.Truef(os.IsNotExist(dirErr), "%s should not exist", path)
 	}
 }
