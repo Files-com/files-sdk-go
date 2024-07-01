@@ -24,6 +24,7 @@ func (s Snapshot) Identifier() interface{} {
 type SnapshotCollection []Snapshot
 
 type SnapshotListParams struct {
+	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 

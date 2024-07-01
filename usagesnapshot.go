@@ -32,6 +32,7 @@ func (u UsageSnapshot) Identifier() interface{} {
 type UsageSnapshotCollection []UsageSnapshot
 
 type UsageSnapshotListParams struct {
+	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 

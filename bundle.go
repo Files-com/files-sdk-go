@@ -81,6 +81,7 @@ func (u BundlePermissionsEnum) Enum() map[string]BundlePermissionsEnum {
 
 type BundleListParams struct {
 	UserId     int64                  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	Action     string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy     map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter     Bundle                 `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	FilterGt   map[string]interface{} `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -110,7 +111,6 @@ type BundleCreateParams struct {
 	PathTemplate                    string                `url:"path_template,omitempty" required:"false" json:"path_template,omitempty" path:"path_template"`
 	PathTemplateTimeZone            string                `url:"path_template_time_zone,omitempty" required:"false" json:"path_template_time_zone,omitempty" path:"path_template_time_zone"`
 	Permissions                     BundlePermissionsEnum `url:"permissions,omitempty" required:"false" json:"permissions,omitempty" path:"permissions"`
-	PreviewOnly                     *bool                 `url:"preview_only,omitempty" required:"false" json:"preview_only,omitempty" path:"preview_only"`
 	RequireRegistration             *bool                 `url:"require_registration,omitempty" required:"false" json:"require_registration,omitempty" path:"require_registration"`
 	ClickwrapId                     int64                 `url:"clickwrap_id,omitempty" required:"false" json:"clickwrap_id,omitempty" path:"clickwrap_id"`
 	InboxId                         int64                 `url:"inbox_id,omitempty" required:"false" json:"inbox_id,omitempty" path:"inbox_id"`
@@ -150,7 +150,6 @@ type BundleUpdateParams struct {
 	PathTemplate                    string                `url:"path_template,omitempty" required:"false" json:"path_template,omitempty" path:"path_template"`
 	PathTemplateTimeZone            string                `url:"path_template_time_zone,omitempty" required:"false" json:"path_template_time_zone,omitempty" path:"path_template_time_zone"`
 	Permissions                     BundlePermissionsEnum `url:"permissions,omitempty" required:"false" json:"permissions,omitempty" path:"permissions"`
-	PreviewOnly                     *bool                 `url:"preview_only,omitempty" required:"false" json:"preview_only,omitempty" path:"preview_only"`
 	RequireRegistration             *bool                 `url:"require_registration,omitempty" required:"false" json:"require_registration,omitempty" path:"require_registration"`
 	RequireShareRecipient           *bool                 `url:"require_share_recipient,omitempty" required:"false" json:"require_share_recipient,omitempty" path:"require_share_recipient"`
 	SendEmailReceiptToUploader      *bool                 `url:"send_email_receipt_to_uploader,omitempty" required:"false" json:"send_email_receipt_to_uploader,omitempty" path:"send_email_receipt_to_uploader"`

@@ -175,6 +175,7 @@ func (u RemoteServerFilesAgentPermissionSetEnum) Enum() map[string]RemoteServerF
 }
 
 type RemoteServerListParams struct {
+	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 

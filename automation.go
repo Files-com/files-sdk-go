@@ -22,6 +22,7 @@ type Automation struct {
 	IgnoreLockedFolders              *bool                  `json:"ignore_locked_folders,omitempty" path:"ignore_locked_folders,omitempty" url:"ignore_locked_folders,omitempty"`
 	Interval                         string                 `json:"interval,omitempty" path:"interval,omitempty" url:"interval,omitempty"`
 	LastModifiedAt                   *time.Time             `json:"last_modified_at,omitempty" path:"last_modified_at,omitempty" url:"last_modified_at,omitempty"`
+	LegacyFolderMatching             *bool                  `json:"legacy_folder_matching,omitempty" path:"legacy_folder_matching,omitempty" url:"legacy_folder_matching,omitempty"`
 	Name                             string                 `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	OverwriteFiles                   *bool                  `json:"overwrite_files,omitempty" path:"overwrite_files,omitempty" url:"overwrite_files,omitempty"`
 	Path                             string                 `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
@@ -83,6 +84,7 @@ func (u AutomationEnum) Enum() map[string]AutomationEnum {
 }
 
 type AutomationListParams struct {
+	Action      string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy      map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter      Automation             `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	FilterGt    map[string]interface{} `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -108,6 +110,7 @@ type AutomationCreateParams struct {
 	SyncIds                          string                 `url:"sync_ids,omitempty" required:"false" json:"sync_ids,omitempty" path:"sync_ids"`
 	UserIds                          string                 `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty" path:"user_ids"`
 	GroupIds                         string                 `url:"group_ids,omitempty" required:"false" json:"group_ids,omitempty" path:"group_ids"`
+	Schedule                         map[string]interface{} `url:"schedule,omitempty" required:"false" json:"schedule,omitempty" path:"schedule"`
 	ScheduleDaysOfWeek               []int64                `url:"schedule_days_of_week,omitempty" required:"false" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimesOfDay               []string               `url:"schedule_times_of_day,omitempty" required:"false" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
 	ScheduleTimeZone                 string                 `url:"schedule_time_zone,omitempty" required:"false" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
@@ -116,6 +119,7 @@ type AutomationCreateParams struct {
 	Disabled                         *bool                  `url:"disabled,omitempty" required:"false" json:"disabled,omitempty" path:"disabled"`
 	FlattenDestinationStructure      *bool                  `url:"flatten_destination_structure,omitempty" required:"false" json:"flatten_destination_structure,omitempty" path:"flatten_destination_structure"`
 	IgnoreLockedFolders              *bool                  `url:"ignore_locked_folders,omitempty" required:"false" json:"ignore_locked_folders,omitempty" path:"ignore_locked_folders"`
+	LegacyFolderMatching             *bool                  `url:"legacy_folder_matching,omitempty" required:"false" json:"legacy_folder_matching,omitempty" path:"legacy_folder_matching"`
 	Name                             string                 `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 	OverwriteFiles                   *bool                  `url:"overwrite_files,omitempty" required:"false" json:"overwrite_files,omitempty" path:"overwrite_files"`
 	PathTimeZone                     string                 `url:"path_time_zone,omitempty" required:"false" json:"path_time_zone,omitempty" path:"path_time_zone"`
@@ -143,6 +147,7 @@ type AutomationUpdateParams struct {
 	SyncIds                          string                 `url:"sync_ids,omitempty" required:"false" json:"sync_ids,omitempty" path:"sync_ids"`
 	UserIds                          string                 `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty" path:"user_ids"`
 	GroupIds                         string                 `url:"group_ids,omitempty" required:"false" json:"group_ids,omitempty" path:"group_ids"`
+	Schedule                         map[string]interface{} `url:"schedule,omitempty" required:"false" json:"schedule,omitempty" path:"schedule"`
 	ScheduleDaysOfWeek               []int64                `url:"schedule_days_of_week,omitempty" required:"false" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimesOfDay               []string               `url:"schedule_times_of_day,omitempty" required:"false" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
 	ScheduleTimeZone                 string                 `url:"schedule_time_zone,omitempty" required:"false" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
@@ -151,6 +156,7 @@ type AutomationUpdateParams struct {
 	Disabled                         *bool                  `url:"disabled,omitempty" required:"false" json:"disabled,omitempty" path:"disabled"`
 	FlattenDestinationStructure      *bool                  `url:"flatten_destination_structure,omitempty" required:"false" json:"flatten_destination_structure,omitempty" path:"flatten_destination_structure"`
 	IgnoreLockedFolders              *bool                  `url:"ignore_locked_folders,omitempty" required:"false" json:"ignore_locked_folders,omitempty" path:"ignore_locked_folders"`
+	LegacyFolderMatching             *bool                  `url:"legacy_folder_matching,omitempty" required:"false" json:"legacy_folder_matching,omitempty" path:"legacy_folder_matching"`
 	Name                             string                 `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
 	OverwriteFiles                   *bool                  `url:"overwrite_files,omitempty" required:"false" json:"overwrite_files,omitempty" path:"overwrite_files"`
 	PathTimeZone                     string                 `url:"path_time_zone,omitempty" required:"false" json:"path_time_zone,omitempty" path:"path_time_zone"`

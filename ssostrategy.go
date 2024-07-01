@@ -62,6 +62,7 @@ func (s SsoStrategy) Identifier() interface{} {
 type SsoStrategyCollection []SsoStrategy
 
 type SsoStrategyListParams struct {
+	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 

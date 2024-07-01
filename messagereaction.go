@@ -19,8 +19,9 @@ func (m MessageReaction) Identifier() interface{} {
 type MessageReactionCollection []MessageReaction
 
 type MessageReactionListParams struct {
-	UserId    int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	MessageId int64 `url:"message_id,omitempty" required:"true" json:"message_id,omitempty" path:"message_id"`
+	UserId    int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	Action    string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
+	MessageId int64  `url:"message_id,omitempty" required:"true" json:"message_id,omitempty" path:"message_id"`
 	ListParams
 }
 

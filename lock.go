@@ -28,6 +28,7 @@ func (l Lock) Identifier() interface{} {
 type LockCollection []Lock
 
 type LockListForParams struct {
+	Action          string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	Path            string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	IncludeChildren *bool  `url:"include_children,omitempty" required:"false" json:"include_children,omitempty" path:"include_children"`
 	ListParams

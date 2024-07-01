@@ -32,6 +32,7 @@ func (a As2Station) Identifier() interface{} {
 type As2StationCollection []As2Station
 
 type As2StationListParams struct {
+	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 

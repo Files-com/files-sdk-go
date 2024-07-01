@@ -27,7 +27,8 @@ type InboxRegistration struct {
 type InboxRegistrationCollection []InboxRegistration
 
 type InboxRegistrationListParams struct {
-	FolderBehaviorId int64 `url:"folder_behavior_id,omitempty" required:"false" json:"folder_behavior_id,omitempty" path:"folder_behavior_id"`
+	Action           string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
+	FolderBehaviorId int64  `url:"folder_behavior_id,omitempty" required:"false" json:"folder_behavior_id,omitempty" path:"folder_behavior_id"`
 	ListParams
 }
 

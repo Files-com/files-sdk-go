@@ -22,8 +22,9 @@ func (g GroupUser) Identifier() interface{} {
 type GroupUserCollection []GroupUser
 
 type GroupUserListParams struct {
-	UserId  int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	GroupId int64 `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
+	UserId  int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	Action  string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
+	GroupId int64  `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
 	ListParams
 }
 
