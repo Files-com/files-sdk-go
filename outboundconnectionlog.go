@@ -21,6 +21,7 @@ type OutboundConnectionLog struct {
 	DurationMs         int64      `json:"duration_ms,omitempty" path:"duration_ms,omitempty" url:"duration_ms,omitempty"`
 	BytesUploaded      int64      `json:"bytes_uploaded,omitempty" path:"bytes_uploaded,omitempty" url:"bytes_uploaded,omitempty"`
 	BytesDownloaded    int64      `json:"bytes_downloaded,omitempty" path:"bytes_downloaded,omitempty" url:"bytes_downloaded,omitempty"`
+	ListCount          int64      `json:"list_count,omitempty" path:"list_count,omitempty" url:"list_count,omitempty"`
 }
 
 func (o OutboundConnectionLog) Identifier() interface{} {
