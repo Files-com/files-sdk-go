@@ -241,11 +241,12 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 				return
 			}
 			// server is not after local
-			if !os.IsNotExist(localStatErr) && reportStatus.Job().Sync && remoteStat.Size() == localStat.Size() {
+			if !os.IsNotExist(localStatErr) && remoteStat.Size() == localStat.Size() {
 				// Local version is the same or newer
 				reportStatus.Job().UpdateStatus(status.Skipped, reportStatus, nil)
 				return
 			}
+			reportStatus.Job().UpdateStatus(status.Compared, reportStatus, nil)
 		}
 
 		if reportStatus.dryRun {

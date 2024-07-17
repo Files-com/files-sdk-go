@@ -18,6 +18,7 @@ var (
 	Indexed     = Status{"indexed", 0}
 	Retrying    = Status{"retrying", 0}
 	Queued      = Status{"queued", 1}
+	Compared    = Status{"compared", 1}
 	Downloading = Status{"downloading", 2}
 	Uploading   = Status{"uploading", 2}
 	Skipped     = Status{"skipped", 3}
@@ -27,9 +28,9 @@ var (
 	Canceled    = Status{"canceled", 5}
 	Errored     = Status{"errored", 5}
 
-	Included = []GetStatus{Indexed, Queued, Retrying, Downloading, Uploading, Complete, Canceled, Errored}
+	Included = []GetStatus{Indexed, Queued, Compared, Retrying, Downloading, Uploading, Complete, Canceled, Errored}
 	Excluded = []GetStatus{Skipped, Ignored, FileExists}
-	Valid    = []GetStatus{Indexed, Queued, Retrying, Downloading, Uploading, Complete}
+	Valid    = []GetStatus{Indexed, Queued, Compared, Retrying, Downloading, Uploading, Complete}
 	Invalid  = []GetStatus{Null, Canceled, Errored, Skipped, Ignored, FileExists}
 	Running  = []GetStatus{Downloading, Uploading}
 	Ended    = []GetStatus{Complete, Canceled, Errored, Skipped, Ignored, FileExists}

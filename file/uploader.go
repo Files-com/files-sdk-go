@@ -350,6 +350,7 @@ func excludeFile(uploadStatus *UploadStatus, incrementalUpdates bool) bool {
 		var responseError files_sdk.ResponseError
 		ok := errors.As(err, &responseError)
 		if !found || (ok && responseError.Type == "not-found") {
+			uploadStatus.Job().UpdateStatus(status.Compared, uploadStatus, nil)
 			uploadStatus.Job().Logger.Printf("sync %v not found on destination", uploadStatus.RemotePath())
 			return false
 		}
@@ -362,14 +363,17 @@ func excludeFile(uploadStatus *UploadStatus, incrementalUpdates bool) bool {
 		}
 		if incrementalUpdates && !file.ModTime().IsZero() {
 			if file.ModTime().After(*uploadStatus.File().Mtime) {
+				uploadStatus.Job().UpdateStatus(status.Skipped, uploadStatus, nil)
 				uploadStatus.Job().Logger.Printf("sync incremental-updates %v server has a newer version", uploadStatus.RemotePath())
 				return true
 			}
 			if file.ModTime().Truncate(time.Minute).Equal(uploadStatus.File().Mtime.Truncate(time.Minute)) {
+				uploadStatus.Job().UpdateStatus(status.Skipped, uploadStatus, nil)
 				uploadStatus.Job().Logger.Printf("sync incremental-updates %v both times are within the same minute", uploadStatus.RemotePath())
 				return true
 			}
 		}
+		uploadStatus.Job().UpdateStatus(status.Compared, uploadStatus, nil)
 		uploadStatus.Job().Logger.Printf("sync %v found on destination with non matching sizes: local: %v, remote: %v", uploadStatus.RemotePath(), uploadStatus.File().Size, file.Size)
 	}
 	return false
