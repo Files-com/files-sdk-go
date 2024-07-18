@@ -2,58 +2,50 @@
 
 The Files.com Go client library provides convenient access to the Files.com API from applications written in the Go language.
 
-
 ## Installation
 
-Make sure your project is using Go Modules (it will have a `go.mod` file in its
-root if it already is):
+Make sure your project is using Go Modules (it will have a `go.mod` file in its root if it already is):
 
-``` sh
+```sh
 go mod init
 ```
 
 Then, reference files-sdk-go in a Go program with `import`:
 
-``` go
+```go
 import (
     "github.com/Files-com/files-sdk-go/v3"
     "github.com/Files-com/files-sdk-go/v3/folder"
 )
 ```
 
-Run any of the normal `go` commands (`build`/`install`/`test`). The Go
-toolchain will resolve and fetch the files module automatically.
-
+Run any of the normal `go` commands (`build`/`install`/`test`). The Go toolchain will resolve and fetch the files module automatically.
 
 ## Documentation
 
-
 ### Setting API Key
-
 
 #### Setting by ENV
 
-``` sh
+```sh
 export FILES_API_KEY="XXXX-XXXX..."
 ```
-
 
 #### Set Global Variable
 
 ```go
 import (
-    "github.com/Files-com/files-sdk-go/v3"
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
 )
 
- files_sdk.GlobalConfig.APIKey = "XXXX-XXXX..."
+files_sdk.GlobalConfig.APIKey = "XXXX-XXXX..."
 ```
-
 
 #### Set Per Client
 
 ```go
 import (
-    "github.com/Files-com/files-sdk-go/v3"
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
     "github.com/Files-com/files-sdk-go/v3/file"
 )
 
@@ -61,13 +53,12 @@ config := files_sdk.Config{APIKey: "XXXX-XXXX..."}.Init()
 client := file.Client{Config: config}
 ```
 
-
 ### List
 
 ```go
 import (
-	files_sdk "github.com/Files-com/files-sdk-go/v3"
-	folder "github.com/Files-com/files-sdk-go/v3/folder"
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    folder "github.com/Files-com/files-sdk-go/v3/folder"
     "fmt"
 )
 
@@ -86,13 +77,12 @@ func main() {
 
 ```
 
-
 ### Upload a File
 
 ```go
 import (
-	files_sdk "github.com/Files-com/files-sdk-go/v3"
-	file "github.com/Files-com/files-sdk-go/v3/file"
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    file "github.com/Files-com/files-sdk-go/v3/file"
 )
 
 func main() {
@@ -106,11 +96,13 @@ func main() {
 }
 ```
 
-
 #### Via io.Reader
 
 ```go
-import file "github.com/Files-com/files-sdk-go/v3/file"
+import (
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    file "github.com/Files-com/files-sdk-go/v3/file"
+)
 
 func main() {
     client := file.Client{Config: files_sdk.GlobalConfig}
@@ -123,11 +115,13 @@ func main() {
 }
 ```
 
-
 ### Download a File
 
 ```go
-import file "github.com/Files-com/files-sdk-go/v3/file"
+import (
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    file "github.com/Files-com/files-sdk-go/v3/file"
+)
 
 func main() {
     client := file.Client{Config: files_sdk.GlobalConfig}
@@ -139,7 +133,6 @@ func main() {
 }
 ```
 
-
 ### Docker
 
 ```shell
@@ -147,9 +140,8 @@ docker build . --tag files-sdk-go:latest
 docker run --workdir /app --volume ${PWD}:/app -it files-sdk-go
 ```
 
-
 ## Getting Support
 
 The Files.com team is happy to help with any SDK Integration challenges you may face.
 
-Just email support@files.com and we'll get the process started.
+Just email <support@files.com> and we'll get the process started.
