@@ -35,6 +35,7 @@ type Site struct {
 	BundleRegistrationNotifications          string                 `json:"bundle_registration_notifications,omitempty" path:"bundle_registration_notifications,omitempty" url:"bundle_registration_notifications,omitempty"`
 	BundleRequireRegistration                *bool                  `json:"bundle_require_registration,omitempty" path:"bundle_require_registration,omitempty" url:"bundle_require_registration,omitempty"`
 	BundleRequireShareRecipient              *bool                  `json:"bundle_require_share_recipient,omitempty" path:"bundle_require_share_recipient,omitempty" url:"bundle_require_share_recipient,omitempty"`
+	BundleRequireNote                        *bool                  `json:"bundle_require_note,omitempty" path:"bundle_require_note,omitempty" url:"bundle_require_note,omitempty"`
 	BundleUploadReceiptNotifications         string                 `json:"bundle_upload_receipt_notifications,omitempty" path:"bundle_upload_receipt_notifications,omitempty" url:"bundle_upload_receipt_notifications,omitempty"`
 	BundleWatermarkAttachment                Image                  `json:"bundle_watermark_attachment,omitempty" path:"bundle_watermark_attachment,omitempty" url:"bundle_watermark_attachment,omitempty"`
 	BundleWatermarkValue                     map[string]interface{} `json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value,omitempty" url:"bundle_watermark_value,omitempty"`
@@ -211,6 +212,7 @@ type SiteUpdateParams struct {
 	MotdUseForSftp                           *bool                  `url:"motd_use_for_sftp,omitempty" required:"false" json:"motd_use_for_sftp,omitempty" path:"motd_use_for_sftp"`
 	LeftNavigationVisibility                 map[string]interface{} `url:"left_navigation_visibility,omitempty" required:"false" json:"left_navigation_visibility,omitempty" path:"left_navigation_visibility"`
 	AdditionalTextFileTypes                  []string               `url:"additional_text_file_types,omitempty" required:"false" json:"additional_text_file_types,omitempty" path:"additional_text_file_types"`
+	BundleRequireNote                        *bool                  `url:"bundle_require_note,omitempty" required:"false" json:"bundle_require_note,omitempty" path:"bundle_require_note"`
 	SessionExpiry                            string                 `url:"session_expiry,omitempty" required:"false" json:"session_expiry,omitempty" path:"session_expiry"`
 	SslRequired                              *bool                  `url:"ssl_required,omitempty" required:"false" json:"ssl_required,omitempty" path:"ssl_required"`
 	TlsDisabled                              *bool                  `url:"tls_disabled,omitempty" required:"false" json:"tls_disabled,omitempty" path:"tls_disabled"`
