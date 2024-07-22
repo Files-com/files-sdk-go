@@ -62,6 +62,7 @@ type RemoteServer struct {
 	LinodeBucket                          string `json:"linode_bucket,omitempty" path:"linode_bucket,omitempty" url:"linode_bucket,omitempty"`
 	LinodeAccessKey                       string `json:"linode_access_key,omitempty" path:"linode_access_key,omitempty" url:"linode_access_key,omitempty"`
 	LinodeRegion                          string `json:"linode_region,omitempty" path:"linode_region,omitempty" url:"linode_region,omitempty"`
+	SupportsVersioning                    *bool  `json:"supports_versioning,omitempty" path:"supports_versioning,omitempty" url:"supports_versioning,omitempty"`
 	AwsSecretKey                          string `json:"aws_secret_key,omitempty" path:"aws_secret_key,omitempty" url:"aws_secret_key,omitempty"`
 	Password                              string `json:"password,omitempty" path:"password,omitempty" url:"password,omitempty"`
 	PrivateKey                            string `json:"private_key,omitempty" path:"private_key,omitempty" url:"private_key,omitempty"`
