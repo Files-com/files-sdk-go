@@ -39,6 +39,7 @@ import (
 )
 
 files_sdk.GlobalConfig.APIKey = "XXXX-XXXX..."
+client := file.Client{Config: files_sdk.GlobalConfig}
 ```
 
 #### Set Per Client
