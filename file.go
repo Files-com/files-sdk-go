@@ -65,12 +65,13 @@ type EtagsParam struct {
 
 // Download file
 type FileDownloadParams struct {
-	Path              string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
-	Action            string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
-	PreviewSize       string `url:"preview_size,omitempty" required:"false" json:"preview_size,omitempty" path:"preview_size"`
-	WithPreviews      *bool  `url:"with_previews,omitempty" required:"false" json:"with_previews,omitempty" path:"with_previews"`
-	WithPriorityColor *bool  `url:"with_priority_color,omitempty" required:"false" json:"with_priority_color,omitempty" path:"with_priority_color"`
-	File              File   `url:"-,omitempty" required:"false" json:"-,omitempty"`
+	Path              string     `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
+	Action            string     `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
+	PreviewSize       string     `url:"preview_size,omitempty" required:"false" json:"preview_size,omitempty" path:"preview_size"`
+	WithPreviews      *bool      `url:"with_previews,omitempty" required:"false" json:"with_previews,omitempty" path:"with_previews"`
+	WithPriorityColor *bool      `url:"with_priority_color,omitempty" required:"false" json:"with_priority_color,omitempty" path:"with_priority_color"`
+	PointInTime       *time.Time `url:"point_in_time,omitempty" required:"false" json:"point_in_time,omitempty" path:"point_in_time"`
+	File              File       `url:"-,omitempty" required:"false" json:"-,omitempty"`
 }
 
 type FileCreateParams struct {
