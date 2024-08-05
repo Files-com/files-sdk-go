@@ -5,7 +5,6 @@ import (
 )
 
 type ListParams struct {
-	Page     int64  `json:"page,omitempty" url:"page,omitempty" required:"false"`
 	PerPage  int64  `json:"per_page,omitempty" url:"per_page,omitempty" required:"false"`
 	Cursor   string `json:"cursor,omitempty" url:"cursor,omitempty" required:"false"`
 	MaxPages int64  `json:"-" url:"-"`
@@ -77,6 +76,7 @@ type Iter struct {
 	ListParams   ListParamsContainer
 	Params       []interface{}
 	CurrentIndex int
+	Page         int64
 	Values       *[]interface{}
 	Cursor       string
 	Error        error
@@ -116,22 +116,18 @@ func (i *Iter) ExportParams() (lib.ExportValues, error) {
 		listParamValues.Set(key, value[0])
 	}
 
-	if i.GetCursor() != "" {
-		listParamValues.Del("page")
-	}
-
 	return lib.ExportValues{Values: listParamValues}, nil
 }
 
 func (i *Iter) GetPage() bool {
-	if i.GetParams().MaxPages != 0 && i.GetParams().Page == i.GetParams().MaxPages {
+	if i.GetParams().MaxPages != 0 && i.Page >= i.GetParams().MaxPages {
 		return false
 	}
 
 	i.CurrentIndex = 0
+	i.Page += 1
 
-	i.GetParams().Page += 1
-	if i.GetParams().Page == 2 && i.Cursor == "" {
+	if i.Values != nil && i.Cursor == "" {
 		return false
 	}
 	params, _ := i.ExportParams()

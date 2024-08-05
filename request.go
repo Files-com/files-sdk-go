@@ -24,7 +24,6 @@ func (r Request) Identifier() interface{} {
 type RequestCollection []Request
 
 type RequestListParams struct {
-	Action string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Mine   *bool                  `url:"mine,omitempty" required:"false" json:"mine,omitempty" path:"mine"`
 	Path   string                 `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
@@ -32,7 +31,6 @@ type RequestListParams struct {
 }
 
 type RequestGetFolderParams struct {
-	Action string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Mine   *bool                  `url:"mine,omitempty" required:"false" json:"mine,omitempty" path:"mine"`
 	Path   string                 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`

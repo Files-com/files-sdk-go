@@ -40,7 +40,7 @@ interactions:
     headers:
       User-Agent:
       - Files.com Go SDK
-    url: https://app.files.com/api/rest/v1/folders/empty%20folder?page=1
+    url: https://app.files.com/api/rest/v1/folders/empty%20folder
     method: GET
   response:
     body: '[]'

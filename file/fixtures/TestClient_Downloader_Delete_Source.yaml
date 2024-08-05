@@ -166,7 +166,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/test-delete-source?page=1
+    url: https://app.files.com/api/rest/v1/folders/test-delete-source
     method: GET
   response:
     body: '[{"path":"test-delete-source/test.text","display_name":"test.text","type":"file","size":9,"created_at":"2022-10-26T16:26:17Z","mtime":"2022-10-26T16:26:17Z","provided_mtime":"2010-11-17T20:34:58Z","crc32":"b669a0d4","md5":"15e081c59a53cf6aadd83c7dc0e831d3","mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}]'

@@ -670,7 +670,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/tmp/TestUploader-uploader-copy_contents_of_foo_to_bar/dest-root/Dest/bar?page=1
+    url: https://app.files.com/api/rest/v1/folders/tmp/TestUploader-uploader-copy_contents_of_foo_to_bar/dest-root/Dest/bar
     method: GET
   response:
     body: '[{"path":"tmp/TestUploader-uploader-copy_contents_of_foo_to_bar/dest-root/Dest/bar/baz.txt","display_name":"baz.txt","type":"file","size":0,"created_at":"2023-02-06T17:27:30Z","mtime":"2023-02-06T17:27:30Z","provided_mtime":"2023-02-06T17:27:25Z","crc32":"0","md5":"d41d8cd98f00b204e9800998ecf8427e","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'

@@ -61,7 +61,6 @@ func (u As2PartnerServerCertificateEnum) Enum() map[string]As2PartnerServerCerti
 }
 
 type As2PartnerListParams struct {
-	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	ListParams
 }
 

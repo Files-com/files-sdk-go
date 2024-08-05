@@ -22,7 +22,6 @@ type InboxRecipient struct {
 type InboxRecipientCollection []InboxRecipient
 
 type InboxRecipientListParams struct {
-	Action  string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy  map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter  InboxRecipient         `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	InboxId int64                  `url:"inbox_id,omitempty" required:"true" json:"inbox_id,omitempty" path:"inbox_id"`

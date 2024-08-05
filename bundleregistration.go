@@ -28,8 +28,7 @@ type BundleRegistration struct {
 type BundleRegistrationCollection []BundleRegistration
 
 type BundleRegistrationListParams struct {
-	Action   string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
-	BundleId int64  `url:"bundle_id,omitempty" required:"false" json:"bundle_id,omitempty" path:"bundle_id"`
+	BundleId int64 `url:"bundle_id,omitempty" required:"false" json:"bundle_id,omitempty" path:"bundle_id"`
 	ListParams
 }
 

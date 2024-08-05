@@ -33,7 +33,6 @@ type HistoryListForFileParams struct {
 	StartAt *time.Time             `url:"start_at,omitempty" required:"false" json:"start_at,omitempty" path:"start_at"`
 	EndAt   *time.Time             `url:"end_at,omitempty" required:"false" json:"end_at,omitempty" path:"end_at"`
 	Display string                 `url:"display,omitempty" required:"false" json:"display,omitempty" path:"display"`
-	Action  string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy  map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Path    string                 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	ListParams
@@ -43,7 +42,6 @@ type HistoryListForFolderParams struct {
 	StartAt *time.Time             `url:"start_at,omitempty" required:"false" json:"start_at,omitempty" path:"start_at"`
 	EndAt   *time.Time             `url:"end_at,omitempty" required:"false" json:"end_at,omitempty" path:"end_at"`
 	Display string                 `url:"display,omitempty" required:"false" json:"display,omitempty" path:"display"`
-	Action  string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy  map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Path    string                 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	ListParams
@@ -53,7 +51,6 @@ type HistoryListForUserParams struct {
 	StartAt *time.Time             `url:"start_at,omitempty" required:"false" json:"start_at,omitempty" path:"start_at"`
 	EndAt   *time.Time             `url:"end_at,omitempty" required:"false" json:"end_at,omitempty" path:"end_at"`
 	Display string                 `url:"display,omitempty" required:"false" json:"display,omitempty" path:"display"`
-	Action  string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy  map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	UserId  int64                  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"user_id"`
 	ListParams
@@ -63,7 +60,6 @@ type HistoryListLoginsParams struct {
 	StartAt *time.Time             `url:"start_at,omitempty" required:"false" json:"start_at,omitempty" path:"start_at"`
 	EndAt   *time.Time             `url:"end_at,omitempty" required:"false" json:"end_at,omitempty" path:"end_at"`
 	Display string                 `url:"display,omitempty" required:"false" json:"display,omitempty" path:"display"`
-	Action  string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy  map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
@@ -72,7 +68,6 @@ type HistoryListParams struct {
 	StartAt      *time.Time             `url:"start_at,omitempty" required:"false" json:"start_at,omitempty" path:"start_at"`
 	EndAt        *time.Time             `url:"end_at,omitempty" required:"false" json:"end_at,omitempty" path:"end_at"`
 	Display      string                 `url:"display,omitempty" required:"false" json:"display,omitempty" path:"display"`
-	Action       string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy       map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       History                `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`

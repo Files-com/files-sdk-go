@@ -26,7 +26,6 @@ func (e EmailIncomingMessage) Identifier() interface{} {
 type EmailIncomingMessageCollection []EmailIncomingMessage
 
 type EmailIncomingMessageListParams struct {
-	Action       string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy       map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       EmailIncomingMessage   `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	FilterGt     map[string]interface{} `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`

@@ -22,7 +22,6 @@ type BundleRecipient struct {
 type BundleRecipientCollection []BundleRecipient
 
 type BundleRecipientListParams struct {
-	Action   string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy   map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter   BundleRecipient        `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	BundleId int64                  `url:"bundle_id,omitempty" required:"true" json:"bundle_id,omitempty" path:"bundle_id"`

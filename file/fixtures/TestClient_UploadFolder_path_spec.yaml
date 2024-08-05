@@ -231,7 +231,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_foo_to_dest?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_foo_to_dest
     method: GET
   response:
     body: '[{"path":"files-dest-copy_foo_to_dest/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:11Z","mtime":"2022-10-31T17:21:13Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
@@ -293,7 +293,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_foo_to_dest/dest?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_foo_to_dest/dest
     method: GET
   response:
     body: '[{"path":"files-dest-copy_foo_to_dest/dest/foo","display_name":"foo","type":"directory","size":null,"created_at":"2022-10-31T17:21:11Z","mtime":"2022-10-31T17:21:13Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
@@ -355,7 +355,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_foo_to_dest/dest/foo?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_foo_to_dest/dest/foo
     method: GET
   response:
     body: '[{"path":"files-dest-copy_foo_to_dest/dest/foo/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:13Z","mtime":"2022-10-31T17:21:13Z","provided_mtime":"2022-10-31T17:21:10Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
@@ -838,7 +838,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_foo?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_foo
     method: GET
   response:
     body: '[{"path":"files-dest-copy_contents_of_foo_to_dest_foo/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:19Z","mtime":"2022-10-31T17:21:21Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
@@ -900,7 +900,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_foo/dest?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_foo/dest
     method: GET
   response:
     body: '[{"path":"files-dest-copy_contents_of_foo_to_dest_foo/dest/foo","display_name":"foo","type":"directory","size":null,"created_at":"2022-10-31T17:21:20Z","mtime":"2022-10-31T17:21:21Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
@@ -962,7 +962,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_foo/dest/foo?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_foo/dest/foo
     method: GET
   response:
     body: '[{"path":"files-dest-copy_contents_of_foo_to_dest_foo/dest/foo/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:21Z","mtime":"2022-10-31T17:21:21Z","provided_mtime":"2022-10-31T17:21:19Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
@@ -1445,7 +1445,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_bar?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_bar
     method: GET
   response:
     body: '[{"path":"files-dest-copy_contents_of_foo_to_dest_bar/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:28Z","mtime":"2022-10-31T17:21:30Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
@@ -1507,7 +1507,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_bar/dest?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_bar/dest
     method: GET
   response:
     body: '[{"path":"files-dest-copy_contents_of_foo_to_dest_bar/dest/bar","display_name":"bar","type":"directory","size":null,"created_at":"2022-10-31T17:21:29Z","mtime":"2022-10-31T17:21:30Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
@@ -1569,7 +1569,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_bar/dest/bar?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_contents_of_foo_to_dest_bar/dest/bar
     method: GET
   response:
     body: '[{"path":"files-dest-copy_contents_of_foo_to_dest_bar/dest/bar/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:30Z","mtime":"2022-10-31T17:21:30Z","provided_mtime":"2022-10-31T17:21:27Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
@@ -2051,7 +2051,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest
     method: GET
   response:
     body: '[{"path":"files-dest-copy_baz-txt_to_dest/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:36Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
@@ -2113,7 +2113,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest/dest?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest/dest
     method: GET
   response:
     body: '[{"path":"files-dest-copy_baz-txt_to_dest/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:38Z","mtime":"2022-10-31T17:21:38Z","provided_mtime":"2022-10-31T17:21:36Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
@@ -2563,7 +2563,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest_without_name?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest_without_name
     method: GET
   response:
     body: '[{"path":"files-dest-copy_baz-txt_to_dest_without_name/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:43Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
@@ -2625,7 +2625,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest_without_name/dest?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest_without_name/dest
     method: GET
   response:
     body: '[{"path":"files-dest-copy_baz-txt_to_dest_without_name/dest/baz.txt","display_name":"baz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:45Z","mtime":"2022-10-31T17:21:45Z","provided_mtime":"2022-10-31T17:21:43Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
@@ -3076,7 +3076,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest_with_rename?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest_with_rename
     method: GET
   response:
     body: '[{"path":"files-dest-copy_baz-txt_to_dest_with_rename/dest","display_name":"dest","type":"directory","size":null,"created_at":"2022-10-31T17:21:51Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}]'
@@ -3138,7 +3138,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest_with_rename/dest?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_dest_with_rename/dest
     method: GET
   response:
     body: '[{"path":"files-dest-copy_baz-txt_to_dest_with_rename/dest/taz.txt","display_name":"taz.txt","type":"file","size":15,"created_at":"2022-10-31T17:21:52Z","mtime":"2022-10-31T17:21:52Z","provided_mtime":"2022-10-31T17:21:50Z","crc32":"e6162ccd","md5":"ddf66d49f5b58593a322d1e85538cc77","mime_type":"text/plain","region":"us-east-1","permissions":"lrwd"}]'
@@ -3553,7 +3553,7 @@ interactions:
       - close
       User-Agent:
       - Files.com Go SDK 2.0.0-beta
-    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_current_working_directory?page=1
+    url: https://app.files.com/api/rest/v1/folders/files-dest-copy_baz-txt_to_current_working_directory
     method: GET
   response:
     body: '[]'

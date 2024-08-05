@@ -41,7 +41,6 @@ type Automation struct {
 	UserIds                          []int64                `json:"user_ids,omitempty" path:"user_ids,omitempty" url:"user_ids,omitempty"`
 	Value                            map[string]interface{} `json:"value,omitempty" path:"value,omitempty" url:"value,omitempty"`
 	WebhookUrl                       string                 `json:"webhook_url,omitempty" path:"webhook_url,omitempty" url:"webhook_url,omitempty"`
-	Destination                      string                 `json:"destination,omitempty" path:"destination,omitempty" url:"destination,omitempty"`
 }
 
 func (a Automation) Identifier() interface{} {
@@ -84,7 +83,6 @@ func (u AutomationEnum) Enum() map[string]AutomationEnum {
 }
 
 type AutomationListParams struct {
-	Action      string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy      map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter      Automation             `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	FilterGt    map[string]interface{} `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -101,7 +99,6 @@ type AutomationFindParams struct {
 
 type AutomationCreateParams struct {
 	Source                           string                 `url:"source,omitempty" required:"false" json:"source,omitempty" path:"source"`
-	Destination                      string                 `url:"destination,omitempty" required:"false" json:"destination,omitempty" path:"destination"`
 	Destinations                     []string               `url:"destinations,omitempty" required:"false" json:"destinations,omitempty" path:"destinations"`
 	DestinationReplaceFrom           string                 `url:"destination_replace_from,omitempty" required:"false" json:"destination_replace_from,omitempty" path:"destination_replace_from"`
 	DestinationReplaceTo             string                 `url:"destination_replace_to,omitempty" required:"false" json:"destination_replace_to,omitempty" path:"destination_replace_to"`
@@ -110,7 +107,6 @@ type AutomationCreateParams struct {
 	SyncIds                          string                 `url:"sync_ids,omitempty" required:"false" json:"sync_ids,omitempty" path:"sync_ids"`
 	UserIds                          string                 `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty" path:"user_ids"`
 	GroupIds                         string                 `url:"group_ids,omitempty" required:"false" json:"group_ids,omitempty" path:"group_ids"`
-	Schedule                         map[string]interface{} `url:"schedule,omitempty" required:"false" json:"schedule,omitempty" path:"schedule"`
 	ScheduleDaysOfWeek               []int64                `url:"schedule_days_of_week,omitempty" required:"false" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimesOfDay               []string               `url:"schedule_times_of_day,omitempty" required:"false" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
 	ScheduleTimeZone                 string                 `url:"schedule_time_zone,omitempty" required:"false" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
@@ -138,7 +134,6 @@ type AutomationManualRunParams struct {
 type AutomationUpdateParams struct {
 	Id                               int64                  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
 	Source                           string                 `url:"source,omitempty" required:"false" json:"source,omitempty" path:"source"`
-	Destination                      string                 `url:"destination,omitempty" required:"false" json:"destination,omitempty" path:"destination"`
 	Destinations                     []string               `url:"destinations,omitempty" required:"false" json:"destinations,omitempty" path:"destinations"`
 	DestinationReplaceFrom           string                 `url:"destination_replace_from,omitempty" required:"false" json:"destination_replace_from,omitempty" path:"destination_replace_from"`
 	DestinationReplaceTo             string                 `url:"destination_replace_to,omitempty" required:"false" json:"destination_replace_to,omitempty" path:"destination_replace_to"`
@@ -147,7 +142,6 @@ type AutomationUpdateParams struct {
 	SyncIds                          string                 `url:"sync_ids,omitempty" required:"false" json:"sync_ids,omitempty" path:"sync_ids"`
 	UserIds                          string                 `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty" path:"user_ids"`
 	GroupIds                         string                 `url:"group_ids,omitempty" required:"false" json:"group_ids,omitempty" path:"group_ids"`
-	Schedule                         map[string]interface{} `url:"schedule,omitempty" required:"false" json:"schedule,omitempty" path:"schedule"`
 	ScheduleDaysOfWeek               []int64                `url:"schedule_days_of_week,omitempty" required:"false" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimesOfDay               []string               `url:"schedule_times_of_day,omitempty" required:"false" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
 	ScheduleTimeZone                 string                 `url:"schedule_time_zone,omitempty" required:"false" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`

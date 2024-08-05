@@ -165,7 +165,7 @@ interactions:
     headers:
       User-Agent:
       - Files.com Go SDK 1.0
-    url: https://app.files.com/api/rest/v1/folders/test-delete-source-folder?page=1
+    url: https://app.files.com/api/rest/v1/folders/test-delete-source-folder
     method: GET
   response:
     body: '[{"path":"test-delete-source-folder/test.text","created_by_id":null,"created_by_api_key_id":2503727,"created_by_as2_incoming_message_id":null,"created_by_automation_id":null,"created_by_bundle_registration_id":null,"created_by_inbox_id":null,"created_by_remote_server_id":null,"created_by_remote_server_sync_id":null,"custom_metadata":{},"display_name":"test.text","type":"file","size":9,"created_at":"2024-05-30T15:30:59Z","last_modified_by_id":null,"last_modified_by_api_key_id":null,"last_modified_by_automation_id":null,"last_modified_by_bundle_registration_id":null,"last_modified_by_remote_server_id":null,"last_modified_by_remote_server_sync_id":null,"mtime":"2024-05-30T15:30:59Z","provided_mtime":"2010-11-17T20:34:58Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}]'

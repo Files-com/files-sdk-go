@@ -329,7 +329,7 @@ interactions:
           - close
         User-Agent:
           - Files.com Go SDK 2.0.0-beta
-      url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder/nested_1/nested_2?page=1&per_page=1
+      url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder/nested_1/nested_2?per_page=1
       method: GET
     response:
       body: '[{"path":"TestClient_DownloadFolder/nested_1/nested_2/nested_3","display_name":"nested_3","type":"directory","size":null,"created_at":"2022-07-16T23:15:10Z","mtime":"2022-10-25T23:42:50Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}]'
@@ -395,7 +395,7 @@ interactions:
           - close
         User-Agent:
           - Files.com Go SDK 2.0.0-beta
-      url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder/nested_1/nested_2?page=3&per_page=1
+      url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder/nested_1/nested_2?per_page=1
       method: GET
     response:
       body: '[]'
@@ -493,7 +493,7 @@ interactions:
           - close
         User-Agent:
           - Files.com Go SDK 2.0.0-beta
-      url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder?page=1
+      url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder
       method: GET
     response:
       body: '[{"path":"TestClient_DownloadFolder/nested_1","display_name":"nested_1","type":"directory","size":null,"created_at":"2022-07-16T23:15:06Z","mtime":"2022-10-25T23:42:50Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}]'
@@ -524,7 +524,7 @@ interactions:
           - close
         User-Agent:
           - Files.com Go SDK 2.0.0-beta
-      url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder/nested_1?page=1
+      url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder/nested_1
       method: GET
     response:
       body: '[{"path":"TestClient_DownloadFolder/nested_1/nested_2","display_name":"nested_2","type":"directory","size":null,"created_at":"2022-07-16T23:15:07Z","mtime":"2022-10-25T23:42:50Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false}]'
@@ -555,7 +555,7 @@ interactions:
           - close
         User-Agent:
           - Files.com Go SDK 2.0.0-beta
-      url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder/nested_1/nested_2?page=1
+      url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder/nested_1/nested_2
       method: GET
     response:
       body: '[{"path":"TestClient_DownloadFolder/nested_1/nested_2/nested_3","display_name":"nested_3","type":"directory","size":null,"created_at":"2022-07-16T23:15:10Z","mtime":"2022-10-25T23:42:50Z","provided_mtime":null,"crc32":null,"md5":null,"permissions":"lrwd","subfolders_locked?":false},{"path":"TestClient_DownloadFolder/nested_1/nested_2/3.text","display_name":"3.text","type":"file","size":9,"created_at":"2022-10-25T23:42:49Z","mtime":"2022-10-25T23:42:49Z","provided_mtime":"2010-11-17T20:34:58Z","crc32":"b669a0d4","md5":"15e081c59a53cf6aadd83c7dc0e831d3","mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}]'
@@ -617,7 +617,7 @@ interactions:
           - close
         User-Agent:
           - Files.com Go SDK 2.0.0-beta
-      url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder/nested_1/nested_2/nested_3?page=1
+      url: https://app.files.com/api/rest/v1/folders/TestClient_DownloadFolder/nested_1/nested_2/nested_3
       method: GET
     response:
       body: '[{"path":"TestClient_DownloadFolder/nested_1/nested_2/nested_3/4.text","display_name":"4.text","type":"file","size":9,"created_at":"2022-10-25T23:42:50Z","mtime":"2022-10-25T23:42:50Z","provided_mtime":"2010-11-17T20:34:58Z","crc32":"b669a0d4","md5":"15e081c59a53cf6aadd83c7dc0e831d3","mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}]'

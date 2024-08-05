@@ -27,7 +27,6 @@ func (g Group) Identifier() interface{} {
 type GroupCollection []Group
 
 type GroupListParams struct {
-	Action       string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	SortBy       map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       Group                  `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`

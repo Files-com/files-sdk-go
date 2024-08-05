@@ -31,7 +31,6 @@ func (o OutboundConnectionLog) Identifier() interface{} {
 type OutboundConnectionLogCollection []OutboundConnectionLog
 
 type OutboundConnectionLogListParams struct {
-	Action       string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
 	Filter       OutboundConnectionLog  `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
 	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	ListParams

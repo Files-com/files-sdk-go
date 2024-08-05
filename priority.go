@@ -18,8 +18,7 @@ func (p Priority) Identifier() interface{} {
 type PriorityCollection []Priority
 
 type PriorityListParams struct {
-	Action string `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
-	Path   string `url:"path,omitempty" required:"true" json:"path,omitempty" path:"path"`
+	Path string `url:"path,omitempty" required:"true" json:"path,omitempty" path:"path"`
 	ListParams
 }
 
