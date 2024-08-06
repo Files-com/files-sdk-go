@@ -19,6 +19,7 @@ type HistoryExportResult struct {
 	Destination            string `json:"destination,omitempty" path:"destination,omitempty" url:"destination,omitempty"`
 	Ip                     string `json:"ip,omitempty" path:"ip,omitempty" url:"ip,omitempty"`
 	Username               string `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
+	UserIsFromParentSite   *bool  `json:"user_is_from_parent_site,omitempty" path:"user_is_from_parent_site,omitempty" url:"user_is_from_parent_site,omitempty"`
 	Action                 string `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
 	FailureType            string `json:"failure_type,omitempty" path:"failure_type,omitempty" url:"failure_type,omitempty"`
 	Interface              string `json:"interface,omitempty" path:"interface,omitempty" url:"interface,omitempty"`
