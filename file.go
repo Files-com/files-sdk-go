@@ -124,7 +124,7 @@ type FileMoveParams struct {
 	Overwrite   *bool  `url:"overwrite,omitempty" required:"false" json:"overwrite,omitempty" path:"overwrite"`
 }
 
-// Begin file upload
+// Begin File Upload
 type FileBeginUploadParams struct {
 	Path         string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
 	MkdirParents *bool  `url:"mkdir_parents,omitempty" required:"false" json:"mkdir_parents,omitempty" path:"mkdir_parents"`
