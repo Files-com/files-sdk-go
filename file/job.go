@@ -19,7 +19,6 @@ import (
 	"github.com/chilts/sid"
 	"github.com/hashicorp/go-retryablehttp"
 	ignore "github.com/sabhiram/go-gitignore"
-	"github.com/tunabay/go-infounit"
 )
 
 type EventsReporter map[status.Status][]reporterSettings
@@ -237,7 +236,7 @@ func (r *Job) UpdateStatusWithBytes(status status.GetStatus, file IFile, bytesCo
 	file.IncrementTransferBytes(bytesCount)
 
 	if bytesCount > 0 {
-		r.Meter.Record(time.Now(), infounit.ByteCount(bytesCount))
+		r.Meter.Record(time.Now(), uint64(bytesCount))
 	}
 
 	if status != file.Status() {
@@ -347,18 +346,18 @@ func (r *Job) CountFunc(call func(IFile) bool, t ...status.GetStatus) int {
 
 func (r *Job) Idle() bool {
 	ago := time.Second * 3
-	now := r.Meter.BitRate(time.Now()).Convert(infounit.BitPerSecond)
-	since := r.Meter.BitRate(time.Now().Add(-ago)).Convert(infounit.BitPerSecond)
+	now := r.Meter.BitRate(time.Now())
+	since := r.Meter.BitRate(time.Now().Add(-ago))
 	return now == 0 && since == 0
 }
 
 func (r *Job) TransferRate() int64 {
-	return int64(r.Meter.BitRate(time.Now()).Convert(infounit.BitPerSecond) / 8)
+	return int64(r.Meter.BitRate(time.Now()) / 8)
 }
 
 func (r *Job) FinalTransferRate() int64 {
 	_, _, b := r.Meter.Total(time.Now())
-	return int64(b.Convert(infounit.BitPerSecond) / 8)
+	return int64(b / 8)
 }
 
 func (r *Job) FilesRate() float64 {

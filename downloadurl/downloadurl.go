@@ -4,8 +4,6 @@ import (
 	"net/url"
 	"strconv"
 	"time"
-
-	"github.com/itchyny/timefmt-go"
 )
 
 type URL struct {
@@ -44,7 +42,7 @@ var (
 	filesDate      = expire{"X-Files-Date", "X-Files-Expires", ""}
 	googleDate     = expire{"X-Goog-Date", "X-Goog-Expires", ""}
 	azureBlob      = expire{"sp", "", "se"}
-	timeDateFormat = "%Y%m%dT%H%M%SZ"
+	timeDateFormat = "20060102T150405Z"
 )
 
 var Dates = []expire{amazonS3, filesDate, googleDate, azureBlob}
@@ -55,12 +53,12 @@ func (d *URL) parseTime() (err error) {
 		if parser.expireDate != "" {
 			query := (&url.URL{RawQuery: date}).Query()
 			if len(query[parser.expireDate]) == 1 {
-				d.Time, err = timefmt.Parse(query[parser.expireDate][0], timeDateFormat)
+				d.Time, err = time.Parse(timeDateFormat, query[parser.expireDate][0])
 			} else {
 				continue
 			}
 		} else {
-			d.Time, err = timefmt.Parse(date, timeDateFormat)
+			d.Time, err = time.Parse(timeDateFormat, date)
 		}
 
 		if parser.expire != "" {
@@ -78,7 +76,7 @@ func (d *URL) parseTime() (err error) {
 }
 
 func (d *URL) Valid(within time.Duration) (remaining time.Duration, valid bool) {
-	remaining = d.Time.Sub(time.Now())
+	remaining = time.Until(d.Time)
 	valid = remaining >= within
 	return
 }

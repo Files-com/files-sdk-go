@@ -3,8 +3,10 @@ package file
 import (
 	"net/url"
 	"time"
+)
 
-	"github.com/itchyny/timefmt-go"
+var (
+	timeDateFormat = "20060102T150405Z"
 )
 
 type DownloadUri string
@@ -27,17 +29,17 @@ func (d DownloadUri) ToTime() (t time.Time, err error) {
 		return t, err
 	}
 	expires := u.Query().Get("X-Amz-Date")
-	t, err = timefmt.Parse(expires, "%Y%m%dT%H%M%SZ")
+	t, err = time.Parse(timeDateFormat, expires)
 	if err == nil {
 		return t, err
 	}
 	expires = u.Query().Get("X-Files-Date")
-	t, err = timefmt.Parse(expires, "%Y%m%dT%H%M%SZ")
+	t, err = time.Parse(timeDateFormat, expires)
 	if err == nil {
 		return t, err
 	}
 	expires = u.Query().Get("X-Goog-Date")
-	t, err = timefmt.Parse(expires, "%Y%m%dT%H%M%SZ")
+	t, err = time.Parse(timeDateFormat, expires)
 	return
 }
 

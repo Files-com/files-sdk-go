@@ -6,8 +6,6 @@ import (
 	"math"
 	"sync"
 	"time"
-
-	"github.com/tunabay/go-infounit"
 )
 
 // ErrInvalidMeterParameter is the error thrown when a parameter is invalid.
@@ -23,7 +21,7 @@ type Meter struct {
 	cur, last, first    *MeterItem
 	started, closed     bool
 	startedAt, closedAt time.Time
-	totalBytes          infounit.ByteCount
+	totalBytes          uint64
 	mu                  sync.RWMutex
 }
 
@@ -89,7 +87,7 @@ func (m *Meter) Close(tc time.Time) {
 }
 
 // Record records the data transfer into the meter.
-func (m *Meter) Record(tc time.Time, b infounit.ByteCount) {
+func (m *Meter) Record(tc time.Time, b uint64) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -115,11 +113,11 @@ func (m *Meter) Record(tc time.Time, b infounit.ByteCount) {
 const bpscoef = 8 * float64(time.Second)
 
 // BitRate returns the bit rate in the last sample period.
-func (m *Meter) BitRate(tc time.Time) infounit.BitRate {
+func (m *Meter) BitRate(tc time.Time) uint64 {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	if m.last == nil {
-		return infounit.BitRate(0)
+		return 0
 	}
 
 	newest := m.last
@@ -143,12 +141,12 @@ func (m *Meter) BitRate(tc time.Time) infounit.BitRate {
 		}
 	}
 	// fmt.Printf("DEBUG: %f * 8 / %s\n", sum, sampleWidth)
-	return infounit.BitRate(sum * bpscoef / float64(sampleWidth))
+	return uint64(sum * bpscoef / float64(sampleWidth))
 }
 
 // Total returns the data transfer amount, elapsed time, and bit rate
 // in the entire period from Start to Close.
-func (m *Meter) Total(tc time.Time) (infounit.ByteCount, time.Duration, infounit.BitRate) {
+func (m *Meter) Total(tc time.Time) (uint64, time.Duration, float64) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 	if m.last == nil {
@@ -162,7 +160,7 @@ func (m *Meter) Total(tc time.Time) (infounit.ByteCount, time.Duration, infounit
 	case b == 0:
 		return 0, d, 0
 	case d == 0:
-		return b, d, infounit.BitRate(math.Inf(+1))
+		return b, d, math.Inf(+1)
 	}
-	return b, d, infounit.BitRate(float64(b) * bpscoef / float64(d))
+	return b, d, float64(b) * bpscoef / float64(d)
 }

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-
-	"github.com/fatih/structs"
 )
 
 func CheckRequired(iStruct interface{}) error {
@@ -38,12 +36,12 @@ func CheckRequired(iStruct interface{}) error {
 			continue
 		}
 		tag := sf.Tag.Get("required")
-		m := structs.Map(iStruct)
-
-		jsonValue, err := json.Marshal(m[sf.Name])
+		value := val.FieldByName(sf.Name)
+		jsonValue, err := json.Marshal(value.Interface())
 		if err != nil {
 			return err
 		}
+
 		if tag == "true" && (string(jsonValue) == "null" || string(jsonValue) == JSONEmptyValue(sf.Type)) {
 			errors = append(
 				errors,

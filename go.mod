@@ -7,17 +7,14 @@ require (
 	github.com/bradfitz/iter v0.0.0-20191230175014-e8f45d346db8
 	github.com/chilts/sid v0.0.0-20190607042430-660e94789ec9
 	github.com/dnaeon/go-vcr v1.2.0
-	github.com/fatih/structs v1.1.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/hashicorp/go-retryablehttp v0.7.7
-	github.com/itchyny/timefmt-go v0.1.5
 	github.com/lpar/date v1.0.0
 	github.com/panjf2000/ants/v2 v2.9.1
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
 	github.com/samber/lo v1.39.0
 	github.com/snabb/httpreaderat v1.0.1
 	github.com/stretchr/testify v1.9.0
-	github.com/tunabay/go-infounit v1.1.3
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
 	golang.org/x/text v0.15.0
 	moul.io/http2curl/v2 v2.3.0

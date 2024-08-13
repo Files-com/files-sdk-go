@@ -1,11 +1,11 @@
 package manager
 
 import (
+	"fmt"
 	"math"
 	"net/http"
 
 	"github.com/Files-com/files-sdk-go/v3/lib"
-	"github.com/dnaeon/go-vcr/recorder"
 )
 
 var (
@@ -63,12 +63,14 @@ func Build(maxConcurrentConnections, maxConcurrentDirectoryLists int, downloadFi
 }
 
 func (m *Manager) CreateMatchingClient(client *http.Client) *http.Client {
+	if fmt.Sprintf("%T", client.Transport) == "*recorder.Recorder" {
+		// Can't modify VCR in Test mode.
+		return client
+	}
+
 	switch t := client.Transport.(type) {
 	case *lib.Transport:
 		t.MaxConnsPerHost = m.FilePartsManager.Max()
-		return client
-	case *recorder.Recorder:
-		// Can't modify VCR in Test mode.
 		return client
 	default:
 		defaultTransport := lib.DefaultPooledTransport()
