@@ -296,6 +296,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `not-authorized/api-key-only-for-desktop-app` | Api Key Only For Desktop App |
 | `not-authorized/api-key-only-for-mobile-app` | Api Key Only For Mobile App |
 | `not-authorized/api-key-only-for-office-integration` | Api Key Only For Office Integration |
+| `not-authorized/billing-or-site-admin-permission-required` | Billing Or Site Admin Permission Required |
 | `not-authorized/billing-permission-required` | Billing Permission Required |
 | `not-authorized/bundle-maximum-uses-reached` | Bundle Maximum Uses Reached |
 | `not-authorized/cannot-login-while-using-key` | Cannot Login While Using Key |

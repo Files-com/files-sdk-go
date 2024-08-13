@@ -218,8 +218,9 @@ func (u *uploadIO) ReaderAt() (io.ReaderAt, bool) {
 }
 
 func (u *uploadIO) partBuilder(offset OffSet, final bool, number int) *Part {
+	proxyReader, err := u.buildReader(offset)
 	part := &Part{
-		OffSet: offset, number: number, final: final, ProxyReader: u.buildReader(offset),
+		OffSet: offset, number: number, final: final, ProxyReader: proxyReader, error: err,
 	}
 	if number == 1 {
 		part.FileUploadPart = u.FileUploadPart
@@ -259,7 +260,7 @@ func (u *uploadIO) ensurePartNumber(part *Part) {
 	}
 }
 
-func (u *uploadIO) buildReader(offset OffSet) ProxyReader {
+func (u *uploadIO) buildReader(offset OffSet) (ProxyReader, error) {
 	var readerAt io.ReaderAt
 	var readerAtOk bool
 
@@ -275,14 +276,14 @@ func (u *uploadIO) buildReader(offset OffSet) ProxyReader {
 			// Use io.CopyN to copy up to fiveMB into buf
 			n, err := io.CopyN(buf, sectionReader, offset.len)
 			if err != nil && err != io.EOF {
-				// handle error
+				return nil, err
 			}
 
 			return &ProxyRead{
 				Reader: buf,
 				len:    n,
 				onRead: u.Progress,
-			}
+			}, nil
 		} else {
 			buf := new(bytes.Buffer)
 
@@ -290,14 +291,14 @@ func (u *uploadIO) buildReader(offset OffSet) ProxyReader {
 			reader, _ := u.Reader()
 			n, err := io.CopyN(buf, reader, offset.len)
 			if err != nil && err != io.EOF {
-				// handle error
+				return nil, err
 			}
 
 			return &ProxyRead{
 				Reader: buf,
 				len:    n,
 				onRead: u.Progress,
-			}
+			}, nil
 		}
 	}
 
@@ -307,20 +308,25 @@ func (u *uploadIO) buildReader(offset OffSet) ProxyReader {
 			off:      offset.off,
 			len:      offset.len,
 			onRead:   u.Progress,
-		}
+		}, nil
 	} else {
 		reader, _ := u.Reader()
 		return &ProxyRead{
 			Reader: reader,
 			len:    offset.len,
 			onRead: u.Progress,
-		}
+		}, nil
 	}
 }
 
 type PartRunnerReturn int
 
 func (u *uploadIO) manageUpdatePart(ctx context.Context, part *Part, wait lib.ConcurrencyManager) bool {
+	if part.error != nil {
+		u.onComplete <- part
+		return true
+	}
+
 	if wait.WaitWithContext(ctx) {
 		if *u.FileUploadPart.ParallelParts && !u.disableParallelParts && u.Size != nil {
 			go func() {
@@ -385,7 +391,7 @@ func (u *uploadIO) uploadParts(ctx context.Context) {
 			u.onComplete <- part
 		} else {
 			part.Clear()
-			part.ProxyReader = u.buildReader(part.OffSet)
+			part.ProxyReader, part.error = u.buildReader(part.OffSet)
 
 			if u.manageUpdatePart(ctx, part, wait) {
 				break

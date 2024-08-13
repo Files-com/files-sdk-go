@@ -56,6 +56,7 @@ type User struct {
 	Active2fa                        *bool      `json:"active_2fa,omitempty" path:"active_2fa,omitempty" url:"active_2fa,omitempty"`
 	RequirePasswordChange            *bool      `json:"require_password_change,omitempty" path:"require_password_change,omitempty" url:"require_password_change,omitempty"`
 	PasswordExpired                  *bool      `json:"password_expired,omitempty" path:"password_expired,omitempty" url:"password_expired,omitempty"`
+	ReadonlySiteAdmin                *bool      `json:"readonly_site_admin,omitempty" path:"readonly_site_admin,omitempty" url:"readonly_site_admin,omitempty"`
 	RestapiPermission                *bool      `json:"restapi_permission,omitempty" path:"restapi_permission,omitempty" url:"restapi_permission,omitempty"`
 	SelfManaged                      *bool      `json:"self_managed,omitempty" path:"self_managed,omitempty" url:"self_managed,omitempty"`
 	SftpPermission                   *bool      `json:"sftp_permission,omitempty" path:"sftp_permission,omitempty" url:"sftp_permission,omitempty"`
@@ -182,6 +183,7 @@ type UserCreateParams struct {
 	Notes                      string                       `url:"notes,omitempty" required:"false" json:"notes,omitempty" path:"notes"`
 	OfficeIntegrationEnabled   *bool                        `url:"office_integration_enabled,omitempty" required:"false" json:"office_integration_enabled,omitempty" path:"office_integration_enabled"`
 	PasswordValidityDays       int64                        `url:"password_validity_days,omitempty" required:"false" json:"password_validity_days,omitempty" path:"password_validity_days"`
+	ReadonlySiteAdmin          *bool                        `url:"readonly_site_admin,omitempty" required:"false" json:"readonly_site_admin,omitempty" path:"readonly_site_admin"`
 	ReceiveAdminAlerts         *bool                        `url:"receive_admin_alerts,omitempty" required:"false" json:"receive_admin_alerts,omitempty" path:"receive_admin_alerts"`
 	RequireLoginBy             *time.Time                   `url:"require_login_by,omitempty" required:"false" json:"require_login_by,omitempty" path:"require_login_by"`
 	RequirePasswordChange      *bool                        `url:"require_password_change,omitempty" required:"false" json:"require_password_change,omitempty" path:"require_password_change"`
@@ -246,6 +248,7 @@ type UserUpdateParams struct {
 	Notes                      string                       `url:"notes,omitempty" required:"false" json:"notes,omitempty" path:"notes"`
 	OfficeIntegrationEnabled   *bool                        `url:"office_integration_enabled,omitempty" required:"false" json:"office_integration_enabled,omitempty" path:"office_integration_enabled"`
 	PasswordValidityDays       int64                        `url:"password_validity_days,omitempty" required:"false" json:"password_validity_days,omitempty" path:"password_validity_days"`
+	ReadonlySiteAdmin          *bool                        `url:"readonly_site_admin,omitempty" required:"false" json:"readonly_site_admin,omitempty" path:"readonly_site_admin"`
 	ReceiveAdminAlerts         *bool                        `url:"receive_admin_alerts,omitempty" required:"false" json:"receive_admin_alerts,omitempty" path:"receive_admin_alerts"`
 	RequireLoginBy             *time.Time                   `url:"require_login_by,omitempty" required:"false" json:"require_login_by,omitempty" path:"require_login_by"`
 	RequirePasswordChange      *bool                        `url:"require_password_change,omitempty" required:"false" json:"require_password_change,omitempty" path:"require_password_change"`
