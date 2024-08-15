@@ -688,7 +688,12 @@ expected 4194304 bytes sent 5242880 received`)
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
 		require.NoError(t, job.Statuses[0].Err())
-		assert.Equal(t, status.Queued, job.Statuses[0].Status())
+		assert.Equal(t, status.Complete, job.Statuses[0].Status())
+		f, err := os.Open(filepath.Join(root, "taco.png"))
+		require.NoError(t, err)
+		stat, err := f.Stat()
+		require.NoError(t, err)
+		assert.Equal(t, int64(0), stat.Size())
 	})
 
 	t.Run("local directory is privileged", func(t *testing.T) {

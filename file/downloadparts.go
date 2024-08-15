@@ -394,6 +394,9 @@ func (d *DownloadParts) downloadFile() error {
 		d.File = withContext.WithContext(d.Context)
 	}
 	n, err := io.Copy(d.WriterAndAt, d.File)
+	if n == 0 {
+		d.WriterAndAt.Write([]byte{})
+	}
 	atomic.AddInt64(&d.totalWritten, n)
 	if err != nil {
 		return err
