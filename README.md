@@ -28,9 +28,7 @@ import (
 Run any of the normal `go` commands (`build`/`install`/`test`). The Go
 toolchain will resolve and fetch the files module automatically.
 
-<Note title="Repository">
 Explore the [files-sdk-go](https://github.com/Files-com/files-sdk-go) code on GitHub.
-</Note>
 
 ### Getting Support
 
@@ -69,9 +67,7 @@ it, err := client.ListFor(files_sdk.FolderListForParams{})
 it, err := folder.ListFor(files_sdk.FolderListForParams{})
 ```
 
-<Note>
 Don't forget to replace the placeholder, `YOUR_API_KEY`, with your actual API key.
-</Note>
 
 ### Authenticate with a Session
 
