@@ -181,15 +181,15 @@ The returned errors fall into basic categories:
 1.  `error` - errors that originate in the SDK or standard libraries.
 2.  `ResponseError` - errors that occur due to the response from the Files.com API.
 
-The `error` type are errors that implment the  `type error` interface and the error specifics can be accessed with the `Error()` method.
+The `error` type are errors that implement the `type error` interface and the error specifics can be accessed with the `Error()` method.
 
-`ResponseError` also implements the  `type error` interface but is a custom error with additional data.
+`ResponseError` also implements the `type error` interface but is a custom error with additional data.
 
 The additional data includes:
 
 - `Type` - the type of error returned by the Files.com API
 - `Title` - a description of the error returned by the Files.com API
-- `ErrorMessage` - addtional error information
+- `ErrorMessage` - additional error information
 
 ```go title="Example Error Handling"
 
