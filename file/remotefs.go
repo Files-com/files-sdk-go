@@ -167,18 +167,18 @@ func (f *File) Stat() (goFs.FileInfo, error) {
 
 func (f *File) Read(b []byte) (n int, err error) {
 	f.ReadCloser.CompareAndUpdate(nil, func() io.ReadCloser {
+		f.fileMutex.Lock()
+		defer f.fileMutex.Unlock()
+
 		var readCloser io.ReadCloser
 		readCloser, err = f.readCloserInit()
 		if downloadRequestExpired(err) {
 			f.Config.LogPath(f.File.Path, map[string]interface{}{"message": "downloadRequestExpired", "error": err})
-			f.fileMutex.Lock()
-
 			f.File.DownloadUri = "" // force a new query
 			*f.File, err = (&Client{Config: f.Config}).DownloadUri(files_sdk.FileDownloadParams{File: *f.File}, files_sdk.WithContext(f.Context))
 			if err == nil {
 				readCloser, err = f.readCloserInit()
 			}
-			f.fileMutex.Unlock()
 		}
 
 		if err != nil {
