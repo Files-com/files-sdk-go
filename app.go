@@ -26,6 +26,7 @@ type App struct {
 	SdkInstallationInstructionsLink     string                 `json:"sdk_installation_instructions_link,omitempty" path:"sdk_installation_instructions_link,omitempty" url:"sdk_installation_instructions_link,omitempty"`
 	ShortDescription                    string                 `json:"short_description,omitempty" path:"short_description,omitempty" url:"short_description,omitempty"`
 	SsoStrategyType                     string                 `json:"sso_strategy_type,omitempty" path:"sso_strategy_type,omitempty" url:"sso_strategy_type,omitempty"`
+	SiemType                            string                 `json:"siem_type,omitempty" path:"siem_type,omitempty" url:"siem_type,omitempty"`
 	TutorialYoutubeUrl                  string                 `json:"tutorial_youtube_url,omitempty" path:"tutorial_youtube_url,omitempty" url:"tutorial_youtube_url,omitempty"`
 }
 
