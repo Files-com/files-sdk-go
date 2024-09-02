@@ -5,7 +5,9 @@ The content included here should be enough to get started, but please visit our
 
 ## Introduction
 
-The Files.com Go client library provides convenient access to the Files.com API from applications written in the Go language.
+The Files.com Go client library provides convenient access to all aspects of Files.com from applications written in the Go language.
+
+Files.com customers use our Go client library for directly working with files and folders as well as performing management tasks such as adding/removing users, onboarding counterparties, retrieving information about automations and more.
 
 ### Installation
 
@@ -28,14 +30,19 @@ import (
 Run any of the normal `go` commands (`build`/`install`/`test`). The Go
 toolchain will resolve and fetch the files module automatically.
 
+### Files.com is Committed to Go
+
+Go is a core language used by the Files.com team for internal development.  This library is directly used by the Files.com CLI app, Files.com Desktop App v6, the official Files.com Terraform integration, and the official Files.com RClone integration.
+
+As such, this library is actively developed and should be expected to be highly performant.
+
 Explore the [files-sdk-go](https://github.com/Files-com/files-sdk-go) code on GitHub.
 
 ### Getting Support
 
-The Files.com team is happy to help with any SDK Integration challenges you
-may face.
+The Files.com Support team provides official support for all of our official Files.com integration tools.
 
-Just email support@files.com and we'll get the process started.
+To initiate a support conversation, you can send an [Authenticated Support Request](https://www.files.com/docs/overview/requesting-support) or simply send an E-Mail to support@files.com.
 
 ## Authentication
 
