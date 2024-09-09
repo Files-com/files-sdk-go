@@ -9,6 +9,7 @@ import (
 )
 
 type Site struct {
+	Id                                       int64                  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name                                     string                 `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	AdditionalTextFileTypes                  []string               `json:"additional_text_file_types,omitempty" path:"additional_text_file_types,omitempty" url:"additional_text_file_types,omitempty"`
 	Allowed2faMethodSms                      *bool                  `json:"allowed_2fa_method_sms,omitempty" path:"allowed_2fa_method_sms,omitempty" url:"allowed_2fa_method_sms,omitempty"`
@@ -172,7 +173,9 @@ type Site struct {
 	GroupAdminsCanSetUserPassword            *bool                  `json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password,omitempty" url:"group_admins_can_set_user_password,omitempty"`
 }
 
-// Identifier no path or id
+func (s Site) Identifier() interface{} {
+	return s.Id
+}
 
 type SiteCollection []Site
 
