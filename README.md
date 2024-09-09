@@ -88,7 +88,7 @@ session times out, simply create a new session and resume where you left off. Th
 automatically handled by SDKs because we do not want to store password information in memory without
 your explicit consent.
 
-#### Logging in
+#### Logging In
 
 To create a session, create a `session Client` object that points to the subdomain of the Files.com site.
 
@@ -103,7 +103,7 @@ folderClient := folder.Client{Config: config}
 it, err := folderClient.ListFor(files_sdk.FolderListForParams{})
 ```
 
-#### Using a session
+#### Using a Session
 
 Once a session has been created, the `Session.Id` can be set in a `Config` object, which can then be used to authenticate `Client` objects.
 
@@ -114,7 +114,7 @@ folderClient := folder.Client{Config: config}
 it, err := folderClient.ListFor(files_sdk.FolderListForParams{})
 ```
 
-#### Logging out
+#### Logging Out
 
 User sessions can be ended by calling `Delete()` on the `Session` client.
 
@@ -125,7 +125,7 @@ err = sessionClient.Delete()
 
 ## Configuration
 
-### Configuration options
+### Configuration Options
 
 #### Base URL
 
@@ -376,7 +376,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 
 ## Examples
 
-### List files and folders
+### List Files and Folders
 
 ```go
 import (
