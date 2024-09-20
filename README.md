@@ -493,6 +493,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `processing-failure/two-factor-authentication-code-already-sent` | Two Factor Authentication Code Already Sent |
 | `processing-failure/two-factor-authentication-country-blacklisted` | Two Factor Authentication Country Blacklisted |
 | `processing-failure/two-factor-authentication-general-error` | Two Factor Authentication General Error |
+| `processing-failure/two-factor-authentication-method-unsupported-error` | Two Factor Authentication Method Unsupported Error |
 | `processing-failure/two-factor-authentication-unsubscribed-recipient` | Two Factor Authentication Unsubscribed Recipient |
 | `processing-failure/updates-not-allowed-for-remotes` | Updates Not Allowed For Remotes |
 | `rate-limited/duplicate-share-recipient` | Duplicate Share Recipient |

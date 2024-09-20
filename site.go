@@ -14,7 +14,6 @@ type Site struct {
 	AdditionalTextFileTypes                  []string               `json:"additional_text_file_types,omitempty" path:"additional_text_file_types,omitempty" url:"additional_text_file_types,omitempty"`
 	Allowed2faMethodSms                      *bool                  `json:"allowed_2fa_method_sms,omitempty" path:"allowed_2fa_method_sms,omitempty" url:"allowed_2fa_method_sms,omitempty"`
 	Allowed2faMethodTotp                     *bool                  `json:"allowed_2fa_method_totp,omitempty" path:"allowed_2fa_method_totp,omitempty" url:"allowed_2fa_method_totp,omitempty"`
-	Allowed2faMethodU2f                      *bool                  `json:"allowed_2fa_method_u2f,omitempty" path:"allowed_2fa_method_u2f,omitempty" url:"allowed_2fa_method_u2f,omitempty"`
 	Allowed2faMethodWebauthn                 *bool                  `json:"allowed_2fa_method_webauthn,omitempty" path:"allowed_2fa_method_webauthn,omitempty" url:"allowed_2fa_method_webauthn,omitempty"`
 	Allowed2faMethodYubi                     *bool                  `json:"allowed_2fa_method_yubi,omitempty" path:"allowed_2fa_method_yubi,omitempty" url:"allowed_2fa_method_yubi,omitempty"`
 	Allowed2faMethodEmail                    *bool                  `json:"allowed_2fa_method_email,omitempty" path:"allowed_2fa_method_email,omitempty" url:"allowed_2fa_method_email,omitempty"`
@@ -277,7 +276,6 @@ type SiteUpdateParams struct {
 	BundleRecipientBlacklistDomains          []string               `url:"bundle_recipient_blacklist_domains,omitempty" required:"false" json:"bundle_recipient_blacklist_domains,omitempty" path:"bundle_recipient_blacklist_domains"`
 	AdminsBypassLockedSubfolders             *bool                  `url:"admins_bypass_locked_subfolders,omitempty" required:"false" json:"admins_bypass_locked_subfolders,omitempty" path:"admins_bypass_locked_subfolders"`
 	Allowed2faMethodSms                      *bool                  `url:"allowed_2fa_method_sms,omitempty" required:"false" json:"allowed_2fa_method_sms,omitempty" path:"allowed_2fa_method_sms"`
-	Allowed2faMethodU2f                      *bool                  `url:"allowed_2fa_method_u2f,omitempty" required:"false" json:"allowed_2fa_method_u2f,omitempty" path:"allowed_2fa_method_u2f"`
 	Allowed2faMethodTotp                     *bool                  `url:"allowed_2fa_method_totp,omitempty" required:"false" json:"allowed_2fa_method_totp,omitempty" path:"allowed_2fa_method_totp"`
 	Allowed2faMethodWebauthn                 *bool                  `url:"allowed_2fa_method_webauthn,omitempty" required:"false" json:"allowed_2fa_method_webauthn,omitempty" path:"allowed_2fa_method_webauthn"`
 	Allowed2faMethodYubi                     *bool                  `url:"allowed_2fa_method_yubi,omitempty" required:"false" json:"allowed_2fa_method_yubi,omitempty" path:"allowed_2fa_method_yubi"`
