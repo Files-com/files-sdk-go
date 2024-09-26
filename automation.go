@@ -17,6 +17,7 @@ type Automation struct {
 	DestinationReplaceTo             string                 `json:"destination_replace_to,omitempty" path:"destination_replace_to,omitempty" url:"destination_replace_to,omitempty"`
 	Destinations                     []string               `json:"destinations,omitempty" path:"destinations,omitempty" url:"destinations,omitempty"`
 	Disabled                         *bool                  `json:"disabled,omitempty" path:"disabled,omitempty" url:"disabled,omitempty"`
+	ExcludePattern                   string                 `json:"exclude_pattern,omitempty" path:"exclude_pattern,omitempty" url:"exclude_pattern,omitempty"`
 	FlattenDestinationStructure      *bool                  `json:"flatten_destination_structure,omitempty" path:"flatten_destination_structure,omitempty" url:"flatten_destination_structure,omitempty"`
 	GroupIds                         []int64                `json:"group_ids,omitempty" path:"group_ids,omitempty" url:"group_ids,omitempty"`
 	IgnoreLockedFolders              *bool                  `json:"ignore_locked_folders,omitempty" path:"ignore_locked_folders,omitempty" url:"ignore_locked_folders,omitempty"`
