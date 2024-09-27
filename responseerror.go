@@ -59,11 +59,11 @@ type Data struct {
 	TwoFactorAuthenticationMethod []string          `json:"two_factor_authentication_methods,omitempty"`
 	Host                          string            `json:"host,omitempty"`
 	// Download Request Status
-	BytesTransferred int64     `json:"bytes_transferred,omitempty"`
-	Status           string    `json:"status,omitempty"`
-	StartedAt        time.Time `json:"started_at,omitempty"`
-	CompletedAt      time.Time `json:"completed_at,omitempty"`
-	TouchedAt        time.Time `json:"touched_at,omitempty"`
+	BytesTransferred int64      `json:"bytes_transferred,omitempty"`
+	Status           string     `json:"status,omitempty"`
+	StartedAt        *time.Time `json:"started_at,omitempty"`
+	CompletedAt      *time.Time `json:"completed_at,omitempty"`
+	TouchedAt        *time.Time `json:"touched_at,omitempty"`
 }
 
 func (e ResponseError) Error() string {

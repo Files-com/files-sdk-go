@@ -1,9 +1,11 @@
 package files_sdk
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var TestStr1 = `
@@ -180,4 +182,14 @@ func TestResponseError_UnmarshalJSON_Error4(t *testing.T) {
 	assert.Equal("", subject.ErrorMessage)
 	assert.Equal("", subject.Type)
 	assert.True(subject.IsNil(), "Empty ErrorMessage should make IsNil() true")
+}
+
+func TestResponseError_MarshalJSON(t *testing.T) {
+	subject := ResponseError{}
+
+	err := subject.UnmarshalJSON([]byte(TestStr1))
+	require.NoError(t, err)
+	jsonBytes, err := json.Marshal(subject)
+	require.NoError(t, err)
+	assert.JSONEq(t, TestStr1, string(jsonBytes))
 }
