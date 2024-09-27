@@ -23,7 +23,8 @@ var TestStr1 = `
       "u2f"
     ],
     "u2f_redirect": "https://dustin.files.com",
-    "partial_session_id": "XXX"
+    "partial_session_id": "XXX",
+	"unknown-key": "unknown-value"
   },
   "error": "2FA Authenication error: Insert your U2F/FIDO key and press its button.",
   "http-code": 401,
@@ -101,7 +102,9 @@ func TestResponseError1_UnmarshalJSON(t *testing.T) {
 	assert.Equal("not-authenticated/two-factor-authentication-error", subject.Type)
 	assert.Equal("Two Factor Authentication Error", subject.Title)
 	assert.Equal("Two Factor Authentication Error", subject.Errors[0].Title)
-	assert.False(subject.IsNil())
+	assert.Equal(false, subject.IsNil())
+	assert.Equal("unknown-value", subject.RawData["unknown-key"])
+	assert.Equal("XXX", subject.Data.PartialSessionId)
 }
 
 func TestResponseError2_UnmarshalJSON(t *testing.T) {

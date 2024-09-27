@@ -14,12 +14,16 @@ import (
 )
 
 type ResponseError struct {
-	Type         string          `json:"type,omitempty"`
-	Title        string          `json:"title,omitempty"`
-	ErrorMessage string          `json:"error,omitempty"`
-	HttpCode     int             `json:"http-code,omitempty"`
-	Errors       []ResponseError `json:"errors,omitempty"`
-	Data         Data            `json:"data,omitempty"`
+	Type         string `json:"type,omitempty"`
+	Title        string `json:"title,omitempty"`
+	ErrorMessage string `json:"error,omitempty"`
+	HttpCode     int    `json:"http-code,omitempty"`
+	Data
+	RawData        map[string]interface{} `json:"data,omitempty"`
+	Errors         []ResponseError        `json:"errors,omitempty"`
+	Instance       string                 `json:"instance,omitempty"`
+	ModelErrors    map[string]interface{} `json:"model_errors,omitempty"`
+	ModelErrorKeys map[string]interface{} `json:"model_error_keys,omitempty"`
 }
 
 const (
@@ -78,12 +82,10 @@ func (e ResponseError) Is(err error) bool {
 func (e *ResponseError) UnmarshalJSON(data []byte) error {
 	type re ResponseError
 	var v re
-	err := json.Unmarshal(data, &v)
 
-	if err != nil {
-		jsonError, ok := err.(*json.UnmarshalTypeError)
-
-		if ok && jsonError.Field == "" {
+	if err := json.Unmarshal(data, &v); err != nil {
+		var jsonError *json.UnmarshalTypeError
+		if ok := errors.As(err, &jsonError); ok && jsonError.Field == "" {
 			if jsonError.Value == "string" {
 				var str string
 				json.Unmarshal(data, &str)
@@ -100,10 +102,18 @@ func (e *ResponseError) UnmarshalJSON(data []byte) error {
 			return err
 		}
 
-		jsonSyntaxErr, ok := err.(*json.SyntaxError)
-		if ok && jsonSyntaxErr.Error() == "invalid character '<' looking for beginning of value" {
+		var jsonSyntaxErr *json.SyntaxError
+		if ok := errors.As(err, &jsonSyntaxErr); ok && jsonSyntaxErr.Error() == "invalid character '<' looking for beginning of value" {
 			return fmt.Errorf(string(data))
 		}
+	}
+
+	rawDataJson, err := json.Marshal(v.RawData)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(rawDataJson, &v.Data); err != nil {
+		return err
 	}
 
 	*e = ResponseError(v)
