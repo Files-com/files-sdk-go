@@ -14,11 +14,11 @@ import (
 )
 
 type ResponseError struct {
-	Type         string `json:"type,omitempty"`
-	Title        string `json:"title,omitempty"`
-	ErrorMessage string `json:"error,omitempty"`
-	HttpCode     int    `json:"http-code,omitempty"`
-	Data
+	Type           string `json:"type,omitempty"`
+	Title          string `json:"title,omitempty"`
+	ErrorMessage   string `json:"error,omitempty"`
+	HttpCode       int    `json:"http-code,omitempty"`
+	Data           `json:"-"`
 	RawData        map[string]interface{} `json:"data,omitempty"`
 	Errors         []ResponseError        `json:"errors,omitempty"`
 	Instance       string                 `json:"instance,omitempty"`
@@ -77,6 +77,21 @@ func (e ResponseError) IsNil() bool {
 func (e ResponseError) Is(err error) bool {
 	var responseError ResponseError
 	return errors.As(err, &responseError)
+}
+
+func (e ResponseError) MarshalJSON() ([]byte, error) {
+	type re ResponseError
+	var v re
+	v = re(e)
+
+	rawDataJson, err := json.Marshal(v.Data)
+	if err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(rawDataJson, &v.RawData); err != nil {
+		return nil, err
+	}
+	return json.Marshal(v)
 }
 
 func (e *ResponseError) UnmarshalJSON(data []byte) error {
