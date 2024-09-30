@@ -70,6 +70,7 @@ type User struct {
 	TypeOf2fa                        string     `json:"type_of_2fa,omitempty" path:"type_of_2fa,omitempty" url:"type_of_2fa,omitempty"`
 	TypeOf2faForDisplay              string     `json:"type_of_2fa_for_display,omitempty" path:"type_of_2fa_for_display,omitempty" url:"type_of_2fa_for_display,omitempty"`
 	UserRoot                         string     `json:"user_root,omitempty" path:"user_root,omitempty" url:"user_root,omitempty"`
+	UserHome                         string     `json:"user_home,omitempty" path:"user_home,omitempty" url:"user_home,omitempty"`
 	DaysRemainingUntilPasswordExpire int64      `json:"days_remaining_until_password_expire,omitempty" path:"days_remaining_until_password_expire,omitempty" url:"days_remaining_until_password_expire,omitempty"`
 	PasswordExpireAt                 *time.Time `json:"password_expire_at,omitempty" path:"password_expire_at,omitempty" url:"password_expire_at,omitempty"`
 	AvatarFile                       io.Reader  `json:"avatar_file,omitempty" path:"avatar_file,omitempty" url:"avatar_file,omitempty"`
@@ -198,6 +199,7 @@ type UserCreateParams struct {
 	Require2fa                 UserRequire2faEnum           `url:"require_2fa,omitempty" required:"false" json:"require_2fa,omitempty" path:"require_2fa"`
 	TimeZone                   string                       `url:"time_zone,omitempty" required:"false" json:"time_zone,omitempty" path:"time_zone"`
 	UserRoot                   string                       `url:"user_root,omitempty" required:"false" json:"user_root,omitempty" path:"user_root"`
+	UserHome                   string                       `url:"user_home,omitempty" required:"false" json:"user_home,omitempty" path:"user_home"`
 	Username                   string                       `url:"username,omitempty" required:"true" json:"username,omitempty" path:"username"`
 }
 
@@ -263,6 +265,7 @@ type UserUpdateParams struct {
 	Require2fa                 UserRequire2faEnum           `url:"require_2fa,omitempty" required:"false" json:"require_2fa,omitempty" path:"require_2fa"`
 	TimeZone                   string                       `url:"time_zone,omitempty" required:"false" json:"time_zone,omitempty" path:"time_zone"`
 	UserRoot                   string                       `url:"user_root,omitempty" required:"false" json:"user_root,omitempty" path:"user_root"`
+	UserHome                   string                       `url:"user_home,omitempty" required:"false" json:"user_home,omitempty" path:"user_home"`
 	Username                   string                       `url:"username,omitempty" required:"false" json:"username,omitempty" path:"username"`
 }
 
