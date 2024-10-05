@@ -114,6 +114,7 @@ type AutomationCreateParams struct {
 	AlwaysOverwriteSizeMatchingFiles *bool                  `url:"always_overwrite_size_matching_files,omitempty" required:"false" json:"always_overwrite_size_matching_files,omitempty" path:"always_overwrite_size_matching_files"`
 	Description                      string                 `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
 	Disabled                         *bool                  `url:"disabled,omitempty" required:"false" json:"disabled,omitempty" path:"disabled"`
+	ExcludePattern                   string                 `url:"exclude_pattern,omitempty" required:"false" json:"exclude_pattern,omitempty" path:"exclude_pattern"`
 	FlattenDestinationStructure      *bool                  `url:"flatten_destination_structure,omitempty" required:"false" json:"flatten_destination_structure,omitempty" path:"flatten_destination_structure"`
 	IgnoreLockedFolders              *bool                  `url:"ignore_locked_folders,omitempty" required:"false" json:"ignore_locked_folders,omitempty" path:"ignore_locked_folders"`
 	LegacyFolderMatching             *bool                  `url:"legacy_folder_matching,omitempty" required:"false" json:"legacy_folder_matching,omitempty" path:"legacy_folder_matching"`
@@ -149,6 +150,7 @@ type AutomationUpdateParams struct {
 	AlwaysOverwriteSizeMatchingFiles *bool                  `url:"always_overwrite_size_matching_files,omitempty" required:"false" json:"always_overwrite_size_matching_files,omitempty" path:"always_overwrite_size_matching_files"`
 	Description                      string                 `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
 	Disabled                         *bool                  `url:"disabled,omitempty" required:"false" json:"disabled,omitempty" path:"disabled"`
+	ExcludePattern                   string                 `url:"exclude_pattern,omitempty" required:"false" json:"exclude_pattern,omitempty" path:"exclude_pattern"`
 	FlattenDestinationStructure      *bool                  `url:"flatten_destination_structure,omitempty" required:"false" json:"flatten_destination_structure,omitempty" path:"flatten_destination_structure"`
 	IgnoreLockedFolders              *bool                  `url:"ignore_locked_folders,omitempty" required:"false" json:"ignore_locked_folders,omitempty" path:"ignore_locked_folders"`
 	LegacyFolderMatching             *bool                  `url:"legacy_folder_matching,omitempty" required:"false" json:"legacy_folder_matching,omitempty" path:"legacy_folder_matching"`

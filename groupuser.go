@@ -7,12 +7,12 @@ import (
 )
 
 type GroupUser struct {
-	GroupName string   `json:"group_name,omitempty" path:"group_name,omitempty" url:"group_name,omitempty"`
-	GroupId   int64    `json:"group_id,omitempty" path:"group_id,omitempty" url:"group_id,omitempty"`
-	UserId    int64    `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
-	Admin     *bool    `json:"admin,omitempty" path:"admin,omitempty" url:"admin,omitempty"`
-	Usernames []string `json:"usernames,omitempty" path:"usernames,omitempty" url:"usernames,omitempty"`
-	Id        int64    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	GroupName string `json:"group_name,omitempty" path:"group_name,omitempty" url:"group_name,omitempty"`
+	GroupId   int64  `json:"group_id,omitempty" path:"group_id,omitempty" url:"group_id,omitempty"`
+	UserId    int64  `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	Admin     *bool  `json:"admin,omitempty" path:"admin,omitempty" url:"admin,omitempty"`
+	Usernames string `json:"usernames,omitempty" path:"usernames,omitempty" url:"usernames,omitempty"`
+	Id        int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 }
 
 func (g GroupUser) Identifier() interface{} {
