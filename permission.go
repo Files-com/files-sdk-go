@@ -35,8 +35,8 @@ type PermissionListParams struct {
 }
 
 type PermissionCreateParams struct {
+	Path       string `url:"path,omitempty" required:"true" json:"path,omitempty" path:"path"`
 	GroupId    int64  `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
-	Path       string `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
 	Permission string `url:"permission,omitempty" required:"false" json:"permission,omitempty" path:"permission"`
 	Recursive  *bool  `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
 	UserId     int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
