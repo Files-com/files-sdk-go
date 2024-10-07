@@ -141,47 +141,18 @@ client := file.Client{Config: config}
 
 ## Sort and Filter
 
-Several of the Files.com API resources have list operations that return multiple instances of the resource.  The List operations
-can be sorted and filtered.
+Several of the Files.com API resources have list operations that return multiple instances of the
+resource. The List operations can be sorted and filtered.
 
 ### Sorting
 
-The returned data can be sorted by passing in the ```SortBy``` method argument.
+To sort the returned data, pass in the ```SortBy``` method argument.
 
-Each resource has a set of valid fields for sorting and can be sorted by one field at a time.
+Each resource supports a unique set of valid sort fields and can only be sorted by one field at a
+time.
 
-The argument value is a Go ```map[string]interface{}``` map that has a key of the resource field name to sort on and a value of either ```"asc"``` or ```"desc"``` to specify the sort order.
-
-### Filters
-
-Filters apply selection criteria to the underlying query that returns the results. Filters can be applied individually to select resource fields
-and/or in a combination with each other.  The results of applying filters and filter combinations can be sorted by a single field.
-
-For the filter type of ```Filter```, the passed in argument value is an initialized resource struct.  Struct fields are initialized with values to use in the filter.
-
-For the other filter types, the passed in argument is a Go ```map[string]interface{}``` map that has a key of the resource field name to filter on and a passed in value to use in the filter comparison.
-
-Each resource has their own set of valid filters and fields, valid combinations of filters, and sortable fields.
-
-#### Types of Filters
-
-##### Exact Filter
-
-`Filter` - find resources that have an exact field value match to a passed in value. (i.e., FIELD_VALUE = PASS_IN_VALUE).
-
-#### Range Filters
-
-`FilterGt` - find resources that have a field value that is greater than the passed in value.  (i.e., FIELD_VALUE > PASS_IN_VALUE).
-
-`FilterGte` - find resources that have a field value that is greater than or equal to the passed in value.  (i.e., FIELD_VALUE >=  PASS_IN_VALUE).
-
-`FilterLt` - find resources that have a field value that is less than the passed in value.  (i.e., FIELD_VALUE < PASS_IN_VALUE).
-
-`FilterLte` - find resources that have a field value that is less than or equal to the passed in value.  (i.e., FIELD_VALUE \<= PASS_IN_VALUE).
-
-##### Pattern Filter
-
-`FilterPrefix` - find resources where the specified field is prefixed by the supplied value. This is applicable to values that are strings.
+The argument value is a Go ```map[string]interface{}``` map that has a key of the resource field
+name to sort on and a value of either ```"asc"``` or ```"desc"``` to specify the sort order.
 
 ```go title="Sort Example"
 // users sorted by username
@@ -191,92 +162,121 @@ filter_value := true;
 parameters := files_sdk.UserListParams{ SortBy:  map[string]interface{}{"username":"asc" }}
 user_iterator, err := client.List(parameters)
 if err != nil {
-fmt.Println("There was an error")
-    panic(err)
+  fmt.Println("There was an error")
+  panic(err)
 }
 
 for user_iterator.Next() {
-    user := user_iterator.User()
-    fmt.Println(user.Username)
+  user := user_iterator.User()
+  fmt.Println(user.Username)
 }
 ```
+
+### Filtering
+
+Filters apply selection criteria to the underlying query that returns the results. They can be
+applied individually or combined with other filters, and the resulting data can be sorted by a
+single field.
+
+Each resource supports a unique set of valid filter fields, filter combinations, and combinations of
+filters and sort fields.
+
+For the filter type of ```Filter```, the passed in argument value is an initialized resource struct.
+Struct fields are initialized with values to use in the filter.
+
+For the other filter types, the passed in argument is a Go ```map[string]interface{}``` map that has
+a key of the resource field name to filter on and a passed in value to use in the filter comparison.
+
+#### Filter Types
+
+| Filter | Type | Description |
+| --------- | --------- | --------- |
+| `Filter` | Exact | Find resources that have an exact field value match to a passed in value. (i.e., FIELD_VALUE = PASS_IN_VALUE). |
+| `FilterPrefix` | Pattern | Find resources where the specified field is prefixed by the supplied value. This is applicable to values that are strings. |
+| `FilterGt` | Range | Find resources that have a field value that is greater than the passed in value.  (i.e., FIELD_VALUE > PASS_IN_VALUE). |
+| `FilterGteq` | Range | Find resources that have a field value that is greater than or equal to the passed in value.  (i.e., FIELD_VALUE >=  PASS_IN_VALUE). |
+| `FilterLt` | Range | Find resources that have a field value that is less than the passed in value.  (i.e., FIELD_VALUE < PASS_IN_VALUE). |
+| `FilterLteq` | Range | Find resources that have a field value that is less than or equal to the passed in value.  (i.e., FIELD_VALUE \<= PASS_IN_VALUE). |
 
 ```go title="Exact Filter Example"
 // non admin users
 files_sdk.GlobalConfig.APIKey ="my-key";
 client := user.Client{Config: files_sdk.GlobalConfig};
 filter_value := true;
-parameters := files_sdk.UserListParams{ Filter: files_sdk.User{NotSiteAdmin: &filter_value },
-                                        SortBy:  map[string]interface{}{"username":"asc" }}
+parameters := files_sdk.UserListParams{
+  Filter: files_sdk.User{NotSiteAdmin: &filter_value }
+}
 user_iterator, err := client.List(parameters)
 if err != nil {
-fmt.Println("There was an error")
-    panic(err)
-}
-
-for user_iterator.Next() {
-    user := user_iterator.User()
-    fmt.Println(user.Username)
-}
-```
-
-```go title="Range Filter Example"
-#users who haven't logged in since 2024-01-01
-files_sdk.GlobalConfig.APIKey ="my-key";
-client := user.Client{Config: files_sdk.GlobalConfig};
-filter_value := true;
-parameters := files_sdk.UserListParams{ FilterLt:  map[string]interface{}{"last_login_at"":"2024-01-01"},
-                                        SortBy:  map[string]interface{}{"last_login_at":"asc"}}
-user_iterator, err := client.List(parameters)
-if err != nil {
-fmt.Println("There was an error")
-    panic(err)
-}
-
-for user_iterator.Next() {
-    user := user_iterator.User()
-    fmt.Println(user.Username)
-}
-
-```
-
-```go title="Pattern Filter Example"
-## users who usernames start with 'test'
-files_sdk.GlobalConfig.APIKey ="my-key";
-client := user.Client{Config: files_sdk.GlobalConfig};
-filter_value := true;
-parameters := files_sdk.UserListParams{ FilterPrefix:  map[string]interface{}{"username"":"test"},
-                                        SortBy:  map[string]interface{}{"username":"asc"}}
-user_iterator, err := client.List(parameters)
-if err != nil {
-fmt.Println("There was an error")
-    panic(err)
-}
-
-for user_iterator.Next() {
-    user := user_iterator.User()
-    fmt.Println(user.Username)
-}
-```
-
-```go title="Combined Filter Example"
-## users who usernames start with 'test' and are not admins
-
-files_sdk.GlobalConfig.APIKey ="my-key";
-client := user.Client{Config: files_sdk.GlobalConfig};
-filter_value := true;
-parameters := files_sdk.UserListParams{ FilterPrefix:  map[string]interface{}{"username"":"test"},
-                                        Filter: files_sdk.User{NotSiteAdmin: &filter_value },
-                                        SortBy:  map[string]interface{}{"username":"asc"}}
-user_iterator, err := client.List(parameters)
-if err != nil {
-fmt.Println("There was an error")
-    panic(err)
+  fmt.Println("There was an error")
+  panic(err)
 }
 
 for user_iterator.Next() {
   user := user_iterator.User()
-    fmt.Println(user.Username)
+  fmt.Println(user.Username)
+}
+```
+
+```go title="Range Filter Example"
+// users who haven't logged in since 2024-01-01
+files_sdk.GlobalConfig.APIKey ="my-key";
+client := user.Client{Config: files_sdk.GlobalConfig};
+filter_value := true;
+parameters := files_sdk.UserListParams{
+  FilterLt:  map[string]interface{}{"last_login_at"":"2024-01-01"}
+}
+user_iterator, err := client.List(parameters)
+if err != nil {
+  fmt.Println("There was an error")
+  panic(err)
+}
+
+for user_iterator.Next() {
+  user := user_iterator.User()
+  fmt.Println(user.Username)
+}
+```
+
+```go title="Pattern Filter Example"
+// users whose usernames start with 'test'
+files_sdk.GlobalConfig.APIKey ="my-key";
+client := user.Client{Config: files_sdk.GlobalConfig};
+filter_value := true;
+parameters := files_sdk.UserListParams{
+  FilterPrefix:  map[string]interface{}{"username"":"test"}
+}
+user_iterator, err := client.List(parameters)
+if err != nil {
+  fmt.Println("There was an error")
+  panic(err)
+}
+
+for user_iterator.Next() {
+  user := user_iterator.User()
+  fmt.Println(user.Username)
+}
+```
+
+```go title="Combination Filter with Sort Example"
+// users whose usernames start with 'test' and are not admins
+files_sdk.GlobalConfig.APIKey ="my-key";
+client := user.Client{Config: files_sdk.GlobalConfig};
+filter_value := true;
+parameters := files_sdk.UserListParams{
+  FilterPrefix:  map[string]interface{}{"username"":"test"},
+  Filter: files_sdk.User{NotSiteAdmin: &filter_value },
+  SortBy:  map[string]interface{}{"username":"asc"}
+}
+user_iterator, err := client.List(parameters)
+if err != nil {
+  fmt.Println("There was an error")
+  panic(err)
+}
+
+for user_iterator.Next() {
+  user := user_iterator.User()
+  fmt.Println(user.Username)
 }
 ```
 
