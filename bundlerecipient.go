@@ -22,19 +22,19 @@ type BundleRecipient struct {
 type BundleRecipientCollection []BundleRecipient
 
 type BundleRecipientListParams struct {
-	SortBy   map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter   BundleRecipient        `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	BundleId int64                  `url:"bundle_id,omitempty" required:"true" json:"bundle_id,omitempty" path:"bundle_id"`
+	SortBy   map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter   BundleRecipient        `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	BundleId int64                  `url:"bundle_id" json:"bundle_id" path:"bundle_id"`
 	ListParams
 }
 
 type BundleRecipientCreateParams struct {
-	BundleId         int64  `url:"bundle_id,omitempty" required:"true" json:"bundle_id,omitempty" path:"bundle_id"`
-	Recipient        string `url:"recipient,omitempty" required:"true" json:"recipient,omitempty" path:"recipient"`
-	Name             string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	Company          string `url:"company,omitempty" required:"false" json:"company,omitempty" path:"company"`
-	Note             string `url:"note,omitempty" required:"false" json:"note,omitempty" path:"note"`
-	ShareAfterCreate *bool  `url:"share_after_create,omitempty" required:"false" json:"share_after_create,omitempty" path:"share_after_create"`
+	BundleId         int64  `url:"bundle_id" json:"bundle_id" path:"bundle_id"`
+	Recipient        string `url:"recipient" json:"recipient" path:"recipient"`
+	Name             string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	Company          string `url:"company,omitempty" json:"company,omitempty" path:"company"`
+	Note             string `url:"note,omitempty" json:"note,omitempty" path:"note"`
+	ShareAfterCreate *bool  `url:"share_after_create,omitempty" json:"share_after_create,omitempty" path:"share_after_create"`
 }
 
 func (b *BundleRecipient) UnmarshalJSON(data []byte) error {

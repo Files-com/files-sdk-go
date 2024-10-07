@@ -80,88 +80,88 @@ func (u BundlePermissionsEnum) Enum() map[string]BundlePermissionsEnum {
 }
 
 type BundleListParams struct {
-	UserId     int64                  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	SortBy     map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter     Bundle                 `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterGt   map[string]interface{} `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq map[string]interface{} `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterLt   map[string]interface{} `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq map[string]interface{} `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	UserId     int64                  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	SortBy     map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter     Bundle                 `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterGt   map[string]interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq map[string]interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterLt   map[string]interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq map[string]interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 
 type BundleFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type BundleCreateParams struct {
-	UserId                          int64                 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	Paths                           []string              `url:"paths,omitempty" required:"true" json:"paths,omitempty" path:"paths"`
-	Password                        string                `url:"password,omitempty" required:"false" json:"password,omitempty" path:"password"`
-	FormFieldSetId                  int64                 `url:"form_field_set_id,omitempty" required:"false" json:"form_field_set_id,omitempty" path:"form_field_set_id"`
-	CreateSnapshot                  *bool                 `url:"create_snapshot,omitempty" required:"false" json:"create_snapshot,omitempty" path:"create_snapshot"`
-	DontSeparateSubmissionsByFolder *bool                 `url:"dont_separate_submissions_by_folder,omitempty" required:"false" json:"dont_separate_submissions_by_folder,omitempty" path:"dont_separate_submissions_by_folder"`
-	ExpiresAt                       *time.Time            `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty" path:"expires_at"`
-	FinalizeSnapshot                *bool                 `url:"finalize_snapshot,omitempty" required:"false" json:"finalize_snapshot,omitempty" path:"finalize_snapshot"`
-	MaxUses                         int64                 `url:"max_uses,omitempty" required:"false" json:"max_uses,omitempty" path:"max_uses"`
-	Description                     string                `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
-	Note                            string                `url:"note,omitempty" required:"false" json:"note,omitempty" path:"note"`
-	Code                            string                `url:"code,omitempty" required:"false" json:"code,omitempty" path:"code"`
-	PathTemplate                    string                `url:"path_template,omitempty" required:"false" json:"path_template,omitempty" path:"path_template"`
-	PathTemplateTimeZone            string                `url:"path_template_time_zone,omitempty" required:"false" json:"path_template_time_zone,omitempty" path:"path_template_time_zone"`
-	Permissions                     BundlePermissionsEnum `url:"permissions,omitempty" required:"false" json:"permissions,omitempty" path:"permissions"`
-	RequireRegistration             *bool                 `url:"require_registration,omitempty" required:"false" json:"require_registration,omitempty" path:"require_registration"`
-	ClickwrapId                     int64                 `url:"clickwrap_id,omitempty" required:"false" json:"clickwrap_id,omitempty" path:"clickwrap_id"`
-	InboxId                         int64                 `url:"inbox_id,omitempty" required:"false" json:"inbox_id,omitempty" path:"inbox_id"`
-	RequireShareRecipient           *bool                 `url:"require_share_recipient,omitempty" required:"false" json:"require_share_recipient,omitempty" path:"require_share_recipient"`
-	SendEmailReceiptToUploader      *bool                 `url:"send_email_receipt_to_uploader,omitempty" required:"false" json:"send_email_receipt_to_uploader,omitempty" path:"send_email_receipt_to_uploader"`
-	SkipEmail                       *bool                 `url:"skip_email,omitempty" required:"false" json:"skip_email,omitempty" path:"skip_email"`
-	SkipName                        *bool                 `url:"skip_name,omitempty" required:"false" json:"skip_name,omitempty" path:"skip_name"`
-	SkipCompany                     *bool                 `url:"skip_company,omitempty" required:"false" json:"skip_company,omitempty" path:"skip_company"`
-	StartAccessOnDate               *time.Time            `url:"start_access_on_date,omitempty" required:"false" json:"start_access_on_date,omitempty" path:"start_access_on_date"`
-	SnapshotId                      int64                 `url:"snapshot_id,omitempty" required:"false" json:"snapshot_id,omitempty" path:"snapshot_id"`
-	WatermarkAttachmentFile         io.Writer             `url:"watermark_attachment_file,omitempty" required:"false" json:"watermark_attachment_file,omitempty" path:"watermark_attachment_file"`
+	UserId                          int64                 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	Paths                           []string              `url:"paths" json:"paths" path:"paths"`
+	Password                        string                `url:"password,omitempty" json:"password,omitempty" path:"password"`
+	FormFieldSetId                  int64                 `url:"form_field_set_id,omitempty" json:"form_field_set_id,omitempty" path:"form_field_set_id"`
+	CreateSnapshot                  *bool                 `url:"create_snapshot,omitempty" json:"create_snapshot,omitempty" path:"create_snapshot"`
+	DontSeparateSubmissionsByFolder *bool                 `url:"dont_separate_submissions_by_folder,omitempty" json:"dont_separate_submissions_by_folder,omitempty" path:"dont_separate_submissions_by_folder"`
+	ExpiresAt                       *time.Time            `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
+	FinalizeSnapshot                *bool                 `url:"finalize_snapshot,omitempty" json:"finalize_snapshot,omitempty" path:"finalize_snapshot"`
+	MaxUses                         int64                 `url:"max_uses,omitempty" json:"max_uses,omitempty" path:"max_uses"`
+	Description                     string                `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	Note                            string                `url:"note,omitempty" json:"note,omitempty" path:"note"`
+	Code                            string                `url:"code,omitempty" json:"code,omitempty" path:"code"`
+	PathTemplate                    string                `url:"path_template,omitempty" json:"path_template,omitempty" path:"path_template"`
+	PathTemplateTimeZone            string                `url:"path_template_time_zone,omitempty" json:"path_template_time_zone,omitempty" path:"path_template_time_zone"`
+	Permissions                     BundlePermissionsEnum `url:"permissions,omitempty" json:"permissions,omitempty" path:"permissions"`
+	RequireRegistration             *bool                 `url:"require_registration,omitempty" json:"require_registration,omitempty" path:"require_registration"`
+	ClickwrapId                     int64                 `url:"clickwrap_id,omitempty" json:"clickwrap_id,omitempty" path:"clickwrap_id"`
+	InboxId                         int64                 `url:"inbox_id,omitempty" json:"inbox_id,omitempty" path:"inbox_id"`
+	RequireShareRecipient           *bool                 `url:"require_share_recipient,omitempty" json:"require_share_recipient,omitempty" path:"require_share_recipient"`
+	SendEmailReceiptToUploader      *bool                 `url:"send_email_receipt_to_uploader,omitempty" json:"send_email_receipt_to_uploader,omitempty" path:"send_email_receipt_to_uploader"`
+	SkipEmail                       *bool                 `url:"skip_email,omitempty" json:"skip_email,omitempty" path:"skip_email"`
+	SkipName                        *bool                 `url:"skip_name,omitempty" json:"skip_name,omitempty" path:"skip_name"`
+	SkipCompany                     *bool                 `url:"skip_company,omitempty" json:"skip_company,omitempty" path:"skip_company"`
+	StartAccessOnDate               *time.Time            `url:"start_access_on_date,omitempty" json:"start_access_on_date,omitempty" path:"start_access_on_date"`
+	SnapshotId                      int64                 `url:"snapshot_id,omitempty" json:"snapshot_id,omitempty" path:"snapshot_id"`
+	WatermarkAttachmentFile         io.Writer             `url:"watermark_attachment_file,omitempty" json:"watermark_attachment_file,omitempty" path:"watermark_attachment_file"`
 }
 
 // Send email(s) with a link to bundle
 type BundleShareParams struct {
-	Id         int64                    `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	To         []string                 `url:"to,omitempty" required:"false" json:"to,omitempty" path:"to"`
-	Note       string                   `url:"note,omitempty" required:"false" json:"note,omitempty" path:"note"`
-	Recipients []map[string]interface{} `url:"recipients,omitempty" required:"false" json:"recipients,omitempty" path:"recipients"`
+	Id         int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	To         []string                 `url:"to,omitempty" json:"to,omitempty" path:"to"`
+	Note       string                   `url:"note,omitempty" json:"note,omitempty" path:"note"`
+	Recipients []map[string]interface{} `url:"recipients,omitempty" json:"recipients,omitempty" path:"recipients"`
 }
 
 type BundleUpdateParams struct {
-	Id                              int64                 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	Paths                           []string              `url:"paths,omitempty" required:"false" json:"paths,omitempty" path:"paths"`
-	Password                        string                `url:"password,omitempty" required:"false" json:"password,omitempty" path:"password"`
-	FormFieldSetId                  int64                 `url:"form_field_set_id,omitempty" required:"false" json:"form_field_set_id,omitempty" path:"form_field_set_id"`
-	ClickwrapId                     int64                 `url:"clickwrap_id,omitempty" required:"false" json:"clickwrap_id,omitempty" path:"clickwrap_id"`
-	Code                            string                `url:"code,omitempty" required:"false" json:"code,omitempty" path:"code"`
-	CreateSnapshot                  *bool                 `url:"create_snapshot,omitempty" required:"false" json:"create_snapshot,omitempty" path:"create_snapshot"`
-	Description                     string                `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
-	DontSeparateSubmissionsByFolder *bool                 `url:"dont_separate_submissions_by_folder,omitempty" required:"false" json:"dont_separate_submissions_by_folder,omitempty" path:"dont_separate_submissions_by_folder"`
-	ExpiresAt                       *time.Time            `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty" path:"expires_at"`
-	FinalizeSnapshot                *bool                 `url:"finalize_snapshot,omitempty" required:"false" json:"finalize_snapshot,omitempty" path:"finalize_snapshot"`
-	InboxId                         int64                 `url:"inbox_id,omitempty" required:"false" json:"inbox_id,omitempty" path:"inbox_id"`
-	MaxUses                         int64                 `url:"max_uses,omitempty" required:"false" json:"max_uses,omitempty" path:"max_uses"`
-	Note                            string                `url:"note,omitempty" required:"false" json:"note,omitempty" path:"note"`
-	PathTemplate                    string                `url:"path_template,omitempty" required:"false" json:"path_template,omitempty" path:"path_template"`
-	PathTemplateTimeZone            string                `url:"path_template_time_zone,omitempty" required:"false" json:"path_template_time_zone,omitempty" path:"path_template_time_zone"`
-	Permissions                     BundlePermissionsEnum `url:"permissions,omitempty" required:"false" json:"permissions,omitempty" path:"permissions"`
-	RequireRegistration             *bool                 `url:"require_registration,omitempty" required:"false" json:"require_registration,omitempty" path:"require_registration"`
-	RequireShareRecipient           *bool                 `url:"require_share_recipient,omitempty" required:"false" json:"require_share_recipient,omitempty" path:"require_share_recipient"`
-	SendEmailReceiptToUploader      *bool                 `url:"send_email_receipt_to_uploader,omitempty" required:"false" json:"send_email_receipt_to_uploader,omitempty" path:"send_email_receipt_to_uploader"`
-	SkipCompany                     *bool                 `url:"skip_company,omitempty" required:"false" json:"skip_company,omitempty" path:"skip_company"`
-	StartAccessOnDate               *time.Time            `url:"start_access_on_date,omitempty" required:"false" json:"start_access_on_date,omitempty" path:"start_access_on_date"`
-	SkipEmail                       *bool                 `url:"skip_email,omitempty" required:"false" json:"skip_email,omitempty" path:"skip_email"`
-	SkipName                        *bool                 `url:"skip_name,omitempty" required:"false" json:"skip_name,omitempty" path:"skip_name"`
-	WatermarkAttachmentDelete       *bool                 `url:"watermark_attachment_delete,omitempty" required:"false" json:"watermark_attachment_delete,omitempty" path:"watermark_attachment_delete"`
-	WatermarkAttachmentFile         io.Writer             `url:"watermark_attachment_file,omitempty" required:"false" json:"watermark_attachment_file,omitempty" path:"watermark_attachment_file"`
+	Id                              int64                 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Paths                           []string              `url:"paths,omitempty" json:"paths,omitempty" path:"paths"`
+	Password                        string                `url:"password,omitempty" json:"password,omitempty" path:"password"`
+	FormFieldSetId                  int64                 `url:"form_field_set_id,omitempty" json:"form_field_set_id,omitempty" path:"form_field_set_id"`
+	ClickwrapId                     int64                 `url:"clickwrap_id,omitempty" json:"clickwrap_id,omitempty" path:"clickwrap_id"`
+	Code                            string                `url:"code,omitempty" json:"code,omitempty" path:"code"`
+	CreateSnapshot                  *bool                 `url:"create_snapshot,omitempty" json:"create_snapshot,omitempty" path:"create_snapshot"`
+	Description                     string                `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	DontSeparateSubmissionsByFolder *bool                 `url:"dont_separate_submissions_by_folder,omitempty" json:"dont_separate_submissions_by_folder,omitempty" path:"dont_separate_submissions_by_folder"`
+	ExpiresAt                       *time.Time            `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
+	FinalizeSnapshot                *bool                 `url:"finalize_snapshot,omitempty" json:"finalize_snapshot,omitempty" path:"finalize_snapshot"`
+	InboxId                         int64                 `url:"inbox_id,omitempty" json:"inbox_id,omitempty" path:"inbox_id"`
+	MaxUses                         int64                 `url:"max_uses,omitempty" json:"max_uses,omitempty" path:"max_uses"`
+	Note                            string                `url:"note,omitempty" json:"note,omitempty" path:"note"`
+	PathTemplate                    string                `url:"path_template,omitempty" json:"path_template,omitempty" path:"path_template"`
+	PathTemplateTimeZone            string                `url:"path_template_time_zone,omitempty" json:"path_template_time_zone,omitempty" path:"path_template_time_zone"`
+	Permissions                     BundlePermissionsEnum `url:"permissions,omitempty" json:"permissions,omitempty" path:"permissions"`
+	RequireRegistration             *bool                 `url:"require_registration,omitempty" json:"require_registration,omitempty" path:"require_registration"`
+	RequireShareRecipient           *bool                 `url:"require_share_recipient,omitempty" json:"require_share_recipient,omitempty" path:"require_share_recipient"`
+	SendEmailReceiptToUploader      *bool                 `url:"send_email_receipt_to_uploader,omitempty" json:"send_email_receipt_to_uploader,omitempty" path:"send_email_receipt_to_uploader"`
+	SkipCompany                     *bool                 `url:"skip_company,omitempty" json:"skip_company,omitempty" path:"skip_company"`
+	StartAccessOnDate               *time.Time            `url:"start_access_on_date,omitempty" json:"start_access_on_date,omitempty" path:"start_access_on_date"`
+	SkipEmail                       *bool                 `url:"skip_email,omitempty" json:"skip_email,omitempty" path:"skip_email"`
+	SkipName                        *bool                 `url:"skip_name,omitempty" json:"skip_name,omitempty" path:"skip_name"`
+	WatermarkAttachmentDelete       *bool                 `url:"watermark_attachment_delete,omitempty" json:"watermark_attachment_delete,omitempty" path:"watermark_attachment_delete"`
+	WatermarkAttachmentFile         io.Writer             `url:"watermark_attachment_file,omitempty" json:"watermark_attachment_file,omitempty" path:"watermark_attachment_file"`
 }
 
 type BundleDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (b *Bundle) UnmarshalJSON(data []byte) error {

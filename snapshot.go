@@ -28,29 +28,29 @@ type SnapshotListParams struct {
 }
 
 type SnapshotFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type SnapshotCreateParams struct {
-	ExpiresAt *time.Time `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty" path:"expires_at"`
-	Name      string     `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	Paths     []string   `url:"paths,omitempty" required:"false" json:"paths,omitempty" path:"paths"`
+	ExpiresAt *time.Time `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
+	Name      string     `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	Paths     []string   `url:"paths,omitempty" json:"paths,omitempty" path:"paths"`
 }
 
 // Finalize Snapshot
 type SnapshotFinalizeParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type SnapshotUpdateParams struct {
-	Id        int64      `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	ExpiresAt *time.Time `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty" path:"expires_at"`
-	Name      string     `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	Paths     []string   `url:"paths,omitempty" required:"false" json:"paths,omitempty" path:"paths"`
+	Id        int64      `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	ExpiresAt *time.Time `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
+	Name      string     `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	Paths     []string   `url:"paths,omitempty" json:"paths,omitempty" path:"paths"`
 }
 
 type SnapshotDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (s *Snapshot) UnmarshalJSON(data []byte) error {

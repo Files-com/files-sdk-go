@@ -26,8 +26,8 @@ func (a ActionNotificationExportResult) Identifier() interface{} {
 type ActionNotificationExportResultCollection []ActionNotificationExportResult
 
 type ActionNotificationExportResultListParams struct {
-	UserId                     int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	ActionNotificationExportId int64 `url:"action_notification_export_id,omitempty" required:"true" json:"action_notification_export_id,omitempty" path:"action_notification_export_id"`
+	UserId                     int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	ActionNotificationExportId int64 `url:"action_notification_export_id" json:"action_notification_export_id" path:"action_notification_export_id"`
 	ListParams
 }
 

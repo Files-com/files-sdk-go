@@ -179,161 +179,161 @@ func (s Site) Identifier() interface{} {
 type SiteCollection []Site
 
 type SiteUpdateParams struct {
-	Name                                     string                 `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	Subdomain                                string                 `url:"subdomain,omitempty" required:"false" json:"subdomain,omitempty" path:"subdomain"`
-	Domain                                   string                 `url:"domain,omitempty" required:"false" json:"domain,omitempty" path:"domain"`
-	DomainHstsHeader                         *bool                  `url:"domain_hsts_header,omitempty" required:"false" json:"domain_hsts_header,omitempty" path:"domain_hsts_header"`
-	DomainLetsencryptChain                   string                 `url:"domain_letsencrypt_chain,omitempty" required:"false" json:"domain_letsencrypt_chain,omitempty" path:"domain_letsencrypt_chain"`
-	Email                                    string                 `url:"email,omitempty" required:"false" json:"email,omitempty" path:"email"`
-	ReplyToEmail                             string                 `url:"reply_to_email,omitempty" required:"false" json:"reply_to_email,omitempty" path:"reply_to_email"`
-	AllowBundleNames                         *bool                  `url:"allow_bundle_names,omitempty" required:"false" json:"allow_bundle_names,omitempty" path:"allow_bundle_names"`
-	BundleExpiration                         int64                  `url:"bundle_expiration,omitempty" required:"false" json:"bundle_expiration,omitempty" path:"bundle_expiration"`
-	WelcomeEmailEnabled                      *bool                  `url:"welcome_email_enabled,omitempty" required:"false" json:"welcome_email_enabled,omitempty" path:"welcome_email_enabled"`
-	AskAboutOverwrites                       *bool                  `url:"ask_about_overwrites,omitempty" required:"false" json:"ask_about_overwrites,omitempty" path:"ask_about_overwrites"`
-	ShowRequestAccessLink                    *bool                  `url:"show_request_access_link,omitempty" required:"false" json:"show_request_access_link,omitempty" path:"show_request_access_link"`
-	AlwaysMkdirParents                       *bool                  `url:"always_mkdir_parents,omitempty" required:"false" json:"always_mkdir_parents,omitempty" path:"always_mkdir_parents"`
-	WelcomeEmailCc                           string                 `url:"welcome_email_cc,omitempty" required:"false" json:"welcome_email_cc,omitempty" path:"welcome_email_cc"`
-	WelcomeEmailSubject                      string                 `url:"welcome_email_subject,omitempty" required:"false" json:"welcome_email_subject,omitempty" path:"welcome_email_subject"`
-	WelcomeCustomText                        string                 `url:"welcome_custom_text,omitempty" required:"false" json:"welcome_custom_text,omitempty" path:"welcome_custom_text"`
-	Language                                 string                 `url:"language,omitempty" required:"false" json:"language,omitempty" path:"language"`
-	WindowsModeFtp                           *bool                  `url:"windows_mode_ftp,omitempty" required:"false" json:"windows_mode_ftp,omitempty" path:"windows_mode_ftp"`
-	DefaultTimeZone                          string                 `url:"default_time_zone,omitempty" required:"false" json:"default_time_zone,omitempty" path:"default_time_zone"`
-	DesktopApp                               *bool                  `url:"desktop_app,omitempty" required:"false" json:"desktop_app,omitempty" path:"desktop_app"`
-	DesktopAppSessionIpPinning               *bool                  `url:"desktop_app_session_ip_pinning,omitempty" required:"false" json:"desktop_app_session_ip_pinning,omitempty" path:"desktop_app_session_ip_pinning"`
-	DesktopAppSessionLifetime                int64                  `url:"desktop_app_session_lifetime,omitempty" required:"false" json:"desktop_app_session_lifetime,omitempty" path:"desktop_app_session_lifetime"`
-	MobileApp                                *bool                  `url:"mobile_app,omitempty" required:"false" json:"mobile_app,omitempty" path:"mobile_app"`
-	MobileAppSessionIpPinning                *bool                  `url:"mobile_app_session_ip_pinning,omitempty" required:"false" json:"mobile_app_session_ip_pinning,omitempty" path:"mobile_app_session_ip_pinning"`
-	MobileAppSessionLifetime                 int64                  `url:"mobile_app_session_lifetime,omitempty" required:"false" json:"mobile_app_session_lifetime,omitempty" path:"mobile_app_session_lifetime"`
-	FolderPermissionsGroupsOnly              *bool                  `url:"folder_permissions_groups_only,omitempty" required:"false" json:"folder_permissions_groups_only,omitempty" path:"folder_permissions_groups_only"`
-	WelcomeScreen                            string                 `url:"welcome_screen,omitempty" required:"false" json:"welcome_screen,omitempty" path:"welcome_screen"`
-	OfficeIntegrationAvailable               *bool                  `url:"office_integration_available,omitempty" required:"false" json:"office_integration_available,omitempty" path:"office_integration_available"`
-	OfficeIntegrationType                    string                 `url:"office_integration_type,omitempty" required:"false" json:"office_integration_type,omitempty" path:"office_integration_type"`
-	PinAllRemoteServersToSiteRegion          *bool                  `url:"pin_all_remote_servers_to_site_region,omitempty" required:"false" json:"pin_all_remote_servers_to_site_region,omitempty" path:"pin_all_remote_servers_to_site_region"`
-	MotdText                                 string                 `url:"motd_text,omitempty" required:"false" json:"motd_text,omitempty" path:"motd_text"`
-	MotdUseForFtp                            *bool                  `url:"motd_use_for_ftp,omitempty" required:"false" json:"motd_use_for_ftp,omitempty" path:"motd_use_for_ftp"`
-	MotdUseForSftp                           *bool                  `url:"motd_use_for_sftp,omitempty" required:"false" json:"motd_use_for_sftp,omitempty" path:"motd_use_for_sftp"`
-	LeftNavigationVisibility                 map[string]interface{} `url:"left_navigation_visibility,omitempty" required:"false" json:"left_navigation_visibility,omitempty" path:"left_navigation_visibility"`
-	AdditionalTextFileTypes                  []string               `url:"additional_text_file_types,omitempty" required:"false" json:"additional_text_file_types,omitempty" path:"additional_text_file_types"`
-	BundleRequireNote                        *bool                  `url:"bundle_require_note,omitempty" required:"false" json:"bundle_require_note,omitempty" path:"bundle_require_note"`
-	SessionExpiry                            string                 `url:"session_expiry,omitempty" required:"false" json:"session_expiry,omitempty" path:"session_expiry"`
-	SslRequired                              *bool                  `url:"ssl_required,omitempty" required:"false" json:"ssl_required,omitempty" path:"ssl_required"`
-	TlsDisabled                              *bool                  `url:"tls_disabled,omitempty" required:"false" json:"tls_disabled,omitempty" path:"tls_disabled"`
-	SftpInsecureCiphers                      *bool                  `url:"sftp_insecure_ciphers,omitempty" required:"false" json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers"`
-	SftpInsecureDiffieHellman                *bool                  `url:"sftp_insecure_diffie_hellman,omitempty" required:"false" json:"sftp_insecure_diffie_hellman,omitempty" path:"sftp_insecure_diffie_hellman"`
-	DisableFilesCertificateGeneration        *bool                  `url:"disable_files_certificate_generation,omitempty" required:"false" json:"disable_files_certificate_generation,omitempty" path:"disable_files_certificate_generation"`
-	UserLockout                              *bool                  `url:"user_lockout,omitempty" required:"false" json:"user_lockout,omitempty" path:"user_lockout"`
-	UserLockoutTries                         int64                  `url:"user_lockout_tries,omitempty" required:"false" json:"user_lockout_tries,omitempty" path:"user_lockout_tries"`
-	UserLockoutWithin                        int64                  `url:"user_lockout_within,omitempty" required:"false" json:"user_lockout_within,omitempty" path:"user_lockout_within"`
-	UserLockoutLockPeriod                    int64                  `url:"user_lockout_lock_period,omitempty" required:"false" json:"user_lockout_lock_period,omitempty" path:"user_lockout_lock_period"`
-	IncludePasswordInWelcomeEmail            *bool                  `url:"include_password_in_welcome_email,omitempty" required:"false" json:"include_password_in_welcome_email,omitempty" path:"include_password_in_welcome_email"`
-	AllowedCountries                         string                 `url:"allowed_countries,omitempty" required:"false" json:"allowed_countries,omitempty" path:"allowed_countries"`
-	AllowedIps                               string                 `url:"allowed_ips,omitempty" required:"false" json:"allowed_ips,omitempty" path:"allowed_ips"`
-	DisallowedCountries                      string                 `url:"disallowed_countries,omitempty" required:"false" json:"disallowed_countries,omitempty" path:"disallowed_countries"`
-	DaysToRetainBackups                      int64                  `url:"days_to_retain_backups,omitempty" required:"false" json:"days_to_retain_backups,omitempty" path:"days_to_retain_backups"`
-	MaxPriorPasswords                        int64                  `url:"max_prior_passwords,omitempty" required:"false" json:"max_prior_passwords,omitempty" path:"max_prior_passwords"`
-	PasswordValidityDays                     int64                  `url:"password_validity_days,omitempty" required:"false" json:"password_validity_days,omitempty" path:"password_validity_days"`
-	PasswordMinLength                        int64                  `url:"password_min_length,omitempty" required:"false" json:"password_min_length,omitempty" path:"password_min_length"`
-	PasswordRequireLetter                    *bool                  `url:"password_require_letter,omitempty" required:"false" json:"password_require_letter,omitempty" path:"password_require_letter"`
-	PasswordRequireMixed                     *bool                  `url:"password_require_mixed,omitempty" required:"false" json:"password_require_mixed,omitempty" path:"password_require_mixed"`
-	PasswordRequireSpecial                   *bool                  `url:"password_require_special,omitempty" required:"false" json:"password_require_special,omitempty" path:"password_require_special"`
-	PasswordRequireNumber                    *bool                  `url:"password_require_number,omitempty" required:"false" json:"password_require_number,omitempty" path:"password_require_number"`
-	PasswordRequireUnbreached                *bool                  `url:"password_require_unbreached,omitempty" required:"false" json:"password_require_unbreached,omitempty" path:"password_require_unbreached"`
-	RequireLogoutFromBundlesAndInboxes       *bool                  `url:"require_logout_from_bundles_and_inboxes,omitempty" required:"false" json:"require_logout_from_bundles_and_inboxes,omitempty" path:"require_logout_from_bundles_and_inboxes"`
-	DavUserRootEnabled                       *bool                  `url:"dav_user_root_enabled,omitempty" required:"false" json:"dav_user_root_enabled,omitempty" path:"dav_user_root_enabled"`
-	SftpUserRootEnabled                      *bool                  `url:"sftp_user_root_enabled,omitempty" required:"false" json:"sftp_user_root_enabled,omitempty" path:"sftp_user_root_enabled"`
-	DisablePasswordReset                     *bool                  `url:"disable_password_reset,omitempty" required:"false" json:"disable_password_reset,omitempty" path:"disable_password_reset"`
-	ImmutableFiles                           *bool                  `url:"immutable_files,omitempty" required:"false" json:"immutable_files,omitempty" path:"immutable_files"`
-	SessionPinnedByIp                        *bool                  `url:"session_pinned_by_ip,omitempty" required:"false" json:"session_pinned_by_ip,omitempty" path:"session_pinned_by_ip"`
-	BundleNotFoundMessage                    string                 `url:"bundle_not_found_message,omitempty" required:"false" json:"bundle_not_found_message,omitempty" path:"bundle_not_found_message"`
-	BundlePasswordRequired                   *bool                  `url:"bundle_password_required,omitempty" required:"false" json:"bundle_password_required,omitempty" path:"bundle_password_required"`
-	BundleRequireRegistration                *bool                  `url:"bundle_require_registration,omitempty" required:"false" json:"bundle_require_registration,omitempty" path:"bundle_require_registration"`
-	BundleRequireShareRecipient              *bool                  `url:"bundle_require_share_recipient,omitempty" required:"false" json:"bundle_require_share_recipient,omitempty" path:"bundle_require_share_recipient"`
-	BundleRegistrationNotifications          string                 `url:"bundle_registration_notifications,omitempty" required:"false" json:"bundle_registration_notifications,omitempty" path:"bundle_registration_notifications"`
-	BundleActivityNotifications              string                 `url:"bundle_activity_notifications,omitempty" required:"false" json:"bundle_activity_notifications,omitempty" path:"bundle_activity_notifications"`
-	BundleUploadReceiptNotifications         string                 `url:"bundle_upload_receipt_notifications,omitempty" required:"false" json:"bundle_upload_receipt_notifications,omitempty" path:"bundle_upload_receipt_notifications"`
-	PasswordRequirementsApplyToBundles       *bool                  `url:"password_requirements_apply_to_bundles,omitempty" required:"false" json:"password_requirements_apply_to_bundles,omitempty" path:"password_requirements_apply_to_bundles"`
-	PreventRootPermissionsForNonSiteAdmins   *bool                  `url:"prevent_root_permissions_for_non_site_admins,omitempty" required:"false" json:"prevent_root_permissions_for_non_site_admins,omitempty" path:"prevent_root_permissions_for_non_site_admins"`
-	OptOutGlobal                             *bool                  `url:"opt_out_global,omitempty" required:"false" json:"opt_out_global,omitempty" path:"opt_out_global"`
-	UseProvidedModifiedAt                    *bool                  `url:"use_provided_modified_at,omitempty" required:"false" json:"use_provided_modified_at,omitempty" path:"use_provided_modified_at"`
-	CustomNamespace                          *bool                  `url:"custom_namespace,omitempty" required:"false" json:"custom_namespace,omitempty" path:"custom_namespace"`
-	DisableUsersFromInactivityPeriodDays     int64                  `url:"disable_users_from_inactivity_period_days,omitempty" required:"false" json:"disable_users_from_inactivity_period_days,omitempty" path:"disable_users_from_inactivity_period_days"`
-	NonSsoGroupsAllowed                      *bool                  `url:"non_sso_groups_allowed,omitempty" required:"false" json:"non_sso_groups_allowed,omitempty" path:"non_sso_groups_allowed"`
-	NonSsoUsersAllowed                       *bool                  `url:"non_sso_users_allowed,omitempty" required:"false" json:"non_sso_users_allowed,omitempty" path:"non_sso_users_allowed"`
-	SharingEnabled                           *bool                  `url:"sharing_enabled,omitempty" required:"false" json:"sharing_enabled,omitempty" path:"sharing_enabled"`
-	UserRequestsEnabled                      *bool                  `url:"user_requests_enabled,omitempty" required:"false" json:"user_requests_enabled,omitempty" path:"user_requests_enabled"`
-	UserRequestsNotifyAdmins                 *bool                  `url:"user_requests_notify_admins,omitempty" required:"false" json:"user_requests_notify_admins,omitempty" path:"user_requests_notify_admins"`
-	DavEnabled                               *bool                  `url:"dav_enabled,omitempty" required:"false" json:"dav_enabled,omitempty" path:"dav_enabled"`
-	FtpEnabled                               *bool                  `url:"ftp_enabled,omitempty" required:"false" json:"ftp_enabled,omitempty" path:"ftp_enabled"`
-	SftpEnabled                              *bool                  `url:"sftp_enabled,omitempty" required:"false" json:"sftp_enabled,omitempty" path:"sftp_enabled"`
-	UsersCanCreateApiKeys                    *bool                  `url:"users_can_create_api_keys,omitempty" required:"false" json:"users_can_create_api_keys,omitempty" path:"users_can_create_api_keys"`
-	UsersCanCreateSshKeys                    *bool                  `url:"users_can_create_ssh_keys,omitempty" required:"false" json:"users_can_create_ssh_keys,omitempty" path:"users_can_create_ssh_keys"`
-	SftpHostKeyType                          string                 `url:"sftp_host_key_type,omitempty" required:"false" json:"sftp_host_key_type,omitempty" path:"sftp_host_key_type"`
-	ActiveSftpHostKeyId                      int64                  `url:"active_sftp_host_key_id,omitempty" required:"false" json:"active_sftp_host_key_id,omitempty" path:"active_sftp_host_key_id"`
-	ProtocolAccessGroupsOnly                 *bool                  `url:"protocol_access_groups_only,omitempty" required:"false" json:"protocol_access_groups_only,omitempty" path:"protocol_access_groups_only"`
-	BundleWatermarkValue                     map[string]interface{} `url:"bundle_watermark_value,omitempty" required:"false" json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value"`
-	GroupAdminsCanSetUserPassword            *bool                  `url:"group_admins_can_set_user_password,omitempty" required:"false" json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password"`
-	BundleRecipientBlacklistFreeEmailDomains *bool                  `url:"bundle_recipient_blacklist_free_email_domains,omitempty" required:"false" json:"bundle_recipient_blacklist_free_email_domains,omitempty" path:"bundle_recipient_blacklist_free_email_domains"`
-	BundleRecipientBlacklistDomains          []string               `url:"bundle_recipient_blacklist_domains,omitempty" required:"false" json:"bundle_recipient_blacklist_domains,omitempty" path:"bundle_recipient_blacklist_domains"`
-	AdminsBypassLockedSubfolders             *bool                  `url:"admins_bypass_locked_subfolders,omitempty" required:"false" json:"admins_bypass_locked_subfolders,omitempty" path:"admins_bypass_locked_subfolders"`
-	Allowed2faMethodSms                      *bool                  `url:"allowed_2fa_method_sms,omitempty" required:"false" json:"allowed_2fa_method_sms,omitempty" path:"allowed_2fa_method_sms"`
-	Allowed2faMethodTotp                     *bool                  `url:"allowed_2fa_method_totp,omitempty" required:"false" json:"allowed_2fa_method_totp,omitempty" path:"allowed_2fa_method_totp"`
-	Allowed2faMethodWebauthn                 *bool                  `url:"allowed_2fa_method_webauthn,omitempty" required:"false" json:"allowed_2fa_method_webauthn,omitempty" path:"allowed_2fa_method_webauthn"`
-	Allowed2faMethodYubi                     *bool                  `url:"allowed_2fa_method_yubi,omitempty" required:"false" json:"allowed_2fa_method_yubi,omitempty" path:"allowed_2fa_method_yubi"`
-	Allowed2faMethodEmail                    *bool                  `url:"allowed_2fa_method_email,omitempty" required:"false" json:"allowed_2fa_method_email,omitempty" path:"allowed_2fa_method_email"`
-	Allowed2faMethodStatic                   *bool                  `url:"allowed_2fa_method_static,omitempty" required:"false" json:"allowed_2fa_method_static,omitempty" path:"allowed_2fa_method_static"`
-	Allowed2faMethodBypassForFtpSftpDav      *bool                  `url:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty" required:"false" json:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty" path:"allowed_2fa_method_bypass_for_ftp_sftp_dav"`
-	Require2fa                               *bool                  `url:"require_2fa,omitempty" required:"false" json:"require_2fa,omitempty" path:"require_2fa"`
-	Require2faUserType                       string                 `url:"require_2fa_user_type,omitempty" required:"false" json:"require_2fa_user_type,omitempty" path:"require_2fa_user_type"`
-	Color2Top                                string                 `url:"color2_top,omitempty" required:"false" json:"color2_top,omitempty" path:"color2_top"`
-	Color2Left                               string                 `url:"color2_left,omitempty" required:"false" json:"color2_left,omitempty" path:"color2_left"`
-	Color2Link                               string                 `url:"color2_link,omitempty" required:"false" json:"color2_link,omitempty" path:"color2_link"`
-	Color2Text                               string                 `url:"color2_text,omitempty" required:"false" json:"color2_text,omitempty" path:"color2_text"`
-	Color2TopText                            string                 `url:"color2_top_text,omitempty" required:"false" json:"color2_top_text,omitempty" path:"color2_top_text"`
-	SiteHeader                               string                 `url:"site_header,omitempty" required:"false" json:"site_header,omitempty" path:"site_header"`
-	SiteFooter                               string                 `url:"site_footer,omitempty" required:"false" json:"site_footer,omitempty" path:"site_footer"`
-	LoginHelpText                            string                 `url:"login_help_text,omitempty" required:"false" json:"login_help_text,omitempty" path:"login_help_text"`
-	UseDedicatedIpsForSmtp                   *bool                  `url:"use_dedicated_ips_for_smtp,omitempty" required:"false" json:"use_dedicated_ips_for_smtp,omitempty" path:"use_dedicated_ips_for_smtp"`
-	SmtpAddress                              string                 `url:"smtp_address,omitempty" required:"false" json:"smtp_address,omitempty" path:"smtp_address"`
-	SmtpAuthentication                       string                 `url:"smtp_authentication,omitempty" required:"false" json:"smtp_authentication,omitempty" path:"smtp_authentication"`
-	SmtpFrom                                 string                 `url:"smtp_from,omitempty" required:"false" json:"smtp_from,omitempty" path:"smtp_from"`
-	SmtpUsername                             string                 `url:"smtp_username,omitempty" required:"false" json:"smtp_username,omitempty" path:"smtp_username"`
-	SmtpPort                                 int64                  `url:"smtp_port,omitempty" required:"false" json:"smtp_port,omitempty" path:"smtp_port"`
-	LdapEnabled                              *bool                  `url:"ldap_enabled,omitempty" required:"false" json:"ldap_enabled,omitempty" path:"ldap_enabled"`
-	LdapType                                 string                 `url:"ldap_type,omitempty" required:"false" json:"ldap_type,omitempty" path:"ldap_type"`
-	LdapHost                                 string                 `url:"ldap_host,omitempty" required:"false" json:"ldap_host,omitempty" path:"ldap_host"`
-	LdapHost2                                string                 `url:"ldap_host_2,omitempty" required:"false" json:"ldap_host_2,omitempty" path:"ldap_host_2"`
-	LdapHost3                                string                 `url:"ldap_host_3,omitempty" required:"false" json:"ldap_host_3,omitempty" path:"ldap_host_3"`
-	LdapPort                                 int64                  `url:"ldap_port,omitempty" required:"false" json:"ldap_port,omitempty" path:"ldap_port"`
-	LdapSecure                               *bool                  `url:"ldap_secure,omitempty" required:"false" json:"ldap_secure,omitempty" path:"ldap_secure"`
-	LdapUsername                             string                 `url:"ldap_username,omitempty" required:"false" json:"ldap_username,omitempty" path:"ldap_username"`
-	LdapUsernameField                        string                 `url:"ldap_username_field,omitempty" required:"false" json:"ldap_username_field,omitempty" path:"ldap_username_field"`
-	LdapDomain                               string                 `url:"ldap_domain,omitempty" required:"false" json:"ldap_domain,omitempty" path:"ldap_domain"`
-	LdapUserAction                           string                 `url:"ldap_user_action,omitempty" required:"false" json:"ldap_user_action,omitempty" path:"ldap_user_action"`
-	LdapGroupAction                          string                 `url:"ldap_group_action,omitempty" required:"false" json:"ldap_group_action,omitempty" path:"ldap_group_action"`
-	LdapUserIncludeGroups                    string                 `url:"ldap_user_include_groups,omitempty" required:"false" json:"ldap_user_include_groups,omitempty" path:"ldap_user_include_groups"`
-	LdapGroupExclusion                       string                 `url:"ldap_group_exclusion,omitempty" required:"false" json:"ldap_group_exclusion,omitempty" path:"ldap_group_exclusion"`
-	LdapGroupInclusion                       string                 `url:"ldap_group_inclusion,omitempty" required:"false" json:"ldap_group_inclusion,omitempty" path:"ldap_group_inclusion"`
-	LdapBaseDn                               string                 `url:"ldap_base_dn,omitempty" required:"false" json:"ldap_base_dn,omitempty" path:"ldap_base_dn"`
-	UploadsViaEmailAuthentication            *bool                  `url:"uploads_via_email_authentication,omitempty" required:"false" json:"uploads_via_email_authentication,omitempty" path:"uploads_via_email_authentication"`
-	Icon16File                               io.Writer              `url:"icon16_file,omitempty" required:"false" json:"icon16_file,omitempty" path:"icon16_file"`
-	Icon16Delete                             *bool                  `url:"icon16_delete,omitempty" required:"false" json:"icon16_delete,omitempty" path:"icon16_delete"`
-	Icon32File                               io.Writer              `url:"icon32_file,omitempty" required:"false" json:"icon32_file,omitempty" path:"icon32_file"`
-	Icon32Delete                             *bool                  `url:"icon32_delete,omitempty" required:"false" json:"icon32_delete,omitempty" path:"icon32_delete"`
-	Icon48File                               io.Writer              `url:"icon48_file,omitempty" required:"false" json:"icon48_file,omitempty" path:"icon48_file"`
-	Icon48Delete                             *bool                  `url:"icon48_delete,omitempty" required:"false" json:"icon48_delete,omitempty" path:"icon48_delete"`
-	Icon128File                              io.Writer              `url:"icon128_file,omitempty" required:"false" json:"icon128_file,omitempty" path:"icon128_file"`
-	Icon128Delete                            *bool                  `url:"icon128_delete,omitempty" required:"false" json:"icon128_delete,omitempty" path:"icon128_delete"`
-	LogoFile                                 io.Writer              `url:"logo_file,omitempty" required:"false" json:"logo_file,omitempty" path:"logo_file"`
-	LogoDelete                               *bool                  `url:"logo_delete,omitempty" required:"false" json:"logo_delete,omitempty" path:"logo_delete"`
-	BundleWatermarkAttachmentFile            io.Writer              `url:"bundle_watermark_attachment_file,omitempty" required:"false" json:"bundle_watermark_attachment_file,omitempty" path:"bundle_watermark_attachment_file"`
-	BundleWatermarkAttachmentDelete          *bool                  `url:"bundle_watermark_attachment_delete,omitempty" required:"false" json:"bundle_watermark_attachment_delete,omitempty" path:"bundle_watermark_attachment_delete"`
-	LoginPageBackgroundImageFile             io.Writer              `url:"login_page_background_image_file,omitempty" required:"false" json:"login_page_background_image_file,omitempty" path:"login_page_background_image_file"`
-	LoginPageBackgroundImageDelete           *bool                  `url:"login_page_background_image_delete,omitempty" required:"false" json:"login_page_background_image_delete,omitempty" path:"login_page_background_image_delete"`
-	Disable2faWithDelay                      *bool                  `url:"disable_2fa_with_delay,omitempty" required:"false" json:"disable_2fa_with_delay,omitempty" path:"disable_2fa_with_delay"`
-	LdapPasswordChange                       string                 `url:"ldap_password_change,omitempty" required:"false" json:"ldap_password_change,omitempty" path:"ldap_password_change"`
-	LdapPasswordChangeConfirmation           string                 `url:"ldap_password_change_confirmation,omitempty" required:"false" json:"ldap_password_change_confirmation,omitempty" path:"ldap_password_change_confirmation"`
-	SmtpPassword                             string                 `url:"smtp_password,omitempty" required:"false" json:"smtp_password,omitempty" path:"smtp_password"`
-	SessionExpiryMinutes                     int64                  `url:"session_expiry_minutes,omitempty" required:"false" json:"session_expiry_minutes,omitempty" path:"session_expiry_minutes"`
+	Name                                     string                 `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	Subdomain                                string                 `url:"subdomain,omitempty" json:"subdomain,omitempty" path:"subdomain"`
+	Domain                                   string                 `url:"domain,omitempty" json:"domain,omitempty" path:"domain"`
+	DomainHstsHeader                         *bool                  `url:"domain_hsts_header,omitempty" json:"domain_hsts_header,omitempty" path:"domain_hsts_header"`
+	DomainLetsencryptChain                   string                 `url:"domain_letsencrypt_chain,omitempty" json:"domain_letsencrypt_chain,omitempty" path:"domain_letsencrypt_chain"`
+	Email                                    string                 `url:"email,omitempty" json:"email,omitempty" path:"email"`
+	ReplyToEmail                             string                 `url:"reply_to_email,omitempty" json:"reply_to_email,omitempty" path:"reply_to_email"`
+	AllowBundleNames                         *bool                  `url:"allow_bundle_names,omitempty" json:"allow_bundle_names,omitempty" path:"allow_bundle_names"`
+	BundleExpiration                         int64                  `url:"bundle_expiration,omitempty" json:"bundle_expiration,omitempty" path:"bundle_expiration"`
+	WelcomeEmailEnabled                      *bool                  `url:"welcome_email_enabled,omitempty" json:"welcome_email_enabled,omitempty" path:"welcome_email_enabled"`
+	AskAboutOverwrites                       *bool                  `url:"ask_about_overwrites,omitempty" json:"ask_about_overwrites,omitempty" path:"ask_about_overwrites"`
+	ShowRequestAccessLink                    *bool                  `url:"show_request_access_link,omitempty" json:"show_request_access_link,omitempty" path:"show_request_access_link"`
+	AlwaysMkdirParents                       *bool                  `url:"always_mkdir_parents,omitempty" json:"always_mkdir_parents,omitempty" path:"always_mkdir_parents"`
+	WelcomeEmailCc                           string                 `url:"welcome_email_cc,omitempty" json:"welcome_email_cc,omitempty" path:"welcome_email_cc"`
+	WelcomeEmailSubject                      string                 `url:"welcome_email_subject,omitempty" json:"welcome_email_subject,omitempty" path:"welcome_email_subject"`
+	WelcomeCustomText                        string                 `url:"welcome_custom_text,omitempty" json:"welcome_custom_text,omitempty" path:"welcome_custom_text"`
+	Language                                 string                 `url:"language,omitempty" json:"language,omitempty" path:"language"`
+	WindowsModeFtp                           *bool                  `url:"windows_mode_ftp,omitempty" json:"windows_mode_ftp,omitempty" path:"windows_mode_ftp"`
+	DefaultTimeZone                          string                 `url:"default_time_zone,omitempty" json:"default_time_zone,omitempty" path:"default_time_zone"`
+	DesktopApp                               *bool                  `url:"desktop_app,omitempty" json:"desktop_app,omitempty" path:"desktop_app"`
+	DesktopAppSessionIpPinning               *bool                  `url:"desktop_app_session_ip_pinning,omitempty" json:"desktop_app_session_ip_pinning,omitempty" path:"desktop_app_session_ip_pinning"`
+	DesktopAppSessionLifetime                int64                  `url:"desktop_app_session_lifetime,omitempty" json:"desktop_app_session_lifetime,omitempty" path:"desktop_app_session_lifetime"`
+	MobileApp                                *bool                  `url:"mobile_app,omitempty" json:"mobile_app,omitempty" path:"mobile_app"`
+	MobileAppSessionIpPinning                *bool                  `url:"mobile_app_session_ip_pinning,omitempty" json:"mobile_app_session_ip_pinning,omitempty" path:"mobile_app_session_ip_pinning"`
+	MobileAppSessionLifetime                 int64                  `url:"mobile_app_session_lifetime,omitempty" json:"mobile_app_session_lifetime,omitempty" path:"mobile_app_session_lifetime"`
+	FolderPermissionsGroupsOnly              *bool                  `url:"folder_permissions_groups_only,omitempty" json:"folder_permissions_groups_only,omitempty" path:"folder_permissions_groups_only"`
+	WelcomeScreen                            string                 `url:"welcome_screen,omitempty" json:"welcome_screen,omitempty" path:"welcome_screen"`
+	OfficeIntegrationAvailable               *bool                  `url:"office_integration_available,omitempty" json:"office_integration_available,omitempty" path:"office_integration_available"`
+	OfficeIntegrationType                    string                 `url:"office_integration_type,omitempty" json:"office_integration_type,omitempty" path:"office_integration_type"`
+	PinAllRemoteServersToSiteRegion          *bool                  `url:"pin_all_remote_servers_to_site_region,omitempty" json:"pin_all_remote_servers_to_site_region,omitempty" path:"pin_all_remote_servers_to_site_region"`
+	MotdText                                 string                 `url:"motd_text,omitempty" json:"motd_text,omitempty" path:"motd_text"`
+	MotdUseForFtp                            *bool                  `url:"motd_use_for_ftp,omitempty" json:"motd_use_for_ftp,omitempty" path:"motd_use_for_ftp"`
+	MotdUseForSftp                           *bool                  `url:"motd_use_for_sftp,omitempty" json:"motd_use_for_sftp,omitempty" path:"motd_use_for_sftp"`
+	LeftNavigationVisibility                 map[string]interface{} `url:"left_navigation_visibility,omitempty" json:"left_navigation_visibility,omitempty" path:"left_navigation_visibility"`
+	AdditionalTextFileTypes                  []string               `url:"additional_text_file_types,omitempty" json:"additional_text_file_types,omitempty" path:"additional_text_file_types"`
+	BundleRequireNote                        *bool                  `url:"bundle_require_note,omitempty" json:"bundle_require_note,omitempty" path:"bundle_require_note"`
+	SessionExpiry                            string                 `url:"session_expiry,omitempty" json:"session_expiry,omitempty" path:"session_expiry"`
+	SslRequired                              *bool                  `url:"ssl_required,omitempty" json:"ssl_required,omitempty" path:"ssl_required"`
+	TlsDisabled                              *bool                  `url:"tls_disabled,omitempty" json:"tls_disabled,omitempty" path:"tls_disabled"`
+	SftpInsecureCiphers                      *bool                  `url:"sftp_insecure_ciphers,omitempty" json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers"`
+	SftpInsecureDiffieHellman                *bool                  `url:"sftp_insecure_diffie_hellman,omitempty" json:"sftp_insecure_diffie_hellman,omitempty" path:"sftp_insecure_diffie_hellman"`
+	DisableFilesCertificateGeneration        *bool                  `url:"disable_files_certificate_generation,omitempty" json:"disable_files_certificate_generation,omitempty" path:"disable_files_certificate_generation"`
+	UserLockout                              *bool                  `url:"user_lockout,omitempty" json:"user_lockout,omitempty" path:"user_lockout"`
+	UserLockoutTries                         int64                  `url:"user_lockout_tries,omitempty" json:"user_lockout_tries,omitempty" path:"user_lockout_tries"`
+	UserLockoutWithin                        int64                  `url:"user_lockout_within,omitempty" json:"user_lockout_within,omitempty" path:"user_lockout_within"`
+	UserLockoutLockPeriod                    int64                  `url:"user_lockout_lock_period,omitempty" json:"user_lockout_lock_period,omitempty" path:"user_lockout_lock_period"`
+	IncludePasswordInWelcomeEmail            *bool                  `url:"include_password_in_welcome_email,omitempty" json:"include_password_in_welcome_email,omitempty" path:"include_password_in_welcome_email"`
+	AllowedCountries                         string                 `url:"allowed_countries,omitempty" json:"allowed_countries,omitempty" path:"allowed_countries"`
+	AllowedIps                               string                 `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
+	DisallowedCountries                      string                 `url:"disallowed_countries,omitempty" json:"disallowed_countries,omitempty" path:"disallowed_countries"`
+	DaysToRetainBackups                      int64                  `url:"days_to_retain_backups,omitempty" json:"days_to_retain_backups,omitempty" path:"days_to_retain_backups"`
+	MaxPriorPasswords                        int64                  `url:"max_prior_passwords,omitempty" json:"max_prior_passwords,omitempty" path:"max_prior_passwords"`
+	PasswordValidityDays                     int64                  `url:"password_validity_days,omitempty" json:"password_validity_days,omitempty" path:"password_validity_days"`
+	PasswordMinLength                        int64                  `url:"password_min_length,omitempty" json:"password_min_length,omitempty" path:"password_min_length"`
+	PasswordRequireLetter                    *bool                  `url:"password_require_letter,omitempty" json:"password_require_letter,omitempty" path:"password_require_letter"`
+	PasswordRequireMixed                     *bool                  `url:"password_require_mixed,omitempty" json:"password_require_mixed,omitempty" path:"password_require_mixed"`
+	PasswordRequireSpecial                   *bool                  `url:"password_require_special,omitempty" json:"password_require_special,omitempty" path:"password_require_special"`
+	PasswordRequireNumber                    *bool                  `url:"password_require_number,omitempty" json:"password_require_number,omitempty" path:"password_require_number"`
+	PasswordRequireUnbreached                *bool                  `url:"password_require_unbreached,omitempty" json:"password_require_unbreached,omitempty" path:"password_require_unbreached"`
+	RequireLogoutFromBundlesAndInboxes       *bool                  `url:"require_logout_from_bundles_and_inboxes,omitempty" json:"require_logout_from_bundles_and_inboxes,omitempty" path:"require_logout_from_bundles_and_inboxes"`
+	DavUserRootEnabled                       *bool                  `url:"dav_user_root_enabled,omitempty" json:"dav_user_root_enabled,omitempty" path:"dav_user_root_enabled"`
+	SftpUserRootEnabled                      *bool                  `url:"sftp_user_root_enabled,omitempty" json:"sftp_user_root_enabled,omitempty" path:"sftp_user_root_enabled"`
+	DisablePasswordReset                     *bool                  `url:"disable_password_reset,omitempty" json:"disable_password_reset,omitempty" path:"disable_password_reset"`
+	ImmutableFiles                           *bool                  `url:"immutable_files,omitempty" json:"immutable_files,omitempty" path:"immutable_files"`
+	SessionPinnedByIp                        *bool                  `url:"session_pinned_by_ip,omitempty" json:"session_pinned_by_ip,omitempty" path:"session_pinned_by_ip"`
+	BundleNotFoundMessage                    string                 `url:"bundle_not_found_message,omitempty" json:"bundle_not_found_message,omitempty" path:"bundle_not_found_message"`
+	BundlePasswordRequired                   *bool                  `url:"bundle_password_required,omitempty" json:"bundle_password_required,omitempty" path:"bundle_password_required"`
+	BundleRequireRegistration                *bool                  `url:"bundle_require_registration,omitempty" json:"bundle_require_registration,omitempty" path:"bundle_require_registration"`
+	BundleRequireShareRecipient              *bool                  `url:"bundle_require_share_recipient,omitempty" json:"bundle_require_share_recipient,omitempty" path:"bundle_require_share_recipient"`
+	BundleRegistrationNotifications          string                 `url:"bundle_registration_notifications,omitempty" json:"bundle_registration_notifications,omitempty" path:"bundle_registration_notifications"`
+	BundleActivityNotifications              string                 `url:"bundle_activity_notifications,omitempty" json:"bundle_activity_notifications,omitempty" path:"bundle_activity_notifications"`
+	BundleUploadReceiptNotifications         string                 `url:"bundle_upload_receipt_notifications,omitempty" json:"bundle_upload_receipt_notifications,omitempty" path:"bundle_upload_receipt_notifications"`
+	PasswordRequirementsApplyToBundles       *bool                  `url:"password_requirements_apply_to_bundles,omitempty" json:"password_requirements_apply_to_bundles,omitempty" path:"password_requirements_apply_to_bundles"`
+	PreventRootPermissionsForNonSiteAdmins   *bool                  `url:"prevent_root_permissions_for_non_site_admins,omitempty" json:"prevent_root_permissions_for_non_site_admins,omitempty" path:"prevent_root_permissions_for_non_site_admins"`
+	OptOutGlobal                             *bool                  `url:"opt_out_global,omitempty" json:"opt_out_global,omitempty" path:"opt_out_global"`
+	UseProvidedModifiedAt                    *bool                  `url:"use_provided_modified_at,omitempty" json:"use_provided_modified_at,omitempty" path:"use_provided_modified_at"`
+	CustomNamespace                          *bool                  `url:"custom_namespace,omitempty" json:"custom_namespace,omitempty" path:"custom_namespace"`
+	DisableUsersFromInactivityPeriodDays     int64                  `url:"disable_users_from_inactivity_period_days,omitempty" json:"disable_users_from_inactivity_period_days,omitempty" path:"disable_users_from_inactivity_period_days"`
+	NonSsoGroupsAllowed                      *bool                  `url:"non_sso_groups_allowed,omitempty" json:"non_sso_groups_allowed,omitempty" path:"non_sso_groups_allowed"`
+	NonSsoUsersAllowed                       *bool                  `url:"non_sso_users_allowed,omitempty" json:"non_sso_users_allowed,omitempty" path:"non_sso_users_allowed"`
+	SharingEnabled                           *bool                  `url:"sharing_enabled,omitempty" json:"sharing_enabled,omitempty" path:"sharing_enabled"`
+	UserRequestsEnabled                      *bool                  `url:"user_requests_enabled,omitempty" json:"user_requests_enabled,omitempty" path:"user_requests_enabled"`
+	UserRequestsNotifyAdmins                 *bool                  `url:"user_requests_notify_admins,omitempty" json:"user_requests_notify_admins,omitempty" path:"user_requests_notify_admins"`
+	DavEnabled                               *bool                  `url:"dav_enabled,omitempty" json:"dav_enabled,omitempty" path:"dav_enabled"`
+	FtpEnabled                               *bool                  `url:"ftp_enabled,omitempty" json:"ftp_enabled,omitempty" path:"ftp_enabled"`
+	SftpEnabled                              *bool                  `url:"sftp_enabled,omitempty" json:"sftp_enabled,omitempty" path:"sftp_enabled"`
+	UsersCanCreateApiKeys                    *bool                  `url:"users_can_create_api_keys,omitempty" json:"users_can_create_api_keys,omitempty" path:"users_can_create_api_keys"`
+	UsersCanCreateSshKeys                    *bool                  `url:"users_can_create_ssh_keys,omitempty" json:"users_can_create_ssh_keys,omitempty" path:"users_can_create_ssh_keys"`
+	SftpHostKeyType                          string                 `url:"sftp_host_key_type,omitempty" json:"sftp_host_key_type,omitempty" path:"sftp_host_key_type"`
+	ActiveSftpHostKeyId                      int64                  `url:"active_sftp_host_key_id,omitempty" json:"active_sftp_host_key_id,omitempty" path:"active_sftp_host_key_id"`
+	ProtocolAccessGroupsOnly                 *bool                  `url:"protocol_access_groups_only,omitempty" json:"protocol_access_groups_only,omitempty" path:"protocol_access_groups_only"`
+	BundleWatermarkValue                     map[string]interface{} `url:"bundle_watermark_value,omitempty" json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value"`
+	GroupAdminsCanSetUserPassword            *bool                  `url:"group_admins_can_set_user_password,omitempty" json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password"`
+	BundleRecipientBlacklistFreeEmailDomains *bool                  `url:"bundle_recipient_blacklist_free_email_domains,omitempty" json:"bundle_recipient_blacklist_free_email_domains,omitempty" path:"bundle_recipient_blacklist_free_email_domains"`
+	BundleRecipientBlacklistDomains          []string               `url:"bundle_recipient_blacklist_domains,omitempty" json:"bundle_recipient_blacklist_domains,omitempty" path:"bundle_recipient_blacklist_domains"`
+	AdminsBypassLockedSubfolders             *bool                  `url:"admins_bypass_locked_subfolders,omitempty" json:"admins_bypass_locked_subfolders,omitempty" path:"admins_bypass_locked_subfolders"`
+	Allowed2faMethodSms                      *bool                  `url:"allowed_2fa_method_sms,omitempty" json:"allowed_2fa_method_sms,omitempty" path:"allowed_2fa_method_sms"`
+	Allowed2faMethodTotp                     *bool                  `url:"allowed_2fa_method_totp,omitempty" json:"allowed_2fa_method_totp,omitempty" path:"allowed_2fa_method_totp"`
+	Allowed2faMethodWebauthn                 *bool                  `url:"allowed_2fa_method_webauthn,omitempty" json:"allowed_2fa_method_webauthn,omitempty" path:"allowed_2fa_method_webauthn"`
+	Allowed2faMethodYubi                     *bool                  `url:"allowed_2fa_method_yubi,omitempty" json:"allowed_2fa_method_yubi,omitempty" path:"allowed_2fa_method_yubi"`
+	Allowed2faMethodEmail                    *bool                  `url:"allowed_2fa_method_email,omitempty" json:"allowed_2fa_method_email,omitempty" path:"allowed_2fa_method_email"`
+	Allowed2faMethodStatic                   *bool                  `url:"allowed_2fa_method_static,omitempty" json:"allowed_2fa_method_static,omitempty" path:"allowed_2fa_method_static"`
+	Allowed2faMethodBypassForFtpSftpDav      *bool                  `url:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty" json:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty" path:"allowed_2fa_method_bypass_for_ftp_sftp_dav"`
+	Require2fa                               *bool                  `url:"require_2fa,omitempty" json:"require_2fa,omitempty" path:"require_2fa"`
+	Require2faUserType                       string                 `url:"require_2fa_user_type,omitempty" json:"require_2fa_user_type,omitempty" path:"require_2fa_user_type"`
+	Color2Top                                string                 `url:"color2_top,omitempty" json:"color2_top,omitempty" path:"color2_top"`
+	Color2Left                               string                 `url:"color2_left,omitempty" json:"color2_left,omitempty" path:"color2_left"`
+	Color2Link                               string                 `url:"color2_link,omitempty" json:"color2_link,omitempty" path:"color2_link"`
+	Color2Text                               string                 `url:"color2_text,omitempty" json:"color2_text,omitempty" path:"color2_text"`
+	Color2TopText                            string                 `url:"color2_top_text,omitempty" json:"color2_top_text,omitempty" path:"color2_top_text"`
+	SiteHeader                               string                 `url:"site_header,omitempty" json:"site_header,omitempty" path:"site_header"`
+	SiteFooter                               string                 `url:"site_footer,omitempty" json:"site_footer,omitempty" path:"site_footer"`
+	LoginHelpText                            string                 `url:"login_help_text,omitempty" json:"login_help_text,omitempty" path:"login_help_text"`
+	UseDedicatedIpsForSmtp                   *bool                  `url:"use_dedicated_ips_for_smtp,omitempty" json:"use_dedicated_ips_for_smtp,omitempty" path:"use_dedicated_ips_for_smtp"`
+	SmtpAddress                              string                 `url:"smtp_address,omitempty" json:"smtp_address,omitempty" path:"smtp_address"`
+	SmtpAuthentication                       string                 `url:"smtp_authentication,omitempty" json:"smtp_authentication,omitempty" path:"smtp_authentication"`
+	SmtpFrom                                 string                 `url:"smtp_from,omitempty" json:"smtp_from,omitempty" path:"smtp_from"`
+	SmtpUsername                             string                 `url:"smtp_username,omitempty" json:"smtp_username,omitempty" path:"smtp_username"`
+	SmtpPort                                 int64                  `url:"smtp_port,omitempty" json:"smtp_port,omitempty" path:"smtp_port"`
+	LdapEnabled                              *bool                  `url:"ldap_enabled,omitempty" json:"ldap_enabled,omitempty" path:"ldap_enabled"`
+	LdapType                                 string                 `url:"ldap_type,omitempty" json:"ldap_type,omitempty" path:"ldap_type"`
+	LdapHost                                 string                 `url:"ldap_host,omitempty" json:"ldap_host,omitempty" path:"ldap_host"`
+	LdapHost2                                string                 `url:"ldap_host_2,omitempty" json:"ldap_host_2,omitempty" path:"ldap_host_2"`
+	LdapHost3                                string                 `url:"ldap_host_3,omitempty" json:"ldap_host_3,omitempty" path:"ldap_host_3"`
+	LdapPort                                 int64                  `url:"ldap_port,omitempty" json:"ldap_port,omitempty" path:"ldap_port"`
+	LdapSecure                               *bool                  `url:"ldap_secure,omitempty" json:"ldap_secure,omitempty" path:"ldap_secure"`
+	LdapUsername                             string                 `url:"ldap_username,omitempty" json:"ldap_username,omitempty" path:"ldap_username"`
+	LdapUsernameField                        string                 `url:"ldap_username_field,omitempty" json:"ldap_username_field,omitempty" path:"ldap_username_field"`
+	LdapDomain                               string                 `url:"ldap_domain,omitempty" json:"ldap_domain,omitempty" path:"ldap_domain"`
+	LdapUserAction                           string                 `url:"ldap_user_action,omitempty" json:"ldap_user_action,omitempty" path:"ldap_user_action"`
+	LdapGroupAction                          string                 `url:"ldap_group_action,omitempty" json:"ldap_group_action,omitempty" path:"ldap_group_action"`
+	LdapUserIncludeGroups                    string                 `url:"ldap_user_include_groups,omitempty" json:"ldap_user_include_groups,omitempty" path:"ldap_user_include_groups"`
+	LdapGroupExclusion                       string                 `url:"ldap_group_exclusion,omitempty" json:"ldap_group_exclusion,omitempty" path:"ldap_group_exclusion"`
+	LdapGroupInclusion                       string                 `url:"ldap_group_inclusion,omitempty" json:"ldap_group_inclusion,omitempty" path:"ldap_group_inclusion"`
+	LdapBaseDn                               string                 `url:"ldap_base_dn,omitempty" json:"ldap_base_dn,omitempty" path:"ldap_base_dn"`
+	UploadsViaEmailAuthentication            *bool                  `url:"uploads_via_email_authentication,omitempty" json:"uploads_via_email_authentication,omitempty" path:"uploads_via_email_authentication"`
+	Icon16File                               io.Writer              `url:"icon16_file,omitempty" json:"icon16_file,omitempty" path:"icon16_file"`
+	Icon16Delete                             *bool                  `url:"icon16_delete,omitempty" json:"icon16_delete,omitempty" path:"icon16_delete"`
+	Icon32File                               io.Writer              `url:"icon32_file,omitempty" json:"icon32_file,omitempty" path:"icon32_file"`
+	Icon32Delete                             *bool                  `url:"icon32_delete,omitempty" json:"icon32_delete,omitempty" path:"icon32_delete"`
+	Icon48File                               io.Writer              `url:"icon48_file,omitempty" json:"icon48_file,omitempty" path:"icon48_file"`
+	Icon48Delete                             *bool                  `url:"icon48_delete,omitempty" json:"icon48_delete,omitempty" path:"icon48_delete"`
+	Icon128File                              io.Writer              `url:"icon128_file,omitempty" json:"icon128_file,omitempty" path:"icon128_file"`
+	Icon128Delete                            *bool                  `url:"icon128_delete,omitempty" json:"icon128_delete,omitempty" path:"icon128_delete"`
+	LogoFile                                 io.Writer              `url:"logo_file,omitempty" json:"logo_file,omitempty" path:"logo_file"`
+	LogoDelete                               *bool                  `url:"logo_delete,omitempty" json:"logo_delete,omitempty" path:"logo_delete"`
+	BundleWatermarkAttachmentFile            io.Writer              `url:"bundle_watermark_attachment_file,omitempty" json:"bundle_watermark_attachment_file,omitempty" path:"bundle_watermark_attachment_file"`
+	BundleWatermarkAttachmentDelete          *bool                  `url:"bundle_watermark_attachment_delete,omitempty" json:"bundle_watermark_attachment_delete,omitempty" path:"bundle_watermark_attachment_delete"`
+	LoginPageBackgroundImageFile             io.Writer              `url:"login_page_background_image_file,omitempty" json:"login_page_background_image_file,omitempty" path:"login_page_background_image_file"`
+	LoginPageBackgroundImageDelete           *bool                  `url:"login_page_background_image_delete,omitempty" json:"login_page_background_image_delete,omitempty" path:"login_page_background_image_delete"`
+	Disable2faWithDelay                      *bool                  `url:"disable_2fa_with_delay,omitempty" json:"disable_2fa_with_delay,omitempty" path:"disable_2fa_with_delay"`
+	LdapPasswordChange                       string                 `url:"ldap_password_change,omitempty" json:"ldap_password_change,omitempty" path:"ldap_password_change"`
+	LdapPasswordChangeConfirmation           string                 `url:"ldap_password_change_confirmation,omitempty" json:"ldap_password_change_confirmation,omitempty" path:"ldap_password_change_confirmation"`
+	SmtpPassword                             string                 `url:"smtp_password,omitempty" json:"smtp_password,omitempty" path:"smtp_password"`
+	SessionExpiryMinutes                     int64                  `url:"session_expiry_minutes,omitempty" json:"session_expiry_minutes,omitempty" path:"session_expiry_minutes"`
 }
 
 func (s *Site) UnmarshalJSON(data []byte) error {

@@ -22,28 +22,28 @@ func (g GroupUser) Identifier() interface{} {
 type GroupUserCollection []GroupUser
 
 type GroupUserListParams struct {
-	UserId  int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	GroupId int64 `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
+	UserId  int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	GroupId int64 `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
 	ListParams
 }
 
 type GroupUserCreateParams struct {
-	GroupId int64 `url:"group_id,omitempty" required:"true" json:"group_id,omitempty" path:"group_id"`
-	UserId  int64 `url:"user_id,omitempty" required:"true" json:"user_id,omitempty" path:"user_id"`
-	Admin   *bool `url:"admin,omitempty" required:"false" json:"admin,omitempty" path:"admin"`
+	GroupId int64 `url:"group_id" json:"group_id" path:"group_id"`
+	UserId  int64 `url:"user_id" json:"user_id" path:"user_id"`
+	Admin   *bool `url:"admin,omitempty" json:"admin,omitempty" path:"admin"`
 }
 
 type GroupUserUpdateParams struct {
-	Id      int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	GroupId int64 `url:"group_id,omitempty" required:"true" json:"group_id,omitempty" path:"group_id"`
-	UserId  int64 `url:"user_id,omitempty" required:"true" json:"user_id,omitempty" path:"user_id"`
-	Admin   *bool `url:"admin,omitempty" required:"false" json:"admin,omitempty" path:"admin"`
+	Id      int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	GroupId int64 `url:"group_id" json:"group_id" path:"group_id"`
+	UserId  int64 `url:"user_id" json:"user_id" path:"user_id"`
+	Admin   *bool `url:"admin,omitempty" json:"admin,omitempty" path:"admin"`
 }
 
 type GroupUserDeleteParams struct {
-	Id      int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	GroupId int64 `url:"group_id,omitempty" required:"true" json:"group_id,omitempty" path:"group_id"`
-	UserId  int64 `url:"user_id,omitempty" required:"true" json:"user_id,omitempty" path:"user_id"`
+	Id      int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	GroupId int64 `url:"group_id" json:"group_id" path:"group_id"`
+	UserId  int64 `url:"user_id" json:"user_id" path:"user_id"`
 }
 
 func (g *GroupUser) UnmarshalJSON(data []byte) error {

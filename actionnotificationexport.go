@@ -31,20 +31,20 @@ func (a ActionNotificationExport) Identifier() interface{} {
 type ActionNotificationExportCollection []ActionNotificationExport
 
 type ActionNotificationExportFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type ActionNotificationExportCreateParams struct {
-	UserId             int64      `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	StartAt            *time.Time `url:"start_at,omitempty" required:"false" json:"start_at,omitempty" path:"start_at"`
-	EndAt              *time.Time `url:"end_at,omitempty" required:"false" json:"end_at,omitempty" path:"end_at"`
-	QueryMessage       string     `url:"query_message,omitempty" required:"false" json:"query_message,omitempty" path:"query_message"`
-	QueryRequestMethod string     `url:"query_request_method,omitempty" required:"false" json:"query_request_method,omitempty" path:"query_request_method"`
-	QueryRequestUrl    string     `url:"query_request_url,omitempty" required:"false" json:"query_request_url,omitempty" path:"query_request_url"`
-	QueryStatus        string     `url:"query_status,omitempty" required:"false" json:"query_status,omitempty" path:"query_status"`
-	QuerySuccess       *bool      `url:"query_success,omitempty" required:"false" json:"query_success,omitempty" path:"query_success"`
-	QueryPath          string     `url:"query_path,omitempty" required:"false" json:"query_path,omitempty" path:"query_path"`
-	QueryFolder        string     `url:"query_folder,omitempty" required:"false" json:"query_folder,omitempty" path:"query_folder"`
+	UserId             int64      `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	StartAt            *time.Time `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
+	EndAt              *time.Time `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
+	QueryMessage       string     `url:"query_message,omitempty" json:"query_message,omitempty" path:"query_message"`
+	QueryRequestMethod string     `url:"query_request_method,omitempty" json:"query_request_method,omitempty" path:"query_request_method"`
+	QueryRequestUrl    string     `url:"query_request_url,omitempty" json:"query_request_url,omitempty" path:"query_request_url"`
+	QueryStatus        string     `url:"query_status,omitempty" json:"query_status,omitempty" path:"query_status"`
+	QuerySuccess       *bool      `url:"query_success,omitempty" json:"query_success,omitempty" path:"query_success"`
+	QueryPath          string     `url:"query_path,omitempty" json:"query_path,omitempty" path:"query_path"`
+	QueryFolder        string     `url:"query_folder,omitempty" json:"query_folder,omitempty" path:"query_folder"`
 }
 
 func (a *ActionNotificationExport) UnmarshalJSON(data []byte) error {

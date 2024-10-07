@@ -19,22 +19,22 @@ func (m MessageCommentReaction) Identifier() interface{} {
 type MessageCommentReactionCollection []MessageCommentReaction
 
 type MessageCommentReactionListParams struct {
-	UserId           int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	MessageCommentId int64 `url:"message_comment_id,omitempty" required:"true" json:"message_comment_id,omitempty" path:"message_comment_id"`
+	UserId           int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	MessageCommentId int64 `url:"message_comment_id" json:"message_comment_id" path:"message_comment_id"`
 	ListParams
 }
 
 type MessageCommentReactionFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type MessageCommentReactionCreateParams struct {
-	UserId int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	Emoji  string `url:"emoji,omitempty" required:"true" json:"emoji,omitempty" path:"emoji"`
+	UserId int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	Emoji  string `url:"emoji" json:"emoji" path:"emoji"`
 }
 
 type MessageCommentReactionDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (m *MessageCommentReaction) UnmarshalJSON(data []byte) error {

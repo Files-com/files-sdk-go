@@ -26,8 +26,8 @@ func (a AutomationLog) Identifier() interface{} {
 type AutomationLogCollection []AutomationLog
 
 type AutomationLogListParams struct {
-	Filter       AutomationLog          `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	Filter       AutomationLog          `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	ListParams
 }
 

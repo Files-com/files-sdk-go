@@ -24,34 +24,34 @@ func (f FormFieldSet) Identifier() interface{} {
 type FormFieldSetCollection []FormFieldSet
 
 type FormFieldSetListParams struct {
-	UserId int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	ListParams
 }
 
 type FormFieldSetFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type FormFieldSetCreateParams struct {
-	UserId      int64                    `url:"user_id,omitempty" required:"" json:"user_id,omitempty" path:"user_id"`
-	Title       string                   `url:"title,omitempty" required:"" json:"title,omitempty" path:"title"`
-	SkipEmail   *bool                    `url:"skip_email,omitempty" required:"" json:"skip_email,omitempty" path:"skip_email"`
-	SkipName    *bool                    `url:"skip_name,omitempty" required:"" json:"skip_name,omitempty" path:"skip_name"`
-	SkipCompany *bool                    `url:"skip_company,omitempty" required:"" json:"skip_company,omitempty" path:"skip_company"`
-	FormFields  []map[string]interface{} `url:"form_fields,omitempty" required:"" json:"form_fields,omitempty" path:"form_fields"`
+	UserId      int64                    `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	Title       string                   `url:"title,omitempty" json:"title,omitempty" path:"title"`
+	SkipEmail   *bool                    `url:"skip_email,omitempty" json:"skip_email,omitempty" path:"skip_email"`
+	SkipName    *bool                    `url:"skip_name,omitempty" json:"skip_name,omitempty" path:"skip_name"`
+	SkipCompany *bool                    `url:"skip_company,omitempty" json:"skip_company,omitempty" path:"skip_company"`
+	FormFields  []map[string]interface{} `url:"form_fields,omitempty" json:"form_fields,omitempty" path:"form_fields"`
 }
 
 type FormFieldSetUpdateParams struct {
-	Id          int64                    `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	Title       string                   `url:"title,omitempty" required:"" json:"title,omitempty" path:"title"`
-	SkipEmail   *bool                    `url:"skip_email,omitempty" required:"" json:"skip_email,omitempty" path:"skip_email"`
-	SkipName    *bool                    `url:"skip_name,omitempty" required:"" json:"skip_name,omitempty" path:"skip_name"`
-	SkipCompany *bool                    `url:"skip_company,omitempty" required:"" json:"skip_company,omitempty" path:"skip_company"`
-	FormFields  []map[string]interface{} `url:"form_fields,omitempty" required:"" json:"form_fields,omitempty" path:"form_fields"`
+	Id          int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Title       string                   `url:"title,omitempty" json:"title,omitempty" path:"title"`
+	SkipEmail   *bool                    `url:"skip_email,omitempty" json:"skip_email,omitempty" path:"skip_email"`
+	SkipName    *bool                    `url:"skip_name,omitempty" json:"skip_name,omitempty" path:"skip_name"`
+	SkipCompany *bool                    `url:"skip_company,omitempty" json:"skip_company,omitempty" path:"skip_company"`
+	FormFields  []map[string]interface{} `url:"form_fields,omitempty" json:"form_fields,omitempty" path:"form_fields"`
 }
 
 type FormFieldSetDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (f *FormFieldSet) UnmarshalJSON(data []byte) error {

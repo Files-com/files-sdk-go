@@ -24,33 +24,33 @@ func (g GpgKey) Identifier() interface{} {
 type GpgKeyCollection []GpgKey
 
 type GpgKeyListParams struct {
-	UserId int64                  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	SortBy map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
+	UserId int64                  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	SortBy map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
 
 type GpgKeyFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type GpgKeyCreateParams struct {
-	UserId             int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	PublicKey          string `url:"public_key,omitempty" required:"false" json:"public_key,omitempty" path:"public_key"`
-	PrivateKey         string `url:"private_key,omitempty" required:"false" json:"private_key,omitempty" path:"private_key"`
-	PrivateKeyPassword string `url:"private_key_password,omitempty" required:"false" json:"private_key_password,omitempty" path:"private_key_password"`
-	Name               string `url:"name,omitempty" required:"true" json:"name,omitempty" path:"name"`
+	UserId             int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	PublicKey          string `url:"public_key,omitempty" json:"public_key,omitempty" path:"public_key"`
+	PrivateKey         string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
+	PrivateKeyPassword string `url:"private_key_password,omitempty" json:"private_key_password,omitempty" path:"private_key_password"`
+	Name               string `url:"name" json:"name" path:"name"`
 }
 
 type GpgKeyUpdateParams struct {
-	Id                 int64  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	PublicKey          string `url:"public_key,omitempty" required:"false" json:"public_key,omitempty" path:"public_key"`
-	PrivateKey         string `url:"private_key,omitempty" required:"false" json:"private_key,omitempty" path:"private_key"`
-	PrivateKeyPassword string `url:"private_key_password,omitempty" required:"false" json:"private_key_password,omitempty" path:"private_key_password"`
-	Name               string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
+	Id                 int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	PublicKey          string `url:"public_key,omitempty" json:"public_key,omitempty" path:"public_key"`
+	PrivateKey         string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
+	PrivateKeyPassword string `url:"private_key_password,omitempty" json:"private_key_password,omitempty" path:"private_key_password"`
+	Name               string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
 type GpgKeyDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (g *GpgKey) UnmarshalJSON(data []byte) error {

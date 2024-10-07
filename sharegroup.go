@@ -21,30 +21,30 @@ func (s ShareGroup) Identifier() interface{} {
 type ShareGroupCollection []ShareGroup
 
 type ShareGroupListParams struct {
-	UserId int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	ListParams
 }
 
 type ShareGroupFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type ShareGroupCreateParams struct {
-	UserId  int64                    `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	Notes   string                   `url:"notes,omitempty" required:"false" json:"notes,omitempty" path:"notes"`
-	Name    string                   `url:"name,omitempty" required:"true" json:"name,omitempty" path:"name"`
-	Members []map[string]interface{} `url:"members,omitempty" required:"true" json:"members,omitempty" path:"members"`
+	UserId  int64                    `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	Notes   string                   `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
+	Name    string                   `url:"name" json:"name" path:"name"`
+	Members []map[string]interface{} `url:"members" json:"members" path:"members"`
 }
 
 type ShareGroupUpdateParams struct {
-	Id      int64                    `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	Notes   string                   `url:"notes,omitempty" required:"false" json:"notes,omitempty" path:"notes"`
-	Name    string                   `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	Members []map[string]interface{} `url:"members,omitempty" required:"false" json:"members,omitempty" path:"members"`
+	Id      int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Notes   string                   `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
+	Name    string                   `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	Members []map[string]interface{} `url:"members,omitempty" json:"members,omitempty" path:"members"`
 }
 
 type ShareGroupDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (s *ShareGroup) UnmarshalJSON(data []byte) error {

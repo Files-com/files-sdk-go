@@ -106,103 +106,103 @@ type SiemHttpDestinationListParams struct {
 }
 
 type SiemHttpDestinationFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type SiemHttpDestinationCreateParams struct {
-	Name                                    string                                    `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	AdditionalHeaders                       map[string]interface{}                    `url:"additional_headers,omitempty" required:"false" json:"additional_headers,omitempty" path:"additional_headers"`
-	SendingActive                           *bool                                     `url:"sending_active,omitempty" required:"false" json:"sending_active,omitempty" path:"sending_active"`
-	GenericPayloadType                      SiemHttpDestinationGenericPayloadTypeEnum `url:"generic_payload_type,omitempty" required:"false" json:"generic_payload_type,omitempty" path:"generic_payload_type"`
-	SplunkToken                             string                                    `url:"splunk_token,omitempty" required:"false" json:"splunk_token,omitempty" path:"splunk_token"`
-	AzureDcrImmutableId                     string                                    `url:"azure_dcr_immutable_id,omitempty" required:"false" json:"azure_dcr_immutable_id,omitempty" path:"azure_dcr_immutable_id"`
-	AzureStreamName                         string                                    `url:"azure_stream_name,omitempty" required:"false" json:"azure_stream_name,omitempty" path:"azure_stream_name"`
-	AzureOauthClientCredentialsTenantId     string                                    `url:"azure_oauth_client_credentials_tenant_id,omitempty" required:"false" json:"azure_oauth_client_credentials_tenant_id,omitempty" path:"azure_oauth_client_credentials_tenant_id"`
-	AzureOauthClientCredentialsClientId     string                                    `url:"azure_oauth_client_credentials_client_id,omitempty" required:"false" json:"azure_oauth_client_credentials_client_id,omitempty" path:"azure_oauth_client_credentials_client_id"`
-	AzureOauthClientCredentialsClientSecret string                                    `url:"azure_oauth_client_credentials_client_secret,omitempty" required:"false" json:"azure_oauth_client_credentials_client_secret,omitempty" path:"azure_oauth_client_credentials_client_secret"`
-	QradarUsername                          string                                    `url:"qradar_username,omitempty" required:"false" json:"qradar_username,omitempty" path:"qradar_username"`
-	QradarPassword                          string                                    `url:"qradar_password,omitempty" required:"false" json:"qradar_password,omitempty" path:"qradar_password"`
-	SolarWindsToken                         string                                    `url:"solar_winds_token,omitempty" required:"false" json:"solar_winds_token,omitempty" path:"solar_winds_token"`
-	NewRelicApiKey                          string                                    `url:"new_relic_api_key,omitempty" required:"false" json:"new_relic_api_key,omitempty" path:"new_relic_api_key"`
-	DatadogApiKey                           string                                    `url:"datadog_api_key,omitempty" required:"false" json:"datadog_api_key,omitempty" path:"datadog_api_key"`
-	SftpActionSendEnabled                   *bool                                     `url:"sftp_action_send_enabled,omitempty" required:"false" json:"sftp_action_send_enabled,omitempty" path:"sftp_action_send_enabled"`
-	FtpActionSendEnabled                    *bool                                     `url:"ftp_action_send_enabled,omitempty" required:"false" json:"ftp_action_send_enabled,omitempty" path:"ftp_action_send_enabled"`
-	WebDavActionSendEnabled                 *bool                                     `url:"web_dav_action_send_enabled,omitempty" required:"false" json:"web_dav_action_send_enabled,omitempty" path:"web_dav_action_send_enabled"`
-	SyncSendEnabled                         *bool                                     `url:"sync_send_enabled,omitempty" required:"false" json:"sync_send_enabled,omitempty" path:"sync_send_enabled"`
-	OutboundConnectionSendEnabled           *bool                                     `url:"outbound_connection_send_enabled,omitempty" required:"false" json:"outbound_connection_send_enabled,omitempty" path:"outbound_connection_send_enabled"`
-	AutomationSendEnabled                   *bool                                     `url:"automation_send_enabled,omitempty" required:"false" json:"automation_send_enabled,omitempty" path:"automation_send_enabled"`
-	ApiRequestSendEnabled                   *bool                                     `url:"api_request_send_enabled,omitempty" required:"false" json:"api_request_send_enabled,omitempty" path:"api_request_send_enabled"`
-	PublicHostingRequestSendEnabled         *bool                                     `url:"public_hosting_request_send_enabled,omitempty" required:"false" json:"public_hosting_request_send_enabled,omitempty" path:"public_hosting_request_send_enabled"`
-	EmailSendEnabled                        *bool                                     `url:"email_send_enabled,omitempty" required:"false" json:"email_send_enabled,omitempty" path:"email_send_enabled"`
-	ExavaultApiRequestSendEnabled           *bool                                     `url:"exavault_api_request_send_enabled,omitempty" required:"false" json:"exavault_api_request_send_enabled,omitempty" path:"exavault_api_request_send_enabled"`
-	DestinationType                         SiemHttpDestinationDestinationTypeEnum    `url:"destination_type,omitempty" required:"true" json:"destination_type,omitempty" path:"destination_type"`
-	DestinationUrl                          string                                    `url:"destination_url,omitempty" required:"true" json:"destination_url,omitempty" path:"destination_url"`
+	Name                                    string                                    `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	AdditionalHeaders                       map[string]interface{}                    `url:"additional_headers,omitempty" json:"additional_headers,omitempty" path:"additional_headers"`
+	SendingActive                           *bool                                     `url:"sending_active,omitempty" json:"sending_active,omitempty" path:"sending_active"`
+	GenericPayloadType                      SiemHttpDestinationGenericPayloadTypeEnum `url:"generic_payload_type,omitempty" json:"generic_payload_type,omitempty" path:"generic_payload_type"`
+	SplunkToken                             string                                    `url:"splunk_token,omitempty" json:"splunk_token,omitempty" path:"splunk_token"`
+	AzureDcrImmutableId                     string                                    `url:"azure_dcr_immutable_id,omitempty" json:"azure_dcr_immutable_id,omitempty" path:"azure_dcr_immutable_id"`
+	AzureStreamName                         string                                    `url:"azure_stream_name,omitempty" json:"azure_stream_name,omitempty" path:"azure_stream_name"`
+	AzureOauthClientCredentialsTenantId     string                                    `url:"azure_oauth_client_credentials_tenant_id,omitempty" json:"azure_oauth_client_credentials_tenant_id,omitempty" path:"azure_oauth_client_credentials_tenant_id"`
+	AzureOauthClientCredentialsClientId     string                                    `url:"azure_oauth_client_credentials_client_id,omitempty" json:"azure_oauth_client_credentials_client_id,omitempty" path:"azure_oauth_client_credentials_client_id"`
+	AzureOauthClientCredentialsClientSecret string                                    `url:"azure_oauth_client_credentials_client_secret,omitempty" json:"azure_oauth_client_credentials_client_secret,omitempty" path:"azure_oauth_client_credentials_client_secret"`
+	QradarUsername                          string                                    `url:"qradar_username,omitempty" json:"qradar_username,omitempty" path:"qradar_username"`
+	QradarPassword                          string                                    `url:"qradar_password,omitempty" json:"qradar_password,omitempty" path:"qradar_password"`
+	SolarWindsToken                         string                                    `url:"solar_winds_token,omitempty" json:"solar_winds_token,omitempty" path:"solar_winds_token"`
+	NewRelicApiKey                          string                                    `url:"new_relic_api_key,omitempty" json:"new_relic_api_key,omitempty" path:"new_relic_api_key"`
+	DatadogApiKey                           string                                    `url:"datadog_api_key,omitempty" json:"datadog_api_key,omitempty" path:"datadog_api_key"`
+	SftpActionSendEnabled                   *bool                                     `url:"sftp_action_send_enabled,omitempty" json:"sftp_action_send_enabled,omitempty" path:"sftp_action_send_enabled"`
+	FtpActionSendEnabled                    *bool                                     `url:"ftp_action_send_enabled,omitempty" json:"ftp_action_send_enabled,omitempty" path:"ftp_action_send_enabled"`
+	WebDavActionSendEnabled                 *bool                                     `url:"web_dav_action_send_enabled,omitempty" json:"web_dav_action_send_enabled,omitempty" path:"web_dav_action_send_enabled"`
+	SyncSendEnabled                         *bool                                     `url:"sync_send_enabled,omitempty" json:"sync_send_enabled,omitempty" path:"sync_send_enabled"`
+	OutboundConnectionSendEnabled           *bool                                     `url:"outbound_connection_send_enabled,omitempty" json:"outbound_connection_send_enabled,omitempty" path:"outbound_connection_send_enabled"`
+	AutomationSendEnabled                   *bool                                     `url:"automation_send_enabled,omitempty" json:"automation_send_enabled,omitempty" path:"automation_send_enabled"`
+	ApiRequestSendEnabled                   *bool                                     `url:"api_request_send_enabled,omitempty" json:"api_request_send_enabled,omitempty" path:"api_request_send_enabled"`
+	PublicHostingRequestSendEnabled         *bool                                     `url:"public_hosting_request_send_enabled,omitempty" json:"public_hosting_request_send_enabled,omitempty" path:"public_hosting_request_send_enabled"`
+	EmailSendEnabled                        *bool                                     `url:"email_send_enabled,omitempty" json:"email_send_enabled,omitempty" path:"email_send_enabled"`
+	ExavaultApiRequestSendEnabled           *bool                                     `url:"exavault_api_request_send_enabled,omitempty" json:"exavault_api_request_send_enabled,omitempty" path:"exavault_api_request_send_enabled"`
+	DestinationType                         SiemHttpDestinationDestinationTypeEnum    `url:"destination_type" json:"destination_type" path:"destination_type"`
+	DestinationUrl                          string                                    `url:"destination_url" json:"destination_url" path:"destination_url"`
 }
 
 type SiemHttpDestinationSendTestEntryParams struct {
-	SiemHttpDestinationId                   int64                                     `url:"siem_http_destination_id,omitempty" required:"false" json:"siem_http_destination_id,omitempty" path:"siem_http_destination_id"`
-	DestinationType                         SiemHttpDestinationDestinationTypeEnum    `url:"destination_type,omitempty" required:"false" json:"destination_type,omitempty" path:"destination_type"`
-	DestinationUrl                          string                                    `url:"destination_url,omitempty" required:"false" json:"destination_url,omitempty" path:"destination_url"`
-	Name                                    string                                    `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	AdditionalHeaders                       map[string]interface{}                    `url:"additional_headers,omitempty" required:"false" json:"additional_headers,omitempty" path:"additional_headers"`
-	SendingActive                           *bool                                     `url:"sending_active,omitempty" required:"false" json:"sending_active,omitempty" path:"sending_active"`
-	GenericPayloadType                      SiemHttpDestinationGenericPayloadTypeEnum `url:"generic_payload_type,omitempty" required:"false" json:"generic_payload_type,omitempty" path:"generic_payload_type"`
-	SplunkToken                             string                                    `url:"splunk_token,omitempty" required:"false" json:"splunk_token,omitempty" path:"splunk_token"`
-	AzureDcrImmutableId                     string                                    `url:"azure_dcr_immutable_id,omitempty" required:"false" json:"azure_dcr_immutable_id,omitempty" path:"azure_dcr_immutable_id"`
-	AzureStreamName                         string                                    `url:"azure_stream_name,omitempty" required:"false" json:"azure_stream_name,omitempty" path:"azure_stream_name"`
-	AzureOauthClientCredentialsTenantId     string                                    `url:"azure_oauth_client_credentials_tenant_id,omitempty" required:"false" json:"azure_oauth_client_credentials_tenant_id,omitempty" path:"azure_oauth_client_credentials_tenant_id"`
-	AzureOauthClientCredentialsClientId     string                                    `url:"azure_oauth_client_credentials_client_id,omitempty" required:"false" json:"azure_oauth_client_credentials_client_id,omitempty" path:"azure_oauth_client_credentials_client_id"`
-	AzureOauthClientCredentialsClientSecret string                                    `url:"azure_oauth_client_credentials_client_secret,omitempty" required:"false" json:"azure_oauth_client_credentials_client_secret,omitempty" path:"azure_oauth_client_credentials_client_secret"`
-	QradarUsername                          string                                    `url:"qradar_username,omitempty" required:"false" json:"qradar_username,omitempty" path:"qradar_username"`
-	QradarPassword                          string                                    `url:"qradar_password,omitempty" required:"false" json:"qradar_password,omitempty" path:"qradar_password"`
-	SolarWindsToken                         string                                    `url:"solar_winds_token,omitempty" required:"false" json:"solar_winds_token,omitempty" path:"solar_winds_token"`
-	NewRelicApiKey                          string                                    `url:"new_relic_api_key,omitempty" required:"false" json:"new_relic_api_key,omitempty" path:"new_relic_api_key"`
-	DatadogApiKey                           string                                    `url:"datadog_api_key,omitempty" required:"false" json:"datadog_api_key,omitempty" path:"datadog_api_key"`
-	SftpActionSendEnabled                   *bool                                     `url:"sftp_action_send_enabled,omitempty" required:"false" json:"sftp_action_send_enabled,omitempty" path:"sftp_action_send_enabled"`
-	FtpActionSendEnabled                    *bool                                     `url:"ftp_action_send_enabled,omitempty" required:"false" json:"ftp_action_send_enabled,omitempty" path:"ftp_action_send_enabled"`
-	WebDavActionSendEnabled                 *bool                                     `url:"web_dav_action_send_enabled,omitempty" required:"false" json:"web_dav_action_send_enabled,omitempty" path:"web_dav_action_send_enabled"`
-	SyncSendEnabled                         *bool                                     `url:"sync_send_enabled,omitempty" required:"false" json:"sync_send_enabled,omitempty" path:"sync_send_enabled"`
-	OutboundConnectionSendEnabled           *bool                                     `url:"outbound_connection_send_enabled,omitempty" required:"false" json:"outbound_connection_send_enabled,omitempty" path:"outbound_connection_send_enabled"`
-	AutomationSendEnabled                   *bool                                     `url:"automation_send_enabled,omitempty" required:"false" json:"automation_send_enabled,omitempty" path:"automation_send_enabled"`
-	ApiRequestSendEnabled                   *bool                                     `url:"api_request_send_enabled,omitempty" required:"false" json:"api_request_send_enabled,omitempty" path:"api_request_send_enabled"`
-	PublicHostingRequestSendEnabled         *bool                                     `url:"public_hosting_request_send_enabled,omitempty" required:"false" json:"public_hosting_request_send_enabled,omitempty" path:"public_hosting_request_send_enabled"`
-	EmailSendEnabled                        *bool                                     `url:"email_send_enabled,omitempty" required:"false" json:"email_send_enabled,omitempty" path:"email_send_enabled"`
-	ExavaultApiRequestSendEnabled           *bool                                     `url:"exavault_api_request_send_enabled,omitempty" required:"false" json:"exavault_api_request_send_enabled,omitempty" path:"exavault_api_request_send_enabled"`
+	SiemHttpDestinationId                   int64                                     `url:"siem_http_destination_id,omitempty" json:"siem_http_destination_id,omitempty" path:"siem_http_destination_id"`
+	DestinationType                         SiemHttpDestinationDestinationTypeEnum    `url:"destination_type,omitempty" json:"destination_type,omitempty" path:"destination_type"`
+	DestinationUrl                          string                                    `url:"destination_url,omitempty" json:"destination_url,omitempty" path:"destination_url"`
+	Name                                    string                                    `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	AdditionalHeaders                       map[string]interface{}                    `url:"additional_headers,omitempty" json:"additional_headers,omitempty" path:"additional_headers"`
+	SendingActive                           *bool                                     `url:"sending_active,omitempty" json:"sending_active,omitempty" path:"sending_active"`
+	GenericPayloadType                      SiemHttpDestinationGenericPayloadTypeEnum `url:"generic_payload_type,omitempty" json:"generic_payload_type,omitempty" path:"generic_payload_type"`
+	SplunkToken                             string                                    `url:"splunk_token,omitempty" json:"splunk_token,omitempty" path:"splunk_token"`
+	AzureDcrImmutableId                     string                                    `url:"azure_dcr_immutable_id,omitempty" json:"azure_dcr_immutable_id,omitempty" path:"azure_dcr_immutable_id"`
+	AzureStreamName                         string                                    `url:"azure_stream_name,omitempty" json:"azure_stream_name,omitempty" path:"azure_stream_name"`
+	AzureOauthClientCredentialsTenantId     string                                    `url:"azure_oauth_client_credentials_tenant_id,omitempty" json:"azure_oauth_client_credentials_tenant_id,omitempty" path:"azure_oauth_client_credentials_tenant_id"`
+	AzureOauthClientCredentialsClientId     string                                    `url:"azure_oauth_client_credentials_client_id,omitempty" json:"azure_oauth_client_credentials_client_id,omitempty" path:"azure_oauth_client_credentials_client_id"`
+	AzureOauthClientCredentialsClientSecret string                                    `url:"azure_oauth_client_credentials_client_secret,omitempty" json:"azure_oauth_client_credentials_client_secret,omitempty" path:"azure_oauth_client_credentials_client_secret"`
+	QradarUsername                          string                                    `url:"qradar_username,omitempty" json:"qradar_username,omitempty" path:"qradar_username"`
+	QradarPassword                          string                                    `url:"qradar_password,omitempty" json:"qradar_password,omitempty" path:"qradar_password"`
+	SolarWindsToken                         string                                    `url:"solar_winds_token,omitempty" json:"solar_winds_token,omitempty" path:"solar_winds_token"`
+	NewRelicApiKey                          string                                    `url:"new_relic_api_key,omitempty" json:"new_relic_api_key,omitempty" path:"new_relic_api_key"`
+	DatadogApiKey                           string                                    `url:"datadog_api_key,omitempty" json:"datadog_api_key,omitempty" path:"datadog_api_key"`
+	SftpActionSendEnabled                   *bool                                     `url:"sftp_action_send_enabled,omitempty" json:"sftp_action_send_enabled,omitempty" path:"sftp_action_send_enabled"`
+	FtpActionSendEnabled                    *bool                                     `url:"ftp_action_send_enabled,omitempty" json:"ftp_action_send_enabled,omitempty" path:"ftp_action_send_enabled"`
+	WebDavActionSendEnabled                 *bool                                     `url:"web_dav_action_send_enabled,omitempty" json:"web_dav_action_send_enabled,omitempty" path:"web_dav_action_send_enabled"`
+	SyncSendEnabled                         *bool                                     `url:"sync_send_enabled,omitempty" json:"sync_send_enabled,omitempty" path:"sync_send_enabled"`
+	OutboundConnectionSendEnabled           *bool                                     `url:"outbound_connection_send_enabled,omitempty" json:"outbound_connection_send_enabled,omitempty" path:"outbound_connection_send_enabled"`
+	AutomationSendEnabled                   *bool                                     `url:"automation_send_enabled,omitempty" json:"automation_send_enabled,omitempty" path:"automation_send_enabled"`
+	ApiRequestSendEnabled                   *bool                                     `url:"api_request_send_enabled,omitempty" json:"api_request_send_enabled,omitempty" path:"api_request_send_enabled"`
+	PublicHostingRequestSendEnabled         *bool                                     `url:"public_hosting_request_send_enabled,omitempty" json:"public_hosting_request_send_enabled,omitempty" path:"public_hosting_request_send_enabled"`
+	EmailSendEnabled                        *bool                                     `url:"email_send_enabled,omitempty" json:"email_send_enabled,omitempty" path:"email_send_enabled"`
+	ExavaultApiRequestSendEnabled           *bool                                     `url:"exavault_api_request_send_enabled,omitempty" json:"exavault_api_request_send_enabled,omitempty" path:"exavault_api_request_send_enabled"`
 }
 
 type SiemHttpDestinationUpdateParams struct {
-	Id                                      int64                                     `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	Name                                    string                                    `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	AdditionalHeaders                       map[string]interface{}                    `url:"additional_headers,omitempty" required:"false" json:"additional_headers,omitempty" path:"additional_headers"`
-	SendingActive                           *bool                                     `url:"sending_active,omitempty" required:"false" json:"sending_active,omitempty" path:"sending_active"`
-	GenericPayloadType                      SiemHttpDestinationGenericPayloadTypeEnum `url:"generic_payload_type,omitempty" required:"false" json:"generic_payload_type,omitempty" path:"generic_payload_type"`
-	SplunkToken                             string                                    `url:"splunk_token,omitempty" required:"false" json:"splunk_token,omitempty" path:"splunk_token"`
-	AzureDcrImmutableId                     string                                    `url:"azure_dcr_immutable_id,omitempty" required:"false" json:"azure_dcr_immutable_id,omitempty" path:"azure_dcr_immutable_id"`
-	AzureStreamName                         string                                    `url:"azure_stream_name,omitempty" required:"false" json:"azure_stream_name,omitempty" path:"azure_stream_name"`
-	AzureOauthClientCredentialsTenantId     string                                    `url:"azure_oauth_client_credentials_tenant_id,omitempty" required:"false" json:"azure_oauth_client_credentials_tenant_id,omitempty" path:"azure_oauth_client_credentials_tenant_id"`
-	AzureOauthClientCredentialsClientId     string                                    `url:"azure_oauth_client_credentials_client_id,omitempty" required:"false" json:"azure_oauth_client_credentials_client_id,omitempty" path:"azure_oauth_client_credentials_client_id"`
-	AzureOauthClientCredentialsClientSecret string                                    `url:"azure_oauth_client_credentials_client_secret,omitempty" required:"false" json:"azure_oauth_client_credentials_client_secret,omitempty" path:"azure_oauth_client_credentials_client_secret"`
-	QradarUsername                          string                                    `url:"qradar_username,omitempty" required:"false" json:"qradar_username,omitempty" path:"qradar_username"`
-	QradarPassword                          string                                    `url:"qradar_password,omitempty" required:"false" json:"qradar_password,omitempty" path:"qradar_password"`
-	SolarWindsToken                         string                                    `url:"solar_winds_token,omitempty" required:"false" json:"solar_winds_token,omitempty" path:"solar_winds_token"`
-	NewRelicApiKey                          string                                    `url:"new_relic_api_key,omitempty" required:"false" json:"new_relic_api_key,omitempty" path:"new_relic_api_key"`
-	DatadogApiKey                           string                                    `url:"datadog_api_key,omitempty" required:"false" json:"datadog_api_key,omitempty" path:"datadog_api_key"`
-	SftpActionSendEnabled                   *bool                                     `url:"sftp_action_send_enabled,omitempty" required:"false" json:"sftp_action_send_enabled,omitempty" path:"sftp_action_send_enabled"`
-	FtpActionSendEnabled                    *bool                                     `url:"ftp_action_send_enabled,omitempty" required:"false" json:"ftp_action_send_enabled,omitempty" path:"ftp_action_send_enabled"`
-	WebDavActionSendEnabled                 *bool                                     `url:"web_dav_action_send_enabled,omitempty" required:"false" json:"web_dav_action_send_enabled,omitempty" path:"web_dav_action_send_enabled"`
-	SyncSendEnabled                         *bool                                     `url:"sync_send_enabled,omitempty" required:"false" json:"sync_send_enabled,omitempty" path:"sync_send_enabled"`
-	OutboundConnectionSendEnabled           *bool                                     `url:"outbound_connection_send_enabled,omitempty" required:"false" json:"outbound_connection_send_enabled,omitempty" path:"outbound_connection_send_enabled"`
-	AutomationSendEnabled                   *bool                                     `url:"automation_send_enabled,omitempty" required:"false" json:"automation_send_enabled,omitempty" path:"automation_send_enabled"`
-	ApiRequestSendEnabled                   *bool                                     `url:"api_request_send_enabled,omitempty" required:"false" json:"api_request_send_enabled,omitempty" path:"api_request_send_enabled"`
-	PublicHostingRequestSendEnabled         *bool                                     `url:"public_hosting_request_send_enabled,omitempty" required:"false" json:"public_hosting_request_send_enabled,omitempty" path:"public_hosting_request_send_enabled"`
-	EmailSendEnabled                        *bool                                     `url:"email_send_enabled,omitempty" required:"false" json:"email_send_enabled,omitempty" path:"email_send_enabled"`
-	ExavaultApiRequestSendEnabled           *bool                                     `url:"exavault_api_request_send_enabled,omitempty" required:"false" json:"exavault_api_request_send_enabled,omitempty" path:"exavault_api_request_send_enabled"`
-	DestinationType                         SiemHttpDestinationDestinationTypeEnum    `url:"destination_type,omitempty" required:"false" json:"destination_type,omitempty" path:"destination_type"`
-	DestinationUrl                          string                                    `url:"destination_url,omitempty" required:"false" json:"destination_url,omitempty" path:"destination_url"`
+	Id                                      int64                                     `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Name                                    string                                    `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	AdditionalHeaders                       map[string]interface{}                    `url:"additional_headers,omitempty" json:"additional_headers,omitempty" path:"additional_headers"`
+	SendingActive                           *bool                                     `url:"sending_active,omitempty" json:"sending_active,omitempty" path:"sending_active"`
+	GenericPayloadType                      SiemHttpDestinationGenericPayloadTypeEnum `url:"generic_payload_type,omitempty" json:"generic_payload_type,omitempty" path:"generic_payload_type"`
+	SplunkToken                             string                                    `url:"splunk_token,omitempty" json:"splunk_token,omitempty" path:"splunk_token"`
+	AzureDcrImmutableId                     string                                    `url:"azure_dcr_immutable_id,omitempty" json:"azure_dcr_immutable_id,omitempty" path:"azure_dcr_immutable_id"`
+	AzureStreamName                         string                                    `url:"azure_stream_name,omitempty" json:"azure_stream_name,omitempty" path:"azure_stream_name"`
+	AzureOauthClientCredentialsTenantId     string                                    `url:"azure_oauth_client_credentials_tenant_id,omitempty" json:"azure_oauth_client_credentials_tenant_id,omitempty" path:"azure_oauth_client_credentials_tenant_id"`
+	AzureOauthClientCredentialsClientId     string                                    `url:"azure_oauth_client_credentials_client_id,omitempty" json:"azure_oauth_client_credentials_client_id,omitempty" path:"azure_oauth_client_credentials_client_id"`
+	AzureOauthClientCredentialsClientSecret string                                    `url:"azure_oauth_client_credentials_client_secret,omitempty" json:"azure_oauth_client_credentials_client_secret,omitempty" path:"azure_oauth_client_credentials_client_secret"`
+	QradarUsername                          string                                    `url:"qradar_username,omitempty" json:"qradar_username,omitempty" path:"qradar_username"`
+	QradarPassword                          string                                    `url:"qradar_password,omitempty" json:"qradar_password,omitempty" path:"qradar_password"`
+	SolarWindsToken                         string                                    `url:"solar_winds_token,omitempty" json:"solar_winds_token,omitempty" path:"solar_winds_token"`
+	NewRelicApiKey                          string                                    `url:"new_relic_api_key,omitempty" json:"new_relic_api_key,omitempty" path:"new_relic_api_key"`
+	DatadogApiKey                           string                                    `url:"datadog_api_key,omitempty" json:"datadog_api_key,omitempty" path:"datadog_api_key"`
+	SftpActionSendEnabled                   *bool                                     `url:"sftp_action_send_enabled,omitempty" json:"sftp_action_send_enabled,omitempty" path:"sftp_action_send_enabled"`
+	FtpActionSendEnabled                    *bool                                     `url:"ftp_action_send_enabled,omitempty" json:"ftp_action_send_enabled,omitempty" path:"ftp_action_send_enabled"`
+	WebDavActionSendEnabled                 *bool                                     `url:"web_dav_action_send_enabled,omitempty" json:"web_dav_action_send_enabled,omitempty" path:"web_dav_action_send_enabled"`
+	SyncSendEnabled                         *bool                                     `url:"sync_send_enabled,omitempty" json:"sync_send_enabled,omitempty" path:"sync_send_enabled"`
+	OutboundConnectionSendEnabled           *bool                                     `url:"outbound_connection_send_enabled,omitempty" json:"outbound_connection_send_enabled,omitempty" path:"outbound_connection_send_enabled"`
+	AutomationSendEnabled                   *bool                                     `url:"automation_send_enabled,omitempty" json:"automation_send_enabled,omitempty" path:"automation_send_enabled"`
+	ApiRequestSendEnabled                   *bool                                     `url:"api_request_send_enabled,omitempty" json:"api_request_send_enabled,omitempty" path:"api_request_send_enabled"`
+	PublicHostingRequestSendEnabled         *bool                                     `url:"public_hosting_request_send_enabled,omitempty" json:"public_hosting_request_send_enabled,omitempty" path:"public_hosting_request_send_enabled"`
+	EmailSendEnabled                        *bool                                     `url:"email_send_enabled,omitempty" json:"email_send_enabled,omitempty" path:"email_send_enabled"`
+	ExavaultApiRequestSendEnabled           *bool                                     `url:"exavault_api_request_send_enabled,omitempty" json:"exavault_api_request_send_enabled,omitempty" path:"exavault_api_request_send_enabled"`
+	DestinationType                         SiemHttpDestinationDestinationTypeEnum    `url:"destination_type,omitempty" json:"destination_type,omitempty" path:"destination_type"`
+	DestinationUrl                          string                                    `url:"destination_url,omitempty" json:"destination_url,omitempty" path:"destination_url"`
 }
 
 type SiemHttpDestinationDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (s *SiemHttpDestination) UnmarshalJSON(data []byte) error {

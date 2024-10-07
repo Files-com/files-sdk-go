@@ -27,44 +27,44 @@ func (g Group) Identifier() interface{} {
 type GroupCollection []Group
 
 type GroupListParams struct {
-	SortBy       map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter       Group                  `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	Ids          string                 `url:"ids,omitempty" required:"false" json:"ids,omitempty" path:"ids"`
+	SortBy       map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter       Group                  `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	Ids          string                 `url:"ids,omitempty" json:"ids,omitempty" path:"ids"`
 	ListParams
 }
 
 type GroupFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type GroupCreateParams struct {
-	Notes             string `url:"notes,omitempty" required:"false" json:"notes,omitempty" path:"notes"`
-	UserIds           string `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty" path:"user_ids"`
-	AdminIds          string `url:"admin_ids,omitempty" required:"false" json:"admin_ids,omitempty" path:"admin_ids"`
-	FtpPermission     *bool  `url:"ftp_permission,omitempty" required:"false" json:"ftp_permission,omitempty" path:"ftp_permission"`
-	SftpPermission    *bool  `url:"sftp_permission,omitempty" required:"false" json:"sftp_permission,omitempty" path:"sftp_permission"`
-	DavPermission     *bool  `url:"dav_permission,omitempty" required:"false" json:"dav_permission,omitempty" path:"dav_permission"`
-	RestapiPermission *bool  `url:"restapi_permission,omitempty" required:"false" json:"restapi_permission,omitempty" path:"restapi_permission"`
-	AllowedIps        string `url:"allowed_ips,omitempty" required:"false" json:"allowed_ips,omitempty" path:"allowed_ips"`
-	Name              string `url:"name,omitempty" required:"true" json:"name,omitempty" path:"name"`
+	Notes             string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
+	UserIds           string `url:"user_ids,omitempty" json:"user_ids,omitempty" path:"user_ids"`
+	AdminIds          string `url:"admin_ids,omitempty" json:"admin_ids,omitempty" path:"admin_ids"`
+	FtpPermission     *bool  `url:"ftp_permission,omitempty" json:"ftp_permission,omitempty" path:"ftp_permission"`
+	SftpPermission    *bool  `url:"sftp_permission,omitempty" json:"sftp_permission,omitempty" path:"sftp_permission"`
+	DavPermission     *bool  `url:"dav_permission,omitempty" json:"dav_permission,omitempty" path:"dav_permission"`
+	RestapiPermission *bool  `url:"restapi_permission,omitempty" json:"restapi_permission,omitempty" path:"restapi_permission"`
+	AllowedIps        string `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
+	Name              string `url:"name" json:"name" path:"name"`
 }
 
 type GroupUpdateParams struct {
-	Id                int64  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	Notes             string `url:"notes,omitempty" required:"false" json:"notes,omitempty" path:"notes"`
-	UserIds           string `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty" path:"user_ids"`
-	AdminIds          string `url:"admin_ids,omitempty" required:"false" json:"admin_ids,omitempty" path:"admin_ids"`
-	FtpPermission     *bool  `url:"ftp_permission,omitempty" required:"false" json:"ftp_permission,omitempty" path:"ftp_permission"`
-	SftpPermission    *bool  `url:"sftp_permission,omitempty" required:"false" json:"sftp_permission,omitempty" path:"sftp_permission"`
-	DavPermission     *bool  `url:"dav_permission,omitempty" required:"false" json:"dav_permission,omitempty" path:"dav_permission"`
-	RestapiPermission *bool  `url:"restapi_permission,omitempty" required:"false" json:"restapi_permission,omitempty" path:"restapi_permission"`
-	AllowedIps        string `url:"allowed_ips,omitempty" required:"false" json:"allowed_ips,omitempty" path:"allowed_ips"`
-	Name              string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
+	Id                int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Notes             string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
+	UserIds           string `url:"user_ids,omitempty" json:"user_ids,omitempty" path:"user_ids"`
+	AdminIds          string `url:"admin_ids,omitempty" json:"admin_ids,omitempty" path:"admin_ids"`
+	FtpPermission     *bool  `url:"ftp_permission,omitempty" json:"ftp_permission,omitempty" path:"ftp_permission"`
+	SftpPermission    *bool  `url:"sftp_permission,omitempty" json:"sftp_permission,omitempty" path:"sftp_permission"`
+	DavPermission     *bool  `url:"dav_permission,omitempty" json:"dav_permission,omitempty" path:"dav_permission"`
+	RestapiPermission *bool  `url:"restapi_permission,omitempty" json:"restapi_permission,omitempty" path:"restapi_permission"`
+	AllowedIps        string `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
+	Name              string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
 type GroupDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (g *Group) UnmarshalJSON(data []byte) error {

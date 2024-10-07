@@ -23,7 +23,7 @@ func (u UserCipherUse) Identifier() interface{} {
 type UserCipherUseCollection []UserCipherUse
 
 type UserCipherUseListParams struct {
-	UserId int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	ListParams
 }
 

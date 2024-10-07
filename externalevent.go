@@ -47,23 +47,23 @@ func (u ExternalEventStatusEnum) Enum() map[string]ExternalEventStatusEnum {
 }
 
 type ExternalEventListParams struct {
-	SortBy       map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter       ExternalEvent          `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterGt     map[string]interface{} `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq   map[string]interface{} `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	FilterLt     map[string]interface{} `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq   map[string]interface{} `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	SortBy       map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter       ExternalEvent          `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterGt     map[string]interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq   map[string]interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	FilterLt     map[string]interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq   map[string]interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 
 type ExternalEventFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type ExternalEventCreateParams struct {
-	Status ExternalEventStatusEnum `url:"status,omitempty" required:"true" json:"status,omitempty" path:"status"`
-	Body   string                  `url:"body,omitempty" required:"true" json:"body,omitempty" path:"body"`
+	Status ExternalEventStatusEnum `url:"status" json:"status" path:"status"`
+	Body   string                  `url:"body" json:"body" path:"body"`
 }
 
 func (e *ExternalEvent) UnmarshalJSON(data []byte) error {

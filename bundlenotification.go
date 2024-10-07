@@ -21,30 +21,30 @@ func (b BundleNotification) Identifier() interface{} {
 type BundleNotificationCollection []BundleNotification
 
 type BundleNotificationListParams struct {
-	SortBy map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter BundleNotification     `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	SortBy map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter BundleNotification     `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
 type BundleNotificationFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type BundleNotificationCreateParams struct {
-	BundleId             int64 `url:"bundle_id,omitempty" required:"true" json:"bundle_id,omitempty" path:"bundle_id"`
-	UserId               int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	NotifyOnRegistration *bool `url:"notify_on_registration,omitempty" required:"false" json:"notify_on_registration,omitempty" path:"notify_on_registration"`
-	NotifyOnUpload       *bool `url:"notify_on_upload,omitempty" required:"false" json:"notify_on_upload,omitempty" path:"notify_on_upload"`
+	BundleId             int64 `url:"bundle_id" json:"bundle_id" path:"bundle_id"`
+	UserId               int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	NotifyOnRegistration *bool `url:"notify_on_registration,omitempty" json:"notify_on_registration,omitempty" path:"notify_on_registration"`
+	NotifyOnUpload       *bool `url:"notify_on_upload,omitempty" json:"notify_on_upload,omitempty" path:"notify_on_upload"`
 }
 
 type BundleNotificationUpdateParams struct {
-	Id                   int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	NotifyOnRegistration *bool `url:"notify_on_registration,omitempty" required:"false" json:"notify_on_registration,omitempty" path:"notify_on_registration"`
-	NotifyOnUpload       *bool `url:"notify_on_upload,omitempty" required:"false" json:"notify_on_upload,omitempty" path:"notify_on_upload"`
+	Id                   int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	NotifyOnRegistration *bool `url:"notify_on_registration,omitempty" json:"notify_on_registration,omitempty" path:"notify_on_registration"`
+	NotifyOnUpload       *bool `url:"notify_on_upload,omitempty" json:"notify_on_upload,omitempty" path:"notify_on_upload"`
 }
 
 type BundleNotificationDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (b *BundleNotification) UnmarshalJSON(data []byte) error {

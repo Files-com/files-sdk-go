@@ -20,13 +20,13 @@ func (f FileCommentReaction) Identifier() interface{} {
 type FileCommentReactionCollection []FileCommentReaction
 
 type FileCommentReactionCreateParams struct {
-	UserId        int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	FileCommentId int64  `url:"file_comment_id,omitempty" required:"true" json:"file_comment_id,omitempty" path:"file_comment_id"`
-	Emoji         string `url:"emoji,omitempty" required:"true" json:"emoji,omitempty" path:"emoji"`
+	UserId        int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	FileCommentId int64  `url:"file_comment_id" json:"file_comment_id" path:"file_comment_id"`
+	Emoji         string `url:"emoji" json:"emoji" path:"emoji"`
 }
 
 type FileCommentReactionDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (f *FileCommentReaction) UnmarshalJSON(data []byte) error {

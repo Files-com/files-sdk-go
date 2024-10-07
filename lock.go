@@ -28,22 +28,22 @@ func (l Lock) Identifier() interface{} {
 type LockCollection []Lock
 
 type LockListForParams struct {
-	Path            string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
-	IncludeChildren *bool  `url:"include_children,omitempty" required:"false" json:"include_children,omitempty" path:"include_children"`
+	Path            string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	IncludeChildren *bool  `url:"include_children,omitempty" json:"include_children,omitempty" path:"include_children"`
 	ListParams
 }
 
 type LockCreateParams struct {
-	Path                 string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
-	AllowAccessByAnyUser *bool  `url:"allow_access_by_any_user,omitempty" required:"false" json:"allow_access_by_any_user,omitempty" path:"allow_access_by_any_user"`
-	Exclusive            *bool  `url:"exclusive,omitempty" required:"false" json:"exclusive,omitempty" path:"exclusive"`
-	Recursive            *bool  `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
-	Timeout              int64  `url:"timeout,omitempty" required:"false" json:"timeout,omitempty" path:"timeout"`
+	Path                 string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	AllowAccessByAnyUser *bool  `url:"allow_access_by_any_user,omitempty" json:"allow_access_by_any_user,omitempty" path:"allow_access_by_any_user"`
+	Exclusive            *bool  `url:"exclusive,omitempty" json:"exclusive,omitempty" path:"exclusive"`
+	Recursive            *bool  `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
+	Timeout              int64  `url:"timeout,omitempty" json:"timeout,omitempty" path:"timeout"`
 }
 
 type LockDeleteParams struct {
-	Path  string `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
-	Token string `url:"token,omitempty" required:"true" json:"token,omitempty" path:"token"`
+	Path  string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	Token string `url:"token" json:"token" path:"token"`
 }
 
 func (l *Lock) UnmarshalJSON(data []byte) error {

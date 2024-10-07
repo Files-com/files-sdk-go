@@ -20,27 +20,27 @@ func (m MessageComment) Identifier() interface{} {
 type MessageCommentCollection []MessageComment
 
 type MessageCommentListParams struct {
-	UserId    int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	MessageId int64 `url:"message_id,omitempty" required:"true" json:"message_id,omitempty" path:"message_id"`
+	UserId    int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	MessageId int64 `url:"message_id" json:"message_id" path:"message_id"`
 	ListParams
 }
 
 type MessageCommentFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type MessageCommentCreateParams struct {
-	UserId int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	Body   string `url:"body,omitempty" required:"true" json:"body,omitempty" path:"body"`
+	UserId int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	Body   string `url:"body" json:"body" path:"body"`
 }
 
 type MessageCommentUpdateParams struct {
-	Id   int64  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	Body string `url:"body,omitempty" required:"true" json:"body,omitempty" path:"body"`
+	Id   int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Body string `url:"body" json:"body" path:"body"`
 }
 
 type MessageCommentDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (m *MessageComment) UnmarshalJSON(data []byte) error {

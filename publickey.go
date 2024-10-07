@@ -25,27 +25,27 @@ func (p PublicKey) Identifier() interface{} {
 type PublicKeyCollection []PublicKey
 
 type PublicKeyListParams struct {
-	UserId int64 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	ListParams
 }
 
 type PublicKeyFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type PublicKeyCreateParams struct {
-	UserId    int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	Title     string `url:"title,omitempty" required:"true" json:"title,omitempty" path:"title"`
-	PublicKey string `url:"public_key,omitempty" required:"true" json:"public_key,omitempty" path:"public_key"`
+	UserId    int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	Title     string `url:"title" json:"title" path:"title"`
+	PublicKey string `url:"public_key" json:"public_key" path:"public_key"`
 }
 
 type PublicKeyUpdateParams struct {
-	Id    int64  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	Title string `url:"title,omitempty" required:"true" json:"title,omitempty" path:"title"`
+	Id    int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Title string `url:"title" json:"title" path:"title"`
 }
 
 type PublicKeyDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (p *PublicKey) UnmarshalJSON(data []byte) error {

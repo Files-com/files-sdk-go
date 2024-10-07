@@ -22,12 +22,12 @@ func (r RemoteBandwidthSnapshot) Identifier() interface{} {
 type RemoteBandwidthSnapshotCollection []RemoteBandwidthSnapshot
 
 type RemoteBandwidthSnapshotListParams struct {
-	SortBy     map[string]interface{}  `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter     RemoteBandwidthSnapshot `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterGt   map[string]interface{}  `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq map[string]interface{}  `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterLt   map[string]interface{}  `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq map[string]interface{}  `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	SortBy     map[string]interface{}  `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter     RemoteBandwidthSnapshot `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterGt   map[string]interface{}  `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq map[string]interface{}  `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterLt   map[string]interface{}  `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq map[string]interface{}  `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 

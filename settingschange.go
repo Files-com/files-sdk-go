@@ -22,8 +22,8 @@ type SettingsChange struct {
 type SettingsChangeCollection []SettingsChange
 
 type SettingsChangeListParams struct {
-	SortBy map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter SettingsChange         `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
+	SortBy map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter SettingsChange         `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 

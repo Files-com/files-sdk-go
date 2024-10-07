@@ -65,35 +65,35 @@ type As2PartnerListParams struct {
 }
 
 type As2PartnerFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type As2PartnerCreateParams struct {
-	EnableDedicatedIps *bool                            `url:"enable_dedicated_ips,omitempty" required:"false" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
-	HttpAuthUsername   string                           `url:"http_auth_username,omitempty" required:"false" json:"http_auth_username,omitempty" path:"http_auth_username"`
-	HttpAuthPassword   string                           `url:"http_auth_password,omitempty" required:"false" json:"http_auth_password,omitempty" path:"http_auth_password"`
-	MdnValidationLevel As2PartnerMdnValidationLevelEnum `url:"mdn_validation_level,omitempty" required:"false" json:"mdn_validation_level,omitempty" path:"mdn_validation_level"`
-	ServerCertificate  As2PartnerServerCertificateEnum  `url:"server_certificate,omitempty" required:"false" json:"server_certificate,omitempty" path:"server_certificate"`
-	As2StationId       int64                            `url:"as2_station_id,omitempty" required:"true" json:"as2_station_id,omitempty" path:"as2_station_id"`
-	Name               string                           `url:"name,omitempty" required:"true" json:"name,omitempty" path:"name"`
-	Uri                string                           `url:"uri,omitempty" required:"true" json:"uri,omitempty" path:"uri"`
-	PublicCertificate  string                           `url:"public_certificate,omitempty" required:"true" json:"public_certificate,omitempty" path:"public_certificate"`
+	EnableDedicatedIps *bool                            `url:"enable_dedicated_ips,omitempty" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
+	HttpAuthUsername   string                           `url:"http_auth_username,omitempty" json:"http_auth_username,omitempty" path:"http_auth_username"`
+	HttpAuthPassword   string                           `url:"http_auth_password,omitempty" json:"http_auth_password,omitempty" path:"http_auth_password"`
+	MdnValidationLevel As2PartnerMdnValidationLevelEnum `url:"mdn_validation_level,omitempty" json:"mdn_validation_level,omitempty" path:"mdn_validation_level"`
+	ServerCertificate  As2PartnerServerCertificateEnum  `url:"server_certificate,omitempty" json:"server_certificate,omitempty" path:"server_certificate"`
+	As2StationId       int64                            `url:"as2_station_id" json:"as2_station_id" path:"as2_station_id"`
+	Name               string                           `url:"name" json:"name" path:"name"`
+	Uri                string                           `url:"uri" json:"uri" path:"uri"`
+	PublicCertificate  string                           `url:"public_certificate" json:"public_certificate" path:"public_certificate"`
 }
 
 type As2PartnerUpdateParams struct {
-	Id                 int64                            `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	EnableDedicatedIps *bool                            `url:"enable_dedicated_ips,omitempty" required:"false" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
-	HttpAuthUsername   string                           `url:"http_auth_username,omitempty" required:"false" json:"http_auth_username,omitempty" path:"http_auth_username"`
-	HttpAuthPassword   string                           `url:"http_auth_password,omitempty" required:"false" json:"http_auth_password,omitempty" path:"http_auth_password"`
-	MdnValidationLevel As2PartnerMdnValidationLevelEnum `url:"mdn_validation_level,omitempty" required:"false" json:"mdn_validation_level,omitempty" path:"mdn_validation_level"`
-	ServerCertificate  As2PartnerServerCertificateEnum  `url:"server_certificate,omitempty" required:"false" json:"server_certificate,omitempty" path:"server_certificate"`
-	Name               string                           `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	Uri                string                           `url:"uri,omitempty" required:"false" json:"uri,omitempty" path:"uri"`
-	PublicCertificate  string                           `url:"public_certificate,omitempty" required:"false" json:"public_certificate,omitempty" path:"public_certificate"`
+	Id                 int64                            `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	EnableDedicatedIps *bool                            `url:"enable_dedicated_ips,omitempty" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
+	HttpAuthUsername   string                           `url:"http_auth_username,omitempty" json:"http_auth_username,omitempty" path:"http_auth_username"`
+	HttpAuthPassword   string                           `url:"http_auth_password,omitempty" json:"http_auth_password,omitempty" path:"http_auth_password"`
+	MdnValidationLevel As2PartnerMdnValidationLevelEnum `url:"mdn_validation_level,omitempty" json:"mdn_validation_level,omitempty" path:"mdn_validation_level"`
+	ServerCertificate  As2PartnerServerCertificateEnum  `url:"server_certificate,omitempty" json:"server_certificate,omitempty" path:"server_certificate"`
+	Name               string                           `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	Uri                string                           `url:"uri,omitempty" json:"uri,omitempty" path:"uri"`
+	PublicCertificate  string                           `url:"public_certificate,omitempty" json:"public_certificate,omitempty" path:"public_certificate"`
 }
 
 type As2PartnerDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (a *As2Partner) UnmarshalJSON(data []byte) error {

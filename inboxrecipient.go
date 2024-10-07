@@ -22,19 +22,19 @@ type InboxRecipient struct {
 type InboxRecipientCollection []InboxRecipient
 
 type InboxRecipientListParams struct {
-	SortBy  map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter  InboxRecipient         `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	InboxId int64                  `url:"inbox_id,omitempty" required:"true" json:"inbox_id,omitempty" path:"inbox_id"`
+	SortBy  map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter  InboxRecipient         `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	InboxId int64                  `url:"inbox_id" json:"inbox_id" path:"inbox_id"`
 	ListParams
 }
 
 type InboxRecipientCreateParams struct {
-	InboxId          int64  `url:"inbox_id,omitempty" required:"true" json:"inbox_id,omitempty" path:"inbox_id"`
-	Recipient        string `url:"recipient,omitempty" required:"true" json:"recipient,omitempty" path:"recipient"`
-	Name             string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	Company          string `url:"company,omitempty" required:"false" json:"company,omitempty" path:"company"`
-	Note             string `url:"note,omitempty" required:"false" json:"note,omitempty" path:"note"`
-	ShareAfterCreate *bool  `url:"share_after_create,omitempty" required:"false" json:"share_after_create,omitempty" path:"share_after_create"`
+	InboxId          int64  `url:"inbox_id" json:"inbox_id" path:"inbox_id"`
+	Recipient        string `url:"recipient" json:"recipient" path:"recipient"`
+	Name             string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	Company          string `url:"company,omitempty" json:"company,omitempty" path:"company"`
+	Note             string `url:"note,omitempty" json:"note,omitempty" path:"note"`
+	ShareAfterCreate *bool  `url:"share_after_create,omitempty" json:"share_after_create,omitempty" path:"share_after_create"`
 }
 
 func (i *InboxRecipient) UnmarshalJSON(data []byte) error {

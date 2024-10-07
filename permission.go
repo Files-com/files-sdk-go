@@ -24,27 +24,27 @@ func (p Permission) Identifier() interface{} {
 type PermissionCollection []Permission
 
 type PermissionListParams struct {
-	SortBy        map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter        Permission             `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterPrefix  map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	Path          string                 `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
-	IncludeGroups *bool                  `url:"include_groups,omitempty" required:"false" json:"include_groups,omitempty" path:"include_groups"`
-	GroupId       string                 `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
-	UserId        string                 `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
+	SortBy        map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter        Permission             `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterPrefix  map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	Path          string                 `url:"path,omitempty" json:"path,omitempty" path:"path"`
+	IncludeGroups *bool                  `url:"include_groups,omitempty" json:"include_groups,omitempty" path:"include_groups"`
+	GroupId       string                 `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
+	UserId        string                 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	ListParams
 }
 
 type PermissionCreateParams struct {
-	Path       string `url:"path,omitempty" required:"true" json:"path,omitempty" path:"path"`
-	GroupId    int64  `url:"group_id,omitempty" required:"false" json:"group_id,omitempty" path:"group_id"`
-	Permission string `url:"permission,omitempty" required:"false" json:"permission,omitempty" path:"permission"`
-	Recursive  *bool  `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
-	UserId     int64  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	Username   string `url:"username,omitempty" required:"false" json:"username,omitempty" path:"username"`
+	Path       string `url:"path" json:"path" path:"path"`
+	GroupId    int64  `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
+	Permission string `url:"permission,omitempty" json:"permission,omitempty" path:"permission"`
+	Recursive  *bool  `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
+	UserId     int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	Username   string `url:"username,omitempty" json:"username,omitempty" path:"username"`
 }
 
 type PermissionDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (p *Permission) UnmarshalJSON(data []byte) error {

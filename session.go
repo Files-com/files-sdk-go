@@ -24,10 +24,10 @@ func (s Session) Identifier() interface{} {
 type SessionCollection []Session
 
 type SessionCreateParams struct {
-	Username         string `url:"username,omitempty" required:"false" json:"username,omitempty" path:"username"`
-	Password         string `url:"password,omitempty" required:"false" json:"password,omitempty" path:"password"`
-	Otp              string `url:"otp,omitempty" required:"false" json:"otp,omitempty" path:"otp"`
-	PartialSessionId string `url:"partial_session_id,omitempty" required:"false" json:"partial_session_id,omitempty" path:"partial_session_id"`
+	Username         string `url:"username,omitempty" json:"username,omitempty" path:"username"`
+	Password         string `url:"password,omitempty" json:"password,omitempty" path:"password"`
+	Otp              string `url:"otp,omitempty" json:"otp,omitempty" path:"otp"`
+	PartialSessionId string `url:"partial_session_id,omitempty" json:"partial_session_id,omitempty" path:"partial_session_id"`
 }
 
 func (s *Session) UnmarshalJSON(data []byte) error {

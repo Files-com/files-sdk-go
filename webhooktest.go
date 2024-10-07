@@ -29,16 +29,16 @@ type WebhookTest struct {
 type WebhookTestCollection []WebhookTest
 
 type WebhookTestCreateParams struct {
-	Url             string                 `url:"url,omitempty" required:"true" json:"url,omitempty" path:"url"`
-	Method          string                 `url:"method,omitempty" required:"false" json:"method,omitempty" path:"method"`
-	Encoding        string                 `url:"encoding,omitempty" required:"false" json:"encoding,omitempty" path:"encoding"`
-	Headers         map[string]interface{} `url:"headers,omitempty" required:"false" json:"headers,omitempty" path:"headers"`
-	Body            map[string]interface{} `url:"body,omitempty" required:"false" json:"body,omitempty" path:"body"`
-	RawBody         string                 `url:"raw_body,omitempty" required:"false" json:"raw_body,omitempty" path:"raw_body"`
-	FileAsBody      *bool                  `url:"file_as_body,omitempty" required:"false" json:"file_as_body,omitempty" path:"file_as_body"`
-	FileFormField   string                 `url:"file_form_field,omitempty" required:"false" json:"file_form_field,omitempty" path:"file_form_field"`
-	Action          string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
-	UseDedicatedIps *bool                  `url:"use_dedicated_ips,omitempty" required:"false" json:"use_dedicated_ips,omitempty" path:"use_dedicated_ips"`
+	Url             string                 `url:"url" json:"url" path:"url"`
+	Method          string                 `url:"method,omitempty" json:"method,omitempty" path:"method"`
+	Encoding        string                 `url:"encoding,omitempty" json:"encoding,omitempty" path:"encoding"`
+	Headers         map[string]interface{} `url:"headers,omitempty" json:"headers,omitempty" path:"headers"`
+	Body            map[string]interface{} `url:"body,omitempty" json:"body,omitempty" path:"body"`
+	RawBody         string                 `url:"raw_body,omitempty" json:"raw_body,omitempty" path:"raw_body"`
+	FileAsBody      *bool                  `url:"file_as_body,omitempty" json:"file_as_body,omitempty" path:"file_as_body"`
+	FileFormField   string                 `url:"file_form_field,omitempty" json:"file_form_field,omitempty" path:"file_form_field"`
+	Action          string                 `url:"action,omitempty" json:"action,omitempty" path:"action"`
+	UseDedicatedIps *bool                  `url:"use_dedicated_ips,omitempty" json:"use_dedicated_ips,omitempty" path:"use_dedicated_ips"`
 }
 
 func (w *WebhookTest) UnmarshalJSON(data []byte) error {

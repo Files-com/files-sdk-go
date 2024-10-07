@@ -25,22 +25,22 @@ type SftpHostKeyListParams struct {
 }
 
 type SftpHostKeyFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type SftpHostKeyCreateParams struct {
-	Name       string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	PrivateKey string `url:"private_key,omitempty" required:"false" json:"private_key,omitempty" path:"private_key"`
+	Name       string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	PrivateKey string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 }
 
 type SftpHostKeyUpdateParams struct {
-	Id         int64  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	Name       string `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	PrivateKey string `url:"private_key,omitempty" required:"false" json:"private_key,omitempty" path:"private_key"`
+	Id         int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Name       string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	PrivateKey string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 }
 
 type SftpHostKeyDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (s *SftpHostKey) UnmarshalJSON(data []byte) error {

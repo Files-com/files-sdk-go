@@ -47,45 +47,45 @@ func (u ApiKeyPermissionSetEnum) Enum() map[string]ApiKeyPermissionSetEnum {
 }
 
 type ApiKeyListParams struct {
-	UserId     int64                  `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	SortBy     map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter     ApiKey                 `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterGt   map[string]interface{} `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq map[string]interface{} `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterLt   map[string]interface{} `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq map[string]interface{} `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	UserId     int64                  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	SortBy     map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter     ApiKey                 `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterGt   map[string]interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq map[string]interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterLt   map[string]interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq map[string]interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 
 type ApiKeyFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type ApiKeyCreateParams struct {
-	UserId        int64                   `url:"user_id,omitempty" required:"false" json:"user_id,omitempty" path:"user_id"`
-	Description   string                  `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
-	ExpiresAt     *time.Time              `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty" path:"expires_at"`
-	PermissionSet ApiKeyPermissionSetEnum `url:"permission_set,omitempty" required:"false" json:"permission_set,omitempty" path:"permission_set"`
-	Name          string                  `url:"name,omitempty" required:"true" json:"name,omitempty" path:"name"`
-	Path          string                  `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
+	UserId        int64                   `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	Description   string                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	ExpiresAt     *time.Time              `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
+	PermissionSet ApiKeyPermissionSetEnum `url:"permission_set,omitempty" json:"permission_set,omitempty" path:"permission_set"`
+	Name          string                  `url:"name" json:"name" path:"name"`
+	Path          string                  `url:"path,omitempty" json:"path,omitempty" path:"path"`
 }
 
 type ApiKeyUpdateCurrentParams struct {
-	ExpiresAt     *time.Time              `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty" path:"expires_at"`
-	Name          string                  `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	PermissionSet ApiKeyPermissionSetEnum `url:"permission_set,omitempty" required:"false" json:"permission_set,omitempty" path:"permission_set"`
+	ExpiresAt     *time.Time              `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
+	Name          string                  `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	PermissionSet ApiKeyPermissionSetEnum `url:"permission_set,omitempty" json:"permission_set,omitempty" path:"permission_set"`
 }
 
 type ApiKeyUpdateParams struct {
-	Id            int64                   `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	Description   string                  `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
-	ExpiresAt     *time.Time              `url:"expires_at,omitempty" required:"false" json:"expires_at,omitempty" path:"expires_at"`
-	PermissionSet ApiKeyPermissionSetEnum `url:"permission_set,omitempty" required:"false" json:"permission_set,omitempty" path:"permission_set"`
-	Name          string                  `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
+	Id            int64                   `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Description   string                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	ExpiresAt     *time.Time              `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
+	PermissionSet ApiKeyPermissionSetEnum `url:"permission_set,omitempty" json:"permission_set,omitempty" path:"permission_set"`
+	Name          string                  `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
 type ApiKeyDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (a *ApiKey) UnmarshalJSON(data []byte) error {

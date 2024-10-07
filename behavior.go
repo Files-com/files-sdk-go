@@ -28,58 +28,58 @@ func (b Behavior) Identifier() interface{} {
 type BehaviorCollection []Behavior
 
 type BehaviorListParams struct {
-	SortBy       map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter       Behavior               `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	SortBy       map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter       Behavior               `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	ListParams
 }
 
 type BehaviorFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type BehaviorListForParams struct {
-	SortBy            map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter            Behavior               `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterPrefix      map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	Path              string                 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"path"`
-	AncestorBehaviors *bool                  `url:"ancestor_behaviors,omitempty" required:"false" json:"ancestor_behaviors,omitempty" path:"ancestor_behaviors"`
+	SortBy            map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter            Behavior               `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterPrefix      map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	Path              string                 `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	AncestorBehaviors *bool                  `url:"ancestor_behaviors,omitempty" json:"ancestor_behaviors,omitempty" path:"ancestor_behaviors"`
 	ListParams
 }
 
 type BehaviorCreateParams struct {
-	Value                       string    `url:"value,omitempty" required:"false" json:"value,omitempty" path:"value"`
-	AttachmentFile              io.Writer `url:"attachment_file,omitempty" required:"false" json:"attachment_file,omitempty" path:"attachment_file"`
-	DisableParentFolderBehavior *bool     `url:"disable_parent_folder_behavior,omitempty" required:"false" json:"disable_parent_folder_behavior,omitempty" path:"disable_parent_folder_behavior"`
-	Recursive                   *bool     `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
-	Name                        string    `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	Description                 string    `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
-	Path                        string    `url:"path,omitempty" required:"true" json:"path,omitempty" path:"path"`
-	Behavior                    string    `url:"behavior,omitempty" required:"true" json:"behavior,omitempty" path:"behavior"`
+	Value                       string    `url:"value,omitempty" json:"value,omitempty" path:"value"`
+	AttachmentFile              io.Writer `url:"attachment_file,omitempty" json:"attachment_file,omitempty" path:"attachment_file"`
+	DisableParentFolderBehavior *bool     `url:"disable_parent_folder_behavior,omitempty" json:"disable_parent_folder_behavior,omitempty" path:"disable_parent_folder_behavior"`
+	Recursive                   *bool     `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
+	Name                        string    `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	Description                 string    `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	Path                        string    `url:"path" json:"path" path:"path"`
+	Behavior                    string    `url:"behavior" json:"behavior" path:"behavior"`
 }
 
 type BehaviorWebhookTestParams struct {
-	Url      string                 `url:"url,omitempty" required:"true" json:"url,omitempty" path:"url"`
-	Method   string                 `url:"method,omitempty" required:"false" json:"method,omitempty" path:"method"`
-	Encoding string                 `url:"encoding,omitempty" required:"false" json:"encoding,omitempty" path:"encoding"`
-	Headers  map[string]interface{} `url:"headers,omitempty" required:"false" json:"headers,omitempty" path:"headers"`
-	Body     map[string]interface{} `url:"body,omitempty" required:"false" json:"body,omitempty" path:"body"`
-	Action   string                 `url:"action,omitempty" required:"false" json:"action,omitempty" path:"action"`
+	Url      string                 `url:"url" json:"url" path:"url"`
+	Method   string                 `url:"method,omitempty" json:"method,omitempty" path:"method"`
+	Encoding string                 `url:"encoding,omitempty" json:"encoding,omitempty" path:"encoding"`
+	Headers  map[string]interface{} `url:"headers,omitempty" json:"headers,omitempty" path:"headers"`
+	Body     map[string]interface{} `url:"body,omitempty" json:"body,omitempty" path:"body"`
+	Action   string                 `url:"action,omitempty" json:"action,omitempty" path:"action"`
 }
 
 type BehaviorUpdateParams struct {
-	Id                          int64     `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	Value                       string    `url:"value,omitempty" required:"false" json:"value,omitempty" path:"value"`
-	AttachmentFile              io.Writer `url:"attachment_file,omitempty" required:"false" json:"attachment_file,omitempty" path:"attachment_file"`
-	DisableParentFolderBehavior *bool     `url:"disable_parent_folder_behavior,omitempty" required:"false" json:"disable_parent_folder_behavior,omitempty" path:"disable_parent_folder_behavior"`
-	Recursive                   *bool     `url:"recursive,omitempty" required:"false" json:"recursive,omitempty" path:"recursive"`
-	Name                        string    `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	Description                 string    `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
-	AttachmentDelete            *bool     `url:"attachment_delete,omitempty" required:"false" json:"attachment_delete,omitempty" path:"attachment_delete"`
+	Id                          int64     `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Value                       string    `url:"value,omitempty" json:"value,omitempty" path:"value"`
+	AttachmentFile              io.Writer `url:"attachment_file,omitempty" json:"attachment_file,omitempty" path:"attachment_file"`
+	DisableParentFolderBehavior *bool     `url:"disable_parent_folder_behavior,omitempty" json:"disable_parent_folder_behavior,omitempty" path:"disable_parent_folder_behavior"`
+	Recursive                   *bool     `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
+	Name                        string    `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	Description                 string    `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	AttachmentDelete            *bool     `url:"attachment_delete,omitempty" json:"attachment_delete,omitempty" path:"attachment_delete"`
 }
 
 type BehaviorDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (b *Behavior) UnmarshalJSON(data []byte) error {

@@ -84,88 +84,88 @@ func (u AutomationEnum) Enum() map[string]AutomationEnum {
 }
 
 type AutomationListParams struct {
-	SortBy      map[string]interface{} `url:"sort_by,omitempty" required:"false" json:"sort_by,omitempty" path:"sort_by"`
-	Filter      Automation             `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterGt    map[string]interface{} `url:"filter_gt,omitempty" required:"false" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq  map[string]interface{} `url:"filter_gteq,omitempty" required:"false" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterLt    map[string]interface{} `url:"filter_lt,omitempty" required:"false" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq  map[string]interface{} `url:"filter_lteq,omitempty" required:"false" json:"filter_lteq,omitempty" path:"filter_lteq"`
-	WithDeleted *bool                  `url:"with_deleted,omitempty" required:"false" json:"with_deleted,omitempty" path:"with_deleted"`
+	SortBy      map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter      Automation             `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterGt    map[string]interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq  map[string]interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterLt    map[string]interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq  map[string]interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	WithDeleted *bool                  `url:"with_deleted,omitempty" json:"with_deleted,omitempty" path:"with_deleted"`
 	ListParams
 }
 
 type AutomationFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type AutomationCreateParams struct {
-	Source                           string                 `url:"source,omitempty" required:"false" json:"source,omitempty" path:"source"`
-	Destinations                     []string               `url:"destinations,omitempty" required:"false" json:"destinations,omitempty" path:"destinations"`
-	DestinationReplaceFrom           string                 `url:"destination_replace_from,omitempty" required:"false" json:"destination_replace_from,omitempty" path:"destination_replace_from"`
-	DestinationReplaceTo             string                 `url:"destination_replace_to,omitempty" required:"false" json:"destination_replace_to,omitempty" path:"destination_replace_to"`
-	Interval                         string                 `url:"interval,omitempty" required:"false" json:"interval,omitempty" path:"interval"`
-	Path                             string                 `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
-	SyncIds                          string                 `url:"sync_ids,omitempty" required:"false" json:"sync_ids,omitempty" path:"sync_ids"`
-	UserIds                          string                 `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty" path:"user_ids"`
-	GroupIds                         string                 `url:"group_ids,omitempty" required:"false" json:"group_ids,omitempty" path:"group_ids"`
-	ScheduleDaysOfWeek               []int64                `url:"schedule_days_of_week,omitempty" required:"false" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
-	ScheduleTimesOfDay               []string               `url:"schedule_times_of_day,omitempty" required:"false" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
-	ScheduleTimeZone                 string                 `url:"schedule_time_zone,omitempty" required:"false" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
-	AlwaysOverwriteSizeMatchingFiles *bool                  `url:"always_overwrite_size_matching_files,omitempty" required:"false" json:"always_overwrite_size_matching_files,omitempty" path:"always_overwrite_size_matching_files"`
-	Description                      string                 `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
-	Disabled                         *bool                  `url:"disabled,omitempty" required:"false" json:"disabled,omitempty" path:"disabled"`
-	ExcludePattern                   string                 `url:"exclude_pattern,omitempty" required:"false" json:"exclude_pattern,omitempty" path:"exclude_pattern"`
-	FlattenDestinationStructure      *bool                  `url:"flatten_destination_structure,omitempty" required:"false" json:"flatten_destination_structure,omitempty" path:"flatten_destination_structure"`
-	IgnoreLockedFolders              *bool                  `url:"ignore_locked_folders,omitempty" required:"false" json:"ignore_locked_folders,omitempty" path:"ignore_locked_folders"`
-	LegacyFolderMatching             *bool                  `url:"legacy_folder_matching,omitempty" required:"false" json:"legacy_folder_matching,omitempty" path:"legacy_folder_matching"`
-	Name                             string                 `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	OverwriteFiles                   *bool                  `url:"overwrite_files,omitempty" required:"false" json:"overwrite_files,omitempty" path:"overwrite_files"`
-	PathTimeZone                     string                 `url:"path_time_zone,omitempty" required:"false" json:"path_time_zone,omitempty" path:"path_time_zone"`
-	Trigger                          AutomationTriggerEnum  `url:"trigger,omitempty" required:"false" json:"trigger,omitempty" path:"trigger"`
-	TriggerActions                   []string               `url:"trigger_actions,omitempty" required:"false" json:"trigger_actions,omitempty" path:"trigger_actions"`
-	Value                            map[string]interface{} `url:"value,omitempty" required:"false" json:"value,omitempty" path:"value"`
-	RecurringDay                     int64                  `url:"recurring_day,omitempty" required:"false" json:"recurring_day,omitempty" path:"recurring_day"`
-	Automation                       AutomationEnum         `url:"automation,omitempty" required:"true" json:"automation,omitempty" path:"automation"`
+	Source                           string                 `url:"source,omitempty" json:"source,omitempty" path:"source"`
+	Destinations                     []string               `url:"destinations,omitempty" json:"destinations,omitempty" path:"destinations"`
+	DestinationReplaceFrom           string                 `url:"destination_replace_from,omitempty" json:"destination_replace_from,omitempty" path:"destination_replace_from"`
+	DestinationReplaceTo             string                 `url:"destination_replace_to,omitempty" json:"destination_replace_to,omitempty" path:"destination_replace_to"`
+	Interval                         string                 `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
+	Path                             string                 `url:"path,omitempty" json:"path,omitempty" path:"path"`
+	SyncIds                          string                 `url:"sync_ids,omitempty" json:"sync_ids,omitempty" path:"sync_ids"`
+	UserIds                          string                 `url:"user_ids,omitempty" json:"user_ids,omitempty" path:"user_ids"`
+	GroupIds                         string                 `url:"group_ids,omitempty" json:"group_ids,omitempty" path:"group_ids"`
+	ScheduleDaysOfWeek               []int64                `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
+	ScheduleTimesOfDay               []string               `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
+	ScheduleTimeZone                 string                 `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
+	AlwaysOverwriteSizeMatchingFiles *bool                  `url:"always_overwrite_size_matching_files,omitempty" json:"always_overwrite_size_matching_files,omitempty" path:"always_overwrite_size_matching_files"`
+	Description                      string                 `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	Disabled                         *bool                  `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
+	ExcludePattern                   string                 `url:"exclude_pattern,omitempty" json:"exclude_pattern,omitempty" path:"exclude_pattern"`
+	FlattenDestinationStructure      *bool                  `url:"flatten_destination_structure,omitempty" json:"flatten_destination_structure,omitempty" path:"flatten_destination_structure"`
+	IgnoreLockedFolders              *bool                  `url:"ignore_locked_folders,omitempty" json:"ignore_locked_folders,omitempty" path:"ignore_locked_folders"`
+	LegacyFolderMatching             *bool                  `url:"legacy_folder_matching,omitempty" json:"legacy_folder_matching,omitempty" path:"legacy_folder_matching"`
+	Name                             string                 `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	OverwriteFiles                   *bool                  `url:"overwrite_files,omitempty" json:"overwrite_files,omitempty" path:"overwrite_files"`
+	PathTimeZone                     string                 `url:"path_time_zone,omitempty" json:"path_time_zone,omitempty" path:"path_time_zone"`
+	Trigger                          AutomationTriggerEnum  `url:"trigger,omitempty" json:"trigger,omitempty" path:"trigger"`
+	TriggerActions                   []string               `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
+	Value                            map[string]interface{} `url:"value,omitempty" json:"value,omitempty" path:"value"`
+	RecurringDay                     int64                  `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
+	Automation                       AutomationEnum         `url:"automation" json:"automation" path:"automation"`
 }
 
 // Manually run automation
 type AutomationManualRunParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 type AutomationUpdateParams struct {
-	Id                               int64                  `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
-	Source                           string                 `url:"source,omitempty" required:"false" json:"source,omitempty" path:"source"`
-	Destinations                     []string               `url:"destinations,omitempty" required:"false" json:"destinations,omitempty" path:"destinations"`
-	DestinationReplaceFrom           string                 `url:"destination_replace_from,omitempty" required:"false" json:"destination_replace_from,omitempty" path:"destination_replace_from"`
-	DestinationReplaceTo             string                 `url:"destination_replace_to,omitempty" required:"false" json:"destination_replace_to,omitempty" path:"destination_replace_to"`
-	Interval                         string                 `url:"interval,omitempty" required:"false" json:"interval,omitempty" path:"interval"`
-	Path                             string                 `url:"path,omitempty" required:"false" json:"path,omitempty" path:"path"`
-	SyncIds                          string                 `url:"sync_ids,omitempty" required:"false" json:"sync_ids,omitempty" path:"sync_ids"`
-	UserIds                          string                 `url:"user_ids,omitempty" required:"false" json:"user_ids,omitempty" path:"user_ids"`
-	GroupIds                         string                 `url:"group_ids,omitempty" required:"false" json:"group_ids,omitempty" path:"group_ids"`
-	ScheduleDaysOfWeek               []int64                `url:"schedule_days_of_week,omitempty" required:"false" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
-	ScheduleTimesOfDay               []string               `url:"schedule_times_of_day,omitempty" required:"false" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
-	ScheduleTimeZone                 string                 `url:"schedule_time_zone,omitempty" required:"false" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
-	AlwaysOverwriteSizeMatchingFiles *bool                  `url:"always_overwrite_size_matching_files,omitempty" required:"false" json:"always_overwrite_size_matching_files,omitempty" path:"always_overwrite_size_matching_files"`
-	Description                      string                 `url:"description,omitempty" required:"false" json:"description,omitempty" path:"description"`
-	Disabled                         *bool                  `url:"disabled,omitempty" required:"false" json:"disabled,omitempty" path:"disabled"`
-	ExcludePattern                   string                 `url:"exclude_pattern,omitempty" required:"false" json:"exclude_pattern,omitempty" path:"exclude_pattern"`
-	FlattenDestinationStructure      *bool                  `url:"flatten_destination_structure,omitempty" required:"false" json:"flatten_destination_structure,omitempty" path:"flatten_destination_structure"`
-	IgnoreLockedFolders              *bool                  `url:"ignore_locked_folders,omitempty" required:"false" json:"ignore_locked_folders,omitempty" path:"ignore_locked_folders"`
-	LegacyFolderMatching             *bool                  `url:"legacy_folder_matching,omitempty" required:"false" json:"legacy_folder_matching,omitempty" path:"legacy_folder_matching"`
-	Name                             string                 `url:"name,omitempty" required:"false" json:"name,omitempty" path:"name"`
-	OverwriteFiles                   *bool                  `url:"overwrite_files,omitempty" required:"false" json:"overwrite_files,omitempty" path:"overwrite_files"`
-	PathTimeZone                     string                 `url:"path_time_zone,omitempty" required:"false" json:"path_time_zone,omitempty" path:"path_time_zone"`
-	Trigger                          AutomationTriggerEnum  `url:"trigger,omitempty" required:"false" json:"trigger,omitempty" path:"trigger"`
-	TriggerActions                   []string               `url:"trigger_actions,omitempty" required:"false" json:"trigger_actions,omitempty" path:"trigger_actions"`
-	Value                            map[string]interface{} `url:"value,omitempty" required:"false" json:"value,omitempty" path:"value"`
-	RecurringDay                     int64                  `url:"recurring_day,omitempty" required:"false" json:"recurring_day,omitempty" path:"recurring_day"`
-	Automation                       AutomationEnum         `url:"automation,omitempty" required:"false" json:"automation,omitempty" path:"automation"`
+	Id                               int64                  `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Source                           string                 `url:"source,omitempty" json:"source,omitempty" path:"source"`
+	Destinations                     []string               `url:"destinations,omitempty" json:"destinations,omitempty" path:"destinations"`
+	DestinationReplaceFrom           string                 `url:"destination_replace_from,omitempty" json:"destination_replace_from,omitempty" path:"destination_replace_from"`
+	DestinationReplaceTo             string                 `url:"destination_replace_to,omitempty" json:"destination_replace_to,omitempty" path:"destination_replace_to"`
+	Interval                         string                 `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
+	Path                             string                 `url:"path,omitempty" json:"path,omitempty" path:"path"`
+	SyncIds                          string                 `url:"sync_ids,omitempty" json:"sync_ids,omitempty" path:"sync_ids"`
+	UserIds                          string                 `url:"user_ids,omitempty" json:"user_ids,omitempty" path:"user_ids"`
+	GroupIds                         string                 `url:"group_ids,omitempty" json:"group_ids,omitempty" path:"group_ids"`
+	ScheduleDaysOfWeek               []int64                `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
+	ScheduleTimesOfDay               []string               `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
+	ScheduleTimeZone                 string                 `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
+	AlwaysOverwriteSizeMatchingFiles *bool                  `url:"always_overwrite_size_matching_files,omitempty" json:"always_overwrite_size_matching_files,omitempty" path:"always_overwrite_size_matching_files"`
+	Description                      string                 `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	Disabled                         *bool                  `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
+	ExcludePattern                   string                 `url:"exclude_pattern,omitempty" json:"exclude_pattern,omitempty" path:"exclude_pattern"`
+	FlattenDestinationStructure      *bool                  `url:"flatten_destination_structure,omitempty" json:"flatten_destination_structure,omitempty" path:"flatten_destination_structure"`
+	IgnoreLockedFolders              *bool                  `url:"ignore_locked_folders,omitempty" json:"ignore_locked_folders,omitempty" path:"ignore_locked_folders"`
+	LegacyFolderMatching             *bool                  `url:"legacy_folder_matching,omitempty" json:"legacy_folder_matching,omitempty" path:"legacy_folder_matching"`
+	Name                             string                 `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	OverwriteFiles                   *bool                  `url:"overwrite_files,omitempty" json:"overwrite_files,omitempty" path:"overwrite_files"`
+	PathTimeZone                     string                 `url:"path_time_zone,omitempty" json:"path_time_zone,omitempty" path:"path_time_zone"`
+	Trigger                          AutomationTriggerEnum  `url:"trigger,omitempty" json:"trigger,omitempty" path:"trigger"`
+	TriggerActions                   []string               `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
+	Value                            map[string]interface{} `url:"value,omitempty" json:"value,omitempty" path:"value"`
+	RecurringDay                     int64                  `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
+	Automation                       AutomationEnum         `url:"automation,omitempty" json:"automation,omitempty" path:"automation"`
 }
 
 type AutomationDeleteParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (a *Automation) UnmarshalJSON(data []byte) error {

@@ -25,8 +25,8 @@ func (f FileMigrationLog) Identifier() interface{} {
 type FileMigrationLogCollection []FileMigrationLog
 
 type FileMigrationLogListParams struct {
-	Filter       FileMigrationLog       `url:"filter,omitempty" required:"false" json:"filter,omitempty" path:"filter"`
-	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" required:"false" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	Filter       FileMigrationLog       `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	ListParams
 }
 

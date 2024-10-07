@@ -100,7 +100,7 @@ func (l FilesMigrationLogIter) Init() *FilesMigrationLogIter {
 }
 
 type FileMigrationFindParams struct {
-	Id int64 `url:"-,omitempty" required:"false" json:"-,omitempty" path:"id"`
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (f *FileMigration) UnmarshalJSON(data []byte) error {
