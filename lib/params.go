@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"time"
 
 	"github.com/appscode/go-querystring/query"
 )
@@ -22,6 +23,10 @@ type Values interface {
 type ExportValues struct {
 	url.Values
 }
+
+var (
+	zeroTimeString = time.Time{}.Format(time.RFC3339)
+)
 
 func (m ExportValues) ToValues() (url.Values, error) {
 	return m.Values, nil
@@ -40,7 +45,7 @@ func (p Params) ToJSON() (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	b, err = removeDashJSON(b)
+	b, err = sanitizeJSON(b)
 	return bytes.NewBuffer(b), err
 }
 
@@ -57,16 +62,19 @@ func (p Params) ToValues() (url.Values, error) {
 	return removeDash(v), nil
 }
 
-func removeDashJSON(b []byte) ([]byte, error) {
+func sanitizeJSON(b []byte) ([]byte, error) {
 	var m map[string]interface{}
 	err := json.Unmarshal(b, &m)
 	if err != nil {
 		return b, err
 	}
 
-	for key := range m {
-		if key == "-" {
+	for key, value := range m {
+		switch {
+		case key == "-":
 			delete(m, key)
+		case value == zeroTimeString:
+			m[key] = nil
 		}
 	}
 
