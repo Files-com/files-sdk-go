@@ -177,6 +177,9 @@ func (u RemoteServerFilesAgentPermissionSetEnum) Enum() map[string]RemoteServerF
 }
 
 type RemoteServerListParams struct {
+	SortBy       map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter       RemoteServer           `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	ListParams
 }
 

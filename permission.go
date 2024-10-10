@@ -41,6 +41,7 @@ type PermissionCreateParams struct {
 	Recursive  *bool  `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
 	UserId     int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Username   string `url:"username,omitempty" json:"username,omitempty" path:"username"`
+	GroupName  string `url:"group_name,omitempty" json:"group_name,omitempty" path:"group_name"`
 }
 
 type PermissionDeleteParams struct {
