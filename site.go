@@ -136,6 +136,7 @@ type Site struct {
 	SftpInsecureDiffieHellman                *bool                  `json:"sftp_insecure_diffie_hellman,omitempty" path:"sftp_insecure_diffie_hellman,omitempty" url:"sftp_insecure_diffie_hellman,omitempty"`
 	SftpUserRootEnabled                      *bool                  `json:"sftp_user_root_enabled,omitempty" path:"sftp_user_root_enabled,omitempty" url:"sftp_user_root_enabled,omitempty"`
 	SharingEnabled                           *bool                  `json:"sharing_enabled,omitempty" path:"sharing_enabled,omitempty" url:"sharing_enabled,omitempty"`
+	ShowUserNotificationsLogInLink           *bool                  `json:"show_user_notifications_log_in_link,omitempty" path:"show_user_notifications_log_in_link,omitempty" url:"show_user_notifications_log_in_link,omitempty"`
 	ShowRequestAccessLink                    *bool                  `json:"show_request_access_link,omitempty" path:"show_request_access_link,omitempty" url:"show_request_access_link,omitempty"`
 	SiteFooter                               string                 `json:"site_footer,omitempty" path:"site_footer,omitempty" url:"site_footer,omitempty"`
 	SiteHeader                               string                 `json:"site_header,omitempty" path:"site_header,omitempty" url:"site_header,omitempty"`
@@ -269,6 +270,7 @@ type SiteUpdateParams struct {
 	SftpEnabled                              *bool                  `url:"sftp_enabled,omitempty" json:"sftp_enabled,omitempty" path:"sftp_enabled"`
 	UsersCanCreateApiKeys                    *bool                  `url:"users_can_create_api_keys,omitempty" json:"users_can_create_api_keys,omitempty" path:"users_can_create_api_keys"`
 	UsersCanCreateSshKeys                    *bool                  `url:"users_can_create_ssh_keys,omitempty" json:"users_can_create_ssh_keys,omitempty" path:"users_can_create_ssh_keys"`
+	ShowUserNotificationsLogInLink           *bool                  `url:"show_user_notifications_log_in_link,omitempty" json:"show_user_notifications_log_in_link,omitempty" path:"show_user_notifications_log_in_link"`
 	SftpHostKeyType                          string                 `url:"sftp_host_key_type,omitempty" json:"sftp_host_key_type,omitempty" path:"sftp_host_key_type"`
 	ActiveSftpHostKeyId                      int64                  `url:"active_sftp_host_key_id,omitempty" json:"active_sftp_host_key_id,omitempty" path:"active_sftp_host_key_id"`
 	ProtocolAccessGroupsOnly                 *bool                  `url:"protocol_access_groups_only,omitempty" json:"protocol_access_groups_only,omitempty" path:"protocol_access_groups_only"`
