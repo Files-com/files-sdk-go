@@ -36,6 +36,7 @@ type Site struct {
 	BundleRequireRegistration                *bool                  `json:"bundle_require_registration,omitempty" path:"bundle_require_registration,omitempty" url:"bundle_require_registration,omitempty"`
 	BundleRequireShareRecipient              *bool                  `json:"bundle_require_share_recipient,omitempty" path:"bundle_require_share_recipient,omitempty" url:"bundle_require_share_recipient,omitempty"`
 	BundleRequireNote                        *bool                  `json:"bundle_require_note,omitempty" path:"bundle_require_note,omitempty" url:"bundle_require_note,omitempty"`
+	BundleSendSharedReceipts                 *bool                  `json:"bundle_send_shared_receipts,omitempty" path:"bundle_send_shared_receipts,omitempty" url:"bundle_send_shared_receipts,omitempty"`
 	BundleUploadReceiptNotifications         string                 `json:"bundle_upload_receipt_notifications,omitempty" path:"bundle_upload_receipt_notifications,omitempty" url:"bundle_upload_receipt_notifications,omitempty"`
 	BundleWatermarkAttachment                Image                  `json:"bundle_watermark_attachment,omitempty" path:"bundle_watermark_attachment,omitempty" url:"bundle_watermark_attachment,omitempty"`
 	BundleWatermarkValue                     map[string]interface{} `json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value,omitempty" url:"bundle_watermark_value,omitempty"`
@@ -217,6 +218,7 @@ type SiteUpdateParams struct {
 	LeftNavigationVisibility                 map[string]interface{} `url:"left_navigation_visibility,omitempty" json:"left_navigation_visibility,omitempty" path:"left_navigation_visibility"`
 	AdditionalTextFileTypes                  []string               `url:"additional_text_file_types,omitempty" json:"additional_text_file_types,omitempty" path:"additional_text_file_types"`
 	BundleRequireNote                        *bool                  `url:"bundle_require_note,omitempty" json:"bundle_require_note,omitempty" path:"bundle_require_note"`
+	BundleSendSharedReceipts                 *bool                  `url:"bundle_send_shared_receipts,omitempty" json:"bundle_send_shared_receipts,omitempty" path:"bundle_send_shared_receipts"`
 	SessionExpiry                            string                 `url:"session_expiry,omitempty" json:"session_expiry,omitempty" path:"session_expiry"`
 	SslRequired                              *bool                  `url:"ssl_required,omitempty" json:"ssl_required,omitempty" path:"ssl_required"`
 	TlsDisabled                              *bool                  `url:"tls_disabled,omitempty" json:"tls_disabled,omitempty" path:"tls_disabled"`

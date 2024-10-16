@@ -357,7 +357,6 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `bad-request/invalid-cursor-type-for-sort` | Invalid Cursor Type For Sort |
 | `bad-request/invalid-etags` | Invalid Etags |
 | `bad-request/invalid-filter-alias-combination` | Invalid Filter Alias Combination |
-| `bad-request/invalid-filter-combination` | Invalid Filter Combination |
 | `bad-request/invalid-filter-field` | Invalid Filter Field |
 | `bad-request/invalid-filter-param` | Invalid Filter Param |
 | `bad-request/invalid-filter-param-value` | Invalid Filter Param Value |
@@ -366,6 +365,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `bad-request/invalid-oauth-provider` | Invalid Oauth Provider |
 | `bad-request/invalid-path` | Invalid Path |
 | `bad-request/invalid-return-to-url` | Invalid Return To Url |
+| `bad-request/invalid-sort-filter-combination` | Invalid Sort Filter Combination |
 | `bad-request/invalid-upload-offset` | Invalid Upload Offset |
 | `bad-request/invalid-upload-part-gap` | Invalid Upload Part Gap |
 | `bad-request/invalid-upload-part-size` | Invalid Upload Part Size |

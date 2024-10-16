@@ -18,6 +18,7 @@ type User struct {
 	AuthenticateUntil                *time.Time `json:"authenticate_until,omitempty" path:"authenticate_until,omitempty" url:"authenticate_until,omitempty"`
 	AuthenticationMethod             string     `json:"authentication_method,omitempty" path:"authentication_method,omitempty" url:"authentication_method,omitempty"`
 	AvatarUrl                        string     `json:"avatar_url,omitempty" path:"avatar_url,omitempty" url:"avatar_url,omitempty"`
+	Billable                         *bool      `json:"billable,omitempty" path:"billable,omitempty" url:"billable,omitempty"`
 	BillingPermission                *bool      `json:"billing_permission,omitempty" path:"billing_permission,omitempty" url:"billing_permission,omitempty"`
 	BypassSiteAllowedIps             *bool      `json:"bypass_site_allowed_ips,omitempty" path:"bypass_site_allowed_ips,omitempty" url:"bypass_site_allowed_ips,omitempty"`
 	BypassInactiveDisable            *bool      `json:"bypass_inactive_disable,omitempty" path:"bypass_inactive_disable,omitempty" url:"bypass_inactive_disable,omitempty"`
