@@ -46,6 +46,7 @@ type Bundle struct {
 	WatermarkAttachment             Image                    `json:"watermark_attachment,omitempty" path:"watermark_attachment,omitempty" url:"watermark_attachment,omitempty"`
 	WatermarkValue                  map[string]interface{}   `json:"watermark_value,omitempty" path:"watermark_value,omitempty" url:"watermark_value,omitempty"`
 	HasInbox                        *bool                    `json:"has_inbox,omitempty" path:"has_inbox,omitempty" url:"has_inbox,omitempty"`
+	DontAllowFoldersInUploads       *bool                    `json:"dont_allow_folders_in_uploads,omitempty" path:"dont_allow_folders_in_uploads,omitempty" url:"dont_allow_folders_in_uploads,omitempty"`
 	Paths                           []string                 `json:"paths,omitempty" path:"paths,omitempty" url:"paths,omitempty"`
 	Bundlepaths                     []map[string]interface{} `json:"bundlepaths,omitempty" path:"bundlepaths,omitempty" url:"bundlepaths,omitempty"`
 	Password                        string                   `json:"password,omitempty" path:"password,omitempty" url:"password,omitempty"`
