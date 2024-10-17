@@ -66,6 +66,7 @@ func DefaultRetryableHttp(logger Logger, client ...*http.Client) *retryablehttp.
 func defaultPooledClient() *http.Client {
 	return &http.Client{
 		Transport: DefaultPooledTransport(),
+		Timeout:   60 * time.Second,
 	}
 }
 
