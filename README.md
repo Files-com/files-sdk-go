@@ -352,6 +352,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `bad-request/datetime-parse` | Datetime Parse |
 | `bad-request/destination-same` | Destination Same |
 | `bad-request/folder-must-not-be-a-file` | Folder Must Not Be A File |
+| `bad-request/folders-not-allowed` | Folders Not Allowed |
 | `bad-request/invalid-body` | Invalid Body |
 | `bad-request/invalid-cursor` | Invalid Cursor |
 | `bad-request/invalid-cursor-type-for-sort` | Invalid Cursor Type For Sort |
