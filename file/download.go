@@ -38,6 +38,7 @@ type DownloaderParams struct {
 	RemotePath    string
 	RemoteFile    files_sdk.File
 	LocalPath     string
+	TempPath      string // Folder path where the file(s) will be downloaded to before being moved to LocalPath. If not set, the file(s) will be downloaded directly to LocalPath.
 	Sync          bool
 	PreserveTimes bool
 	NoOverwrite   bool

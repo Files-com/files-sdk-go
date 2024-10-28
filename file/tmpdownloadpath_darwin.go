@@ -24,3 +24,12 @@ func finalizeTmpDownload(tmpName string, finalPath string) error {
 	downloadPackage, _ := filepath.Split(tmpName)
 	return os.Remove(downloadPackage)
 }
+
+func removeTmpDownload(tmpName string) error {
+	err := os.Remove(tmpName)
+	if err != nil {
+		return err
+	}
+	downloadPackage, _ := filepath.Split(tmpName)
+	return os.Remove(downloadPackage)
+}

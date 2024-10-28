@@ -737,6 +737,52 @@ expected 4194304 bytes sent 5242880 received`)
 		require.Contains(t, job.Statuses[0].Err().Error(), "invalid argument")
 		assert.Equal(t, status.Errored, job.Statuses[0].Status())
 	})
+
+	t.Run("with a temp path", func(t *testing.T) {
+		root := t.TempDir()
+		temp := t.TempDir()
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["taco.png"] = mockFile{
+			SizeTrust: TrustedSizeValue,
+			File:      files_sdk.File{Size: 100},
+		}
+
+		job := client.Downloader(DownloaderParams{RemotePath: "taco.png", LocalPath: root, TempPath: temp})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.NoError(t, job.Statuses[0].Err())
+	})
+
+	t.Run("with a temp path and a privileged local directory", func(t *testing.T) {
+		root := t.TempDir()
+		temp := t.TempDir()
+		restricted := filepath.Join(root, "restricted")
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["taco.png"] = mockFile{
+			SizeTrust: TrustedSizeValue,
+			File:      files_sdk.File{Size: 100},
+		}
+
+		require.NoError(t, os.Mkdir(restricted, 0000))
+
+		t.Cleanup(func() {
+			require.NoError(t, os.Chmod(restricted, 0777))
+		})
+
+		job := client.Downloader(DownloaderParams{RemotePath: "taco.png", LocalPath: restricted, TempPath: temp})
+		job.Start()
+		job.Wait()
+		assert.Len(t, job.Statuses, 1)
+		require.True(t, os.IsPermission(job.Statuses[0].Err()))
+		assert.Equal(t, status.Errored, job.Statuses[0].Status())
+		_, err := os.Open(filepath.Join(temp, "taco.png.download"))
+		require.Error(t, err)
+	})
 }
 
 func TestDownload(t *testing.T) {

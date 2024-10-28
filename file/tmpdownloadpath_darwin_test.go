@@ -15,7 +15,7 @@ import (
 func Test_tmpDownloadPath(t *testing.T) {
 	t.Run("base case", func(t *testing.T) {
 		dir := t.TempDir()
-		path, err := tmpDownloadPath(filepath.Join(dir, "you-wont-find-me"))
+		path, err := tmpDownloadPath(filepath.Join(dir, "you-wont-find-me"), "")
 		require.NoError(t, err)
 		assert.Equal(t, filepath.Join(dir, "you-wont-find-me.download/you-wont-find-me"), path)
 	})
@@ -29,7 +29,7 @@ func Test_tmpDownloadPath(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		path, err := tmpDownloadPath(filepath.Join(dir, "find-me"))
+		path, err := tmpDownloadPath(filepath.Join(dir, "find-me"), "")
 		require.NoError(t, err)
 		assert.Equal(t, fmt.Sprintf(filepath.Join(dir, "find-me (1).download/find-me")), path, "it increments a number")
 	})
@@ -37,15 +37,23 @@ func Test_tmpDownloadPath(t *testing.T) {
 	t.Run("it increments a number lots of times", func(t *testing.T) {
 		dir := t.TempDir()
 		for i := 0; i < 11; i++ {
-			path, err := tmpDownloadPath(filepath.Join(dir, "find-me"))
+			path, err := tmpDownloadPath(filepath.Join(dir, "find-me"), "")
 			require.NoError(t, err)
 			file, err := os.Create(path)
 			require.NoError(t, err)
 			file.Close()
 		}
 
-		path, err := tmpDownloadPath(filepath.Join(dir, "find-me"))
+		path, err := tmpDownloadPath(filepath.Join(dir, "find-me"), "")
 		require.NoError(t, err)
 		assert.NotEqual(t, fmt.Sprintf(filepath.Join(dir, "find-me (11).download/find-me")), path)
+	})
+
+	t.Run("it supports a temp path", func(t *testing.T) {
+		dir := t.TempDir()
+		tempDir := t.TempDir()
+		path, err := tmpDownloadPath(filepath.Join(dir, "find-me"), tempDir)
+		require.NoError(t, err)
+		assert.Equal(t, fmt.Sprintf(filepath.Join(tempDir, "find-me.download/find-me")), path)
 	})
 }

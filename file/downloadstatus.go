@@ -19,6 +19,7 @@ type DownloadStatus struct {
 	DownloadedBytes int64
 	localPath       string
 	remotePath      string
+	tempPath        string
 	Sync            bool
 	NoOverwrite     bool
 	endedAt         time.Time

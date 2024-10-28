@@ -119,6 +119,7 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *Jo
 				status:      status.Errored,
 				localPath:   params.LocalPath,
 				remotePath:  params.RemotePath,
+				tempPath:    params.TempPath,
 				Sync:        params.Sync,
 				NoOverwrite: params.NoOverwrite,
 				Mutex:       &sync.RWMutex{},
@@ -166,6 +167,7 @@ func createIndexedStatus(f Entity, params DownloaderParams, job *Job) {
 		fsFile:        f.File,
 		FS:            f.FS,
 		job:           job,
+		tempPath:      params.TempPath,
 		Sync:          params.Sync,
 		NoOverwrite:   params.NoOverwrite,
 		status:        status.Indexed,
@@ -254,7 +256,7 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 			return
 		}
 
-		tmpName, err := tmpDownloadPath(reportStatus.LocalPath())
+		tmpName, err := tmpDownloadPath(reportStatus.LocalPath(), reportStatus.tempPath)
 		if err != nil {
 			reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
 			return
@@ -291,6 +293,9 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 				},
 			)
 			err := finalizeTmpDownload(tmpName, reportStatus.LocalPath())
+			if err != nil {
+				removeTmpDownload(tmpName)
+			}
 
 			if err == nil && reportStatus.PreserveTimes {
 				var t time.Time
@@ -310,7 +315,7 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 				reportStatus.Job().UpdateStatus(status.Complete, reportStatus, nil)
 			}
 		} else {
-			err := os.Remove(tmpName) // Clean up on invalid download
+			err := removeTmpDownload(tmpName) // Clean up on invalid download
 			if err != nil {
 				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
 			}
