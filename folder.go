@@ -32,6 +32,8 @@ type Folder struct {
 	ProvidedMtime                      *time.Time             `json:"provided_mtime,omitempty" path:"provided_mtime,omitempty" url:"provided_mtime,omitempty"`
 	Crc32                              string                 `json:"crc32,omitempty" path:"crc32,omitempty" url:"crc32,omitempty"`
 	Md5                                string                 `json:"md5,omitempty" path:"md5,omitempty" url:"md5,omitempty"`
+	Sha1                               string                 `json:"sha1,omitempty" path:"sha1,omitempty" url:"sha1,omitempty"`
+	Sha256                             string                 `json:"sha256,omitempty" path:"sha256,omitempty" url:"sha256,omitempty"`
 	MimeType                           string                 `json:"mime_type,omitempty" path:"mime_type,omitempty" url:"mime_type,omitempty"`
 	Region                             string                 `json:"region,omitempty" path:"region,omitempty" url:"region,omitempty"`
 	Permissions                        string                 `json:"permissions,omitempty" path:"permissions,omitempty" url:"permissions,omitempty"`

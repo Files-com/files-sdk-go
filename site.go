@@ -40,6 +40,10 @@ type Site struct {
 	BundleUploadReceiptNotifications         string                 `json:"bundle_upload_receipt_notifications,omitempty" path:"bundle_upload_receipt_notifications,omitempty" url:"bundle_upload_receipt_notifications,omitempty"`
 	BundleWatermarkAttachment                Image                  `json:"bundle_watermark_attachment,omitempty" path:"bundle_watermark_attachment,omitempty" url:"bundle_watermark_attachment,omitempty"`
 	BundleWatermarkValue                     map[string]interface{} `json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value,omitempty" url:"bundle_watermark_value,omitempty"`
+	CalculateFileChecksumsCrc32              *bool                  `json:"calculate_file_checksums_crc32,omitempty" path:"calculate_file_checksums_crc32,omitempty" url:"calculate_file_checksums_crc32,omitempty"`
+	CalculateFileChecksumsMd5                *bool                  `json:"calculate_file_checksums_md5,omitempty" path:"calculate_file_checksums_md5,omitempty" url:"calculate_file_checksums_md5,omitempty"`
+	CalculateFileChecksumsSha1               *bool                  `json:"calculate_file_checksums_sha1,omitempty" path:"calculate_file_checksums_sha1,omitempty" url:"calculate_file_checksums_sha1,omitempty"`
+	CalculateFileChecksumsSha256             *bool                  `json:"calculate_file_checksums_sha256,omitempty" path:"calculate_file_checksums_sha256,omitempty" url:"calculate_file_checksums_sha256,omitempty"`
 	UploadsViaEmailAuthentication            *bool                  `json:"uploads_via_email_authentication,omitempty" path:"uploads_via_email_authentication,omitempty" url:"uploads_via_email_authentication,omitempty"`
 	Color2Left                               string                 `json:"color2_left,omitempty" path:"color2_left,omitempty" url:"color2_left,omitempty"`
 	Color2Link                               string                 `json:"color2_link,omitempty" path:"color2_link,omitempty" url:"color2_link,omitempty"`
@@ -58,6 +62,7 @@ type Site struct {
 	DesktopApp                               *bool                  `json:"desktop_app,omitempty" path:"desktop_app,omitempty" url:"desktop_app,omitempty"`
 	DesktopAppSessionIpPinning               *bool                  `json:"desktop_app_session_ip_pinning,omitempty" path:"desktop_app_session_ip_pinning,omitempty" url:"desktop_app_session_ip_pinning,omitempty"`
 	DesktopAppSessionLifetime                int64                  `json:"desktop_app_session_lifetime,omitempty" path:"desktop_app_session_lifetime,omitempty" url:"desktop_app_session_lifetime,omitempty"`
+	LegacyChecksumsMode                      *bool                  `json:"legacy_checksums_mode,omitempty" path:"legacy_checksums_mode,omitempty" url:"legacy_checksums_mode,omitempty"`
 	MobileApp                                *bool                  `json:"mobile_app,omitempty" path:"mobile_app,omitempty" url:"mobile_app,omitempty"`
 	MobileAppSessionIpPinning                *bool                  `json:"mobile_app_session_ip_pinning,omitempty" path:"mobile_app_session_ip_pinning,omitempty" url:"mobile_app_session_ip_pinning,omitempty"`
 	MobileAppSessionLifetime                 int64                  `json:"mobile_app_session_lifetime,omitempty" path:"mobile_app_session_lifetime,omitempty" url:"mobile_app_session_lifetime,omitempty"`
@@ -219,6 +224,11 @@ type SiteUpdateParams struct {
 	AdditionalTextFileTypes                  []string               `url:"additional_text_file_types,omitempty" json:"additional_text_file_types,omitempty" path:"additional_text_file_types"`
 	BundleRequireNote                        *bool                  `url:"bundle_require_note,omitempty" json:"bundle_require_note,omitempty" path:"bundle_require_note"`
 	BundleSendSharedReceipts                 *bool                  `url:"bundle_send_shared_receipts,omitempty" json:"bundle_send_shared_receipts,omitempty" path:"bundle_send_shared_receipts"`
+	CalculateFileChecksumsCrc32              *bool                  `url:"calculate_file_checksums_crc32,omitempty" json:"calculate_file_checksums_crc32,omitempty" path:"calculate_file_checksums_crc32"`
+	CalculateFileChecksumsMd5                *bool                  `url:"calculate_file_checksums_md5,omitempty" json:"calculate_file_checksums_md5,omitempty" path:"calculate_file_checksums_md5"`
+	CalculateFileChecksumsSha1               *bool                  `url:"calculate_file_checksums_sha1,omitempty" json:"calculate_file_checksums_sha1,omitempty" path:"calculate_file_checksums_sha1"`
+	CalculateFileChecksumsSha256             *bool                  `url:"calculate_file_checksums_sha256,omitempty" json:"calculate_file_checksums_sha256,omitempty" path:"calculate_file_checksums_sha256"`
+	LegacyChecksumsMode                      *bool                  `url:"legacy_checksums_mode,omitempty" json:"legacy_checksums_mode,omitempty" path:"legacy_checksums_mode"`
 	SessionExpiry                            string                 `url:"session_expiry,omitempty" json:"session_expiry,omitempty" path:"session_expiry"`
 	SslRequired                              *bool                  `url:"ssl_required,omitempty" json:"ssl_required,omitempty" path:"ssl_required"`
 	TlsDisabled                              *bool                  `url:"tls_disabled,omitempty" json:"tls_disabled,omitempty" path:"tls_disabled"`
