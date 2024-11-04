@@ -11,7 +11,6 @@ type BundleAction struct {
 	Action             string             `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
 	BundleRegistration BundleRegistration `json:"bundle_registration,omitempty" path:"bundle_registration,omitempty" url:"bundle_registration,omitempty"`
 	CreatedAt          *time.Time         `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	When               *time.Time         `json:"when,omitempty" path:"when,omitempty" url:"when,omitempty"`
 	Destination        string             `json:"destination,omitempty" path:"destination,omitempty" url:"destination,omitempty"`
 	Path               string             `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	Source             string             `json:"source,omitempty" path:"source,omitempty" url:"source,omitempty"`
