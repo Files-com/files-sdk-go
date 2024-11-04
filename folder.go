@@ -54,7 +54,6 @@ type FolderCollection []Folder
 
 type FolderListForParams struct {
 	Path               string                              `url:"-,omitempty" json:"-,omitempty" path:"path"`
-	Filter             string                              `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	PreviewSize        string                              `url:"preview_size,omitempty" json:"preview_size,omitempty" path:"preview_size"`
 	SortBy             map[string]interface{}              `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Search             string                              `url:"search,omitempty" json:"search,omitempty" path:"search"`
