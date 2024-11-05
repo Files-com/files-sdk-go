@@ -57,7 +57,7 @@ type Site struct {
 	DavEnabled                               *bool                  `json:"dav_enabled,omitempty" path:"dav_enabled,omitempty" url:"dav_enabled,omitempty"`
 	DavUserRootEnabled                       *bool                  `json:"dav_user_root_enabled,omitempty" path:"dav_user_root_enabled,omitempty" url:"dav_user_root_enabled,omitempty"`
 	DaysToRetainBackups                      int64                  `json:"days_to_retain_backups,omitempty" path:"days_to_retain_backups,omitempty" url:"days_to_retain_backups,omitempty"`
-	DocumentEditsInBundleAllowed             string                 `json:"document_edits_in_bundle_allowed,omitempty" path:"document_edits_in_bundle_allowed,omitempty" url:"document_edits_in_bundle_allowed,omitempty"`
+	DocumentEditsInBundleAllowed             *bool                  `json:"document_edits_in_bundle_allowed,omitempty" path:"document_edits_in_bundle_allowed,omitempty" url:"document_edits_in_bundle_allowed,omitempty"`
 	DefaultTimeZone                          string                 `json:"default_time_zone,omitempty" path:"default_time_zone,omitempty" url:"default_time_zone,omitempty"`
 	DesktopApp                               *bool                  `json:"desktop_app,omitempty" path:"desktop_app,omitempty" url:"desktop_app,omitempty"`
 	DesktopAppSessionIpPinning               *bool                  `json:"desktop_app_session_ip_pinning,omitempty" path:"desktop_app_session_ip_pinning,omitempty" url:"desktop_app_session_ip_pinning,omitempty"`
@@ -265,7 +265,7 @@ type SiteUpdateParams struct {
 	BundleRegistrationNotifications          string                 `url:"bundle_registration_notifications,omitempty" json:"bundle_registration_notifications,omitempty" path:"bundle_registration_notifications"`
 	BundleActivityNotifications              string                 `url:"bundle_activity_notifications,omitempty" json:"bundle_activity_notifications,omitempty" path:"bundle_activity_notifications"`
 	BundleUploadReceiptNotifications         string                 `url:"bundle_upload_receipt_notifications,omitempty" json:"bundle_upload_receipt_notifications,omitempty" path:"bundle_upload_receipt_notifications"`
-	DocumentEditsInBundleAllowed             string                 `url:"document_edits_in_bundle_allowed,omitempty" json:"document_edits_in_bundle_allowed,omitempty" path:"document_edits_in_bundle_allowed"`
+	DocumentEditsInBundleAllowed             *bool                  `url:"document_edits_in_bundle_allowed,omitempty" json:"document_edits_in_bundle_allowed,omitempty" path:"document_edits_in_bundle_allowed"`
 	PasswordRequirementsApplyToBundles       *bool                  `url:"password_requirements_apply_to_bundles,omitempty" json:"password_requirements_apply_to_bundles,omitempty" path:"password_requirements_apply_to_bundles"`
 	PreventRootPermissionsForNonSiteAdmins   *bool                  `url:"prevent_root_permissions_for_non_site_admins,omitempty" json:"prevent_root_permissions_for_non_site_admins,omitempty" path:"prevent_root_permissions_for_non_site_admins"`
 	OptOutGlobal                             *bool                  `url:"opt_out_global,omitempty" json:"opt_out_global,omitempty" path:"opt_out_global"`
