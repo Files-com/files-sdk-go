@@ -1,0 +1,56 @@
+---
+version: 1
+interactions:
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/folders/empty_dir
+    method: POST
+  response:
+    body: '{"path":"empty_dir","created_by_id":1028730,"created_by_api_key_id":null,"created_by_as2_incoming_message_id":null,"created_by_automation_id":null,"created_by_bundle_registration_id":null,"created_by_inbox_id":null,"created_by_remote_server_id":null,"created_by_remote_server_sync_id":null,"custom_metadata":{},"display_name":"empty_dir","type":"directory","size":null,"created_at":"2024-11-13T20:17:31Z","last_modified_by_id":null,"last_modified_by_api_key_id":null,"last_modified_by_automation_id":null,"last_modified_by_bundle_registration_id":null,"last_modified_by_remote_server_id":null,"last_modified_by_remote_server_sync_id":null,"mtime":"2024-11-13T20:17:31Z","provided_mtime":null,"crc32":null,"md5":null,"sha1":null,"sha256":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "808"
+      Content-Security-Policy:
+      - 'default-src ''self''; base-uri ''self''; block-all-mixed-content; child-src
+        ''none''; connect-src ''self''; font-src ''self'' data:; form-action ''self'';
+        frame-ancestors ''none''; img-src ''self'' data: https:; media-src ''self'';
+        object-src ''self''; plugin-types application/pdf; script-src ''self'' ''unsafe-eval''
+        ''unsafe-inline''; style-src ''self'' ''unsafe-inline''; upgrade-insecure-requests;
+        report-uri https://actionverb.report-uri.io/r/default/csp/enforce'
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 13 Nov 2024 20:17:31 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - same-origin
+      Server:
+      - files.com
+      Strict-Transport-Security:
+      - max-age=631139040; includeSubdomains; preload
+      X-Content-Type-Options:
+      - nosniff
+      X-Download-Options:
+      - noopen
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Permitted-Cross-Domain-Policies:
+      - none
+      X-Request-Id:
+      - dc8bb232ecd4ae9b5c03787d93dc1d53
+      X-Xss-Protection:
+      - 1; mode=block
+    status: 201 Created
+    code: 201
+    duration: ""

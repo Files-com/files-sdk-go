@@ -40,7 +40,7 @@ interactions:
       - application/json
       User-Agent:
       - Files.com Go SDK 1.0
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/2.text
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/B/2.text
     method: POST
   response:
     body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2023-09-15T23:19:33Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"retry_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-6159689273","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/799e8c7a-299a-4a43-99c1-72365fef0c7d?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20230915%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20230915T230433Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=hfEUJdOaW3.SR8xWkJF3uvT4NQBTfJ0zQT2d3EVXgKMqxydpW8.JEdt9ljT2wUa547UvZi8ErJe0IKTIl0EP8OmqKeShkNs0um4zIQ.pWanMu.etNei1QWdZZTc8w5Uf\u0026X-Amz-Signature=b108f665f854f21dd9c8780ccff113a9480f7e958db28c9888838048a2ac9185"}]'
@@ -95,6 +95,164 @@ interactions:
     code: 200
     duration: ""
 - request:
+    body: '{"mkdir_parents":true}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/folders/C
+    method: POST
+  response:
+    body: '{"path":"C","created_by_id":1028730,"created_by_api_key_id":null,"created_by_as2_incoming_message_id":null,"created_by_automation_id":null,"created_by_bundle_registration_id":null,"created_by_inbox_id":null,"created_by_remote_server_id":null,"created_by_remote_server_sync_id":null,"custom_metadata":{},"display_name":"C","type":"directory","size":null,"created_at":"2024-11-13T18:16:58Z","last_modified_by_id":null,"last_modified_by_api_key_id":null,"last_modified_by_automation_id":null,"last_modified_by_bundle_registration_id":null,"last_modified_by_remote_server_id":null,"last_modified_by_remote_server_sync_id":null,"mtime":"2024-11-13T18:16:58Z","provided_mtime":null,"crc32":null,"md5":null,"sha1":null,"sha256":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "792"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 13 Nov 2024 18:16:58 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - files.com
+      X-Request-Id:
+      - f6379380aac1bff223ec726964f789f7
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"mkdir_parents":true}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/folders/B
+    method: POST
+  response:
+    body: '{"error":"The destination exists.","http-code":422,"instance":"9ea3f94e7aa29f840335097103c8aef8","title":"Destination
+      Exists","type":"processing-failure/destination-exists"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "173"
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 14 Nov 2024 16:16:47 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - files.com
+      X-Request-Id:
+      - 9ea3f94e7aa29f840335097103c8aef8
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{"mkdir_parents":true}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/folders/B/Z
+    method: POST
+  response:
+    body: '{"error":"The destination exists.","http-code":422,"instance":"d51bb2b030b41d10c2dce679f282e767","title":"Destination
+      Exists","type":"processing-failure/destination-exists"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "173"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 13 Nov 2024 18:16:58 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - files.com
+      X-Request-Id:
+      - d51bb2b030b41d10c2dce679f282e767
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: '{"mkdir_parents":true}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/folders/B/Y
+    method: POST
+  response:
+    body: '{"path":"B/Y","created_by_id":1028730,"created_by_api_key_id":null,"created_by_as2_incoming_message_id":null,"created_by_automation_id":null,"created_by_bundle_registration_id":null,"created_by_inbox_id":null,"created_by_remote_server_id":null,"created_by_remote_server_sync_id":null,"custom_metadata":{},"display_name":"Y","type":"directory","size":null,"created_at":"2024-11-13T18:16:58Z","last_modified_by_id":null,"last_modified_by_api_key_id":null,"last_modified_by_automation_id":null,"last_modified_by_bundle_registration_id":null,"last_modified_by_remote_server_id":null,"last_modified_by_remote_server_sync_id":null,"mtime":"2024-11-13T18:16:58Z","provided_mtime":null,"crc32":null,"md5":null,"sha1":null,"sha256":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "792"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 13 Nov 2024 18:16:58 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - files.com
+      X-Request-Id:
+      - d3c8c05ee14530aacd4c55648862e20c
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/B
+    method: GET
+  response:
+    body: '{"path":"B","created_by_id":1028730,"created_by_api_key_id":null,"created_by_as2_incoming_message_id":null,"created_by_automation_id":null,"created_by_bundle_registration_id":null,"created_by_inbox_id":null,"created_by_remote_server_id":null,"created_by_remote_server_sync_id":null,"custom_metadata":{},"display_name":"Z","type":"directory","size":null,"created_at":"2024-11-13T18:16:58Z","last_modified_by_id":null,"last_modified_by_api_key_id":null,"last_modified_by_automation_id":null,"last_modified_by_bundle_registration_id":null,"last_modified_by_remote_server_id":null,"last_modified_by_remote_server_sync_id":null,"mtime":"2024-11-13T18:16:58Z","provided_mtime":null,"crc32":null,"md5":null,"sha1":null,"sha256":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 15 Sep 2023 23:04:33 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - files.com
+      X-Request-Id:
+      - 36c829f15c6e319c8569f6eecf72dc6b
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
     body: '{"mkdir_parents":true,"size":24}'
     form: {}
     headers:
@@ -102,7 +260,7 @@ interactions:
       - application/json
       User-Agent:
       - Files.com Go SDK 1.0
-    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/Z/4.text
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/B/Z/4.text
     method: POST
   response:
     body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2023-09-15T23:19:33Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"retry_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-6159689283","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/37263/4cd24a1e-e14f-437e-b360-08c7ba4b15ba?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20230915%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20230915T230433Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=80_cuTppSs_P43NKc6_3Uy_s34N_t6ceeMBK_BnQ6WEkHg.LA2yoavJgV7EhctHALhbATyYFnucgSIJO9E2bOpkdwK1DtCVK5W0Mq4HX8IBKxsRLpvM_B_nRPeZhtOJZ\u0026X-Amz-Signature=96d1d627a8701c87fa42c59e11e45d862a32253fa5c82bfee9fe46599d1e7ed5"}]'
@@ -182,6 +340,34 @@ interactions:
     code: 200
     duration: ""
 - request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/B/Z
+    method: GET
+  response:
+    body: '{"path":"B/Z","created_by_id":1028730,"created_by_api_key_id":null,"created_by_as2_incoming_message_id":null,"created_by_automation_id":null,"created_by_bundle_registration_id":null,"created_by_inbox_id":null,"created_by_remote_server_id":null,"created_by_remote_server_sync_id":null,"custom_metadata":{},"display_name":"Z","type":"directory","size":null,"created_at":"2024-11-14T16:16:47Z","last_modified_by_id":null,"last_modified_by_api_key_id":null,"last_modified_by_automation_id":null,"last_modified_by_bundle_registration_id":null,"last_modified_by_remote_server_id":null,"last_modified_by_remote_server_sync_id":null,"mtime":"2024-11-14T16:16:47Z","provided_mtime":null,"crc32":null,"md5":null,"sha1":null,"sha256":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Type:
+      - application/json
+      Date:
+      - Thu, 14 Nov 2024 16:16:47 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - files.com
+      X-Request-Id:
+      - a0f8bbd5437febdb965efe2632c8947c
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
     body: hello how are you doing?
     form: {}
     headers:
@@ -245,10 +431,10 @@ interactions:
       - application/json
       User-Agent:
       - Files.com Go SDK 1.0
-    url: https://app.files.com/api/rest/v1/files/2.text
+    url: https://app.files.com/api/rest/v1/files/B/2.text
     method: POST
   response:
-    body: '{"path":"2.text","display_name":"2.text","type":"file","size":24,"created_at":"2023-09-15T23:04:34Z","mtime":"2023-09-15T23:04:34Z","provided_mtime":"2023-09-15T23:04:33Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    body: '{"path":"B/2.text","display_name":"2.text","type":"file","size":24,"created_at":"2023-09-15T23:04:34Z","mtime":"2023-09-15T23:04:34Z","provided_mtime":"2023-09-15T23:04:33Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate
@@ -338,10 +524,10 @@ interactions:
       - application/json
       User-Agent:
       - Files.com Go SDK 1.0
-    url: https://app.files.com/api/rest/v1/files/Z/4.text
+    url: https://app.files.com/api/rest/v1/files/B/Z/4.text
     method: POST
   response:
-    body: '{"path":"Z/4.text","display_name":"4.text","type":"file","size":24,"created_at":"2023-09-15T23:04:34Z","mtime":"2023-09-15T23:04:34Z","provided_mtime":"2023-09-15T23:04:33Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    body: '{"path":"B/Z/4.text","display_name":"4.text","type":"file","size":24,"created_at":"2023-09-15T23:04:34Z","mtime":"2023-09-15T23:04:34Z","provided_mtime":"2023-09-15T23:04:33Z","crc32":null,"md5":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
     headers:
       Cache-Control:
       - no-cache, no-store, max-age=0, must-revalidate

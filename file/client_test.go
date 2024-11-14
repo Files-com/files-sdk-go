@@ -27,11 +27,38 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type FileStatus struct {
+	name   string
+	status string
+	size   int
+	dir    bool
+}
+
 func CreateClient(fixture string) (client *Client, r *recorder.Recorder, err error) {
 	client = &Client{}
 	client.Config, r, err = test.CreateConfig(fixture)
 
 	return client, r, err
+}
+
+func createFileStructure(t *testing.T, tmpDir string, filesAndStatus []FileStatus) (filePaths []string) {
+	for index, file := range filesAndStatus {
+		file.name = filepath.Join(tmpDir, file.name)
+		filesAndStatus[index] = file
+		if file.dir {
+			require.NoError(t, os.MkdirAll(file.name, 0750))
+		} else {
+			require.NoError(t, os.MkdirAll(filepath.Dir(file.name), 0750))
+			f, err := os.Create(file.name)
+			assert.NoError(t, err)
+			f.Write([]byte("hello how are you doing?"))
+			f.Close()
+			if file.status == "complete" {
+				filePaths = append(filePaths, f.Name())
+			}
+		}
+	}
+	return
 }
 
 func deletePath(client *Client, path string) {
@@ -541,9 +568,9 @@ func TestClient_UploadFolder_RemotePathWithStartingSlash(t *testing.T) {
 	job := client.Uploader(UploaderParams{LocalPath: filepath.Join(tmpDir, "test"), RemotePath: "/test", Manager: manager.Sync()})
 	job.Start()
 	job.Wait()
-	assert.NoError(t, job.Statuses[0].Err())
-	assert.Len(t, job.Statuses, 3)
-	dir, _ := filepath.Split(job.Statuses[0].RemotePath())
+	assert.Len(t, job.Statuses, 4)
+	assert.NoError(t, job.Statuses[1].Err())
+	dir, _ := filepath.Split(job.Statuses[1].RemotePath())
 	assert.Equal(t, "test/test/", dir)
 }
 
@@ -567,9 +594,11 @@ func TestClient_UploadFolder_ZeroByteFile(t *testing.T) {
 	job := client.Uploader(UploaderParams{LocalPath: filepath.Join(tmpDir, "zero_byte_folder"), RemotePath: "", Manager: manager.Sync()})
 	job.Start()
 	job.Wait()
-	require.Len(t, job.Statuses, 1)
+	require.Len(t, job.Statuses, 2)
 	assert.NoError(t, job.Statuses[0].Err())
-	assert.Equal(t, "zero_byte_folder/zero-byte-file.text", job.Statuses[0].RemotePath())
+	assert.NoError(t, job.Statuses[1].Err())
+	assert.Equal(t, "zero_byte_folder", job.Statuses[0].RemotePath())
+	assert.Equal(t, "zero_byte_folder/zero-byte-file.text", job.Statuses[1].RemotePath())
 
 	job = client.Downloader(DownloaderParams{RemotePath: "zero_byte_folder", LocalPath: tmpDir + string(os.PathSeparator)})
 	job.Start()
@@ -1040,21 +1069,12 @@ func TestClient_Uploader_Files(t *testing.T) {
 	assert := assert.New(t)
 	tmpDir := t.TempDir()
 
-	filesAndStatus := []struct {
-		name   string
-		status string
-		size   int
-	}{{name: "1 (1).text", status: "complete", size: 24}, {name: "2.text", status: "complete", size: 24}, {name: "3.pdf", status: "ignored"}}
-	var filePaths []string
-	for _, file := range filesAndStatus {
-		f, err := os.Create(filepath.Join(tmpDir, file.name))
-		assert.NoError(err)
-		f.Write([]byte("hello how are you doing?"))
-		f.Close()
-		if file.status == "complete" {
-			filePaths = append(filePaths, f.Name())
-		}
+	filesAndStatus := []FileStatus{
+		{name: "1 (1).text", status: "complete", size: 24},
+		{name: "2.text", status: "complete", size: 24},
+		{name: "3.pdf", status: "ignored"},
 	}
+	filePaths := createFileStructure(t, tmpDir, filesAndStatus)
 
 	job := client.Uploader(UploaderParams{LocalPath: tmpDir + string(os.PathSeparator), LocalPaths: filePaths})
 	job.Start()
@@ -1079,27 +1099,25 @@ func TestClient_Uploader_Directories(t *testing.T) {
 	assert := assert.New(t)
 	tmpDir := t.TempDir()
 
-	filesAndStatus := []struct {
-		name   string
-		status string
-		size   int
-	}{{name: "A/1.text", status: "complete", size: 24}, {name: "B/2.text", status: "complete", size: 24}, {name: "B/Z/4.text", status: "complete", size: 24}, {name: "3.text", status: "complete", size: 24}}
-	for index, file := range filesAndStatus {
-		file.name = filepath.Join(tmpDir, file.name)
-		require.NoError(t, os.MkdirAll(filepath.Dir(file.name), 0750))
-		filesAndStatus[index] = file
-		f, err := os.Create(file.name)
-		assert.NoError(err)
-		f.Write([]byte("hello how are you doing?"))
-		f.Close()
+	filesAndStatus := []FileStatus{
+		{name: "A/1.text", status: "complete", size: 24},
+		{name: "B", status: "complete", dir: true},
+		{name: "B/2.text", status: "complete", size: 24},
+		{name: "B/Y", status: "complete", dir: true},
+		{name: "B/Z", status: "complete", dir: true},
+		{name: "B/Z/4.text", status: "complete", size: 24},
+		{name: "C", status: "complete", dir: true},
+		{name: "3.text", status: "complete", size: 24},
 	}
+	createFileStructure(t, tmpDir, filesAndStatus)
 
 	job := client.Uploader(
 		UploaderParams{
 			LocalPath: tmpDir + string(os.PathSeparator),
 			LocalPaths: []string{
 				filepath.Join(tmpDir, "A") + string(os.PathSeparator),
-				filepath.Join(tmpDir, "B") + string(os.PathSeparator),
+				filepath.Join(tmpDir, "B"),
+				filepath.Join(tmpDir, "C"),
 				filepath.Join(tmpDir, "3.text"),
 			},
 		},
@@ -1107,43 +1125,66 @@ func TestClient_Uploader_Directories(t *testing.T) {
 	job.Start()
 	job.Wait()
 
-	require.Equal(t, 4, len(job.Statuses), "the right number of files did not upload")
-	assert.Equal(filesAndStatus[0].name, job.Statuses[0].LocalPath())
+	require.Equal(t, len(filesAndStatus), len(job.Statuses), "the right number of files did not upload")
+
 	assert.Equal("1.text", job.Statuses[0].RemotePath())
+	assert.Equal("B", job.Statuses[1].RemotePath())
+	assert.Equal("B/2.text", job.Statuses[2].RemotePath())
+	assert.Equal("B/Y", job.Statuses[3].RemotePath())
+	assert.Equal("B/Z", job.Statuses[4].RemotePath())
+	assert.Equal("B/Z/4.text", job.Statuses[5].RemotePath())
+	assert.Equal("C", job.Statuses[6].RemotePath())
+	assert.Equal("3.text", job.Statuses[7].RemotePath())
+
+	for index, file := range filesAndStatus {
+		assert.Equal(file.name, job.Statuses[index].LocalPath())
+		assert.Equal(status.Complete, job.Statuses[index].Status(), "file %s", file.name)
+		assert.NoError(job.Statuses[index].Err(), "file %s", file.name)
+	}
+}
+
+func TestClient_Uploader_Empty_Directory(t *testing.T) {
+	client, r, err := CreateClient("TestClient_Uploader_Empty_Directory")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	assert := assert.New(t)
+	tmpDir := t.TempDir()
+
+	emptyDir := filepath.Join(tmpDir, "empty_dir")
+	require.NoError(t, os.Mkdir(emptyDir, 0750))
+
+	job := client.Uploader(
+		UploaderParams{
+			LocalPath: emptyDir,
+		},
+	)
+	job.Start()
+	job.Wait()
+
+	require.Equal(t, 1, len(job.Statuses), "the right number of files did not upload")
+
+	assert.Equal("empty_dir", job.Statuses[0].RemotePath())
+	assert.Equal(emptyDir, job.Statuses[0].LocalPath())
 	assert.Equal(status.Complete, job.Statuses[0].Status())
 	assert.NoError(job.Statuses[0].Err())
-
-	assert.Equal(filesAndStatus[1].name, job.Statuses[1].LocalPath())
-	assert.Equal("2.text", job.Statuses[1].RemotePath())
-	assert.Equal(status.Complete, job.Statuses[1].Status())
-	assert.NoError(job.Statuses[1].Err())
-
-	assert.Equal(filesAndStatus[2].name, job.Statuses[2].LocalPath())
-	assert.Equal("Z/4.text", job.Statuses[2].RemotePath())
-	assert.Equal(status.Complete, job.Statuses[2].Status())
-	assert.NoError(job.Statuses[2].Err())
-
-	assert.Equal(filesAndStatus[3].name, job.Statuses[3].LocalPath())
-	assert.Equal("3.text", job.Statuses[3].RemotePath())
-	assert.Equal(status.Complete, job.Statuses[3].Status())
-	assert.NoError(job.Statuses[3].Err())
 }
 
 // This starts with the following directory structure in tmp
 // - empty_dir/
 // - A/
-//   - 1.text
-//
+// - - 1.text
+// - - empty_dir/
 // - B/
-//   - 2.text
-//   - Z/
-//   - 4.text
-//   - empty_dir/
+// - - 2.text
+// - - Z/
+// - - - 4.text
+// - - - empty_dir/
 //
-// A, and B should be completely removed because there was a file uploaded from those hierarchies
-// empty_dir/ does get removed because there were no files in that directory and it's part of the source pathj.
+// A and B should be completely removed because there was a file uploaded from those hierarchies
+// empty_dir/ does get removed because there were no files in that directory and it's part of the source path.
 func TestClient_Uploader_Directories_With_DeleteSource(t *testing.T) {
-	t.Skip("Skip: Flaky until https://gitlab.av/repository/files-sdk-generator/-/merge_requests/977 ships")
 	client, r, err := CreateClient("TestClient_Uploader_Directories_With_DeleteSource")
 	if err != nil {
 		t.Fatal(err)
@@ -1155,22 +1196,15 @@ func TestClient_Uploader_Directories_With_DeleteSource(t *testing.T) {
 
 	require.NoError(t, os.Mkdir(filepath.Join(tmpDir, "empty_dir"), 0750))
 
-	filesAndStatus := []struct {
-		name   string
-		status string
-		size   int
-	}{{name: "A/1.text", status: "complete", size: 24}, {name: "B/2.text", status: "complete", size: 24}, {name: "B/Z/4.text", status: "complete", size: 24}}
-	for index, file := range filesAndStatus {
-		file.name = filepath.Join(tmpDir, file.name)
-		require.NoError(t, os.MkdirAll(filepath.Dir(file.name), 0750))
-		filesAndStatus[index] = file
-		f, err := os.Create(file.name)
-		assert.NoError(err)
-		f.Write([]byte("hello how are you doing?"))
-		f.Close()
+	filesAndStatus := []FileStatus{
+		{name: "A/1.text", status: "complete", size: 24},
+		{name: "A/empty_dir", status: "complete", dir: true},
+		{name: "B/2.text", status: "complete", size: 24},
+		{name: "B/Z", status: "complete", dir: true},
+		{name: "B/Z/4.text", status: "complete", size: 24},
+		{name: "B/Z/empty_dir", status: "complete", dir: true},
 	}
-	require.NoError(t, os.Mkdir(filepath.Join(tmpDir, "A", "empty_dir"), 0750))
-	require.NoError(t, os.Mkdir(filepath.Join(tmpDir, "B", "Z", "empty_dir"), 0750))
+	createFileStructure(t, tmpDir, filesAndStatus)
 
 	job := client.Uploader(
 		UploaderParams{
@@ -1189,21 +1223,20 @@ func TestClient_Uploader_Directories_With_DeleteSource(t *testing.T) {
 	job.Start()
 	job.Wait()
 
-	require.Equal(t, 3, len(job.Statuses), "the right number of files did not upload")
-	assert.Equal(filesAndStatus[0].name, job.Statuses[0].LocalPath())
+	require.Equal(t, 6, len(job.Statuses), "the right number of files did not upload")
+
 	assert.Equal("1.text", job.Statuses[0].RemotePath())
-	assert.Equal(status.Complete, job.Statuses[0].Status())
-	assert.NoError(job.Statuses[0].Err())
+	assert.Equal("empty_dir", job.Statuses[1].RemotePath())
+	assert.Equal("2.text", job.Statuses[2].RemotePath())
+	assert.Equal("Z", job.Statuses[3].RemotePath())
+	assert.Equal("Z/4.text", job.Statuses[4].RemotePath())
+	assert.Equal("Z/empty_dir", job.Statuses[5].RemotePath())
 
-	assert.Equal(filesAndStatus[1].name, job.Statuses[1].LocalPath())
-	assert.Equal("2.text", job.Statuses[1].RemotePath())
-	assert.Equal(status.Complete, job.Statuses[1].Status())
-	assert.NoError(job.Statuses[1].Err())
-
-	assert.Equal(filesAndStatus[2].name, job.Statuses[2].LocalPath())
-	assert.Equal("Z/4.text", job.Statuses[2].RemotePath())
-	assert.Equal(status.Complete, job.Statuses[2].Status())
-	assert.NoError(job.Statuses[2].Err())
+	for index, file := range filesAndStatus {
+		assert.Equal(file.name, job.Statuses[index].LocalPath())
+		assert.Equal(status.Complete, job.Statuses[index].Status(), "file %s", file.name)
+		assert.NoError(job.Statuses[index].Err(), "file %s", file.name)
+	}
 
 	DeleteEmptySourceFolders{Config: client.Config, Direction: job.Direction}.Call(*job)
 

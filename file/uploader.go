@@ -20,6 +20,7 @@ import (
 type Uploader interface {
 	UploadWithResume(...UploadOption) (UploadResumable, error)
 	Find(files_sdk.FileFindParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error)
+	CreateFolder(files_sdk.FolderCreateParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error)
 }
 
 func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *Job {
@@ -37,12 +38,6 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *Job
 
 	if statErr == nil && fileInfoLocalPath.IsDir() {
 		job.Type = directory.Dir
-
-		if !(lib.Path{Path: params.LocalPath}).EndingSlash() {
-			_, lastDir := filepath.Split(params.LocalPath)
-			params.RemotePath = lib.UrlJoinNoEscape(params.RemotePath, lastDir)
-			params.LocalPath = params.LocalPath + string(os.PathSeparator)
-		}
 	} else {
 		job.Type = directory.File
 	}
@@ -154,26 +149,41 @@ func errorJob(job *Job, metaFile UploadStatus, err error) bool {
 	return false
 }
 
-func processDirectory(LocalPath string, params UploaderParams, job *Job, jobCtx context.Context, c Uploader) *lib.IterChan[lib.DirEntry] {
+func processDirectory(localPath string, params UploaderParams, job *Job, jobCtx context.Context, c Uploader) *lib.IterChan[lib.DirEntry] {
+	root := ""
+	remotePath := params.RemotePath
+
+	if !strings.HasSuffix(localPath, string(os.PathSeparator)) {
+		root = "."
+		_, lastDir := filepath.Split(localPath)
+		remotePath = filepath.Join(remotePath, lastDir)
+	}
+
 	it := (&lib.Walk[lib.DirEntry]{
-		FS:                 os.DirFS(LocalPath),
+		FS:                 os.DirFS(localPath),
 		ConcurrencyManager: job.Manager.DirectoryListingManager,
 		WalkFile:           lib.DirEntryWalkFile,
+		ListDirectories:    true,
+		Root:               root,
 	}).Walk(jobCtx)
 
 	for it.Next() {
-		uploadStatus, ok := buildUploadStatus(filepath.Join(LocalPath, it.Resource().Path()), LocalPath, params.RemotePath, c, job, params)
+		uploadStatus, ok := buildUploadStatus(filepath.Join(localPath, it.Resource().Path()), localPath, remotePath, c, job, params)
 		if !ok {
 			continue
 		}
 
-		uploadStatus.file.Type = "file"
 		if it.Resource().Err() != nil {
 			uploadStatus.missingStat = true
 			uploadStatus.error = it.Resource().Err()
 		} else {
-			uploadStatus.file.Size = it.Resource().FileInfo.Size()
-			uploadStatus.file.Mtime = lib.Time(it.Resource().FileInfo.ModTime())
+			if it.Resource().DirEntry.IsDir() {
+				uploadStatus.file.Type = "directory"
+			} else {
+				uploadStatus.file.Type = "file"
+				uploadStatus.file.Size = it.Resource().FileInfo.Size()
+				uploadStatus.file.Mtime = lib.Time(it.Resource().FileInfo.ModTime())
+			}
 		}
 		job.Add(&uploadStatus)
 	}
@@ -248,6 +258,23 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 			uploadStatus.Job().UpdateStatus(status.Complete, uploadStatus, nil)
 			return
 		}
+		if uploadStatus.File().IsDir() {
+			_, err = uploadStatus.CreateFolder(files_sdk.FolderCreateParams{Path: uploadStatus.RemotePath(), MkdirParents: lib.Bool(true)}, files_sdk.WithContext(ctx))
+			if err == nil {
+				uploadStatus.Job().UpdateStatus(status.Complete, uploadStatus, nil)
+				return
+			}
+
+			if files_sdk.IsExist(err) {
+				remoteFile, err := uploadStatus.Find(files_sdk.FileFindParams{Path: uploadStatus.RemotePath()}, files_sdk.WithContext(ctx))
+				if err == nil && remoteFile.IsDir() {
+					uploadStatus.Job().UpdateStatus(status.Complete, uploadStatus, nil)
+					return
+				}
+			}
+			uploadStatus.Job().UpdateStatus(status.Errored, uploadStatus, err)
+			return
+		}
 		localFile, err = os.Open(uploadStatus.LocalPath())
 		if err != nil {
 			uploadStatus.Job().UpdateStatus(status.Errored, uploadStatus, err)
@@ -319,7 +346,7 @@ func buildDestination(path string, localFolderPath string, destinationRootPath s
 		destination = filepath.Join(destinationRootPath, baseDestination)
 	}
 
-	if destination == "." {
+	if destination == "." || destination == "" {
 		destination = filename
 	}
 	return lib.Path{Path: destination}.NormalizePathSystemForAPI().String()

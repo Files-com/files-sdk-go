@@ -39,6 +39,10 @@ func (m *MockUploader) Find(files_sdk.FileFindParams, ...files_sdk.RequestRespon
 	return m.File, m.findError
 }
 
+func (m *MockUploader) CreateFolder(files_sdk.FolderCreateParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+	return files_sdk.File{}, nil
+}
+
 func Test_excludeFile(t *testing.T) {
 	var progressReportError error
 

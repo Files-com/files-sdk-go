@@ -269,6 +269,10 @@ func (c *Client) ListFor(params files_sdk.FolderListForParams, opts ...files_sdk
 	return Iter{Iter: it}, err
 }
 
+func (c *Client) CreateFolder(params files_sdk.FolderCreateParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+	return (&folder.Client{Config: c.Config}).Create(params, opts...)
+}
+
 type RecursiveItem struct {
 	files_sdk.File
 	error `json:"error"`

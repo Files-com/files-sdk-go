@@ -5,6 +5,38 @@ interactions:
     body: '{"mkdir_parents":true}'
     form: {}
     headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/folders/zero_byte_folder
+    method: POST
+  response:
+    body: '{"path":"zero_byte_folder","created_by_id":1028730,"created_by_api_key_id":null,"created_by_as2_incoming_message_id":null,"created_by_automation_id":null,"created_by_bundle_registration_id":null,"created_by_inbox_id":null,"created_by_remote_server_id":null,"created_by_remote_server_sync_id":null,"custom_metadata":{},"display_name":"zero_byte_folder","type":"directory","size":null,"created_at":"2024-11-13T21:14:43Z","last_modified_by_id":null,"last_modified_by_api_key_id":null,"last_modified_by_automation_id":null,"last_modified_by_bundle_registration_id":null,"last_modified_by_remote_server_id":null,"last_modified_by_remote_server_sync_id":null,"mtime":"2024-11-13T21:14:43Z","provided_mtime":null,"crc32":null,"md5":null,"sha1":null,"sha256":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "822"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 13 Nov 2024 21:14:43 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - files.com
+      X-Request-Id:
+      - bc90d872c116ed866018eaa9597921ae
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"mkdir_parents":true}'
+    form: {}
+    headers:
       Connection:
       - close
       Content-Type:

@@ -92,6 +92,102 @@ interactions:
     code: 200
     duration: ""
 - request:
+    body: '{"mkdir_parents":true}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/folders/Z
+    method: POST
+  response:
+    body: '{"path":"Z","created_by_id":1028730,"created_by_api_key_id":null,"created_by_as2_incoming_message_id":null,"created_by_automation_id":null,"created_by_bundle_registration_id":null,"created_by_inbox_id":null,"created_by_remote_server_id":null,"created_by_remote_server_sync_id":null,"custom_metadata":{},"display_name":"Z","type":"directory","size":null,"created_at":"2024-11-13T20:46:42Z","last_modified_by_id":null,"last_modified_by_api_key_id":null,"last_modified_by_automation_id":null,"last_modified_by_bundle_registration_id":null,"last_modified_by_remote_server_id":null,"last_modified_by_remote_server_sync_id":null,"mtime":"2024-11-13T20:46:42Z","provided_mtime":null,"crc32":null,"md5":null,"sha1":null,"sha256":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "792"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 13 Nov 2024 20:46:42 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - files.com
+      X-Request-Id:
+      - 46cc22ff7037a45666357ba3ff99aa4c
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"mkdir_parents":true}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/folders/empty_dir
+    method: POST
+  response:
+    body: '{"path":"empty_dir","created_by_id":1028730,"created_by_api_key_id":null,"created_by_as2_incoming_message_id":null,"created_by_automation_id":null,"created_by_bundle_registration_id":null,"created_by_inbox_id":null,"created_by_remote_server_id":null,"created_by_remote_server_sync_id":null,"custom_metadata":{},"display_name":"empty_dir","type":"directory","size":null,"created_at":"2024-11-13T20:46:42Z","last_modified_by_id":null,"last_modified_by_api_key_id":null,"last_modified_by_automation_id":null,"last_modified_by_bundle_registration_id":null,"last_modified_by_remote_server_id":null,"last_modified_by_remote_server_sync_id":null,"mtime":"2024-11-13T20:46:42Z","provided_mtime":null,"crc32":null,"md5":null,"sha1":null,"sha256":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "808"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 13 Nov 2024 20:46:42 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - files.com
+      X-Request-Id:
+      - 4c630ba92a8ea6969fb849fbf997f063
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: '{"mkdir_parents":true}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/folders/Z/empty_dir
+    method: POST
+  response:
+    body: '{"path":"Z/empty_dir","created_by_id":1028730,"created_by_api_key_id":null,"created_by_as2_incoming_message_id":null,"created_by_automation_id":null,"created_by_bundle_registration_id":null,"created_by_inbox_id":null,"created_by_remote_server_id":null,"created_by_remote_server_sync_id":null,"custom_metadata":{},"display_name":"empty_dir","type":"directory","size":null,"created_at":"2024-11-13T20:46:42Z","last_modified_by_id":null,"last_modified_by_api_key_id":null,"last_modified_by_automation_id":null,"last_modified_by_bundle_registration_id":null,"last_modified_by_remote_server_id":null,"last_modified_by_remote_server_sync_id":null,"mtime":"2024-11-13T20:46:42Z","provided_mtime":null,"crc32":null,"md5":null,"sha1":null,"sha256":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "810"
+      Content-Type:
+      - application/json
+      Date:
+      - Wed, 13 Nov 2024 20:46:42 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Server:
+      - files.com
+      X-Request-Id:
+      - 59982a32a5011ee627bf8d327cc03cc7
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
     body: hello how are you doing?
     form: {}
     headers:
