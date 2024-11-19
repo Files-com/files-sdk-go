@@ -1091,6 +1091,63 @@ func TestClient_Uploader_Files(t *testing.T) {
 	assert.NoError(job.Statuses[1].Err())
 }
 
+func TestClient_Uploader_File_Remote_Folder(t *testing.T) {
+	client, r, err := CreateClient("TestClient_Uploader_File_Remote_Folder")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	assert := assert.New(t)
+	tmpDir := t.TempDir()
+
+	fileName := "file.text"
+	dirName := "remote-folder"
+
+	folderClient := folder.Client{Config: client.Config}
+	_, err = folderClient.Create(files_sdk.FolderCreateParams{Path: dirName})
+	defer deletePath(client, dirName)
+
+	filesAndStatus := []FileStatus{{name: fileName, status: "complete", size: 24}}
+	createFileStructure(t, tmpDir, filesAndStatus)
+
+	job := client.Uploader(UploaderParams{LocalPath: filepath.Join(tmpDir, fileName), RemotePath: dirName})
+	job.Start()
+	job.Wait()
+
+	assert.Len(job.Statuses, 1)
+	assert.Equal(filepath.Join(dirName, fileName), job.Statuses[0].RemotePath())
+	assert.Equal(status.Complete, job.Statuses[0].Status())
+	assert.NoError(job.Statuses[0].Err())
+}
+
+func TestClient_Uploader_File_Remote_Path_Error(t *testing.T) {
+	client, r, err := CreateClient("TestClient_Uploader_File_Remote_Path_Error")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Stop()
+	assert := assert.New(t)
+	tmpDir := t.TempDir()
+
+	fileName := "file.text"
+	dirName := "remote-folder"
+
+	filesAndStatus := []FileStatus{{name: fileName, status: "complete", size: 24}}
+	createFileStructure(t, tmpDir, filesAndStatus)
+
+	job := client.Uploader(UploaderParams{
+		LocalPath:   filepath.Join(tmpDir, fileName),
+		RemotePath:  dirName,
+		RetryPolicy: RetryPolicy{Type: RetryUnfinished, RetryCount: 2},
+	})
+	job.Start()
+	job.Wait()
+
+	assert.Len(job.Statuses, 1)
+	assert.Equal(status.Errored, job.Statuses[0].Status())
+	assert.ErrorContains(job.Statuses[0].Err(), "token provided could not")
+}
+
 func TestClient_Uploader_Directories(t *testing.T) {
 	client, r, err := CreateClient("TestClient_Uploader_Directories")
 	if err != nil {

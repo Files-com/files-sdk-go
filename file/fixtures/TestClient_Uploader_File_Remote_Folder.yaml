@@ -1,0 +1,346 @@
+---
+version: 1
+interactions:
+- request:
+    body: '{}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/folders/remote-folder
+    method: POST
+  response:
+    body: '{"path":"remote-folder","created_by_id":1028730,"created_by_api_key_id":null,"created_by_as2_incoming_message_id":null,"created_by_automation_id":null,"created_by_bundle_registration_id":null,"created_by_inbox_id":null,"created_by_remote_server_id":null,"created_by_remote_server_sync_id":null,"custom_metadata":{},"display_name":"remote-folder","type":"directory","size":null,"created_at":"2024-11-19T19:43:37Z","last_modified_by_id":null,"last_modified_by_api_key_id":null,"last_modified_by_automation_id":null,"last_modified_by_bundle_registration_id":null,"last_modified_by_remote_server_id":null,"last_modified_by_remote_server_sync_id":null,"mtime":"2024-11-19T19:43:37Z","provided_mtime":null,"crc32":null,"md5":null,"sha1":null,"sha256":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "816"
+      Content-Security-Policy:
+      - 'default-src ''self''; base-uri ''self''; block-all-mixed-content; child-src
+        ''none''; connect-src ''self''; font-src ''self'' data:; form-action ''self'';
+        frame-ancestors ''none''; img-src ''self'' data: https:; media-src ''self'';
+        object-src ''self''; plugin-types application/pdf; script-src ''self'' ''unsafe-eval''
+        ''unsafe-inline''; style-src ''self'' ''unsafe-inline''; upgrade-insecure-requests;
+        report-uri https://actionverb.report-uri.io/r/default/csp/enforce'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 19 Nov 2024 19:43:37 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - same-origin
+      Server:
+      - files.com
+      Strict-Transport-Security:
+      - max-age=631139040; includeSubdomains; preload
+      X-Content-Type-Options:
+      - nosniff
+      X-Download-Options:
+      - noopen
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Permitted-Cross-Domain-Policies:
+      - none
+      X-Request-Id:
+      - 9c6c145c5650ae471f07993174f82ec6
+      X-Xss-Protection:
+      - 1; mode=block
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/remote-folder
+    method: GET
+  response:
+    body: '{"path":"remote-folder","created_by_id":1028730,"created_by_api_key_id":null,"created_by_as2_incoming_message_id":null,"created_by_automation_id":null,"created_by_bundle_registration_id":null,"created_by_inbox_id":null,"created_by_remote_server_id":null,"created_by_remote_server_sync_id":null,"custom_metadata":{},"display_name":"remote-folder","type":"directory","size":null,"created_at":"2024-11-19T19:43:37Z","last_modified_by_id":null,"last_modified_by_api_key_id":null,"last_modified_by_automation_id":null,"last_modified_by_bundle_registration_id":null,"last_modified_by_remote_server_id":null,"last_modified_by_remote_server_sync_id":null,"mtime":"2024-11-19T19:43:37Z","provided_mtime":null,"crc32":null,"md5":null,"sha1":null,"sha256":null,"permissions":"lrwd","subfolders_locked?":false,"is_locked":false}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Security-Policy:
+      - 'default-src ''self''; base-uri ''self''; block-all-mixed-content; child-src
+        ''none''; connect-src ''self''; font-src ''self'' data:; form-action ''self'';
+        frame-ancestors ''none''; img-src ''self'' data: https:; media-src ''self'';
+        object-src ''self''; plugin-types application/pdf; script-src ''self'' ''unsafe-eval''
+        ''unsafe-inline''; style-src ''self'' ''unsafe-inline''; upgrade-insecure-requests;
+        report-uri https://actionverb.report-uri.io/r/default/csp/enforce'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 19 Nov 2024 19:43:37 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - same-origin
+      Server:
+      - files.com
+      Strict-Transport-Security:
+      - max-age=631139040; includeSubdomains; preload
+      X-Content-Type-Options:
+      - nosniff
+      X-Download-Options:
+      - noopen
+      X-Files-Cache-For-Seconds:
+      - "900"
+      X-Files-Safe-To-Cache:
+      - "true"
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Permitted-Cross-Domain-Policies:
+      - none
+      X-Request-Id:
+      - ba1c316cdba0a6f5848924e639576931
+      X-Xss-Protection:
+      - 1; mode=block
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"mkdir_parents":true,"size":24}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/file_actions/begin_upload/remote-folder/file.text
+    method: POST
+  response:
+    body: '[{"send":{"partsize":"required-header Content-Length","partdata":"body"},"action":"put/write","ask_about_overwrites":false,"available_parts":10000,"expires":"2024-11-19T19:58:37Z","headers":{},"http_method":"PUT","next_partsize":6291456,"parallel_parts":true,"retry_parts":true,"parameters":{},"part_number":1,"partsize":5242880,"ref":"put-10967318862","upload_uri":"https://s3.amazonaws.com/objects.brickftp.com/metadata/115123/a4ccf922-2fb0-47a0-a681-2df0486d13ee?X-Amz-Algorithm=AWS4-HMAC-SHA256\u0026X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20241119%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Date=20241119T194337Z\u0026X-Amz-Expires=900\u0026X-Amz-SignedHeaders=host\u0026partNumber=1\u0026response-content-type=application%2Foctet-stream\u0026uploadId=Ur1YZ6MVh_.tR3B5_Tqpw23MKyiDW4pC5o86OsRFJ4khFfEPn6BeHykdi3Eozzqgn9tjh0J6dL1YUXdx.d8mWL76qi_xboz94NH0KJUAexq7SD4k6LHGPrfxKZK7vmSO\u0026X-Amz-Signature=eaf66112aee18e006dcb95bfe005ac1257cfab3db49772c1ef040ac13c281be9"}]'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Security-Policy:
+      - 'default-src ''self''; base-uri ''self''; block-all-mixed-content; child-src
+        ''none''; connect-src ''self''; font-src ''self'' data:; form-action ''self'';
+        frame-ancestors ''none''; img-src ''self'' data: https:; media-src ''self'';
+        object-src ''self''; plugin-types application/pdf; script-src ''self'' ''unsafe-eval''
+        ''unsafe-inline''; style-src ''self'' ''unsafe-inline''; upgrade-insecure-requests;
+        report-uri https://actionverb.report-uri.io/r/default/csp/enforce'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 19 Nov 2024 19:43:37 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - same-origin
+      Server:
+      - files.com
+      Strict-Transport-Security:
+      - max-age=631139040; includeSubdomains; preload
+      X-Content-Type-Options:
+      - nosniff
+      X-Download-Options:
+      - noopen
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Permitted-Cross-Domain-Policies:
+      - none
+      X-Request-Id:
+      - d21fd8f17a75870c4a5efde96fe27057
+      X-Xss-Protection:
+      - 1; mode=block
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: hello how are you doing?
+    form: {}
+    headers:
+      Content-Length:
+      - "24"
+    url: https://s3.amazonaws.com/objects.brickftp.com/metadata/115123/a4ccf922-2fb0-47a0-a681-2df0486d13ee?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIEWLY3MN4YGZQOWA%2F20241119%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20241119T194337Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&response-content-type=application%2Foctet-stream&uploadId=Ur1YZ6MVh_.tR3B5_Tqpw23MKyiDW4pC5o86OsRFJ4khFfEPn6BeHykdi3Eozzqgn9tjh0J6dL1YUXdx.d8mWL76qi_xboz94NH0KJUAexq7SD4k6LHGPrfxKZK7vmSO&X-Amz-Signature=eaf66112aee18e006dcb95bfe005ac1257cfab3db49772c1ef040ac13c281be9
+    method: PUT
+  response:
+    body: ""
+    headers:
+      Content-Length:
+      - "0"
+      Date:
+      - Tue, 19 Nov 2024 19:43:39 GMT
+      Etag:
+      - '"5045cf51883b32c692d1b38d57993daf"'
+      Server:
+      - AmazonS3
+      X-Amz-Id-2:
+      - aKULgSi5aKJ3NzrgjWVzjDSemrliOdlBhxsfjKuEVGmnxejdPUm08AFKEl01qdxlNnaHjagcdGkCrNza2sBk5RnIfhW9mgBNGDVMKbKLmiw=
+      X-Amz-Request-Id:
+      - JC43EKWZN4W83AGC
+      X-Amz-Server-Side-Encryption:
+      - AES256
+    status: 200 OK
+    code: 200
+    duration: ""
+- request:
+    body: '{"action":"end","etags":[{"etag":"5045cf51883b32c692d1b38d57993daf","part":"1"}],"mkdir_parents":true,"ref":"put-10967318862","size":24}'
+    form: {}
+    headers:
+      Content-Type:
+      - application/json
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/files/remote-folder/file.text
+    method: POST
+  response:
+    body: '{"path":"remote-folder/file.text","created_by_id":1028730,"created_by_api_key_id":2598814,"created_by_as2_incoming_message_id":null,"created_by_automation_id":null,"created_by_bundle_registration_id":null,"created_by_inbox_id":null,"created_by_remote_server_id":null,"created_by_remote_server_sync_id":null,"custom_metadata":{},"display_name":"file.text","type":"file","size":24,"created_at":"2024-11-19T19:43:38Z","last_modified_by_id":null,"last_modified_by_api_key_id":null,"last_modified_by_automation_id":null,"last_modified_by_bundle_registration_id":null,"last_modified_by_remote_server_id":null,"last_modified_by_remote_server_sync_id":null,"mtime":"2024-11-19T19:43:38Z","provided_mtime":null,"crc32":null,"md5":null,"sha1":null,"sha256":null,"mime_type":"application/octet-stream","region":"us-east-1","permissions":"lrwd"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "833"
+      Content-Security-Policy:
+      - 'default-src ''self''; base-uri ''self''; block-all-mixed-content; child-src
+        ''none''; connect-src ''self''; font-src ''self'' data:; form-action ''self'';
+        frame-ancestors ''none''; img-src ''self'' data: https:; media-src ''self'';
+        object-src ''self''; plugin-types application/pdf; script-src ''self'' ''unsafe-eval''
+        ''unsafe-inline''; style-src ''self'' ''unsafe-inline''; upgrade-insecure-requests;
+        report-uri https://actionverb.report-uri.io/r/default/csp/enforce'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 19 Nov 2024 19:43:38 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - same-origin
+      Server:
+      - files.com
+      Strict-Transport-Security:
+      - max-age=631139040; includeSubdomains; preload
+      X-Content-Type-Options:
+      - nosniff
+      X-Download-Options:
+      - noopen
+      X-Files-Cache-For-Seconds:
+      - "900"
+      X-Files-Safe-To-Cache:
+      - "true"
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Permitted-Cross-Domain-Policies:
+      - none
+      X-Request-Id:
+      - b430e7ddd296313ae4d2f78cda1ad7e8
+      X-Xss-Protection:
+      - 1; mode=block
+    status: 201 Created
+    code: 201
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/files/remote-folder
+    method: DELETE
+  response:
+    body: '{"error":"Folder remote-folder not empty","http-code":422,"instance":"6959dd049d34d15c72683e01c09e6f1d","title":"Folder
+      Not Empty","type":"processing-failure/folder-not-empty"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "176"
+      Content-Security-Policy:
+      - 'default-src ''self''; base-uri ''self''; block-all-mixed-content; child-src
+        ''none''; connect-src ''self''; font-src ''self'' data:; form-action ''self'';
+        frame-ancestors ''none''; img-src ''self'' data: https:; media-src ''self'';
+        object-src ''self''; plugin-types application/pdf; script-src ''self'' ''unsafe-eval''
+        ''unsafe-inline''; style-src ''self'' ''unsafe-inline''; upgrade-insecure-requests;
+        report-uri https://actionverb.report-uri.io/r/default/csp/enforce'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 19 Nov 2024 19:43:38 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - same-origin
+      Server:
+      - files.com
+      Strict-Transport-Security:
+      - max-age=631139040; includeSubdomains; preload
+      X-Content-Type-Options:
+      - nosniff
+      X-Download-Options:
+      - noopen
+      X-Files-Error-Class:
+      - processing-failure/folder-not-empty
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Permitted-Cross-Domain-Policies:
+      - none
+      X-Request-Id:
+      - 6959dd049d34d15c72683e01c09e6f1d
+      X-Xss-Protection:
+      - 1; mode=block
+    status: 422 Unprocessable Entity
+    code: 422
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/files/remote-folder?recursive=true
+    method: DELETE
+  response:
+    body: ""
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Security-Policy:
+      - 'default-src ''self''; base-uri ''self''; block-all-mixed-content; child-src
+        ''none''; connect-src ''self''; font-src ''self'' data:; form-action ''self'';
+        frame-ancestors ''none''; img-src ''self'' data: https:; media-src ''self'';
+        object-src ''self''; plugin-types application/pdf; script-src ''self'' ''unsafe-eval''
+        ''unsafe-inline''; style-src ''self'' ''unsafe-inline''; upgrade-insecure-requests;
+        report-uri https://actionverb.report-uri.io/r/default/csp/enforce'
+      Date:
+      - Tue, 19 Nov 2024 19:43:38 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - same-origin
+      Server:
+      - files.com
+      Strict-Transport-Security:
+      - max-age=631139040; includeSubdomains; preload
+      X-Content-Type-Options:
+      - nosniff
+      X-Download-Options:
+      - noopen
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Permitted-Cross-Domain-Policies:
+      - none
+      X-Request-Id:
+      - a1d151a8bd18bee77658c2658c0d6cee
+      X-Xss-Protection:
+      - 1; mode=block
+    status: 204 No Content
+    code: 204
+    duration: ""

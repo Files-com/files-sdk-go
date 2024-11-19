@@ -1,0 +1,168 @@
+---
+version: 1
+interactions:
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/remote-folder
+    method: GET
+  response:
+    body: '{"error":"The API key or Session token provided could not be used to validate
+      this request.","http-code":401,"instance":"5b12251d03a1f2f650f1423cd5cbab22","title":"Invalid
+      Credentials","type":"not-authenticated/invalid-credentials"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "232"
+      Content-Security-Policy:
+      - 'default-src ''self''; base-uri ''self''; block-all-mixed-content; child-src
+        ''none''; connect-src ''self''; font-src ''self'' data:; form-action ''self'';
+        frame-ancestors ''none''; img-src ''self'' data: https:; media-src ''self'';
+        object-src ''self''; plugin-types application/pdf; script-src ''self'' ''unsafe-eval''
+        ''unsafe-inline''; style-src ''self'' ''unsafe-inline''; upgrade-insecure-requests;
+        report-uri https://actionverb.report-uri.io/r/default/csp/enforce'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 19 Nov 2024 20:05:52 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - same-origin
+      Server:
+      - files.com
+      Strict-Transport-Security:
+      - max-age=631139040; includeSubdomains; preload
+      X-Content-Type-Options:
+      - nosniff
+      X-Download-Options:
+      - noopen
+      X-Files-Error-Class:
+      - not-authenticated/invalid-credentials
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Permitted-Cross-Domain-Policies:
+      - none
+      X-Request-Id:
+      - 5b12251d03a1f2f650f1423cd5cbab22
+      X-Xss-Protection:
+      - 1; mode=block
+    status: 401 Unauthorized
+    code: 401
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/remote-folder
+    method: GET
+  response:
+    body: '{"error":"The API key or Session token provided could not be used to validate
+      this request.","http-code":401,"instance":"bd1567cba0f41b0e64a472c7b6c90059","title":"Invalid
+      Credentials","type":"not-authenticated/invalid-credentials"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "232"
+      Content-Security-Policy:
+      - 'default-src ''self''; base-uri ''self''; block-all-mixed-content; child-src
+        ''none''; connect-src ''self''; font-src ''self'' data:; form-action ''self'';
+        frame-ancestors ''none''; img-src ''self'' data: https:; media-src ''self'';
+        object-src ''self''; plugin-types application/pdf; script-src ''self'' ''unsafe-eval''
+        ''unsafe-inline''; style-src ''self'' ''unsafe-inline''; upgrade-insecure-requests;
+        report-uri https://actionverb.report-uri.io/r/default/csp/enforce'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 19 Nov 2024 20:05:53 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - same-origin
+      Server:
+      - files.com
+      Strict-Transport-Security:
+      - max-age=631139040; includeSubdomains; preload
+      X-Content-Type-Options:
+      - nosniff
+      X-Download-Options:
+      - noopen
+      X-Files-Error-Class:
+      - not-authenticated/invalid-credentials
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Permitted-Cross-Domain-Policies:
+      - none
+      X-Request-Id:
+      - bd1567cba0f41b0e64a472c7b6c90059
+      X-Xss-Protection:
+      - 1; mode=block
+    status: 401 Unauthorized
+    code: 401
+    duration: ""
+- request:
+    body: ""
+    form: {}
+    headers:
+      User-Agent:
+      - Files.com Go SDK 1.0
+    url: https://app.files.com/api/rest/v1/file_actions/metadata/remote-folder
+    method: GET
+  response:
+    body: '{"error":"The API key or Session token provided could not be used to validate
+      this request.","http-code":401,"instance":"f7fc5a8191a55258bc13a21ad5c579e0","title":"Invalid
+      Credentials","type":"not-authenticated/invalid-credentials"}'
+    headers:
+      Cache-Control:
+      - no-cache, no-store, max-age=0, must-revalidate
+      Content-Length:
+      - "232"
+      Content-Security-Policy:
+      - 'default-src ''self''; base-uri ''self''; block-all-mixed-content; child-src
+        ''none''; connect-src ''self''; font-src ''self'' data:; form-action ''self'';
+        frame-ancestors ''none''; img-src ''self'' data: https:; media-src ''self'';
+        object-src ''self''; plugin-types application/pdf; script-src ''self'' ''unsafe-eval''
+        ''unsafe-inline''; style-src ''self'' ''unsafe-inline''; upgrade-insecure-requests;
+        report-uri https://actionverb.report-uri.io/r/default/csp/enforce'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 19 Nov 2024 20:05:53 GMT
+      Expires:
+      - Fri, 01 Jan 1990 00:00:00 GMT
+      Pragma:
+      - no-cache
+      Referrer-Policy:
+      - same-origin
+      Server:
+      - files.com
+      Strict-Transport-Security:
+      - max-age=631139040; includeSubdomains; preload
+      X-Content-Type-Options:
+      - nosniff
+      X-Download-Options:
+      - noopen
+      X-Files-Error-Class:
+      - not-authenticated/invalid-credentials
+      X-Frame-Options:
+      - SAMEORIGIN
+      X-Permitted-Cross-Domain-Policies:
+      - none
+      X-Request-Id:
+      - f7fc5a8191a55258bc13a21ad5c579e0
+      X-Xss-Protection:
+      - 1; mode=block
+    status: 401 Unauthorized
+    code: 401
+    duration: ""

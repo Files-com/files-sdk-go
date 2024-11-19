@@ -118,16 +118,12 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *Job
 				statusFile.error = err
 				job.Add(&statusFile)
 			} else {
-				statusFile.remotePath, statusFile.error = remotePath(jobCtx, path, params.RemotePath, c, job)
-				if statusFile.error != nil {
-					statusFile.file.Path = statusFile.remotePath
-				}
+				statusFile.remotePath = params.RemotePath
 				statusFile.file = files_sdk.File{
 					DisplayName: filepath.Base(path),
 					Type:        "file",
 					Mtime:       lib.Time(fi.ModTime()),
 					Size:        fi.Size(),
-					Path:        statusFile.remotePath,
 				}
 				job.Add(&statusFile)
 			}
@@ -251,6 +247,14 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 			}
 			finish()
 		}()
+		if uploadStatus.file.Path == "" {
+			uploadStatus.file.Path, err = remotePath(ctx, uploadStatus.LocalPath(), uploadStatus.RemotePath(), uploadStatus, job)
+			if err != nil {
+				uploadStatus.Job().UpdateStatus(status.Errored, uploadStatus, err)
+				return
+			}
+			uploadStatus.remotePath = uploadStatus.file.Path
+		}
 		if excludeFile(uploadStatus, job.Config.FeatureFlag("incremental-updates")) {
 			return
 		}
