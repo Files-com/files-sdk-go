@@ -261,14 +261,14 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 		if uploadStatus.File().IsDir() {
 			_, err = uploadStatus.CreateFolder(files_sdk.FolderCreateParams{Path: uploadStatus.RemotePath(), MkdirParents: lib.Bool(true)}, files_sdk.WithContext(ctx))
 			if err == nil {
-				uploadStatus.Job().UpdateStatus(status.Complete, uploadStatus, nil)
+				uploadStatus.Job().UpdateStatus(status.FolderCreated, uploadStatus, nil)
 				return
 			}
 
 			if files_sdk.IsExist(err) {
 				remoteFile, err := uploadStatus.Find(files_sdk.FileFindParams{Path: uploadStatus.RemotePath()}, files_sdk.WithContext(ctx))
 				if err == nil && remoteFile.IsDir() {
-					uploadStatus.Job().UpdateStatus(status.Complete, uploadStatus, nil)
+					uploadStatus.Job().UpdateStatus(status.FolderCreated, uploadStatus, nil)
 					return
 				}
 			}

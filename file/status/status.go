@@ -14,26 +14,27 @@ type GetStatus interface {
 }
 
 var (
-	Null        = Status{"", -1}
-	Indexed     = Status{"indexed", 0}
-	Retrying    = Status{"retrying", 0}
-	Queued      = Status{"queued", 1}
-	Compared    = Status{"compared", 1}
-	Downloading = Status{"downloading", 2}
-	Uploading   = Status{"uploading", 2}
-	Skipped     = Status{"skipped", 3}
-	FileExists  = Status{"file_exists", 3}
-	Ignored     = Status{"ignored", 3}
-	Complete    = Status{"complete", 4}
-	Canceled    = Status{"canceled", 5}
-	Errored     = Status{"errored", 5}
+	Null          = Status{"", -1}
+	Indexed       = Status{"indexed", 0}
+	Retrying      = Status{"retrying", 0}
+	Queued        = Status{"queued", 1}
+	Compared      = Status{"compared", 1}
+	Downloading   = Status{"downloading", 2}
+	Uploading     = Status{"uploading", 2}
+	Skipped       = Status{"skipped", 3}
+	FileExists    = Status{"file_exists", 3}
+	Ignored       = Status{"ignored", 3}
+	Complete      = Status{"complete", 4}
+	FolderCreated = Status{"folder_created", 4}
+	Canceled      = Status{"canceled", 5}
+	Errored       = Status{"errored", 5}
 
-	Included = []GetStatus{Indexed, Queued, Compared, Retrying, Downloading, Uploading, Complete, Canceled, Errored}
+	Included = []GetStatus{Indexed, Queued, Compared, Retrying, Downloading, Uploading, Complete, Canceled, Errored, FolderCreated}
 	Excluded = []GetStatus{Skipped, Ignored, FileExists}
-	Valid    = []GetStatus{Indexed, Queued, Compared, Retrying, Downloading, Uploading, Complete}
+	Valid    = []GetStatus{Indexed, Queued, Compared, Retrying, Downloading, Uploading, Complete, FolderCreated}
 	Invalid  = []GetStatus{Null, Canceled, Errored, Skipped, Ignored, FileExists}
 	Running  = []GetStatus{Downloading, Uploading}
-	Ended    = []GetStatus{Complete, Canceled, Errored, Skipped, Ignored, FileExists}
+	Ended    = []GetStatus{Complete, Canceled, Errored, Skipped, Ignored, FileExists, FolderCreated}
 )
 
 func (e Status) String() string {

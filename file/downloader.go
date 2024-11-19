@@ -102,6 +102,7 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *Jo
 			Root:               lib.UrlJoinNoEscape(job.RemotePath),
 			ConcurrencyManager: job.Manager.FilePartsManager,
 			WalkFile:           lib.DirEntryWalkFile,
+			ListDirectories:    true,
 		}).Walk(jobCtx)
 
 		for it.Next() {
@@ -253,6 +254,16 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 
 		if reportStatus.dryRun {
 			reportStatus.Job().UpdateStatus(status.Complete, reportStatus, nil)
+			return
+		}
+
+		if reportStatus.File().IsDir() {
+			err := os.MkdirAll(reportStatus.LocalPath(), 0755)
+			if err != nil {
+				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
+			} else {
+				reportStatus.Job().UpdateStatus(status.FolderCreated, reportStatus, nil)
+			}
 			return
 		}
 

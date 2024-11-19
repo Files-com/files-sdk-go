@@ -603,8 +603,9 @@ func TestClient_UploadFolder_ZeroByteFile(t *testing.T) {
 	job = client.Downloader(DownloaderParams{RemotePath: "zero_byte_folder", LocalPath: tmpDir + string(os.PathSeparator)})
 	job.Start()
 	job.Wait()
-	require.Len(t, job.Statuses, 1)
+	require.Len(t, job.Statuses, 2)
 	assert.NoError(t, job.Statuses[0].Err())
+	assert.NoError(t, job.Statuses[1].Err())
 }
 
 func TestClient_DownloadFolder(t *testing.T) {
@@ -1138,7 +1139,11 @@ func TestClient_Uploader_Directories(t *testing.T) {
 
 	for index, file := range filesAndStatus {
 		assert.Equal(file.name, job.Statuses[index].LocalPath())
-		assert.Equal(status.Complete, job.Statuses[index].Status(), "file %s", file.name)
+		expectedStatus := status.Complete
+		if file.dir {
+			expectedStatus = status.FolderCreated
+		}
+		assert.Equal(expectedStatus, job.Statuses[index].Status(), "file %s", file.name)
 		assert.NoError(job.Statuses[index].Err(), "file %s", file.name)
 	}
 }
@@ -1167,7 +1172,7 @@ func TestClient_Uploader_Empty_Directory(t *testing.T) {
 
 	assert.Equal("empty_dir", job.Statuses[0].RemotePath())
 	assert.Equal(emptyDir, job.Statuses[0].LocalPath())
-	assert.Equal(status.Complete, job.Statuses[0].Status())
+	assert.Equal(status.FolderCreated, job.Statuses[0].Status())
 	assert.NoError(job.Statuses[0].Err())
 }
 
@@ -1234,7 +1239,11 @@ func TestClient_Uploader_Directories_With_DeleteSource(t *testing.T) {
 
 	for index, file := range filesAndStatus {
 		assert.Equal(file.name, job.Statuses[index].LocalPath())
-		assert.Equal(status.Complete, job.Statuses[index].Status(), "file %s", file.name)
+		expectedStatus := status.Complete
+		if file.dir {
+			expectedStatus = status.FolderCreated
+		}
+		assert.Equal(expectedStatus, job.Statuses[index].Status(), "file %s", file.name)
 		assert.NoError(job.Statuses[index].Err(), "file %s", file.name)
 	}
 
