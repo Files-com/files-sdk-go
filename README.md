@@ -437,7 +437,6 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `not-authorized/user-id-without-site-admin` | User Id Without Site Admin |
 | `not-authorized/write-and-bundle-permission-required` | Write And Bundle Permission Required |
 | `not-authorized/write-permission-required` | Write Permission Required |
-| `not-authorized/zip-download-ip-mismatch` | Zip Download Ip Mismatch |
 | `not-found` | Not Found |
 | `not-found/api-key-not-found` | Api Key Not Found |
 | `not-found/bundle-path-not-found` | Bundle Path Not Found |

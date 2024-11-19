@@ -134,7 +134,6 @@ type Site struct {
 	Require2faUserType                       string                 `json:"require_2fa_user_type,omitempty" path:"require_2fa_user_type,omitempty" url:"require_2fa_user_type,omitempty"`
 	RequireLogoutFromBundlesAndInboxes       *bool                  `json:"require_logout_from_bundles_and_inboxes,omitempty" path:"require_logout_from_bundles_and_inboxes,omitempty" url:"require_logout_from_bundles_and_inboxes,omitempty"`
 	Session                                  Session                `json:"session,omitempty" path:"session,omitempty" url:"session,omitempty"`
-	SessionPinnedByIp                        *bool                  `json:"session_pinned_by_ip,omitempty" path:"session_pinned_by_ip,omitempty" url:"session_pinned_by_ip,omitempty"`
 	SftpEnabled                              *bool                  `json:"sftp_enabled,omitempty" path:"sftp_enabled,omitempty" url:"sftp_enabled,omitempty"`
 	SftpHostKeyType                          string                 `json:"sftp_host_key_type,omitempty" path:"sftp_host_key_type,omitempty" url:"sftp_host_key_type,omitempty"`
 	ActiveSftpHostKeyId                      int64                  `json:"active_sftp_host_key_id,omitempty" path:"active_sftp_host_key_id,omitempty" url:"active_sftp_host_key_id,omitempty"`
@@ -257,7 +256,6 @@ type SiteUpdateParams struct {
 	SftpUserRootEnabled                      *bool                  `url:"sftp_user_root_enabled,omitempty" json:"sftp_user_root_enabled,omitempty" path:"sftp_user_root_enabled"`
 	DisablePasswordReset                     *bool                  `url:"disable_password_reset,omitempty" json:"disable_password_reset,omitempty" path:"disable_password_reset"`
 	ImmutableFiles                           *bool                  `url:"immutable_files,omitempty" json:"immutable_files,omitempty" path:"immutable_files"`
-	SessionPinnedByIp                        *bool                  `url:"session_pinned_by_ip,omitempty" json:"session_pinned_by_ip,omitempty" path:"session_pinned_by_ip"`
 	BundleNotFoundMessage                    string                 `url:"bundle_not_found_message,omitempty" json:"bundle_not_found_message,omitempty" path:"bundle_not_found_message"`
 	BundlePasswordRequired                   *bool                  `url:"bundle_password_required,omitempty" json:"bundle_password_required,omitempty" path:"bundle_password_required"`
 	BundleRequireRegistration                *bool                  `url:"bundle_require_registration,omitempty" json:"bundle_require_registration,omitempty" path:"bundle_require_registration"`
