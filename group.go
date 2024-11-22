@@ -18,6 +18,7 @@ type Group struct {
 	SftpPermission    *bool  `json:"sftp_permission,omitempty" path:"sftp_permission,omitempty" url:"sftp_permission,omitempty"`
 	DavPermission     *bool  `json:"dav_permission,omitempty" path:"dav_permission,omitempty" url:"dav_permission,omitempty"`
 	RestapiPermission *bool  `json:"restapi_permission,omitempty" path:"restapi_permission,omitempty" url:"restapi_permission,omitempty"`
+	SiteId            int64  `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
 }
 
 func (g Group) Identifier() interface{} {
@@ -27,10 +28,11 @@ func (g Group) Identifier() interface{} {
 type GroupCollection []Group
 
 type GroupListParams struct {
-	SortBy       map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter       Group                  `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
-	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	Ids          string                 `url:"ids,omitempty" json:"ids,omitempty" path:"ids"`
+	SortBy                  map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter                  Group                  `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterPrefix            map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	Ids                     string                 `url:"ids,omitempty" json:"ids,omitempty" path:"ids"`
+	IncludeParentSiteGroups *bool                  `url:"include_parent_site_groups,omitempty" json:"include_parent_site_groups,omitempty" path:"include_parent_site_groups"`
 	ListParams
 }
 
