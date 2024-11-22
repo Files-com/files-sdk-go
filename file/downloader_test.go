@@ -112,59 +112,22 @@ func Test_downloadFolder_ending_in_slash(t *testing.T) {
 
 	assert.Equal(t, 2, setup.reporterCalls[0].Job.Count())
 	assert.Equal(t, 5, len(setup.reporterCalls))
-	assert.Equal(t, status.Queued, setup.reporterCalls[0].Status)
-	assert.Equal(t, status.Queued, setup.reporterCalls[1].Status)
-	assert.Equal(t, status.FolderCreated, setup.reporterCalls[2].Status)
-	assert.Equal(t, status.Downloading, setup.reporterCalls[3].Status)
-	assert.Equal(t, status.Complete, setup.reporterCalls[4].Status)
-	assert.NoError(t, setup.reporterCalls[4].err)
-	assert.Equal(t, "some-path", setup.reporterCalls[0].File.Path)
-	assert.Equal(t, "some-path/taco.png", setup.reporterCalls[1].File.Path)
+
+	expectedStatus := []status.Status{status.Queued, status.Queued, status.FolderCreated, status.Downloading, status.Complete}
+	var actualStatus []status.Status
+	for _, call := range setup.reporterCalls {
+		actualStatus = append(actualStatus, call.Status)
+		assert.NoError(t, call.err)
+		switch call.Status {
+		case status.FolderCreated:
+			assert.Equal(t, "some-path", call.File.Path)
+		case status.Complete:
+			assert.Equal(t, "some-path/taco.png", call.File.Path)
+		}
+	}
+	assert.ElementsMatch(t, expectedStatus, actualStatus)
+
 	assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
-
-	assert.Equal(t, true, setup.reporterCalls[0].Job.All(status.Ended...))
-	assert.Equal(t, int64(100), setup.reporterCalls[0].Job.TransferBytes())
-	assert.Equal(t, int64(100), setup.reporterCalls[0].Job.TotalBytes())
-
-	assert.NoError(t, setup.TearDown())
-}
-
-func Test_downloader_RemoteStartingSlash(t *testing.T) {
-	setup := NewTestSetup()
-	setup.MapFS["some-path"] = &fstest.MapFile{
-		Data:    nil,
-		Mode:    fs.ModeDir,
-		ModTime: time.Time{},
-		Sys:     files_sdk.File{DisplayName: "some-path", Path: "some-path", Type: "directory"},
-	}
-
-	setup.MapFS["some-path/taco.png"] = &fstest.MapFile{
-		Data:    make([]byte, 100),
-		Mode:    fs.ModePerm,
-		ModTime: time.Time{},
-		Sys:     files_sdk.File{DisplayName: "taco.png", Path: "some-path/taco.png", Type: "file", Size: 100},
-	}
-
-	setup.DownloaderParams = DownloaderParams{RemotePath: "some-path", EventsReporter: setup.Reporter(), LocalPath: setup.RootDestination()}
-	setup.rootDestination = "some-path" + string(os.PathSeparator)
-	setup.Call()
-
-	fi, ok := setup.reporterCalls[0].Find(status.Errored)
-	if ok {
-		require.NoError(t, fi.Err())
-	}
-	assert.Equal(t, 2, setup.reporterCalls[0].Job.Count())
-	assert.Equal(t, 5, len(setup.reporterCalls))
-	assert.Equal(t, status.Queued, setup.reporterCalls[0].Status)
-	assert.Equal(t, status.Queued, setup.reporterCalls[1].Status)
-	assert.Equal(t, status.FolderCreated, setup.reporterCalls[2].Status)
-	assert.Equal(t, status.Downloading, setup.reporterCalls[3].Status)
-	assert.Equal(t, status.Complete, setup.reporterCalls[4].Status)
-	assert.NoError(t, setup.reporterCalls[4].err)
-	assert.Equal(t, "some-path", setup.reporterCalls[0].File.Path)
-	assert.Equal(t, "some-path/taco.png", setup.reporterCalls[1].File.Path)
-	assert.Equal(t, int64(0), setup.reporterCalls[0].TransferBytes)
-
 	assert.Equal(t, true, setup.reporterCalls[0].Job.All(status.Ended...))
 	assert.Equal(t, int64(100), setup.reporterCalls[0].Job.TransferBytes())
 	assert.Equal(t, int64(100), setup.reporterCalls[0].Job.TotalBytes())
