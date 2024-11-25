@@ -65,7 +65,7 @@ type EtagsParam struct {
 	Part string `url:"part,omitempty" json:"part,omitempty" path:"part"`
 }
 
-// Download file
+// Download File
 type FileDownloadParams struct {
 	Path              string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	Action            string `url:"action,omitempty" json:"action,omitempty" path:"action"`
@@ -110,7 +110,7 @@ type FileFindParams struct {
 	WithPriorityColor *bool  `url:"with_priority_color,omitempty" json:"with_priority_color,omitempty" path:"with_priority_color"`
 }
 
-// Copy file/folder
+// Copy File/Folder
 type FileCopyParams struct {
 	Path        string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	Destination string `url:"destination" json:"destination" path:"destination"`
@@ -118,7 +118,7 @@ type FileCopyParams struct {
 	Overwrite   *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
-// Move file/folder
+// Move File/Folder
 type FileMoveParams struct {
 	Path        string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	Destination string `url:"destination" json:"destination" path:"destination"`

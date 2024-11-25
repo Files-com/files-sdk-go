@@ -127,7 +127,7 @@ type AutomationCreateParams struct {
 	Automation                       AutomationEnum         `url:"automation" json:"automation" path:"automation"`
 }
 
-// Manually run automation
+// Manually Run Automation
 type AutomationManualRunParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
