@@ -536,31 +536,9 @@ A README is available on the GitHub link.
 
 ## File/Folder Operations
 
-### List Files and Folders
+### Upload
 
-```go
-import (
-    files_sdk "github.com/Files-com/files-sdk-go/v3"
-    folder "github.com/Files-com/files-sdk-go/v3/folder"
-    "fmt"
-)
-
-func main() {
-    it, err := folder.ListFor(files_sdk.FolderListForParams{})
-
-    if err != nil {
-        // deal with error
-    }
-
-    for it.Next() {
-        entry := it.Folder()
-        fmt.Println(entry.Path)
-    }
-}
-
-```
-
-### Upload a File
+#### Upload a File
 
 ```go
 import (
@@ -579,7 +557,7 @@ func main() {
 }
 ```
 
-### Create File from an io.Reader
+#### Create File from an io.Reader
 
 ```go
 import (
@@ -598,7 +576,7 @@ func main() {
 }
 ```
 
-### Download a File
+### Download
 
 ```go
 import (
@@ -612,6 +590,29 @@ func main() {
     fileEntry, err := client.DownloadToFile(files_sdk.FileDownloadParams{Path: "file-to-download.txt"}, downloadPath)
     if err != nil {
         panic(err)
+    }
+}
+```
+
+### List
+
+```go
+import (
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    folder "github.com/Files-com/files-sdk-go/v3/folder"
+    "fmt"
+)
+
+func main() {
+    it, err := folder.ListFor(files_sdk.FolderListForParams{})
+
+    if err != nil {
+        // deal with error
+    }
+
+    for it.Next() {
+        entry := it.Folder()
+        fmt.Println(entry.Path)
     }
 }
 ```
