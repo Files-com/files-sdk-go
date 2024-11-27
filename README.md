@@ -516,25 +516,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `site-configuration/trial-locked` | Trial Locked |
 | `site-configuration/user-requests-enabled-required` | User Requests Enabled Required |
 
-## Mock Server
-
-Files.com publishes a Files.com API server, which is useful for testing your use of the Files.com
-SDKs and other direct integrations against the Files.com API in an integration test environment.
-
-It is a Ruby app that operates as a minimal server for the purpose of testing basic network
-operations and JSON encoding for your SDK or API client. It does not maintain state and it does not
-deeply inspect your submissions for correctness.
-
-Eventually we will add more features intended for integration testing, such as the ability to
-intentionally provoke errors.
-
-Download the server as a Docker image via [Docker Hub](https://hub.docker.com/r/filescom/files-mock-server).
-
-The Source Code is also available on [GitHub](https://github.com/Files-com/files-mock-server).
-
-A README is available on the GitHub link.
-
-## File/Folder Operations
+## Examples
 
 ### Upload
 
@@ -557,7 +539,7 @@ func main() {
 }
 ```
 
-#### Create File from an io.Reader
+#### Create a File from an io.Reader
 
 ```go
 import (
@@ -576,7 +558,30 @@ func main() {
 }
 ```
 
+#### Create a Folder
+
+```go
+import (
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    folder "github.com/Files-com/files-sdk-go/v3/folder"
+    lib "github.com/Files-com/files-sdk-go/v3/lib"
+)
+
+func main() {
+    client := folder.Client{Config: files_sdk.GlobalConfig}
+    err := client.Create(files_sdk.FolderCreateParams{
+        Path: "path/to/folder/to/be/created"
+        MkdirParents: lib.Bool(true),
+    })
+    if err != nil {
+        panic(err)
+    }
+}
+```
+
 ### Download
+
+#### Download a File
 
 ```go
 import (
@@ -596,6 +601,8 @@ func main() {
 
 ### List
 
+#### List Folder Contents
+
 ```go
 import (
     files_sdk "github.com/Files-com/files-sdk-go/v3"
@@ -604,15 +611,119 @@ import (
 )
 
 func main() {
-    it, err := folder.ListFor(files_sdk.FolderListForParams{})
+    it, err := folder.ListFor(files_sdk.FolderListForParams{
+        Path: "remote/path/to/folder/",
+    })
 
     if err != nil {
-        // deal with error
+        panic(err)
     }
 
     for it.Next() {
-        entry := it.Folder()
+        entry := it.File()
         fmt.Println(entry.Path)
     }
 }
 ```
+
+### Copy
+
+The copy function works for both files and folders.
+
+```go
+import (
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    file "github.com/Files-com/files-sdk-go/v3/file"
+)
+
+func main() {
+    client := file.Client{Config: files_sdk.GlobalConfig}
+    action, err := client.Copy(files_sdk.FileCopyParams{
+        Path: "source/path",
+        Destination: "destination/path"
+    })
+    if err != nil {
+        panic(err)
+    }
+}
+```
+
+### Move
+
+The move function works for both files and folders.
+
+```go
+import (
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    file "github.com/Files-com/files-sdk-go/v3/file"
+)
+
+func main() {
+    client := file.Client{Config: files_sdk.GlobalConfig}
+    action, err := client.Move(files_sdk.FileMoveParams{
+        Path: "source/path",
+        Destination: "destination/path"
+    })
+    if err != nil {
+        panic(err)
+    }
+}
+```
+
+### Delete
+
+The delete function works for both files and folders.
+
+```go
+import (
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    file "github.com/Files-com/files-sdk-go/v3/file"
+)
+
+func main() {
+    client := file.Client{Config: files_sdk.GlobalConfig}
+    err := client.Delete(files_sdk.FileDeleteParams{Path: "path/to/file/or/folder"})
+    if err != nil {
+        panic(err)
+    }
+}
+```
+
+In case the folder is not empty, you can use the `Recursive` argument:
+
+```go
+import (
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    file "github.com/Files-com/files-sdk-go/v3/file"
+    lib "github.com/Files-com/files-sdk-go/v3/lib"
+)
+
+func main() {
+    client := file.Client{Config: files_sdk.GlobalConfig}
+    err := client.Delete(files_sdk.FileDeleteParams{
+        Path: "path/to/folder",
+        Recursive: lib.Bool(true),
+    })
+    if err != nil {
+        panic(err)
+    }
+}
+```
+
+## Mock Server
+
+Files.com publishes a Files.com API server, which is useful for testing your use of the Files.com
+SDKs and other direct integrations against the Files.com API in an integration test environment.
+
+It is a Ruby app that operates as a minimal server for the purpose of testing basic network
+operations and JSON encoding for your SDK or API client. It does not maintain state and it does not
+deeply inspect your submissions for correctness.
+
+Eventually we will add more features intended for integration testing, such as the ability to
+intentionally provoke errors.
+
+Download the server as a Docker image via [Docker Hub](https://hub.docker.com/r/filescom/files-mock-server).
+
+The Source Code is also available on [GitHub](https://github.com/Files-com/files-mock-server).
+
+A README is available on the GitHub link.
