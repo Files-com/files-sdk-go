@@ -360,6 +360,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `bad-request/invalid-filter-alias-combination` | Invalid Filter Alias Combination |
 | `bad-request/invalid-filter-field` | Invalid Filter Field |
 | `bad-request/invalid-filter-param` | Invalid Filter Param |
+| `bad-request/invalid-filter-param-format` | Invalid Filter Param Format |
 | `bad-request/invalid-filter-param-value` | Invalid Filter Param Value |
 | `bad-request/invalid-input-encoding` | Invalid Input Encoding |
 | `bad-request/invalid-interface` | Invalid Interface |
