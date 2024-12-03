@@ -517,6 +517,11 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `site-configuration/trial-locked` | Trial Locked |
 | `site-configuration/user-requests-enabled-required` | User Requests Enabled Required |
 
+## Case Sensitivity
+
+The Files.com API compares files and paths in a case-insensitive manner.
+ For related documentation see [Case Sensitivity Documentation](https://www.files.com/docs/files-and-folders/file-system-semantics/case-sensitivity).
+
 ## Examples
 
 ### Upload
