@@ -28,7 +28,8 @@ type BundleRegistration struct {
 type BundleRegistrationCollection []BundleRegistration
 
 type BundleRegistrationListParams struct {
-	BundleId int64 `url:"bundle_id,omitempty" json:"bundle_id,omitempty" path:"bundle_id"`
+	SortBy   map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	BundleId int64                  `url:"bundle_id,omitempty" json:"bundle_id,omitempty" path:"bundle_id"`
 	ListParams
 }
 
