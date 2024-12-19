@@ -22,7 +22,7 @@ Then, reference files-sdk-go in a Go program with `import`:
 
 ``` go
 import (
-    "github.com/Files-com/files-sdk-go/v3"
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
     "github.com/Files-com/files-sdk-go/v3/folder"
 )
 ```
@@ -62,6 +62,11 @@ access to the entire API. If the user is not an administrator, you will only be 
 that user can access, and no access will be granted to site administration functions in the API.
 
 ```go title="Example Request"
+import (
+  files_sdk "github.com/Files-com/files-sdk-go/v3"
+  "github.com/Files-com/files-sdk-go/v3/folder"
+)
+
 // You can specify an API key in the GlobalConfig, and use that config when creating clients.
 files_sdk.GlobalConfig.APIKey = "YOUR_API_KEY"
 client := folder.Client{Config: files_sdk.GlobalConfig}
@@ -97,6 +102,12 @@ To create a session, create a `session Client` object that points to the subdoma
 The `Create` method on the `session` client can then be used to create a `Session` object which can be used to authenticate SDK method calls.
 
 ```go title="Example Request"
+import (
+  files_sdk "github.com/Files-com/files-sdk-go/v3"
+  "github.com/Files-com/files-sdk-go/v3/folder"
+  "github.com/Files-com/files-sdk-go/v3/session"
+)
+
 sessionClient := session.Client{}
 thisSession, err := sessionClient.Create(files_sdk.SessionCreateParams{Username: "USERNAME", Password: "PASSWORD" })
 config := files_sdk.Config{SessionId: thisSession.Id}
@@ -110,6 +121,11 @@ it, err := folderClient.ListFor(files_sdk.FolderListForParams{})
 Once a session has been created, the `Session.Id` can be set in a `Config` object, which can then be used to authenticate `Client` objects.
 
 ```go title="Example Request"
+import (
+  files_sdk "github.com/Files-com/files-sdk-go/v3"
+  "github.com/Files-com/files-sdk-go/v3/folder"
+)
+
 config := files_sdk.Config{SessionId: thisSession.Id}
 folderClient := folder.Client{Config: config}
 
@@ -121,6 +137,11 @@ it, err := folderClient.ListFor(files_sdk.FolderListForParams{})
 User sessions can be ended by calling `Delete()` on the `Session` client.
 
 ```go title="Example Request"
+import (
+  files_sdk "github.com/Files-com/files-sdk-go/v3"
+  "github.com/Files-com/files-sdk-go/v3/session"
+)
+
 sessionClient := session.Client{Config: files_sdk.Config{ SessionId: thisSession.Id }}
 err = sessionClient.Delete()
 ```
@@ -137,6 +158,11 @@ Setting the base URL for the API is required if your site is configured to disab
 This can also be set to use a mock server in development or CI.
 
 ```go title="Example setting"
+import (
+  files_sdk "github.com/Files-com/files-sdk-go/v3"
+  "github.com/Files-com/files-sdk-go/v3/file"
+)
+
 config := files_sdk.Config{
   EndpointOverride: "https://MY-SUBDOMAIN.files.com",
 }.Init()
@@ -159,11 +185,17 @@ The argument value is a Go ```map[string]interface{}``` map that has a key of th
 name to sort on and a value of either ```"asc"``` or ```"desc"``` to specify the sort order.
 
 ```go title="Sort Example"
-// users sorted by username
-files_sdk.GlobalConfig.APIKey ="my-key";
+import (
+  "fmt"
+
+  files_sdk "github.com/Files-com/files-sdk-go/v3"
+  "github.com/Files-com/files-sdk-go/v3/user"
+)
+
 client := user.Client{Config: files_sdk.GlobalConfig};
-filter_value := true;
-parameters := files_sdk.UserListParams{ SortBy:  map[string]interface{}{"username":"asc" }}
+
+// users sorted by username
+parameters := files_sdk.UserListParams{SortBy: map[string]interface{}{"username":"asc"}}
 user_iterator, err := client.List(parameters)
 if err != nil {
   fmt.Println("There was an error")
@@ -203,9 +235,16 @@ a key of the resource field name to filter on and a passed in value to use in th
 | `FilterLteq` | Range | Find resources that have a field value that is less than or equal to the passed in value.  (i.e., FIELD_VALUE \<= PASS_IN_VALUE). |
 
 ```go title="Exact Filter Example"
-// non admin users
-files_sdk.GlobalConfig.APIKey ="my-key";
+import (
+  "fmt"
+
+  files_sdk "github.com/Files-com/files-sdk-go/v3"
+  "github.com/Files-com/files-sdk-go/v3/user"
+)
+
 client := user.Client{Config: files_sdk.GlobalConfig};
+
+// non admin users
 filter_value := true;
 parameters := files_sdk.UserListParams{
   Filter: files_sdk.User{NotSiteAdmin: &filter_value }
@@ -223,10 +262,16 @@ for user_iterator.Next() {
 ```
 
 ```go title="Range Filter Example"
-// users who haven't logged in since 2024-01-01
-files_sdk.GlobalConfig.APIKey ="my-key";
+import (
+  "fmt"
+
+  files_sdk "github.com/Files-com/files-sdk-go/v3"
+  "github.com/Files-com/files-sdk-go/v3/user"
+)
+
 client := user.Client{Config: files_sdk.GlobalConfig};
-filter_value := true;
+
+// users who haven't logged in since 2024-01-01
 parameters := files_sdk.UserListParams{
   FilterLt:  map[string]interface{}{"last_login_at"":"2024-01-01"}
 }
@@ -243,10 +288,16 @@ for user_iterator.Next() {
 ```
 
 ```go title="Pattern Filter Example"
-// users whose usernames start with 'test'
-files_sdk.GlobalConfig.APIKey ="my-key";
+import (
+  "fmt"
+
+  files_sdk "github.com/Files-com/files-sdk-go/v3"
+  "github.com/Files-com/files-sdk-go/v3/user"
+)
+
 client := user.Client{Config: files_sdk.GlobalConfig};
-filter_value := true;
+
+// users whose usernames start with 'test'
 parameters := files_sdk.UserListParams{
   FilterPrefix:  map[string]interface{}{"username"":"test"}
 }
@@ -263,9 +314,16 @@ for user_iterator.Next() {
 ```
 
 ```go title="Combination Filter with Sort Example"
-// users whose usernames start with 'test' and are not admins
-files_sdk.GlobalConfig.APIKey ="my-key";
+import (
+  "fmt"
+
+  files_sdk "github.com/Files-com/files-sdk-go/v3"
+  "github.com/Files-com/files-sdk-go/v3/user"
+)
+
 client := user.Client{Config: files_sdk.GlobalConfig};
+
+// users whose usernames start with 'test' and are not admins
 filter_value := true;
 parameters := files_sdk.UserListParams{
   FilterPrefix:  map[string]interface{}{"username"":"test"},
@@ -304,7 +362,6 @@ The additional data includes:
 - `ErrorMessage` - additional error information
 
 ```go title="Example Error Handling"
-
 package main
 import (
   "fmt"
@@ -339,7 +396,6 @@ func main() {
 
     fmt.Println("The End")
 }
-
 ```
 
 ### ResponseError Types
