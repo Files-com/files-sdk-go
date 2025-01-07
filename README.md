@@ -523,6 +523,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `processing-failure/destination-folder-limited` | Destination Folder Limited |
 | `processing-failure/destination-parent-conflict` | Destination Parent Conflict |
 | `processing-failure/destination-parent-does-not-exist` | Destination Parent Does Not Exist |
+| `processing-failure/exceeded-runtime-limit` | Exceeded Runtime Limit |
 | `processing-failure/expired-private-key` | Expired Private Key |
 | `processing-failure/expired-public-key` | Expired Public Key |
 | `processing-failure/export-failure` | Export Failure |
