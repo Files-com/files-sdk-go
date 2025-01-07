@@ -25,6 +25,7 @@ type FtpActionLog struct {
 	ResponseMessage string     `json:"responseMessage,omitempty" path:"responseMessage,omitempty" url:"responseMessage,omitempty"`
 	EntriesReturned int64      `json:"entries_returned,omitempty" path:"entries_returned,omitempty" url:"entries_returned,omitempty"`
 	Success         *bool      `json:"success,omitempty" path:"success,omitempty" url:"success,omitempty"`
+	Status          string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
 	DurationMs      int64      `json:"duration_ms,omitempty" path:"duration_ms,omitempty" url:"duration_ms,omitempty"`
 }
 
