@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
-	"github.com/lpar/date"
+	"github.com/lpar/calendar"
 )
 
 type UsageDailySnapshot struct {
 	Id                           int64                  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Date                         *date.Date             `json:"date,omitempty" path:"date,omitempty" url:"date,omitempty"`
+	Date                         *calendar.Date         `json:"date,omitempty" path:"date,omitempty" url:"date,omitempty"`
 	ApiUsageAvailable            *bool                  `json:"api_usage_available,omitempty" path:"api_usage_available,omitempty" url:"api_usage_available,omitempty"`
 	ReadApiUsage                 int64                  `json:"read_api_usage,omitempty" path:"read_api_usage,omitempty" url:"read_api_usage,omitempty"`
 	WriteApiUsage                int64                  `json:"write_api_usage,omitempty" path:"write_api_usage,omitempty" url:"write_api_usage,omitempty"`

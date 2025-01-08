@@ -9,7 +9,7 @@ require (
 	github.com/dnaeon/go-vcr v1.2.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/hashicorp/go-retryablehttp v0.7.7
-	github.com/lpar/date v1.0.0
+	github.com/lpar/calendar v0.2.0
 	github.com/panjf2000/ants/v2 v2.9.1
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
 	github.com/samber/lo v1.39.0
