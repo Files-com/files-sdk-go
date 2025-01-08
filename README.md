@@ -73,7 +73,7 @@ client := folder.Client{Config: files_sdk.GlobalConfig}
 it, err := client.ListFor(files_sdk.FolderListForParams{})
 
 // Alternatively, you can specify the API key on a per-request basis using the Config struct.
-config := files_sdk.Config{APIKey: "YOUR_API_KEY"}
+config := files_sdk.Config{APIKey: "YOUR_API_KEY"}.Init()
 client := folder.Client{Config: config}
 it, err := client.ListFor(files_sdk.FolderListForParams{})
 
@@ -110,7 +110,7 @@ import (
 
 sessionClient := session.Client{}
 thisSession, err := sessionClient.Create(files_sdk.SessionCreateParams{Username: "USERNAME", Password: "PASSWORD" })
-config := files_sdk.Config{SessionId: thisSession.Id}
+config := files_sdk.Config{SessionId: thisSession.Id}.Init()
 folderClient := folder.Client{Config: config}
 
 it, err := folderClient.ListFor(files_sdk.FolderListForParams{})
@@ -126,7 +126,7 @@ import (
   "github.com/Files-com/files-sdk-go/v3/folder"
 )
 
-config := files_sdk.Config{SessionId: thisSession.Id}
+config := files_sdk.Config{SessionId: thisSession.Id}.Init()
 folderClient := folder.Client{Config: config}
 
 it, err := folderClient.ListFor(files_sdk.FolderListForParams{})
@@ -142,7 +142,7 @@ import (
   "github.com/Files-com/files-sdk-go/v3/session"
 )
 
-sessionClient := session.Client{Config: files_sdk.Config{ SessionId: thisSession.Id }}
+sessionClient := session.Client{Config: files_sdk.Config{ SessionId: thisSession.Id }.Init()}
 err = sessionClient.Delete()
 ```
 
@@ -192,7 +192,7 @@ import (
   "github.com/Files-com/files-sdk-go/v3/user"
 )
 
-client := user.Client{Config: files_sdk.GlobalConfig};
+client := user.Client{Config: files_sdk.GlobalConfig}
 
 // users sorted by username
 parameters := files_sdk.UserListParams{SortBy: map[string]interface{}{"username":"asc"}}
@@ -242,7 +242,7 @@ import (
   "github.com/Files-com/files-sdk-go/v3/user"
 )
 
-client := user.Client{Config: files_sdk.GlobalConfig};
+client := user.Client{Config: files_sdk.GlobalConfig}
 
 // non admin users
 filter_value := true;
@@ -383,7 +383,7 @@ func main() {
       }
     }
 
-    sessionClient := session.Client{Config: files_sdk.Config{ SessionId: thisSession.Id }}
+    sessionClient := session.Client{Config: files_sdk.Config{ SessionId: thisSession.Id }.Init()}
     err = sessionClient.Delete()
     if err != nil {
       var respErr files_sdk.ResponseError
