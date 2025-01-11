@@ -63,22 +63,49 @@ that user can access, and no access will be granted to site administration funct
 
 ```go title="Example Request"
 import (
-  files_sdk "github.com/Files-com/files-sdk-go/v3"
-  "github.com/Files-com/files-sdk-go/v3/folder"
+    "fmt"
+    "errors"
+
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    "github.com/Files-com/files-sdk-go/v3/folder"
 )
 
 // You can specify an API key in the GlobalConfig, and use that config when creating clients.
 files_sdk.GlobalConfig.APIKey = "YOUR_API_KEY"
 client := folder.Client{Config: files_sdk.GlobalConfig}
 it, err := client.ListFor(files_sdk.FolderListForParams{})
+if err != nil {
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
+}
 
 // Alternatively, you can specify the API key on a per-request basis using the Config struct.
 config := files_sdk.Config{APIKey: "YOUR_API_KEY"}.Init()
 client := folder.Client{Config: config}
 it, err := client.ListFor(files_sdk.FolderListForParams{})
+if err != nil {
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
+}
 
 // If the API Key is available in the `FILES_API_KEY` environment variable you do not need to create clients.
 it, err := folder.ListFor(files_sdk.FolderListForParams{})
+if err != nil {
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
+}
 ```
 
 Don't forget to replace the placeholder, `YOUR_API_KEY`, with your actual API key.
@@ -103,17 +130,37 @@ The `Create` method on the `session` client can then be used to create a `Sessio
 
 ```go title="Example Request"
 import (
-  files_sdk "github.com/Files-com/files-sdk-go/v3"
-  "github.com/Files-com/files-sdk-go/v3/folder"
-  "github.com/Files-com/files-sdk-go/v3/session"
+    "fmt"
+    "errors"
+
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    "github.com/Files-com/files-sdk-go/v3/folder"
+    "github.com/Files-com/files-sdk-go/v3/session"
 )
 
 sessionClient := session.Client{}
-thisSession, err := sessionClient.Create(files_sdk.SessionCreateParams{Username: "USERNAME", Password: "PASSWORD" })
+thisSession, err := sessionClient.Create(files_sdk.SessionCreateParams{Username: "USERNAME", Password: "PASSWORD"})
+if err != nil {
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
+}
+
 config := files_sdk.Config{SessionId: thisSession.Id}.Init()
 folderClient := folder.Client{Config: config}
 
 it, err := folderClient.ListFor(files_sdk.FolderListForParams{})
+if err != nil {
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
+}
 ```
 
 #### Using a Session
@@ -122,14 +169,25 @@ Once a session has been created, the `Session.Id` can be set in a `Config` objec
 
 ```go title="Example Request"
 import (
-  files_sdk "github.com/Files-com/files-sdk-go/v3"
-  "github.com/Files-com/files-sdk-go/v3/folder"
+    "fmt"
+    "errors"
+
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    "github.com/Files-com/files-sdk-go/v3/folder"
 )
 
 config := files_sdk.Config{SessionId: thisSession.Id}.Init()
 folderClient := folder.Client{Config: config}
 
 it, err := folderClient.ListFor(files_sdk.FolderListForParams{})
+if err != nil {
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
+}
 ```
 
 #### Logging Out
@@ -138,12 +196,23 @@ User sessions can be ended by calling `Delete()` on the `Session` client.
 
 ```go title="Example Request"
 import (
-  files_sdk "github.com/Files-com/files-sdk-go/v3"
-  "github.com/Files-com/files-sdk-go/v3/session"
+    "fmt"
+    "errors"
+
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    "github.com/Files-com/files-sdk-go/v3/session"
 )
 
-sessionClient := session.Client{Config: files_sdk.Config{ SessionId: thisSession.Id }.Init()}
-err = sessionClient.Delete()
+sessionClient := session.Client{Config: files_sdk.Config{SessionId: thisSession.Id}.Init()}
+err := sessionClient.Delete()
+if err != nil {
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
+}
 ```
 
 ## Configuration
@@ -159,12 +228,12 @@ This can also be set to use a mock server in development or CI.
 
 ```go title="Example setting"
 import (
-  files_sdk "github.com/Files-com/files-sdk-go/v3"
-  "github.com/Files-com/files-sdk-go/v3/file"
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    "github.com/Files-com/files-sdk-go/v3/file"
 )
 
 config := files_sdk.Config{
-  EndpointOverride: "https://MY-SUBDOMAIN.files.com",
+    EndpointOverride: "https://MY-SUBDOMAIN.files.com",
 }.Init()
 client := file.Client{Config: config}
 ```
@@ -186,25 +255,39 @@ name to sort on and a value of either ```"asc"``` or ```"desc"``` to specify the
 
 ```go title="Sort Example"
 import (
-  "fmt"
+    "fmt"
+    "errors"
 
-  files_sdk "github.com/Files-com/files-sdk-go/v3"
-  "github.com/Files-com/files-sdk-go/v3/user"
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    "github.com/Files-com/files-sdk-go/v3/user"
 )
 
 client := user.Client{Config: files_sdk.GlobalConfig}
 
 // users sorted by username
 parameters := files_sdk.UserListParams{SortBy: map[string]interface{}{"username":"asc"}}
-user_iterator, err := client.List(parameters)
+userIterator, err := client.List(parameters)
 if err != nil {
-  fmt.Println("There was an error")
-  panic(err)
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
 }
 
-for user_iterator.Next() {
-  user := user_iterator.User()
+for userIterator.Next() {
+  user := userIterator.User()
   fmt.Println(user.Username)
+}
+err = userIterator.Err()
+if err != nil {
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
 }
 ```
 
@@ -236,10 +319,11 @@ a key of the resource field name to filter on and a passed in value to use in th
 
 ```go title="Exact Filter Example"
 import (
-  "fmt"
+    "fmt"
+    "errors"
 
-  files_sdk "github.com/Files-com/files-sdk-go/v3"
-  "github.com/Files-com/files-sdk-go/v3/user"
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    "github.com/Files-com/files-sdk-go/v3/user"
 )
 
 client := user.Client{Config: files_sdk.GlobalConfig}
@@ -247,98 +331,153 @@ client := user.Client{Config: files_sdk.GlobalConfig}
 // non admin users
 filter_value := true;
 parameters := files_sdk.UserListParams{
-  Filter: files_sdk.User{NotSiteAdmin: &filter_value }
+    Filter: files_sdk.User{NotSiteAdmin: &filter_value}
 }
-user_iterator, err := client.List(parameters)
+userIterator, err := client.List(parameters)
 if err != nil {
-  fmt.Println("There was an error")
-  panic(err)
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
 }
 
-for user_iterator.Next() {
-  user := user_iterator.User()
+for userIterator.Next() {
+  user := userIterator.User()
   fmt.Println(user.Username)
+}
+err = userIterator.Err()
+if err != nil {
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
 }
 ```
 
 ```go title="Range Filter Example"
 import (
-  "fmt"
+    "fmt"
+    "errors"
 
-  files_sdk "github.com/Files-com/files-sdk-go/v3"
-  "github.com/Files-com/files-sdk-go/v3/user"
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    "github.com/Files-com/files-sdk-go/v3/user"
 )
 
 client := user.Client{Config: files_sdk.GlobalConfig};
 
 // users who haven't logged in since 2024-01-01
 parameters := files_sdk.UserListParams{
-  FilterLt:  map[string]interface{}{"last_login_at"":"2024-01-01"}
+    FilterLt: map[string]interface{}{"last_login_at": "2024-01-01"}
 }
-user_iterator, err := client.List(parameters)
+userIterator, err := client.List(parameters)
 if err != nil {
-  fmt.Println("There was an error")
-  panic(err)
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
 }
 
-for user_iterator.Next() {
-  user := user_iterator.User()
+for userIterator.Next() {
+  user := userIterator.User()
   fmt.Println(user.Username)
+}
+err = userIterator.Err()
+if err != nil {
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
 }
 ```
 
 ```go title="Pattern Filter Example"
 import (
-  "fmt"
+    "fmt"
+    "errors"
 
-  files_sdk "github.com/Files-com/files-sdk-go/v3"
-  "github.com/Files-com/files-sdk-go/v3/user"
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    "github.com/Files-com/files-sdk-go/v3/user"
 )
 
 client := user.Client{Config: files_sdk.GlobalConfig};
 
 // users whose usernames start with 'test'
 parameters := files_sdk.UserListParams{
-  FilterPrefix:  map[string]interface{}{"username"":"test"}
+    FilterPrefix: map[string]interface{}{"username": "test"}
 }
-user_iterator, err := client.List(parameters)
+userIterator, err := client.List(parameters)
 if err != nil {
-  fmt.Println("There was an error")
-  panic(err)
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
 }
 
-for user_iterator.Next() {
-  user := user_iterator.User()
+for userIterator.Next() {
+  user := userIterator.User()
   fmt.Println(user.Username)
+}
+err = userIterator.Err()
+if err != nil {
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
 }
 ```
 
 ```go title="Combination Filter with Sort Example"
 import (
-  "fmt"
+    "fmt"
+    "errors"
 
-  files_sdk "github.com/Files-com/files-sdk-go/v3"
-  "github.com/Files-com/files-sdk-go/v3/user"
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    "github.com/Files-com/files-sdk-go/v3/user"
 )
 
 client := user.Client{Config: files_sdk.GlobalConfig};
 
 // users whose usernames start with 'test' and are not admins
-filter_value := true;
+filterValue := true;
 parameters := files_sdk.UserListParams{
-  FilterPrefix:  map[string]interface{}{"username"":"test"},
-  Filter: files_sdk.User{NotSiteAdmin: &filter_value },
-  SortBy:  map[string]interface{}{"username":"asc"}
+    FilterPrefix: map[string]interface{}{"username" :"test"},
+    Filter:       files_sdk.User{NotSiteAdmin: &filterValue},
+    SortBy:       map[string]interface{}{"username" :"asc"}
 }
-user_iterator, err := client.List(parameters)
+userIterator, err := client.List(parameters)
 if err != nil {
-  fmt.Println("There was an error")
-  panic(err)
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
 }
 
-for user_iterator.Next() {
-  user := user_iterator.User()
+for userIterator.Next() {
+  user := userIterator.User()
   fmt.Println(user.Username)
+}
+err = userIterator.Err()
+if err != nil {
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
 }
 ```
 
@@ -362,39 +501,22 @@ The additional data includes:
 - `ErrorMessage` - additional error information
 
 ```go title="Example Error Handling"
-package main
 import (
-  "fmt"
-  "errors"
+    "fmt"
+    "errors"
 
-  files_sdk "github.com/Files-com/files-sdk-go/v3"
-  "github.com/Files-com/files-sdk-go/v3/session"
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    "github.com/Files-com/files-sdk-go/v3/session"
 )
 
-func main() {
-    thisSession, err := session.Create(files_sdk.SessionCreateParams{ Username: "USERNAME", Password: "BADPASSWORD" })
-
-    if err != nil {
-      var respErr files_sdk.ResponseError
-      if errors.As(err, &respErr) {
-        fmt.Println("Response Error happened(" + respErr.Type + "): " + respErr.ErrorMessage)
-      } else {
+thisSession, err := session.Create(files_sdk.SessionCreateParams{ Username: "USERNAME", Password: "BADPASSWORD" })
+if err != nil {
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
         fmt.Printf("Unexpected Error: %s\n", err.Error())
-      }
     }
-
-    sessionClient := session.Client{Config: files_sdk.Config{ SessionId: thisSession.Id }.Init()}
-    err = sessionClient.Delete()
-    if err != nil {
-      var respErr files_sdk.ResponseError
-      if errors.As(err, &respErr) {
-        fmt.Println("Response Error happened(" + respErr.Type + "): " + respErr.ErrorMessage)
-      } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
-      }
-    }
-
-    fmt.Println("The End")
 }
 ```
 
