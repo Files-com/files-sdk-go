@@ -44,6 +44,7 @@ type RemoteServer struct {
 	AzureBlobStorageHierarchicalNamespace *bool  `json:"azure_blob_storage_hierarchical_namespace,omitempty" path:"azure_blob_storage_hierarchical_namespace,omitempty" url:"azure_blob_storage_hierarchical_namespace,omitempty"`
 	AzureFilesStorageAccount              string `json:"azure_files_storage_account,omitempty" path:"azure_files_storage_account,omitempty" url:"azure_files_storage_account,omitempty"`
 	AzureFilesStorageShareName            string `json:"azure_files_storage_share_name,omitempty" path:"azure_files_storage_share_name,omitempty" url:"azure_files_storage_share_name,omitempty"`
+	AzureFilesStorageDnsSuffix            string `json:"azure_files_storage_dns_suffix,omitempty" path:"azure_files_storage_dns_suffix,omitempty" url:"azure_files_storage_dns_suffix,omitempty"`
 	S3CompatibleBucket                    string `json:"s3_compatible_bucket,omitempty" path:"s3_compatible_bucket,omitempty" url:"s3_compatible_bucket,omitempty"`
 	S3CompatibleEndpoint                  string `json:"s3_compatible_endpoint,omitempty" path:"s3_compatible_endpoint,omitempty" url:"s3_compatible_endpoint,omitempty"`
 	S3CompatibleRegion                    string `json:"s3_compatible_region,omitempty" path:"s3_compatible_region,omitempty" url:"s3_compatible_region,omitempty"`
@@ -235,6 +236,7 @@ type RemoteServerCreateParams struct {
 	AzureBlobStorageSasToken              string                                  `url:"azure_blob_storage_sas_token,omitempty" json:"azure_blob_storage_sas_token,omitempty" path:"azure_blob_storage_sas_token"`
 	AzureFilesStorageAccount              string                                  `url:"azure_files_storage_account,omitempty" json:"azure_files_storage_account,omitempty" path:"azure_files_storage_account"`
 	AzureFilesStorageShareName            string                                  `url:"azure_files_storage_share_name,omitempty" json:"azure_files_storage_share_name,omitempty" path:"azure_files_storage_share_name"`
+	AzureFilesStorageDnsSuffix            string                                  `url:"azure_files_storage_dns_suffix,omitempty" json:"azure_files_storage_dns_suffix,omitempty" path:"azure_files_storage_dns_suffix"`
 	AzureFilesStorageSasToken             string                                  `url:"azure_files_storage_sas_token,omitempty" json:"azure_files_storage_sas_token,omitempty" path:"azure_files_storage_sas_token"`
 	S3CompatibleBucket                    string                                  `url:"s3_compatible_bucket,omitempty" json:"s3_compatible_bucket,omitempty" path:"s3_compatible_bucket"`
 	S3CompatibleEndpoint                  string                                  `url:"s3_compatible_endpoint,omitempty" json:"s3_compatible_endpoint,omitempty" path:"s3_compatible_endpoint"`
@@ -320,6 +322,7 @@ type RemoteServerUpdateParams struct {
 	AzureBlobStorageSasToken              string                                  `url:"azure_blob_storage_sas_token,omitempty" json:"azure_blob_storage_sas_token,omitempty" path:"azure_blob_storage_sas_token"`
 	AzureFilesStorageAccount              string                                  `url:"azure_files_storage_account,omitempty" json:"azure_files_storage_account,omitempty" path:"azure_files_storage_account"`
 	AzureFilesStorageShareName            string                                  `url:"azure_files_storage_share_name,omitempty" json:"azure_files_storage_share_name,omitempty" path:"azure_files_storage_share_name"`
+	AzureFilesStorageDnsSuffix            string                                  `url:"azure_files_storage_dns_suffix,omitempty" json:"azure_files_storage_dns_suffix,omitempty" path:"azure_files_storage_dns_suffix"`
 	AzureFilesStorageSasToken             string                                  `url:"azure_files_storage_sas_token,omitempty" json:"azure_files_storage_sas_token,omitempty" path:"azure_files_storage_sas_token"`
 	S3CompatibleBucket                    string                                  `url:"s3_compatible_bucket,omitempty" json:"s3_compatible_bucket,omitempty" path:"s3_compatible_bucket"`
 	S3CompatibleEndpoint                  string                                  `url:"s3_compatible_endpoint,omitempty" json:"s3_compatible_endpoint,omitempty" path:"s3_compatible_endpoint"`
