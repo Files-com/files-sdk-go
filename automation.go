@@ -30,6 +30,8 @@ type Automation struct {
 	Path                             string                   `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	PathTimeZone                     string                   `json:"path_time_zone,omitempty" path:"path_time_zone,omitempty" url:"path_time_zone,omitempty"`
 	RecurringDay                     int64                    `json:"recurring_day,omitempty" path:"recurring_day,omitempty" url:"recurring_day,omitempty"`
+	RetryOnFailureIntervalInMinutes  int64                    `json:"retry_on_failure_interval_in_minutes,omitempty" path:"retry_on_failure_interval_in_minutes,omitempty" url:"retry_on_failure_interval_in_minutes,omitempty"`
+	RetryOnFailureNumberOfAttempts   int64                    `json:"retry_on_failure_number_of_attempts,omitempty" path:"retry_on_failure_number_of_attempts,omitempty" url:"retry_on_failure_number_of_attempts,omitempty"`
 	Schedule                         map[string]interface{}   `json:"schedule,omitempty" path:"schedule,omitempty" url:"schedule,omitempty"`
 	HumanReadableSchedule            string                   `json:"human_readable_schedule,omitempty" path:"human_readable_schedule,omitempty" url:"human_readable_schedule,omitempty"`
 	ScheduleDaysOfWeek               []int64                  `json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week,omitempty" url:"schedule_days_of_week,omitempty"`
@@ -123,6 +125,8 @@ type AutomationCreateParams struct {
 	Name                             string                   `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	OverwriteFiles                   *bool                    `url:"overwrite_files,omitempty" json:"overwrite_files,omitempty" path:"overwrite_files"`
 	PathTimeZone                     string                   `url:"path_time_zone,omitempty" json:"path_time_zone,omitempty" path:"path_time_zone"`
+	RetryOnFailureIntervalInMinutes  int64                    `url:"retry_on_failure_interval_in_minutes,omitempty" json:"retry_on_failure_interval_in_minutes,omitempty" path:"retry_on_failure_interval_in_minutes"`
+	RetryOnFailureNumberOfAttempts   int64                    `url:"retry_on_failure_number_of_attempts,omitempty" json:"retry_on_failure_number_of_attempts,omitempty" path:"retry_on_failure_number_of_attempts"`
 	Trigger                          AutomationTriggerEnum    `url:"trigger,omitempty" json:"trigger,omitempty" path:"trigger"`
 	TriggerActions                   []string                 `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
 	Value                            map[string]interface{}   `url:"value,omitempty" json:"value,omitempty" path:"value"`
@@ -160,6 +164,8 @@ type AutomationUpdateParams struct {
 	Name                             string                   `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	OverwriteFiles                   *bool                    `url:"overwrite_files,omitempty" json:"overwrite_files,omitempty" path:"overwrite_files"`
 	PathTimeZone                     string                   `url:"path_time_zone,omitempty" json:"path_time_zone,omitempty" path:"path_time_zone"`
+	RetryOnFailureIntervalInMinutes  int64                    `url:"retry_on_failure_interval_in_minutes,omitempty" json:"retry_on_failure_interval_in_minutes,omitempty" path:"retry_on_failure_interval_in_minutes"`
+	RetryOnFailureNumberOfAttempts   int64                    `url:"retry_on_failure_number_of_attempts,omitempty" json:"retry_on_failure_number_of_attempts,omitempty" path:"retry_on_failure_number_of_attempts"`
 	Trigger                          AutomationTriggerEnum    `url:"trigger,omitempty" json:"trigger,omitempty" path:"trigger"`
 	TriggerActions                   []string                 `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
 	Value                            map[string]interface{}   `url:"value,omitempty" json:"value,omitempty" path:"value"`
