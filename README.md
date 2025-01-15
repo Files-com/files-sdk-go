@@ -700,6 +700,46 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `site-configuration/trial-locked` | Trial Locked |
 | `site-configuration/user-requests-enabled-required` | User Requests Enabled Required |
 
+## {frontmatter.title}
+
+Certain API operations return lists of objects. When the number of objects in the list is large,
+the API will paginate the results.
+
+The Files.com Go SDK automatically paginates through lists of objects by default.
+
+```go title="Example Request" hasDataFormatSelector
+import (
+    "fmt"
+    "errors"
+
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    "github.com/Files-com/files-sdk-go/v3/folder"
+)
+
+fileIterator, err := folder.ListFor(files_sdk.FolderListForParams{Path: "path"})
+if err != nil {
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
+}
+
+for fileIterator.Next() {
+    file := fileIterator.file()
+}
+err = fileIterator.Err()
+if err != nil {
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Unexpected Error: %s\n", err.Error())
+    }
+}
+```
+
 ## Case Sensitivity
 
 The Files.com API compares files and paths in a case-insensitive manner.
