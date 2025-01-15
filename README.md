@@ -452,9 +452,9 @@ client := user.Client{Config: files_sdk.GlobalConfig};
 // users whose usernames start with 'test' and are not admins
 filterValue := true;
 parameters := files_sdk.UserListParams{
-    FilterPrefix: map[string]interface{}{"username" :"test"},
+    FilterPrefix: map[string]interface{}{"username": "test"},
     Filter:       files_sdk.User{NotSiteAdmin: &filterValue},
-    SortBy:       map[string]interface{}{"username" :"asc"}
+    SortBy:       map[string]interface{}{"username": "asc"}
 }
 userIterator, err := client.List(parameters)
 if err != nil {
