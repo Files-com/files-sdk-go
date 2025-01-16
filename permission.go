@@ -15,6 +15,7 @@ type Permission struct {
 	GroupName  string `json:"group_name,omitempty" path:"group_name,omitempty" url:"group_name,omitempty"`
 	Permission string `json:"permission,omitempty" path:"permission,omitempty" url:"permission,omitempty"`
 	Recursive  *bool  `json:"recursive,omitempty" path:"recursive,omitempty" url:"recursive,omitempty"`
+	SiteId     int64  `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
 }
 
 func (p Permission) Identifier() interface{} {
@@ -42,6 +43,7 @@ type PermissionCreateParams struct {
 	UserId     int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Username   string `url:"username,omitempty" json:"username,omitempty" path:"username"`
 	GroupName  string `url:"group_name,omitempty" json:"group_name,omitempty" path:"group_name"`
+	SiteId     int64  `url:"site_id,omitempty" json:"site_id,omitempty" path:"site_id"`
 }
 
 type PermissionDeleteParams struct {
