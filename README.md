@@ -533,6 +533,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `bad-request/cant-move-with-multiple-locations` | Cant Move With Multiple Locations |
 | `bad-request/datetime-parse` | Datetime Parse |
 | `bad-request/destination-same` | Destination Same |
+| `bad-request/does-not-support-sorting` | Does Not Support Sorting |
 | `bad-request/folder-must-not-be-a-file` | Folder Must Not Be A File |
 | `bad-request/folders-not-allowed` | Folders Not Allowed |
 | `bad-request/invalid-body` | Invalid Body |
@@ -549,11 +550,13 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `bad-request/invalid-oauth-provider` | Invalid Oauth Provider |
 | `bad-request/invalid-path` | Invalid Path |
 | `bad-request/invalid-return-to-url` | Invalid Return To Url |
+| `bad-request/invalid-sort-field` | Invalid Sort Field |
 | `bad-request/invalid-sort-filter-combination` | Invalid Sort Filter Combination |
 | `bad-request/invalid-upload-offset` | Invalid Upload Offset |
 | `bad-request/invalid-upload-part-gap` | Invalid Upload Part Gap |
 | `bad-request/invalid-upload-part-size` | Invalid Upload Part Size |
 | `bad-request/method-not-allowed` | Method Not Allowed |
+| `bad-request/multiple-sort-params-not-allowed` | Multiple Sort Params Not Allowed |
 | `bad-request/no-valid-input-params` | No Valid Input Params |
 | `bad-request/part-number-too-large` | Part Number Too Large |
 | `bad-request/path-cannot-have-trailing-whitespace` | Path Cannot Have Trailing Whitespace |
@@ -562,6 +565,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `bad-request/request-params-invalid` | Request Params Invalid |
 | `bad-request/request-params-required` | Request Params Required |
 | `bad-request/search-all-on-child-path` | Search All On Child Path |
+| `bad-request/unrecognized-sort-index` | Unrecognized Sort Index |
 | `bad-request/unsupported-currency` | Unsupported Currency |
 | `bad-request/unsupported-http-response-format` | Unsupported Http Response Format |
 | `bad-request/unsupported-media-type` | Unsupported Media Type |
