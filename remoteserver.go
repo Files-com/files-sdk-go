@@ -35,7 +35,6 @@ type RemoteServer struct {
 	RackspaceUsername                     string `json:"rackspace_username,omitempty" path:"rackspace_username,omitempty" url:"rackspace_username,omitempty"`
 	RackspaceRegion                       string `json:"rackspace_region,omitempty" path:"rackspace_region,omitempty" url:"rackspace_region,omitempty"`
 	RackspaceContainer                    string `json:"rackspace_container,omitempty" path:"rackspace_container,omitempty" url:"rackspace_container,omitempty"`
-	AuthSetupLink                         string `json:"auth_setup_link,omitempty" path:"auth_setup_link,omitempty" url:"auth_setup_link,omitempty"`
 	AuthStatus                            string `json:"auth_status,omitempty" path:"auth_status,omitempty" url:"auth_status,omitempty"`
 	AuthAccountName                       string `json:"auth_account_name,omitempty" path:"auth_account_name,omitempty" url:"auth_account_name,omitempty"`
 	OneDriveAccountType                   string `json:"one_drive_account_type,omitempty" path:"one_drive_account_type,omitempty" url:"one_drive_account_type,omitempty"`
