@@ -53,14 +53,15 @@ func (f Folder) Identifier() interface{} {
 type FolderCollection []Folder
 
 type FolderListForParams struct {
-	Path               string                              `url:"-,omitempty" json:"-,omitempty" path:"path"`
-	PreviewSize        string                              `url:"preview_size,omitempty" json:"preview_size,omitempty" path:"preview_size"`
-	SortBy             map[string]interface{}              `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Search             string                              `url:"search,omitempty" json:"search,omitempty" path:"search"`
-	SearchAll          *bool                               `url:"search_all,omitempty" json:"search_all,omitempty" path:"search_all"`
-	WithPreviews       *bool                               `url:"with_previews,omitempty" json:"with_previews,omitempty" path:"with_previews"`
-	WithPriorityColor  *bool                               `url:"with_priority_color,omitempty" json:"with_priority_color,omitempty" path:"with_priority_color"`
-	ConcurrencyManager lib.ConcurrencyManagerWithSubWorker `url:"-" required:"false" json:"-"`
+	Path                    string                              `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	PreviewSize             string                              `url:"preview_size,omitempty" json:"preview_size,omitempty" path:"preview_size"`
+	SortBy                  map[string]interface{}              `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Search                  string                              `url:"search,omitempty" json:"search,omitempty" path:"search"`
+	SearchCustomMetadataKey string                              `url:"search_custom_metadata_key,omitempty" json:"search_custom_metadata_key,omitempty" path:"search_custom_metadata_key"`
+	SearchAll               *bool                               `url:"search_all,omitempty" json:"search_all,omitempty" path:"search_all"`
+	WithPreviews            *bool                               `url:"with_previews,omitempty" json:"with_previews,omitempty" path:"with_previews"`
+	WithPriorityColor       *bool                               `url:"with_priority_color,omitempty" json:"with_priority_color,omitempty" path:"with_priority_color"`
+	ConcurrencyManager      lib.ConcurrencyManagerWithSubWorker `url:"-" required:"false" json:"-"`
 	ListParams
 }
 
