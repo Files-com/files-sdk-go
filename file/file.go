@@ -31,7 +31,7 @@ type MashableError struct {
 }
 
 func (m MashableError) MarshalJSON() ([]byte, error) {
-	return json.Marshal(m.Err())
+	return json.Marshal(m.error)
 }
 
 func (m MashableError) Err() error {
