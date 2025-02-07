@@ -42,4 +42,8 @@ func (m MashableError) Err() error {
 	return m
 }
 
+func (m MashableError) Unwrap() error {
+	return m.error
+}
+
 type Reporter func(JobFile)

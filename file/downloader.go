@@ -168,6 +168,8 @@ func createIndexedStatus(f Entity, params DownloaderParams, job *Job) {
 		fsFile:        f.File,
 		FS:            f.FS,
 		job:           job,
+		localPath:     params.LocalPath,
+		remotePath:    params.RemotePath,
 		tempPath:      params.TempPath,
 		Sync:          params.Sync,
 		NoOverwrite:   params.NoOverwrite,
