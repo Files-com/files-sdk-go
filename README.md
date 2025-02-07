@@ -573,6 +573,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `bad-request/user-id-on-user-endpoint` | User Id On User Endpoint |
 | `bad-request/user-required` | User Required |
 | `not-authenticated/additional-authentication-required` | Additional Authentication Required |
+| `not-authenticated/api-key-sessions-not-supported` | Api Key Sessions Not Supported |
 | `not-authenticated/authentication-required` | Authentication Required |
 | `not-authenticated/bundle-registration-code-failed` | Bundle Registration Code Failed |
 | `not-authenticated/files-agent-token-failed` | Files Agent Token Failed |
