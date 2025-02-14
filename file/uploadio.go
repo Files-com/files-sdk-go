@@ -437,6 +437,7 @@ func (u *uploadIO) startUpload(ctx context.Context, beginUpload files_sdk.FileBe
 	if err != nil {
 		return files_sdk.FileUploadPart{}, err
 	}
+	u.Progress(0)
 	return uploads[0], err
 }
 
