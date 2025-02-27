@@ -15,6 +15,7 @@ require (
 	github.com/samber/lo v1.39.0
 	github.com/snabb/httpreaderat v1.0.1
 	github.com/stretchr/testify v1.9.0
+	github.com/winfsp/cgofuse v1.6.0
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
 	golang.org/x/text v0.15.0
 	moul.io/http2curl/v2 v2.3.0
