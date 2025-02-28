@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	filepath "path"
+	"slices"
 	"sync"
 	"time"
 
@@ -24,13 +25,16 @@ const (
 )
 
 type fsNode struct {
+	fs          *Filescomfs
+	path        string
 	openCount   int
 	stat        *fuse.Stat_t
 	statExpires *time.Time
 	mu          sync.Mutex
-	pipeWriter  *io.PipeWriter
-	pipeReader  *io.PipeReader
+	writer      *io.PipeWriter
+	reader      *io.PipeReader
 	writeOffset int64
+	partCache   map[int64][]byte
 }
 
 func (n *fsNode) updateStat(stat *fuse.Stat_t) {
@@ -41,46 +45,61 @@ func (n *fsNode) updateStat(stat *fuse.Stat_t) {
 	n.statExpires = lib.Time(time.Now().Add(statCacheTime))
 }
 
-func (n *fsNode) updateWriteOffset(offset int) {
+func (n *fsNode) openWriter() {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	n.writeOffset += int64(offset)
-	n.stat.Size = n.writeOffset
-	n.statExpires = lib.Time(time.Now().Add(statCacheTime))
-}
-
-func (n *fsNode) openWriter(path string, client *file.Client) {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-	if n.pipeWriter == nil {
-		n.pipeReader, n.pipeWriter = io.Pipe()
+	if n.writer == nil {
+		n.reader, n.writer = io.Pipe()
+		n.partCache = make(map[int64][]byte)
 		go func() {
 			uploadOpts := []file.UploadOption{
-				file.UploadWithReader(n.pipeReader),
-				file.UploadWithDestinationPath(path),
+				file.UploadWithReader(n.reader),
+				file.UploadWithDestinationPath(n.path),
 			}
 
-			client.Upload(uploadOpts...)
+			if err := n.fs.fileClient.Upload(uploadOpts...); err != nil {
+				n.fs.error("Upload failed: %v", err)
+			}
 
-			n.pipeReader.Close()
-			n.pipeReader = nil
+			n.reader.Close()
+			n.reader = nil
 		}()
 	}
+}
+
+func (n *fsNode) write(buff []byte) (int, error) {
+	n.mu.Lock()
+	defer n.mu.Unlock()
+
+	l, err := n.writer.Write(buff)
+	if err != nil {
+		return 0, err
+	}
+
+	// Remove the part from the cache. No-op if it's not in the cache.
+	delete(n.partCache, n.writeOffset)
+
+	n.writeOffset += int64(l)
+	n.stat.Size = n.writeOffset
+	n.statExpires = lib.Time(time.Now().Add(statCacheTime))
+
+	return l, nil
 }
 
 func (n *fsNode) closeWriter() {
 	n.mu.Lock()
 	defer n.mu.Unlock()
 
-	if n.pipeWriter != nil {
-		n.pipeWriter.Close()
-		n.pipeWriter = nil
+	if n.writer != nil {
+		n.writer.Close()
+		n.writer = nil
 		n.writeOffset = 0
 		n.statExpires = nil
+		n.partCache = nil
 
 		// Wait for the reader to be closed so we know the upload is complete.
-		for n.pipeReader != nil {
+		for n.reader != nil {
 			time.Sleep(1 * time.Second) // TODO: make this better
 		}
 	}
@@ -103,8 +122,8 @@ func (self *Filescomfs) Init() {
 }
 
 func (self *Filescomfs) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
-	self.trace("Statfs: path=%v", path)
 	path = self.absPath(path)
+	self.trace("Statfs: path=%v", path)
 
 	blockSize := uint64(4096)
 	totalBytes := uint64(1 << 50) // 1 PB?
@@ -121,8 +140,8 @@ func (self *Filescomfs) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 }
 
 func (self *Filescomfs) Mknod(path string, mode uint32, dev uint64) (errc int) {
-	self.trace("Mknod: path=%v, mode=%v, dev=%v", path, mode, dev)
 	path = self.absPath(path)
+	self.trace("Mknod: path=%v, mode=%v, dev=%v", path, mode, dev)
 
 	_, err := self.fileClient.Find(files_sdk.FileFindParams{Path: path})
 	if err == nil {
@@ -135,14 +154,14 @@ func (self *Filescomfs) Mknod(path string, mode uint32, dev uint64) (errc int) {
 	}
 
 	node := self.fetchNode(path)
-	node.openWriter(path, self.fileClient)
+	node.openWriter()
 
 	return 0
 }
 
 func (self *Filescomfs) Mkdir(path string, mode uint32) (errc int) {
-	self.trace("Mkdir: path=%v, mode=%v", path, mode)
 	path = self.absPath(path)
+	self.trace("Mkdir: path=%v, mode=%v", path, mode)
 
 	_, err := self.fileClient.CreateFolder(files_sdk.FolderCreateParams{Path: path})
 	if files_sdk.IsExist(err) {
@@ -152,8 +171,11 @@ func (self *Filescomfs) Mkdir(path string, mode uint32) (errc int) {
 }
 
 func (self *Filescomfs) Unlink(path string) (errc int) {
-	self.trace("Unlink: path=%v", path)
 	path = self.absPath(path)
+	self.trace("Unlink: path=%v", path)
+
+	node := self.fetchNode(path)
+	node.closeWriter()
 
 	file, err := self.fileClient.Find(files_sdk.FileFindParams{Path: path})
 	if errc = self.handleError(err); errc != 0 {
@@ -168,8 +190,8 @@ func (self *Filescomfs) Unlink(path string) (errc int) {
 }
 
 func (self *Filescomfs) Rmdir(path string) (errc int) {
-	self.trace("Rmdir: path=%v", path)
 	path = self.absPath(path)
+	self.trace("Rmdir: path=%v", path)
 
 	file, err := self.fileClient.Find(files_sdk.FileFindParams{Path: path})
 	if files_sdk.IsNotExist(err) {
@@ -188,9 +210,9 @@ func (self *Filescomfs) Rmdir(path string) (errc int) {
 }
 
 func (self *Filescomfs) Rename(oldpath string, newpath string) (errc int) {
-	self.trace("Rename: oldpath=%v, newpath=%v", oldpath, newpath)
 	oldpath = self.absPath(oldpath)
 	newpath = self.absPath(newpath)
+	self.trace("Rename: oldpath=%v, newpath=%v", oldpath, newpath)
 
 	params := files_sdk.FileMoveParams{
 		Path:        oldpath,
@@ -208,8 +230,9 @@ func (self *Filescomfs) Rename(oldpath string, newpath string) (errc int) {
 }
 
 func (self *Filescomfs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
-	self.trace("Utimens: path=%v, tmsp=%v", path, tmsp)
 	path = self.absPath(path)
+	self.trace("Utimens: path=%v, tmsp=%v", path, tmsp)
+
 	node := self.fetchNode(path)
 	node.closeWriter()
 
@@ -223,17 +246,20 @@ func (self *Filescomfs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 }
 
 func (self *Filescomfs) Open(path string, flags int) (errc int, fh uint64) {
-	self.trace("Open: path=%v, flags=%v", path, flags)
 	path = self.absPath(path)
+	self.trace("Open: path=%v, flags=%v", path, flags)
+
 	return self.openNode(path, false)
 }
 
 func (self *Filescomfs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
-	self.trace("Getattr: path=%v", path)
 	path = self.absPath(path)
+	self.trace("Getattr: path=%v", path)
+
 	node := self.fetchNode(path)
 
-	if fuse.S_IFDIR == node.stat.Mode&fuse.S_IFMT || (node.statExpires != nil && node.statExpires.After(time.Now())) || node.pipeWriter != nil {
+	if fuse.S_IFDIR == node.stat.Mode&fuse.S_IFMT || (node.statExpires != nil && node.statExpires.After(time.Now())) || node.writer != nil {
+		self.trace("Getattr: using cached stat, path=%v, size=%v, mtime=%v", path, node.stat.Size, node.stat.Mtim)
 		*stat = *node.stat
 		return 0
 	}
@@ -251,18 +277,20 @@ func (self *Filescomfs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc
 
 // TODO: this is needed in order to support file overwrites, but do we need to actually truncate to the given size?
 func (self *Filescomfs) Truncate(path string, size int64, fh uint64) (errc int) {
-	self.trace("Truncate: path=%v, size=%v", path, size)
 	path = self.absPath(path)
+	self.trace("Truncate: path=%v, size=%v", path, size)
+
 	return 0
 }
 
 func (self *Filescomfs) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
-	self.trace("Read: path=%v, len=%v, ofst=%v", path, len(buff), ofst)
 	path = self.absPath(path)
+	self.trace("Read: path=%v, len=%v, ofst=%v", path, len(buff), ofst)
+
 	node := self.fetchNode(path)
 
 	if ofst >= node.stat.Size {
-		// Finished reading the file.
+		self.trace("Read: offset %d is greater than file size %d, returning EOF", ofst, node.stat.Size)
 		return 0
 	}
 
@@ -288,43 +316,65 @@ func (self *Filescomfs) Read(path string, buff []byte, ofst int64, fh uint64) (n
 }
 
 func (self *Filescomfs) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
-	self.trace("Write: path=%v, len=%v, ofst=%v", path, len(buff), ofst)
 	path = self.absPath(path)
+	self.trace("Write: path=%v, len=%v, ofst=%v", path, len(buff), ofst)
+
 	node := self.fetchNode(path)
 
 	if ofst < node.writeOffset {
 		// This happens on Windows when a write operation is paused. It writes a 56 byte buffer at
 		// offset 0. It's unclear how to handle this to properly resume the write.
+		self.trace("Write: path=%v, offset %d is less than write offset %d, closing writer", path, ofst, node.writeOffset)
 		node.closeWriter()
 		return len(buff)
 	}
 
-	node.openWriter(path, self.fileClient)
+	node.openWriter()
 
-	for ofst != node.writeOffset {
-		self.trace("Waiting for correct write offset (expected: %d, got: %d)", node.writeOffset, ofst)
-		time.Sleep(1 * time.Second)
+	if ofst > node.writeOffset {
+		// Sometimes parts come in out of order. We need to cache them until it's time to write them.
+		self.trace("Write: path=%v, offset %d is greater than write offset %d, caching", path, ofst, node.writeOffset)
+		// TODO: Allow for configuring the cache size.
+		node.partCache[ofst] = slices.Clone(buff)
+		// Return that we wrote the full buffer, otherwise fuse will eventually fail the write.
+		return len(buff)
 	}
 
-	n, err := node.pipeWriter.Write(buff)
+	n, err := node.write(buff)
 	if errc := self.handleError(err); errc != 0 {
 		return errc
 	}
 
-	node.updateWriteOffset(n)
+	self.trace("Write: path=%v, wrote %d bytes, new write offset is %d", path, n, node.writeOffset)
+
+	for {
+		part, ok := node.partCache[node.writeOffset]
+		if !ok {
+			break
+		}
+
+		l, err := node.write(part)
+		if errc := self.handleError(err); errc != 0 {
+			return errc
+		}
+
+		self.trace("Write: path=%v, wrote %d bytes, new write offset is %d", path, l, node.writeOffset)
+	}
 
 	return n
 }
 
 func (self *Filescomfs) Release(path string, fh uint64) (errc int) {
-	self.trace("Release: path=%v", path)
 	path = self.absPath(path)
+	self.trace("Release: path=%v", path)
+
 	return self.closeNode(path)
 }
 
 func (self *Filescomfs) Opendir(path string) (errc int, fh uint64) {
-	self.trace("Opendir: path=%v", path)
 	path = self.absPath(path)
+	self.trace("Opendir: path=%v", path)
+
 	return self.openNode(path, true)
 }
 
@@ -332,8 +382,8 @@ func (self *Filescomfs) Readdir(path string,
 	fill func(name string, stat *fuse.Stat_t, ofst int64) bool,
 	ofst int64,
 	fh uint64) (errc int) {
-	self.trace("Readdir: path=%v", path)
 	path = self.absPath(path)
+	self.trace("Readdir: path=%v", path)
 
 	it, err := self.fileClient.ListFor(files_sdk.FolderListForParams{Path: path})
 	if errc = self.handleError(err); errc != 0 {
@@ -354,8 +404,9 @@ func (self *Filescomfs) Readdir(path string,
 }
 
 func (self *Filescomfs) Releasedir(path string, fh uint64) (errc int) {
-	self.trace("Releasedir: path=%v", path)
 	path = self.absPath(path)
+	self.trace("Releasedir: path=%v", path)
+
 	return self.closeNode(path)
 }
 
@@ -412,7 +463,11 @@ func (self *Filescomfs) fetchNode(path string) (node *fsNode) {
 	node, ok := self.openMap[path]
 	if !ok {
 		stat := &fuse.Stat_t{}
-		node = &fsNode{stat: stat}
+		node = &fsNode{
+			fs:   self,
+			path: path,
+			stat: stat,
+		}
 		self.openMap[path] = node
 
 		if path == "/" {
