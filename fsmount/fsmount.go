@@ -3,6 +3,7 @@
 package fsmount
 
 import (
+	"fmt"
 	"runtime"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
@@ -20,7 +21,7 @@ type MountHost interface {
 	Unmount() bool
 }
 
-func Mount(params MountParams) MountHost {
+func Mount(params MountParams) (MountHost, error) {
 	fs := &Filescomfs{
 		root:   params.Root,
 		config: params.Config,
@@ -39,8 +40,26 @@ func Mount(params MountParams) MountHost {
 	}
 	options = append(options, "-o", "FileSystemName=Files.com")
 
+	if err := initFuse(); err != nil {
+		return nil, err
+	}
+
 	go func() {
 		host.Mount(params.MountPoint, options)
 	}()
-	return host
+
+	return host, nil
+}
+
+// Test if the fuse library can be loaded, and gracefully handle any error.
+func initFuse() (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+	}()
+
+	// This will panic if the fuse library cannot be loaded.
+	fuse.OptParse([]string{}, "")
+	return
 }
