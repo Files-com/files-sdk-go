@@ -672,11 +672,13 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `processing-failure/invalid-filename` | Invalid Filename |
 | `processing-failure/invalid-priority-color` | Invalid Priority Color |
 | `processing-failure/invalid-range` | Invalid Range |
+| `processing-failure/invalid-site` | Invalid Site |
 | `processing-failure/model-save-error` | Model Save Error |
 | `processing-failure/multiple-processing-errors` | Multiple Processing Errors |
 | `processing-failure/path-too-long` | Path Too Long |
 | `processing-failure/recipient-already-shared` | Recipient Already Shared |
 | `processing-failure/remote-server-error` | Remote Server Error |
+| `processing-failure/resource-belongs-to-parent-site` | Resource Belongs To Parent Site |
 | `processing-failure/resource-locked` | Resource Locked |
 | `processing-failure/subfolder-locked` | Subfolder Locked |
 | `processing-failure/two-factor-authentication-code-already-sent` | Two Factor Authentication Code Already Sent |
