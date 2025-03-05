@@ -51,7 +51,6 @@ type uploadIO struct {
 	etags                      []files_sdk.EtagsParam
 	file                       files_sdk.File
 	RewindAllProgressOnFailure bool
-	disableParallelParts       bool
 	notResumable               *atomic.Bool
 }
 
@@ -87,9 +86,9 @@ func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
 	var err error
 	if time.Now().After(u.FileUploadPart.UploadExpires()) || u.isRemoteMount(u.FileUploadPart) {
 		if len(u.Parts) > 0 {
-			u.LogPath(u.Path, map[string]interface{}{
+			u.LogPath(u.Path, map[string]any{
 				"timestamp":     time.Now(),
-				"event":         "check resumablity",
+				"event":         "check resumability",
 				"isRemoteMount": u.isRemoteMount(u.FileUploadPart),
 				"expired":       time.Now().After(u.FileUploadPart.UploadExpires()),
 				"message":       "parts are invalidated must start over",
@@ -146,7 +145,7 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 		case <-u.partsFinished:
 			close(u.onComplete)
 			if allErrors != nil {
-				u.LogPath(u.Path, map[string]interface{}{
+				u.LogPath(u.Path, map[string]any{
 					"timestamp": time.Now(),
 					"error":     allErrors.Error(),
 					"event":     "partsFinished",
@@ -161,7 +160,7 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 				u.file, err = u.completeUpload(ctx, u.ProvidedMtime, u.etags, u.bytesWritten, u.Path, u.FileUploadPart.Ref)
 				u.Manager.Done()
 				if err != nil {
-					u.LogPath(u.Path, map[string]interface{}{
+					u.LogPath(u.Path, map[string]any{
 						"timestamp": time.Now(),
 						"error":     err.Error(),
 						"event":     "complete upload",
@@ -171,7 +170,7 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 				}
 				return u.UploadResumable(), err
 			} else {
-				u.LogPath(u.Path, map[string]interface{}{
+				u.LogPath(u.Path, map[string]any{
 					"timestamp": time.Now(),
 					"error":     ctx.Err(),
 					"event":     "complete upload",
@@ -188,7 +187,7 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 				u.Progress(-part.bytes)
 				allErrors = errors.Join(allErrors, part.error)
 
-				u.LogPath(u.Path, map[string]interface{}{
+				u.LogPath(u.Path, map[string]any{
 					"timestamp": time.Now(),
 					"error":     part.Error(),
 					"part":      part.PartNumber,
@@ -261,62 +260,42 @@ func (u *uploadIO) ensurePartNumber(part *Part) {
 }
 
 func (u *uploadIO) buildReader(offset OffSet) (ProxyReader, error) {
-	var readerAt io.ReaderAt
-	var readerAtOk bool
+	readerAt, readerAtOk := u.ReaderAt()
 
-	if readerAt, readerAtOk = u.ReaderAt(); !readerAtOk {
-		u.disableParallelParts = true
-	}
-
-	if u.Size == nil {
-		if readerAtOk {
-			sectionReader := io.NewSectionReader(readerAt, offset.off, offset.len)
-			buf := new(bytes.Buffer)
-
-			// Use io.CopyN to copy up to fiveMB into buf
-			n, err := io.CopyN(buf, sectionReader, offset.len)
-			if err != nil && err != io.EOF {
-				return nil, err
-			}
-
-			return &ProxyRead{
-				Reader: buf,
-				len:    n,
-				onRead: u.Progress,
-			}, nil
-		} else {
-			buf := new(bytes.Buffer)
-
-			// Use io.CopyN to copy up to fiveMB into buf
-			reader, _ := u.Reader()
-			n, err := io.CopyN(buf, reader, offset.len)
-			if err != nil && err != io.EOF {
-				return nil, err
-			}
-
-			return &ProxyRead{
-				Reader: buf,
-				len:    n,
-				onRead: u.Progress,
-			}, nil
-		}
-	}
-
-	if readerAtOk {
+	if u.Size != nil && readerAtOk {
 		return &ProxyReaderAt{
 			ReaderAt: readerAt,
 			off:      offset.off,
 			len:      offset.len,
 			onRead:   u.Progress,
 		}, nil
-	} else {
+	}
+
+	if u.Size == nil || *u.FileUploadPart.ParallelParts {
 		reader, _ := u.Reader()
+		if readerAtOk {
+			reader = io.NewSectionReader(readerAt, offset.off, offset.len)
+		}
+
+		buf := new(bytes.Buffer)
+		n, err := io.CopyN(buf, reader, offset.len)
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+
 		return &ProxyRead{
-			Reader: reader,
-			len:    offset.len,
+			Reader: buf,
+			len:    n,
 			onRead: u.Progress,
 		}, nil
 	}
+
+	reader, _ := u.Reader()
+	return &ProxyRead{
+		Reader: reader,
+		len:    offset.len,
+		onRead: u.Progress,
+	}, nil
 }
 
 type PartRunnerReturn int
@@ -328,7 +307,7 @@ func (u *uploadIO) manageUpdatePart(ctx context.Context, part *Part, wait lib.Co
 	}
 
 	if wait.WaitWithContext(ctx) {
-		if *u.FileUploadPart.ParallelParts && !u.disableParallelParts && u.Size != nil {
+		if *u.FileUploadPart.ParallelParts {
 			go func() {
 				u.runUploadPart(ctx, part)
 				wait.Done()
@@ -360,7 +339,7 @@ func (u *uploadIO) runUploadPart(ctx context.Context, part *Part) {
 			part.FileUploadPart.Expires = ""
 			part.FileUploadPart.UploadUri = ""
 			if part.ProxyReader.Rewind() {
-				u.LogPath(u.Path, map[string]interface{}{
+				u.LogPath(u.Path, map[string]any{
 					"timestamp": time.Now(),
 					"error":     part.error,
 					"part":      part.PartNumber,
@@ -463,7 +442,7 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 	if part.PartNumber != 1 || part.UploadUri == "" {
 		if time.Now().After(part.ExpiresTime()) {
 			if !part.ExpiresTime().IsZero() {
-				u.LogPath(u.Path, map[string]interface{}{
+				u.LogPath(u.Path, map[string]any{
 					"timestamp":           time.Now(),
 					"part":                part.PartNumber,
 					"event":               "uploadPart",

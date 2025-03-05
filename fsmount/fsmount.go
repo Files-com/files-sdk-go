@@ -11,10 +11,11 @@ import (
 )
 
 type MountParams struct {
-	MountPoint string
-	VolumeName string
-	Root       string
-	Config     files_sdk.Config
+	MountPoint       string
+	VolumeName       string
+	Root             string
+	WriteConcurrency *int
+	Config           files_sdk.Config
 }
 
 type MountHost interface {
@@ -23,8 +24,9 @@ type MountHost interface {
 
 func Mount(params MountParams) (MountHost, error) {
 	fs := &Filescomfs{
-		root:   params.Root,
-		config: params.Config,
+		root:             params.Root,
+		writeConcurrency: params.WriteConcurrency,
+		config:           params.Config,
 	}
 	host := fuse.NewFileSystemHost(fs)
 	host.SetDirectIO(true)

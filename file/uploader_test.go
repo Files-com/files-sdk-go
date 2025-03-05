@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"io/fs"
 	"math"
 	"net/http"
@@ -588,33 +587,6 @@ func TestUploadReader(t *testing.T) {
 		ContentType: "application/xml",
 		Body:        []byte(`<?xml version="1.0" encoding="UTF-8"?> <Error><Code>AccessDenied</Code><Message>Request has expired</Message><X-Amz-Expires>900</X-Amz-Expires><Expires>2023-09-06T05:27:01Z</Expires><ServerTime>2023-09-06T05:27:21Z</ServerTime><RequestId>DCZ7NV6P08Y6SKY2</RequestId><HostId>a0ww8xPnO34ZC2to9wizy501VJcZicTFKdohzq5P7SArZuXJ7cCo6GpJbUXITjkyFHNPla8Sd1U=</HostId></Error>`),
 	}
-
-	t.Run("socket connection error", func(t *testing.T) {
-		server := (&MockAPIServer{T: t}).Do()
-		defer server.Shutdown()
-
-		r, w := io.Pipe()
-		defer w.Close()
-		defer r.Close()
-		go func() {
-			for {
-				// Simulate a slow disk access
-				w.Write([]byte("1"))
-				time.Sleep(time.Millisecond * 10)
-			}
-		}()
-
-		client := server.Client()
-		u, err := client.UploadWithResume(
-			UploadWithSize(1024),
-			UploadWithReader(r),
-			UploadWithDestinationPath("file.bak"),
-			UploadWithManager(lib.NewConstrainedWorkGroup(1)),
-		)
-
-		assert.Equal(t, lib.S3Error{Message: "Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed.", Code: "RequestTimeout"}.Error(), err.Error())
-		assert.Equal(t, "file.bak", u.FileUploadPart.Path)
-	})
 
 	t.Run("socket connection error recovers after retry", func(t *testing.T) {
 		server := (&MockAPIServer{T: t}).Do()

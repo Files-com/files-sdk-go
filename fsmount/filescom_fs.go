@@ -14,6 +14,7 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/file"
+	"github.com/Files-com/files-sdk-go/v3/file/manager"
 	file_migration "github.com/Files-com/files-sdk-go/v3/filemigration"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/winfsp/cgofuse/fuse"
@@ -40,7 +41,7 @@ type fsNode struct {
 
 func (n *fsNode) updateStat(stat *fuse.Stat_t) {
 	n.stat = stat
-	n.statExpires = lib.Time(time.Now().Add(statCacheTime))
+	n.statExpires = lib.Ptr(time.Now().Add(statCacheTime))
 }
 
 func (n *fsNode) openWriter() {
@@ -56,6 +57,9 @@ func (n *fsNode) openWriter() {
 				file.UploadWithReader(n.reader),
 				file.UploadWithDestinationPath(n.path),
 				file.UploadWithProvidedMtimePtr(&n.modTime),
+			}
+			if n.fs.writeConcurrency != nil {
+				uploadOpts = append(uploadOpts, file.UploadWithManager(manager.ConcurrencyManager{}.New(*n.fs.writeConcurrency)))
 			}
 
 			if err := n.fs.fileClient.Upload(uploadOpts...); err != nil {
@@ -76,7 +80,7 @@ func (n *fsNode) write(buff []byte) (int, error) {
 
 	n.writeOffset += int64(l)
 	n.stat.Size = n.writeOffset
-	n.statExpires = lib.Time(time.Now().Add(statCacheTime))
+	n.statExpires = lib.Ptr(time.Now().Add(statCacheTime))
 
 	return l, nil
 }
@@ -112,12 +116,13 @@ func (n *fsNode) waitForUploadCompletion() {
 
 type Filescomfs struct {
 	fuse.FileSystemBase
-	root            string
-	config          files_sdk.Config
-	fileClient      *file.Client
-	migrationClient *file_migration.Client
-	openMap         map[string]*fsNode
-	openMapMutex    sync.Mutex
+	root             string
+	writeConcurrency *int
+	config           files_sdk.Config
+	fileClient       *file.Client
+	migrationClient  *file_migration.Client
+	openMap          map[string]*fsNode
+	openMapMutex     sync.Mutex
 }
 
 func (self *Filescomfs) Init() {
@@ -205,7 +210,7 @@ func (self *Filescomfs) Rename(oldpath string, newpath string) (errc int) {
 	params := files_sdk.FileMoveParams{
 		Path:        oldpath,
 		Destination: newpath,
-		Overwrite:   lib.Bool(true),
+		Overwrite:   lib.Ptr(true),
 	}
 
 	action, err := self.fileClient.Move(params)
@@ -232,7 +237,7 @@ func (self *Filescomfs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 
 	params := files_sdk.FileUpdateParams{
 		Path:          path,
-		ProvidedMtime: lib.Time(node.modTime),
+		ProvidedMtime: lib.Ptr(node.modTime),
 	}
 
 	_, err := self.fileClient.Update(params)

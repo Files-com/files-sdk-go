@@ -21,3 +21,7 @@ func Time(t time.Time) *time.Time {
 func Int64(i int64) *int64 {
 	return &i
 }
+
+func Ptr[T any](t T) *T {
+	return &t
+}
