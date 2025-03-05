@@ -38,7 +38,7 @@ type uploadIO struct {
 	Size     *int64
 	Progress
 	Manager       lib.ConcurrencyManagerWithSubWorker
-	ProvidedMtime time.Time
+	ProvidedMtime *time.Time
 	Parts
 	files_sdk.FileUploadPart
 	MkdirParents    *bool
@@ -158,7 +158,7 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 			// Rate limit all outgoing connections
 			if u.Manager.WaitWithContext(ctx) {
 				var err error
-				u.file, err = u.completeUpload(ctx, &u.ProvidedMtime, u.etags, u.bytesWritten, u.Path, u.FileUploadPart.Ref)
+				u.file, err = u.completeUpload(ctx, u.ProvidedMtime, u.etags, u.bytesWritten, u.Path, u.FileUploadPart.Ref)
 				u.Manager.Done()
 				if err != nil {
 					u.LogPath(u.Path, map[string]interface{}{
@@ -442,7 +442,7 @@ func (u *uploadIO) startUpload(ctx context.Context, beginUpload files_sdk.FileBe
 }
 
 func (u *uploadIO) completeUpload(ctx context.Context, providedMtime *time.Time, etags []files_sdk.EtagsParam, bytesWritten int64, path string, ref string) (files_sdk.File, error) {
-	if providedMtime.IsZero() {
+	if providedMtime != nil && providedMtime.IsZero() {
 		providedMtime = nil
 	}
 

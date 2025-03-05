@@ -25,53 +25,47 @@ const (
 )
 
 type fsNode struct {
-	fs          *Filescomfs
-	path        string
-	openCount   int
-	stat        *fuse.Stat_t
-	statExpires *time.Time
-	mu          sync.Mutex
-	writer      *io.PipeWriter
-	reader      *io.PipeReader
-	writeOffset int64
-	partCache   map[int64][]byte
+	fs              *Filescomfs
+	path            string
+	openCount       int
+	stat            *fuse.Stat_t
+	statExpires     *time.Time
+	modTime         time.Time
+	writer          *io.PipeWriter
+	reader          *io.PipeReader
+	uploadCompleted *sync.Cond
+	writeOffset     int64
+	partCache       map[int64][]byte
 }
 
 func (n *fsNode) updateStat(stat *fuse.Stat_t) {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
 	n.stat = stat
 	n.statExpires = lib.Time(time.Now().Add(statCacheTime))
 }
 
 func (n *fsNode) openWriter() {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
 	if n.writer == nil {
 		n.reader, n.writer = io.Pipe()
 		n.partCache = make(map[int64][]byte)
+		n.uploadCompleted = sync.NewCond(&sync.Mutex{})
+
 		go func() {
+			defer n.closeReader()
+
 			uploadOpts := []file.UploadOption{
 				file.UploadWithReader(n.reader),
 				file.UploadWithDestinationPath(n.path),
+				file.UploadWithProvidedMtimePtr(&n.modTime),
 			}
 
 			if err := n.fs.fileClient.Upload(uploadOpts...); err != nil {
 				n.fs.error("Upload failed: %v", err)
 			}
-
-			n.reader.Close()
-			n.reader = nil
 		}()
 	}
 }
 
 func (n *fsNode) write(buff []byte) (int, error) {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
 	l, err := n.writer.Write(buff)
 	if err != nil {
 		return 0, err
@@ -88,20 +82,31 @@ func (n *fsNode) write(buff []byte) (int, error) {
 }
 
 func (n *fsNode) closeWriter() {
-	n.mu.Lock()
-	defer n.mu.Unlock()
-
 	if n.writer != nil {
 		n.writer.Close()
 		n.writer = nil
 		n.writeOffset = 0
-		n.statExpires = nil
 		n.partCache = nil
+	}
+}
 
-		// Wait for the reader to be closed so we know the upload is complete.
-		for n.reader != nil {
-			time.Sleep(1 * time.Second) // TODO: make this better
-		}
+func (n *fsNode) closeReader() {
+	if n.reader != nil {
+		n.reader.Close()
+		n.reader = nil
+
+		n.uploadCompleted.L.Lock()
+		defer n.uploadCompleted.L.Unlock()
+		n.uploadCompleted.Broadcast()
+		n.uploadCompleted = nil
+	}
+}
+
+func (n *fsNode) waitForUploadCompletion() {
+	if n.uploadCompleted != nil {
+		n.uploadCompleted.L.Lock()
+		defer n.uploadCompleted.L.Unlock()
+		n.uploadCompleted.Wait()
 	}
 }
 
@@ -167,6 +172,7 @@ func (self *Filescomfs) Mkdir(path string, mode uint32) (errc int) {
 	if files_sdk.IsExist(err) {
 		return 0
 	}
+
 	return self.handleError(err)
 }
 
@@ -176,16 +182,10 @@ func (self *Filescomfs) Unlink(path string) (errc int) {
 
 	node := self.fetchNode(path)
 	node.closeWriter()
+	// Wait for the upload to complete before deleting the file.
+	node.waitForUploadCompletion()
 
-	file, err := self.fileClient.Find(files_sdk.FileFindParams{Path: path})
-	if errc = self.handleError(err); errc != 0 {
-		return
-	}
-	if file.IsDir() {
-		return -fuse.EISDIR
-	}
-
-	err = self.fileClient.Delete(files_sdk.FileDeleteParams{Path: path})
+	err := self.fileClient.Delete(files_sdk.FileDeleteParams{Path: path})
 	return self.handleError(err)
 }
 
@@ -193,19 +193,7 @@ func (self *Filescomfs) Rmdir(path string) (errc int) {
 	path = self.absPath(path)
 	self.trace("Rmdir: path=%v", path)
 
-	file, err := self.fileClient.Find(files_sdk.FileFindParams{Path: path})
-	if files_sdk.IsNotExist(err) {
-		return -fuse.ENOENT
-	}
-	if !file.IsDir() {
-		return -fuse.ENOTDIR
-	}
-
-	params := files_sdk.FileDeleteParams{
-		Path: path,
-	}
-
-	err = self.fileClient.Delete(params)
+	err := self.fileClient.Delete(files_sdk.FileDeleteParams{Path: path})
 	return self.handleError(err)
 }
 
@@ -234,11 +222,17 @@ func (self *Filescomfs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 	self.trace("Utimens: path=%v, tmsp=%v", path, tmsp)
 
 	node := self.fetchNode(path)
-	node.closeWriter()
+	node.modTime = tmsp[1].Time()
+
+	if node.writer != nil {
+		// If we're writing to the file, no need update the mtime. It will be updated when the write completes.
+		node.closeWriter()
+		return 0
+	}
 
 	params := files_sdk.FileUpdateParams{
 		Path:          path,
-		ProvidedMtime: lib.Time(tmsp[1].Time()),
+		ProvidedMtime: lib.Time(node.modTime),
 	}
 
 	_, err := self.fileClient.Update(params)

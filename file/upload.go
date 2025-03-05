@@ -71,6 +71,10 @@ func UploadWithDestinationPath(destinationPath string) UploadOption {
 }
 
 func UploadWithProvidedMtime(providedMtime time.Time) UploadOption {
+	return UploadWithProvidedMtimePtr(&providedMtime)
+}
+
+func UploadWithProvidedMtimePtr(providedMtime *time.Time) UploadOption {
 	return func(params uploadIO) (uploadIO, error) {
 		params.ProvidedMtime = providedMtime
 		return params, nil
