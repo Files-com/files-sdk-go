@@ -749,8 +749,7 @@ if err != nil {
 
 ## Case Sensitivity
 
-The Files.com API compares files and paths in a case-insensitive manner.
- For related documentation see [Case Sensitivity Documentation](https://www.files.com/docs/files-and-folders/file-system-semantics/case-sensitivity).
+The Files.com API compares files and paths in a case-insensitive manner. For related documentation see [Case Sensitivity Documentation](https://www.files.com/docs/files-and-folders/file-system-semantics/case-sensitivity).
 
 ## Mock Server
 
