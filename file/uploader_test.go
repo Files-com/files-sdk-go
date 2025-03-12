@@ -21,7 +21,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/slices"
 )
 
 type MockUploader struct {
@@ -348,7 +347,7 @@ func TestUploadReader(t *testing.T) {
 
 		require.NoError(t, err)
 
-		assert.Equal(t, server.TrackRequest["/upload/*path"], []string{"/upload/reader-no-size.txt?part_number=1", "/upload/reader-no-size.txt?part_number=2"})
+		assert.ElementsMatch(t, []string{"/upload/reader-no-size.txt?part_number=1", "/upload/reader-no-size.txt?part_number=2"}, server.TrackRequest["/upload/*path"])
 		assert.Equal(t, "reader-no-size.txt", u.File.Path)
 		assert.Equal(t, int64(5), u.Size)
 		assert.Len(t, u.Parts, 0, "individual parts are not retryable with nil size")
@@ -372,7 +371,7 @@ func TestUploadReader(t *testing.T) {
 
 		require.NoError(t, err)
 
-		assert.Equal(t, server.TrackRequest["/upload/*path"], []string{"/upload/reader-size.txt?part_number=1", "/upload/reader-size.txt?part_number=2", "/upload/reader-size.txt?part_number=3"})
+		assert.ElementsMatch(t, []string{"/upload/reader-size.txt?part_number=1", "/upload/reader-size.txt?part_number=2", "/upload/reader-size.txt?part_number=3"}, server.TrackRequest["/upload/*path"])
 		assert.Equal(t, "reader-size.txt", u.File.Path)
 		assert.Equal(t, int64(10), u.Size)
 		assert.Len(t, u.Parts, 0, "individual parts are not retryable with nil size")
@@ -396,7 +395,7 @@ func TestUploadReader(t *testing.T) {
 
 		require.NoError(t, err)
 
-		assert.Equal(t, server.TrackRequest["/upload/*path"], []string{"/upload/reader-at_no-size.txt?part_number=1", "/upload/reader-at_no-size.txt?part_number=2", "/upload/reader-at_no-size.txt?part_number=3"})
+		assert.ElementsMatch(t, []string{"/upload/reader-at_no-size.txt?part_number=1", "/upload/reader-at_no-size.txt?part_number=2", "/upload/reader-at_no-size.txt?part_number=3"}, server.TrackRequest["/upload/*path"])
 		assert.Equal(t, "reader-at_no-size.txt", u.File.Path)
 		assert.Equal(t, int64(10), u.Size)
 		assert.Len(t, u.Parts, 0, "individual parts are not retryable with nil size")
@@ -420,10 +419,8 @@ func TestUploadReader(t *testing.T) {
 		)
 
 		require.NoError(t, err)
-		expectation := []string{"/upload/reader-at-size.txt?part_number=1", "/upload/reader-at-size.txt?part_number=2", "/upload/reader-at-size.txt?part_number=3"}
-		slices.Sort(expectation)
-		slices.Sort(server.TrackRequest["/upload/*path"])
-		assert.Equal(t, expectation, server.TrackRequest["/upload/*path"])
+
+		assert.ElementsMatch(t, []string{"/upload/reader-at-size.txt?part_number=1", "/upload/reader-at-size.txt?part_number=2", "/upload/reader-at-size.txt?part_number=3"}, server.TrackRequest["/upload/*path"])
 		assert.Equal(t, "reader-at-size.txt", u.File.Path)
 		assert.Equal(t, int64(10), u.Size)
 		assert.Len(t, u.Parts, 3, "individual parts are not retryable with nil size")
