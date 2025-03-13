@@ -25,9 +25,10 @@ const (
 
 type Filescomfs struct {
 	fuse.FileSystemBase
-	vfs              virtualfs
+	vfs              *virtualfs
 	root             string
 	writeConcurrency *int
+	cacheTTL         *time.Duration
 	config           files_sdk.Config
 	fileClient       *file.Client
 	migrationClient  *file_migration.Client
@@ -36,7 +37,7 @@ type Filescomfs struct {
 func (self *Filescomfs) Init() {
 	self.fileClient = &file.Client{Config: self.config}
 	self.migrationClient = &file_migration.Client{Config: self.config}
-	self.vfs.init()
+	self.vfs = newVirtualfs(self.cacheTTL)
 }
 
 func (self *Filescomfs) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
@@ -203,10 +204,13 @@ func (self *Filescomfs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc
 	return
 }
 
-// This is needed in order to support file overwrites, but we don't actually need to do the truncate.
+// This is needed in order to support file overwrites, but we don't actually need to do the truncate. Make sure the file is open for writing, though.
 func (self *Filescomfs) Truncate(path string, size int64, fh uint64) (errc int) {
 	path = self.absPath(path)
 	self.trace("Truncate: path=%v, size=%v", path, size)
+
+	node, _ := self.vfs.fetch(path)
+	node.openWriter(self)
 
 	return
 }
@@ -224,12 +228,15 @@ func (self *Filescomfs) Read(path string, buff []byte, ofst int64, fh uint64) (n
 
 	headers := &http.Header{}
 	headers.Set("Range", fmt.Sprintf("bytes=%v-%v", ofst, ofst+int64(len(buff))-1))
-	_, err := self.fileClient.Download(
-		files_sdk.FileDownloadParams{Path: path},
+	file, err := self.fileClient.Download(
+		files_sdk.FileDownloadParams{File: files_sdk.File{
+			Path:        node.path,
+			DownloadUri: node.downloadUri,
+		}},
 		files_sdk.RequestHeadersOption(headers),
-		files_sdk.ResponseBodyOption(func(closer io.ReadCloser) error {
+		files_sdk.ResponseBodyOption(func(reader io.ReadCloser) error {
 			var err error
-			n, err = io.ReadFull(closer, buff)
+			n, err = io.ReadFull(reader, buff)
 			if err == io.ErrUnexpectedEOF {
 				return nil
 			}
@@ -240,6 +247,10 @@ func (self *Filescomfs) Read(path string, buff []byte, ofst int64, fh uint64) (n
 		return errc
 	}
 
+	node.downloadUri = file.DownloadUri
+
+	self.trace("Read: path=%v, ofst=%d, read %d bytes", path, ofst, n)
+
 	return n
 }
 
@@ -248,6 +259,10 @@ func (self *Filescomfs) Write(path string, buff []byte, ofst int64, fh uint64) (
 	self.trace("Write: path=%v, len=%v, ofst=%v", path, len(buff), ofst)
 
 	node, _ := self.vfs.fetch(path)
+	if node.writer == nil {
+		self.trace("Write: path=%v, offset %d, writer already closed", path, ofst)
+		return -fuse.ENOENT
+	}
 
 	if ofst < node.writeOffset {
 		// This happens on Windows when a write operation is paused. It writes a 56 byte buffer at
@@ -256,8 +271,6 @@ func (self *Filescomfs) Write(path string, buff []byte, ofst int64, fh uint64) (
 		node.closeWriter()
 		return len(buff)
 	}
-
-	node.openWriter(self)
 
 	if ofst > node.writeOffset {
 		// Sometimes parts come in out of order. We need to cache them until it's time to write them.

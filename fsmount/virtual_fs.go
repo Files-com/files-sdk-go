@@ -3,15 +3,28 @@ package fsmount
 import (
 	filepath "path"
 	"sync"
+	"time"
+)
+
+const (
+	defaultCacheTTL = 1 * time.Second
 )
 
 type virtualfs struct {
+	cacheTTL     time.Duration
 	nodeMap      map[string]*fsNode
 	nodeMapMutex sync.Mutex
 }
 
-func (self *virtualfs) init() {
-	self.nodeMap = make(map[string]*fsNode)
+func newVirtualfs(cacheTTL *time.Duration) *virtualfs {
+	vfs := &virtualfs{
+		nodeMap:  make(map[string]*fsNode),
+		cacheTTL: defaultCacheTTL,
+	}
+	if cacheTTL != nil {
+		vfs.cacheTTL = *cacheTTL
+	}
+	return vfs
 }
 
 func (self *virtualfs) fetch(path string) (*fsNode, bool) {

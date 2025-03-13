@@ -8,10 +8,6 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
-const (
-	infoCacheTime = 1 * time.Second
-)
-
 type FSWriter interface {
 	writeFile(path string, reader io.Reader, mtime *time.Time)
 }
@@ -19,6 +15,7 @@ type FSWriter interface {
 type fsNode struct {
 	fs                *virtualfs
 	path              string
+	downloadUri       string
 	info              fsNodeInfo
 	infoExpires       *time.Time
 	writer            *io.PipeWriter
@@ -39,12 +36,18 @@ type fsNodeInfo struct {
 
 func (n *fsNode) updateInfo(info fsNodeInfo) {
 	n.info = info
-	n.infoExpires = lib.Ptr(time.Now().Add(infoCacheTime))
+	n.infoExpires = lib.Ptr(time.Now().Add(n.fs.cacheTTL))
 }
 
 func (n *fsNode) updateChildPaths(childPaths map[string]struct{}) {
 	n.childPaths = childPaths
-	n.childPathsExpires = lib.Ptr(time.Now().Add(infoCacheTime))
+	n.childPathsExpires = lib.Ptr(time.Now().Add(n.fs.cacheTTL))
+}
+
+func (n *fsNode) addOffset(offset int64) {
+	n.writeOffset += offset
+	n.info.size = n.writeOffset
+	n.infoExpires = lib.Ptr(time.Now().Add(n.fs.cacheTTL))
 }
 
 func (n *fsNode) infoExpired() bool {
@@ -77,9 +80,7 @@ func (n *fsNode) write(buff []byte) (int, error) {
 	// Remove the part from the cache. No-op if it's not in the cache.
 	delete(n.partCache, n.writeOffset)
 
-	n.writeOffset += int64(l)
-	n.info.size = n.writeOffset
-	n.infoExpires = lib.Ptr(time.Now().Add(infoCacheTime))
+	n.addOffset(int64(l))
 
 	return l, nil
 }

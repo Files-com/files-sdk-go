@@ -5,6 +5,7 @@ package fsmount
 import (
 	"fmt"
 	"runtime"
+	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/winfsp/cgofuse/fuse"
@@ -15,6 +16,7 @@ type MountParams struct {
 	VolumeName       string
 	Root             string
 	WriteConcurrency *int
+	CacheTTL         *time.Duration
 	Config           files_sdk.Config
 }
 
@@ -26,10 +28,10 @@ func Mount(params MountParams) (MountHost, error) {
 	fs := &Filescomfs{
 		root:             params.Root,
 		writeConcurrency: params.WriteConcurrency,
+		cacheTTL:         params.CacheTTL,
 		config:           params.Config,
 	}
 	host := fuse.NewFileSystemHost(fs)
-	host.SetDirectIO(true)
 	host.SetCapReaddirPlus(true)
 
 	options := []string{"-o", "attr_timeout=1"}
