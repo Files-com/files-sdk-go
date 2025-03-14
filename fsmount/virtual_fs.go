@@ -1,9 +1,13 @@
 package fsmount
 
 import (
+	"fmt"
 	filepath "path"
+	"runtime/debug"
 	"sync"
 	"time"
+
+	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
 const (
@@ -14,11 +18,13 @@ type virtualfs struct {
 	cacheTTL     time.Duration
 	nodeMap      map[string]*fsNode
 	nodeMapMutex sync.Mutex
+	lib.Logger
 }
 
-func newVirtualfs(cacheTTL *time.Duration) *virtualfs {
+func newVirtualfs(logger lib.Logger, cacheTTL *time.Duration) *virtualfs {
 	vfs := &virtualfs{
 		nodeMap:  make(map[string]*fsNode),
+		Logger:   logger,
 		cacheTTL: defaultCacheTTL,
 	}
 	if cacheTTL != nil {
@@ -56,9 +62,9 @@ func (self *virtualfs) getOrCreate(path string, dir bool) (node *fsNode) {
 	return node
 }
 
-func (self *virtualfs) close(path string) (errc int) {
+func (self *virtualfs) close(path string, handle uint64) (errc int) {
 	if node, ok := self.fetch(path); ok {
-		node.closeWriter()
+		node.closeWriterByHandle(handle)
 	}
 
 	// TODO: Remove nodes that haven't been accessed in a while.
@@ -72,7 +78,7 @@ func (self *virtualfs) rename(oldPath string, newPath string) {
 		return
 	}
 
-	self.delete(oldPath)
+	self.remove(oldPath)
 	node.path = newPath
 
 	self.nodeMapMutex.Lock()
@@ -91,7 +97,7 @@ func (self *virtualfs) add(node *fsNode) {
 	}
 }
 
-func (self *virtualfs) delete(path string) {
+func (self *virtualfs) remove(path string) {
 	self.nodeMapMutex.Lock()
 	defer self.nodeMapMutex.Unlock()
 
@@ -102,5 +108,25 @@ func (self *virtualfs) delete(path string) {
 		if parent, ok := self.nodeMap[parentPath]; ok {
 			delete(parent.childPaths, path)
 		}
+	}
+}
+
+func (self *virtualfs) error(format string, args ...any) {
+	self.log("ERROR", format, args...)
+}
+
+func (self *virtualfs) trace(format string, args ...any) {
+	self.log("TRACE", format, args...)
+}
+
+func (self *virtualfs) log(level string, format string, args ...any) {
+	format = fmt.Sprintf("[%v] %v", level, format)
+	self.Logger.Printf(format, args...)
+}
+
+func (self *virtualfs) logPanics() {
+	if r := recover(); r != nil {
+		self.error("Panic: %v\nStack trace:\n%s", r, debug.Stack())
+		panic(r)
 	}
 }
