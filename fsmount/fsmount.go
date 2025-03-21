@@ -26,6 +26,7 @@ type MountHost interface {
 
 func Mount(params MountParams) (MountHost, error) {
 	fs := &Filescomfs{
+		mountPoint:       params.MountPoint,
 		root:             params.Root,
 		writeConcurrency: params.WriteConcurrency,
 		cacheTTL:         params.CacheTTL,

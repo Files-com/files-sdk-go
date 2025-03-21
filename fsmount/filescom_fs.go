@@ -8,7 +8,8 @@ import (
 	"io"
 	"math/rand"
 	"net/http"
-	filepath "path"
+	path_lib "path"
+	"path/filepath"
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
@@ -21,11 +22,13 @@ import (
 
 const (
 	folderNotEmpty = "processing-failure/folder-not-empty"
+	blockSize      = 4096
 )
 
 type Filescomfs struct {
 	fuse.FileSystemBase
 	*virtualfs
+	mountPoint       string
 	root             string
 	writeConcurrency *int
 	config           files_sdk.Config
@@ -38,15 +41,13 @@ func (self *Filescomfs) Init() {
 	defer self.logPanics()
 	self.fileClient = &file.Client{Config: self.config}
 	self.migrationClient = &file_migration.Client{Config: self.config}
-	self.virtualfs = newVirtualfs(self.config, self.cacheTTL)
+	self.virtualfs = newVirtualfs(self.config.Logger, self.cacheTTL)
 }
 
 func (self *Filescomfs) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 	defer self.logPanics()
-	path = self.absPath(path)
-	self.trace("Statfs: path=%v", path)
+	self.Trace("Statfs: path=%v", path)
 
-	blockSize := uint64(4096)
 	totalBytes := uint64(1 << 50) // 1 PB?
 	usedBytes := uint64(0)        // TODO: get used bytes
 	freeBytes := totalBytes - usedBytes
@@ -62,14 +63,19 @@ func (self *Filescomfs) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 
 func (self *Filescomfs) Mkdir(path string, mode uint32) (errc int) {
 	defer self.logPanics()
-	path = self.absPath(path)
-	self.trace("Mkdir: path=%v, mode=%v", path, mode)
+	localPath, remotePath := self.paths(path)
+	self.Debug("Making dir: %v (%v) (mode=%v)", remotePath, localPath, mode)
 
-	_, err := self.fileClient.CreateFolder(files_sdk.FolderCreateParams{Path: path})
+	_, err := self.fileClient.CreateFolder(files_sdk.FolderCreateParams{Path: remotePath})
 	if files_sdk.IsExist(err) {
 		return 0
 	}
-	if errc = self.handleError(err); errc != 0 {
+
+	// Windows File Explorer always tries to create the parent folder when writing a file, so don't
+	// info-log until here in case the folder already exists.
+	self.Info("Creating folder: %v (%v)", remotePath, localPath)
+
+	if errc = self.handleError(path, err); errc != 0 {
 		return
 	}
 
@@ -81,44 +87,46 @@ func (self *Filescomfs) Mkdir(path string, mode uint32) (errc int) {
 
 func (self *Filescomfs) Unlink(path string) (errc int) {
 	defer self.logPanics()
-	path = self.absPath(path)
-	self.trace("Unlink: path=%v", path)
 
 	if node, ok := self.fetch(path); ok {
 		// Close the file and wait for any writes to complete before deleting the file.
 		node.closeWriter(true)
 	}
 
+	// We may have been in the middle of writing the file, so don't log until here.
+	localPath, remotePath := self.paths(path)
+	self.Info("Deleting file: %v (%v)", remotePath, localPath)
+
 	return self.delete(path)
 }
 
 func (self *Filescomfs) Rmdir(path string) (errc int) {
 	defer self.logPanics()
-	path = self.absPath(path)
-	self.trace("Rmdir: path=%v", path)
+	localPath, remotePath := self.paths(path)
+	self.Info("Deleting folder: %v (%v)", remotePath, localPath)
 
 	return self.delete(path)
 }
 
 func (self *Filescomfs) Rename(oldpath string, newpath string) (errc int) {
 	defer self.logPanics()
-	oldpath = self.absPath(oldpath)
-	newpath = self.absPath(newpath)
-	self.trace("Rename: oldpath=%v, newpath=%v", oldpath, newpath)
+	oldLocalPath, oldRemotePath := self.paths(oldpath)
+	newLocalPath, newRemotePath := self.paths(newpath)
+	self.Info("Renaming: %v to %v (%v to %v)", oldRemotePath, newRemotePath, oldLocalPath, newLocalPath)
 
 	params := files_sdk.FileMoveParams{
-		Path:        oldpath,
-		Destination: newpath,
+		Path:        oldRemotePath,
+		Destination: newRemotePath,
 		Overwrite:   lib.Ptr(true),
 	}
 
 	action, err := self.fileClient.Move(params)
-	if errc = self.handleError(err); errc != 0 {
+	if errc = self.handleError(oldpath, err); errc != 0 {
 		return
 	}
 
 	err = self.waitForAction(action, "move")
-	if errc = self.handleError(err); errc != 0 {
+	if errc = self.handleError(oldpath, err); errc != 0 {
 		return
 	}
 
@@ -129,13 +137,13 @@ func (self *Filescomfs) Rename(oldpath string, newpath string) (errc int) {
 
 func (self *Filescomfs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 	defer self.logPanics()
-	path = self.absPath(path)
-	self.trace("Utimens: path=%v, tmsp=%v", path, tmsp)
+	localPath, remotePath := self.paths(path)
+	self.Debug("Updating provided mtime: %v (%v) (mtime=%v)", remotePath, localPath, tmsp[1])
 
 	node, _ := self.fetch(path)
 	node.info.modTime = tmsp[1].Time()
 
-	if node.writer != nil {
+	if node.isWriterOpen() {
 		// If we're writing to the file, no need update the mtime. It will be updated when the write completes.
 		// Don't wait for any writes to complete since those will slow down the process, especially when writing many small files.
 		node.closeWriter(false)
@@ -143,19 +151,19 @@ func (self *Filescomfs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 	}
 
 	params := files_sdk.FileUpdateParams{
-		Path:          path,
+		Path:          remotePath,
 		ProvidedMtime: &node.info.modTime,
 	}
 
 	_, err := self.fileClient.Update(params)
-	return self.handleError(err)
+	return self.handleError(path, err)
 }
 
 func (self *Filescomfs) Create(path string, flags int, mode uint32) (errc int, fh uint64) {
 	defer self.logPanics()
-	path = self.absPath(path)
 	fh = rand.Uint64()
-	self.trace("Create: path=%v, flags=%v, mode=%v, fh=%v", path, flags, mode, fh)
+	localPath, remotePath := self.paths(path)
+	self.Debug("Creating file: %v (%v) (flags=%v, mode=%v, fh=%v)", remotePath, localPath, flags, mode, fh)
 
 	if errc = self.loadParent(path); errc != 0 {
 		return
@@ -172,16 +180,19 @@ func (self *Filescomfs) Create(path string, flags int, mode uint32) (errc int, f
 	}
 
 	node.updateSize(0)
-	node.openWriter(self, fh)
+
+	if !node.isWriterOpen() {
+		self.Info("Starting upload: %v (%v)", remotePath, localPath)
+		node.openWriter(self, fh)
+	}
 
 	return
 }
 
 func (self *Filescomfs) Open(path string, flags int) (errc int, fh uint64) {
 	defer self.logPanics()
-	path = self.absPath(path)
 	fh = rand.Uint64()
-	self.trace("Open: path=%v, flags=%v, fh=%v", path, flags, fh)
+	self.Trace("Open: path=%v, flags=%v, fh=%v", path, flags, fh)
 
 	self.getOrCreate(path, false)
 	return
@@ -189,17 +200,10 @@ func (self *Filescomfs) Open(path string, flags int) (errc int, fh uint64) {
 
 func (self *Filescomfs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
 	defer self.logPanics()
-	path = self.absPath(path)
-	self.trace("Getattr: path=%v", path)
-
-	if path == "/" {
-		// Special case that we can't stat the root directory of a Files.com site.
-		stat.Mode = fuse.S_IFDIR | 0777
-		return
-	}
+	self.Trace("Getattr: path=%v, fh=%v", path, fh)
 
 	if node, ok := self.fetch(path); ok && !node.infoExpired() {
-		self.trace("Getattr: using cached stat, path=%v, size=%v, mtime=%v", path, node.info.size, node.info.modTime)
+		self.Trace("Getattr: using cached stat, path=%v, size=%v, mtime=%v", path, node.info.size, node.info.modTime)
 		getStat(node.info, stat)
 		return
 	}
@@ -210,11 +214,12 @@ func (self *Filescomfs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc
 
 	node, ok := self.fetch(path)
 	if !ok || node.infoExpired() {
-		self.trace("Getattr: path=%v, not found", path)
+		localPath, remotePath := self.paths(path)
+		self.Debug("File not found: %v (%v)", remotePath, localPath)
 		return -fuse.ENOENT
 	}
 
-	self.trace("Getattr: path=%v, size=%v, mtime=%v", path, node.info.size, node.info.modTime)
+	self.Trace("Getattr: path=%v, size=%v, mtime=%v", path, node.info.size, node.info.modTime)
 	getStat(node.info, stat)
 
 	return
@@ -222,33 +227,50 @@ func (self *Filescomfs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc
 
 func (self *Filescomfs) Truncate(path string, size int64, fh uint64) (errc int) {
 	defer self.logPanics()
-	path = self.absPath(path)
-	self.trace("Truncate: path=%v, size=%v, fh=%v", path, size, fh)
+	localPath, remotePath := self.paths(path)
+	self.Debug("Truncating file: %v (%v) (size=%v, fh=%v)", remotePath, localPath, size, fh)
 
 	node, _ := self.fetch(path)
 	node.updateSize(size)
-	node.openWriter(self, fh)
+
+	if !node.isWriterOpen() {
+		self.Info("Starting upload: %v (%v)", remotePath, localPath)
+		node.openWriter(self, fh)
+	}
 
 	return
 }
 
 func (self *Filescomfs) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
 	defer self.logPanics()
-	path = self.absPath(path)
-	self.trace("Read: path=%v, len=%v, ofst=%v, fh=%v", path, len(buff), ofst, fh)
+	buffLen := int64(len(buff))
+	self.Trace("Read: path=%v, len=%v, ofst=%v, fh=%v", path, buffLen, ofst, fh)
 
+	localPath, remotePath := self.paths(path)
 	node, _ := self.fetch(path)
 
-	if ofst >= node.info.size {
-		self.trace("Read: offset %d is greater than file size %d, returning EOF", ofst, node.info.size)
+	if ofst > node.info.size {
+		self.Trace("Read: offset %d is greater than file size %d, returning EOF", ofst, node.info.size)
 		return 0
 	}
 
+	if node.isWriterOpen() {
+		// We can't read while writing to the file, so close the writer and wait for it to finish.
+		// Do this _before_ we log that we're starting the download.
+		self.Debug("Finalizing upload before downloading: %v (%v) (fh=%v)", remotePath, localPath, fh)
+		node.closeWriter(true)
+	}
+
+	if ofst == 0 && buffLen >= min(blockSize, node.info.size) {
+		node.readerHandle = fh
+		self.Info("Starting download: %v (%v)", remotePath, localPath)
+	}
+
 	headers := &http.Header{}
-	headers.Set("Range", fmt.Sprintf("bytes=%v-%v", ofst, ofst+int64(len(buff))-1))
+	headers.Set("Range", fmt.Sprintf("bytes=%v-%v", ofst, ofst+buffLen-1))
 	file, err := self.fileClient.Download(
 		files_sdk.FileDownloadParams{File: files_sdk.File{
-			Path:        node.path,
+			Path:        remotePath,
 			DownloadUri: node.downloadUri,
 		}},
 		files_sdk.RequestHeadersOption(headers),
@@ -261,31 +283,31 @@ func (self *Filescomfs) Read(path string, buff []byte, ofst int64, fh uint64) (n
 			return err
 		}),
 	)
-	if errc := self.handleError(err); errc != 0 {
+	if errc := self.handleError(path, err); errc != 0 {
 		return errc
 	}
 
 	node.downloadUri = file.DownloadUri
 
-	self.trace("Read: path=%v, ofst=%d, read %d bytes", path, ofst, n)
+	self.Trace("Read: path=%v, ofst=%d, read %d bytes", path, ofst, n)
 
 	return n
 }
 
 func (self *Filescomfs) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
 	defer self.logPanics()
-	path = self.absPath(path)
-	self.trace("Write: path=%v, len=%v, ofst=%v, fh=%v", path, len(buff), ofst, fh)
+	self.Trace("Write: path=%v, len=%v, ofst=%v, fh=%v", path, len(buff), ofst, fh)
 
 	node, _ := self.fetch(path)
 
-	if !node.openWriter(self, fh) {
-		self.error("Write: path=%v, fh=%v, writer is already open for a different handle", path)
-		return -fuse.EIO
+	if !node.isWriterOpen() {
+		localPath, remotePath := self.paths(path)
+		self.Info("Starting upload: %v (%v)", remotePath, localPath)
+		node.openWriter(self, fh)
 	}
 
 	n, err := node.writer.writeAt(buff, ofst)
-	if errc := self.handleError(err); errc != 0 {
+	if errc := self.handleError(path, err); errc != 0 {
 		return errc
 	}
 
@@ -294,17 +316,21 @@ func (self *Filescomfs) Write(path string, buff []byte, ofst int64, fh uint64) (
 
 func (self *Filescomfs) Release(path string, fh uint64) (errc int) {
 	defer self.logPanics()
-	path = self.absPath(path)
-	self.trace("Release: path=%v, fh=%v", path, fh)
+	self.Trace("Release: path=%v, fh=%v", path, fh)
+
+	if node, ok := self.fetch(path); ok && node.readerHandle == fh {
+		localPath, remotePath := self.paths(path)
+		self.Info("Download completed: %v (%v)", remotePath, localPath)
+		node.readerHandle = 0
+	}
 
 	return self.close(path, fh)
 }
 
 func (self *Filescomfs) Opendir(path string) (errc int, fh uint64) {
 	defer self.logPanics()
-	path = self.absPath(path)
 	fh = rand.Uint64()
-	self.trace("Opendir: path=%v, fh=%v", path, fh)
+	self.Trace("Opendir: path=%v, fh=%v", path, fh)
 
 	self.getOrCreate(path, true)
 	return
@@ -315,8 +341,8 @@ func (self *Filescomfs) Readdir(path string,
 	ofst int64,
 	fh uint64) (errc int) {
 	defer self.logPanics()
-	path = self.absPath(path)
-	self.trace("Readdir: path=%v, ofst=%v, fh=%v", path, ofst, fh)
+	localPath, remotePath := self.paths(path)
+	self.Info("Listing folder: %v (%v)", remotePath, localPath)
 
 	node, _ := self.fetch(path)
 	if errc = self.loadDir(node); errc != 0 {
@@ -328,7 +354,7 @@ func (self *Filescomfs) Readdir(path string,
 
 	for childPath := range node.childPaths {
 		if childNode, ok := self.fetch(childPath); ok {
-			fill(filepath.Base(childPath), getStat(childNode.info, nil), 0)
+			fill(path_lib.Base(childPath), getStat(childNode.info, nil), 0)
 		}
 	}
 
@@ -337,15 +363,15 @@ func (self *Filescomfs) Readdir(path string,
 
 func (self *Filescomfs) Releasedir(path string, fh uint64) (errc int) {
 	defer self.logPanics()
-	path = self.absPath(path)
-	self.trace("Releasedir: path=%v, fh=%v", path, fh)
+	self.Trace("Releasedir: path=%v, fh=%v", path, fh)
 
 	return self.close(path, fh)
 }
 
 func (self *Filescomfs) writeFile(path string, reader io.Reader, mtime *time.Time) {
+	localPath, remotePath := self.paths(path)
 	uploadOpts := []file.UploadOption{
-		file.UploadWithDestinationPath(path),
+		file.UploadWithDestinationPath(remotePath),
 		file.UploadWithReader(reader),
 		file.UploadWithProvidedMtimePtr(mtime),
 	}
@@ -354,17 +380,29 @@ func (self *Filescomfs) writeFile(path string, reader io.Reader, mtime *time.Tim
 	}
 
 	if err := self.fileClient.Upload(uploadOpts...); err != nil {
-		self.error("Upload failed: %v", err)
+		self.Error("Upload failed: %v (%v): %v", remotePath, localPath, err)
+		return
 	}
+
+	self.Info("Upload completed: %v (%v)", remotePath, localPath)
 }
 
-func (self *Filescomfs) absPath(path string) string {
-	return filepath.Join(self.root, path)
+func (self *Filescomfs) paths(path string) (string, string) {
+	return self.localPath(path), self.remotePath(path)
 }
 
-func (self *Filescomfs) handleError(err error) int {
+func (self *Filescomfs) localPath(path string) string {
+	return filepath.Join(self.mountPoint, path)
+}
+
+func (self *Filescomfs) remotePath(path string) string {
+	return path_lib.Join(self.root, path)
+}
+
+func (self *Filescomfs) handleError(path string, err error) int {
 	if err != nil {
-		self.error(err.Error())
+		localPath, remotePath := self.paths(path)
+		self.Error("%v (%v): %v", remotePath, localPath, err)
 
 		if files_sdk.IsNotExist(err) {
 			return -fuse.ENOENT
@@ -383,8 +421,8 @@ func (self *Filescomfs) handleError(err error) int {
 }
 
 func (self *Filescomfs) delete(path string) (errc int) {
-	err := self.fileClient.Delete(files_sdk.FileDeleteParams{Path: path})
-	if errc = self.handleError(err); errc != 0 {
+	err := self.fileClient.Delete(files_sdk.FileDeleteParams{Path: self.remotePath(path)})
+	if errc = self.handleError(path, err); errc != 0 {
 		return
 	}
 
@@ -393,14 +431,64 @@ func (self *Filescomfs) delete(path string) (errc int) {
 }
 
 func (self *Filescomfs) loadParent(path string) (errc int) {
-	parentPath := filepath.Dir(path)
-	parent := self.getOrCreate(parentPath, true)
+	if path == "/" {
+		// If we're at the root, we can't load the parent. Just make sure the root exists.
+		_, errc = self.findDir(path)
+		return
+	}
+
+	parentPath := path_lib.Dir(path)
+	parent, ok := self.fetch(parentPath)
+
+	// Make sure the parent is actually a directory that exists before attempting to load it.
+	if !ok || parent.infoExpired() {
+		parent, errc = self.findDir(parentPath)
+		if errc != 0 {
+			return
+		}
+	}
+
+	if !parent.info.dir {
+		// Don't log an error. Windows File Explorer sometimes treats shortcuts as parent directories.
+		self.Trace("Parent of %s is not a directory %s", path, parentPath)
+		return -fuse.ENOTDIR
+	}
+
 	return self.loadDir(parent)
+}
+
+func (self *Filescomfs) findDir(path string) (node *fsNode, errc int) {
+	remotePath := self.remotePath(path)
+
+	if remotePath == "/" {
+		// Special case that we can't stat the root directory of a Files.com site.
+		node = self.getOrCreate(path, true)
+		node.updateInfo(fsNodeInfo{dir: true})
+		return
+	}
+
+	item, err := self.fileClient.Find(files_sdk.FileFindParams{Path: remotePath})
+	// Check for non-existence first so it doesn't get logged as an error, since this may be expected.
+	if files_sdk.IsNotExist(err) {
+		errc = -fuse.ENOENT
+		return
+	}
+	if errc = self.handleError(path, err); errc != 0 {
+		return
+	}
+	if !item.IsDir() {
+		errc = -fuse.ENOTDIR
+		return
+	}
+
+	node = self.createNode(path, item)
+
+	return
 }
 
 func (self *Filescomfs) loadDir(node *fsNode) (errc int) {
 	err := node.updateChildPaths(self.listDir)
-	if errc = self.handleError(err); errc != 0 {
+	if errc = self.handleError(node.path, err); errc != 0 {
 		return
 	}
 
@@ -408,7 +496,7 @@ func (self *Filescomfs) loadDir(node *fsNode) (errc int) {
 }
 
 func (self *Filescomfs) listDir(path string) (childPaths map[string]struct{}, err error) {
-	it, err := self.fileClient.ListFor(files_sdk.FolderListForParams{Path: path})
+	it, err := self.fileClient.ListFor(files_sdk.FolderListForParams{Path: self.remotePath(path)})
 	if err != nil {
 		return
 	}
@@ -418,18 +506,24 @@ func (self *Filescomfs) listDir(path string) (childPaths map[string]struct{}, er
 	for it.Next() {
 		item := it.File()
 
-		childPath := filepath.Join(path, item.DisplayName)
+		childPath := path_lib.Join(path, item.DisplayName)
 		childPaths[childPath] = struct{}{}
 
-		childNode := self.getOrCreate(childPath, item.IsDir())
-		childNode.updateInfo(fsNodeInfo{
-			dir:          item.IsDir(),
-			size:         item.Size,
-			modTime:      item.ModTime(),
-			creationTime: item.CreatedAt,
-		})
+		self.createNode(childPath, item)
 	}
 	err = it.Err()
+
+	return
+}
+
+func (self *Filescomfs) createNode(path string, item files_sdk.File) (node *fsNode) {
+	node = self.getOrCreate(path, item.IsDir())
+	node.updateInfo(fsNodeInfo{
+		dir:          item.IsDir(),
+		size:         item.Size,
+		modTime:      item.ModTime(),
+		creationTime: item.CreatedAt,
+	})
 
 	return
 }

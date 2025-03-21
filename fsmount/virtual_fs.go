@@ -1,7 +1,6 @@
 package fsmount
 
 import (
-	"fmt"
 	filepath "path"
 	"runtime/debug"
 	"sync"
@@ -18,14 +17,14 @@ type virtualfs struct {
 	cacheTTL     time.Duration
 	nodeMap      map[string]*fsNode
 	nodeMapMutex sync.Mutex
-	lib.Logger
+	lib.LeveledLogger
 }
 
 func newVirtualfs(logger lib.Logger, cacheTTL *time.Duration) *virtualfs {
 	vfs := &virtualfs{
-		nodeMap:  make(map[string]*fsNode),
-		Logger:   logger,
-		cacheTTL: defaultCacheTTL,
+		nodeMap:       make(map[string]*fsNode),
+		LeveledLogger: lib.NewLeveledLogger(logger),
+		cacheTTL:      defaultCacheTTL,
 	}
 	if cacheTTL != nil {
 		vfs.cacheTTL = *cacheTTL
@@ -111,22 +110,9 @@ func (self *virtualfs) remove(path string) {
 	}
 }
 
-func (self *virtualfs) error(format string, args ...any) {
-	self.log("ERROR", format, args...)
-}
-
-func (self *virtualfs) trace(format string, args ...any) {
-	self.log("TRACE", format, args...)
-}
-
-func (self *virtualfs) log(level string, format string, args ...any) {
-	format = fmt.Sprintf("[%v] %v", level, format)
-	self.Logger.Printf(format, args...)
-}
-
 func (self *virtualfs) logPanics() {
 	if r := recover(); r != nil {
-		self.error("Panic: %v\nStack trace:\n%s", r, debug.Stack())
+		self.Error("Panic: %v\nStack trace:\n%s", r, debug.Stack())
 		panic(r)
 	}
 }

@@ -17,6 +17,7 @@ type fsNode struct {
 	fs                *virtualfs
 	path              string
 	downloadUri       string
+	readerHandle      uint64
 	info              fsNodeInfo
 	infoExpires       *time.Time
 	childPaths        map[string]struct{}
@@ -68,7 +69,7 @@ func (n *fsNode) childPathsExpired() bool {
 	return n.childPathsExpires == nil || n.childPathsExpires.Before(time.Now())
 }
 
-func (n *fsNode) openWriter(fsWriter FSWriter, handle uint64) bool {
+func (n *fsNode) openWriter(fsWriter FSWriter, handle uint64) {
 	if n.writer == nil {
 		nodeWriter := newFsNodeWriter(n, handle)
 		n.writer = nodeWriter
@@ -79,8 +80,6 @@ func (n *fsNode) openWriter(fsWriter FSWriter, handle uint64) bool {
 			fsWriter.writeFile(n.path, nodeWriter.out, &n.info.modTime)
 		}()
 	}
-
-	return handle == n.writer.handle
 }
 
 func (n *fsNode) closeWriterByHandle(handle uint64) bool {
@@ -100,6 +99,10 @@ func (n *fsNode) closeWriter(wait bool) {
 		}
 		n.writer = nil
 	}
+}
+
+func (n *fsNode) isWriterOpen() bool {
+	return n.writer != nil
 }
 
 type fsNodeWriter struct {
@@ -128,14 +131,14 @@ func (w *fsNodeWriter) writeAt(buff []byte, offset int64) (n int, err error) {
 	if offset < w.offset {
 		// This happens on Windows when a write operation is paused. It writes a 56 byte buffer at
 		// offset 0. It's unclear how to handle this to properly resume the write.
-		w.fs.trace("Write: path=%v, offset %d is less than write offset %d, closing writer", w.path, offset, w.offset)
+		w.fs.Trace("Write: path=%v, offset %d is less than write offset %d, closing writer", w.path, offset, w.offset)
 		w.closeWriter(true)
 		return len(buff), nil
 	}
 
 	if offset > w.offset {
 		// Sometimes parts come in out of order. We need to cache them until it's time to write them.
-		w.fs.trace("Write: path=%v, offset %d is greater than write offset %d, caching", w.path, offset, w.offset)
+		w.fs.Trace("Write: path=%v, offset %d is greater than write offset %d, caching", w.path, offset, w.offset)
 		// TODO: Allow for configuring the cache size.
 		w.partCache[offset] = slices.Clone(buff)
 		// Return that we wrote the full buffer, otherwise fuse will eventually fail the write.
@@ -150,7 +153,7 @@ func (w *fsNodeWriter) writeAt(buff []byte, offset int64) (n int, err error) {
 	w.offset += int64(n)
 	w.updateSize(w.offset)
 
-	w.fs.trace("Write: path=%v, wrote %d bytes, new write offset is %d", w.path, n, w.offset)
+	w.fs.Trace("Write: path=%v, wrote %d bytes, new write offset is %d", w.path, n, w.offset)
 
 	if part, ok := w.partCache[w.offset]; ok {
 		partOffset := w.offset
@@ -159,7 +162,7 @@ func (w *fsNodeWriter) writeAt(buff []byte, offset int64) (n int, err error) {
 			return 0, err
 		}
 
-		w.fs.trace("Write: path=%v, wrote %d bytes from cache, new write offset is %d", w.path, l, w.offset)
+		w.fs.Trace("Write: path=%v, wrote %d bytes from cache, new write offset is %d", w.path, l, w.offset)
 
 		delete(w.partCache, partOffset)
 	}

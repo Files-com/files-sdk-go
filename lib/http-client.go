@@ -17,14 +17,6 @@ func init() {
 	DefaultClient = defaultPooledClient()
 }
 
-type NullLogger struct{}
-
-func (n NullLogger) Printf(_ string, _ ...interface{}) {}
-
-type Logger interface {
-	Printf(string, ...interface{})
-}
-
 func DefaultRetryableHttp(logger Logger, client ...*http.Client) *retryablehttp.Client {
 	retryClient := retryablehttp.NewClient()
 	retryClient.Logger = logger
