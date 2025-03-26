@@ -39,9 +39,23 @@ type Filescomfs struct {
 
 func (self *Filescomfs) Init() {
 	defer self.logPanics()
-	self.fileClient = &file.Client{Config: self.config}
-	self.migrationClient = &file_migration.Client{Config: self.config}
-	self.virtualfs = newVirtualfs(self.config.Logger, self.cacheTTL)
+	if self.fileClient == nil {
+		self.fileClient = &file.Client{Config: self.config}
+		self.migrationClient = &file_migration.Client{Config: self.config}
+		self.virtualfs = newVirtualfs(self.config.Logger, self.cacheTTL)
+	}
+}
+
+func (self *Filescomfs) Validate() (err error) {
+	self.Init()
+
+	// Make sure we can list the root directory.
+	it, err := self.fileClient.ListFor(files_sdk.FolderListForParams{Path: self.remotePath("/"), ListParams: files_sdk.ListParams{PerPage: 1}})
+	if err == nil {
+		it.Next() // Get 1 item. This is what actually triggers the API call.
+		err = it.Err()
+	}
+	return
 }
 
 func (self *Filescomfs) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
