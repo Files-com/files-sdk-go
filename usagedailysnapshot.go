@@ -8,17 +8,17 @@ import (
 )
 
 type UsageDailySnapshot struct {
-	Id                           int64                  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Date                         *date.Date             `json:"date,omitempty" path:"date,omitempty" url:"date,omitempty"`
-	ApiUsageAvailable            *bool                  `json:"api_usage_available,omitempty" path:"api_usage_available,omitempty" url:"api_usage_available,omitempty"`
-	ReadApiUsage                 int64                  `json:"read_api_usage,omitempty" path:"read_api_usage,omitempty" url:"read_api_usage,omitempty"`
-	WriteApiUsage                int64                  `json:"write_api_usage,omitempty" path:"write_api_usage,omitempty" url:"write_api_usage,omitempty"`
-	UserCount                    int64                  `json:"user_count,omitempty" path:"user_count,omitempty" url:"user_count,omitempty"`
-	CurrentStorage               int64                  `json:"current_storage,omitempty" path:"current_storage,omitempty" url:"current_storage,omitempty"`
-	DeletedFilesStorage          int64                  `json:"deleted_files_storage,omitempty" path:"deleted_files_storage,omitempty" url:"deleted_files_storage,omitempty"`
-	DeletedFilesCountedInMinimum int64                  `json:"deleted_files_counted_in_minimum,omitempty" path:"deleted_files_counted_in_minimum,omitempty" url:"deleted_files_counted_in_minimum,omitempty"`
-	RootStorage                  int64                  `json:"root_storage,omitempty" path:"root_storage,omitempty" url:"root_storage,omitempty"`
-	UsageByTopLevelDir           map[string]interface{} `json:"usage_by_top_level_dir,omitempty" path:"usage_by_top_level_dir,omitempty" url:"usage_by_top_level_dir,omitempty"`
+	Id                           int64                    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Date                         *date.Date               `json:"date,omitempty" path:"date,omitempty" url:"date,omitempty"`
+	ApiUsageAvailable            *bool                    `json:"api_usage_available,omitempty" path:"api_usage_available,omitempty" url:"api_usage_available,omitempty"`
+	ReadApiUsage                 int64                    `json:"read_api_usage,omitempty" path:"read_api_usage,omitempty" url:"read_api_usage,omitempty"`
+	WriteApiUsage                int64                    `json:"write_api_usage,omitempty" path:"write_api_usage,omitempty" url:"write_api_usage,omitempty"`
+	UserCount                    int64                    `json:"user_count,omitempty" path:"user_count,omitempty" url:"user_count,omitempty"`
+	CurrentStorage               string                   `json:"current_storage,omitempty" path:"current_storage,omitempty" url:"current_storage,omitempty"`
+	DeletedFilesStorage          string                   `json:"deleted_files_storage,omitempty" path:"deleted_files_storage,omitempty" url:"deleted_files_storage,omitempty"`
+	DeletedFilesCountedInMinimum string                   `json:"deleted_files_counted_in_minimum,omitempty" path:"deleted_files_counted_in_minimum,omitempty" url:"deleted_files_counted_in_minimum,omitempty"`
+	RootStorage                  string                   `json:"root_storage,omitempty" path:"root_storage,omitempty" url:"root_storage,omitempty"`
+	UsageByTopLevelDir           []map[string]interface{} `json:"usage_by_top_level_dir,omitempty" path:"usage_by_top_level_dir,omitempty" url:"usage_by_top_level_dir,omitempty"`
 }
 
 func (u UsageDailySnapshot) Identifier() interface{} {

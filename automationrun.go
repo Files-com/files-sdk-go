@@ -12,7 +12,7 @@ type AutomationRun struct {
 	AutomationId         int64      `json:"automation_id,omitempty" path:"automation_id,omitempty" url:"automation_id,omitempty"`
 	CompletedAt          *time.Time `json:"completed_at,omitempty" path:"completed_at,omitempty" url:"completed_at,omitempty"`
 	CreatedAt            *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	RetryAt              string     `json:"retry_at,omitempty" path:"retry_at,omitempty" url:"retry_at,omitempty"`
+	RetryAt              *time.Time `json:"retry_at,omitempty" path:"retry_at,omitempty" url:"retry_at,omitempty"`
 	RetriedAt            *time.Time `json:"retried_at,omitempty" path:"retried_at,omitempty" url:"retried_at,omitempty"`
 	RetriedInRunId       int64      `json:"retried_in_run_id,omitempty" path:"retried_in_run_id,omitempty" url:"retried_in_run_id,omitempty"`
 	RetryOfRunId         int64      `json:"retry_of_run_id,omitempty" path:"retry_of_run_id,omitempty" url:"retry_of_run_id,omitempty"`

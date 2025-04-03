@@ -11,7 +11,7 @@ type Request struct {
 	Path            string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	Source          string `json:"source,omitempty" path:"source,omitempty" url:"source,omitempty"`
 	Destination     string `json:"destination,omitempty" path:"destination,omitempty" url:"destination,omitempty"`
-	AutomationId    string `json:"automation_id,omitempty" path:"automation_id,omitempty" url:"automation_id,omitempty"`
+	AutomationId    int64  `json:"automation_id,omitempty" path:"automation_id,omitempty" url:"automation_id,omitempty"`
 	UserDisplayName string `json:"user_display_name,omitempty" path:"user_display_name,omitempty" url:"user_display_name,omitempty"`
 	UserIds         string `json:"user_ids,omitempty" path:"user_ids,omitempty" url:"user_ids,omitempty"`
 	GroupIds        string `json:"group_ids,omitempty" path:"group_ids,omitempty" url:"group_ids,omitempty"`
