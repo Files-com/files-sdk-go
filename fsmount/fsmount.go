@@ -9,6 +9,7 @@ import (
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/ignore"
 	"github.com/winfsp/cgofuse/fuse"
 )
 
@@ -31,6 +32,13 @@ type MountParams struct {
 	// Optional. Cache TTL for the filesystem metadata. Defaults to 1 second.
 	CacheTTL *time.Duration
 
+	// Optional. Disable use of Files.com locks when writing files. Defaults to false.
+	DisableLocking bool
+
+	// Optional. List of patterns to ignore when creating files and directories. Defaults to
+	// OS-specific defaults. To ignore no patterns, pass an empty slice.
+	IgnorePatterns []string
+
 	Config files_sdk.Config
 }
 
@@ -50,7 +58,16 @@ func Mount(params MountParams) (MountHost, error) {
 		writeConcurrency: params.WriteConcurrency,
 		cacheTTL:         params.CacheTTL,
 		config:           params.Config,
+		disableLocking:   params.DisableLocking,
 	}
+
+	if params.IgnorePatterns == nil || len(params.IgnorePatterns) > 0 {
+		fs.ignore, err = ignore.New(params.IgnorePatterns...)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if err := fs.Validate(); err != nil {
 		return nil, err
 	}

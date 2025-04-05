@@ -24,6 +24,7 @@ type fsNode struct {
 	childPathsExpires *time.Time
 	childPathsMutex   sync.Mutex
 	writer            *fsNodeWriter
+	lockMutex         sync.Mutex // Used to prevent simultaneous lock/unlock operations.
 }
 
 type fsNodeInfo struct {
@@ -31,10 +32,25 @@ type fsNodeInfo struct {
 	size         int64
 	creationTime *time.Time
 	modTime      time.Time
+	lockOwner    string
 }
 
 func (n *fsNode) updateInfo(info fsNodeInfo) {
+	if n.info.size != info.size {
+		n.downloadUri = ""
+	}
+
 	n.info = info
+	n.infoExpires = lib.Ptr(time.Now().Add(n.fs.cacheTTL))
+	n.childPathsExpires = nil // Force a rebuild of child paths (if we're a directory).
+}
+
+func (n *fsNode) updateSize(size int64) {
+	if n.info.size != size {
+		n.downloadUri = ""
+	}
+
+	n.info.size = size
 	n.infoExpires = lib.Ptr(time.Now().Add(n.fs.cacheTTL))
 }
 
@@ -56,17 +72,16 @@ func (n *fsNode) updateChildPaths(buildChildPaths func(string) (map[string]struc
 	return
 }
 
-func (n *fsNode) updateSize(size int64) {
-	n.info.size = size
-	n.infoExpires = lib.Ptr(time.Now().Add(n.fs.cacheTTL))
-}
-
 func (n *fsNode) infoExpired() bool {
 	return n.infoExpires == nil || n.infoExpires.Before(time.Now())
 }
 
 func (n *fsNode) childPathsExpired() bool {
 	return n.childPathsExpires == nil || n.childPathsExpires.Before(time.Now())
+}
+
+func (n *fsNode) isLocked() bool {
+	return n.info.lockOwner != ""
 }
 
 func (n *fsNode) openWriter(fsWriter FSWriter, handle uint64) {
