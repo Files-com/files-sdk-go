@@ -11,8 +11,8 @@ type OutboundConnectionLog struct {
 	Timestamp          *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
 	Path               string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	ClientIp           string     `json:"client_ip,omitempty" path:"client_ip,omitempty" url:"client_ip,omitempty"`
-	SrcRemoteServerId  string     `json:"src_remote_server_id,omitempty" path:"src_remote_server_id,omitempty" url:"src_remote_server_id,omitempty"`
-	DestRemoteServerId string     `json:"dest_remote_server_id,omitempty" path:"dest_remote_server_id,omitempty" url:"dest_remote_server_id,omitempty"`
+	SrcRemoteServerId  int64      `json:"src_remote_server_id,omitempty" path:"src_remote_server_id,omitempty" url:"src_remote_server_id,omitempty"`
+	DestRemoteServerId int64      `json:"dest_remote_server_id,omitempty" path:"dest_remote_server_id,omitempty" url:"dest_remote_server_id,omitempty"`
 	Operation          string     `json:"operation,omitempty" path:"operation,omitempty" url:"operation,omitempty"`
 	ErrorMessage       string     `json:"error_message,omitempty" path:"error_message,omitempty" url:"error_message,omitempty"`
 	ErrorOperation     string     `json:"error_operation,omitempty" path:"error_operation,omitempty" url:"error_operation,omitempty"`

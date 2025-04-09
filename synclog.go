@@ -15,7 +15,7 @@ type SyncLog struct {
 	Message         string     `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
 	Operation       string     `json:"operation,omitempty" path:"operation,omitempty" url:"operation,omitempty"`
 	Path            string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
-	Size            string     `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
+	Size            int64      `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
 	FileType        string     `json:"file_type,omitempty" path:"file_type,omitempty" url:"file_type,omitempty"`
 	Status          string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
 }
