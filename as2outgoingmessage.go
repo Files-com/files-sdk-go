@@ -13,7 +13,6 @@ type As2OutgoingMessage struct {
 	As2StationId                int64                  `json:"as2_station_id,omitempty" path:"as2_station_id,omitempty" url:"as2_station_id,omitempty"`
 	Uuid                        string                 `json:"uuid,omitempty" path:"uuid,omitempty" url:"uuid,omitempty"`
 	HttpHeaders                 map[string]interface{} `json:"http_headers,omitempty" path:"http_headers,omitempty" url:"http_headers,omitempty"`
-	ActivityLog                 string                 `json:"activity_log,omitempty" path:"activity_log,omitempty" url:"activity_log,omitempty"`
 	ProcessingResult            string                 `json:"processing_result,omitempty" path:"processing_result,omitempty" url:"processing_result,omitempty"`
 	ProcessingResultDescription string                 `json:"processing_result_description,omitempty" path:"processing_result_description,omitempty" url:"processing_result_description,omitempty"`
 	Mic                         string                 `json:"mic,omitempty" path:"mic,omitempty" url:"mic,omitempty"`

@@ -14,7 +14,6 @@ type As2IncomingMessage struct {
 	Uuid                        string                 `json:"uuid,omitempty" path:"uuid,omitempty" url:"uuid,omitempty"`
 	ContentType                 string                 `json:"content_type,omitempty" path:"content_type,omitempty" url:"content_type,omitempty"`
 	HttpHeaders                 map[string]interface{} `json:"http_headers,omitempty" path:"http_headers,omitempty" url:"http_headers,omitempty"`
-	ActivityLog                 string                 `json:"activity_log,omitempty" path:"activity_log,omitempty" url:"activity_log,omitempty"`
 	ProcessingResult            string                 `json:"processing_result,omitempty" path:"processing_result,omitempty" url:"processing_result,omitempty"`
 	ProcessingResultDescription string                 `json:"processing_result_description,omitempty" path:"processing_result_description,omitempty" url:"processing_result_description,omitempty"`
 	Mic                         string                 `json:"mic,omitempty" path:"mic,omitempty" url:"mic,omitempty"`
