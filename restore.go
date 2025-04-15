@@ -36,9 +36,10 @@ type RestoreListParams struct {
 
 type RestoreCreateParams struct {
 	EarliestDate              *time.Time `url:"earliest_date" json:"earliest_date" path:"earliest_date"`
+	Prefix                    string     `url:"prefix,omitempty" json:"prefix,omitempty" path:"prefix"`
 	RestoreDeletedPermissions *bool      `url:"restore_deleted_permissions,omitempty" json:"restore_deleted_permissions,omitempty" path:"restore_deleted_permissions"`
 	RestoreInPlace            *bool      `url:"restore_in_place,omitempty" json:"restore_in_place,omitempty" path:"restore_in_place"`
-	Prefix                    string     `url:"prefix,omitempty" json:"prefix,omitempty" path:"prefix"`
+	UpdateTimestamps          *bool      `url:"update_timestamps,omitempty" json:"update_timestamps,omitempty" path:"update_timestamps"`
 }
 
 func (r *Restore) UnmarshalJSON(data []byte) error {
