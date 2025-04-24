@@ -708,7 +708,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `site-configuration/trial-locked` | Trial Locked |
 | `site-configuration/user-requests-enabled-required` | User Requests Enabled Required |
 
-## {frontmatter.title}
+## Pagination
 
 Certain API operations return lists of objects. When the number of objects in the list is large,
 the API will paginate the results.
