@@ -41,6 +41,7 @@ type RemoteServer struct {
 	AzureBlobStorageAccount               string `json:"azure_blob_storage_account,omitempty" path:"azure_blob_storage_account,omitempty" url:"azure_blob_storage_account,omitempty"`
 	AzureBlobStorageContainer             string `json:"azure_blob_storage_container,omitempty" path:"azure_blob_storage_container,omitempty" url:"azure_blob_storage_container,omitempty"`
 	AzureBlobStorageHierarchicalNamespace *bool  `json:"azure_blob_storage_hierarchical_namespace,omitempty" path:"azure_blob_storage_hierarchical_namespace,omitempty" url:"azure_blob_storage_hierarchical_namespace,omitempty"`
+	AzureBlobStorageDnsSuffix             string `json:"azure_blob_storage_dns_suffix,omitempty" path:"azure_blob_storage_dns_suffix,omitempty" url:"azure_blob_storage_dns_suffix,omitempty"`
 	AzureFilesStorageAccount              string `json:"azure_files_storage_account,omitempty" path:"azure_files_storage_account,omitempty" url:"azure_files_storage_account,omitempty"`
 	AzureFilesStorageShareName            string `json:"azure_files_storage_share_name,omitempty" path:"azure_files_storage_share_name,omitempty" url:"azure_files_storage_share_name,omitempty"`
 	AzureFilesStorageDnsSuffix            string `json:"azure_files_storage_dns_suffix,omitempty" path:"azure_files_storage_dns_suffix,omitempty" url:"azure_files_storage_dns_suffix,omitempty"`
@@ -233,6 +234,7 @@ type RemoteServerCreateParams struct {
 	AzureBlobStorageContainer             string                                  `url:"azure_blob_storage_container,omitempty" json:"azure_blob_storage_container,omitempty" path:"azure_blob_storage_container"`
 	AzureBlobStorageHierarchicalNamespace *bool                                   `url:"azure_blob_storage_hierarchical_namespace,omitempty" json:"azure_blob_storage_hierarchical_namespace,omitempty" path:"azure_blob_storage_hierarchical_namespace"`
 	AzureBlobStorageSasToken              string                                  `url:"azure_blob_storage_sas_token,omitempty" json:"azure_blob_storage_sas_token,omitempty" path:"azure_blob_storage_sas_token"`
+	AzureBlobStorageDnsSuffix             string                                  `url:"azure_blob_storage_dns_suffix,omitempty" json:"azure_blob_storage_dns_suffix,omitempty" path:"azure_blob_storage_dns_suffix"`
 	AzureFilesStorageAccount              string                                  `url:"azure_files_storage_account,omitempty" json:"azure_files_storage_account,omitempty" path:"azure_files_storage_account"`
 	AzureFilesStorageShareName            string                                  `url:"azure_files_storage_share_name,omitempty" json:"azure_files_storage_share_name,omitempty" path:"azure_files_storage_share_name"`
 	AzureFilesStorageDnsSuffix            string                                  `url:"azure_files_storage_dns_suffix,omitempty" json:"azure_files_storage_dns_suffix,omitempty" path:"azure_files_storage_dns_suffix"`
@@ -319,6 +321,7 @@ type RemoteServerUpdateParams struct {
 	AzureBlobStorageContainer             string                                  `url:"azure_blob_storage_container,omitempty" json:"azure_blob_storage_container,omitempty" path:"azure_blob_storage_container"`
 	AzureBlobStorageHierarchicalNamespace *bool                                   `url:"azure_blob_storage_hierarchical_namespace,omitempty" json:"azure_blob_storage_hierarchical_namespace,omitempty" path:"azure_blob_storage_hierarchical_namespace"`
 	AzureBlobStorageSasToken              string                                  `url:"azure_blob_storage_sas_token,omitempty" json:"azure_blob_storage_sas_token,omitempty" path:"azure_blob_storage_sas_token"`
+	AzureBlobStorageDnsSuffix             string                                  `url:"azure_blob_storage_dns_suffix,omitempty" json:"azure_blob_storage_dns_suffix,omitempty" path:"azure_blob_storage_dns_suffix"`
 	AzureFilesStorageAccount              string                                  `url:"azure_files_storage_account,omitempty" json:"azure_files_storage_account,omitempty" path:"azure_files_storage_account"`
 	AzureFilesStorageShareName            string                                  `url:"azure_files_storage_share_name,omitempty" json:"azure_files_storage_share_name,omitempty" path:"azure_files_storage_share_name"`
 	AzureFilesStorageDnsSuffix            string                                  `url:"azure_files_storage_dns_suffix,omitempty" json:"azure_files_storage_dns_suffix,omitempty" path:"azure_files_storage_dns_suffix"`

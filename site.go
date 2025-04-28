@@ -153,6 +153,7 @@ type Site struct {
 	SmtpUsername                             string                 `json:"smtp_username,omitempty" path:"smtp_username,omitempty" url:"smtp_username,omitempty"`
 	SessionExpiry                            string                 `json:"session_expiry,omitempty" path:"session_expiry,omitempty" url:"session_expiry,omitempty"`
 	SessionExpiryMinutes                     int64                  `json:"session_expiry_minutes,omitempty" path:"session_expiry_minutes,omitempty" url:"session_expiry_minutes,omitempty"`
+	SnapshotSharingEnabled                   *bool                  `json:"snapshot_sharing_enabled,omitempty" path:"snapshot_sharing_enabled,omitempty" url:"snapshot_sharing_enabled,omitempty"`
 	SslRequired                              *bool                  `json:"ssl_required,omitempty" path:"ssl_required,omitempty" url:"ssl_required,omitempty"`
 	Subdomain                                string                 `json:"subdomain,omitempty" path:"subdomain,omitempty" url:"subdomain,omitempty"`
 	SwitchToPlanDate                         *time.Time             `json:"switch_to_plan_date,omitempty" path:"switch_to_plan_date,omitempty" url:"switch_to_plan_date,omitempty"`
@@ -275,6 +276,7 @@ type SiteUpdateParams struct {
 	NonSsoGroupsAllowed                      *bool                  `url:"non_sso_groups_allowed,omitempty" json:"non_sso_groups_allowed,omitempty" path:"non_sso_groups_allowed"`
 	NonSsoUsersAllowed                       *bool                  `url:"non_sso_users_allowed,omitempty" json:"non_sso_users_allowed,omitempty" path:"non_sso_users_allowed"`
 	SharingEnabled                           *bool                  `url:"sharing_enabled,omitempty" json:"sharing_enabled,omitempty" path:"sharing_enabled"`
+	SnapshotSharingEnabled                   *bool                  `url:"snapshot_sharing_enabled,omitempty" json:"snapshot_sharing_enabled,omitempty" path:"snapshot_sharing_enabled"`
 	UserRequestsEnabled                      *bool                  `url:"user_requests_enabled,omitempty" json:"user_requests_enabled,omitempty" path:"user_requests_enabled"`
 	UserRequestsNotifyAdmins                 *bool                  `url:"user_requests_notify_admins,omitempty" json:"user_requests_notify_admins,omitempty" path:"user_requests_notify_admins"`
 	DavEnabled                               *bool                  `url:"dav_enabled,omitempty" json:"dav_enabled,omitempty" path:"dav_enabled"`
