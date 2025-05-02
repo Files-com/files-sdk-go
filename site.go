@@ -132,6 +132,7 @@ type Site struct {
 	ProtocolAccessGroupsOnly                 *bool                  `json:"protocol_access_groups_only,omitempty" path:"protocol_access_groups_only,omitempty" url:"protocol_access_groups_only,omitempty"`
 	Require2fa                               *bool                  `json:"require_2fa,omitempty" path:"require_2fa,omitempty" url:"require_2fa,omitempty"`
 	Require2faStopTime                       *time.Time             `json:"require_2fa_stop_time,omitempty" path:"require_2fa_stop_time,omitempty" url:"require_2fa_stop_time,omitempty"`
+	RevokeBundleAccessOnDisableOrDelete      *bool                  `json:"revoke_bundle_access_on_disable_or_delete,omitempty" path:"revoke_bundle_access_on_disable_or_delete,omitempty" url:"revoke_bundle_access_on_disable_or_delete,omitempty"`
 	Require2faUserType                       string                 `json:"require_2fa_user_type,omitempty" path:"require_2fa_user_type,omitempty" url:"require_2fa_user_type,omitempty"`
 	RequireLogoutFromBundlesAndInboxes       *bool                  `json:"require_logout_from_bundles_and_inboxes,omitempty" path:"require_logout_from_bundles_and_inboxes,omitempty" url:"require_logout_from_bundles_and_inboxes,omitempty"`
 	Session                                  Session                `json:"session,omitempty" path:"session,omitempty" url:"session,omitempty"`
@@ -288,6 +289,7 @@ type SiteUpdateParams struct {
 	SftpHostKeyType                          string                 `url:"sftp_host_key_type,omitempty" json:"sftp_host_key_type,omitempty" path:"sftp_host_key_type"`
 	ActiveSftpHostKeyId                      int64                  `url:"active_sftp_host_key_id,omitempty" json:"active_sftp_host_key_id,omitempty" path:"active_sftp_host_key_id"`
 	ProtocolAccessGroupsOnly                 *bool                  `url:"protocol_access_groups_only,omitempty" json:"protocol_access_groups_only,omitempty" path:"protocol_access_groups_only"`
+	RevokeBundleAccessOnDisableOrDelete      *bool                  `url:"revoke_bundle_access_on_disable_or_delete,omitempty" json:"revoke_bundle_access_on_disable_or_delete,omitempty" path:"revoke_bundle_access_on_disable_or_delete"`
 	BundleWatermarkValue                     map[string]interface{} `url:"bundle_watermark_value,omitempty" json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value"`
 	GroupAdminsCanSetUserPassword            *bool                  `url:"group_admins_can_set_user_password,omitempty" json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password"`
 	BundleRecipientBlacklistFreeEmailDomains *bool                  `url:"bundle_recipient_blacklist_free_email_domains,omitempty" json:"bundle_recipient_blacklist_free_email_domains,omitempty" path:"bundle_recipient_blacklist_free_email_domains"`
