@@ -45,6 +45,8 @@ type SiemHttpDestination struct {
 	EmailEntriesSent                              int64                  `json:"email_entries_sent,omitempty" path:"email_entries_sent,omitempty" url:"email_entries_sent,omitempty"`
 	ExavaultApiRequestSendEnabled                 *bool                  `json:"exavault_api_request_send_enabled,omitempty" path:"exavault_api_request_send_enabled,omitempty" url:"exavault_api_request_send_enabled,omitempty"`
 	ExavaultApiRequestEntriesSent                 int64                  `json:"exavault_api_request_entries_sent,omitempty" path:"exavault_api_request_entries_sent,omitempty" url:"exavault_api_request_entries_sent,omitempty"`
+	SettingsChangeSendEnabled                     *bool                  `json:"settings_change_send_enabled,omitempty" path:"settings_change_send_enabled,omitempty" url:"settings_change_send_enabled,omitempty"`
+	SettingsChangeEntriesSent                     int64                  `json:"settings_change_entries_sent,omitempty" path:"settings_change_entries_sent,omitempty" url:"settings_change_entries_sent,omitempty"`
 	LastHttpCallTargetType                        string                 `json:"last_http_call_target_type,omitempty" path:"last_http_call_target_type,omitempty" url:"last_http_call_target_type,omitempty"`
 	LastHttpCallSuccess                           *bool                  `json:"last_http_call_success,omitempty" path:"last_http_call_success,omitempty" url:"last_http_call_success,omitempty"`
 	LastHttpCallResponseCode                      int64                  `json:"last_http_call_response_code,omitempty" path:"last_http_call_response_code,omitempty" url:"last_http_call_response_code,omitempty"`
@@ -135,6 +137,7 @@ type SiemHttpDestinationCreateParams struct {
 	PublicHostingRequestSendEnabled         *bool                                     `url:"public_hosting_request_send_enabled,omitempty" json:"public_hosting_request_send_enabled,omitempty" path:"public_hosting_request_send_enabled"`
 	EmailSendEnabled                        *bool                                     `url:"email_send_enabled,omitempty" json:"email_send_enabled,omitempty" path:"email_send_enabled"`
 	ExavaultApiRequestSendEnabled           *bool                                     `url:"exavault_api_request_send_enabled,omitempty" json:"exavault_api_request_send_enabled,omitempty" path:"exavault_api_request_send_enabled"`
+	SettingsChangeSendEnabled               *bool                                     `url:"settings_change_send_enabled,omitempty" json:"settings_change_send_enabled,omitempty" path:"settings_change_send_enabled"`
 	DestinationType                         SiemHttpDestinationDestinationTypeEnum    `url:"destination_type" json:"destination_type" path:"destination_type"`
 	DestinationUrl                          string                                    `url:"destination_url" json:"destination_url" path:"destination_url"`
 }
@@ -168,6 +171,7 @@ type SiemHttpDestinationSendTestEntryParams struct {
 	PublicHostingRequestSendEnabled         *bool                                     `url:"public_hosting_request_send_enabled,omitempty" json:"public_hosting_request_send_enabled,omitempty" path:"public_hosting_request_send_enabled"`
 	EmailSendEnabled                        *bool                                     `url:"email_send_enabled,omitempty" json:"email_send_enabled,omitempty" path:"email_send_enabled"`
 	ExavaultApiRequestSendEnabled           *bool                                     `url:"exavault_api_request_send_enabled,omitempty" json:"exavault_api_request_send_enabled,omitempty" path:"exavault_api_request_send_enabled"`
+	SettingsChangeSendEnabled               *bool                                     `url:"settings_change_send_enabled,omitempty" json:"settings_change_send_enabled,omitempty" path:"settings_change_send_enabled"`
 }
 
 type SiemHttpDestinationUpdateParams struct {
@@ -197,6 +201,7 @@ type SiemHttpDestinationUpdateParams struct {
 	PublicHostingRequestSendEnabled         *bool                                     `url:"public_hosting_request_send_enabled,omitempty" json:"public_hosting_request_send_enabled,omitempty" path:"public_hosting_request_send_enabled"`
 	EmailSendEnabled                        *bool                                     `url:"email_send_enabled,omitempty" json:"email_send_enabled,omitempty" path:"email_send_enabled"`
 	ExavaultApiRequestSendEnabled           *bool                                     `url:"exavault_api_request_send_enabled,omitempty" json:"exavault_api_request_send_enabled,omitempty" path:"exavault_api_request_send_enabled"`
+	SettingsChangeSendEnabled               *bool                                     `url:"settings_change_send_enabled,omitempty" json:"settings_change_send_enabled,omitempty" path:"settings_change_send_enabled"`
 	DestinationType                         SiemHttpDestinationDestinationTypeEnum    `url:"destination_type,omitempty" json:"destination_type,omitempty" path:"destination_type"`
 	DestinationUrl                          string                                    `url:"destination_url,omitempty" json:"destination_url,omitempty" path:"destination_url"`
 }
