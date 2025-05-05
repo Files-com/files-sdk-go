@@ -27,7 +27,6 @@ type RemoteServer struct {
 	Username                                string `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
 	GoogleCloudStorageBucket                string `json:"google_cloud_storage_bucket,omitempty" path:"google_cloud_storage_bucket,omitempty" url:"google_cloud_storage_bucket,omitempty"`
 	GoogleCloudStorageProjectId             string `json:"google_cloud_storage_project_id,omitempty" path:"google_cloud_storage_project_id,omitempty" url:"google_cloud_storage_project_id,omitempty"`
-	GoogleCloudStorageRegion                string `json:"google_cloud_storage_region,omitempty" path:"google_cloud_storage_region,omitempty" url:"google_cloud_storage_region,omitempty"`
 	GoogleCloudStorageS3CompatibleAccessKey string `json:"google_cloud_storage_s3_compatible_access_key,omitempty" path:"google_cloud_storage_s3_compatible_access_key,omitempty" url:"google_cloud_storage_s3_compatible_access_key,omitempty"`
 	BackblazeB2S3Endpoint                   string `json:"backblaze_b2_s3_endpoint,omitempty" path:"backblaze_b2_s3_endpoint,omitempty" url:"backblaze_b2_s3_endpoint,omitempty"`
 	BackblazeB2Bucket                       string `json:"backblaze_b2_bucket,omitempty" path:"backblaze_b2_bucket,omitempty" url:"backblaze_b2_bucket,omitempty"`
@@ -238,7 +237,6 @@ type RemoteServerCreateParams struct {
 	FilesAgentVersion                       string                                  `url:"files_agent_version,omitempty" json:"files_agent_version,omitempty" path:"files_agent_version"`
 	GoogleCloudStorageBucket                string                                  `url:"google_cloud_storage_bucket,omitempty" json:"google_cloud_storage_bucket,omitempty" path:"google_cloud_storage_bucket"`
 	GoogleCloudStorageProjectId             string                                  `url:"google_cloud_storage_project_id,omitempty" json:"google_cloud_storage_project_id,omitempty" path:"google_cloud_storage_project_id"`
-	GoogleCloudStorageRegion                string                                  `url:"google_cloud_storage_region,omitempty" json:"google_cloud_storage_region,omitempty" path:"google_cloud_storage_region"`
 	GoogleCloudStorageS3CompatibleAccessKey string                                  `url:"google_cloud_storage_s3_compatible_access_key,omitempty" json:"google_cloud_storage_s3_compatible_access_key,omitempty" path:"google_cloud_storage_s3_compatible_access_key"`
 	Hostname                                string                                  `url:"hostname,omitempty" json:"hostname,omitempty" path:"hostname"`
 	LinodeAccessKey                         string                                  `url:"linode_access_key,omitempty" json:"linode_access_key,omitempty" path:"linode_access_key"`
@@ -328,7 +326,6 @@ type RemoteServerUpdateParams struct {
 	FilesAgentVersion                       string                                  `url:"files_agent_version,omitempty" json:"files_agent_version,omitempty" path:"files_agent_version"`
 	GoogleCloudStorageBucket                string                                  `url:"google_cloud_storage_bucket,omitempty" json:"google_cloud_storage_bucket,omitempty" path:"google_cloud_storage_bucket"`
 	GoogleCloudStorageProjectId             string                                  `url:"google_cloud_storage_project_id,omitempty" json:"google_cloud_storage_project_id,omitempty" path:"google_cloud_storage_project_id"`
-	GoogleCloudStorageRegion                string                                  `url:"google_cloud_storage_region,omitempty" json:"google_cloud_storage_region,omitempty" path:"google_cloud_storage_region"`
 	GoogleCloudStorageS3CompatibleAccessKey string                                  `url:"google_cloud_storage_s3_compatible_access_key,omitempty" json:"google_cloud_storage_s3_compatible_access_key,omitempty" path:"google_cloud_storage_s3_compatible_access_key"`
 	Hostname                                string                                  `url:"hostname,omitempty" json:"hostname,omitempty" path:"hostname"`
 	LinodeAccessKey                         string                                  `url:"linode_access_key,omitempty" json:"linode_access_key,omitempty" path:"linode_access_key"`
