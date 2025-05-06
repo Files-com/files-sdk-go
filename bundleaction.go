@@ -23,6 +23,7 @@ func (b BundleAction) Identifier() interface{} {
 type BundleActionCollection []BundleAction
 
 type BundleActionListParams struct {
+	UserId     int64                  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy     map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter     BundleAction           `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt   map[string]interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
