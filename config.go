@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.2.154"
+var VERSION = "3.2.155"
 
 const (
 	UserAgent   = "Files.com Go SDK"
@@ -28,6 +28,7 @@ func init() {
 type Config struct {
 	APIKey           string `header:"X-FilesAPI-Key" json:"api_key"`
 	SessionId        string `header:"X-FilesAPI-Auth" json:"session_id"`
+	Language         string `header:"Accept-Language"`
 	Subdomain        string `json:"subdomain"`
 	EndpointOverride string `json:"endpoint_override"`
 	*retryablehttp.Client
@@ -99,7 +100,9 @@ func (c Config) SetHeaders(headers *http.Header) {
 	} else if c.SessionId != "" {
 		headers.Set("X-FilesAPI-Auth", c.SessionId)
 	}
-
+	if c.Language != "" {
+		headers.Set("Accept-Language", c.Language)
+	}
 	for key, value := range c.AdditionalHeaders {
 		headers.Set(key, value)
 	}
