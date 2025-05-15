@@ -1,0 +1,1 @@
+package user_lifecycle_rule
