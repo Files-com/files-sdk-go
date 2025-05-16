@@ -69,6 +69,15 @@ type UserLifecycleRuleCreateParams struct {
 	IncludeFolderAdmins  *bool                                     `url:"include_folder_admins,omitempty" json:"include_folder_admins,omitempty" path:"include_folder_admins"`
 }
 
+type UserLifecycleRuleUpdateParams struct {
+	Id                   int64                                     `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Action               UserLifecycleRuleActionEnum               `url:"action" json:"action" path:"action"`
+	AuthenticationMethod UserLifecycleRuleAuthenticationMethodEnum `url:"authentication_method" json:"authentication_method" path:"authentication_method"`
+	InactivityDays       int64                                     `url:"inactivity_days" json:"inactivity_days" path:"inactivity_days"`
+	IncludeSiteAdmins    *bool                                     `url:"include_site_admins,omitempty" json:"include_site_admins,omitempty" path:"include_site_admins"`
+	IncludeFolderAdmins  *bool                                     `url:"include_folder_admins,omitempty" json:"include_folder_admins,omitempty" path:"include_folder_admins"`
+}
+
 type UserLifecycleRuleDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

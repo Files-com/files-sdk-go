@@ -65,6 +65,24 @@ func Create(params files_sdk.UserLifecycleRuleCreateParams, opts ...files_sdk.Re
 	return (&Client{}).Create(params, opts...)
 }
 
+func (c *Client) Update(params files_sdk.UserLifecycleRuleUpdateParams, opts ...files_sdk.RequestResponseOption) (userLifecycleRule files_sdk.UserLifecycleRule, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/user_lifecycle_rules/{id}", Params: params, Entity: &userLifecycleRule}, opts...)
+	return
+}
+
+func Update(params files_sdk.UserLifecycleRuleUpdateParams, opts ...files_sdk.RequestResponseOption) (userLifecycleRule files_sdk.UserLifecycleRule, err error) {
+	return (&Client{}).Update(params, opts...)
+}
+
+func (c *Client) UpdateWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (userLifecycleRule files_sdk.UserLifecycleRule, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/user_lifecycle_rules/{id}", Params: params, Entity: &userLifecycleRule}, opts...)
+	return
+}
+
+func UpdateWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (userLifecycleRule files_sdk.UserLifecycleRule, err error) {
+	return (&Client{}).UpdateWithMap(params, opts...)
+}
+
 func (c *Client) Delete(params files_sdk.UserLifecycleRuleDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "DELETE", Path: "/user_lifecycle_rules/{id}", Params: params, Entity: nil}, opts...)
 	return
