@@ -35,6 +35,10 @@ func (c *Client) DownloadToFile(params files_sdk.FileDownloadParams, filePath st
 }
 
 type DownloaderParams struct {
+	// Ignore gitignore formatted pattern
+	Ignore []string
+	// Include gitignore formatted pattern
+	Include       []string
 	RemotePath    string
 	RemoteFile    files_sdk.File
 	LocalPath     string

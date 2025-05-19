@@ -11,9 +11,11 @@ import (
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/directory"
 	"github.com/Files-com/files-sdk-go/v3/file/status"
+	"github.com/Files-com/files-sdk-go/v3/ignore"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/Files-com/files-sdk-go/v3/lib/direction"
 	"github.com/Files-com/files-sdk-go/v3/lib/keyvalue"
+	gitignore "github.com/sabhiram/go-gitignore"
 )
 
 func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *Job {
@@ -97,6 +99,41 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *Jo
 		go enqueueIndexedDownloads(job, jobCtx, onComplete)
 		WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, job.RetryPolicy.(RetryPolicy), false) })
 
+		metaFile := &DownloadStatus{
+			job:         job,
+			status:      status.Errored,
+			localPath:   params.LocalPath,
+			remotePath:  params.RemotePath,
+			tempPath:    params.TempPath,
+			Sync:        params.Sync,
+			NoOverwrite: params.NoOverwrite,
+			Mutex:       &sync.RWMutex{},
+		}
+		metaFile.file = files_sdk.File{
+			DisplayName: filepath.Base(params.RemotePath),
+			Type:        job.Direction.Name(),
+			Path:        params.LocalPath,
+		}
+
+		var err error
+		var ignorePattern *gitignore.GitIgnore
+		var includePattern *gitignore.GitIgnore
+		ignorePattern, err = ignore.New(params.Ignore...)
+		if err != nil {
+			downloadJobError(job, metaFile, err)
+			return
+		}
+
+		if len(params.Include) > 0 {
+			includePattern, err = ignore.New(params.Include...)
+			if err != nil {
+				downloadJobError(job, metaFile, err)
+				return
+			}
+		}
+		job.Ignore = ignorePattern
+		job.Include = includePattern
+
 		it := (&lib.Walk[lib.DirEntry]{
 			FS:                 fileSys,
 			Root:               lib.UrlJoinNoEscape(job.RemotePath),
@@ -115,21 +152,6 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *Jo
 		}
 
 		if it.Err() != nil {
-			metaFile := &DownloadStatus{
-				job:         job,
-				status:      status.Errored,
-				localPath:   params.LocalPath,
-				remotePath:  params.RemotePath,
-				tempPath:    params.TempPath,
-				Sync:        params.Sync,
-				NoOverwrite: params.NoOverwrite,
-				Mutex:       &sync.RWMutex{},
-			}
-			metaFile.file = files_sdk.File{
-				DisplayName: filepath.Base(params.LocalPath),
-				Type:        job.Direction.Name(),
-				Path:        params.RemotePath,
-			}
 			job.Add(metaFile)
 			job.UpdateStatus(status.Errored, metaFile, it.Err())
 			onComplete <- metaFile
@@ -199,8 +221,24 @@ func enqueueDownload(ctx context.Context, job *Job, downloadStatus *DownloadStat
 		signal <- downloadStatus
 		return
 	}
-
+	if excludeDownload(downloadStatus) {
+		downloadStatus.Job().UpdateStatus(status.Ignored, downloadStatus, nil)
+		signal <- downloadStatus
+		return
+	}
 	downloadFolderItem(ctx, signal, downloadStatus)
+}
+
+func excludeDownload(status *DownloadStatus) bool {
+	return excludePath(status.RemotePath(), status.Job().Ignore, status.Job().Include)
+}
+
+func excludePath(path string, ignore, include *gitignore.GitIgnore) bool {
+	// if the ignore matches, or the include doesn't match, we skip the file
+	if (ignore != nil && ignore.MatchesPath(path)) || (include != nil && !include.MatchesPath(path)) {
+		return true
+	}
+	return false
 }
 
 func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *DownloadStatus) {
@@ -365,4 +403,14 @@ func relativePath(job Job, file files_sdk.File) string {
 		panic(err)
 	}
 	return relativePath
+}
+func downloadJobError(job *Job, metaFile IFile, err error) bool {
+	if err != nil {
+		job.Add(metaFile)
+		job.UpdateStatus(status.Errored, metaFile, err)
+		job.EndScan()
+		job.Finish()
+		return true
+	}
+	return false
 }
