@@ -783,50 +783,56 @@ func TestDownload(t *testing.T) {
 	})
 }
 
-func TestExcludeDownload(t *testing.T) {
+func TestIgnoreDownload(t *testing.T) {
 	tests := []struct {
 		name           string
 		path           string
 		ignorePattern  string
 		includePattern string
-		excluded       bool
+		ignored        bool
 	}{
 		{
-			name:     "nothing explicitly ignored or included",
-			path:     "path/not/excluded/computers.pdf",
-			excluded: false,
+			name:    "nothing explicitly ignored or included",
+			path:    "path/not/excluded/computers.pdf",
+			ignored: false,
 		},
 		{
 			name:          "ignore css files",
 			path:          "path/excluded/main.css",
 			ignorePattern: "*.css",
-			excluded:      true,
+			ignored:       true,
 		},
 		{
 			name:           "only include pdf files",
 			path:           "path/excluded/computers.txt",
 			includePattern: "*.pdf",
-			excluded:       true,
+			ignored:        true,
+		},
+		{
+			name:           "include directory path matches folder *.pdf",
+			path:           "path/excluded/computers.pdf",
+			includePattern: "*/excluded/*.pdf",
+			ignored:        false,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			var err error
-			var exclude, include *gitignore.GitIgnore
-			exclude, err = ignore.New(tc.ignorePattern)
+			var ignored, included *gitignore.GitIgnore
+			ignored, err = ignore.New(tc.ignorePattern)
 			if err != nil {
 				t.Error(err)
 			}
 			if tc.includePattern != "" {
-				include, err = ignore.New(tc.includePattern)
+				included, err = ignore.New(tc.includePattern)
 				if err != nil {
 					t.Error(err)
 				}
 			}
-			got := excludePath(tc.path, exclude, include)
-			if got != tc.excluded {
-				t.Errorf("excludeDownload() = %v, want %v", got, tc.excluded)
+			got := ignorePath(tc.path, ignored, included)
+			if got != tc.ignored {
+				t.Errorf("ignorePath(%q, %q, %q) = %v, want %v", tc.path, tc.ignorePattern, tc.includePattern, got, tc.ignored)
 			}
 		})
 	}
