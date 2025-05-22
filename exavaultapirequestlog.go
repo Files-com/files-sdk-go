@@ -10,7 +10,7 @@ import (
 type ExavaultApiRequestLog struct {
 	Timestamp     *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
 	Endpoint      string     `json:"endpoint,omitempty" path:"endpoint,omitempty" url:"endpoint,omitempty"`
-	Version       string     `json:"version,omitempty" path:"version,omitempty" url:"version,omitempty"`
+	Version       int64      `json:"version,omitempty" path:"version,omitempty" url:"version,omitempty"`
 	RequestIp     string     `json:"request_ip,omitempty" path:"request_ip,omitempty" url:"request_ip,omitempty"`
 	RequestMethod string     `json:"request_method,omitempty" path:"request_method,omitempty" url:"request_method,omitempty"`
 	ErrorType     string     `json:"error_type,omitempty" path:"error_type,omitempty" url:"error_type,omitempty"`
