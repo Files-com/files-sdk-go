@@ -291,7 +291,7 @@ func TestUploader(t *testing.T) {
 	t.Run("uploader", func(t *testing.T) {
 		sourceFs := lib.ReadWriteFs(lib.LocalFileSystem{})
 		destinationFs := &FS{Context: context.Background()}
-		for _, tt := range lib.PathSpec(sourceFs.PathSeparator(), destinationFs.PathSeparator()) {
+		for _, tt := range lib.PathSpec(t, sourceFs.PathSeparator(), destinationFs.PathSeparator()) {
 			t.Run(tt.Name, func(t *testing.T) {
 				client, r, err := CreateClient(t.Name())
 				if err != nil {

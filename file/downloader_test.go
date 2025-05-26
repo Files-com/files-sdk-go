@@ -761,7 +761,7 @@ func TestDownload(t *testing.T) {
 	t.Run("downloader", func(t *testing.T) {
 		sourceFs := &FS{Context: context.Background()}
 		destinationFs := lib.ReadWriteFs(lib.LocalFileSystem{})
-		for _, tt := range lib.PathSpec(sourceFs.PathSeparator(), destinationFs.PathSeparator()) {
+		for _, tt := range lib.PathSpec(t, sourceFs.PathSeparator(), destinationFs.PathSeparator()) {
 			t.Run(tt.Name, func(t *testing.T) {
 				client, r, err := CreateClient(t.Name())
 				if err != nil {

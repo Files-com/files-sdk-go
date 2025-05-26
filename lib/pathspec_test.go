@@ -18,7 +18,7 @@ func TestRsync(t *testing.T) {
 
 	t.Run("rsync", func(t *testing.T) {
 		mutex := &sync.Mutex{}
-		for _, tt := range PathSpec(sourceFs.PathSeparator(), destinationFs.PathSeparator()) {
+		for _, tt := range PathSpec(t, sourceFs.PathSeparator(), destinationFs.PathSeparator()) {
 			t.Run(tt.Name, func(t *testing.T) {
 				BuildPathSpecTest(t, mutex, tt, sourceFs, destinationFs, func(args PathSpecArgs) Cmd {
 					if args.PreserveTimes {

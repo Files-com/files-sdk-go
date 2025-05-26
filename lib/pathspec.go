@@ -36,6 +36,7 @@ type PathSpecTest struct {
 }
 
 func BuildPathSpecTest(t *testing.T, mutex *sync.Mutex, tt PathSpecTest, sourceFs ReadWriteFs, destinationFs ReadWriteFs, cmdBuilder func(PathSpecArgs) Cmd) {
+	t.Helper()
 	t.Log(tt.Name)
 
 	sourceTmpDir := sourceFs.PathJoin(sourceFs.TempDir(), strings.ReplaceAll(t.Name(), "/", "-"))
@@ -186,7 +187,8 @@ func BuildPathSpecTest(t *testing.T, mutex *sync.Mutex, tt PathSpecTest, sourceF
 	assert.NoError(t, destinationFs.RemoveAll(destRoot))
 }
 
-func PathSpec(srcPathSeparator string, destPathSeparator string) []PathSpecTest {
+func PathSpec(t *testing.T, srcPathSeparator string, destPathSeparator string) []PathSpecTest {
+	t.Helper()
 	return []PathSpecTest{
 		{
 			Name: "copy foo to Dest",
