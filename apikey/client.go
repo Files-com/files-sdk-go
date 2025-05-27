@@ -48,7 +48,7 @@ func List(params files_sdk.ApiKeyListParams, opts ...files_sdk.RequestResponseOp
 }
 
 func (c *Client) FindCurrent(opts ...files_sdk.RequestResponseOption) (apiKey files_sdk.ApiKey, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/api_key", Params: lib.Interface(), Entity: &apiKey}, opts...)
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/api_key", Entity: &apiKey}, opts...)
 	return
 }
 
@@ -111,7 +111,7 @@ func UpdateWithMap(params map[string]interface{}, opts ...files_sdk.RequestRespo
 }
 
 func (c *Client) DeleteCurrent(opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "DELETE", Path: "/api_key", Params: lib.Interface(), Entity: nil}, opts...)
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "DELETE", Path: "/api_key", Entity: nil}, opts...)
 	return
 }
 

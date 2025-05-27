@@ -10,7 +10,7 @@ type Client struct {
 }
 
 func (c *Client) Get(opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/site", Params: lib.Interface(), Entity: &site}, opts...)
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/site", Entity: &site}, opts...)
 	return
 }
 
@@ -19,7 +19,7 @@ func Get(opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err erro
 }
 
 func (c *Client) GetUsage(opts ...files_sdk.RequestResponseOption) (usageSnapshot files_sdk.UsageSnapshot, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/site/usage", Params: lib.Interface(), Entity: &usageSnapshot}, opts...)
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/site/usage", Entity: &usageSnapshot}, opts...)
 	return
 }
 

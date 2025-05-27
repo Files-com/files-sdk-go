@@ -19,7 +19,7 @@ func Create(params files_sdk.SessionCreateParams, opts ...files_sdk.RequestRespo
 }
 
 func (c *Client) Delete(opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "DELETE", Path: "/sessions", Params: lib.Interface(), Entity: nil}, opts...)
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "DELETE", Path: "/sessions", Entity: nil}, opts...)
 	return
 }
 

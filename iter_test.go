@@ -67,7 +67,7 @@ func TestIter_Next_PerPage_of_one(t *testing.T) {
 	recordCount := 0
 	for it.Next() {
 		recordCount += 1
-		assert.Equal(lib.Interface(), it.Current())
+		assert.Equal(nil, it.Current())
 	}
 	assert.Equal(1, recordCount)
 }
@@ -86,7 +86,7 @@ func TestIter_Next_No_Cursor(t *testing.T) {
 	recordCount := 0
 	for it.Next() {
 		recordCount += 1
-		assert.Equal(lib.Interface(), it.Current())
+		assert.Equal(nil, it.Current())
 	}
 	assert.Equal(1, recordCount)
 }

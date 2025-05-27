@@ -25,7 +25,7 @@ func (c *Client) Get(Path string, opts ...files_sdk.RequestResponseOption) (file
 	if err != nil {
 		return file, err
 	}
-	data, _, err := files_sdk.Call("GET", c.Config, path, lib.Params{Params: lib.Interface()}, opts...)
+	data, _, err := files_sdk.Call("GET", c.Config, path, lib.Params{}, opts...)
 	if err != nil {
 		return file, err
 	}
