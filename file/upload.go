@@ -121,6 +121,13 @@ func UploadWithResume(resume UploadResumable) UploadOption {
 	}
 }
 
+func UploadWithAttributes(attributes map[string]any) UploadOption {
+	return func(params uploadIO) (uploadIO, error) {
+		params.attributes = attributes
+		return params, nil
+	}
+}
+
 func (c *Client) Upload(opts ...UploadOption) error {
 	_, err := c.UploadWithResume(opts...)
 
