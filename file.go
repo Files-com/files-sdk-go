@@ -76,20 +76,20 @@ type FileDownloadParams struct {
 }
 
 type FileCreateParams struct {
-	Path          string         `url:"-,omitempty" json:"-,omitempty" path:"path"`
-	Action        string         `url:"action,omitempty" json:"action,omitempty" path:"action"`
-	EtagsParam    []EtagsParam   `url:"etags,omitempty" json:"etags,omitempty" path:"etags"`
-	Length        int64          `url:"length,omitempty" json:"length,omitempty" path:"length"`
-	MkdirParents  *bool          `url:"mkdir_parents,omitempty" json:"mkdir_parents,omitempty" path:"mkdir_parents"`
-	Part          int64          `url:"part,omitempty" json:"part,omitempty" path:"part"`
-	Parts         int64          `url:"parts,omitempty" json:"parts,omitempty" path:"parts"`
-	ProvidedMtime *time.Time     `url:"provided_mtime,omitempty" json:"provided_mtime,omitempty" path:"provided_mtime"`
-	Ref           string         `url:"ref,omitempty" json:"ref,omitempty" path:"ref"`
-	Restart       int64          `url:"restart,omitempty" json:"restart,omitempty" path:"restart"`
-	Size          int64          `url:"size,omitempty" json:"size,omitempty" path:"size"`
-	Structure     string         `url:"structure,omitempty" json:"structure,omitempty" path:"structure"`
-	WithRename    *bool          `url:"with_rename,omitempty" json:"with_rename,omitempty" path:"with_rename"`
-	Attributes    map[string]any `url:"attributes,omitempty" json:"attributes,omitempty" path:"attributes"`
+	Path             string         `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	Action           string         `url:"action,omitempty" json:"action,omitempty" path:"action"`
+	EtagsParam       []EtagsParam   `url:"etags,omitempty" json:"etags,omitempty" path:"etags"`
+	Length           int64          `url:"length,omitempty" json:"length,omitempty" path:"length"`
+	MkdirParents     *bool          `url:"mkdir_parents,omitempty" json:"mkdir_parents,omitempty" path:"mkdir_parents"`
+	Part             int64          `url:"part,omitempty" json:"part,omitempty" path:"part"`
+	Parts            int64          `url:"parts,omitempty" json:"parts,omitempty" path:"parts"`
+	ProvidedMtime    *time.Time     `url:"provided_mtime,omitempty" json:"provided_mtime,omitempty" path:"provided_mtime"`
+	Ref              string         `url:"ref,omitempty" json:"ref,omitempty" path:"ref"`
+	Restart          int64          `url:"restart,omitempty" json:"restart,omitempty" path:"restart"`
+	Size             int64          `url:"size,omitempty" json:"size,omitempty" path:"size"`
+	Structure        string         `url:"structure,omitempty" json:"structure,omitempty" path:"structure"`
+	WithRename       *bool          `url:"with_rename,omitempty" json:"with_rename,omitempty" path:"with_rename"`
+	ActionAttributes map[string]any `url:"action_attributes,omitempty" json:"action_attributes,omitempty" path:"action_attributes"`
 }
 
 type FileUpdateParams struct {
@@ -168,36 +168,6 @@ func (f File) ModTime() time.Time {
 		return *f.Mtime
 	}
 	return time.Time{}
-}
-
-func (f FileCreateParams) MarshalJSON() ([]byte, error) {
-	// Merge Attributes in at the top level
-	type Alias FileCreateParams
-	data, err := json.Marshal(Alias(f))
-	if err != nil {
-		return nil, err
-	}
-
-	if f.Attributes == nil || len(f.Attributes) == 0 {
-		return data, nil
-	}
-
-	// Unmarshal into map to merge attributes
-	var mapData map[string]any
-	if err := json.Unmarshal(data, &mapData); err != nil {
-		return nil, err
-	}
-
-	// Remove the attributes field itself
-	delete(mapData, "attributes")
-
-	// Merge the attributes into the top level
-	for k, v := range f.Attributes {
-		mapData[k] = v
-	}
-
-	// Marshal back to JSON
-	return json.Marshal(mapData)
 }
 
 func (f *File) UnmarshalJSON(data []byte) error {

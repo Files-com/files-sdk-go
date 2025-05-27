@@ -52,7 +52,7 @@ type uploadIO struct {
 	file                       files_sdk.File
 	RewindAllProgressOnFailure bool
 	notResumable               *atomic.Bool
-	attributes                 map[string]any
+	actionAttributes           map[string]any
 }
 
 func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
@@ -427,14 +427,14 @@ func (u *uploadIO) completeUpload(ctx context.Context, providedMtime *time.Time,
 	}
 
 	return u.Create(files_sdk.FileCreateParams{
-		ProvidedMtime: providedMtime,
-		EtagsParam:    etags,
-		Action:        "end",
-		Path:          path,
-		Ref:           ref,
-		Size:          bytesWritten,
-		MkdirParents:  lib.Bool(true),
-		Attributes:    u.attributes,
+		ProvidedMtime:    providedMtime,
+		EtagsParam:       etags,
+		Action:           "end",
+		Path:             path,
+		Ref:              ref,
+		Size:             bytesWritten,
+		MkdirParents:     lib.Bool(true),
+		ActionAttributes: u.actionAttributes,
 	}, files_sdk.WithContext(ctx))
 }
 
