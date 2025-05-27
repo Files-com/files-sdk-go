@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.2.165"
+var VERSION = "3.2.166"
 
 const (
 	UserAgent   = "Files.com Go SDK"
@@ -52,7 +52,9 @@ func (c Config) Init() Config {
 		c.FeatureFlags = FeatureFlags()
 	}
 
-	c.UserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
+	if c.UserAgent == "" {
+		c.UserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
+	}
 
 	return c
 }
