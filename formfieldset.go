@@ -14,6 +14,7 @@ type FormFieldSet struct {
 	SkipName    *bool                    `json:"skip_name,omitempty" path:"skip_name,omitempty" url:"skip_name,omitempty"`
 	SkipEmail   *bool                    `json:"skip_email,omitempty" path:"skip_email,omitempty" url:"skip_email,omitempty"`
 	SkipCompany *bool                    `json:"skip_company,omitempty" path:"skip_company,omitempty" url:"skip_company,omitempty"`
+	InUse       *bool                    `json:"in_use,omitempty" path:"in_use,omitempty" url:"in_use,omitempty"`
 	UserId      int64                    `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 }
 
