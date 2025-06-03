@@ -273,7 +273,8 @@ type UserUpdateParams struct {
 }
 
 type UserDeleteParams struct {
-	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Id         int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	NewOwnerId int64 `url:"new_owner_id,omitempty" json:"new_owner_id,omitempty" path:"new_owner_id"`
 }
 
 func (u *User) UnmarshalJSON(data []byte) error {
