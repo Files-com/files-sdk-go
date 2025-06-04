@@ -27,6 +27,7 @@ type ApiRequestLog struct {
 	ResponseCode         int64      `json:"response_code,omitempty" path:"response_code,omitempty" url:"response_code,omitempty"`
 	Success              *bool      `json:"success,omitempty" path:"success,omitempty" url:"success,omitempty"`
 	DurationMs           int64      `json:"duration_ms,omitempty" path:"duration_ms,omitempty" url:"duration_ms,omitempty"`
+	ImpersonatorUserId   int64      `json:"impersonator_user_id,omitempty" path:"impersonator_user_id,omitempty" url:"impersonator_user_id,omitempty"`
 }
 
 // Identifier no path or id
