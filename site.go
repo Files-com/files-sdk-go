@@ -178,7 +178,6 @@ type Site struct {
 	WelcomeEmailEnabled                      *bool                  `json:"welcome_email_enabled,omitempty" path:"welcome_email_enabled,omitempty" url:"welcome_email_enabled,omitempty"`
 	WelcomeScreen                            string                 `json:"welcome_screen,omitempty" path:"welcome_screen,omitempty" url:"welcome_screen,omitempty"`
 	WindowsModeFtp                           *bool                  `json:"windows_mode_ftp,omitempty" path:"windows_mode_ftp,omitempty" url:"windows_mode_ftp,omitempty"`
-	DisableUsersFromInactivityPeriodDays     int64                  `json:"disable_users_from_inactivity_period_days,omitempty" path:"disable_users_from_inactivity_period_days,omitempty" url:"disable_users_from_inactivity_period_days,omitempty"`
 	GroupAdminsCanSetUserPassword            *bool                  `json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password,omitempty" url:"group_admins_can_set_user_password,omitempty"`
 }
 
@@ -273,7 +272,6 @@ type SiteUpdateParams struct {
 	OptOutGlobal                             *bool                  `url:"opt_out_global,omitempty" json:"opt_out_global,omitempty" path:"opt_out_global"`
 	UseProvidedModifiedAt                    *bool                  `url:"use_provided_modified_at,omitempty" json:"use_provided_modified_at,omitempty" path:"use_provided_modified_at"`
 	CustomNamespace                          *bool                  `url:"custom_namespace,omitempty" json:"custom_namespace,omitempty" path:"custom_namespace"`
-	DisableUsersFromInactivityPeriodDays     int64                  `url:"disable_users_from_inactivity_period_days,omitempty" json:"disable_users_from_inactivity_period_days,omitempty" path:"disable_users_from_inactivity_period_days"`
 	NonSsoGroupsAllowed                      *bool                  `url:"non_sso_groups_allowed,omitempty" json:"non_sso_groups_allowed,omitempty" path:"non_sso_groups_allowed"`
 	NonSsoUsersAllowed                       *bool                  `url:"non_sso_users_allowed,omitempty" json:"non_sso_users_allowed,omitempty" path:"non_sso_users_allowed"`
 	SharingEnabled                           *bool                  `url:"sharing_enabled,omitempty" json:"sharing_enabled,omitempty" path:"sharing_enabled"`

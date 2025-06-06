@@ -21,7 +21,7 @@ type User struct {
 	Billable                         *bool      `json:"billable,omitempty" path:"billable,omitempty" url:"billable,omitempty"`
 	BillingPermission                *bool      `json:"billing_permission,omitempty" path:"billing_permission,omitempty" url:"billing_permission,omitempty"`
 	BypassSiteAllowedIps             *bool      `json:"bypass_site_allowed_ips,omitempty" path:"bypass_site_allowed_ips,omitempty" url:"bypass_site_allowed_ips,omitempty"`
-	BypassInactiveDisable            *bool      `json:"bypass_inactive_disable,omitempty" path:"bypass_inactive_disable,omitempty" url:"bypass_inactive_disable,omitempty"`
+	BypassUserLifecycleRules         *bool      `json:"bypass_user_lifecycle_rules,omitempty" path:"bypass_user_lifecycle_rules,omitempty" url:"bypass_user_lifecycle_rules,omitempty"`
 	CreatedAt                        *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 	DavPermission                    *bool      `json:"dav_permission,omitempty" path:"dav_permission,omitempty" url:"dav_permission,omitempty"`
 	Disabled                         *bool      `json:"disabled,omitempty" path:"disabled,omitempty" url:"disabled,omitempty"`
@@ -174,7 +174,7 @@ type UserCreateParams struct {
 	AuthenticateUntil          *time.Time                   `url:"authenticate_until,omitempty" json:"authenticate_until,omitempty" path:"authenticate_until"`
 	AuthenticationMethod       UserAuthenticationMethodEnum `url:"authentication_method,omitempty" json:"authentication_method,omitempty" path:"authentication_method"`
 	BillingPermission          *bool                        `url:"billing_permission,omitempty" json:"billing_permission,omitempty" path:"billing_permission"`
-	BypassInactiveDisable      *bool                        `url:"bypass_inactive_disable,omitempty" json:"bypass_inactive_disable,omitempty" path:"bypass_inactive_disable"`
+	BypassUserLifecycleRules   *bool                        `url:"bypass_user_lifecycle_rules,omitempty" json:"bypass_user_lifecycle_rules,omitempty" path:"bypass_user_lifecycle_rules"`
 	BypassSiteAllowedIps       *bool                        `url:"bypass_site_allowed_ips,omitempty" json:"bypass_site_allowed_ips,omitempty" path:"bypass_site_allowed_ips"`
 	DavPermission              *bool                        `url:"dav_permission,omitempty" json:"dav_permission,omitempty" path:"dav_permission"`
 	Disabled                   *bool                        `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
@@ -240,7 +240,7 @@ type UserUpdateParams struct {
 	AuthenticateUntil          *time.Time                   `url:"authenticate_until,omitempty" json:"authenticate_until,omitempty" path:"authenticate_until"`
 	AuthenticationMethod       UserAuthenticationMethodEnum `url:"authentication_method,omitempty" json:"authentication_method,omitempty" path:"authentication_method"`
 	BillingPermission          *bool                        `url:"billing_permission,omitempty" json:"billing_permission,omitempty" path:"billing_permission"`
-	BypassInactiveDisable      *bool                        `url:"bypass_inactive_disable,omitempty" json:"bypass_inactive_disable,omitempty" path:"bypass_inactive_disable"`
+	BypassUserLifecycleRules   *bool                        `url:"bypass_user_lifecycle_rules,omitempty" json:"bypass_user_lifecycle_rules,omitempty" path:"bypass_user_lifecycle_rules"`
 	BypassSiteAllowedIps       *bool                        `url:"bypass_site_allowed_ips,omitempty" json:"bypass_site_allowed_ips,omitempty" path:"bypass_site_allowed_ips"`
 	DavPermission              *bool                        `url:"dav_permission,omitempty" json:"dav_permission,omitempty" path:"dav_permission"`
 	Disabled                   *bool                        `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
