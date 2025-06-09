@@ -16,6 +16,7 @@ type PublicHostingRequestLog struct {
 	ResponseCode int64      `json:"responseCode,omitempty" path:"responseCode,omitempty" url:"responseCode,omitempty"`
 	Success      *bool      `json:"success,omitempty" path:"success,omitempty" url:"success,omitempty"`
 	DurationMs   int64      `json:"duration_ms,omitempty" path:"duration_ms,omitempty" url:"duration_ms,omitempty"`
+	CreatedAt    *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
 func (p PublicHostingRequestLog) Identifier() interface{} {
@@ -26,7 +27,11 @@ type PublicHostingRequestLogCollection []PublicHostingRequestLog
 
 type PublicHostingRequestLogListParams struct {
 	Filter       PublicHostingRequestLog `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterGt     map[string]interface{}  `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq   map[string]interface{}  `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
 	FilterPrefix map[string]interface{}  `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	FilterLt     map[string]interface{}  `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq   map[string]interface{}  `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 

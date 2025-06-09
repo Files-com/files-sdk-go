@@ -17,6 +17,7 @@ type EmailLog struct {
 	DeliveryMethod string     `json:"delivery_method,omitempty" path:"delivery_method,omitempty" url:"delivery_method,omitempty"`
 	SmtpHostname   string     `json:"smtp_hostname,omitempty" path:"smtp_hostname,omitempty" url:"smtp_hostname,omitempty"`
 	SmtpIp         string     `json:"smtp_ip,omitempty" path:"smtp_ip,omitempty" url:"smtp_ip,omitempty"`
+	CreatedAt      *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
 // Identifier no path or id
@@ -25,7 +26,11 @@ type EmailLogCollection []EmailLog
 
 type EmailLogListParams struct {
 	Filter       EmailLog               `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterGt     map[string]interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq   map[string]interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
 	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	FilterLt     map[string]interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq   map[string]interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 

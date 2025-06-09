@@ -18,6 +18,7 @@ type SyncLog struct {
 	Size            int64      `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
 	FileType        string     `json:"file_type,omitempty" path:"file_type,omitempty" url:"file_type,omitempty"`
 	Status          string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	CreatedAt       *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
 func (s SyncLog) Identifier() interface{} {
@@ -28,7 +29,11 @@ type SyncLogCollection []SyncLog
 
 type SyncLogListParams struct {
 	Filter       SyncLog                `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterGt     map[string]interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq   map[string]interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
 	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	FilterLt     map[string]interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq   map[string]interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 

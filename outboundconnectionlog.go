@@ -22,6 +22,7 @@ type OutboundConnectionLog struct {
 	BytesUploaded      int64      `json:"bytes_uploaded,omitempty" path:"bytes_uploaded,omitempty" url:"bytes_uploaded,omitempty"`
 	BytesDownloaded    int64      `json:"bytes_downloaded,omitempty" path:"bytes_downloaded,omitempty" url:"bytes_downloaded,omitempty"`
 	ListCount          int64      `json:"list_count,omitempty" path:"list_count,omitempty" url:"list_count,omitempty"`
+	CreatedAt          *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
 func (o OutboundConnectionLog) Identifier() interface{} {
@@ -32,7 +33,11 @@ type OutboundConnectionLogCollection []OutboundConnectionLog
 
 type OutboundConnectionLogListParams struct {
 	Filter       OutboundConnectionLog  `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterGt     map[string]interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq   map[string]interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
 	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	FilterLt     map[string]interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq   map[string]interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 

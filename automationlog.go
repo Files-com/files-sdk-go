@@ -17,6 +17,7 @@ type AutomationLog struct {
 	Operation       string     `json:"operation,omitempty" path:"operation,omitempty" url:"operation,omitempty"`
 	Path            string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	Status          string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	CreatedAt       *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
 func (a AutomationLog) Identifier() interface{} {
@@ -27,7 +28,11 @@ type AutomationLogCollection []AutomationLog
 
 type AutomationLogListParams struct {
 	Filter       AutomationLog          `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterGt     map[string]interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq   map[string]interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
 	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	FilterLt     map[string]interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq   map[string]interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 

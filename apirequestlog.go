@@ -28,6 +28,7 @@ type ApiRequestLog struct {
 	Success              *bool      `json:"success,omitempty" path:"success,omitempty" url:"success,omitempty"`
 	DurationMs           int64      `json:"duration_ms,omitempty" path:"duration_ms,omitempty" url:"duration_ms,omitempty"`
 	ImpersonatorUserId   int64      `json:"impersonator_user_id,omitempty" path:"impersonator_user_id,omitempty" url:"impersonator_user_id,omitempty"`
+	CreatedAt            *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
 // Identifier no path or id
@@ -36,7 +37,11 @@ type ApiRequestLogCollection []ApiRequestLog
 
 type ApiRequestLogListParams struct {
 	Filter       ApiRequestLog          `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterGt     map[string]interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq   map[string]interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
 	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	FilterLt     map[string]interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq   map[string]interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 
