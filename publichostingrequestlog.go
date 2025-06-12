@@ -8,15 +8,17 @@ import (
 )
 
 type PublicHostingRequestLog struct {
-	Timestamp    *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
-	RemoteIp     string     `json:"remote_ip,omitempty" path:"remote_ip,omitempty" url:"remote_ip,omitempty"`
-	ServerIp     string     `json:"server_ip,omitempty" path:"server_ip,omitempty" url:"server_ip,omitempty"`
-	Hostname     string     `json:"hostname,omitempty" path:"hostname,omitempty" url:"hostname,omitempty"`
-	Path         string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
-	ResponseCode int64      `json:"responseCode,omitempty" path:"responseCode,omitempty" url:"responseCode,omitempty"`
-	Success      *bool      `json:"success,omitempty" path:"success,omitempty" url:"success,omitempty"`
-	DurationMs   int64      `json:"duration_ms,omitempty" path:"duration_ms,omitempty" url:"duration_ms,omitempty"`
-	CreatedAt    *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	Timestamp        *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
+	RemoteIp         string     `json:"remote_ip,omitempty" path:"remote_ip,omitempty" url:"remote_ip,omitempty"`
+	ServerIp         string     `json:"server_ip,omitempty" path:"server_ip,omitempty" url:"server_ip,omitempty"`
+	Hostname         string     `json:"hostname,omitempty" path:"hostname,omitempty" url:"hostname,omitempty"`
+	Path             string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	ResponseCode     int64      `json:"responseCode,omitempty" path:"responseCode,omitempty" url:"responseCode,omitempty"`
+	Success          *bool      `json:"success,omitempty" path:"success,omitempty" url:"success,omitempty"`
+	DurationMs       int64      `json:"duration_ms,omitempty" path:"duration_ms,omitempty" url:"duration_ms,omitempty"`
+	CreatedAt        *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	BytesTransferred int64      `json:"bytes_transferred,omitempty" path:"bytes_transferred,omitempty" url:"bytes_transferred,omitempty"`
+	HttpMethod       string     `json:"http_method,omitempty" path:"http_method,omitempty" url:"http_method,omitempty"`
 }
 
 func (p PublicHostingRequestLog) Identifier() interface{} {

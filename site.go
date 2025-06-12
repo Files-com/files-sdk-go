@@ -64,6 +64,7 @@ type Site struct {
 	DesktopAppSessionIpPinning               *bool                  `json:"desktop_app_session_ip_pinning,omitempty" path:"desktop_app_session_ip_pinning,omitempty" url:"desktop_app_session_ip_pinning,omitempty"`
 	DesktopAppSessionLifetime                int64                  `json:"desktop_app_session_lifetime,omitempty" path:"desktop_app_session_lifetime,omitempty" url:"desktop_app_session_lifetime,omitempty"`
 	LegacyChecksumsMode                      *bool                  `json:"legacy_checksums_mode,omitempty" path:"legacy_checksums_mode,omitempty" url:"legacy_checksums_mode,omitempty"`
+	MigrateRemoteServerSyncToSync            *bool                  `json:"migrate_remote_server_sync_to_sync,omitempty" path:"migrate_remote_server_sync_to_sync,omitempty" url:"migrate_remote_server_sync_to_sync,omitempty"`
 	MobileApp                                *bool                  `json:"mobile_app,omitempty" path:"mobile_app,omitempty" url:"mobile_app,omitempty"`
 	MobileAppSessionIpPinning                *bool                  `json:"mobile_app_session_ip_pinning,omitempty" path:"mobile_app_session_ip_pinning,omitempty" url:"mobile_app_session_ip_pinning,omitempty"`
 	MobileAppSessionLifetime                 int64                  `json:"mobile_app_session_lifetime,omitempty" path:"mobile_app_session_lifetime,omitempty" url:"mobile_app_session_lifetime,omitempty"`
@@ -230,6 +231,7 @@ type SiteUpdateParams struct {
 	CalculateFileChecksumsSha1               *bool                  `url:"calculate_file_checksums_sha1,omitempty" json:"calculate_file_checksums_sha1,omitempty" path:"calculate_file_checksums_sha1"`
 	CalculateFileChecksumsSha256             *bool                  `url:"calculate_file_checksums_sha256,omitempty" json:"calculate_file_checksums_sha256,omitempty" path:"calculate_file_checksums_sha256"`
 	LegacyChecksumsMode                      *bool                  `url:"legacy_checksums_mode,omitempty" json:"legacy_checksums_mode,omitempty" path:"legacy_checksums_mode"`
+	MigrateRemoteServerSyncToSync            *bool                  `url:"migrate_remote_server_sync_to_sync,omitempty" json:"migrate_remote_server_sync_to_sync,omitempty" path:"migrate_remote_server_sync_to_sync"`
 	SessionExpiry                            string                 `url:"session_expiry,omitempty" json:"session_expiry,omitempty" path:"session_expiry"`
 	SslRequired                              *bool                  `url:"ssl_required,omitempty" json:"ssl_required,omitempty" path:"ssl_required"`
 	TlsDisabled                              *bool                  `url:"tls_disabled,omitempty" json:"tls_disabled,omitempty" path:"tls_disabled"`
