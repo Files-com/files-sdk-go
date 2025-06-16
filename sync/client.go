@@ -74,6 +74,15 @@ func CreateMigrateTo(opts ...files_sdk.RequestResponseOption) (err error) {
 	return (&Client{}).CreateMigrateTo(opts...)
 }
 
+func (c *Client) ManualRun(params files_sdk.SyncManualRunParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/syncs/{id}/manual_run", Params: params, Entity: nil}, opts...)
+	return
+}
+
+func ManualRun(params files_sdk.SyncManualRunParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	return (&Client{}).ManualRun(params, opts...)
+}
+
 func (c *Client) Update(params files_sdk.SyncUpdateParams, opts ...files_sdk.RequestResponseOption) (sync files_sdk.Sync, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/syncs/{id}", Params: params, Entity: &sync}, opts...)
 	return

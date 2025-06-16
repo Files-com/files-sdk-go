@@ -69,6 +69,11 @@ type SyncCreateParams struct {
 	ScheduleTimesOfDay []string `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
 }
 
+// Manually Run Sync
+type SyncManualRunParams struct {
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+}
+
 type SyncUpdateParams struct {
 	Id                 int64    `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name               string   `url:"name,omitempty" json:"name,omitempty" path:"name"`
