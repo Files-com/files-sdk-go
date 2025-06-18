@@ -75,7 +75,6 @@ type User struct {
 	UserHome                         string     `json:"user_home,omitempty" path:"user_home,omitempty" url:"user_home,omitempty"`
 	DaysRemainingUntilPasswordExpire int64      `json:"days_remaining_until_password_expire,omitempty" path:"days_remaining_until_password_expire,omitempty" url:"days_remaining_until_password_expire,omitempty"`
 	PasswordExpireAt                 *time.Time `json:"password_expire_at,omitempty" path:"password_expire_at,omitempty" url:"password_expire_at,omitempty"`
-	HasReassignableAssociations      *bool      `json:"has_reassignable_associations,omitempty" path:"has_reassignable_associations,omitempty" url:"has_reassignable_associations,omitempty"`
 	AvatarFile                       io.Reader  `json:"avatar_file,omitempty" path:"avatar_file,omitempty" url:"avatar_file,omitempty"`
 	AvatarDelete                     *bool      `json:"avatar_delete,omitempty" path:"avatar_delete,omitempty" url:"avatar_delete,omitempty"`
 	ChangePassword                   string     `json:"change_password,omitempty" path:"change_password,omitempty" url:"change_password,omitempty"`
