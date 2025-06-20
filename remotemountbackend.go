@@ -39,7 +39,8 @@ func (u RemoteMountBackendHealthCheckTypeEnum) String() string {
 
 func (u RemoteMountBackendHealthCheckTypeEnum) Enum() map[string]RemoteMountBackendHealthCheckTypeEnum {
 	return map[string]RemoteMountBackendHealthCheckTypeEnum{
-		"active": RemoteMountBackendHealthCheckTypeEnum("active"),
+		"active":  RemoteMountBackendHealthCheckTypeEnum("active"),
+		"passive": RemoteMountBackendHealthCheckTypeEnum("passive"),
 	}
 }
 
