@@ -12,6 +12,7 @@ type RemoteMountBackend struct {
 	Fall                  int64  `json:"fall,omitempty" path:"fall,omitempty" url:"fall,omitempty"`
 	HealthCheckEnabled    *bool  `json:"health_check_enabled,omitempty" path:"health_check_enabled,omitempty" url:"health_check_enabled,omitempty"`
 	HealthCheckType       string `json:"health_check_type,omitempty" path:"health_check_type,omitempty" url:"health_check_type,omitempty"`
+	Id                    int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Interval              int64  `json:"interval,omitempty" path:"interval,omitempty" url:"interval,omitempty"`
 	MinFreeCpu            string `json:"min_free_cpu,omitempty" path:"min_free_cpu,omitempty" url:"min_free_cpu,omitempty"`
 	MinFreeMem            string `json:"min_free_mem,omitempty" path:"min_free_mem,omitempty" url:"min_free_mem,omitempty"`
@@ -22,7 +23,6 @@ type RemoteMountBackend struct {
 	Rise                  int64  `json:"rise,omitempty" path:"rise,omitempty" url:"rise,omitempty"`
 	Status                string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
 	UndergoingMaintenance *bool  `json:"undergoing_maintenance,omitempty" path:"undergoing_maintenance,omitempty" url:"undergoing_maintenance,omitempty"`
-	Id                    int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 }
 
 func (r RemoteMountBackend) Identifier() interface{} {
@@ -45,6 +45,7 @@ func (u RemoteMountBackendHealthCheckTypeEnum) Enum() map[string]RemoteMountBack
 }
 
 type RemoteMountBackendListParams struct {
+	Filter RemoteMountBackend `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
