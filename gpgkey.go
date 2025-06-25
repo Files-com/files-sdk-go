@@ -15,6 +15,10 @@ type GpgKey struct {
 	PublicKey          string     `json:"public_key,omitempty" path:"public_key,omitempty" url:"public_key,omitempty"`
 	PrivateKey         string     `json:"private_key,omitempty" path:"private_key,omitempty" url:"private_key,omitempty"`
 	PrivateKeyPassword string     `json:"private_key_password,omitempty" path:"private_key_password,omitempty" url:"private_key_password,omitempty"`
+	GenerateExpiresAt  string     `json:"generate_expires_at,omitempty" path:"generate_expires_at,omitempty" url:"generate_expires_at,omitempty"`
+	GenerateKeypair    *bool      `json:"generate_keypair,omitempty" path:"generate_keypair,omitempty" url:"generate_keypair,omitempty"`
+	GenerateFullName   string     `json:"generate_full_name,omitempty" path:"generate_full_name,omitempty" url:"generate_full_name,omitempty"`
+	GenerateEmail      string     `json:"generate_email,omitempty" path:"generate_email,omitempty" url:"generate_email,omitempty"`
 }
 
 func (g GpgKey) Identifier() interface{} {
@@ -34,11 +38,15 @@ type GpgKeyFindParams struct {
 }
 
 type GpgKeyCreateParams struct {
-	UserId             int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
-	PublicKey          string `url:"public_key,omitempty" json:"public_key,omitempty" path:"public_key"`
-	PrivateKey         string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
-	PrivateKeyPassword string `url:"private_key_password,omitempty" json:"private_key_password,omitempty" path:"private_key_password"`
-	Name               string `url:"name" json:"name" path:"name"`
+	UserId             int64      `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	PublicKey          string     `url:"public_key,omitempty" json:"public_key,omitempty" path:"public_key"`
+	PrivateKey         string     `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
+	PrivateKeyPassword string     `url:"private_key_password,omitempty" json:"private_key_password,omitempty" path:"private_key_password"`
+	Name               string     `url:"name" json:"name" path:"name"`
+	GenerateExpiresAt  *time.Time `url:"generate_expires_at,omitempty" json:"generate_expires_at,omitempty" path:"generate_expires_at"`
+	GenerateKeypair    *bool      `url:"generate_keypair,omitempty" json:"generate_keypair,omitempty" path:"generate_keypair"`
+	GenerateFullName   string     `url:"generate_full_name,omitempty" json:"generate_full_name,omitempty" path:"generate_full_name"`
+	GenerateEmail      string     `url:"generate_email,omitempty" json:"generate_email,omitempty" path:"generate_email"`
 }
 
 type GpgKeyUpdateParams struct {

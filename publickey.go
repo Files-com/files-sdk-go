@@ -8,15 +8,21 @@ import (
 )
 
 type PublicKey struct {
-	Id                int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Title             string     `json:"title,omitempty" path:"title,omitempty" url:"title,omitempty"`
-	CreatedAt         *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	Fingerprint       string     `json:"fingerprint,omitempty" path:"fingerprint,omitempty" url:"fingerprint,omitempty"`
-	FingerprintSha256 string     `json:"fingerprint_sha256,omitempty" path:"fingerprint_sha256,omitempty" url:"fingerprint_sha256,omitempty"`
-	LastLoginAt       *time.Time `json:"last_login_at,omitempty" path:"last_login_at,omitempty" url:"last_login_at,omitempty"`
-	Username          string     `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
-	UserId            int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
-	PublicKey         string     `json:"public_key,omitempty" path:"public_key,omitempty" url:"public_key,omitempty"`
+	Id                         int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Title                      string     `json:"title,omitempty" path:"title,omitempty" url:"title,omitempty"`
+	CreatedAt                  *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	Fingerprint                string     `json:"fingerprint,omitempty" path:"fingerprint,omitempty" url:"fingerprint,omitempty"`
+	FingerprintSha256          string     `json:"fingerprint_sha256,omitempty" path:"fingerprint_sha256,omitempty" url:"fingerprint_sha256,omitempty"`
+	Status                     string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	LastLoginAt                *time.Time `json:"last_login_at,omitempty" path:"last_login_at,omitempty" url:"last_login_at,omitempty"`
+	PrivateKey                 string     `json:"private_key,omitempty" path:"private_key,omitempty" url:"private_key,omitempty"`
+	PublicKey                  string     `json:"public_key,omitempty" path:"public_key,omitempty" url:"public_key,omitempty"`
+	Username                   string     `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
+	UserId                     int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	GenerateKeypair            *bool      `json:"generate_keypair,omitempty" path:"generate_keypair,omitempty" url:"generate_keypair,omitempty"`
+	GeneratePrivateKeyPassword string     `json:"generate_private_key_password,omitempty" path:"generate_private_key_password,omitempty" url:"generate_private_key_password,omitempty"`
+	GenerateAlgorithm          string     `json:"generate_algorithm,omitempty" path:"generate_algorithm,omitempty" url:"generate_algorithm,omitempty"`
+	GenerateLength             int64      `json:"generate_length,omitempty" path:"generate_length,omitempty" url:"generate_length,omitempty"`
 }
 
 func (p PublicKey) Identifier() interface{} {
@@ -40,9 +46,13 @@ type PublicKeyFindParams struct {
 }
 
 type PublicKeyCreateParams struct {
-	UserId    int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
-	Title     string `url:"title" json:"title" path:"title"`
-	PublicKey string `url:"public_key" json:"public_key" path:"public_key"`
+	UserId                     int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	Title                      string `url:"title" json:"title" path:"title"`
+	PublicKey                  string `url:"public_key,omitempty" json:"public_key,omitempty" path:"public_key"`
+	GenerateKeypair            *bool  `url:"generate_keypair,omitempty" json:"generate_keypair,omitempty" path:"generate_keypair"`
+	GeneratePrivateKeyPassword string `url:"generate_private_key_password,omitempty" json:"generate_private_key_password,omitempty" path:"generate_private_key_password"`
+	GenerateAlgorithm          string `url:"generate_algorithm,omitempty" json:"generate_algorithm,omitempty" path:"generate_algorithm"`
+	GenerateLength             int64  `url:"generate_length,omitempty" json:"generate_length,omitempty" path:"generate_length"`
 }
 
 type PublicKeyUpdateParams struct {
