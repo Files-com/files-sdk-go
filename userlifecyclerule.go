@@ -13,6 +13,7 @@ type UserLifecycleRule struct {
 	IncludeFolderAdmins  *bool  `json:"include_folder_admins,omitempty" path:"include_folder_admins,omitempty" url:"include_folder_admins,omitempty"`
 	IncludeSiteAdmins    *bool  `json:"include_site_admins,omitempty" path:"include_site_admins,omitempty" url:"include_site_admins,omitempty"`
 	Action               string `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
+	UserState            string `json:"user_state,omitempty" path:"user_state,omitempty" url:"user_state,omitempty"`
 	SiteId               int64  `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
 }
 
@@ -53,6 +54,19 @@ func (u UserLifecycleRuleAuthenticationMethodEnum) Enum() map[string]UserLifecyc
 	}
 }
 
+type UserLifecycleRuleUserStateEnum string
+
+func (u UserLifecycleRuleUserStateEnum) String() string {
+	return string(u)
+}
+
+func (u UserLifecycleRuleUserStateEnum) Enum() map[string]UserLifecycleRuleUserStateEnum {
+	return map[string]UserLifecycleRuleUserStateEnum{
+		"inactive": UserLifecycleRuleUserStateEnum("inactive"),
+		"disabled": UserLifecycleRuleUserStateEnum("disabled"),
+	}
+}
+
 type UserLifecycleRuleListParams struct {
 	ListParams
 }
@@ -67,6 +81,7 @@ type UserLifecycleRuleCreateParams struct {
 	InactivityDays       int64                                     `url:"inactivity_days" json:"inactivity_days" path:"inactivity_days"`
 	IncludeSiteAdmins    *bool                                     `url:"include_site_admins,omitempty" json:"include_site_admins,omitempty" path:"include_site_admins"`
 	IncludeFolderAdmins  *bool                                     `url:"include_folder_admins,omitempty" json:"include_folder_admins,omitempty" path:"include_folder_admins"`
+	UserState            UserLifecycleRuleUserStateEnum            `url:"user_state,omitempty" json:"user_state,omitempty" path:"user_state"`
 }
 
 type UserLifecycleRuleUpdateParams struct {
@@ -76,6 +91,7 @@ type UserLifecycleRuleUpdateParams struct {
 	InactivityDays       int64                                     `url:"inactivity_days" json:"inactivity_days" path:"inactivity_days"`
 	IncludeSiteAdmins    *bool                                     `url:"include_site_admins,omitempty" json:"include_site_admins,omitempty" path:"include_site_admins"`
 	IncludeFolderAdmins  *bool                                     `url:"include_folder_admins,omitempty" json:"include_folder_admins,omitempty" path:"include_folder_admins"`
+	UserState            UserLifecycleRuleUserStateEnum            `url:"user_state,omitempty" json:"user_state,omitempty" path:"user_state"`
 }
 
 type UserLifecycleRuleDeleteParams struct {

@@ -56,7 +56,6 @@ type Site struct {
 	CustomNamespace                          *bool                  `json:"custom_namespace,omitempty" path:"custom_namespace,omitempty" url:"custom_namespace,omitempty"`
 	DavEnabled                               *bool                  `json:"dav_enabled,omitempty" path:"dav_enabled,omitempty" url:"dav_enabled,omitempty"`
 	DavUserRootEnabled                       *bool                  `json:"dav_user_root_enabled,omitempty" path:"dav_user_root_enabled,omitempty" url:"dav_user_root_enabled,omitempty"`
-	DaysBeforeDeletingDisabledUsers          int64                  `json:"days_before_deleting_disabled_users,omitempty" path:"days_before_deleting_disabled_users,omitempty" url:"days_before_deleting_disabled_users,omitempty"`
 	DaysToRetainBackups                      int64                  `json:"days_to_retain_backups,omitempty" path:"days_to_retain_backups,omitempty" url:"days_to_retain_backups,omitempty"`
 	DocumentEditsInBundleAllowed             *bool                  `json:"document_edits_in_bundle_allowed,omitempty" path:"document_edits_in_bundle_allowed,omitempty" url:"document_edits_in_bundle_allowed,omitempty"`
 	DefaultTimeZone                          string                 `json:"default_time_zone,omitempty" path:"default_time_zone,omitempty" url:"default_time_zone,omitempty"`
@@ -246,7 +245,6 @@ type SiteUpdateParams struct {
 	AllowedCountries                         string                 `url:"allowed_countries,omitempty" json:"allowed_countries,omitempty" path:"allowed_countries"`
 	AllowedIps                               string                 `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
 	DisallowedCountries                      string                 `url:"disallowed_countries,omitempty" json:"disallowed_countries,omitempty" path:"disallowed_countries"`
-	DaysBeforeDeletingDisabledUsers          int64                  `url:"days_before_deleting_disabled_users,omitempty" json:"days_before_deleting_disabled_users,omitempty" path:"days_before_deleting_disabled_users"`
 	DaysToRetainBackups                      int64                  `url:"days_to_retain_backups,omitempty" json:"days_to_retain_backups,omitempty" path:"days_to_retain_backups"`
 	MaxPriorPasswords                        int64                  `url:"max_prior_passwords,omitempty" json:"max_prior_passwords,omitempty" path:"max_prior_passwords"`
 	PasswordValidityDays                     int64                  `url:"password_validity_days,omitempty" json:"password_validity_days,omitempty" path:"password_validity_days"`
