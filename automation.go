@@ -46,6 +46,7 @@ type Automation struct {
 	UserIds                          []int64                  `json:"user_ids,omitempty" path:"user_ids,omitempty" url:"user_ids,omitempty"`
 	Value                            map[string]interface{}   `json:"value,omitempty" path:"value,omitempty" url:"value,omitempty"`
 	WebhookUrl                       string                   `json:"webhook_url,omitempty" path:"webhook_url,omitempty" url:"webhook_url,omitempty"`
+	HolidayRegion                    string                   `json:"holiday_region,omitempty" path:"holiday_region,omitempty" url:"holiday_region,omitempty"`
 }
 
 func (a Automation) Identifier() interface{} {
