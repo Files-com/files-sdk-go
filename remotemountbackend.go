@@ -54,9 +54,6 @@ type RemoteMountBackendFindParams struct {
 }
 
 type RemoteMountBackendCreateParams struct {
-	CanaryFilePath      string                                `url:"canary_file_path" json:"canary_file_path" path:"canary_file_path"`
-	RemoteServerMountId int64                                 `url:"remote_server_mount_id" json:"remote_server_mount_id" path:"remote_server_mount_id"`
-	RemoteServerId      int64                                 `url:"remote_server_id" json:"remote_server_id" path:"remote_server_id"`
 	Enabled             *bool                                 `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
 	Fall                int64                                 `url:"fall,omitempty" json:"fall,omitempty" path:"fall"`
 	HealthCheckEnabled  *bool                                 `url:"health_check_enabled,omitempty" json:"health_check_enabled,omitempty" path:"health_check_enabled"`
@@ -67,6 +64,9 @@ type RemoteMountBackendCreateParams struct {
 	Priority            int64                                 `url:"priority,omitempty" json:"priority,omitempty" path:"priority"`
 	RemotePath          string                                `url:"remote_path,omitempty" json:"remote_path,omitempty" path:"remote_path"`
 	Rise                int64                                 `url:"rise,omitempty" json:"rise,omitempty" path:"rise"`
+	CanaryFilePath      string                                `url:"canary_file_path" json:"canary_file_path" path:"canary_file_path"`
+	RemoteServerMountId int64                                 `url:"remote_server_mount_id" json:"remote_server_mount_id" path:"remote_server_mount_id"`
+	RemoteServerId      int64                                 `url:"remote_server_id" json:"remote_server_id" path:"remote_server_id"`
 }
 
 // Reset backend status to healthy
@@ -75,20 +75,19 @@ type RemoteMountBackendResetStatusParams struct {
 }
 
 type RemoteMountBackendUpdateParams struct {
-	Id                  int64                                 `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	CanaryFilePath      string                                `url:"canary_file_path" json:"canary_file_path" path:"canary_file_path"`
-	RemoteServerMountId int64                                 `url:"remote_server_mount_id" json:"remote_server_mount_id" path:"remote_server_mount_id"`
-	RemoteServerId      int64                                 `url:"remote_server_id" json:"remote_server_id" path:"remote_server_id"`
-	Enabled             *bool                                 `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
-	Fall                int64                                 `url:"fall,omitempty" json:"fall,omitempty" path:"fall"`
-	HealthCheckEnabled  *bool                                 `url:"health_check_enabled,omitempty" json:"health_check_enabled,omitempty" path:"health_check_enabled"`
-	HealthCheckType     RemoteMountBackendHealthCheckTypeEnum `url:"health_check_type,omitempty" json:"health_check_type,omitempty" path:"health_check_type"`
-	Interval            int64                                 `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
-	MinFreeCpu          string                                `url:"min_free_cpu,omitempty" json:"min_free_cpu,omitempty" path:"min_free_cpu"`
-	MinFreeMem          string                                `url:"min_free_mem,omitempty" json:"min_free_mem,omitempty" path:"min_free_mem"`
-	Priority            int64                                 `url:"priority,omitempty" json:"priority,omitempty" path:"priority"`
-	RemotePath          string                                `url:"remote_path,omitempty" json:"remote_path,omitempty" path:"remote_path"`
-	Rise                int64                                 `url:"rise,omitempty" json:"rise,omitempty" path:"rise"`
+	Id                 int64                                 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Enabled            *bool                                 `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
+	Fall               int64                                 `url:"fall,omitempty" json:"fall,omitempty" path:"fall"`
+	HealthCheckEnabled *bool                                 `url:"health_check_enabled,omitempty" json:"health_check_enabled,omitempty" path:"health_check_enabled"`
+	HealthCheckType    RemoteMountBackendHealthCheckTypeEnum `url:"health_check_type,omitempty" json:"health_check_type,omitempty" path:"health_check_type"`
+	Interval           int64                                 `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
+	MinFreeCpu         string                                `url:"min_free_cpu,omitempty" json:"min_free_cpu,omitempty" path:"min_free_cpu"`
+	MinFreeMem         string                                `url:"min_free_mem,omitempty" json:"min_free_mem,omitempty" path:"min_free_mem"`
+	Priority           int64                                 `url:"priority,omitempty" json:"priority,omitempty" path:"priority"`
+	RemotePath         string                                `url:"remote_path,omitempty" json:"remote_path,omitempty" path:"remote_path"`
+	Rise               int64                                 `url:"rise,omitempty" json:"rise,omitempty" path:"rise"`
+	CanaryFilePath     string                                `url:"canary_file_path,omitempty" json:"canary_file_path,omitempty" path:"canary_file_path"`
+	RemoteServerId     int64                                 `url:"remote_server_id,omitempty" json:"remote_server_id,omitempty" path:"remote_server_id"`
 }
 
 type RemoteMountBackendDeleteParams struct {
