@@ -116,6 +116,7 @@ type AutomationCreateParams struct {
 	ScheduleDaysOfWeek               []int64                  `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimesOfDay               []string                 `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
 	ScheduleTimeZone                 string                   `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
+	HolidayRegion                    string                   `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
 	AlwaysOverwriteSizeMatchingFiles *bool                    `url:"always_overwrite_size_matching_files,omitempty" json:"always_overwrite_size_matching_files,omitempty" path:"always_overwrite_size_matching_files"`
 	AlwaysSerializeJobs              *bool                    `url:"always_serialize_jobs,omitempty" json:"always_serialize_jobs,omitempty" path:"always_serialize_jobs"`
 	Description                      string                   `url:"description,omitempty" json:"description,omitempty" path:"description"`
@@ -156,6 +157,7 @@ type AutomationUpdateParams struct {
 	ScheduleDaysOfWeek               []int64                  `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimesOfDay               []string                 `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
 	ScheduleTimeZone                 string                   `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
+	HolidayRegion                    string                   `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
 	AlwaysOverwriteSizeMatchingFiles *bool                    `url:"always_overwrite_size_matching_files,omitempty" json:"always_overwrite_size_matching_files,omitempty" path:"always_overwrite_size_matching_files"`
 	AlwaysSerializeJobs              *bool                    `url:"always_serialize_jobs,omitempty" json:"always_serialize_jobs,omitempty" path:"always_serialize_jobs"`
 	Description                      string                   `url:"description,omitempty" json:"description,omitempty" path:"description"`
