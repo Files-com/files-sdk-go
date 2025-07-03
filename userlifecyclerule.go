@@ -14,6 +14,7 @@ type UserLifecycleRule struct {
 	IncludeSiteAdmins    *bool  `json:"include_site_admins,omitempty" path:"include_site_admins,omitempty" url:"include_site_admins,omitempty"`
 	Action               string `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
 	UserState            string `json:"user_state,omitempty" path:"user_state,omitempty" url:"user_state,omitempty"`
+	Name                 string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	SiteId               int64  `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
 }
 
@@ -82,6 +83,7 @@ type UserLifecycleRuleCreateParams struct {
 	IncludeSiteAdmins    *bool                                     `url:"include_site_admins,omitempty" json:"include_site_admins,omitempty" path:"include_site_admins"`
 	IncludeFolderAdmins  *bool                                     `url:"include_folder_admins,omitempty" json:"include_folder_admins,omitempty" path:"include_folder_admins"`
 	UserState            UserLifecycleRuleUserStateEnum            `url:"user_state,omitempty" json:"user_state,omitempty" path:"user_state"`
+	Name                 string                                    `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
 type UserLifecycleRuleUpdateParams struct {
@@ -92,6 +94,7 @@ type UserLifecycleRuleUpdateParams struct {
 	IncludeSiteAdmins    *bool                                     `url:"include_site_admins,omitempty" json:"include_site_admins,omitempty" path:"include_site_admins"`
 	IncludeFolderAdmins  *bool                                     `url:"include_folder_admins,omitempty" json:"include_folder_admins,omitempty" path:"include_folder_admins"`
 	UserState            UserLifecycleRuleUserStateEnum            `url:"user_state,omitempty" json:"user_state,omitempty" path:"user_state"`
+	Name                 string                                    `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
 type UserLifecycleRuleDeleteParams struct {
