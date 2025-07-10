@@ -8,12 +8,16 @@ import (
 )
 
 type BundleAction struct {
-	Action             string             `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
-	BundleRegistration BundleRegistration `json:"bundle_registration,omitempty" path:"bundle_registration,omitempty" url:"bundle_registration,omitempty"`
-	CreatedAt          *time.Time         `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	Destination        string             `json:"destination,omitempty" path:"destination,omitempty" url:"destination,omitempty"`
-	Path               string             `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
-	Source             string             `json:"source,omitempty" path:"source,omitempty" url:"source,omitempty"`
+	Action                  string             `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
+	BundleRegistration      BundleRegistration `json:"bundle_registration,omitempty" path:"bundle_registration,omitempty" url:"bundle_registration,omitempty"`
+	CreatedAt               *time.Time         `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	Destination             string             `json:"destination,omitempty" path:"destination,omitempty" url:"destination,omitempty"`
+	Path                    string             `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	Source                  string             `json:"source,omitempty" path:"source,omitempty" url:"source,omitempty"`
+	BundleRegistrationId    int64              `json:"bundle_registration_id,omitempty" path:"bundle_registration_id,omitempty" url:"bundle_registration_id,omitempty"`
+	BundleRegistrationName  string             `json:"bundle_registration_name,omitempty" path:"bundle_registration_name,omitempty" url:"bundle_registration_name,omitempty"`
+	BundleRegistrationEmail string             `json:"bundle_registration_email,omitempty" path:"bundle_registration_email,omitempty" url:"bundle_registration_email,omitempty"`
+	BundleRegistrationIp    string             `json:"bundle_registration_ip,omitempty" path:"bundle_registration_ip,omitempty" url:"bundle_registration_ip,omitempty"`
 }
 
 func (b BundleAction) Identifier() interface{} {
