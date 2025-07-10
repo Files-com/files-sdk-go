@@ -40,6 +40,13 @@ type MountParams struct {
 	IgnorePatterns []string
 
 	Config files_sdk.Config
+
+	// Optional. If set to true, will initialize fuse configured to provide extra debug information.
+	// Defaults to false.
+	DebugFuse bool
+	// Optional. The path to the fuse debug log. Only used if DebugFuse is set to true.
+	// Defaults to fuse.log
+	DebugFuseLog string
 }
 
 type MountHost interface {
@@ -59,6 +66,7 @@ func Mount(params MountParams) (MountHost, error) {
 		cacheTTL:         params.CacheTTL,
 		config:           params.Config,
 		disableLocking:   params.DisableLocking,
+		debugFuse:        params.DebugFuse,
 	}
 
 	if params.IgnorePatterns == nil || len(params.IgnorePatterns) > 0 {
@@ -76,6 +84,16 @@ func Mount(params MountParams) (MountHost, error) {
 	host.SetCapReaddirPlus(true)
 
 	options := []string{"-o", "attr_timeout=1"}
+
+	if fs.debugFuse {
+		logfile := "fuse.log"
+		if params.DebugFuseLog != "" {
+			logfile = params.DebugFuseLog
+		}
+		options = append(options, "-o", "debug")
+		options = append(options, "-o", "DebugLog="+logfile)
+	}
+
 	if runtime.GOOS == "windows" {
 		options = append(options, "-o", "uid=-1")
 		options = append(options, "-o", "gid=-1")

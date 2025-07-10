@@ -1,16 +1,15 @@
 package fsmount
 
 import (
+	"fmt"
 	"io"
 	"slices"
 	"sync"
 	"time"
-
-	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
 type FSWriter interface {
-	writeFile(path string, reader io.Reader, mtime *time.Time)
+	writeFile(path string, reader io.Reader, mtime time.Time)
 }
 
 type fsNode struct {
@@ -19,18 +18,23 @@ type fsNode struct {
 	downloadUri       string
 	readerHandle      uint64
 	info              fsNodeInfo
-	infoExpires       *time.Time
+	infoExpires       time.Time
 	childPaths        map[string]struct{}
-	childPathsExpires *time.Time
+	childPathsExpires time.Time
 	childPathsMutex   sync.Mutex
 	writer            *fsNodeWriter
+	writeMu           sync.Mutex
 	lockMutex         sync.Mutex // Used to prevent simultaneous lock/unlock operations.
+}
+
+func (n *fsNode) String() string {
+	return fmt.Sprintf("path: %s, uri: %s, h: %d", n.path, n.downloadUri, n.readerHandle)
 }
 
 type fsNodeInfo struct {
 	dir          bool
 	size         int64
-	creationTime *time.Time
+	creationTime time.Time
 	modTime      time.Time
 	lockOwner    string
 }
@@ -41,8 +45,8 @@ func (n *fsNode) updateInfo(info fsNodeInfo) {
 	}
 
 	n.info = info
-	n.infoExpires = lib.Ptr(time.Now().Add(n.fs.cacheTTL))
-	n.childPathsExpires = nil // Force a rebuild of child paths (if we're a directory).
+	n.infoExpires = time.Now().Add(n.fs.cacheTTL)
+	n.childPathsExpires = time.Time{} // Force a rebuild of child paths (if we're a directory).
 }
 
 func (n *fsNode) updateSize(size int64) {
@@ -51,7 +55,7 @@ func (n *fsNode) updateSize(size int64) {
 	}
 
 	n.info.size = size
-	n.infoExpires = lib.Ptr(time.Now().Add(n.fs.cacheTTL))
+	n.infoExpires = time.Now().Add(n.fs.cacheTTL)
 }
 
 func (n *fsNode) updateChildPaths(buildChildPaths func(string) (map[string]struct{}, error)) (err error) {
@@ -68,31 +72,32 @@ func (n *fsNode) updateChildPaths(buildChildPaths func(string) (map[string]struc
 	}
 
 	n.childPaths = childPaths
-	n.childPathsExpires = lib.Ptr(time.Now().Add(n.fs.cacheTTL))
+	n.childPathsExpires = time.Now().Add(n.fs.cacheTTL)
 	return
 }
 
 func (n *fsNode) infoExpired() bool {
-	return n.infoExpires == nil || n.infoExpires.Before(time.Now())
+	return n.infoExpires.IsZero() || n.infoExpires.Before(time.Now())
 }
 
 func (n *fsNode) childPathsExpired() bool {
-	return n.childPathsExpires == nil || n.childPathsExpires.Before(time.Now())
+	return n.childPathsExpires.IsZero() || n.childPathsExpires.Before(time.Now())
 }
 
 func (n *fsNode) isLocked() bool {
 	return n.info.lockOwner != ""
 }
 
-func (n *fsNode) openWriter(fsWriter FSWriter, handle uint64) {
+func (n *fsNode) openWriter(fsWriter FSWriter, fh uint64) {
 	if n.writer == nil {
-		nodeWriter := newFsNodeWriter(n, handle)
+		n.fs.Debug("openWriter from node: %v, ptr: %p, fh: %v", n.String(), n, fh)
+		nodeWriter := newFsNodeWriter(n, fh)
 		n.writer = nodeWriter
 		n.downloadUri = ""
 
 		go func() {
 			defer nodeWriter.done()
-			fsWriter.writeFile(n.path, nodeWriter.out, &n.info.modTime)
+			fsWriter.writeFile(n.path, nodeWriter.out, n.info.modTime)
 		}()
 	}
 }
@@ -165,11 +170,14 @@ func (w *fsNodeWriter) writeAt(buff []byte, offset int64) (n int, err error) {
 		return
 	}
 
+	// update the offset so we know how many total bytes have been written
 	w.offset += int64(n)
 	w.updateSize(w.offset)
 
 	w.fs.Trace("Write: path=%v, wrote %d bytes, new write offset is %d", w.path, n, w.offset)
 
+	// check to see if there is a part in the cache at the new offset, and if there is
+	// recurse
 	if part, ok := w.partCache[w.offset]; ok {
 		partOffset := w.offset
 		l, err := w.writeAt(part, partOffset)
@@ -179,6 +187,9 @@ func (w *fsNodeWriter) writeAt(buff []byte, offset int64) (n int, err error) {
 
 		w.fs.Trace("Write: path=%v, wrote %d bytes from cache, new write offset is %d", w.path, l, w.offset)
 
+		// TODO: this might be better before calling writeAt, otherwise parts are not removed from the cache
+		// until the call to writeAt returns. If there are multiple levels of recursion, the cache could grow
+		// unbounded.
 		delete(w.partCache, partOffset)
 	}
 
