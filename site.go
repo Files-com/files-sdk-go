@@ -147,6 +147,8 @@ type Site struct {
 	ShowRequestAccessLink                    *bool                  `json:"show_request_access_link,omitempty" path:"show_request_access_link,omitempty" url:"show_request_access_link,omitempty"`
 	SiteFooter                               string                 `json:"site_footer,omitempty" path:"site_footer,omitempty" url:"site_footer,omitempty"`
 	SiteHeader                               string                 `json:"site_header,omitempty" path:"site_header,omitempty" url:"site_header,omitempty"`
+	SitePublicFooter                         string                 `json:"site_public_footer,omitempty" path:"site_public_footer,omitempty" url:"site_public_footer,omitempty"`
+	SitePublicHeader                         string                 `json:"site_public_header,omitempty" path:"site_public_header,omitempty" url:"site_public_header,omitempty"`
 	SmtpAddress                              string                 `json:"smtp_address,omitempty" path:"smtp_address,omitempty" url:"smtp_address,omitempty"`
 	SmtpAuthentication                       string                 `json:"smtp_authentication,omitempty" path:"smtp_authentication,omitempty" url:"smtp_authentication,omitempty"`
 	SmtpFrom                                 string                 `json:"smtp_from,omitempty" path:"smtp_from,omitempty" url:"smtp_from,omitempty"`
@@ -309,6 +311,8 @@ type SiteUpdateParams struct {
 	Color2TopText                            string                 `url:"color2_top_text,omitempty" json:"color2_top_text,omitempty" path:"color2_top_text"`
 	SiteHeader                               string                 `url:"site_header,omitempty" json:"site_header,omitempty" path:"site_header"`
 	SiteFooter                               string                 `url:"site_footer,omitempty" json:"site_footer,omitempty" path:"site_footer"`
+	SitePublicHeader                         string                 `url:"site_public_header,omitempty" json:"site_public_header,omitempty" path:"site_public_header"`
+	SitePublicFooter                         string                 `url:"site_public_footer,omitempty" json:"site_public_footer,omitempty" path:"site_public_footer"`
 	LoginHelpText                            string                 `url:"login_help_text,omitempty" json:"login_help_text,omitempty" path:"login_help_text"`
 	UseDedicatedIpsForSmtp                   *bool                  `url:"use_dedicated_ips_for_smtp,omitempty" json:"use_dedicated_ips_for_smtp,omitempty" path:"use_dedicated_ips_for_smtp"`
 	SmtpAddress                              string                 `url:"smtp_address,omitempty" json:"smtp_address,omitempty" path:"smtp_address"`
