@@ -61,6 +61,8 @@ type FolderListForParams struct {
 	SearchAll               *bool                               `url:"search_all,omitempty" json:"search_all,omitempty" path:"search_all"`
 	WithPreviews            *bool                               `url:"with_previews,omitempty" json:"with_previews,omitempty" path:"with_previews"`
 	WithPriorityColor       *bool                               `url:"with_priority_color,omitempty" json:"with_priority_color,omitempty" path:"with_priority_color"`
+	Type                    string                              `url:"type,omitempty" json:"type,omitempty" path:"type"`
+	ModifiedAtDatetime      *time.Time                          `url:"modified_at_datetime,omitempty" json:"modified_at_datetime,omitempty" path:"modified_at_datetime"`
 	ConcurrencyManager      lib.ConcurrencyManagerWithSubWorker `url:"-" required:"false" json:"-"`
 	ListParams
 }
