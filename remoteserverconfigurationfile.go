@@ -24,6 +24,7 @@ type RemoteServerConfigurationFile struct {
 	OverrideMaxConcurrentJobs int64  `json:"override_max_concurrent_jobs,omitempty" path:"override_max_concurrent_jobs,omitempty" url:"override_max_concurrent_jobs,omitempty"`
 	GracefulShutdownTimeout   int64  `json:"graceful_shutdown_timeout,omitempty" path:"graceful_shutdown_timeout,omitempty" url:"graceful_shutdown_timeout,omitempty"`
 	TransferRateLimit         string `json:"transfer_rate_limit,omitempty" path:"transfer_rate_limit,omitempty" url:"transfer_rate_limit,omitempty"`
+	AutoUpdatePolicy          string `json:"auto_update_policy,omitempty" path:"auto_update_policy,omitempty" url:"auto_update_policy,omitempty"`
 	ApiToken                  string `json:"api_token,omitempty" path:"api_token,omitempty" url:"api_token,omitempty"`
 	Port                      int64  `json:"port,omitempty" path:"port,omitempty" url:"port,omitempty"`
 	Hostname                  string `json:"hostname,omitempty" path:"hostname,omitempty" url:"hostname,omitempty"`

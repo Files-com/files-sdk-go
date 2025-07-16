@@ -11,6 +11,7 @@ type SyncLog struct {
 	Timestamp       *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
 	SyncId          int64      `json:"sync_id,omitempty" path:"sync_id,omitempty" url:"sync_id,omitempty"`
 	ExternalEventId int64      `json:"external_event_id,omitempty" path:"external_event_id,omitempty" url:"external_event_id,omitempty"`
+	SyncRunId       int64      `json:"sync_run_id,omitempty" path:"sync_run_id,omitempty" url:"sync_run_id,omitempty"`
 	ErrorType       string     `json:"error_type,omitempty" path:"error_type,omitempty" url:"error_type,omitempty"`
 	Message         string     `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
 	Operation       string     `json:"operation,omitempty" path:"operation,omitempty" url:"operation,omitempty"`
