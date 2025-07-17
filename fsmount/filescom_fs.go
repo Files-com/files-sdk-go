@@ -1,5 +1,3 @@
-//go:build windows
-
 package fsmount
 
 import (
@@ -10,6 +8,7 @@ import (
 	"net/http"
 	path_lib "path"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"sync"
 	"time"
@@ -29,14 +28,18 @@ const (
 	blockSize      = 4096
 )
 
+// Filescomfs is a filesystem that implements the fuse.FileSystem interface,
+// allowing it to be mounted using FUSE. It provides a virtual filesystem
+// interface to Files.com, allowing users to interact with their Files.com
+// account as if it were a local filesystem.
 type Filescomfs struct {
-	fuse.FileSystemBase
+	fuse.FileSystemBase // implements fuse.FileSystem with no-op methods
 	*virtualfs
+	config           *files_sdk.Config
 	mountPoint       string
 	root             string
-	writeConcurrency *int
-	config           files_sdk.Config
-	cacheTTL         *time.Duration
+	writeConcurrency int
+	cacheTTL         time.Duration
 	disableLocking   bool
 	ignore           *ignore.GitIgnore
 
@@ -53,12 +56,13 @@ type lockInfo struct {
 	token string
 }
 
+// Init initializes the Filescomfs filesystem.
 func (fs *Filescomfs) Init() {
 	defer fs.logPanics()
 	if fs.fileClient == nil {
-		fs.fileClient = &file.Client{Config: fs.config}
-		fs.lockClient = &lock.Client{Config: fs.config}
-		fs.migrationClient = &file_migration.Client{Config: fs.config}
+		fs.fileClient = &file.Client{Config: *fs.config}
+		fs.lockClient = &lock.Client{Config: *fs.config}
+		fs.migrationClient = &file_migration.Client{Config: *fs.config}
 		fs.lockMap = make(map[string]*lockInfo)
 		fs.virtualfs = newVirtualfs(fs.config.Logger, fs.cacheTTL)
 	}
@@ -72,6 +76,7 @@ func (fs *Filescomfs) Destroy() {
 	}
 }
 
+// Validate checks if the Filescomfs filesystem is valid by attempting to list the root directory.
 func (fs *Filescomfs) Validate() error {
 	fs.Init()
 
@@ -88,8 +93,8 @@ func (fs *Filescomfs) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 	defer fs.logPanics()
 	fs.Trace("Statfs: path=%v", path)
 
-	totalBytes := uint64(1 << 50) // 1 PB?
-	usedBytes := uint64(0)        // TODO: get used bytes
+	totalBytes := remoteCapacityBytes() // 1 PB?
+	usedBytes := uint64(0)              // TODO: get used bytes from the remote
 	freeBytes := totalBytes - usedBytes
 
 	stat.Bsize = blockSize
@@ -99,6 +104,17 @@ func (fs *Filescomfs) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 	stat.Bavail = freeBytes / blockSize
 
 	return errc
+}
+
+func remoteCapacityBytes() uint64 {
+	// the remote capacity is functionally unlimited, but we need to return the largest
+	// value that the OS will accept, otherwise it will show up as zero capacity.
+	switch runtime.GOOS {
+	case "darwin":
+		return uint64(1 << 43) // ~8TB - any larger and the nfs drive shows up as zero capacity on macOS
+	default:
+		return uint64(1 << 50) // ~1PB
+	}
 }
 
 func (fs *Filescomfs) Mkdir(path string, mode uint32) (errc int) {
@@ -494,8 +510,8 @@ func (fs *Filescomfs) writeFile(path string, reader io.Reader, mtime time.Time) 
 		file.UploadWithReader(reader),
 		file.UploadWithProvidedMtime(mtime),
 	}
-	if fs.writeConcurrency != nil {
-		uploadOpts = append(uploadOpts, file.UploadWithManager(manager.ConcurrencyManager{}.New(*fs.writeConcurrency)))
+	if fs.writeConcurrency != 0 {
+		uploadOpts = append(uploadOpts, file.UploadWithManager(manager.ConcurrencyManager{}.New(fs.writeConcurrency)))
 	}
 
 	if err := fs.fileClient.Upload(uploadOpts...); err != nil {

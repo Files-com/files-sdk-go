@@ -12,7 +12,6 @@ import (
 )
 
 const (
-	defaultCacheTTL       = 5 * time.Second
 	officeOwnerFilePrefix = "~$"
 	officeOwnerNameLength = 54 // Excel uses 54. Word uses 53, but it accepts 54, so we'll use that.
 )
@@ -24,14 +23,14 @@ type virtualfs struct {
 	lib.LeveledLogger
 }
 
-func newVirtualfs(logger lib.Logger, cacheTTL *time.Duration) *virtualfs {
+func newVirtualfs(logger lib.Logger, cacheTTL time.Duration) *virtualfs {
 	vfs := &virtualfs{
 		nodeMap:       make(map[string]*fsNode),
 		LeveledLogger: lib.NewLeveledLogger(logger),
-		cacheTTL:      defaultCacheTTL,
+		cacheTTL:      DefaultCacheTTL,
 	}
-	if cacheTTL != nil {
-		vfs.cacheTTL = *cacheTTL
+	if cacheTTL != 0 {
+		vfs.cacheTTL = cacheTTL
 	}
 	return vfs
 }
