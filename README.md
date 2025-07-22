@@ -658,7 +658,6 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `not-found/code-not-found` | Code Not Found |
 | `not-found/file-not-found` | File Not Found |
 | `not-found/file-upload-not-found` | File Upload Not Found |
-| `not-found/folder-not-found` | Folder Not Found |
 | `not-found/group-not-found` | Group Not Found |
 | `not-found/inbox-not-found` | Inbox Not Found |
 | `not-found/nested-not-found` | Nested Not Found |
