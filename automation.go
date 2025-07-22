@@ -39,6 +39,7 @@ type Automation struct {
 	ScheduleTimesOfDay               []string                 `json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day,omitempty" url:"schedule_times_of_day,omitempty"`
 	ScheduleTimeZone                 string                   `json:"schedule_time_zone,omitempty" path:"schedule_time_zone,omitempty" url:"schedule_time_zone,omitempty"`
 	Source                           string                   `json:"source,omitempty" path:"source,omitempty" url:"source,omitempty"`
+	LegacySyncIds                    []int64                  `json:"legacy_sync_ids,omitempty" path:"legacy_sync_ids,omitempty" url:"legacy_sync_ids,omitempty"`
 	SyncIds                          []int64                  `json:"sync_ids,omitempty" path:"sync_ids,omitempty" url:"sync_ids,omitempty"`
 	TriggerActions                   []string                 `json:"trigger_actions,omitempty" path:"trigger_actions,omitempty" url:"trigger_actions,omitempty"`
 	Trigger                          string                   `json:"trigger,omitempty" path:"trigger,omitempty" url:"trigger,omitempty"`
@@ -110,6 +111,7 @@ type AutomationCreateParams struct {
 	DestinationReplaceTo             string                   `url:"destination_replace_to,omitempty" json:"destination_replace_to,omitempty" path:"destination_replace_to"`
 	Interval                         string                   `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
 	Path                             string                   `url:"path,omitempty" json:"path,omitempty" path:"path"`
+	LegacySyncIds                    string                   `url:"legacy_sync_ids,omitempty" json:"legacy_sync_ids,omitempty" path:"legacy_sync_ids"`
 	SyncIds                          string                   `url:"sync_ids,omitempty" json:"sync_ids,omitempty" path:"sync_ids"`
 	UserIds                          string                   `url:"user_ids,omitempty" json:"user_ids,omitempty" path:"user_ids"`
 	GroupIds                         string                   `url:"group_ids,omitempty" json:"group_ids,omitempty" path:"group_ids"`
@@ -151,6 +153,7 @@ type AutomationUpdateParams struct {
 	DestinationReplaceTo             string                   `url:"destination_replace_to,omitempty" json:"destination_replace_to,omitempty" path:"destination_replace_to"`
 	Interval                         string                   `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
 	Path                             string                   `url:"path,omitempty" json:"path,omitempty" path:"path"`
+	LegacySyncIds                    string                   `url:"legacy_sync_ids,omitempty" json:"legacy_sync_ids,omitempty" path:"legacy_sync_ids"`
 	SyncIds                          string                   `url:"sync_ids,omitempty" json:"sync_ids,omitempty" path:"sync_ids"`
 	UserIds                          string                   `url:"user_ids,omitempty" json:"user_ids,omitempty" path:"user_ids"`
 	GroupIds                         string                   `url:"group_ids,omitempty" json:"group_ids,omitempty" path:"group_ids"`
