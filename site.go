@@ -160,7 +160,6 @@ type Site struct {
 	SslRequired                              *bool                  `json:"ssl_required,omitempty" path:"ssl_required,omitempty" url:"ssl_required,omitempty"`
 	Subdomain                                string                 `json:"subdomain,omitempty" path:"subdomain,omitempty" url:"subdomain,omitempty"`
 	SwitchToPlanDate                         *time.Time             `json:"switch_to_plan_date,omitempty" path:"switch_to_plan_date,omitempty" url:"switch_to_plan_date,omitempty"`
-	TlsDisabled                              *bool                  `json:"tls_disabled,omitempty" path:"tls_disabled,omitempty" url:"tls_disabled,omitempty"`
 	TrialDaysLeft                            int64                  `json:"trial_days_left,omitempty" path:"trial_days_left,omitempty" url:"trial_days_left,omitempty"`
 	TrialUntil                               *time.Time             `json:"trial_until,omitempty" path:"trial_until,omitempty" url:"trial_until,omitempty"`
 	UseDedicatedIpsForSmtp                   *bool                  `json:"use_dedicated_ips_for_smtp,omitempty" path:"use_dedicated_ips_for_smtp,omitempty" url:"use_dedicated_ips_for_smtp,omitempty"`
@@ -235,7 +234,6 @@ type SiteUpdateParams struct {
 	MigrateRemoteServerSyncToSync            *bool                  `url:"migrate_remote_server_sync_to_sync,omitempty" json:"migrate_remote_server_sync_to_sync,omitempty" path:"migrate_remote_server_sync_to_sync"`
 	SessionExpiry                            string                 `url:"session_expiry,omitempty" json:"session_expiry,omitempty" path:"session_expiry"`
 	SslRequired                              *bool                  `url:"ssl_required,omitempty" json:"ssl_required,omitempty" path:"ssl_required"`
-	TlsDisabled                              *bool                  `url:"tls_disabled,omitempty" json:"tls_disabled,omitempty" path:"tls_disabled"`
 	SftpInsecureCiphers                      *bool                  `url:"sftp_insecure_ciphers,omitempty" json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers"`
 	SftpInsecureDiffieHellman                *bool                  `url:"sftp_insecure_diffie_hellman,omitempty" json:"sftp_insecure_diffie_hellman,omitempty" path:"sftp_insecure_diffie_hellman"`
 	DisableFilesCertificateGeneration        *bool                  `url:"disable_files_certificate_generation,omitempty" json:"disable_files_certificate_generation,omitempty" path:"disable_files_certificate_generation"`
