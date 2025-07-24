@@ -9,12 +9,13 @@ import (
 
 type UserCipherUse struct {
 	Id             int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	UserId         int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	Username       string     `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
 	ProtocolCipher string     `json:"protocol_cipher,omitempty" path:"protocol_cipher,omitempty" url:"protocol_cipher,omitempty"`
 	CreatedAt      *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 	Insecure       *bool      `json:"insecure,omitempty" path:"insecure,omitempty" url:"insecure,omitempty"`
 	Interface      string     `json:"interface,omitempty" path:"interface,omitempty" url:"interface,omitempty"`
 	UpdatedAt      *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
-	UserId         int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 }
 
 func (u UserCipherUse) Identifier() interface{} {
