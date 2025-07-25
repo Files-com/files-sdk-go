@@ -761,7 +761,7 @@ func (fs *Filescomfs) createNode(path string, item files_sdk.File) *fsNode {
 		dir:          item.IsDir(),
 		size:         item.Size,
 		modTime:      item.ModTime(),
-		creationTime: *item.CreatedAt,
+		creationTime: item.CreationTime(),
 	})
 
 	return node

@@ -170,6 +170,12 @@ func (f File) ModTime() time.Time {
 	return time.Time{}
 }
 
+func (f File) CreationTime() time.Time {
+	if f.CreatedAt != nil {
+		return *f.CreatedAt
+	}
+	return time.Time{}
+}
 func (f *File) UnmarshalJSON(data []byte) error {
 	type file File
 	var v file
