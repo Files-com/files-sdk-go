@@ -91,15 +91,16 @@ func (u SiemHttpDestinationDestinationTypeEnum) String() string {
 
 func (u SiemHttpDestinationDestinationTypeEnum) Enum() map[string]SiemHttpDestinationDestinationTypeEnum {
 	return map[string]SiemHttpDestinationDestinationTypeEnum{
-		"generic":     SiemHttpDestinationDestinationTypeEnum("generic"),
-		"splunk":      SiemHttpDestinationDestinationTypeEnum("splunk"),
-		"azure":       SiemHttpDestinationDestinationTypeEnum("azure"),
-		"qradar":      SiemHttpDestinationDestinationTypeEnum("qradar"),
-		"sumo":        SiemHttpDestinationDestinationTypeEnum("sumo"),
-		"rapid7":      SiemHttpDestinationDestinationTypeEnum("rapid7"),
-		"solar_winds": SiemHttpDestinationDestinationTypeEnum("solar_winds"),
-		"new_relic":   SiemHttpDestinationDestinationTypeEnum("new_relic"),
-		"datadog":     SiemHttpDestinationDestinationTypeEnum("datadog"),
+		"generic":      SiemHttpDestinationDestinationTypeEnum("generic"),
+		"splunk":       SiemHttpDestinationDestinationTypeEnum("splunk"),
+		"azure_legacy": SiemHttpDestinationDestinationTypeEnum("azure_legacy"),
+		"qradar":       SiemHttpDestinationDestinationTypeEnum("qradar"),
+		"sumo":         SiemHttpDestinationDestinationTypeEnum("sumo"),
+		"rapid7":       SiemHttpDestinationDestinationTypeEnum("rapid7"),
+		"solar_winds":  SiemHttpDestinationDestinationTypeEnum("solar_winds"),
+		"new_relic":    SiemHttpDestinationDestinationTypeEnum("new_relic"),
+		"datadog":      SiemHttpDestinationDestinationTypeEnum("datadog"),
+		"azure":        SiemHttpDestinationDestinationTypeEnum("azure"),
 	}
 }
 
