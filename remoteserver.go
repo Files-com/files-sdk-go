@@ -33,9 +33,6 @@ type RemoteServer struct {
 	WasabiBucket                            string `json:"wasabi_bucket,omitempty" path:"wasabi_bucket,omitempty" url:"wasabi_bucket,omitempty"`
 	WasabiRegion                            string `json:"wasabi_region,omitempty" path:"wasabi_region,omitempty" url:"wasabi_region,omitempty"`
 	WasabiAccessKey                         string `json:"wasabi_access_key,omitempty" path:"wasabi_access_key,omitempty" url:"wasabi_access_key,omitempty"`
-	RackspaceUsername                       string `json:"rackspace_username,omitempty" path:"rackspace_username,omitempty" url:"rackspace_username,omitempty"`
-	RackspaceRegion                         string `json:"rackspace_region,omitempty" path:"rackspace_region,omitempty" url:"rackspace_region,omitempty"`
-	RackspaceContainer                      string `json:"rackspace_container,omitempty" path:"rackspace_container,omitempty" url:"rackspace_container,omitempty"`
 	AuthStatus                              string `json:"auth_status,omitempty" path:"auth_status,omitempty" url:"auth_status,omitempty"`
 	AuthAccountName                         string `json:"auth_account_name,omitempty" path:"auth_account_name,omitempty" url:"auth_account_name,omitempty"`
 	OneDriveAccountType                     string `json:"one_drive_account_type,omitempty" path:"one_drive_account_type,omitempty" url:"one_drive_account_type,omitempty"`
@@ -82,7 +79,6 @@ type RemoteServer struct {
 	GoogleCloudStorageCredentialsJson       string `json:"google_cloud_storage_credentials_json,omitempty" path:"google_cloud_storage_credentials_json,omitempty" url:"google_cloud_storage_credentials_json,omitempty"`
 	GoogleCloudStorageS3CompatibleSecretKey string `json:"google_cloud_storage_s3_compatible_secret_key,omitempty" path:"google_cloud_storage_s3_compatible_secret_key,omitempty" url:"google_cloud_storage_s3_compatible_secret_key,omitempty"`
 	LinodeSecretKey                         string `json:"linode_secret_key,omitempty" path:"linode_secret_key,omitempty" url:"linode_secret_key,omitempty"`
-	RackspaceApiKey                         string `json:"rackspace_api_key,omitempty" path:"rackspace_api_key,omitempty" url:"rackspace_api_key,omitempty"`
 	S3CompatibleSecretKey                   string `json:"s3_compatible_secret_key,omitempty" path:"s3_compatible_secret_key,omitempty" url:"s3_compatible_secret_key,omitempty"`
 	WasabiSecretKey                         string `json:"wasabi_secret_key,omitempty" path:"wasabi_secret_key,omitempty" url:"wasabi_secret_key,omitempty"`
 }
@@ -149,7 +145,6 @@ func (u RemoteServerServerTypeEnum) Enum() map[string]RemoteServerServerTypeEnum
 		"wasabi":               RemoteServerServerTypeEnum("wasabi"),
 		"backblaze_b2":         RemoteServerServerTypeEnum("backblaze_b2"),
 		"one_drive":            RemoteServerServerTypeEnum("one_drive"),
-		"rackspace":            RemoteServerServerTypeEnum("rackspace"),
 		"box":                  RemoteServerServerTypeEnum("box"),
 		"dropbox":              RemoteServerServerTypeEnum("dropbox"),
 		"google_drive":         RemoteServerServerTypeEnum("google_drive"),
@@ -212,7 +207,6 @@ type RemoteServerCreateParams struct {
 	GoogleCloudStorageCredentialsJson       string                                  `url:"google_cloud_storage_credentials_json,omitempty" json:"google_cloud_storage_credentials_json,omitempty" path:"google_cloud_storage_credentials_json"`
 	GoogleCloudStorageS3CompatibleSecretKey string                                  `url:"google_cloud_storage_s3_compatible_secret_key,omitempty" json:"google_cloud_storage_s3_compatible_secret_key,omitempty" path:"google_cloud_storage_s3_compatible_secret_key"`
 	LinodeSecretKey                         string                                  `url:"linode_secret_key,omitempty" json:"linode_secret_key,omitempty" path:"linode_secret_key"`
-	RackspaceApiKey                         string                                  `url:"rackspace_api_key,omitempty" json:"rackspace_api_key,omitempty" path:"rackspace_api_key"`
 	S3CompatibleSecretKey                   string                                  `url:"s3_compatible_secret_key,omitempty" json:"s3_compatible_secret_key,omitempty" path:"s3_compatible_secret_key"`
 	WasabiSecretKey                         string                                  `url:"wasabi_secret_key,omitempty" json:"wasabi_secret_key,omitempty" path:"wasabi_secret_key"`
 	AwsAccessKey                            string                                  `url:"aws_access_key,omitempty" json:"aws_access_key,omitempty" path:"aws_access_key"`
@@ -247,9 +241,6 @@ type RemoteServerCreateParams struct {
 	OneDriveAccountType                     RemoteServerOneDriveAccountTypeEnum     `url:"one_drive_account_type,omitempty" json:"one_drive_account_type,omitempty" path:"one_drive_account_type"`
 	PinToSiteRegion                         *bool                                   `url:"pin_to_site_region,omitempty" json:"pin_to_site_region,omitempty" path:"pin_to_site_region"`
 	Port                                    int64                                   `url:"port,omitempty" json:"port,omitempty" path:"port"`
-	RackspaceContainer                      string                                  `url:"rackspace_container,omitempty" json:"rackspace_container,omitempty" path:"rackspace_container"`
-	RackspaceRegion                         string                                  `url:"rackspace_region,omitempty" json:"rackspace_region,omitempty" path:"rackspace_region"`
-	RackspaceUsername                       string                                  `url:"rackspace_username,omitempty" json:"rackspace_username,omitempty" path:"rackspace_username"`
 	S3Bucket                                string                                  `url:"s3_bucket,omitempty" json:"s3_bucket,omitempty" path:"s3_bucket"`
 	S3CompatibleAccessKey                   string                                  `url:"s3_compatible_access_key,omitempty" json:"s3_compatible_access_key,omitempty" path:"s3_compatible_access_key"`
 	S3CompatibleBucket                      string                                  `url:"s3_compatible_bucket,omitempty" json:"s3_compatible_bucket,omitempty" path:"s3_compatible_bucket"`
@@ -301,7 +292,6 @@ type RemoteServerUpdateParams struct {
 	GoogleCloudStorageCredentialsJson       string                                  `url:"google_cloud_storage_credentials_json,omitempty" json:"google_cloud_storage_credentials_json,omitempty" path:"google_cloud_storage_credentials_json"`
 	GoogleCloudStorageS3CompatibleSecretKey string                                  `url:"google_cloud_storage_s3_compatible_secret_key,omitempty" json:"google_cloud_storage_s3_compatible_secret_key,omitempty" path:"google_cloud_storage_s3_compatible_secret_key"`
 	LinodeSecretKey                         string                                  `url:"linode_secret_key,omitempty" json:"linode_secret_key,omitempty" path:"linode_secret_key"`
-	RackspaceApiKey                         string                                  `url:"rackspace_api_key,omitempty" json:"rackspace_api_key,omitempty" path:"rackspace_api_key"`
 	S3CompatibleSecretKey                   string                                  `url:"s3_compatible_secret_key,omitempty" json:"s3_compatible_secret_key,omitempty" path:"s3_compatible_secret_key"`
 	WasabiSecretKey                         string                                  `url:"wasabi_secret_key,omitempty" json:"wasabi_secret_key,omitempty" path:"wasabi_secret_key"`
 	AwsAccessKey                            string                                  `url:"aws_access_key,omitempty" json:"aws_access_key,omitempty" path:"aws_access_key"`
@@ -336,9 +326,6 @@ type RemoteServerUpdateParams struct {
 	OneDriveAccountType                     RemoteServerOneDriveAccountTypeEnum     `url:"one_drive_account_type,omitempty" json:"one_drive_account_type,omitempty" path:"one_drive_account_type"`
 	PinToSiteRegion                         *bool                                   `url:"pin_to_site_region,omitempty" json:"pin_to_site_region,omitempty" path:"pin_to_site_region"`
 	Port                                    int64                                   `url:"port,omitempty" json:"port,omitempty" path:"port"`
-	RackspaceContainer                      string                                  `url:"rackspace_container,omitempty" json:"rackspace_container,omitempty" path:"rackspace_container"`
-	RackspaceRegion                         string                                  `url:"rackspace_region,omitempty" json:"rackspace_region,omitempty" path:"rackspace_region"`
-	RackspaceUsername                       string                                  `url:"rackspace_username,omitempty" json:"rackspace_username,omitempty" path:"rackspace_username"`
 	S3Bucket                                string                                  `url:"s3_bucket,omitempty" json:"s3_bucket,omitempty" path:"s3_bucket"`
 	S3CompatibleAccessKey                   string                                  `url:"s3_compatible_access_key,omitempty" json:"s3_compatible_access_key,omitempty" path:"s3_compatible_access_key"`
 	S3CompatibleBucket                      string                                  `url:"s3_compatible_bucket,omitempty" json:"s3_compatible_bucket,omitempty" path:"s3_compatible_bucket"`
