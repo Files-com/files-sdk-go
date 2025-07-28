@@ -29,9 +29,13 @@ type MountParams struct {
 	// Required. Files.com API configuration.
 	Config *files_sdk.Config
 
-	// Optional. Path to mount the filesystem. On Windows, this is expected to be a drive letter
-	// followed by a colon (e.g. "Z:"). If not specified, the highest available drive letter will
-	// be used.
+	// Path to mount the filesystem.
+	//
+	// Optional on Windows. If provided, this is expected to be a drive letter
+	// followed by a colon (e.g. "Z:"). If not specified, the letter closest to
+	// the end of the Latin alphabet that is not already in use will be chosen.
+	//
+	// Required on MacOS and Linux, this is the path to the mount point (e.g. "/mnt/files").
 	MountPoint string
 
 	// Optional. Volume name to display in Finder/Explorer. On Windows, this is also used as the
@@ -125,10 +129,11 @@ func newFs(params MountParams) (*Filescomfs, error) {
 		debugFuse:        params.DebugFuse,
 	}
 
-	if params.WriteConcurrency <= 0 {
+	// ensure write concurrency and cache TTL are positive
+	if fs.writeConcurrency <= 0 {
 		fs.writeConcurrency = DefaultWriteConcurrency
 	}
-	if params.CacheTTL <= 0 {
+	if fs.cacheTTL <= 0 {
 		fs.cacheTTL = DefaultCacheTTL
 	}
 	if params.IgnorePatterns == nil || len(params.IgnorePatterns) > 0 {

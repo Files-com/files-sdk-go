@@ -16,6 +16,14 @@ const (
 	officeOwnerNameLength = 54 // Excel uses 54. Word uses 53, but it accepts 54, so we'll use that.
 )
 
+// nodeType represents the type of a file system node, either a file or a directory.
+type nodeType int
+
+const (
+	nodeTypeFile nodeType = iota
+	nodeTypeDir
+)
+
 type virtualfs struct {
 	cacheTTL     time.Duration
 	nodeMap      map[string]*fsNode
@@ -29,7 +37,7 @@ func newVirtualfs(logger lib.Logger, cacheTTL time.Duration) *virtualfs {
 		LeveledLogger: lib.NewLeveledLogger(logger),
 		cacheTTL:      DefaultCacheTTL,
 	}
-	if cacheTTL != 0 {
+	if cacheTTL >= 0 {
 		vfs.cacheTTL = cacheTTL
 	}
 	return vfs
@@ -43,18 +51,19 @@ func (vfs *virtualfs) fetch(path string) (*fsNode, bool) {
 	return node, ok
 }
 
-func (vfs *virtualfs) getOrCreate(path string, dir bool) (node *fsNode) {
+func (vfs *virtualfs) getOrCreate(path string, nt nodeType) (node *fsNode) {
 	vfs.nodeMapMutex.Lock()
 	defer vfs.nodeMapMutex.Unlock()
 
 	node, ok := vfs.nodeMap[path]
 	if !ok {
 		node = &fsNode{
-			fs:   vfs,
-			path: path,
+			path:     path,
+			cacheTTL: vfs.cacheTTL,
+			logger:   vfs.LeveledLogger,
 		}
-		node.updateInfo(fsNodeInfo{dir: dir})
-		if dir {
+		node.updateInfo(fsNodeInfo{nodeType: nt})
+		if nt == nodeTypeDir {
 			node.childPaths = make(map[string]struct{})
 		}
 
@@ -64,7 +73,7 @@ func (vfs *virtualfs) getOrCreate(path string, dir bool) (node *fsNode) {
 	return node
 }
 
-func (vfs *virtualfs) close(path string, handle uint64) (errc int) {
+func (vfs *virtualfs) release(path string, handle uint64) (errc int) {
 	if node, ok := vfs.fetch(path); ok {
 		node.closeWriterByHandle(handle)
 	}

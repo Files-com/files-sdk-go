@@ -93,7 +93,7 @@ func (w *orderedPipe) writeAt(buff []byte, offset int64) (n int, err error) {
 	// recurse
 	if part, ok := w.bufCache[w.offset]; ok {
 		partOffset := w.offset
-		w.cacheMu.Unlock()
+		w.cacheMu.Unlock() // explicit unlock to allow recursion without deadlock
 		l, err := w.writeAt(part, partOffset)
 		if err != nil {
 			return 0, err
@@ -104,7 +104,9 @@ func (w *orderedPipe) writeAt(buff []byte, offset int64) (n int, err error) {
 		// TODO: this might be better before calling writeAt, otherwise parts are not removed from the cache
 		// until the call to writeAt returns. If there are multiple levels of recursion, the cache could grow
 		// unbounded.
+		w.cacheMu.Lock()
 		delete(w.bufCache, partOffset)
+		w.cacheMu.Unlock()
 	} else {
 		w.cacheMu.Unlock()
 	}

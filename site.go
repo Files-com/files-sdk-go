@@ -180,6 +180,7 @@ type Site struct {
 	WelcomeScreen                            string                 `json:"welcome_screen,omitempty" path:"welcome_screen,omitempty" url:"welcome_screen,omitempty"`
 	WindowsModeFtp                           *bool                  `json:"windows_mode_ftp,omitempty" path:"windows_mode_ftp,omitempty" url:"windows_mode_ftp,omitempty"`
 	GroupAdminsCanSetUserPassword            *bool                  `json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password,omitempty" url:"group_admins_can_set_user_password,omitempty"`
+	ManagedSiteSettings                      []string               `json:"managed_site_settings,omitempty" path:"managed_site_settings,omitempty" url:"managed_site_settings,omitempty"`
 }
 
 func (s Site) Identifier() interface{} {
