@@ -20,6 +20,13 @@ require (
 	moul.io/http2curl/v2 v2.3.0
 )
 
+// TODO: remove after/if https://github.com/winfsp/cgofuse/pull/98 is merged and released, and update
+// the github.com/winfsp/cgofuse version in the main require block above. The pseudo version here is
+// currently pointed at the tip of github.com/Files-com/cgofuse/tree/allow-runtime-dylib-location. If
+// there is a need to update the dependency, update the branch, then run
+// `go get github.com/Files-com/cgofuse@<some-new-sha-version>`.
+replace github.com/winfsp/cgofuse => github.com/Files-com/cgofuse v0.0.0-20250730195528-757f89f7861c
+
 require (
 	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
