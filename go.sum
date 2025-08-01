@@ -1,5 +1,5 @@
-github.com/Files-com/cgofuse v0.0.0-20250730195528-757f89f7861c h1:Cg/xiIsxJyho7lsOHvnkLGGCy0PwPNHf50yLgqdItfk=
-github.com/Files-com/cgofuse v0.0.0-20250730195528-757f89f7861c/go.mod h1:uxjoF2jEYT3+x+vC2KJddEGdk/LU8pRowXmyVMHSV5I=
+github.com/Files-com/cgofuse v0.0.0-20250731221149-e6448c5267ff h1:IeELw6R+XwX8tb2tr3pINsSVTGmU3ryBV+mdAqojbOs=
+github.com/Files-com/cgofuse v0.0.0-20250731221149-e6448c5267ff/go.mod h1:uxjoF2jEYT3+x+vC2KJddEGdk/LU8pRowXmyVMHSV5I=
 github.com/appscode/go-querystring v0.0.0-20170504095604-0126cfb3f1dc h1:LoL75er+LKDHDUfU5tRvFwxH0LjPpZN8OoG8Ll+liGU=
 github.com/appscode/go-querystring v0.0.0-20170504095604-0126cfb3f1dc/go.mod h1:w648aMHEgFYS6xb0KVMMtZ2uMeemhiKCuD2vj6gY52A=
 github.com/avvmoto/buf-readerat v0.0.0-20171115124131-a17c8cb89270/go.mod h1:2XtVRGCw/HthOLxU0Qw6o6jSJrcEoOb2OCCl8gQYvGw=
