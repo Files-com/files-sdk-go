@@ -8,6 +8,7 @@ import (
 )
 
 type InvoiceLineItem struct {
+	Id             int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Amount         string     `json:"amount,omitempty" path:"amount,omitempty" url:"amount,omitempty"`
 	CreatedAt      *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 	Description    string     `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
@@ -18,7 +19,9 @@ type InvoiceLineItem struct {
 	Site           string     `json:"site,omitempty" path:"site,omitempty" url:"site,omitempty"`
 }
 
-// Identifier no path or id
+func (i InvoiceLineItem) Identifier() interface{} {
+	return i.Id
+}
 
 type InvoiceLineItemCollection []InvoiceLineItem
 

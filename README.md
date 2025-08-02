@@ -687,12 +687,16 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `not-authorized/history-permission-required` | History Permission Required |
 | `not-authorized/insufficient-permission-for-params` | Insufficient Permission For Params |
 | `not-authorized/insufficient-permission-for-site` | Insufficient Permission For Site |
+| `not-authorized/mover-access-denied` | Mover Access Denied |
+| `not-authorized/mover-package-required` | Mover Package Required |
 | `not-authorized/must-authenticate-with-api-key` | Must Authenticate With Api Key |
 | `not-authorized/need-admin-permission-for-inbox` | Need Admin Permission For Inbox |
 | `not-authorized/non-admins-must-query-by-folder-or-path` | Non Admins Must Query By Folder Or Path |
 | `not-authorized/not-allowed-to-create-bundle` | Not Allowed To Create Bundle |
+| `not-authorized/not-enqueuable-sync` | Not Enqueuable Sync |
 | `not-authorized/password-change-not-required` | Password Change Not Required |
 | `not-authorized/password-change-required` | Password Change Required |
+| `not-authorized/payment-method-error` | Payment Method Error |
 | `not-authorized/read-only-session` | Read Only Session |
 | `not-authorized/read-permission-required` | Read Permission Required |
 | `not-authorized/reauthentication-failed` | Reauthentication Failed |
@@ -761,6 +765,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `processing-failure/resource-belongs-to-parent-site` | Resource Belongs To Parent Site |
 | `processing-failure/resource-locked` | Resource Locked |
 | `processing-failure/subfolder-locked` | Subfolder Locked |
+| `processing-failure/sync-in-progress` | Sync In Progress |
 | `processing-failure/two-factor-authentication-code-already-sent` | Two Factor Authentication Code Already Sent |
 | `processing-failure/two-factor-authentication-country-blacklisted` | Two Factor Authentication Country Blacklisted |
 | `processing-failure/two-factor-authentication-general-error` | Two Factor Authentication General Error |

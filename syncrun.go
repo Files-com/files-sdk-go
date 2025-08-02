@@ -16,7 +16,6 @@ type SyncRun struct {
 	DestRemoteServerType string     `json:"dest_remote_server_type,omitempty" path:"dest_remote_server_type,omitempty" url:"dest_remote_server_type,omitempty"`
 	Body                 string     `json:"body,omitempty" path:"body,omitempty" url:"body,omitempty"`
 	EventErrors          []string   `json:"event_errors,omitempty" path:"event_errors,omitempty" url:"event_errors,omitempty"`
-	BytesSynced          int64      `json:"bytes_synced,omitempty" path:"bytes_synced,omitempty" url:"bytes_synced,omitempty"`
 	ComparedFiles        int64      `json:"compared_files,omitempty" path:"compared_files,omitempty" url:"compared_files,omitempty"`
 	ComparedFolders      int64      `json:"compared_folders,omitempty" path:"compared_folders,omitempty" url:"compared_folders,omitempty"`
 	ErroredFiles         int64      `json:"errored_files,omitempty" path:"errored_files,omitempty" url:"errored_files,omitempty"`
@@ -25,6 +24,9 @@ type SyncRun struct {
 	LogUrl               string     `json:"log_url,omitempty" path:"log_url,omitempty" url:"log_url,omitempty"`
 	CompletedAt          *time.Time `json:"completed_at,omitempty" path:"completed_at,omitempty" url:"completed_at,omitempty"`
 	Notified             *bool      `json:"notified,omitempty" path:"notified,omitempty" url:"notified,omitempty"`
+	DryRun               *bool      `json:"dry_run,omitempty" path:"dry_run,omitempty" url:"dry_run,omitempty"`
+	BytesSynced          int64      `json:"bytes_synced,omitempty" path:"bytes_synced,omitempty" url:"bytes_synced,omitempty"`
+	EstimatedBytesCount  int64      `json:"estimated_bytes_count,omitempty" path:"estimated_bytes_count,omitempty" url:"estimated_bytes_count,omitempty"`
 	CreatedAt            *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 	UpdatedAt            *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
@@ -39,7 +41,6 @@ type SyncRunListParams struct {
 	UserId int64                  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter SyncRun                `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
-	SyncId int64                  `url:"sync_id" json:"sync_id" path:"sync_id"`
 	ListParams
 }
 

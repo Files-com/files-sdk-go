@@ -34,6 +34,7 @@ type Sync struct {
 	ScheduleTimesOfDay  []string   `json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day,omitempty" url:"schedule_times_of_day,omitempty"`
 	ScheduleTimeZone    string     `json:"schedule_time_zone,omitempty" path:"schedule_time_zone,omitempty" url:"schedule_time_zone,omitempty"`
 	HolidayRegion       string     `json:"holiday_region,omitempty" path:"holiday_region,omitempty" url:"holiday_region,omitempty"`
+	LatestSyncRun       SyncRun    `json:"latest_sync_run,omitempty" path:"latest_sync_run,omitempty" url:"latest_sync_run,omitempty"`
 }
 
 func (s Sync) Identifier() interface{} {
@@ -70,6 +71,11 @@ type SyncCreateParams struct {
 	ScheduleTimeZone    string   `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
 	ScheduleDaysOfWeek  []int64  `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimesOfDay  []string `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
+}
+
+// Dry Run Sync
+type SyncDryRunParams struct {
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // Manually Run Sync
