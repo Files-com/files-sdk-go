@@ -25,7 +25,7 @@ require (
 // currently pointed at the tip of github.com/Files-com/cgofuse/tree/allow-runtime-dylib-location. If
 // there is a need to update the dependency, update the branch, then run
 // `go get github.com/Files-com/cgofuse@<some-new-sha-version>`.
-replace github.com/winfsp/cgofuse => github.com/Files-com/cgofuse v0.0.0-20250731221149-e6448c5267ff
+replace github.com/winfsp/cgofuse => github.com/Files-com/cgofuse v0.0.0-20250804164923-2cbe1e9ea255
 
 require (
 	github.com/bytedance/sonic v1.13.2 // indirect
