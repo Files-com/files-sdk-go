@@ -724,6 +724,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `not-found/site-not-found` | Site Not Found |
 | `not-found/user-not-found` | User Not Found |
 | `processing-failure` | Processing Failure |
+| `processing-failure/agent-unavailable` | Agent Unavailable |
 | `processing-failure/already-completed` | Already Completed |
 | `processing-failure/automation-cannot-be-run-manually` | Automation Cannot Be Run Manually |
 | `processing-failure/behavior-not-allowed-on-remote-server` | Behavior Not Allowed On Remote Server |
@@ -779,7 +780,6 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `rate-limited/too-many-login-attempts` | Too Many Login Attempts |
 | `rate-limited/too-many-requests` | Too Many Requests |
 | `rate-limited/too-many-shares` | Too Many Shares |
-| `service-unavailable/agent-unavailable` | Agent Unavailable |
 | `service-unavailable/automations-unavailable` | Automations Unavailable |
 | `service-unavailable/migration-in-progress` | Migration In Progress |
 | `service-unavailable/site-disabled` | Site Disabled |
