@@ -15,10 +15,11 @@ type PublicKey struct {
 	FingerprintSha256          string     `json:"fingerprint_sha256,omitempty" path:"fingerprint_sha256,omitempty" url:"fingerprint_sha256,omitempty"`
 	Status                     string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
 	LastLoginAt                *time.Time `json:"last_login_at,omitempty" path:"last_login_at,omitempty" url:"last_login_at,omitempty"`
-	PrivateKey                 string     `json:"private_key,omitempty" path:"private_key,omitempty" url:"private_key,omitempty"`
-	PublicKey                  string     `json:"public_key,omitempty" path:"public_key,omitempty" url:"public_key,omitempty"`
+	GeneratedPrivateKey        string     `json:"generated_private_key,omitempty" path:"generated_private_key,omitempty" url:"generated_private_key,omitempty"`
+	GeneratedPublicKey         string     `json:"generated_public_key,omitempty" path:"generated_public_key,omitempty" url:"generated_public_key,omitempty"`
 	Username                   string     `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
 	UserId                     int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	PublicKey                  string     `json:"public_key,omitempty" path:"public_key,omitempty" url:"public_key,omitempty"`
 	GenerateKeypair            *bool      `json:"generate_keypair,omitempty" path:"generate_keypair,omitempty" url:"generate_keypair,omitempty"`
 	GeneratePrivateKeyPassword string     `json:"generate_private_key_password,omitempty" path:"generate_private_key_password,omitempty" url:"generate_private_key_password,omitempty"`
 	GenerateAlgorithm          string     `json:"generate_algorithm,omitempty" path:"generate_algorithm,omitempty" url:"generate_algorithm,omitempty"`
