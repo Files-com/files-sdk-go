@@ -147,12 +147,14 @@ func defaultMountOpts(params MountParams) []string {
 	opts := []string{}
 	opts = append(opts, "-o", "attr_timeout=1")
 	if params.DebugFuse {
+		// enables debug logging in the underlying fuse implementation
 		opts = append(opts, "-o", "debug")
 	}
 	volname := DefaultVolumeName
 	if params.VolumeName != "" {
 		volname = params.VolumeName
 	}
+	// sets the volume name that is passed to the fuse implementation
 	opts = append(opts, "-o", "volname="+volname)
 	return opts
 }

@@ -21,10 +21,10 @@ func mountPoint(mountPoint string) (string, error) {
 
 func mountOpts(params MountParams) []string {
 	opts := defaultMountOpts(params)
-	opts = append(opts, "-o", "nobrowse")
-	// TODO: Figure out how to provide the volume icon correctly to fuse
-	// opts = append(opts, "-o", "modules=volicon")
-	// opts = append(opts, "-o", "iconpath=application.icns")
-	// opts = append(opts, "-o", "volicon="+params.IconPath)
+	// uses the smb implementation from fuse-t/go-nfsv4
+	opts = append(opts, "-o", "backend=smb")
+
+	// sets the name that is displayed in the Finder sidebar
+	opts = append(opts, "-o", "location=Files")
 	return opts
 }

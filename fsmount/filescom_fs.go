@@ -49,6 +49,9 @@ type Filescomfs struct {
 	lockMap         map[string]*lockInfo
 	lockMapMutex    sync.Mutex
 	debugFuse       bool
+
+	initOnce sync.Once
+	initTime time.Time
 }
 
 type lockInfo struct {
@@ -59,13 +62,20 @@ type lockInfo struct {
 // Init initializes the Filescomfs filesystem.
 func (fs *Filescomfs) Init() {
 	defer fs.logPanics()
-	if fs.fileClient == nil {
-		fs.fileClient = &file.Client{Config: *fs.config}
-		fs.lockClient = &lock.Client{Config: *fs.config}
-		fs.migrationClient = &file_migration.Client{Config: *fs.config}
-		fs.lockMap = make(map[string]*lockInfo)
-		fs.virtualfs = newVirtualfs(fs.config.Logger, fs.cacheTTL)
-	}
+	// Guard with a sync.Once because we call Init from fsmount.Mount, but cgofuse also calls Init
+	// when it mounts the filesystem.
+	fs.initOnce.Do(func() {
+		if fs.fileClient == nil {
+			fs.fileClient = &file.Client{Config: *fs.config}
+			fs.lockClient = &lock.Client{Config: *fs.config}
+			fs.migrationClient = &file_migration.Client{Config: *fs.config}
+			fs.lockMap = make(map[string]*lockInfo)
+			fs.virtualfs = newVirtualfs(fs.config.Logger, fs.cacheTTL)
+		}
+
+		// store the time the filesystem was initialized to use as the creation time for the root directory
+		fs.initTime = time.Now()
+	})
 }
 
 func (fs *Filescomfs) Destroy() {
@@ -93,8 +103,10 @@ func (fs *Filescomfs) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 	defer fs.logPanics()
 	fs.Trace("Statfs: path=%v", path)
 
-	totalBytes := remoteCapacityBytes() // 1 PB?
-	usedBytes := uint64(0)              // TODO: get used bytes from the remote
+	totalBytes := remoteCapacityBytes()
+
+	// TODO: get used bytes from the remote
+	usedBytes := uint64(0)
 	freeBytes := totalBytes - usedBytes
 
 	stat.Bsize = blockSize
@@ -695,7 +707,11 @@ func (fs *Filescomfs) findDir(path string) (node *fsNode, errc int) {
 	if remotePath == "/" {
 		// Special case that we can't stat the root directory of a Files.com site.
 		node = fs.getOrCreate(path, nodeTypeDir)
-		node.updateInfo(fsNodeInfo{nodeType: nodeTypeDir})
+		node.updateInfo(fsNodeInfo{
+			nodeType:     nodeTypeDir,
+			creationTime: fs.initTime,
+			modTime:      time.Now(),
+		})
 		return node, errc
 	}
 
