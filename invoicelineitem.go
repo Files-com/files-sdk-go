@@ -8,15 +8,19 @@ import (
 )
 
 type InvoiceLineItem struct {
-	Id             int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Amount         string     `json:"amount,omitempty" path:"amount,omitempty" url:"amount,omitempty"`
-	CreatedAt      *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	Description    string     `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
-	Type           string     `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
-	ServiceEndAt   *time.Time `json:"service_end_at,omitempty" path:"service_end_at,omitempty" url:"service_end_at,omitempty"`
-	ServiceStartAt *time.Time `json:"service_start_at,omitempty" path:"service_start_at,omitempty" url:"service_start_at,omitempty"`
-	Plan           string     `json:"plan,omitempty" path:"plan,omitempty" url:"plan,omitempty"`
-	Site           string     `json:"site,omitempty" path:"site,omitempty" url:"site,omitempty"`
+	Id                    int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Amount                string     `json:"amount,omitempty" path:"amount,omitempty" url:"amount,omitempty"`
+	CreatedAt             *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	Description           string     `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
+	Type                  string     `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
+	ServiceEndAt          *time.Time `json:"service_end_at,omitempty" path:"service_end_at,omitempty" url:"service_end_at,omitempty"`
+	ServiceStartAt        *time.Time `json:"service_start_at,omitempty" path:"service_start_at,omitempty" url:"service_start_at,omitempty"`
+	Plan                  string     `json:"plan,omitempty" path:"plan,omitempty" url:"plan,omitempty"`
+	Site                  string     `json:"site,omitempty" path:"site,omitempty" url:"site,omitempty"`
+	PrepaidBytes          int64      `json:"prepaid_bytes,omitempty" path:"prepaid_bytes,omitempty" url:"prepaid_bytes,omitempty"`
+	PrepaidBytesExpireAt  *time.Time `json:"prepaid_bytes_expire_at,omitempty" path:"prepaid_bytes_expire_at,omitempty" url:"prepaid_bytes_expire_at,omitempty"`
+	PrepaidBytesUsed      int64      `json:"prepaid_bytes_used,omitempty" path:"prepaid_bytes_used,omitempty" url:"prepaid_bytes_used,omitempty"`
+	PrepaidBytesAvaliable int64      `json:"prepaid_bytes_avaliable,omitempty" path:"prepaid_bytes_avaliable,omitempty" url:"prepaid_bytes_avaliable,omitempty"`
 }
 
 func (i InvoiceLineItem) Identifier() interface{} {
