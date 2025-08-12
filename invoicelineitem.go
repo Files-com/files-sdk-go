@@ -20,7 +20,7 @@ type InvoiceLineItem struct {
 	PrepaidBytes          int64      `json:"prepaid_bytes,omitempty" path:"prepaid_bytes,omitempty" url:"prepaid_bytes,omitempty"`
 	PrepaidBytesExpireAt  *time.Time `json:"prepaid_bytes_expire_at,omitempty" path:"prepaid_bytes_expire_at,omitempty" url:"prepaid_bytes_expire_at,omitempty"`
 	PrepaidBytesUsed      int64      `json:"prepaid_bytes_used,omitempty" path:"prepaid_bytes_used,omitempty" url:"prepaid_bytes_used,omitempty"`
-	PrepaidBytesAvaliable int64      `json:"prepaid_bytes_avaliable,omitempty" path:"prepaid_bytes_avaliable,omitempty" url:"prepaid_bytes_avaliable,omitempty"`
+	PrepaidBytesAvailable int64      `json:"prepaid_bytes_available,omitempty" path:"prepaid_bytes_available,omitempty" url:"prepaid_bytes_available,omitempty"`
 }
 
 func (i InvoiceLineItem) Identifier() interface{} {
