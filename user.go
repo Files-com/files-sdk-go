@@ -85,6 +85,7 @@ type User struct {
 	Password                         string     `json:"password,omitempty" path:"password,omitempty" url:"password,omitempty"`
 	PasswordConfirmation             string     `json:"password_confirmation,omitempty" path:"password_confirmation,omitempty" url:"password_confirmation,omitempty"`
 	AnnouncementsRead                *bool      `json:"announcements_read,omitempty" path:"announcements_read,omitempty" url:"announcements_read,omitempty"`
+	Clear2fa                         *bool      `json:"clear_2fa,omitempty" path:"clear_2fa,omitempty" url:"clear_2fa,omitempty"`
 }
 
 func (u User) Identifier() interface{} {
@@ -270,6 +271,7 @@ type UserUpdateParams struct {
 	UserRoot                   string                       `url:"user_root,omitempty" json:"user_root,omitempty" path:"user_root"`
 	UserHome                   string                       `url:"user_home,omitempty" json:"user_home,omitempty" path:"user_home"`
 	Username                   string                       `url:"username,omitempty" json:"username,omitempty" path:"username"`
+	Clear2fa                   *bool                        `url:"clear_2fa,omitempty" json:"clear_2fa,omitempty" path:"clear_2fa"`
 }
 
 type UserDeleteParams struct {
