@@ -3,6 +3,7 @@ package fsmount
 import (
 	"fmt"
 	"io"
+	"os"
 	"slices"
 	"sync"
 
@@ -19,12 +20,22 @@ type orderedPipe struct {
 	path string
 
 	// in is the side of the io.Pipe streaming data from the host
-	// to the Filescomfs.Write function.
+	// to the Filescomfs.Write function. The orderedPipe writes to "writers",
+	// but a reference to the io.PipeWriter is kept here so that it can be closed
+	// when the orderedPipe is closed.
 	in *io.PipeWriter
 
 	// out is the side of the io.Pipe streaming data to the SDK
 	// uploader.
 	out *io.PipeReader
+
+	// writers is used to write data to both the pipe and a temporary file
+	// simultaneously.
+	writers io.Writer
+
+	// file allows reading from the temporary file created to allow the orderedPipe
+	// to service Read requests while writes are still in progress.
+	file *os.File
 
 	// offset is the current write offset in the file.
 	offset int64
@@ -37,24 +48,32 @@ type orderedPipe struct {
 
 	// closeOnce ensures that the close operation is only performed once.
 	closeOnce sync.Once
+	closeErr  error
 
 	completedCond *sync.Cond
 	handle        uint64
 }
 
-func newOrderedPipe(path string, handle uint64, logger lib.LeveledLogger) *orderedPipe {
+func newOrderedPipe(path string, handle uint64, logger lib.LeveledLogger) (*orderedPipe, error) {
 	pipeReader, pipeWriter := io.Pipe()
+	// Create a temporary file to allow reading while writes are still in progress.
+	file, err := os.CreateTemp("", "Filescomfs-ordered-pipe")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temporary file for ordered pipe: %w", err)
+	}
 	return &orderedPipe{
 		logger:        logger,
 		path:          path,
 		in:            pipeWriter,
 		out:           pipeReader,
+		writers:       io.MultiWriter(pipeWriter, file),
+		file:          file,
 		offset:        0,
 		bufCache:      make(map[int64][]byte),
 		cacheMu:       &sync.Mutex{},
 		handle:        handle,
 		completedCond: sync.NewCond(&sync.Mutex{}),
-	}
+	}, nil
 }
 
 func (w *orderedPipe) writeAt(buff []byte, offset int64) (n int, err error) {
@@ -67,24 +86,24 @@ func (w *orderedPipe) writeAt(buff []byte, offset int64) (n int, err error) {
 	}
 
 	if offset > w.offset {
-		// Sometimes parts come in out of order. We need to cache them until it's time to write them.
+		// Sometimes parts come in out of order. Those parts need to be cached until it's time to write them.
 		w.logger.Trace("Write: path=%v, offset %d is greater than write offset %d, caching", w.path, offset, w.offset)
 
 		// TODO: Allow for configuring the cache size.
 		w.bufCache[offset] = slices.Clone(buff)
 
-		// Return that we wrote the full buffer, otherwise fuse will eventually fail the write.
+		// Return that the full buffer was written, otherwise fuse will eventually fail the write.
 		w.cacheMu.Unlock()
 		return len(buff), nil
 	}
 
-	n, err = w.in.Write(buff)
+	n, err = w.writers.Write(buff)
 	if err != nil {
 		w.cacheMu.Unlock()
 		return n, err
 	}
 
-	// update the offset so we know how many total bytes have been written
+	// update the offset so to maintain a record of how many total bytes have been written
 	w.offset += int64(n)
 
 	w.logger.Trace("Write: path=%v, wrote %d bytes, new write offset is %d", w.path, n, w.offset)
@@ -114,28 +133,45 @@ func (w *orderedPipe) writeAt(buff []byte, offset int64) (n int, err error) {
 	return n, err
 }
 
-func (w *orderedPipe) close() {
+func (w *orderedPipe) readAt(buff []byte, offset int64) (n int) {
+	w.cacheMu.Lock()
+	defer w.cacheMu.Unlock()
+
+	if w.file == nil {
+		w.logger.Error("readAt: file is nil for path=%v, at offset %d", w.path, offset)
+		return 0
+	}
+
+	w.logger.Trace("readAt: attempting to read data for path=%v, at offset %d", w.path, offset)
+	if offset > w.offset {
+		w.logger.Trace("readAt: path=%v, offset %d is greater than write offset %d, returning 0 bytes", w.path, offset, w.offset)
+		return 0
+	}
+
+	n, err := w.file.ReadAt(buff, offset)
+	if err != nil && err != io.EOF {
+		w.logger.Error("readAt: error reading data for path=%v, at offset %d: %v", w.path, offset, err)
+		return 0
+	}
+	return n
+}
+
+func (w *orderedPipe) close() error {
 	w.closeOnce.Do(func() {
 		if w.in != nil {
-			w.in.Close()
+			w.closeErr = w.in.Close()
 			w.in = nil
 		}
+
+		if w.file != nil {
+			if err := w.file.Close(); err != nil {
+				w.logger.Error("done: error closing file for path=%v: %v", w.path, err)
+			}
+			if err := os.Remove(w.file.Name()); err != nil {
+				w.logger.Error("done: error removing temporary file for path=%v: %v", w.path, err)
+			}
+			w.file = nil
+		}
 	})
-}
-
-func (w *orderedPipe) done() {
-	w.close()
-
-	w.completedCond.L.Lock()
-	defer w.completedCond.L.Unlock()
-	w.completedCond.Broadcast()
-	w.completedCond = nil
-}
-
-func (w *orderedPipe) waitForCompletion() {
-	if w.completedCond != nil {
-		w.completedCond.L.Lock()
-		defer w.completedCond.L.Unlock()
-		w.completedCond.Wait()
-	}
+	return w.closeErr
 }

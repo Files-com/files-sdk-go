@@ -15,17 +15,10 @@ require (
 	github.com/samber/lo v1.50.0
 	github.com/snabb/httpreaderat v1.0.1
 	github.com/stretchr/testify v1.10.0
-	github.com/winfsp/cgofuse v1.6.0
+	github.com/winfsp/cgofuse v1.6.1-0.20250813110601-7d90b0992471 // includes fixes from https://github.com/winfsp/cgofuse/pull/98, update when the next version is released
 	golang.org/x/text v0.22.0 // latest supported for go 1.21
 	moul.io/http2curl/v2 v2.3.0
 )
-
-// TODO: remove after/if https://github.com/winfsp/cgofuse/pull/98 is merged and released, and update
-// the github.com/winfsp/cgofuse version in the main require block above. The pseudo version here is
-// currently pointed at the tip of github.com/Files-com/cgofuse/tree/allow-runtime-dylib-location. If
-// there is a need to update the dependency, update the branch, then run
-// `go get github.com/Files-com/cgofuse@<some-new-sha-version>`.
-replace github.com/winfsp/cgofuse => github.com/Files-com/cgofuse v0.0.0-20250804164923-2cbe1e9ea255
 
 require (
 	github.com/bytedance/sonic v1.13.2 // indirect

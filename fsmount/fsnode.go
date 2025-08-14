@@ -10,14 +10,13 @@ import (
 )
 
 type FSWriter interface {
-	writeFile(path string, reader io.Reader, mtime time.Time)
+	writeFile(path string, reader io.Reader, mtime time.Time, fh uint64)
 }
 
 type fsNode struct {
-	path         string
-	downloadUri  string
-	readerHandle uint64
-	info         fsNodeInfo
+	path        string
+	downloadUri string
+	info        fsNodeInfo
 
 	cacheTTL time.Duration
 	logger   lib.LeveledLogger
@@ -49,8 +48,16 @@ type fsNode struct {
 	statusMu sync.Mutex
 }
 
+func truncate(s string, length int) string {
+	if len(s) <= length {
+		return s
+	}
+	return s[:length] + "..."
+}
+
 func (n *fsNode) String() string {
-	return fmt.Sprintf("path: %s, uri: %s, h: %d", n.path, n.downloadUri, n.readerHandle)
+	uri := truncate(n.downloadUri, 20) // truncate for readability in logs
+	return fmt.Sprintf("fsNode{path: %s, uri: %s, info: %v, expires: %v}", n.path, uri, n.info, n.infoExpires)
 }
 
 type fsNodeInfo struct {
@@ -61,6 +68,11 @@ type fsNodeInfo struct {
 	lockOwner    string
 }
 
+func (n fsNodeInfo) String() string {
+	return fmt.Sprintf("fsNodeInfo{type: %v, size: %d, created: %v, modified: %v, lockOwner: %s}",
+		n.nodeType, n.size, n.creationTime, n.modTime, n.lockOwner)
+}
+
 func (n *fsNode) updateInfo(info fsNodeInfo) {
 	n.statusMu.Lock()
 	defer n.statusMu.Unlock()
@@ -69,8 +81,13 @@ func (n *fsNode) updateInfo(info fsNodeInfo) {
 	}
 
 	n.info = info
+	n.extendTtl()
+	// Force a rebuild of child paths (if the current node is a directory).
+	n.childPathsExpires = time.Time{}
+}
+
+func (n *fsNode) extendTtl() {
 	n.infoExpires = time.Now().Add(n.cacheTTL)
-	n.childPathsExpires = time.Time{} // Force a rebuild of child paths (if we're a directory).
 }
 
 func (n *fsNode) updateSize(size int64) {
@@ -81,7 +98,14 @@ func (n *fsNode) updateSize(size int64) {
 	}
 
 	n.info.size = size
-	n.infoExpires = time.Now().Add(n.cacheTTL)
+	n.extendTtl()
+}
+
+func (n *fsNode) incrementSize(size int64) {
+	n.statusMu.Lock()
+	defer n.statusMu.Unlock()
+	n.info.size += size
+	n.extendTtl()
 }
 
 func (n *fsNode) updateChildPaths(buildChildPaths func(string) (map[string]struct{}, error)) (err error) {
@@ -89,7 +113,7 @@ func (n *fsNode) updateChildPaths(buildChildPaths func(string) (map[string]struc
 	defer n.childPathsMutex.Unlock()
 
 	if !n.childPathsExpired() {
-		return
+		return err
 	}
 
 	childPaths, err := buildChildPaths(n.path)
@@ -99,7 +123,7 @@ func (n *fsNode) updateChildPaths(buildChildPaths func(string) (map[string]struc
 
 	n.childPaths = childPaths
 	n.childPathsExpires = time.Now().Add(n.cacheTTL)
-	return
+	return err
 }
 
 func (n *fsNode) infoExpired() bool {
@@ -124,40 +148,24 @@ func (n *fsNode) isWriterOpen() bool {
 	return n.writer != nil
 }
 
-func (n *fsNode) openWriter(fsWriter FSWriter, fh uint64) {
+func (n *fsNode) openWriter(fsWriter FSWriter, fh uint64) error {
 	n.writeMu.Lock()
 	defer n.writeMu.Unlock()
 	// not wrapped in a sync.Once because a node could be cached, written to, and then
-	// the writer could be closed, and then the node is accessed again, so we need to
-	// be able to open a new writer for the same node.
+	// the writer could be closed. If a subsequent request needs to write to this node
+	// again, it needs to be able to open a new writer.
 	if n.writer == nil {
 		n.logger.Debug("openWriter from node: %v, ptr: %p, fh: %v", n.String(), n, fh)
-		pipe := newOrderedPipe(n.path, fh, n.logger)
+		pipe, err := newOrderedPipe(n.path, fh, n.logger)
+		if err != nil {
+			return fmt.Errorf("failed to open writer: %v", err)
+		}
 		n.writer = pipe
 		n.downloadUri = ""
 
 		go func() {
-			defer pipe.done()
-			fsWriter.writeFile(n.path, pipe.out, n.info.modTime)
+			fsWriter.writeFile(n.path, pipe.out, n.info.modTime, fh)
 		}()
 	}
-}
-
-func (n *fsNode) closeWriterByHandle(handle uint64) bool {
-	if n.writer != nil && n.writer.handle == handle {
-		n.closeWriter(true)
-		return true
-	}
-
-	return false
-}
-
-func (n *fsNode) closeWriter(wait bool) {
-	if n.writer != nil {
-		n.writer.close()
-		if wait {
-			n.writer.waitForCompletion()
-		}
-		n.writer = nil
-	}
+	return nil
 }

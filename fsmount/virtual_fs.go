@@ -6,6 +6,7 @@ import (
 	"runtime/debug"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Files-com/files-sdk-go/v3/lib"
@@ -13,7 +14,7 @@ import (
 
 const (
 	officeOwnerFilePrefix = "~$"
-	officeOwnerNameLength = 54 // Excel uses 54. Word uses 53, but it accepts 54, so we'll use that.
+	officeOwnerNameLength = 54 // Excel uses 54. Word uses 53, but it accepts 54
 )
 
 // nodeType represents the type of a file system node, either a file or a directory.
@@ -24,16 +25,51 @@ const (
 	nodeTypeDir
 )
 
+type fileHandle struct {
+	// ID of the file handle, unique within the OpenHandles instance.
+	id uint64
+
+	// The node this handle is associated with
+	node *fsNode
+
+	// Indicates if the file has been written to
+	written atomic.Bool
+
+	// The number of bytes written to the file if opened for writing
+	bytesWritten atomic.Int64
+
+	// The flags used when opening the file
+	FuseFlags
+}
+
+func (fh *fileHandle) String() string {
+	return fmt.Sprintf("fileHandle{id: %v, node: %v, written: %v, flags: %v}", fh.id, fh.node, fh.written.Load(), fh.FuseFlags)
+}
+
+// isWriteOp checks if the file handle was opened as a write operation.
+func (fh *fileHandle) isWriteOp() bool {
+	return !fh.IsReadOnly()
+}
+
 type virtualfs struct {
-	cacheTTL     time.Duration
-	nodeMap      map[string]*fsNode
-	nodeMapMutex sync.Mutex
+	cacheTTL time.Duration
+
+	// map from path to fsNode
+	nodes map[string]*fsNode
+
+	// map from handle ID to fileHandle
+	handles *OpenHandles
+
+	// mutex to protect access to nodes
+	nodesMu sync.Mutex
+
 	lib.LeveledLogger
 }
 
 func newVirtualfs(logger lib.Logger, cacheTTL time.Duration) *virtualfs {
 	vfs := &virtualfs{
-		nodeMap:       make(map[string]*fsNode),
+		nodes:         make(map[string]*fsNode),
+		handles:       NewOpenHandles(),
 		LeveledLogger: lib.NewLeveledLogger(logger),
 		cacheTTL:      DefaultCacheTTL,
 	}
@@ -44,25 +80,29 @@ func newVirtualfs(logger lib.Logger, cacheTTL time.Duration) *virtualfs {
 }
 
 func (vfs *virtualfs) fetch(path string) (*fsNode, bool) {
-	vfs.nodeMapMutex.Lock()
-	defer vfs.nodeMapMutex.Unlock()
+	vfs.nodesMu.Lock()
+	defer vfs.nodesMu.Unlock()
 
-	node, ok := vfs.nodeMap[path]
+	node, ok := vfs.nodes[path]
 	return node, ok
 }
 
 func (vfs *virtualfs) getOrCreate(path string, nt nodeType) (node *fsNode) {
-	vfs.nodeMapMutex.Lock()
-	defer vfs.nodeMapMutex.Unlock()
+	vfs.nodesMu.Lock()
+	defer vfs.nodesMu.Unlock()
 
-	node, ok := vfs.nodeMap[path]
+	node, ok := vfs.nodes[path]
 	if !ok {
 		node = &fsNode{
 			path:     path,
 			cacheTTL: vfs.cacheTTL,
 			logger:   vfs.LeveledLogger,
 		}
-		node.updateInfo(fsNodeInfo{nodeType: nt})
+		node.updateInfo(fsNodeInfo{
+			nodeType:     nt,
+			creationTime: time.Now(),
+			modTime:      time.Now(),
+		})
 		if nt == nodeTypeDir {
 			node.childPaths = make(map[string]struct{})
 		}
@@ -71,16 +111,6 @@ func (vfs *virtualfs) getOrCreate(path string, nt nodeType) (node *fsNode) {
 	}
 
 	return node
-}
-
-func (vfs *virtualfs) release(path string, handle uint64) (errc int) {
-	if node, ok := vfs.fetch(path); ok {
-		node.closeWriterByHandle(handle)
-	}
-
-	// TODO: Remove nodes that haven't been accessed in a while.
-
-	return
 }
 
 func (vfs *virtualfs) rename(oldPath string, newPath string) {
@@ -92,31 +122,31 @@ func (vfs *virtualfs) rename(oldPath string, newPath string) {
 	vfs.remove(oldPath)
 	node.path = newPath
 
-	vfs.nodeMapMutex.Lock()
-	defer vfs.nodeMapMutex.Unlock()
+	vfs.nodesMu.Lock()
+	defer vfs.nodesMu.Unlock()
 	vfs.add(node)
 }
 
 func (vfs *virtualfs) add(node *fsNode) {
-	vfs.nodeMap[node.path] = node
+	vfs.nodes[node.path] = node
 
 	parentPath := path_lib.Dir(node.path)
 	if parentPath != node.path {
-		if parent, ok := vfs.nodeMap[parentPath]; ok {
+		if parent, ok := vfs.nodes[parentPath]; ok {
 			parent.childPaths[node.path] = struct{}{}
 		}
 	}
 }
 
 func (vfs *virtualfs) remove(path string) {
-	vfs.nodeMapMutex.Lock()
-	defer vfs.nodeMapMutex.Unlock()
+	vfs.nodesMu.Lock()
+	defer vfs.nodesMu.Unlock()
 
-	delete(vfs.nodeMap, path)
+	delete(vfs.nodes, path)
 
 	parentPath := path_lib.Dir(path)
 	if parentPath != path {
-		if parent, ok := vfs.nodeMap[parentPath]; ok {
+		if parent, ok := vfs.nodes[parentPath]; ok {
 			delete(parent.childPaths, path)
 		}
 	}

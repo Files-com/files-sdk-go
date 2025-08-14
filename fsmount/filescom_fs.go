@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand"
 	"net/http"
 	path_lib "path"
 	"path/filepath"
 	"runtime"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 
@@ -62,7 +62,7 @@ type lockInfo struct {
 // Init initializes the Filescomfs filesystem.
 func (fs *Filescomfs) Init() {
 	defer fs.logPanics()
-	// Guard with a sync.Once because we call Init from fsmount.Mount, but cgofuse also calls Init
+	// Guard with a sync.Once because Init is called from fsmount.Mount, but cgofuse also calls Init
 	// when it mounts the filesystem.
 	fs.initOnce.Do(func() {
 		if fs.fileClient == nil {
@@ -79,7 +79,7 @@ func (fs *Filescomfs) Init() {
 }
 
 func (fs *Filescomfs) Destroy() {
-	fs.Debug("Destroying filesystem")
+	fs.Debug("Destroy: removing all file locks")
 
 	for path, lockInfo := range fs.lockMap {
 		fs.unlock(path, lockInfo.fh)
@@ -90,7 +90,7 @@ func (fs *Filescomfs) Destroy() {
 func (fs *Filescomfs) Validate() error {
 	fs.Init()
 
-	// Make sure we can list the root directory.
+	// Make sure the root directory can be listed.
 	it, err := fs.fileClient.ListFor(files_sdk.FolderListForParams{Path: fs.remotePath("/"), ListParams: files_sdk.ListParams{PerPage: 1}})
 	if err == nil {
 		it.Next() // Get 1 item. This is what actually triggers the API call.
@@ -119,20 +119,22 @@ func (fs *Filescomfs) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 }
 
 func remoteCapacityBytes() uint64 {
-	// the remote capacity is functionally unlimited, but we need to return the largest
-	// value that the OS will accept, otherwise it will show up as zero capacity.
+	// the remote capacity is functionally unlimited, so return the largest
+	// value that the OS will accept
 	switch runtime.GOOS {
 	case "darwin":
-		return uint64(1 << 43) // ~8TB - any larger and the nfs drive shows up as zero capacity on macOS
+		// ~8TB - any larger and the drive shows up as zero capacity on macOS
+		return uint64(1 << 43)
 	default:
-		return uint64(1 << 50) // ~1PB
+		// ~1PB
+		return uint64(1 << 50)
 	}
 }
 
 func (fs *Filescomfs) Mkdir(path string, mode uint32) (errc int) {
 	defer fs.logPanics()
 	localPath, remotePath := fs.paths(path)
-	fs.Debug("Making dir: %v (%v) (mode=%v)", remotePath, localPath, mode)
+	fs.Debug("Mkdir: %v (%v) (mode=%v)", remotePath, localPath, mode)
 
 	_, err := fs.fileClient.CreateFolder(files_sdk.FolderCreateParams{Path: remotePath})
 	if files_sdk.IsExist(err) {
@@ -157,15 +159,26 @@ func (fs *Filescomfs) Unlink(path string) int {
 	defer fs.logPanics()
 	localPath, remotePath := fs.paths(path)
 
-	if node, ok := fs.fetch(path); ok {
-		// If the node is locked, we cannot delete it.
-		if node.isLocked() || node.isWriterOpen() {
-			fs.Info("Cannot delete locked file: %v (%v)", remotePath, localPath)
-			return -fuse.ENOLCK
-		}
+	node, exists := fs.fetch(path)
+	if !exists {
+		// If the node doesn't exist, it can not be deleted.
+		fs.Debug("Unlink: File not found: %v (%v)", remotePath, localPath)
+		return -fuse.ENOENT
 	}
 
-	// We may have been in the middle of writing the file, so don't log until here.
+	// If the node is locked, it can not be deleted.
+	if node.isLocked() {
+		fs.Info("Cannot delete locked file: %v (%v)", remotePath, localPath)
+		return -fuse.ENOLCK
+	}
+
+	// If the node is being written to, it can not be deleted.
+	if node.isWriterOpen() {
+		fs.Info("Cannot delete file while writing: %v (%v)", remotePath, localPath)
+		return -fuse.EBUSY
+	}
+
+	// The fs may have been in the middle of writing the file, so don't log until here.
 	fs.Info("Deleting file: %v (%v)", remotePath, localPath)
 
 	return fs.delete(path)
@@ -183,12 +196,21 @@ func (fs *Filescomfs) Rename(oldpath string, newpath string) (errc int) {
 	defer fs.logPanics()
 	oldLocalPath, oldRemotePath := fs.paths(oldpath)
 	newLocalPath, newRemotePath := fs.paths(newpath)
-	fs.Info("Renaming: %v to %v (%v to %v)", oldRemotePath, newRemotePath, oldLocalPath, newLocalPath)
 
-	if node, ok := fs.fetch(oldpath); ok && node.isLocked() {
+	node, ok := fs.fetch(oldpath)
+	if !ok {
+		return -fuse.ENOENT
+	}
+	if node.isWriterOpen() {
+		fs.Info("Cannot rename file while uploading: %v (%v)", oldRemotePath, oldLocalPath)
+		return -fuse.EBUSY
+	}
+	if node.isLocked() {
 		fs.Info("Cannot rename locked file: %v (%v)", oldRemotePath, oldLocalPath)
 		return -fuse.ENOLCK
 	}
+
+	fs.Info("Renaming: %v to %v (%v to %v)", oldRemotePath, newRemotePath, oldLocalPath, newLocalPath)
 
 	params := files_sdk.FileMoveParams{
 		Path:        oldRemotePath,
@@ -215,13 +237,13 @@ func (fs *Filescomfs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 	defer fs.logPanics()
 	localPath, remotePath := fs.paths(path)
 	modT := tmsp[1].Time()
-	fs.Debug("Updating mtime for: %v (%v) (mtime=%v)", remotePath, localPath, modT)
+	fs.Debug("Utimens: Updating mtime for: %v (%v) (mtime=%v)", remotePath, localPath, modT)
 
 	node, _ := fs.fetch(path)
 	node.info.modTime = modT
 
 	if node.isWriterOpen() {
-		// If we're writing to the file, no need update the mtime. It will be updated when the write completes.
+		// If the fs is writing to the file, no need update the mtime. It will be updated when the write completes.
 		return errc
 	}
 
@@ -237,37 +259,59 @@ func (fs *Filescomfs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 func (fs *Filescomfs) Create(path string, flags int, mode uint32) (errc int, fh uint64) {
 	defer fs.logPanics()
 
+	// refuse to create files that should be ignored
 	if fs.ignoreWrite(path) {
 		return -fuse.ENOENT, fh
 	}
 
-	fh = rand.Uint64()
 	localPath, remotePath := fs.paths(path)
-	fs.Debug("Creating file: %v (%v) (flags=%v, mode=%v, fh=%v)", remotePath, localPath, flags, mode, fh)
+	fuseFlags := NewFuseFlags(flags)
+	fh, handle := fs.handles.Open(nil, fuseFlags)
+
+	fs.Debug("Create: Creating file: %v (%v) (flags=%v, mode=%v, fh=%v)", remotePath, localPath, fuseFlags, mode, fh)
 
 	if errc = fs.loadParent(path); errc != 0 {
 		return errc, fh
 	}
 
-	node, ok := fs.fetch(path)
-	if ok && !node.infoExpired() {
-		errc = -fuse.EEXIST
+	node, exists := fs.fetch(path)
+	if exists && node.isWriterOpen() {
+		// the node exists and has an open writer, if the writer's offset is
+		// greater than zero, it means the file is actively being written to
+		if node.writer.offset > 0 {
+			fs.Info("Cannot create file while writing: %v (%v)", remotePath, localPath)
+			return -fuse.EEXIST, fh
+		}
+		// the node exists, and has an open writer, but the writer's offset is zero,
+		// meaning the file was created but nothing has been written to it yet.
+		// In this case, create a new file handle and return it. The writer will
+		// only be closed when the last file handle is released to avoid creating
+		// multiple upload events for the same file.
+		fs.Debug("Create: File already exists, but no data has been written: %v (%v)", remotePath, localPath)
+		handle.node = node
 		return errc, fh
 	}
 
-	if !ok {
+	// TODO: decide if this makes sense. the node exists and the cache data is recent
+	// so return an error for the Create call?
+	if exists && !node.infoExpired() {
+		fs.Error("Create: Node exists, cache data is recent, but no open writer: %v (%v)", remotePath, localPath)
+		return -fuse.EEXIST, fh
+	}
+
+	if !exists {
 		node = fs.getOrCreate(path, nodeTypeFile)
 	}
 
 	node.updateSize(0)
-
-	if errc = fs.lock(node, fh); errc != 0 {
-		return errc, fh
-	}
+	handle.node = node
 
 	if !node.isWriterOpen() {
-		fs.Debug("Opening writer from Create: %v (%v)", remotePath, localPath)
-		node.openWriter(fs, fh)
+		fs.Debug("Create: Opening writer %v (%v)", remotePath, localPath)
+		if err := node.openWriter(fs, fh); err != nil {
+			fs.Error("Create: error opening writer for %v: %v", path, err)
+			return -fuse.EIO, fh
+		}
 	}
 
 	return errc, fh
@@ -275,40 +319,39 @@ func (fs *Filescomfs) Create(path string, flags int, mode uint32) (errc int, fh 
 
 func (fs *Filescomfs) Open(path string, flags int) (errc int, fh uint64) {
 	defer fs.logPanics()
-	fh = rand.Uint64()
-	fs.Debug("Open: path=%v, flags=%v, fh=%v", path, flags, fh)
+	fuseFlags := NewFuseFlags(flags)
+	fh, handle := fs.handles.Open(nil, fuseFlags)
+	fs.Debug("Open: path=%v, flags=%v, fh=%v", path, fuseFlags, fh)
 
-	readOnly := flags == fuse.O_RDONLY
 	node := fs.getOrCreate(path, nodeTypeFile)
+	handle.node = node
 
 	// If the requested op is read only, and the writer is not open,
-	// return 0 and a file handle.  TODO: should the fh be ^uint64(0)
-	if readOnly && !node.isWriterOpen() {
+	// return 0 and a file handle.
+	if handle.IsReadOnly() && !node.isWriterOpen() {
 		return errc, fh
 	}
 
 	// If the requested op is read only, and the writer is already open,
-	// return a busy status and a file handle. TODO: should the fh be ^uint64(0)
-	if readOnly && node.isWriterOpen() {
+	// return a busy status and a file handle.
+	if handle.IsReadOnly() && node.isWriterOpen() {
 		return -fuse.EBUSY, fh
 	}
 	// after this point, the requested op must be a write operation
 
-	// return noent if the file is ignored
+	// return ENOENT if the file is ignored
 	if fs.ignoreWrite(path) {
 		localPath, remotePath := fs.paths(path)
-		fs.Debug("Ignoring file for upload: %v (%v)", remotePath, localPath)
+		fs.Debug("Open: Ignoring file for upload: %v (%v)", remotePath, localPath)
 		return -fuse.ENOENT, fh
-	}
-
-	errc = fs.lock(node, fh)
-	if errc != 0 {
-		return errc, fh
 	}
 
 	// open the writer and associate it with a file handle
 	if !node.isWriterOpen() {
-		node.openWriter(fs, fh)
+		if err := node.openWriter(fs, fh); err != nil {
+			fs.Error("Open: error opening writer for %v: %v", path, err)
+			return -fuse.EIO, fh
+		}
 	}
 
 	return errc, fh
@@ -317,8 +360,14 @@ func (fs *Filescomfs) Open(path string, flags int) (errc int, fh uint64) {
 func (fs *Filescomfs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
 	defer fs.logPanics()
 	fs.Trace("Getattr: path=%v, fh=%v", path, fh)
-
-	if node, ok := fs.fetch(path); ok && !node.infoExpired() {
+	// If the file handle is open, extend the TTL of the open handle. The info may have expired,
+	// but the handle is still open, meaning the OS is still using the file. This can happen if there
+	// are multiple simultaneous uploads, but they haven't all received a write request in the last
+	// cacheTTL duration. If the Getattr call returns an error, the OS will remove the file from the
+	// Explorer/Finder window until the upload completes, and a subsequent Getattr call succeeds, which
+	// is a bad user experience.
+	fs.handles.ExtendOpenHandleTtls()
+	if node, exists := fs.fetch(path); exists && !node.infoExpired() {
 		fs.Trace("Getattr: using cached stat, path=%v, size=%v, mtime=%v", path, node.info.size, node.info.modTime)
 		getStat(node.info, stat)
 		return errc
@@ -328,12 +377,12 @@ func (fs *Filescomfs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc i
 		return errc
 	}
 
-	node, ok := fs.fetch(path)
-	if !ok || node.infoExpired() {
+	node, exists := fs.fetch(path)
+	if !exists {
 		node = nil
 
 		if fs.isLockFile(path) {
-			if lockedNode, ok := fs.fetchLockTarget(path); ok && lockedNode.isLocked() {
+			if lockedNode, exists := fs.fetchLockTarget(path); exists && lockedNode.isLocked() {
 				node = fs.getOrCreate(path, nodeTypeFile)
 				node.updateInfo(fsNodeInfo{
 					size:    int64(len(buildOwnerFile(lockedNode))),
@@ -344,7 +393,7 @@ func (fs *Filescomfs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc i
 
 		if node == nil {
 			localPath, remotePath := fs.paths(path)
-			fs.Debug("File not found: %v (%v)", remotePath, localPath)
+			fs.Debug("Getattr: File not found: %v (%v)", remotePath, localPath)
 			return -fuse.ENOENT
 		}
 	}
@@ -360,14 +409,21 @@ func (fs *Filescomfs) Truncate(path string, size int64, fh uint64) (errc int) {
 	// file to the size getting passed in, NOT to truncate the file to zero bytes.
 	defer fs.logPanics()
 	localPath, remotePath := fs.paths(path)
-	fs.Debug("Truncating file: %v (%v) (size=%v, fh=%v)", remotePath, localPath, size, fh)
+	fs.Debug("Truncate: %v (%v) (size=%v, fh=%v)", remotePath, localPath, size, fh)
 
 	node, _ := fs.fetch(path)
 	node.updateSize(size)
 
+	if errc = fs.lock(node, fh); errc != 0 {
+		return errc
+	}
+
 	if !node.isWriterOpen() {
-		fs.Debug("Opening writer from Truncate: %v (%v)", remotePath, localPath)
-		node.openWriter(fs, fh)
+		fs.Debug("Truncate: Opening writer %v (%v)", remotePath, localPath)
+		if err := node.openWriter(fs, fh); err != nil {
+			fs.Error("Truncate: error opening writer for %v: %v", path, err)
+			return -fuse.EIO
+		}
 	}
 
 	return errc
@@ -378,8 +434,13 @@ func (fs *Filescomfs) Read(path string, buff []byte, ofst int64, fh uint64) (n i
 	buffLen := int64(len(buff))
 	fs.Trace("Read: path=%v, len=%v, ofst=%v, fh=%v", path, buffLen, ofst, fh)
 
+	_, node, ok := fs.handles.Lookup(fh)
+	if !ok {
+		fs.Error("Read: file handle %v not found for path %v", fh, path)
+		return -fuse.EBADF
+	}
+
 	localPath, remotePath := fs.paths(path)
-	node, _ := fs.fetch(path)
 
 	if node.info.size == 0 {
 		fs.Trace("Read: file is empty, returning EOF")
@@ -392,6 +453,16 @@ func (fs *Filescomfs) Read(path string, buff []byte, ofst int64, fh uint64) (n i
 	}
 
 	if node.isWriterOpen() {
+		// Attempt to read from the file backing the writer if possible.
+		// This will only work if the ordered pipe's current offset is ahead of the read offset.
+		// If the read offset is ahead of the ordered pipe's current offset, return -fuse.EBUSY
+		// to indicate that the file is being written to and the read can not be satisfied
+		// at this time.
+		n := node.writer.readAt(buff, ofst)
+		if n > 0 {
+			fs.Trace("Read: path=%v, ofst=%d, read %d bytes from writer pipe", path, ofst, n)
+			return n
+		}
 		fs.Info("Cannot read from file while writing: %v (%v) (fh=%v)", remotePath, localPath, fh)
 		return -fuse.EBUSY
 	}
@@ -405,11 +476,6 @@ func (fs *Filescomfs) Read(path string, buff []byte, ofst int64, fh uint64) (n i
 
 	// Read up to the end of the file.
 	buffLen = min(buffLen, node.info.size-ofst)
-
-	if ofst == 0 && buffLen >= min(blockSize, node.info.size) {
-		node.readerHandle = fh
-		fs.Info("Starting download: %v (%v)", remotePath, localPath)
-	}
 
 	headers := &http.Header{}
 	headers.Set("Range", fmt.Sprintf("bytes=%v-%v", ofst, ofst+buffLen-1))
@@ -443,53 +509,86 @@ func (fs *Filescomfs) Write(path string, buff []byte, ofst int64, fh uint64) (n 
 	defer fs.logPanics()
 	fs.Debug("Write: path=%v, len=%v, ofst=%v, fh=%v", path, len(buff), ofst, fh)
 
-	node, _ := fs.fetch(path)
+	handle, node, ok := fs.handles.Lookup(fh)
+
+	if !ok {
+		fs.Debug("Write: file handle %v not found for path %v", fh, path)
+		return -fuse.EBADF
+	}
 
 	if !node.isWriterOpen() {
 		localPath, remotePath := fs.paths(path)
-		fs.Debug("Opening writer from Write: %v (%v)", remotePath, localPath)
-		node.openWriter(fs, fh)
+		fs.Debug("Write: Opening writer %v (%v)", remotePath, localPath)
+		if err := handle.node.openWriter(fs, fh); err != nil {
+			fs.Error("Write: error opening writer for %v: %v", path, err)
+			return -fuse.EIO
+		}
 	}
 
+	// Write the buffer to the ordered pipe, which handles maintaining write order
+	// and temporarily caching out-of-order writes until they can be written sequentially.
 	n, err := node.writer.writeAt(buff, ofst)
 	if errc := fs.handleError(path, err); errc != 0 {
 		return errc
 	}
 
-	// If the write was successful, update the size of the node. This ensures
-	// that Getattr calls return an up to date size that changes as the upload
-	// progresses and allows the OS to more accurately calculate upload time
-	// remaining. It has the additional benefit of keeping the infoExpires
-	// field current, and keeps the node in the cache.
-	node.updateSize(node.writer.offset)
+	// If the write was successful, mark the handle as written, in order to
+	// differentiate it from a handle that was opened but never written to
+	// when deciding whether to close the writer on Release.
+	handle.written.Store(true)
 
 	return n
 }
 
 func (fs *Filescomfs) Release(path string, fh uint64) (errc int) {
 	defer fs.logPanics()
-	fs.Trace("Release: path=%v, fh=%v", path, fh)
-	defer fs.Trace("Released: path=%v, fh=%v", path, fh)
+	fs.Debug("Release: path=%v, fh=%v", path, fh)
+	handle, ok := fs.handles.Release(fh)
+	node := handle.node
 
-	if node, ok := fs.fetch(path); ok && node.readerHandle == fh {
-		localPath, remotePath := fs.paths(path)
-		fs.Info("Download completed: %v (%v)", remotePath, localPath)
-		node.readerHandle = 0
+	if !ok {
+		// This is an unexpected condition. Why is the OS calling to release
+		// a file handle that was never opened?
+		fs.Error("Release: file handle not found path: %v, fh: %v", path, fh)
+
+		// unlock is a no-op if the path/handle combo doesn't match an existing lock
+		if errc = fs.unlock(path, fh); errc != 0 {
+			return errc
+		}
+		return errc
+	}
+
+	// only close the writer if something has been written to it,
+	// this avoids creating an upload event for files that were
+	// created but never written to.
+	if handle.isWriteOp() && handle.written.Load() {
+		if err := node.writer.close(); err != nil {
+			fs.Error("Release: error closing writer for %v: %v", path, err)
+			return -fuse.EIO
+		}
+		if errc = fs.unlock(path, fh); errc != 0 {
+			fs.Trace("Release: error unlocking path: %v, fh: %v", path, fh)
+			return errc
+		}
+		fs.Debug("Release: closed handle for path=%v, fh=%v", path, fh)
+		// Clear the writer so that a cached node gets a new writer
+		// if another upload is started.
+		node.writer = nil
+		return errc
 	}
 
 	if errc = fs.unlock(path, fh); errc != 0 {
 		return errc
 	}
 
-	return fs.release(path, fh)
+	return errc
 }
 
 func (fs *Filescomfs) Opendir(path string) (errc int, fh uint64) {
 	defer fs.logPanics()
-	fh = rand.Uint64()
+	node := fs.getOrCreate(path, nodeTypeDir)
+	fh, _ = fs.handles.Open(node, NewFuseFlags(fuse.O_RDONLY))
 	fs.Trace("Opendir: path=%v, fh=%v", path, fh)
-
-	fs.getOrCreate(path, nodeTypeDir)
 	return errc, fh
 }
 
@@ -499,47 +598,86 @@ func (fs *Filescomfs) Readdir(path string,
 	fh uint64) (errc int) {
 	defer fs.logPanics()
 	localPath, remotePath := fs.paths(path)
-	fs.Info("Listing folder: %v (%v)", remotePath, localPath)
 
-	node, _ := fs.fetch(path)
-	if errc = fs.loadDir(node); errc != 0 {
+	// This happens a lot, so log at debug level.
+	fs.Debug("Readdir: Listing folder: %v (%v)", remotePath, localPath)
+
+	fillNode, _ := fs.fetch(path)
+
+	// Force a load of the directory entries from the remote to make sure
+	// the local vfs representation is up to date.
+	if errc = fs.loadDir(fillNode); errc != 0 {
 		return errc
 	}
 
 	fill(".", nil, 0)
 	fill("..", nil, 0)
 
-	// provide a consistent sort order when calling fill
-	keys := make([]string, len(node.childPaths))
+	// construct a list of child entries for the current directory
+	entries := make([]string, len(fillNode.childPaths))
 	pos := 0
-	for childPath := range node.childPaths {
-		keys[pos] = childPath
+	for childPath := range fillNode.childPaths {
+		entries[pos] = childPath
 		pos++
 	}
-	slices.Sort(keys)
-	for _, childPath := range keys {
-		if childNode, ok := fs.fetch(childPath); ok {
-			fill(path_lib.Base(childPath), getStat(childNode.info, nil), 0)
+
+	// make sure to append any open paths that are not already in the entries list
+	// this ensures that uploads in progress are visible in the directory listing
+	handles := fs.handles.OpenHandles()
+	for _, handle := range handles {
+		openNode := handle.node
+		if openNode.path == "/" || openNode.path == path {
+			// Skip the root directory and the current path.
+			continue
+		}
+		if !slices.Contains(entries, openNode.path) && strings.HasPrefix(openNode.path, path) {
+			fs.Trace("Readdir: Child entries %v: for path %s, does not include open handle: %v, adding %v", entries, path, handle, openNode.path)
+			entries = append(entries, openNode.path)
+		}
+	}
+
+	// sort the entries in order to provide a consistent sort order when calling fill
+	slices.Sort(entries)
+	for _, entryPath := range entries {
+		if entryNode, ok := fs.fetch(entryPath); ok {
+			fs.Trace("Readdir: Calling fill for entry: %v (%v)", entryPath, entryPath)
+			fill(path_lib.Base(entryPath), getStat(entryNode.info, nil), 0)
+		} else {
+			// This should never happen, but log it if it does.
+			fs.Error("Readdir: entry node not found: %v (%v)", path_lib.Base(entryPath), entryPath)
 		}
 	}
 
 	return errc
 }
 
-func (fs *Filescomfs) Releasedir(path string, fh uint64) int {
+func (fs *Filescomfs) Releasedir(path string, fh uint64) (errc int) {
 	defer fs.logPanics()
 	fs.Trace("Releasedir: path=%v, fh=%v", path, fh)
-
-	return fs.release(path, fh)
+	fs.handles.Release(fh)
+	return errc
 }
 
-func (fs *Filescomfs) writeFile(path string, reader io.Reader, mtime time.Time) {
+func (fs *Filescomfs) uploadProgressFunc(handle *fileHandle) func(increment int64) {
+	return func(increment int64) {
+		// If the write was successful, extend the node's ttl and keep track of the number
+		// of bytes written for logging purposes.
+		handle.node.extendTtl()
+		handle.bytesWritten.Add(increment)
+		localPath, remotePath := fs.paths(handle.node.path)
+		fs.Trace("Upload progress: %v (%v), bytes written: %v", remotePath, localPath, handle.bytesWritten.Load())
+	}
+}
+
+func (fs *Filescomfs) writeFile(path string, reader io.Reader, mtime time.Time, fh uint64) {
 	localPath, remotePath := fs.paths(path)
 	fs.Info("Starting upload: %v (%v)", remotePath, localPath)
+	handle, _, _ := fs.handles.Lookup(fh)
 	uploadOpts := []file.UploadOption{
 		file.UploadWithDestinationPath(remotePath),
 		file.UploadWithReader(reader),
 		file.UploadWithProvidedMtime(mtime),
+		file.UploadWithProgress(fs.uploadProgressFunc(handle)),
 	}
 	if fs.writeConcurrency != 0 {
 		uploadOpts = append(uploadOpts, file.UploadWithManager(manager.ConcurrencyManager{}.New(fs.writeConcurrency)))
@@ -548,13 +686,11 @@ func (fs *Filescomfs) writeFile(path string, reader io.Reader, mtime time.Time) 
 	start := time.Now()
 	u, err := fs.fileClient.UploadWithResume(uploadOpts...)
 	if err != nil {
-		fs.Error("Upload failed: %v (%v): %v", remotePath, localPath, err)
+		fs.Error("Error uploading file: %v (%v): %v", remotePath, localPath, err)
 		return
 	}
-
 	fs.Info("Upload completed: %v (%v).", remotePath, localPath)
 	fs.Debug("Bytes: %v, Duration: %v", u.Size, time.Since(start))
-
 }
 
 func (fs *Filescomfs) lock(node *fsNode, fh uint64) (errc int) {
@@ -569,10 +705,10 @@ func (fs *Filescomfs) lock(node *fsNode, fh uint64) (errc int) {
 	defer fs.lockMapMutex.Unlock()
 
 	localPath, remotePath := fs.paths(node.path)
-	fs.Debug("Locking file: %v (%v)", remotePath, localPath)
+	fs.Debug("lock: file %v (%v)", remotePath, localPath)
 
 	if node.isLocked() {
-		fs.Debug("File is already locked by %v: %v (%v)", node.info.lockOwner, remotePath, localPath)
+		fs.Debug("lock: File is already locked by %v: %v (%v)", node.info.lockOwner, remotePath, localPath)
 		errc = -fuse.ENOLCK
 		return errc
 	}
@@ -588,7 +724,7 @@ func (fs *Filescomfs) lock(node *fsNode, fh uint64) (errc int) {
 		return errc
 	}
 
-	// Update the local lock's path since it includes the full remote path. We build the full path ourselves.
+	// Update the local lock's path since it includes the full remote path.
 	lock.Path = node.path
 
 	fs.lockMap[node.path] = &lockInfo{fh: fh, token: lock.Token}
@@ -600,8 +736,8 @@ func (fs *Filescomfs) unlock(path string, fh uint64) (errc int) {
 		return errc
 	}
 
-	// If we have a node, prevent locking while we're unlocking.
-	// If the node was renamed/moved, we won't have a node, but we may still need to unlock it.
+	// If the node exists, prevent locking while unlocking.
+	// If the node was renamed/moved, it may still need to be unlocked it.
 	if node, ok := fs.fetch(path); ok {
 		node.lockMutex.Lock()
 		defer node.lockMutex.Unlock()
@@ -617,7 +753,7 @@ func (fs *Filescomfs) unlock(path string, fh uint64) (errc int) {
 	}
 
 	localPath, remotePath := fs.paths(path)
-	fs.Debug("Unlocking file: %v (%v)", remotePath, localPath)
+	fs.Debug("unlock: file %v (%v)", remotePath, localPath)
 
 	err := fs.lockClient.Delete(files_sdk.LockDeleteParams{
 		Path:  remotePath,
@@ -676,7 +812,7 @@ func (fs *Filescomfs) delete(path string) (errc int) {
 
 func (fs *Filescomfs) loadParent(path string) (errc int) {
 	if path == "/" {
-		// If we're at the root, we can't load the parent. Just make sure the root exists.
+		// If loading at the root, the parent can't be loaded. Just make sure the root exists.
 		_, errc = fs.findDir(path)
 		return errc
 	}
@@ -694,7 +830,7 @@ func (fs *Filescomfs) loadParent(path string) (errc int) {
 
 	if parent.info.nodeType != nodeTypeDir {
 		// Don't log an error. Windows File Explorer sometimes treats shortcuts as parent directories.
-		fs.Trace("Parent of %s is not a directory %s", path, parentPath)
+		fs.Trace("loadParent: Parent of %s is not a directory %s", path, parentPath)
 		return -fuse.ENOTDIR
 	}
 
@@ -705,7 +841,7 @@ func (fs *Filescomfs) findDir(path string) (node *fsNode, errc int) {
 	remotePath := fs.remotePath(path)
 
 	if remotePath == "/" {
-		// Special case that we can't stat the root directory of a Files.com site.
+		// Special case that the root directory of a Files.com site can't be stat'd.
 		node = fs.getOrCreate(path, nodeTypeDir)
 		node.updateInfo(fsNodeInfo{
 			nodeType:     nodeTypeDir,
@@ -780,7 +916,7 @@ func (fs *Filescomfs) listDir(path string) (childPaths map[string]struct{}, err 
 		lock := locks.Lock()
 		childPath := path_lib.Join(path, path_lib.Base(lock.Path))
 
-		// Ignore paths where *we* hold the lock.
+		// Ignore paths where the lock is held by this filesystem.
 		if _, ok := fs.lockMap[childPath]; ok {
 			continue
 		}
@@ -814,7 +950,7 @@ func (fs *Filescomfs) createNode(path string, item files_sdk.File) *fsNode {
 
 func (fs *Filescomfs) waitForAction(action files_sdk.FileAction, operation string) error {
 	migration, err := fs.migrationClient.Wait(action, func(migration files_sdk.FileMigration) {
-		fs.Trace("waiting for migration")
+		fs.Trace("watchForAction: waiting for migration")
 	})
 	if err == nil && migration.Status != "completed" {
 		return fmt.Errorf("%v did not complete successfully: %v", operation, migration.Status)
@@ -949,7 +1085,8 @@ func (fs *Filescomfs) Getxattr(path string, name string) (int, []byte) {
 
 // Setxattr sets extended attributes.
 func (fs *Filescomfs) Setxattr(path string, name string, value []byte, flags int) int {
-	fs.Debug("Setxattr: path=%v, name=%v, value=%v flags=%v", path, name, value, flags)
+	fuseFlags := NewFuseFlags(flags)
+	fs.Debug("Setxattr: path=%v, name=%v, value=%v flags=%v", path, name, value, fuseFlags)
 	return 0
 }
 
@@ -972,14 +1109,14 @@ func (fs *Filescomfs) Listxattr(path string, fill func(name string) bool) int {
 // FUSE struct fuse_file_info). If implemented, they are preferred over
 // Open and Create.
 func (fs *Filescomfs) CreateEx(path string, mode uint32, fi *fuse.FileInfo_t) int {
-	fs.Debug("CreateEx: path=%v, mode=%v, fi=%v", path, mode, fi)
+	fs.Trace("CreateEx: path=%v, mode=%v, fi=%v", path, mode, fi)
 	errc, fh := fs.Create(path, fi.Flags, mode)
 	fi.Fh = fh
 	return errc
 }
 
 func (fs *Filescomfs) OpenEx(path string, fi *fuse.FileInfo_t) int {
-	fs.Debug("OpenEx: path=%v, fi=%v", path, fi)
+	fs.Trace("OpenEx: path=%v, fi=%v", path, fi)
 	errc, fh := fs.Open(path, fi.Flags)
 	fi.Fh = fh
 	return errc
