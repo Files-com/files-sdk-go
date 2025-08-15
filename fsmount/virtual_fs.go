@@ -38,6 +38,9 @@ type fileHandle struct {
 	// The number of bytes written to the file if opened for writing
 	bytesWritten atomic.Int64
 
+	// The number of bytes read from the file if opened for reading
+	bytesRead atomic.Int64
+
 	// The flags used when opening the file
 	FuseFlags
 }

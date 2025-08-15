@@ -44,7 +44,7 @@ type orderedPipe struct {
 	bufCache map[int64][]byte
 
 	// cacheMu is used to synchronize access to bufCache.
-	cacheMu *sync.Mutex
+	cacheMu sync.Mutex
 
 	// closeOnce ensures that the close operation is only performed once.
 	closeOnce sync.Once
@@ -70,7 +70,6 @@ func newOrderedPipe(path string, handle uint64, logger lib.LeveledLogger) (*orde
 		file:          file,
 		offset:        0,
 		bufCache:      make(map[int64][]byte),
-		cacheMu:       &sync.Mutex{},
 		handle:        handle,
 		completedCond: sync.NewCond(&sync.Mutex{}),
 	}, nil

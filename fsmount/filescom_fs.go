@@ -348,6 +348,8 @@ func (fs *Filescomfs) Open(path string, flags int) (errc int, fh uint64) {
 
 	// open the writer and associate it with a file handle
 	if !node.isWriterOpen() {
+		localPath, remotePath := fs.paths(path)
+		fs.Debug("Open: Opening writer %v (%v)", remotePath, localPath)
 		if err := node.openWriter(fs, fh); err != nil {
 			fs.Error("Open: error opening writer for %v: %v", path, err)
 			return -fuse.EIO, fh
@@ -392,8 +394,10 @@ func (fs *Filescomfs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc i
 		}
 
 		if node == nil {
-			localPath, remotePath := fs.paths(path)
-			fs.Debug("Getattr: File not found: %v (%v)", remotePath, localPath)
+			if !fs.isIgnoreFile(path) {
+				localPath, remotePath := fs.paths(path)
+				fs.Debug("Getattr: File not found: %v (%v)", remotePath, localPath)
+			}
 			return -fuse.ENOENT
 		}
 	}
@@ -434,13 +438,13 @@ func (fs *Filescomfs) Read(path string, buff []byte, ofst int64, fh uint64) (n i
 	buffLen := int64(len(buff))
 	fs.Trace("Read: path=%v, len=%v, ofst=%v, fh=%v", path, buffLen, ofst, fh)
 
-	_, node, ok := fs.handles.Lookup(fh)
+	handle, node, ok := fs.handles.Lookup(fh)
 	if !ok {
 		fs.Error("Read: file handle %v not found for path %v", fh, path)
 		return -fuse.EBADF
 	}
 
-	localPath, remotePath := fs.paths(path)
+	_, remotePath := fs.paths(path)
 
 	if node.info.size == 0 {
 		fs.Trace("Read: file is empty, returning EOF")
@@ -452,19 +456,22 @@ func (fs *Filescomfs) Read(path string, buff []byte, ofst int64, fh uint64) (n i
 		return 0
 	}
 
+	// At this point, the requested offset is less than the node size, so it must be the
+	// case that the handle/node represent an ongoing upload, or the handle/node were opened
+	// with a write permission, and the OS only intends to read from it. In this case,
+	// attempt to read from the active upload; if that read returns zero bytes, fall through
+	// to attempting to read from the remote file.
+
+	// Attempt to read from the temporary file backing the writer if possible. If the read can't be
+	// satisfied from the temporary file, it will return zero bytes, and the logic will fall through to
+	// reading from the remote file.
 	if node.isWriterOpen() {
-		// Attempt to read from the file backing the writer if possible.
-		// This will only work if the ordered pipe's current offset is ahead of the read offset.
-		// If the read offset is ahead of the ordered pipe's current offset, return -fuse.EBUSY
-		// to indicate that the file is being written to and the read can not be satisfied
-		// at this time.
-		n := node.writer.readAt(buff, ofst)
+		n = node.writer.readAt(buff, ofst)
 		if n > 0 {
-			fs.Trace("Read: path=%v, ofst=%d, read %d bytes from writer pipe", path, ofst, n)
+			handle.bytesRead.Add(int64(n))
+			fs.Trace("Read: readAt: path=%v, ofst=%d, read %d bytes from writer pipe", path, ofst, n)
 			return n
 		}
-		fs.Info("Cannot read from file while writing: %v (%v) (fh=%v)", remotePath, localPath, fh)
-		return -fuse.EBUSY
 	}
 
 	if fs.isLockFile(path) {
@@ -500,8 +507,8 @@ func (fs *Filescomfs) Read(path string, buff []byte, ofst int64, fh uint64) (n i
 
 	node.downloadUri = file.DownloadUri
 
-	fs.Trace("Read: path=%v, ofst=%d, read %d bytes", path, ofst, n)
-
+	fs.Trace("Read: succeeded path=%v, ofst=%d, read %d bytes", path, ofst, n)
+	handle.bytesRead.Add(int64(n))
 	return n
 }
 
@@ -556,6 +563,12 @@ func (fs *Filescomfs) Release(path string, fh uint64) (errc int) {
 			return errc
 		}
 		return errc
+	}
+
+	// if the handle read any bytes, log an info message that the download is complete
+	if handle.bytesRead.Load() > 0 {
+		localPath, remotePath := fs.paths(path)
+		fs.Info("Download complete: %v (%v)", remotePath, localPath)
 	}
 
 	// only close the writer if something has been written to it,
