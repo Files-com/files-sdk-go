@@ -330,8 +330,14 @@ func (fs *Filescomfs) Open(path string, flags int) (errc int, fh uint64) {
 
 	// If the requested op is read only, and the writer is not open,
 	// return 0 and a file handle.
-	if handle.IsReadOnly() {
+	if handle.IsReadOnly() && !node.isWriterOpen() {
 		return errc, fh
+	}
+
+	// If the requested op is read only, and the writer is already open,
+	// return a busy status and a file handle.
+	if handle.IsReadOnly() && node.isWriterOpen() {
+		return -fuse.EBUSY, fh
 	}
 
 	// after this point, the requested op must be a write operation
