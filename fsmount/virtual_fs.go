@@ -1,6 +1,7 @@
 package fsmount
 
 import (
+	"context"
 	"fmt"
 	path_lib "path"
 	"runtime/debug"
@@ -38,8 +39,18 @@ type fileHandle struct {
 	// The number of bytes written to the file if opened for writing
 	bytesWritten atomic.Int64
 
+	// writtenAt is the time when the file was last written to
+	writtenAt time.Time
+
 	// The number of bytes read from the file if opened for reading
 	bytesRead atomic.Int64
+
+	// readAt is the time when the file was last read
+	readAt time.Time
+
+	// A function that can be called to cancel an ongoing upload operation
+	// if the file is being uploaded in the background.
+	cancelUpload context.CancelFunc
 
 	// The flags used when opening the file
 	FuseFlags
@@ -52,6 +63,18 @@ func (fh *fileHandle) String() string {
 // isWriteOp checks if the file handle was opened as a write operation.
 func (fh *fileHandle) isWriteOp() bool {
 	return !fh.IsReadOnly()
+}
+
+// incrementWritten increments the number of bytes written to the file
+func (fh *fileHandle) incrementWritten(n int64) {
+	fh.bytesWritten.Add(n)
+	fh.writtenAt = time.Now()
+}
+
+// incrementRead increments the number of bytes read from the file
+func (fh *fileHandle) incrementRead(n int64) {
+	fh.bytesRead.Add(n)
+	fh.readAt = time.Now()
 }
 
 type virtualfs struct {
@@ -70,10 +93,11 @@ type virtualfs struct {
 }
 
 func newVirtualfs(logger lib.Logger, cacheTTL time.Duration) *virtualfs {
+	ll := lib.NewLeveledLogger(logger)
 	vfs := &virtualfs{
 		nodes:         make(map[string]*fsNode),
-		handles:       NewOpenHandles(),
-		LeveledLogger: lib.NewLeveledLogger(logger),
+		handles:       NewOpenHandles(ll),
+		LeveledLogger: ll,
 		cacheTTL:      DefaultCacheTTL,
 	}
 	if cacheTTL >= 0 {

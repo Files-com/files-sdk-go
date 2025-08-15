@@ -1,6 +1,7 @@
 package fsmount
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -270,6 +271,7 @@ func (fs *Filescomfs) Create(path string, flags int, mode uint32) (errc int, fh 
 
 	fs.Debug("Create: Creating file: %v (%v) (flags=%v, mode=%v, fh=%v)", remotePath, localPath, fuseFlags, mode, fh)
 
+	// Load the parent directory to populate the vfs nodes map
 	if errc = fs.loadParent(path); errc != 0 {
 		return errc, fh
 	}
@@ -285,8 +287,8 @@ func (fs *Filescomfs) Create(path string, flags int, mode uint32) (errc int, fh 
 		// the node exists, and has an open writer, but the writer's offset is zero,
 		// meaning the file was created but nothing has been written to it yet.
 		// In this case, create a new file handle and return it. The writer will
-		// only be closed when the last file handle is released to avoid creating
-		// multiple upload events for the same file.
+		// only be closed when a file handle that has written data is released to
+		// avoid creating multiple upload events for the same file.
 		fs.Debug("Create: File already exists, but no data has been written: %v (%v)", remotePath, localPath)
 		handle.node = node
 		return errc, fh
@@ -328,15 +330,10 @@ func (fs *Filescomfs) Open(path string, flags int) (errc int, fh uint64) {
 
 	// If the requested op is read only, and the writer is not open,
 	// return 0 and a file handle.
-	if handle.IsReadOnly() && !node.isWriterOpen() {
+	if handle.IsReadOnly() {
 		return errc, fh
 	}
 
-	// If the requested op is read only, and the writer is already open,
-	// return a busy status and a file handle.
-	if handle.IsReadOnly() && node.isWriterOpen() {
-		return -fuse.EBUSY, fh
-	}
 	// after this point, the requested op must be a write operation
 
 	// return ENOENT if the file is ignored
@@ -458,7 +455,7 @@ func (fs *Filescomfs) Read(path string, buff []byte, ofst int64, fh uint64) (n i
 
 	// At this point, the requested offset is less than the node size, so it must be the
 	// case that the handle/node represent an ongoing upload, or the handle/node were opened
-	// with a write permission, and the OS only intends to read from it. In this case,
+	// with a write permission, and the OS wants to read from it. In this case,
 	// attempt to read from the active upload; if that read returns zero bytes, fall through
 	// to attempting to read from the remote file.
 
@@ -468,7 +465,7 @@ func (fs *Filescomfs) Read(path string, buff []byte, ofst int64, fh uint64) (n i
 	if node.isWriterOpen() {
 		n = node.writer.readAt(buff, ofst)
 		if n > 0 {
-			handle.bytesRead.Add(int64(n))
+			handle.incrementRead(int64(n))
 			fs.Trace("Read: readAt: path=%v, ofst=%d, read %d bytes from writer pipe", path, ofst, n)
 			return n
 		}
@@ -550,13 +547,13 @@ func (fs *Filescomfs) Write(path string, buff []byte, ofst int64, fh uint64) (n 
 func (fs *Filescomfs) Release(path string, fh uint64) (errc int) {
 	defer fs.logPanics()
 	fs.Debug("Release: path=%v, fh=%v", path, fh)
-	handle, ok := fs.handles.Release(fh)
-	node := handle.node
+	handle, node, ok := fs.handles.Lookup(fh)
 
 	if !ok {
 		// This is an unexpected condition. Why is the OS calling to release
-		// a file handle that was never opened?
-		fs.Error("Release: file handle not found path: %v, fh: %v", path, fh)
+		// a file handle that was never opened? There's no file handle to release,
+		// so log the error and try to unlock the path if it was locked.
+		fs.Error("Release: file handle not found for path: %v, fh: %v", path, fh)
 
 		// unlock is a no-op if the path/handle combo doesn't match an existing lock
 		if errc = fs.unlock(path, fh); errc != 0 {
@@ -571,30 +568,46 @@ func (fs *Filescomfs) Release(path string, fh uint64) (errc int) {
 		fs.Info("Download complete: %v (%v)", remotePath, localPath)
 	}
 
-	// only close the writer if something has been written to it,
-	// this avoids creating an upload event for files that were
-	// created but never written to.
-	if handle.isWriteOp() && handle.written.Load() {
+	// If the handle is a read only operation, remove it from the open handles map and return.
+	if handle.IsReadOnly() {
+		fs.handles.Release(fh)
+		fs.Debug("Release: closed handle for path=%v, fh=%v", path, fh)
+		return errc
+	}
+
+	// The handle is a write operation and has had data written to it.
+	if handle.written.Load() {
+		// remove the handle from the open handles map
+		fs.handles.Release(fh)
+
+		// close the writer to finalize the upload
 		if err := node.writer.close(); err != nil {
 			fs.Error("Release: error closing writer for %v: %v", path, err)
 			return -fuse.EIO
 		}
+
+		// If the file was locked, unlock it.
 		if errc = fs.unlock(path, fh); errc != 0 {
 			fs.Trace("Release: error unlocking path: %v, fh: %v", path, fh)
-			return errc
 		}
 		fs.Debug("Release: closed handle for path=%v, fh=%v", path, fh)
-		// Clear the writer so that a cached node gets a new writer
-		// if another upload is started.
+
+		// Clear the writer so that a cached node gets a new writer if another upload
+		// is started.
 		node.writer = nil
 		return errc
 	}
 
-	if errc = fs.unlock(path, fh); errc != 0 {
-		return errc
+	// The handle is a write operation, and has NOT had data written to it.
+	if !handle.written.Load() {
+		// DO NOT remove the handle from the open handles map, and DO NOT close the writer.
+		// Not closing the writer allows the writer to be reused for a subsequent write
+		// operation. If no subsequent write operation occurs, the handle will be cleaned
+		// up by a periodic cleanup task that checks how long since the last write operation
+		// was performed on the handle.
+		fs.Debug("Release: handle for path=%v, fh=%v was never written to, not closing writer", path, fh)
 	}
-
-	return errc
+	return fs.unlock(path, fh)
 }
 
 func (fs *Filescomfs) Opendir(path string) (errc int, fh uint64) {
@@ -676,7 +689,7 @@ func (fs *Filescomfs) uploadProgressFunc(handle *fileHandle) func(increment int6
 		// If the write was successful, extend the node's ttl and keep track of the number
 		// of bytes written for logging purposes.
 		handle.node.extendTtl()
-		handle.bytesWritten.Add(increment)
+		handle.incrementWritten(increment)
 		localPath, remotePath := fs.paths(handle.node.path)
 		fs.Trace("Upload progress: %v (%v), bytes written: %v", remotePath, localPath, handle.bytesWritten.Load())
 	}
@@ -686,7 +699,11 @@ func (fs *Filescomfs) writeFile(path string, reader io.Reader, mtime time.Time, 
 	localPath, remotePath := fs.paths(path)
 	fs.Info("Starting upload: %v (%v)", remotePath, localPath)
 	handle, _, _ := fs.handles.Lookup(fh)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	handle.cancelUpload = cancel
 	uploadOpts := []file.UploadOption{
+		file.UploadWithContext(ctx),
 		file.UploadWithDestinationPath(remotePath),
 		file.UploadWithReader(reader),
 		file.UploadWithProvidedMtime(mtime),
