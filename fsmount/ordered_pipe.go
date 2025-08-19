@@ -1,6 +1,7 @@
 package fsmount
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -157,20 +158,24 @@ func (w *orderedPipe) readAt(buff []byte, offset int64) (n int) {
 
 func (w *orderedPipe) close() error {
 	w.closeOnce.Do(func() {
+		var inErr error
+		var fErr error
+		var rmErr error
 		if w.in != nil {
-			w.closeErr = w.in.Close()
+			inErr = w.in.Close()
 			w.in = nil
 		}
 
 		if w.file != nil {
-			if err := w.file.Close(); err != nil {
-				w.logger.Error("done: error closing file for path=%v: %v", w.path, err)
+			if fileErr := w.file.Close(); fileErr != nil {
+				w.logger.Error("done: error closing file for path=%v: %v", w.path, fileErr)
 			}
-			if err := os.Remove(w.file.Name()); err != nil {
-				w.logger.Error("done: error removing temporary file for path=%v: %v", w.path, err)
+			if removeErr := os.Remove(w.file.Name()); removeErr != nil {
+				w.logger.Error("done: error removing temporary file for path=%v: %v", w.path, removeErr)
 			}
 			w.file = nil
 		}
+		w.closeErr = errors.Join(inErr, fErr, rmErr)
 	})
 	return w.closeErr
 }
