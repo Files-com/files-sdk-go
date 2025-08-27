@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 
@@ -662,7 +661,7 @@ func (fs *Filescomfs) Readdir(path string,
 			// Skip the root directory and the current path.
 			continue
 		}
-		if !slices.Contains(entries, openNode.path) && strings.HasPrefix(openNode.path, path) {
+		if !slices.Contains(entries, openNode.path) && path == filepath.Dir(openNode.path) {
 			fs.Trace("Readdir: Child entries %v: for path %s, does not include open handle: %v, adding %v", entries, path, handle, openNode.path)
 			entries = append(entries, openNode.path)
 		}
