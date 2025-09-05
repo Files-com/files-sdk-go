@@ -53,6 +53,8 @@ type uploadIO struct {
 	RewindAllProgressOnFailure bool
 	notResumable               *atomic.Bool
 	actionAttributes           map[string]any
+	startedCallback            func(files_sdk.FileUploadPart)
+	renamedCallback            func() (string, string)
 }
 
 func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
@@ -158,7 +160,11 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 			// Rate limit all outgoing connections
 			if u.Manager.WaitWithContext(ctx) {
 				var err error
-				u.file, err = u.completeUpload(ctx, u.ProvidedMtime, u.etags, u.bytesWritten, u.Path, u.FileUploadPart.Ref)
+				path, ref := u.Path, u.FileUploadPart.Ref
+				if u.renamedCallback != nil {
+					path, ref = u.renamedCallback()
+				}
+				u.file, err = u.completeUpload(ctx, u.ProvidedMtime, u.etags, u.bytesWritten, path, ref)
 				u.Manager.Done()
 				if err != nil {
 					u.LogPath(u.Path, map[string]any{
@@ -418,7 +424,11 @@ func (u *uploadIO) startUpload(ctx context.Context, beginUpload files_sdk.FileBe
 		return files_sdk.FileUploadPart{}, err
 	}
 	u.Progress(0)
-	return uploads[0], err
+	part := uploads[0]
+	if u.startedCallback != nil {
+		u.startedCallback(part)
+	}
+	return part, err
 }
 
 func (u *uploadIO) completeUpload(ctx context.Context, providedMtime *time.Time, etags []files_sdk.EtagsParam, bytesWritten int64, path string, ref string) (files_sdk.File, error) {

@@ -50,12 +50,9 @@ type orderedPipe struct {
 	// closeOnce ensures that the close operation is only performed once.
 	closeOnce sync.Once
 	closeErr  error
-
-	completedCond *sync.Cond
-	handle        uint64
 }
 
-func newOrderedPipe(path string, handle uint64, logger lib.LeveledLogger) (*orderedPipe, error) {
+func newOrderedPipe(path string, logger lib.LeveledLogger) (*orderedPipe, error) {
 	pipeReader, pipeWriter := io.Pipe()
 	// Create a temporary file to allow reading while writes are still in progress.
 	file, err := os.CreateTemp("", "Filescomfs-ordered-pipe")
@@ -63,24 +60,27 @@ func newOrderedPipe(path string, handle uint64, logger lib.LeveledLogger) (*orde
 		return nil, fmt.Errorf("failed to create temporary file for ordered pipe: %w", err)
 	}
 	return &orderedPipe{
-		logger:        logger,
-		path:          path,
-		in:            pipeWriter,
-		out:           pipeReader,
-		writers:       io.MultiWriter(pipeWriter, file),
-		file:          file,
-		offset:        0,
-		bufCache:      make(map[int64][]byte),
-		handle:        handle,
-		completedCond: sync.NewCond(&sync.Mutex{}),
+		logger:   logger,
+		path:     path,
+		in:       pipeWriter,
+		out:      pipeReader,
+		writers:  io.MultiWriter(pipeWriter, file),
+		file:     file,
+		offset:   0,
+		bufCache: make(map[int64][]byte),
 	}, nil
 }
 
 func (w *orderedPipe) writeAt(buff []byte, offset int64) (n int, err error) {
 	w.cacheMu.Lock()
 	if offset < w.offset {
-		// This happens on Windows when a write operation is paused. It writes a 56 byte buffer at
-		// offset 0. It's unclear how to handle this to properly resume the write.
+		// Windows editors sometimes replay a tiny header (~56 bytes) at 0 after pause/resume.
+		// If so, accept and discard to keep the stream consistent.
+		if offset == 0 && len(buff) <= 64 {
+			w.logger.Debug("Write: rewind-at-zero %d bytes ignored for %v (current offset %d)", len(buff), w.path, w.offset)
+			w.cacheMu.Unlock()
+			return len(buff), nil
+		}
 		w.cacheMu.Unlock()
 		return 0, fmt.Errorf("write at offset %d is less than current offset %d", offset, w.offset)
 	}
@@ -154,6 +154,12 @@ func (w *orderedPipe) readAt(buff []byte, offset int64) (n int) {
 		return 0
 	}
 	return n
+}
+
+func (w *orderedPipe) Offset() int64 {
+	w.cacheMu.Lock()
+	defer w.cacheMu.Unlock()
+	return w.offset
 }
 
 func (w *orderedPipe) close() error {

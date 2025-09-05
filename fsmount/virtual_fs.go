@@ -1,7 +1,6 @@
 package fsmount
 
 import (
-	"context"
 	"fmt"
 	path_lib "path"
 	"runtime/debug"
@@ -33,42 +32,23 @@ type fileHandle struct {
 	// The node this handle is associated with
 	node *fsNode
 
-	// Indicates if the file has been written to
-	written atomic.Bool
-
-	// The number of bytes written to the file if opened for writing
-	bytesWritten atomic.Int64
-
-	// writtenAt is the time when the file was last written to
-	writtenAt time.Time
-
 	// The number of bytes read from the file if opened for reading
 	bytesRead atomic.Int64
 
 	// readAt is the time when the file was last read
 	readAt time.Time
 
-	// A function that can be called to cancel an ongoing upload operation
-	// if the file is being uploaded in the background.
-	cancelUpload context.CancelFunc
-
 	// The flags used when opening the file
 	FuseFlags
 }
 
 func (fh *fileHandle) String() string {
-	return fmt.Sprintf("fileHandle{id: %v, node: %v, written: %v, flags: %v}", fh.id, fh.node, fh.written.Load(), fh.FuseFlags)
+	return fmt.Sprintf("fileHandle{id: %v, node: %v, flags: %v}", fh.id, fh.node, fh.FuseFlags)
 }
 
 // isWriteOp checks if the file handle was opened as a write operation.
 func (fh *fileHandle) isWriteOp() bool {
 	return !fh.IsReadOnly()
-}
-
-// incrementWritten increments the number of bytes written to the file
-func (fh *fileHandle) incrementWritten(n int64) {
-	fh.bytesWritten.Add(n)
-	fh.writtenAt = time.Now()
 }
 
 // incrementRead increments the number of bytes read from the file
@@ -140,18 +120,20 @@ func (vfs *virtualfs) getOrCreate(path string, nt nodeType) (node *fsNode) {
 	return node
 }
 
-func (vfs *virtualfs) rename(oldPath string, newPath string) {
+func (vfs *virtualfs) rename(oldPath string, newPath string) *fsNode {
 	node, ok := vfs.fetch(oldPath)
 	if !ok {
-		return
+		return nil
 	}
 
 	vfs.remove(oldPath)
 	node.path = newPath
 
 	vfs.nodesMu.Lock()
-	defer vfs.nodesMu.Unlock()
 	vfs.add(node)
+	vfs.nodesMu.Unlock()
+
+	return node
 }
 
 func (vfs *virtualfs) add(node *fsNode) {

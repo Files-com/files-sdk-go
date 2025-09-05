@@ -24,6 +24,14 @@ const (
 	// sweeptInterval is the interval at which the upload sweeper runs to cancel
 	// uploads that have not been written to in a long time.
 	sweeptInterval = 10 * time.Minute
+
+	// uploadIdleTimeout is the duration after which an upload that has not been
+	// written to will be cancelled.
+	uploadIdleTimeout = 1 * time.Hour
+
+	// unopenedUploadTimeout is the duration after which an upload that has not
+	// been written to at all will be cancelled.
+	unopenedUploadTimeout = 24 * time.Hour
 )
 
 var (
@@ -44,7 +52,11 @@ func NewOpenHandles(logger lib.LeveledLogger) *OpenHandles {
 // Open creates a new ID and stores the handle.
 // Never hold h.mu while allocating the ID to avoid lock-order issues.
 func (h *OpenHandles) Open(n *fsNode, fl FuseFlags) (id uint64, fh *fileHandle) {
-	fh = &fileHandle{node: n, FuseFlags: fl, writtenAt: time.Now(), readAt: time.Now()}
+	fh = &fileHandle{
+		node:      n,
+		FuseFlags: fl,
+		readAt:    time.Now(),
+	}
 	for {
 		id = (atomic.AddUint64(&next, 1)) & handleMask
 		fh.id = id
@@ -103,13 +115,9 @@ func (h *OpenHandles) ExtendOpenHandleTtls() {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	for _, handle := range handles {
-		handle.node.extendTtl()
-	}
-}
-
-func (h *OpenHandles) stopUploadSweeper() {
-	if h.ticker != nil {
-		h.ticker.Stop()
+		if handle.isWriteOp() {
+			handle.node.extendTtl()
+		}
 	}
 }
 
@@ -117,28 +125,27 @@ func (h *OpenHandles) startUploadSweeper() {
 	h.ticker = time.NewTicker(sweeptInterval)
 	for range h.ticker.C {
 		h.mu.Lock()
-		for id, handle := range h.entries {
-			// if the handle is not a write operation or has no cancelUpload function, skip it
-			if !handle.isWriteOp() || handle.cancelUpload == nil {
+		for _, handle := range h.entries {
+			if handle == nil || handle.node == nil {
 				continue
 			}
-
-			// if the handle has never been written to, and 24 hours have passed, cancel the upload
-			// and remove it from the entries
-			if handle.bytesWritten.Load() == 0 && time.Since(handle.writtenAt) > 24*time.Hour {
-				h.Debug("Upload sweeper: cancelling upload for handle %d, never written to. Created at: %v", id, handle.writtenAt)
-				handle.cancelUpload()
-				handle.cancelUpload = nil
-				delete(h.entries, id)
+			node := handle.node
+			if node.upload == nil {
 				continue
 			}
-			// if the handle has been written to, and 1 hour has passed since the last write, cancel the upload
-			// and remove it from the entries
-			if handle.bytesWritten.Load() > 0 && time.Since(handle.writtenAt) > 1*time.Hour {
-				h.Debug("Upload sweeper: cancelling upload for handle %d, last written at: %v", id, handle.writtenAt)
-				handle.cancelUpload()
-				handle.cancelUpload = nil
-				delete(h.entries, id)
+			_, bytesWritten, lastActivity := node.uploadStats()
+			idle := time.Since(lastActivity)
+			h.Debug("Upload sweeper: checking upload for path %s, bytes written: %d, last activity: %v, idle time: %v", node.path, bytesWritten, lastActivity, idle)
+			// Case A: upload opened but never wrote any bytes — allow a long grace period.
+			if bytesWritten == 0 && idle > unopenedUploadTimeout {
+				h.Debug("Upload sweeper: cancelling unopened upload for path %s, last activity: %v", node.path, lastActivity)
+				node.cancelUpload()
+				continue
+			}
+			// Case B: upload has written bytes but has been idle too long.
+			if bytesWritten > 0 && idle > uploadIdleTimeout {
+				h.Debug("Upload sweeper: cancelling idle upload for path %s, last activity: %v", node.path, lastActivity)
+				node.cancelUpload()
 			}
 		}
 		h.mu.Unlock()

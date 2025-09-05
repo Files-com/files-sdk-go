@@ -28,7 +28,7 @@ type writeAtOffset struct {
 }
 
 func TestOutOfOrderWrites(t *testing.T) {
-	op, err := newOrderedPipe("/test/path", 123, logger)
+	op, err := newOrderedPipe("/test/path", logger)
 	if err != nil {
 		t.Fatalf("Error creating ordered pipe: %v", err)
 	}
@@ -88,7 +88,7 @@ func TestOutOfOrderWrites(t *testing.T) {
 }
 
 func TestReaderAt(t *testing.T) {
-	op, err := newOrderedPipe("/test/path", 123, logger)
+	op, err := newOrderedPipe("/test/path", logger)
 	if err != nil {
 		t.Fatalf("Error creating ordered pipe: %v", err)
 	}
