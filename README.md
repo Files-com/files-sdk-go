@@ -758,7 +758,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `processing-failure/invalid-priority-color` | Invalid Priority Color |
 | `processing-failure/invalid-range` | Invalid Range |
 | `processing-failure/invalid-site` | Invalid Site |
-| `processing-failure/metadata-not-supported-on-remotes-error` | Metadata Not Supported On Remotes Error |
+| `processing-failure/metadata-not-supported-on-remotes` | Metadata Not Supported On Remotes |
 | `processing-failure/model-save-error` | Model Save Error |
 | `processing-failure/multiple-processing-errors` | Multiple Processing Errors |
 | `processing-failure/path-too-long` | Path Too Long |
