@@ -62,11 +62,12 @@ type Filescomfs struct {
 
 	initOnce sync.Once
 	initTime time.Time
+	debugSrv *http.Server
 }
 
 type lockInfo struct {
-	fh    uint64
-	token string
+	Fh   uint64
+	Lock *files_sdk.Lock
 }
 
 // Init initializes the Filescomfs filesystem.
@@ -85,14 +86,26 @@ func (fs *Filescomfs) Init() {
 
 		// store the time the filesystem was initialized to use as the creation time for the root directory
 		fs.initTime = time.Now()
+
+		// if the binary is built with the 'filescomfs_debug' tag
+		//   start the debug server to allow for pprof profiling and other debug endpoints
+		//   the listen address and port can be configured using the 'FILESCOMFS_DEBUG_PPROF_HOST'
+		//   and 'FILESCOMFS_DEBUG_PPROF_PORT' environment variables, respectively. If not set, the
+		//   default is 'localhost:6060'.
+		// if the binary is not built with the 'filescomfs_debug' tag
+		//   this is a no-op and the debug server will not be started
+		fs.startPprof()
 	})
 }
 
 func (fs *Filescomfs) Destroy() {
+	if err := fs.debugSrv.Shutdown(context.Background()); err != nil {
+		fs.Error("error shutting down debug server: %v", err)
+	}
 	fs.Debug("Destroy: removing all file locks")
 
 	for path, lockInfo := range fs.lockMap {
-		fs.unlock(path, lockInfo.fh)
+		fs.unlock(path, lockInfo.Fh)
 	}
 }
 
@@ -847,7 +860,8 @@ func (fs *Filescomfs) lock(node *fsNode, fh uint64) (errc int) {
 	if errc = fs.handleError("lock", node.path, err); errc != 0 {
 		return errc
 	}
-	fs.lockMap[node.path] = &lockInfo{fh: fh, token: lock.Token}
+	fs.Debug("lock: created owner=%v, path=%v, fh=%v", lock.Username, remotePath, fh)
+	fs.lockMap[node.path] = &lockInfo{Fh: fh, Lock: &lock}
 	return errc
 }
 
@@ -857,7 +871,7 @@ func (fs *Filescomfs) unlock(path string, fh uint64) (errc int) {
 	}
 
 	// If the node exists, prevent locking while unlocking.
-	// If the node was renamed/moved, it may still need to be unlocked it.
+	// If the node was renamed/moved, it may still need to be unlocked.
 	if node, ok := fs.fetch(path); ok {
 		node.lockMutex.Lock()
 		defer node.lockMutex.Unlock()
@@ -873,7 +887,7 @@ func (fs *Filescomfs) unlock(path string, fh uint64) (errc int) {
 		fs.Debug("unlock: File not locked: %v fh=%v", path, fh)
 		return errc
 	}
-	if lockInfo.fh != fh {
+	if lockInfo.Fh != fh {
 		// This is fine. It just means the file either wasn't locked or it was locked by a different file handle.
 		fs.Debug("unlock: File not locked by this handle: %v fh=%v", path, fh)
 		return errc
@@ -884,7 +898,7 @@ func (fs *Filescomfs) unlock(path string, fh uint64) (errc int) {
 
 	err := fs.lockClient.Delete(files_sdk.LockDeleteParams{
 		Path:  remotePath,
-		Token: lockInfo.token,
+		Token: lockInfo.Lock.Token,
 	})
 	if errc = fs.handleError("unlock", path, err); errc != 0 {
 		return errc
