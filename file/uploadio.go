@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -16,6 +17,7 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/file/manager"
 	"github.com/Files-com/files-sdk-go/v3/file/status"
 	"github.com/Files-com/files-sdk-go/v3/lib"
+	pool "github.com/libp2p/go-buffer-pool"
 )
 
 type Progress func(int64)
@@ -279,21 +281,51 @@ func (u *uploadIO) buildReader(offset OffSet) (ProxyReader, error) {
 	}
 
 	if u.Size == nil || *u.FileUploadPart.ParallelParts {
-		reader, _ := u.Reader()
+		var reader io.Reader
 		if readerAtOk {
 			reader = io.NewSectionReader(readerAt, offset.off, offset.len)
+		} else {
+			reader, _ = u.Reader()
+			reader = io.LimitReader(reader, offset.len)
 		}
 
-		buf := new(bytes.Buffer)
-		n, err := io.CopyN(buf, reader, offset.len)
+		// Buffer allocation: temp buffer for I/O, main buffer for data storage
+		tempBuff := pool.Get(32 * 1024)
+		var bytesReader *bytes.Buffer
+		var closer func() error
+
+		// Pool requires int parameter, but offset.len is int64 - bypass pool for large parts
+		if offset.len > math.MaxInt32 {
+			// Large parts: pool.Get() can't handle int64, use direct allocation
+			poolBuffer := make([]byte, int(offset.len))
+			bytesReader = bytes.NewBuffer(poolBuffer)
+			closer = func() error { bytesReader.Reset(); return nil }
+		} else {
+			// Small parts: safe to convert int64 to int for pool.Get()
+			poolBuffer := pool.Get(int(offset.len))[:0] // [:0] prevents garbage data
+			bytesReader = bytes.NewBuffer(poolBuffer)
+			closer = func() error {
+				bytesReader.Reset()
+				pool.Put(poolBuffer[:cap(poolBuffer)]) // Return original slice
+				return nil
+			}
+		}
+
+		// Copy data from source to buffer
+		n, err := io.CopyBuffer(bytesReader, reader, tempBuff)
+		pool.Put(tempBuff) // Return temp buffer immediately
+
+		// Handle errors, cleanup resources on failure
 		if err != nil && err != io.EOF {
+			_ = closer() // Ensure cleanup
 			return nil, err
 		}
 
 		return &ProxyRead{
-			Reader: buf,
+			Reader: bytesReader,
 			len:    n,
 			onRead: u.Progress,
+			Closer: closer,
 		}, nil
 	}
 
@@ -316,11 +348,13 @@ func (u *uploadIO) manageUpdatePart(ctx context.Context, part *Part, wait lib.Co
 	if wait.WaitWithContext(ctx) {
 		if *u.FileUploadPart.ParallelParts {
 			go func() {
+				defer part.ProxyReader.Close()
+				defer wait.Done()
 				u.runUploadPart(ctx, part)
-				wait.Done()
 			}()
 		} else {
 			u.runUploadPart(ctx, part)
+			part.ProxyReader.Close()
 			wait.Done()
 		}
 		if part.ProxyReader.Len() != int(part.len) {
@@ -338,7 +372,7 @@ func (u *uploadIO) runUploadPart(ctx context.Context, part *Part) {
 	for {
 		runCount++
 		part.EtagsParam, part.error = u.uploadPart(ctx, part)
-		part.bytes = int64(part.ProxyReader.BytesRead())
+		part.bytes = part.ProxyReader.BytesRead()
 		part.Touch()
 		if part.error == nil && runCount < 3 {
 			break
@@ -500,11 +534,9 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 		// With remote mounts this has no value, but the code strip the value causing a validation error.
 		etag = "null"
 	}
-	if res != nil {
-		err = res.Body.Close()
-		if err != nil {
-			return files_sdk.EtagsParam{}, err
-		}
+
+	if err = res.Body.Close(); err != nil {
+		return files_sdk.EtagsParam{}, err
 	}
 	return files_sdk.EtagsParam{
 		Etag: etag,
