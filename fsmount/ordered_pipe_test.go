@@ -58,7 +58,6 @@ func TestOutOfOrderWrites(t *testing.T) {
 	errchan := make(chan error, errChanLen)
 
 	go func() {
-		defer f.orderdPipe.close()
 		defer close(errchan)
 		for _, w := range writeOffsets {
 			_, err := f.Write([]byte(w.Data), int(w.Offset))
@@ -66,6 +65,7 @@ func TestOutOfOrderWrites(t *testing.T) {
 				errchan <- fmt.Errorf("Error writing to sorted pipe: %v", err)
 			}
 		}
+		f.orderdPipe.close()
 	}()
 
 	var sortedData []byte

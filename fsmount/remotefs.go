@@ -1,0 +1,1356 @@
+package fsmount
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	path_lib "path"
+	"path/filepath"
+	"slices"
+	"strings"
+	"sync"
+	"time"
+
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	api_key "github.com/Files-com/files-sdk-go/v3/apikey"
+	"github.com/Files-com/files-sdk-go/v3/file"
+	"github.com/Files-com/files-sdk-go/v3/file/manager"
+	file_migration "github.com/Files-com/files-sdk-go/v3/filemigration"
+	"github.com/Files-com/files-sdk-go/v3/ignore"
+	"github.com/Files-com/files-sdk-go/v3/lib"
+	"github.com/Files-com/files-sdk-go/v3/lock"
+	gogitignore "github.com/sabhiram/go-gitignore"
+	"github.com/winfsp/cgofuse/fuse"
+)
+
+// RemoteFs is a filesystem that implements the logic for interacting with the Files.com API
+// for a mounted filesystem. It handles all operations that are not handled by the LocalFs
+// implementation, which is used for temporary files and files that should not be uploaded to
+// Files.com. The Filescomfs implementation delegates operations to this implementation for
+// all files who's source/destination is Files.com.
+type RemoteFs struct {
+	log              lib.LeveledLogger
+	vfs              *virtualfs
+	config           *files_sdk.Config
+	mountPoint       string
+	localFsRoot      string
+	root             string
+	writeConcurrency int
+	cacheTTL         time.Duration
+	disableLocking   bool
+	ignore           *gogitignore.GitIgnore
+
+	fileClient      *file.Client
+	lockClient      *lock.Client
+	apiKeyClient    *api_key.Client
+	currentUserId   int64
+	migrationClient *file_migration.Client
+	lockMap         map[string]*lockInfo
+	lockMapMutex    sync.Mutex
+	loadDirMutex    sync.Mutex
+
+	debugFuse bool
+
+	initOnce sync.Once
+	initTime time.Time
+}
+
+type lockInfo struct {
+	Fh   uint64
+	Lock *files_sdk.Lock
+}
+
+func newRemoteFs(params MountParams, vfs *virtualfs, ll lib.LeveledLogger) (*RemoteFs, error) {
+	if params.Root == "" {
+		params.Root = "/"
+	}
+	fs := &RemoteFs{
+		log:              ll,
+		root:             params.Root,
+		vfs:              vfs,
+		mountPoint:       params.MountPoint,
+		localFsRoot:      params.TmpFsPath,
+		writeConcurrency: params.WriteConcurrency,
+		cacheTTL:         params.CacheTTL,
+		config:           params.Config,
+		disableLocking:   params.DisableLocking,
+		debugFuse:        params.DebugFuse,
+	}
+	// ensure write concurrency and cache TTL are positive
+	if fs.writeConcurrency <= 0 {
+		fs.writeConcurrency = DefaultWriteConcurrency
+	}
+	if fs.cacheTTL <= 0 {
+		fs.cacheTTL = DefaultCacheTTL
+	}
+	if params.IgnorePatterns == nil || len(params.IgnorePatterns) > 0 {
+		ignore, err := ignore.New(params.IgnorePatterns...)
+		if err != nil {
+			return nil, err
+		}
+		fs.ignore = ignore
+	}
+	return fs, nil
+}
+
+func (fs *RemoteFs) Init() {
+	// Guard with a sync.Once because Init is called from fsmount.Mount, but cgofuse also calls Init
+	// when it mounts the filesystem.
+	fs.initOnce.Do(func() {
+		if fs.fileClient == nil {
+			fs.fileClient = &file.Client{Config: *fs.config}
+			fs.lockClient = &lock.Client{Config: *fs.config}
+			fs.apiKeyClient = &api_key.Client{Config: *fs.config}
+			fs.migrationClient = &file_migration.Client{Config: *fs.config}
+			fs.lockMap = make(map[string]*lockInfo)
+		}
+
+		key, err := fs.apiKeyClient.FindCurrent()
+		if err != nil {
+			fs.log.Error("Failed to find metadata for current API key, file exclusivity locks may not work as expected: %v", err)
+			// set locking to false?
+		}
+		fs.currentUserId = key.UserId
+		// store the time the filesystem was initialized to use as the creation time for the root directory
+		fs.initTime = time.Now()
+		fs.log.Debug("RemoteFs: RemoteFs initialized successfully. Remote filesystem root: %s", fs.root)
+	})
+}
+
+func (fs *RemoteFs) Destroy() {
+	fs.log.Debug("RemoteFs: Destroy: removing all file locks")
+
+	fs.lockMapMutex.Lock()
+	defer fs.lockMapMutex.Unlock()
+	for path, lockInfo := range fs.lockMap {
+		fs.unlock(path, lockInfo.Fh)
+	}
+}
+
+func (fs *RemoteFs) Validate() error {
+	fs.Init()
+
+	// Make sure the root directory can be listed.
+	it, err := fs.fileClient.ListFor(files_sdk.FolderListForParams{Path: fs.remotePath("/"), ListParams: files_sdk.ListParams{PerPage: 1}})
+	if err == nil {
+		it.Next() // Get 1 item. This is what actually triggers the API call.
+		err = it.Err()
+	}
+	return err
+}
+
+func (fs *RemoteFs) Mkdir(path string, mode uint32) (errc int) {
+	localPath, remotePath := fs.paths(path)
+	fs.log.Debug("RemoteFs: Mkdir: %v (%v) (mode=%o)", remotePath, localPath, mode)
+
+	_, err := fs.fileClient.CreateFolder(files_sdk.FolderCreateParams{Path: remotePath})
+	if files_sdk.IsExist(err) {
+		return errc
+	}
+
+	if errc = fs.handleError(path, err); errc != 0 {
+		return errc
+	}
+
+	node := fs.vfs.getOrCreate(path, nodeTypeDir)
+	node.updateSize(0)
+
+	return errc
+}
+
+func (fs *RemoteFs) Unlink(path string) (errc int) {
+	localPath, remotePath := fs.paths(path)
+
+	node, exists := fs.vfs.fetch(path)
+	if !exists {
+		// If the node doesn't exist, it can not be deleted.
+		fs.log.Debug("RemoteFs: Unlink: File not found: %v (%v)", remotePath, localPath)
+		return errc
+	}
+
+	// If the node is locked, it can not be deleted.
+	if node.isLocked() {
+		fs.log.Info("Cannot delete locked file: %v (%v)", remotePath, localPath)
+		return -fuse.ENOLCK
+	}
+
+	// If the node is being written to, cancel the upload and delete the file from the remote API.
+	// This is necessary because the file may be in the middle of being written to, and the upload may not have completed yet.
+	if node.isWriterOpen() {
+		fs.log.Debug("RemoteFs: Unlink: Canceling upload for: %v (%v)", remotePath, localPath)
+		node.cancelUpload()
+	}
+
+	// The fs may have been in the middle of writing the file, so don't log until here.
+	fs.log.Info("Deleting file: %v (%v)", remotePath, localPath)
+	return fs.delete(path)
+}
+
+func (fs *RemoteFs) Rmdir(path string) int {
+	localPath, remotePath := fs.paths(path)
+	fs.log.Info("Deleting folder: %v (%v)", remotePath, localPath)
+
+	return fs.delete(path)
+}
+
+func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
+	fs.log.Debug("RemoteFs: Rename: oldpath=%v, newpath=%v", oldpath, newpath)
+	oldLocalPath, oldRemotePath := fs.paths(oldpath)
+	newLocalPath, newRemotePath := fs.paths(newpath)
+
+	node, ok := fs.vfs.fetch(oldpath)
+	if !ok {
+		return -fuse.ENOENT
+	}
+
+	defer node.expireInfo()
+
+	// If there is no active upload for this node, proceed with the rename.
+	if !node.isWriterOpen() {
+		fs.log.Info("Renaming %v to %v (%v to %v)", oldRemotePath, newRemotePath, oldLocalPath, newLocalPath)
+
+		params := files_sdk.FileMoveParams{
+			Path:        oldRemotePath,
+			Destination: newRemotePath,
+			Overwrite:   lib.Ptr(true),
+		}
+
+		action, err := fs.fileClient.Move(params)
+		if errc = fs.handleError(oldpath, err); errc != 0 {
+			return errc
+		}
+
+		err = fs.waitForAction(action, "move")
+		if errc = fs.handleError(oldpath, err); errc != 0 {
+			return errc
+		}
+
+		fs.rename(oldpath, newpath)
+		return errc
+	}
+
+	// There must be an active upload for this node. Update local VFS map immediately so listings/
+	// lookups stay consistent. In order to support the pattern of writing a file to a temporary
+	// name, then renaming once the upload is complete, the node, and upload must be updated to
+	// reflect the new path. Before the upload is finalized, there is a callback that inspects the
+	// file node to get the final path and upload ref to complete the upload.
+	fs.rename(oldpath, newpath)
+	node.clearDownloadURI()
+
+	return errc
+}
+
+func (fs *RemoteFs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
+	localPath, remotePath := fs.paths(path)
+	modT := tmsp[1].Time()
+	fs.log.Debug("RemoteFs: Utimens: Updating mtime for: %v (%v) (mtime=%v)", remotePath, localPath, modT)
+
+	node := fs.vfs.getOrCreate(path, nodeTypeFile)
+	node.info.modTime = modT
+
+	if node.isWriterOpen() {
+		// If the fs is writing to the file, no need update the mtime. It will be updated when the write completes.
+		return errc
+	}
+
+	params := files_sdk.FileUpdateParams{
+		Path:          remotePath,
+		ProvidedMtime: &node.info.modTime,
+	}
+
+	_, err := fs.fileClient.Update(params)
+	return fs.handleError(path, err)
+}
+
+func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh uint64) {
+	localPath, remotePath := fs.paths(path)
+	fuseFlags := NewFuseFlags(flags)
+	fh, handle := fs.vfs.handles.Open(nil, fuseFlags)
+
+	fs.log.Debug("RemoteFs: Create: Creating file: %v (%v) (flags=%v, mode=%o, fh=%v)", remotePath, localPath, fuseFlags, mode, fh)
+
+	// Load the parent directory to populate the vfs nodes map
+	if errc = fs.loadParent(path); errc != 0 {
+		return errc, fh
+	}
+
+	node, exists := fs.vfs.fetch(path)
+	if exists && node.isWriterOpen() {
+		// the node exists and has an open writer, if the writer's offset is
+		// greater than zero, it means the file is actively being written to
+		if node.writer.Offset() > 0 {
+			fs.log.Info("Cannot create file while writing: %v (%v)", remotePath, localPath)
+			return -fuse.EEXIST, fh
+		}
+		// the node exists, and has an open writer, but the writer's offset is zero,
+		// meaning the file was created but nothing has been written to it yet.
+		// In this case, create a new file handle and return it. The writer will
+		// only be closed when a file handle that has written data is released to
+		// avoid creating multiple upload events for the same file.
+		fs.log.Debug("RemoteFs: Create: File already exists, but no data has been written: %v (%v)", remotePath, localPath)
+		handle.node = node
+		return errc, fh
+	}
+
+	// TODO: decide if this makes sense. the node exists and the cache data is recent
+	// so return an error for the Create call?
+	if exists && !node.infoExpired() {
+		fs.log.Debug("RemoteFs: Create: Node exists, cache data is recent, but no open writer: %v (%v)", remotePath, localPath)
+		return -fuse.EEXIST, fh
+	}
+
+	if !exists {
+		node = fs.vfs.getOrCreate(path, nodeTypeFile)
+	}
+
+	node.updateSize(0)
+	handle.node = node
+
+	if errc = fs.lock(node, fh); errc != 0 {
+		return errc, fh
+	}
+
+	if !node.isWriterOpen() {
+		fs.log.Debug("RemoteFs: Create: Opening writer %v (%v)", remotePath, localPath)
+		if err := node.openWriter(fs, fh); err != nil {
+			fs.log.Error("Error opening writer for %v: %v", path, err)
+			return -fuse.EIO, fh
+		}
+	}
+
+	return errc, fh
+}
+
+func (fs *RemoteFs) Open(path string, flags int) (errc int, fh uint64) {
+	fuseFlags := NewFuseFlags(flags)
+	node := fs.vfs.getOrCreate(path, nodeTypeFile)
+	fh, handle := fs.vfs.handles.Open(node, fuseFlags)
+	fs.log.Debug("RemoteFs: Open: path=%v, flags=%v, fh=%v", path, fuseFlags, fh)
+	// If the requested op is read only return 0 and a file handle. The fs will attempt
+	// to read from a temporary file backing the writer if it exists, otherwise it will
+	// read from the remote API.
+	// TODO: this can succeed even if the file doesn't exist. The file may be created
+	// later when the file is written to, or it may never be created if the file
+	// is never written to. Decide if this is the desired behavior.
+	if handle.IsReadOnly() {
+		return errc, fh
+	}
+	// after this point, the requested op must be a write operation
+
+	if errc = fs.lock(node, fh); errc != 0 {
+		return errc, fh
+	}
+
+	// Single-writer with adoption: block if committed, otherwise allow/adopt.
+	if node.writerIsOpen() {
+		_, _, committed := node.writerSnapshot()
+		if committed {
+			return -fuse.EBUSY, fh
+		}
+		// Uncommitted (zero bytes have been written) — let the subsequent Write
+		// claim ownership of the open writer.
+	}
+
+	// open the writer and associate it with a file handle
+	if !node.isWriterOpen() {
+		localPath, remotePath := fs.paths(path)
+		fs.log.Debug("RemoteFs: Open: Opening writer %v (%v)", remotePath, localPath)
+		if err := node.openWriter(fs, fh); err != nil {
+			fs.log.Error("Error opening writer for %v: %v", path, err)
+			return -fuse.EIO, fh
+		}
+	}
+
+	return errc, fh
+}
+
+func (fs *RemoteFs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
+	fs.log.Trace("RemoteFs: Getattr: path=%v, fh=%v", path, fh)
+	// If the file handle is open, extend the TTL of the open handle. The info may have expired,
+	// but the handle is still open, meaning the OS is still using the file. This can happen if there
+	// are multiple simultaneous uploads, but they haven't all received a write request in the last
+	// cacheTTL duration. If the Getattr call returns an error, the OS will remove the file from the
+	// Explorer/Finder window until the upload completes, and a subsequent Getattr call succeeds, which
+	// is a bad user experience.
+	fs.vfs.handles.ExtendOpenHandleTtls()
+	if node, exists := fs.vfs.fetch(path); exists && !node.infoExpired() {
+		fs.log.Trace("RemoteFs: Getattr: using cached stat, path=%v, size=%v, mtime=%v", path, node.info.size, node.info.modTime)
+		getStat(node.info, stat)
+		return errc
+	}
+
+	if errc = fs.loadParent(path); errc != 0 {
+		return errc
+	}
+
+	node, exists := fs.vfs.fetch(path)
+	if !exists {
+		node = nil
+
+		if fs.isLockFile(path) {
+			if lockedNode, exists := fs.vfs.fetchLockTarget(path); exists && lockedNode.isLocked() {
+				node = fs.vfs.getOrCreate(path, nodeTypeFile)
+				node.updateInfo(fsNodeInfo{
+					size:    int64(len(buildOwnerFile(lockedNode))),
+					modTime: time.Now(),
+				})
+			}
+		}
+
+		if node == nil {
+			localPath, remotePath := fs.paths(path)
+			fs.log.Trace("RemoteFs: Getattr: File not found: %v (%v)", remotePath, localPath)
+			return -fuse.ENOENT
+		}
+	}
+
+	fs.log.Trace("RemoteFs: Getattr: path=%v, size=%v, mtime=%v", path, node.info.size, node.info.modTime)
+	getStat(node.info, stat)
+
+	return errc
+}
+
+func (fs *RemoteFs) Truncate(path string, size int64, fh uint64) (errc int) {
+	// The word truncate is overloaded here. The intention is to set the size of the
+	// file to the size getting passed in, NOT to truncate the file to zero bytes.
+
+	localPath, remotePath := fs.paths(path)
+	fs.log.Debug("RemoteFs: Truncate: %v (%v) (size=%v, fh=%v)", remotePath, localPath, size, fh)
+
+	node := fs.vfs.getOrCreate(path, nodeTypeFile)
+	node.updateSize(size)
+
+	if !node.isWriterOpen() {
+		fs.log.Debug("RemoteFs: Truncate: Opening writer %v (%v)", remotePath, localPath)
+		if err := node.openWriter(fs, fh); err != nil {
+			fs.log.Error("Error opening writer for %v: %v", path, err)
+			return -fuse.EIO
+		}
+	}
+
+	return errc
+}
+
+func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
+	buffLen := int64(len(buff))
+	// return 0 bytes read if there's not way to pass bytes back anyway
+	if buffLen == 0 {
+		return 0
+	}
+
+	handle, node, ok := fs.vfs.handles.Lookup(fh)
+	if !ok {
+		fs.log.Debug("RemoteFs: Read: file handle %v not found for path %v", fh, path)
+		return -fuse.EBADF
+	}
+
+	// Attempt to read from the temporary file backing the writer if possible. If the read can't be
+	// satisfied from the temporary file, it will return zero bytes, and the logic will fall through to
+	// reading from the remote API.
+	if node.writerIsOpen() {
+		n = node.readFromWriter(buff, ofst)
+		if n > 0 {
+			handle.incrementRead(int64(n))
+			fs.log.Trace("RemoteFs: Read: readAt: path=%v, ofst=%d, read %d bytes from writer pipe", path, ofst, n)
+			return n
+		}
+	}
+
+	// the following operations all benefit from knowing the file size, so attempt to get the most
+	// up-to-date size possible before proceeding.
+	size := node.info.size
+	if node.infoExpired() || size <= 0 {
+
+		// in order to get the most up-to-date size the parent directory's info must be expired as well,
+		// otherwise the getattr call will return a cached stat that may not reflect the current size of the file.
+		fs.vfs.expireNodeInfo(path)
+		var st fuse.Stat_t
+		// ignore errno and fall back to range-from-ofst if still unknown
+		_ = fs.Getattr(path, &st, fh)
+		size = node.info.size
+	}
+
+	// make sure offset is not negative, and if size is known, that offset is not past EOF
+	if ofst < 0 {
+		ofst = 0
+	}
+	if !node.writerIsOpen() && size == 0 {
+		fs.log.Trace("RemoteFs: Read: file is empty, returning EOF")
+		return 0
+	}
+	// attempting to read past EOF
+	if size > 0 && ofst >= size {
+		fs.log.Trace("RemoteFs: Read: offset %d is greater than file size %d, returning EOF", ofst, size)
+		return 0
+	}
+
+	// TODO: determine if this is still needed, or if it needs to move to the localfs, these files are written to the local fs and not
+	// stored remotely anymore
+	if fs.isLockFile(path) {
+		if lockedNode, ok := fs.vfs.fetchLockTarget(path); ok && lockedNode.isLocked() {
+			ownerBuffer := buildOwnerFile(lockedNode)
+			return copy(buff, ownerBuffer[ofst:])
+		}
+	}
+
+	// At this point, the read request could not be satisfied from the temporary file backing the
+	// writer, so read from the remote API.
+
+	// the strategy for determining the correct range to request is as follows:
+	// * If the size of the file is known, clamp the read to EOF
+	// * If the size of the file is unknown, request from the offset to EOF
+	sizeKnown := size > 0
+	var (
+		headers  = &http.Header{}
+		setRange bool
+		fullRead bool
+		toRead   = buffLen
+	)
+
+	if sizeKnown {
+		// clamp to EOF
+		remaining := size - ofst
+		if remaining <= 0 {
+			fs.log.Trace("RemoteFs: Read: offset %d is greater than file size %d, returning EOF", ofst, size)
+			return 0
+		}
+		if buffLen > remaining {
+			toRead = remaining
+		}
+		// if reading from the beginning, and the number of bytes to read is the size of the file
+		// then this is a full read
+		fullRead = (ofst == 0 && toRead == size)
+		if !fullRead {
+			// this is a partial read, so set the Range header
+			setRange = true
+			headers.Set("Range", fmt.Sprintf("bytes=%d-%d", ofst, ofst+toRead-1))
+		}
+	} else {
+		// Unknown size: request from offset to EOF
+		setRange = true
+		headers.Set("Range", fmt.Sprintf("bytes=%d-", ofst))
+	}
+
+	// Make the API call to download the file, passing in the Range header if set.
+	var file files_sdk.File
+	var err error
+	file, err = fs.fileClient.Download(
+		files_sdk.FileDownloadParams{
+			File: files_sdk.File{
+				Path:        fs.remotePath(path), // or fs.paths(path)
+				DownloadUri: node.downloadUri,
+			},
+		},
+		files_sdk.RequestHeadersOption(headers),
+		files_sdk.ResponseOption(func(resp *http.Response) error {
+			defer func() { io.Copy(io.Discard, resp.Body); _ = resp.Body.Close() }()
+			// Accept statuses depending on the kind of request we made.
+			switch {
+			case setRange && !fullRead:
+				// if it's a range request, and not a full read, expect 206 Partial Content
+				if resp.StatusCode != http.StatusPartialContent {
+					return files_sdk.APIError()(resp)
+				}
+			case fullRead:
+				// if it is a full read, expect 200 OK or 206 Partial Content
+				if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
+					return files_sdk.APIError()(resp)
+				}
+			default:
+				// no Range header: expect 200 (204 also OK for empty objects)
+				if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+					return files_sdk.APIError()(resp)
+				}
+			}
+
+			// Decide how many bytes to pull into buff this call.
+			wantBytes := int(toRead)
+			if !sizeKnown {
+				// Unknown size: read up to len(buff), or Content-Length if smaller.
+				if resp.ContentLength >= 0 && resp.ContentLength < int64(len(buff)) {
+					wantBytes = int(resp.ContentLength)
+				} else {
+					wantBytes = len(buff)
+				}
+			}
+			if wantBytes == 0 {
+				fs.log.Debug("RemoteFs: Read: API returned 0 bytes, returning EOF")
+				n = 0
+				return nil
+			}
+
+			// Read exactly wantBytes, treating short reads as success w/ partial n.
+			m, rerr := io.ReadFull(resp.Body, buff[:wantBytes])
+			n = m
+			if rerr == io.ErrUnexpectedEOF || rerr == io.EOF {
+				return nil
+			}
+			return rerr
+		}),
+	)
+	if errc := fs.handleError(path, err); errc != 0 {
+		return errc
+	}
+
+	if file.DownloadUri != "" {
+		node.setDownloadURI(file.DownloadUri)
+	}
+	fs.log.Debug("RemoteFs: Read: ok path=%v ofst=%d read=%d", path, ofst, n)
+	handle.incrementRead(int64(n))
+	return n
+}
+
+func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
+	fs.log.Debug("RemoteFs: Write: path=%v, len=%v, ofst=%v, fh=%v", path, len(buff), ofst, fh)
+
+	_, node, ok := fs.vfs.handles.Lookup(fh)
+
+	if !ok {
+		fs.log.Debug("RemoteFs: Write: file handle %v not found for path %v", fh, path)
+		return -fuse.EBADF
+	}
+
+	if !node.isWriterOpen() {
+		localPath, remotePath := fs.paths(path)
+		fs.log.Debug("RemoteFs: Write: Opening writer %v (%v)", remotePath, localPath)
+		if err := node.openWriter(fs, fh); err != nil {
+			fs.log.Error("Error opening writer for %v: %v", path, err)
+			return -fuse.EIO
+		}
+	}
+	// Guard concurrent writers:
+	// - If a writer exists and has written bytes, only the owner may write.
+	// - If a writer exists but is uncommitted (offset==0), allow first real writer to adopt.
+	if node.isWriterOpen() {
+		_, owner, committed := node.writerSnapshot()
+		if committed && owner != fh {
+			fs.log.Debug("RemoteFs: Write: writer already committed for path=%v, fh=%v, owner=%v", path, fh, owner)
+			return -fuse.EBUSY
+		}
+		_, _ = node.adoptWriterIfUncommitted(fh)
+	}
+	// Write the buffer to the ordered pipe, which handles maintaining write order
+	// and temporarily caching out-of-order writes until they can be written sequentially.
+	n, err := node.writer.writeAt(buff, ofst)
+	if errc := fs.handleError(path, err); errc != 0 {
+		return errc
+	}
+	return n
+}
+
+func (fs *RemoteFs) Release(path string, fh uint64) (errc int) {
+	fs.log.Debug("RemoteFs: Release: path=%v, fh=%v", path, fh)
+	handle, node, ok := fs.vfs.handles.Lookup(fh)
+
+	// Remove the handle from the set of open handles in all cases,
+	// the host FS is finished with the handle, so it will not be used again.
+	defer fs.vfs.handles.Release(fh)
+
+	if !ok {
+		// This is an unexpected condition. Why is the OS calling to release
+		// a file handle that was never opened? There's no file handle to release,
+		// so log the error and try to unlock the path if it was locked.
+		fs.log.Debug("RemoteFs: Release: file handle not found for path: %v, fh: %v", path, fh)
+
+		// unlock is a no-op if the path/handle combo doesn't match an existing lock
+		if errc = fs.unlock(path, fh); errc != 0 {
+			return errc
+		}
+		return errc
+	}
+
+	// if the handle read any bytes, log an info message that the download is complete
+	bytesRead := handle.bytesRead.Load()
+	if bytesRead > 0 {
+		localPath, remotePath := fs.paths(path)
+		fs.log.Info("Download complete: %v (%v), size=%v", remotePath, localPath, bytesRead)
+	}
+
+	// If the handle is a read only operation, there's nothing left to do.
+	if handle.IsReadOnly() {
+		fs.log.Debug("RemoteFs: Release: closed handle for path=%v, fh=%v", path, fh)
+		return errc
+	}
+
+	// Only the owning writer may close/finalize, and only if data was written.
+	_, owner, committed := node.writerSnapshot()
+	iOwn, wrote := owner == fh, committed
+
+	// set the node's expire time to expired so that the next Getattr call will trigger a reload of the node's info from the remote API.
+	defer node.expireInfo()
+	if iOwn && wrote {
+		// close the writer, which signals that no more data will be written, and will
+		// finalize the upload once all data has been written to the API.
+		fs.log.Debug("RemoteFs: Release: handle marked as written: closing writer for path=%v, fh=%v", path, fh)
+		if err := node.closeWriter(); err != nil {
+			fs.log.Debug("RemoteFs: Release: error closing writer for %v: %v", path, err)
+			return -fuse.EIO
+		}
+		// wait for the upload to complete
+		_ = node.waitForUploadIfFinalizing(context.TODO())
+	}
+
+	// If this owner never wrote any bytes, keep the writer open to allow adoption.
+	if iOwn && !wrote {
+		// DO NOT close the writer.
+		// Not closing the writer allows the writer to be reused for a subsequent write
+		// operation. If no subsequent write operation occurs, the handle will be cleaned
+		// up by a periodic cleanup task that checks how long since the last write operation
+		// was performed on the handle.
+		fs.log.Debug("RemoteFs: Release: handle for path=%v, fh=%v was never written to, not closing writer", path, fh)
+	}
+	return fs.unlock(path, fh)
+}
+
+func (fs *RemoteFs) Opendir(path string) (errc int, fh uint64) {
+	node := fs.vfs.getOrCreate(path, nodeTypeDir)
+	fh, _ = fs.vfs.handles.Open(node, NewFuseFlags(fuse.O_RDONLY))
+	fs.log.Trace("RemoteFs: Opendir: path=%v, fh=%v", path, fh)
+	return errc, fh
+}
+
+func (fs *RemoteFs) Readdir(path string,
+	fill func(name string, stat *fuse.Stat_t, ofst int64) bool,
+	ofst int64,
+	fh uint64) (errc int) {
+
+	localPath, remotePath := fs.paths(path)
+
+	// This happens a lot, so log at trace level.
+	fs.log.Trace("RemoteFs: Readdir: Listing folder: %v (%v)", remotePath, localPath)
+
+	fillNode, _ := fs.vfs.fetch(path)
+
+	// Force a load of the directory entries from the remote to make sure
+	// the local vfs representation is up to date.
+	if errc = fs.loadDir(fillNode); errc != 0 {
+		return errc
+	}
+
+	fill(".", nil, 0)
+	fill("..", nil, 0)
+
+	// construct a list of child entries for the current directory
+	entries := make([]string, len(fillNode.childPaths))
+	pos := 0
+	for childPath := range fillNode.childPaths {
+		entries[pos] = childPath
+		pos++
+	}
+
+	// make sure to append any open paths that are not already in the entries list
+	// this ensures that uploads in progress are visible in the directory listing
+	handles := fs.vfs.handles.OpenHandles()
+	for _, handle := range handles {
+		openNode := handle.node
+		// skip the remote root node, the node that represents the current directory being read, and nodes
+		// that are rooted in the local fs (e.g. temporary files created by the OS)
+		if openNode.path == fs.root || openNode.path == path || strings.HasPrefix(openNode.path, fs.localFsRoot) {
+			continue
+		}
+		if !slices.Contains(entries, openNode.path) && path == filepath.Dir(openNode.path) {
+			fs.log.Debug("RemoteFs: Readdir: Child entries %v: for path %s, does not include open handle: %v, adding %v", entries, path, handle, openNode.path)
+			entries = append(entries, openNode.path)
+		}
+	}
+
+	// sort the entries in order to provide a consistent sort order when calling fill
+	slices.Sort(entries)
+	for _, entryPath := range entries {
+		if entryNode, ok := fs.vfs.fetch(entryPath); ok {
+			fs.log.Trace("RemoteFs: Readdir: Calling fill for entry: %v (%v)", entryPath, entryPath)
+			fill(path_lib.Base(entryPath), getStat(entryNode.info, nil), 0)
+		} else {
+			// This can happen if the OS has opened multiple handles for a single node, and Unlink
+			// is called on a path before all the handles are Released. In this case, the node will
+			// be removed from the vfs, but the handle will still exist in the handles map, and the
+			// Readdir call will attempt to fill the entry for the node that no longer exists in the vfs.
+			fs.log.Debug("RemoteFs: Readdir: entry node not found: %v (%v)", path_lib.Base(entryPath), entryPath)
+		}
+	}
+
+	return errc
+}
+
+func (fs *RemoteFs) Releasedir(path string, fh uint64) (errc int) {
+	fs.log.Trace("RemoteFs: Releasedir: path=%v, fh=%v", path, fh)
+	fs.vfs.handles.Release(fh)
+	return errc
+}
+
+// Chmod changes the permission bits of a file.
+// Files.com does not support POSIX permissions, but certain operations may fail
+// if calling Chmod returns an error, so this implementation is a no-op that returns success.
+func (fs *RemoteFs) Chmod(path string, mode uint32) int {
+	fs.log.Debug("RemoteFs: Chmod: path=%v, mode=%o", path, mode)
+	return 0
+}
+
+// Fsync attempts to synchronize file contents.
+// If an upload is active but the writer is already closed (finalizing in background),
+// wait for completion. Otherwise, fall back to ENOSYS.
+func (fs *RemoteFs) Fsync(path string, datasync bool, fh uint64) (errc int) {
+	fs.log.Trace("RemoteFs: Fsync: path=%v, datasync=%v, fh=%v", path, datasync, fh)
+	node, _ := fs.vfs.fetch(path)
+	if node == nil {
+		return errc
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), fsyncTimeout)
+	defer cancel()
+	if err := node.waitForUploadIfFinalizing(ctx); err == nil {
+		return errc
+	}
+	return -fuse.ETIMEDOUT
+}
+
+func (fs *RemoteFs) uploadProgressFunc(node *fsNode) func(int64) {
+	return func(delta int64) {
+		// If the write was successful, extend the node's ttl and keep track of the number
+		// of bytes written for logging purposes.
+		// Extend the node's TTL and keep track of bytes written for logging/sweeping.
+		node.extendTtl()
+		node.recordProgress(delta)
+	}
+}
+
+func (fs *RemoteFs) writeFile(path string, reader io.Reader, mtime time.Time, fh uint64) {
+	localPath, remotePath := fs.paths(path)
+	fs.log.Info("Starting upload: %v (%v)", remotePath, localPath)
+	_, node, _ := fs.vfs.handles.Lookup(fh)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	node.startUpload(path, cancel)
+	uploadOpts := []file.UploadOption{
+		file.UploadWithContext(ctx),
+		file.UploadWithDestinationPath(remotePath),
+		file.UploadWithReader(reader),
+		file.UploadWithProvidedMtime(mtime),
+		file.UploadWithProgress(fs.uploadProgressFunc(node)),
+
+		// Using the WithUploadStartedCallback option allows capturing
+		// the upload reference as soon as the upload starts, which is needed in
+		// order to support renaming the file during an active upload.
+		file.WithUploadStartedCallback(func(part files_sdk.FileUploadPart) {
+			fs.log.Debug("RemoteFs: Upload started: %v (%v), upload ref: '%v'", remotePath, localPath, part.Ref)
+			node.captureRef(part.Ref)
+		}),
+
+		// Using the WithUploadRenamedCallback option allows renaming the upload
+		// while it is in progress. This is needed in order to support the pattern
+		// of writing a file to a temporary name, then renaming it to the final
+		// name once the upload is complete.
+		file.WithUploadRenamedCallback(func() (string, string) {
+			if remotePath != node.path {
+				fs.log.Debug("RemoteFs: writeFile: in progress upload renamed from: %v to %v", remotePath, node.path)
+			}
+			return node.pathAndRef()
+		}),
+	}
+	if fs.writeConcurrency != 0 {
+		uploadOpts = append(uploadOpts, file.UploadWithManager(manager.ConcurrencyManager{}.New(fs.writeConcurrency)))
+	}
+
+	start := time.Now()
+	u, err := fs.fileClient.UploadWithResume(uploadOpts...)
+	if err != nil {
+		// this is only an error if the upload was not cancelled. If the upload was cancelled, it should not be logged as an error.
+		if !errors.Is(err, context.Canceled) && !files_sdk.IsNotExist(err) {
+			fs.log.Error("Error uploading file: %v (%v): %v", remotePath, localPath, err)
+		}
+		return
+	}
+	node.closeUpload(u.Size)
+	fs.log.Info("Upload completed: %v (%v).", remotePath, localPath)
+	fs.log.Debug("RemoteFs: Bytes: %v, Duration: %v, fh: %v", u.Size, time.Since(start), fh)
+}
+
+// this is a convenience method for uploading a file from the local filesystem to the remote API
+// for use by the Rename operation when moving a file from the LocalFs to the RemoteFs.
+func (fs *RemoteFs) uploadFile(src, dst string) error {
+	fs.log.Debug("Uploading file: %v to %v", src, dst)
+	if err := fs.fileClient.Upload(file.UploadWithFile(src), file.UploadWithDestinationPath(dst)); err != nil {
+		return err
+	}
+	fs.vfs.expireNodeInfo(dst)
+	fs.loadParent(dst)
+	return nil
+}
+
+// this is a convenience method for downloading a file from the remote API to the local filesystem
+// for use by the Rename operation when moving a file from the RemoteFs to the LocalFs.
+func (fs *RemoteFs) downloadFile(src, dst string) error {
+	fs.log.Debug("RemoteFs: Downloading file: %v to %v", src, dst)
+	_, err := fs.fileClient.DownloadToFile(files_sdk.FileDownloadParams{Path: src}, dst)
+	return err
+}
+
+// rename updates local bookkeeping for a path change.
+// It renames the node in the VFS, migrates any lock entry, and clears stale URLs.
+func (fs *RemoteFs) rename(oldpath, newpath string) {
+	// 1) Update the in-memory node map (and parent childPaths) first.
+	//    vfs.rename should handle moving the node and fixing parent listings.
+	node := fs.vfs.rename(oldpath, newpath)
+
+	// 2) Move any lock entry old -> new.
+	fs.lockMapMutex.Lock()
+	if li, ok := fs.lockMap[oldpath]; ok {
+		delete(fs.lockMap, oldpath)
+		fs.lockMap[newpath] = li
+	}
+	fs.lockMapMutex.Unlock()
+
+	// 3) Clear any cached presigned URL for this node (path changed).
+	if node != nil {
+		node.clearDownloadURI()
+	}
+}
+
+func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
+	if fs.disableLocking {
+		return errc
+	}
+
+	node.lockMutex.Lock()
+	defer node.lockMutex.Unlock()
+
+	fs.lockMapMutex.Lock()
+	defer fs.lockMapMutex.Unlock()
+
+	localPath, remotePath := fs.paths(node.path)
+	fs.log.Debug("RemoteFs: lock: file %v (%v) fh=%v", remotePath, localPath, fh)
+
+	if node.isLocked() {
+		fs.log.Error("File is already locked by %v: %v (%v) fh=%v", node.info.lockOwner, remotePath, localPath, fh)
+		errc = -fuse.ENOLCK
+		return errc
+	}
+
+	lock, err := fs.lockClient.Create(files_sdk.LockCreateParams{
+		Path:                 remotePath,
+		AllowAccessByAnyUser: lib.Ptr(true),
+		Exclusive:            lib.Ptr(true),
+		Recursive:            lib.Ptr(true),
+		Timeout:              fileLockSeconds,
+	})
+
+	if files_sdk.IsExist(err) {
+		// the file is already locked, if it's in the lock map and not owned by this user, return ENOLCK
+		linfo, ok := fs.lockMap[node.path]
+		if ok && fs.currentUserId != linfo.Lock.UserId {
+			fs.log.Error("File '%v' is already locked by %v:", remotePath, linfo.Lock.Username)
+			return -fuse.ENOLCK
+		}
+		if ok && fs.currentUserId == linfo.Lock.UserId {
+			// If the lock is already held by the current user, treat it as a success.
+			fs.log.Debug("RemoteFs: lock: File is already locked by current user %v: %v (%v) fh=%v", fs.currentUserId, remotePath, localPath, fh)
+			return 0
+		}
+	}
+
+	if errc = fs.handleError(node.path, err); errc != 0 {
+		return errc
+	}
+	fs.log.Debug("RemoteFs: lock: created owner=%v, path=%v, fh=%v", lock.Username, remotePath, fh)
+	fs.lockMap[node.path] = &lockInfo{Fh: fh, Lock: &lock}
+	return errc
+}
+
+func (fs *RemoteFs) unlock(path string, fh uint64) (errc int) {
+	if fs.disableLocking {
+		return errc
+	}
+
+	// If the node exists, prevent locking while unlocking.
+	// If the node was renamed/moved, it may still need to be unlocked.
+	if node, ok := fs.vfs.fetch(path); ok {
+		node.lockMutex.Lock()
+		defer node.lockMutex.Unlock()
+	}
+
+	fs.lockMapMutex.Lock()
+	defer fs.lockMapMutex.Unlock()
+
+	lockInfo, ok := fs.lockMap[path]
+	if !ok {
+		// If the lock map doesn't have an entry for this path, it means the file
+		// was never locked, or it was locked by a different file handle.
+		fs.log.Debug("RemoteFs: unlock: File not locked: %v fh=%v", path, fh)
+		return errc
+	}
+	if lockInfo.Fh != fh {
+		// This is fine. It just means the file either wasn't locked or it was locked by a different file handle.
+		fs.log.Debug("RemoteFs: unlock: File not locked by this handle: %v fh=%v", path, fh)
+		return errc
+	}
+
+	localPath, remotePath := fs.paths(path)
+	fs.log.Debug("RemoteFs: unlock: file %v (%v)", remotePath, localPath)
+
+	err := fs.lockClient.Delete(files_sdk.LockDeleteParams{
+		Path:  remotePath,
+		Token: lockInfo.Lock.Token,
+	})
+	if files_sdk.IsNotExist(err) {
+		// If the lock was already deleted, consider it a success.
+		fs.log.Debug("RemoteFs: unlock: %v (%v) err=%v", remotePath, localPath, err)
+		delete(fs.lockMap, path)
+		return errc
+	}
+	// for any other error, handle it normally
+	if errc = fs.handleError(path, err); errc != 0 {
+		return errc
+	}
+
+	delete(fs.lockMap, path)
+	return errc
+}
+
+func (fs *RemoteFs) paths(path string) (string, string) {
+	return fs.localPath(path), fs.remotePath(path)
+}
+
+func (fs *RemoteFs) localPath(path string) string {
+	return filepath.Join(fs.mountPoint, path)
+}
+
+func (fs *RemoteFs) remotePath(path string) string {
+	return path_lib.Join(fs.root, path)
+}
+
+func (fs *RemoteFs) handleError(path string, err error) int {
+	if err != nil {
+		localPath, remotePath := fs.paths(path)
+		fs.log.Error("%v (%v): %v", remotePath, localPath, err)
+
+		if files_sdk.IsNotExist(err) {
+			return -fuse.ENOENT
+		}
+		if files_sdk.IsExist(err) {
+			return -fuse.EEXIST
+		}
+		if isFolderNotEmpty(err) {
+			return -fuse.ENOTEMPTY
+		}
+		return -fuse.EIO
+	}
+	return 0
+}
+
+func (fs *RemoteFs) delete(path string) (errc int) {
+	err := fs.fileClient.Delete(files_sdk.FileDeleteParams{Path: fs.remotePath(path)})
+	// if there's an error, and it's a not-found, consider it a success.
+	if files_sdk.IsNotExist(err) {
+		// if the delete was successful, remove the node from the vfs
+		fs.vfs.remove(path)
+		return errc
+	}
+	// for any other error, handle it normally
+	if errc = fs.handleError(path, err); errc != 0 {
+		return errc
+	}
+	// if the delete was successful, remove the node from the vfs
+	fs.vfs.remove(path)
+	return errc
+}
+
+func (fs *RemoteFs) loadParent(path string) (errc int) {
+	if path == "/" {
+		// If loading at the root, the parent can't be loaded. Just make sure the root exists.
+		_, errc = fs.findDir(path)
+		return errc
+	}
+
+	parentPath := path_lib.Dir(path)
+	parent, ok := fs.vfs.fetch(parentPath)
+
+	// Make sure the parent is actually a directory that exists before attempting to load it.
+	if !ok || parent.infoExpired() {
+		parent, errc = fs.findDir(parentPath)
+		if errc != 0 {
+			return errc
+		}
+	}
+
+	if parent.info.nodeType != nodeTypeDir {
+		// Don't log an error. Windows File Explorer sometimes treats shortcuts as parent directories.
+		fs.log.Trace("RemoteFs: loadParent: Parent of %s is not a directory %s", path, parentPath)
+		return -fuse.ENOTDIR
+	}
+
+	return fs.loadDir(parent)
+}
+
+func (fs *RemoteFs) findDir(path string) (node *fsNode, errc int) {
+	remotePath := fs.remotePath(path)
+
+	if remotePath == "/" {
+		// Special case that the root directory of a Files.com site can't be stat'd.
+		node = fs.vfs.getOrCreate(path, nodeTypeDir)
+		node.updateInfo(fsNodeInfo{
+			nodeType:     nodeTypeDir,
+			creationTime: fs.initTime,
+			modTime:      time.Now(),
+		})
+		return node, errc
+	}
+
+	item, err := fs.fileClient.Find(files_sdk.FileFindParams{Path: remotePath})
+	// Check for non-existence first so it doesn't get logged as an error, since this may be expected.
+	if files_sdk.IsNotExist(err) {
+		errc = -fuse.ENOENT
+		return node, errc
+	}
+	if errc = fs.handleError(path, err); errc != 0 {
+		return nil, errc
+	}
+	if !item.IsDir() {
+		errc = -fuse.ENOTDIR
+		return node, errc
+	}
+
+	node = fs.createNode(path, item)
+
+	return node, errc
+}
+
+func (fs *RemoteFs) loadDir(node *fsNode) (errc int) {
+	fs.loadDirMutex.Lock()
+	defer fs.loadDirMutex.Unlock()
+	if node.infoExpired() {
+		fs.log.Debug("RemoteFs: loadDir: Loading directory: %v", node.path)
+		err := node.updateChildPaths(fs.listDir)
+		if errc = fs.handleError(node.path, err); errc != 0 {
+			return errc
+		}
+	} else {
+		fs.log.Debug("RemoteFs: loadDir: Skipping load of directory, info not expired: %v", node.path)
+	}
+	return errc
+}
+
+func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, err error) {
+	fs.log.Trace("RemoteFs: listDir: Listing directory: %v", path)
+	it, err := fs.fileClient.ListFor(files_sdk.FolderListForParams{Path: fs.remotePath(path)})
+	if err != nil {
+		return nil, err
+	}
+
+	childPaths = make(map[string]struct{})
+
+	for it.Next() {
+		item := it.File()
+
+		childPath := path_lib.Join(path, item.DisplayName)
+		childPaths[childPath] = struct{}{}
+
+		fs.createNode(childPath, item)
+	}
+	err = it.Err()
+	if err != nil {
+		return childPaths, err
+	}
+
+	if fs.disableLocking {
+		return childPaths, err
+	}
+
+	locks, err := fs.lockClient.ListFor(files_sdk.LockListForParams{
+		Path:            fs.remotePath(path),
+		IncludeChildren: lib.Ptr(true),
+	})
+	if err != nil {
+		return childPaths, err
+	}
+
+	for locks.Next() {
+		lock := locks.Lock()
+		childPath := path_lib.Join(path, path_lib.Base(lock.Path))
+
+		// Ignore paths where the lock is held by this filesystem.
+		if _, ok := fs.lockMap[childPath]; ok {
+			continue
+		}
+
+		if child, ok := fs.vfs.fetch(childPath); ok {
+			fs.log.Trace("RemoteFs: listDir: Found lock for child path %v, setting lock owner to %v", childPath, lock.Username)
+			child.info.lockOwner = lock.Username
+		}
+	}
+	err = locks.Err()
+
+	return childPaths, err
+}
+
+func (fs *RemoteFs) createNode(path string, item files_sdk.File) *fsNode {
+	var nt nodeType
+	if item.IsDir() {
+		nt = nodeTypeDir
+	} else {
+		nt = nodeTypeFile
+	}
+	node := fs.vfs.getOrCreate(path, nt)
+	node.updateInfo(fsNodeInfo{
+		nodeType:     nt,
+		size:         item.Size,
+		modTime:      item.ModTime(),
+		creationTime: item.CreationTime(),
+	})
+
+	return node
+}
+
+func (fs *RemoteFs) waitForAction(action files_sdk.FileAction, operation string) error {
+	migration, err := fs.migrationClient.Wait(action, func(migration files_sdk.FileMigration) {
+		fs.log.Trace("RemoteFs: watchForAction: waiting for migration")
+	})
+	if err == nil && migration.Status != "completed" {
+		return fmt.Errorf("%v did not complete successfully: %v", operation, migration.Status)
+	}
+	return err
+}
+
+func (fs *RemoteFs) isLockFile(path string) bool {
+	return isMsOfficeOwnerFile(path) && !fs.disableLocking
+}
+
+// Methods below are part of the fuse.FileSystemInterface, but not supported by
+// this implementation. They exist here to support logging for visibility of how
+// the underlying fuse layer calls into this implementation.
+
+// Mknod creates a file node.
+// The return value of -fuse.ENOSYS indicates the method is not supported.
+func (fs *RemoteFs) Mknod(path string, mode uint32, dev uint64) int {
+	fs.log.Trace("RemoteFs: Mknod: path=%v, mode=%o, dev=%v", path, mode, dev)
+	return -fuse.ENOSYS
+}
+
+// Link creates a hard link to a file.
+// The return value of -fuse.ENOSYS indicates the method is not supported.
+func (fs *RemoteFs) Link(oldpath string, newpath string) int {
+	fs.log.Trace("RemoteFs: Link: old=%v, new=%v", oldpath, newpath)
+	return -fuse.ENOSYS
+}
+
+// Symlink creates a symbolic link.
+// The return value of -fuse.ENOSYS indicates the method is not supported.
+func (fs *RemoteFs) Symlink(target string, newpath string) int {
+	fs.log.Trace("RemoteFs: Symlink: target=%v, newpath=%v", target, newpath)
+	return -fuse.ENOSYS
+}
+
+// Readlink reads the target of a symbolic link.
+// The return value of -fuse.ENOSYS indicates the method is not supported.
+func (fs *RemoteFs) Readlink(path string) (int, string) {
+	fs.log.Trace("RemoteFs: Readlink: path=%v", path)
+	return -fuse.ENOSYS, ""
+}
+
+// Chown changes the owner and group of a file.
+// The return value of -fuse.ENOSYS indicates the method is not supported.
+func (fs *RemoteFs) Chown(path string, uid uint32, gid uint32) int {
+	fs.log.Trace("RemoteFs: Chown: path=%v, uid=%v, gid=%v", path, uid, gid)
+	return -fuse.ENOSYS
+}
+
+// Access checks file access permissions.
+// The return value of -fuse.ENOSYS indicates the method is not supported.
+func (fs *RemoteFs) Access(path string, mask uint32) int {
+	fs.log.Trace("RemoteFs: Access: path=%v, mask=%v", path, mask)
+	return -fuse.ENOSYS
+}
+
+// Flush flushes cached file data.
+// The return value of -fuse.ENOSYS indicates the method is not supported.
+func (fs *RemoteFs) Flush(path string, fh uint64) int {
+	fs.log.Trace("RemoteFs: Flush: path=%v, fh=%v", path, fh)
+	return 0
+}
+
+// Fsyncdir synchronizes directory contents.
+// The return value of -fuse.ENOSYS indicates the method is not supported.
+func (fs *RemoteFs) Fsyncdir(path string, datasync bool, fh uint64) int {
+	fs.log.Trace("RemoteFs: Fsyncdir: path=%v, datasync=%v, fh=%v", path, datasync, fh)
+	return 0
+}
+
+// The [Foo]xattr implementations below explicitly return 0 to indicate that
+// extended attributes are "supported" in order to ensure that the other xattr
+// methods are called for debugging visibility, but are all no-op implementations.
+
+// Getxattr gets extended attributes.
+// Any return value other than -fuse.ENOSYS indicates support for extended
+// attributes, but also expects Setxattr, Listxattr, and Removexattr to exist
+// for extended attribute support.
+func (fs *RemoteFs) Getxattr(path string, name string) (int, []byte) {
+	fs.log.Debug("RemoteFs: Getxattr: path=%v, name=%v", path, name)
+	return 0, []byte{}
+}
+
+// Setxattr sets extended attributes.
+func (fs *RemoteFs) Setxattr(path string, name string, value []byte, flags int) int {
+	fuseFlags := NewFuseFlags(flags)
+	fs.log.Debug("RemoteFs: Setxattr: path=%v, name=%v, value=%v flags=%v", path, name, value, fuseFlags)
+	return 0
+}
+
+// Removexattr removes extended attributes.
+func (fs *RemoteFs) Removexattr(path string, name string) int {
+	fs.log.Debug("RemoteFs: Removexattr: path=%v, name=%v", path, name)
+	return 0
+}
+
+// Listxattr lists extended attributes.
+func (fs *RemoteFs) Listxattr(path string, fill func(name string) bool) int {
+	fs.log.Debug("RemoteFs: Listxattr: path=%v", path)
+	return 0
+}
+
+// FileSystemOpenEx is the interface that wraps the OpenEx and CreateEx methods.
+
+// OpenEx and CreateEx are similar to Open and Create except that they allow
+// direct manipulation of the FileInfo_t struct (which is analogous to the
+// FUSE struct fuse_file_info). If implemented, they are preferred over
+// Open and Create.
+func (fs *RemoteFs) CreateEx(path string, mode uint32, fi *fuse.FileInfo_t) int {
+	fs.log.Debug("RemoteFs: CreateEx: path=%v, mode=%o, fi=%v", path, mode, fi)
+	errc, fh := fs.Create(path, fi.Flags, mode)
+	fi.Fh = fh
+	return errc
+}
+
+func (fs *RemoteFs) OpenEx(path string, fi *fuse.FileInfo_t) int {
+	fs.log.Debug("RemoteFs: OpenEx: path=%v, fi=%v", path, fi)
+	errc, fh := fs.Open(path, fi.Flags)
+	fi.Fh = fh
+	return errc
+}
+
+// Getpath is part of the FileSystemGetpath interface and
+// allows a case-insensitive file system to report the correct case of a file path.
+func (fs *RemoteFs) Getpath(path string, fh uint64) (int, string) {
+	fs.log.Trace("RemoteFs: Getpath: path=%v, fh=%v", path, fh)
+	return -fuse.ENOSYS, path
+}
+
+// Chflags is part of the FileSystemChflags interface and
+// changes the BSD file flags (Windows file attributes).
+func (fs *RemoteFs) Chflags(path string, flags uint32) int {
+	fs.log.Trace("RemoteFs: Chflags: path=%v, flags=%v", path, flags)
+	return -fuse.ENOSYS
+}
+
+// Setcrtime is part of the FileSystemSetcrtime interface and
+// changes the file creation (birth) time.
+func (fs *RemoteFs) Setcrtime(path string, tmsp fuse.Timespec) int {
+	fs.log.Trace("RemoteFs: Setcrtime: path=%v, tmsp=%v", path, tmsp)
+	return -fuse.ENOSYS
+}
+
+// Setchgtime is part of the FileSystemSetchgtime interface and
+// changes the file change (ctime) time.
+func (fs *RemoteFs) Setchgtime(path string, tmsp fuse.Timespec) int {
+	fs.log.Trace("RemoteFs: Setchgtime: path=%v, tmsp=%v", path, tmsp)
+	return -fuse.ENOSYS
+}

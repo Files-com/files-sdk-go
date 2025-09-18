@@ -5,9 +5,23 @@ package fsmount
 import (
 	"fmt"
 	"os"
+	"regexp"
 )
 
+var (
+	validMountPointRe = regexp.MustCompile(`^[A-Za-z]:$`)
+)
+
+// mountPoint validates or selects a mount point (drive letter) for the FUSE filesystem.
+// If mountPoint is empty, it finds the highest available drive letter by searching backward
+// from Z: to D:.
+// If mountPoint is provided, it validates that it is a single drive letter followed by a colon (e.g. "X:")
+// and checks that the drive letter is not already in use.
+// Returns the selected or validated mount point, or an error if no valid mount point is found.
 func mountPoint(mountPoint string) (string, error) {
+	if err := validateMountPoint(mountPoint); err != nil {
+		return "", err
+	}
 	if mountPoint == "" {
 		// Find the highest available drive letter.
 		for l := 'Z'; l >= 'D'; l-- {
@@ -19,17 +33,29 @@ func mountPoint(mountPoint string) (string, error) {
 
 		return "", fmt.Errorf("no available drive letters")
 	} else {
-		if len(mountPoint) != 2 || mountPoint[1] != ':' {
-			return "", fmt.Errorf("invalid mount point")
-		}
-
 		_, err := os.Stat(mountPoint + string(os.PathSeparator))
-		if err == nil || !os.IsNotExist(err) {
+		switch {
+		case err == nil:
 			return "", fmt.Errorf("mount point already in use")
+		case os.IsNotExist(err):
+			// ok — available
+		default:
+			return "", fmt.Errorf("requested mount point not available: %w", err)
 		}
 	}
 
 	return mountPoint, nil
+}
+
+// expect a drive letter like "X:" or ""
+func validateMountPoint(mountPoint string) error {
+	if mountPoint == "" {
+		return nil
+	}
+	if !validMountPointRe.MatchString(mountPoint) {
+		return fmt.Errorf("invalid mount point")
+	}
+	return nil
 }
 
 func mountOpts(params MountParams) []string {
@@ -50,5 +76,25 @@ func mountOpts(params MountParams) []string {
 	}
 
 	opts = append(opts, "-o", "FileSystemName=Files.com")
+	opts = append(opts, "-o", "DirInfoTimeout=1")
 	return opts
+}
+
+// Microsoft Office lock/owner files (sidecar next to the doc)
+// ~$*
+// Office scratch temp files
+// ~WR*.tmp
+// ~DF*.tmp
+// AD70B1.tmp
+// AD70B13.tmp
+// AD70B13E.tmp
+func additionalIgnorePatterns() []string {
+	return []string{
+		"~$*",
+		"~WR*.tmp",
+		"~DF*.tmp",
+		"[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F].tmp",
+		"[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F].tmp",
+		"[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F].tmp",
+	}
 }

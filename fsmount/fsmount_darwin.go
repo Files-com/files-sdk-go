@@ -28,3 +28,30 @@ func mountOpts(params MountParams) []string {
 	opts = append(opts, "-o", "location=Files")
 	return opts
 }
+
+// macOS safe-save temp DIRECTORIES (Word/Pages/TextEdit)
+// Use trailing slash so only directories match.
+// *.sb-*/
+// Office scratch temp files (occasionally appear on macOS)
+// ~WR*.tmp
+// Per-volume Trash directories (external/network volumes)
+// .Trash-*/
+func additionalIgnorePatterns() []string {
+	return []string{
+		"*.doc.sb-*",
+		"*.docx.sb-*",
+		"*.dotx.sb-*",
+		"*.ppt.sb-*",
+		"*.pptm.sb-*",
+		"*.pptx.sb-*",
+		"*.pdf.sb-*",
+		"*.rtf.sb-*",
+		"*.csv.sb-*",
+		"*.xls.sb-*",
+		"*.xlsb.sb-*",
+		"*.xlsm.sb-*",
+		"*.xlsx.sb-*",
+		".Trash-*/",
+		"~WR*.tmp",
+	}
+}

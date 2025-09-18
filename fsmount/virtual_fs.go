@@ -2,6 +2,7 @@ package fsmount
 
 import (
 	"fmt"
+	"os"
 	path_lib "path"
 	"runtime/debug"
 	"strings"
@@ -25,6 +26,17 @@ const (
 	nodeTypeDir
 )
 
+func (nt nodeType) String() string {
+	switch nt {
+	case nodeTypeFile:
+		return "file"
+	case nodeTypeDir:
+		return "directory"
+	default:
+		return "unknown"
+	}
+}
+
 type fileHandle struct {
 	// ID of the file handle, unique within the OpenHandles instance.
 	id uint64
@@ -40,6 +52,10 @@ type fileHandle struct {
 
 	// The flags used when opening the file
 	FuseFlags
+
+	// If the file is stored locally, this is the *os.File represented by this handle
+	// If the file is stored remotely, this will be nil.
+	localFile *os.File
 }
 
 func (fh *fileHandle) String() string {
@@ -72,18 +88,21 @@ type virtualfs struct {
 	lib.LeveledLogger
 }
 
-func newVirtualfs(logger lib.Logger, cacheTTL time.Duration) *virtualfs {
-	ll := lib.NewLeveledLogger(logger)
+func newVirtualfs(params MountParams, ll lib.LeveledLogger) *virtualfs {
 	vfs := &virtualfs{
 		nodes:         make(map[string]*fsNode),
 		handles:       NewOpenHandles(ll),
 		LeveledLogger: ll,
 		cacheTTL:      DefaultCacheTTL,
 	}
-	if cacheTTL >= 0 {
-		vfs.cacheTTL = cacheTTL
+	if params.CacheTTL > 0 {
+		vfs.cacheTTL = params.CacheTTL
 	}
 	return vfs
+}
+
+func (vfs *virtualfs) destroy() {
+	vfs.handles.Close()
 }
 
 func (vfs *virtualfs) fetch(path string) (*fsNode, bool) {
@@ -161,6 +180,14 @@ func (vfs *virtualfs) remove(path string) {
 	}
 }
 
+func (vfs *virtualfs) expireNodeInfo(path string) {
+	node := vfs.getOrCreate(path, nodeTypeDir)
+	node.expireInfo()
+	parentPath := path_lib.Dir(path)
+	parent := vfs.getOrCreate(parentPath, nodeTypeDir)
+	parent.expireInfo()
+}
+
 func (vfs *virtualfs) fetchLockTarget(path string) (*fsNode, bool) {
 	if !isMsOfficeOwnerFile(path) {
 		return nil, false
@@ -206,9 +233,9 @@ func buildOwnerFile(node *fsNode) []byte {
 	return ownerBuffer
 }
 
-func (vfs *virtualfs) logPanics() {
+func logPanics(log lib.LeveledLogger) {
 	if r := recover(); r != nil {
-		vfs.Error("Panic: %v\nStack trace:\n%s", r, debug.Stack())
+		log.Error("Panic: %v\nStack trace:\n%s", r, debug.Stack())
 		panic(r)
 	}
 }

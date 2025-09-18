@@ -91,7 +91,7 @@ type fsNodeInfo struct {
 }
 
 func (n fsNodeInfo) String() string {
-	return fmt.Sprintf("fsNodeInfo{type: %v, size: %d, created: %v, modified: %v, lockOwner: %s}",
+	return fmt.Sprintf("fsNodeInfo{type: %v, size: %d, created: %v, modified: %v, lockOwner: '%s'}",
 		n.nodeType, n.size, n.creationTime, n.modTime, n.lockOwner)
 }
 
@@ -108,9 +108,11 @@ func (n *fsNode) updateInfo(info fsNodeInfo) {
 	}
 
 	n.info = info
-	n.extendTtl()
 	// Force a rebuild of child paths (if the current node is a directory).
 	n.childPathsExpires = timeZero
+	if info.nodeType == nodeTypeFile {
+		n.extendTtl()
+	}
 }
 
 func (n *fsNode) extendTtl() {
@@ -143,6 +145,7 @@ func (n *fsNode) updateChildPaths(buildChildPaths func(string) (map[string]struc
 
 	n.childPaths = childPaths
 	n.childPathsExpires = time.Now().Add(n.cacheTTL)
+	n.extendTtl()
 	return err
 }
 
@@ -175,8 +178,9 @@ func (n *fsNode) isWriterOpen() bool {
 
 func (n *fsNode) openWriter(fsWriter FSWriter, fh uint64) error {
 	n.writeMu.Lock()
+	defer n.writeMu.Unlock()
 	if n.writer == nil {
-		n.logger.Debug("openWriter from node: %v, ptr: %p, fh: %v", n.String(), n, fh)
+		n.logger.Debug("openWriter from node: %v, fh: %v", n.String(), fh)
 		pipe, err := newOrderedPipe(n.path, n.logger)
 		if err != nil {
 			return fmt.Errorf("failed to open writer: %v", err)
@@ -184,12 +188,9 @@ func (n *fsNode) openWriter(fsWriter FSWriter, fh uint64) error {
 		n.writer = pipe
 		n.writerOwner = fh
 		n.downloadUri = ""
-		n.writeMu.Unlock()
 		go func() {
 			fsWriter.writeFile(n.path, pipe.out, n.info.modTime, fh)
 		}()
-	} else {
-		n.writeMu.Unlock()
 	}
 	return nil
 }
@@ -229,7 +230,7 @@ func (n *fsNode) startUpload(path string, cancel context.CancelFunc) (int, error
 	return 0, nil
 }
 
-func (n *fsNode) finishUpload(size int64) {
+func (n *fsNode) closeUpload(size int64) {
 	n.updateSize(size)
 	n.uploadMu.Lock()
 	defer n.uploadMu.Unlock()
@@ -237,7 +238,6 @@ func (n *fsNode) finishUpload(size int64) {
 		n.upload.closeDone()
 		n.upload = nil
 	}
-	n.expireInfo()
 }
 
 func (n *fsNode) pathAndRef() (string, string) {
@@ -317,8 +317,8 @@ func (n *fsNode) readFromWriter(buff []byte, ofst int64) int {
 // waitForUploadIfFinalizing blocks until finalize completes when appropriate.
 // It never blocks for an unwritten upload.
 func (n *fsNode) waitForUploadIfFinalizing(ctx context.Context) error {
-	w, _, committed := n.writerSnapshot()
 	n.uploadMu.Lock()
+	w, _, committed := n.writerSnapshot()
 	var done <-chan struct{}
 	if n.upload != nil && (w == nil || committed) {
 		done = n.upload.done
@@ -349,6 +349,7 @@ func (n *fsNode) uploadStats() (string, int64, time.Time) {
 	return n.upload.stats()
 }
 
+// Lock order: uploadMu -> writeMu (maintain across call paths to avoid deadlocks).
 func (n *fsNode) cancelUpload() {
 	n.uploadMu.Lock()
 	defer n.uploadMu.Unlock()
@@ -391,7 +392,6 @@ func (u *activeUpload) recordProgress(delta int64) {
 	defer u.mu.Unlock()
 	u.bytesWritten += delta
 	u.lastActivity = time.Now()
-
 }
 
 func (u *activeUpload) stats() (string, int64, time.Time) {

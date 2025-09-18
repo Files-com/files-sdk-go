@@ -121,3 +121,24 @@ func TestFuseFlags(t *testing.T) {
 		})
 	}
 }
+
+func TestFuseFlagsWithout(t *testing.T) {
+	ff := NewFuseFlags(fuse.O_RDWR | fuse.O_CREAT | fuse.O_EXCL)
+	ffWithoutCreate := ff.Without(fuse.O_CREAT)
+	expectedFlags := NewFuseFlags(fuse.O_RDWR | fuse.O_EXCL)
+	if ffWithoutCreate != expectedFlags {
+		t.Errorf("Without(O_CREAT) = %v, want %v", ffWithoutCreate, expectedFlags)
+	}
+
+	ffWithoutExcl := ff.Without(fuse.O_EXCL)
+	expectedFlags = NewFuseFlags(fuse.O_RDWR | fuse.O_CREAT)
+	if ffWithoutExcl != expectedFlags {
+		t.Errorf("Without(O_EXCL) = %v, want %v", ffWithoutExcl, expectedFlags)
+	}
+
+	ffWithoutReadWrite := ff.Without(fuse.O_RDWR)
+	expectedFlags = NewFuseFlags(fuse.O_CREAT | fuse.O_EXCL)
+	if ffWithoutReadWrite != expectedFlags {
+		t.Errorf("Without(O_RDWR) = %v, want %v", ffWithoutReadWrite, expectedFlags)
+	}
+}

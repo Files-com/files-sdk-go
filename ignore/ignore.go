@@ -22,18 +22,19 @@ var LinuxGitignore []byte
 //go:embed data/common.gitignore
 var commonGitignore []byte
 
-// New creates a new GitIgnore instance based on the current operating system's default ignore patterns, with optional overrides.
-// If overrides are provided, they will be used instead of the default patterns.
-// If no overrides are provided, the function will use the default ignore patterns for the current operating system.
+// New creates a new GitIgnore instance based on the current operating system's default ignore
+// patterns, with optional overrides. If overrides are provided, they will be used instead of
+// the default patterns. If no overrides are provided, the function will use the default ignore
+// patterns for the current operating system.
 func New(overrides ...string) (*ignore.GitIgnore, error) {
-	if len(overrides) > 0 {
-		return ignore.CompileIgnoreLines(overrides...), nil
+	if overrides == nil {
+		osIgnoreLines, err := osIgnoreLines()
+		if err != nil {
+			return nil, err
+		}
+		return ignore.CompileIgnoreLines(osIgnoreLines...), nil
 	}
-	osIgnoreLines, err := osIgnoreLines()
-	if err != nil {
-		return nil, err
-	}
-	return ignore.CompileIgnoreLines(osIgnoreLines...), nil
+	return ignore.CompileIgnoreLines(overrides...), nil
 }
 
 // NewWithAllowList creates a new GitIgnore instance based on the OS specific defaults,
@@ -63,6 +64,30 @@ func NewWithAllowList(allowed ...string) (*ignore.GitIgnore, error) {
 		}
 	}
 	return ignore.CompileIgnoreLines(filtered...), nil
+}
+
+// NewWithDenyList creates a new GitIgnore instance based on the OS specific defaults,
+// and adds items in the deny list to the ignored patterns. If no deny list is provided,
+// it will use the default ignore patterns for the current operating system, which is the same
+// behavior as calling New() with no arguments.
+func NewWithDenyList(denied ...string) (*ignore.GitIgnore, error) {
+	if len(denied) == 0 {
+		return New()
+	}
+	lines, err := osIgnoreLines()
+	if err != nil {
+		return nil, err
+	}
+	lines = append(lines, denied...)
+	unique := make(map[string]struct{}, len(lines))
+	for _, line := range lines {
+		unique[line] = struct{}{}
+	}
+	var uniqueLines []string
+	for line := range unique {
+		uniqueLines = append(uniqueLines, line)
+	}
+	return ignore.CompileIgnoreLines(uniqueLines...), nil
 }
 
 func osIgnoreLines() ([]string, error) {

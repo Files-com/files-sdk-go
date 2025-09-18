@@ -5,6 +5,7 @@ package fsmount
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/pprof"
@@ -21,28 +22,32 @@ const (
 
 func (fs *Filescomfs) startPprof() {
 	mux := fs.debugMux()
-	pprofHost := os.Getenv("FILESCOMFS_PPROF_HOST")
+	pprofHost := os.Getenv("FILESCOMFS_DEBUG_PPROF_HOST")
 	if pprofHost == "" {
 		pprofHost = pprofHostDefault
 	}
-	envPort := os.Getenv("FILESCOMFS_PPROF_PORT")
+	envPort := os.Getenv("FILESCOMFS_DEBUG_PPROF_PORT")
 	pprofPort := pprofPortDefault
 	var err error
 	if envPort != "" {
 		pprofPort, err = strconv.Atoi(envPort)
 		if err != nil {
-			fs.Error("error parsing FILESCOMFS_PPROF_PORT environment variable: %v, defaulting to %d", err, pprofPortDefault)
+			fs.log.Error("error parsing FILESCOMFS_DEBUG_PPROF_PORT environment variable: %v, defaulting to %d", err, pprofPortDefault)
 		}
 	}
 
 	pprofAddr := fmt.Sprintf("%s:%d", pprofHost, pprofPort)
-	fs.debugSrv = &http.Server{Addr: pprofAddr, Handler: mux}
+	fs.dbgSrv = &http.Server{Addr: pprofAddr, Handler: mux}
 	go func() {
-		if err := fs.debugSrv.ListenAndServe(); err != nil {
-			fs.Error("debug server: %v", err)
+		if err := fs.dbgSrv.ListenAndServe(); err != nil {
+			if !errors.Is(err, http.ErrServerClosed) {
+				fs.log.Error("debug server in debug.go: %v", err)
+			} else {
+				fs.log.Info("debug server shut down successfully")
+			}
 		}
 	}()
-	fs.Info("debug server listening on %s", pprofAddr)
+	fs.log.Info("debug server listening on %s", pprofAddr)
 }
 
 // debugMux creates an *httpServeMux that exposes pprof handlers and handlers
@@ -114,12 +119,24 @@ type dbgWriter struct {
 }
 
 type dbgNode struct {
-	Path        string    `json:"path"`
-	Size        int64     `json:"size"`
-	ModTime     time.Time `json:"modTime"`
-	DownloadURI bool      `json:"downloadUriCached"`
-	HasWriter   bool      `json:"hasWriter"`
-	HasUpload   bool      `json:"hasUpload"`
+	Path        string       `json:"path"`
+	Size        int64        `json:"size"`
+	ModTime     time.Time    `json:"modTime"`
+	DownloadURI bool         `json:"downloadUriCached"`
+	HasWriter   bool         `json:"hasWriter"`
+	HasUpload   bool         `json:"hasUpload"`
+	Info        *dbgNodeInfo `json:"info"`
+	Now         time.Time    `json:"now"`
+	InfoExpires time.Time    `json:"infoExpires"`
+	InfoExpired bool         `json:"infoExpired"`
+}
+
+type dbgNodeInfo struct {
+	NodeType  string    `json:"nodeType"`
+	Size      int64     `json:"size"`
+	Created   time.Time `json:"created"`
+	Modified  time.Time `json:"modified"`
+	LockOwner string    `json:"lockOwner"`
 }
 
 // /debug/state — quick overview
@@ -137,10 +154,10 @@ func (fs *Filescomfs) handleDebugState(w http.ResponseWriter, r *http.Request) {
 
 	// Snapshot handles
 	var handleCount int
-	if fs.virtualfs != nil && fs.virtualfs.handles != nil {
-		fs.virtualfs.handles.mu.Lock()
-		handleCount = len(fs.virtualfs.handles.entries)
-		fs.virtualfs.handles.mu.Unlock()
+	if fs.vfs != nil && fs.vfs.handles != nil {
+		fs.vfs.handles.mu.Lock()
+		handleCount = len(fs.vfs.handles.entries)
+		fs.vfs.handles.mu.Unlock()
 	}
 
 	// Snapshot nodes
@@ -214,9 +231,9 @@ func (fs *Filescomfs) handleDebugState(w http.ResponseWriter, r *http.Request) {
 func (fs *Filescomfs) handleDebugHandles(w http.ResponseWriter, r *http.Request) {
 	out := make([]dbgHandle, 0)
 
-	if fs.virtualfs != nil && fs.virtualfs.handles != nil {
-		fs.virtualfs.handles.mu.Lock()
-		for id, fh := range fs.virtualfs.handles.entries {
+	if fs.vfs != nil && fs.vfs.handles != nil {
+		fs.vfs.handles.mu.Lock()
+		for id, fh := range fs.vfs.handles.entries {
 			if fh == nil || fh.node == nil {
 				continue
 			}
@@ -229,7 +246,7 @@ func (fs *Filescomfs) handleDebugHandles(w http.ResponseWriter, r *http.Request)
 			}
 			out = append(out, item)
 		}
-		fs.virtualfs.handles.mu.Unlock()
+		fs.vfs.handles.mu.Unlock()
 	}
 
 	sort.Slice(out, func(i, j int) bool { return out[i].Path < out[j].Path })
@@ -310,6 +327,8 @@ func (fs *Filescomfs) handleDebugNodes(w http.ResponseWriter, r *http.Request) {
 		size := n.info.size
 		mod := n.info.modTime
 		hasUpload := n.upload != nil
+		expires := n.infoExpires
+		info := n.info
 		n.statusMu.Unlock()
 
 		// writer fields
@@ -324,6 +343,15 @@ func (fs *Filescomfs) handleDebugNodes(w http.ResponseWriter, r *http.Request) {
 			DownloadURI: uriCached,
 			HasWriter:   hasWriter,
 			HasUpload:   hasUpload,
+			Now:         time.Now(),
+			InfoExpires: expires,
+			InfoExpired: n.infoExpired(),
+			Info: &dbgNodeInfo{
+				NodeType: info.nodeType.String(),
+				Size:     info.size,
+				Created:  info.creationTime,
+				Modified: info.modTime,
+			},
 		})
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Path < out[j].Path })
@@ -332,17 +360,17 @@ func (fs *Filescomfs) handleDebugNodes(w http.ResponseWriter, r *http.Request) {
 
 // snapshotNodes returns a stable slice of *fsNode without holding the VFS lock.
 func (fs *Filescomfs) snapshotNodes() []*fsNode {
-	if fs.virtualfs == nil {
+	if fs.vfs == nil {
 		return nil
 	}
-	fs.virtualfs.nodesMu.Lock()
-	nodes := make([]*fsNode, 0, len(fs.virtualfs.nodes))
-	for _, n := range fs.virtualfs.nodes {
+	fs.vfs.nodesMu.Lock()
+	nodes := make([]*fsNode, 0, len(fs.vfs.nodes))
+	for _, n := range fs.vfs.nodes {
 		if n != nil {
 			nodes = append(nodes, n)
 		}
 	}
-	fs.virtualfs.nodesMu.Unlock()
+	fs.vfs.nodesMu.Unlock()
 	return nodes
 }
 
@@ -365,14 +393,14 @@ func (fs *Filescomfs) handleDebugLocks(w http.ResponseWriter, r *http.Request) {
 	out := make([]dbgLock, 0)
 
 	// Snapshot under lockMapMutex, but don’t hold it while encoding.
-	fs.lockMapMutex.Lock()
-	for p, li := range fs.lockMap {
+	fs.remote.lockMapMutex.Lock()
+	for p, li := range fs.remote.lockMap {
 		out = append(out, dbgLock{
 			Path: p,
 			Raw:  li, // will marshal any exported fields on your lock entry type
 		})
 	}
-	fs.lockMapMutex.Unlock()
+	fs.remote.lockMapMutex.Unlock()
 
 	// keep output stable/diff-friendly
 	sort.Slice(out, func(i, j int) bool { return out[i].Path < out[j].Path })

@@ -63,6 +63,10 @@ func (f FuseFlags) IsCreateExclusive() bool {
 	return f.IsCreate() && f.IsExclusive()
 }
 
+func (f FuseFlags) Without(remove int) FuseFlags {
+	return FuseFlags(int(f) &^ remove)
+}
+
 // String returns a string representation of the FuseFlags.
 func (f FuseFlags) String() string {
 	flags := []string{}

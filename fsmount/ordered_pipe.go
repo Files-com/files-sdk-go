@@ -150,6 +150,8 @@ func (w *orderedPipe) readAt(buff []byte, offset int64) (n int) {
 
 	n, err := w.file.ReadAt(buff, offset)
 	if err != nil && err != io.EOF {
+		// log the error, but return 0. This can happen if reading while writing is in progress
+		// but nothing has been written yet.
 		w.logger.Error("readAt: error reading data for path=%v, at offset %d: %v", w.path, offset, err)
 		return 0
 	}
@@ -173,11 +175,11 @@ func (w *orderedPipe) close() error {
 		}
 
 		if w.file != nil {
-			if fileErr := w.file.Close(); fileErr != nil {
-				w.logger.Error("done: error closing file for path=%v: %v", w.path, fileErr)
+			if fErr = w.file.Close(); fErr != nil {
+				w.logger.Error("done: error closing file for path=%v: %v", w.path, fErr)
 			}
-			if removeErr := os.Remove(w.file.Name()); removeErr != nil {
-				w.logger.Error("done: error removing temporary file for path=%v: %v", w.path, removeErr)
+			if rmErr = os.Remove(w.file.Name()); rmErr != nil {
+				w.logger.Error("done: error removing temporary file for path=%v: %v", w.path, rmErr)
 			}
 			w.file = nil
 		}

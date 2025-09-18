@@ -24,3 +24,11 @@ func mountOpts(params MountParams) []string {
 	opts := defaultMountOpts(params)
 	return opts
 }
+
+// LibreOffice lock files
+// .~lock.*#
+func additionalIgnorePatterns() []string {
+	return []string{
+		".~lock.*#",
+	}
+}

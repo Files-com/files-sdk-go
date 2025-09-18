@@ -3,11 +3,15 @@ package fsmount
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/ignore"
+	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/winfsp/cgofuse/fuse"
+
+	gogitignore "github.com/sabhiram/go-gitignore"
 )
 
 const (
@@ -37,6 +41,13 @@ type MountParams struct {
 	//
 	// Required on MacOS and Linux, this is the path to the mount point (e.g. "/mnt/files").
 	MountPoint string
+
+	// Optional. Path to a temporary directory for storing files that don't belong on Files.com.
+	// e.g. .DS_Store, Thumbs.db, etc... The full list of patterns is available in the ignore package
+	// https://github.com/Files-com/files-sdk-go/tree/master/ignore/data
+	//
+	// Defaults to OS-specific temporary directory if not specified.
+	TmpFsPath string
 
 	// Optional. Volume name to display in Finder/Explorer. On Windows, this is also used as the
 	// share name for the UNC path. Defaults to "Files.com".
@@ -119,33 +130,70 @@ func newFs(params MountParams) (*Filescomfs, error) {
 	}
 	params.MountPoint = mountPoint
 
-	fs := &Filescomfs{
-		mountPoint:       params.MountPoint,
-		root:             params.Root,
-		writeConcurrency: params.WriteConcurrency,
-		cacheTTL:         params.CacheTTL,
-		config:           params.Config,
-		disableLocking:   params.DisableLocking,
-		debugFuse:        params.DebugFuse,
+	if params.Root == "" {
+		params.Root = "/"
 	}
 
-	// ensure write concurrency and cache TTL are positive
-	if fs.writeConcurrency <= 0 {
-		fs.writeConcurrency = DefaultWriteConcurrency
+	// create the temporary directory if it doesn't exist
+	if params.TmpFsPath == "" {
+		tmpRoot, err := os.MkdirTemp("", "Files.com-v6-tmp-*")
+		if err != nil {
+			return nil, fmt.Errorf("failed to create temporary local filesystem: %w", err)
+		}
+		params.TmpFsPath = tmpRoot
 	}
-	if fs.cacheTTL <= 0 {
-		fs.cacheTTL = DefaultCacheTTL
+
+	logger := lib.NewLeveledLogger(params.Config.Logger)
+
+	// The Filescomfs, RemoteFs, and LocalFs all share a single virtualfs instance to manage the
+	// in-memory representation of the filesystem. This allows for consistent state management and
+	// caching across the different filesystem implementations.
+	vfs := newVirtualfs(params, logger)
+
+	remotefs, err := newRemoteFs(params, vfs, logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create remote filesystem: %w", err)
 	}
-	if params.IgnorePatterns == nil || len(params.IgnorePatterns) > 0 {
-		fs.ignore, _ = ignore.New(params.IgnorePatterns...)
+
+	localfs := newLocalFs(params, vfs, logger)
+
+	// create the Filescomfs instance
+	fs := &Filescomfs{
+		mountPoint:  mountPoint,
+		remoteRoot:  params.Root,
+		localFsRoot: params.TmpFsPath,
+		log:         logger,
+		remote:      remotefs,
+		local:       localfs,
+		vfs:         vfs,
 	}
+
+	ig, err := ignoreFromPatterns(params.IgnorePatterns)
+	if err != nil {
+		return nil, err
+	}
+	fs.ignore = ig
+
+	logger.Info("Mounting Files.com filesystem at %s", params.MountPoint)
 	return fs, nil
+}
+
+func ignoreFromPatterns(patterns []string) (*gogitignore.GitIgnore, error) {
+	switch {
+	case patterns == nil:
+		// use OS-specific defaults + additional common patterns
+		return ignore.NewWithDenyList(additionalIgnorePatterns()...)
+	default:
+		// use provided override patterns
+		return ignore.New(patterns...)
+	}
 }
 
 // Default mount options for all fuse implementations
 func defaultMountOpts(params MountParams) []string {
 	opts := []string{}
 	opts = append(opts, "-o", "attr_timeout=1")
+	opts = append(opts, "-o", "hard_remove") // avoids .fuse_hiddenXXXXXX files on delete
 	if params.DebugFuse {
 		// enables debug logging in the underlying fuse implementation
 		opts = append(opts, "-o", "debug")

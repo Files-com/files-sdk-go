@@ -1,7 +1,9 @@
 package fsmount
 
 import (
+	"fmt"
 	"math"
+	"os"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -14,16 +16,16 @@ type OpenHandles struct {
 	mu      sync.RWMutex
 	entries map[uint64]*fileHandle
 	ticker  *time.Ticker
-	lib.LeveledLogger
+	log     lib.LeveledLogger
 }
 
 const (
 	// max int64 as a uint64 - 9,223,372,036,854,775,807
 	handleMask = uint64(math.MaxInt64)
 
-	// sweeptInterval is the interval at which the upload sweeper runs to cancel
+	// sweepInterval is the interval at which the upload sweeper runs to cancel
 	// uploads that have not been written to in a long time.
-	sweeptInterval = 10 * time.Minute
+	sweepInterval = 10 * time.Minute
 
 	// uploadIdleTimeout is the duration after which an upload that has not been
 	// written to will be cancelled.
@@ -37,13 +39,15 @@ const (
 var (
 	// Mask with MaxInt64 so int64(h) is always >= 0 if anyone miscasts it.
 	next uint64 = 1
+
+	ErrFileHandleInUse = fmt.Errorf("file handle ID already in use")
 )
 
 // NewOpenHandles initializes a new OpenHandles instance.
 func NewOpenHandles(logger lib.LeveledLogger) *OpenHandles {
 	oh := &OpenHandles{
-		entries:       make(map[uint64]*fileHandle),
-		LeveledLogger: logger,
+		entries: make(map[uint64]*fileHandle),
+		log:     logger,
 	}
 	go oh.startUploadSweeper()
 	return oh
@@ -51,11 +55,11 @@ func NewOpenHandles(logger lib.LeveledLogger) *OpenHandles {
 
 // Open creates a new ID and stores the handle.
 // Never hold h.mu while allocating the ID to avoid lock-order issues.
-func (h *OpenHandles) Open(n *fsNode, fl FuseFlags) (id uint64, fh *fileHandle) {
+func (h *OpenHandles) Open(node *fsNode, flags FuseFlags) (id uint64, fh *fileHandle) {
 	fh = &fileHandle{
-		node:      n,
-		FuseFlags: fl,
-		readAt:    time.Now(),
+		node:      node,
+		FuseFlags: flags,
+		readAt:    time.Time{},
 	}
 	for {
 		id = (atomic.AddUint64(&next, 1)) & handleMask
@@ -69,6 +73,14 @@ func (h *OpenHandles) Open(n *fsNode, fl FuseFlags) (id uint64, fh *fileHandle) 
 		h.mu.Unlock()
 		// On the vanishingly small chance of a clash, try the next value.
 	}
+}
+
+// OpenWithFile uses the given *os.File to create and store a new handle.
+// Never hold h.mu while allocating the ID to avoid lock-order issues.
+func (h *OpenHandles) OpenWithFile(node *fsNode, flags FuseFlags, file *os.File) (id uint64, fh *fileHandle) {
+	id, fh = h.Open(node, flags)
+	fh.localFile = file
+	return id, fh
 }
 
 // Lookup finds a fileHandle and node without holding the lock during use.
@@ -121,8 +133,34 @@ func (h *OpenHandles) ExtendOpenHandleTtls() {
 	}
 }
 
+func (h *OpenHandles) Close() {
+	h.stopUploadSweeper()
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for id, fh := range h.entries {
+		if fh.node != nil {
+			fh.node.logger.Debug("Closing file handle %d for path %s", id, fh.node.path)
+		} else {
+			h.log.Debug("Closing file handle %d with no associated node", id)
+		}
+		if fh.localFile != nil {
+			fh.localFile.Close()
+			fh.localFile = nil
+		}
+		delete(h.entries, id)
+	}
+}
+
+func (h *OpenHandles) stopUploadSweeper() {
+	if h.ticker != nil {
+		h.ticker.Stop()
+	}
+}
+
+// startUploadSweeper periodically checks for uploads that have been idle
+// for too long and cancels them.
 func (h *OpenHandles) startUploadSweeper() {
-	h.ticker = time.NewTicker(sweeptInterval)
+	h.ticker = time.NewTicker(sweepInterval)
 	for range h.ticker.C {
 		h.mu.Lock()
 		for _, handle := range h.entries {
@@ -135,16 +173,16 @@ func (h *OpenHandles) startUploadSweeper() {
 			}
 			_, bytesWritten, lastActivity := node.uploadStats()
 			idle := time.Since(lastActivity)
-			h.Debug("Upload sweeper: checking upload for path %s, bytes written: %d, last activity: %v, idle time: %v", node.path, bytesWritten, lastActivity, idle)
+			h.log.Debug("Upload sweeper: checking upload for path %s, bytes written: %d, last activity: %v, idle time: %v", node.path, bytesWritten, lastActivity, idle)
 			// Case A: upload opened but never wrote any bytes — allow a long grace period.
 			if bytesWritten == 0 && idle > unopenedUploadTimeout {
-				h.Debug("Upload sweeper: cancelling unopened upload for path %s, last activity: %v", node.path, lastActivity)
+				h.log.Debug("Upload sweeper: cancelling unopened upload for path %s, last activity: %v", node.path, lastActivity)
 				node.cancelUpload()
 				continue
 			}
 			// Case B: upload has written bytes but has been idle too long.
 			if bytesWritten > 0 && idle > uploadIdleTimeout {
-				h.Debug("Upload sweeper: cancelling idle upload for path %s, last activity: %v", node.path, lastActivity)
+				h.log.Debug("Upload sweeper: cancelling idle upload for path %s, last activity: %v", node.path, lastActivity)
 				node.cancelUpload()
 			}
 		}
