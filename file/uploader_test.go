@@ -509,8 +509,8 @@ func TestUploadReader(t *testing.T) {
 			u, err := retry(ctx, resume, client)
 			require.NoError(t, err)
 
-			assert.ElementsMatch(t, []string{"/api/rest/v1/file_actions/begin_upload/native-file"}, server.TrackRequest["/api/rest/v1/file_actions/begin_upload/*path"], "only requests part 3")
-			assert.ElementsMatch(t, []string{"/upload/native-file?part_number=2", "/upload/native-file?part_number=3"}, server.TrackRequest["/upload/*path"], "1 already succeed rest are uploaded")
+			assert.ElementsMatch(t, []string{"/api/rest/v1/file_actions/begin_upload/native-file", "/api/rest/v1/file_actions/begin_upload/native-file", "/api/rest/v1/file_actions/begin_upload/native-file"}, server.TrackRequest["/api/rest/v1/file_actions/begin_upload/*path"], "only requests part 3")
+			assert.ElementsMatch(t, []string{"/upload/native-file?part_number=1", "/upload/native-file?part_number=2", "/upload/native-file?part_number=3"}, server.TrackRequest["/upload/*path"], "1 already succeed rest are uploaded")
 			assert.Equal(t, "native-file", u.File.Path)
 			assert.Equal(t, int64(10), u.Size)
 			assert.Len(t, u.Parts, 3)
@@ -525,19 +525,25 @@ func TestUploadReader(t *testing.T) {
 			server.traceMutex.Lock()
 			server.TrackRequest = make(map[string][]string)
 			server.traceMutex.Unlock()
+			expires := time.Now().Add(time.Hour).Format(time.RFC3339)
+			uploadURLPartNumber := func(path string, part int64) string {
+				return fmt.Sprintf("%v?part_number=%v&X-Files-Date=%v&X-Files-Expires=%v", lib.UrlJoinNoEscape("upload", path), part, expires, 180)
+			}
 			server.MockRoute("/api/rest/v1/file_actions/begin_upload/remote_mount-file", func(ctx *gin.Context, model interface{}) bool {
 				file := model.(files_sdk.FileBeginUploadParams)
 				if file.Part == 0 {
 					file.Part = 1
 				}
 				path := strings.TrimPrefix(ctx.Param("path"), "/")
+
+				uploadURI := lib.UrlJoinNoEscape(server.URL, uploadURLPartNumber(path, file.Part))
 				ctx.JSON(http.StatusOK, files_sdk.FileUploadPartCollection{
 					files_sdk.FileUploadPart{
 						HttpMethod:    "POST",
 						Path:          path,
-						UploadUri:     fmt.Sprintf("%v?part_number=%v", lib.UrlJoinNoEscape(server.URL, "upload", path), file.Part),
+						UploadUri:     uploadURI,
 						ParallelParts: lib.Bool(false),
-						Expires:       time.Now().Add(time.Hour).Format(time.RFC3339),
+						Expires:       expires,
 						PartNumber:    file.Part,
 					},
 				})
@@ -548,7 +554,7 @@ func TestUploadReader(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.ElementsMatch(t, []string{"/api/rest/v1/file_actions/begin_upload/remote_mount-file"}, server.TrackRequest["/api/rest/v1/file_actions/begin_upload/*path"], "upload is invalided because of ParallelParts")
-			assert.ElementsMatch(t, []string{"/upload/remote_mount-file?part_number=1", "/upload/remote_mount-file?part_number=2", "/upload/remote_mount-file?part_number=3"}, server.TrackRequest["/upload/*path"], "all parts are uploaded")
+			assert.ElementsMatch(t, []string{"/upload/remote_mount-file?part_number=2", "/" + uploadURLPartNumber("remote_mount-file", 3)}, server.TrackRequest["/upload/*path"], "all parts are uploaded")
 			assert.Equal(t, "remote_mount-file", u.File.Path)
 			assert.Equal(t, int64(10), u.Size)
 			assert.Len(t, u.Parts, 3)
