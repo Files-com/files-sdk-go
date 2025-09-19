@@ -104,10 +104,10 @@ func (b ByteOffset) BySize(size *int64) Iterator {
 // When OverrideChunkSize is set (or computed for large files), use a constant-size iterator.
 // Otherwise, use the PartSizes-driven iterator.
 func (b ByteOffset) Resume(size *int64, off int64, index int) Iterator {
-	// Compute dynamic override for large files (>50MB) when not explicitly set.
+	// Compute dynamic override for large files (>10) when not explicitly set.
 	// OK to assign on value receiver: only the closure needs this adjusted value.
-	if b.OverrideChunkSize == 0 && size != nil && *size > 50*1024*1024 {
-		b.OverrideChunkSize = lo.Clamp((*size+9999)/10000, 50*1024*1024, 525*1024*1024)
+	if b.OverrideChunkSize == 0 && size != nil && *size > 10*1024*1024 {
+		b.OverrideChunkSize = lo.Clamp((*size+9999)/10000, 10*1024*1024, 525*1024*1024)
 	}
 
 	// Iterator for constant-size chunks (override mode).
