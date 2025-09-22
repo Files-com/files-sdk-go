@@ -4,15 +4,20 @@
 package fsmount
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/http/pprof"
 	"os"
 	"sort"
 	"strconv"
+	"sync"
 	"time"
+
+	_ "embed"
 )
 
 const (
@@ -20,40 +25,70 @@ const (
 	pprofPortDefault = 6060
 )
 
-func (fs *Filescomfs) startPprof() {
-	mux := fs.debugMux()
-	pprofHost := os.Getenv("FILESCOMFS_DEBUG_PPROF_HOST")
-	if pprofHost == "" {
-		pprofHost = pprofHostDefault
-	}
-	envPort := os.Getenv("FILESCOMFS_DEBUG_PPROF_PORT")
-	pprofPort := pprofPortDefault
-	var err error
-	if envPort != "" {
-		pprofPort, err = strconv.Atoi(envPort)
-		if err != nil {
-			fs.log.Error("error parsing FILESCOMFS_DEBUG_PPROF_PORT environment variable: %v, defaulting to %d", err, pprofPortDefault)
-		}
-	}
+var pprofMu sync.Mutex
 
-	pprofAddr := fmt.Sprintf("%s:%d", pprofHost, pprofPort)
-	fs.dbgSrv = &http.Server{Addr: pprofAddr, Handler: mux}
-	go func() {
-		if err := fs.dbgSrv.ListenAndServe(); err != nil {
-			if !errors.Is(err, http.ErrServerClosed) {
-				fs.log.Error("debug server in debug.go: %v", err)
-			} else {
-				fs.log.Info("debug server shut down successfully")
+//go:embed templates/debug.tmpl
+var templateData []byte
+
+func (reg *mountRegistry) startPprof() {
+	pprofMu.Lock()
+	defer pprofMu.Unlock()
+	var pprofAddr string
+	if reg.dbgSrv == nil {
+		mux := reg.debugMux()
+		pprofHost := os.Getenv("FILESCOMFS_DEBUG_PPROF_HOST")
+		if pprofHost == "" {
+			pprofHost = pprofHostDefault
+		}
+		envPort := os.Getenv("FILESCOMFS_DEBUG_PPROF_PORT")
+		pprofPort := pprofPortDefault
+		var err error
+		if envPort != "" {
+			pprofPort, err = strconv.Atoi(envPort)
+			if err != nil {
+				reg.log.Error("error parsing FILESCOMFS_DEBUG_PPROF_PORT environment variable: %v, defaulting to %d", err, pprofPortDefault)
 			}
 		}
-	}()
-	fs.log.Info("debug server listening on %s", pprofAddr)
+
+		pprofAddr = fmt.Sprintf("%s:%d", pprofHost, pprofPort)
+		reg.dbgSrv = &http.Server{Addr: pprofAddr, Handler: mux}
+		go func() {
+			if err := reg.dbgSrv.ListenAndServe(); err != nil {
+				if !errors.Is(err, http.ErrServerClosed) {
+					reg.log.Error("debug server in debug.go: %v", err)
+				} else {
+					reg.log.Info("debug server shut down successfully")
+				}
+			}
+		}()
+	}
+	reg.log.Info("debug server listening on %s", pprofAddr)
+}
+
+func (reg *mountRegistry) stopPprof() {
+	pprofMu.Lock()
+	defer pprofMu.Unlock()
+	// Shutdown the debug server if it was started
+	if reg.dbgSrv != nil {
+		reg.log.Info("Shutting down debug server")
+		ctx, cancel := context.WithTimeout(context.Background(), dbgShutdownTimeout)
+		defer cancel()
+		if err := reg.dbgSrv.Shutdown(ctx); err != nil {
+			reg.log.Error("error shutting down debug server: %v", err)
+		} else {
+			reg.log.Info("debug server shut down successfully")
+		}
+	}
+	reg.dbgSrv = nil
 }
 
 // debugMux creates an *httpServeMux that exposes pprof handlers and handlers
 // that expose internal file system state for use in debugging.
-func (fs *Filescomfs) debugMux() *http.ServeMux {
+func (reg *mountRegistry) debugMux() *http.ServeMux {
 	mux := http.NewServeMux()
+
+	// root handler
+	mux.HandleFunc("/", reg.handleDebugRoot)
 
 	// ---- pprof endpoints ----
 	mux.HandleFunc("/debug/pprof/", pprof.Index)
@@ -63,29 +98,12 @@ func (fs *Filescomfs) debugMux() *http.ServeMux {
 	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	// ---- JSON endpoints ----
-	mux.HandleFunc("/debug/state", fs.handleDebugState)
-	mux.HandleFunc("/debug/handles", fs.handleDebugHandles)
-	mux.HandleFunc("/debug/uploads", fs.handleDebugUploads)
-	mux.HandleFunc("/debug/writers", fs.handleDebugWriters)
-	mux.HandleFunc("/debug/nodes", fs.handleDebugNodes)
-	mux.HandleFunc("/debug/locks", fs.handleDebugLocks)
-
-	// simple index
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		fmt.Fprintf(w, `<html><body style="font-family: system-ui, sans-serif">
-<h1>Files.com FUSE Debug</h1>
-<ul>
-  <li><a href="/debug/pprof/">/debug/pprof/</a></li>
-  <li><a href="/debug/state">/debug/state</a></li>
-  <li><a href="/debug/handles">/debug/handles</a></li>
-  <li><a href="/debug/uploads">/debug/uploads</a></li>
-  <li><a href="/debug/writers">/debug/writers</a></li>
-  <li><a href="/debug/nodes">/debug/nodes</a></li>
-  <li><a href="/debug/locks">/debug/locks</a></li>
-</ul>
-</body></html>`)
-	})
+	mux.HandleFunc("/debug/state", reg.handleDebugState)
+	mux.HandleFunc("/debug/handles", reg.handleDebugHandles)
+	mux.HandleFunc("/debug/uploads", reg.handleDebugUploads)
+	mux.HandleFunc("/debug/writers", reg.handleDebugWriters)
+	mux.HandleFunc("/debug/nodes", reg.handleDebugNodes)
+	mux.HandleFunc("/debug/locks", reg.handleDebugLocks)
 
 	return mux
 }
@@ -139,8 +157,23 @@ type dbgNodeInfo struct {
 	LockOwner string    `json:"lockOwner"`
 }
 
+func (reg *mountRegistry) handleDebugRoot(w http.ResponseWriter, r *http.Request) {
+
+	var tmplFile = "debug.tmpl"
+	tmpl, err := template.New(tmplFile).Parse(string(templateData))
+	if err != nil {
+		writeJSON(w, map[string]string{"error": "error parsing template: " + err.Error()})
+		return
+	}
+
+	mounts := reg.list()
+	// simple index
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_ = tmpl.Execute(w, mounts)
+}
+
 // /debug/state — quick overview
-func (fs *Filescomfs) handleDebugState(w http.ResponseWriter, r *http.Request) {
+func (reg *mountRegistry) handleDebugState(w http.ResponseWriter, r *http.Request) {
 	type state struct {
 		Now           time.Time `json:"now"`
 		NumHandles    int       `json:"numHandles"`
@@ -151,6 +184,20 @@ func (fs *Filescomfs) handleDebugState(w http.ResponseWriter, r *http.Request) {
 		SampleWriters []dbgWriter
 	}
 	now := time.Now()
+
+	mnt := r.URL.Query().Get("mnt")
+
+	if mnt == "" {
+		writeJSON(w, map[string]string{"error": "missing 'mnt' query parameter"})
+		return
+	}
+
+	host, ok := reg.get(mnt)
+	if !ok {
+		writeJSON(w, map[string]string{"error": "no such mount point"})
+		return
+	}
+	fs := host.fs
 
 	// Snapshot handles
 	var handleCount int
@@ -228,8 +275,22 @@ func (fs *Filescomfs) handleDebugState(w http.ResponseWriter, r *http.Request) {
 }
 
 // /debug/handles — enumerate open file handles
-func (fs *Filescomfs) handleDebugHandles(w http.ResponseWriter, r *http.Request) {
+func (reg *mountRegistry) handleDebugHandles(w http.ResponseWriter, r *http.Request) {
 	out := make([]dbgHandle, 0)
+
+	mnt := r.URL.Query().Get("mnt")
+
+	if mnt == "" {
+		writeJSON(w, map[string]string{"error": "missing 'mnt' query parameter"})
+		return
+	}
+
+	host, ok := reg.get(mnt)
+	if !ok {
+		writeJSON(w, map[string]string{"error": "no such mount point"})
+		return
+	}
+	fs := host.fs
 
 	if fs.vfs != nil && fs.vfs.handles != nil {
 		fs.vfs.handles.mu.Lock()
@@ -254,8 +315,23 @@ func (fs *Filescomfs) handleDebugHandles(w http.ResponseWriter, r *http.Request)
 }
 
 // /debug/uploads — nodes with active uploads
-func (fs *Filescomfs) handleDebugUploads(w http.ResponseWriter, r *http.Request) {
+func (reg *mountRegistry) handleDebugUploads(w http.ResponseWriter, r *http.Request) {
 	out := make([]dbgUpload, 0)
+
+	mnt := r.URL.Query().Get("mnt")
+
+	if mnt == "" {
+		writeJSON(w, map[string]string{"error": "missing 'mnt' query parameter"})
+		return
+	}
+
+	host, ok := reg.get(mnt)
+	if !ok {
+		writeJSON(w, map[string]string{"error": "no such mount point"})
+		return
+	}
+	fs := host.fs
+
 	for _, n := range fs.snapshotNodes() {
 		n.statusMu.Lock()
 		u := n.upload
@@ -290,8 +366,23 @@ func (fs *Filescomfs) handleDebugUploads(w http.ResponseWriter, r *http.Request)
 }
 
 // /debug/writers — nodes with open writers
-func (fs *Filescomfs) handleDebugWriters(w http.ResponseWriter, r *http.Request) {
+func (reg *mountRegistry) handleDebugWriters(w http.ResponseWriter, r *http.Request) {
 	out := make([]dbgWriter, 0)
+
+	mnt := r.URL.Query().Get("mnt")
+
+	if mnt == "" {
+		writeJSON(w, map[string]string{"error": "missing 'mnt' query parameter"})
+		return
+	}
+
+	host, ok := reg.get(mnt)
+	if !ok {
+		writeJSON(w, map[string]string{"error": "no such mount point"})
+		return
+	}
+	fs := host.fs
+
 	for _, n := range fs.snapshotNodes() {
 		n.writeMu.Lock()
 		w := n.writer
@@ -317,8 +408,23 @@ func (fs *Filescomfs) handleDebugWriters(w http.ResponseWriter, r *http.Request)
 }
 
 // /debug/nodes — light metadata for all nodes
-func (fs *Filescomfs) handleDebugNodes(w http.ResponseWriter, r *http.Request) {
+func (reg *mountRegistry) handleDebugNodes(w http.ResponseWriter, r *http.Request) {
 	out := make([]dbgNode, 0)
+
+	mnt := r.URL.Query().Get("mnt")
+
+	if mnt == "" {
+		writeJSON(w, map[string]string{"error": "missing 'mnt' query parameter"})
+		return
+	}
+
+	host, ok := reg.get(mnt)
+	if !ok {
+		writeJSON(w, map[string]string{"error": "no such mount point"})
+		return
+	}
+	fs := host.fs
+
 	for _, n := range fs.snapshotNodes() {
 		// status fields
 		n.statusMu.Lock()
@@ -389,8 +495,22 @@ type dbgLock struct {
 }
 
 // /debug/locks — enumerate current lockMap entries
-func (fs *Filescomfs) handleDebugLocks(w http.ResponseWriter, r *http.Request) {
+func (reg *mountRegistry) handleDebugLocks(w http.ResponseWriter, r *http.Request) {
 	out := make([]dbgLock, 0)
+
+	mnt := r.URL.Query().Get("mnt")
+
+	if mnt == "" {
+		writeJSON(w, map[string]string{"error": "missing 'mnt' query parameter"})
+		return
+	}
+
+	host, ok := reg.get(mnt)
+	if !ok {
+		writeJSON(w, map[string]string{"error": "no such mount point"})
+		return
+	}
+	fs := host.fs
 
 	// Snapshot under lockMapMutex, but don’t hold it while encoding.
 	fs.remote.lockMapMutex.Lock()

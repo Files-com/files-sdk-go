@@ -3,6 +3,10 @@
 
 package fsmount
 
-func (fs *Filescomfs) startPprof() {
+func (fs *mountRegistry) startPprof() {
+	// no-op if not built with the filescomfs_debug build tag
+}
+
+func (reg *mountRegistry) stopPprof() {
 	// no-op if not built with the filescomfs_debug build tag
 }

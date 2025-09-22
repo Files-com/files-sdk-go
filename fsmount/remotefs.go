@@ -25,8 +25,8 @@ import (
 	"github.com/winfsp/cgofuse/fuse"
 )
 
-// RemoteFs is a filesystem that implements the logic for interacting with the Files.com API
-// for a mounted filesystem. It handles all operations that are not handled by the LocalFs
+// RemoteFs is a file system that implements the logic for interacting with the Files.com API
+// for a mounted file system. It handles all operations that are not handled by the LocalFs
 // implementation, which is used for temporary files and files that should not be uploaded to
 // Files.com. The Filescomfs implementation delegates operations to this implementation for
 // all files who's source/destination is Files.com.
@@ -97,7 +97,7 @@ func newRemoteFs(params MountParams, vfs *virtualfs, ll lib.LeveledLogger) (*Rem
 
 func (fs *RemoteFs) Init() {
 	// Guard with a sync.Once because Init is called from fsmount.Mount, but cgofuse also calls Init
-	// when it mounts the filesystem.
+	// when it mounts the file system.
 	fs.initOnce.Do(func() {
 		if fs.fileClient == nil {
 			fs.fileClient = &file.Client{Config: *fs.config}
@@ -113,9 +113,9 @@ func (fs *RemoteFs) Init() {
 			// set locking to false?
 		}
 		fs.currentUserId = key.UserId
-		// store the time the filesystem was initialized to use as the creation time for the root directory
+		// store the time the file system was initialized to use as the creation time for the root directory
 		fs.initTime = time.Now()
-		fs.log.Debug("RemoteFs: RemoteFs initialized successfully. Remote filesystem root: %s", fs.root)
+		fs.log.Debug("RemoteFs: RemoteFs initialized successfully. Remote file system root: %s", fs.root)
 	})
 }
 
@@ -866,7 +866,7 @@ func (fs *RemoteFs) writeFile(path string, reader io.Reader, mtime time.Time, fh
 	fs.log.Debug("RemoteFs: Bytes: %v, Duration: %v, fh: %v", u.Size, time.Since(start), fh)
 }
 
-// this is a convenience method for uploading a file from the local filesystem to the remote API
+// this is a convenience method for uploading a file from the local file system to the remote API
 // for use by the Rename operation when moving a file from the LocalFs to the RemoteFs.
 func (fs *RemoteFs) uploadFile(src, dst string) error {
 	fs.log.Debug("Uploading file: %v to %v", src, dst)
@@ -878,7 +878,7 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 	return nil
 }
 
-// this is a convenience method for downloading a file from the remote API to the local filesystem
+// this is a convenience method for downloading a file from the remote API to the local file system
 // for use by the Rename operation when moving a file from the RemoteFs to the LocalFs.
 func (fs *RemoteFs) downloadFile(src, dst string) error {
 	fs.log.Debug("RemoteFs: Downloading file: %v to %v", src, dst)
@@ -1168,7 +1168,7 @@ func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, err er
 		lock := locks.Lock()
 		childPath := path_lib.Join(path, path_lib.Base(lock.Path))
 
-		// Ignore paths where the lock is held by this filesystem.
+		// Ignore paths where the lock is held by this file system.
 		if _, ok := fs.lockMap[childPath]; ok {
 			continue
 		}

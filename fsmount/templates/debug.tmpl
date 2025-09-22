@@ -1,0 +1,19 @@
+<html>
+  <body style="font-family: system-ui, sans-serif">
+    <h1>Files.com FUSE Debug</h1>
+      <ul>
+        <li><a href="/debug/pprof/">/debug/pprof/</a></li>
+      </ul>
+      <ul>
+        {{ range . }}
+        <h2>Mount: {{.}}</h2>
+        <li><a href="/debug/state?mnt={{.}}">State</a></li>
+        <li><a href="/debug/handles?mnt={{.}}">Handles</a></li>
+        <li><a href="/debug/uploads?mnt={{.}}">Uploads</a></li>
+        <li><a href="/debug/writers?mnt={{.}}">Writers</a></li>
+        <li><a href="/debug/nodes?mnt={{.}}">Nodes</a></li>
+        <li><a href="/debug/locks?mnt={{.}}">Locks</a></li>
+        {{ end }}
+      </ul>
+  </body>
+</html>

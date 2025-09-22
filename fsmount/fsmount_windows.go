@@ -12,7 +12,7 @@ var (
 	validMountPointRe = regexp.MustCompile(`^[A-Za-z]:$`)
 )
 
-// mountPoint validates or selects a mount point (drive letter) for the FUSE filesystem.
+// mountPoint validates or selects a mount point (drive letter) for the FUSE file system.
 // If mountPoint is empty, it finds the highest available drive letter by searching backward
 // from Z: to D:.
 // If mountPoint is provided, it validates that it is a single drive letter followed by a colon (e.g. "X:")
@@ -26,6 +26,10 @@ func mountPoint(mountPoint string) (string, error) {
 		// Find the highest available drive letter.
 		for l := 'Z'; l >= 'D'; l-- {
 			drive := string(l) + ":"
+			// check if the candidate is already reserved
+			if _, ok := mntRegistry.get(drive); ok {
+				continue
+			}
 			if _, err := os.Stat(drive + string(os.PathSeparator)); os.IsNotExist(err) {
 				return drive, nil
 			}
@@ -53,7 +57,7 @@ func validateMountPoint(mountPoint string) error {
 		return nil
 	}
 	if !validMountPointRe.MatchString(mountPoint) {
-		return fmt.Errorf("invalid mount point")
+		return fmt.Errorf("mount point must be a drive letter followed by a colon (e.g. 'X:')")
 	}
 	return nil
 }

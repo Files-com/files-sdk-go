@@ -32,10 +32,10 @@ var (
 	fileLockSeconds = int64((1 * time.Hour).Seconds())
 )
 
-// Filescomfs is a filesystem that implements the fuse.FileSystem interface,
-// allowing it to be mounted using FUSE. It provides a virtual filesystem
+// Filescomfs is a file system that implements the fuse.FileSystem interface,
+// allowing it to be mounted using FUSE. It provides a virtual files ystem
 // interface to Files.com, allowing users to interact with their Files.com
-// account as if it were a local filesystem.
+// account as if it were a local file system.
 type Filescomfs struct {
 	remote         *RemoteFs
 	local          *LocalFs
@@ -51,49 +51,29 @@ type Filescomfs struct {
 	dbgSrv   *http.Server
 }
 
-// Init initializes the Filescomfs filesystem.
+// Init initializes the Filescomfs file system.
 func (fs *Filescomfs) Init() {
 	defer logPanics(fs.log)
 	// Guard with a sync.Once because Init is called from fsmount.Mount, but cgofuse also calls Init
-	// when it mounts the filesystem.
+	// when it mounts the file system.
 	fs.initOnce.Do(func() {
 		fs.remote.Init()
 		fs.local.Init()
 
-		// if the binary is built with the 'filescomfs_debug' tag
-		//   start the debug server to allow for pprof profiling and other debug endpoints
-		//   the listen address and port can be configured using the 'FILESCOMFS_DEBUG_PPROF_HOST'
-		//   and 'FILESCOMFS_DEBUG_PPROF_PORT' environment variables, respectively. If not set, the
-		//   default is 'localhost:6060'.
-		// if the binary is not built with the 'filescomfs_debug' tag
-		//   this is a no-op and the debug server will not be started
-		fs.startPprof()
-		fs.log.Info("Files.com filesystem initialized successfully.")
-		fs.log.Debug("Mount point: %s, Remote filesystem root: %s, Local filesystem root: %s", fs.mountPoint, fs.remote.root, fs.local.localFsRoot)
+		fs.log.Info("Files.com file system initialized successfully.")
+		fs.log.Debug("Mount point: %s, Remote file system root: %s, Local file system root: %s", fs.mountPoint, fs.remote.root, fs.local.localFsRoot)
 	})
 }
 
 func (fs *Filescomfs) Destroy() {
 	defer logPanics(fs.log)
-	fs.log.Info("Shutting down Files.com filesystem at mount point: %s", fs.mountPoint)
+	fs.log.Info("Shutting down Files.com file system mounted at: %s", fs.mountPoint)
 	fs.remote.Destroy()
 	fs.local.Destroy()
 	fs.vfs.destroy()
-
-	// Shutdown the debug server if it was started
-	if fs.dbgSrv != nil {
-		fs.log.Info("Shutting down debug server")
-		ctx, cancel := context.WithTimeout(context.Background(), dbgShutdownTimeout)
-		defer cancel()
-		if err := fs.dbgSrv.Shutdown(ctx); err != nil {
-			fs.log.Error("error shutting down debug server: %v", err)
-		} else {
-			fs.log.Info("debug server shut down successfully")
-		}
-	}
 }
 
-// Validate checks if the Filescomfs filesystem is valid by attempting to list the root directories of the RemoteFs and LocalFs.
+// Validate checks if the Filescomfs file system is valid by attempting to list the root directories of the RemoteFs and LocalFs.
 func (fs *Filescomfs) Validate() error {
 	defer logPanics(fs.log)
 	fs.Init()
@@ -176,7 +156,7 @@ func (fs *Filescomfs) Rename(oldpath string, newpath string) (errc int) {
 	fs.log.Trace("Filescomfs: Rename: renaming file: oldpath=%v, newpath=%v", oldpath, newpath)
 
 	// for renames that stay within the same storage (local to local, remote to remote)
-	// delegate to the appropriate filesystem's Rename method
+	// delegate to the appropriate file system's Rename method
 	if fs.isStoredRemotely(oldpath) && fs.isStoredRemotely(newpath) {
 		errc = fs.remote.Rename(oldpath, newpath)
 		fs.log.Trace("Filescomfs: Rename: renaming file remotely: oldpath=%v, newpath=%v, errc=%v", oldpath, newpath, errc)

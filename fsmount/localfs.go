@@ -39,26 +39,26 @@ func newLocalFs(params MountParams, vfs *virtualfs, ll lib.LeveledLogger) *Local
 
 func (fs *LocalFs) Init() {
 	// Guard with a sync.Once because Init is called from fsmount.Mount, but cgofuse also calls Init
-	// when it mounts the filesystem.
+	// when it mounts the file system.
 	fs.initOnce.Do(func() {
-		// store the time the filesystem was initialized to use as the creation time for the root directory
+		// store the time the file system was initialized to use as the creation time for the root directory
 		fs.initTime = time.Now()
-		fs.log.Debug("LocalFs initialized successfully. Local filesystem root: %s", fs.localFsRoot)
+		fs.log.Debug("LocalFs initialized successfully. Local file system root: %s", fs.localFsRoot)
 	})
 }
 
 func (fs *LocalFs) Destroy() {
 	root := filepath.Clean(fs.localFsRoot)
 	tmp := filepath.Clean(os.TempDir())
-	fs.log.Debug("LocalFs: Destroy: considering removal of local filesystem root: %v", root)
+	fs.log.Debug("LocalFs: Destroy: considering removal of local file system root: %v", root)
 
-	// only remove the local filesystem root if it is under the system temp directory
+	// only remove the local file system root if it is under the system temp directory
 	if strings.HasPrefix(root+string(os.PathSeparator), tmp+string(os.PathSeparator)) {
 		if err := os.RemoveAll(root); err != nil {
-			fs.log.Debug("LocalFs: Destroy: failed to remove temporary local filesystem root: %v, err: %v", root, err)
+			fs.log.Debug("LocalFs: Destroy: failed to remove temporary local file system root: %v, err: %v", root, err)
 			return
 		}
-		fs.log.Debug("LocalFs: Destroy: removed temporary local filesystem root: %v", root)
+		fs.log.Debug("LocalFs: Destroy: removed temporary local file system root: %v", root)
 		return
 	}
 	fs.log.Debug("LocalFs: Destroy: refusing to remove non-temp TmpFsPath: %v (TempDir=%v)", root, tmp)
@@ -120,7 +120,7 @@ func (fs *LocalFs) Unlink(path string) (errc int) {
 	path = fs.fqPath(path)
 	if err := os.Remove(path); err != nil {
 		// just log the error, rely on the Destroy method to clean up the temp files
-		// as a whole when the filesystem is unmounted
+		// as a whole when the file system is unmounted
 		fs.log.Debug("LocalFs: Unlink: failed to remove file: path=%v, err=%v", path, err)
 	}
 	return errc
@@ -198,7 +198,7 @@ func (fs *LocalFs) open(path string, flags int, mode uint32) (errc int, fh uint6
 		fs.log.Debug("LocalFs: open: failed to open file: path=%v, flags=%v, mode=%o, err=%v, errno=%v", path, fuseFlags, mode, err, errc)
 		return errc, ^uint64(0)
 	}
-	// create a new fsNode for the file and open a file handle for it in the virtual filesystem
+	// create a new fsNode for the file and open a file handle for it in the virtual file system
 	node := fs.vfs.getOrCreate(path, nodeTypeFile)
 	fh, _ = fs.vfs.handles.OpenWithFile(node, fuseFlags, f)
 	fs.log.Trace("LocalFs: open: succeeded path=%v, flags=%v, mode=%o fh=%v", path, fuseFlags, mode, fh)
@@ -321,8 +321,8 @@ func (fs *LocalFs) Release(path string, fh uint64) (errc int) {
 }
 
 func (fs *LocalFs) Opendir(path string) (errc int, fh uint64) {
-	// this is largely a no-op since we don't need to open a directory handle on the local filesystem,
-	// but allocating a file handle allows us to track open directories in the virtual filesystem
+	// this is largely a no-op since we don't need to open a directory handle on the local file system,
+	// but allocating a file handle allows us to track open directories in the virtual file system
 	// and aligns with releasedir which will close the handle
 	path = fs.fqPath(path)
 	node := fs.vfs.getOrCreate(path, nodeTypeDir)

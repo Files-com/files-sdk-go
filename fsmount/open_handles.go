@@ -13,10 +13,11 @@ import (
 
 // OpenHandles tracks currently-open FUSE file handles and allocates fresh IDs.
 type OpenHandles struct {
-	mu      sync.RWMutex
-	entries map[uint64]*fileHandle
-	ticker  *time.Ticker
-	log     lib.LeveledLogger
+	mu         sync.RWMutex
+	entries    map[uint64]*fileHandle
+	ticker     *time.Ticker
+	stopTicker chan struct{}
+	log        lib.LeveledLogger
 }
 
 const (
@@ -152,40 +153,53 @@ func (h *OpenHandles) Close() {
 }
 
 func (h *OpenHandles) stopUploadSweeper() {
+	h.log.Debug("Stopping upload sweeper")
+	if h.stopTicker != nil {
+		close(h.stopTicker)
+		h.stopTicker = nil
+	}
 	if h.ticker != nil {
 		h.ticker.Stop()
+		h.ticker = nil
 	}
 }
 
 // startUploadSweeper periodically checks for uploads that have been idle
 // for too long and cancels them.
 func (h *OpenHandles) startUploadSweeper() {
+	h.stopTicker = make(chan struct{})
 	h.ticker = time.NewTicker(sweepInterval)
-	for range h.ticker.C {
-		h.mu.Lock()
-		for _, handle := range h.entries {
-			if handle == nil || handle.node == nil {
-				continue
+	for {
+		select {
+		case <-h.stopTicker:
+			h.log.Debug("Upload sweeper stopped")
+			return
+		case <-h.ticker.C:
+			h.mu.Lock()
+			for _, handle := range h.entries {
+				if handle == nil || handle.node == nil {
+					continue
+				}
+				node := handle.node
+				if node.upload == nil {
+					continue
+				}
+				_, bytesWritten, lastActivity := node.uploadStats()
+				idle := time.Since(lastActivity)
+				h.log.Debug("Upload sweeper: checking upload for path %s, bytes written: %d, last activity: %v, idle time: %v", node.path, bytesWritten, lastActivity, idle)
+				// Case A: upload opened but never wrote any bytes — allow a long grace period.
+				if bytesWritten == 0 && idle > unopenedUploadTimeout {
+					h.log.Debug("Upload sweeper: cancelling unopened upload for path %s, last activity: %v", node.path, lastActivity)
+					node.cancelUpload()
+					continue
+				}
+				// Case B: upload has written bytes but has been idle too long.
+				if bytesWritten > 0 && idle > uploadIdleTimeout {
+					h.log.Debug("Upload sweeper: cancelling idle upload for path %s, last activity: %v", node.path, lastActivity)
+					node.cancelUpload()
+				}
 			}
-			node := handle.node
-			if node.upload == nil {
-				continue
-			}
-			_, bytesWritten, lastActivity := node.uploadStats()
-			idle := time.Since(lastActivity)
-			h.log.Debug("Upload sweeper: checking upload for path %s, bytes written: %d, last activity: %v, idle time: %v", node.path, bytesWritten, lastActivity, idle)
-			// Case A: upload opened but never wrote any bytes — allow a long grace period.
-			if bytesWritten == 0 && idle > unopenedUploadTimeout {
-				h.log.Debug("Upload sweeper: cancelling unopened upload for path %s, last activity: %v", node.path, lastActivity)
-				node.cancelUpload()
-				continue
-			}
-			// Case B: upload has written bytes but has been idle too long.
-			if bytesWritten > 0 && idle > uploadIdleTimeout {
-				h.log.Debug("Upload sweeper: cancelling idle upload for path %s, last activity: %v", node.path, lastActivity)
-				node.cancelUpload()
-			}
+			h.mu.Unlock()
 		}
-		h.mu.Unlock()
 	}
 }

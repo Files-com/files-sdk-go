@@ -5,18 +5,88 @@ package fsmount
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+
+	"golang.org/x/sys/unix"
 )
 
-func mountPoint(mountPoint string) (string, error) {
-	// TODO: build a path to the mount point that is OS specific. For now,
-	// require that the mount point is provided and exists.
-	if mountPoint == "" {
+func mountPoint(mntRoot string) (string, error) {
+	mntRoot = filepath.Clean(mntRoot)
+	if mntRoot == "" {
 		return "", fmt.Errorf("mount point cannot be empty")
 	}
-	if _, err := os.Stat(mountPoint); os.IsNotExist(err) {
-		return "", fmt.Errorf("mount point does not exist: %w", err)
+
+	// ensure the parent directory exists
+	if _, err := os.Stat(mntRoot); os.IsNotExist(err) {
+		return "", fmt.Errorf("parent directory for creating mount point does not exist: %w", err)
 	}
-	return mountPoint, nil
+
+	dirs, err := os.ReadDir(mntRoot)
+	if err != nil {
+		return "", fmt.Errorf("failed to read mount root directory: %w", err)
+	}
+	// if there are directories in the mount root, check if any of them are
+	// available for use as a mount point
+	for _, dir := range dirs {
+		if dir.IsDir() {
+			candidate := filepath.Join(mntRoot, dir.Name())
+
+			// check if the candidate is already reserved
+			if _, ok := mntRegistry.get(candidate); ok {
+				continue
+			}
+
+			// check if the mount point is already in use
+			inUse, err := mountInUse(candidate)
+			if err != nil {
+				continue
+			}
+
+			if !inUse {
+				// return the candidate
+				return candidate, nil
+			}
+		}
+	}
+
+	// no existing directories are available,
+
+	// find a suitable name for the mount point that is not already in use
+	// by checking for directories named A-Z in the mount root
+	// and checking if they are already mounted
+	// and checking if they are already reserved in this process
+	for l := 'A'; l <= 'Z'; l++ {
+		subdir := string(l)
+
+		// generate a candidate mount point
+		candidate := filepath.Join(mntRoot, subdir)
+
+		// check if the candidate is already reserved
+		if _, ok := mntRegistry.get(candidate); ok {
+			continue
+		}
+
+		// check if the mount point is already in use
+		inUse, err := mountInUse(candidate)
+		if err != nil {
+			continue
+		}
+
+		if !inUse {
+			// make sure it exists
+			if _, err := os.Stat(candidate); os.IsNotExist(err) {
+				// create the directory if it doesn't exist
+				if err := os.Mkdir(candidate, 0o700); err != nil {
+					return "", fmt.Errorf("failed to create mount point directory: %w", err)
+				}
+			}
+
+			// return the candidate
+			return candidate, nil
+		}
+	}
+
+	return "", fmt.Errorf("no available mount points")
 }
 
 func mountOpts(params MountParams) []string {
@@ -54,4 +124,45 @@ func additionalIgnorePatterns() []string {
 		".Trash-*/",
 		"~WR*.tmp",
 	}
+}
+
+// mountInUse reports whether base/rel is currently the mount point of some file system.
+func mountInUse(mntPnt string) (bool, error) {
+	p := filepath.Clean(mntPnt)
+	// Fast path: statfs on the path and compare mntonname.
+	var s unix.Statfs_t
+	if err := unix.Statfs(p, &s); err == nil {
+		mntonname := cArrayToString(s.Mntonname[:])
+		if filepath.Clean(mntonname) == p {
+			return true, nil
+		}
+	}
+	// Fallback: enumerate mounts (covers cases where the dir doesn't exist yet).
+	n, err := unix.Getfsstat(nil, unix.MNT_NOWAIT)
+	if err != nil {
+		return false, err
+	}
+	buf := make([]unix.Statfs_t, n)
+	_, err = unix.Getfsstat(buf, unix.MNT_NOWAIT)
+	if err != nil {
+		return false, err
+	}
+	for i := range buf {
+		if filepath.Clean(cArrayToString(buf[i].Mntonname[:])) == p {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func cArrayToString(arr []byte) string {
+	n := 0
+	for n < len(arr) && arr[n] != 0 {
+		n++
+	}
+	b := make([]byte, n)
+	for i := 0; i < n; i++ {
+		b[i] = byte(arr[i])
+	}
+	return string(b)
 }

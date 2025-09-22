@@ -1,9 +1,10 @@
-// Package fsmount provides functionality to mount a Files.com filesystem using FUSE.
+// Package fsmount provides functionality to mount a Files.com file system using FUSE.
 package fsmount
 
 import (
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
@@ -18,22 +19,22 @@ const (
 	// DefaultWriteConcurrency is the default number of concurrent file parts to upload.
 	DefaultWriteConcurrency = 50
 
-	// DefaultCacheTTL is the default cache TTL for the filesystem metadata.
+	// DefaultCacheTTL is the default cache TTL for the file system metadata.
 	DefaultCacheTTL = 5 * time.Second
 
-	// DefaultVolumeName is the default volume name for the filesystem.
+	// DefaultVolumeName is the default volume name for the file system.
 	DefaultVolumeName = "Files.com"
 
 	// DefaultDebugFuseLog is the default path to the fuse debug log. [Windows only]
 	DefaultDebugFuseLog = "fuse.log"
 )
 
-// MountParams contains the parameters for mounting a Files.com filesystem using FUSE.
+// MountParams contains the parameters for mounting a Files.com file system using FUSE.
 type MountParams struct {
 	// Required. Files.com API configuration.
 	Config *files_sdk.Config
 
-	// Path to mount the filesystem.
+	// Path to mount the file system.
 	//
 	// Optional on Windows. If provided, this is expected to be a drive letter
 	// followed by a colon (e.g. "Z:"). If not specified, the letter closest to
@@ -53,13 +54,13 @@ type MountParams struct {
 	// share name for the UNC path. Defaults to "Files.com".
 	VolumeName string
 
-	// Optional. Files.com path to mount as the root of the filesystem. Defaults to the site root.
+	// Optional. Files.com path to mount as the root of the file system. Defaults to the site root.
 	Root string
 
 	// Optional. Number of concurrent file parts to upload. Defaults to 50.
 	WriteConcurrency int
 
-	// Optional. Cache TTL for the filesystem metadata. Defaults to 5 seconds.
+	// Optional. Cache TTL for the file system metadata. Defaults to 5 seconds.
 	CacheTTL time.Duration
 
 	// Optional. Disable use of Files.com locks when writing files. Defaults to false.
@@ -82,18 +83,40 @@ type MountParams struct {
 	IconPath string
 }
 
-// MountHost defines the interface for a mounted Files.com filesystem.
-type MountHost interface {
-	Unmount() bool
-}
+var (
+	// the registry of active mount hosts
+	mntRegistry *mountRegistry
 
-// Mount initializes a Files.com filesystem and mounts it using FUSE.
-func Mount(params MountParams) (MountHost, error) {
-	fs, err := newFs(params)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create filesystem: %w", err)
+	// mutex to ensure only one mount operation is happening at a time
+	mountMu sync.Mutex
+)
+
+// Mount initializes a Files.com file system and mounts it using FUSE.
+func Mount(params MountParams) (*Host, error) {
+	// only allow one mount operation at a time, to avoid multiple mounts
+	// attempting to use the same mount point
+	mountMu.Lock()
+	defer mountMu.Unlock()
+
+	logger := lib.NewLeveledLogger(params.Config.Logger)
+
+	if mntRegistry == nil {
+		mntRegistry = newRegistry(logger)
+
+		// if the binary is built with the 'filescomfs_debug' tag
+		//   start the debug server to allow for pprof profiling and other debug endpoints
+		//   the listen address and port can be configured using the 'FILESCOMFS_DEBUG_PPROF_HOST'
+		//   and 'FILESCOMFS_DEBUG_PPROF_PORT' environment variables, respectively. If not set, the
+		//   default is 'localhost:6060'. If the debug server is already running, this is a no-op.
+		// if the binary is not built with the 'filescomfs_debug' tag
+		//   this is a no-op and the debug server will not be started
+		mntRegistry.startPprof()
 	}
 
+	fs, err := newFs(params, logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create file system: %w", err)
+	}
 	// test that the fs can list the root
 	if err := fs.Validate(); err != nil {
 		return nil, err
@@ -107,17 +130,25 @@ func Mount(params MountParams) (MountHost, error) {
 		return nil, err
 	}
 
-	// Create the filesystem host and mount it
+	// Create the file system host and mount it
 	host := fuse.NewFileSystemHost(fs)
 	host.SetCapReaddirPlus(true)
 	go func() {
-		host.Mount(fs.mountPoint, opts)
+		mounted := host.Mount(fs.mountPoint, opts)
+		if !mounted {
+			fs.log.Error("Failed to mount file system at %s", fs.mountPoint)
+			mntRegistry.remove(fs.mountPoint)
+			return
+		}
 	}()
 
-	return host, nil
+	return mntRegistry.add(fs.mountPoint, &Host{
+		fuseHost: host,
+		fs:       fs,
+	})
 }
 
-func newFs(params MountParams) (*Filescomfs, error) {
+func newFs(params MountParams, logger lib.LeveledLogger) (*Filescomfs, error) {
 	// return early if config is nil or the mount point can't
 	// be determined
 	if params.Config == nil {
@@ -136,23 +167,21 @@ func newFs(params MountParams) (*Filescomfs, error) {
 
 	// create the temporary directory if it doesn't exist
 	if params.TmpFsPath == "" {
-		tmpRoot, err := os.MkdirTemp("", "Files.com-v6-tmp-*")
+		tmpRoot, err := os.MkdirTemp("", "Files.com-v6-*")
 		if err != nil {
-			return nil, fmt.Errorf("failed to create temporary local filesystem: %w", err)
+			return nil, fmt.Errorf("failed to create temporary local file system: %w", err)
 		}
 		params.TmpFsPath = tmpRoot
 	}
 
-	logger := lib.NewLeveledLogger(params.Config.Logger)
-
 	// The Filescomfs, RemoteFs, and LocalFs all share a single virtualfs instance to manage the
-	// in-memory representation of the filesystem. This allows for consistent state management and
-	// caching across the different filesystem implementations.
+	// in-memory representation of the file system. This allows for consistent state management and
+	// caching across the different file system implementations.
 	vfs := newVirtualfs(params, logger)
 
 	remotefs, err := newRemoteFs(params, vfs, logger)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create remote filesystem: %w", err)
+		return nil, fmt.Errorf("failed to create remote file system: %w", err)
 	}
 
 	localfs := newLocalFs(params, vfs, logger)
@@ -174,7 +203,7 @@ func newFs(params MountParams) (*Filescomfs, error) {
 	}
 	fs.ignore = ig
 
-	logger.Info("Mounting Files.com filesystem at %s", params.MountPoint)
+	logger.Info("Mounting Files.com file system at %s", params.MountPoint)
 	return fs, nil
 }
 
