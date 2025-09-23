@@ -19,7 +19,6 @@ type ProxyReaderAt struct {
 	onRead func(i int64)
 	read   int64
 	closed atomic.Bool
-	Closer func() error
 }
 
 type ProxyRead struct {
@@ -28,7 +27,6 @@ type ProxyRead struct {
 	onRead func(i int64)
 	read   int64
 	closed atomic.Bool
-	Closer func() error
 }
 
 func (x *ProxyReaderAt) Rewind() bool {
@@ -113,16 +111,10 @@ func (x *ProxyRead) Read(p []byte) (int, error) {
 
 func (x *ProxyReaderAt) Close() error {
 	x.closed.Store(true)
-	if x.Closer != nil {
-		return x.Closer()
-	}
 	return nil
 }
 
 func (x *ProxyRead) Close() error {
 	x.closed.Store(true)
-	if x.Closer != nil {
-		return x.Closer()
-	}
 	return nil
 }
