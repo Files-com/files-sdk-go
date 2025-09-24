@@ -108,6 +108,7 @@ type Site struct {
 	Logo                                     Image                  `json:"logo,omitempty" path:"logo,omitempty" url:"logo,omitempty"`
 	LoginPageBackgroundImage                 Image                  `json:"login_page_background_image,omitempty" path:"login_page_background_image,omitempty" url:"login_page_background_image,omitempty"`
 	MaxPriorPasswords                        int64                  `json:"max_prior_passwords,omitempty" path:"max_prior_passwords,omitempty" url:"max_prior_passwords,omitempty"`
+	ManagedSiteSettings                      map[string]interface{} `json:"managed_site_settings,omitempty" path:"managed_site_settings,omitempty" url:"managed_site_settings,omitempty"`
 	MotdText                                 string                 `json:"motd_text,omitempty" path:"motd_text,omitempty" url:"motd_text,omitempty"`
 	MotdUseForFtp                            *bool                  `json:"motd_use_for_ftp,omitempty" path:"motd_use_for_ftp,omitempty" url:"motd_use_for_ftp,omitempty"`
 	MotdUseForSftp                           *bool                  `json:"motd_use_for_sftp,omitempty" path:"motd_use_for_sftp,omitempty" url:"motd_use_for_sftp,omitempty"`
@@ -180,7 +181,6 @@ type Site struct {
 	WelcomeScreen                            string                 `json:"welcome_screen,omitempty" path:"welcome_screen,omitempty" url:"welcome_screen,omitempty"`
 	WindowsModeFtp                           *bool                  `json:"windows_mode_ftp,omitempty" path:"windows_mode_ftp,omitempty" url:"windows_mode_ftp,omitempty"`
 	GroupAdminsCanSetUserPassword            *bool                  `json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password,omitempty" url:"group_admins_can_set_user_password,omitempty"`
-	ManagedSiteSettings                      []string               `json:"managed_site_settings,omitempty" path:"managed_site_settings,omitempty" url:"managed_site_settings,omitempty"`
 }
 
 func (s Site) Identifier() interface{} {
