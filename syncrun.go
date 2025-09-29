@@ -23,7 +23,6 @@ type SyncRun struct {
 	Runtime              string     `json:"runtime,omitempty" path:"runtime,omitempty" url:"runtime,omitempty"`
 	LogUrl               string     `json:"log_url,omitempty" path:"log_url,omitempty" url:"log_url,omitempty"`
 	CompletedAt          *time.Time `json:"completed_at,omitempty" path:"completed_at,omitempty" url:"completed_at,omitempty"`
-	Notified             *bool      `json:"notified,omitempty" path:"notified,omitempty" url:"notified,omitempty"`
 	DryRun               *bool      `json:"dry_run,omitempty" path:"dry_run,omitempty" url:"dry_run,omitempty"`
 	BytesSynced          int64      `json:"bytes_synced,omitempty" path:"bytes_synced,omitempty" url:"bytes_synced,omitempty"`
 	EstimatedBytesCount  int64      `json:"estimated_bytes_count,omitempty" path:"estimated_bytes_count,omitempty" url:"estimated_bytes_count,omitempty"`
