@@ -1024,6 +1024,9 @@ func (fs *RemoteFs) handleError(path string, err error) int {
 		localPath, remotePath := fs.paths(path)
 		fs.log.Error("%v (%v): %v", remotePath, localPath, err)
 
+		if files_sdk.IsNotAuthenticated(err) {
+			return -fuse.EPERM
+		}
 		if files_sdk.IsNotExist(err) {
 			return -fuse.ENOENT
 		}

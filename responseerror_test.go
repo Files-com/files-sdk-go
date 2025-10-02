@@ -93,6 +93,16 @@ var TestStr4 = `
 <body></body>
 `
 
+var notAuthenticated = `
+{
+  "error": "The API key or Session token provided could not be used to validate this request.",
+  "http-code":401,
+  "instance":"5baab0b9dd8b58ffa436cf86498bda05",
+  "title":"Invalid Credentials",
+  "type":"not-authenticated/not-a-real-auth-type"
+}
+`
+
 func TestResponseError1_UnmarshalJSON(t *testing.T) {
 	assert := assert.New(t)
 	subject := ResponseError{}
@@ -192,4 +202,13 @@ func TestResponseError_MarshalJSON(t *testing.T) {
 	jsonBytes, err := json.Marshal(subject)
 	require.NoError(t, err)
 	assert.JSONEq(t, TestStr1, string(jsonBytes))
+}
+
+func TestIsNotAuthenticated(t *testing.T) {
+	assert := assert.New(t)
+	subject := ResponseError{}
+
+	err := subject.UnmarshalJSON([]byte(notAuthenticated))
+	require.NoError(t, err)
+	assert.True(IsNotAuthenticated(subject))
 }

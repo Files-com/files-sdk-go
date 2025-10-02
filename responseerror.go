@@ -50,6 +50,16 @@ func IsNotExist(err error) bool {
 	return ok && strings.Split(re.Type, "/")[0] == "not-found"
 }
 
+func IsNotAuthenticated(err error) bool {
+	var re ResponseError
+	ok := errors.As(err, &re)
+	tkns := strings.Split(re.Type, "/")
+
+	// no length check on tkns needed because strings.Split guarantees at least one element if the
+	// separator is not empty
+	return ok && tkns[0] == "not-authenticated"
+}
+
 type SignRequest struct {
 	Version   string `json:"version"`
 	KeyHandle string `json:"keyHandle"`

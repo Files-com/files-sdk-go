@@ -8,6 +8,7 @@ import (
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	api_key "github.com/Files-com/files-sdk-go/v3/apikey"
 	"github.com/Files-com/files-sdk-go/v3/ignore"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/winfsp/cgofuse/fuse"
@@ -40,7 +41,8 @@ type MountParams struct {
 	// followed by a colon (e.g. "Z:"). If not specified, the letter closest to
 	// the end of the Latin alphabet that is not already in use will be chosen.
 	//
-	// Required on MacOS and Linux, this is the path to the mount point (e.g. "/mnt/files").
+	// Required on MacOS and Linux, this is the path to the directory where mount points
+	// will be located (e.g. "/mnt/files").
 	MountPoint string
 
 	// Optional. Path to a temporary directory for storing files that don't belong on Files.com.
@@ -99,6 +101,13 @@ func Mount(params MountParams) (*Host, error) {
 	defer mountMu.Unlock()
 
 	logger := lib.NewLeveledLogger(params.Config.Logger)
+
+	// make sure the API key is valid before attempting to mount
+	apiKeyClient := &api_key.Client{Config: *params.Config}
+	_, err := apiKeyClient.FindCurrent()
+	if err != nil {
+		return nil, err
+	}
 
 	if mntRegistry == nil {
 		mntRegistry = newRegistry(logger)
