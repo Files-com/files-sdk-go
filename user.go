@@ -206,6 +206,7 @@ type UserCreateParams struct {
 	Company                    string                       `url:"company,omitempty" json:"company,omitempty" path:"company"`
 	Notes                      string                       `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
 	OfficeIntegrationEnabled   *bool                        `url:"office_integration_enabled,omitempty" json:"office_integration_enabled,omitempty" path:"office_integration_enabled"`
+	PartnerAdmin               *bool                        `url:"partner_admin,omitempty" json:"partner_admin,omitempty" path:"partner_admin"`
 	PartnerId                  int64                        `url:"partner_id,omitempty" json:"partner_id,omitempty" path:"partner_id"`
 	PasswordValidityDays       int64                        `url:"password_validity_days,omitempty" json:"password_validity_days,omitempty" path:"password_validity_days"`
 	ReadonlySiteAdmin          *bool                        `url:"readonly_site_admin,omitempty" json:"readonly_site_admin,omitempty" path:"readonly_site_admin"`
@@ -274,6 +275,7 @@ type UserUpdateParams struct {
 	Company                    string                       `url:"company,omitempty" json:"company,omitempty" path:"company"`
 	Notes                      string                       `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
 	OfficeIntegrationEnabled   *bool                        `url:"office_integration_enabled,omitempty" json:"office_integration_enabled,omitempty" path:"office_integration_enabled"`
+	PartnerAdmin               *bool                        `url:"partner_admin,omitempty" json:"partner_admin,omitempty" path:"partner_admin"`
 	PartnerId                  int64                        `url:"partner_id,omitempty" json:"partner_id,omitempty" path:"partner_id"`
 	PasswordValidityDays       int64                        `url:"password_validity_days,omitempty" json:"password_validity_days,omitempty" path:"password_validity_days"`
 	ReadonlySiteAdmin          *bool                        `url:"readonly_site_admin,omitempty" json:"readonly_site_admin,omitempty" path:"readonly_site_admin"`
