@@ -49,6 +49,7 @@ type User struct {
 	Notes                            string     `json:"notes,omitempty" path:"notes,omitempty" url:"notes,omitempty"`
 	NotificationDailySendTime        int64      `json:"notification_daily_send_time,omitempty" path:"notification_daily_send_time,omitempty" url:"notification_daily_send_time,omitempty"`
 	OfficeIntegrationEnabled         *bool      `json:"office_integration_enabled,omitempty" path:"office_integration_enabled,omitempty" url:"office_integration_enabled,omitempty"`
+	PartnerAdmin                     *bool      `json:"partner_admin,omitempty" path:"partner_admin,omitempty" url:"partner_admin,omitempty"`
 	PartnerId                        int64      `json:"partner_id,omitempty" path:"partner_id,omitempty" url:"partner_id,omitempty"`
 	PasswordSetAt                    *time.Time `json:"password_set_at,omitempty" path:"password_set_at,omitempty" url:"password_set_at,omitempty"`
 	PasswordValidityDays             int64      `json:"password_validity_days,omitempty" path:"password_validity_days,omitempty" url:"password_validity_days,omitempty"`
