@@ -28,6 +28,10 @@ type ScimLogListParams struct {
 	ListParams
 }
 
+type ScimLogFindParams struct {
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+}
+
 func (s *ScimLog) UnmarshalJSON(data []byte) error {
 	type scimLog ScimLog
 	var v scimLog

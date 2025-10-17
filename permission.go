@@ -7,16 +7,17 @@ import (
 )
 
 type Permission struct {
-	Id         int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Path       string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
-	UserId     int64  `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
-	Username   string `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
-	GroupId    int64  `json:"group_id,omitempty" path:"group_id,omitempty" url:"group_id,omitempty"`
-	GroupName  string `json:"group_name,omitempty" path:"group_name,omitempty" url:"group_name,omitempty"`
-	PartnerId  int64  `json:"partner_id,omitempty" path:"partner_id,omitempty" url:"partner_id,omitempty"`
-	Permission string `json:"permission,omitempty" path:"permission,omitempty" url:"permission,omitempty"`
-	Recursive  *bool  `json:"recursive,omitempty" path:"recursive,omitempty" url:"recursive,omitempty"`
-	SiteId     int64  `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
+	Id          int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Path        string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	UserId      int64  `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	Username    string `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
+	GroupId     int64  `json:"group_id,omitempty" path:"group_id,omitempty" url:"group_id,omitempty"`
+	GroupName   string `json:"group_name,omitempty" path:"group_name,omitempty" url:"group_name,omitempty"`
+	PartnerId   int64  `json:"partner_id,omitempty" path:"partner_id,omitempty" url:"partner_id,omitempty"`
+	PartnerName string `json:"partner_name,omitempty" path:"partner_name,omitempty" url:"partner_name,omitempty"`
+	Permission  string `json:"permission,omitempty" path:"permission,omitempty" url:"permission,omitempty"`
+	Recursive   *bool  `json:"recursive,omitempty" path:"recursive,omitempty" url:"recursive,omitempty"`
+	SiteId      int64  `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
 }
 
 func (p Permission) Identifier() interface{} {

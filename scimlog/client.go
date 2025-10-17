@@ -23,6 +23,14 @@ func (i *Iter) ScimLog() files_sdk.ScimLog {
 	return i.Current().(files_sdk.ScimLog)
 }
 
+func (i *Iter) LoadResource(identifier interface{}, opts ...files_sdk.RequestResponseOption) (interface{}, error) {
+	params := files_sdk.ScimLogFindParams{}
+	if id, ok := identifier.(int64); ok {
+		params.Id = id
+	}
+	return i.Client.Find(params, opts...)
+}
+
 func (c *Client) List(params files_sdk.ScimLogListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/scim_logs", params)
@@ -37,4 +45,13 @@ func (c *Client) List(params files_sdk.ScimLogListParams, opts ...files_sdk.Requ
 
 func List(params files_sdk.ScimLogListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	return (&Client{}).List(params, opts...)
+}
+
+func (c *Client) Find(params files_sdk.ScimLogFindParams, opts ...files_sdk.RequestResponseOption) (scimLog files_sdk.ScimLog, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/scim_logs/{id}", Params: params, Entity: &scimLog}, opts...)
+	return
+}
+
+func Find(params files_sdk.ScimLogFindParams, opts ...files_sdk.RequestResponseOption) (scimLog files_sdk.ScimLog, err error) {
+	return (&Client{}).Find(params, opts...)
 }

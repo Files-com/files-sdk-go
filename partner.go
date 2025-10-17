@@ -14,6 +14,7 @@ type Partner struct {
 	Name                      string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Notes                     string `json:"notes,omitempty" path:"notes,omitempty" url:"notes,omitempty"`
 	RootFolder                string `json:"root_folder,omitempty" path:"root_folder,omitempty" url:"root_folder,omitempty"`
+	Tags                      string `json:"tags,omitempty" path:"tags,omitempty" url:"tags,omitempty"`
 }
 
 func (p Partner) Identifier() interface{} {
@@ -32,22 +33,24 @@ type PartnerFindParams struct {
 }
 
 type PartnerCreateParams struct {
+	Name                      string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	AllowBypassing2faPolicies *bool  `url:"allow_bypassing_2fa_policies,omitempty" json:"allow_bypassing_2fa_policies,omitempty" path:"allow_bypassing_2fa_policies"`
 	AllowCredentialChanges    *bool  `url:"allow_credential_changes,omitempty" json:"allow_credential_changes,omitempty" path:"allow_credential_changes"`
 	AllowUserCreation         *bool  `url:"allow_user_creation,omitempty" json:"allow_user_creation,omitempty" path:"allow_user_creation"`
-	Name                      string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	Notes                     string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
 	RootFolder                string `url:"root_folder,omitempty" json:"root_folder,omitempty" path:"root_folder"`
+	Tags                      string `url:"tags,omitempty" json:"tags,omitempty" path:"tags"`
 }
 
 type PartnerUpdateParams struct {
 	Id                        int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Name                      string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	AllowBypassing2faPolicies *bool  `url:"allow_bypassing_2fa_policies,omitempty" json:"allow_bypassing_2fa_policies,omitempty" path:"allow_bypassing_2fa_policies"`
 	AllowCredentialChanges    *bool  `url:"allow_credential_changes,omitempty" json:"allow_credential_changes,omitempty" path:"allow_credential_changes"`
 	AllowUserCreation         *bool  `url:"allow_user_creation,omitempty" json:"allow_user_creation,omitempty" path:"allow_user_creation"`
-	Name                      string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	Notes                     string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
 	RootFolder                string `url:"root_folder,omitempty" json:"root_folder,omitempty" path:"root_folder"`
+	Tags                      string `url:"tags,omitempty" json:"tags,omitempty" path:"tags"`
 }
 
 type PartnerDeleteParams struct {

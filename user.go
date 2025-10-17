@@ -71,6 +71,7 @@ type User struct {
 	SsoStrategyId                    int64      `json:"sso_strategy_id,omitempty" path:"sso_strategy_id,omitempty" url:"sso_strategy_id,omitempty"`
 	SubscribeToNewsletter            *bool      `json:"subscribe_to_newsletter,omitempty" path:"subscribe_to_newsletter,omitempty" url:"subscribe_to_newsletter,omitempty"`
 	ExternallyManaged                *bool      `json:"externally_managed,omitempty" path:"externally_managed,omitempty" url:"externally_managed,omitempty"`
+	Tags                             string     `json:"tags,omitempty" path:"tags,omitempty" url:"tags,omitempty"`
 	TimeZone                         string     `json:"time_zone,omitempty" path:"time_zone,omitempty" url:"time_zone,omitempty"`
 	TypeOf2fa                        string     `json:"type_of_2fa,omitempty" path:"type_of_2fa,omitempty" url:"type_of_2fa,omitempty"`
 	TypeOf2faForDisplay              string     `json:"type_of_2fa_for_display,omitempty" path:"type_of_2fa_for_display,omitempty" url:"type_of_2fa_for_display,omitempty"`
@@ -222,6 +223,7 @@ type UserCreateParams struct {
 	SsoStrategyId              int64                        `url:"sso_strategy_id,omitempty" json:"sso_strategy_id,omitempty" path:"sso_strategy_id"`
 	SubscribeToNewsletter      *bool                        `url:"subscribe_to_newsletter,omitempty" json:"subscribe_to_newsletter,omitempty" path:"subscribe_to_newsletter"`
 	Require2fa                 UserRequire2faEnum           `url:"require_2fa,omitempty" json:"require_2fa,omitempty" path:"require_2fa"`
+	Tags                       string                       `url:"tags,omitempty" json:"tags,omitempty" path:"tags"`
 	TimeZone                   string                       `url:"time_zone,omitempty" json:"time_zone,omitempty" path:"time_zone"`
 	UserRoot                   string                       `url:"user_root,omitempty" json:"user_root,omitempty" path:"user_root"`
 	UserHome                   string                       `url:"user_home,omitempty" json:"user_home,omitempty" path:"user_home"`
@@ -291,6 +293,7 @@ type UserUpdateParams struct {
 	SsoStrategyId              int64                        `url:"sso_strategy_id,omitempty" json:"sso_strategy_id,omitempty" path:"sso_strategy_id"`
 	SubscribeToNewsletter      *bool                        `url:"subscribe_to_newsletter,omitempty" json:"subscribe_to_newsletter,omitempty" path:"subscribe_to_newsletter"`
 	Require2fa                 UserRequire2faEnum           `url:"require_2fa,omitempty" json:"require_2fa,omitempty" path:"require_2fa"`
+	Tags                       string                       `url:"tags,omitempty" json:"tags,omitempty" path:"tags"`
 	TimeZone                   string                       `url:"time_zone,omitempty" json:"time_zone,omitempty" path:"time_zone"`
 	UserRoot                   string                       `url:"user_root,omitempty" json:"user_root,omitempty" path:"user_root"`
 	UserHome                   string                       `url:"user_home,omitempty" json:"user_home,omitempty" path:"user_home"`

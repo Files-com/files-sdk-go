@@ -10,13 +10,15 @@ type UserLifecycleRule struct {
 	Id                   int64   `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	AuthenticationMethod string  `json:"authentication_method,omitempty" path:"authentication_method,omitempty" url:"authentication_method,omitempty"`
 	GroupIds             []int64 `json:"group_ids,omitempty" path:"group_ids,omitempty" url:"group_ids,omitempty"`
+	Action               string  `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
 	InactivityDays       int64   `json:"inactivity_days,omitempty" path:"inactivity_days,omitempty" url:"inactivity_days,omitempty"`
 	IncludeFolderAdmins  *bool   `json:"include_folder_admins,omitempty" path:"include_folder_admins,omitempty" url:"include_folder_admins,omitempty"`
 	IncludeSiteAdmins    *bool   `json:"include_site_admins,omitempty" path:"include_site_admins,omitempty" url:"include_site_admins,omitempty"`
-	Action               string  `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
-	UserState            string  `json:"user_state,omitempty" path:"user_state,omitempty" url:"user_state,omitempty"`
 	Name                 string  `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	PartnerTag           string  `json:"partner_tag,omitempty" path:"partner_tag,omitempty" url:"partner_tag,omitempty"`
 	SiteId               int64   `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
+	UserState            string  `json:"user_state,omitempty" path:"user_state,omitempty" url:"user_state,omitempty"`
+	UserTag              string  `json:"user_tag,omitempty" path:"user_tag,omitempty" url:"user_tag,omitempty"`
 }
 
 func (u UserLifecycleRule) Identifier() interface{} {
@@ -70,6 +72,7 @@ func (u UserLifecycleRuleUserStateEnum) Enum() map[string]UserLifecycleRuleUserS
 }
 
 type UserLifecycleRuleListParams struct {
+	SortBy map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
 
@@ -84,8 +87,10 @@ type UserLifecycleRuleCreateParams struct {
 	InactivityDays       int64                                     `url:"inactivity_days,omitempty" json:"inactivity_days,omitempty" path:"inactivity_days"`
 	IncludeSiteAdmins    *bool                                     `url:"include_site_admins,omitempty" json:"include_site_admins,omitempty" path:"include_site_admins"`
 	IncludeFolderAdmins  *bool                                     `url:"include_folder_admins,omitempty" json:"include_folder_admins,omitempty" path:"include_folder_admins"`
-	UserState            UserLifecycleRuleUserStateEnum            `url:"user_state,omitempty" json:"user_state,omitempty" path:"user_state"`
 	Name                 string                                    `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	PartnerTag           string                                    `url:"partner_tag,omitempty" json:"partner_tag,omitempty" path:"partner_tag"`
+	UserState            UserLifecycleRuleUserStateEnum            `url:"user_state,omitempty" json:"user_state,omitempty" path:"user_state"`
+	UserTag              string                                    `url:"user_tag,omitempty" json:"user_tag,omitempty" path:"user_tag"`
 }
 
 type UserLifecycleRuleUpdateParams struct {
@@ -96,8 +101,10 @@ type UserLifecycleRuleUpdateParams struct {
 	InactivityDays       int64                                     `url:"inactivity_days,omitempty" json:"inactivity_days,omitempty" path:"inactivity_days"`
 	IncludeSiteAdmins    *bool                                     `url:"include_site_admins,omitempty" json:"include_site_admins,omitempty" path:"include_site_admins"`
 	IncludeFolderAdmins  *bool                                     `url:"include_folder_admins,omitempty" json:"include_folder_admins,omitempty" path:"include_folder_admins"`
-	UserState            UserLifecycleRuleUserStateEnum            `url:"user_state,omitempty" json:"user_state,omitempty" path:"user_state"`
 	Name                 string                                    `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	PartnerTag           string                                    `url:"partner_tag,omitempty" json:"partner_tag,omitempty" path:"partner_tag"`
+	UserState            UserLifecycleRuleUserStateEnum            `url:"user_state,omitempty" json:"user_state,omitempty" path:"user_state"`
+	UserTag              string                                    `url:"user_tag,omitempty" json:"user_tag,omitempty" path:"user_tag"`
 }
 
 type UserLifecycleRuleDeleteParams struct {
