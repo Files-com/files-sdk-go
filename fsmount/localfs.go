@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	ff "github.com/Files-com/files-sdk-go/v3/fsmount/internal/flags"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/winfsp/cgofuse/fuse"
 )
@@ -171,15 +172,15 @@ func (fs *LocalFs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 
 func (fs *LocalFs) Create(path string, flags int, mode uint32) (errc int, fh uint64) {
 	path = fs.fqPath(path)
-	fuseFlags := NewFuseFlags(flags)
+	fuseFlags := ff.NewFuseFlags(flags)
 	fs.log.Debug("LocalFs: Create: path=%v, flags=%v, mode=%o", path, fuseFlags, mode)
 	return fs.open(path, flags, mode)
 }
 
 func (fs *LocalFs) Open(path string, flags int) (errc int, fh uint64) {
 	path = fs.fqPath(path)
-	fuseFlags := NewFuseFlags(flags)
-	fs.log.Debug("LocalFs: Open: path=%v, flags=%v", path, fuseFlags)
+	fuseFlags := ff.NewFuseFlags(flags)
+	fs.log.Trace("LocalFs: Open: path=%v, flags=%v", path, fuseFlags)
 	return fs.open(path, flags, 0)
 }
 
@@ -189,9 +190,8 @@ func (fs *LocalFs) open(path string, flags int, mode uint32) (errc int, fh uint6
 		fs.log.Debug("LocalFs: open: failed to create parent directories: path=%v, flags=%v, mode=%o, err=%v", path, flags, mode, err)
 		return -fuse.EIO, ^uint64(0)
 	}
-	fuseFlags := NewFuseFlags(flags)
-	osFlags := toOSFlags(flags)
-	f, err := os.OpenFile(path, osFlags, os.FileMode(mode))
+	fuseFlags := ff.NewFuseFlags(flags)
+	f, err := os.OpenFile(path, fuseFlags.AsOsFlags(), os.FileMode(mode))
 	if err != nil {
 		// this is expected in some cases, like .DS_Store files on macOS, so log at Debug level
 		errc = toErrno(err)
@@ -223,38 +223,6 @@ func toErrno(err error) int {
 	default:
 		return -fuse.EIO
 	}
-}
-
-// mapping FUSE/Posix open flags to golang os.* flags
-// TODO: extract this to FuseFlags and write a test for it
-func toOSFlags(fuseFlags int) int {
-	osf := 0
-
-	// Access mode (mask is 0|1|2 for R/W/RW)
-	switch fuseFlags & 0x3 { // O_RDONLY=0, O_WRONLY=1, O_RDWR=2 in POSIX
-	case 0:
-		osf |= os.O_RDONLY
-	case 1:
-		osf |= os.O_WRONLY
-	case 2:
-		osf |= os.O_RDWR
-	}
-
-	// Creation / behavior bits
-	if fuseFlags&fuse.O_CREAT != 0 {
-		osf |= os.O_CREATE
-	}
-	if fuseFlags&fuse.O_EXCL != 0 {
-		osf |= os.O_EXCL
-	}
-	if fuseFlags&fuse.O_TRUNC != 0 {
-		osf |= os.O_TRUNC
-	}
-	if fuseFlags&fuse.O_APPEND != 0 {
-		osf |= os.O_APPEND
-	}
-
-	return osf
 }
 
 func (fs *LocalFs) Truncate(path string, size int64, fh uint64) (errc int) {
@@ -294,13 +262,13 @@ func (fs *LocalFs) Write(path string, buff []byte, ofst int64, fh uint64) (n int
 		fs.log.Debug("LocalFs: Write: failed to write file: path=%v, ofst=%v, fh=%v, err=%v", path, ofst, fh, err)
 		return -fuse.EIO
 	}
-	fs.log.Debug("LocalFs: Write: path=%v, len=%v, ofst=%v, fh=%v", path, len(buff), ofst, fh)
+	fs.log.Trace("LocalFs: Write: path=%v, len=%v, ofst=%v, fh=%v", path, len(buff), ofst, fh)
 	return n
 }
 
 func (fs *LocalFs) Release(path string, fh uint64) (errc int) {
 	path = fs.fqPath(path)
-	fs.log.Debug("LocalFs: Release: path=%v, fh=%v", path, fh)
+	fs.log.Trace("LocalFs: Release: path=%v, fh=%v", path, fh)
 	handle, _, ok := fs.vfs.handles.Lookup(fh)
 	if !ok {
 		fs.log.Debug("LocalFs: Release: invalid file handle: path=%v, fh=%v", path, fh)
@@ -326,7 +294,7 @@ func (fs *LocalFs) Opendir(path string) (errc int, fh uint64) {
 	// and aligns with releasedir which will close the handle
 	path = fs.fqPath(path)
 	node := fs.vfs.getOrCreate(path, nodeTypeDir)
-	fh, _ = fs.vfs.handles.Open(node, NewFuseFlags(fuse.O_RDONLY))
+	fh, _ = fs.vfs.handles.Open(node, ff.NewFuseFlags(fuse.O_RDONLY))
 	return 0, fh
 }
 
@@ -396,7 +364,7 @@ func (fs *LocalFs) Fsync(path string, datasync bool, fh uint64) (errc int) {
 		return -fuse.EIO
 	}
 
-	fs.log.Debug("LocalFs: Fsync: path=%v, datasync=%v, fh=%v", path, datasync, fh)
+	fs.log.Trace("LocalFs: Fsync: path=%v, datasync=%v, fh=%v", path, datasync, fh)
 	return errc
 }
 
@@ -481,7 +449,7 @@ func (fs *LocalFs) Getxattr(path string, name string) (int, []byte) {
 // Setxattr sets extended attributes.
 func (fs *LocalFs) Setxattr(path string, name string, value []byte, flags int) int {
 	path = fs.fqPath(path)
-	fuseFlags := NewFuseFlags(flags)
+	fuseFlags := ff.NewFuseFlags(flags)
 	fs.log.Trace("LocalFs: Setxattr: path=%v, name=%v, value=%v flags=%v", path, name, value, fuseFlags)
 	return 0
 }

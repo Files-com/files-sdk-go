@@ -3,7 +3,6 @@ package fsmount
 import (
 	"context"
 	"errors"
-	"net/http"
 	"os"
 	"runtime"
 	"sync"
@@ -22,8 +21,6 @@ const (
 	// The maximum time to wait for the Fsync operation to complete before timing out.
 	// This is used to prevent the Fsync operation from hanging indefinitely if the remote API is unresponsive.
 	fsyncTimeout = 30 * time.Second
-
-	dbgShutdownTimeout = 5 * time.Second
 )
 
 var (
@@ -48,7 +45,6 @@ type Filescomfs struct {
 	ignore         *gogitignore.GitIgnore
 
 	initOnce sync.Once
-	dbgSrv   *http.Server
 }
 
 // Init initializes the Filescomfs file system.

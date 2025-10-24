@@ -13,17 +13,33 @@ import (
 	"sync"
 	"time"
 
-	files_sdk "github.com/Files-com/files-sdk-go/v3"
-	api_key "github.com/Files-com/files-sdk-go/v3/apikey"
 	"github.com/Files-com/files-sdk-go/v3/file"
 	"github.com/Files-com/files-sdk-go/v3/file/manager"
-	file_migration "github.com/Files-com/files-sdk-go/v3/filemigration"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/disk"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/mem"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/log"
 	"github.com/Files-com/files-sdk-go/v3/ignore"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/Files-com/files-sdk-go/v3/lock"
-	gogitignore "github.com/sabhiram/go-gitignore"
 	"github.com/winfsp/cgofuse/fuse"
+
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	api_key "github.com/Files-com/files-sdk-go/v3/apikey"
+	file_migration "github.com/Files-com/files-sdk-go/v3/filemigration"
+	ff "github.com/Files-com/files-sdk-go/v3/fsmount/internal/flags"
+	gogitignore "github.com/sabhiram/go-gitignore"
 )
+
+const (
+	// cacheWriteSize is the number of bytes read from an API response and written to the cache
+	// before signalling any waiting cache readers that data is available
+	cacheWriteSize = 128 * 1024 // 128KB
+)
+
+// compile time assertions that the cache implementations satisfy the fsCache interface
+var _ cacheStore = (*disk.DiskCache)(nil)
+var _ cacheStore = (*mem.MemoryCache)(nil)
 
 // RemoteFs is a file system that implements the logic for interacting with the Files.com API
 // for a mounted file system. It handles all operations that are not handled by the LocalFs
@@ -31,7 +47,7 @@ import (
 // Files.com. The Filescomfs implementation delegates operations to this implementation for
 // all files who's source/destination is Files.com.
 type RemoteFs struct {
-	log              lib.LeveledLogger
+	log              log.Logger
 	vfs              *virtualfs
 	config           *files_sdk.Config
 	mountPoint       string
@@ -55,6 +71,22 @@ type RemoteFs struct {
 
 	initOnce sync.Once
 	initTime time.Time
+
+	cacheStore cacheStore
+
+	gatesMu    sync.Mutex
+	readyGates map[string]*cache.ReadyGate
+}
+
+// cacheStore defines the interface for the file system cache used by RemoteFs and allows for alternative
+// implementations. e.g. an in-memory cache implementation vs a disk-based cache implementation.
+type cacheStore interface {
+	Read(path string, buff []byte, ofst int64) (n int, err error)
+	Write(path string, buff []byte, ofst int64) (n int, err error)
+	Delete(path string) bool
+	Stats() *cache.Stats
+	StartMaintenance()
+	StopMaintenance()
 }
 
 type lockInfo struct {
@@ -62,12 +94,12 @@ type lockInfo struct {
 	Lock *files_sdk.Lock
 }
 
-func newRemoteFs(params MountParams, vfs *virtualfs, ll lib.LeveledLogger) (*RemoteFs, error) {
+func newRemoteFs(params MountParams, vfs *virtualfs, log log.Logger, cs cacheStore) (*RemoteFs, error) {
 	if params.Root == "" {
 		params.Root = "/"
 	}
 	fs := &RemoteFs{
-		log:              ll,
+		log:              log,
 		root:             params.Root,
 		vfs:              vfs,
 		mountPoint:       params.MountPoint,
@@ -77,6 +109,7 @@ func newRemoteFs(params MountParams, vfs *virtualfs, ll lib.LeveledLogger) (*Rem
 		config:           params.Config,
 		disableLocking:   params.DisableLocking,
 		debugFuse:        params.DebugFuse,
+		cacheStore:       cs,
 	}
 	// ensure write concurrency and cache TTL are positive
 	if fs.writeConcurrency <= 0 {
@@ -117,6 +150,10 @@ func (fs *RemoteFs) Init() {
 		fs.initTime = time.Now()
 		fs.log.Debug("RemoteFs: RemoteFs initialized successfully. Remote file system root: %s", fs.root)
 	})
+	// start the disk cache maintenance goroutine
+	// this does not block and ensures only one goroutine is started
+	fs.cacheStore.StartMaintenance()
+
 }
 
 func (fs *RemoteFs) Destroy() {
@@ -127,6 +164,9 @@ func (fs *RemoteFs) Destroy() {
 	for path, lockInfo := range fs.lockMap {
 		fs.unlock(path, lockInfo.Fh)
 	}
+
+	fs.log.Debug("RemoteFs: Destroy: stopping cache maintenance")
+	fs.cacheStore.StopMaintenance()
 }
 
 func (fs *RemoteFs) Validate() error {
@@ -228,6 +268,9 @@ func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
 		}
 
 		fs.rename(oldpath, newpath)
+		_ = fs.cacheStore.Delete(oldpath)
+		_ = fs.cacheStore.Delete(newpath)
+
 		return errc
 	}
 
@@ -266,7 +309,7 @@ func (fs *RemoteFs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 
 func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh uint64) {
 	localPath, remotePath := fs.paths(path)
-	fuseFlags := NewFuseFlags(flags)
+	fuseFlags := ff.NewFuseFlags(flags)
 	fh, handle := fs.vfs.handles.Open(nil, fuseFlags)
 
 	fs.log.Debug("RemoteFs: Create: Creating file: %v (%v) (flags=%v, mode=%o, fh=%v)", remotePath, localPath, fuseFlags, mode, fh)
@@ -324,10 +367,10 @@ func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh ui
 }
 
 func (fs *RemoteFs) Open(path string, flags int) (errc int, fh uint64) {
-	fuseFlags := NewFuseFlags(flags)
+	fuseFlags := ff.NewFuseFlags(flags)
 	node := fs.vfs.getOrCreate(path, nodeTypeFile)
 	fh, handle := fs.vfs.handles.Open(node, fuseFlags)
-	fs.log.Debug("RemoteFs: Open: path=%v, flags=%v, fh=%v", path, fuseFlags, fh)
+	fs.log.Trace("RemoteFs: Open: path=%v, flags=%v, fh=%v", path, fuseFlags, fh)
 	// If the requested op is read only return 0 and a file handle. The fs will attempt
 	// to read from a temporary file backing the writer if it exists, otherwise it will
 	// read from the remote API.
@@ -435,10 +478,12 @@ func (fs *RemoteFs) Truncate(path string, size int64, fh uint64) (errc int) {
 
 func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
 	buffLen := int64(len(buff))
-	// return 0 bytes read if there's not way to pass bytes back anyway
+	// unlikely, but guard against a zero-length read
 	if buffLen == 0 {
 		return 0
 	}
+
+	fs.log.Trace("RemoteFs: Read: path=%v, len=%v, ofst=%v, fh=%v", path, buffLen, ofst, fh)
 
 	handle, node, ok := fs.vfs.handles.Lookup(fh)
 	if !ok {
@@ -446,8 +491,8 @@ func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int
 		return -fuse.EBADF
 	}
 
-	// Attempt to read from the temporary file backing the writer if possible. If the read can't be
-	// satisfied from the temporary file, it will return zero bytes, and the logic will fall through to
+	// Attempt to read from the temporary file backing the writer. If the read can't be satisfied
+	// from the temporary file, it will return zero bytes, and the logic will fall through to
 	// reading from the remote API.
 	if node.writerIsOpen() {
 		n = node.readFromWriter(buff, ofst)
@@ -462,7 +507,6 @@ func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int
 	// up-to-date size possible before proceeding.
 	size := node.info.size
 	if node.infoExpired() || size <= 0 {
-
 		// in order to get the most up-to-date size the parent directory's info must be expired as well,
 		// otherwise the getattr call will return a cached stat that may not reflect the current size of the file.
 		fs.vfs.expireNodeInfo(path)
@@ -476,10 +520,12 @@ func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int
 	if ofst < 0 {
 		ofst = 0
 	}
+
 	if !node.writerIsOpen() && size == 0 {
 		fs.log.Trace("RemoteFs: Read: file is empty, returning EOF")
 		return 0
 	}
+
 	// attempting to read past EOF
 	if size > 0 && ofst >= size {
 		fs.log.Trace("RemoteFs: Read: offset %d is greater than file size %d, returning EOF", ofst, size)
@@ -495,107 +541,51 @@ func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int
 		}
 	}
 
+	// Attempt to read from the disk cache. If the read can't be satisfied from the disk cache, it
+	// will return zero bytes, and the logic will fall through to reading from the remote API.
+	n, err := fs.cacheStore.Read(path, buff, ofst)
+	if err != nil {
+		fs.log.Debug("RemoteFs: Read: diskCache.Read error: %v", err)
+	}
+
+	if n > 0 {
+		handle.incrementRead(int64(n))
+		fs.log.Trace("RemoteFs: Read: readAt: path=%v, ofst=%d, read %d bytes from disk cache", path, ofst, n)
+		return n
+	}
+
 	// At this point, the read request could not be satisfied from the temporary file backing the
-	// writer, so read from the remote API.
+	// writer or the disk cache, so read from the remote API.
+	endOffset := ofst + int64(len(buff))
+	readyGate, exists := fs.findOrCreateGate(path)
+	if !exists {
+		// start the download in a new goroutine, which will populate the disk cache
+		go fs.fillCache(context.Background(), path, node.downloadUri, readyGate, fh)
+	}
+	readyGate.Add()
+	defer readyGate.Done()
 
-	// the strategy for determining the correct range to request is as follows:
-	// * If the size of the file is known, clamp the read to EOF
-	// * If the size of the file is unknown, request from the offset to EOF
-	sizeKnown := size > 0
-	var (
-		headers  = &http.Header{}
-		setRange bool
-		fullRead bool
-		toRead   = buffLen
-	)
-
-	if sizeKnown {
-		// clamp to EOF
-		remaining := size - ofst
-		if remaining <= 0 {
-			fs.log.Trace("RemoteFs: Read: offset %d is greater than file size %d, returning EOF", ofst, size)
+	// wait for the requested range to be available in the cache
+	if err := readyGate.WaitFor(endOffset); err != nil {
+		// adjust on EOF: serve whatever is available
+		if err != io.EOF {
+			if errc := fs.handleError(path, err); errc != 0 {
+				return errc
+			}
+		}
+		// err is EOF: serve whatever is available
+		avail := readyGate.Available()
+		if avail <= ofst {
 			return 0
-		}
-		if buffLen > remaining {
-			toRead = remaining
-		}
-		// if reading from the beginning, and the number of bytes to read is the size of the file
-		// then this is a full read
-		fullRead = (ofst == 0 && toRead == size)
-		if !fullRead {
-			// this is a partial read, so set the Range header
-			setRange = true
-			headers.Set("Range", fmt.Sprintf("bytes=%d-%d", ofst, ofst+toRead-1))
-		}
-	} else {
-		// Unknown size: request from offset to EOF
-		setRange = true
-		headers.Set("Range", fmt.Sprintf("bytes=%d-", ofst))
+		} // nothing available
+		endOffset = avail
 	}
-
-	// Make the API call to download the file, passing in the Range header if set.
-	var file files_sdk.File
-	var err error
-	file, err = fs.fileClient.Download(
-		files_sdk.FileDownloadParams{
-			File: files_sdk.File{
-				Path:        fs.remotePath(path), // or fs.paths(path)
-				DownloadUri: node.downloadUri,
-			},
-		},
-		files_sdk.RequestHeadersOption(headers),
-		files_sdk.ResponseOption(func(resp *http.Response) error {
-			defer func() { io.Copy(io.Discard, resp.Body); _ = resp.Body.Close() }()
-			// Accept statuses depending on the kind of request we made.
-			switch {
-			case setRange && !fullRead:
-				// if it's a range request, and not a full read, expect 206 Partial Content
-				if resp.StatusCode != http.StatusPartialContent {
-					return files_sdk.APIError()(resp)
-				}
-			case fullRead:
-				// if it is a full read, expect 200 OK or 206 Partial Content
-				if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusPartialContent {
-					return files_sdk.APIError()(resp)
-				}
-			default:
-				// no Range header: expect 200 (204 also OK for empty objects)
-				if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
-					return files_sdk.APIError()(resp)
-				}
-			}
-
-			// Decide how many bytes to pull into buff this call.
-			wantBytes := int(toRead)
-			if !sizeKnown {
-				// Unknown size: read up to len(buff), or Content-Length if smaller.
-				if resp.ContentLength >= 0 && resp.ContentLength < int64(len(buff)) {
-					wantBytes = int(resp.ContentLength)
-				} else {
-					wantBytes = len(buff)
-				}
-			}
-			if wantBytes == 0 {
-				fs.log.Debug("RemoteFs: Read: API returned 0 bytes, returning EOF")
-				n = 0
-				return nil
-			}
-
-			// Read exactly wantBytes, treating short reads as success w/ partial n.
-			m, rerr := io.ReadFull(resp.Body, buff[:wantBytes])
-			n = m
-			if rerr == io.ErrUnexpectedEOF || rerr == io.EOF {
-				return nil
-			}
-			return rerr
-		}),
-	)
-	if errc := fs.handleError(path, err); errc != 0 {
-		return errc
-	}
-
-	if file.DownloadUri != "" {
-		node.setDownloadURI(file.DownloadUri)
+	// now read from cache
+	want := min(endOffset-ofst, int64(len(buff)))
+	n, err = fs.cacheStore.Read(path, buff[:want], ofst)
+	if err != nil {
+		fs.log.Debug("RemoteFs: Read: diskCache.Read error after WaitFor: %v", err)
+		return -fuse.EAGAIN
 	}
 	fs.log.Debug("RemoteFs: Read: ok path=%v ofst=%d read=%d", path, ofst, n)
 	handle.incrementRead(int64(n))
@@ -633,15 +623,20 @@ func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n in
 	}
 	// Write the buffer to the ordered pipe, which handles maintaining write order
 	// and temporarily caching out-of-order writes until they can be written sequentially.
-	n, err := node.writer.writeAt(buff, ofst)
+	n, err := node.writer.WriteAt(buff, ofst)
 	if errc := fs.handleError(path, err); errc != 0 {
 		return errc
+	}
+	// if any bytes were written, delete the disk cache for this path to ensure
+	// subsequent reads get the latest data
+	if n > 0 {
+		fs.cacheStore.Delete(path)
 	}
 	return n
 }
 
 func (fs *RemoteFs) Release(path string, fh uint64) (errc int) {
-	fs.log.Debug("RemoteFs: Release: path=%v, fh=%v", path, fh)
+	fs.log.Trace("RemoteFs: Release: path=%v, fh=%v", path, fh)
 	handle, node, ok := fs.vfs.handles.Lookup(fh)
 
 	// Remove the handle from the set of open handles in all cases,
@@ -661,16 +656,9 @@ func (fs *RemoteFs) Release(path string, fh uint64) (errc int) {
 		return errc
 	}
 
-	// if the handle read any bytes, log an info message that the download is complete
-	bytesRead := handle.bytesRead.Load()
-	if bytesRead > 0 {
-		localPath, remotePath := fs.paths(path)
-		fs.log.Info("Download complete: %v (%v), size=%v", remotePath, localPath, bytesRead)
-	}
-
 	// If the handle is a read only operation, there's nothing left to do.
 	if handle.IsReadOnly() {
-		fs.log.Debug("RemoteFs: Release: closed handle for path=%v, fh=%v", path, fh)
+		fs.log.Trace("RemoteFs: Release: closed handle for path=%v, fh=%v", path, fh)
 		return errc
 	}
 
@@ -706,7 +694,7 @@ func (fs *RemoteFs) Release(path string, fh uint64) (errc int) {
 
 func (fs *RemoteFs) Opendir(path string) (errc int, fh uint64) {
 	node := fs.vfs.getOrCreate(path, nodeTypeDir)
-	fh, _ = fs.vfs.handles.Open(node, NewFuseFlags(fuse.O_RDONLY))
+	fh, _ = fs.vfs.handles.Open(node, ff.NewFuseFlags(fuse.O_RDONLY))
 	fs.log.Trace("RemoteFs: Opendir: path=%v, fh=%v", path, fh)
 	return errc, fh
 }
@@ -862,6 +850,9 @@ func (fs *RemoteFs) writeFile(path string, reader io.Reader, mtime time.Time, fh
 		return
 	}
 	node.closeUpload(u.Size)
+
+	// clear the disk cache for the file after a successful upload
+	fs.cacheStore.Delete(path)
 	fs.log.Info("Upload completed: %v (%v).", remotePath, localPath)
 	fs.log.Debug("RemoteFs: Bytes: %v, Duration: %v, fh: %v", u.Size, time.Since(start), fh)
 }
@@ -873,6 +864,7 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 	if err := fs.fileClient.Upload(file.UploadWithFile(src), file.UploadWithDestinationPath(dst)); err != nil {
 		return err
 	}
+	_ = fs.cacheStore.Delete(dst)
 	fs.vfs.expireNodeInfo(dst)
 	fs.loadParent(dst)
 	return nil
@@ -884,6 +876,88 @@ func (fs *RemoteFs) downloadFile(src, dst string) error {
 	fs.log.Debug("RemoteFs: Downloading file: %v to %v", src, dst)
 	_, err := fs.fileClient.DownloadToFile(files_sdk.FileDownloadParams{Path: src}, dst)
 	return err
+}
+
+func (fs *RemoteFs) findOrCreateGate(path string) (*cache.ReadyGate, bool) {
+	fs.gatesMu.Lock()
+	defer fs.gatesMu.Unlock()
+	if fs.readyGates == nil {
+		fs.readyGates = map[string]*cache.ReadyGate{}
+	}
+	if s, ok := fs.readyGates[path]; ok {
+		return s, true
+	}
+	s := cache.NewReadyGate()
+	fs.readyGates[path] = s
+	return s, false
+}
+
+func (fs *RemoteFs) removeGate(path string, s *cache.ReadyGate) {
+	fs.gatesMu.Lock()
+	if cur, ok := fs.readyGates[path]; ok && cur == s {
+		delete(fs.readyGates, path)
+	}
+	fs.gatesMu.Unlock()
+}
+
+func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, readyGate *cache.ReadyGate, fh uint64) {
+	ctx, cancel := context.WithCancel(ctx)
+	readyGate.SetCancel(cancel)
+	defer func() {
+		cancel()
+		fs.removeGate(path, readyGate)
+	}()
+
+	f, err := fs.fileClient.Download(
+		files_sdk.FileDownloadParams{File: files_sdk.File{Path: fs.remotePath(path), DownloadUri: uri}},
+		files_sdk.WithContext(ctx),
+		files_sdk.ResponseOption(func(resp *http.Response) error {
+			if resp.StatusCode != http.StatusPartialContent && resp.StatusCode != http.StatusOK {
+				return files_sdk.APIError()(resp)
+			}
+			defer resp.Body.Close()
+
+			// while downloading a file from the remote API, write data to the disk cache in chunks and update
+			// the ready gate every cacheWriteSize bytes to signal that data is available for reading.
+			buf := make([]byte, cacheWriteSize)
+			var off int64 = 0
+			for {
+				nr, er := resp.Body.Read(buf)
+				if nr > 0 {
+					// TODO: consider altering Write to keep data in memory and periodically flush to disk
+					// to reduce the number of disk writes. This would require more memory usage, but would
+					// improve read and write performance by avoiding constantly opening/closing the file.
+					written, err := fs.cacheStore.Write(path, buf[:nr], off)
+					if err != nil || written != nr {
+						// there was an error writing to the disk cache, or not all bytes that were read from the
+						// remote API were written to the disk cache.
+						readyGate.Finish(fmt.Errorf("error writing to disk cache for %v: %v", path, err), off)
+						return err
+					}
+					off += int64(written)
+					readyGate.SetAvailable(off)
+				}
+				if er != nil {
+					if er == io.EOF {
+						readyGate.Finish(nil, off)
+						return nil
+					}
+					readyGate.Finish(er, off)
+					return er
+				}
+				// TODO: consider canceling the download if there are no active readers/waiters
+				// after a certain period of time
+			}
+		}),
+	)
+	if err != nil {
+		readyGate.Finish(err, -1)
+		return
+	}
+	if f.Size > 0 {
+		localPath, remotePath := fs.paths(path)
+		fs.log.Info("Download complete: %v (%v), size=%v fh=%v", remotePath, localPath, f.Size, fh)
+	}
 }
 
 // rename updates local bookkeeping for a path change.
@@ -1047,6 +1121,7 @@ func (fs *RemoteFs) delete(path string) (errc int) {
 	if files_sdk.IsNotExist(err) {
 		// if the delete was successful, remove the node from the vfs
 		fs.vfs.remove(path)
+		_ = fs.cacheStore.Delete(path)
 		return errc
 	}
 	// for any other error, handle it normally
@@ -1055,6 +1130,7 @@ func (fs *RemoteFs) delete(path string) (errc int) {
 	}
 	// if the delete was successful, remove the node from the vfs
 	fs.vfs.remove(path)
+	_ = fs.cacheStore.Delete(path)
 	return errc
 }
 
@@ -1122,13 +1198,13 @@ func (fs *RemoteFs) loadDir(node *fsNode) (errc int) {
 	fs.loadDirMutex.Lock()
 	defer fs.loadDirMutex.Unlock()
 	if node.infoExpired() {
-		fs.log.Debug("RemoteFs: loadDir: Loading directory: %v", node.path)
+		fs.log.Debug("RemoteFs: loadDir: Refreshing directory listing: %v", node.path)
 		err := node.updateChildPaths(fs.listDir)
 		if errc = fs.handleError(node.path, err); errc != 0 {
 			return errc
 		}
 	} else {
-		fs.log.Debug("RemoteFs: loadDir: Skipping load of directory, info not expired: %v", node.path)
+		fs.log.Trace("RemoteFs: loadDir: Skipping load of directory, info not expired: %v", node.path)
 	}
 	return errc
 }
@@ -1193,6 +1269,13 @@ func (fs *RemoteFs) createNode(path string, item files_sdk.File) *fsNode {
 	} else {
 		nt = nodeTypeFile
 	}
+	// best-effort invalidate stale data
+	if prev, ok := fs.vfs.fetch(path); ok && prev.info.nodeType == nodeTypeFile {
+		if prev.info.size != item.Size || !prev.info.modTime.Equal(item.ModTime()) {
+			_ = fs.cacheStore.Delete(path)
+		}
+	}
+
 	node := fs.vfs.getOrCreate(path, nt)
 	node.updateInfo(fsNodeInfo{
 		nodeType:     nt,
@@ -1293,7 +1376,7 @@ func (fs *RemoteFs) Getxattr(path string, name string) (int, []byte) {
 
 // Setxattr sets extended attributes.
 func (fs *RemoteFs) Setxattr(path string, name string, value []byte, flags int) int {
-	fuseFlags := NewFuseFlags(flags)
+	fuseFlags := ff.NewFuseFlags(flags)
 	fs.log.Debug("RemoteFs: Setxattr: path=%v, name=%v, value=%v flags=%v", path, name, value, fuseFlags)
 	return 0
 }

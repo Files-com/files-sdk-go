@@ -4,15 +4,20 @@ package fsmount
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	api_key "github.com/Files-com/files-sdk-go/v3/apikey"
+	dc "github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/disk"
+	mc "github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/mem"
+
 	"github.com/Files-com/files-sdk-go/v3/ignore"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/winfsp/cgofuse/fuse"
 
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/log"
 	gogitignore "github.com/sabhiram/go-gitignore"
 )
 
@@ -83,6 +88,46 @@ type MountParams struct {
 	// Optional. The path to the icon to display in Finder. If not specified, the default icon
 	// for a network drive is used. [MacOS only]
 	IconPath string
+
+	// DiskCacheEnabled determines whether to use a disk-based cache for file data.
+	// If false, an in-memory cache will be used instead.
+	DiskCacheEnabled bool
+
+	// DiskCachePath specifies the file system directory where disk cache data is stored.
+	// The directory must be writable and have sufficient space for the cache.
+	//
+	// Ignored if DiskCacheEnabled is set to false
+	DiskCachePath string
+
+	// DiskCacheParams contains the configuration parameters for the disk cache.
+	//
+	// Ignored if DiskCacheEnabled is set to false
+	DiskCacheParams CacheParams
+
+	// MemoryCacheParams contains the configuration parameters for the in-memory cache.
+	//
+	// Ignored if DiskCacheEnabled is set to true
+	MemoryCacheParams CacheParams
+}
+
+// CacheParams defines the configuration parameters for the file system cache.
+// It controls cache behavior including capacity limits, timing settings, and storage location.
+type CacheParams struct {
+	// CapacityBytes specifies the maximum size of the cache in bytes.
+	// When this limit is reached, older entries will be evicted to make room for new ones.
+	CapacityBytes int64
+
+	// MaintenanceInterval defines how frequently cache maintenance tasks run,
+	// such as cleaning up expired entries and enforcing capacity limits.
+	MaintenanceInterval time.Duration
+
+	// MaxAge specifies the maximum duration a cache entry can exist
+	// before it is considered stale and eligible for eviction.
+	MaxAge time.Duration
+
+	// MaxFileCount limits the total number of files that can be stored in the cache.
+	// When this limit is reached, older files will be removed to accommodate new ones.
+	MaxFileCount int64
 }
 
 var (
@@ -163,7 +208,7 @@ func newFs(params MountParams, logger lib.LeveledLogger) (*Filescomfs, error) {
 	if params.Config == nil {
 		return nil, fmt.Errorf("config is required")
 	}
-	// get the platform specific mount point
+	// the mountPoint function is platform specific
 	mountPoint, err := mountPoint(params.MountPoint)
 	if err != nil {
 		return nil, err
@@ -174,13 +219,17 @@ func newFs(params MountParams, logger lib.LeveledLogger) (*Filescomfs, error) {
 		params.Root = "/"
 	}
 
-	// create the temporary directory if it doesn't exist
-	if params.TmpFsPath == "" {
-		tmpRoot, err := os.MkdirTemp("", "Files.com-v6-*")
-		if err != nil {
-			return nil, fmt.Errorf("failed to create temporary local file system: %w", err)
-		}
-		params.TmpFsPath = tmpRoot
+	tmpRoot, err := tmpFsPath(params.TmpFsPath)
+	if err != nil {
+		return nil, err
+	}
+	params.TmpFsPath = tmpRoot
+
+	// newCache creates either a disk or memory cache based on if the mount parameters
+	// have disk caching enabled or disabled.
+	cache, err := newCache(params, logger)
+	if err != nil {
+		return nil, err
 	}
 
 	// The Filescomfs, RemoteFs, and LocalFs all share a single virtualfs instance to manage the
@@ -188,7 +237,7 @@ func newFs(params MountParams, logger lib.LeveledLogger) (*Filescomfs, error) {
 	// caching across the different file system implementations.
 	vfs := newVirtualfs(params, logger)
 
-	remotefs, err := newRemoteFs(params, vfs, logger)
+	remotefs, err := newRemoteFs(params, vfs, logger, cache)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create remote file system: %w", err)
 	}
@@ -216,9 +265,133 @@ func newFs(params MountParams, logger lib.LeveledLogger) (*Filescomfs, error) {
 	return fs, nil
 }
 
+func newCache(params MountParams, log log.Logger) (cacheStore, error) {
+	if params.DiskCacheEnabled {
+		cachePath, err := diskCachePath(params)
+		if err != nil {
+			return nil, err
+		}
+		opts := []dc.Option{
+			dc.WithLogger(log),
+		}
+		if params.DiskCacheParams.CapacityBytes > 0 {
+			opts = append(opts, dc.WithCapacityBytes(params.DiskCacheParams.CapacityBytes))
+		}
+		if params.DiskCacheParams.MaintenanceInterval > 0 {
+			opts = append(opts, dc.WithMaintenanceInterval(params.DiskCacheParams.MaintenanceInterval))
+		}
+		if params.DiskCacheParams.MaxAge > 0 {
+			opts = append(opts, dc.WithMaxAge(params.DiskCacheParams.MaxAge))
+		}
+		if params.DiskCacheParams.MaxFileCount > 0 {
+			opts = append(opts, dc.WithMaxFileCount(params.DiskCacheParams.MaxFileCount))
+		}
+		cache, err := dc.NewDiskCache(cachePath, opts...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create disk cache: %w", err)
+		}
+		return cache, nil
+	}
+
+	// if the disk cache has been disabled, use an in memory cache
+	opts := []mc.Option{
+		mc.WithLogger(log),
+	}
+	if params.MemoryCacheParams.CapacityBytes > 0 {
+		opts = append(opts, mc.WithCapacityBytes(params.MemoryCacheParams.CapacityBytes))
+	}
+	if params.DiskCacheParams.CapacityBytes > 0 {
+		opts = append(opts, mc.WithCapacityBytes(params.MemoryCacheParams.CapacityBytes))
+	}
+	if params.DiskCacheParams.MaintenanceInterval > 0 {
+		opts = append(opts, mc.WithMaintenanceInterval(params.MemoryCacheParams.MaintenanceInterval))
+	}
+	if params.DiskCacheParams.MaxAge > 0 {
+		opts = append(opts, mc.WithMaxAge(params.MemoryCacheParams.MaxAge))
+	}
+	if params.DiskCacheParams.MaxFileCount > 0 {
+		opts = append(opts, mc.WithMaxFileCount(params.MemoryCacheParams.MaxFileCount))
+	}
+	cache, err := mc.NewMemoryCache(opts...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create memory cache: %w", err)
+	}
+	return cache, nil
+}
+
+// tmpFsPath returns the path to the temporary file system directory.
+// If the provided path is empty, it defaults to an application specific path appended to
+// the OS-specific temporary directory.
+// If the provided path does not exist, it is created.
+// If the provided path exists but is not a directory, an error is returned.
+func tmpFsPath(path string) (string, error) {
+	if path != "" {
+		st, err := os.Stat(path)
+		if err != nil {
+			if os.IsNotExist(err) {
+				if err := os.MkdirAll(path, 0o700); err != nil {
+					return "", fmt.Errorf("failed to create temporary file system path: %w", err)
+				}
+				return path, nil
+			}
+			return "", fmt.Errorf("failed to access temporary file system path: %w", err)
+		}
+		if !st.IsDir() {
+			return "", fmt.Errorf("temporary file system path is not a directory")
+		}
+		return path, nil
+	}
+	path, err := os.MkdirTemp("", "Files.com-v6-*")
+	if err != nil {
+		return "", fmt.Errorf("failed to create temporary local file system: %w", err)
+	}
+	return path, nil
+}
+
+// diskCachePath returns the path to the directory for the disk cache.
+// If the provided path is empty, it defaults to an application specific path appended to
+// the OS-specific cache directory.
+// If the provided path does not exist, it is created.
+// If the provided path exists but is not a directory, an error is returned.
+func diskCachePath(params MountParams) (string, error) {
+	path := params.DiskCachePath
+	if path != "" {
+		st, err := os.Stat(path)
+		if err != nil {
+			return "", fmt.Errorf("failed to stat local cache path: %w", err)
+		}
+		if !st.IsDir() {
+			return "", fmt.Errorf("local cache path is not a directory")
+		}
+		return path, nil
+	}
+
+	// the passed in path is empty, so use the OS-specific cache directory
+	// e.g. /Users/username/Library/Caches on MacOS
+	//      /home/username/.cache on Linux
+	//      C:\Users\username\AppData\Local on Windows
+	cacheDir, err := os.UserCacheDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to locate user cache directory: %w", err)
+	}
+
+	// use a cache directory specific to this mount point
+	// to avoid conflicts with multiple mounts
+	// e.g. /Users/username/Library/Caches/Files.com/v6/A/cache
+	mountBase := filepath.Base(params.MountPoint)
+	if mountBase == string(os.PathSeparator) || mountBase == "" {
+		return "", fmt.Errorf("failed to locate mount specific cache directory: %w", err)
+	}
+	path = filepath.Join(cacheDir, "Files.com", "v6", mountBase, "cache")
+	if err := os.MkdirAll(path, 0o700); err != nil {
+		return "", fmt.Errorf("failed to create mount specific cache directory: %w", err)
+	}
+	return path, nil
+}
+
 func ignoreFromPatterns(patterns []string) (*gogitignore.GitIgnore, error) {
-	switch {
-	case patterns == nil:
+	switch patterns {
+	case nil:
 		// use OS-specific defaults + additional common patterns
 		return ignore.NewWithDenyList(additionalIgnorePatterns()...)
 	default:

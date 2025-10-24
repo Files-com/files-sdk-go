@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	ff "github.com/Files-com/files-sdk-go/v3/fsmount/internal/flags"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
@@ -56,7 +57,7 @@ func NewOpenHandles(logger lib.LeveledLogger) *OpenHandles {
 
 // Open creates a new ID and stores the handle.
 // Never hold h.mu while allocating the ID to avoid lock-order issues.
-func (h *OpenHandles) Open(node *fsNode, flags FuseFlags) (id uint64, fh *fileHandle) {
+func (h *OpenHandles) Open(node *fsNode, flags ff.FuseFlags) (id uint64, fh *fileHandle) {
 	fh = &fileHandle{
 		node:      node,
 		FuseFlags: flags,
@@ -78,7 +79,7 @@ func (h *OpenHandles) Open(node *fsNode, flags FuseFlags) (id uint64, fh *fileHa
 
 // OpenWithFile uses the given *os.File to create and store a new handle.
 // Never hold h.mu while allocating the ID to avoid lock-order issues.
-func (h *OpenHandles) OpenWithFile(node *fsNode, flags FuseFlags, file *os.File) (id uint64, fh *fileHandle) {
+func (h *OpenHandles) OpenWithFile(node *fsNode, flags ff.FuseFlags, file *os.File) (id uint64, fh *fileHandle) {
 	id, fh = h.Open(node, flags)
 	fh.localFile = file
 	return id, fh

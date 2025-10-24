@@ -7,8 +7,10 @@ require (
 	github.com/bradfitz/iter v0.0.0-20191230175014-e8f45d346db8
 	github.com/chilts/sid v0.0.0-20190607042430-660e94789ec9
 	github.com/dnaeon/go-vcr v1.2.0
+	github.com/dustin/go-humanize v1.0.1
 	github.com/gin-gonic/gin v1.10.0 // latest supported for go 1.21
 	github.com/hashicorp/go-retryablehttp v0.7.7
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/lpar/date v1.0.0
 	github.com/panjf2000/ants/v2 v2.11.3
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
@@ -16,11 +18,10 @@ require (
 	github.com/snabb/httpreaderat v1.0.1
 	github.com/stretchr/testify v1.10.0
 	github.com/winfsp/cgofuse v1.6.1-0.20250813110601-7d90b0992471 // includes fixes from https://github.com/winfsp/cgofuse/pull/98, update when the next version is released
+	golang.org/x/sys v0.30.0
 	golang.org/x/text v0.22.0 // latest supported for go 1.21
 	moul.io/http2curl/v2 v2.3.0
 )
-
-require golang.org/x/sys v0.30.0
 
 require (
 	github.com/bytedance/sonic v1.13.2 // indirect

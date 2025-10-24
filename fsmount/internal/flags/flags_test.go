@@ -1,8 +1,10 @@
-package fsmount
+package flags_test
 
 import (
+	"os"
 	"testing"
 
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/flags"
 	"github.com/winfsp/cgofuse/fuse"
 )
 
@@ -89,7 +91,7 @@ func TestFuseFlags(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ff := NewFuseFlags(tt.flags)
+			ff := flags.NewFuseFlags(tt.flags)
 
 			if got := ff.IsReadOnly(); got != tt.expectedReadOnly {
 				t.Errorf("IsReadOnly() = %v, want %v", got, tt.expectedReadOnly)
@@ -123,22 +125,79 @@ func TestFuseFlags(t *testing.T) {
 }
 
 func TestFuseFlagsWithout(t *testing.T) {
-	ff := NewFuseFlags(fuse.O_RDWR | fuse.O_CREAT | fuse.O_EXCL)
+	ff := flags.NewFuseFlags(fuse.O_RDWR | fuse.O_CREAT | fuse.O_EXCL)
 	ffWithoutCreate := ff.Without(fuse.O_CREAT)
-	expectedFlags := NewFuseFlags(fuse.O_RDWR | fuse.O_EXCL)
+	expectedFlags := flags.NewFuseFlags(fuse.O_RDWR | fuse.O_EXCL)
 	if ffWithoutCreate != expectedFlags {
 		t.Errorf("Without(O_CREAT) = %v, want %v", ffWithoutCreate, expectedFlags)
 	}
 
 	ffWithoutExcl := ff.Without(fuse.O_EXCL)
-	expectedFlags = NewFuseFlags(fuse.O_RDWR | fuse.O_CREAT)
+	expectedFlags = flags.NewFuseFlags(fuse.O_RDWR | fuse.O_CREAT)
 	if ffWithoutExcl != expectedFlags {
 		t.Errorf("Without(O_EXCL) = %v, want %v", ffWithoutExcl, expectedFlags)
 	}
 
 	ffWithoutReadWrite := ff.Without(fuse.O_RDWR)
-	expectedFlags = NewFuseFlags(fuse.O_CREAT | fuse.O_EXCL)
+	expectedFlags = flags.NewFuseFlags(fuse.O_CREAT | fuse.O_EXCL)
 	if ffWithoutReadWrite != expectedFlags {
 		t.Errorf("Without(O_RDWR) = %v, want %v", ffWithoutReadWrite, expectedFlags)
+	}
+}
+func TestFuseFlags_AsOsFlags(t *testing.T) {
+	tests := []struct {
+		name     string
+		flags    int
+		expected int
+	}{
+		{
+			name:     "ReadOnly",
+			flags:    fuse.O_RDONLY,
+			expected: 0, // os.O_RDONLY == 0
+		},
+		{
+			name:     "WriteOnly",
+			flags:    fuse.O_WRONLY,
+			expected: 1, // os.O_WRONLY == 1
+		},
+		{
+			name:     "ReadWrite",
+			flags:    fuse.O_RDWR,
+			expected: 2, // os.O_RDWR == 2
+		},
+		{
+			name:     "Create",
+			flags:    fuse.O_WRONLY | fuse.O_CREAT,
+			expected: 1 | os.O_CREATE,
+		},
+		{
+			name:     "CreateExclusive",
+			flags:    fuse.O_RDWR | fuse.O_CREAT | fuse.O_EXCL,
+			expected: 2 | os.O_CREATE | os.O_EXCL,
+		},
+		{
+			name:     "TruncateAppend",
+			flags:    fuse.O_WRONLY | fuse.O_TRUNC | fuse.O_APPEND,
+			expected: 1 | os.O_TRUNC | os.O_APPEND,
+		},
+		{
+			name:     "AllFlags",
+			flags:    fuse.O_RDWR | fuse.O_CREAT | fuse.O_EXCL | fuse.O_TRUNC | fuse.O_APPEND,
+			expected: 2 | os.O_CREATE | os.O_EXCL | os.O_TRUNC | os.O_APPEND,
+		},
+		{
+			name:     "EventOnlyIgnored",
+			flags:    flags.O_EVTONLY,
+			expected: 0, // O_EVTONLY ignored, so os.O_RDONLY == 0
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ff := flags.NewFuseFlags(tt.flags)
+			got := ff.AsOsFlags()
+			if got != tt.expected {
+				t.Errorf("AsOsFlags() = %v, want %v", got, tt.expected)
+			}
+		})
 	}
 }

@@ -1,25 +1,24 @@
-package fsmount
+package io_test
 
 import (
 	"fmt"
 	"io"
 	"testing"
 
-	"github.com/Files-com/files-sdk-go/v3/lib"
+	fsio "github.com/Files-com/files-sdk-go/v3/fsmount/internal/io"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/log"
 )
 
-var logger = lib.NewLeveledLogger(lib.NullLogger{})
-
 type Fakefs struct {
-	orderdPipe *orderedPipe
+	orderdPipe *fsio.OrderedPipe
 }
 
 func (f *Fakefs) Write(p []byte, offset int) (n int, err error) {
-	return f.orderdPipe.writeAt(p, int64(offset))
+	return f.orderdPipe.WriteAt(p, int64(offset))
 }
 
 func (fs *Fakefs) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
-	return fs.orderdPipe.readAt(buff, ofst)
+	return fs.orderdPipe.ReadAt(buff, ofst)
 }
 
 type writeAtOffset struct {
@@ -28,7 +27,7 @@ type writeAtOffset struct {
 }
 
 func TestOutOfOrderWrites(t *testing.T) {
-	op, err := newOrderedPipe("/test/path", logger)
+	op, err := fsio.NewOrderedPipe("/test/path", fsio.WithLogger(&log.NoOpLogger{}))
 	if err != nil {
 		t.Fatalf("Error creating ordered pipe: %v", err)
 	}
@@ -65,12 +64,12 @@ func TestOutOfOrderWrites(t *testing.T) {
 				errchan <- fmt.Errorf("Error writing to sorted pipe: %v", err)
 			}
 		}
-		f.orderdPipe.close()
+		f.orderdPipe.Close()
 	}()
 
 	var sortedData []byte
 
-	sortedData, err = io.ReadAll(f.orderdPipe.out)
+	sortedData, err = io.ReadAll(f.orderdPipe.Out)
 	if err != nil {
 		t.Errorf("Error reading from sorted pipe: %v", err)
 	}
@@ -88,7 +87,7 @@ func TestOutOfOrderWrites(t *testing.T) {
 }
 
 func TestReaderAt(t *testing.T) {
-	op, err := newOrderedPipe("/test/path", logger)
+	op, err := fsio.NewOrderedPipe("/test/path", fsio.WithLogger(&log.NoOpLogger{}))
 	if err != nil {
 		t.Fatalf("Error creating ordered pipe: %v", err)
 	}
@@ -118,7 +117,7 @@ func TestReaderAt(t *testing.T) {
 	errchan := make(chan error, errChanLen)
 
 	go func() {
-		defer f.orderdPipe.close()
+		defer f.orderdPipe.Close()
 		defer close(errchan)
 		for idx, w := range writeOffsets {
 			_, err := f.Write([]byte(w.Data), int(w.Offset))
@@ -159,7 +158,7 @@ func TestReaderAt(t *testing.T) {
 
 	var sortedData []byte
 
-	sortedData, err = io.ReadAll(f.orderdPipe.out)
+	sortedData, err = io.ReadAll(f.orderdPipe.Out)
 	if err != nil {
 		t.Errorf("Error reading from sorted pipe: %v", err)
 	}
@@ -174,5 +173,4 @@ func TestReaderAt(t *testing.T) {
 	if got != want {
 		t.Fatalf("got: %v, want: %v", got, want)
 	}
-
 }

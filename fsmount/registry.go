@@ -3,7 +3,6 @@ package fsmount
 import (
 	"fmt"
 	"net/http"
-	"sort"
 	"sync"
 
 	"github.com/Files-com/files-sdk-go/v3/lib"
@@ -15,13 +14,14 @@ var (
 	errNilHost         = fmt.Errorf("nil host provided")
 )
 
-// mountRegistry manages a collection of active mount hosts.
+// mountRegistry manages a collection of active mount hosts. This allows using a single pprof
+// debug server/port to see statistics about all mounted file systems.
 type mountRegistry struct {
 	hosts   map[string]*Host
 	hostsMu sync.Mutex
 
 	log    lib.LeveledLogger
-	dbgSrv *http.Server
+	dbgSrv *http.Server //lint:ignore U1000 used only under build tag "filescomfs_debug"
 }
 
 func newRegistry(logger lib.LeveledLogger) *mountRegistry {
@@ -57,20 +57,8 @@ func (reg *mountRegistry) remove(mountPoint string) {
 	delete(reg.hosts, mountPoint)
 }
 
-func (reg *mountRegistry) list() []string {
-	reg.hostsMu.Lock()
-	defer reg.hostsMu.Unlock()
-	mounts := make([]string, 0, len(reg.hosts))
-	for mnt := range reg.hosts {
-		mounts = append(mounts, mnt)
-	}
-	// sort the mount points for consistent ordering
-	sort.Strings(mounts)
-	return mounts
-}
-
 // Host acts as a wrapper around a fuse.FileSystemHost and an fsmount.Filescomfs to allow
-// interception unmount, and notify calls. This is primarily to facilitate calling Unmount on macOS
+// interception of unmount, and notify calls. This is primarily to facilitate calling Unmount on macOS
 // because the unmount action on macOS does not reliably propagate to the underlying file system
 // implementations, which means they don't reliably have the opportunity to clean up resources.
 type Host struct {
@@ -83,19 +71,21 @@ func (h *Host) Unmount() bool {
 	if h.fuseHost == nil || h.fs == nil {
 		return false
 	}
+	defer func() {
+		if h.fs != nil {
+			h.fs.Destroy()
+		}
+
+		// remove from the registry
+		mntRegistry.remove(h.fs.mountPoint)
+	}()
+
 	// unmount the fuse host first to stop any further file system operations
 	unmounted := h.fuseHost.Unmount()
 	if !unmounted {
 		return false
 	}
 
-	// call to destroy the underlying Filescomfs instance
-	if h.fs != nil {
-		h.fs.Destroy()
-	}
-
-	// remove from the registry
-	mntRegistry.remove(h.fs.mountPoint)
 	return unmounted
 }
 

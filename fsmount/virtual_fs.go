@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	ff "github.com/Files-com/files-sdk-go/v3/fsmount/internal/flags"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
@@ -51,7 +52,7 @@ type fileHandle struct {
 	readAt time.Time
 
 	// The flags used when opening the file
-	FuseFlags
+	ff.FuseFlags
 
 	// If the file is stored locally, this is the *os.File represented by this handle
 	// If the file is stored remotely, this will be nil.

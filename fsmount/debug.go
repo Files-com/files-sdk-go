@@ -23,6 +23,8 @@ import (
 const (
 	pprofHostDefault = "localhost"
 	pprofPortDefault = 6060
+
+	dbgShutdownTimeout = 5 * time.Second
 )
 
 var pprofMu sync.Mutex
@@ -104,6 +106,7 @@ func (reg *mountRegistry) debugMux() *http.ServeMux {
 	mux.HandleFunc("/debug/writers", reg.handleDebugWriters)
 	mux.HandleFunc("/debug/nodes", reg.handleDebugNodes)
 	mux.HandleFunc("/debug/locks", reg.handleDebugLocks)
+	mux.HandleFunc("/debug/cache", reg.handleDebugCacheStats)
 
 	return mux
 }
@@ -157,8 +160,19 @@ type dbgNodeInfo struct {
 	LockOwner string    `json:"lockOwner"`
 }
 
-func (reg *mountRegistry) handleDebugRoot(w http.ResponseWriter, r *http.Request) {
+func (reg *mountRegistry) list() []string {
+	reg.hostsMu.Lock()
+	defer reg.hostsMu.Unlock()
+	mounts := make([]string, 0, len(reg.hosts))
+	for mnt := range reg.hosts {
+		mounts = append(mounts, mnt)
+	}
+	// sort the mount points for consistent ordering
+	sort.Strings(mounts)
+	return mounts
+}
 
+func (reg *mountRegistry) handleDebugRoot(w http.ResponseWriter, r *http.Request) {
 	var tmplFile = "debug.tmpl"
 	tmpl, err := template.New(tmplFile).Parse(string(templateData))
 	if err != nil {
@@ -462,6 +476,28 @@ func (reg *mountRegistry) handleDebugNodes(w http.ResponseWriter, r *http.Reques
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Path < out[j].Path })
 	writeJSON(w, out)
+}
+
+func (reg *mountRegistry) handleDebugCacheStats(w http.ResponseWriter, r *http.Request) {
+	mnt := r.URL.Query().Get("mnt")
+
+	if mnt == "" {
+		writeJSON(w, map[string]string{"error": "missing 'mnt' query parameter"})
+		return
+	}
+
+	host, ok := reg.get(mnt)
+	if !ok {
+		writeJSON(w, map[string]string{"error": "no such mount point"})
+		return
+	}
+	fs := host.fs
+	if fs.remote.cacheStore == nil {
+		writeJSON(w, map[string]string{"error": "disk cache not enabled for this mount"})
+		return
+	}
+
+	writeJSON(w, fs.remote.cacheStore.Stats())
 }
 
 // snapshotNodes returns a stable slice of *fsNode without holding the VFS lock.

@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	fsio "github.com/Files-com/files-sdk-go/v3/fsmount/internal/io"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
@@ -37,7 +38,7 @@ type fsNode struct {
 
 	// coordinates and caches out of order writes to the remote file system
 	// until they can be written in the correct order.
-	writer *orderedPipe
+	writer *fsio.OrderedPipe
 
 	// Used to prevent creation of multiple writers for the same node.
 	writeMu sync.Mutex
@@ -181,7 +182,7 @@ func (n *fsNode) openWriter(fsWriter FSWriter, fh uint64) error {
 	defer n.writeMu.Unlock()
 	if n.writer == nil {
 		n.logger.Debug("openWriter from node: %v, fh: %v", n.String(), fh)
-		pipe, err := newOrderedPipe(n.path, n.logger)
+		pipe, err := fsio.NewOrderedPipe(n.path, fsio.WithLogger(n.logger))
 		if err != nil {
 			return fmt.Errorf("failed to open writer: %v", err)
 		}
@@ -189,7 +190,7 @@ func (n *fsNode) openWriter(fsWriter FSWriter, fh uint64) error {
 		n.writerOwner = fh
 		n.downloadUri = ""
 		go func() {
-			fsWriter.writeFile(n.path, pipe.out, n.info.modTime, fh)
+			fsWriter.writeFile(n.path, pipe.Out, n.info.modTime, fh)
 		}()
 	}
 	return nil
@@ -201,7 +202,7 @@ func (n *fsNode) closeWriter() error {
 	defer n.writeMu.Unlock()
 	if n.writer != nil {
 		n.logger.Debug("closeWriter from node: %s", n.String())
-		err := n.writer.close()
+		err := n.writer.Close()
 		n.writer = nil
 		return err
 	}
@@ -277,7 +278,7 @@ func (n *fsNode) writerIsOpen() bool {
 
 // writerSnapshot returns a snapshot of writer pointer, owner, and committed status.
 // committed := writer.Offset() > 0
-func (n *fsNode) writerSnapshot() (w *orderedPipe, owner uint64, committed bool) {
+func (n *fsNode) writerSnapshot() (w *fsio.OrderedPipe, owner uint64, committed bool) {
 	n.writeMu.Lock()
 	w = n.writer
 	owner = n.writerOwner
@@ -311,7 +312,7 @@ func (n *fsNode) readFromWriter(buff []byte, ofst int64) int {
 	if w == nil {
 		return 0
 	}
-	return w.readAt(buff, ofst)
+	return w.ReadAt(buff, ofst)
 }
 
 // waitForUploadIfFinalizing blocks until finalize completes when appropriate.
