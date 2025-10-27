@@ -126,7 +126,7 @@ type DiskCache struct {
 	maintMu     sync.Mutex
 	maintActive bool
 	maintCancel context.CancelFunc
-	maintDone   chan struct{}
+	wg          sync.WaitGroup
 
 	stateDir string
 	dataDir  string
@@ -357,11 +357,13 @@ func (dc *DiskCache) StartMaintenance() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	dc.maintCancel = cancel
-	dc.maintDone = make(chan struct{})
 	dc.maintActive = true
 	dc.maintMu.Unlock()
-
-	go dc.maintenanceLoop(ctx)
+	dc.wg.Add(1)
+	go func() {
+		defer dc.wg.Done()
+		dc.maintenanceLoop(ctx)
+	}()
 }
 
 // StopMaintenance stops the maintenance goroutine if it is running.
@@ -372,21 +374,18 @@ func (dc *DiskCache) StopMaintenance() {
 		return
 	}
 	cancel := dc.maintCancel
-	done := dc.maintDone
-
-	// Clear struct state under the lock so a concurrent Start can proceed.
-	dc.maintCancel = nil
-	dc.maintDone = nil
-	dc.maintActive = false
 	dc.maintMu.Unlock()
-
 	// Trigger shutdown and wait for the goroutine to exit cleanly.
 	if cancel != nil {
 		cancel()
 	}
-	if done != nil {
-		<-done
-	}
+	dc.wg.Wait()
+
+	dc.maintMu.Lock()
+	// Clear struct state under the lock so a concurrent Start can proceed.
+	dc.maintCancel = nil
+	dc.maintActive = false
+	dc.maintMu.Unlock()
 
 	dc.persistLRUState()
 }
@@ -649,19 +648,8 @@ func (dc *DiskCache) persistLRUState() {
 func (dc *DiskCache) maintenanceLoop(ctx context.Context) {
 	ticker := time.NewTicker(dc.MaintenanceInterval)
 	persistTicker := time.NewTicker(dc.LruFlushInterval)
-	defer func() {
-		ticker.Stop()
-		persistTicker.Stop()
-		dc.maintMu.Lock()
-		// Nothing else to do here; Start/Stop already manage flags,
-		// but this ensures done is always closed exactly once.
-		done := dc.maintDone
-		dc.maintMu.Unlock()
-
-		if done != nil {
-			close(done)
-		}
-	}()
+	defer ticker.Stop()
+	defer persistTicker.Stop()
 
 	for {
 		select {

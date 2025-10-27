@@ -94,7 +94,7 @@ type MemoryCache struct {
 	maintMu     sync.Mutex
 	maintActive bool
 	maintCancel context.CancelFunc
-	maintDone   chan struct{}
+	wg          sync.WaitGroup
 }
 
 func NewMemoryCache(opts ...Option) (*MemoryCache, error) {
@@ -317,11 +317,13 @@ func (mc *MemoryCache) StartMaintenance() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	mc.maintCancel = cancel
-	mc.maintDone = make(chan struct{})
 	mc.maintActive = true
 	mc.maintMu.Unlock()
-
-	go mc.maintenanceLoop(ctx)
+	mc.wg.Add(1)
+	go func() {
+		defer mc.wg.Done()
+		mc.maintenanceLoop(ctx)
+	}()
 }
 
 // StopMaintenance stops the maintenance goroutine if it is running.
@@ -332,21 +334,18 @@ func (mc *MemoryCache) StopMaintenance() {
 		return
 	}
 	cancel := mc.maintCancel
-	done := mc.maintDone
-
-	// Clear struct state under the lock so a concurrent Start can proceed.
-	mc.maintCancel = nil
-	mc.maintDone = nil
-	mc.maintActive = false
 	mc.maintMu.Unlock()
-
 	// Trigger shutdown and wait for the goroutine to exit cleanly.
 	if cancel != nil {
 		cancel()
 	}
-	if done != nil {
-		<-done
-	}
+	mc.wg.Wait()
+
+	mc.maintMu.Lock()
+	// Clear struct state under the lock so a concurrent Start can proceed.
+	mc.maintCancel = nil
+	mc.maintActive = false
+	mc.maintMu.Unlock()
 }
 
 func (dc *MemoryCache) hasCapacityDelta(delta int64, newFile bool) bool {
@@ -373,18 +372,7 @@ func bytesNeededForWrite(ent *entry, ofst, n int64) int64 {
 // maintenanceLoop runs periodic maintenance tasks until the context is cancelled.
 func (mc *MemoryCache) maintenanceLoop(ctx context.Context) {
 	ticker := time.NewTicker(mc.MaintenanceInterval)
-	defer func() {
-		ticker.Stop()
-		mc.maintMu.Lock()
-		// Nothing else to do here; Start/Stop already manage flags,
-		// but this ensures done is always closed exactly once.
-		done := mc.maintDone
-		mc.maintMu.Unlock()
-
-		if done != nil {
-			close(done)
-		}
-	}()
+	defer ticker.Stop()
 
 	for {
 		select {
