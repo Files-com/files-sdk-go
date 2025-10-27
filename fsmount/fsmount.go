@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 
@@ -378,7 +379,18 @@ func diskCachePath(params MountParams) (string, error) {
 	// use a cache directory specific to this mount point
 	// to avoid conflicts with multiple mounts
 	// e.g. /Users/username/Library/Caches/Files.com/v6/A/cache
-	mountBase := filepath.Base(params.MountPoint)
+	var mountBase string
+	switch runtime.GOOS {
+	case "windows":
+		// on Windows, the mount point is a drive letter like "X:"
+		// so we use the drive letter as the directory name
+		mountBase = params.MountPoint[:1]
+	default:
+		// on MacOS and Linux, the mount point is a path like "/mnt/files/A"
+		// so we use the base name of the path as the directory name
+		mountBase = filepath.Base(params.MountPoint)
+	}
+
 	if mountBase == string(os.PathSeparator) || mountBase == "" {
 		return "", fmt.Errorf("failed to locate mount specific cache directory: %w", err)
 	}
