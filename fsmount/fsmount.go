@@ -301,17 +301,14 @@ func newCache(params MountParams, log log.Logger) (cacheStore, error) {
 	if params.MemoryCacheParams.CapacityBytes > 0 {
 		opts = append(opts, mc.WithCapacityBytes(params.MemoryCacheParams.CapacityBytes))
 	}
-	if params.DiskCacheParams.CapacityBytes > 0 {
-		opts = append(opts, mc.WithCapacityBytes(params.MemoryCacheParams.CapacityBytes))
-	}
-	if params.DiskCacheParams.MaintenanceInterval > 0 {
-		opts = append(opts, mc.WithMaintenanceInterval(params.MemoryCacheParams.MaintenanceInterval))
-	}
-	if params.DiskCacheParams.MaxAge > 0 {
+	if params.MemoryCacheParams.MaxAge > 0 {
 		opts = append(opts, mc.WithMaxAge(params.MemoryCacheParams.MaxAge))
 	}
-	if params.DiskCacheParams.MaxFileCount > 0 {
+	if params.MemoryCacheParams.MaxFileCount > 0 {
 		opts = append(opts, mc.WithMaxFileCount(params.MemoryCacheParams.MaxFileCount))
+	}
+	if params.MemoryCacheParams.MaintenanceInterval > 0 {
+		opts = append(opts, mc.WithMaintenanceInterval(params.MemoryCacheParams.MaintenanceInterval))
 	}
 	cache, err := mc.NewMemoryCache(opts...)
 	if err != nil {
