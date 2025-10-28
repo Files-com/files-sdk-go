@@ -9,6 +9,7 @@ import (
 type Partner struct {
 	AllowBypassing2faPolicies *bool  `json:"allow_bypassing_2fa_policies,omitempty" path:"allow_bypassing_2fa_policies,omitempty" url:"allow_bypassing_2fa_policies,omitempty"`
 	AllowCredentialChanges    *bool  `json:"allow_credential_changes,omitempty" path:"allow_credential_changes,omitempty" url:"allow_credential_changes,omitempty"`
+	AllowProvidingGpgKeys     *bool  `json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys,omitempty" url:"allow_providing_gpg_keys,omitempty"`
 	AllowUserCreation         *bool  `json:"allow_user_creation,omitempty" path:"allow_user_creation,omitempty" url:"allow_user_creation,omitempty"`
 	Id                        int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name                      string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -36,6 +37,7 @@ type PartnerCreateParams struct {
 	Name                      string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	AllowBypassing2faPolicies *bool  `url:"allow_bypassing_2fa_policies,omitempty" json:"allow_bypassing_2fa_policies,omitempty" path:"allow_bypassing_2fa_policies"`
 	AllowCredentialChanges    *bool  `url:"allow_credential_changes,omitempty" json:"allow_credential_changes,omitempty" path:"allow_credential_changes"`
+	AllowProvidingGpgKeys     *bool  `url:"allow_providing_gpg_keys,omitempty" json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys"`
 	AllowUserCreation         *bool  `url:"allow_user_creation,omitempty" json:"allow_user_creation,omitempty" path:"allow_user_creation"`
 	Notes                     string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
 	RootFolder                string `url:"root_folder,omitempty" json:"root_folder,omitempty" path:"root_folder"`
@@ -47,6 +49,7 @@ type PartnerUpdateParams struct {
 	Name                      string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	AllowBypassing2faPolicies *bool  `url:"allow_bypassing_2fa_policies,omitempty" json:"allow_bypassing_2fa_policies,omitempty" path:"allow_bypassing_2fa_policies"`
 	AllowCredentialChanges    *bool  `url:"allow_credential_changes,omitempty" json:"allow_credential_changes,omitempty" path:"allow_credential_changes"`
+	AllowProvidingGpgKeys     *bool  `url:"allow_providing_gpg_keys,omitempty" json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys"`
 	AllowUserCreation         *bool  `url:"allow_user_creation,omitempty" json:"allow_user_creation,omitempty" path:"allow_user_creation"`
 	Notes                     string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
 	RootFolder                string `url:"root_folder,omitempty" json:"root_folder,omitempty" path:"root_folder"`
