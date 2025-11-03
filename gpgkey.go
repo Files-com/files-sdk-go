@@ -12,6 +12,7 @@ type GpgKey struct {
 	ExpiresAt             *time.Time `json:"expires_at,omitempty" path:"expires_at,omitempty" url:"expires_at,omitempty"`
 	Name                  string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	PartnerId             int64      `json:"partner_id,omitempty" path:"partner_id,omitempty" url:"partner_id,omitempty"`
+	PartnerName           string     `json:"partner_name,omitempty" path:"partner_name,omitempty" url:"partner_name,omitempty"`
 	UserId                int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	PublicKeyMd5          string     `json:"public_key_md5,omitempty" path:"public_key_md5,omitempty" url:"public_key_md5,omitempty"`
 	PrivateKeyMd5         string     `json:"private_key_md5,omitempty" path:"private_key_md5,omitempty" url:"private_key_md5,omitempty"`

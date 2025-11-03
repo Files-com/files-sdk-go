@@ -51,6 +51,7 @@ type User struct {
 	OfficeIntegrationEnabled         *bool      `json:"office_integration_enabled,omitempty" path:"office_integration_enabled,omitempty" url:"office_integration_enabled,omitempty"`
 	PartnerAdmin                     *bool      `json:"partner_admin,omitempty" path:"partner_admin,omitempty" url:"partner_admin,omitempty"`
 	PartnerId                        int64      `json:"partner_id,omitempty" path:"partner_id,omitempty" url:"partner_id,omitempty"`
+	PartnerName                      string     `json:"partner_name,omitempty" path:"partner_name,omitempty" url:"partner_name,omitempty"`
 	PasswordSetAt                    *time.Time `json:"password_set_at,omitempty" path:"password_set_at,omitempty" url:"password_set_at,omitempty"`
 	PasswordValidityDays             int64      `json:"password_validity_days,omitempty" path:"password_validity_days,omitempty" url:"password_validity_days,omitempty"`
 	PublicKeysCount                  int64      `json:"public_keys_count,omitempty" path:"public_keys_count,omitempty" url:"public_keys_count,omitempty"`
