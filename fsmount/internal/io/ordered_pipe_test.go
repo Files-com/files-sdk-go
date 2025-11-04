@@ -1,25 +1,12 @@
 package io_test
 
 import (
-	"fmt"
 	"io"
 	"testing"
 
 	fsio "github.com/Files-com/files-sdk-go/v3/fsmount/internal/io"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/log"
 )
-
-type Fakefs struct {
-	orderdPipe *fsio.OrderedPipe
-}
-
-func (f *Fakefs) Write(p []byte, offset int) (n int, err error) {
-	return f.orderdPipe.WriteAt(p, int64(offset))
-}
-
-func (fs *Fakefs) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
-	return fs.orderdPipe.ReadAt(buff, ofst)
-}
 
 type writeAtOffset struct {
 	Offset int64
@@ -30,9 +17,6 @@ func TestOutOfOrderWrites(t *testing.T) {
 	op, err := fsio.NewOrderedPipe("/test/path", fsio.WithLogger(&log.NoOpLogger{}))
 	if err != nil {
 		t.Fatalf("Error creating ordered pipe: %v", err)
-	}
-	f := &Fakefs{
-		orderdPipe: op,
 	}
 
 	// This slice is made up of the string
@@ -51,33 +35,33 @@ func TestOutOfOrderWrites(t *testing.T) {
 		{Offset: 57, Data: "Sed "},
 	}
 
-	// make the channel capable of buffering at least as many errors as there are
-	// writes to ensure the test doesn't hang if there are errors
-	errChanLen := len(writeOffsets) + 1
-	errchan := make(chan error, errChanLen)
-
+	// Start reading in a goroutine (simulating the upload goroutine)
+	// Read will block waiting for contiguous data as writes come in
+	readDone := make(chan error, 1)
+	var sortedData []byte
 	go func() {
-		defer close(errchan)
-		for _, w := range writeOffsets {
-			_, err := f.Write([]byte(w.Data), int(w.Offset))
-			if err != nil {
-				errchan <- fmt.Errorf("Error writing to sorted pipe: %v", err)
-			}
+		defer close(readDone)
+		var err error
+		sortedData, err = io.ReadAll(op.Out)
+		if err != nil {
+			readDone <- err
 		}
-		f.orderdPipe.Close()
 	}()
 
-	var sortedData []byte
-
-	sortedData, err = io.ReadAll(f.orderdPipe.Out)
-	if err != nil {
-		t.Errorf("Error reading from sorted pipe: %v", err)
+	// Meanwhile, write data in the main goroutine (simulating FUSE writes)
+	for _, w := range writeOffsets {
+		_, err := op.WriteAt([]byte(w.Data), w.Offset)
+		if err != nil {
+			t.Fatalf("Error writing to sorted pipe: %v", err)
+		}
 	}
 
-	for err := range errchan {
-		if err != nil {
-			t.Errorf("Expected no error, got: %v", err)
-		}
+	// Signal that all writes are complete (simulates closeWriter())
+	op.Close()
+
+	// Wait for reading to complete and check for errors
+	if err := <-readDone; err != nil {
+		t.Fatalf("Error during reads: %v", err)
 	}
 	got := string(sortedData)
 	want := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do"
@@ -90,9 +74,6 @@ func TestReaderAt(t *testing.T) {
 	op, err := fsio.NewOrderedPipe("/test/path", fsio.WithLogger(&log.NoOpLogger{}))
 	if err != nil {
 		t.Fatalf("Error creating ordered pipe: %v", err)
-	}
-	f := &Fakefs{
-		orderdPipe: op,
 	}
 
 	// This slice is made up of the string
@@ -111,62 +92,61 @@ func TestReaderAt(t *testing.T) {
 		{Offset: 57, Data: "Sed "},         // bytes 57-60
 	}
 
-	// make the channel capable of buffering at least as many errors as there are
-	// writes to ensure the test doesn't hang if there are errors
-	errChanLen := len(writeOffsets) + 1
-	errchan := make(chan error, errChanLen)
-
+	// Start reading in a goroutine (simulating the upload goroutine)
+	readDone := make(chan error, 1)
+	var sortedData []byte
 	go func() {
-		defer f.orderdPipe.Close()
-		defer close(errchan)
-		for idx, w := range writeOffsets {
-			_, err := f.Write([]byte(w.Data), int(w.Offset))
-			if err != nil {
-				errchan <- fmt.Errorf("Error writing to sorted pipe: %v", err)
-			}
-			if idx == 3 {
-				// At this point, the data in the pipe should be:
-				// "Lorem ipsum dolor sit " based on completing the first four writes.
-				readBuff := make([]byte, 6)
-				// Call Read with a start offset of 6, which should read "ipsum " and pass
-				// a buffer of 6 bytes. The result should be "ipsum ".
-				n := f.Read("/test/path", readBuff, 6, 123)
-				if n != 6 {
-					errchan <- fmt.Errorf("Expected to read 6 bytes, but got %d", n)
-				}
-				if string(readBuff) != "ipsum " {
-					errchan <- fmt.Errorf("Expected to read 'ipsum ', but got '%s'", string(readBuff))
-				}
-			}
-			if idx == 7 {
-				// At this point, the data in the pipe should be:
-				// "Lorem ipsum dolor sit amet, consectetur "
-				// based on completing the first eight writes.
-				readBuff := make([]byte, 12)
-				// Call Read with a start offset of 28, which should read "consectetur"...
-				// and pass a buffer of 12 bytes. The result should be "consectetur ".
-				n := f.Read("/test/path", readBuff, 28, 123)
-				if n != 12 {
-					errchan <- fmt.Errorf("Expected to read 12 bytes, but got %d", n)
-				}
-				if string(readBuff) != "consectetur " {
-					errchan <- fmt.Errorf("Expected to read 'consectetur ', but got '%s'", string(readBuff))
-				}
-			}
+		defer close(readDone)
+		var err error
+		sortedData, err = io.ReadAll(op.Out)
+		if err != nil {
+			readDone <- err
 		}
 	}()
 
-	var sortedData []byte
-
-	sortedData, err = io.ReadAll(f.orderdPipe.Out)
-	if err != nil {
-		t.Errorf("Error reading from sorted pipe: %v", err)
+	// Write data and test ReadAt during the process
+	for idx, w := range writeOffsets {
+		_, err := op.WriteAt([]byte(w.Data), w.Offset)
+		if err != nil {
+			t.Fatalf("Error writing to sorted pipe: %v", err)
+		}
+		if idx == 3 {
+			// At this point, the data in the pipe should be:
+			// "Lorem ipsum dolor sit " based on completing the first four writes.
+			readBuff := make([]byte, 6)
+			// Call Read with a start offset of 6, which should read "ipsum " and pass
+			// a buffer of 6 bytes. The result should be "ipsum ".
+			n := op.ReadAt(readBuff, 6)
+			if n != 6 {
+				t.Errorf("Expected to read 6 bytes, but got %d", n)
+			}
+			if string(readBuff) != "ipsum " {
+				t.Errorf("Expected to read 'ipsum ', but got '%s'", string(readBuff))
+			}
+		}
+		if idx == 7 {
+			// At this point, the data in the pipe should be:
+			// "Lorem ipsum dolor sit amet, consectetur "
+			// based on completing the first eight writes.
+			readBuff := make([]byte, 12)
+			// Call Read with a start offset of 28, which should read "consectetur"...
+			// and pass a buffer of 12 bytes. The result should be "consectetur ".
+			n := op.ReadAt(readBuff, 28)
+			if n != 12 {
+				t.Errorf("Expected to read 12 bytes, but got %d", n)
+			}
+			if string(readBuff) != "consectetur " {
+				t.Errorf("Expected to read 'consectetur ', but got '%s'", string(readBuff))
+			}
+		}
 	}
 
-	for err := range errchan {
-		if err != nil {
-			t.Errorf("Expected no error, got: %v", err)
-		}
+	// Signal that all writes are complete (simulates closeWriter())
+	op.Close()
+
+	// Wait for reading to complete and check for errors
+	if err := <-readDone; err != nil {
+		t.Fatalf("Error during reads: %v", err)
 	}
 	got := string(sortedData)
 	want := "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do"

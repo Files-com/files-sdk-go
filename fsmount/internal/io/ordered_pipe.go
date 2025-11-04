@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"slices"
 	"sync"
 
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/log"
@@ -32,42 +31,81 @@ type OrderedPipe struct {
 	// logger is used for logging within the OrderedPipe.
 	logger log.Logger
 
-	// in is the side of the io.Pipe streaming data from the host
-	// to the Filescomfs.Write function. The OrderedPipe writes to "writers",
-	// but a reference to the io.PipeWriter is kept here so that it can be closed
+	// in is the side of the io.Pipe that receives streamed data when Close() is called.
+	// A reference to the io.PipeWriter is kept here so that it can be closed
 	// when the OrderedPipe is closed.
 	in *io.PipeWriter
 
-	// writers is used to write data to both the pipe and a temporary file
-	// simultaneously.
-	writers io.Writer
-
-	// file allows reading from the temporary file created to allow the OrderedPipe
-	// to service Read requests while writes are still in progress.
+	// file is the temporary file used to store writes at specific offsets.
+	// It allows reading from the OrderedPipe while writes are still in progress.
 	file *os.File
 
 	// offset is the current write offset in the file.
 	offset int64
 
-	// bufCache holds data chunks that have been written out of order.
-	bufCache map[int64][]byte
+	// hasWrites tracks whether any WriteAt calls have occurred (excludes initial content).
+	hasWrites bool
 
-	// cacheMu is used to synchronize access to bufCache.
-	cacheMu sync.Mutex
+	// initialContentSize is the size of content loaded before any writes.
+	initialContentSize int64
+
+	// cacheWriter is an optional callback that writes data to cache on every WriteAt.
+	cacheWriter CacheWriter
+
+	// mu is used to synchronize access to offset, hasWrites, and file operations.
+	mu sync.Mutex
 
 	// closeOnce ensures that the close operation is only performed once.
 	closeOnce sync.Once
 	closeErr  error
 	closed    bool
+
+	// writingDone is closed when FinishedWriting is called, signaling to Read that
+	// no more writes will occur.
+	writingDone chan struct{}
+	writingOnce sync.Once
 }
 
 // OrderedPipeOption defines a function type for configuring OrderedPipe.
 type OrderedPipeOption func(*OrderedPipe)
 
+// CacheWriter is a function that writes data to cache at a specific offset.
+type CacheWriter func(data []byte, offset int64) (int, error)
+
 // WithLogger sets a custom logger for OrderedPipe.
 func WithLogger(logger log.Logger) OrderedPipeOption {
 	return func(op *OrderedPipe) {
 		op.logger = logger
+	}
+}
+
+// WithCacheWriter sets a callback that writes data to cache on every WriteAt call.
+// This allows real-time cache updates as writes occur, avoiding a separate copy step.
+func WithCacheWriter(cacheWriter CacheWriter) OrderedPipeOption {
+	return func(op *OrderedPipe) {
+		op.cacheWriter = cacheWriter
+	}
+}
+
+// WithInitialContent copies existing file content into the OrderedPipe's temp file
+// before any writes occur. This allows partial updates to preserve unmodified data.
+func WithInitialContent(reader io.Reader) OrderedPipeOption {
+	return func(op *OrderedPipe) {
+		if reader != nil && op.file != nil {
+			n, err := io.Copy(op.file, reader)
+			if err != nil {
+				op.logger.Error("OrderedPipe: failed to copy initial content: %v", err)
+				return
+			}
+			op.initialContentSize = n
+			op.offset = n
+			op.logger.Debug("OrderedPipe: loaded %d bytes of initial content for %v", n, op.ident)
+
+			// Seek back to start for subsequent operations
+			if _, err := op.file.Seek(0, io.SeekStart); err != nil {
+				op.logger.Error("OrderedPipe: failed to seek after initial content: %v", err)
+			}
+		}
 	}
 }
 
@@ -79,14 +117,14 @@ func NewOrderedPipe(ident string, opts ...OrderedPipeOption) (*OrderedPipe, erro
 		return nil, fmt.Errorf("failed to create temporary file for ordered pipe: %w", err)
 	}
 	op := &OrderedPipe{
-		Out:      pipeReader,
-		logger:   &log.NoOpLogger{},
-		ident:    ident,
-		in:       pipeWriter,
-		writers:  io.MultiWriter(pipeWriter, file),
-		file:     file,
-		offset:   0,
-		bufCache: make(map[int64][]byte),
+		Out:         pipeReader,
+		logger:      &log.NoOpLogger{},
+		ident:       ident,
+		in:          pipeWriter,
+		file:        file,
+		offset:      0,
+		hasWrites:   false,
+		writingDone: make(chan struct{}),
 	}
 	for _, opt := range opts {
 		opt(op)
@@ -94,89 +132,56 @@ func NewOrderedPipe(ident string, opts ...OrderedPipeOption) (*OrderedPipe, erro
 	return op, nil
 }
 
-// WriteAt writes data to the OrderedPipe at the specified offset. Out of order writes are cached
-// until they can be written in order.
+// WriteAt writes data to the OrderedPipe at the specified offset.
+// The underlying os.File handles out-of-order writes automatically.
 func (w *OrderedPipe) WriteAt(buff []byte, offset int64) (n int, err error) {
 	if w.closed {
 		return 0, errors.New("write to closed OrderedPipe")
 	}
 
-	// Lock the cache while checking and updating the write offset and cache.
-	w.cacheMu.Lock()
-	if offset < w.offset {
-		// Windows editors sometimes replay a tiny header (~56 bytes) at 0 after pause/resume.
-		// If so, accept and discard to keep the stream consistent.
-		if offset == 0 && len(buff) <= 64 {
-			w.logger.Debug("OrderedPipe.Write: rewind-at-zero %d bytes ignored for %v (current offset %d)", len(buff), w.ident, w.offset)
-			w.cacheMu.Unlock()
-			return len(buff), nil
-		}
-		w.cacheMu.Unlock()
-		return 0, fmt.Errorf("write at offset %d is less than current offset %d", offset, w.offset)
-	}
+	w.mu.Lock()
+	defer w.mu.Unlock()
 
-	if offset > w.offset {
-		// Sometimes parts come in out of order. Those parts need to be cached until it's time to write them.
-		w.logger.Trace("OrderedPipe.Write: ident=%v, offset %d is greater than write offset %d, caching", w.ident, offset, w.offset)
+	// Mark that actual writes have occurred
+	w.hasWrites = true
 
-		// TODO: Allow for configuring the cache size.
-		w.bufCache[offset] = slices.Clone(buff)
-
-		// Return that the full buffer was written, otherwise fuse will eventually fail the write.
-		w.cacheMu.Unlock()
-		return len(buff), nil
-	}
-
-	// The current offset if the ordered pipe matches the requested offset for the current WriteAt
-	// operation. Write the data to the underlying writers (pipe and temp file).
-	n, err = w.writers.Write(buff)
+	// Write directly to the temp file at the specified offset
+	// os.File.WriteAt handles sparse files and out-of-order writes
+	n, err = w.file.WriteAt(buff, offset)
 	if err != nil {
-		w.cacheMu.Unlock()
-		return n, err
+		return n, fmt.Errorf("failed to write to temp file: %w", err)
 	}
 
-	// update the offset so to maintain a record of how many total bytes have been written
-	w.offset += int64(n)
-
-	w.logger.Trace("OrderedPipe.Write: ident=%v, wrote %d bytes, new write offset is %d", w.ident, n, w.offset)
-
-	// check to see if there is a part in the cache at the new offset, and if there is
-	// recurse
-	if part, ok := w.bufCache[w.offset]; ok {
-		partOffset := w.offset
-		w.cacheMu.Unlock() // explicit unlock to allow recursion without deadlock
-		l, err := w.WriteAt(part, partOffset)
-		if err != nil {
-			return 0, err
+	// If a cache writer is configured, also write to cache
+	if w.cacheWriter != nil {
+		if cn, cerr := w.cacheWriter(buff[:n], offset); cerr != nil || cn != n {
+			w.logger.Debug("OrderedPipe.WriteAt: cache write failed for ident=%v at offset %d: %v", w.ident, offset, cerr)
+			// Continue anyway - cache write failure shouldn't fail the main write
 		}
-
-		w.logger.Trace("OrderedPipe.Write: ident=%v, wrote %d bytes from cache, new write offset is %d", w.ident, l, w.offset)
-
-		// TODO: consider moving this before calling WriteAt, otherwise parts are not removed from
-		// the cache until the all recursive calls to WriteAt return. If there are multiple levels
-		// of recursion, the cache could grow unbounded. Maybe flush all cached parts to disk at a
-		// certain size threshold, and check for cached parts on disk in addition to in-memory cache
-		// when ordering writes.
-		w.cacheMu.Lock()
-		delete(w.bufCache, partOffset)
-		w.cacheMu.Unlock()
-	} else {
-		w.cacheMu.Unlock()
 	}
 
-	return n, err
+	// Update offset to track the highest written position
+	endOffset := offset + int64(n)
+	if endOffset > w.offset {
+		w.offset = endOffset
+	}
+
+	w.logger.Trace("OrderedPipe.WriteAt: ident=%v, wrote %d bytes at offset %d, current max offset is %d",
+		w.ident, n, offset, w.offset)
+
+	return n, nil
 }
 
-// ReadAt reads data from the OrderedPipe at the specified offset. It only supports reading data
-// that has already been written in order. If attempting to read beyond the current write offset,
-// it returns 0 bytes.
+// ReadAt reads data from the OrderedPipe at the specified offset.
+// Returns data that has been written to the temp file.
 func (w *OrderedPipe) ReadAt(buff []byte, offset int64) (n int) {
 	if w.closed {
 		w.logger.Error("OrderedPipe.ReadAt: read from closed OrderedPipe for ident=%v, at offset %d", w.ident, offset)
 		return 0
 	}
-	w.cacheMu.Lock()
-	defer w.cacheMu.Unlock()
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
 
 	if w.file == nil {
 		w.logger.Error("OrderedPipe.ReadAt: file is nil for ident=%v, at offset %d", w.ident, offset)
@@ -184,42 +189,84 @@ func (w *OrderedPipe) ReadAt(buff []byte, offset int64) (n int) {
 	}
 
 	w.logger.Trace("OrderedPipe.ReadAt: attempting to read data for ident=%v, at offset %d", w.ident, offset)
-	if offset > w.offset {
-		w.logger.Trace("OrderedPipe.ReadAt: ident=%v, offset %d is greater than write offset %d, returning 0 bytes", w.ident, offset, w.offset)
-		return 0
-	}
 
+	// Read directly from temp file - it contains all written data
 	n, err := w.file.ReadAt(buff, offset)
 	if err != nil && err != io.EOF {
-		// log the error, but return 0. This can happen if reading while writing is in progress
-		// but nothing has been written yet.
 		w.logger.Error("OrderedPipe.ReadAt: error reading data for ident=%v, at offset %d: %v", w.ident, offset, err)
 		return 0
 	}
 	return n
 }
 
-// Offset returns the current write offset of the OrderedPipe.
+// Offset returns the current maximum write offset of the OrderedPipe.
 func (w *OrderedPipe) Offset() int64 {
-	w.cacheMu.Lock()
-	defer w.cacheMu.Unlock()
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	return w.offset
 }
 
-// Close closes the OrderedPipe, including the underlying io.PipeWriter and temporary file. The
-// temporary file is also removed.
-//
-// It returns any error encountered during the close operations. A closed OrderedPipe cannot be used
-// again.
+// HasWrites reports whether any WriteAt calls have occurred (excludes initial content).
+func (w *OrderedPipe) HasWrites() bool {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.hasWrites
+}
+
+// streamToPipe copies the temp file content to the pipe writer for upload.
+// This provides backpressure so uploads don't appear to complete instantly.
+func (w *OrderedPipe) streamToPipe() {
+	w.mu.Lock()
+	if w.file == nil || w.in == nil {
+		w.mu.Unlock()
+		return
+	}
+
+	// Seek to start of file
+	if _, err := w.file.Seek(0, io.SeekStart); err != nil {
+		w.logger.Error("OrderedPipe.streamToPipe: failed to seek to start: %v", err)
+		w.mu.Unlock()
+		_ = w.in.CloseWithError(err)
+		return
+	}
+	w.mu.Unlock()
+
+	// Copy file to pipe (this provides backpressure)
+	_, err := io.Copy(w.in, w.file)
+	if err != nil {
+		w.logger.Error("OrderedPipe.streamToPipe: error copying to pipe: %v", err)
+		_ = w.in.CloseWithError(err)
+	} else {
+		_ = w.in.Close()
+	}
+	w.logger.Debug("OrderedPipe.streamToPipe: finished streaming for ident=%v", w.ident)
+}
+
+// Close closes the OrderedPipe and performs cleanup:
+//   - Signals that no more writes will occur
+//   - Streams any pending data to the pipe
+//   - Closes the underlying io.PipeWriter
+//   - Closes and removes the temporary file
+//   - Returns any errors encountered (a closed OrderedPipe cannot be reused)
 func (w *OrderedPipe) Close() error {
+	// Signal that no more writes will occur and start streaming (once only)
+	w.writingOnce.Do(func() {
+		w.logger.Debug("OrderedPipe.Close: starting stream to pipe for ident=%v", w.ident)
+
+		// Start goroutine to stream file content to pipe
+		go func() {
+			w.streamToPipe()
+			// Signal that streaming is complete
+			close(w.writingDone)
+		}()
+	})
+
+	// Wait for streaming to complete
+	<-w.writingDone
+
 	w.closeOnce.Do(func() {
-		var inErr error
 		var fErr error
 		var rmErr error
-		if w.in != nil {
-			inErr = w.in.Close()
-			w.in = nil
-		}
 
 		if w.file != nil {
 			if fErr = w.file.Close(); fErr != nil {
@@ -230,7 +277,7 @@ func (w *OrderedPipe) Close() error {
 			}
 			w.file = nil
 		}
-		w.closeErr = errors.Join(inErr, fErr, rmErr)
+		w.closeErr = errors.Join(fErr, rmErr)
 		w.closed = true
 	})
 	return w.closeErr

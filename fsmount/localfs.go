@@ -1,9 +1,10 @@
 package fsmount
 
 import (
+	"context"
 	"errors"
 	"io"
-	"io/fs"
+	iofs "io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,20 +22,31 @@ import (
 // intended to be uploaded to Files.com, the Filescomfs can delegate those operations to this
 // implementation.
 type LocalFs struct {
-	mountPoint  string
-	localFsRoot string
-	log         lib.LeveledLogger
-	vfs         *virtualfs
-	initOnce    sync.Once
-	initTime    time.Time
+	mountPoint      string
+	localFsRoot     string
+	log             lib.LeveledLogger
+	vfs             *virtualfs
+	initOnce        sync.Once
+	initTime        time.Time
+	deletable       chan string
+	deleteRetries   map[string]int
+	deleteRetriesMu sync.Mutex
+	maintMu         sync.Mutex
+	maintActive     bool
+	maintCancel     context.CancelFunc
+	wg              sync.WaitGroup
 }
+
+const maxDeleteAttempts = 10
 
 func newLocalFs(params MountParams, vfs *virtualfs, ll lib.LeveledLogger) *LocalFs {
 	return &LocalFs{
-		mountPoint:  params.MountPoint,
-		localFsRoot: params.TmpFsPath,
-		vfs:         vfs,
-		log:         ll,
+		mountPoint:    params.MountPoint,
+		localFsRoot:   params.TmpFsPath,
+		vfs:           vfs,
+		log:           ll,
+		deletable:     make(chan string, 100),
+		deleteRetries: make(map[string]int),
 	}
 }
 
@@ -45,6 +57,7 @@ func (fs *LocalFs) Init() {
 		// store the time the file system was initialized to use as the creation time for the root directory
 		fs.initTime = time.Now()
 		fs.log.Debug("LocalFs initialized successfully. Local file system root: %s", fs.localFsRoot)
+		fs.StartMaintenance()
 	})
 }
 
@@ -53,6 +66,7 @@ func (fs *LocalFs) Destroy() {
 	tmp := filepath.Clean(os.TempDir())
 	fs.log.Debug("LocalFs: Destroy: considering removal of local file system root: %v", root)
 
+	fs.StopMaintenance()
 	// only remove the local file system root if it is under the system temp directory
 	if strings.HasPrefix(root+string(os.PathSeparator), tmp+string(os.PathSeparator)) {
 		if err := os.RemoveAll(root); err != nil {
@@ -118,13 +132,109 @@ func (fs *LocalFs) Mkdir(path string, mode uint32) (errc int) {
 }
 
 func (fs *LocalFs) Unlink(path string) (errc int) {
+	// defer deletion to a background goroutine to avoid blocking the FUSE operation
+	// this entire file system will be cleaned up on unmount, so best effort deletion is sufficient
 	path = fs.fqPath(path)
-	if err := os.Remove(path); err != nil {
-		// just log the error, rely on the Destroy method to clean up the temp files
-		// as a whole when the file system is unmounted
-		fs.log.Debug("LocalFs: Unlink: failed to remove file: path=%v, err=%v", path, err)
-	}
+	fs.vfs.remove(path)
+	fs.deletable <- fs.fqPath(path)
 	return errc
+}
+
+// StartMaintenance starts the background deletion goroutine if it is not already running.
+func (fs *LocalFs) StartMaintenance() {
+	fs.maintMu.Lock()
+	if fs.maintActive {
+		fs.maintMu.Unlock()
+		return
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	fs.maintCancel = cancel
+	fs.maintActive = true
+	fs.maintMu.Unlock()
+	fs.wg.Add(1)
+	go func() {
+		defer fs.wg.Done()
+		fs.maintenanceLoop(ctx)
+	}()
+}
+
+// StopMaintenance stops the background deletion goroutine if it is running.
+func (fs *LocalFs) StopMaintenance() {
+	fs.maintMu.Lock()
+	if !fs.maintActive {
+		fs.maintMu.Unlock()
+		return
+	}
+	cancel := fs.maintCancel
+	fs.maintMu.Unlock()
+	// Trigger shutdown and wait for the goroutine to exit cleanly.
+	if cancel != nil {
+		cancel()
+	}
+	fs.wg.Wait()
+
+	fs.maintMu.Lock()
+	// Clear struct state under the lock so a concurrent Start can proceed.
+	fs.maintCancel = nil
+	fs.maintActive = false
+	fs.maintMu.Unlock()
+}
+
+// maintenanceLoop runs periodic maintenance tasks until the context is cancelled.
+func (fs *LocalFs) maintenanceLoop(ctx context.Context) {
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case path := <-fs.deletable:
+			fs.handleDeletion(ctx, path)
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			// periodic wake-up to check context
+		}
+	}
+}
+
+// handleDeletion attempts to delete a path and schedules a retry if needed.
+func (fs *LocalFs) handleDeletion(ctx context.Context, path string) {
+	fs.deleteRetriesMu.Lock()
+	defer fs.deleteRetriesMu.Unlock()
+
+	err := os.RemoveAll(path)
+	if err != nil && !errors.Is(err, iofs.ErrNotExist) {
+		retries := fs.deleteRetries[path]
+		retries++
+		if retries < maxDeleteAttempts {
+			fs.deleteRetries[path] = retries
+			fs.log.Debug("LocalFs: handleDeletion: failed to remove path (attempt %d/%d): path=%v, err=%v", retries, maxDeleteAttempts, path, err)
+			fs.scheduleRetry(ctx, path)
+		} else {
+			delete(fs.deleteRetries, path)
+			fs.log.Debug("LocalFs: handleDeletion: giving up on path after %d attempts: path=%v, err=%v", retries, path, err)
+		}
+	} else {
+		delete(fs.deleteRetries, path)
+		fs.log.Trace("LocalFs: handleDeletion: removed path: path=%v", path)
+	}
+}
+
+// scheduleRetry re-queues a path for deletion after a delay, respecting context cancellation.
+func (fs *LocalFs) scheduleRetry(ctx context.Context, path string) {
+	go func() {
+		select {
+		case <-time.After(time.Second):
+			select {
+			case fs.deletable <- path:
+			case <-ctx.Done():
+				// Context cancelled while trying to send
+			}
+		case <-ctx.Done():
+			// Context cancelled during delay
+		}
+	}()
 }
 
 func (fs *LocalFs) Rmdir(path string) (errc int) {
@@ -133,6 +243,7 @@ func (fs *LocalFs) Rmdir(path string) (errc int) {
 		fs.log.Debug("LocalFs: Rmdir: failed to remove directory: path=%v, err=%v", path, err)
 		return -fuse.EIO
 	}
+	fs.vfs.remove(path)
 	return errc
 }
 
@@ -210,15 +321,15 @@ func toErrno(err error) int {
 		return 0
 	}
 	switch {
-	case errors.Is(err, fs.ErrInvalid):
+	case errors.Is(err, iofs.ErrInvalid):
 		return -fuse.EINVAL
-	case errors.Is(err, fs.ErrPermission):
+	case errors.Is(err, iofs.ErrPermission):
 		return -fuse.EPERM
-	case errors.Is(err, fs.ErrExist):
+	case errors.Is(err, iofs.ErrExist):
 		return -fuse.EEXIST
-	case errors.Is(err, fs.ErrNotExist):
+	case errors.Is(err, iofs.ErrNotExist):
 		return -fuse.ENOENT
-	case errors.Is(err, fs.ErrClosed):
+	case errors.Is(err, iofs.ErrClosed):
 		return -fuse.EBADF
 	default:
 		return -fuse.EIO

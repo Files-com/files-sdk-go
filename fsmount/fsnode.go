@@ -177,23 +177,81 @@ func (n *fsNode) isWriterOpen() bool {
 	return n.writerIsOpen()
 }
 
-func (n *fsNode) openWriter(fsWriter FSWriter, fh uint64) error {
+// markWriteIntent marks that a handle intends to write (but doesn't create writer yet).
+// Writer will be lazily created on first actual Write call.
+func (n *fsNode) markWriteIntent(fh uint64) {
+	// Ignore sentinel value (^uint64(0)) which indicates no file handle.
+	// This happens when operations like Truncate are called on a path
+	// without an open file handle.
+	if fh == ^uint64(0) {
+		return
+	}
+
 	n.writeMu.Lock()
 	defer n.writeMu.Unlock()
+	// If no writer exists yet, allow this handle to claim ownership.
+	// This implements a "last-intent-wins" policy where opening for write
+	// can steal ownership from a previous handle that never actually wrote.
 	if n.writer == nil {
-		n.logger.Debug("openWriter from node: %v, fh: %v", n.String(), fh)
-		pipe, err := fsio.NewOrderedPipe(n.path, fsio.WithLogger(n.logger))
-		if err != nil {
-			return fmt.Errorf("failed to open writer: %v", err)
-		}
-		n.writer = pipe
 		n.writerOwner = fh
-		n.downloadUri = ""
-		go func() {
-			fsWriter.writeFile(n.path, pipe.Out, n.info.modTime, fh)
-		}()
+		n.logger.Debug("markWriteIntent: fh=%v marked as writer owner for path=%v", fh, n.path)
 	}
-	return nil
+}
+
+// ensureWriter creates the writer if it doesn't exist (called from first Write).
+// Returns the writer and whether it was just created.
+func (n *fsNode) ensureWriter(fsWriter FSWriter, fh uint64, getInitialContent func() io.Reader, getCacheWriter func() fsio.CacheWriter) (*fsio.OrderedPipe, bool, error) {
+	n.writeMu.Lock()
+	defer n.writeMu.Unlock()
+
+	// Writer already exists
+	if n.writer != nil {
+		return n.writer, false, nil
+	}
+
+	// Check ownership
+	if n.writerOwner != 0 && n.writerOwner != fh {
+		return nil, false, fmt.Errorf("handle %d is not the writer owner (owner is %d)", fh, n.writerOwner)
+	}
+
+	// Set ownership if not set
+	if n.writerOwner == 0 {
+		n.writerOwner = fh
+	}
+
+	n.logger.Debug("ensureWriter: creating writer for node: %v, fh: %v", n.String(), fh)
+
+	// Get initial content if available (for partial file updates)
+	var opts []fsio.OrderedPipeOption
+	opts = append(opts, fsio.WithLogger(n.logger))
+
+	if getInitialContent != nil {
+		if reader := getInitialContent(); reader != nil {
+			opts = append(opts, fsio.WithInitialContent(reader))
+		}
+	}
+
+	// Get cache writer if available (for real-time cache updates)
+	if getCacheWriter != nil {
+		if cacheWriter := getCacheWriter(); cacheWriter != nil {
+			opts = append(opts, fsio.WithCacheWriter(cacheWriter))
+		}
+	}
+
+	pipe, err := fsio.NewOrderedPipe(n.path, opts...)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to create writer: %v", err)
+	}
+
+	n.writer = pipe
+	n.downloadUri = ""
+
+	// Start upload goroutine
+	go func() {
+		fsWriter.writeFile(n.path, pipe.Out, n.info.modTime, fh)
+	}()
+
+	return pipe, true, nil
 }
 
 // closeWriter closes the writer if it is open and sets it to nil.
@@ -207,6 +265,18 @@ func (n *fsNode) closeWriter() error {
 		return err
 	}
 	return nil
+}
+
+// discardWriter discards the writer without closing it. This is used after
+// a successful upload to allow the writer to be recreated for the next write.
+func (n *fsNode) discardWriter() {
+	n.writeMu.Lock()
+	defer n.writeMu.Unlock()
+	if n.writer != nil {
+		n.logger.Debug("discardWriter from node: %s", n.String())
+		n.writer = nil
+		n.writerOwner = 0
+	}
 }
 
 func (n *fsNode) recordProgress(delta int64) {
@@ -276,32 +346,17 @@ func (n *fsNode) writerIsOpen() bool {
 	return n.writer != nil
 }
 
-// writerSnapshot returns a snapshot of writer pointer, owner, and committed status.
-// committed := writer.Offset() > 0
-func (n *fsNode) writerSnapshot() (w *fsio.OrderedPipe, owner uint64, committed bool) {
+// writerSnapshot returns a snapshot of writer pointer, owner, and whether it has writes.
+// hasWrites indicates actual data was written (not just initial content loaded).
+func (n *fsNode) writerSnapshot() (w *fsio.OrderedPipe, owner uint64, hasWrites bool) {
 	n.writeMu.Lock()
 	w = n.writer
 	owner = n.writerOwner
-	if w != nil && w.Offset() > 0 {
-		committed = true
+	if w != nil {
+		hasWrites = w.HasWrites()
 	}
 	n.writeMu.Unlock()
-	return w, owner, committed
-}
-
-// adoptWriterIfUncommitted sets writerOwner to fh if writer exists and Offset()==0.
-// Returns (adopted, committed).
-func (n *fsNode) adoptWriterIfUncommitted(fh uint64) (bool, bool) {
-	n.writeMu.Lock()
-	defer n.writeMu.Unlock()
-	if n.writer == nil {
-		return false, false
-	}
-	if n.writer.Offset() == 0 {
-		n.writerOwner = fh
-		return true, false
-	}
-	return false, true
+	return w, owner, hasWrites
 }
 
 // readFromWriter reads from the in-flight writer without exposing locks.
@@ -316,12 +371,12 @@ func (n *fsNode) readFromWriter(buff []byte, ofst int64) int {
 }
 
 // waitForUploadIfFinalizing blocks until finalize completes when appropriate.
-// It never blocks for an unwritten upload.
+// It never blocks for an upload that has no writes.
 func (n *fsNode) waitForUploadIfFinalizing(ctx context.Context) error {
 	n.uploadMu.Lock()
-	w, _, committed := n.writerSnapshot()
+	w, _, hasWrites := n.writerSnapshot()
 	var done <-chan struct{}
-	if n.upload != nil && (w == nil || committed) {
+	if n.upload != nil && (w == nil || hasWrites) {
 		done = n.upload.done
 	}
 	n.uploadMu.Unlock()

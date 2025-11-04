@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	path_lib "path"
 	"path/filepath"
 	"slices"
@@ -18,6 +19,7 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/disk"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/mem"
+	fsio "github.com/Files-com/files-sdk-go/v3/fsmount/internal/io"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/log"
 	"github.com/Files-com/files-sdk-go/v3/ignore"
 	"github.com/Files-com/files-sdk-go/v3/lib"
@@ -87,6 +89,51 @@ type cacheStore interface {
 	Stats() *cache.Stats
 	StartMaintenance()
 	StopMaintenance()
+}
+
+// cacheReader wraps the cacheStore to provide an io.Reader interface for reading cached files.
+// This is used to seed OrderedPipe with initial content for partial file updates.
+type cacheReader struct {
+	cache  cacheStore
+	path   string
+	size   int64
+	offset int64
+	logger log.Logger
+}
+
+func (cr *cacheReader) Read(p []byte) (n int, err error) {
+	if cr.offset >= cr.size {
+		return 0, io.EOF
+	}
+
+	n, err = cr.cache.Read(cr.path, p, cr.offset)
+	if err != nil {
+		cr.logger.Debug("cacheReader: error reading from cache at offset %d: %v", cr.offset, err)
+		return 0, err
+	}
+
+	if n == 0 {
+		// Cache doesn't have this data - return EOF to prevent blocking
+		return 0, io.EOF
+	}
+
+	cr.offset += int64(n)
+	return n, nil
+}
+
+// cacheWriterAdapter adapts an fsio.CacheWriter to io.Writer for use with io.TeeReader.
+// This allows simultaneous writing to cache while reading from a source during uploads.
+type cacheWriterAdapter struct {
+	writer func([]byte, int64) (int, error)
+	offset *int64
+}
+
+func (cw *cacheWriterAdapter) Write(p []byte) (n int, err error) {
+	n, err = cw.writer(p, *cw.offset)
+	if err == nil {
+		*cw.offset += int64(n)
+	}
+	return n, err
 }
 
 type lockInfo struct {
@@ -355,13 +402,9 @@ func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh ui
 		return errc, fh
 	}
 
-	if !node.isWriterOpen() {
-		fs.log.Debug("RemoteFs: Create: Opening writer %v (%v)", remotePath, localPath)
-		if err := node.openWriter(fs, fh); err != nil {
-			fs.log.Error("Error opening writer for %v: %v", path, err)
-			return -fuse.EIO, fh
-		}
-	}
+	// Mark write intent - writer will be created lazily on first Write
+	node.markWriteIntent(fh)
+	fs.log.Debug("RemoteFs: Create: marked write intent for %v (%v), fh=%v", remotePath, localPath, fh)
 
 	return errc, fh
 }
@@ -386,25 +429,18 @@ func (fs *RemoteFs) Open(path string, flags int) (errc int, fh uint64) {
 		return errc, fh
 	}
 
-	// Single-writer with adoption: block if committed, otherwise allow/adopt.
+	// Single-writer enforcement: block if writer exists and has writes
 	if node.writerIsOpen() {
-		_, _, committed := node.writerSnapshot()
-		if committed {
+		_, owner, hasWrites := node.writerSnapshot()
+		if hasWrites && owner != fh {
+			fs.log.Debug("RemoteFs: Open: writer already active with writes for path=%v, owner=%v", path, owner)
 			return -fuse.EBUSY, fh
 		}
-		// Uncommitted (zero bytes have been written) — let the subsequent Write
-		// claim ownership of the open writer.
 	}
 
-	// open the writer and associate it with a file handle
-	if !node.isWriterOpen() {
-		localPath, remotePath := fs.paths(path)
-		fs.log.Debug("RemoteFs: Open: Opening writer %v (%v)", remotePath, localPath)
-		if err := node.openWriter(fs, fh); err != nil {
-			fs.log.Error("Error opening writer for %v: %v", path, err)
-			return -fuse.EIO, fh
-		}
-	}
+	// Mark write intent - writer will be created lazily on first Write
+	node.markWriteIntent(fh)
+	fs.log.Debug("RemoteFs: Open: marked write intent for path=%v, fh=%v", path, fh)
 
 	return errc, fh
 }
@@ -465,13 +501,10 @@ func (fs *RemoteFs) Truncate(path string, size int64, fh uint64) (errc int) {
 	node := fs.vfs.getOrCreate(path, nodeTypeFile)
 	node.updateSize(size)
 
-	if !node.isWriterOpen() {
-		fs.log.Debug("RemoteFs: Truncate: Opening writer %v (%v)", remotePath, localPath)
-		if err := node.openWriter(fs, fh); err != nil {
-			fs.log.Error("Error opening writer for %v: %v", path, err)
-			return -fuse.EIO
-		}
-	}
+	// Mark write intent - actual truncation will happen if data is written
+	// Per requirements: O_TRUNC creates writer but waits for actual data before uploading
+	node.markWriteIntent(fh)
+	fs.log.Debug("RemoteFs: Truncate: marked write intent for %v (%v)", remotePath, localPath)
 
 	return errc
 }
@@ -602,41 +635,46 @@ func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n in
 		return -fuse.EBADF
 	}
 
-	if !node.isWriterOpen() {
-		localPath, remotePath := fs.paths(path)
-		fs.log.Debug("RemoteFs: Write: Opening writer %v (%v)", remotePath, localPath)
-		if err := node.openWriter(fs, fh); err != nil {
-			fs.log.Error("Error opening writer for %v: %v", path, err)
-			return -fuse.EIO
+	// Lazy-create writer on first write with initial content and cache writer support
+	writer, created, err := node.ensureWriter(fs, fh, func() io.Reader {
+		// Get initial content from cache for partial file updates
+		if node.info.size > 0 {
+			// Try to get content from cache
+			cacheReader := &cacheReader{
+				cache:  fs.cacheStore,
+				path:   path,
+				size:   node.info.size,
+				logger: fs.log,
+			}
+			return cacheReader
 		}
-	}
-	// Guard concurrent writers:
-	// - If a writer exists and has written bytes, only the owner may write.
-	// - If a writer exists but is uncommitted (offset==0), allow first real writer to adopt.
-	if node.isWriterOpen() {
-		_, owner, committed := node.writerSnapshot()
-		if committed && owner != fh {
-			fs.log.Debug("RemoteFs: Write: writer already committed for path=%v, fh=%v, owner=%v", path, fh, owner)
-			return -fuse.EBUSY
+		return nil
+	}, func() fsio.CacheWriter {
+		// Return a cache writer that updates cache in real-time as writes occur
+		return func(data []byte, offset int64) (int, error) {
+			return fs.cacheStore.Write(path, data, offset)
 		}
-		_, _ = node.adoptWriterIfUncommitted(fh)
+	})
+
+	if err != nil {
+		fs.log.Error("RemoteFs: Write: failed to ensure writer for %v: %v", path, err)
+		return -fuse.EIO
 	}
-	// Write the buffer to the ordered pipe, which handles maintaining write order
-	// and temporarily caching out-of-order writes until they can be written sequentially.
-	n, err := node.writer.WriteAt(buff, ofst)
-	if errc := fs.handleError(path, err); errc != 0 {
+
+	if created {
+		fs.log.Debug("RemoteFs: Write: created new writer for path=%v, fh=%v", path, fh)
+	}
+
+	// Write the buffer to the ordered pipe
+	n, writeErr := writer.WriteAt(buff, ofst)
+	if errc := fs.handleError(path, writeErr); errc != 0 {
 		return errc
-	}
-	// if any bytes were written, delete the disk cache for this path to ensure
-	// subsequent reads get the latest data
-	if n > 0 {
-		fs.cacheStore.Delete(path)
 	}
 	return n
 }
 
 func (fs *RemoteFs) Release(path string, fh uint64) (errc int) {
-	fs.log.Trace("RemoteFs: Release: path=%v, fh=%v", path, fh)
+	fs.log.Debug("RemoteFs: Release: path=%v, fh=%v", path, fh)
 	handle, node, ok := fs.vfs.handles.Lookup(fh)
 
 	// Remove the handle from the set of open handles in all cases,
@@ -662,33 +700,21 @@ func (fs *RemoteFs) Release(path string, fh uint64) (errc int) {
 		return errc
 	}
 
-	// Only the owning writer may close/finalize, and only if data was written.
-	_, owner, committed := node.writerSnapshot()
-	iOwn, wrote := owner == fh, committed
+	// Check if this handle owns a writer with uncommitted writes.
+	_, owner, hasWrites := node.writerSnapshot()
+	iOwn := owner == fh
 
 	// set the node's expire time to expired so that the next Getattr call will trigger a reload of the node's info from the remote API.
 	defer node.expireInfo()
-	if iOwn && wrote {
-		// close the writer, which signals that no more data will be written, and will
-		// finalize the upload once all data has been written to the API.
-		fs.log.Debug("RemoteFs: Release: handle marked as written: closing writer for path=%v, fh=%v", path, fh)
-		if err := node.closeWriter(); err != nil {
-			fs.log.Debug("RemoteFs: Release: error closing writer for %v: %v", path, err)
-			return -fuse.EIO
+
+	// If we own the writer and have uncommitted writes, finalize the upload.
+	if iOwn && hasWrites {
+		fs.log.Debug("RemoteFs: Release: finalizing upload for path=%v, fh=%v", path, fh)
+		if errc := fs.fsyncNode(path, node, fh); errc != 0 {
+			return errc
 		}
-		// wait for the upload to complete
-		_ = node.waitForUploadIfFinalizing(context.TODO())
 	}
 
-	// If this owner never wrote any bytes, keep the writer open to allow adoption.
-	if iOwn && !wrote {
-		// DO NOT close the writer.
-		// Not closing the writer allows the writer to be reused for a subsequent write
-		// operation. If no subsequent write operation occurs, the handle will be cleaned
-		// up by a periodic cleanup task that checks how long since the last write operation
-		// was performed on the handle.
-		fs.log.Debug("RemoteFs: Release: handle for path=%v, fh=%v was never written to, not closing writer", path, fh)
-	}
 	return fs.unlock(path, fh)
 }
 
@@ -780,19 +806,62 @@ func (fs *RemoteFs) Chmod(path string, mode uint32) int {
 // If an upload is active but the writer is already closed (finalizing in background),
 // wait for completion. Otherwise, fall back to ENOSYS.
 func (fs *RemoteFs) Fsync(path string, datasync bool, fh uint64) (errc int) {
-	fs.log.Trace("RemoteFs: Fsync: path=%v, datasync=%v, fh=%v", path, datasync, fh)
-	node, _ := fs.vfs.fetch(path)
-	if node == nil {
-		return errc
+	fs.log.Debug("RemoteFs: Fsync: path=%v, datasync=%v, fh=%v", path, datasync, fh)
+
+	_, node, ok := fs.vfs.handles.Lookup(fh)
+	if !ok {
+		fs.log.Debug("RemoteFs: Fsync: file handle not found for path: %v, fh: %v", path, fh)
+		return -fuse.EBADF
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), fsyncTimeout)
-	defer cancel()
-	if err := node.waitForUploadIfFinalizing(ctx); err == nil {
-		return errc
+
+	// Check if this handle owns a writer with uncommitted writes.
+	_, owner, hasWrites := node.writerSnapshot()
+	if owner != fh {
+		// This handle doesn't own the writer, nothing to fsync.
+		fs.log.Debug("RemoteFs: Fsync: handle does not own writer for path=%v, fh=%v", path, fh)
+		return 0
 	}
-	return -fuse.ETIMEDOUT
+
+	if !hasWrites {
+		// No writes to sync.
+		fs.log.Debug("RemoteFs: Fsync: no writes to sync for path=%v, fh=%v", path, fh)
+		return 0
+	}
+
+	// Finalize the upload.
+	return fs.fsyncNode(path, node, fh)
 }
 
+// fsyncNode finalizes an upload for a node with uncommitted writes.
+// It closes the writer, waits for the upload to complete, then discards the writer.
+// Note: Cache is already updated in real-time via the CacheWriter callback set during ensureWriter.
+func (fs *RemoteFs) fsyncNode(path string, node *fsNode, fh uint64) (errc int) {
+	fs.log.Debug("RemoteFs: fsyncNode: closing writer for path=%v, fh=%v", path, fh)
+
+	// Close the writer, which signals that no more data will be written.
+	if err := node.closeWriter(); err != nil {
+		fs.log.Debug("RemoteFs: fsyncNode: error closing writer for %v: %v", path, err)
+		return -fuse.EIO
+	}
+
+	// Wait for the upload to complete with a timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), fsyncTimeout)
+	defer cancel()
+
+	if err := node.waitForUploadIfFinalizing(ctx); err != nil {
+		fs.log.Debug("RemoteFs: fsyncNode: error waiting for upload to complete for %v: %v", path, err)
+		return -fuse.ETIMEDOUT
+	}
+
+	// Discard the writer after successful upload.
+	node.discardWriter()
+	fs.log.Debug("RemoteFs: fsyncNode: upload complete and writer discarded for path=%v, fh=%v", path, fh)
+
+	return 0
+}
+
+// copyWriterToCache copies the writer's temp file content to the cache.
+// This is called before closing the writer to preserve the uploaded content for subsequent writes.
 func (fs *RemoteFs) uploadProgressFunc(node *fsNode) func(int64) {
 	return func(delta int64) {
 		// If the write was successful, extend the node's ttl and keep track of the number
@@ -821,7 +890,7 @@ func (fs *RemoteFs) writeFile(path string, reader io.Reader, mtime time.Time, fh
 		// the upload reference as soon as the upload starts, which is needed in
 		// order to support renaming the file during an active upload.
 		file.WithUploadStartedCallback(func(part files_sdk.FileUploadPart) {
-			fs.log.Debug("RemoteFs: Upload started: %v (%v), upload ref: '%v'", remotePath, localPath, part.Ref)
+			fs.log.Debug("RemoteFs: Uploading part number %d, of: %v, ref: '%v'", part.PartNumber, remotePath, part.Ref)
 			node.captureRef(part.Ref)
 		}),
 
@@ -851,8 +920,9 @@ func (fs *RemoteFs) writeFile(path string, reader io.Reader, mtime time.Time, fh
 	}
 	node.closeUpload(u.Size)
 
-	// clear the disk cache for the file after a successful upload
-	fs.cacheStore.Delete(path)
+	// Note: Cache was already updated in fsyncNode() by copying from the writer's temp file
+	// before it was closed. No need to re-download from remote.
+
 	fs.log.Info("Upload completed: %v (%v).", remotePath, localPath)
 	fs.log.Debug("RemoteFs: Bytes: %v, Duration: %v, fh: %v", u.Size, time.Since(start), fh)
 }
@@ -861,12 +931,47 @@ func (fs *RemoteFs) writeFile(path string, reader io.Reader, mtime time.Time, fh
 // for use by the Rename operation when moving a file from the LocalFs to the RemoteFs.
 func (fs *RemoteFs) uploadFile(src, dst string) error {
 	fs.log.Debug("Uploading file: %v to %v", src, dst)
-	if err := fs.fileClient.Upload(file.UploadWithFile(src), file.UploadWithDestinationPath(dst)); err != nil {
+
+	// Open the source file
+	srcFile, err := os.Open(src)
+	if err != nil {
 		return err
 	}
-	_ = fs.cacheStore.Delete(dst)
-	fs.vfs.expireNodeInfo(dst)
-	fs.loadParent(dst)
+	defer srcFile.Close()
+
+	// Get file info for size and mtime
+	fileInfo, err := srcFile.Stat()
+	if err != nil {
+		return err
+	}
+
+	// Create a cache writer adapter with TeeReader
+	var offset int64
+	cacheWriter := &cacheWriterAdapter{
+		writer: func(data []byte, off int64) (int, error) {
+			return fs.cacheStore.Write(dst, data, off)
+		},
+		offset: &offset,
+	}
+	teeReader := io.TeeReader(srcFile, cacheWriter)
+
+	// Upload with the TeeReader (writes to cache as it reads)
+	if err := fs.fileClient.Upload(
+		file.UploadWithReader(teeReader),
+		file.UploadWithDestinationPath(dst),
+	); err != nil {
+		return err
+	}
+
+	// Update the node's info with the uploaded file details
+	node := fs.vfs.getOrCreate(dst, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeFile,
+		size:         fileInfo.Size(),
+		modTime:      fileInfo.ModTime(),
+		creationTime: node.info.creationTime,
+	})
+
 	return nil
 }
 

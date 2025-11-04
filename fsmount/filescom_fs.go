@@ -177,7 +177,7 @@ func (fs *Filescomfs) Rename(oldpath string, newpath string) (errc int) {
 			return errc
 		}
 		fs.vfs.rename(oldpath, newpath)
-		errc = fs.Unlink(oldpath)
+		errc = fs.local.Unlink(oldpath)
 		fs.log.Trace("Filescomfs: Rename: finished unlink after upload: oldpath=%v, newpath=%v, errc=%v", oldpath, newpath, errc)
 		return errc
 	}

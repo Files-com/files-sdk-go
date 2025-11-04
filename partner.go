@@ -7,15 +7,17 @@ import (
 )
 
 type Partner struct {
-	AllowBypassing2faPolicies *bool  `json:"allow_bypassing_2fa_policies,omitempty" path:"allow_bypassing_2fa_policies,omitempty" url:"allow_bypassing_2fa_policies,omitempty"`
-	AllowCredentialChanges    *bool  `json:"allow_credential_changes,omitempty" path:"allow_credential_changes,omitempty" url:"allow_credential_changes,omitempty"`
-	AllowProvidingGpgKeys     *bool  `json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys,omitempty" url:"allow_providing_gpg_keys,omitempty"`
-	AllowUserCreation         *bool  `json:"allow_user_creation,omitempty" path:"allow_user_creation,omitempty" url:"allow_user_creation,omitempty"`
-	Id                        int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Name                      string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
-	Notes                     string `json:"notes,omitempty" path:"notes,omitempty" url:"notes,omitempty"`
-	RootFolder                string `json:"root_folder,omitempty" path:"root_folder,omitempty" url:"root_folder,omitempty"`
-	Tags                      string `json:"tags,omitempty" path:"tags,omitempty" url:"tags,omitempty"`
+	AllowBypassing2faPolicies *bool   `json:"allow_bypassing_2fa_policies,omitempty" path:"allow_bypassing_2fa_policies,omitempty" url:"allow_bypassing_2fa_policies,omitempty"`
+	AllowCredentialChanges    *bool   `json:"allow_credential_changes,omitempty" path:"allow_credential_changes,omitempty" url:"allow_credential_changes,omitempty"`
+	AllowProvidingGpgKeys     *bool   `json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys,omitempty" url:"allow_providing_gpg_keys,omitempty"`
+	AllowUserCreation         *bool   `json:"allow_user_creation,omitempty" path:"allow_user_creation,omitempty" url:"allow_user_creation,omitempty"`
+	Id                        int64   `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Name                      string  `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Notes                     string  `json:"notes,omitempty" path:"notes,omitempty" url:"notes,omitempty"`
+	PartnerAdminIds           []int64 `json:"partner_admin_ids,omitempty" path:"partner_admin_ids,omitempty" url:"partner_admin_ids,omitempty"`
+	RootFolder                string  `json:"root_folder,omitempty" path:"root_folder,omitempty" url:"root_folder,omitempty"`
+	Tags                      string  `json:"tags,omitempty" path:"tags,omitempty" url:"tags,omitempty"`
+	UserIds                   []int64 `json:"user_ids,omitempty" path:"user_ids,omitempty" url:"user_ids,omitempty"`
 }
 
 func (p Partner) Identifier() interface{} {

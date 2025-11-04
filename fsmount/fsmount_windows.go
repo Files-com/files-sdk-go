@@ -84,21 +84,24 @@ func mountOpts(params MountParams) []string {
 	return opts
 }
 
-// Microsoft Office lock/owner files (sidecar next to the doc)
-// ~$*
-// Office scratch temp files
-// ~WR*.tmp
-// ~DF*.tmp
-// AD70B1.tmp
-// AD70B13.tmp
-// AD70B13E.tmp
 func additionalIgnorePatterns() []string {
 	return []string{
+		// Microsoft Office lock/owner files (sidecar next to the doc)
+		// ~$*
 		"~$*",
+		// Office scratch temp files
+		// ~WR*.tmp
+		// ~DF*.tmp
+		// AD70B1.tmp
+		// AD70B13.tmp
+		// AD70B13E.tmp
 		"~WR*.tmp",
 		"~DF*.tmp",
 		"[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F].tmp",
 		"[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F].tmp",
 		"[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F].tmp",
+		// Adobe InDesign temp files
+		// test4c4a9d1c-5b46.TMP
+		"test[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]-[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f].TMP",
 	}
 }
