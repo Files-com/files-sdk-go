@@ -194,7 +194,7 @@ func (n *fsNode) markWriteIntent(fh uint64) {
 	// can steal ownership from a previous handle that never actually wrote.
 	if n.writer == nil {
 		n.writerOwner = fh
-		n.logger.Debug("markWriteIntent: fh=%v marked as writer owner for path=%v", fh, n.path)
+		n.logger.Trace("markWriteIntent: fh=%v marked as writer owner for path=%v", fh, n.path)
 	}
 }
 
@@ -219,7 +219,7 @@ func (n *fsNode) ensureWriter(fsWriter FSWriter, fh uint64, getInitialContent fu
 		n.writerOwner = fh
 	}
 
-	n.logger.Debug("ensureWriter: creating writer for node: %v, fh: %v", n.String(), fh)
+	n.logger.Trace("ensureWriter: creating writer for node: %v, fh: %v", n.String(), fh)
 
 	// Get initial content if available (for partial file updates)
 	var opts []fsio.OrderedPipeOption

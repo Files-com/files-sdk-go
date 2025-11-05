@@ -57,6 +57,10 @@ const (
 	dataDir = "data"
 
 	lruStateFile = "lru.json"
+
+	// maxEvictionAttempts is the maximum number of consecutive pinned files
+	// checked during eviction before concluding that all files are pinned.
+	maxEvictionAttempts = 10
 )
 
 // DiskCache implements a simple disk-based cache for file data with an interface that roughly
@@ -123,6 +127,10 @@ type DiskCache struct {
 	// LRU cache to track file access for eviction
 	lru *lru.Cache[string, struct{}]
 
+	// Track pinned files (reference counted) to prevent eviction of files with open handles
+	pinnedFiles   map[string]int
+	pinnedFilesMu sync.Mutex
+
 	maintMu     sync.Mutex
 	maintActive bool
 	maintCancel context.CancelFunc
@@ -172,6 +180,7 @@ func NewDiskCache(path string, opts ...Option) (*DiskCache, error) {
 		MaxFileCount:        DefaultMaxFileCount,
 		log:                 nil,
 		lru:                 nil,
+		pinnedFiles:         make(map[string]int),
 	}
 
 	// apply options
@@ -230,7 +239,7 @@ func (dc *DiskCache) Read(path string, buff []byte, ofst int64) (n int, err erro
 	_, ok := dc.lru.Get(fqPath)
 	if !ok {
 		// file is not in the cache
-		dc.log.Trace("diskCache: LRU does not contain path %s", path)
+		dc.log.Trace("DiskCache: LRU does not contain path %s", path)
 	}
 
 	file, err := os.Open(fqPath)
@@ -297,16 +306,42 @@ func (dc *DiskCache) Write(path string, buff []byte, ofst int64) (n int, err err
 	projected := max(ofst+int64(len(buff)), currSize)
 	delta := projected - currSize
 
+	// Enforce capacity limits when configured by evicting old unpinned files.
+	// The limits are "soft", so writes should always succeed, but a best effort is made to evict
+	// unpinned files to stay near the configured limits.
 	if dc.Capacity > 0 || dc.MaxFileCount > 0 {
-		// evict the least recently used files until there is enough space, or the file count is under the limit
+		evictionAttempts := 0
+
+		// Try to evict unpinned files to make room, but don't fail if eviction is not possible.
 		for !dc.hasCapacityDelta(delta, newFile) {
-			if _, _, ok := dc.lru.RemoveOldest(); ok {
+			oldestKey, _, ok := dc.lru.GetOldest()
+			if !ok {
+				// LRU is empty - try disk scan as fallback
+				dc.deleteOneByMtime()
+				// Whether deletion succeeded or not, allow the write to proceed
+				break
+			}
+
+			// Don't evict the file currently being written to
+			if oldestKey == fqPath {
+				break
+			}
+
+			// Check if the oldest file is pinned
+			if dc.isPinned(oldestKey) {
+				evictionAttempts++
+				if evictionAttempts >= maxEvictionAttempts {
+					// Likely all files are pinned. Allow the write to proceed.
+					break
+				}
+				// Try to remove it anyway - onEvict will re-add it and provide the next oldest
+				dc.lru.Remove(oldestKey)
 				continue
 			}
-			// LRU is empty → fall back to disk scan deleting ONE file
-			if !dc.deleteOneByMtime() {
-				return 0, fmt.Errorf("diskCache: at capacity, no entries to evict, and nothing deletable")
-			}
+
+			// Remove the oldest entry (which is not the current file and is not pinned)
+			evictionAttempts = 0 // Reset counter since an evictable file was found
+			dc.lru.Remove(oldestKey)
 		}
 	}
 
@@ -406,16 +441,118 @@ func (dc *DiskCache) Stats() *cache.Stats {
 	s.WriteBytes.Store(dc.stats.WriteBytes.Load())
 	s.WriteCount.Store(dc.stats.WriteCount.Load())
 
+	// Snapshot pinned files information
+	dc.pinnedFilesMu.Lock()
+	s.PinnedCount = len(dc.pinnedFiles)
+	s.PinnedPaths = make(map[string]int, len(dc.pinnedFiles))
+	for path, count := range dc.pinnedFiles {
+		s.PinnedPaths[path] = count
+	}
+	dc.pinnedFilesMu.Unlock()
+
+	// Get LRU keys ordered from oldest to newest
+	// lru.Keys() already returns a copy, so no need to copy again
+	s.LruKeys = dc.lru.Keys()
+
 	s.CapacityBytesRemaining = s.CapacityBytes - s.SizeBytes.Load()
 	s.FileCountRemaining = s.MaxFileCount - s.FileCount.Load()
 	return s
 }
 
+// Pin increments the reference count for a file, preventing it from being evicted.
+// This should be called when a file handle is opened.
+func (dc *DiskCache) Pin(path string) {
+	dc.pinnedFilesMu.Lock()
+	defer dc.pinnedFilesMu.Unlock()
+
+	// Use fqPath as the key to match LRU keys
+	fqPath := dc.entryPath(path)
+	dc.pinnedFiles[fqPath]++
+	dc.log.Trace("DiskCache: pinned %s (fqPath: %s, count: %d)", path, fqPath, dc.pinnedFiles[fqPath])
+}
+
+// Unpin decrements the reference count for a file.
+// When the count reaches zero, the file becomes eligible for eviction.
+// This should be called when a file handle is closed.
+func (dc *DiskCache) Unpin(path string) {
+	dc.pinnedFilesMu.Lock()
+
+	// Use fqPath as the key to match LRU keys
+	fqPath := dc.entryPath(path)
+	dc.pinnedFiles[fqPath]--
+	fullyUnpinned := dc.pinnedFiles[fqPath] <= 0
+	if fullyUnpinned {
+		delete(dc.pinnedFiles, fqPath)
+		dc.log.Trace("DiskCache: unpinned %s (fqPath: %s, fully released)", path, fqPath)
+	} else {
+		dc.log.Trace("DiskCache: unpinned %s (fqPath: %s, count: %d)", path, fqPath, dc.pinnedFiles[fqPath])
+	}
+
+	dc.pinnedFilesMu.Unlock()
+
+	// If this file was fully unpinned and the cache is over capacity, try to trim the cache
+	// back to the configured limit to respect the user's settings. This ensures the
+	// cache doesn't stay bloated after files are closed.
+	if fullyUnpinned && (dc.Capacity > 0 || dc.MaxFileCount > 0) {
+		dc.writeMu.Lock()
+		defer dc.writeMu.Unlock()
+
+		// First, try to evict the file that was just unpinned since it just became eligible
+		if !dc.hasCapacityDelta(1, false) {
+			dc.lru.Remove(fqPath)
+		}
+
+		// Then evict other oldest files until the cache is back under capacity
+		evictionAttempts := 0
+		for !dc.hasCapacityDelta(1, false) {
+			oldestKey, _, ok := dc.lru.GetOldest()
+			if !ok {
+				// LRU is empty, nothing more to evict
+				break
+			}
+
+			// Don't attempt to evict pinned files
+			if dc.isPinned(oldestKey) {
+				evictionAttempts++
+				if evictionAttempts >= maxEvictionAttempts {
+					// Likely all remaining files are pinned, cache cannot be reduced further
+					break
+				}
+				// Try to remove it anyway - onEvict will re-add it and provide the next oldest
+				dc.lru.Remove(oldestKey)
+				continue
+			}
+
+			// Remove the oldest entry (which is not pinned)
+			evictionAttempts = 0 // Reset counter since an evictable file was found
+			dc.lru.Remove(oldestKey)
+		}
+	}
+}
+
+// isPinned checks if a file is currently pinned (has open file handles).
+// The key parameter should be the fqPath (same as LRU keys).
+func (dc *DiskCache) isPinned(key string) bool {
+	dc.pinnedFilesMu.Lock()
+	defer dc.pinnedFilesMu.Unlock()
+
+	count, exists := dc.pinnedFiles[key]
+	return exists && count > 0
+}
+
 // onEvict is called when a key is evicted from the LRU. This includes when the key is removed
 // explicitly via Remove or RemoveOldest.
 func (dc *DiskCache) onEvict(path string, value struct{}) {
+	// NEVER evict pinned files (files with open handles)
+	if dc.isPinned(path) {
+		dc.log.Trace("DiskCache: skipping eviction of pinned file: %s", path)
+		// Re-add to LRU to allow retry later
+		_ = dc.lru.Add(path, struct{}{})
+		return
+	}
+
 	if err := dc.deleteFile(path); err != nil {
-		dc.log.Info("diskCache: error deleting evicted cached file %s: %v", path, err)
+		dc.log.Trace("DiskCache: error deleting evicted cached file %s: %v", path, err)
 	}
 	dc.lruDirty.Store(true)
 }
@@ -445,7 +582,7 @@ func (dc *DiskCache) deleteFile(path string) error {
 	}
 
 	if err := os.RemoveAll(fqPath); err != nil {
-		dc.log.Info("diskCache: error deleting evicted cached file %s: %v", fqPath, err)
+		dc.log.Trace("DiskCache: error deleting evicted cached file %s: %v", fqPath, err)
 		return err
 	}
 
@@ -477,13 +614,13 @@ func (dc *DiskCache) loadStats() error {
 			totalSize += info.Size()
 			if !dc.lru.Contains(p) {
 				// TODO: decide what to do in this case - for now just log it
-				dc.log.Debug("diskCache: loadStats: LRU does not contain %s", p)
+				dc.log.Trace("DiskCache: loadStats: LRU does not contain %s", p)
 			}
 		}
 		return nil
 	})
 	if err != nil {
-		dc.log.Debug("diskCache: loadStats: failed to load stats: %v", err)
+		dc.log.Debug("DiskCache: loadStats: failed to load stats: %v", err)
 		return err
 	}
 	dc.stats.CapacityBytes = dc.Capacity
@@ -620,7 +757,7 @@ func (dc *DiskCache) saveLRUState() error {
 		return nil
 	}
 	// Keys returns a slice of the keys in the LRU, from oldest to newest.
-	// when restoring, we add them in order to preserve LRU order.
+	// When restoring, keys are added in order to preserve LRU order.
 	keys := dc.lru.Keys()
 	state := lruState{Keys: keys}
 	statePath := filepath.Join(dc.stateDir, lruStateFile)
@@ -639,7 +776,7 @@ func (dc *DiskCache) persistLRUState() {
 		return
 	}
 	if err := dc.saveLRUState(); err != nil {
-		dc.log.Info("diskCache: error saving LRU state: %v", err)
+		dc.log.Debug("DiskCache: error saving LRU state: %v", err)
 	}
 	dc.lruDirty.Store(false)
 }
@@ -682,7 +819,7 @@ func (dc *DiskCache) runMaintenanceOnce(ctx context.Context) {
 	// create a snapshot of files to delete along with the predicted size and count of files
 	// that will be left after deletions
 	dc.writeMu.Lock()
-	dc.log.Debug("diskCache: performing maintenance")
+	dc.log.Debug("DiskCache: performing maintenance")
 	start := time.Now()
 	_ = filepath.WalkDir(dc.dataDir, func(p string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
@@ -697,7 +834,7 @@ func (dc *DiskCache) runMaintenanceOnce(ctx context.Context) {
 		info, ierr := d.Info()
 		if ierr != nil {
 			// the maintenance is best-effort, so just log and continue
-			dc.log.Info("diskCache: maintenance: error stating file %s: %v", p, ierr)
+			dc.log.Debug("DiskCache: maintenance: error stating file %s: %v", p, ierr)
 			return nil
 		}
 
@@ -778,7 +915,7 @@ func (dc *DiskCache) runMaintenanceOnce(ctx context.Context) {
 	dc.stats.LruCount = len(dc.lru.Keys())
 	dc.writeMu.Unlock()
 
-	dc.log.Debug("diskCache: maintenance complete, duration=%vms", duration.Milliseconds())
+	dc.log.Debug("DiskCache: maintenance complete, duration=%vms", duration.Milliseconds())
 }
 
 // delete if expired based on MaxAge
@@ -829,7 +966,7 @@ func (dc *DiskCache) deleteOneByMtime() bool {
 		return true
 	}
 	if err := dc.deleteFile(oldest.path); err != nil {
-		dc.log.Info("diskCache: error deleting oldest by mtime %s: %v", oldest.path, err)
+		dc.log.Trace("DiskCache: error deleting oldest by mtime %s: %v", oldest.path, err)
 		return false
 	}
 	return true

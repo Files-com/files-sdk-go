@@ -18,6 +18,10 @@ import (
 	"time"
 
 	_ "embed"
+
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/disk"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/mem"
 )
 
 const (
@@ -28,6 +32,17 @@ const (
 )
 
 var pprofMu sync.Mutex
+
+// cacheStoreWithStats extends cacheStore with statistics gathering methods.
+// This interface is only available when building with the filescomfs_debug tag.
+type cacheStoreWithStats interface {
+	cacheStore
+	Stats() *cache.Stats
+}
+
+// Compile-time verification that our cache implementations satisfy the extended interface
+var _ cacheStoreWithStats = (*disk.DiskCache)(nil)
+var _ cacheStoreWithStats = (*mem.MemoryCache)(nil)
 
 //go:embed templates/debug.tmpl
 var templateData []byte
@@ -497,7 +512,14 @@ func (reg *mountRegistry) handleDebugCacheStats(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	writeJSON(w, fs.remote.cacheStore.Stats())
+	// Type-assert to the extended interface that includes Stats()
+	statsCache, ok := fs.remote.cacheStore.(cacheStoreWithStats)
+	if !ok {
+		writeJSON(w, map[string]string{"error": "cache does not support stats"})
+		return
+	}
+
+	writeJSON(w, statsCache.Stats())
 }
 
 // snapshotNodes returns a stable slice of *fsNode without holding the VFS lock.

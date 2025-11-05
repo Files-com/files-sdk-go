@@ -53,7 +53,7 @@ func (fs *LocalFs) createLocalNode(path string, entry os.DirEntry) (*fsNode, err
 		return nil, err
 	}
 	var creationTime time.Time
-	// On unix, os.FileInfo does not provide creation time, so we need to use syscall.Stat_t
+	// On unix, os.FileInfo does not provide creation time, so syscall.Stat_t is needed
 	// to get the creation time if available.
 	if stat, ok := info.Sys().(*syscall.Stat_t); ok {
 		creationTime = time.Unix(stat.Birthtimespec.Sec, stat.Birthtimespec.Nsec)

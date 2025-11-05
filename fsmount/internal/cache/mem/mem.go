@@ -44,6 +44,10 @@ const (
 	// pageSize is the size of each byte slice that is allocated to hold the contents of a file.
 	// Equivalent to 128KiB.
 	pageSize = 128 << 10
+
+	// maxEvictionAttempts is the maximum number of consecutive pinned files
+	// checked during eviction before concluding that all files are pinned.
+	maxEvictionAttempts = 10
 )
 
 // page is a convenient way to think about a chunk of an individual file
@@ -91,6 +95,10 @@ type MemoryCache struct {
 	// used to log cache operations
 	log log.Logger
 
+	// Track pinned files (reference counted) to prevent eviction of files with open handles
+	pinnedFiles   map[string]int
+	pinnedFilesMu sync.Mutex
+
 	maintMu     sync.Mutex
 	maintActive bool
 	maintCancel context.CancelFunc
@@ -104,6 +112,7 @@ func NewMemoryCache(opts ...Option) (*MemoryCache, error) {
 		MaxAge:              DefaultMaxAge,
 		MaxFileCount:        DefaultMaxFileCount,
 		files:               make(map[string]*entry),
+		pinnedFiles:         make(map[string]int),
 	}
 
 	// apply options
@@ -163,12 +172,40 @@ func (mc *MemoryCache) Write(path string, buff []byte, ofst int64) (int, error) 
 	mc.writeMu.Lock()
 	defer mc.writeMu.Unlock()
 
-	// enure there is enough capacity in the cache for the incoming write in terms of bytes and file count
+	// Enforce capacity limits when configured by evicting old unpinned files.
+	// The limits are "soft", so writes should always succeed, but a best effort is made to evict
+	// unpinned files to stay near the configured limits.
 	need := bytesNeededForWrite(ent, ofst, int64(len(buff)))
+	evictionAttempts := 0
+
+	// Try to evict unpinned files to make room, but don't fail if eviction is not possible.
 	for !mc.hasCapacityDelta(need, newFile) {
-		if _, _, ok := mc.lru.RemoveOldest(); !ok {
-			return 0, fmt.Errorf("cache: at capacity, and nothing deletable")
+		oldestKey, _, ok := mc.lru.GetOldest()
+		if !ok {
+			// LRU is empty - allow the write to proceed
+			break
 		}
+
+		// Don't evict the file currently being written to
+		if oldestKey == path {
+			break
+		}
+
+		// Check if the oldest file is pinned
+		if mc.isPinned(oldestKey) {
+			evictionAttempts++
+			if evictionAttempts >= maxEvictionAttempts {
+				// Likely all files are pinned. Allow the write to proceed.
+				break
+			}
+			// Try to remove it anyway - onEvict will re-add it and provide the next oldest
+			mc.lru.Remove(oldestKey)
+			continue
+		}
+
+		// Remove the oldest entry (which is not the current file and is not pinned)
+		evictionAttempts = 0 // Reset counter since an evictable file was found
+		mc.lru.Remove(oldestKey)
 	}
 
 	mc.filesMu.Lock()
@@ -302,9 +339,100 @@ func (mc *MemoryCache) Stats() *cache.Stats {
 	s.WriteBytes.Store(mc.stats.WriteBytes.Load())
 	s.WriteCount.Store(mc.stats.WriteCount.Load())
 
+	// Snapshot pinned files information
+	mc.pinnedFilesMu.Lock()
+	s.PinnedCount = len(mc.pinnedFiles)
+	s.PinnedPaths = make(map[string]int, len(mc.pinnedFiles))
+	for path, count := range mc.pinnedFiles {
+		s.PinnedPaths[path] = count
+	}
+	mc.pinnedFilesMu.Unlock()
+
+	// Get LRU keys ordered from oldest to newest
+	// lru.Keys() already returns a copy, so no need to copy again
+	s.LruKeys = mc.lru.Keys()
+
 	s.CapacityBytesRemaining = s.CapacityBytes - s.SizeBytes.Load()
 	s.FileCountRemaining = s.MaxFileCount - s.FileCount.Load()
 	return s
+}
+
+// Pin increments the reference count for a file, preventing it from being evicted.
+// This should be called when a file handle is opened.
+// Note: MemoryCache uses path directly as the key (same as LRU and files map).
+func (mc *MemoryCache) Pin(path string) {
+	mc.pinnedFilesMu.Lock()
+	defer mc.pinnedFilesMu.Unlock()
+
+	mc.pinnedFiles[path]++
+	mc.log.Trace("MemoryCache: pinned %s (count: %d)", path, mc.pinnedFiles[path])
+}
+
+// Unpin decrements the reference count for a file.
+// When the count reaches zero, the file becomes eligible for eviction.
+// This should be called when a file handle is closed.
+func (mc *MemoryCache) Unpin(path string) {
+	mc.pinnedFilesMu.Lock()
+
+	mc.pinnedFiles[path]--
+	fullyUnpinned := mc.pinnedFiles[path] <= 0
+	if fullyUnpinned {
+		delete(mc.pinnedFiles, path)
+		mc.log.Trace("MemoryCache: unpinned %s (fully released)", path)
+	} else {
+		mc.log.Trace("MemoryCache: unpinned %s (count: %d)", path, mc.pinnedFiles[path])
+	}
+
+	mc.pinnedFilesMu.Unlock()
+
+	// If this file was fully unpinned and the cache is over capacity, try to trim the cache
+	// back to the configured limit to respect the user's settings. This ensures the
+	// cache doesn't stay bloated after files are closed.
+	if fullyUnpinned && (mc.Capacity > 0 || mc.MaxFileCount > 0) {
+		mc.writeMu.Lock()
+		defer mc.writeMu.Unlock()
+
+		// First, try to evict the file that was just unpinned since it just became eligible
+		if !mc.hasCapacityDelta(1, false) {
+			mc.lru.Remove(path)
+		}
+
+		// Then evict other oldest files until the cache is back under capacity
+		evictionAttempts := 0
+		for !mc.hasCapacityDelta(1, false) {
+			oldestKey, _, ok := mc.lru.GetOldest()
+			if !ok {
+				// LRU is empty, nothing more to evict
+				break
+			}
+
+			// Don't attempt to evict pinned files
+			if mc.isPinned(oldestKey) {
+				evictionAttempts++
+				if evictionAttempts >= maxEvictionAttempts {
+					// Likely all remaining files are pinned, cache cannot be reduced further
+					break
+				}
+				// Try to remove it anyway - onEvict will re-add it and provide the next oldest
+				mc.lru.Remove(oldestKey)
+				continue
+			}
+
+			// Remove the oldest entry (which is not pinned)
+			evictionAttempts = 0 // Reset counter since an evictable file was found
+			mc.lru.Remove(oldestKey)
+		}
+	}
+}
+
+// isPinned checks if a file is currently pinned (has open file handles).
+// The path parameter should match the keys used in LRU and files map.
+func (mc *MemoryCache) isPinned(path string) bool {
+	mc.pinnedFilesMu.Lock()
+	defer mc.pinnedFilesMu.Unlock()
+
+	count, exists := mc.pinnedFiles[path]
+	return exists && count > 0
 }
 
 // StartMaintenance starts the maintenance goroutine if it is not already running.
@@ -354,6 +482,11 @@ func (dc *MemoryCache) hasCapacityDelta(delta int64, newFile bool) bool {
 	return bytesOK && filesOK
 }
 
+// bytesNeededForWrite calculates the number of new bytes that will need to be allocated
+// to perform a write of n bytes at the given offset in the entry. Pages are allocated at
+// a fixed pageSize, so this function counts the number of pages that don't yet exist and
+// would need to be allocated, multiplied by pageSize. Pages that already exist contribute
+// zero bytes to the calculation, even if the write only uses part of those pages.
 func bytesNeededForWrite(ent *entry, ofst, n int64) int64 {
 	var need, pos int64
 	for pos < n {
@@ -385,11 +518,11 @@ func (mc *MemoryCache) maintenanceLoop(ctx context.Context) {
 }
 
 func (mc *MemoryCache) runMaintenanceOnce(_ context.Context) {
-	mc.log.Debug("memoryCache: performing maintenance")
+	mc.log.Debug("MemoryCache: performing maintenance")
 	start := time.Now()
 
 	if mc.MaxAge == 0 {
-		mc.log.Debug("memoryCache: maintenance complete, duration=%v", time.Since(start))
+		mc.log.Debug("MemoryCache: maintenance complete: max age is 0, nothing to do ")
 		return
 	}
 
@@ -406,17 +539,25 @@ func (mc *MemoryCache) runMaintenanceOnce(_ context.Context) {
 	for _, path := range agedOut {
 		mc.lru.Remove(path)
 	}
-	mc.log.Debug("memoryCache: maintenance complete, duration=%v", time.Since(start))
+	mc.log.Debug("MemoryCache: maintenance complete, duration=%v", time.Since(start))
 }
 
 func (mc *MemoryCache) onEvict(path string, value struct{}) {
-	mc.log.Debug("memoryCache: evicting %s", path)
+	// NEVER evict pinned files (files with open handles)
+	if mc.isPinned(path) {
+		mc.log.Trace("MemoryCache: skipping eviction of pinned file: %s", path)
+		// Re-add to LRU to allow retry later
+		_ = mc.lru.Add(path, struct{}{})
+		return
+	}
+
+	mc.log.Trace("MemoryCache: evicting %s", path)
 	// look up entry in files map
 	mc.filesMu.Lock()
 	defer mc.filesMu.Unlock()
 	ent, ok := mc.files[path]
 	if !ok {
-		mc.log.Debug("memoryCache: evicting %s but not found in files map", path)
+		mc.log.Trace("MemoryCache: evicting %s but not found in files map", path)
 		return
 	}
 	// calculate size to be freed

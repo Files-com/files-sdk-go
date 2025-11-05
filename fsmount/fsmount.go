@@ -379,12 +379,12 @@ func diskCachePath(params MountParams) (string, error) {
 	var mountBase string
 	switch runtime.GOOS {
 	case "windows":
-		// on Windows, the mount point is a drive letter like "X:"
-		// so we use the drive letter as the directory name
+		// On Windows, the mount point is a drive letter like "X:",
+		// so use the drive letter as the directory name
 		mountBase = params.MountPoint[:1]
 	default:
-		// on MacOS and Linux, the mount point is a path like "/mnt/files/A"
-		// so we use the base name of the path as the directory name
+		// On MacOS and Linux, the mount point is a path like "/mnt/files/A",
+		// so use the base name of the path as the directory name
 		mountBase = filepath.Base(params.MountPoint)
 	}
 

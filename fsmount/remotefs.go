@@ -86,9 +86,12 @@ type cacheStore interface {
 	Read(path string, buff []byte, ofst int64) (n int, err error)
 	Write(path string, buff []byte, ofst int64) (n int, err error)
 	Delete(path string) bool
-	Stats() *cache.Stats
 	StartMaintenance()
 	StopMaintenance()
+	// Pin increments the reference count for a file, preventing it from being evicted
+	Pin(path string)
+	// Unpin decrements the reference count for a file
+	Unpin(path string)
 }
 
 // cacheReader wraps the cacheStore to provide an io.Reader interface for reading cached files.
@@ -363,6 +366,8 @@ func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh ui
 
 	// Load the parent directory to populate the vfs nodes map
 	if errc = fs.loadParent(path); errc != 0 {
+		// Release handle on error since FUSE won't call Release() for failed creates
+		fs.vfs.handles.Release(fh)
 		return errc, fh
 	}
 
@@ -372,6 +377,8 @@ func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh ui
 		// greater than zero, it means the file is actively being written to
 		if node.writer.Offset() > 0 {
 			fs.log.Info("Cannot create file while writing: %v (%v)", remotePath, localPath)
+			// Release handle on error since FUSE won't call Release() for failed creates
+			fs.vfs.handles.Release(fh)
 			return -fuse.EEXIST, fh
 		}
 		// the node exists, and has an open writer, but the writer's offset is zero,
@@ -388,6 +395,8 @@ func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh ui
 	// so return an error for the Create call?
 	if exists && !node.infoExpired() {
 		fs.log.Debug("RemoteFs: Create: Node exists, cache data is recent, but no open writer: %v (%v)", remotePath, localPath)
+		// Release handle on error since FUSE won't call Release() for failed creates
+		fs.vfs.handles.Release(fh)
 		return -fuse.EEXIST, fh
 	}
 
@@ -398,7 +407,19 @@ func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh ui
 	node.updateSize(0)
 	handle.node = node
 
+	// Pin the file in cache to prevent eviction while the handle is open
+	// NOTE: If an error is returned below, Unpin() must be called manually since FUSE will
+	// NOT call Release() for failed create operations.
+	if fs.cacheStore != nil {
+		fs.cacheStore.Pin(path)
+	}
+
 	if errc = fs.lock(node, fh); errc != 0 {
+		// Lock failed - manually Unpin and Release handle since Release() won't be called for failed creates
+		if fs.cacheStore != nil {
+			fs.cacheStore.Unpin(path)
+		}
+		fs.vfs.handles.Release(fh)
 		return errc, fh
 	}
 
@@ -414,9 +435,16 @@ func (fs *RemoteFs) Open(path string, flags int) (errc int, fh uint64) {
 	node := fs.vfs.getOrCreate(path, nodeTypeFile)
 	fh, handle := fs.vfs.handles.Open(node, fuseFlags)
 	fs.log.Trace("RemoteFs: Open: path=%v, flags=%v, fh=%v", path, fuseFlags, fh)
-	// If the requested op is read only return 0 and a file handle. The fs will attempt
-	// to read from a temporary file backing the writer if it exists, otherwise it will
-	// read from the remote API.
+
+	// Pin the file in cache to prevent eviction while the handle is open.
+	// This must happen early, before any error returns, to ensure the file remains
+	// cached for the lifetime of the handle (both read and write operations).
+	// NOTE: If an error is returned below, Unpin() must be called manually since FUSE will
+	// NOT call Release() for failed open operations.
+	if fs.cacheStore != nil {
+		fs.cacheStore.Pin(path)
+	}
+
 	// TODO: this can succeed even if the file doesn't exist. The file may be created
 	// later when the file is written to, or it may never be created if the file
 	// is never written to. Decide if this is the desired behavior.
@@ -426,6 +454,11 @@ func (fs *RemoteFs) Open(path string, flags int) (errc int, fh uint64) {
 	// after this point, the requested op must be a write operation
 
 	if errc = fs.lock(node, fh); errc != 0 {
+		// Lock failed - manually Unpin and Release handle since Release() won't be called for failed opens
+		if fs.cacheStore != nil {
+			fs.cacheStore.Unpin(path)
+		}
+		fs.vfs.handles.Release(fh)
 		return errc, fh
 	}
 
@@ -434,6 +467,11 @@ func (fs *RemoteFs) Open(path string, flags int) (errc int, fh uint64) {
 		_, owner, hasWrites := node.writerSnapshot()
 		if hasWrites && owner != fh {
 			fs.log.Debug("RemoteFs: Open: writer already active with writes for path=%v, owner=%v", path, owner)
+			// EBUSY error - manually Unpin and Release handle since Release() won't be called for failed opens
+			if fs.cacheStore != nil {
+				fs.cacheStore.Unpin(path)
+			}
+			fs.vfs.handles.Release(fh)
 			return -fuse.EBUSY, fh
 		}
 	}
@@ -526,7 +564,7 @@ func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int
 
 	// Attempt to read from the temporary file backing the writer. If the read can't be satisfied
 	// from the temporary file, it will return zero bytes, and the logic will fall through to
-	// reading from the remote API.
+	// reading from the cache or remote API.
 	if node.writerIsOpen() {
 		n = node.readFromWriter(buff, ofst)
 		if n > 0 {
@@ -620,7 +658,7 @@ func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int
 		fs.log.Debug("RemoteFs: Read: diskCache.Read error after WaitFor: %v", err)
 		return -fuse.EAGAIN
 	}
-	fs.log.Debug("RemoteFs: Read: ok path=%v ofst=%d read=%d", path, ofst, n)
+	fs.log.Trace("RemoteFs: Read: ok path=%v ofst=%d read=%d", path, ofst, n)
 	handle.incrementRead(int64(n))
 	return n
 }
@@ -674,7 +712,7 @@ func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n in
 }
 
 func (fs *RemoteFs) Release(path string, fh uint64) (errc int) {
-	fs.log.Debug("RemoteFs: Release: path=%v, fh=%v", path, fh)
+	fs.log.Trace("RemoteFs: Release: path=%v, fh=%v", path, fh)
 	handle, node, ok := fs.vfs.handles.Lookup(fh)
 
 	// Remove the handle from the set of open handles in all cases,
@@ -694,6 +732,15 @@ func (fs *RemoteFs) Release(path string, fh uint64) (errc int) {
 		return errc
 	}
 
+	// Unpin the file from cache when the handle is closed, allowing it to be evicted if needed.
+	// This must be done for ALL handle types (read-only and write) since Pin() is called
+	// in both Open() and Create() for all handle types.
+	defer func() {
+		if fs.cacheStore != nil {
+			fs.cacheStore.Unpin(path)
+		}
+	}()
+
 	// If the handle is a read only operation, there's nothing left to do.
 	if handle.IsReadOnly() {
 		fs.log.Trace("RemoteFs: Release: closed handle for path=%v, fh=%v", path, fh)
@@ -707,7 +754,7 @@ func (fs *RemoteFs) Release(path string, fh uint64) (errc int) {
 	// set the node's expire time to expired so that the next Getattr call will trigger a reload of the node's info from the remote API.
 	defer node.expireInfo()
 
-	// If we own the writer and have uncommitted writes, finalize the upload.
+	// If this handle owns the writer and has uncommitted writes, finalize the upload.
 	if iOwn && hasWrites {
 		fs.log.Debug("RemoteFs: Release: finalizing upload for path=%v, fh=%v", path, fh)
 		if errc := fs.fsyncNode(path, node, fh); errc != 0 {

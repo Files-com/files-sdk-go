@@ -105,8 +105,8 @@ func (fs *LocalFs) fqPath(path string) string {
 	rootClean := filepath.Clean(fs.localFsRoot)
 	fqClean := filepath.Clean(fq)
 
-	// Build “path with trailing separator” forms to ensure we only match whole
-	// directory segments (so /tmp/x doesn't match /tmp/xyz).
+	// Build "path with trailing separator" forms to ensure only whole
+	// directory segments are matched (so /tmp/x doesn't match /tmp/xyz).
 	fqCleanWithSep := fqClean + string(os.PathSeparator)
 	rootCleanWithSep := rootClean + string(os.PathSeparator)
 
@@ -284,7 +284,7 @@ func (fs *LocalFs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 func (fs *LocalFs) Create(path string, flags int, mode uint32) (errc int, fh uint64) {
 	path = fs.fqPath(path)
 	fuseFlags := ff.NewFuseFlags(flags)
-	fs.log.Debug("LocalFs: Create: path=%v, flags=%v, mode=%o", path, fuseFlags, mode)
+	fs.log.Trace("LocalFs: Create: path=%v, flags=%v, mode=%o", path, fuseFlags, mode)
 	return fs.open(path, flags, mode)
 }
 
@@ -387,8 +387,8 @@ func (fs *LocalFs) Release(path string, fh uint64) (errc int) {
 	}
 	defer fs.vfs.handles.Release(fh)
 
-	// this should always be non-nil since we always set it when opening the handle
-	// but just in case, check for nil before trying to close it
+	// This should always be non-nil since it's set when opening the handle,
+	// but check for nil before attempting to close it.
 	if handle.localFile != nil {
 		if err := handle.localFile.Close(); err != nil {
 			fs.log.Debug("LocalFs: Release: failed to close file: path=%v, fh=%v, err=%v", path, fh, err)
@@ -400,9 +400,9 @@ func (fs *LocalFs) Release(path string, fh uint64) (errc int) {
 }
 
 func (fs *LocalFs) Opendir(path string) (errc int, fh uint64) {
-	// this is largely a no-op since we don't need to open a directory handle on the local file system,
-	// but allocating a file handle allows us to track open directories in the virtual file system
-	// and aligns with releasedir which will close the handle
+	// This is largely a no-op since directory handles aren't needed on the local file system,
+	// but allocating a file handle allows tracking of open directories in the virtual file system
+	// and aligns with releasedir which will close the handle.
 	path = fs.fqPath(path)
 	node := fs.vfs.getOrCreate(path, nodeTypeDir)
 	fh, _ = fs.vfs.handles.Open(node, ff.NewFuseFlags(fuse.O_RDONLY))

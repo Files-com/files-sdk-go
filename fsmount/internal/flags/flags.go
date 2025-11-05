@@ -109,8 +109,8 @@ func (f FuseFlags) String() string {
 //
 // Why this is cross-platform:
 //   - Access mode: FUSE follows POSIX semantics where the lower two bits encode
-//     the access mode (O_RDONLY=0, O_WRONLY=1, O_RDWR=2). We mask with 0x3 and
-//     map to os.O_RDONLY / os.O_WRONLY / os.O_RDWR. The os package then turns
+//     the access mode (O_RDONLY=0, O_WRONLY=1, O_RDWR=2). Masking with 0x3 and
+//     mapping to os.O_RDONLY / os.O_WRONLY / os.O_RDWR allows the os package to turn
 //     these into the correct native flags for Linux, macOS, and Windows.
 //   - Behavior/creation bits: FUSE flags like O_CREAT, O_EXCL, O_TRUNC, and
 //     O_APPEND have direct counterparts in the os package (os.O_CREATE,
