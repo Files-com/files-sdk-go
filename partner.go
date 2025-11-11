@@ -36,7 +36,6 @@ type PartnerFindParams struct {
 }
 
 type PartnerCreateParams struct {
-	Name                      string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	AllowBypassing2faPolicies *bool  `url:"allow_bypassing_2fa_policies,omitempty" json:"allow_bypassing_2fa_policies,omitempty" path:"allow_bypassing_2fa_policies"`
 	AllowCredentialChanges    *bool  `url:"allow_credential_changes,omitempty" json:"allow_credential_changes,omitempty" path:"allow_credential_changes"`
 	AllowProvidingGpgKeys     *bool  `url:"allow_providing_gpg_keys,omitempty" json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys"`
@@ -44,11 +43,11 @@ type PartnerCreateParams struct {
 	Notes                     string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
 	RootFolder                string `url:"root_folder,omitempty" json:"root_folder,omitempty" path:"root_folder"`
 	Tags                      string `url:"tags,omitempty" json:"tags,omitempty" path:"tags"`
+	Name                      string `url:"name" json:"name" path:"name"`
 }
 
 type PartnerUpdateParams struct {
 	Id                        int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	Name                      string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	AllowBypassing2faPolicies *bool  `url:"allow_bypassing_2fa_policies,omitempty" json:"allow_bypassing_2fa_policies,omitempty" path:"allow_bypassing_2fa_policies"`
 	AllowCredentialChanges    *bool  `url:"allow_credential_changes,omitempty" json:"allow_credential_changes,omitempty" path:"allow_credential_changes"`
 	AllowProvidingGpgKeys     *bool  `url:"allow_providing_gpg_keys,omitempty" json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys"`
@@ -56,6 +55,7 @@ type PartnerUpdateParams struct {
 	Notes                     string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
 	RootFolder                string `url:"root_folder,omitempty" json:"root_folder,omitempty" path:"root_folder"`
 	Tags                      string `url:"tags,omitempty" json:"tags,omitempty" path:"tags"`
+	Name                      string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
 type PartnerDeleteParams struct {
