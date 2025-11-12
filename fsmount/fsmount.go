@@ -389,7 +389,7 @@ func diskCachePath(params MountParams) (string, error) {
 	}
 
 	if mountBase == string(os.PathSeparator) || mountBase == "" {
-		return "", fmt.Errorf("failed to locate mount specific cache directory: %w", err)
+		return "", fmt.Errorf("failed to locate cache directory: expected path or drive letter: got '%s'", mountBase)
 	}
 	path = filepath.Join(cacheDir, "Files.com", "v6", mountBase, "cache")
 	if err := os.MkdirAll(path, 0o700); err != nil {
