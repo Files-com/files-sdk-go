@@ -46,7 +46,7 @@ type ChildSiteManagementPolicyFindParams struct {
 }
 
 type ChildSiteManagementPolicyCreateParams struct {
-	Value            string                                  `url:"value,omitempty" json:"value,omitempty" path:"value"`
+	Value            map[string]interface{}                  `url:"value,omitempty" json:"value,omitempty" path:"value"`
 	SkipChildSiteIds []int64                                 `url:"skip_child_site_ids,omitempty" json:"skip_child_site_ids,omitempty" path:"skip_child_site_ids"`
 	PolicyType       ChildSiteManagementPolicyPolicyTypeEnum `url:"policy_type" json:"policy_type" path:"policy_type"`
 	Name             string                                  `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -55,7 +55,7 @@ type ChildSiteManagementPolicyCreateParams struct {
 
 type ChildSiteManagementPolicyUpdateParams struct {
 	Id               int64                                   `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	Value            string                                  `url:"value,omitempty" json:"value,omitempty" path:"value"`
+	Value            map[string]interface{}                  `url:"value,omitempty" json:"value,omitempty" path:"value"`
 	SkipChildSiteIds []int64                                 `url:"skip_child_site_ids,omitempty" json:"skip_child_site_ids,omitempty" path:"skip_child_site_ids"`
 	PolicyType       ChildSiteManagementPolicyPolicyTypeEnum `url:"policy_type,omitempty" json:"policy_type,omitempty" path:"policy_type"`
 	Name             string                                  `url:"name,omitempty" json:"name,omitempty" path:"name"`
