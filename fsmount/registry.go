@@ -89,6 +89,14 @@ func (h *Host) Unmount() bool {
 	return unmounted
 }
 
+// GetMountPoint returns the mount point of the file system.
+func (h *Host) GetMountPoint() string {
+	if h.fs == nil {
+		return ""
+	}
+	return h.fs.mountPoint
+}
+
 // Notify sends a notification to the FUSE host about changes to a specific path.
 // This can be used to inform the FUSE layer that a file or directory has changed,
 // prompting it to refresh its cache or take other appropriate actions.
