@@ -44,7 +44,7 @@ func RequestHeadersOption(headers *http.Header) RequestResponseOption {
 func WithContext(ctx context.Context) RequestResponseOption {
 	return func(opt *requestResponseOption) error {
 		if opt.Request != nil && ctx != nil {
-			opt.Request.WithContext(ctx)
+			opt.Request = opt.Request.WithContext(ctx)
 		} else {
 			opt.Context = ctx
 		}
@@ -59,26 +59,27 @@ func ResponseBodyOption(opt func(io.ReadCloser) error) RequestResponseOption {
 }
 
 func WrapRequestOptions(config Config, request *http.Request, opts ...RequestResponseOption) (*http.Response, error) {
+	optionRequestResponse := &requestResponseOption{Request: request}
+
 	for _, opt := range opts {
-		err := opt(&requestResponseOption{Request: request})
-		if err != nil {
+		if err := opt(optionRequestResponse); err != nil {
 			return &http.Response{}, err
 		}
 	}
 
-	resp, err := config.Do(request)
+	var err error
+	optionRequestResponse.Response, err = config.Do(request)
 	if err != nil {
-		return resp, err
+		return optionRequestResponse.Response, err
 	}
 
 	for _, opt := range opts {
-		err := opt(&requestResponseOption{Response: resp})
-		if err != nil {
-			return resp, err
+		if err := opt(optionRequestResponse); err != nil {
+			return optionRequestResponse.Response, err
 		}
 	}
 
-	return resp, nil
+	return optionRequestResponse.Response, nil
 }
 
 func ContextOption(opts []RequestResponseOption) context.Context {
