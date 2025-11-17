@@ -51,6 +51,11 @@ type MountParams struct {
 	// will be located (e.g. "/mnt/files").
 	MountPoint string
 
+	// UseDefaultMountPoint enables fallback behavior on Windows. If true and the specified
+	// MountPoint is invalid or already in use, the system will automatically search for
+	// an available drive letter from Z: to D:. Defaults to false.
+	UseDefaultMountPoint bool
+
 	// Optional. Path to a temporary directory for storing files that don't belong on Files.com.
 	// e.g. .DS_Store, Thumbs.db, etc... The full list of patterns is available in the ignore package
 	// https://github.com/Files-com/files-sdk-go/tree/master/ignore/data
@@ -210,7 +215,7 @@ func newFs(params MountParams, logger lib.LeveledLogger) (*Filescomfs, error) {
 		return nil, fmt.Errorf("config is required")
 	}
 	// the mountPoint function is platform specific
-	mountPoint, err := mountPoint(params.MountPoint)
+	mountPoint, err := mountPoint(params.MountPoint, params.UseDefaultMountPoint)
 	if err != nil {
 		return nil, err
 	}

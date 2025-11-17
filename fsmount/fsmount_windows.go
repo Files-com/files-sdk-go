@@ -12,38 +12,58 @@ var (
 	validMountPointRe = regexp.MustCompile(`^[A-Za-z]:$`)
 )
 
+// findAvailableDriveLetter searches for an available drive letter from Z: to D:
+func findAvailableDriveLetter() (string, error) {
+	for l := 'Z'; l >= 'D'; l-- {
+		drive := string(l) + ":"
+		// check if the candidate is already reserved
+		if _, ok := mntRegistry.get(drive); ok {
+			continue
+		}
+		if _, err := os.Stat(drive + string(os.PathSeparator)); os.IsNotExist(err) {
+			return drive, nil
+		}
+	}
+	return "", fmt.Errorf("no available drive letters")
+}
+
 // mountPoint validates or selects a mount point (drive letter) for the FUSE file system.
 // If mountPoint is empty, it finds the highest available drive letter by searching backward
 // from Z: to D:.
 // If mountPoint is provided, it validates that it is a single drive letter followed by a colon (e.g. "X:")
 // and checks that the drive letter is not already in use.
 // Returns the selected or validated mount point, or an error if no valid mount point is found.
-func mountPoint(mountPoint string) (string, error) {
+func mountPoint(mountPoint string, useDefaultMountPoint ...bool) (string, error) {
+	// Default to false if not provided
+	useDefault := false
+	if len(useDefaultMountPoint) > 0 {
+		useDefault = useDefaultMountPoint[0]
+	}
+
 	if err := validateMountPoint(mountPoint); err != nil {
 		return "", err
 	}
+
 	if mountPoint == "" {
 		// Find the highest available drive letter.
-		for l := 'Z'; l >= 'D'; l-- {
-			drive := string(l) + ":"
-			// check if the candidate is already reserved
-			if _, ok := mntRegistry.get(drive); ok {
-				continue
-			}
-			if _, err := os.Stat(drive + string(os.PathSeparator)); os.IsNotExist(err) {
-				return drive, nil
-			}
-		}
-
-		return "", fmt.Errorf("no available drive letters")
+		return findAvailableDriveLetter()
 	} else {
 		_, err := os.Stat(mountPoint + string(os.PathSeparator))
 		switch {
 		case err == nil:
+			if useDefault {
+				// Mount point in use with useDefault=true: fall back to Z-D search
+				return findAvailableDriveLetter()
+			}
 			return "", fmt.Errorf("mount point already in use")
+
 		case os.IsNotExist(err):
 			// ok — available
 		default:
+			if useDefault {
+				// Mount point not available with useDefault=true: fall back to Z-D search
+				return findAvailableDriveLetter()
+			}
 			return "", fmt.Errorf("requested mount point not available: %w", err)
 		}
 	}

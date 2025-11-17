@@ -10,7 +10,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func mountPoint(mntRoot string) (string, error) {
+func mountPoint(mntRoot string, _ ...bool) (string, error) {
 	mntRoot = filepath.Clean(mntRoot)
 	if mntRoot == "" {
 		return "", fmt.Errorf("mount point cannot be empty")

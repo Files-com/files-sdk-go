@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func mountPoint(mountPoint string) (string, error) {
+func mountPoint(mountPoint string, _ ...bool) (string, error) {
 	// TODO: build a path to the mount point that is OS specific
 	// for now, require that the mount point is provided and
 	// exists.
