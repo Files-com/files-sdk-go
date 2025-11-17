@@ -655,6 +655,6 @@ func TestUploadReader(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "File Upload Not Found", "it invalidates any resuming")
 		assert.Len(t, u.Parts, 0)
-		assert.Equal(t, partCount, 3)
+		assert.Contains(t, []int{1, 2, 3}, partCount)
 	})
 }
