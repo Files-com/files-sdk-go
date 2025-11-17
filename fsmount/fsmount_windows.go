@@ -33,13 +33,7 @@ func findAvailableDriveLetter() (string, error) {
 // If mountPoint is provided, it validates that it is a single drive letter followed by a colon (e.g. "X:")
 // and checks that the drive letter is not already in use.
 // Returns the selected or validated mount point, or an error if no valid mount point is found.
-func mountPoint(mountPoint string, useDefaultMountPoint ...bool) (string, error) {
-	// Default to false if not provided
-	useDefault := false
-	if len(useDefaultMountPoint) > 0 {
-		useDefault = useDefaultMountPoint[0]
-	}
-
+func mountPoint(mountPoint string, useDefaultMountPoint bool) (string, error) {
 	if err := validateMountPoint(mountPoint); err != nil {
 		return "", err
 	}
@@ -51,7 +45,7 @@ func mountPoint(mountPoint string, useDefaultMountPoint ...bool) (string, error)
 		_, err := os.Stat(mountPoint + string(os.PathSeparator))
 		switch {
 		case err == nil:
-			if useDefault {
+			if useDefaultMountPoint {
 				// Mount point in use with useDefault=true: fall back to Z-D search
 				return findAvailableDriveLetter()
 			}
@@ -60,7 +54,7 @@ func mountPoint(mountPoint string, useDefaultMountPoint ...bool) (string, error)
 		case os.IsNotExist(err):
 			// ok — available
 		default:
-			if useDefault {
+			if useDefaultMountPoint {
 				// Mount point not available with useDefault=true: fall back to Z-D search
 				return findAvailableDriveLetter()
 			}
