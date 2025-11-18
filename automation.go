@@ -64,6 +64,7 @@ func (u AutomationTriggerEnum) String() string {
 
 func (u AutomationTriggerEnum) Enum() map[string]AutomationTriggerEnum {
 	return map[string]AutomationTriggerEnum{
+		"manual":          AutomationTriggerEnum("manual"),
 		"daily":           AutomationTriggerEnum("daily"),
 		"custom_schedule": AutomationTriggerEnum("custom_schedule"),
 		"webhook":         AutomationTriggerEnum("webhook"),
