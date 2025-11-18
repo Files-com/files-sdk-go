@@ -11,6 +11,7 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	api_key "github.com/Files-com/files-sdk-go/v3/apikey"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/events"
 	dc "github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/disk"
 	mc "github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/mem"
 
@@ -114,6 +115,8 @@ type MountParams struct {
 	//
 	// Ignored if DiskCacheEnabled is set to true
 	MemoryCacheParams CacheParams
+
+	EventPublisher events.EventPublisher
 }
 
 // CacheParams defines the configuration parameters for the file system cache.
@@ -259,6 +262,10 @@ func newFs(params MountParams, logger lib.LeveledLogger) (*Filescomfs, error) {
 		remote:      remotefs,
 		local:       localfs,
 		vfs:         vfs,
+		events:      params.EventPublisher,
+	}
+	if fs.events == nil {
+		fs.events = &events.NoOpEventPublisher{}
 	}
 
 	ig, err := ignoreFromPatterns(params.IgnorePatterns)

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/events"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	gogitignore "github.com/sabhiram/go-gitignore"
 	"github.com/winfsp/cgofuse/fuse"
@@ -43,6 +44,7 @@ type Filescomfs struct {
 	localFsRoot    string
 	disableLocking bool
 	ignore         *gogitignore.GitIgnore
+	events         events.EventPublisher
 
 	initOnce sync.Once
 }

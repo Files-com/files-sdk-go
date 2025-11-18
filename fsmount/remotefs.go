@@ -16,6 +16,7 @@ import (
 
 	"github.com/Files-com/files-sdk-go/v3/file"
 	"github.com/Files-com/files-sdk-go/v3/file/manager"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/events"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/disk"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/mem"
@@ -78,6 +79,8 @@ type RemoteFs struct {
 
 	gatesMu    sync.Mutex
 	readyGates map[string]*cache.ReadyGate
+
+	events events.EventPublisher
 }
 
 // cacheStore defines the interface for the file system cache used by RemoteFs and allows for alternative
@@ -174,6 +177,9 @@ func newRemoteFs(params MountParams, vfs *virtualfs, log log.Logger, cs cacheSto
 			return nil, err
 		}
 		fs.ignore = ignore
+	}
+	if fs.events == nil {
+		fs.events = &events.NoOpEventPublisher{}
 	}
 	return fs, nil
 }
@@ -1251,6 +1257,9 @@ func (fs *RemoteFs) handleError(path string, err error) int {
 		fs.log.Error("%v (%v): %v", remotePath, localPath, err)
 
 		if files_sdk.IsNotAuthenticated(err) {
+			fs.events.Publish(events.AuthenticationFailedEvent{
+				Reason: err.Error(),
+			})
 			return -fuse.EPERM
 		}
 		if files_sdk.IsNotExist(err) {
