@@ -162,6 +162,7 @@ func newRemoteFs(params MountParams, vfs *virtualfs, log log.Logger, cs cacheSto
 		config:           params.Config,
 		disableLocking:   params.DisableLocking,
 		debugFuse:        params.DebugFuse,
+		events:           params.EventPublisher,
 		cacheStore:       cs,
 	}
 	// ensure write concurrency and cache TTL are positive
