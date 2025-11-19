@@ -51,13 +51,13 @@ func (a As2IncomingMessage) Identifier() interface{} {
 type As2IncomingMessageCollection []As2IncomingMessage
 
 type As2IncomingMessageListParams struct {
-	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
-	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq   interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterLt     interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq   interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
-	As2PartnerId int64       `url:"as2_partner_id,omitempty" json:"as2_partner_id,omitempty" path:"as2_partner_id"`
+	SortBy       interface{}        `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter       As2IncomingMessage `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterGt     interface{}        `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq   interface{}        `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterLt     interface{}        `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq   interface{}        `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	As2PartnerId int64              `url:"as2_partner_id,omitempty" json:"as2_partner_id,omitempty" path:"as2_partner_id"`
 	ListParams
 }
 

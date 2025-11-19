@@ -46,7 +46,7 @@ func (u RemoteMountBackendHealthCheckTypeEnum) Enum() map[string]RemoteMountBack
 }
 
 type RemoteMountBackendListParams struct {
-	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	Filter RemoteMountBackend `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 

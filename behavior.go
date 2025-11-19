@@ -29,7 +29,7 @@ type BehaviorCollection []Behavior
 
 type BehaviorListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	Filter Behavior    `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
@@ -39,7 +39,7 @@ type BehaviorFindParams struct {
 
 type BehaviorListForParams struct {
 	SortBy            interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter            interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	Filter            Behavior    `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	Path              string      `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	AncestorBehaviors *bool       `url:"ancestor_behaviors,omitempty" json:"ancestor_behaviors,omitempty" path:"ancestor_behaviors"`
 	ListParams

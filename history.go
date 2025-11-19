@@ -70,7 +70,7 @@ type HistoryListParams struct {
 	EndAt        *time.Time  `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
 	Display      string      `url:"display,omitempty" json:"display,omitempty" path:"display"`
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	Filter       History     `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterPrefix interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	ListParams
 }

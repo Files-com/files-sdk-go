@@ -25,7 +25,7 @@ type EmailLog struct {
 type EmailLogCollection []EmailLog
 
 type EmailLogListParams struct {
-	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	Filter       EmailLog    `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
 	FilterGteq   interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
 	FilterPrefix interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`

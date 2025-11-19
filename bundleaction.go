@@ -27,13 +27,13 @@ func (b BundleAction) Identifier() interface{} {
 type BundleActionCollection []BundleAction
 
 type BundleActionListParams struct {
-	UserId     int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
-	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
-	FilterGt   interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterLt   interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	UserId     int64        `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	SortBy     interface{}  `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter     BundleAction `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterGt   interface{}  `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq interface{}  `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterLt   interface{}  `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq interface{}  `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 

@@ -28,7 +28,7 @@ type PermissionCollection []Permission
 
 type PermissionListParams struct {
 	SortBy        interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter        interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	Filter        Permission  `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterPrefix  interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	Path          string      `url:"path,omitempty" json:"path,omitempty" path:"path"`
 	IncludeGroups *bool       `url:"include_groups,omitempty" json:"include_groups,omitempty" path:"include_groups"`
