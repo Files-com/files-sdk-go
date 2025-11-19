@@ -30,10 +30,10 @@ func (a AutomationRun) Identifier() interface{} {
 type AutomationRunCollection []AutomationRun
 
 type AutomationRunListParams struct {
-	UserId       int64                  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
-	SortBy       map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter       AutomationRun          `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
-	AutomationId int64                  `url:"automation_id" json:"automation_id" path:"automation_id"`
+	UserId       int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	AutomationId int64       `url:"automation_id" json:"automation_id" path:"automation_id"`
 	ListParams
 }
 

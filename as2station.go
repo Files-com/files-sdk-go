@@ -32,7 +32,7 @@ func (a As2Station) Identifier() interface{} {
 type As2StationCollection []As2Station
 
 type As2StationListParams struct {
-	SortBy map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
 

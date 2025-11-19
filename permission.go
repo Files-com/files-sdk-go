@@ -27,14 +27,14 @@ func (p Permission) Identifier() interface{} {
 type PermissionCollection []Permission
 
 type PermissionListParams struct {
-	SortBy        map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter        Permission             `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
-	FilterPrefix  map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	Path          string                 `url:"path,omitempty" json:"path,omitempty" path:"path"`
-	IncludeGroups *bool                  `url:"include_groups,omitempty" json:"include_groups,omitempty" path:"include_groups"`
-	GroupId       string                 `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
-	PartnerId     string                 `url:"partner_id,omitempty" json:"partner_id,omitempty" path:"partner_id"`
-	UserId        string                 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	SortBy        interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter        interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterPrefix  interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	Path          string      `url:"path,omitempty" json:"path,omitempty" path:"path"`
+	IncludeGroups *bool       `url:"include_groups,omitempty" json:"include_groups,omitempty" path:"include_groups"`
+	GroupId       string      `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
+	PartnerId     string      `url:"partner_id,omitempty" json:"partner_id,omitempty" path:"partner_id"`
+	UserId        string      `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	ListParams
 }
 

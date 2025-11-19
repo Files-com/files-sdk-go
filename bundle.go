@@ -44,7 +44,7 @@ type Bundle struct {
 	ClickwrapId                     int64                    `json:"clickwrap_id,omitempty" path:"clickwrap_id,omitempty" url:"clickwrap_id,omitempty"`
 	InboxId                         int64                    `json:"inbox_id,omitempty" path:"inbox_id,omitempty" url:"inbox_id,omitempty"`
 	WatermarkAttachment             Image                    `json:"watermark_attachment,omitempty" path:"watermark_attachment,omitempty" url:"watermark_attachment,omitempty"`
-	WatermarkValue                  map[string]interface{}   `json:"watermark_value,omitempty" path:"watermark_value,omitempty" url:"watermark_value,omitempty"`
+	WatermarkValue                  interface{}              `json:"watermark_value,omitempty" path:"watermark_value,omitempty" url:"watermark_value,omitempty"`
 	HasInbox                        *bool                    `json:"has_inbox,omitempty" path:"has_inbox,omitempty" url:"has_inbox,omitempty"`
 	DontAllowFoldersInUploads       *bool                    `json:"dont_allow_folders_in_uploads,omitempty" path:"dont_allow_folders_in_uploads,omitempty" url:"dont_allow_folders_in_uploads,omitempty"`
 	Paths                           []string                 `json:"paths,omitempty" path:"paths,omitempty" url:"paths,omitempty"`
@@ -81,14 +81,14 @@ func (u BundlePermissionsEnum) Enum() map[string]BundlePermissionsEnum {
 }
 
 type BundleListParams struct {
-	UserId       int64                  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
-	SortBy       map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter       Bundle                 `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
-	FilterGt     map[string]interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq   map[string]interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterPrefix map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	FilterLt     map[string]interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq   map[string]interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	UserId       int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq   interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterPrefix interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	FilterLt     interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq   interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 

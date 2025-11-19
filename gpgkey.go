@@ -35,8 +35,8 @@ func (g GpgKey) Identifier() interface{} {
 type GpgKeyCollection []GpgKey
 
 type GpgKeyListParams struct {
-	UserId int64                  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
-	SortBy map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	UserId int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
 

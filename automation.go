@@ -33,7 +33,7 @@ type Automation struct {
 	RecurringDay                     int64                    `json:"recurring_day,omitempty" path:"recurring_day,omitempty" url:"recurring_day,omitempty"`
 	RetryOnFailureIntervalInMinutes  int64                    `json:"retry_on_failure_interval_in_minutes,omitempty" path:"retry_on_failure_interval_in_minutes,omitempty" url:"retry_on_failure_interval_in_minutes,omitempty"`
 	RetryOnFailureNumberOfAttempts   int64                    `json:"retry_on_failure_number_of_attempts,omitempty" path:"retry_on_failure_number_of_attempts,omitempty" url:"retry_on_failure_number_of_attempts,omitempty"`
-	Schedule                         map[string]interface{}   `json:"schedule,omitempty" path:"schedule,omitempty" url:"schedule,omitempty"`
+	Schedule                         interface{}              `json:"schedule,omitempty" path:"schedule,omitempty" url:"schedule,omitempty"`
 	HumanReadableSchedule            string                   `json:"human_readable_schedule,omitempty" path:"human_readable_schedule,omitempty" url:"human_readable_schedule,omitempty"`
 	ScheduleDaysOfWeek               []int64                  `json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week,omitempty" url:"schedule_days_of_week,omitempty"`
 	ScheduleTimesOfDay               []string                 `json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day,omitempty" url:"schedule_times_of_day,omitempty"`
@@ -45,7 +45,7 @@ type Automation struct {
 	Trigger                          string                   `json:"trigger,omitempty" path:"trigger,omitempty" url:"trigger,omitempty"`
 	UserId                           int64                    `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	UserIds                          []int64                  `json:"user_ids,omitempty" path:"user_ids,omitempty" url:"user_ids,omitempty"`
-	Value                            map[string]interface{}   `json:"value,omitempty" path:"value,omitempty" url:"value,omitempty"`
+	Value                            interface{}              `json:"value,omitempty" path:"value,omitempty" url:"value,omitempty"`
 	WebhookUrl                       string                   `json:"webhook_url,omitempty" path:"webhook_url,omitempty" url:"webhook_url,omitempty"`
 	HolidayRegion                    string                   `json:"holiday_region,omitempty" path:"holiday_region,omitempty" url:"holiday_region,omitempty"`
 }
@@ -92,12 +92,12 @@ func (u AutomationEnum) Enum() map[string]AutomationEnum {
 }
 
 type AutomationListParams struct {
-	SortBy     map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter     Automation             `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
-	FilterGt   map[string]interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq map[string]interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterLt   map[string]interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq map[string]interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterGt   interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterLt   interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	ListParams
 }
 
@@ -136,7 +136,7 @@ type AutomationCreateParams struct {
 	RetryOnFailureNumberOfAttempts   int64                    `url:"retry_on_failure_number_of_attempts,omitempty" json:"retry_on_failure_number_of_attempts,omitempty" path:"retry_on_failure_number_of_attempts"`
 	Trigger                          AutomationTriggerEnum    `url:"trigger,omitempty" json:"trigger,omitempty" path:"trigger"`
 	TriggerActions                   []string                 `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
-	Value                            map[string]interface{}   `url:"value,omitempty" json:"value,omitempty" path:"value"`
+	Value                            interface{}              `url:"value,omitempty" json:"value,omitempty" path:"value"`
 	RecurringDay                     int64                    `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
 	Automation                       AutomationEnum           `url:"automation" json:"automation" path:"automation"`
 }
@@ -178,7 +178,7 @@ type AutomationUpdateParams struct {
 	RetryOnFailureNumberOfAttempts   int64                    `url:"retry_on_failure_number_of_attempts,omitempty" json:"retry_on_failure_number_of_attempts,omitempty" path:"retry_on_failure_number_of_attempts"`
 	Trigger                          AutomationTriggerEnum    `url:"trigger,omitempty" json:"trigger,omitempty" path:"trigger"`
 	TriggerActions                   []string                 `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
-	Value                            map[string]interface{}   `url:"value,omitempty" json:"value,omitempty" path:"value"`
+	Value                            interface{}              `url:"value,omitempty" json:"value,omitempty" path:"value"`
 	RecurringDay                     int64                    `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
 	Automation                       AutomationEnum           `url:"automation,omitempty" json:"automation,omitempty" path:"automation"`
 }

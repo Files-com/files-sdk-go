@@ -161,16 +161,16 @@ func (u UserRequire2faEnum) Enum() map[string]UserRequire2faEnum {
 }
 
 type UserListParams struct {
-	SortBy                 map[string]interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter                 User                   `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
-	FilterGt               map[string]interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq             map[string]interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterPrefix           map[string]interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	FilterLt               map[string]interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq             map[string]interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
-	Ids                    string                 `url:"ids,omitempty" json:"ids,omitempty" path:"ids"`
-	IncludeParentSiteUsers *bool                  `url:"include_parent_site_users,omitempty" json:"include_parent_site_users,omitempty" path:"include_parent_site_users"`
-	Search                 string                 `url:"search,omitempty" json:"search,omitempty" path:"search"`
+	SortBy                 interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter                 interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterGt               interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	FilterGteq             interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	FilterPrefix           interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	FilterLt               interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	FilterLteq             interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	Ids                    string      `url:"ids,omitempty" json:"ids,omitempty" path:"ids"`
+	IncludeParentSiteUsers *bool       `url:"include_parent_site_users,omitempty" json:"include_parent_site_users,omitempty" path:"include_parent_site_users"`
+	Search                 string      `url:"search,omitempty" json:"search,omitempty" path:"search"`
 	ListParams
 }
 
