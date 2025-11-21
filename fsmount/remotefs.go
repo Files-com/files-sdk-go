@@ -31,6 +31,7 @@ import (
 	api_key "github.com/Files-com/files-sdk-go/v3/apikey"
 	file_migration "github.com/Files-com/files-sdk-go/v3/filemigration"
 	ff "github.com/Files-com/files-sdk-go/v3/fsmount/internal/flags"
+	lim "github.com/Files-com/files-sdk-go/v3/fsmount/internal/limit"
 	gogitignore "github.com/sabhiram/go-gitignore"
 )
 
@@ -38,6 +39,12 @@ const (
 	// cacheWriteSize is the number of bytes read from an API response and written to the cache
 	// before signalling any waiting cache readers that data is available
 	cacheWriteSize = 128 * 1024 // 128KB
+
+	// limits using in configuring the NewFuseOpLimiter for RemoteFs
+	downloadOpLimit = 10
+	uploadOpLimit   = 4
+	otherOpLimit    = 4
+	globalOpLimit   = 16
 )
 
 // compile time assertions that the cache implementations satisfy the fsCache interface
@@ -81,6 +88,8 @@ type RemoteFs struct {
 	readyGates map[string]*cache.ReadyGate
 
 	events events.EventPublisher
+
+	ops *lim.FuseOpLimiter
 }
 
 // cacheStore defines the interface for the file system cache used by RemoteFs and allows for alternative
@@ -151,6 +160,13 @@ func newRemoteFs(params MountParams, vfs *virtualfs, log log.Logger, cs cacheSto
 	if params.Root == "" {
 		params.Root = "/"
 	}
+
+	limiter := lim.NewFuseOpLimiter(map[lim.FuseOpType]int64{
+		lim.FuseOpDownload: downloadOpLimit,
+		lim.FuseOpUpload:   uploadOpLimit,
+		lim.FuseOpOther:    otherOpLimit,
+	}, globalOpLimit)
+
 	fs := &RemoteFs{
 		log:              log,
 		root:             params.Root,
@@ -164,7 +180,10 @@ func newRemoteFs(params MountParams, vfs *virtualfs, log log.Logger, cs cacheSto
 		debugFuse:        params.DebugFuse,
 		events:           params.EventPublisher,
 		cacheStore:       cs,
+		readyGates:       make(map[string]*cache.ReadyGate),
+		ops:              limiter,
 	}
+
 	// ensure write concurrency and cache TTL are positive
 	if fs.writeConcurrency <= 0 {
 		fs.writeConcurrency = DefaultWriteConcurrency
@@ -197,6 +216,7 @@ func (fs *RemoteFs) Init() {
 			fs.lockMap = make(map[string]*lockInfo)
 		}
 
+		// no need to guard this with an operation limit since it's only called once during initialization
 		key, err := fs.apiKeyClient.FindCurrent()
 		if err != nil {
 			fs.log.Error("Failed to find metadata for current API key, file exclusivity locks may not work as expected: %v", err)
@@ -228,21 +248,32 @@ func (fs *RemoteFs) Destroy() {
 
 func (fs *RemoteFs) Validate() error {
 	fs.Init()
+	return fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
 
-	// Make sure the root directory can be listed.
-	it, err := fs.fileClient.ListFor(files_sdk.FolderListForParams{Path: fs.remotePath("/"), ListParams: files_sdk.ListParams{PerPage: 1}})
-	if err == nil {
-		it.Next() // Get 1 item. This is what actually triggers the API call.
-		err = it.Err()
-	}
-	return err
+		// Make sure the root directory can be listed.
+		// no need to guard this with an operation limit since it's only called once during initialization
+		it, err := fs.fileClient.ListFor(files_sdk.FolderListForParams{
+			Path: fs.remotePath("/"),
+			ListParams: files_sdk.ListParams{
+				PerPage: 1,
+			},
+		})
+		if err == nil {
+			it.Next() // Get 1 item. This is what actually triggers the API call.
+			err = it.Err()
+		}
+		return err
+	})
 }
 
 func (fs *RemoteFs) Mkdir(path string, mode uint32) (errc int) {
 	localPath, remotePath := fs.paths(path)
 	fs.log.Debug("RemoteFs: Mkdir: %v (%v) (mode=%o)", remotePath, localPath, mode)
 
-	_, err := fs.fileClient.CreateFolder(files_sdk.FolderCreateParams{Path: remotePath})
+	err := fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+		_, err := fs.fileClient.CreateFolder(files_sdk.FolderCreateParams{Path: remotePath})
+		return err
+	})
 	if files_sdk.IsExist(err) {
 		return errc
 	}
@@ -314,7 +345,12 @@ func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
 			Overwrite:   lib.Ptr(true),
 		}
 
-		action, err := fs.fileClient.Move(params)
+		var action files_sdk.FileAction
+		var err error
+		err = fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+			action, err = fs.fileClient.Move(params)
+			return err
+		})
 		if errc = fs.handleError(oldpath, err); errc != 0 {
 			return errc
 		}
@@ -360,7 +396,11 @@ func (fs *RemoteFs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 		ProvidedMtime: &node.info.modTime,
 	}
 
-	_, err := fs.fileClient.Update(params)
+	err := fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+		_, err := fs.fileClient.Update(params)
+		return err
+	})
+
 	return fs.handleError(path, err)
 }
 
@@ -964,7 +1004,14 @@ func (fs *RemoteFs) writeFile(path string, reader io.Reader, mtime time.Time, fh
 	}
 
 	start := time.Now()
-	u, err := fs.fileClient.UploadWithResume(uploadOpts...)
+
+	var u file.UploadResumable
+	var err error
+	err = fs.ops.WithLimit(context.Background(), lim.FuseOpUpload, func(ctx context.Context) error {
+		u, err = fs.fileClient.UploadWithResume(uploadOpts...)
+		return err
+	})
+
 	if err != nil {
 		// this is only an error if the upload was not cancelled. If the upload was cancelled, it should not be logged as an error.
 		if !errors.Is(err, context.Canceled) && !files_sdk.IsNotExist(err) {
@@ -1010,10 +1057,13 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 	teeReader := io.TeeReader(srcFile, cacheWriter)
 
 	// Upload with the TeeReader (writes to cache as it reads)
-	if err := fs.fileClient.Upload(
-		file.UploadWithReader(teeReader),
-		file.UploadWithDestinationPath(dst),
-	); err != nil {
+	err = fs.ops.WithLimit(context.Background(), lim.FuseOpUpload, func(ctx context.Context) error {
+		return fs.fileClient.Upload(
+			file.UploadWithReader(teeReader),
+			file.UploadWithDestinationPath(dst),
+		)
+	})
+	if err != nil {
 		return err
 	}
 
@@ -1033,7 +1083,11 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 // for use by the Rename operation when moving a file from the RemoteFs to the LocalFs.
 func (fs *RemoteFs) downloadFile(src, dst string) error {
 	fs.log.Debug("RemoteFs: Downloading file: %v to %v", src, dst)
-	_, err := fs.fileClient.DownloadToFile(files_sdk.FileDownloadParams{Path: src}, dst)
+	err := fs.ops.WithLimit(context.Background(), lim.FuseOpDownload, func(ctx context.Context) error {
+		_, err := fs.fileClient.DownloadToFile(files_sdk.FileDownloadParams{Path: src}, dst)
+		return err
+	})
+
 	return err
 }
 
@@ -1067,48 +1121,54 @@ func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, read
 		fs.removeGate(path, readyGate)
 	}()
 
-	f, err := fs.fileClient.Download(
-		files_sdk.FileDownloadParams{File: files_sdk.File{Path: fs.remotePath(path), DownloadUri: uri}},
-		files_sdk.WithContext(ctx),
-		files_sdk.ResponseOption(func(resp *http.Response) error {
-			if resp.StatusCode != http.StatusPartialContent && resp.StatusCode != http.StatusOK {
-				return files_sdk.APIError()(resp)
-			}
-			defer resp.Body.Close()
+	var f files_sdk.File
+	var err error
+	err = fs.ops.WithLimit(context.Background(), lim.FuseOpDownload, func(ctx context.Context) error {
+		f, err = fs.fileClient.Download(
+			files_sdk.FileDownloadParams{File: files_sdk.File{Path: fs.remotePath(path), DownloadUri: uri}},
+			files_sdk.WithContext(ctx),
+			files_sdk.ResponseOption(func(resp *http.Response) error {
+				if resp.StatusCode != http.StatusPartialContent && resp.StatusCode != http.StatusOK {
+					return files_sdk.APIError()(resp)
+				}
+				defer resp.Body.Close()
 
-			// while downloading a file from the remote API, write data to the disk cache in chunks and update
-			// the ready gate every cacheWriteSize bytes to signal that data is available for reading.
-			buf := make([]byte, cacheWriteSize)
-			var off int64 = 0
-			for {
-				nr, er := resp.Body.Read(buf)
-				if nr > 0 {
-					// TODO: consider altering Write to keep data in memory and periodically flush to disk
-					// to reduce the number of disk writes. This would require more memory usage, but would
-					// improve read and write performance by avoiding constantly opening/closing the file.
-					written, err := fs.cacheStore.Write(path, buf[:nr], off)
-					if err != nil || written != nr {
-						// there was an error writing to the disk cache, or not all bytes that were read from the
-						// remote API were written to the disk cache.
-						readyGate.Finish(fmt.Errorf("error writing to disk cache for %v: %v", path, err), off)
-						return err
+				// while downloading a file from the remote API, write data to the disk cache in chunks and update
+				// the ready gate every cacheWriteSize bytes to signal that data is available for reading.
+				buf := make([]byte, cacheWriteSize)
+				var off int64 = 0
+				for {
+					nr, er := resp.Body.Read(buf)
+					if nr > 0 {
+						// TODO: consider altering Write to keep data in memory and periodically flush to disk
+						// to reduce the number of disk writes. This would require more memory usage, but would
+						// improve read and write performance by avoiding constantly opening/closing the file.
+						written, err := fs.cacheStore.Write(path, buf[:nr], off)
+						if err != nil || written != nr {
+							// there was an error writing to the disk cache, or not all bytes that were read from the
+							// remote API were written to the disk cache.
+							readyGate.Finish(fmt.Errorf("error writing to disk cache for %v: %v", path, err), off)
+							return err
+						}
+						off += int64(written)
+						readyGate.SetAvailable(off)
 					}
-					off += int64(written)
-					readyGate.SetAvailable(off)
-				}
-				if er != nil {
-					if er == io.EOF {
-						readyGate.Finish(nil, off)
-						return nil
+					if er != nil {
+						if er == io.EOF {
+							readyGate.Finish(nil, off)
+							return nil
+						}
+						readyGate.Finish(er, off)
+						return er
 					}
-					readyGate.Finish(er, off)
-					return er
+					// TODO: consider canceling the download if there are no active readers/waiters
+					// after a certain period of time
 				}
-				// TODO: consider canceling the download if there are no active readers/waiters
-				// after a certain period of time
-			}
-		}),
-	)
+			}),
+		)
+		return err
+	})
+
 	if err != nil {
 		readyGate.Finish(err, -1)
 		return
@@ -1160,12 +1220,17 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 		return errc
 	}
 
-	lock, err := fs.lockClient.Create(files_sdk.LockCreateParams{
-		Path:                 remotePath,
-		AllowAccessByAnyUser: lib.Ptr(true),
-		Exclusive:            lib.Ptr(true),
-		Recursive:            lib.Ptr(true),
-		Timeout:              fileLockSeconds,
+	var lock files_sdk.Lock
+	var err error
+	err = fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+		lock, err = fs.lockClient.Create(files_sdk.LockCreateParams{
+			Path:                 remotePath,
+			AllowAccessByAnyUser: lib.Ptr(true),
+			Exclusive:            lib.Ptr(true),
+			Recursive:            lib.Ptr(true),
+			Timeout:              fileLockSeconds,
+		})
+		return err
 	})
 
 	if files_sdk.IsExist(err) {
@@ -1221,10 +1286,14 @@ func (fs *RemoteFs) unlock(path string, fh uint64) (errc int) {
 	localPath, remotePath := fs.paths(path)
 	fs.log.Debug("RemoteFs: unlock: file %v (%v)", remotePath, localPath)
 
-	err := fs.lockClient.Delete(files_sdk.LockDeleteParams{
-		Path:  remotePath,
-		Token: lockInfo.Lock.Token,
+	err := fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+		err := fs.lockClient.Delete(files_sdk.LockDeleteParams{
+			Path:  remotePath,
+			Token: lockInfo.Lock.Token,
+		})
+		return err
 	})
+
 	if files_sdk.IsNotExist(err) {
 		// If the lock was already deleted, consider it a success.
 		fs.log.Debug("RemoteFs: unlock: %v (%v) err=%v", remotePath, localPath, err)
@@ -1278,7 +1347,11 @@ func (fs *RemoteFs) handleError(path string, err error) int {
 }
 
 func (fs *RemoteFs) delete(path string) (errc int) {
-	err := fs.fileClient.Delete(files_sdk.FileDeleteParams{Path: fs.remotePath(path)})
+	err := fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+		err := fs.fileClient.Delete(files_sdk.FileDeleteParams{Path: fs.remotePath(path)})
+		return err
+	})
+
 	// if there's an error, and it's a not-found, consider it a success.
 	if files_sdk.IsNotExist(err) {
 		// if the delete was successful, remove the node from the vfs
@@ -1337,7 +1410,13 @@ func (fs *RemoteFs) findDir(path string) (node *fsNode, errc int) {
 		return node, errc
 	}
 
-	item, err := fs.fileClient.Find(files_sdk.FileFindParams{Path: remotePath})
+	var item files_sdk.File
+	var err error
+	err = fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+		item, err = fs.fileClient.Find(files_sdk.FileFindParams{Path: remotePath})
+		return err
+	})
+
 	// Check for non-existence first so it doesn't get logged as an error, since this may be expected.
 	if files_sdk.IsNotExist(err) {
 		errc = -fuse.ENOENT
@@ -1373,8 +1452,16 @@ func (fs *RemoteFs) loadDir(node *fsNode) (errc int) {
 
 func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, err error) {
 	fs.log.Trace("RemoteFs: listDir: Listing directory: %v", path)
-	it, err := fs.fileClient.ListFor(files_sdk.FolderListForParams{Path: fs.remotePath(path)})
-	if err != nil {
+
+	var it file.Iter
+	var lerr error
+
+	lerr = fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+		it, err = fs.fileClient.ListFor(files_sdk.FolderListForParams{Path: fs.remotePath(path)})
+		return err
+	})
+
+	if lerr != nil {
 		return nil, err
 	}
 
@@ -1397,11 +1484,17 @@ func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, err er
 		return childPaths, err
 	}
 
-	locks, err := fs.lockClient.ListFor(files_sdk.LockListForParams{
-		Path:            fs.remotePath(path),
-		IncludeChildren: lib.Ptr(true),
+	var locks *lock.Iter
+	var locksErr error
+	locksErr = fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+		locks, err = fs.lockClient.ListFor(files_sdk.LockListForParams{
+			Path:            fs.remotePath(path),
+			IncludeChildren: lib.Ptr(true),
+		})
+		return err
 	})
-	if err != nil {
+
+	if locksErr != nil {
 		return childPaths, err
 	}
 
@@ -1450,9 +1543,15 @@ func (fs *RemoteFs) createNode(path string, item files_sdk.File) *fsNode {
 }
 
 func (fs *RemoteFs) waitForAction(action files_sdk.FileAction, operation string) error {
-	migration, err := fs.migrationClient.Wait(action, func(migration files_sdk.FileMigration) {
-		fs.log.Trace("RemoteFs: watchForAction: waiting for migration")
+	var migration files_sdk.FileMigration
+	var err error
+	err = fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+		migration, err = fs.migrationClient.Wait(action, func(migration files_sdk.FileMigration) {
+			fs.log.Trace("RemoteFs: watchForAction: waiting for migration")
+		})
+		return err
 	})
+
 	if err == nil && migration.Status != "completed" {
 		return fmt.Errorf("%v did not complete successfully: %v", operation, migration.Status)
 	}
