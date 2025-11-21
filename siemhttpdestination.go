@@ -11,6 +11,9 @@ type SiemHttpDestination struct {
 	Name                                          string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	DestinationType                               string      `json:"destination_type,omitempty" path:"destination_type,omitempty" url:"destination_type,omitempty"`
 	DestinationUrl                                string      `json:"destination_url,omitempty" path:"destination_url,omitempty" url:"destination_url,omitempty"`
+	FileDestinationPath                           string      `json:"file_destination_path,omitempty" path:"file_destination_path,omitempty" url:"file_destination_path,omitempty"`
+	FileFormat                                    string      `json:"file_format,omitempty" path:"file_format,omitempty" url:"file_format,omitempty"`
+	FileIntervalMinutes                           int64       `json:"file_interval_minutes,omitempty" path:"file_interval_minutes,omitempty" url:"file_interval_minutes,omitempty"`
 	AdditionalHeaders                             interface{} `json:"additional_headers,omitempty" path:"additional_headers,omitempty" url:"additional_headers,omitempty"`
 	SendingActive                                 *bool       `json:"sending_active,omitempty" path:"sending_active,omitempty" url:"sending_active,omitempty"`
 	GenericPayloadType                            string      `json:"generic_payload_type,omitempty" path:"generic_payload_type,omitempty" url:"generic_payload_type,omitempty"`
@@ -83,6 +86,19 @@ func (u SiemHttpDestinationGenericPayloadTypeEnum) Enum() map[string]SiemHttpDes
 	}
 }
 
+type SiemHttpDestinationFileFormatEnum string
+
+func (u SiemHttpDestinationFileFormatEnum) String() string {
+	return string(u)
+}
+
+func (u SiemHttpDestinationFileFormatEnum) Enum() map[string]SiemHttpDestinationFileFormatEnum {
+	return map[string]SiemHttpDestinationFileFormatEnum{
+		"json": SiemHttpDestinationFileFormatEnum("json"),
+		"csv":  SiemHttpDestinationFileFormatEnum("csv"),
+	}
+}
+
 type SiemHttpDestinationDestinationTypeEnum string
 
 func (u SiemHttpDestinationDestinationTypeEnum) String() string {
@@ -101,6 +117,7 @@ func (u SiemHttpDestinationDestinationTypeEnum) Enum() map[string]SiemHttpDestin
 		"new_relic":    SiemHttpDestinationDestinationTypeEnum("new_relic"),
 		"datadog":      SiemHttpDestinationDestinationTypeEnum("datadog"),
 		"azure":        SiemHttpDestinationDestinationTypeEnum("azure"),
+		"file":         SiemHttpDestinationDestinationTypeEnum("file"),
 	}
 }
 
@@ -117,6 +134,9 @@ type SiemHttpDestinationCreateParams struct {
 	AdditionalHeaders                       interface{}                               `url:"additional_headers,omitempty" json:"additional_headers,omitempty" path:"additional_headers"`
 	SendingActive                           *bool                                     `url:"sending_active,omitempty" json:"sending_active,omitempty" path:"sending_active"`
 	GenericPayloadType                      SiemHttpDestinationGenericPayloadTypeEnum `url:"generic_payload_type,omitempty" json:"generic_payload_type,omitempty" path:"generic_payload_type"`
+	FileDestinationPath                     string                                    `url:"file_destination_path,omitempty" json:"file_destination_path,omitempty" path:"file_destination_path"`
+	FileFormat                              SiemHttpDestinationFileFormatEnum         `url:"file_format,omitempty" json:"file_format,omitempty" path:"file_format"`
+	FileIntervalMinutes                     int64                                     `url:"file_interval_minutes,omitempty" json:"file_interval_minutes,omitempty" path:"file_interval_minutes"`
 	SplunkToken                             string                                    `url:"splunk_token,omitempty" json:"splunk_token,omitempty" path:"splunk_token"`
 	AzureDcrImmutableId                     string                                    `url:"azure_dcr_immutable_id,omitempty" json:"azure_dcr_immutable_id,omitempty" path:"azure_dcr_immutable_id"`
 	AzureStreamName                         string                                    `url:"azure_stream_name,omitempty" json:"azure_stream_name,omitempty" path:"azure_stream_name"`
@@ -140,7 +160,7 @@ type SiemHttpDestinationCreateParams struct {
 	ExavaultApiRequestSendEnabled           *bool                                     `url:"exavault_api_request_send_enabled,omitempty" json:"exavault_api_request_send_enabled,omitempty" path:"exavault_api_request_send_enabled"`
 	SettingsChangeSendEnabled               *bool                                     `url:"settings_change_send_enabled,omitempty" json:"settings_change_send_enabled,omitempty" path:"settings_change_send_enabled"`
 	DestinationType                         SiemHttpDestinationDestinationTypeEnum    `url:"destination_type" json:"destination_type" path:"destination_type"`
-	DestinationUrl                          string                                    `url:"destination_url" json:"destination_url" path:"destination_url"`
+	DestinationUrl                          string                                    `url:"destination_url,omitempty" json:"destination_url,omitempty" path:"destination_url"`
 }
 
 type SiemHttpDestinationSendTestEntryParams struct {
@@ -151,6 +171,9 @@ type SiemHttpDestinationSendTestEntryParams struct {
 	AdditionalHeaders                       interface{}                               `url:"additional_headers,omitempty" json:"additional_headers,omitempty" path:"additional_headers"`
 	SendingActive                           *bool                                     `url:"sending_active,omitempty" json:"sending_active,omitempty" path:"sending_active"`
 	GenericPayloadType                      SiemHttpDestinationGenericPayloadTypeEnum `url:"generic_payload_type,omitempty" json:"generic_payload_type,omitempty" path:"generic_payload_type"`
+	FileDestinationPath                     string                                    `url:"file_destination_path,omitempty" json:"file_destination_path,omitempty" path:"file_destination_path"`
+	FileFormat                              SiemHttpDestinationFileFormatEnum         `url:"file_format,omitempty" json:"file_format,omitempty" path:"file_format"`
+	FileIntervalMinutes                     int64                                     `url:"file_interval_minutes,omitempty" json:"file_interval_minutes,omitempty" path:"file_interval_minutes"`
 	SplunkToken                             string                                    `url:"splunk_token,omitempty" json:"splunk_token,omitempty" path:"splunk_token"`
 	AzureDcrImmutableId                     string                                    `url:"azure_dcr_immutable_id,omitempty" json:"azure_dcr_immutable_id,omitempty" path:"azure_dcr_immutable_id"`
 	AzureStreamName                         string                                    `url:"azure_stream_name,omitempty" json:"azure_stream_name,omitempty" path:"azure_stream_name"`
@@ -181,6 +204,9 @@ type SiemHttpDestinationUpdateParams struct {
 	AdditionalHeaders                       interface{}                               `url:"additional_headers,omitempty" json:"additional_headers,omitempty" path:"additional_headers"`
 	SendingActive                           *bool                                     `url:"sending_active,omitempty" json:"sending_active,omitempty" path:"sending_active"`
 	GenericPayloadType                      SiemHttpDestinationGenericPayloadTypeEnum `url:"generic_payload_type,omitempty" json:"generic_payload_type,omitempty" path:"generic_payload_type"`
+	FileDestinationPath                     string                                    `url:"file_destination_path,omitempty" json:"file_destination_path,omitempty" path:"file_destination_path"`
+	FileFormat                              SiemHttpDestinationFileFormatEnum         `url:"file_format,omitempty" json:"file_format,omitempty" path:"file_format"`
+	FileIntervalMinutes                     int64                                     `url:"file_interval_minutes,omitempty" json:"file_interval_minutes,omitempty" path:"file_interval_minutes"`
 	SplunkToken                             string                                    `url:"splunk_token,omitempty" json:"splunk_token,omitempty" path:"splunk_token"`
 	AzureDcrImmutableId                     string                                    `url:"azure_dcr_immutable_id,omitempty" json:"azure_dcr_immutable_id,omitempty" path:"azure_dcr_immutable_id"`
 	AzureStreamName                         string                                    `url:"azure_stream_name,omitempty" json:"azure_stream_name,omitempty" path:"azure_stream_name"`
