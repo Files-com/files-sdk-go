@@ -3,6 +3,7 @@ package fsmount
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -14,6 +15,7 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/fsmount/events"
 	dc "github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/disk"
 	mc "github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/mem"
+	"github.com/hashicorp/go-retryablehttp"
 
 	"github.com/Files-com/files-sdk-go/v3/ignore"
 	"github.com/Files-com/files-sdk-go/v3/lib"
@@ -156,6 +158,8 @@ func Mount(params MountParams) (*Host, error) {
 
 	logger := lib.NewLeveledLogger(params.Config.Logger)
 
+	params.Config.Client = retriableClientWithHTTP2()
+
 	// make sure the API key is valid before attempting to mount
 	apiKeyClient := &api_key.Client{Config: *params.Config}
 	_, err := apiKeyClient.FindCurrent()
@@ -209,6 +213,15 @@ func Mount(params MountParams) (*Host, error) {
 		fuseHost: host,
 		fs:       fs,
 	})
+}
+
+// TODO: remove if/when the entire SDK has http2 configured by default
+func retriableClientWithHTTP2() *retryablehttp.Client {
+	retriableClient := lib.DefaultRetryableHttp(nil)
+	pooledTransport := lib.DefaultPooledTransport()
+	pooledTransport.Transport.ForceAttemptHTTP2 = true
+	retriableClient.HTTPClient = &http.Client{Transport: pooledTransport}
+	return retriableClient
 }
 
 func newFs(params MountParams, logger lib.LeveledLogger) (*Filescomfs, error) {

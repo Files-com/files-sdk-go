@@ -1114,7 +1114,7 @@ func (fs *RemoteFs) removeGate(path string, s *cache.ReadyGate) {
 }
 
 func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, readyGate *cache.ReadyGate, fh uint64) {
-	ctx, cancel := context.WithCancel(ctx)
+	_, cancel := context.WithCancel(ctx)
 	readyGate.SetCancel(cancel)
 	defer func() {
 		cancel()
@@ -1454,15 +1454,14 @@ func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, err er
 	fs.log.Trace("RemoteFs: listDir: Listing directory: %v", path)
 
 	var it file.Iter
-	var lerr error
 
-	lerr = fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+	lerr := fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
 		it, err = fs.fileClient.ListFor(files_sdk.FolderListForParams{Path: fs.remotePath(path)})
 		return err
 	})
 
 	if lerr != nil {
-		return nil, err
+		return nil, lerr
 	}
 
 	childPaths = make(map[string]struct{})
@@ -1485,8 +1484,7 @@ func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, err er
 	}
 
 	var locks *lock.Iter
-	var locksErr error
-	locksErr = fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+	locksErr := fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
 		locks, err = fs.lockClient.ListFor(files_sdk.LockListForParams{
 			Path:            fs.remotePath(path),
 			IncludeChildren: lib.Ptr(true),
