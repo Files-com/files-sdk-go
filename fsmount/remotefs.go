@@ -248,22 +248,19 @@ func (fs *RemoteFs) Destroy() {
 
 func (fs *RemoteFs) Validate() error {
 	fs.Init()
-	return fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
-
-		// Make sure the root directory can be listed.
-		// no need to guard this with an operation limit since it's only called once during initialization
-		it, err := fs.fileClient.ListFor(files_sdk.FolderListForParams{
-			Path: fs.remotePath("/"),
-			ListParams: files_sdk.ListParams{
-				PerPage: 1,
-			},
-		})
-		if err == nil {
-			it.Next() // Get 1 item. This is what actually triggers the API call.
-			err = it.Err()
-		}
-		return err
+	// Make sure the root directory can be listed.
+	// no need to guard this with an operation limit since it's only called once during initialization
+	it, err := fs.fileClient.ListFor(files_sdk.FolderListForParams{
+		Path: fs.remotePath("/"),
+		ListParams: files_sdk.ListParams{
+			PerPage: 1,
+		},
 	})
+	if err == nil {
+		it.Next() // Get 1 item. This is what actually triggers the API call.
+		err = it.Err()
+	}
+	return err
 }
 
 func (fs *RemoteFs) Mkdir(path string, mode uint32) (errc int) {
@@ -345,17 +342,13 @@ func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
 			Overwrite:   lib.Ptr(true),
 		}
 
-		var action files_sdk.FileAction
-		var err error
-		err = fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
-			action, err = fs.fileClient.Move(params)
-			return err
+		err := fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+			action, err := fs.fileClient.Move(params)
+			if err != nil {
+				return err
+			}
+			return fs.waitForAction(ctx, action, "move")
 		})
-		if errc = fs.handleError(oldpath, err); errc != 0 {
-			return errc
-		}
-
-		err = fs.waitForAction(action, "move")
 		if errc = fs.handleError(oldpath, err); errc != 0 {
 			return errc
 		}
@@ -1007,7 +1000,7 @@ func (fs *RemoteFs) writeFile(path string, reader io.Reader, mtime time.Time, fh
 
 	var u file.UploadResumable
 	var err error
-	err = fs.ops.WithLimit(context.Background(), lim.FuseOpUpload, func(ctx context.Context) error {
+	err = fs.ops.WithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
 		u, err = fs.fileClient.UploadWithResume(uploadOpts...)
 		return err
 	})
@@ -1123,7 +1116,7 @@ func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, read
 
 	var f files_sdk.File
 	var err error
-	err = fs.ops.WithLimit(context.Background(), lim.FuseOpDownload, func(ctx context.Context) error {
+	err = fs.ops.WithLimit(ctx, lim.FuseOpDownload, func(ctx context.Context) error {
 		f, err = fs.fileClient.Download(
 			files_sdk.FileDownloadParams{File: files_sdk.File{Path: fs.remotePath(path), DownloadUri: uri}},
 			files_sdk.WithContext(ctx),
@@ -1450,69 +1443,61 @@ func (fs *RemoteFs) loadDir(node *fsNode) (errc int) {
 	return errc
 }
 
-func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, err error) {
+func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, opErr error) {
 	fs.log.Trace("RemoteFs: listDir: Listing directory: %v", path)
 
-	var it file.Iter
+	opErr = fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+		it, err := fs.fileClient.ListFor(files_sdk.FolderListForParams{Path: fs.remotePath(path)})
+		if err != nil {
+			return err
+		}
 
-	lerr := fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
-		it, err = fs.fileClient.ListFor(files_sdk.FolderListForParams{Path: fs.remotePath(path)})
-		return err
-	})
+		childPaths = make(map[string]struct{})
 
-	if lerr != nil {
-		return nil, lerr
-	}
+		for it.Next() {
+			item := it.File()
 
-	childPaths = make(map[string]struct{})
+			childPath := path_lib.Join(path, item.DisplayName)
+			childPaths[childPath] = struct{}{}
 
-	for it.Next() {
-		item := it.File()
+			fs.createNode(childPath, item)
+		}
+		err = it.Err()
+		if err != nil {
+			return err
+		}
 
-		childPath := path_lib.Join(path, item.DisplayName)
-		childPaths[childPath] = struct{}{}
+		if fs.disableLocking {
+			return err
+		}
 
-		fs.createNode(childPath, item)
-	}
-	err = it.Err()
-	if err != nil {
-		return childPaths, err
-	}
-
-	if fs.disableLocking {
-		return childPaths, err
-	}
-
-	var locks *lock.Iter
-	locksErr := fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
-		locks, err = fs.lockClient.ListFor(files_sdk.LockListForParams{
+		locks, err := fs.lockClient.ListFor(files_sdk.LockListForParams{
 			Path:            fs.remotePath(path),
 			IncludeChildren: lib.Ptr(true),
 		})
-		return err
+
+		if err != nil {
+			return err
+		}
+
+		for locks.Next() {
+			lock := locks.Lock()
+			childPath := path_lib.Join(path, path_lib.Base(lock.Path))
+
+			// Ignore paths where the lock is held by this file system.
+			if _, ok := fs.lockMap[childPath]; ok {
+				continue
+			}
+
+			if child, ok := fs.vfs.fetch(childPath); ok {
+				fs.log.Trace("RemoteFs: listDir: Found lock for child path %v, setting lock owner to %v", childPath, lock.Username)
+				child.info.lockOwner = lock.Username
+			}
+		}
+		return locks.Err()
 	})
 
-	if locksErr != nil {
-		return childPaths, err
-	}
-
-	for locks.Next() {
-		lock := locks.Lock()
-		childPath := path_lib.Join(path, path_lib.Base(lock.Path))
-
-		// Ignore paths where the lock is held by this file system.
-		if _, ok := fs.lockMap[childPath]; ok {
-			continue
-		}
-
-		if child, ok := fs.vfs.fetch(childPath); ok {
-			fs.log.Trace("RemoteFs: listDir: Found lock for child path %v, setting lock owner to %v", childPath, lock.Username)
-			child.info.lockOwner = lock.Username
-		}
-	}
-	err = locks.Err()
-
-	return childPaths, err
+	return childPaths, opErr
 }
 
 func (fs *RemoteFs) createNode(path string, item files_sdk.File) *fsNode {
@@ -1540,10 +1525,10 @@ func (fs *RemoteFs) createNode(path string, item files_sdk.File) *fsNode {
 	return node
 }
 
-func (fs *RemoteFs) waitForAction(action files_sdk.FileAction, operation string) error {
+func (fs *RemoteFs) waitForAction(ctx context.Context, action files_sdk.FileAction, operation string) error {
 	var migration files_sdk.FileMigration
 	var err error
-	err = fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+	err = fs.ops.WithLimit(ctx, lim.FuseOpOther, func(ctx context.Context) error {
 		migration, err = fs.migrationClient.Wait(action, func(migration files_sdk.FileMigration) {
 			fs.log.Trace("RemoteFs: watchForAction: waiting for migration")
 		})
