@@ -13,6 +13,7 @@ type RemoteServer struct {
 	Hostname                                string `json:"hostname,omitempty" path:"hostname,omitempty" url:"hostname,omitempty"`
 	RemoteHomePath                          string `json:"remote_home_path,omitempty" path:"remote_home_path,omitempty" url:"remote_home_path,omitempty"`
 	Name                                    string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Description                             string `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
 	Port                                    int64  `json:"port,omitempty" path:"port,omitempty" url:"port,omitempty"`
 	BufferUploads                           string `json:"buffer_uploads,omitempty" path:"buffer_uploads,omitempty" url:"buffer_uploads,omitempty"`
 	MaxConnections                          int64  `json:"max_connections,omitempty" path:"max_connections,omitempty" url:"max_connections,omitempty"`
@@ -238,6 +239,7 @@ type RemoteServerCreateParams struct {
 	CloudflareAccessKey                     string                                  `url:"cloudflare_access_key,omitempty" json:"cloudflare_access_key,omitempty" path:"cloudflare_access_key"`
 	CloudflareBucket                        string                                  `url:"cloudflare_bucket,omitempty" json:"cloudflare_bucket,omitempty" path:"cloudflare_bucket"`
 	CloudflareEndpoint                      string                                  `url:"cloudflare_endpoint,omitempty" json:"cloudflare_endpoint,omitempty" path:"cloudflare_endpoint"`
+	Description                             string                                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	DropboxTeams                            *bool                                   `url:"dropbox_teams,omitempty" json:"dropbox_teams,omitempty" path:"dropbox_teams"`
 	EnableDedicatedIps                      *bool                                   `url:"enable_dedicated_ips,omitempty" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
 	FilebaseAccessKey                       string                                  `url:"filebase_access_key,omitempty" json:"filebase_access_key,omitempty" path:"filebase_access_key"`
@@ -324,6 +326,7 @@ type RemoteServerUpdateParams struct {
 	CloudflareAccessKey                     string                                  `url:"cloudflare_access_key,omitempty" json:"cloudflare_access_key,omitempty" path:"cloudflare_access_key"`
 	CloudflareBucket                        string                                  `url:"cloudflare_bucket,omitempty" json:"cloudflare_bucket,omitempty" path:"cloudflare_bucket"`
 	CloudflareEndpoint                      string                                  `url:"cloudflare_endpoint,omitempty" json:"cloudflare_endpoint,omitempty" path:"cloudflare_endpoint"`
+	Description                             string                                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	DropboxTeams                            *bool                                   `url:"dropbox_teams,omitempty" json:"dropbox_teams,omitempty" path:"dropbox_teams"`
 	EnableDedicatedIps                      *bool                                   `url:"enable_dedicated_ips,omitempty" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
 	FilebaseAccessKey                       string                                  `url:"filebase_access_key,omitempty" json:"filebase_access_key,omitempty" path:"filebase_access_key"`

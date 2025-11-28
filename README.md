@@ -734,6 +734,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `processing-failure/already-completed` | Already Completed |
 | `processing-failure/automation-cannot-be-run-manually` | Automation Cannot Be Run Manually |
 | `processing-failure/behavior-not-allowed-on-remote-server` | Behavior Not Allowed On Remote Server |
+| `processing-failure/buffered-upload-disabled-for-this-destination` | Buffered Upload Disabled For This Destination |
 | `processing-failure/bundle-only-allows-previews` | Bundle Only Allows Previews |
 | `processing-failure/bundle-operation-requires-subfolder` | Bundle Operation Requires Subfolder |
 | `processing-failure/could-not-create-parent` | Could Not Create Parent |
