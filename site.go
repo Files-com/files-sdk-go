@@ -176,6 +176,7 @@ type Site struct {
 	UsersCanCreateApiKeys                    *bool       `json:"users_can_create_api_keys,omitempty" path:"users_can_create_api_keys,omitempty" url:"users_can_create_api_keys,omitempty"`
 	UsersCanCreateSshKeys                    *bool       `json:"users_can_create_ssh_keys,omitempty" path:"users_can_create_ssh_keys,omitempty" url:"users_can_create_ssh_keys,omitempty"`
 	WelcomeCustomText                        string      `json:"welcome_custom_text,omitempty" path:"welcome_custom_text,omitempty" url:"welcome_custom_text,omitempty"`
+	EmailFooterCustomText                    string      `json:"email_footer_custom_text,omitempty" path:"email_footer_custom_text,omitempty" url:"email_footer_custom_text,omitempty"`
 	WelcomeEmailCc                           string      `json:"welcome_email_cc,omitempty" path:"welcome_email_cc,omitempty" url:"welcome_email_cc,omitempty"`
 	WelcomeEmailSubject                      string      `json:"welcome_email_subject,omitempty" path:"welcome_email_subject,omitempty" url:"welcome_email_subject,omitempty"`
 	WelcomeEmailEnabled                      *bool       `json:"welcome_email_enabled,omitempty" path:"welcome_email_enabled,omitempty" url:"welcome_email_enabled,omitempty"`
@@ -316,6 +317,7 @@ type SiteUpdateParams struct {
 	SitePublicFooter                         string      `url:"site_public_footer,omitempty" json:"site_public_footer,omitempty" path:"site_public_footer"`
 	LoginHelpText                            string      `url:"login_help_text,omitempty" json:"login_help_text,omitempty" path:"login_help_text"`
 	UseDedicatedIpsForSmtp                   *bool       `url:"use_dedicated_ips_for_smtp,omitempty" json:"use_dedicated_ips_for_smtp,omitempty" path:"use_dedicated_ips_for_smtp"`
+	EmailFooterCustomText                    string      `url:"email_footer_custom_text,omitempty" json:"email_footer_custom_text,omitempty" path:"email_footer_custom_text"`
 	SmtpAddress                              string      `url:"smtp_address,omitempty" json:"smtp_address,omitempty" path:"smtp_address"`
 	SmtpAuthentication                       string      `url:"smtp_authentication,omitempty" json:"smtp_authentication,omitempty" path:"smtp_authentication"`
 	SmtpFrom                                 string      `url:"smtp_from,omitempty" json:"smtp_from,omitempty" path:"smtp_from"`
