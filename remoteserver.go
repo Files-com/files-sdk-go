@@ -54,6 +54,7 @@ type RemoteServer struct {
 	FilesAgentRoot                          string `json:"files_agent_root,omitempty" path:"files_agent_root,omitempty" url:"files_agent_root,omitempty"`
 	FilesAgentApiToken                      string `json:"files_agent_api_token,omitempty" path:"files_agent_api_token,omitempty" url:"files_agent_api_token,omitempty"`
 	FilesAgentVersion                       string `json:"files_agent_version,omitempty" path:"files_agent_version,omitempty" url:"files_agent_version,omitempty"`
+	OutboundAgentId                         int64  `json:"outbound_agent_id,omitempty" path:"outbound_agent_id,omitempty" url:"outbound_agent_id,omitempty"`
 	FilebaseBucket                          string `json:"filebase_bucket,omitempty" path:"filebase_bucket,omitempty" url:"filebase_bucket,omitempty"`
 	FilebaseAccessKey                       string `json:"filebase_access_key,omitempty" path:"filebase_access_key,omitempty" url:"filebase_access_key,omitempty"`
 	CloudflareBucket                        string `json:"cloudflare_bucket,omitempty" path:"cloudflare_bucket,omitempty" url:"cloudflare_bucket,omitempty"`
@@ -247,6 +248,7 @@ type RemoteServerCreateParams struct {
 	FilesAgentPermissionSet                 RemoteServerFilesAgentPermissionSetEnum `url:"files_agent_permission_set,omitempty" json:"files_agent_permission_set,omitempty" path:"files_agent_permission_set"`
 	FilesAgentRoot                          string                                  `url:"files_agent_root,omitempty" json:"files_agent_root,omitempty" path:"files_agent_root"`
 	FilesAgentVersion                       string                                  `url:"files_agent_version,omitempty" json:"files_agent_version,omitempty" path:"files_agent_version"`
+	OutboundAgentId                         int64                                   `url:"outbound_agent_id,omitempty" json:"outbound_agent_id,omitempty" path:"outbound_agent_id"`
 	GoogleCloudStorageBucket                string                                  `url:"google_cloud_storage_bucket,omitempty" json:"google_cloud_storage_bucket,omitempty" path:"google_cloud_storage_bucket"`
 	GoogleCloudStorageProjectId             string                                  `url:"google_cloud_storage_project_id,omitempty" json:"google_cloud_storage_project_id,omitempty" path:"google_cloud_storage_project_id"`
 	GoogleCloudStorageS3CompatibleAccessKey string                                  `url:"google_cloud_storage_s3_compatible_access_key,omitempty" json:"google_cloud_storage_s3_compatible_access_key,omitempty" path:"google_cloud_storage_s3_compatible_access_key"`
@@ -334,6 +336,7 @@ type RemoteServerUpdateParams struct {
 	FilesAgentPermissionSet                 RemoteServerFilesAgentPermissionSetEnum `url:"files_agent_permission_set,omitempty" json:"files_agent_permission_set,omitempty" path:"files_agent_permission_set"`
 	FilesAgentRoot                          string                                  `url:"files_agent_root,omitempty" json:"files_agent_root,omitempty" path:"files_agent_root"`
 	FilesAgentVersion                       string                                  `url:"files_agent_version,omitempty" json:"files_agent_version,omitempty" path:"files_agent_version"`
+	OutboundAgentId                         int64                                   `url:"outbound_agent_id,omitempty" json:"outbound_agent_id,omitempty" path:"outbound_agent_id"`
 	GoogleCloudStorageBucket                string                                  `url:"google_cloud_storage_bucket,omitempty" json:"google_cloud_storage_bucket,omitempty" path:"google_cloud_storage_bucket"`
 	GoogleCloudStorageProjectId             string                                  `url:"google_cloud_storage_project_id,omitempty" json:"google_cloud_storage_project_id,omitempty" path:"google_cloud_storage_project_id"`
 	GoogleCloudStorageS3CompatibleAccessKey string                                  `url:"google_cloud_storage_s3_compatible_access_key,omitempty" json:"google_cloud_storage_s3_compatible_access_key,omitempty" path:"google_cloud_storage_s3_compatible_access_key"`
