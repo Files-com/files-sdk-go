@@ -31,7 +31,7 @@ var (
 )
 
 // Filescomfs is a file system that implements the fuse.FileSystem interface,
-// allowing it to be mounted using FUSE. It provides a virtual files ystem
+// allowing it to be mounted using FUSE. It provides a virtual files system
 // interface to Files.com, allowing users to interact with their Files.com
 // account as if it were a local file system.
 type Filescomfs struct {
@@ -45,8 +45,7 @@ type Filescomfs struct {
 	disableLocking bool
 	ignore         *gogitignore.GitIgnore
 	events         events.EventPublisher
-
-	initOnce sync.Once
+	initOnce       sync.Once
 }
 
 // Init initializes the Filescomfs file system.

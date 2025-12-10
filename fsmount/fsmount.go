@@ -198,10 +198,11 @@ func Mount(params MountParams) (*Host, error) {
 	}
 
 	// Create the file system host and mount it
-	host := fuse.NewFileSystemHost(fs)
-	host.SetCapReaddirPlus(true)
+	fuseHost := fuse.NewFileSystemHost(fs)
+	fuseHost.SetCapReaddirPlus(true)
+
 	go func() {
-		mounted := host.Mount(fs.mountPoint, opts)
+		mounted := fuseHost.Mount(fs.mountPoint, opts)
 		if !mounted {
 			fs.log.Error("Failed to mount file system at %s", fs.mountPoint)
 			mntRegistry.remove(fs.mountPoint)
@@ -210,7 +211,7 @@ func Mount(params MountParams) (*Host, error) {
 	}()
 
 	return mntRegistry.add(fs.mountPoint, &Host{
-		fuseHost: host,
+		fuseHost: fuseHost,
 		fs:       fs,
 	})
 }

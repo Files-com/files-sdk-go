@@ -122,6 +122,28 @@ func (h *OpenHandles) OpenHandles() []*fileHandle {
 	return handles
 }
 
+// OpenDirectoryPaths returns unique FUSE paths for directories with open handles.
+func (h *OpenHandles) OpenDirectoryPaths() []string {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	paths := make([]string, 0, len(h.entries))
+	seen := make(map[string]struct{})
+	for _, fh := range h.entries {
+		if fh == nil || fh.node == nil {
+			continue
+		}
+		if fh.node.info.nodeType != nodeTypeDir {
+			continue
+		}
+		if _, ok := seen[fh.node.path]; ok {
+			continue
+		}
+		seen[fh.node.path] = struct{}{}
+		paths = append(paths, fh.node.path)
+	}
+	return paths
+}
+
 // ExtendOpenHandleTtls extends the TTL of all open handles.
 // This is useful to keep the file handles alive while the OS is still using them.
 func (h *OpenHandles) ExtendOpenHandleTtls() {

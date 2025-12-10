@@ -9,6 +9,7 @@ import (
 	"os"
 	path_lib "path"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 	"sync"
@@ -22,6 +23,7 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/mem"
 	fsio "github.com/Files-com/files-sdk-go/v3/fsmount/internal/io"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/log"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/shell"
 	fssync "github.com/Files-com/files-sdk-go/v3/fsmount/internal/sync"
 	"github.com/Files-com/files-sdk-go/v3/ignore"
 	"github.com/Files-com/files-sdk-go/v3/lib"
@@ -53,9 +55,14 @@ const (
 	globalOpLimit = 32
 )
 
-// compile time assertions that the cache implementations satisfy the fsCache interface
-var _ cacheStore = (*disk.DiskCache)(nil)
-var _ cacheStore = (*mem.MemoryCache)(nil)
+var (
+	// compile time assertions that the cache implementations satisfy the fsCache interface
+	_ cacheStore = (*disk.DiskCache)(nil)
+	_ cacheStore = (*mem.MemoryCache)(nil)
+
+	// webSyncInterval determines how frequently we ask Explorer to refresh any open folders.
+	webSyncInterval = 15 * time.Second
+)
 
 // RemoteFs is a file system that implements the logic for interacting with the Files.com API
 // for a mounted file system. It handles all operations that are not handled by the LocalFs
@@ -98,6 +105,10 @@ type RemoteFs struct {
 	ops *lim.FuseOpLimiter
 
 	bufferPool *fssync.Pool[[]byte]
+
+	webSyncTicker *time.Ticker
+	stopCh        chan struct{}
+	wg            sync.WaitGroup
 }
 
 // cacheStore defines the interface for the file system cache used by RemoteFs and allows for alternative
@@ -243,6 +254,12 @@ func (fs *RemoteFs) Init() {
 	// this does not block and ensures only one goroutine is started
 	fs.cacheStore.StartMaintenance()
 
+	// start the web sync watcher on Windows, which periodically checks for changes made via the web interface
+	// and notifies the OS to refresh the directory view
+	if runtime.GOOS == "windows" {
+		fs.startWebSyncWatcher(webSyncInterval)
+	}
+
 }
 
 func (fs *RemoteFs) Destroy() {
@@ -256,6 +273,7 @@ func (fs *RemoteFs) Destroy() {
 
 	fs.log.Debug("RemoteFs: Destroy: stopping cache maintenance")
 	fs.cacheStore.StopMaintenance()
+	fs.stopWebSync()
 }
 
 func (fs *RemoteFs) Validate() error {
@@ -1549,6 +1567,65 @@ func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, opErr 
 	})
 
 	return childPaths, opErr
+}
+
+// startWebSyncWatcher starts a periodic watcher that notifies all cached directories
+// to catch changes made via the web interface. This triggers Explorer/Finder to refresh.
+func (fs *RemoteFs) startWebSyncWatcher(interval time.Duration) {
+	if runtime.GOOS != "windows" {
+		return
+	}
+	if fs.webSyncTicker != nil {
+		return
+	}
+
+	fs.webSyncTicker = time.NewTicker(interval)
+	if fs.stopCh == nil {
+		fs.stopCh = make(chan struct{})
+	}
+	fs.wg.Add(1)
+
+	go func() {
+		defer fs.wg.Done()
+		for {
+			select {
+			case <-fs.webSyncTicker.C:
+				if fs.vfs != nil {
+					var dirs []string
+					if fs.vfs.handles != nil {
+						dirs = fs.vfs.handles.OpenDirectoryPaths()
+					}
+					// If nothing is open, skip this tick
+					if len(dirs) == 0 {
+						continue
+					}
+					for _, dir := range dirs {
+						path := fs.localPath(dir)
+						if err := shell.NotifyUpdatedDir(path); err != nil {
+							fs.log.Error("shell notify failed for %s: %v", path, err)
+						}
+					}
+				}
+			case <-fs.stopCh:
+				return
+			}
+		}
+	}()
+}
+
+// stopWebSync stops the web sync watcher and related goroutines.
+func (fs *RemoteFs) stopWebSync() {
+	if fs.stopCh != nil {
+		close(fs.stopCh)
+		fs.stopCh = nil
+	}
+
+	if fs.webSyncTicker != nil {
+		fs.webSyncTicker.Stop()
+		fs.webSyncTicker = nil
+	}
+
+	fs.wg.Wait()
 }
 
 func (fs *RemoteFs) createNode(path string, item files_sdk.File) *fsNode {
