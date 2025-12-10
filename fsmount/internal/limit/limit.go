@@ -2,9 +2,13 @@ package sync
 
 import (
 	"context"
+	"errors"
 
 	"golang.org/x/sync/semaphore"
 )
+
+// ErrNoSlotsAvailable is returned when WithLimit cannot acquire a slot immediately.
+var ErrNoSlotsAvailable = errors.New("no slots available")
 
 // FuseOpType represents the type of operation for limiting purposes.
 //
@@ -51,14 +55,8 @@ func NewFuseOpLimiter(perClass map[FuseOpType]int64, global int64) *FuseOpLimite
 
 // WithLimit applies the class (and global) limit. Reentrant-safe: if the
 // context already holds the class token, it won't acquire again.
+// This method blocks until slots are available.
 func (m *FuseOpLimiter) WithLimit(ctx context.Context, cl FuseOpType, fn func(context.Context) error) error {
-	held := getHeld(ctx)
-	if held[cl] {
-		return fn(ctx) // already holds this class; skip acquire
-	}
-
-	// Build the acquisition plan
-	var toRelease []func()
 	acquire := func(s *semaphore.Weighted, n int64) error {
 		if s == nil || n == 0 {
 			return nil
@@ -66,15 +64,51 @@ func (m *FuseOpLimiter) WithLimit(ctx context.Context, cl FuseOpType, fn func(co
 		if err := s.Acquire(ctx, n); err != nil {
 			return err
 		}
-		toRelease = append(toRelease, func() { s.Release(n) })
+		return nil
+	}
+	return m.withLimit(ctx, cl, fn, acquire)
+}
+
+// TryWithLimit applies the class (and global) limit without blocking. Reentrant-safe: if the
+// context already holds the class token, it won't acquire again.
+// Returns ErrNoSlotsAvailable immediately if slots cannot be acquired.
+func (m *FuseOpLimiter) TryWithLimit(ctx context.Context, cl FuseOpType, fn func(context.Context) error) error {
+	acquire := func(s *semaphore.Weighted, n int64) error {
+		if s == nil || n == 0 {
+			return nil
+		}
+		if !s.TryAcquire(n) {
+			return ErrNoSlotsAvailable
+		}
+		return nil
+	}
+	return m.withLimit(ctx, cl, fn, acquire)
+}
+
+// withLimit is the shared implementation for WithLimit and TryWithLimit.
+func (m *FuseOpLimiter) withLimit(ctx context.Context, cl FuseOpType, fn func(context.Context) error, acquire func(*semaphore.Weighted, int64) error) error {
+	held := getHeld(ctx)
+	if held[cl] {
+		return fn(ctx) // already holds this class; skip acquire
+	}
+
+	// Build the acquisition plan
+	var toRelease []func()
+	acquireWithRelease := func(s *semaphore.Weighted, n int64) error {
+		if err := acquire(s, n); err != nil {
+			return err
+		}
+		if s != nil && n > 0 {
+			toRelease = append(toRelease, func() { s.Release(n) })
+		}
 		return nil
 	}
 
 	// Always acquire global first to avoid inversion.
-	if err := acquire(m.global, 1); err != nil {
+	if err := acquireWithRelease(m.global, 1); err != nil {
 		return err
 	}
-	if err := acquire(m.class[cl], 1); err != nil {
+	if err := acquireWithRelease(m.class[cl], 1); err != nil {
 		// release global if class acquire fails
 		for i := len(toRelease) - 1; i >= 0; i-- {
 			toRelease[i]()

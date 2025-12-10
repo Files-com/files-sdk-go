@@ -400,3 +400,277 @@ func TestFuseOpLimiter_GlobalAcquiredFirst(t *testing.T) {
 		t.Fatal("second operation should have proceeded after release")
 	}
 }
+
+func TestFuseOpLimiter_TryWithLimit_Success(t *testing.T) {
+	limiter := lim.NewFuseOpLimiter(map[lim.FuseOpType]int64{
+		lim.FuseOpUpload: 2,
+	}, 0)
+
+	ctx := context.Background()
+	called := false
+
+	err := limiter.TryWithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
+		called = true
+		return nil
+	})
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if !called {
+		t.Fatal("expected function to be called")
+	}
+}
+
+func TestFuseOpLimiter_TryWithLimit_NoSlotsAvailable(t *testing.T) {
+	limiter := lim.NewFuseOpLimiter(map[lim.FuseOpType]int64{
+		lim.FuseOpUpload: 1,
+	}, 0)
+
+	ctx := context.Background()
+	blocked := make(chan struct{})
+	released := make(chan struct{})
+
+	// Occupy the single slot
+	go func() {
+		_ = limiter.WithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
+			close(blocked)
+			<-released
+			return nil
+		})
+	}()
+
+	<-blocked
+
+	// Try to acquire with TryWithLimit - should fail immediately
+	called := false
+	err := limiter.TryWithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
+		called = true
+		return nil
+	})
+
+	if !errors.Is(err, lim.ErrNoSlotsAvailable) {
+		t.Fatalf("expected ErrNoSlotsAvailable, got %v", err)
+	}
+	if called {
+		t.Fatal("function should not have been called when no slots available")
+	}
+
+	close(released)
+}
+
+func TestFuseOpLimiter_TryWithLimit_GlobalLimitExhausted(t *testing.T) {
+	limiter := lim.NewFuseOpLimiter(map[lim.FuseOpType]int64{
+		lim.FuseOpUpload:   5,
+		lim.FuseOpDownload: 5,
+	}, 1) // global limit of 1
+
+	ctx := context.Background()
+	blocked := make(chan struct{})
+	released := make(chan struct{})
+
+	// Occupy the global slot with an upload
+	go func() {
+		_ = limiter.WithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
+			close(blocked)
+			<-released
+			return nil
+		})
+	}()
+
+	<-blocked
+
+	// Try to acquire a download with TryWithLimit - should fail due to global limit
+	called := false
+	err := limiter.TryWithLimit(ctx, lim.FuseOpDownload, func(ctx context.Context) error {
+		called = true
+		return nil
+	})
+
+	if !errors.Is(err, lim.ErrNoSlotsAvailable) {
+		t.Fatalf("expected ErrNoSlotsAvailable due to global limit, got %v", err)
+	}
+	if called {
+		t.Fatal("function should not have been called when global limit exhausted")
+	}
+
+	close(released)
+}
+
+func TestFuseOpLimiter_TryWithLimit_Reentrancy(t *testing.T) {
+	limiter := lim.NewFuseOpLimiter(map[lim.FuseOpType]int64{
+		lim.FuseOpUpload: 1,
+	}, 0)
+
+	ctx := context.Background()
+	var depth int
+
+	err := limiter.TryWithLimit(ctx, lim.FuseOpUpload, func(ctx1 context.Context) error {
+		depth++
+		// Nested call with same operation type should not require another slot
+		return limiter.TryWithLimit(ctx1, lim.FuseOpUpload, func(ctx2 context.Context) error {
+			depth++
+			return nil
+		})
+	})
+
+	if err != nil {
+		t.Fatalf("expected no error with reentrant call, got %v", err)
+	}
+	if depth != 2 {
+		t.Fatalf("expected depth 2, got %d", depth)
+	}
+}
+
+func TestFuseOpLimiter_TryWithLimit_FunctionError(t *testing.T) {
+	limiter := lim.NewFuseOpLimiter(map[lim.FuseOpType]int64{
+		lim.FuseOpUpload: 1,
+	}, 0)
+
+	ctx := context.Background()
+	expectedErr := errors.New("test error")
+
+	err := limiter.TryWithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
+		return expectedErr
+	})
+
+	if err != expectedErr {
+		t.Fatalf("expected error %v, got %v", expectedErr, err)
+	}
+}
+
+func TestFuseOpLimiter_TryWithLimit_ReleasesOnError(t *testing.T) {
+	limiter := lim.NewFuseOpLimiter(map[lim.FuseOpType]int64{
+		lim.FuseOpUpload: 1,
+	}, 0)
+
+	ctx := context.Background()
+	testErr := errors.New("test error")
+
+	// First call that returns an error
+	err := limiter.TryWithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
+		return testErr
+	})
+
+	if err != testErr {
+		t.Fatalf("expected test error, got %v", err)
+	}
+
+	// Second call should succeed, proving the slot was released
+	called := false
+	err = limiter.TryWithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
+		called = true
+		return nil
+	})
+
+	if err != nil {
+		t.Fatalf("expected no error on second call, got %v", err)
+	}
+	if !called {
+		t.Fatal("second call should have succeeded after first released slot")
+	}
+}
+
+func TestFuseOpLimiter_TryWithLimit_ClassLimitOnly(t *testing.T) {
+	limiter := lim.NewFuseOpLimiter(map[lim.FuseOpType]int64{
+		lim.FuseOpUpload: 1,
+	}, 0) // no global limit
+
+	ctx := context.Background()
+	blocked := make(chan struct{})
+	released := make(chan struct{})
+
+	// Occupy the class slot
+	go func() {
+		_ = limiter.WithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
+			close(blocked)
+			<-released
+			return nil
+		})
+	}()
+
+	<-blocked
+
+	// Try to acquire with TryWithLimit - should fail due to class limit
+	err := limiter.TryWithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
+		t.Fatal("should not be called")
+		return nil
+	})
+
+	if !errors.Is(err, lim.ErrNoSlotsAvailable) {
+		t.Fatalf("expected ErrNoSlotsAvailable, got %v", err)
+	}
+
+	close(released)
+}
+
+func TestFuseOpLimiter_TryWithLimit_NoLimit(t *testing.T) {
+	// Create limiter with no limits set for this operation type
+	limiter := lim.NewFuseOpLimiter(map[lim.FuseOpType]int64{}, 0)
+
+	ctx := context.Background()
+	called := false
+
+	err := limiter.TryWithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
+		called = true
+		return nil
+	})
+
+	if err != nil {
+		t.Fatalf("expected no error with no limits, got %v", err)
+	}
+	if !called {
+		t.Fatal("function should be called when no limits are set")
+	}
+}
+
+func TestFuseOpLimiter_MixedWithLimitAndTryWithLimit(t *testing.T) {
+	limiter := lim.NewFuseOpLimiter(map[lim.FuseOpType]int64{
+		lim.FuseOpUpload: 1,
+	}, 0)
+
+	ctx := context.Background()
+	blocked := make(chan struct{})
+	released := make(chan struct{})
+
+	// Use WithLimit to occupy the slot (blocking)
+	go func() {
+		_ = limiter.WithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
+			close(blocked)
+			<-released
+			return nil
+		})
+	}()
+
+	<-blocked
+
+	// Use TryWithLimit - should fail immediately
+	err := limiter.TryWithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
+		t.Fatal("should not be called")
+		return nil
+	})
+
+	if !errors.Is(err, lim.ErrNoSlotsAvailable) {
+		t.Fatalf("expected ErrNoSlotsAvailable, got %v", err)
+	}
+
+	// Release the WithLimit operation
+	close(released)
+
+	// Give it time to release
+	time.Sleep(10 * time.Millisecond)
+
+	// Now TryWithLimit should succeed
+	called := false
+	err = limiter.TryWithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
+		called = true
+		return nil
+	})
+
+	if err != nil {
+		t.Fatalf("expected success after release, got %v", err)
+	}
+	if !called {
+		t.Fatal("function should have been called after slot was released")
+	}
+}

@@ -22,6 +22,7 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/mem"
 	fsio "github.com/Files-com/files-sdk-go/v3/fsmount/internal/io"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/log"
+	fssync "github.com/Files-com/files-sdk-go/v3/fsmount/internal/sync"
 	"github.com/Files-com/files-sdk-go/v3/ignore"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/Files-com/files-sdk-go/v3/lock"
@@ -40,11 +41,16 @@ const (
 	// before signalling any waiting cache readers that data is available
 	cacheWriteSize = 128 * 1024 // 128KB
 
-	// limits using in configuring the NewFuseOpLimiter for RemoteFs
-	downloadOpLimit = 10
-	uploadOpLimit   = 4
-	otherOpLimit    = 4
-	globalOpLimit   = 16
+	// limits used in configuring the NewFuseOpLimiter for RemoteFs
+	// S3 operations use HTTP/1.1 (6 connections is browser default for HTTP/1.1)
+	downloadOpLimit = 6
+	uploadOpLimit   = 6
+
+	// Files.com API operations use HTTP/2 (multiplexed, single connection)
+	otherOpLimit = 20
+
+	// Global limit should accommodate peak concurrent operations
+	globalOpLimit = 32
 )
 
 // compile time assertions that the cache implementations satisfy the fsCache interface
@@ -75,7 +81,7 @@ type RemoteFs struct {
 	migrationClient *file_migration.Client
 	lockMap         map[string]*lockInfo
 	lockMapMutex    sync.Mutex
-	loadDirMutex    sync.Mutex
+	loadDirMutexes  *fssync.PathMutex
 
 	debugFuse bool
 
@@ -90,6 +96,8 @@ type RemoteFs struct {
 	events events.EventPublisher
 
 	ops *lim.FuseOpLimiter
+
+	bufferPool *fssync.Pool[[]byte]
 }
 
 // cacheStore defines the interface for the file system cache used by RemoteFs and allows for alternative
@@ -182,6 +190,10 @@ func newRemoteFs(params MountParams, vfs *virtualfs, log log.Logger, cs cacheSto
 		cacheStore:       cs,
 		readyGates:       make(map[string]*cache.ReadyGate),
 		ops:              limiter,
+		loadDirMutexes:   fssync.NewPathMutex(),
+		bufferPool: fssync.NewPool(func() []byte {
+			return make([]byte, cacheWriteSize)
+		}),
 	}
 
 	// ensure write concurrency and cache TTL are positive
@@ -267,10 +279,13 @@ func (fs *RemoteFs) Mkdir(path string, mode uint32) (errc int) {
 	localPath, remotePath := fs.paths(path)
 	fs.log.Debug("RemoteFs: Mkdir: %v (%v) (mode=%o)", remotePath, localPath, mode)
 
-	err := fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+	err := fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
 		_, err := fs.fileClient.CreateFolder(files_sdk.FolderCreateParams{Path: remotePath})
 		return err
 	})
+	if errors.Is(err, lim.ErrNoSlotsAvailable) {
+		return -fuse.EAGAIN
+	}
 	if files_sdk.IsExist(err) {
 		return errc
 	}
@@ -342,13 +357,16 @@ func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
 			Overwrite:   lib.Ptr(true),
 		}
 
-		err := fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+		err := fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
 			action, err := fs.fileClient.Move(params)
 			if err != nil {
 				return err
 			}
 			return fs.waitForAction(ctx, action, "move")
 		})
+		if errors.Is(err, lim.ErrNoSlotsAvailable) {
+			return -fuse.EAGAIN
+		}
 		if errc = fs.handleError(oldpath, err); errc != 0 {
 			return errc
 		}
@@ -389,10 +407,13 @@ func (fs *RemoteFs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 		ProvidedMtime: &node.info.modTime,
 	}
 
-	err := fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+	err := fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
 		_, err := fs.fileClient.Update(params)
 		return err
 	})
+	if errors.Is(err, lim.ErrNoSlotsAvailable) {
+		return -fuse.EAGAIN
+	}
 
 	return fs.handleError(path, err)
 }
@@ -834,11 +855,9 @@ func (fs *RemoteFs) Readdir(path string,
 	fill("..", nil, 0)
 
 	// construct a list of child entries for the current directory
-	entries := make([]string, len(fillNode.childPaths))
-	pos := 0
+	entries := make([]string, 0, len(fillNode.childPaths))
 	for childPath := range fillNode.childPaths {
-		entries[pos] = childPath
-		pos++
+		entries = append(entries, childPath)
 	}
 
 	// make sure to append any open paths that are not already in the entries list
@@ -1126,9 +1145,12 @@ func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, read
 				}
 				defer resp.Body.Close()
 
+				// Get buffer from pool
+				buf := fs.bufferPool.Get()
+				defer fs.bufferPool.Put(buf)
+
 				// while downloading a file from the remote API, write data to the disk cache in chunks and update
 				// the ready gate every cacheWriteSize bytes to signal that data is available for reading.
-				buf := make([]byte, cacheWriteSize)
 				var off int64 = 0
 				for {
 					nr, er := resp.Body.Read(buf)
@@ -1201,9 +1223,6 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 	node.lockMutex.Lock()
 	defer node.lockMutex.Unlock()
 
-	fs.lockMapMutex.Lock()
-	defer fs.lockMapMutex.Unlock()
-
 	localPath, remotePath := fs.paths(node.path)
 	fs.log.Debug("RemoteFs: lock: file %v (%v) fh=%v", remotePath, localPath, fh)
 
@@ -1213,9 +1232,10 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 		return errc
 	}
 
+	// Make API call without holding lockMapMutex
 	var lock files_sdk.Lock
 	var err error
-	err = fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+	err = fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
 		lock, err = fs.lockClient.Create(files_sdk.LockCreateParams{
 			Path:                 remotePath,
 			AllowAccessByAnyUser: lib.Ptr(true),
@@ -1225,10 +1245,16 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 		})
 		return err
 	})
+	if errors.Is(err, lim.ErrNoSlotsAvailable) {
+		return -fuse.EAGAIN
+	}
 
 	if files_sdk.IsExist(err) {
 		// the file is already locked, if it's in the lock map and not owned by this user, return ENOLCK
+		fs.lockMapMutex.Lock()
 		linfo, ok := fs.lockMap[node.path]
+		fs.lockMapMutex.Unlock()
+
 		if ok && fs.currentUserId != linfo.Lock.UserId {
 			fs.log.Error("File '%v' is already locked by %v:", remotePath, linfo.Lock.Username)
 			return -fuse.ENOLCK
@@ -1243,8 +1269,13 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 	if errc = fs.handleError(node.path, err); errc != 0 {
 		return errc
 	}
-	fs.log.Debug("RemoteFs: lock: created owner=%v, path=%v, fh=%v", lock.Username, remotePath, fh)
+
+	// Store the lock in the map - only hold mutex for this operation
+	fs.lockMapMutex.Lock()
 	fs.lockMap[node.path] = &lockInfo{Fh: fh, Lock: &lock}
+	fs.lockMapMutex.Unlock()
+
+	fs.log.Debug("RemoteFs: lock: created owner=%v, path=%v, fh=%v", lock.Username, remotePath, fh)
 	return errc
 }
 
@@ -1260,10 +1291,11 @@ func (fs *RemoteFs) unlock(path string, fh uint64) (errc int) {
 		defer node.lockMutex.Unlock()
 	}
 
+	// Check if lock exists in map - only hold mutex briefly
 	fs.lockMapMutex.Lock()
-	defer fs.lockMapMutex.Unlock()
-
 	lockInfo, ok := fs.lockMap[path]
+	fs.lockMapMutex.Unlock()
+
 	if !ok {
 		// If the lock map doesn't have an entry for this path, it means the file
 		// was never locked, or it was locked by a different file handle.
@@ -1279,18 +1311,24 @@ func (fs *RemoteFs) unlock(path string, fh uint64) (errc int) {
 	localPath, remotePath := fs.paths(path)
 	fs.log.Debug("RemoteFs: unlock: file %v (%v)", remotePath, localPath)
 
-	err := fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+	// Make API call without holding lockMapMutex
+	err := fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
 		err := fs.lockClient.Delete(files_sdk.LockDeleteParams{
 			Path:  remotePath,
 			Token: lockInfo.Lock.Token,
 		})
 		return err
 	})
+	if errors.Is(err, lim.ErrNoSlotsAvailable) {
+		return -fuse.EAGAIN
+	}
 
 	if files_sdk.IsNotExist(err) {
 		// If the lock was already deleted, consider it a success.
 		fs.log.Debug("RemoteFs: unlock: %v (%v) err=%v", remotePath, localPath, err)
+		fs.lockMapMutex.Lock()
 		delete(fs.lockMap, path)
+		fs.lockMapMutex.Unlock()
 		return errc
 	}
 	// for any other error, handle it normally
@@ -1298,7 +1336,11 @@ func (fs *RemoteFs) unlock(path string, fh uint64) (errc int) {
 		return errc
 	}
 
+	// Delete from map - only hold mutex for this operation
+	fs.lockMapMutex.Lock()
 	delete(fs.lockMap, path)
+	fs.lockMapMutex.Unlock()
+
 	return errc
 }
 
@@ -1340,10 +1382,13 @@ func (fs *RemoteFs) handleError(path string, err error) int {
 }
 
 func (fs *RemoteFs) delete(path string) (errc int) {
-	err := fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+	err := fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
 		err := fs.fileClient.Delete(files_sdk.FileDeleteParams{Path: fs.remotePath(path)})
 		return err
 	})
+	if errors.Is(err, lim.ErrNoSlotsAvailable) {
+		return -fuse.EAGAIN
+	}
 
 	// if there's an error, and it's a not-found, consider it a success.
 	if files_sdk.IsNotExist(err) {
@@ -1405,10 +1450,13 @@ func (fs *RemoteFs) findDir(path string) (node *fsNode, errc int) {
 
 	var item files_sdk.File
 	var err error
-	err = fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+	err = fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
 		item, err = fs.fileClient.Find(files_sdk.FileFindParams{Path: remotePath})
 		return err
 	})
+	if errors.Is(err, lim.ErrNoSlotsAvailable) {
+		return nil, -fuse.EAGAIN
+	}
 
 	// Check for non-existence first so it doesn't get logged as an error, since this may be expected.
 	if files_sdk.IsNotExist(err) {
@@ -1429,11 +1477,14 @@ func (fs *RemoteFs) findDir(path string) (node *fsNode, errc int) {
 }
 
 func (fs *RemoteFs) loadDir(node *fsNode) (errc int) {
-	fs.loadDirMutex.Lock()
-	defer fs.loadDirMutex.Unlock()
+	fs.loadDirMutexes.Lock(node.path)
+	defer fs.loadDirMutexes.Unlock(node.path)
 	if node.infoExpired() {
 		fs.log.Debug("RemoteFs: loadDir: Refreshing directory listing: %v", node.path)
 		err := node.updateChildPaths(fs.listDir)
+		if errors.Is(err, lim.ErrNoSlotsAvailable) {
+			return -fuse.EAGAIN
+		}
 		if errc = fs.handleError(node.path, err); errc != 0 {
 			return errc
 		}
@@ -1446,7 +1497,7 @@ func (fs *RemoteFs) loadDir(node *fsNode) (errc int) {
 func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, opErr error) {
 	fs.log.Trace("RemoteFs: listDir: Listing directory: %v", path)
 
-	opErr = fs.ops.WithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+	opErr = fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
 		it, err := fs.fileClient.ListFor(files_sdk.FolderListForParams{Path: fs.remotePath(path)})
 		if err != nil {
 			return err
@@ -1528,12 +1579,15 @@ func (fs *RemoteFs) createNode(path string, item files_sdk.File) *fsNode {
 func (fs *RemoteFs) waitForAction(ctx context.Context, action files_sdk.FileAction, operation string) error {
 	var migration files_sdk.FileMigration
 	var err error
-	err = fs.ops.WithLimit(ctx, lim.FuseOpOther, func(ctx context.Context) error {
+	err = fs.ops.TryWithLimit(ctx, lim.FuseOpOther, func(ctx context.Context) error {
 		migration, err = fs.migrationClient.Wait(action, func(migration files_sdk.FileMigration) {
 			fs.log.Trace("RemoteFs: watchForAction: waiting for migration")
 		})
 		return err
 	})
+	if errors.Is(err, lim.ErrNoSlotsAvailable) {
+		return lim.ErrNoSlotsAvailable
+	}
 
 	if err == nil && migration.Status != "completed" {
 		return fmt.Errorf("%v did not complete successfully: %v", operation, migration.Status)
