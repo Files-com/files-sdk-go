@@ -16,7 +16,7 @@ type File struct {
 	CreatedByBundleRegistrationId      int64       `json:"created_by_bundle_registration_id,omitempty" path:"created_by_bundle_registration_id,omitempty" url:"created_by_bundle_registration_id,omitempty"`
 	CreatedByInboxId                   int64       `json:"created_by_inbox_id,omitempty" path:"created_by_inbox_id,omitempty" url:"created_by_inbox_id,omitempty"`
 	CreatedByRemoteServerId            int64       `json:"created_by_remote_server_id,omitempty" path:"created_by_remote_server_id,omitempty" url:"created_by_remote_server_id,omitempty"`
-	CreatedByRemoteServerSyncId        int64       `json:"created_by_remote_server_sync_id,omitempty" path:"created_by_remote_server_sync_id,omitempty" url:"created_by_remote_server_sync_id,omitempty"`
+	CreatedBySyncId                    int64       `json:"created_by_sync_id,omitempty" path:"created_by_sync_id,omitempty" url:"created_by_sync_id,omitempty"`
 	CustomMetadata                     interface{} `json:"custom_metadata,omitempty" path:"custom_metadata,omitempty" url:"custom_metadata,omitempty"`
 	DisplayName                        string      `json:"display_name,omitempty" path:"display_name,omitempty" url:"display_name,omitempty"`
 	Type                               string      `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
@@ -27,7 +27,7 @@ type File struct {
 	LastModifiedByAutomationId         int64       `json:"last_modified_by_automation_id,omitempty" path:"last_modified_by_automation_id,omitempty" url:"last_modified_by_automation_id,omitempty"`
 	LastModifiedByBundleRegistrationId int64       `json:"last_modified_by_bundle_registration_id,omitempty" path:"last_modified_by_bundle_registration_id,omitempty" url:"last_modified_by_bundle_registration_id,omitempty"`
 	LastModifiedByRemoteServerId       int64       `json:"last_modified_by_remote_server_id,omitempty" path:"last_modified_by_remote_server_id,omitempty" url:"last_modified_by_remote_server_id,omitempty"`
-	LastModifiedByRemoteServerSyncId   int64       `json:"last_modified_by_remote_server_sync_id,omitempty" path:"last_modified_by_remote_server_sync_id,omitempty" url:"last_modified_by_remote_server_sync_id,omitempty"`
+	LastModifiedBySyncId               int64       `json:"last_modified_by_sync_id,omitempty" path:"last_modified_by_sync_id,omitempty" url:"last_modified_by_sync_id,omitempty"`
 	Mtime                              *time.Time  `json:"mtime,omitempty" path:"mtime,omitempty" url:"mtime,omitempty"`
 	ProvidedMtime                      *time.Time  `json:"provided_mtime,omitempty" path:"provided_mtime,omitempty" url:"provided_mtime,omitempty"`
 	Crc32                              string      `json:"crc32,omitempty" path:"crc32,omitempty" url:"crc32,omitempty"`
