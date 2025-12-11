@@ -79,6 +79,8 @@ func (u As2PartnerServerCertificateEnum) Enum() map[string]As2PartnerServerCerti
 }
 
 type As2PartnerListParams struct {
+	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter As2Partner  `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
