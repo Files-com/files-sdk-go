@@ -156,7 +156,6 @@ type Site struct {
 	SmtpFrom                                 string      `json:"smtp_from,omitempty" path:"smtp_from,omitempty" url:"smtp_from,omitempty"`
 	SmtpPort                                 int64       `json:"smtp_port,omitempty" path:"smtp_port,omitempty" url:"smtp_port,omitempty"`
 	SmtpUsername                             string      `json:"smtp_username,omitempty" path:"smtp_username,omitempty" url:"smtp_username,omitempty"`
-	SessionExpiry                            string      `json:"session_expiry,omitempty" path:"session_expiry,omitempty" url:"session_expiry,omitempty"`
 	SessionExpiryMinutes                     int64       `json:"session_expiry_minutes,omitempty" path:"session_expiry_minutes,omitempty" url:"session_expiry_minutes,omitempty"`
 	SnapshotSharingEnabled                   *bool       `json:"snapshot_sharing_enabled,omitempty" path:"snapshot_sharing_enabled,omitempty" url:"snapshot_sharing_enabled,omitempty"`
 	SslRequired                              *bool       `json:"ssl_required,omitempty" path:"ssl_required,omitempty" url:"ssl_required,omitempty"`
@@ -236,7 +235,7 @@ type SiteUpdateParams struct {
 	LegacyChecksumsMode                      *bool       `url:"legacy_checksums_mode,omitempty" json:"legacy_checksums_mode,omitempty" path:"legacy_checksums_mode"`
 	MigrateRemoteServerSyncToSync            *bool       `url:"migrate_remote_server_sync_to_sync,omitempty" json:"migrate_remote_server_sync_to_sync,omitempty" path:"migrate_remote_server_sync_to_sync"`
 	As2MessageRetentionDays                  int64       `url:"as2_message_retention_days,omitempty" json:"as2_message_retention_days,omitempty" path:"as2_message_retention_days"`
-	SessionExpiry                            string      `url:"session_expiry,omitempty" json:"session_expiry,omitempty" path:"session_expiry"`
+	SessionExpiryMinutes                     int64       `url:"session_expiry_minutes,omitempty" json:"session_expiry_minutes,omitempty" path:"session_expiry_minutes"`
 	SslRequired                              *bool       `url:"ssl_required,omitempty" json:"ssl_required,omitempty" path:"ssl_required"`
 	SftpInsecureCiphers                      *bool       `url:"sftp_insecure_ciphers,omitempty" json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers"`
 	SftpInsecureDiffieHellman                *bool       `url:"sftp_insecure_diffie_hellman,omitempty" json:"sftp_insecure_diffie_hellman,omitempty" path:"sftp_insecure_diffie_hellman"`
@@ -358,7 +357,6 @@ type SiteUpdateParams struct {
 	LdapPasswordChange                       string      `url:"ldap_password_change,omitempty" json:"ldap_password_change,omitempty" path:"ldap_password_change"`
 	LdapPasswordChangeConfirmation           string      `url:"ldap_password_change_confirmation,omitempty" json:"ldap_password_change_confirmation,omitempty" path:"ldap_password_change_confirmation"`
 	SmtpPassword                             string      `url:"smtp_password,omitempty" json:"smtp_password,omitempty" path:"smtp_password"`
-	SessionExpiryMinutes                     int64       `url:"session_expiry_minutes,omitempty" json:"session_expiry_minutes,omitempty" path:"session_expiry_minutes"`
 }
 
 func (s *Site) UnmarshalJSON(data []byte) error {
