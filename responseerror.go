@@ -85,6 +85,9 @@ type Data struct {
 }
 
 func (e ResponseError) Error() string {
+	if e.Title == "" {
+		return e.ErrorMessage
+	}
 	return fmt.Sprintf("%v - `%v`", e.Title, e.ErrorMessage)
 }
 
