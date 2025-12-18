@@ -55,6 +55,8 @@ type RemoteServer struct {
 	FilesAgentRoot                          string `json:"files_agent_root,omitempty" path:"files_agent_root,omitempty" url:"files_agent_root,omitempty"`
 	FilesAgentApiToken                      string `json:"files_agent_api_token,omitempty" path:"files_agent_api_token,omitempty" url:"files_agent_api_token,omitempty"`
 	FilesAgentVersion                       string `json:"files_agent_version,omitempty" path:"files_agent_version,omitempty" url:"files_agent_version,omitempty"`
+	FilesAgentUpToDate                      *bool  `json:"files_agent_up_to_date,omitempty" path:"files_agent_up_to_date,omitempty" url:"files_agent_up_to_date,omitempty"`
+	FilesAgentLatestVersion                 string `json:"files_agent_latest_version,omitempty" path:"files_agent_latest_version,omitempty" url:"files_agent_latest_version,omitempty"`
 	OutboundAgentId                         int64  `json:"outbound_agent_id,omitempty" path:"outbound_agent_id,omitempty" url:"outbound_agent_id,omitempty"`
 	FilebaseBucket                          string `json:"filebase_bucket,omitempty" path:"filebase_bucket,omitempty" url:"filebase_bucket,omitempty"`
 	FilebaseAccessKey                       string `json:"filebase_access_key,omitempty" path:"filebase_access_key,omitempty" url:"filebase_access_key,omitempty"`
@@ -277,6 +279,11 @@ type RemoteServerCreateParams struct {
 	WasabiAccessKey                         string                                  `url:"wasabi_access_key,omitempty" json:"wasabi_access_key,omitempty" path:"wasabi_access_key"`
 	WasabiBucket                            string                                  `url:"wasabi_bucket,omitempty" json:"wasabi_bucket,omitempty" path:"wasabi_bucket"`
 	WasabiRegion                            string                                  `url:"wasabi_region,omitempty" json:"wasabi_region,omitempty" path:"wasabi_region"`
+}
+
+// Push update to Files Agent
+type RemoteServerAgentPushUpdateParams struct {
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // Post local changes, check in, and download configuration file (used by some Remote Server integrations, such as the Files.com Agent)
