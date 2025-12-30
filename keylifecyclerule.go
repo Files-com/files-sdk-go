@@ -33,7 +33,8 @@ func (u KeyLifecycleRuleKeyTypeEnum) Enum() map[string]KeyLifecycleRuleKeyTypeEn
 }
 
 type KeyLifecycleRuleListParams struct {
-	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	SortBy interface{}      `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter KeyLifecycleRule `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 

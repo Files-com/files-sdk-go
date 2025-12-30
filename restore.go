@@ -51,6 +51,8 @@ func (u RestoreRestorationTypeEnum) Enum() map[string]RestoreRestorationTypeEnum
 }
 
 type RestoreListParams struct {
+	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter Restore     `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
