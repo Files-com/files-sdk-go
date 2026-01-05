@@ -45,13 +45,13 @@ type GroupCreateParams struct {
 	Notes             string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
 	UserIds           string `url:"user_ids,omitempty" json:"user_ids,omitempty" path:"user_ids"`
 	AdminIds          string `url:"admin_ids,omitempty" json:"admin_ids,omitempty" path:"admin_ids"`
-	WorkspaceId       int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	FtpPermission     *bool  `url:"ftp_permission,omitempty" json:"ftp_permission,omitempty" path:"ftp_permission"`
 	SftpPermission    *bool  `url:"sftp_permission,omitempty" json:"sftp_permission,omitempty" path:"sftp_permission"`
 	DavPermission     *bool  `url:"dav_permission,omitempty" json:"dav_permission,omitempty" path:"dav_permission"`
 	RestapiPermission *bool  `url:"restapi_permission,omitempty" json:"restapi_permission,omitempty" path:"restapi_permission"`
 	AllowedIps        string `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
 	Name              string `url:"name" json:"name" path:"name"`
+	WorkspaceId       int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 type GroupUpdateParams struct {
@@ -59,7 +59,6 @@ type GroupUpdateParams struct {
 	Notes             string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
 	UserIds           string `url:"user_ids,omitempty" json:"user_ids,omitempty" path:"user_ids"`
 	AdminIds          string `url:"admin_ids,omitempty" json:"admin_ids,omitempty" path:"admin_ids"`
-	WorkspaceId       int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	FtpPermission     *bool  `url:"ftp_permission,omitempty" json:"ftp_permission,omitempty" path:"ftp_permission"`
 	SftpPermission    *bool  `url:"sftp_permission,omitempty" json:"sftp_permission,omitempty" path:"sftp_permission"`
 	DavPermission     *bool  `url:"dav_permission,omitempty" json:"dav_permission,omitempty" path:"dav_permission"`

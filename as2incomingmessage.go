@@ -9,6 +9,7 @@ import (
 
 type As2IncomingMessage struct {
 	Id                          int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	WorkspaceId                 int64       `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	As2PartnerId                int64       `json:"as2_partner_id,omitempty" path:"as2_partner_id,omitempty" url:"as2_partner_id,omitempty"`
 	As2StationId                int64       `json:"as2_station_id,omitempty" path:"as2_station_id,omitempty" url:"as2_station_id,omitempty"`
 	Uuid                        string      `json:"uuid,omitempty" path:"uuid,omitempty" url:"uuid,omitempty"`

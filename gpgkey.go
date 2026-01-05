@@ -53,11 +53,11 @@ type GpgKeyFindParams struct {
 type GpgKeyCreateParams struct {
 	UserId             int64      `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	PartnerId          int64      `url:"partner_id,omitempty" json:"partner_id,omitempty" path:"partner_id"`
-	WorkspaceId        int64      `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	PublicKey          string     `url:"public_key,omitempty" json:"public_key,omitempty" path:"public_key"`
 	PrivateKey         string     `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 	PrivateKeyPassword string     `url:"private_key_password,omitempty" json:"private_key_password,omitempty" path:"private_key_password"`
 	Name               string     `url:"name" json:"name" path:"name"`
+	WorkspaceId        int64      `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	GenerateExpiresAt  *time.Time `url:"generate_expires_at,omitempty" json:"generate_expires_at,omitempty" path:"generate_expires_at"`
 	GenerateKeypair    *bool      `url:"generate_keypair,omitempty" json:"generate_keypair,omitempty" path:"generate_keypair"`
 	GenerateFullName   string     `url:"generate_full_name,omitempty" json:"generate_full_name,omitempty" path:"generate_full_name"`
@@ -67,7 +67,6 @@ type GpgKeyCreateParams struct {
 type GpgKeyUpdateParams struct {
 	Id                 int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	PartnerId          int64  `url:"partner_id,omitempty" json:"partner_id,omitempty" path:"partner_id"`
-	WorkspaceId        int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	PublicKey          string `url:"public_key,omitempty" json:"public_key,omitempty" path:"public_key"`
 	PrivateKey         string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 	PrivateKeyPassword string `url:"private_key_password,omitempty" json:"private_key_password,omitempty" path:"private_key_password"`

@@ -26,6 +26,7 @@ type RemoteServer struct {
 	ServerCertificate                       string `json:"server_certificate,omitempty" path:"server_certificate,omitempty" url:"server_certificate,omitempty"`
 	ServerHostKey                           string `json:"server_host_key,omitempty" path:"server_host_key,omitempty" url:"server_host_key,omitempty"`
 	ServerType                              string `json:"server_type,omitempty" path:"server_type,omitempty" url:"server_type,omitempty"`
+	WorkspaceId                             int64  `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	Ssl                                     string `json:"ssl,omitempty" path:"ssl,omitempty" url:"ssl,omitempty"`
 	Username                                string `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
 	GoogleCloudStorageBucket                string `json:"google_cloud_storage_bucket,omitempty" path:"google_cloud_storage_bucket,omitempty" url:"google_cloud_storage_bucket,omitempty"`
@@ -57,6 +58,7 @@ type RemoteServer struct {
 	FilesAgentVersion                       string `json:"files_agent_version,omitempty" path:"files_agent_version,omitempty" url:"files_agent_version,omitempty"`
 	FilesAgentUpToDate                      *bool  `json:"files_agent_up_to_date,omitempty" path:"files_agent_up_to_date,omitempty" url:"files_agent_up_to_date,omitempty"`
 	FilesAgentLatestVersion                 string `json:"files_agent_latest_version,omitempty" path:"files_agent_latest_version,omitempty" url:"files_agent_latest_version,omitempty"`
+	FilesAgentSupportsPushUpdates           *bool  `json:"files_agent_supports_push_updates,omitempty" path:"files_agent_supports_push_updates,omitempty" url:"files_agent_supports_push_updates,omitempty"`
 	OutboundAgentId                         int64  `json:"outbound_agent_id,omitempty" path:"outbound_agent_id,omitempty" url:"outbound_agent_id,omitempty"`
 	FilebaseBucket                          string `json:"filebase_bucket,omitempty" path:"filebase_bucket,omitempty" url:"filebase_bucket,omitempty"`
 	FilebaseAccessKey                       string `json:"filebase_access_key,omitempty" path:"filebase_access_key,omitempty" url:"filebase_access_key,omitempty"`
@@ -279,6 +281,7 @@ type RemoteServerCreateParams struct {
 	WasabiAccessKey                         string                                  `url:"wasabi_access_key,omitempty" json:"wasabi_access_key,omitempty" path:"wasabi_access_key"`
 	WasabiBucket                            string                                  `url:"wasabi_bucket,omitempty" json:"wasabi_bucket,omitempty" path:"wasabi_bucket"`
 	WasabiRegion                            string                                  `url:"wasabi_region,omitempty" json:"wasabi_region,omitempty" path:"wasabi_region"`
+	WorkspaceId                             int64                                   `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 // Push update to Files Agent

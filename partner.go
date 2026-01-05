@@ -12,6 +12,7 @@ type Partner struct {
 	AllowProvidingGpgKeys     *bool   `json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys,omitempty" url:"allow_providing_gpg_keys,omitempty"`
 	AllowUserCreation         *bool   `json:"allow_user_creation,omitempty" path:"allow_user_creation,omitempty" url:"allow_user_creation,omitempty"`
 	Id                        int64   `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	WorkspaceId               int64   `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	Name                      string  `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Notes                     string  `json:"notes,omitempty" path:"notes,omitempty" url:"notes,omitempty"`
 	PartnerAdminIds           []int64 `json:"partner_admin_ids,omitempty" path:"partner_admin_ids,omitempty" url:"partner_admin_ids,omitempty"`
@@ -28,6 +29,7 @@ type PartnerCollection []Partner
 
 type PartnerListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter Partner     `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
@@ -44,6 +46,7 @@ type PartnerCreateParams struct {
 	RootFolder                string `url:"root_folder,omitempty" json:"root_folder,omitempty" path:"root_folder"`
 	Tags                      string `url:"tags,omitempty" json:"tags,omitempty" path:"tags"`
 	Name                      string `url:"name" json:"name" path:"name"`
+	WorkspaceId               int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 type PartnerUpdateParams struct {

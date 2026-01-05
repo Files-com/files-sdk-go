@@ -89,7 +89,6 @@ type RemoteServerCredentialFindParams struct {
 }
 
 type RemoteServerCredentialCreateParams struct {
-	WorkspaceId                             int64                                `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	Name                                    string                               `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	Description                             string                               `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	ServerType                              RemoteServerCredentialServerTypeEnum `url:"server_type,omitempty" json:"server_type,omitempty" path:"server_type"`
@@ -120,11 +119,11 @@ type RemoteServerCredentialCreateParams struct {
 	LinodeSecretKey                         string                               `url:"linode_secret_key,omitempty" json:"linode_secret_key,omitempty" path:"linode_secret_key"`
 	S3CompatibleSecretKey                   string                               `url:"s3_compatible_secret_key,omitempty" json:"s3_compatible_secret_key,omitempty" path:"s3_compatible_secret_key"`
 	WasabiSecretKey                         string                               `url:"wasabi_secret_key,omitempty" json:"wasabi_secret_key,omitempty" path:"wasabi_secret_key"`
+	WorkspaceId                             int64                                `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 type RemoteServerCredentialUpdateParams struct {
 	Id                                      int64                                `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	WorkspaceId                             int64                                `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	Name                                    string                               `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	Description                             string                               `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	ServerType                              RemoteServerCredentialServerTypeEnum `url:"server_type,omitempty" json:"server_type,omitempty" path:"server_type"`

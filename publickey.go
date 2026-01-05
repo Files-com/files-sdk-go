@@ -9,6 +9,7 @@ import (
 
 type PublicKey struct {
 	Id                         int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	WorkspaceId                int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	Title                      string     `json:"title,omitempty" path:"title,omitempty" url:"title,omitempty"`
 	CreatedAt                  *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 	Fingerprint                string     `json:"fingerprint,omitempty" path:"fingerprint,omitempty" url:"fingerprint,omitempty"`

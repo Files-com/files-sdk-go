@@ -67,6 +67,7 @@ type User struct {
 	SftpPermission                   *bool      `json:"sftp_permission,omitempty" path:"sftp_permission,omitempty" url:"sftp_permission,omitempty"`
 	SiteAdmin                        *bool      `json:"site_admin,omitempty" path:"site_admin,omitempty" url:"site_admin,omitempty"`
 	SiteId                           int64      `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
+	WorkspaceId                      int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	SkipWelcomeScreen                *bool      `json:"skip_welcome_screen,omitempty" path:"skip_welcome_screen,omitempty" url:"skip_welcome_screen,omitempty"`
 	SslRequired                      string     `json:"ssl_required,omitempty" path:"ssl_required,omitempty" url:"ssl_required,omitempty"`
 	SsoStrategyId                    int64      `json:"sso_strategy_id,omitempty" path:"sso_strategy_id,omitempty" url:"sso_strategy_id,omitempty"`
@@ -230,6 +231,7 @@ type UserCreateParams struct {
 	UserRoot                   string                       `url:"user_root,omitempty" json:"user_root,omitempty" path:"user_root"`
 	UserHome                   string                       `url:"user_home,omitempty" json:"user_home,omitempty" path:"user_home"`
 	Username                   string                       `url:"username" json:"username" path:"username"`
+	WorkspaceId                int64                        `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 // Unlock user who has been locked out due to failed logins

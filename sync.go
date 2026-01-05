@@ -106,7 +106,6 @@ type SyncUpdateParams struct {
 	ScheduleTimeZone    string   `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
 	ScheduleDaysOfWeek  []int64  `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimesOfDay  []string `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
-	WorkspaceId         int64    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 type SyncDeleteParams struct {

@@ -139,8 +139,8 @@ type AutomationCreateParams struct {
 	TriggerActions                   []string                 `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
 	Value                            interface{}              `url:"value,omitempty" json:"value,omitempty" path:"value"`
 	RecurringDay                     int64                    `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
-	WorkspaceId                      int64                    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	Automation                       AutomationEnum           `url:"automation" json:"automation" path:"automation"`
+	WorkspaceId                      int64                    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 // Manually Run Automation
@@ -182,7 +182,6 @@ type AutomationUpdateParams struct {
 	TriggerActions                   []string                 `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
 	Value                            interface{}              `url:"value,omitempty" json:"value,omitempty" path:"value"`
 	RecurringDay                     int64                    `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
-	WorkspaceId                      int64                    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	Automation                       AutomationEnum           `url:"automation,omitempty" json:"automation,omitempty" path:"automation"`
 }
 
