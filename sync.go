@@ -12,6 +12,7 @@ type Sync struct {
 	Name                string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Description         string     `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
 	SiteId              int64      `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
+	WorkspaceId         int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	UserId              int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	SrcPath             string     `json:"src_path,omitempty" path:"src_path,omitempty" url:"src_path,omitempty"`
 	DestPath            string     `json:"dest_path,omitempty" path:"dest_path,omitempty" url:"dest_path,omitempty"`
@@ -72,6 +73,7 @@ type SyncCreateParams struct {
 	ScheduleTimeZone    string   `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
 	ScheduleDaysOfWeek  []int64  `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimesOfDay  []string `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
+	WorkspaceId         int64    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 // Dry Run Sync
@@ -104,6 +106,7 @@ type SyncUpdateParams struct {
 	ScheduleTimeZone    string   `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
 	ScheduleDaysOfWeek  []int64  `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimesOfDay  []string `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
+	WorkspaceId         int64    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 type SyncDeleteParams struct {

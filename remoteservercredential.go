@@ -8,6 +8,7 @@ import (
 
 type RemoteServerCredential struct {
 	Id                                      int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	WorkspaceId                             int64  `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	Name                                    string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Description                             string `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
 	ServerType                              string `json:"server_type,omitempty" path:"server_type,omitempty" url:"server_type,omitempty"`
@@ -77,6 +78,7 @@ func (u RemoteServerCredentialServerTypeEnum) Enum() map[string]RemoteServerCred
 }
 
 type RemoteServerCredentialListParams struct {
+	SortBy       interface{}            `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       RemoteServerCredential `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterPrefix interface{}            `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	ListParams
@@ -87,6 +89,7 @@ type RemoteServerCredentialFindParams struct {
 }
 
 type RemoteServerCredentialCreateParams struct {
+	WorkspaceId                             int64                                `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	Name                                    string                               `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	Description                             string                               `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	ServerType                              RemoteServerCredentialServerTypeEnum `url:"server_type,omitempty" json:"server_type,omitempty" path:"server_type"`
@@ -121,6 +124,7 @@ type RemoteServerCredentialCreateParams struct {
 
 type RemoteServerCredentialUpdateParams struct {
 	Id                                      int64                                `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	WorkspaceId                             int64                                `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	Name                                    string                               `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	Description                             string                               `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	ServerType                              RemoteServerCredentialServerTypeEnum `url:"server_type,omitempty" json:"server_type,omitempty" path:"server_type"`

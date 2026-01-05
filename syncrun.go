@@ -23,6 +23,7 @@ type SyncRun struct {
 	LogUrl               string     `json:"log_url,omitempty" path:"log_url,omitempty" url:"log_url,omitempty"`
 	Runtime              string     `json:"runtime,omitempty" path:"runtime,omitempty" url:"runtime,omitempty"`
 	SiteId               int64      `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
+	WorkspaceId          int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	SrcRemoteServerType  string     `json:"src_remote_server_type,omitempty" path:"src_remote_server_type,omitempty" url:"src_remote_server_type,omitempty"`
 	Status               string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
 	SuccessfulFiles      int64      `json:"successful_files,omitempty" path:"successful_files,omitempty" url:"successful_files,omitempty"`

@@ -10,6 +10,7 @@ import (
 type AutomationRun struct {
 	Id                   int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	AutomationId         int64      `json:"automation_id,omitempty" path:"automation_id,omitempty" url:"automation_id,omitempty"`
+	WorkspaceId          int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	CompletedAt          *time.Time `json:"completed_at,omitempty" path:"completed_at,omitempty" url:"completed_at,omitempty"`
 	CreatedAt            *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 	RetryAt              *time.Time `json:"retry_at,omitempty" path:"retry_at,omitempty" url:"retry_at,omitempty"`

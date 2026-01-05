@@ -9,6 +9,7 @@ import (
 
 type Automation struct {
 	Id                               int64                    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	WorkspaceId                      int64                    `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	AlwaysSerializeJobs              *bool                    `json:"always_serialize_jobs,omitempty" path:"always_serialize_jobs,omitempty" url:"always_serialize_jobs,omitempty"`
 	AlwaysOverwriteSizeMatchingFiles *bool                    `json:"always_overwrite_size_matching_files,omitempty" path:"always_overwrite_size_matching_files,omitempty" url:"always_overwrite_size_matching_files,omitempty"`
 	Automation                       string                   `json:"automation,omitempty" path:"automation,omitempty" url:"automation,omitempty"`
@@ -138,6 +139,7 @@ type AutomationCreateParams struct {
 	TriggerActions                   []string                 `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
 	Value                            interface{}              `url:"value,omitempty" json:"value,omitempty" path:"value"`
 	RecurringDay                     int64                    `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
+	WorkspaceId                      int64                    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	Automation                       AutomationEnum           `url:"automation" json:"automation" path:"automation"`
 }
 
@@ -180,6 +182,7 @@ type AutomationUpdateParams struct {
 	TriggerActions                   []string                 `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
 	Value                            interface{}              `url:"value,omitempty" json:"value,omitempty" path:"value"`
 	RecurringDay                     int64                    `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
+	WorkspaceId                      int64                    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	Automation                       AutomationEnum           `url:"automation,omitempty" json:"automation,omitempty" path:"automation"`
 }
 

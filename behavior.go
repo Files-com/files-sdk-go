@@ -46,14 +46,14 @@ type BehaviorListForParams struct {
 }
 
 type BehaviorCreateParams struct {
-	Value                       string    `url:"value,omitempty" json:"value,omitempty" path:"value"`
-	AttachmentFile              io.Writer `url:"attachment_file,omitempty" json:"attachment_file,omitempty" path:"attachment_file"`
-	DisableParentFolderBehavior *bool     `url:"disable_parent_folder_behavior,omitempty" json:"disable_parent_folder_behavior,omitempty" path:"disable_parent_folder_behavior"`
-	Recursive                   *bool     `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
-	Name                        string    `url:"name,omitempty" json:"name,omitempty" path:"name"`
-	Description                 string    `url:"description,omitempty" json:"description,omitempty" path:"description"`
-	Path                        string    `url:"path" json:"path" path:"path"`
-	Behavior                    string    `url:"behavior" json:"behavior" path:"behavior"`
+	Value                       interface{} `url:"value,omitempty" json:"value,omitempty" path:"value"`
+	AttachmentFile              io.Writer   `url:"attachment_file,omitempty" json:"attachment_file,omitempty" path:"attachment_file"`
+	DisableParentFolderBehavior *bool       `url:"disable_parent_folder_behavior,omitempty" json:"disable_parent_folder_behavior,omitempty" path:"disable_parent_folder_behavior"`
+	Recursive                   *bool       `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
+	Name                        string      `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	Description                 string      `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	Path                        string      `url:"path" json:"path" path:"path"`
+	Behavior                    string      `url:"behavior" json:"behavior" path:"behavior"`
 }
 
 type BehaviorWebhookTestParams struct {
@@ -66,14 +66,14 @@ type BehaviorWebhookTestParams struct {
 }
 
 type BehaviorUpdateParams struct {
-	Id                          int64     `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	Value                       string    `url:"value,omitempty" json:"value,omitempty" path:"value"`
-	AttachmentFile              io.Writer `url:"attachment_file,omitempty" json:"attachment_file,omitempty" path:"attachment_file"`
-	DisableParentFolderBehavior *bool     `url:"disable_parent_folder_behavior,omitempty" json:"disable_parent_folder_behavior,omitempty" path:"disable_parent_folder_behavior"`
-	Recursive                   *bool     `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
-	Name                        string    `url:"name,omitempty" json:"name,omitempty" path:"name"`
-	Description                 string    `url:"description,omitempty" json:"description,omitempty" path:"description"`
-	AttachmentDelete            *bool     `url:"attachment_delete,omitempty" json:"attachment_delete,omitempty" path:"attachment_delete"`
+	Id                          int64       `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Value                       interface{} `url:"value,omitempty" json:"value,omitempty" path:"value"`
+	AttachmentFile              io.Writer   `url:"attachment_file,omitempty" json:"attachment_file,omitempty" path:"attachment_file"`
+	DisableParentFolderBehavior *bool       `url:"disable_parent_folder_behavior,omitempty" json:"disable_parent_folder_behavior,omitempty" path:"disable_parent_folder_behavior"`
+	Recursive                   *bool       `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
+	Name                        string      `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	Description                 string      `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	AttachmentDelete            *bool       `url:"attachment_delete,omitempty" json:"attachment_delete,omitempty" path:"attachment_delete"`
 }
 
 type BehaviorDeleteParams struct {
