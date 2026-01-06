@@ -66,6 +66,7 @@ type User struct {
 	SelfManaged                      *bool      `json:"self_managed,omitempty" path:"self_managed,omitempty" url:"self_managed,omitempty"`
 	SftpPermission                   *bool      `json:"sftp_permission,omitempty" path:"sftp_permission,omitempty" url:"sftp_permission,omitempty"`
 	SiteAdmin                        *bool      `json:"site_admin,omitempty" path:"site_admin,omitempty" url:"site_admin,omitempty"`
+	WorkspaceAdmin                   *bool      `json:"workspace_admin,omitempty" path:"workspace_admin,omitempty" url:"workspace_admin,omitempty"`
 	SiteId                           int64      `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
 	WorkspaceId                      int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	SkipWelcomeScreen                *bool      `json:"skip_welcome_screen,omitempty" path:"skip_welcome_screen,omitempty" url:"skip_welcome_screen,omitempty"`
@@ -230,6 +231,7 @@ type UserCreateParams struct {
 	TimeZone                   string                       `url:"time_zone,omitempty" json:"time_zone,omitempty" path:"time_zone"`
 	UserRoot                   string                       `url:"user_root,omitempty" json:"user_root,omitempty" path:"user_root"`
 	UserHome                   string                       `url:"user_home,omitempty" json:"user_home,omitempty" path:"user_home"`
+	WorkspaceAdmin             *bool                        `url:"workspace_admin,omitempty" json:"workspace_admin,omitempty" path:"workspace_admin"`
 	Username                   string                       `url:"username" json:"username" path:"username"`
 	WorkspaceId                int64                        `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
@@ -301,6 +303,7 @@ type UserUpdateParams struct {
 	TimeZone                   string                       `url:"time_zone,omitempty" json:"time_zone,omitempty" path:"time_zone"`
 	UserRoot                   string                       `url:"user_root,omitempty" json:"user_root,omitempty" path:"user_root"`
 	UserHome                   string                       `url:"user_home,omitempty" json:"user_home,omitempty" path:"user_home"`
+	WorkspaceAdmin             *bool                        `url:"workspace_admin,omitempty" json:"workspace_admin,omitempty" path:"workspace_admin"`
 	Username                   string                       `url:"username,omitempty" json:"username,omitempty" path:"username"`
 	Clear2fa                   *bool                        `url:"clear_2fa,omitempty" json:"clear_2fa,omitempty" path:"clear_2fa"`
 	ConvertToPartnerUser       *bool                        `url:"convert_to_partner_user,omitempty" json:"convert_to_partner_user,omitempty" path:"convert_to_partner_user"`
