@@ -131,6 +131,7 @@ func (u UserFilesystemLayoutEnum) Enum() map[string]UserFilesystemLayoutEnum {
 		"user_root":           UserFilesystemLayoutEnum("user_root"),
 		"partner_root":        UserFilesystemLayoutEnum("partner_root"),
 		"integration_centric": UserFilesystemLayoutEnum("integration_centric"),
+		"workspace_root":      UserFilesystemLayoutEnum("workspace_root"),
 	}
 }
 
