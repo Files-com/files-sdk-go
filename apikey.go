@@ -68,10 +68,10 @@ type ApiKeyCreateParams struct {
 	UserId              int64                   `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Description         string                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	ExpiresAt           *time.Time              `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
-	PermissionSet       ApiKeyPermissionSetEnum `url:"permission_set,omitempty" json:"permission_set,omitempty" path:"permission_set"`
 	Name                string                  `url:"name" json:"name" path:"name"`
 	AwsStyleCredentials *bool                   `url:"aws_style_credentials,omitempty" json:"aws_style_credentials,omitempty" path:"aws_style_credentials"`
 	Path                string                  `url:"path,omitempty" json:"path,omitempty" path:"path"`
+	PermissionSet       ApiKeyPermissionSetEnum `url:"permission_set,omitempty" json:"permission_set,omitempty" path:"permission_set"`
 }
 
 type ApiKeyUpdateCurrentParams struct {
@@ -81,11 +81,10 @@ type ApiKeyUpdateCurrentParams struct {
 }
 
 type ApiKeyUpdateParams struct {
-	Id            int64                   `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	Description   string                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
-	ExpiresAt     *time.Time              `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
-	PermissionSet ApiKeyPermissionSetEnum `url:"permission_set,omitempty" json:"permission_set,omitempty" path:"permission_set"`
-	Name          string                  `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	Id          int64      `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Description string     `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	ExpiresAt   *time.Time `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
+	Name        string     `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
 type ApiKeyDeleteParams struct {
