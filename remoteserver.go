@@ -12,6 +12,7 @@ type RemoteServer struct {
 	AuthenticationMethod                    string `json:"authentication_method,omitempty" path:"authentication_method,omitempty" url:"authentication_method,omitempty"`
 	Hostname                                string `json:"hostname,omitempty" path:"hostname,omitempty" url:"hostname,omitempty"`
 	RemoteHomePath                          string `json:"remote_home_path,omitempty" path:"remote_home_path,omitempty" url:"remote_home_path,omitempty"`
+	UploadStagingPath                       string `json:"upload_staging_path,omitempty" path:"upload_staging_path,omitempty" url:"upload_staging_path,omitempty"`
 	Name                                    string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Description                             string `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
 	Port                                    int64  `json:"port,omitempty" path:"port,omitempty" url:"port,omitempty"`
@@ -266,6 +267,7 @@ type RemoteServerCreateParams struct {
 	OneDriveAccountType                     RemoteServerOneDriveAccountTypeEnum     `url:"one_drive_account_type,omitempty" json:"one_drive_account_type,omitempty" path:"one_drive_account_type"`
 	PinToSiteRegion                         *bool                                   `url:"pin_to_site_region,omitempty" json:"pin_to_site_region,omitempty" path:"pin_to_site_region"`
 	Port                                    int64                                   `url:"port,omitempty" json:"port,omitempty" path:"port"`
+	UploadStagingPath                       string                                  `url:"upload_staging_path,omitempty" json:"upload_staging_path,omitempty" path:"upload_staging_path"`
 	RemoteServerCredentialId                int64                                   `url:"remote_server_credential_id,omitempty" json:"remote_server_credential_id,omitempty" path:"remote_server_credential_id"`
 	S3Bucket                                string                                  `url:"s3_bucket,omitempty" json:"s3_bucket,omitempty" path:"s3_bucket"`
 	S3CompatibleAccessKey                   string                                  `url:"s3_compatible_access_key,omitempty" json:"s3_compatible_access_key,omitempty" path:"s3_compatible_access_key"`
@@ -361,6 +363,7 @@ type RemoteServerUpdateParams struct {
 	OneDriveAccountType                     RemoteServerOneDriveAccountTypeEnum     `url:"one_drive_account_type,omitempty" json:"one_drive_account_type,omitempty" path:"one_drive_account_type"`
 	PinToSiteRegion                         *bool                                   `url:"pin_to_site_region,omitempty" json:"pin_to_site_region,omitempty" path:"pin_to_site_region"`
 	Port                                    int64                                   `url:"port,omitempty" json:"port,omitempty" path:"port"`
+	UploadStagingPath                       string                                  `url:"upload_staging_path,omitempty" json:"upload_staging_path,omitempty" path:"upload_staging_path"`
 	RemoteServerCredentialId                int64                                   `url:"remote_server_credential_id,omitempty" json:"remote_server_credential_id,omitempty" path:"remote_server_credential_id"`
 	S3Bucket                                string                                  `url:"s3_bucket,omitempty" json:"s3_bucket,omitempty" path:"s3_bucket"`
 	S3CompatibleAccessKey                   string                                  `url:"s3_compatible_access_key,omitempty" json:"s3_compatible_access_key,omitempty" path:"s3_compatible_access_key"`
