@@ -737,6 +737,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `processing-failure/buffered-upload-disabled-for-this-destination` | Buffered Upload Disabled For This Destination |
 | `processing-failure/bundle-only-allows-previews` | Bundle Only Allows Previews |
 | `processing-failure/bundle-operation-requires-subfolder` | Bundle Operation Requires Subfolder |
+| `processing-failure/configuration-locked-path` | Configuration Locked Path |
 | `processing-failure/could-not-create-parent` | Could Not Create Parent |
 | `processing-failure/destination-exists` | Destination Exists |
 | `processing-failure/destination-folder-limited` | Destination Folder Limited |
