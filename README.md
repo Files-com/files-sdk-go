@@ -641,6 +641,7 @@ ResponseError errors have additional data returned from the Files.com API to hel
 | `bad-request/invalid-upload-offset` | Invalid Upload Offset |
 | `bad-request/invalid-upload-part-gap` | Invalid Upload Part Gap |
 | `bad-request/invalid-upload-part-size` | Invalid Upload Part Size |
+| `bad-request/invalid-workspace-id-header` | Invalid Workspace Id Header |
 | `bad-request/method-not-allowed` | Method Not Allowed |
 | `bad-request/multiple-sort-params-not-allowed` | Multiple Sort Params Not Allowed |
 | `bad-request/no-valid-input-params` | No Valid Input Params |
