@@ -21,6 +21,8 @@ type ApiKey struct {
 	Name                string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	PermissionSet       string     `json:"permission_set,omitempty" path:"permission_set,omitempty" url:"permission_set,omitempty"`
 	Platform            string     `json:"platform,omitempty" path:"platform,omitempty" url:"platform,omitempty"`
+	SiteId              int64      `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
+	SiteName            string     `json:"site_name,omitempty" path:"site_name,omitempty" url:"site_name,omitempty"`
 	Url                 string     `json:"url,omitempty" path:"url,omitempty" url:"url,omitempty"`
 	UserId              int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	Path                string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`

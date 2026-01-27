@@ -28,6 +28,8 @@ type SiemHttpDestination struct {
 	SolarWindsTokenMasked                         string      `json:"solar_winds_token_masked,omitempty" path:"solar_winds_token_masked,omitempty" url:"solar_winds_token_masked,omitempty"`
 	NewRelicApiKeyMasked                          string      `json:"new_relic_api_key_masked,omitempty" path:"new_relic_api_key_masked,omitempty" url:"new_relic_api_key_masked,omitempty"`
 	DatadogApiKeyMasked                           string      `json:"datadog_api_key_masked,omitempty" path:"datadog_api_key_masked,omitempty" url:"datadog_api_key_masked,omitempty"`
+	ActionSendEnabled                             *bool       `json:"action_send_enabled,omitempty" path:"action_send_enabled,omitempty" url:"action_send_enabled,omitempty"`
+	ActionEntriesSent                             int64       `json:"action_entries_sent,omitempty" path:"action_entries_sent,omitempty" url:"action_entries_sent,omitempty"`
 	SftpActionSendEnabled                         *bool       `json:"sftp_action_send_enabled,omitempty" path:"sftp_action_send_enabled,omitempty" url:"sftp_action_send_enabled,omitempty"`
 	SftpActionEntriesSent                         int64       `json:"sftp_action_entries_sent,omitempty" path:"sftp_action_entries_sent,omitempty" url:"sftp_action_entries_sent,omitempty"`
 	FtpActionSendEnabled                          *bool       `json:"ftp_action_send_enabled,omitempty" path:"ftp_action_send_enabled,omitempty" url:"ftp_action_send_enabled,omitempty"`
@@ -148,6 +150,7 @@ type SiemHttpDestinationCreateParams struct {
 	SolarWindsToken                         string                                    `url:"solar_winds_token,omitempty" json:"solar_winds_token,omitempty" path:"solar_winds_token"`
 	NewRelicApiKey                          string                                    `url:"new_relic_api_key,omitempty" json:"new_relic_api_key,omitempty" path:"new_relic_api_key"`
 	DatadogApiKey                           string                                    `url:"datadog_api_key,omitempty" json:"datadog_api_key,omitempty" path:"datadog_api_key"`
+	ActionSendEnabled                       *bool                                     `url:"action_send_enabled,omitempty" json:"action_send_enabled,omitempty" path:"action_send_enabled"`
 	SftpActionSendEnabled                   *bool                                     `url:"sftp_action_send_enabled,omitempty" json:"sftp_action_send_enabled,omitempty" path:"sftp_action_send_enabled"`
 	FtpActionSendEnabled                    *bool                                     `url:"ftp_action_send_enabled,omitempty" json:"ftp_action_send_enabled,omitempty" path:"ftp_action_send_enabled"`
 	WebDavActionSendEnabled                 *bool                                     `url:"web_dav_action_send_enabled,omitempty" json:"web_dav_action_send_enabled,omitempty" path:"web_dav_action_send_enabled"`
@@ -185,6 +188,7 @@ type SiemHttpDestinationSendTestEntryParams struct {
 	SolarWindsToken                         string                                    `url:"solar_winds_token,omitempty" json:"solar_winds_token,omitempty" path:"solar_winds_token"`
 	NewRelicApiKey                          string                                    `url:"new_relic_api_key,omitempty" json:"new_relic_api_key,omitempty" path:"new_relic_api_key"`
 	DatadogApiKey                           string                                    `url:"datadog_api_key,omitempty" json:"datadog_api_key,omitempty" path:"datadog_api_key"`
+	ActionSendEnabled                       *bool                                     `url:"action_send_enabled,omitempty" json:"action_send_enabled,omitempty" path:"action_send_enabled"`
 	SftpActionSendEnabled                   *bool                                     `url:"sftp_action_send_enabled,omitempty" json:"sftp_action_send_enabled,omitempty" path:"sftp_action_send_enabled"`
 	FtpActionSendEnabled                    *bool                                     `url:"ftp_action_send_enabled,omitempty" json:"ftp_action_send_enabled,omitempty" path:"ftp_action_send_enabled"`
 	WebDavActionSendEnabled                 *bool                                     `url:"web_dav_action_send_enabled,omitempty" json:"web_dav_action_send_enabled,omitempty" path:"web_dav_action_send_enabled"`
@@ -218,6 +222,7 @@ type SiemHttpDestinationUpdateParams struct {
 	SolarWindsToken                         string                                    `url:"solar_winds_token,omitempty" json:"solar_winds_token,omitempty" path:"solar_winds_token"`
 	NewRelicApiKey                          string                                    `url:"new_relic_api_key,omitempty" json:"new_relic_api_key,omitempty" path:"new_relic_api_key"`
 	DatadogApiKey                           string                                    `url:"datadog_api_key,omitempty" json:"datadog_api_key,omitempty" path:"datadog_api_key"`
+	ActionSendEnabled                       *bool                                     `url:"action_send_enabled,omitempty" json:"action_send_enabled,omitempty" path:"action_send_enabled"`
 	SftpActionSendEnabled                   *bool                                     `url:"sftp_action_send_enabled,omitempty" json:"sftp_action_send_enabled,omitempty" path:"sftp_action_send_enabled"`
 	FtpActionSendEnabled                    *bool                                     `url:"ftp_action_send_enabled,omitempty" json:"ftp_action_send_enabled,omitempty" path:"ftp_action_send_enabled"`
 	WebDavActionSendEnabled                 *bool                                     `url:"web_dav_action_send_enabled,omitempty" json:"web_dav_action_send_enabled,omitempty" path:"web_dav_action_send_enabled"`

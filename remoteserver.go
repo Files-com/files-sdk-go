@@ -13,6 +13,7 @@ type RemoteServer struct {
 	Hostname                                string `json:"hostname,omitempty" path:"hostname,omitempty" url:"hostname,omitempty"`
 	RemoteHomePath                          string `json:"remote_home_path,omitempty" path:"remote_home_path,omitempty" url:"remote_home_path,omitempty"`
 	UploadStagingPath                       string `json:"upload_staging_path,omitempty" path:"upload_staging_path,omitempty" url:"upload_staging_path,omitempty"`
+	AllowRelativePaths                      *bool  `json:"allow_relative_paths,omitempty" path:"allow_relative_paths,omitempty" url:"allow_relative_paths,omitempty"`
 	Name                                    string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Description                             string `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
 	Port                                    int64  `json:"port,omitempty" path:"port,omitempty" url:"port,omitempty"`
@@ -232,6 +233,7 @@ type RemoteServerCreateParams struct {
 	LinodeSecretKey                         string                                  `url:"linode_secret_key,omitempty" json:"linode_secret_key,omitempty" path:"linode_secret_key"`
 	S3CompatibleSecretKey                   string                                  `url:"s3_compatible_secret_key,omitempty" json:"s3_compatible_secret_key,omitempty" path:"s3_compatible_secret_key"`
 	WasabiSecretKey                         string                                  `url:"wasabi_secret_key,omitempty" json:"wasabi_secret_key,omitempty" path:"wasabi_secret_key"`
+	AllowRelativePaths                      *bool                                   `url:"allow_relative_paths,omitempty" json:"allow_relative_paths,omitempty" path:"allow_relative_paths"`
 	AwsAccessKey                            string                                  `url:"aws_access_key,omitempty" json:"aws_access_key,omitempty" path:"aws_access_key"`
 	AzureBlobStorageAccount                 string                                  `url:"azure_blob_storage_account,omitempty" json:"azure_blob_storage_account,omitempty" path:"azure_blob_storage_account"`
 	AzureBlobStorageContainer               string                                  `url:"azure_blob_storage_container,omitempty" json:"azure_blob_storage_container,omitempty" path:"azure_blob_storage_container"`
@@ -328,6 +330,7 @@ type RemoteServerUpdateParams struct {
 	LinodeSecretKey                         string                                  `url:"linode_secret_key,omitempty" json:"linode_secret_key,omitempty" path:"linode_secret_key"`
 	S3CompatibleSecretKey                   string                                  `url:"s3_compatible_secret_key,omitempty" json:"s3_compatible_secret_key,omitempty" path:"s3_compatible_secret_key"`
 	WasabiSecretKey                         string                                  `url:"wasabi_secret_key,omitempty" json:"wasabi_secret_key,omitempty" path:"wasabi_secret_key"`
+	AllowRelativePaths                      *bool                                   `url:"allow_relative_paths,omitempty" json:"allow_relative_paths,omitempty" path:"allow_relative_paths"`
 	AwsAccessKey                            string                                  `url:"aws_access_key,omitempty" json:"aws_access_key,omitempty" path:"aws_access_key"`
 	AzureBlobStorageAccount                 string                                  `url:"azure_blob_storage_account,omitempty" json:"azure_blob_storage_account,omitempty" path:"azure_blob_storage_account"`
 	AzureBlobStorageContainer               string                                  `url:"azure_blob_storage_container,omitempty" json:"azure_blob_storage_container,omitempty" path:"azure_blob_storage_container"`

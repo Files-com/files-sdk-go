@@ -113,6 +113,11 @@ type FileFindParams struct {
 	WithPriorityColor *bool  `url:"with_priority_color,omitempty" json:"with_priority_color,omitempty" path:"with_priority_color"`
 }
 
+// List the contents of a ZIP file
+type FileZipListContentsParams struct {
+	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+}
+
 // Copy File/Folder
 type FileCopyParams struct {
 	Path        string `url:"-,omitempty" json:"-,omitempty" path:"path"`
@@ -126,6 +131,20 @@ type FileMoveParams struct {
 	Path        string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	Destination string `url:"destination" json:"destination" path:"destination"`
 	Overwrite   *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
+}
+
+// Extract a ZIP file to a destination folder
+type FileUnzipParams struct {
+	Path        string `url:"path" json:"path" path:"path"`
+	Destination string `url:"destination" json:"destination" path:"destination"`
+	Filename    string `url:"filename,omitempty" json:"filename,omitempty" path:"filename"`
+	Overwrite   *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
+}
+
+type FileZipParams struct {
+	Paths       []string `url:"paths" json:"paths" path:"paths"`
+	Destination string   `url:"destination" json:"destination" path:"destination"`
+	Overwrite   *bool    `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
 // Begin File Upload
