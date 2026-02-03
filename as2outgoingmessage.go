@@ -27,7 +27,7 @@ type As2OutgoingMessage struct {
 	CreatedAt                   *time.Time  `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 	HttpResponseCode            string      `json:"http_response_code,omitempty" path:"http_response_code,omitempty" url:"http_response_code,omitempty"`
 	HttpResponseHeaders         interface{} `json:"http_response_headers,omitempty" path:"http_response_headers,omitempty" url:"http_response_headers,omitempty"`
-	HttpTransmissionDuration    string      `json:"http_transmission_duration,omitempty" path:"http_transmission_duration,omitempty" url:"http_transmission_duration,omitempty"`
+	HttpTransmissionDuration    float64     `json:"http_transmission_duration,omitempty" path:"http_transmission_duration,omitempty" url:"http_transmission_duration,omitempty"`
 	MdnReceived                 *bool       `json:"mdn_received,omitempty" path:"mdn_received,omitempty" url:"mdn_received,omitempty"`
 	MdnValid                    *bool       `json:"mdn_valid,omitempty" path:"mdn_valid,omitempty" url:"mdn_valid,omitempty"`
 	MdnSignatureVerified        *bool       `json:"mdn_signature_verified,omitempty" path:"mdn_signature_verified,omitempty" url:"mdn_signature_verified,omitempty"`

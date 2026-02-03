@@ -17,7 +17,7 @@ type AutomationRun struct {
 	RetriedAt            *time.Time `json:"retried_at,omitempty" path:"retried_at,omitempty" url:"retried_at,omitempty"`
 	RetriedInRunId       int64      `json:"retried_in_run_id,omitempty" path:"retried_in_run_id,omitempty" url:"retried_in_run_id,omitempty"`
 	RetryOfRunId         int64      `json:"retry_of_run_id,omitempty" path:"retry_of_run_id,omitempty" url:"retry_of_run_id,omitempty"`
-	Runtime              string     `json:"runtime,omitempty" path:"runtime,omitempty" url:"runtime,omitempty"`
+	Runtime              float64    `json:"runtime,omitempty" path:"runtime,omitempty" url:"runtime,omitempty"`
 	Status               string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
 	SuccessfulOperations int64      `json:"successful_operations,omitempty" path:"successful_operations,omitempty" url:"successful_operations,omitempty"`
 	FailedOperations     int64      `json:"failed_operations,omitempty" path:"failed_operations,omitempty" url:"failed_operations,omitempty"`
