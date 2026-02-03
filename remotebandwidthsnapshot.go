@@ -9,8 +9,8 @@ import (
 
 type RemoteBandwidthSnapshot struct {
 	Id                int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	SyncBytesReceived string     `json:"sync_bytes_received,omitempty" path:"sync_bytes_received,omitempty" url:"sync_bytes_received,omitempty"`
-	SyncBytesSent     string     `json:"sync_bytes_sent,omitempty" path:"sync_bytes_sent,omitempty" url:"sync_bytes_sent,omitempty"`
+	SyncBytesReceived int64      `json:"sync_bytes_received,omitempty" path:"sync_bytes_received,omitempty" url:"sync_bytes_received,omitempty"`
+	SyncBytesSent     int64      `json:"sync_bytes_sent,omitempty" path:"sync_bytes_sent,omitempty" url:"sync_bytes_sent,omitempty"`
 	LoggedAt          *time.Time `json:"logged_at,omitempty" path:"logged_at,omitempty" url:"logged_at,omitempty"`
 	RemoteServerId    int64      `json:"remote_server_id,omitempty" path:"remote_server_id,omitempty" url:"remote_server_id,omitempty"`
 }
