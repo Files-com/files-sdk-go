@@ -19,6 +19,15 @@ func (i *Iter) Reload(opts ...files_sdk.RequestResponseOption) files_sdk.IterI {
 	return &Iter{Iter: i.Iter.Reload(opts...).(*files_sdk.Iter), Client: i.Client}
 }
 
+func (c *Client) Linkeds(opts ...files_sdk.RequestResponseOption) (partnerSiteCollection files_sdk.PartnerSiteCollection, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/partner_sites/linked_partner_sites", Entity: &partnerSiteCollection}, opts...)
+	return
+}
+
+func Linkeds(opts ...files_sdk.RequestResponseOption) (partnerSiteCollection files_sdk.PartnerSiteCollection, err error) {
+	return (&Client{}).Linkeds(opts...)
+}
+
 func (i *Iter) PartnerSite() files_sdk.PartnerSite {
 	return i.Current().(files_sdk.PartnerSite)
 }

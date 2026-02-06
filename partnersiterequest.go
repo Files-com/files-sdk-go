@@ -12,6 +12,7 @@ type PartnerSiteRequest struct {
 	PartnerId    int64      `json:"partner_id,omitempty" path:"partner_id,omitempty" url:"partner_id,omitempty"`
 	LinkedSiteId int64      `json:"linked_site_id,omitempty" path:"linked_site_id,omitempty" url:"linked_site_id,omitempty"`
 	Status       string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	MainSiteName string     `json:"main_site_name,omitempty" path:"main_site_name,omitempty" url:"main_site_name,omitempty"`
 	PairingKey   string     `json:"pairing_key,omitempty" path:"pairing_key,omitempty" url:"pairing_key,omitempty"`
 	CreatedAt    *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 	UpdatedAt    *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
