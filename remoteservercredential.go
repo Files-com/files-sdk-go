@@ -13,6 +13,9 @@ type RemoteServerCredential struct {
 	Description                             string `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
 	ServerType                              string `json:"server_type,omitempty" path:"server_type,omitempty" url:"server_type,omitempty"`
 	AwsAccessKey                            string `json:"aws_access_key,omitempty" path:"aws_access_key,omitempty" url:"aws_access_key,omitempty"`
+	S3AssumeRoleArn                         string `json:"s3_assume_role_arn,omitempty" path:"s3_assume_role_arn,omitempty" url:"s3_assume_role_arn,omitempty"`
+	S3AssumeRoleDurationSeconds             int64  `json:"s3_assume_role_duration_seconds,omitempty" path:"s3_assume_role_duration_seconds,omitempty" url:"s3_assume_role_duration_seconds,omitempty"`
+	S3AssumeRoleExternalId                  string `json:"s3_assume_role_external_id,omitempty" path:"s3_assume_role_external_id,omitempty" url:"s3_assume_role_external_id,omitempty"`
 	GoogleCloudStorageS3CompatibleAccessKey string `json:"google_cloud_storage_s3_compatible_access_key,omitempty" path:"google_cloud_storage_s3_compatible_access_key,omitempty" url:"google_cloud_storage_s3_compatible_access_key,omitempty"`
 	WasabiAccessKey                         string `json:"wasabi_access_key,omitempty" path:"wasabi_access_key,omitempty" url:"wasabi_access_key,omitempty"`
 	S3CompatibleAccessKey                   string `json:"s3_compatible_access_key,omitempty" path:"s3_compatible_access_key,omitempty" url:"s3_compatible_access_key,omitempty"`
@@ -91,6 +94,8 @@ type RemoteServerCredentialCreateParams struct {
 	Description                             string                               `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	ServerType                              RemoteServerCredentialServerTypeEnum `url:"server_type,omitempty" json:"server_type,omitempty" path:"server_type"`
 	AwsAccessKey                            string                               `url:"aws_access_key,omitempty" json:"aws_access_key,omitempty" path:"aws_access_key"`
+	S3AssumeRoleArn                         string                               `url:"s3_assume_role_arn,omitempty" json:"s3_assume_role_arn,omitempty" path:"s3_assume_role_arn"`
+	S3AssumeRoleDurationSeconds             int64                                `url:"s3_assume_role_duration_seconds,omitempty" json:"s3_assume_role_duration_seconds,omitempty" path:"s3_assume_role_duration_seconds"`
 	CloudflareAccessKey                     string                               `url:"cloudflare_access_key,omitempty" json:"cloudflare_access_key,omitempty" path:"cloudflare_access_key"`
 	FilebaseAccessKey                       string                               `url:"filebase_access_key,omitempty" json:"filebase_access_key,omitempty" path:"filebase_access_key"`
 	GoogleCloudStorageS3CompatibleAccessKey string                               `url:"google_cloud_storage_s3_compatible_access_key,omitempty" json:"google_cloud_storage_s3_compatible_access_key,omitempty" path:"google_cloud_storage_s3_compatible_access_key"`
@@ -124,6 +129,8 @@ type RemoteServerCredentialUpdateParams struct {
 	Description                             string                               `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	ServerType                              RemoteServerCredentialServerTypeEnum `url:"server_type,omitempty" json:"server_type,omitempty" path:"server_type"`
 	AwsAccessKey                            string                               `url:"aws_access_key,omitempty" json:"aws_access_key,omitempty" path:"aws_access_key"`
+	S3AssumeRoleArn                         string                               `url:"s3_assume_role_arn,omitempty" json:"s3_assume_role_arn,omitempty" path:"s3_assume_role_arn"`
+	S3AssumeRoleDurationSeconds             int64                                `url:"s3_assume_role_duration_seconds,omitempty" json:"s3_assume_role_duration_seconds,omitempty" path:"s3_assume_role_duration_seconds"`
 	CloudflareAccessKey                     string                               `url:"cloudflare_access_key,omitempty" json:"cloudflare_access_key,omitempty" path:"cloudflare_access_key"`
 	FilebaseAccessKey                       string                               `url:"filebase_access_key,omitempty" json:"filebase_access_key,omitempty" path:"filebase_access_key"`
 	GoogleCloudStorageS3CompatibleAccessKey string                               `url:"google_cloud_storage_s3_compatible_access_key,omitempty" json:"google_cloud_storage_s3_compatible_access_key,omitempty" path:"google_cloud_storage_s3_compatible_access_key"`

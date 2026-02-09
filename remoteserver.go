@@ -25,6 +25,9 @@ type RemoteServer struct {
 	S3Bucket                                string `json:"s3_bucket,omitempty" path:"s3_bucket,omitempty" url:"s3_bucket,omitempty"`
 	S3Region                                string `json:"s3_region,omitempty" path:"s3_region,omitempty" url:"s3_region,omitempty"`
 	AwsAccessKey                            string `json:"aws_access_key,omitempty" path:"aws_access_key,omitempty" url:"aws_access_key,omitempty"`
+	S3AssumeRoleArn                         string `json:"s3_assume_role_arn,omitempty" path:"s3_assume_role_arn,omitempty" url:"s3_assume_role_arn,omitempty"`
+	S3AssumeRoleDurationSeconds             int64  `json:"s3_assume_role_duration_seconds,omitempty" path:"s3_assume_role_duration_seconds,omitempty" url:"s3_assume_role_duration_seconds,omitempty"`
+	S3AssumeRoleExternalId                  string `json:"s3_assume_role_external_id,omitempty" path:"s3_assume_role_external_id,omitempty" url:"s3_assume_role_external_id,omitempty"`
 	ServerCertificate                       string `json:"server_certificate,omitempty" path:"server_certificate,omitempty" url:"server_certificate,omitempty"`
 	ServerHostKey                           string `json:"server_host_key,omitempty" path:"server_host_key,omitempty" url:"server_host_key,omitempty"`
 	ServerType                              string `json:"server_type,omitempty" path:"server_type,omitempty" url:"server_type,omitempty"`
@@ -271,6 +274,8 @@ type RemoteServerCreateParams struct {
 	Port                                    int64                                   `url:"port,omitempty" json:"port,omitempty" path:"port"`
 	UploadStagingPath                       string                                  `url:"upload_staging_path,omitempty" json:"upload_staging_path,omitempty" path:"upload_staging_path"`
 	RemoteServerCredentialId                int64                                   `url:"remote_server_credential_id,omitempty" json:"remote_server_credential_id,omitempty" path:"remote_server_credential_id"`
+	S3AssumeRoleArn                         string                                  `url:"s3_assume_role_arn,omitempty" json:"s3_assume_role_arn,omitempty" path:"s3_assume_role_arn"`
+	S3AssumeRoleDurationSeconds             int64                                   `url:"s3_assume_role_duration_seconds,omitempty" json:"s3_assume_role_duration_seconds,omitempty" path:"s3_assume_role_duration_seconds"`
 	S3Bucket                                string                                  `url:"s3_bucket,omitempty" json:"s3_bucket,omitempty" path:"s3_bucket"`
 	S3CompatibleAccessKey                   string                                  `url:"s3_compatible_access_key,omitempty" json:"s3_compatible_access_key,omitempty" path:"s3_compatible_access_key"`
 	S3CompatibleBucket                      string                                  `url:"s3_compatible_bucket,omitempty" json:"s3_compatible_bucket,omitempty" path:"s3_compatible_bucket"`
@@ -368,6 +373,8 @@ type RemoteServerUpdateParams struct {
 	Port                                    int64                                   `url:"port,omitempty" json:"port,omitempty" path:"port"`
 	UploadStagingPath                       string                                  `url:"upload_staging_path,omitempty" json:"upload_staging_path,omitempty" path:"upload_staging_path"`
 	RemoteServerCredentialId                int64                                   `url:"remote_server_credential_id,omitempty" json:"remote_server_credential_id,omitempty" path:"remote_server_credential_id"`
+	S3AssumeRoleArn                         string                                  `url:"s3_assume_role_arn,omitempty" json:"s3_assume_role_arn,omitempty" path:"s3_assume_role_arn"`
+	S3AssumeRoleDurationSeconds             int64                                   `url:"s3_assume_role_duration_seconds,omitempty" json:"s3_assume_role_duration_seconds,omitempty" path:"s3_assume_role_duration_seconds"`
 	S3Bucket                                string                                  `url:"s3_bucket,omitempty" json:"s3_bucket,omitempty" path:"s3_bucket"`
 	S3CompatibleAccessKey                   string                                  `url:"s3_compatible_access_key,omitempty" json:"s3_compatible_access_key,omitempty" path:"s3_compatible_access_key"`
 	S3CompatibleBucket                      string                                  `url:"s3_compatible_bucket,omitempty" json:"s3_compatible_bucket,omitempty" path:"s3_compatible_bucket"`
