@@ -43,9 +43,9 @@ type PartnerCreateParams struct {
 	AllowProvidingGpgKeys     *bool  `url:"allow_providing_gpg_keys,omitempty" json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys"`
 	AllowUserCreation         *bool  `url:"allow_user_creation,omitempty" json:"allow_user_creation,omitempty" path:"allow_user_creation"`
 	Notes                     string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
-	RootFolder                string `url:"root_folder,omitempty" json:"root_folder,omitempty" path:"root_folder"`
 	Tags                      string `url:"tags,omitempty" json:"tags,omitempty" path:"tags"`
 	Name                      string `url:"name" json:"name" path:"name"`
+	RootFolder                string `url:"root_folder" json:"root_folder" path:"root_folder"`
 	WorkspaceId               int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
@@ -56,9 +56,9 @@ type PartnerUpdateParams struct {
 	AllowProvidingGpgKeys     *bool  `url:"allow_providing_gpg_keys,omitempty" json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys"`
 	AllowUserCreation         *bool  `url:"allow_user_creation,omitempty" json:"allow_user_creation,omitempty" path:"allow_user_creation"`
 	Notes                     string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
-	RootFolder                string `url:"root_folder,omitempty" json:"root_folder,omitempty" path:"root_folder"`
 	Tags                      string `url:"tags,omitempty" json:"tags,omitempty" path:"tags"`
 	Name                      string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	RootFolder                string `url:"root_folder,omitempty" json:"root_folder,omitempty" path:"root_folder"`
 }
 
 type PartnerDeleteParams struct {
