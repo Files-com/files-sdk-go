@@ -1,7 +1,6 @@
 package fsmount
 
 import (
-	"context"
 	"errors"
 	"os"
 	"runtime"
@@ -19,8 +18,10 @@ const (
 	folderNotEmpty = "processing-failure/folder-not-empty"
 	blockSize      = 4096
 
-	// The maximum time to wait for the Fsync operation to complete before timing out.
-	// This is used to prevent the Fsync operation from hanging indefinitely if the remote API is unresponsive.
+	// Maximum time without upload progress before Fsync gives up.
+	// The deadline resets on every transferred chunk, so large but actively
+	// uploading files (e.g. InDesign, Photoshop) never time out prematurely.
+	// A timeout only fires when the remote stops responding entirely.
 	fsyncTimeout = 30 * time.Second
 )
 
@@ -191,11 +192,9 @@ func (fs *Filescomfs) Rename(oldpath string, newpath string) (errc int) {
 			// Snapshot: (writer, owner, committed)
 			if w, _, committed := n.writerSnapshot(); w != nil {
 				// If bytes have been written, wait for finalize; if uncommitted, treat as busy.
-				ctx, cancel := context.WithTimeout(context.Background(), fsyncTimeout)
-				defer cancel()
 				if committed {
 					fs.log.Trace("Filescomfs: Rename: waiting for finalize of active upload before renaming: oldpath=%v, newpath=%v", oldpath, newpath)
-					if err := n.waitForUploadIfFinalizing(ctx); err != nil {
+					if err := n.waitForUploadWithProgressTimeout(fsyncTimeout); err != nil {
 						errc = -fuse.EAGAIN
 						fs.log.Trace("Filescomfs: Rename: wait-for-finalize timed out: %v, errc=%v", err, errc)
 						return errc

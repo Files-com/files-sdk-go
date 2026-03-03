@@ -249,6 +249,11 @@ func (n *fsNode) ensureWriter(fsWriter FSWriter, fh uint64, getInitialContent fu
 	// Start upload goroutine
 	go func() {
 		fsWriter.writeFile(n.path, pipe.Out, n.info.modTime, fh)
+		// Ensure the PipeReader is closed when writeFile exits.
+		// Without this, if writeFile returns while streamToPipe is still
+		// running, io.Copy to the PipeWriter blocks indefinitely with no
+		// reader, permanently deadlocking OrderedPipe.Close().
+		_ = pipe.Out.Close()
 	}()
 
 	return pipe, true, nil
@@ -370,28 +375,39 @@ func (n *fsNode) readFromWriter(buff []byte, ofst int64) int {
 	return w.ReadAt(buff, ofst)
 }
 
-// waitForUploadIfFinalizing blocks until finalize completes when appropriate.
-// It never blocks for an upload that has no writes.
-func (n *fsNode) waitForUploadIfFinalizing(ctx context.Context) error {
+// waitForUploadWithProgressTimeout blocks until the upload completes or stalls.
+// Unlike waitForUploadIfFinalizing, the stall deadline resets whenever upload
+// progress is recorded, so a large but actively progressing upload never times
+// out prematurely. Returns an error only when no progress has been observed for
+// stallTimeout.
+func (n *fsNode) waitForUploadWithProgressTimeout(stallTimeout time.Duration) error {
 	n.uploadMu.Lock()
 	w, _, hasWrites := n.writerSnapshot()
 	var done <-chan struct{}
+	var upload *activeUpload
 	if n.upload != nil && (w == nil || hasWrites) {
 		done = n.upload.done
+		upload = n.upload
 	}
 	n.uploadMu.Unlock()
 	if done == nil {
 		return nil
 	}
-	if ctx == nil {
-		<-done
-		return nil
-	}
-	select {
-	case <-done:
-		return nil
-	case <-ctx.Done():
-		return ctx.Err()
+
+	checkInterval := max(stallTimeout/3, time.Second)
+	ticker := time.NewTicker(checkInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-done:
+			return nil
+		case <-ticker.C:
+			_, _, lastActivity := upload.stats()
+			if time.Since(lastActivity) > stallTimeout {
+				return context.DeadlineExceeded
+			}
+		}
 	}
 }
 

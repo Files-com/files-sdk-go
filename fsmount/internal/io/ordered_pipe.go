@@ -135,12 +135,12 @@ func NewOrderedPipe(ident string, opts ...OrderedPipeOption) (*OrderedPipe, erro
 // WriteAt writes data to the OrderedPipe at the specified offset.
 // The underlying os.File handles out-of-order writes automatically.
 func (w *OrderedPipe) WriteAt(buff []byte, offset int64) (n int, err error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
 	if w.closed {
 		return 0, errors.New("write to closed OrderedPipe")
 	}
-
-	w.mu.Lock()
-	defer w.mu.Unlock()
 
 	// Mark that actual writes have occurred
 	w.hasWrites = true

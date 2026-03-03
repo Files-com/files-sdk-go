@@ -618,6 +618,12 @@ func (fs *RemoteFs) Truncate(path string, size int64, fh uint64) (errc int) {
 	node := fs.vfs.getOrCreate(path, nodeTypeFile)
 	node.updateSize(size)
 
+	// Invalidate any cached content. The size has changed, so cached data is stale.
+	// Without this, a subsequent write would load the old cached content as initial
+	// content for the OrderedPipe, potentially uploading data from the wrong version
+	// of the file for regions not covered by the new writes.
+	fs.cacheStore.Delete(path)
+
 	// Mark write intent - actual truncation will happen if data is written
 	// Per requirements: O_TRUNC creates writer but waits for actual data before uploading
 	node.markWriteIntent(fh)
@@ -691,17 +697,24 @@ func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int
 		}
 	}
 
-	// Attempt to read from the disk cache. If the read can't be satisfied from the disk cache, it
-	// will return zero bytes, and the logic will fall through to reading from the remote API.
-	n, err := fs.cacheStore.Read(path, buff, ofst)
-	if err != nil {
-		fs.log.Debug("RemoteFs: Read: diskCache.Read error: %v", err)
-	}
-
-	if n > 0 {
-		handle.incrementRead(int64(n))
-		fs.log.Trace("RemoteFs: Read: readAt: path=%v, ofst=%d, read %d bytes from disk cache", path, ofst, n)
-		return n
+	// Attempt to read from the cache only when no download is in progress for this path.
+	// If a download is active, the cache entry is partially written and a Read call may return
+	// fewer bytes than len(buff) (a short read). WinFSP does not handle short reads from the
+	// FUSE layer correctly: it may advance its internal file pointer by the full requested size
+	// rather than the actual number of bytes returned, causing the skipped region to appear as
+	// zeros or garbage in the assembled file. By skipping the early cache check when a gate is
+	// active, all reads during an active download go through WaitFor, which blocks until the
+	// full requested range is available, guaranteeing a non-short read.
+	if _, isDownloading := fs.peekGate(path); !isDownloading {
+		n, err := fs.cacheStore.Read(path, buff, ofst)
+		if err != nil {
+			fs.log.Debug("RemoteFs: Read: cache.Read error: %v", err)
+		}
+		if n > 0 {
+			handle.incrementRead(int64(n))
+			fs.log.Trace("RemoteFs: Read: readAt: path=%v, ofst=%d, read %d bytes from cache", path, ofst, n)
+			return n
+		}
 	}
 
 	// At this point, the read request could not be satisfied from the temporary file backing the
@@ -732,7 +745,7 @@ func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int
 	}
 	// now read from cache
 	want := min(endOffset-ofst, int64(len(buff)))
-	n, err = fs.cacheStore.Read(path, buff[:want], ofst)
+	n, err := fs.cacheStore.Read(path, buff[:want], ofst)
 	if err != nil {
 		fs.log.Debug("RemoteFs: Read: diskCache.Read error after WaitFor: %v", err)
 		return -fuse.EAGAIN
@@ -754,16 +767,23 @@ func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n in
 
 	// Lazy-create writer on first write with initial content and cache writer support
 	writer, created, err := node.ensureWriter(fs, fh, func() io.Reader {
-		// Get initial content from cache for partial file updates
+		// Get initial content from cache for partial file updates.
+		// Before creating the cacheReader, ensure the full file is in the cache.
+		// Without this, cacheReader would return early EOF for any region not yet
+		// downloaded, causing those regions to be uploaded as zeros when the file
+		// is closed. ensureFullyCached blocks until the download is complete, then
+		// the cacheReader has guaranteed access to the entire file content.
 		if node.info.size > 0 {
-			// Try to get content from cache
-			cacheReader := &cacheReader{
+			if err := fs.ensureFullyCached(path, node.downloadUri, node.info.size, fh); err != nil {
+				fs.log.Error("RemoteFs: Write: ensureFullyCached failed for %v: %v", path, err)
+				return nil
+			}
+			return &cacheReader{
 				cache:  fs.cacheStore,
 				path:   path,
 				size:   node.info.size,
 				logger: fs.log,
 			}
-			return cacheReader
 		}
 		return nil
 	}, func() fsio.CacheWriter {
@@ -833,7 +853,11 @@ func (fs *RemoteFs) Release(path string, fh uint64) (errc int) {
 	// set the node's expire time to expired so that the next Getattr call will trigger a reload of the node's info from the remote API.
 	defer node.expireInfo()
 
-	// If this handle owns the writer and has uncommitted writes, finalize the upload.
+	// Finalize the upload if it wasn't already handled by Flush (e.g. process
+	// exit without close, or platforms where Flush is not called before Release).
+	// On macOS this is normally a no-op: Flush runs fsyncNode which calls
+	// discardWriter, so writer and writerOwner are both cleared by the time
+	// Release runs.
 	if iOwn && hasWrites {
 		fs.log.Debug("RemoteFs: Release: finalizing upload for path=%v, fh=%v", path, fh)
 		if errc := fs.fsyncNode(path, node, fh); errc != 0 {
@@ -968,12 +992,12 @@ func (fs *RemoteFs) fsyncNode(path string, node *fsNode, fh uint64) (errc int) {
 		return -fuse.EIO
 	}
 
-	// Wait for the upload to complete with a timeout.
-	ctx, cancel := context.WithTimeout(context.Background(), fsyncTimeout)
-	defer cancel()
-
-	if err := node.waitForUploadIfFinalizing(ctx); err != nil {
-		fs.log.Debug("RemoteFs: fsyncNode: error waiting for upload to complete for %v: %v", path, err)
+	// Wait for the upload to complete, resetting the stall deadline whenever
+	// bytes are transferred. This prevents large file uploads (e.g. InDesign
+	// files) from being reported as failed simply because they take longer
+	// than a fixed wall-clock limit to upload.
+	if err := node.waitForUploadWithProgressTimeout(fsyncTimeout); err != nil {
+		fs.log.Debug("RemoteFs: fsyncNode: upload stalled for %v: %v", path, err)
 		return -fuse.ETIMEDOUT
 	}
 
@@ -1141,6 +1165,48 @@ func (fs *RemoteFs) removeGate(path string, s *cache.ReadyGate) {
 		delete(fs.readyGates, path)
 	}
 	fs.gatesMu.Unlock()
+}
+
+// ensureFullyCached ensures the remote file at path is fully downloaded to the cache.
+// If a download is already in progress it joins that download; otherwise it starts one.
+// It blocks until all size bytes are available in the cache (or the download finishes
+// short, indicated by io.EOF from WaitFor).
+//
+// A fast-path probe checks whether the last byte of the file is already readable. Because
+// fillCache writes sequentially, a readable last byte means the full file is present and
+// no network round-trip is needed.
+func (fs *RemoteFs) ensureFullyCached(path, uri string, size int64, fh uint64) error {
+	if size <= 0 {
+		return nil
+	}
+	// Fast path: if the last byte is in the cache, the full file is present.
+	probe := [1]byte{}
+	if n, _ := fs.cacheStore.Read(path, probe[:], size-1); n == 1 {
+		return nil
+	}
+	// Slow path: join or start a download and wait for the full file.
+	readyGate, exists := fs.findOrCreateGate(path)
+	if !exists {
+		go fs.fillCache(context.Background(), path, uri, readyGate, fh)
+	}
+	readyGate.Add()
+	defer readyGate.Done()
+	if err := readyGate.WaitFor(size); err != nil && err != io.EOF {
+		return err
+	}
+	return nil
+}
+
+// peekGate returns the existing ready gate for path if one is present, without creating one.
+// It is used to check whether a download is currently in progress for a given path.
+func (fs *RemoteFs) peekGate(path string) (*cache.ReadyGate, bool) {
+	fs.gatesMu.Lock()
+	defer fs.gatesMu.Unlock()
+	if fs.readyGates == nil {
+		return nil, false
+	}
+	s, ok := fs.readyGates[path]
+	return s, ok
 }
 
 func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, readyGate *cache.ReadyGate, fh uint64) {
@@ -1726,6 +1792,24 @@ func (fs *RemoteFs) Access(path string, mask uint32) int {
 // The return value of -fuse.ENOSYS indicates the method is not supported.
 func (fs *RemoteFs) Flush(path string, fh uint64) int {
 	fs.log.Trace("RemoteFs: Flush: path=%v, fh=%v", path, fh)
+
+	handle, node, ok := fs.vfs.handles.Lookup(fh)
+	if !ok || handle.IsReadOnly() {
+		return 0
+	}
+
+	// On macOS, close(2) returns after Flush completes — not after Release.
+	// Release runs asynchronously, so finalizing the upload there causes
+	// fuse_do_release to block, which triggers a libfuse-t assertion failure
+	// (open_count > 0) when a second release arrives before the first completes.
+	// Finalizing here ensures Release returns quickly and the upload is committed
+	// before the OS reports the copy as done.
+	_, owner, hasWrites := node.writerSnapshot()
+	if owner == fh && hasWrites {
+		fs.log.Debug("RemoteFs: Flush: finalizing upload for path=%v, fh=%v", path, fh)
+		return fs.fsyncNode(path, node, fh)
+	}
+
 	return 0
 }
 

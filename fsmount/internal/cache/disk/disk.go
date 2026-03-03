@@ -115,8 +115,10 @@ type DiskCache struct {
 	// current cache stats
 	stats cache.Stats
 
-	// protects from concurrent write operations
-	writeMu sync.Mutex
+	// protects from concurrent read and write operations.
+	// Write acquires the exclusive lock; Read acquires the shared (read) lock.
+	// This prevents concurrent reads from observing partially-written file data.
+	writeMu sync.RWMutex
 
 	// protects from concurrent delete operations
 	delMu sync.Mutex
@@ -233,6 +235,12 @@ func (dc *DiskCache) Read(path string, buff []byte, ofst int64) (n int, err erro
 	if dc.Disabled {
 		return 0, nil
 	}
+	// Acquire the shared read lock to prevent reading partially-written data
+	// from a concurrent Write. Without this, a Read at an offset within a chunk
+	// being written by WriteAt can observe zeros (OS-extended but not yet written
+	// pages), which the early cache check in remotefs.go treats as valid data.
+	dc.writeMu.RLock()
+	defer dc.writeMu.RUnlock()
 	dc.stats.ReadCount.Add(1)
 	fqPath := dc.entryPath(path)
 
