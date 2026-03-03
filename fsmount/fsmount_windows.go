@@ -114,6 +114,8 @@ func additionalIgnorePatterns() []string {
 		"[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F].tmp",
 		"[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F].tmp",
 		"[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F].tmp",
+		// photoshop temp files
+		"ps[0-9A-F][0-9A-F][0-9A-F][0-9A-F].tmp",
 		// Adobe InDesign temp files
 		// test4c4a9d1c-5b46.TMP
 		"test[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]-[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f].TMP",
