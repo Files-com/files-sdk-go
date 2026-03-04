@@ -109,17 +109,10 @@ func additionalIgnorePatterns() []string {
 		// AD70B1.tmp
 		// AD70B13.tmp
 		// AD70B13E.tmp
-		"~WR*.tmp",
-		"~DF*.tmp",
-		"[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F].tmp",
-		"[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F].tmp",
-		"[0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F][0-9A-F].tmp",
-		// photoshop temp files
-		"ps[0-9A-F][0-9A-F][0-9A-F][0-9A-F].tmp",
-		// Adobe InDesign temp files
-		// test4c4a9d1c-5b46.TMP
-		"test[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]-[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f].TMP",
-		// autocad temp files
-		"save[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f].tmp",
+		// photoshop temp files - "psAF90.tmp",
+		// Adobe InDesign temp files - "test4c4a9d1c-5b46.TMP"
+		// autocad temp files - "save686566b0.tmp"
+		// illustrator temp files - "A9R2gnwq7_ax8nkp_1944.tmp"
+		"?*.[tT][mM][pP]",
 	}
 }

@@ -122,8 +122,8 @@ func additionalIgnorePatterns() []string {
 		"*.xlsm.sb-*",
 		"*.xlsx.sb-*",
 		".Trash-*/",
-		"~WR*.tmp",
 		"*.smbdelete*",
+		"?*.[tT][mM][pP]",
 	}
 }
 
