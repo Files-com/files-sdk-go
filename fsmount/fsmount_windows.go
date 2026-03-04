@@ -119,5 +119,7 @@ func additionalIgnorePatterns() []string {
 		// Adobe InDesign temp files
 		// test4c4a9d1c-5b46.TMP
 		"test[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]-[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f].TMP",
+		// autocad temp files
+		"save[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f].tmp",
 	}
 }
