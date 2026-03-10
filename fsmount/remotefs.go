@@ -766,26 +766,8 @@ func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n in
 	}
 
 	// Lazy-create writer on first write with initial content and cache writer support
-	writer, created, err := node.ensureWriter(fs, fh, func() io.Reader {
-		// Get initial content from cache for partial file updates.
-		// Before creating the cacheReader, ensure the full file is in the cache.
-		// Without this, cacheReader would return early EOF for any region not yet
-		// downloaded, causing those regions to be uploaded as zeros when the file
-		// is closed. ensureFullyCached blocks until the download is complete, then
-		// the cacheReader has guaranteed access to the entire file content.
-		if node.info.size > 0 {
-			if err := fs.ensureFullyCached(path, node.downloadUri, node.info.size, fh); err != nil {
-				fs.log.Error("RemoteFs: Write: ensureFullyCached failed for %v: %v", path, err)
-				return nil
-			}
-			return &cacheReader{
-				cache:  fs.cacheStore,
-				path:   path,
-				size:   node.info.size,
-				logger: fs.log,
-			}
-		}
-		return nil
+	writer, created, err := node.ensureWriter(fs, fh, func() (io.Reader, error) {
+		return fs.initialContentForWrite(path, node, fh)
 	}, func() fsio.CacheWriter {
 		// Return a cache writer that updates cache in real-time as writes occur
 		return func(data []byte, offset int64) (int, error) {
@@ -808,6 +790,35 @@ func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n in
 		return errc
 	}
 	return n
+}
+
+func (fs *RemoteFs) initialContentForWrite(path string, node *fsNode, fh uint64) (io.Reader, error) {
+	// Before creating the cacheReader, ensure the full file is in the cache.
+	// Without this, cacheReader would return early EOF for any region not yet
+	// downloaded, causing those regions to be uploaded as zeros when the file
+	// is closed. ensureFullyCached blocks until the download is complete, then
+	// the cacheReader has guaranteed access to the entire file content.
+	if node.info.size <= 0 {
+		return nil, nil
+	}
+
+	if err := fs.ensureFullyCached(path, node.downloadUri, node.info.size, fh); err != nil {
+		if files_sdk.IsNotExist(err) {
+			fs.log.Info("Previous file version was missing during save, continuing with new file: %v", path)
+			node.markDeleted()
+			return nil, nil
+		}
+
+		fs.log.Error("RemoteFs: Write: ensureFullyCached failed for %v: %v", path, err)
+		return nil, err
+	}
+
+	return &cacheReader{
+		cache:  fs.cacheStore,
+		path:   path,
+		size:   node.info.size,
+		logger: fs.log,
+	}, nil
 }
 
 func (fs *RemoteFs) Release(path string, fh uint64) (errc int) {
@@ -1476,19 +1487,23 @@ func (fs *RemoteFs) delete(path string) (errc int) {
 
 	// if there's an error, and it's a not-found, consider it a success.
 	if files_sdk.IsNotExist(err) {
-		// if the delete was successful, remove the node from the vfs
-		fs.vfs.remove(path)
-		_ = fs.cacheStore.Delete(path)
+		fs.finalizeDelete(path)
 		return errc
 	}
 	// for any other error, handle it normally
 	if errc = fs.handleError(path, err); errc != 0 {
 		return errc
 	}
-	// if the delete was successful, remove the node from the vfs
+	fs.finalizeDelete(path)
+	return errc
+}
+
+func (fs *RemoteFs) finalizeDelete(path string) {
+	if node, ok := fs.vfs.fetch(path); ok {
+		node.markDeleted()
+	}
 	fs.vfs.remove(path)
 	_ = fs.cacheStore.Delete(path)
-	return errc
 }
 
 func (fs *RemoteFs) loadParent(path string) (errc int) {

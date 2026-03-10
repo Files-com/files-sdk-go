@@ -200,7 +200,7 @@ func (n *fsNode) markWriteIntent(fh uint64) {
 
 // ensureWriter creates the writer if it doesn't exist (called from first Write).
 // Returns the writer and whether it was just created.
-func (n *fsNode) ensureWriter(fsWriter FSWriter, fh uint64, getInitialContent func() io.Reader, getCacheWriter func() fsio.CacheWriter) (*fsio.OrderedPipe, bool, error) {
+func (n *fsNode) ensureWriter(fsWriter FSWriter, fh uint64, getInitialContent func() (io.Reader, error), getCacheWriter func() fsio.CacheWriter) (*fsio.OrderedPipe, bool, error) {
 	n.writeMu.Lock()
 	defer n.writeMu.Unlock()
 
@@ -226,7 +226,11 @@ func (n *fsNode) ensureWriter(fsWriter FSWriter, fh uint64, getInitialContent fu
 	opts = append(opts, fsio.WithLogger(n.logger))
 
 	if getInitialContent != nil {
-		if reader := getInitialContent(); reader != nil {
+		reader, err := getInitialContent()
+		if err != nil {
+			return nil, false, err
+		}
+		if reader != nil {
 			opts = append(opts, fsio.WithInitialContent(reader))
 		}
 	}
@@ -342,6 +346,14 @@ func (n *fsNode) setDownloadURI(uri string) {
 
 func (n *fsNode) clearDownloadURI() {
 	n.setDownloadURI("")
+}
+
+// markDeleted clears the remote-file identity from the node so surviving open
+// handles behave like a new file rather than a stale reference to a deleted object.
+func (n *fsNode) markDeleted() {
+	n.updateSize(0)
+	n.clearDownloadURI()
+	n.expireInfo()
 }
 
 // writerIsOpen reports if a writer is present.
