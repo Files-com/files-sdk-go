@@ -103,16 +103,5 @@ func additionalIgnorePatterns() []string {
 		// Microsoft Office lock/owner files (sidecar next to the doc)
 		// ~$*
 		"~$*",
-		// Office scratch temp files
-		// ~WR*.tmp
-		// ~DF*.tmp
-		// AD70B1.tmp
-		// AD70B13.tmp
-		// AD70B13E.tmp
-		// photoshop temp files - "psAF90.tmp",
-		// Adobe InDesign temp files - "test4c4a9d1c-5b46.TMP"
-		// autocad temp files - "save686566b0.tmp"
-		// illustrator temp files - "A9R2gnwq7_ax8nkp_1944.tmp"
-		"?*.[tT][mM][pP]",
 	}
 }

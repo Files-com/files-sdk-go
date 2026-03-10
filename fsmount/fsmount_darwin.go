@@ -102,8 +102,6 @@ func mountOpts(params MountParams) []string {
 // macOS safe-save temp DIRECTORIES (Word/Pages/TextEdit)
 // Use trailing slash so only directories match.
 // *.sb-*/
-// Office scratch temp files (occasionally appear on macOS)
-// ~WR*.tmp
 // Per-volume Trash directories (external/network volumes)
 // .Trash-*/
 func additionalIgnorePatterns() []string {
@@ -123,7 +121,6 @@ func additionalIgnorePatterns() []string {
 		"*.xlsx.sb-*",
 		".Trash-*/",
 		"*.smbdelete*",
-		"?*.[tT][mM][pP]",
 	}
 }
 

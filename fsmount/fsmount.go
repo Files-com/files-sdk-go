@@ -424,11 +424,25 @@ func diskCachePath(params MountParams) (string, error) {
 	return path, nil
 }
 
+// commonIgnorePatterns returns ignore patterns shared across all platforms.
+//
+// Office scratch temp files: ~WR*.tmp, ~DF*.tmp, AD70B1.tmp, etc.
+// Photoshop temp files: psAF90.tmp
+// Adobe InDesign temp files: test4c4a9d1c-5b46.TMP
+// AutoCAD temp files: save686566b0.tmp
+// Illustrator temp files: A9R2gnwq7_ax8nkp_1944.tmp
+func commonIgnorePatterns() []string {
+	return []string{
+		"*.[tT][mM][pP]",
+	}
+}
+
 func ignoreFromPatterns(patterns []string) (*gogitignore.GitIgnore, error) {
 	switch patterns {
 	case nil:
 		// use OS-specific defaults + additional common patterns
-		return ignore.NewWithDenyList(additionalIgnorePatterns()...)
+		combined := append(additionalIgnorePatterns(), commonIgnorePatterns()...)
+		return ignore.NewWithDenyList(combined...)
 	default:
 		// use provided override patterns
 		return ignore.New(patterns...)
