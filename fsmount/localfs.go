@@ -302,7 +302,7 @@ func (fs *LocalFs) open(path string, flags int, mode uint32) (errc int, fh uint6
 		return -fuse.EIO, ^uint64(0)
 	}
 	fuseFlags := ff.NewFuseFlags(flags)
-	f, err := os.OpenFile(path, fuseFlags.AsOsFlags(), os.FileMode(mode))
+	f, err := openLocalFile(path, fuseFlags.AsOsFlags(), os.FileMode(mode))
 	if err != nil {
 		// this is expected in some cases, like .DS_Store files on macOS, so log at Debug level
 		errc = toErrno(err)

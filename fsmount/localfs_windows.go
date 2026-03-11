@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/winfsp/cgofuse/fuse"
+	"golang.org/x/sys/windows"
 )
 
 func (fs *LocalFs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
@@ -83,4 +84,56 @@ func (fs *LocalFs) createLocalNode(path string, entry os.DirEntry) (*fsNode, err
 	})
 
 	return node, nil
+}
+
+func openLocalFile(path string, flags int, mode os.FileMode) (*os.File, error) {
+	pathPtr, err := windows.UTF16PtrFromString(path)
+	if err != nil {
+		return nil, err
+	}
+
+	access := uint32(0)
+	switch flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR) {
+	case os.O_WRONLY:
+		access = windows.GENERIC_WRITE
+	case os.O_RDWR:
+		access = windows.GENERIC_READ | windows.GENERIC_WRITE
+	default:
+		access = windows.GENERIC_READ
+	}
+
+	if flags&os.O_APPEND != 0 {
+		access |= windows.FILE_APPEND_DATA
+	}
+
+	shareMode := uint32(windows.FILE_SHARE_READ | windows.FILE_SHARE_WRITE | windows.FILE_SHARE_DELETE)
+
+	var creationDisposition uint32
+	switch {
+	case flags&(os.O_CREATE|os.O_EXCL) == (os.O_CREATE | os.O_EXCL):
+		creationDisposition = windows.CREATE_NEW
+	case flags&(os.O_CREATE|os.O_TRUNC) == (os.O_CREATE | os.O_TRUNC):
+		creationDisposition = windows.CREATE_ALWAYS
+	case flags&os.O_CREATE != 0:
+		creationDisposition = windows.OPEN_ALWAYS
+	case flags&os.O_TRUNC != 0:
+		creationDisposition = windows.TRUNCATE_EXISTING
+	default:
+		creationDisposition = windows.OPEN_EXISTING
+	}
+
+	handle, err := windows.CreateFile(
+		pathPtr,
+		access,
+		shareMode,
+		nil,
+		creationDisposition,
+		windows.FILE_ATTRIBUTE_NORMAL,
+		0,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return os.NewFile(uintptr(handle), path), nil
 }
