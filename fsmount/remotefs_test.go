@@ -342,3 +342,147 @@ func TestSurvivingHandleCanCreateReplacementWriterAfterFinalizeDelete(t *testing
 		t.Fatalf("unexpected write length: got %d want %d", n, len(replacement))
 	}
 }
+
+func TestFsyncDoesNotFinalizeOpenWriter(t *testing.T) {
+	fs, vfs, cacheStore := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	path := "/design.indd"
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeFile,
+		size:         128,
+		modTime:      time.Now(),
+		creationTime: time.Now(),
+	})
+
+	fh, _ := vfs.handles.Open(node, ff.NewFuseFlags(fuse.O_RDWR))
+	node.markWriteIntent(fh)
+
+	writer, created, err := node.ensureWriter(noopFSWriter{}, fh, func() (io.Reader, error) {
+		return nil, nil
+	}, func() fsio.CacheWriter {
+		return func(data []byte, offset int64) (int, error) {
+			return cacheStore.Write(path, data, offset)
+		}
+	})
+	if err != nil {
+		t.Fatalf("ensureWriter returned unexpected error: %v", err)
+	}
+	if !created {
+		t.Fatal("expected writer to be created")
+	}
+
+	if _, err := writer.WriteAt([]byte("abcd"), 0); err != nil {
+		t.Fatalf("first WriteAt failed: %v", err)
+	}
+
+	if errc := fs.Fsync(path, false, fh); errc != 0 {
+		t.Fatalf("Fsync returned unexpected error: %d", errc)
+	}
+
+	snapshotWriter, owner, hasWrites := node.writerSnapshot()
+	if snapshotWriter != writer {
+		t.Fatal("expected Fsync to keep the existing writer open")
+	}
+	if owner != fh {
+		t.Fatalf("expected writer owner to remain %d, got %d", fh, owner)
+	}
+	if !hasWrites {
+		t.Fatal("expected writer to still report buffered writes after Fsync")
+	}
+
+	reusedWriter, created, err := node.ensureWriter(noopFSWriter{}, fh, func() (io.Reader, error) {
+		return nil, nil
+	}, func() fsio.CacheWriter {
+		return func(data []byte, offset int64) (int, error) {
+			return cacheStore.Write(path, data, offset)
+		}
+	})
+	if err != nil {
+		t.Fatalf("ensureWriter returned unexpected error after Fsync: %v", err)
+	}
+	if created {
+		t.Fatal("expected existing writer to be reused after Fsync")
+	}
+	if reusedWriter != writer {
+		t.Fatal("expected ensureWriter to return the original writer after Fsync")
+	}
+
+	if _, err := reusedWriter.WriteAt([]byte("efgh"), 4); err != nil {
+		t.Fatalf("second WriteAt failed: %v", err)
+	}
+
+	buf := make([]byte, 8)
+	n, err := cacheStore.Read(path, buf, 0)
+	if err != nil {
+		t.Fatalf("cache Read failed: %v", err)
+	}
+	if n != 8 {
+		t.Fatalf("expected cache to reflect both writes, got %d bytes", n)
+	}
+	if string(buf[:n]) != "abcdefgh" {
+		t.Fatalf("unexpected cached content: got %q want %q", string(buf[:n]), "abcdefgh")
+	}
+
+	if errc := fs.Release(path, fh); errc != 0 {
+		t.Fatalf("Release returned unexpected error: %d", errc)
+	}
+	if node.writerIsOpen() {
+		t.Fatal("expected Release to finalize and discard the writer")
+	}
+}
+
+func TestFsyncWaitsForUploadAlreadyFinalizing(t *testing.T) {
+	fs, vfs, cacheStore := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	path := "/design.indd"
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeFile,
+		size:         64,
+		modTime:      time.Now(),
+		creationTime: time.Now(),
+	})
+
+	fh, _ := vfs.handles.Open(node, ff.NewFuseFlags(fuse.O_RDWR))
+	node.markWriteIntent(fh)
+
+	writer, _, err := node.ensureWriter(noopFSWriter{}, fh, func() (io.Reader, error) {
+		return nil, nil
+	}, func() fsio.CacheWriter {
+		return func(data []byte, offset int64) (int, error) {
+			return cacheStore.Write(path, data, offset)
+		}
+	})
+	if err != nil {
+		t.Fatalf("ensureWriter returned unexpected error: %v", err)
+	}
+	if _, err := writer.WriteAt([]byte("pending"), 0); err != nil {
+		t.Fatalf("WriteAt failed: %v", err)
+	}
+
+	_, cancel := context.WithCancel(context.Background())
+	node.startUpload(path, cancel)
+	if err := node.closeWriter(); err != nil {
+		t.Fatalf("closeWriter failed: %v", err)
+	}
+
+	uploadClosed := make(chan struct{})
+	go func() {
+		time.Sleep(20 * time.Millisecond)
+		node.closeUpload(7)
+		close(uploadClosed)
+	}()
+
+	if errc := fs.Fsync(path, false, fh); errc != 0 {
+		t.Fatalf("Fsync returned unexpected error while waiting for finalization: %d", errc)
+	}
+
+	select {
+	case <-uploadClosed:
+	default:
+		t.Fatal("expected Fsync to wait for the in-flight finalization to finish")
+	}
+}

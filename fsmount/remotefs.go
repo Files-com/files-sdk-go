@@ -962,8 +962,9 @@ func (fs *RemoteFs) Chmod(path string, mode uint32) int {
 }
 
 // Fsync attempts to synchronize file contents.
-// If an upload is active but the writer is already closed (finalizing in background),
-// wait for completion. Otherwise, fall back to ENOSYS.
+// If an upload is already finalizing in the background, wait for it to complete.
+// If the writer is still open, do not finalize it here; some applications issue
+// repeated Fsync calls while continuing to write through the same handle.
 func (fs *RemoteFs) Fsync(path string, datasync bool, fh uint64) (errc int) {
 	fs.log.Debug("RemoteFs: Fsync: path=%v, datasync=%v, fh=%v", path, datasync, fh)
 
@@ -973,22 +974,31 @@ func (fs *RemoteFs) Fsync(path string, datasync bool, fh uint64) (errc int) {
 		return -fuse.EBADF
 	}
 
-	// Check if this handle owns a writer with uncommitted writes.
-	_, owner, hasWrites := node.writerSnapshot()
+	writer, owner, hasWrites := node.writerSnapshot()
 	if owner != fh {
-		// This handle doesn't own the writer, nothing to fsync.
 		fs.log.Debug("RemoteFs: Fsync: handle does not own writer for path=%v, fh=%v", path, fh)
 		return 0
 	}
 
-	if !hasWrites {
-		// No writes to sync.
-		fs.log.Debug("RemoteFs: Fsync: no writes to sync for path=%v, fh=%v", path, fh)
+	if writer != nil {
+		// The writer is still open, so this handle may continue writing after fsync.
+		// Finalizing here would force subsequent writes to recreate the writer and
+		// rehydrate from partially uploaded remote state.
+		if hasWrites {
+			fs.log.Debug("RemoteFs: Fsync: writer still open, deferring finalization for path=%v, fh=%v", path, fh)
+		} else {
+			fs.log.Debug("RemoteFs: Fsync: no writes to sync for path=%v, fh=%v", path, fh)
+		}
 		return 0
 	}
 
-	// Finalize the upload.
-	return fs.fsyncNode(path, node, fh)
+	// If the writer is already closed but an upload is still active, wait for it.
+	if err := node.waitForUploadWithProgressTimeout(fsyncTimeout); err != nil {
+		fs.log.Debug("RemoteFs: Fsync: upload stalled while finalizing %v: %v", path, err)
+		return -fuse.ETIMEDOUT
+	}
+
+	return 0
 }
 
 // fsyncNode finalizes an upload for a node with uncommitted writes.
