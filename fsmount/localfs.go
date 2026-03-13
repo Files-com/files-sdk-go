@@ -241,7 +241,7 @@ func (fs *LocalFs) Rmdir(path string) (errc int) {
 	path = fs.fqPath(path)
 	if err := os.RemoveAll(path); err != nil {
 		fs.log.Debug("LocalFs: Rmdir: failed to remove directory: path=%v, err=%v", path, err)
-		return -fuse.EIO
+		return toErrno(err)
 	}
 	fs.vfs.remove(path)
 	return errc
@@ -252,7 +252,7 @@ func (fs *LocalFs) Rename(oldpath string, newpath string) (errc int) {
 	newpath = fs.fqPath(newpath)
 	if err := os.Rename(oldpath, newpath); err != nil {
 		fs.log.Debug("LocalFs: Rename: failed to rename file: oldpath=%v, newpath=%v, err=%v", oldpath, newpath, err)
-		return -fuse.EIO
+		return toErrno(err)
 	}
 	fs.rename(oldpath, newpath)
 	return errc

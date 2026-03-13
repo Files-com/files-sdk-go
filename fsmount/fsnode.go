@@ -131,6 +131,23 @@ func (n *fsNode) updateSize(size int64) {
 	n.extendTtl()
 }
 
+func (n *fsNode) updateSizeAtLeast(size int64) {
+	n.statusMu.Lock()
+	defer n.statusMu.Unlock()
+	if size > n.info.size {
+		n.downloadUri = ""
+		n.info.size = size
+	}
+	n.extendTtl()
+}
+
+func (n *fsNode) setLockOwner(owner string) {
+	n.statusMu.Lock()
+	defer n.statusMu.Unlock()
+	n.info.lockOwner = owner
+	n.extendTtl()
+}
+
 func (n *fsNode) updateChildPaths(buildChildPaths func(string) (map[string]struct{}, error)) (err error) {
 	n.childPathsMutex.Lock()
 	defer n.childPathsMutex.Unlock()
@@ -374,6 +391,12 @@ func (n *fsNode) writerSnapshot() (w *fsio.OrderedPipe, owner uint64, hasWrites 
 	}
 	n.writeMu.Unlock()
 	return w, owner, hasWrites
+}
+
+func (n *fsNode) uploadActive() bool {
+	n.uploadMu.Lock()
+	defer n.uploadMu.Unlock()
+	return n.upload != nil
 }
 
 // readFromWriter reads from the in-flight writer without exposing locks.

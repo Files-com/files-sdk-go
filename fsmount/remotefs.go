@@ -301,31 +301,32 @@ func (fs *RemoteFs) Mkdir(path string, mode uint32) (errc int) {
 		_, err := fs.fileClient.CreateFolder(files_sdk.FolderCreateParams{Path: remotePath})
 		return err
 	})
-	if errors.Is(err, lim.ErrNoSlotsAvailable) {
-		return -fuse.EAGAIN
-	}
-	if files_sdk.IsExist(err) {
-		return errc
-	}
-
 	if errc = fs.handleError(path, err); errc != 0 {
 		return errc
 	}
 
 	node := fs.vfs.getOrCreate(path, nodeTypeDir)
-	node.updateSize(0)
+	node.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeDir,
+		size:         0,
+		modTime:      time.Now(),
+		creationTime: time.Now(),
+	})
 
 	return errc
 }
 
 func (fs *RemoteFs) Unlink(path string) (errc int) {
 	localPath, remotePath := fs.paths(path)
-
-	node, exists := fs.vfs.fetch(path)
-	if !exists {
+	node, errc := fs.fetchNodeWithParentRefresh(path)
+	if errc != 0 {
 		// If the node doesn't exist, it can not be deleted.
 		fs.log.Debug("RemoteFs: Unlink: File not found: %v (%v)", remotePath, localPath)
 		return errc
+	}
+	if node.info.nodeType == nodeTypeDir {
+		fs.log.Debug("RemoteFs: Unlink: Path is a directory: %v (%v)", remotePath, localPath)
+		return -fuse.EISDIR
 	}
 
 	// If the node is locked, it can not be deleted.
@@ -346,8 +347,19 @@ func (fs *RemoteFs) Unlink(path string) (errc int) {
 	return fs.delete(path)
 }
 
-func (fs *RemoteFs) Rmdir(path string) int {
+func (fs *RemoteFs) Rmdir(path string) (errc int) {
 	localPath, remotePath := fs.paths(path)
+	node, errc := fs.fetchNodeWithParentRefresh(path)
+	if errc != 0 {
+		// If the node doesn't exist, it can not be deleted.
+		fs.log.Debug("RemoteFs: Rmdir: directory not found: %v (%v)", remotePath, localPath)
+		return errc
+	}
+
+	if node.info.nodeType != nodeTypeDir {
+		fs.log.Debug("RemoteFs: Rmdir: Path is not a directory: %v (%v)", remotePath, localPath)
+		return -fuse.ENOTDIR
+	}
 	fs.log.Info("Deleting folder: %v (%v)", remotePath, localPath)
 
 	return fs.delete(path)
@@ -412,7 +424,11 @@ func (fs *RemoteFs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 	modT := tmsp[1].Time()
 	fs.log.Debug("RemoteFs: Utimens: Updating mtime for: %v (%v) (mtime=%v)", remotePath, localPath, modT)
 
-	node := fs.vfs.getOrCreate(path, nodeTypeFile)
+	node, errc := fs.fetchNodeWithParentRefresh(path)
+	if errc != 0 {
+		return errc
+	}
+
 	node.info.modTime = modT
 
 	if node.isWriterOpen() {
@@ -560,6 +576,23 @@ func (fs *RemoteFs) Open(path string, flags int) (errc int, fh uint64) {
 	fs.log.Debug("RemoteFs: Open: marked write intent for path=%v, fh=%v", path, fh)
 
 	return errc, fh
+}
+
+func (fs *RemoteFs) fetchNodeWithParentRefresh(path string) (node *fsNode, errc int) {
+	if node, ok := fs.vfs.fetch(path); ok && !node.infoExpired() {
+		return node, 0
+	}
+
+	if errc = fs.loadParent(path); errc != 0 {
+		return nil, errc
+	}
+
+	node, ok := fs.vfs.fetch(path)
+	if !ok {
+		return nil, -fuse.ENOENT
+	}
+
+	return node, 0
 }
 
 func (fs *RemoteFs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
@@ -788,6 +821,9 @@ func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n in
 	n, writeErr := writer.WriteAt(buff, ofst)
 	if errc := fs.handleError(path, writeErr); errc != 0 {
 		return errc
+	}
+	if n > 0 {
+		node.updateSizeAtLeast(ofst + int64(n))
 	}
 	return n
 }
@@ -1331,6 +1367,20 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 	localPath, remotePath := fs.paths(node.path)
 	fs.log.Debug("RemoteFs: lock: file %v (%v) fh=%v", remotePath, localPath, fh)
 
+	fs.lockMapMutex.Lock()
+	linfo, ok := fs.lockMap[node.path]
+	fs.lockMapMutex.Unlock()
+	if ok {
+		if fs.currentUserId == linfo.Lock.UserId {
+			node.setLockOwner(linfo.Lock.Username)
+			fs.log.Debug("RemoteFs: lock: reusing existing same-user lock for %v (%v) fh=%v", remotePath, localPath, fh)
+			return 0
+		}
+		node.setLockOwner(linfo.Lock.Username)
+		fs.log.Error("File '%v' is already locked by %v:", remotePath, linfo.Lock.Username)
+		return -fuse.ENOLCK
+	}
+
 	if node.isLocked() {
 		fs.log.Error("File is already locked by %v: %v (%v) fh=%v", node.info.lockOwner, remotePath, localPath, fh)
 		errc = -fuse.ENOLCK
@@ -1361,12 +1411,19 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 		fs.lockMapMutex.Unlock()
 
 		if ok && fs.currentUserId != linfo.Lock.UserId {
+			node.setLockOwner(linfo.Lock.Username)
 			fs.log.Error("File '%v' is already locked by %v:", remotePath, linfo.Lock.Username)
 			return -fuse.ENOLCK
 		}
 		if ok && fs.currentUserId == linfo.Lock.UserId {
 			// If the lock is already held by the current user, treat it as a success.
+			node.setLockOwner(linfo.Lock.Username)
 			fs.log.Debug("RemoteFs: lock: File is already locked by current user %v: %v (%v) fh=%v", fs.currentUserId, remotePath, localPath, fh)
+			return 0
+		}
+		if node.uploadActive() {
+			node.setLockOwner("current-user")
+			fs.log.Debug("RemoteFs: lock: treating backend lock conflict as in-flight upload reuse for %v (%v) fh=%v", remotePath, localPath, fh)
 			return 0
 		}
 	}
@@ -1379,6 +1436,7 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 	fs.lockMapMutex.Lock()
 	fs.lockMap[node.path] = &lockInfo{Fh: fh, Lock: &lock}
 	fs.lockMapMutex.Unlock()
+	node.setLockOwner(lock.Username)
 
 	fs.log.Debug("RemoteFs: lock: created owner=%v, path=%v, fh=%v", lock.Username, remotePath, fh)
 	return errc
@@ -1434,6 +1492,9 @@ func (fs *RemoteFs) unlock(path string, fh uint64) (errc int) {
 		fs.lockMapMutex.Lock()
 		delete(fs.lockMap, path)
 		fs.lockMapMutex.Unlock()
+		if node, ok := fs.vfs.fetch(path); ok {
+			node.setLockOwner("")
+		}
 		return errc
 	}
 	// for any other error, handle it normally
@@ -1445,6 +1506,9 @@ func (fs *RemoteFs) unlock(path string, fh uint64) (errc int) {
 	fs.lockMapMutex.Lock()
 	delete(fs.lockMap, path)
 	fs.lockMapMutex.Unlock()
+	if node, ok := fs.vfs.fetch(path); ok {
+		node.setLockOwner("")
+	}
 
 	return errc
 }
@@ -1478,12 +1542,26 @@ func (fs *RemoteFs) handleError(path string, err error) int {
 		if files_sdk.IsExist(err) {
 			return -fuse.EEXIST
 		}
+		if errors.Is(err, lim.ErrNoSlotsAvailable) {
+			return -fuse.EAGAIN
+		}
 		if isFolderNotEmpty(err) {
 			return -fuse.ENOTEMPTY
+		}
+		if isResourceLocked(err) {
+			return -fuse.EAGAIN
 		}
 		return -fuse.EIO
 	}
 	return 0
+}
+
+func isResourceLocked(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "resource locked") || strings.Contains(msg, "exclusive lock")
 }
 
 func (fs *RemoteFs) delete(path string) (errc int) {
