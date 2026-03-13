@@ -1144,42 +1144,104 @@ func (fs *RemoteFs) writeFile(path string, reader io.Reader, mtime time.Time, fh
 func (fs *RemoteFs) uploadFile(src, dst string) error {
 	fs.log.Debug("Uploading file: %v to %v", src, dst)
 
-	// Open the source file
-	srcFile, err := os.Open(src)
+	// Open independent file handles so the upload path can use a seekable reader
+	// while cache population reads sequentially in parallel.
+	uploadFile, err := os.Open(src)
 	if err != nil {
 		return err
 	}
-	defer srcFile.Close()
+	defer uploadFile.Close()
+
+	cacheFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer cacheFile.Close()
 
 	// Get file info for size and mtime
-	fileInfo, err := srcFile.Stat()
+	fileInfo, err := uploadFile.Stat()
 	if err != nil {
 		return err
 	}
 
-	// Create a cache writer adapter with TeeReader
-	var offset int64
-	cacheWriter := &cacheWriterAdapter{
-		writer: func(data []byte, off int64) (int, error) {
-			return fs.cacheStore.Write(dst, data, off)
-		},
-		offset: &offset,
-	}
-	teeReader := io.TeeReader(srcFile, cacheWriter)
+	localPath, remotePath := fs.paths(dst)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	// Upload with the TeeReader (writes to cache as it reads)
-	err = fs.ops.WithLimit(context.Background(), lim.FuseOpUpload, func(ctx context.Context) error {
-		return fs.fileClient.Upload(
-			file.UploadWithReader(teeReader),
-			file.UploadWithDestinationPath(dst),
-		)
-	})
-	if err != nil {
-		return err
-	}
-
-	// Update the node's info with the uploaded file details
 	node := fs.vfs.getOrCreate(dst, nodeTypeFile)
+	uploadErrCh := make(chan error, 1)
+	cacheErrCh := make(chan error, 1)
+
+	go func() {
+		uploadOpts := []file.UploadOption{
+			file.UploadWithContext(ctx),
+			file.UploadWithReaderAt(uploadFile),
+			file.UploadWithSize(fileInfo.Size()),
+			file.UploadWithDestinationPath(remotePath),
+			file.UploadWithProvidedMtime(fileInfo.ModTime()),
+			file.UploadWithProgress(fs.uploadProgressFunc(node)),
+			file.WithUploadStartedCallback(func(part files_sdk.FileUploadPart) {
+				fs.log.Debug("RemoteFs: uploadFile: uploading part number %d, of: %v, ref: '%v'", part.PartNumber, remotePath, part.Ref)
+			}),
+		}
+
+		uploadErrCh <- fs.ops.WithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
+			return fs.fileClient.Upload(uploadOpts...)
+		})
+	}()
+
+	go func() {
+		var offset int64
+		for {
+			buffer := make([]byte, cacheWriteSize)
+			n, readErr := cacheFile.Read(buffer)
+			if n > 0 {
+				if _, err := fs.cacheStore.Write(dst, buffer[:n], offset); err != nil {
+					cacheErrCh <- err
+					return
+				}
+				offset += int64(n)
+			}
+			if readErr == nil {
+				continue
+			}
+			if errors.Is(readErr, io.EOF) {
+				cacheErrCh <- nil
+				return
+			}
+			cacheErrCh <- readErr
+			return
+		}
+	}()
+
+	var uploadErr error
+	var cacheErr error
+	for i := 0; i < 2; i++ {
+		select {
+		case uploadErr = <-uploadErrCh:
+			if uploadErr != nil {
+				cancel()
+			}
+		case cacheErr = <-cacheErrCh:
+			if cacheErr != nil {
+				fs.cacheStore.Delete(dst)
+			}
+		}
+	}
+
+	if cacheErr != nil {
+		fs.log.Error("Error populating cache during rename upload; invalidating cache entry: %v (%v): %v", remotePath, localPath, cacheErr)
+	}
+
+	if uploadErr != nil {
+		if !errors.Is(uploadErr, context.Canceled) && !files_sdk.IsNotExist(uploadErr) {
+			fs.log.Error("Error uploading file during rename: %v (%v): %v", remotePath, localPath, uploadErr)
+		}
+		return uploadErr
+	}
+
+	// Update the node's info after both upload and cache population succeed.
+	fs.log.Info("Upload completed: %v (%v).", remotePath, localPath)
 	node.updateInfo(fsNodeInfo{
 		nodeType:     nodeTypeFile,
 		size:         fileInfo.Size(),
