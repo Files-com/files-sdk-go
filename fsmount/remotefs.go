@@ -331,8 +331,16 @@ func (fs *RemoteFs) Unlink(path string) (errc int) {
 
 	// If the node is locked, it can not be deleted.
 	if node.isLocked() {
-		fs.log.Info("Cannot delete locked file: %v (%v)", remotePath, localPath)
-		return -fuse.ENOLCK
+		_, _, hasWrites := node.writerSnapshot()
+		fs.lockMapMutex.Lock()
+		linfo, ok := fs.lockMap[path]
+		fs.lockMapMutex.Unlock()
+		if ok && fs.currentUserId == linfo.Lock.UserId && !hasWrites {
+			fs.log.Debug("RemoteFs: Unlink: allowing delete of same-session placeholder: %v (%v)", remotePath, localPath)
+		} else {
+			fs.log.Info("Cannot delete locked file: %v (%v)", remotePath, localPath)
+			return -fuse.ENOLCK
+		}
 	}
 
 	// If the node is being written to, cancel the upload and delete the file from the remote API.

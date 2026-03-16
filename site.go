@@ -22,6 +22,9 @@ type Site struct {
 	AdminUserId                              int64       `json:"admin_user_id,omitempty" path:"admin_user_id,omitempty" url:"admin_user_id,omitempty"`
 	AdminsBypassLockedSubfolders             *bool       `json:"admins_bypass_locked_subfolders,omitempty" path:"admins_bypass_locked_subfolders,omitempty" url:"admins_bypass_locked_subfolders,omitempty"`
 	AllowBundleNames                         *bool       `json:"allow_bundle_names,omitempty" path:"allow_bundle_names,omitempty" url:"allow_bundle_names,omitempty"`
+	AllowUserLevel2faOverride                *bool       `json:"allow_user_level_2fa_override,omitempty" path:"allow_user_level_2fa_override,omitempty" url:"allow_user_level_2fa_override,omitempty"`
+	AllowUserLevelAllowedIpOverride          *bool       `json:"allow_user_level_allowed_ip_override,omitempty" path:"allow_user_level_allowed_ip_override,omitempty" url:"allow_user_level_allowed_ip_override,omitempty"`
+	AllowUserLevelSslOverride                *bool       `json:"allow_user_level_ssl_override,omitempty" path:"allow_user_level_ssl_override,omitempty" url:"allow_user_level_ssl_override,omitempty"`
 	AllowedCountries                         string      `json:"allowed_countries,omitempty" path:"allowed_countries,omitempty" url:"allowed_countries,omitempty"`
 	AllowedIps                               string      `json:"allowed_ips,omitempty" path:"allowed_ips,omitempty" url:"allowed_ips,omitempty"`
 	AlwaysMkdirParents                       *bool       `json:"always_mkdir_parents,omitempty" path:"always_mkdir_parents,omitempty" url:"always_mkdir_parents,omitempty"`
@@ -247,6 +250,9 @@ type SiteUpdateParams struct {
 	IncludePasswordInWelcomeEmail            *bool       `url:"include_password_in_welcome_email,omitempty" json:"include_password_in_welcome_email,omitempty" path:"include_password_in_welcome_email"`
 	AllowedCountries                         string      `url:"allowed_countries,omitempty" json:"allowed_countries,omitempty" path:"allowed_countries"`
 	AllowedIps                               string      `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
+	AllowUserLevel2faOverride                *bool       `url:"allow_user_level_2fa_override,omitempty" json:"allow_user_level_2fa_override,omitempty" path:"allow_user_level_2fa_override"`
+	AllowUserLevelAllowedIpOverride          *bool       `url:"allow_user_level_allowed_ip_override,omitempty" json:"allow_user_level_allowed_ip_override,omitempty" path:"allow_user_level_allowed_ip_override"`
+	AllowUserLevelSslOverride                *bool       `url:"allow_user_level_ssl_override,omitempty" json:"allow_user_level_ssl_override,omitempty" path:"allow_user_level_ssl_override"`
 	DisallowedCountries                      string      `url:"disallowed_countries,omitempty" json:"disallowed_countries,omitempty" path:"disallowed_countries"`
 	DaysToRetainBackups                      int64       `url:"days_to_retain_backups,omitempty" json:"days_to_retain_backups,omitempty" path:"days_to_retain_backups"`
 	MaxPriorPasswords                        int64       `url:"max_prior_passwords,omitempty" json:"max_prior_passwords,omitempty" path:"max_prior_passwords"`
