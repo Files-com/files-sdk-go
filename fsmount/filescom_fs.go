@@ -15,8 +15,7 @@ import (
 )
 
 const (
-	folderNotEmpty = "processing-failure/folder-not-empty"
-	blockSize      = 4096
+	blockSize = 4096
 
 	// Maximum time without upload progress before Fsync gives up.
 	// The deadline resets on every transferred chunk, so large but actively
@@ -461,9 +460,7 @@ func getStat(info fsNodeInfo, stat *fuse.Stat_t) *fuse.Stat_t {
 }
 
 func isFolderNotEmpty(err error) bool {
-	var re files_sdk.ResponseError
-	ok := errors.As(err, &re)
-	return ok && re.Type == folderNotEmpty
+	return errors.Is(err, files_sdk.ErrFolderNotEmpty)
 }
 
 // Mknod creates a file node.

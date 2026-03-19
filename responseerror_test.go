@@ -2,6 +2,7 @@ package files_sdk
 
 import (
 	"encoding/json"
+	goerrors "errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -211,4 +212,92 @@ func TestIsNotAuthenticated(t *testing.T) {
 	err := subject.UnmarshalJSON([]byte(notAuthenticated))
 	require.NoError(t, err)
 	assert.True(IsNotAuthenticated(subject))
+}
+
+func TestResponseErrorTypeConstants(t *testing.T) {
+	assert.Equal(t, ResponseErrorType("processing-failure/destination-exists"), ErrDestinationExists)
+	assert.Equal(t, ResponseErrorType("not-authenticated/invalid-credentials"), ErrInvalidCredentials)
+	assert.Equal(t, ResponseErrorType("not-authenticated/invalid-username-or-password"), ErrInvalidUsernameOrPassword)
+	assert.Equal(t, ResponseErrorType("download_request_expired"), ErrDownloadRequestExpired)
+	assert.Equal(t, ResponseErrorType("upload_request_expired"), ErrUploadRequestExpired)
+	assert.Equal(t, ResponseErrorGroup("not-found"), ErrNotFound)
+	assert.Equal(t, ResponseErrorGroup("not-authenticated"), ErrNotAuthenticated)
+	assert.Equal(t, "processing-failure/destination-exists", DestinationExists)
+	assert.Equal(t, "download_request_expired", DownloadRequestExpired)
+	assert.Equal(t, "upload_request_expired", UploadRequestExpired)
+}
+
+func TestResponseErrorTypeOf(t *testing.T) {
+	errType, ok := ResponseErrorTypeOf(ResponseError{Type: string(ErrDestinationExists)})
+	assert.True(t, ok)
+	assert.Equal(t, ErrDestinationExists, errType)
+
+	errType, ok = ResponseErrorTypeOf(&ResponseError{Type: string(ErrFileNotFound)})
+	assert.True(t, ok)
+	assert.Equal(t, ErrFileNotFound, errType)
+
+	_, ok = ResponseErrorTypeOf(ResponseError{})
+	assert.False(t, ok)
+
+	_, ok = ResponseErrorTypeOf(goerrors.New("boom"))
+	assert.False(t, ok)
+}
+
+func TestResponseErrorStdlibMatching(t *testing.T) {
+	err := ResponseError{Type: string(ErrFileNotFound)}
+
+	assert.True(t, goerrors.Is(err, ErrFileNotFound))
+	assert.True(t, goerrors.Is(err, ErrNotFound))
+	assert.False(t, goerrors.Is(err, ErrNotAuthenticated))
+
+	var responseErr ResponseError
+	assert.True(t, goerrors.As(err, &responseErr))
+	assert.Equal(t, ErrFileNotFound, ResponseErrorType(responseErr.Type))
+
+	errPtr := &ResponseError{Type: string(ErrDestinationExists)}
+	assert.True(t, goerrors.Is(errPtr, ErrDestinationExists))
+
+	var responseErrPtr *ResponseError
+	assert.True(t, goerrors.As(errPtr, &responseErrPtr))
+	assert.Equal(t, ErrDestinationExists, ResponseErrorType(responseErrPtr.Type))
+}
+
+func TestIsErrorType(t *testing.T) {
+	err := ResponseError{Type: string(ErrFileNotFound)}
+	assert.True(t, IsErrorType(err, ErrFileNotFound))
+	assert.False(t, IsErrorType(err, ErrDestinationExists))
+}
+
+func TestIsAnyErrorType(t *testing.T) {
+	err := ResponseError{Type: string(ErrFileNotFound)}
+	assert.True(t, IsAnyErrorType(err, ErrFileNotFound, ErrDestinationExists))
+	assert.False(t, IsAnyErrorType(err, ErrDestinationExists))
+}
+
+func TestIsErrorGroup(t *testing.T) {
+	err := ResponseError{Type: string(ErrFileNotFound)}
+	assert.True(t, IsErrorGroup(err, ErrNotFound))
+	assert.False(t, IsErrorGroup(err, ErrNotAuthenticated))
+	assert.False(t, IsErrorGroup(goerrors.New("boom"), ErrNotFound))
+}
+
+func TestGroupHelpers(t *testing.T) {
+	assert.True(t, IsNotFound(ResponseError{Type: string(ErrFileNotFound)}))
+	assert.True(t, IsAuthenticationError(ResponseError{Type: string(ErrInvalidCredentials)}))
+	assert.False(t, IsAuthenticationError(ResponseError{Type: string(ErrFileNotFound)}))
+}
+
+func TestLegacyWrapperHelpers(t *testing.T) {
+	assert.True(t, IsExist(ResponseError{Type: string(ErrDestinationExists)}))
+	assert.False(t, IsExist(ResponseError{Type: string(ErrFileNotFound)}))
+
+	assert.True(t, IsNotExist(ResponseError{Type: string(ErrFileNotFound)}))
+	assert.False(t, IsNotExist(ResponseError{Type: string(ErrDestinationExists)}))
+
+	assert.True(t, IsNotAuthenticated(ResponseError{Type: string(ErrInvalidCredentials)}))
+	assert.False(t, IsNotAuthenticated(ResponseError{Type: string(ErrFileNotFound)}))
+
+	assert.True(t, IsExpired(ResponseError{Type: string(ErrDownloadRequestExpired)}))
+	assert.True(t, IsExpired(ResponseError{Type: string(ErrUploadRequestExpired)}))
+	assert.False(t, IsExpired(ResponseError{Type: string(ErrFileNotFound)}))
 }

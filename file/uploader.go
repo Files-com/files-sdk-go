@@ -2,7 +2,6 @@ package file
 
 import (
 	"context"
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -200,11 +199,9 @@ func remotePath(ctx context.Context, localPath, remotePath string, c Uploader, j
 		} else {
 			return "", ctx.Err()
 		}
-		var responseError files_sdk.ResponseError
-		ok := errors.As(err, &responseError)
 		if remoteFile.Type == "directory" {
 			destination = lib.UrlJoinNoEscape(remotePath, localFileName)
-		} else if ok && responseError.Type == "not-found" {
+		} else if files_sdk.IsNotFound(err) {
 			if destination[len(destination)-1:] == "/" {
 				destination = lib.UrlJoinNoEscape(remotePath, localFileName)
 			}
@@ -378,9 +375,7 @@ func excludeFile(uploadStatus *UploadStatus, incrementalUpdates bool) bool {
 
 	if uploadStatus.Sync {
 		file, found, err := uploadStatus.Job().FindRemoteFile(uploadStatus)
-		var responseError files_sdk.ResponseError
-		ok := errors.As(err, &responseError)
-		if !found || (ok && responseError.Type == "not-found") {
+		if !found || files_sdk.IsNotFound(err) {
 			uploadStatus.Job().UpdateStatus(status.Compared, uploadStatus, nil)
 			uploadStatus.Job().Logger.Printf("sync %v not found on destination", uploadStatus.RemotePath())
 			return false
