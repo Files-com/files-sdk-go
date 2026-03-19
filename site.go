@@ -142,6 +142,7 @@ type Site struct {
 	RequireLogoutFromBundlesAndInboxes       *bool       `json:"require_logout_from_bundles_and_inboxes,omitempty" path:"require_logout_from_bundles_and_inboxes,omitempty" url:"require_logout_from_bundles_and_inboxes,omitempty"`
 	Session                                  Session     `json:"session,omitempty" path:"session,omitempty" url:"session,omitempty"`
 	SftpEnabled                              *bool       `json:"sftp_enabled,omitempty" path:"sftp_enabled,omitempty" url:"sftp_enabled,omitempty"`
+	SftpFinalizePartialUploads               *bool       `json:"sftp_finalize_partial_uploads,omitempty" path:"sftp_finalize_partial_uploads,omitempty" url:"sftp_finalize_partial_uploads,omitempty"`
 	SftpHostKeyType                          string      `json:"sftp_host_key_type,omitempty" path:"sftp_host_key_type,omitempty" url:"sftp_host_key_type,omitempty"`
 	ActiveSftpHostKeyId                      int64       `json:"active_sftp_host_key_id,omitempty" path:"active_sftp_host_key_id,omitempty" url:"active_sftp_host_key_id,omitempty"`
 	SftpInsecureCiphers                      *bool       `json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers,omitempty" url:"sftp_insecure_ciphers,omitempty"`
@@ -290,6 +291,7 @@ type SiteUpdateParams struct {
 	DavEnabled                               *bool       `url:"dav_enabled,omitempty" json:"dav_enabled,omitempty" path:"dav_enabled"`
 	FtpEnabled                               *bool       `url:"ftp_enabled,omitempty" json:"ftp_enabled,omitempty" path:"ftp_enabled"`
 	SftpEnabled                              *bool       `url:"sftp_enabled,omitempty" json:"sftp_enabled,omitempty" path:"sftp_enabled"`
+	SftpFinalizePartialUploads               *bool       `url:"sftp_finalize_partial_uploads,omitempty" json:"sftp_finalize_partial_uploads,omitempty" path:"sftp_finalize_partial_uploads"`
 	UsersCanCreateApiKeys                    *bool       `url:"users_can_create_api_keys,omitempty" json:"users_can_create_api_keys,omitempty" path:"users_can_create_api_keys"`
 	UsersCanCreateSshKeys                    *bool       `url:"users_can_create_ssh_keys,omitempty" json:"users_can_create_ssh_keys,omitempty" path:"users_can_create_ssh_keys"`
 	ShowUserNotificationsLogInLink           *bool       `url:"show_user_notifications_log_in_link,omitempty" json:"show_user_notifications_log_in_link,omitempty" path:"show_user_notifications_log_in_link"`
