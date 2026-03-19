@@ -838,6 +838,136 @@ func TestIgnoreDownload(t *testing.T) {
 	}
 }
 
+func TestDownloadPauseResume(t *testing.T) {
+	t.Run("pause preserves temp file", func(t *testing.T) {
+		root := t.TempDir()
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["file.txt"] = mockFile{SizeTrust: TrustedSizeValue, File: files_sdk.File{Size: 19999999}}
+		ctx, cancel := context.WithCancelCause(context.Background())
+		defer cancel(nil)
+		job := client.Downloader(
+			DownloaderParams{RemotePath: "file.txt", LocalPath: filepath.Join(root, "file.txt")},
+			files_sdk.WithContext(ctx),
+		)
+		downloadStarted := make(chan struct{}, 1)
+		job.RegisterFileEvent(func(f JobFile) {
+			select {
+			case downloadStarted <- struct{}{}:
+			default:
+			}
+		}, status.Downloading)
+		job.Start()
+		select {
+		case <-downloadStarted:
+		case <-job.Finished.C:
+		}
+		cancel(ErrJobPaused)
+		job.Wait()
+
+		tmpPath := existingTmpDownloadPath(filepath.Join(root, "file.txt"), "")
+		assert.NotEmpty(t, tmpPath, "temp file should be preserved on pause")
+	})
+
+	t.Run("cancel removes temp file", func(t *testing.T) {
+		root := t.TempDir()
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["file.txt"] = mockFile{SizeTrust: TrustedSizeValue, File: files_sdk.File{Size: 19999999}}
+		ctx, cancel := context.WithCancelCause(context.Background())
+		defer cancel(nil)
+		job := client.Downloader(
+			DownloaderParams{RemotePath: "file.txt", LocalPath: filepath.Join(root, "file.txt")},
+			files_sdk.WithContext(ctx),
+		)
+		downloadStarted := make(chan struct{}, 1)
+		job.RegisterFileEvent(func(f JobFile) {
+			select {
+			case downloadStarted <- struct{}{}:
+			default:
+			}
+		}, status.Downloading)
+		job.Start()
+		select {
+		case <-downloadStarted:
+		case <-job.Finished.C:
+		}
+		cancel(fmt.Errorf("job canceled"))
+		job.Wait()
+
+		tmpPath := existingTmpDownloadPath(filepath.Join(root, "file.txt"), "")
+		assert.Empty(t, tmpPath, "temp file should be removed on normal cancel")
+	})
+
+	t.Run("resume skips completed paths", func(t *testing.T) {
+		setup := NewTestSetup()
+		defer setup.TearDown()
+		setup.MapFS["folder"] = &fstest.MapFile{
+			Mode: fs.ModeDir,
+			Sys:  files_sdk.File{DisplayName: "folder", Path: "folder", Type: "directory"},
+		}
+		setup.MapFS["folder/a.txt"] = &fstest.MapFile{
+			Data: make([]byte, 100),
+			Mode: fs.ModePerm,
+			Sys:  files_sdk.File{DisplayName: "a.txt", Path: "folder/a.txt", Type: "file", Size: 100},
+		}
+		setup.MapFS["folder/b.txt"] = &fstest.MapFile{
+			Data: make([]byte, 100),
+			Mode: fs.ModePerm,
+			Sys:  files_sdk.File{DisplayName: "b.txt", Path: "folder/b.txt", Type: "file", Size: 100},
+		}
+		alreadyDone := filepath.Join(setup.tempDir, "folder", "a.txt")
+		setup.DownloaderParams = DownloaderParams{
+			RemotePath:         "folder",
+			LocalPath:          setup.tempDir + "/",
+			EventsReporter:     setup.Reporter(),
+			PriorJobCheckpoint: &JobDownloadCheckpoint{CompletedPaths: []string{alreadyDone}},
+		}
+		setup.Call()
+
+		var statuses []status.Status
+		for _, c := range setup.reporterCalls {
+			if c.LocalPath == alreadyDone {
+				statuses = append(statuses, c.Status)
+			}
+		}
+		assert.Contains(t, statuses, status.Skipped)
+		assert.NotContains(t, statuses, status.Complete)
+	})
+
+	t.Run("resume starts from existing temp file offset", func(t *testing.T) {
+		root := t.TempDir()
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+		client := server.Client()
+		fileSize := int64(19999999)
+		server.MockFiles["file.txt"] = mockFile{SizeTrust: TrustedSizeValue, File: files_sdk.File{Size: fileSize}}
+
+		localPath := filepath.Join(root, "file.txt")
+		createCanonicalTmpFile(t, localPath, fileSize/2)
+
+		job := client.Downloader(DownloaderParams{RemotePath: "file.txt", LocalPath: localPath})
+		job.Start()
+		job.Wait()
+
+		require.NoError(t, job.Statuses[0].Err())
+		fi, err := os.Stat(localPath)
+		require.NoError(t, err)
+		assert.Equal(t, fileSize, fi.Size())
+	})
+}
+
+func createCanonicalTmpFile(t *testing.T, localPath string, size int64) string {
+	t.Helper()
+	tmpPath, err := tmpDownloadPath(localPath, "")
+	require.NoError(t, err)
+	err = os.WriteFile(tmpPath, make([]byte, size), 0644)
+	require.NoError(t, err)
+	return tmpPath
+}
+
 type CmdRunner struct {
 	run    func() *Job
 	stderr io.Writer

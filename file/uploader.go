@@ -53,13 +53,14 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *Job
 		WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, job.RetryPolicy.(RetryPolicy), false) })
 
 		metaFile := UploadStatus{
-			job:         job,
-			status:      status.Errored,
-			localPath:   params.LocalPath,
-			Sync:        params.Sync,
-			NoOverwrite: params.NoOverwrite,
-			Uploader:    c,
-			Mutex:       &sync.RWMutex{},
+			job:             job,
+			status:          status.Errored,
+			localPath:       params.LocalPath,
+			Sync:            params.Sync,
+			NoOverwrite:     params.NoOverwrite,
+			Uploader:        c,
+			Mutex:           &sync.RWMutex{},
+			UploadResumable: params.PriorResumable,
 		}
 		if errorJob(job, metaFile, statErr) {
 			return
@@ -67,6 +68,12 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *Job
 		var err error
 		if job.Ignore, err = ignore.New(params.Ignore...); errorJob(job, metaFile, err) {
 			return
+		}
+		if params.PriorJobCheckpoint != nil {
+			job.CompletedPaths = make(map[string]struct{}, len(params.PriorJobCheckpoint.CompletedPaths))
+			for _, p := range params.PriorJobCheckpoint.CompletedPaths {
+				job.CompletedPaths[p] = struct{}{}
+			}
 		}
 
 		if len(params.Include) > 0 {
@@ -328,6 +335,11 @@ func buildUploadStatus(path string, localFolderPath string, destinationRootPath 
 		dryRun:      params.DryRun,
 		NoOverwrite: params.NoOverwrite,
 	}
+	if params.PriorJobCheckpoint != nil {
+		if resumable, ok := params.PriorJobCheckpoint.PendingParts[path]; ok {
+			uploadStatus.UploadResumable = resumable
+		}
+	}
 	return uploadStatus, true
 }
 
@@ -354,6 +366,10 @@ func buildDestination(path string, localFolderPath string, destinationRootPath s
 }
 
 func excludeFile(uploadStatus *UploadStatus, incrementalUpdates bool) bool {
+	if _, ok := uploadStatus.Job().CompletedPaths[uploadStatus.LocalPath()]; ok {
+		uploadStatus.Job().UpdateStatus(status.Skipped, uploadStatus, nil)
+		return true
+	}
 	if uploadStatus.Job().Ignore.MatchesPath(uploadStatus.LocalPath()) {
 		uploadStatus.Job().UpdateStatus(status.Ignored, uploadStatus, nil)
 		return true

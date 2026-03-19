@@ -7,6 +7,8 @@ import (
 	"io/fs"
 	"math"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -561,6 +563,84 @@ func TestUploadReader(t *testing.T) {
 			assert.Equal(t, int64(10), u.Parts.SuccessfulBytes())
 			assert.Equal(t, "remote_mount-file", u.FileUploadPart.Path)
 		})
+
+		// Regression test: NewPart (used when deserializing checkpoint files) does not set
+		// FileUploadPart fields (Path, Ref, PartNumber, etc.). Previously the repair loop
+		// that propagates session info to non-successful parts was gated on ParallelParts=true,
+		// so non-parallel uploads resumed from a checkpoint would call begin_upload with an
+		// empty path and ref, breaking resume after process restart.
+		t.Run("non-parallel resume from deserialized checkpoint", func(t *testing.T) {
+			server := (&MockAPIServer{T: t}).Do()
+			defer server.Shutdown()
+
+			filename := "non-parallel-checkpoint.txt"
+			server.MockFiles[filename] = mockFile{File: files_sdk.File{Size: 10}}
+			client := server.Client()
+
+			// Simulate checkpoint deserialization via NewPart: only offsets/bytes/etag
+			// are restored; FileUploadPart (Path, Ref, PartNumber...) is zero-value.
+			parts := Parts{
+				NewPart(1, 0, 2, 2, "etag1", "1", ""),           // successful
+				NewPart(2, 2, 4, 0, "", "", "context canceled"), // failed - must be retried
+				NewPart(3, 6, 4, 0, "", "", "context canceled"), // failed - must be retried
+			}
+			resumable := UploadResumable{
+				FileUploadPart: files_sdk.FileUploadPart{
+					Ref:           "checkpoint-ref-123",
+					Path:          filename,
+					HttpMethod:    "POST",
+					ParallelParts: lib.Bool(false),
+					Expires:       time.Now().Add(time.Hour).Format(time.RFC3339),
+				},
+				Parts: parts,
+			}
+
+			var mu sync.Mutex
+			var beginUploadRequests []files_sdk.FileBeginUploadParams
+			expires := time.Now().Add(time.Hour).Format(time.RFC3339)
+
+			server.MockRoute("/api/rest/v1/file_actions/begin_upload/"+filename, func(c *gin.Context, model interface{}) bool {
+				params := model.(files_sdk.FileBeginUploadParams)
+				mu.Lock()
+				beginUploadRequests = append(beginUploadRequests, params)
+				mu.Unlock()
+				part := params.Part
+				if part == 0 {
+					part = 1
+				}
+				c.JSON(http.StatusOK, files_sdk.FileUploadPartCollection{
+					files_sdk.FileUploadPart{
+						HttpMethod:    "POST",
+						Path:          filename,
+						UploadUri:     fmt.Sprintf("%v?part_number=%v", lib.UrlJoinNoEscape(server.URL, "upload", filename), part),
+						ParallelParts: lib.Bool(false),
+						Expires:       expires,
+						PartNumber:    part,
+					},
+				})
+				return true
+			})
+
+			u, err := client.UploadWithResume(
+				func(io uploadIO) (uploadIO, error) {
+					io.PartSizes = []int64{2, 4, 8, 16, 32}
+					return io, nil
+				},
+				UploadWithReaderAt(bytes.NewReader(bytes.NewBufferString("0123456789").Bytes())),
+				UploadWithDestinationPath(filename),
+				UploadWithSize(10),
+				UploadWithResume(resumable),
+				UploadWithManager(lib.NewConstrainedWorkGroup(2)),
+			)
+			require.NoError(t, err)
+
+			require.NotEmpty(t, beginUploadRequests, "failed parts must call begin_upload to get upload URL")
+			for _, req := range beginUploadRequests {
+				assert.Equal(t, filename, req.Path, "begin_upload path must come from the checkpoint ref, not be empty")
+				assert.Equal(t, "checkpoint-ref-123", req.Ref, "begin_upload ref must come from the checkpoint, not be empty")
+			}
+			assert.Equal(t, filename, u.File.Path)
+		})
 	})
 
 	t.Run("missing UploadWithDestinationPath", func(t *testing.T) {
@@ -656,5 +736,268 @@ func TestUploadReader(t *testing.T) {
 		assert.Contains(t, err.Error(), "File Upload Not Found", "it invalidates any resuming")
 		assert.Len(t, u.Parts, 0)
 		assert.Contains(t, []int{1, 2, 3}, partCount)
+	})
+}
+
+func TestUploadPauseResume(t *testing.T) {
+	t.Run("pause preserves upload session", func(t *testing.T) {
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+		client := server.Client()
+
+		ctx, cancel := context.WithCancelCause(context.Background())
+		defer cancel(nil)
+
+		var progressMu sync.Mutex
+		var uploaded int64
+		resumable, err := client.UploadWithResume(
+			func(io uploadIO) (uploadIO, error) {
+				io.PartSizes = []int64{2, 4, 8, 16, 32}
+				return io, nil
+			},
+			UploadWithReaderAt(bytes.NewReader(bytes.NewBufferString("0123456789").Bytes())),
+			UploadWithDestinationPath("pause-file.txt"),
+			UploadWithSize(10),
+			UploadWithContext(ctx),
+			UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+			UploadWithProgress(func(i int64) {
+				progressMu.Lock()
+				uploaded += i
+				trigger := uploaded > 2 // cancel after part 1 (2 bytes) completes and part 2 starts
+				progressMu.Unlock()
+				if trigger {
+					cancel(ErrJobPaused)
+				}
+			}),
+		)
+		_ = err // context.Canceled expected
+		assert.Greater(t, resumable.Parts.SuccessfulBytes(), int64(0), "upload session parts should be preserved on pause")
+	})
+
+	t.Run("cancel removes upload session", func(t *testing.T) {
+		root := t.TempDir()
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+		client := server.Client()
+
+		localPath := filepath.Join(root, "cancel-test.txt")
+		require.NoError(t, os.WriteFile(localPath, make([]byte, 100), 0644))
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel() // cancel before start
+
+		job := client.Uploader(
+			UploaderParams{LocalPath: localPath, RemotePath: "cancel-test.txt"},
+			files_sdk.WithContext(ctx),
+		)
+		job.Start()
+		job.Wait()
+
+		require.Len(t, job.Statuses, 1)
+		assert.Equal(t, status.Canceled, job.Statuses[0].Status())
+	})
+
+	t.Run("resume skips completed paths", func(t *testing.T) {
+		root := t.TempDir()
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+		client := server.Client()
+
+		uploadDir := filepath.Join(root, "upload_dir")
+		require.NoError(t, os.MkdirAll(uploadDir, 0755))
+		require.NoError(t, os.WriteFile(filepath.Join(uploadDir, "a.txt"), make([]byte, 100), 0644))
+		require.NoError(t, os.WriteFile(filepath.Join(uploadDir, "b.txt"), make([]byte, 100), 0644))
+
+		alreadyDone := filepath.Join(uploadDir, "a.txt")
+
+		var mu sync.Mutex
+		var reporterCalls []JobFile
+		reporter := CreateFileEvents(func(f JobFile) {
+			mu.Lock()
+			reporterCalls = append(reporterCalls, f)
+			mu.Unlock()
+		}, append(status.Excluded, status.Included...)...)
+
+		job := client.Uploader(
+			UploaderParams{
+				LocalPath:          uploadDir + string(os.PathSeparator),
+				RemotePath:         "uploaded",
+				PriorJobCheckpoint: &JobUploadCheckpoint{CompletedPaths: []string{alreadyDone}},
+				EventsReporter:     reporter,
+			},
+		)
+		job.Start()
+		job.Wait()
+
+		var aStatuses []status.Status
+		for _, c := range reporterCalls {
+			if c.LocalPath == alreadyDone {
+				aStatuses = append(aStatuses, c.Status)
+			}
+		}
+		assert.Contains(t, aStatuses, status.Skipped)
+		assert.NotContains(t, aStatuses, status.Complete)
+	})
+
+	// When all bytes are already on the server and the job is paused mid-commit,
+	// the SDK must still complete the commit rather than abandoning it.
+	// The fix: completeUpload uses context.Background() instead of the job context,
+	// so a job cancellation cannot abort the final action=end call.
+	t.Run("context canceled during commit still completes upload", func(t *testing.T) {
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+
+		filename := "pause-cancel-commit.txt"
+		server.MockFiles[filename] = mockFile{File: files_sdk.File{Size: 10}}
+		client := server.Client()
+
+		ctx, cancel := context.WithCancelCause(context.Background())
+		defer cancel(nil)
+
+		// Track whether the commit was called with all parts already on the server.
+		// The MockRoute fires only after all part uploads complete (partsFinished),
+		// so by the time we cancel here, all bytes are on the server.
+		commitCalled := false
+		server.MockRoute("/api/rest/v1/files/"+filename, func(c *gin.Context, model interface{}) bool {
+			commitCalled = true
+			cancel(ErrJobPaused) // pause arrives during commit
+			return false         // let server respond 200 — bytes are already there
+		})
+
+		u, err := client.UploadWithResume(
+			func(io uploadIO) (uploadIO, error) {
+				io.PartSizes = []int64{2, 4, 8, 16, 32}
+				return io, nil
+			},
+			UploadWithReaderAt(bytes.NewReader(bytes.NewBufferString("0123456789").Bytes())),
+			UploadWithDestinationPath(filename),
+			UploadWithSize(10),
+			UploadWithContext(ctx),
+			UploadWithManager(lib.NewConstrainedWorkGroup(2)),
+		)
+
+		require.True(t, commitCalled, "commit endpoint must be reached (all bytes on server)")
+		require.NoError(t, err, "upload must complete even when job context is canceled during commit")
+		assert.Equal(t, filename, u.File.Path)
+		assert.Equal(t, int64(10), u.Size)
+	})
+
+	// When the job context is canceled before all bytes land on the server,
+	// the upload must fail — commit is never called because partsFinished never fires cleanly.
+	t.Run("context canceled mid-upload does not commit", func(t *testing.T) {
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+
+		filename := "mid-upload-cancel.txt"
+		server.MockFiles[filename] = mockFile{File: files_sdk.File{Size: 10}}
+		client := server.Client()
+
+		ctx, cancel := context.WithCancelCause(context.Background())
+		defer cancel(nil)
+
+		// Cancel while part bytes are still being sent — before all parts succeed.
+		var progressMu sync.Mutex
+		var uploaded int64
+		commitCalled := false
+
+		server.MockRoute("/api/rest/v1/files/"+filename, func(c *gin.Context, model interface{}) bool {
+			commitCalled = true
+			return false
+		})
+
+		_, err := client.UploadWithResume(
+			func(io uploadIO) (uploadIO, error) {
+				io.PartSizes = []int64{2, 4, 8, 16, 32}
+				return io, nil
+			},
+			UploadWithReaderAt(bytes.NewReader(bytes.NewBufferString("0123456789").Bytes())),
+			UploadWithDestinationPath(filename),
+			UploadWithSize(10),
+			UploadWithContext(ctx),
+			UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+			UploadWithProgress(func(i int64) {
+				progressMu.Lock()
+				uploaded += i
+				trigger := uploaded >= 2 // cancel as soon as part 1 bytes arrive
+				progressMu.Unlock()
+				if trigger {
+					cancel(ErrJobPaused)
+				}
+			}),
+		)
+
+		require.Error(t, err, "upload must fail when context is canceled before all bytes are on server")
+		assert.False(t, commitCalled, "commit must not be called when bytes are incomplete")
+	})
+
+	t.Run("resume uses pending parts", func(t *testing.T) {
+		root := t.TempDir()
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+		client := server.Client()
+
+		// Use a folder upload so PriorJobCheckpoint.PendingParts is applied via buildUploadStatus
+		uploadDir := filepath.Join(root, "upload_dir")
+		require.NoError(t, os.MkdirAll(uploadDir, 0755))
+		filename := "pending-parts.txt"
+		localPath := filepath.Join(uploadDir, filename)
+		require.NoError(t, os.WriteFile(localPath, []byte("0123456789"), 0644))
+		server.MockFiles[filename] = mockFile{File: files_sdk.File{Path: filename, DisplayName: filename, Size: 10}}
+
+		expires := time.Now().Add(time.Hour).Format(time.RFC3339)
+		parts := Parts{
+			NewPart(1, 0, 2, 2, "etag1", "ref-123", ""),     // successful - should not re-upload
+			NewPart(2, 2, 4, 0, "", "", "context canceled"), // failed - must be retried
+			NewPart(3, 6, 4, 0, "", "", "context canceled"), // failed - must be retried
+		}
+		resumable := UploadResumable{
+			FileUploadPart: files_sdk.FileUploadPart{
+				Ref:           "ref-123",
+				Path:          filename,
+				HttpMethod:    "POST",
+				ParallelParts: lib.Bool(false),
+				Expires:       expires,
+			},
+			Parts: parts,
+		}
+
+		server.MockRoute("/api/rest/v1/file_actions/begin_upload/"+filename, func(c *gin.Context, model interface{}) bool {
+			params := model.(files_sdk.FileBeginUploadParams)
+			part := params.Part
+			if part == 0 {
+				part = 1
+			}
+			c.JSON(http.StatusOK, files_sdk.FileUploadPartCollection{
+				files_sdk.FileUploadPart{
+					HttpMethod:    "POST",
+					Path:          filename,
+					UploadUri:     fmt.Sprintf("%v?part_number=%v", lib.UrlJoinNoEscape(server.URL, "upload", filename), part),
+					ParallelParts: lib.Bool(false),
+					Expires:       expires,
+					PartNumber:    part,
+					Ref:           "ref-123",
+				},
+			})
+			return true
+		})
+
+		job := client.Uploader(
+			UploaderParams{
+				LocalPath:          uploadDir + string(os.PathSeparator),
+				RemotePath:         "",
+				PriorJobCheckpoint: &JobUploadCheckpoint{PendingParts: map[string]UploadResumable{localPath: resumable}},
+			},
+		)
+		job.Start()
+		job.Wait()
+
+		require.NoError(t, job.Statuses[0].Err())
+
+		server.traceMutex.Lock()
+		uploadRequests := server.TrackRequest["/upload/*path"]
+		server.traceMutex.Unlock()
+
+		assert.NotContains(t, uploadRequests, "/upload/"+filename+"?part_number=1", "part 1 was already uploaded")
+		assert.Contains(t, uploadRequests, "/upload/"+filename+"?part_number=2", "part 2 should be uploaded")
 	})
 }

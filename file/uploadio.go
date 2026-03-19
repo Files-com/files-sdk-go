@@ -31,6 +31,12 @@ type UploadResumable struct {
 	files_sdk.File
 }
 
+// JobUploadCheckpoint holds folder-level resume state for a paused upload job.
+type JobUploadCheckpoint struct {
+	CompletedPaths []string
+	PendingParts   map[string]UploadResumable // local path → partial upload
+}
+
 type uploadIO struct {
 	ByteOffset
 	Path     string
@@ -61,6 +67,7 @@ type uploadIO struct {
 func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
 	u.notResumable = &atomic.Bool{}
 	u.notResumable.Store(false)
+
 	if u.Path == "" {
 		return u.UploadResumable(), errors.New("UploadWithDestinationPath is required")
 	}
@@ -88,7 +95,21 @@ func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
 		u.MkdirParents = lib.Bool(true)
 	}
 	var err error
-	if time.Now().After(u.FileUploadPart.UploadExpires()) || u.isParallelParts(u.FileUploadPart) {
+	if u.FileUploadPart.Ref != "" {
+		// Propagate session info to non-successful restored parts so uploadPart()
+		// can request fresh upload URLs using the existing Ref (without starting a new session).
+		for _, p := range u.Parts {
+			if !p.Successful() {
+				p.FileUploadPart = files_sdk.FileUploadPart{
+					Ref:           u.FileUploadPart.Ref,
+					Path:          u.Path,
+					HttpMethod:    u.FileUploadPart.HttpMethod,
+					ParallelParts: u.FileUploadPart.ParallelParts,
+					PartNumber:    int64(p.number),
+				}
+			}
+		}
+	} else if time.Now().After(u.FileUploadPart.UploadExpires()) || u.isParallelParts(u.FileUploadPart) {
 		if len(u.Parts) > 0 {
 			u.LogPath(u.Path, map[string]any{
 				"timestamp":      time.Now(),
@@ -158,35 +179,26 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 				u.rewindSuccessfulParts()
 				return u.UploadResumable(), allErrors
 			}
-			// Rate limit all outgoing connections
-			if u.Manager.WaitWithContext(ctx) {
-				var err error
-				path, ref := u.Path, u.FileUploadPart.Ref
-				if u.renamedCallback != nil {
-					path, ref = u.renamedCallback()
-				}
-				u.file, err = u.completeUpload(ctx, u.ProvidedMtime, u.etags, u.bytesWritten, path, ref)
-				u.Manager.Done()
-				if err != nil {
-					u.LogPath(u.Path, map[string]any{
-						"timestamp": time.Now(),
-						"error":     err.Error(),
-						"event":     "complete upload",
-						"message":   "rewindSuccessfulParts",
-					})
-					u.rewindSuccessfulParts()
-				}
-				return u.UploadResumable(), err
-			} else {
+			// Use a detached context so a job cancellation doesn't prevent
+			// committing a file whose bytes are already on the server.
+			path, ref := u.Path, u.FileUploadPart.Ref
+			if u.renamedCallback != nil {
+				path, ref = u.renamedCallback()
+			}
+			u.Manager.WaitWithContext(context.Background())
+			var err error
+			u.file, err = u.completeUpload(context.Background(), u.ProvidedMtime, u.etags, u.bytesWritten, path, ref)
+			u.Manager.Done()
+			if err != nil {
 				u.LogPath(u.Path, map[string]any{
 					"timestamp": time.Now(),
-					"error":     ctx.Err(),
+					"error":     err.Error(),
 					"event":     "complete upload",
 					"message":   "rewindSuccessfulParts",
 				})
 				u.rewindSuccessfulParts()
-				return u.UploadResumable(), ctx.Err()
 			}
+			return u.UploadResumable(), err
 		case part := <-u.onComplete:
 			if part.error == nil {
 				u.etags = append(u.etags, part.EtagsParam)
@@ -480,6 +492,12 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 			}
 
 			part.FileUploadPart, err = u.startUpload(ctx, params)
+			if err != nil && files_sdk.IsNotExist(err) && params.Ref != "" {
+				// Stale upload session (server cleaned it up) — retry without the ref
+				// to start a fresh session instead of failing the part.
+				params.Ref = ""
+				part.FileUploadPart, err = u.startUpload(ctx, params)
+			}
 			part.FileUploadPart.PartNumber = int64(part.number) // Ensure it didn't change PartNumber
 
 			if err != nil {
