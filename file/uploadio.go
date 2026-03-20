@@ -37,6 +37,37 @@ type JobUploadCheckpoint struct {
 	PendingParts   map[string]UploadResumable // local path → partial upload
 }
 
+// UploadCheckpoint builds a JobUploadCheckpoint from the job's settled file statuses.
+// Call at terminal time (Canceled or Finished) instead of tracking state incrementally.
+func (j *Job) UploadCheckpoint() *JobUploadCheckpoint {
+	completed := make(map[string]struct{})
+	for p := range j.CompletedPaths {
+		completed[p] = struct{}{}
+	}
+	pendingParts := make(map[string]UploadResumable)
+
+	j.statusesMutex.RLock()
+	for _, f := range j.Statuses {
+		if f.Status().Is(status.Complete) {
+			completed[f.LocalPath()] = struct{}{}
+		} else if cr, ok := f.(checkpointResumableProvider); ok {
+			if r := cr.CheckpointResumable(); r.FileUploadPart.Ref != "" {
+				pendingParts[f.LocalPath()] = r
+			}
+		}
+	}
+	j.statusesMutex.RUnlock()
+
+	paths := make([]string, 0, len(completed))
+	for p := range completed {
+		paths = append(paths, p)
+	}
+	return &JobUploadCheckpoint{
+		CompletedPaths: paths,
+		PendingParts:   pendingParts,
+	}
+}
+
 type uploadIO struct {
 	ByteOffset
 	Path     string
