@@ -28,6 +28,7 @@ type Restore struct {
 	TwoFactorAuthenticationMethodsRestored int64      `json:"two_factor_authentication_methods_restored,omitempty" path:"two_factor_authentication_methods_restored,omitempty" url:"two_factor_authentication_methods_restored,omitempty"`
 	Status                                 string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
 	UpdateTimestamps                       *bool      `json:"update_timestamps,omitempty" path:"update_timestamps,omitempty" url:"update_timestamps,omitempty"`
+	WorkspaceId                            int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	ErrorMessages                          []string   `json:"error_messages,omitempty" path:"error_messages,omitempty" url:"error_messages,omitempty"`
 }
 
@@ -63,6 +64,7 @@ type RestoreCreateParams struct {
 	RestoreDeletedPermissions *bool                      `url:"restore_deleted_permissions,omitempty" json:"restore_deleted_permissions,omitempty" path:"restore_deleted_permissions"`
 	RestoreInPlace            *bool                      `url:"restore_in_place,omitempty" json:"restore_in_place,omitempty" path:"restore_in_place"`
 	UpdateTimestamps          *bool                      `url:"update_timestamps,omitempty" json:"update_timestamps,omitempty" path:"update_timestamps"`
+	WorkspaceId               int64                      `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 func (r *Restore) UnmarshalJSON(data []byte) error {
