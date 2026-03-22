@@ -11,6 +11,7 @@ type BundleDownload struct {
 	BundleRegistration BundleRegistration `json:"bundle_registration,omitempty" path:"bundle_registration,omitempty" url:"bundle_registration,omitempty"`
 	DownloadMethod     string             `json:"download_method,omitempty" path:"download_method,omitempty" url:"download_method,omitempty"`
 	Path               string             `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	WorkspaceId        int64              `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	CreatedAt          *time.Time         `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 

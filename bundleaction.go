@@ -15,6 +15,7 @@ type BundleAction struct {
 	Path                    string             `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	Source                  string             `json:"source,omitempty" path:"source,omitempty" url:"source,omitempty"`
 	BundleRegistrationId    int64              `json:"bundle_registration_id,omitempty" path:"bundle_registration_id,omitempty" url:"bundle_registration_id,omitempty"`
+	WorkspaceId             int64              `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	BundleRegistrationName  string             `json:"bundle_registration_name,omitempty" path:"bundle_registration_name,omitempty" url:"bundle_registration_name,omitempty"`
 	BundleRegistrationEmail string             `json:"bundle_registration_email,omitempty" path:"bundle_registration_email,omitempty" url:"bundle_registration_email,omitempty"`
 	BundleRegistrationIp    string             `json:"bundle_registration_ip,omitempty" path:"bundle_registration_ip,omitempty" url:"bundle_registration_ip,omitempty"`

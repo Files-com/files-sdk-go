@@ -46,6 +46,7 @@ type Bundle struct {
 	WatermarkAttachment                          Image                    `json:"watermark_attachment,omitempty" path:"watermark_attachment,omitempty" url:"watermark_attachment,omitempty"`
 	WatermarkValue                               interface{}              `json:"watermark_value,omitempty" path:"watermark_value,omitempty" url:"watermark_value,omitempty"`
 	SendOneTimePasswordToRecipientAtRegistration *bool                    `json:"send_one_time_password_to_recipient_at_registration,omitempty" path:"send_one_time_password_to_recipient_at_registration,omitempty" url:"send_one_time_password_to_recipient_at_registration,omitempty"`
+	WorkspaceId                                  int64                    `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	HasInbox                                     *bool                    `json:"has_inbox,omitempty" path:"has_inbox,omitempty" url:"has_inbox,omitempty"`
 	DontAllowFoldersInUploads                    *bool                    `json:"dont_allow_folders_in_uploads,omitempty" path:"dont_allow_folders_in_uploads,omitempty" url:"dont_allow_folders_in_uploads,omitempty"`
 	Paths                                        []string                 `json:"paths,omitempty" path:"paths,omitempty" url:"paths,omitempty"`
@@ -124,6 +125,7 @@ type BundleCreateParams struct {
 	SkipCompany                                  *bool                 `url:"skip_company,omitempty" json:"skip_company,omitempty" path:"skip_company"`
 	StartAccessOnDate                            *time.Time            `url:"start_access_on_date,omitempty" json:"start_access_on_date,omitempty" path:"start_access_on_date"`
 	SnapshotId                                   int64                 `url:"snapshot_id,omitempty" json:"snapshot_id,omitempty" path:"snapshot_id"`
+	WorkspaceId                                  int64                 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	WatermarkAttachmentFile                      io.Writer             `url:"watermark_attachment_file,omitempty" json:"watermark_attachment_file,omitempty" path:"watermark_attachment_file"`
 }
 
@@ -161,6 +163,7 @@ type BundleUpdateParams struct {
 	StartAccessOnDate                            *time.Time            `url:"start_access_on_date,omitempty" json:"start_access_on_date,omitempty" path:"start_access_on_date"`
 	SkipEmail                                    *bool                 `url:"skip_email,omitempty" json:"skip_email,omitempty" path:"skip_email"`
 	SkipName                                     *bool                 `url:"skip_name,omitempty" json:"skip_name,omitempty" path:"skip_name"`
+	WorkspaceId                                  int64                 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	UserId                                       int64                 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	WatermarkAttachmentDelete                    *bool                 `url:"watermark_attachment_delete,omitempty" json:"watermark_attachment_delete,omitempty" path:"watermark_attachment_delete"`
 	WatermarkAttachmentFile                      io.Writer             `url:"watermark_attachment_file,omitempty" json:"watermark_attachment_file,omitempty" path:"watermark_attachment_file"`

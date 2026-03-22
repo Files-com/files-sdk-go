@@ -13,6 +13,7 @@ type BundleRecipient struct {
 	Note             string     `json:"note,omitempty" path:"note,omitempty" url:"note,omitempty"`
 	Recipient        string     `json:"recipient,omitempty" path:"recipient,omitempty" url:"recipient,omitempty"`
 	SentAt           *time.Time `json:"sent_at,omitempty" path:"sent_at,omitempty" url:"sent_at,omitempty"`
+	WorkspaceId      int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	UserId           int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	BundleId         int64      `json:"bundle_id,omitempty" path:"bundle_id,omitempty" url:"bundle_id,omitempty"`
 	ShareAfterCreate *bool      `json:"share_after_create,omitempty" path:"share_after_create,omitempty" url:"share_after_create,omitempty"`

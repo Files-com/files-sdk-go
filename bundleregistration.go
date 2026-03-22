@@ -20,6 +20,7 @@ type BundleRegistration struct {
 	BundleCode        string      `json:"bundle_code,omitempty" path:"bundle_code,omitempty" url:"bundle_code,omitempty"`
 	BundleId          int64       `json:"bundle_id,omitempty" path:"bundle_id,omitempty" url:"bundle_id,omitempty"`
 	BundleRecipientId int64       `json:"bundle_recipient_id,omitempty" path:"bundle_recipient_id,omitempty" url:"bundle_recipient_id,omitempty"`
+	WorkspaceId       int64       `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	CreatedAt         *time.Time  `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
