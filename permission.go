@@ -7,17 +7,19 @@ import (
 )
 
 type Permission struct {
-	Id          int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Path        string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
-	UserId      int64  `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
-	Username    string `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
-	GroupId     int64  `json:"group_id,omitempty" path:"group_id,omitempty" url:"group_id,omitempty"`
-	GroupName   string `json:"group_name,omitempty" path:"group_name,omitempty" url:"group_name,omitempty"`
-	PartnerId   int64  `json:"partner_id,omitempty" path:"partner_id,omitempty" url:"partner_id,omitempty"`
-	PartnerName string `json:"partner_name,omitempty" path:"partner_name,omitempty" url:"partner_name,omitempty"`
-	Permission  string `json:"permission,omitempty" path:"permission,omitempty" url:"permission,omitempty"`
-	Recursive   *bool  `json:"recursive,omitempty" path:"recursive,omitempty" url:"recursive,omitempty"`
-	SiteId      int64  `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
+	Id          int64    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Path        string   `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	UserId      int64    `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	Username    string   `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
+	GroupId     int64    `json:"group_id,omitempty" path:"group_id,omitempty" url:"group_id,omitempty"`
+	GroupName   string   `json:"group_name,omitempty" path:"group_name,omitempty" url:"group_name,omitempty"`
+	GroupIds    []int64  `json:"group_ids,omitempty" path:"group_ids,omitempty" url:"group_ids,omitempty"`
+	GroupNames  []string `json:"group_names,omitempty" path:"group_names,omitempty" url:"group_names,omitempty"`
+	PartnerId   int64    `json:"partner_id,omitempty" path:"partner_id,omitempty" url:"partner_id,omitempty"`
+	PartnerName string   `json:"partner_name,omitempty" path:"partner_name,omitempty" url:"partner_name,omitempty"`
+	Permission  string   `json:"permission,omitempty" path:"permission,omitempty" url:"permission,omitempty"`
+	Recursive   *bool    `json:"recursive,omitempty" path:"recursive,omitempty" url:"recursive,omitempty"`
+	SiteId      int64    `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
 }
 
 func (p Permission) Identifier() interface{} {
@@ -41,6 +43,7 @@ type PermissionListParams struct {
 type PermissionCreateParams struct {
 	Path       string `url:"path" json:"path" path:"path"`
 	GroupId    int64  `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
+	GroupIds   string `url:"group_ids,omitempty" json:"group_ids,omitempty" path:"group_ids"`
 	Permission string `url:"permission,omitempty" json:"permission,omitempty" path:"permission"`
 	Recursive  *bool  `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
 	PartnerId  int64  `url:"partner_id,omitempty" json:"partner_id,omitempty" path:"partner_id"`
