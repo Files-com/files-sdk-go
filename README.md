@@ -721,6 +721,7 @@ if err != nil {
 | `not-authorized/password-change-not-required` | `ErrPasswordChangeNotRequired` | Password Change Not Required |
 | `not-authorized/password-change-required` | `ErrPasswordChangeRequired` | Password Change Required |
 | `not-authorized/payment-method-error` | `ErrPaymentMethodError` | Payment Method Error |
+| `not-authorized/preview-only-permission-cannot-download` | `ErrPreviewOnlyPermissionCannotDownload` | Preview Only Permission Cannot Download |
 | `not-authorized/read-only-session` | `ErrReadOnlySession` | Read Only Session |
 | `not-authorized/read-permission-required` | `ErrReadPermissionRequired` | Read Permission Required |
 | `not-authorized/reauthentication-failed` | `ErrReauthenticationFailed` | Reauthentication Failed |

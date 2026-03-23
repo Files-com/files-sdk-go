@@ -131,6 +131,7 @@ const (
 	ErrPasswordChangeNotRequired                     ResponseErrorType = "not-authorized/password-change-not-required"
 	ErrPasswordChangeRequired                        ResponseErrorType = "not-authorized/password-change-required"
 	ErrPaymentMethodError                            ResponseErrorType = "not-authorized/payment-method-error"
+	ErrPreviewOnlyPermissionCannotDownload           ResponseErrorType = "not-authorized/preview-only-permission-cannot-download"
 	ErrReadOnlySession                               ResponseErrorType = "not-authorized/read-only-session"
 	ErrReadPermissionRequired                        ResponseErrorType = "not-authorized/read-permission-required"
 	ErrReauthenticationFailed                        ResponseErrorType = "not-authorized/reauthentication-failed"
