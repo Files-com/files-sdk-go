@@ -765,6 +765,8 @@ if err != nil {
 | `processing-failure/destination-parent-conflict` | `ErrDestinationParentConflict` | Destination Parent Conflict |
 | `processing-failure/destination-parent-does-not-exist` | `ErrDestinationParentDoesNotExist` | Destination Parent Does Not Exist |
 | `processing-failure/exceeded-runtime-limit` | `ErrExceededRuntimeLimit` | Exceeded Runtime Limit |
+| `processing-failure/expectation-already-has-open-window` | `ErrExpectationAlreadyHasOpenWindow` | Expectation Already Has Open Window |
+| `processing-failure/expectation-not-manual-trigger` | `ErrExpectationNotManualTrigger` | Expectation Not Manual Trigger |
 | `processing-failure/expired-private-key` | `ErrExpiredPrivateKey` | Expired Private Key |
 | `processing-failure/expired-public-key` | `ErrExpiredPublicKey` | Expired Public Key |
 | `processing-failure/export-failure` | `ErrExportFailure` | Export Failure |

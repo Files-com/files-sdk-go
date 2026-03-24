@@ -171,6 +171,8 @@ const (
 	ErrDestinationParentConflict                     ResponseErrorType = "processing-failure/destination-parent-conflict"
 	ErrDestinationParentDoesNotExist                 ResponseErrorType = "processing-failure/destination-parent-does-not-exist"
 	ErrExceededRuntimeLimit                          ResponseErrorType = "processing-failure/exceeded-runtime-limit"
+	ErrExpectationAlreadyHasOpenWindow               ResponseErrorType = "processing-failure/expectation-already-has-open-window"
+	ErrExpectationNotManualTrigger                   ResponseErrorType = "processing-failure/expectation-not-manual-trigger"
 	ErrExpiredPrivateKey                             ResponseErrorType = "processing-failure/expired-private-key"
 	ErrExpiredPublicKey                              ResponseErrorType = "processing-failure/expired-public-key"
 	ErrExportFailure                                 ResponseErrorType = "processing-failure/export-failure"
