@@ -91,7 +91,7 @@ type ExpectationCreateParams struct {
 }
 
 // Manually open an Expectation window
-type ExpectationTriggerParams struct {
+type ExpectationTriggerEvaluationParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 

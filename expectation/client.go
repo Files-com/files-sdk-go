@@ -65,13 +65,13 @@ func Create(params files_sdk.ExpectationCreateParams, opts ...files_sdk.RequestR
 	return (&Client{}).Create(params, opts...)
 }
 
-func (c *Client) Trigger(params files_sdk.ExpectationTriggerParams, opts ...files_sdk.RequestResponseOption) (expectationEvaluation files_sdk.ExpectationEvaluation, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/expectations/{id}/trigger", Params: params, Entity: &expectationEvaluation}, opts...)
+func (c *Client) TriggerEvaluation(params files_sdk.ExpectationTriggerEvaluationParams, opts ...files_sdk.RequestResponseOption) (expectationEvaluation files_sdk.ExpectationEvaluation, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/expectations/{id}/trigger_evaluation", Params: params, Entity: &expectationEvaluation}, opts...)
 	return
 }
 
-func Trigger(params files_sdk.ExpectationTriggerParams, opts ...files_sdk.RequestResponseOption) (expectationEvaluation files_sdk.ExpectationEvaluation, err error) {
-	return (&Client{}).Trigger(params, opts...)
+func TriggerEvaluation(params files_sdk.ExpectationTriggerEvaluationParams, opts ...files_sdk.RequestResponseOption) (expectationEvaluation files_sdk.ExpectationEvaluation, err error) {
+	return (&Client{}).TriggerEvaluation(params, opts...)
 }
 
 func (c *Client) Update(params files_sdk.ExpectationUpdateParams, opts ...files_sdk.RequestResponseOption) (expectation files_sdk.Expectation, err error) {
