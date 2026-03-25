@@ -2,23 +2,20 @@ package fsmount
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"sync"
 	"time"
 
-	fsio "github.com/Files-com/files-sdk-go/v3/fsmount/internal/io"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
-type FSWriter interface {
-	writeFile(path string, reader io.Reader, mtime time.Time, fh uint64)
-}
-
 type fsNode struct {
-	path        string
-	downloadUri string
-	info        fsNodeInfo
+	path         string
+	downloadUri  string
+	info         fsNodeInfo
+	writeSession *writeSession
 
 	cacheTTL time.Duration
 	logger   lib.LeveledLogger
@@ -36,27 +33,14 @@ type fsNode struct {
 	// childPathsMutex is used to synchronize access to childPaths and childPathsExpires.
 	childPathsMutex sync.Mutex
 
-	// coordinates and caches out of order writes to the remote file system
-	// until they can be written in the correct order.
-	writer *fsio.OrderedPipe
-
-	// Used to prevent creation of multiple writers for the same node.
+	// Used to synchronize write-session state on the node.
 	writeMu sync.Mutex
-
-	// writerOwner is the handle id that opened the writer
-	writerOwner uint64
 
 	// Used to prevent simultaneous lock/unlock operations.
 	lockMutex sync.Mutex
 
 	// Used to prevent changes while calling status type methods like isWriterOpen, isLocked, etc.
 	statusMu sync.Mutex
-
-	// upload is the active upload for this node, if any. It is nil if there is no active upload.
-	upload *activeUpload
-
-	// uploadMu is used to synchronize access to the upload field.
-	uploadMu sync.Mutex
 }
 
 var (
@@ -69,6 +53,7 @@ type activeUpload struct {
 	startedAt    time.Time
 	cancel       context.CancelFunc
 	done         chan struct{}
+	doneClosed   bool
 	ref          string
 	bytesWritten int64
 	lastActivity time.Time
@@ -89,11 +74,13 @@ type fsNodeInfo struct {
 	creationTime time.Time
 	modTime      time.Time
 	lockOwner    string
+	uid          uint32
+	gid          uint32
 }
 
 func (n fsNodeInfo) String() string {
-	return fmt.Sprintf("fsNodeInfo{type: %v, size: %d, created: %v, modified: %v, lockOwner: '%s'}",
-		n.nodeType, n.size, n.creationTime, n.modTime, n.lockOwner)
+	return fmt.Sprintf("fsNodeInfo{type: %v, size: %d, created: %v, modified: %v, lockOwner: '%s', uid: %d, gid: %d}",
+		n.nodeType, n.size, n.creationTime, n.modTime, n.lockOwner, n.uid, n.gid)
 }
 
 func (n *fsNode) String() string {
@@ -106,6 +93,12 @@ func (n *fsNode) updateInfo(info fsNodeInfo) {
 	defer n.statusMu.Unlock()
 	if n.info.size != info.size {
 		n.downloadUri = ""
+	}
+	if info.uid == 0 {
+		info.uid = n.info.uid
+	}
+	if info.gid == 0 {
+		info.gid = n.info.gid
 	}
 
 	n.info = info
@@ -145,6 +138,14 @@ func (n *fsNode) setLockOwner(owner string) {
 	n.statusMu.Lock()
 	defer n.statusMu.Unlock()
 	n.info.lockOwner = owner
+	n.extendTtl()
+}
+
+func (n *fsNode) setOwner(uid uint32, gid uint32) {
+	n.statusMu.Lock()
+	defer n.statusMu.Unlock()
+	n.info.uid = uid
+	n.info.gid = gid
 	n.extendTtl()
 }
 
@@ -190,168 +191,331 @@ func (n *fsNode) isLocked() bool {
 	return n.info.lockOwner != ""
 }
 
-func (n *fsNode) isWriterOpen() bool {
-	return n.writerIsOpen()
+func (n *fsNode) pathAndRef() (string, string) {
+	if path, ref, ok := n.writeSessionPathAndRef(); ok {
+		return path, ref
+	}
+	return "", ""
 }
 
-// markWriteIntent marks that a handle intends to write (but doesn't create writer yet).
-// Writer will be lazily created on first actual Write call.
-func (n *fsNode) markWriteIntent(fh uint64) {
-	// Ignore sentinel value (^uint64(0)) which indicates no file handle.
-	// This happens when operations like Truncate are called on a path
-	// without an open file handle.
-	if fh == ^uint64(0) {
-		return
-	}
-
+func (n *fsNode) hasActiveWriteSession() bool {
 	n.writeMu.Lock()
 	defer n.writeMu.Unlock()
-	// If no writer exists yet, allow this handle to claim ownership.
-	// This implements a "last-intent-wins" policy where opening for write
-	// can steal ownership from a previous handle that never actually wrote.
-	if n.writer == nil {
-		n.writerOwner = fh
-		n.logger.Trace("markWriteIntent: fh=%v marked as writer owner for path=%v", fh, n.path)
-	}
+	return n.writeSession != nil
 }
 
-// ensureWriter creates the writer if it doesn't exist (called from first Write).
-// Returns the writer and whether it was just created.
-func (n *fsNode) ensureWriter(fsWriter FSWriter, fh uint64, getInitialContent func() (io.Reader, error), getCacheWriter func() fsio.CacheWriter) (*fsio.OrderedPipe, bool, error) {
+func (n *fsNode) getWriteSession() *writeSession {
+	n.writeMu.Lock()
+	defer n.writeMu.Unlock()
+	return n.writeSession
+}
+
+func (n *fsNode) ensureWriteSession(initialPath string) (*writeSession, bool, error) {
 	n.writeMu.Lock()
 	defer n.writeMu.Unlock()
 
-	// Writer already exists
-	if n.writer != nil {
-		return n.writer, false, nil
+	if n.writeSession != nil {
+		return n.writeSession, false, nil
 	}
 
-	// Check ownership
-	if n.writerOwner != 0 && n.writerOwner != fh {
-		return nil, false, fmt.Errorf("handle %d is not the writer owner (owner is %d)", fh, n.writerOwner)
-	}
-
-	// Set ownership if not set
-	if n.writerOwner == 0 {
-		n.writerOwner = fh
-	}
-
-	n.logger.Trace("ensureWriter: creating writer for node: %v, fh: %v", n.String(), fh)
-
-	// Get initial content if available (for partial file updates)
-	var opts []fsio.OrderedPipeOption
-	opts = append(opts, fsio.WithLogger(n.logger))
-
-	if getInitialContent != nil {
-		reader, err := getInitialContent()
-		if err != nil {
-			return nil, false, err
-		}
-		if reader != nil {
-			opts = append(opts, fsio.WithInitialContent(reader))
-		}
-	}
-
-	// Get cache writer if available (for real-time cache updates)
-	if getCacheWriter != nil {
-		if cacheWriter := getCacheWriter(); cacheWriter != nil {
-			opts = append(opts, fsio.WithCacheWriter(cacheWriter))
-		}
-	}
-
-	pipe, err := fsio.NewOrderedPipe(n.path, opts...)
+	session, err := newWriteSession(initialPath, n.info.modTime)
 	if err != nil {
-		return nil, false, fmt.Errorf("failed to create writer: %v", err)
+		return nil, false, err
 	}
 
-	n.writer = pipe
+	session.baselineSize = n.info.size
+	session.currentSize = n.info.size
+	n.writeSession = session
 	n.downloadUri = ""
-
-	// Start upload goroutine
-	go func() {
-		fsWriter.writeFile(n.path, pipe.Out, n.info.modTime, fh)
-		// Ensure the PipeReader is closed when writeFile exits.
-		// Without this, if writeFile returns while streamToPipe is still
-		// running, io.Copy to the PipeWriter blocks indefinitely with no
-		// reader, permanently deadlocking OrderedPipe.Close().
-		_ = pipe.Out.Close()
-	}()
-
-	return pipe, true, nil
+	return session, true, nil
 }
 
-// closeWriter closes the writer if it is open and sets it to nil.
-func (n *fsNode) closeWriter() error {
+func (n *fsNode) clearWriteSession() error {
 	n.writeMu.Lock()
-	defer n.writeMu.Unlock()
-	if n.writer != nil {
-		n.logger.Debug("closeWriter from node: %s", n.String())
-		err := n.writer.Close()
-		n.writer = nil
-		return err
+	session := n.writeSession
+	n.writeSession = nil
+	n.writeMu.Unlock()
+	if session == nil {
+		return nil
 	}
-	return nil
+	return session.closeAndRemoveWorkingCopy()
 }
 
-// discardWriter discards the writer without closing it. This is used after
-// a successful upload to allow the writer to be recreated for the next write.
-func (n *fsNode) discardWriter() {
+func (n *fsNode) updateWriteSessionPath(path string) {
 	n.writeMu.Lock()
-	defer n.writeMu.Unlock()
-	if n.writer != nil {
-		n.logger.Debug("discardWriter from node: %s", n.String())
-		n.writer = nil
-		n.writerOwner = 0
+	if n.writeSession != nil {
+		n.writeSession.mu.Lock()
+		n.writeSession.path = path
+		n.writeSession.mu.Unlock()
+	}
+	n.writeMu.Unlock()
+}
+
+func (n *fsNode) readFromWriteSession(buff []byte, ofst int64) (int, bool, error) {
+	n.writeMu.Lock()
+	session := n.writeSession
+	n.writeMu.Unlock()
+	if session == nil {
+		return 0, false, nil
+	}
+
+	session.mu.Lock()
+	size := session.currentSize
+	file := session.workingCopy
+	session.mu.Unlock()
+
+	if file == nil {
+		return 0, true, io.ErrClosedPipe
+	}
+	if ofst < 0 {
+		ofst = 0
+	}
+	if ofst >= size {
+		return 0, true, nil
+	}
+
+	maxRead := min(int64(len(buff)), size-ofst)
+	nread, err := file.ReadAt(buff[:maxRead], ofst)
+	if err != nil && !errors.Is(err, io.EOF) {
+		return 0, true, err
+	}
+	return nread, true, nil
+}
+
+func (n *fsNode) writeSessionUploadStats() (string, int64, time.Time, bool) {
+	n.writeMu.Lock()
+	session := n.writeSession
+	n.writeMu.Unlock()
+	if session == nil {
+		return "", 0, timeZero, false
+	}
+
+	session.mu.Lock()
+	upload := session.upload
+	session.mu.Unlock()
+	if upload == nil {
+		return "", 0, timeZero, true
+	}
+	ref, bytes, last := upload.stats()
+	return ref, bytes, last, true
+}
+
+func (n *fsNode) writeSessionCancelUpload() bool {
+	n.writeMu.Lock()
+	session := n.writeSession
+	n.writeMu.Unlock()
+	if session == nil {
+		return false
+	}
+
+	session.mu.Lock()
+	upload := session.upload
+	session.upload = nil
+	session.uploading = false
+	session.finalizing = false
+	session.cond.Broadcast()
+	session.mu.Unlock()
+
+	if upload != nil {
+		upload.cancelUpload()
+	}
+	return true
+}
+
+func (n *fsNode) writeSessionWaitForFinalize(stallTimeout time.Duration) error {
+	n.writeMu.Lock()
+	session := n.writeSession
+	n.writeMu.Unlock()
+	if session == nil {
+		return nil
+	}
+
+	checkInterval := max(stallTimeout/3, time.Second)
+	ticker := time.NewTicker(checkInterval)
+	defer ticker.Stop()
+
+	for {
+		session.mu.Lock()
+		if session.lastUploadErr != nil {
+			err := session.lastUploadErr
+			session.mu.Unlock()
+			return err
+		}
+		if !session.uploading && !session.finalizing {
+			session.mu.Unlock()
+			return nil
+		}
+		upload := session.upload
+		session.mu.Unlock()
+
+		if upload == nil {
+			time.Sleep(10 * time.Millisecond)
+			continue
+		}
+
+		select {
+		case <-upload.done:
+		case <-ticker.C:
+			_, _, lastActivity := upload.stats()
+			if time.Since(lastActivity) > stallTimeout {
+				return context.DeadlineExceeded
+			}
+		}
 	}
 }
 
-func (n *fsNode) recordProgress(delta int64) {
-	n.uploadMu.Lock()
-	defer n.uploadMu.Unlock()
-	if n.upload == nil {
-		return
+func (n *fsNode) writeSessionPathAndRef() (string, string, bool) {
+	n.writeMu.Lock()
+	session := n.writeSession
+	n.writeMu.Unlock()
+	if session == nil {
+		return "", "", false
 	}
-	n.upload.recordProgress(delta)
+
+	session.mu.Lock()
+	defer session.mu.Unlock()
+	var ref string
+	if session.upload != nil {
+		ref, _, _ = session.upload.stats()
+	}
+	return session.path, ref, true
 }
 
-func (n *fsNode) startUpload(path string, cancel context.CancelFunc) (int, error) {
-	n.uploadMu.Lock()
-	defer n.uploadMu.Unlock()
-	n.upload = &activeUpload{
-		path:         path,
+func (n *fsNode) writeSessionCaptureRef(ref string) bool {
+	n.writeMu.Lock()
+	session := n.writeSession
+	n.writeMu.Unlock()
+	if session == nil {
+		return false
+	}
+
+	session.mu.Lock()
+	upload := session.upload
+	session.mu.Unlock()
+	if upload == nil {
+		return true
+	}
+	upload.captureRef(ref)
+	return true
+}
+
+func (n *fsNode) writeSessionStartUpload(cancel context.CancelFunc) (*activeUpload, bool) {
+	n.writeMu.Lock()
+	session := n.writeSession
+	n.writeMu.Unlock()
+	if session == nil {
+		return nil, false
+	}
+
+	session.mu.Lock()
+	defer session.mu.Unlock()
+	upload := &activeUpload{
+		path:         session.path,
 		startedAt:    time.Now(),
 		cancel:       cancel,
 		done:         make(chan struct{}),
 		lastActivity: time.Now(),
 	}
-	return 0, nil
+	session.upload = upload
+	session.uploading = true
+	session.finalizing = true
+	session.cond.Broadcast()
+	return upload, true
 }
 
-func (n *fsNode) closeUpload(size int64) {
-	n.updateSize(size)
-	n.uploadMu.Lock()
-	defer n.uploadMu.Unlock()
-	if n.upload != nil {
-		n.upload.closeDone()
-		n.upload = nil
+func (n *fsNode) writeSessionFinishUpload(size int64, err error) bool {
+	n.writeMu.Lock()
+	session := n.writeSession
+	n.writeMu.Unlock()
+	if session == nil {
+		return false
 	}
+
+	session.mu.Lock()
+	upload := session.upload
+	if err == nil {
+		session.currentSize = size
+		session.dirty = false
+		session.lastUploadErr = nil
+	} else {
+		session.lastUploadErr = err
+	}
+	session.uploading = false
+	session.finalizing = false
+	session.upload = nil
+	session.cond.Broadcast()
+	session.mu.Unlock()
+
+	if upload != nil {
+		upload.closeDone()
+	}
+	return true
 }
 
-func (n *fsNode) pathAndRef() (string, string) {
-	n.uploadMu.Lock()
-	defer n.uploadMu.Unlock()
-	var ref string
-	if n.upload != nil {
-		ref = n.upload.ref
+func (n *fsNode) writeSessionRecordProgress(delta int64) bool {
+	n.writeMu.Lock()
+	session := n.writeSession
+	n.writeMu.Unlock()
+	if session == nil {
+		return false
 	}
-	return n.path, ref
+
+	session.mu.Lock()
+	upload := session.upload
+	session.mu.Unlock()
+	if upload != nil {
+		upload.recordProgress(delta)
+	}
+	return true
+}
+
+func (n *fsNode) poisonedWriteSessionErr() error {
+	n.writeMu.Lock()
+	session := n.writeSession
+	n.writeMu.Unlock()
+	if session == nil {
+		return nil
+	}
+
+	session.mu.Lock()
+	defer session.mu.Unlock()
+	return session.lastUploadErr
+}
+
+func (n *fsNode) ensureWriteSessionHydrated(hydrate func(*writeSession) error) error {
+	n.writeMu.Lock()
+	session := n.writeSession
+	n.writeMu.Unlock()
+	if session == nil {
+		return fmt.Errorf("write session missing for %s", n.path)
+	}
+
+	session.mu.Lock()
+	if session.lastUploadErr != nil {
+		err := session.lastUploadErr
+		session.mu.Unlock()
+		return err
+	}
+	if session.hydrated {
+		session.mu.Unlock()
+		return nil
+	}
+	session.mu.Unlock()
+
+	if err := hydrate(session); err != nil {
+		return err
+	}
+
+	session.mu.Lock()
+	session.hydrated = true
+	session.cond.Broadcast()
+	session.mu.Unlock()
+	return nil
 }
 
 func (n *fsNode) captureRef(ref string) {
-	n.uploadMu.Lock()
-	defer n.uploadMu.Unlock()
-	if n.upload != nil {
-		n.upload.captureRef(ref)
+	if n.writeSessionCaptureRef(ref) {
+		return
 	}
 }
 
@@ -373,41 +537,9 @@ func (n *fsNode) markDeleted() {
 	n.expireInfo()
 }
 
-// writerIsOpen reports if a writer is present.
-func (n *fsNode) writerIsOpen() bool {
-	n.writeMu.Lock()
-	defer n.writeMu.Unlock()
-	return n.writer != nil
-}
-
-// writerSnapshot returns a snapshot of writer pointer, owner, and whether it has writes.
-// hasWrites indicates actual data was written (not just initial content loaded).
-func (n *fsNode) writerSnapshot() (w *fsio.OrderedPipe, owner uint64, hasWrites bool) {
-	n.writeMu.Lock()
-	w = n.writer
-	owner = n.writerOwner
-	if w != nil {
-		hasWrites = w.HasWrites()
-	}
-	n.writeMu.Unlock()
-	return w, owner, hasWrites
-}
-
 func (n *fsNode) uploadActive() bool {
-	n.uploadMu.Lock()
-	defer n.uploadMu.Unlock()
-	return n.upload != nil
-}
-
-// readFromWriter reads from the in-flight writer without exposing locks.
-func (n *fsNode) readFromWriter(buff []byte, ofst int64) int {
-	n.writeMu.Lock()
-	w := n.writer
-	n.writeMu.Unlock()
-	if w == nil {
-		return 0
-	}
-	return w.ReadAt(buff, ofst)
+	_, _, _, ok := n.writeSessionUploadStats()
+	return ok
 }
 
 // waitForUploadWithProgressTimeout blocks until the upload completes or stalls.
@@ -416,56 +548,19 @@ func (n *fsNode) readFromWriter(buff []byte, ofst int64) int {
 // out prematurely. Returns an error only when no progress has been observed for
 // stallTimeout.
 func (n *fsNode) waitForUploadWithProgressTimeout(stallTimeout time.Duration) error {
-	n.uploadMu.Lock()
-	w, _, hasWrites := n.writerSnapshot()
-	var done <-chan struct{}
-	var upload *activeUpload
-	if n.upload != nil && (w == nil || hasWrites) {
-		done = n.upload.done
-		upload = n.upload
-	}
-	n.uploadMu.Unlock()
-	if done == nil {
-		return nil
-	}
-
-	checkInterval := max(stallTimeout/3, time.Second)
-	ticker := time.NewTicker(checkInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-done:
-			return nil
-		case <-ticker.C:
-			_, _, lastActivity := upload.stats()
-			if time.Since(lastActivity) > stallTimeout {
-				return context.DeadlineExceeded
-			}
-		}
-	}
+	return n.writeSessionWaitForFinalize(stallTimeout)
 }
 
 // uploadStats safely returns (ref, bytes, lastActivity) for logging/metrics.
 func (n *fsNode) uploadStats() (string, int64, time.Time) {
-	n.uploadMu.Lock()
-	defer n.uploadMu.Unlock()
-	if n.upload == nil {
-		return "", 0, timeZero
-	}
-	return n.upload.stats()
+	ref, bytes, last, _ := n.writeSessionUploadStats()
+	return ref, bytes, last
 }
 
-// Lock order: uploadMu -> writeMu (maintain across call paths to avoid deadlocks).
 func (n *fsNode) cancelUpload() {
-	n.uploadMu.Lock()
-	defer n.uploadMu.Unlock()
-	if n.upload == nil {
-		return
+	if n.writeSessionCancelUpload() {
+		_ = n.clearWriteSession()
 	}
-	n.upload.cancelUpload()
-	n.upload = nil
-	n.closeWriter()
 }
 
 func (u *activeUpload) cancelUpload() {
@@ -488,9 +583,9 @@ func (u *activeUpload) captureRef(ref string) {
 func (u *activeUpload) closeDone() {
 	u.mu.Lock()
 	defer u.mu.Unlock()
-	if u.done != nil {
+	if !u.doneClosed && u.done != nil {
 		close(u.done)
-		u.done = nil
+		u.doneClosed = true
 	}
 }
 

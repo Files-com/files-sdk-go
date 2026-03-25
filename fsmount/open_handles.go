@@ -90,7 +90,10 @@ func (h *OpenHandles) Lookup(id uint64) (*fileHandle, *fsNode, bool) {
 	h.mu.RLock()
 	fh, ok := h.entries[id]
 	h.mu.RUnlock()
-	return fh, fh.node, ok
+	if !ok || fh == nil {
+		return nil, nil, false
+	}
+	return fh, fh.node, true
 }
 
 // Release removes a fileHandle by id. Safe to call even if the handle
@@ -204,7 +207,7 @@ func (h *OpenHandles) startUploadSweeper() {
 					continue
 				}
 				node := handle.node
-				if node.upload == nil {
+				if !node.uploadActive() {
 					continue
 				}
 				_, bytesWritten, lastActivity := node.uploadStats()

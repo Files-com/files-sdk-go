@@ -13,6 +13,10 @@ import (
 )
 
 func (fs *LocalFs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
+	fs.vfs.ensureContextOwner()
+	if stat == nil {
+		stat = &fuse.Stat_t{}
+	}
 	fq := fs.fqPath(path)
 	info, err := os.Stat(fq)
 	if err != nil {
@@ -26,6 +30,17 @@ func (fs *LocalFs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int)
 
 	stat.Mode = uint32(info.Mode())
 	stat.Size = int64(info.Size())
+	node, ok := fs.vfs.fetch(path)
+	if ok && node.info.uid != 0 {
+		stat.Uid = node.info.uid
+	} else {
+		stat.Uid = fs.vfs.uid
+	}
+	if ok && node.info.gid != 0 {
+		stat.Gid = node.info.gid
+	} else {
+		stat.Gid = fs.vfs.gid
+	}
 	stat.Mtim.Sec = info.ModTime().Unix()
 	if sys := info.Sys(); sys != nil {
 		if wstat, ok := sys.(*syscall.Win32FileAttributeData); ok {

@@ -142,16 +142,23 @@ type dbgUpload struct {
 	Ref          string    `json:"ref"`
 	BytesWritten int64     `json:"bytesWritten"`
 	LastActivity time.Time `json:"lastActivity"`
-	HasCancel    bool      `json:"hasCancel"`
-	WriterOpen   bool      `json:"writerOpen"`
-	Committed    bool      `json:"committed"`
+	Uploading    bool      `json:"uploading"`
+	Finalizing   bool      `json:"finalizing"`
+	Dirty        bool      `json:"dirty"`
 }
 
-type dbgWriter struct {
-	Path      string `json:"path"`
-	OwnerFH   uint64 `json:"ownerFh"`
-	Offset    int64  `json:"offset"`
-	Committed bool   `json:"committed"`
+type dbgSession struct {
+	Path            string    `json:"path"`
+	WorkingCopyPath string    `json:"workingCopyPath"`
+	HandleCount     int       `json:"handleCount"`
+	BaselineSize    int64     `json:"baselineSize"`
+	CurrentSize     int64     `json:"currentSize"`
+	Mtime           time.Time `json:"mtime"`
+	Hydrated        bool      `json:"hydrated"`
+	Dirty           bool      `json:"dirty"`
+	Uploading       bool      `json:"uploading"`
+	Finalizing      bool      `json:"finalizing"`
+	LastUploadErr   string    `json:"lastUploadErr,omitempty"`
 }
 
 type dbgNode struct {
@@ -159,8 +166,9 @@ type dbgNode struct {
 	Size        int64        `json:"size"`
 	ModTime     time.Time    `json:"modTime"`
 	DownloadURI bool         `json:"downloadUriCached"`
-	HasWriter   bool         `json:"hasWriter"`
+	HasSession  bool         `json:"hasSession"`
 	HasUpload   bool         `json:"hasUpload"`
+	Session     *dbgSession  `json:"session,omitempty"`
 	Info        *dbgNodeInfo `json:"info"`
 	Now         time.Time    `json:"now"`
 	InfoExpires time.Time    `json:"infoExpires"`
@@ -204,13 +212,13 @@ func (reg *mountRegistry) handleDebugRoot(w http.ResponseWriter, r *http.Request
 // /debug/state — quick overview
 func (reg *mountRegistry) handleDebugState(w http.ResponseWriter, r *http.Request) {
 	type state struct {
-		Now           time.Time `json:"now"`
-		NumHandles    int       `json:"numHandles"`
-		NumNodes      int       `json:"numNodes"`
-		NumUploads    int       `json:"numUploads"`
-		NumWriters    int       `json:"numWriters"`
-		SampleUploads []dbgUpload
-		SampleWriters []dbgWriter
+		Now            time.Time `json:"now"`
+		NumHandles     int       `json:"numHandles"`
+		NumNodes       int       `json:"numNodes"`
+		NumUploads     int       `json:"numUploads"`
+		NumSessions    int       `json:"numSessions"`
+		SampleUploads  []dbgUpload
+		SampleSessions []dbgSession
 	}
 	now := time.Now()
 
@@ -240,65 +248,60 @@ func (reg *mountRegistry) handleDebugState(w http.ResponseWriter, r *http.Reques
 	nodes := fs.snapshotNodes()
 
 	uploads := make([]dbgUpload, 0)
-	writers := make([]dbgWriter, 0)
+	sessions := make([]dbgSession, 0)
 	for _, n := range nodes {
-		// upload snapshot
-		n.statusMu.Lock()
-		u := n.upload
-		path := n.path
-		downloadURI := (n.downloadUri != "")
-		size := n.info.size
-		mod := n.info.modTime
-		n.statusMu.Unlock()
+		if session := n.getWriteSession(); session != nil {
+			snap := session.snapshot()
+			session.mu.Lock()
+			upload := session.upload
+			handleCount := len(session.handles)
+			workingCopyPath := session.workingCopyPath
+			session.mu.Unlock()
 
-		n.writeMu.Lock()
-		w := n.writer
-		owner := n.writerOwner
-		var off int64
-		if w != nil {
-			off = w.Offset()
-		}
-		n.writeMu.Unlock()
+			dbgSession := dbgSession{
+				Path:            n.path,
+				WorkingCopyPath: workingCopyPath,
+				HandleCount:     handleCount,
+				BaselineSize:    session.baselineSize,
+				CurrentSize:     snap.currentSize,
+				Mtime:           snap.mtime,
+				Hydrated:        snap.hydrated,
+				Dirty:           snap.dirty,
+				Uploading:       snap.uploading,
+				Finalizing:      snap.finalizing,
+			}
+			if snap.lastUploadErr != nil {
+				dbgSession.LastUploadErr = snap.lastUploadErr.Error()
+			}
+			sessions = append(sessions, dbgSession)
 
-		if u != nil {
-			u.mu.Lock()
-			uploads = append(uploads, dbgUpload{
-				Path:         path,
-				Ref:          u.ref,
-				BytesWritten: u.bytesWritten,
-				LastActivity: u.lastActivity,
-				HasCancel:    u.cancel != nil,
-				WriterOpen:   w != nil,
-				Committed:    w != nil && off > 0,
-			})
-			u.mu.Unlock()
+			if upload != nil {
+				ref, bytesWritten, lastActivity := upload.stats()
+				uploads = append(uploads, dbgUpload{
+					Path:         n.path,
+					Ref:          ref,
+					BytesWritten: bytesWritten,
+					LastActivity: lastActivity,
+					Uploading:    snap.uploading,
+					Finalizing:   snap.finalizing,
+					Dirty:        snap.dirty,
+				})
+			}
 		}
-		if w != nil {
-			writers = append(writers, dbgWriter{
-				Path:      path,
-				OwnerFH:   owner,
-				Offset:    off,
-				Committed: off > 0,
-			})
-		}
-
-		_ = downloadURI
-		_ = size
-		_ = mod
 	}
 
 	// small samples (sorted by path for determinism)
 	sort.Slice(uploads, func(i, j int) bool { return uploads[i].Path < uploads[j].Path })
-	sort.Slice(writers, func(i, j int) bool { return writers[i].Path < writers[j].Path })
+	sort.Slice(sessions, func(i, j int) bool { return sessions[i].Path < sessions[j].Path })
 
 	resp := state{
-		Now:           now,
-		NumHandles:    handleCount,
-		NumNodes:      len(nodes),
-		NumUploads:    len(uploads),
-		NumWriters:    len(writers),
-		SampleUploads: uploads,
-		SampleWriters: writers,
+		Now:            now,
+		NumHandles:     handleCount,
+		NumNodes:       len(nodes),
+		NumUploads:     len(uploads),
+		NumSessions:    len(sessions),
+		SampleUploads:  uploads,
+		SampleSessions: sessions,
 	}
 	writeJSON(w, resp)
 }
@@ -362,41 +365,35 @@ func (reg *mountRegistry) handleDebugUploads(w http.ResponseWriter, r *http.Requ
 	fs := host.fs
 
 	for _, n := range fs.snapshotNodes() {
-		n.statusMu.Lock()
-		u := n.upload
-		path := n.path
-		n.statusMu.Unlock()
+		session := n.getWriteSession()
+		if session == nil {
+			continue
+		}
+		snap := session.snapshot()
+		session.mu.Lock()
+		u := session.upload
+		session.mu.Unlock()
 		if u == nil {
 			continue
 		}
-
-		n.writeMu.Lock()
-		wr := n.writer
-		var off int64
-		if wr != nil {
-			off = wr.Offset()
-		}
-		n.writeMu.Unlock()
-
-		u.mu.Lock()
+		ref, bytesWritten, lastActivity := u.stats()
 		out = append(out, dbgUpload{
-			Path:         path,
-			Ref:          u.ref,
-			BytesWritten: u.bytesWritten,
-			LastActivity: u.lastActivity,
-			HasCancel:    u.cancel != nil,
-			WriterOpen:   wr != nil,
-			Committed:    wr != nil && off > 0,
+			Path:         n.path,
+			Ref:          ref,
+			BytesWritten: bytesWritten,
+			LastActivity: lastActivity,
+			Uploading:    snap.uploading,
+			Finalizing:   snap.finalizing,
+			Dirty:        snap.dirty,
 		})
-		u.mu.Unlock()
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Path < out[j].Path })
 	writeJSON(w, out)
 }
 
-// /debug/writers — nodes with open writers
+// /debug/writers — nodes with active write sessions
 func (reg *mountRegistry) handleDebugWriters(w http.ResponseWriter, r *http.Request) {
-	out := make([]dbgWriter, 0)
+	out := make([]dbgSession, 0)
 
 	mnt := r.URL.Query().Get("mnt")
 
@@ -413,23 +410,28 @@ func (reg *mountRegistry) handleDebugWriters(w http.ResponseWriter, r *http.Requ
 	fs := host.fs
 
 	for _, n := range fs.snapshotNodes() {
-		n.writeMu.Lock()
-		w := n.writer
-		owner := n.writerOwner
-		var off int64
-		if w != nil {
-			off = w.Offset()
-		}
-		path := n.path
-		n.writeMu.Unlock()
-
-		if w != nil {
-			out = append(out, dbgWriter{
-				Path:      path,
-				OwnerFH:   owner,
-				Offset:    off,
-				Committed: off > 0,
-			})
+		if session := n.getWriteSession(); session != nil {
+			snap := session.snapshot()
+			session.mu.Lock()
+			handleCount := len(session.handles)
+			workingCopyPath := session.workingCopyPath
+			session.mu.Unlock()
+			item := dbgSession{
+				Path:            n.path,
+				WorkingCopyPath: workingCopyPath,
+				HandleCount:     handleCount,
+				BaselineSize:    session.baselineSize,
+				CurrentSize:     snap.currentSize,
+				Mtime:           snap.mtime,
+				Hydrated:        snap.hydrated,
+				Dirty:           snap.dirty,
+				Uploading:       snap.uploading,
+				Finalizing:      snap.finalizing,
+			}
+			if snap.lastUploadErr != nil {
+				item.LastUploadErr = snap.lastUploadErr.Error()
+			}
+			out = append(out, item)
 		}
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Path < out[j].Path })
@@ -461,23 +463,45 @@ func (reg *mountRegistry) handleDebugNodes(w http.ResponseWriter, r *http.Reques
 		uriCached := n.downloadUri != ""
 		size := n.info.size
 		mod := n.info.modTime
-		hasUpload := n.upload != nil
 		expires := n.infoExpires
 		info := n.info
 		n.statusMu.Unlock()
 
-		// writer fields
-		n.writeMu.Lock()
-		hasWriter := (n.writer != nil)
-		n.writeMu.Unlock()
+		hasSession := n.getWriteSession() != nil
+		hasUpload := false
+		var sessionInfo *dbgSession
+		if session := n.getWriteSession(); session != nil {
+			snap := session.snapshot()
+			session.mu.Lock()
+			hasUpload = session.upload != nil
+			handleCount := len(session.handles)
+			workingCopyPath := session.workingCopyPath
+			session.mu.Unlock()
+			sessionInfo = &dbgSession{
+				Path:            path,
+				WorkingCopyPath: workingCopyPath,
+				HandleCount:     handleCount,
+				BaselineSize:    session.baselineSize,
+				CurrentSize:     snap.currentSize,
+				Mtime:           snap.mtime,
+				Hydrated:        snap.hydrated,
+				Dirty:           snap.dirty,
+				Uploading:       snap.uploading,
+				Finalizing:      snap.finalizing,
+			}
+			if snap.lastUploadErr != nil {
+				sessionInfo.LastUploadErr = snap.lastUploadErr.Error()
+			}
+		}
 
 		out = append(out, dbgNode{
 			Path:        path,
 			Size:        size,
 			ModTime:     mod,
 			DownloadURI: uriCached,
-			HasWriter:   hasWriter,
+			HasSession:  hasSession,
 			HasUpload:   hasUpload,
+			Session:     sessionInfo,
 			Now:         time.Now(),
 			InfoExpires: expires,
 			InfoExpired: n.infoExpired(),

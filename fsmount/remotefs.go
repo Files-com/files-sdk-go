@@ -21,7 +21,6 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/disk"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/mem"
-	fsio "github.com/Files-com/files-sdk-go/v3/fsmount/internal/io"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/log"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/shell"
 	fssync "github.com/Files-com/files-sdk-go/v3/fsmount/internal/sync"
@@ -81,14 +80,12 @@ type RemoteFs struct {
 	disableLocking   bool
 	ignore           *gogitignore.GitIgnore
 
-	fileClient      *file.Client
-	lockClient      *lock.Client
-	apiKeyClient    *api_key.Client
-	currentUserId   int64
-	migrationClient *file_migration.Client
-	lockMap         map[string]*lockInfo
-	lockMapMutex    sync.Mutex
-	loadDirMutexes  *fssync.PathMutex
+	backend           remoteBackend
+	currentUserId     int64
+	uploadWorkingCopy func(ctx context.Context, node *fsNode, path string, reader io.Reader, mtime time.Time, fh uint64) (int64, error)
+	lockMap           map[string]*lockInfo
+	lockMapMutex      sync.Mutex
+	loadDirMutexes    *fssync.PathMutex
 
 	debugFuse bool
 
@@ -126,7 +123,7 @@ type cacheStore interface {
 }
 
 // cacheReader wraps the cacheStore to provide an io.Reader interface for reading cached files.
-// This is used to seed OrderedPipe with initial content for partial file updates.
+// This is used to seed working copies with cached content for partial file updates.
 type cacheReader struct {
 	cache  cacheStore
 	path   string
@@ -231,16 +228,18 @@ func (fs *RemoteFs) Init() {
 	// Guard with a sync.Once because Init is called from fsmount.Mount, but cgofuse also calls Init
 	// when it mounts the file system.
 	fs.initOnce.Do(func() {
-		if fs.fileClient == nil {
-			fs.fileClient = &file.Client{Config: *fs.config}
-			fs.lockClient = &lock.Client{Config: *fs.config}
-			fs.apiKeyClient = &api_key.Client{Config: *fs.config}
-			fs.migrationClient = &file_migration.Client{Config: *fs.config}
+		if fs.backend == nil {
+			fs.backend = &sdkRemoteBackend{
+				fileClient:      &file.Client{Config: *fs.config},
+				lockClient:      &lock.Client{Config: *fs.config},
+				apiKeyClient:    &api_key.Client{Config: *fs.config},
+				migrationClient: &file_migration.Client{Config: *fs.config},
+			}
 			fs.lockMap = make(map[string]*lockInfo)
 		}
 
 		// no need to guard this with an operation limit since it's only called once during initialization
-		key, err := fs.apiKeyClient.FindCurrent()
+		key, err := fs.backend.findCurrent()
 		if err != nil {
 			fs.log.Error("Failed to find metadata for current API key, file exclusivity locks may not work as expected: %v", err)
 			// set locking to false?
@@ -259,7 +258,6 @@ func (fs *RemoteFs) Init() {
 	if runtime.GOOS == "windows" {
 		fs.startWebSyncWatcher(webSyncInterval)
 	}
-
 }
 
 func (fs *RemoteFs) Destroy() {
@@ -280,7 +278,7 @@ func (fs *RemoteFs) Validate() error {
 	fs.Init()
 	// Make sure the root directory can be listed.
 	// no need to guard this with an operation limit since it's only called once during initialization
-	it, err := fs.fileClient.ListFor(files_sdk.FolderListForParams{
+	it, err := fs.backend.listFor(files_sdk.FolderListForParams{
 		Path: fs.remotePath("/"),
 		ListParams: files_sdk.ListParams{
 			PerPage: 1,
@@ -297,8 +295,21 @@ func (fs *RemoteFs) Mkdir(path string, mode uint32) (errc int) {
 	localPath, remotePath := fs.paths(path)
 	fs.log.Debug("RemoteFs: Mkdir: %v (%v) (mode=%o)", remotePath, localPath, mode)
 
+	if node, ok := fs.vfs.fetch(path); ok && !node.infoExpired() {
+		fs.log.Debug("RemoteFs: Mkdir: path already exists in VFS: %v (%v)", remotePath, localPath)
+		return -fuse.EEXIST
+	}
+
+	if errc = fs.loadParent(path); errc != 0 {
+		return errc
+	}
+	if node, ok := fs.vfs.fetch(path); ok && !node.infoExpired() {
+		fs.log.Debug("RemoteFs: Mkdir: path discovered during parent refresh: %v (%v)", remotePath, localPath)
+		return -fuse.EEXIST
+	}
+
 	err := fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
-		_, err := fs.fileClient.CreateFolder(files_sdk.FolderCreateParams{Path: remotePath})
+		_, err := fs.backend.createFolder(files_sdk.FolderCreateParams{Path: remotePath})
 		return err
 	})
 	if errc = fs.handleError(path, err); errc != 0 {
@@ -331,12 +342,11 @@ func (fs *RemoteFs) Unlink(path string) (errc int) {
 
 	// If the node is locked, it can not be deleted.
 	if node.isLocked() {
-		_, _, hasWrites := node.writerSnapshot()
 		fs.lockMapMutex.Lock()
 		linfo, ok := fs.lockMap[path]
 		fs.lockMapMutex.Unlock()
-		if ok && fs.currentUserId == linfo.Lock.UserId && !hasWrites {
-			fs.log.Debug("RemoteFs: Unlink: allowing delete of same-session placeholder: %v (%v)", remotePath, localPath)
+		if ok && fs.currentUserId == linfo.Lock.UserId {
+			fs.log.Debug("RemoteFs: Unlink: allowing delete of same-user locked file: %v (%v)", remotePath, localPath)
 		} else {
 			fs.log.Info("Cannot delete locked file: %v (%v)", remotePath, localPath)
 			return -fuse.ENOLCK
@@ -345,8 +355,8 @@ func (fs *RemoteFs) Unlink(path string) (errc int) {
 
 	// If the node is being written to, cancel the upload and delete the file from the remote API.
 	// This is necessary because the file may be in the middle of being written to, and the upload may not have completed yet.
-	if node.isWriterOpen() {
-		fs.log.Debug("RemoteFs: Unlink: Canceling upload for: %v (%v)", remotePath, localPath)
+	if node.hasActiveWriteSession() {
+		fs.log.Debug("RemoteFs: Unlink: Canceling active write session for: %v (%v)", remotePath, localPath)
 		node.cancelUpload()
 	}
 
@@ -385,18 +395,15 @@ func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
 
 	defer node.expireInfo()
 
-	// If there is no active upload for this node, proceed with the rename.
-	if !node.isWriterOpen() {
+	if !node.hasActiveWriteSession() {
 		fs.log.Info("Renaming %v to %v (%v to %v)", oldRemotePath, newRemotePath, oldLocalPath, newLocalPath)
 
-		params := files_sdk.FileMoveParams{
-			Path:        oldRemotePath,
-			Destination: newRemotePath,
-			Overwrite:   lib.Ptr(true),
-		}
-
 		err := fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
-			action, err := fs.fileClient.Move(params)
+			action, err := fs.backend.move(files_sdk.FileMoveParams{
+				Path:        oldRemotePath,
+				Destination: newRemotePath,
+				Overwrite:   lib.Ptr(true),
+			})
 			if err != nil {
 				return err
 			}
@@ -422,6 +429,7 @@ func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
 	// reflect the new path. Before the upload is finalized, there is a callback that inspects the
 	// file node to get the final path and upload ref to complete the upload.
 	fs.rename(oldpath, newpath)
+	node.updateWriteSessionPath(newpath)
 	node.clearDownloadURI()
 
 	return errc
@@ -439,18 +447,19 @@ func (fs *RemoteFs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 
 	node.info.modTime = modT
 
-	if node.isWriterOpen() {
-		// If the fs is writing to the file, no need update the mtime. It will be updated when the write completes.
+	if session := node.getWriteSession(); session != nil {
+		session.mu.Lock()
+		session.mtime = modT
+		session.mtimeExplicit = true
+		session.mu.Unlock()
 		return errc
 	}
 
-	params := files_sdk.FileUpdateParams{
-		Path:          remotePath,
-		ProvidedMtime: &node.info.modTime,
-	}
-
 	err := fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
-		_, err := fs.fileClient.Update(params)
+		_, err := fs.backend.update(files_sdk.FileUpdateParams{
+			Path:          remotePath,
+			ProvidedMtime: &node.info.modTime,
+		})
 		return err
 	})
 	if errors.Is(err, lim.ErrNoSlotsAvailable) {
@@ -475,22 +484,10 @@ func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh ui
 	}
 
 	node, exists := fs.vfs.fetch(path)
-	if exists && node.isWriterOpen() {
-		// the node exists and has an open writer, if the writer's offset is
-		// greater than zero, it means the file is actively being written to
-		if node.writer.Offset() > 0 {
-			fs.log.Info("Cannot create file while writing: %v (%v)", remotePath, localPath)
-			// Release handle on error since FUSE won't call Release() for failed creates
-			fs.vfs.handles.Release(fh)
-			return -fuse.EEXIST, fh
-		}
-		// the node exists, and has an open writer, but the writer's offset is zero,
-		// meaning the file was created but nothing has been written to it yet.
-		// In this case, create a new file handle and return it. The writer will
-		// only be closed when a file handle that has written data is released to
-		// avoid creating multiple upload events for the same file.
-		fs.log.Debug("RemoteFs: Create: File already exists, but no data has been written: %v (%v)", remotePath, localPath)
+	if exists && node.hasActiveWriteSession() {
+		fs.log.Debug("RemoteFs: Create: joining existing write session: %v (%v)", remotePath, localPath)
 		handle.node = node
+		node.getWriteSession().addHandle(fh)
 		return errc, fh
 	}
 
@@ -526,16 +523,17 @@ func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh ui
 		return errc, fh
 	}
 
-	// Mark write intent - writer will be created lazily on first Write
-	node.markWriteIntent(fh)
-	fs.log.Debug("RemoteFs: Create: marked write intent for %v (%v), fh=%v", remotePath, localPath, fh)
+	fs.log.Debug("RemoteFs: Create: opened write-capable handle for %v (%v), fh=%v", remotePath, localPath, fh)
 
 	return errc, fh
 }
 
 func (fs *RemoteFs) Open(path string, flags int) (errc int, fh uint64) {
 	fuseFlags := ff.NewFuseFlags(flags)
-	node := fs.vfs.getOrCreate(path, nodeTypeFile)
+	node, errc := fs.fetchNodeWithParentRefresh(path)
+	if errc != 0 {
+		return errc, ^uint64(0)
+	}
 	fh, handle := fs.vfs.handles.Open(node, fuseFlags)
 	fs.log.Trace("RemoteFs: Open: path=%v, flags=%v, fh=%v", path, fuseFlags, fh)
 
@@ -565,23 +563,14 @@ func (fs *RemoteFs) Open(path string, flags int) (errc int, fh uint64) {
 		return errc, fh
 	}
 
-	// Single-writer enforcement: block if writer exists and has writes
-	if node.writerIsOpen() {
-		_, owner, hasWrites := node.writerSnapshot()
-		if hasWrites && owner != fh {
-			fs.log.Debug("RemoteFs: Open: writer already active with writes for path=%v, owner=%v", path, owner)
-			// EBUSY error - manually Unpin and Release handle since Release() won't be called for failed opens
-			if fs.cacheStore != nil {
-				fs.cacheStore.Unpin(path)
-			}
-			fs.vfs.handles.Release(fh)
-			return -fuse.EBUSY, fh
-		}
+	// A node with an active write session is already in write-owned state.
+	// Additional write-capable handles join the session instead of being rejected.
+	if session := node.getWriteSession(); session != nil {
+		session.addHandle(fh)
+		fs.log.Debug("RemoteFs: Open: joined active write session for path=%v, fh=%v", path, fh)
+		return errc, fh
 	}
-
-	// Mark write intent - writer will be created lazily on first Write
-	node.markWriteIntent(fh)
-	fs.log.Debug("RemoteFs: Open: marked write intent for path=%v, fh=%v", path, fh)
+	fs.log.Debug("RemoteFs: Open: opened write-capable handle for path=%v, fh=%v", path, fh)
 
 	return errc, fh
 }
@@ -604,7 +593,10 @@ func (fs *RemoteFs) fetchNodeWithParentRefresh(path string) (node *fsNode, errc 
 }
 
 func (fs *RemoteFs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
-	fs.log.Trace("RemoteFs: Getattr: path=%v, fh=%v", path, fh)
+	fs.vfs.ensureContextOwner()
+	if stat == nil {
+		stat = &fuse.Stat_t{}
+	}
 	// If the file handle is open, extend the TTL of the open handle. The info may have expired,
 	// but the handle is still open, meaning the OS is still using the file. This can happen if there
 	// are multiple simultaneous uploads, but they haven't all received a write request in the last
@@ -613,12 +605,22 @@ func (fs *RemoteFs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int
 	// is a bad user experience.
 	fs.vfs.handles.ExtendOpenHandleTtls()
 	if node, exists := fs.vfs.fetch(path); exists && !node.infoExpired() {
-		fs.log.Trace("RemoteFs: Getattr: using cached stat, path=%v, size=%v, mtime=%v", path, node.info.size, node.info.modTime)
-		getStat(node.info, stat)
+		if session := node.getWriteSession(); session != nil {
+			snap := session.snapshot()
+			info := node.info
+			info.size = snap.currentSize
+			info.modTime = snap.mtime
+			getStat(info, stat, fs.vfs.uid, fs.vfs.gid)
+			fs.log.Trace("RemoteFs: Getattr: returning cached write-session stat: path=%v, fh=%v, stat=%s", path, fh, formatFuseStat(stat))
+			return errc
+		}
+		getStat(node.info, stat, fs.vfs.uid, fs.vfs.gid)
+		fs.log.Trace("RemoteFs: Getattr: returning cached node stat: path=%v, fh=%v, stat=%s", path, fh, formatFuseStat(stat))
 		return errc
 	}
 
 	if errc = fs.loadParent(path); errc != 0 {
+		fs.log.Trace("RemoteFs: Getattr: loadParent failed: path=%v, fh=%v, errc=%v", path, fh, errc)
 		return errc
 	}
 
@@ -638,13 +640,19 @@ func (fs *RemoteFs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int
 
 		if node == nil {
 			localPath, remotePath := fs.paths(path)
-			fs.log.Trace("RemoteFs: Getattr: File not found: %v (%v)", remotePath, localPath)
+			fs.log.Trace("RemoteFs: Getattr: file not found: %v (%v), fh=%v", remotePath, localPath, fh)
 			return -fuse.ENOENT
 		}
 	}
-
-	fs.log.Trace("RemoteFs: Getattr: path=%v, size=%v, mtime=%v", path, node.info.size, node.info.modTime)
-	getStat(node.info, stat)
+	if session := node.getWriteSession(); session != nil {
+		snap := session.snapshot()
+		info := node.info
+		info.size = snap.currentSize
+		info.modTime = snap.mtime
+		getStat(info, stat, fs.vfs.uid, fs.vfs.gid)
+		return errc
+	}
+	getStat(node.info, stat, fs.vfs.uid, fs.vfs.gid)
 
 	return errc
 }
@@ -656,19 +664,42 @@ func (fs *RemoteFs) Truncate(path string, size int64, fh uint64) (errc int) {
 	localPath, remotePath := fs.paths(path)
 	fs.log.Debug("RemoteFs: Truncate: %v (%v) (size=%v, fh=%v)", remotePath, localPath, size, fh)
 
-	node := fs.vfs.getOrCreate(path, nodeTypeFile)
-	node.updateSize(size)
+	var node *fsNode
+	if fh != ^uint64(0) {
+		if handle, existingNode, ok := fs.vfs.handles.Lookup(fh); ok && handle != nil && existingNode != nil {
+			node = existingNode
+		}
+	}
+	if node == nil {
+		node, errc = fs.fetchNodeWithParentRefresh(path)
+		if errc != 0 {
+			return errc
+		}
+	}
 
 	// Invalidate any cached content. The size has changed, so cached data is stale.
-	// Without this, a subsequent write would load the old cached content as initial
-	// content for the OrderedPipe, potentially uploading data from the wrong version
-	// of the file for regions not covered by the new writes.
+	// Without this, a subsequent write could load stale cached content as the
+	// working copy baseline and preserve data from the wrong version of the file.
 	fs.cacheStore.Delete(path)
 
-	// Mark write intent - actual truncation will happen if data is written
-	// Per requirements: O_TRUNC creates writer but waits for actual data before uploading
-	node.markWriteIntent(fh)
-	fs.log.Debug("RemoteFs: Truncate: marked write intent for %v (%v)", remotePath, localPath)
+	session, _, err := node.ensureWriteSession(path)
+	if err != nil {
+		fs.log.Error("RemoteFs: Truncate: failed to create write session for %v: %v", path, err)
+		return -fuse.EIO
+	}
+	session.addHandle(fh)
+	if err := fs.ensureWriteSessionBaseline(path, node, session, size == 0, fh); err != nil {
+		if errc := fs.handleError(path, err); errc != 0 {
+			return errc
+		}
+		return -fuse.EIO
+	}
+	if err := fs.truncateWorkingCopy(session, size); err != nil {
+		fs.log.Error("RemoteFs: Truncate: working copy truncate failed for %v: %v", path, err)
+		return -fuse.EIO
+	}
+	node.extendTtl()
+	fs.log.Debug("RemoteFs: Truncate: updated working copy for %v (%v)", remotePath, localPath)
 
 	return errc
 }
@@ -688,16 +719,15 @@ func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int
 		return -fuse.EBADF
 	}
 
-	// Attempt to read from the temporary file backing the writer. If the read can't be satisfied
-	// from the temporary file, it will return zero bytes, and the logic will fall through to
-	// reading from the cache or remote API.
-	if node.writerIsOpen() {
-		n = node.readFromWriter(buff, ofst)
+	if n, sessionOwned, err := node.readFromWriteSession(buff, ofst); sessionOwned {
+		if err != nil {
+			fs.log.Debug("RemoteFs: Read: write session read failed for path=%v: %v", path, err)
+			return -fuse.EIO
+		}
 		if n > 0 {
 			handle.incrementRead(int64(n))
-			fs.log.Trace("RemoteFs: Read: readAt: path=%v, ofst=%d, read %d bytes from writer pipe", path, ofst, n)
-			return n
 		}
+		return n
 	}
 
 	// the following operations all benefit from knowing the file size, so attempt to get the most
@@ -718,7 +748,7 @@ func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int
 		ofst = 0
 	}
 
-	if !node.writerIsOpen() && size == 0 {
+	if size == 0 {
 		fs.log.Trace("RemoteFs: Read: file is empty, returning EOF")
 		return 0
 	}
@@ -758,8 +788,8 @@ func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int
 		}
 	}
 
-	// At this point, the read request could not be satisfied from the temporary file backing the
-	// writer or the disk cache, so read from the remote API.
+	// At this point, the read request could not be satisfied from the working copy
+	// or the disk cache, so read from the remote API.
 	endOffset := ofst + int64(len(buff))
 	readyGate, exists := fs.findOrCreateGate(path)
 	if !exists {
@@ -797,72 +827,330 @@ func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int
 }
 
 func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
-	fs.log.Debug("RemoteFs: Write: path=%v, len=%v, ofst=%v, fh=%v", path, len(buff), ofst, fh)
-
 	_, node, ok := fs.vfs.handles.Lookup(fh)
-
 	if !ok {
 		fs.log.Debug("RemoteFs: Write: file handle %v not found for path %v", fh, path)
 		return -fuse.EBADF
 	}
 
-	// Lazy-create writer on first write with initial content and cache writer support
-	writer, created, err := node.ensureWriter(fs, fh, func() (io.Reader, error) {
-		return fs.initialContentForWrite(path, node, fh)
-	}, func() fsio.CacheWriter {
-		// Return a cache writer that updates cache in real-time as writes occur
-		return func(data []byte, offset int64) (int, error) {
-			return fs.cacheStore.Write(path, data, offset)
-		}
-	})
-
-	if err != nil {
-		fs.log.Error("RemoteFs: Write: failed to ensure writer for %v: %v", path, err)
+	if err := node.poisonedWriteSessionErr(); err != nil {
+		fs.log.Debug("RemoteFs: Write: poisoned write session for path=%v: %v", path, err)
 		return -fuse.EIO
 	}
 
-	if created {
-		fs.log.Debug("RemoteFs: Write: created new writer for path=%v, fh=%v", path, fh)
+	session, _, err := node.ensureWriteSession(path)
+	if err != nil {
+		fs.log.Error("RemoteFs: Write: failed to create write session for %v: %v", path, err)
+		return -fuse.EIO
+	}
+	session.addHandle(fh)
+
+	if err := fs.ensureWriteSessionBaseline(path, node, session, false, fh); err != nil {
+		if errc := fs.handleError(path, err); errc != 0 {
+			return errc
+		}
+		return -fuse.EIO
 	}
 
-	// Write the buffer to the ordered pipe
-	n, writeErr := writer.WriteAt(buff, ofst)
-	if errc := fs.handleError(path, writeErr); errc != 0 {
-		return errc
+	written, err := fs.writeToWorkingCopy(session, buff, ofst)
+	if err != nil {
+		fs.log.Error("RemoteFs: Write: working copy write failed for %v: %v", path, err)
+		return -fuse.EIO
 	}
-	if n > 0 {
-		node.updateSizeAtLeast(ofst + int64(n))
+
+	if written > 0 {
+		node.extendTtl()
 	}
-	return n
+
+	return written
 }
 
-func (fs *RemoteFs) initialContentForWrite(path string, node *fsNode, fh uint64) (io.Reader, error) {
-	// Before creating the cacheReader, ensure the full file is in the cache.
-	// Without this, cacheReader would return early EOF for any region not yet
-	// downloaded, causing those regions to be uploaded as zeros when the file
-	// is closed. ensureFullyCached blocks until the download is complete, then
-	// the cacheReader has guaranteed access to the entire file content.
-	if node.info.size <= 0 {
-		return nil, nil
-	}
-
-	if err := fs.ensureFullyCached(path, node.downloadUri, node.info.size, fh); err != nil {
-		if files_sdk.IsNotExist(err) {
-			fs.log.Info("Previous file version was missing during save, continuing with new file: %v", path)
-			node.markDeleted()
-			return nil, nil
+func (fs *RemoteFs) ensureWriteSessionBaseline(path string, node *fsNode, session *writeSession, truncateToZero bool, fh uint64) error {
+	return node.ensureWriteSessionHydrated(func(session *writeSession) error {
+		session.mu.Lock()
+		file := session.workingCopy
+		session.mu.Unlock()
+		if file == nil {
+			return fmt.Errorf("working copy missing for %s", path)
 		}
 
-		fs.log.Error("RemoteFs: Write: ensureFullyCached failed for %v: %v", path, err)
-		return nil, err
+		if err := file.Truncate(0); err != nil {
+			return err
+		}
+		if _, err := file.Seek(0, io.SeekStart); err != nil {
+			return err
+		}
+
+		if truncateToZero || node.info.size <= 0 {
+			session.mu.Lock()
+			session.baselineSize = node.info.size
+			session.currentSize = 0
+			if session.mtime.IsZero() {
+				session.mtime = time.Now()
+			}
+			session.mu.Unlock()
+			return nil
+		}
+
+		if err := fs.populateWorkingCopyFromRemoteOrCache(path, node, session, fh); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+func (fs *RemoteFs) populateWorkingCopyFromRemoteOrCache(path string, node *fsNode, session *writeSession, fh uint64) error {
+	if err := fs.ensureFullyCached(path, node.downloadUri, node.info.size, fh); err != nil {
+		if files_sdk.IsNotExist(err) {
+			node.markDeleted()
+			session.mu.Lock()
+			session.baselineSize = 0
+			session.currentSize = 0
+			session.mu.Unlock()
+			return nil
+		}
+		return err
 	}
 
-	return &cacheReader{
-		cache:  fs.cacheStore,
-		path:   path,
-		size:   node.info.size,
-		logger: fs.log,
-	}, nil
+	buf := make([]byte, cacheWriteSize)
+	var ofst int64
+	for {
+		n, err := fs.cacheStore.Read(path, buf, ofst)
+		if err != nil {
+			return err
+		}
+		if n == 0 {
+			break
+		}
+		if _, err := session.workingCopy.WriteAt(buf[:n], ofst); err != nil {
+			return err
+		}
+		ofst += int64(n)
+		if ofst >= node.info.size {
+			break
+		}
+	}
+
+	session.mu.Lock()
+	session.baselineSize = node.info.size
+	session.currentSize = node.info.size
+	if session.mtime.IsZero() {
+		session.mtime = node.info.modTime
+	}
+	session.mu.Unlock()
+	return nil
+}
+
+func (fs *RemoteFs) writeToWorkingCopy(session *writeSession, buff []byte, ofst int64) (int, error) {
+	session.mu.Lock()
+	defer session.mu.Unlock()
+
+	if session.lastUploadErr != nil {
+		return 0, session.lastUploadErr
+	}
+	if session.workingCopy == nil {
+		return 0, io.ErrClosedPipe
+	}
+
+	n, err := session.workingCopy.WriteAt(buff, ofst)
+	if err != nil {
+		return n, err
+	}
+
+	end := ofst + int64(n)
+	if end > session.currentSize {
+		session.currentSize = end
+	}
+	session.dirty = true
+	return n, nil
+}
+
+func (fs *RemoteFs) truncateWorkingCopy(session *writeSession, size int64) error {
+	session.mu.Lock()
+	defer session.mu.Unlock()
+
+	if session.lastUploadErr != nil {
+		return session.lastUploadErr
+	}
+	if session.workingCopy == nil {
+		return io.ErrClosedPipe
+	}
+	if err := session.workingCopy.Truncate(size); err != nil {
+		return err
+	}
+	session.currentSize = size
+	session.dirty = true
+	return nil
+}
+
+func (fs *RemoteFs) refreshReadCacheFromWorkingCopy(path string, session *writeSession) error {
+	if fs.cacheStore == nil {
+		return nil
+	}
+	if session.workingCopyPath == "" {
+		return nil
+	}
+
+	cacheFile, err := os.Open(session.workingCopyPath)
+	if err != nil {
+		return err
+	}
+	defer cacheFile.Close()
+
+	_ = fs.cacheStore.Delete(path)
+	buf := make([]byte, cacheWriteSize)
+	var ofst int64
+	for {
+		n, readErr := cacheFile.Read(buf)
+		if n > 0 {
+			if _, err := fs.cacheStore.Write(path, buf[:n], ofst); err != nil {
+				return err
+			}
+			ofst += int64(n)
+		}
+		if readErr == nil {
+			continue
+		}
+		if errors.Is(readErr, io.EOF) {
+			return nil
+		}
+		return readErr
+	}
+}
+
+func (fs *RemoteFs) flushWriteSession(path string, node *fsNode, fh uint64) int {
+	session := node.getWriteSession()
+	if session == nil {
+		return 0
+	}
+
+	session.mu.Lock()
+	if session.lastUploadErr != nil {
+		err := session.lastUploadErr
+		session.mu.Unlock()
+		fs.log.Debug("RemoteFs: flushWriteSession: poisoned session for %v: %v", path, err)
+		return -fuse.EIO
+	}
+	if !session.dirty && !session.uploading && !session.finalizing {
+		session.mu.Unlock()
+		return 0
+	}
+	if session.uploading || session.finalizing {
+		session.mu.Unlock()
+		if err := node.waitForUploadWithProgressTimeout(fsyncTimeout); err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				return -fuse.ETIMEDOUT
+			}
+			return -fuse.EIO
+		}
+		if err := node.poisonedWriteSessionErr(); err != nil {
+			return -fuse.EIO
+		}
+		return 0
+	}
+	session.finalizing = true
+	session.uploading = true
+	session.mu.Unlock()
+
+	go fs.finalizeUploadFromWorkingCopy(path, node, session, fh)
+
+	if err := node.waitForUploadWithProgressTimeout(fsyncTimeout); err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return -fuse.ETIMEDOUT
+		}
+		return -fuse.EIO
+	}
+	if err := node.poisonedWriteSessionErr(); err != nil {
+		return -fuse.EIO
+	}
+	return 0
+}
+
+func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, session *writeSession, fh uint64) {
+	localPath, remotePath := fs.paths(path)
+	fs.log.Info("Starting upload from working copy: %v (%v)", remotePath, localPath)
+
+	reader, err := os.Open(session.workingCopyPath)
+	if err != nil {
+		node.writeSessionFinishUpload(session.snapshot().currentSize, err)
+		return
+	}
+	defer reader.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	node.writeSessionStartUpload(cancel)
+
+	session.mu.Lock()
+	mtime := session.mtime
+	if session.dirty && !session.mtimeExplicit {
+		mtime = time.Now()
+	}
+	session.mu.Unlock()
+
+	size, err := fs.uploadWorkingCopyWithSDK(ctx, node, path, reader, mtime, fh)
+	if err != nil {
+		if !errors.Is(err, context.Canceled) && !files_sdk.IsNotExist(err) {
+			fs.log.Error("Error uploading file from working copy: %v (%v): %v", remotePath, localPath, err)
+		}
+		_ = node.writeSessionFinishUpload(session.snapshot().currentSize, err)
+		return
+	}
+
+	if err := fs.refreshReadCacheFromWorkingCopy(path, session); err != nil {
+		fs.log.Error("Error refreshing cache from working copy: %v (%v): %v", remotePath, localPath, err)
+		_ = node.writeSessionFinishUpload(size, err)
+		return
+	}
+
+	node.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeFile,
+		size:         size,
+		modTime:      mtime,
+		creationTime: node.info.creationTime,
+		uid:          node.info.uid,
+		gid:          node.info.gid,
+	})
+	session.mu.Lock()
+	session.mtime = mtime
+	session.mtimeExplicit = false
+	session.mu.Unlock()
+	_ = node.writeSessionFinishUpload(size, nil)
+}
+
+func (fs *RemoteFs) uploadWorkingCopyWithSDK(ctx context.Context, node *fsNode, path string, reader io.Reader, mtime time.Time, fh uint64) (int64, error) {
+	if fs.uploadWorkingCopy != nil {
+		return fs.uploadWorkingCopy(ctx, node, path, reader, mtime, fh)
+	}
+
+	localPath, remotePath := fs.paths(path)
+	opts := []file.UploadOption{
+		file.UploadWithContext(ctx),
+		file.UploadWithDestinationPath(remotePath),
+		file.UploadWithReader(reader),
+		file.UploadWithProvidedMtime(mtime),
+		file.UploadWithProgress(fs.uploadProgressFunc(node)),
+		file.WithUploadStartedCallback(func(part files_sdk.FileUploadPart) {
+			fs.log.Debug("RemoteFs: Uploading part number %d, of: %v, ref: '%v'", part.PartNumber, remotePath, part.Ref)
+			node.captureRef(part.Ref)
+		}),
+		file.WithUploadRenamedCallback(func() (string, string) {
+			if remotePath != node.path {
+				fs.log.Debug("RemoteFs: finalizeUploadFromWorkingCopy: in progress upload renamed from: %v to %v", remotePath, node.path)
+			}
+			return node.pathAndRef()
+		}),
+	}
+	if fs.writeConcurrency != 0 {
+		opts = append(opts, file.UploadWithManager(manager.ConcurrencyManager{}.New(fs.writeConcurrency)))
+	}
+	u, err := fs.backend.uploadWithResume(opts...)
+	if err != nil {
+		fs.log.Debug("RemoteFs: uploadWorkingCopyWithSDK failed for %v (%v): %v", remotePath, localPath, err)
+		return 0, err
+	}
+	return u.Size, nil
 }
 
 func (fs *RemoteFs) Release(path string, fh uint64) (errc int) {
@@ -901,23 +1189,21 @@ func (fs *RemoteFs) Release(path string, fh uint64) (errc int) {
 		return errc
 	}
 
-	// Check if this handle owns a writer with uncommitted writes.
-	_, owner, hasWrites := node.writerSnapshot()
-	iOwn := owner == fh
-
-	// set the node's expire time to expired so that the next Getattr call will trigger a reload of the node's info from the remote API.
-	defer node.expireInfo()
-
-	// Finalize the upload if it wasn't already handled by Flush (e.g. process
-	// exit without close, or platforms where Flush is not called before Release).
-	// On macOS this is normally a no-op: Flush runs fsyncNode which calls
-	// discardWriter, so writer and writerOwner are both cleared by the time
-	// Release runs.
-	if iOwn && hasWrites {
-		fs.log.Debug("RemoteFs: Release: finalizing upload for path=%v, fh=%v", path, fh)
-		if errc := fs.fsyncNode(path, node, fh); errc != 0 {
-			return errc
+	if session := node.getWriteSession(); session != nil {
+		iOwn := session.hasHandle(fh)
+		defer node.expireInfo()
+		if iOwn {
+			remaining := session.removeHandle(fh)
+			if errc := fs.flushWriteSession(path, node, fh); errc != 0 {
+				return errc
+			}
+			if remaining == 0 {
+				if err := node.clearWriteSession(); err != nil {
+					fs.log.Debug("RemoteFs: Release: failed clearing write session for %v: %v", path, err)
+				}
+			}
 		}
+		return fs.unlock(path, fh)
 	}
 
 	return fs.unlock(path, fh)
@@ -978,7 +1264,7 @@ func (fs *RemoteFs) Readdir(path string,
 	for _, entryPath := range entries {
 		if entryNode, ok := fs.vfs.fetch(entryPath); ok {
 			fs.log.Trace("RemoteFs: Readdir: Calling fill for entry: %v (%v)", entryPath, entryPath)
-			fill(path_lib.Base(entryPath), getStat(entryNode.info, nil), 0)
+			fill(path_lib.Base(entryPath), getStat(entryNode.info, nil, fs.vfs.uid, fs.vfs.gid), 0)
 		} else {
 			// This can happen if the OS has opened multiple handles for a single node, and Unlink
 			// is called on a path before all the handles are Released. In this case, the node will
@@ -1018,58 +1304,21 @@ func (fs *RemoteFs) Fsync(path string, datasync bool, fh uint64) (errc int) {
 		return -fuse.EBADF
 	}
 
-	writer, owner, hasWrites := node.writerSnapshot()
-	if owner != fh {
+	if session := node.getWriteSession(); session != nil {
+		if !session.hasHandle(fh) {
+			return 0
+		}
+		if err := node.poisonedWriteSessionErr(); err != nil {
+			fs.log.Debug("RemoteFs: Fsync: poisoned write session for path=%v: %v", path, err)
+			return -fuse.EIO
+		}
+		return fs.flushWriteSession(path, node, fh)
+	}
+
+	if fh != ^uint64(0) {
 		fs.log.Debug("RemoteFs: Fsync: handle does not own writer for path=%v, fh=%v", path, fh)
 		return 0
 	}
-
-	if writer != nil {
-		// The writer is still open, so this handle may continue writing after fsync.
-		// Finalizing here would force subsequent writes to recreate the writer and
-		// rehydrate from partially uploaded remote state.
-		if hasWrites {
-			fs.log.Debug("RemoteFs: Fsync: writer still open, deferring finalization for path=%v, fh=%v", path, fh)
-		} else {
-			fs.log.Debug("RemoteFs: Fsync: no writes to sync for path=%v, fh=%v", path, fh)
-		}
-		return 0
-	}
-
-	// If the writer is already closed but an upload is still active, wait for it.
-	if err := node.waitForUploadWithProgressTimeout(fsyncTimeout); err != nil {
-		fs.log.Debug("RemoteFs: Fsync: upload stalled while finalizing %v: %v", path, err)
-		return -fuse.ETIMEDOUT
-	}
-
-	return 0
-}
-
-// fsyncNode finalizes an upload for a node with uncommitted writes.
-// It closes the writer, waits for the upload to complete, then discards the writer.
-// Note: Cache is already updated in real-time via the CacheWriter callback set during ensureWriter.
-func (fs *RemoteFs) fsyncNode(path string, node *fsNode, fh uint64) (errc int) {
-	fs.log.Debug("RemoteFs: fsyncNode: closing writer for path=%v, fh=%v", path, fh)
-
-	// Close the writer, which signals that no more data will be written.
-	if err := node.closeWriter(); err != nil {
-		fs.log.Debug("RemoteFs: fsyncNode: error closing writer for %v: %v", path, err)
-		return -fuse.EIO
-	}
-
-	// Wait for the upload to complete, resetting the stall deadline whenever
-	// bytes are transferred. This prevents large file uploads (e.g. InDesign
-	// files) from being reported as failed simply because they take longer
-	// than a fixed wall-clock limit to upload.
-	if err := node.waitForUploadWithProgressTimeout(fsyncTimeout); err != nil {
-		fs.log.Debug("RemoteFs: fsyncNode: upload stalled for %v: %v", path, err)
-		return -fuse.ETIMEDOUT
-	}
-
-	// Discard the writer after successful upload.
-	node.discardWriter()
-	fs.log.Debug("RemoteFs: fsyncNode: upload complete and writer discarded for path=%v, fh=%v", path, fh)
-
 	return 0
 }
 
@@ -1081,70 +1330,8 @@ func (fs *RemoteFs) uploadProgressFunc(node *fsNode) func(int64) {
 		// of bytes written for logging purposes.
 		// Extend the node's TTL and keep track of bytes written for logging/sweeping.
 		node.extendTtl()
-		node.recordProgress(delta)
+		node.writeSessionRecordProgress(delta)
 	}
-}
-
-func (fs *RemoteFs) writeFile(path string, reader io.Reader, mtime time.Time, fh uint64) {
-	localPath, remotePath := fs.paths(path)
-	fs.log.Info("Starting upload: %v (%v)", remotePath, localPath)
-	_, node, _ := fs.vfs.handles.Lookup(fh)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	node.startUpload(path, cancel)
-	uploadOpts := []file.UploadOption{
-		file.UploadWithContext(ctx),
-		file.UploadWithDestinationPath(remotePath),
-		file.UploadWithReader(reader),
-		file.UploadWithProvidedMtime(mtime),
-		file.UploadWithProgress(fs.uploadProgressFunc(node)),
-
-		// Using the WithUploadStartedCallback option allows capturing
-		// the upload reference as soon as the upload starts, which is needed in
-		// order to support renaming the file during an active upload.
-		file.WithUploadStartedCallback(func(part files_sdk.FileUploadPart) {
-			fs.log.Debug("RemoteFs: Uploading part number %d, of: %v, ref: '%v'", part.PartNumber, remotePath, part.Ref)
-			node.captureRef(part.Ref)
-		}),
-
-		// Using the WithUploadRenamedCallback option allows renaming the upload
-		// while it is in progress. This is needed in order to support the pattern
-		// of writing a file to a temporary name, then renaming it to the final
-		// name once the upload is complete.
-		file.WithUploadRenamedCallback(func() (string, string) {
-			if remotePath != node.path {
-				fs.log.Debug("RemoteFs: writeFile: in progress upload renamed from: %v to %v", remotePath, node.path)
-			}
-			return node.pathAndRef()
-		}),
-	}
-	if fs.writeConcurrency != 0 {
-		uploadOpts = append(uploadOpts, file.UploadWithManager(manager.ConcurrencyManager{}.New(fs.writeConcurrency)))
-	}
-
-	start := time.Now()
-
-	var u file.UploadResumable
-	var err error
-	err = fs.ops.WithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
-		u, err = fs.fileClient.UploadWithResume(uploadOpts...)
-		return err
-	})
-
-	if err != nil {
-		// this is only an error if the upload was not cancelled. If the upload was cancelled, it should not be logged as an error.
-		if !errors.Is(err, context.Canceled) && !files_sdk.IsNotExist(err) {
-			fs.log.Error("Error uploading file: %v (%v): %v", remotePath, localPath, err)
-		}
-		return
-	}
-	node.closeUpload(u.Size)
-
-	// Note: Cache was already updated in fsyncNode() by copying from the writer's temp file
-	// before it was closed. No need to re-download from remote.
-
-	fs.log.Info("Upload completed: %v (%v).", remotePath, localPath)
-	fs.log.Debug("RemoteFs: Bytes: %v, Duration: %v, fh: %v", u.Size, time.Since(start), fh)
 }
 
 // this is a convenience method for uploading a file from the local file system to the remote API
@@ -1181,20 +1368,22 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 	cacheErrCh := make(chan error, 1)
 
 	go func() {
-		uploadOpts := []file.UploadOption{
-			file.UploadWithContext(ctx),
-			file.UploadWithReaderAt(uploadFile),
-			file.UploadWithSize(fileInfo.Size()),
-			file.UploadWithDestinationPath(remotePath),
-			file.UploadWithProvidedMtime(fileInfo.ModTime()),
-			file.UploadWithProgress(fs.uploadProgressFunc(node)),
-			file.WithUploadStartedCallback(func(part files_sdk.FileUploadPart) {
-				fs.log.Debug("RemoteFs: uploadFile: uploading part number %d, of: %v, ref: '%v'", part.PartNumber, remotePath, part.Ref)
-			}),
-		}
-
 		uploadErrCh <- fs.ops.WithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
-			return fs.fileClient.Upload(uploadOpts...)
+			uploadOpts := []file.UploadOption{
+				file.UploadWithContext(ctx),
+				file.UploadWithReaderAt(uploadFile),
+				file.UploadWithSize(fileInfo.Size()),
+				file.UploadWithDestinationPath(remotePath),
+				file.UploadWithProvidedMtime(fileInfo.ModTime()),
+				file.UploadWithProgress(fs.uploadProgressFunc(node)),
+				file.WithUploadStartedCallback(func(part files_sdk.FileUploadPart) {
+					fs.log.Debug("RemoteFs: uploadFile: uploading part number %d, of: %v, ref: '%v'", part.PartNumber, remotePath, part.Ref)
+				}),
+			}
+			if fs.writeConcurrency != 0 {
+				uploadOpts = append(uploadOpts, file.UploadWithManager(manager.ConcurrencyManager{}.New(fs.writeConcurrency)))
+			}
+			return fs.backend.upload(uploadOpts...)
 		})
 	}()
 
@@ -1265,7 +1454,7 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 func (fs *RemoteFs) downloadFile(src, dst string) error {
 	fs.log.Debug("RemoteFs: Downloading file: %v to %v", src, dst)
 	err := fs.ops.WithLimit(context.Background(), lim.FuseOpDownload, func(ctx context.Context) error {
-		_, err := fs.fileClient.DownloadToFile(files_sdk.FileDownloadParams{Path: src}, dst)
+		_, err := fs.backend.downloadToFile(files_sdk.FileDownloadParams{Path: src}, dst)
 		return err
 	})
 
@@ -1347,7 +1536,7 @@ func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, read
 	var f files_sdk.File
 	var err error
 	err = fs.ops.WithLimit(ctx, lim.FuseOpDownload, func(ctx context.Context) error {
-		f, err = fs.fileClient.Download(
+		f, err = fs.backend.download(
 			files_sdk.FileDownloadParams{File: files_sdk.File{Path: fs.remotePath(path), DownloadUri: uri}},
 			files_sdk.WithContext(ctx),
 			files_sdk.ResponseOption(func(resp *http.Response) error {
@@ -1364,6 +1553,11 @@ func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, read
 				// the ready gate every cacheWriteSize bytes to signal that data is available for reading.
 				var off int64 = 0
 				for {
+					if node, ok := fs.vfs.fetch(path); ok && node.hasActiveWriteSession() {
+						readyGate.Finish(nil, off)
+						return nil
+					}
+
 					nr, er := resp.Body.Read(buf)
 					if nr > 0 {
 						// TODO: consider altering Write to keep data in memory and periodically flush to disk
@@ -1461,7 +1655,7 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 	var lock files_sdk.Lock
 	var err error
 	err = fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
-		lock, err = fs.lockClient.Create(files_sdk.LockCreateParams{
+		lock, err = fs.backend.createLock(files_sdk.LockCreateParams{
 			Path:                 remotePath,
 			AllowAccessByAnyUser: lib.Ptr(true),
 			Exclusive:            lib.Ptr(true),
@@ -1546,11 +1740,10 @@ func (fs *RemoteFs) unlock(path string, fh uint64) (errc int) {
 
 	// Make API call without holding lockMapMutex
 	err := fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
-		err := fs.lockClient.Delete(files_sdk.LockDeleteParams{
+		return fs.backend.deleteLock(files_sdk.LockDeleteParams{
 			Path:  remotePath,
 			Token: lockInfo.Lock.Token,
 		})
-		return err
 	})
 	if errors.Is(err, lim.ErrNoSlotsAvailable) {
 		return -fuse.EAGAIN
@@ -1636,8 +1829,7 @@ func isResourceLocked(err error) bool {
 
 func (fs *RemoteFs) delete(path string) (errc int) {
 	err := fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
-		err := fs.fileClient.Delete(files_sdk.FileDeleteParams{Path: fs.remotePath(path)})
-		return err
+		return fs.backend.delete(files_sdk.FileDeleteParams{Path: fs.remotePath(path)})
 	})
 	if errors.Is(err, lim.ErrNoSlotsAvailable) {
 		return -fuse.EAGAIN
@@ -1708,7 +1900,7 @@ func (fs *RemoteFs) findDir(path string) (node *fsNode, errc int) {
 	var item files_sdk.File
 	var err error
 	err = fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
-		item, err = fs.fileClient.Find(files_sdk.FileFindParams{Path: remotePath})
+		item, err = fs.backend.find(files_sdk.FileFindParams{Path: remotePath})
 		return err
 	})
 	if errors.Is(err, lim.ErrNoSlotsAvailable) {
@@ -1755,7 +1947,7 @@ func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, opErr 
 	fs.log.Trace("RemoteFs: listDir: Listing directory: %v", path)
 
 	opErr = fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
-		it, err := fs.fileClient.ListFor(files_sdk.FolderListForParams{Path: fs.remotePath(path)})
+		it, err := fs.backend.listFor(files_sdk.FolderListForParams{Path: fs.remotePath(path)})
 		if err != nil {
 			return err
 		}
@@ -1779,7 +1971,7 @@ func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, opErr 
 			return err
 		}
 
-		locks, err := fs.lockClient.ListFor(files_sdk.LockListForParams{
+		locks, err := fs.backend.listLocksFor(files_sdk.LockListForParams{
 			Path:            fs.remotePath(path),
 			IncludeChildren: lib.Ptr(true),
 		})
@@ -1874,20 +2066,32 @@ func (fs *RemoteFs) createNode(path string, item files_sdk.File) *fsNode {
 	} else {
 		nt = nodeTypeFile
 	}
+	var existingCreationTime time.Time
 	// best-effort invalidate stale data
 	if prev, ok := fs.vfs.fetch(path); ok && prev.info.nodeType == nodeTypeFile {
 		if prev.info.size != item.Size || !prev.info.modTime.Equal(item.ModTime()) {
 			_ = fs.cacheStore.Delete(path)
 		}
+		existingCreationTime = prev.info.creationTime
 	}
 
 	node := fs.vfs.getOrCreate(path, nt)
+	if nt == nodeTypeFile && node.hasActiveWriteSession() {
+		return node
+	}
+	creationTime := item.CreationTime()
+	if nt == nodeTypeFile && !existingCreationTime.IsZero() {
+		creationTime = existingCreationTime
+	}
 	node.updateInfo(fsNodeInfo{
 		nodeType:     nt,
 		size:         item.Size,
 		modTime:      item.ModTime(),
-		creationTime: item.CreationTime(),
+		creationTime: creationTime,
 	})
+	if item.DownloadUri != "" {
+		node.setDownloadURI(item.DownloadUri)
+	}
 
 	return node
 }
@@ -1896,7 +2100,7 @@ func (fs *RemoteFs) waitForAction(ctx context.Context, action files_sdk.FileActi
 	var migration files_sdk.FileMigration
 	var err error
 	err = fs.ops.TryWithLimit(ctx, lim.FuseOpOther, func(ctx context.Context) error {
-		migration, err = fs.migrationClient.Wait(action, func(migration files_sdk.FileMigration) {
+		migration, err = fs.backend.wait(action, func(migration files_sdk.FileMigration) {
 			fs.log.Trace("RemoteFs: watchForAction: waiting for migration")
 		})
 		return err
@@ -1948,10 +2152,12 @@ func (fs *RemoteFs) Readlink(path string) (int, string) {
 }
 
 // Chown changes the owner and group of a file.
-// The return value of -fuse.ENOSYS indicates the method is not supported.
+// On Windows this is treated as a no-op success for compatibility.
 func (fs *RemoteFs) Chown(path string, uid uint32, gid uint32) int {
-	fs.log.Trace("RemoteFs: Chown: path=%v, uid=%v, gid=%v", path, uid, gid)
-	return -fuse.ENOSYS
+	node := fs.vfs.getOrCreate(path, nodeTypeFile)
+	node.setOwner(uid, gid)
+	fs.log.Debug("RemoteFs: Chown: path=%v, uid=%v, gid=%v -> errc=0", path, uid, gid)
+	return 0
 }
 
 // Access checks file access permissions.
@@ -1977,10 +2183,14 @@ func (fs *RemoteFs) Flush(path string, fh uint64) int {
 	// (open_count > 0) when a second release arrives before the first completes.
 	// Finalizing here ensures Release returns quickly and the upload is committed
 	// before the OS reports the copy as done.
-	_, owner, hasWrites := node.writerSnapshot()
-	if owner == fh && hasWrites {
-		fs.log.Debug("RemoteFs: Flush: finalizing upload for path=%v, fh=%v", path, fh)
-		return fs.fsyncNode(path, node, fh)
+	if session := node.getWriteSession(); session != nil {
+		if !session.hasHandle(fh) {
+			return 0
+		}
+		if err := node.poisonedWriteSessionErr(); err != nil {
+			return -fuse.EIO
+		}
+		return fs.flushWriteSession(path, node, fh)
 	}
 
 	return 0
@@ -2033,7 +2243,14 @@ func (fs *RemoteFs) Listxattr(path string, fill func(name string) bool) int {
 // Open and Create.
 func (fs *RemoteFs) CreateEx(path string, mode uint32, fi *fuse.FileInfo_t) int {
 	fs.log.Debug("RemoteFs: CreateEx: path=%v, mode=%o, fi=%v", path, mode, fi)
-	errc, fh := fs.Create(path, fi.Flags, mode)
+	fuseFlags := ff.NewFuseFlags(fi.Flags)
+	var errc int
+	var fh uint64
+	if fuseFlags.IsCreate() {
+		errc, fh = fs.Create(path, fi.Flags, mode)
+	} else {
+		errc, fh = fs.Open(path, fi.Flags)
+	}
 	fi.Fh = fh
 	return errc
 }

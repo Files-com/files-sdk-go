@@ -2,6 +2,7 @@ package fsmount
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"runtime"
 	"sync"
@@ -9,6 +10,7 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/events"
+	ff "github.com/Files-com/files-sdk-go/v3/fsmount/internal/flags"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	gogitignore "github.com/sabhiram/go-gitignore"
 	"github.com/winfsp/cgofuse/fuse"
@@ -188,22 +190,15 @@ func (fs *Filescomfs) Rename(oldpath string, newpath string) (errc int) {
 		// newpath = /var/folders/xx/xx/T/filescomfs-xxxxxx/filename.txt
 		// 1) If an upload is active, wait for it to finalize (bounded).
 		if n, ok := fs.vfs.fetch(oldpath); ok {
-			// Snapshot: (writer, owner, committed)
-			if w, _, committed := n.writerSnapshot(); w != nil {
-				// If bytes have been written, wait for finalize; if uncommitted, treat as busy.
-				if committed {
-					fs.log.Trace("Filescomfs: Rename: waiting for finalize of active upload before renaming: oldpath=%v, newpath=%v", oldpath, newpath)
-					if err := n.waitForUploadWithProgressTimeout(fsyncTimeout); err != nil {
+			if session := n.getWriteSession(); session != nil {
+				snap := session.snapshot()
+				if snap.dirty || snap.uploading || snap.finalizing {
+					fs.log.Trace("Filescomfs: Rename: waiting for finalize of active write session before renaming: oldpath=%v, newpath=%v", oldpath, newpath)
+					if err := fs.remote.flushWriteSession(oldpath, n, ^uint64(0)); err != 0 {
 						errc = -fuse.EAGAIN
-						fs.log.Trace("Filescomfs: Rename: wait-for-finalize timed out: %v, errc=%v", err, errc)
+						fs.log.Trace("Filescomfs: Rename: wait-for-finalize of write session failed: errc=%v", errc)
 						return errc
 					}
-				} else {
-					// nothing has been written to the remote and the OS is trying to rename the
-					// file. cancel the upload and proceed. The attempt to download it will 404,
-					// and the fs can create an empty file locally to satisfy the rename.
-					n.cancelUpload()
-					fs.log.Trace("Filescomfs: Rename: canceled uncommitted active upload before renaming: oldpath=%v, newpath=%v", oldpath, newpath)
 				}
 			} else {
 				fs.log.Trace("Filescomfs: Rename: no active upload to wait for: oldpath=%v, newpath=%v", oldpath, newpath)
@@ -288,14 +283,14 @@ func (fs *Filescomfs) Open(path string, flags int) (errc int, fh uint64) {
 func (fs *Filescomfs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
 	defer logPanics(fs.log)
 	if fs.isStoredRemotely(path) {
-		fs.log.Trace("Filescomfs: Getattr: getting attributes remotely: path=%v, fh=%v", path, fh)
+		fs.log.Trace("Filescomfs: Getattr: calling remote getattr: path=%v, fh=%v", path, fh)
 		errc = fs.remote.Getattr(path, stat, fh)
-		fs.log.Trace("Filescomfs: Getattr: got attributes remotely: path=%v, fh=%v, errc=%v", path, fh, errc)
+		fs.log.Trace("Filescomfs: Getattr: remote getattr returned: path=%v, fh=%v, errc=%v, stat=%s", path, fh, errc, formatFuseStat(stat))
 		return errc
 	}
-	fs.log.Trace("Filescomfs: Getattr: getting attributes locally: path=%v, fh=%v", path, fh)
+	fs.log.Trace("Filescomfs: Getattr: calling local getattr: path=%v, fh=%v", path, fh)
 	errc = fs.local.Getattr(path, stat, fh)
-	fs.log.Trace("Filescomfs: Getattr: got attributes locally: path=%v, fh=%v, errc=%v", path, fh, errc)
+	fs.log.Trace("Filescomfs: Getattr: local getattr returned: path=%v, fh=%v, errc=%v, stat=%s", path, fh, errc, formatFuseStat(stat))
 	return errc
 }
 
@@ -438,7 +433,7 @@ func (fs *Filescomfs) isLockFile(path string) bool {
 	return isMsOfficeOwnerFile(path) && !fs.disableLocking
 }
 
-func getStat(info fsNodeInfo, stat *fuse.Stat_t) *fuse.Stat_t {
+func getStat(info fsNodeInfo, stat *fuse.Stat_t, uid uint32, gid uint32) *fuse.Stat_t {
 	if stat == nil {
 		stat = &fuse.Stat_t{}
 	}
@@ -450,13 +445,45 @@ func getStat(info fsNodeInfo, stat *fuse.Stat_t) *fuse.Stat_t {
 	}
 
 	stat.Size = info.size
-	stat.Mtim = fuse.NewTimespec(info.modTime.UTC().Truncate(time.Second))
+	stat.Mtim = fuse.NewTimespec(info.modTime.UTC())
 	if !info.creationTime.IsZero() {
-		btime := fuse.NewTimespec(info.creationTime.UTC().Truncate(time.Second))
+		btime := fuse.NewTimespec(info.creationTime.UTC())
 		stat.Birthtim = btime
 	}
+	stat.Ctim = stat.Mtim
+	stat.Atim = stat.Mtim
+	if info.uid != 0 {
+		stat.Uid = info.uid
+	} else {
+		stat.Uid = uid
+	}
+	if info.gid != 0 {
+		stat.Gid = info.gid
+	} else {
+		stat.Gid = gid
+	}
+	stat.Nlink = 1
 
 	return stat
+}
+
+func formatFuseStat(stat *fuse.Stat_t) string {
+	if stat == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf(
+		"{Mode:%#o Size:%d Uid:%d Gid:%d Atim:%v Mtim:%v Ctim:%v Birthtim:%v Nlink:%d Ino:%d}",
+		stat.Mode,
+		stat.Size,
+		stat.Uid,
+		stat.Gid,
+		stat.Atim.Time(),
+		stat.Mtim.Time(),
+		stat.Ctim.Time(),
+		stat.Birthtim.Time(),
+		stat.Nlink,
+		stat.Ino,
+	)
 }
 
 func isFolderNotEmpty(err error) bool {
@@ -623,8 +650,15 @@ func (fs *Filescomfs) Listxattr(path string, fill func(name string) bool) (errc 
 func (fs *Filescomfs) CreateEx(path string, mode uint32, fi *fuse.FileInfo_t) (errc int) {
 	defer logPanics(fs.log)
 	fs.log.Trace("Filescomfs: CreateEx: path=%v, mode=%v, fi=%v", path, mode, fi)
-	errc, fh := fs.Create(path, fi.Flags, mode)
-	fs.log.Trace("Filescomfs: CreateEx: created file: path=%v, mode=%v, flags=%v, errc=%v, fh=%v", path, mode, fi.Flags, errc, fh)
+	fuseFlags := ff.NewFuseFlags(fi.Flags)
+	var fh uint64
+	if fuseFlags.IsCreate() {
+		errc, fh = fs.Create(path, fi.Flags, mode)
+		fs.log.Trace("Filescomfs: CreateEx: created file: path=%v, mode=%v, flags=%v, errc=%v, fh=%v", path, mode, fi.Flags, errc, fh)
+	} else {
+		errc, fh = fs.Open(path, fi.Flags)
+		fs.log.Trace("Filescomfs: CreateEx: opened file: path=%v, mode=%v, flags=%v, errc=%v, fh=%v", path, mode, fi.Flags, errc, fh)
+	}
 	fi.Fh = uint64(fh)
 	return errc
 }

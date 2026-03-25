@@ -87,8 +87,11 @@ func mountOpts(params MountParams) []string {
 		opts = append(opts, "-o", "DebugLog="+logfile)
 	}
 
-	opts = append(opts, "-o", "uid=-1")
-	opts = append(opts, "-o", "gid=-1")
+	// TODO: Decide if these options can be used. Certain applications like InDesign expect and actually
+	// validate that the uid returned in the *fuse.Stat_t during Getattr matches what the program itself
+	// sees when probing temp files on the file system.
+	// opts = append(opts, "-o", "uid=-1")
+	// opts = append(opts, "-o", "gid=-1")
 	if params.VolumeName != "" {
 		opts = append(opts, "--VolumePrefix=\\Files.com\\"+params.VolumeName)
 	}

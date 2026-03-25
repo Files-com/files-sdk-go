@@ -7,6 +7,7 @@ import (
 	iofs "io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -362,18 +363,18 @@ func (fs *LocalFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int)
 }
 
 func (fs *LocalFs) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
-	path = fs.fqPath(path)
+	fqPath := fs.fqPath(path)
 	handle, _, ok := fs.vfs.handles.Lookup(fh)
 	if !ok {
-		fs.log.Debug("LocalFs: Write: invalid file handle: path=%v, ofst=%v, fh=%v", path, ofst, fh)
+		fs.log.Debug("LocalFs: Write: invalid file handle: path=%v, ofst=%v, fh=%v", fqPath, ofst, fh)
 		return -fuse.EBADF
 	}
 	n, err := handle.localFile.WriteAt(buff, ofst)
 	if err != nil {
-		fs.log.Debug("LocalFs: Write: failed to write file: path=%v, ofst=%v, fh=%v, err=%v", path, ofst, fh, err)
+		fs.log.Debug("LocalFs: Write: failed to write file: path=%v, ofst=%v, fh=%v, err=%v", fqPath, ofst, fh, err)
 		return -fuse.EIO
 	}
-	fs.log.Trace("LocalFs: Write: path=%v, len=%v, ofst=%v, fh=%v", path, len(buff), ofst, fh)
+	fs.log.Trace("LocalFs: Write: path=%v, len=%v, ofst=%v, fh=%v", fqPath, len(buff), ofst, fh)
 	return n
 }
 
@@ -436,7 +437,7 @@ func (fs *LocalFs) Readdir(path string,
 			continue
 		}
 		fs.log.Trace("LocalFs: Readdir: Calling fill for entry: %v", entryPath)
-		fill(entry.Name(), getStat(node.info, nil), 0)
+		fill(entry.Name(), getStat(node.info, nil, fs.vfs.uid, fs.vfs.gid), 0)
 	}
 	return 0
 }
@@ -513,11 +514,19 @@ func (fs *LocalFs) Readlink(path string) (int, string) {
 }
 
 // Chown changes the owner and group of a file.
-// The return value of -fuse.ENOSYS indicates the method is not supported.
-func (fs *LocalFs) Chown(path string, uid uint32, gid uint32) int {
+func (fs *LocalFs) Chown(path string, uid uint32, gid uint32) (errc int) {
+	node := fs.vfs.getOrCreate(path, nodeTypeFile)
+	node.setOwner(uid, gid)
 	path = fs.fqPath(path)
-	fs.log.Trace("LocalFs: Chown: path=%v, uid=%v, gid=%v", path, uid, gid)
-	return -fuse.ENOSYS
+	if runtime.GOOS == "windows" {
+		fs.log.Debug("LocalFs: Chown: path=%v, uid=%v, gid=%v -> errc=0", path, uid, gid)
+		return 0
+	}
+	if err := os.Chown(path, int(uid), int(gid)); err != nil {
+		errc = toErrno(err)
+	}
+	fs.log.Debug("LocalFs: Chown: path=%v, uid=%v, gid=%v -> errc=%d", path, uid, gid, errc)
+	return errc
 }
 
 // Access checks file access permissions.
@@ -587,7 +596,14 @@ func (fs *LocalFs) Listxattr(path string, fill func(name string) bool) int {
 // Open and Create.
 func (fs *LocalFs) CreateEx(path string, mode uint32, fi *fuse.FileInfo_t) int {
 	fs.log.Trace("LocalFs: CreateEx: path=%v, mode=%o, fi=%v", path, mode, fi)
-	errc, fh := fs.Create(path, fi.Flags, mode)
+	fuseFlags := ff.NewFuseFlags(fi.Flags)
+	var errc int
+	var fh uint64
+	if fuseFlags.IsCreate() {
+		errc, fh = fs.Create(path, fi.Flags, mode)
+	} else {
+		errc, fh = fs.Open(path, fi.Flags)
+	}
 	fi.Fh = fh
 	return errc
 }

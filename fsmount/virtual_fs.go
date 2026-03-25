@@ -12,6 +12,7 @@ import (
 
 	ff "github.com/Files-com/files-sdk-go/v3/fsmount/internal/flags"
 	"github.com/Files-com/files-sdk-go/v3/lib"
+	"github.com/winfsp/cgofuse/fuse"
 )
 
 const (
@@ -87,6 +88,11 @@ type virtualfs struct {
 	nodesMu sync.Mutex
 
 	lib.LeveledLogger
+
+	uid uint32
+	gid uint32
+
+	ownerMu sync.Mutex
 }
 
 func newVirtualfs(params MountParams, ll lib.LeveledLogger) *virtualfs {
@@ -95,11 +101,30 @@ func newVirtualfs(params MountParams, ll lib.LeveledLogger) *virtualfs {
 		handles:       NewOpenHandles(ll),
 		LeveledLogger: ll,
 		cacheTTL:      DefaultCacheTTL,
+		uid:           ^uint32(0),
+		gid:           ^uint32(0),
 	}
 	if params.CacheTTL > 0 {
 		vfs.cacheTTL = params.CacheTTL
 	}
 	return vfs
+}
+
+func (vfs *virtualfs) ensureContextOwner() {
+	vfs.ownerMu.Lock()
+	defer vfs.ownerMu.Unlock()
+
+	if vfs.uid != ^uint32(0) && vfs.gid != ^uint32(0) {
+		return
+	}
+
+	uid, gid, _ := fuse.Getcontext()
+	if uid == ^uint32(0) || gid == ^uint32(0) {
+		return
+	}
+
+	vfs.uid = uid
+	vfs.gid = gid
 }
 
 func (vfs *virtualfs) destroy() {
