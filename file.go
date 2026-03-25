@@ -50,6 +50,7 @@ type File struct {
 	Parts                              int64       `json:"parts,omitempty" path:"parts,omitempty" url:"parts,omitempty"`
 	Ref                                string      `json:"ref,omitempty" path:"ref,omitempty" url:"ref,omitempty"`
 	Restart                            int64       `json:"restart,omitempty" path:"restart,omitempty" url:"restart,omitempty"`
+	CopyBehaviors                      *bool       `json:"copy_behaviors,omitempty" path:"copy_behaviors,omitempty" url:"copy_behaviors,omitempty"`
 	Structure                          string      `json:"structure,omitempty" path:"structure,omitempty" url:"structure,omitempty"`
 	WithRename                         *bool       `json:"with_rename,omitempty" path:"with_rename,omitempty" url:"with_rename,omitempty"`
 	BufferedUpload                     *bool       `json:"buffered_upload,omitempty" path:"buffered_upload,omitempty" url:"buffered_upload,omitempty"`
@@ -88,6 +89,7 @@ type FileCreateParams struct {
 	Ref              string         `url:"ref,omitempty" json:"ref,omitempty" path:"ref"`
 	Restart          int64          `url:"restart,omitempty" json:"restart,omitempty" path:"restart"`
 	Size             int64          `url:"size,omitempty" json:"size,omitempty" path:"size"`
+	CopyBehaviors    *bool          `url:"copy_behaviors,omitempty" json:"copy_behaviors,omitempty" path:"copy_behaviors"`
 	Structure        string         `url:"structure,omitempty" json:"structure,omitempty" path:"structure"`
 	WithRename       *bool          `url:"with_rename,omitempty" json:"with_rename,omitempty" path:"with_rename"`
 	BufferedUpload   *bool          `url:"buffered_upload,omitempty" json:"buffered_upload,omitempty" path:"buffered_upload"`
@@ -120,10 +122,11 @@ type FileZipListContentsParams struct {
 
 // Copy File/Folder
 type FileCopyParams struct {
-	Path        string `url:"-,omitempty" json:"-,omitempty" path:"path"`
-	Destination string `url:"destination" json:"destination" path:"destination"`
-	Structure   *bool  `url:"structure,omitempty" json:"structure,omitempty" path:"structure"`
-	Overwrite   *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
+	Path          string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	Destination   string `url:"destination" json:"destination" path:"destination"`
+	CopyBehaviors *bool  `url:"copy_behaviors,omitempty" json:"copy_behaviors,omitempty" path:"copy_behaviors"`
+	Structure     *bool  `url:"structure,omitempty" json:"structure,omitempty" path:"structure"`
+	Overwrite     *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
 // Move File/Folder
