@@ -495,7 +495,7 @@ func TestRemoteFsFlushAfterActiveRenameUploadsToNewPath(t *testing.T) {
 
 	var uploadedPath string
 	var uploaded []byte
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader io.Reader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
 		data, err := io.ReadAll(reader)
 		if err != nil {
 			return 0, err
@@ -591,7 +591,7 @@ func TestRemoteFsPublicFlushUploadsWorkingCopyAndRefreshesCache(t *testing.T) {
 	defer vfs.destroy()
 
 	var uploaded []byte
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader io.Reader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
 		data, err := io.ReadAll(reader)
 		if err != nil {
 			return 0, err
@@ -644,7 +644,7 @@ func TestRemoteFsPublicFlushPoisonsSessionAfterUploadFailure(t *testing.T) {
 	defer vfs.destroy()
 
 	uploadErr := errors.New("upload failed")
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader io.Reader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
 		_, _ = io.ReadAll(reader)
 		return 0, uploadErr
 	}
@@ -706,7 +706,7 @@ func TestRemoteFsInPlaceWritesAndFlushDoNotChangeSizeUntilTruncate(t *testing.T)
 	})
 	node.setDownloadURI("https://example.invalid/download")
 
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader io.Reader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
 		data, err := io.ReadAll(reader)
 		if err != nil {
 			return 0, err
@@ -774,7 +774,7 @@ func TestRemoteFsGetattrKeepsStableMtimeDuringWriteSessionAndPublishesOnFlush(t 
 	node.setDownloadURI("https://example.invalid/download")
 
 	var uploadedMtime time.Time
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader io.Reader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
 		_, err := io.ReadAll(reader)
 		if err != nil {
 			return 0, err

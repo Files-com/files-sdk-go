@@ -82,7 +82,7 @@ type RemoteFs struct {
 
 	backend           remoteBackend
 	currentUserId     int64
-	uploadWorkingCopy func(ctx context.Context, node *fsNode, path string, reader io.Reader, mtime time.Time, fh uint64) (int64, error)
+	uploadWorkingCopy func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error)
 	lockMap           map[string]*lockInfo
 	lockMapMutex      sync.Mutex
 	loadDirMutexes    *fssync.PathMutex
@@ -120,6 +120,12 @@ type cacheStore interface {
 	Pin(path string)
 	// Unpin decrements the reference count for a file
 	Unpin(path string)
+}
+
+type uploadWorkingCopyReader interface {
+	io.Reader
+	io.ReaderAt
+	Stat() (os.FileInfo, error)
 }
 
 // cacheReader wraps the cacheStore to provide an io.Reader interface for reading cached files.
@@ -1119,16 +1125,21 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 	_ = node.writeSessionFinishUpload(size, nil)
 }
 
-func (fs *RemoteFs) uploadWorkingCopyWithSDK(ctx context.Context, node *fsNode, path string, reader io.Reader, mtime time.Time, fh uint64) (int64, error) {
+func (fs *RemoteFs) uploadWorkingCopyWithSDK(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
 	if fs.uploadWorkingCopy != nil {
 		return fs.uploadWorkingCopy(ctx, node, path, reader, mtime, fh)
 	}
 
 	localPath, remotePath := fs.paths(path)
+	fileInfo, err := reader.Stat()
+	if err != nil {
+		return 0, err
+	}
 	opts := []file.UploadOption{
 		file.UploadWithContext(ctx),
 		file.UploadWithDestinationPath(remotePath),
-		file.UploadWithReader(reader),
+		file.UploadWithReaderAt(reader),
+		file.UploadWithSize(fileInfo.Size()),
 		file.UploadWithProvidedMtime(mtime),
 		file.UploadWithProgress(fs.uploadProgressFunc(node)),
 		file.WithUploadStartedCallback(func(part files_sdk.FileUploadPart) {
