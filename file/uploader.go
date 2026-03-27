@@ -288,13 +288,42 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 			uploadStatus.Job().UpdateStatus(status.Errored, uploadStatus, err)
 			return
 		}
+		// For folder resume: pre-set uploadedBytes from checkpoint parts so
+		// per-file progress starts at the correct percentage.  Wrap the
+		// progress callback so those bytes are not re-reported (the caller
+		// accumulates per-file transferBytes on top of the saved checkpoint
+		// total — re-reporting would double-count).  On error/cancel, reset
+		// uploadedBytes to only the NEW bytes before firing the status event
+		// so the folder accumulator stays accurate.
+		progressFn := uploadProgress(uploadStatus)
+		var resumedBytes int64
+		if rb := uploadStatus.UploadResumable.Parts.SuccessfulBytes(); job.Type == directory.Dir && rb > 0 {
+			resumedBytes = rb
+			uploadStatus.SetUploadedBytes(resumedBytes)
+			var skipped int64
+			inner := progressFn
+			progressFn = func(bytesCount int64) {
+				if bytesCount > 0 && skipped < resumedBytes {
+					skip := bytesCount
+					if remaining := resumedBytes - skipped; remaining < skip {
+						skip = remaining
+					}
+					skipped += skip
+					bytesCount -= skip
+				}
+				if bytesCount != 0 {
+					inner(bytesCount)
+				}
+			}
+		}
+
 		opts := []UploadOption{
 			UploadWithContext(ctx),
 			UploadWithManager(job.FilePartsManager),
 			UploadWithReaderAt(localFile),
 			UploadWithSize(uploadStatus.File().Size),
 			UploadWithResume(uploadStatus.UploadResumable),
-			UploadWithProgress(uploadProgress(uploadStatus)),
+			UploadWithProgress(progressFn),
 			UploadWithDestinationPath(uploadStatus.RemotePath()),
 		}
 
@@ -304,6 +333,15 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 
 		uploadStatus.UploadResumable, err = uploadStatus.UploadWithResume(opts...)
 		if err != nil {
+			if resumedBytes > 0 {
+				// Strip pre-existing bytes so the folder accumulator only
+				// receives the delta (new bytes uploaded this session).
+				newBytes := uploadStatus.TransferBytes() - resumedBytes
+				if newBytes < 0 {
+					newBytes = 0
+				}
+				uploadStatus.SetUploadedBytes(newBytes)
+			}
 			uploadStatus.Job().StatusFromError(uploadStatus, err)
 		} else {
 			uploadStatus.SetUploadedBytes(uploadStatus.Parts.SuccessfulBytes())
