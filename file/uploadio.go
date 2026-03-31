@@ -375,6 +375,8 @@ func (u *uploadIO) manageUpdatePart(ctx context.Context, part *Part, wait lib.Co
 			return true
 		}
 	} else {
+		part.error = ctx.Err()
+		u.onComplete <- part
 		return true
 	}
 
