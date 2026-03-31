@@ -77,3 +77,22 @@ func Test_Params_ToValues(t *testing.T) {
 	unescaped, _ := url.QueryUnescape(values.Encode())
 	assert.Equal(t, "a=The a value&d[0]=hello&sub[0][c]=the c value", unescaped)
 }
+
+type ParamsStructWithDynamicFilter struct {
+	Filter interface{} `json:"filter,omitempty" url:"filter,omitempty"`
+	SortBy interface{} `json:"sort_by,omitempty" url:"sort_by,omitempty"`
+}
+
+func Test_Params_ToValues_DynamicFilterAndSort(t *testing.T) {
+	p := Params{
+		Params: ParamsStructWithDynamicFilter{
+			Filter: map[string]interface{}{"not_site_admin": "true"},
+			SortBy: map[string]interface{}{"username": "asc"},
+		},
+	}
+
+	values, err := p.ToValues()
+	assert.NoError(t, err)
+	unescaped, _ := url.QueryUnescape(values.Encode())
+	assert.Equal(t, "filter[not_site_admin]=true&sort_by[username]=asc", unescaped)
+}

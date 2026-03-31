@@ -315,10 +315,7 @@ single field.
 Each resource supports a unique set of valid filter fields, filter combinations, and combinations of
 filters and sort fields.
 
-For the filter type of ```Filter```, the passed in argument value is an initialized resource struct.
-Struct fields are initialized with values to use in the filter.
-
-For the other filter types, the passed in argument is a Go ```map[string]interface{}``` map that has
+The passed in argument is a Go ```map[string]interface{}``` map that has
 a key of the resource field name to filter on and a passed in value to use in the filter comparison.
 
 #### Filter Types
@@ -344,9 +341,8 @@ import (
 client := user.Client{Config: files_sdk.GlobalConfig}
 
 // non admin users
-filter_value := true;
 parameters := files_sdk.UserListParams{
-    Filter: files_sdk.User{NotSiteAdmin: &filter_value}
+    Filter: map[string]interface{}{"not_site_admin": true}
 }
 userIterator, err := client.List(parameters)
 if err != nil {
@@ -465,10 +461,9 @@ import (
 client := user.Client{Config: files_sdk.GlobalConfig};
 
 // users whose usernames start with 'test' and are not admins
-filterValue := true;
 parameters := files_sdk.UserListParams{
     FilterPrefix: map[string]interface{}{"username": "test"},
-    Filter:       files_sdk.User{NotSiteAdmin: &filterValue},
+    Filter:       map[string]interface{}{"not_site_admin": true},
     SortBy:       map[string]interface{}{"username": "asc"}
 }
 userIterator, err := client.List(parameters)

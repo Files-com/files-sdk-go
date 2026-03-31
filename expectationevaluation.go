@@ -35,8 +35,8 @@ func (e ExpectationEvaluation) Identifier() interface{} {
 type ExpectationEvaluationCollection []ExpectationEvaluation
 
 type ExpectationEvaluationListParams struct {
-	SortBy interface{}           `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter ExpectationEvaluation `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 

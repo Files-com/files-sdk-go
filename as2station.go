@@ -34,7 +34,7 @@ type As2StationCollection []As2Station
 
 type As2StationListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter As2Station  `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 

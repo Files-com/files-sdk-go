@@ -21,8 +21,8 @@ func (d DesktopConfigurationProfile) Identifier() interface{} {
 type DesktopConfigurationProfileCollection []DesktopConfigurationProfile
 
 type DesktopConfigurationProfileListParams struct {
-	SortBy interface{}                 `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter DesktopConfigurationProfile `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 

@@ -19,7 +19,7 @@ type WorkspaceCollection []Workspace
 
 type WorkspaceListParams struct {
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter       Workspace   `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterPrefix interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	ListParams
 }
