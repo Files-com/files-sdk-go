@@ -3,7 +3,7 @@ package files_sdk
 import "net/http"
 
 const fullyRedactedDebugValue = "<redacted>"
-const apiKeyDebugVisiblePrefixLength = 16
+const apiKeyDebugVisiblePrefixLength = 4
 const apiKeyDebugMaskSuffix = "****************"
 
 func maskAPIKeyForDebug(value string) string {

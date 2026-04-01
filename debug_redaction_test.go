@@ -17,7 +17,7 @@ func TestSanitizeDebugRequest(t *testing.T) {
 
 	sanitized := sanitizeDebugRequest(req)
 
-	require.Equal(t, "0123456789abcdef****************", sanitized.Header.Get("X-FilesAPI-Key"))
+	require.Equal(t, "0123****************", sanitized.Header.Get("X-FilesAPI-Key"))
 	require.Equal(t, "<redacted>", sanitized.Header.Get("X-FilesAPI-Auth"))
 	require.Equal(t, "<redacted>", sanitized.Header.Get("X-Files-Reauthentication"))
 	require.Equal(t, "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", req.Header.Get("X-FilesAPI-Key"))
