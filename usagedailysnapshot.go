@@ -13,6 +13,7 @@ type UsageDailySnapshot struct {
 	ApiUsageAvailable            *bool                    `json:"api_usage_available,omitempty" path:"api_usage_available,omitempty" url:"api_usage_available,omitempty"`
 	ReadApiUsage                 int64                    `json:"read_api_usage,omitempty" path:"read_api_usage,omitempty" url:"read_api_usage,omitempty"`
 	WriteApiUsage                int64                    `json:"write_api_usage,omitempty" path:"write_api_usage,omitempty" url:"write_api_usage,omitempty"`
+	TransformationCreditsUsage   string                   `json:"transformation_credits_usage,omitempty" path:"transformation_credits_usage,omitempty" url:"transformation_credits_usage,omitempty"`
 	UserCount                    int64                    `json:"user_count,omitempty" path:"user_count,omitempty" url:"user_count,omitempty"`
 	CurrentStorage               int64                    `json:"current_storage,omitempty" path:"current_storage,omitempty" url:"current_storage,omitempty"`
 	DeletedFilesStorage          int64                    `json:"deleted_files_storage,omitempty" path:"deleted_files_storage,omitempty" url:"deleted_files_storage,omitempty"`
