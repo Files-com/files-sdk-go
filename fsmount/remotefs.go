@@ -1147,10 +1147,11 @@ func (fs *RemoteFs) uploadWorkingCopyWithSDK(ctx context.Context, node *fsNode, 
 			node.captureRef(part.Ref)
 		}),
 		file.WithUploadRenamedCallback(func() (string, string) {
-			if remotePath != node.path {
-				fs.log.Debug("RemoteFs: finalizeUploadFromWorkingCopy: in progress upload renamed from: %v to %v", remotePath, node.path)
+			finalRemotePath, ref := fs.finalizeUploadPathAndRef(node)
+			if remotePath != finalRemotePath {
+				fs.log.Debug("RemoteFs: finalizeUploadFromWorkingCopy: in progress upload renamed from: %v to %v", remotePath, finalRemotePath)
 			}
-			return node.pathAndRef()
+			return finalRemotePath, ref
 		}),
 	}
 	if fs.writeConcurrency != 0 {
@@ -1162,6 +1163,11 @@ func (fs *RemoteFs) uploadWorkingCopyWithSDK(ctx context.Context, node *fsNode, 
 		return 0, err
 	}
 	return u.Size, nil
+}
+
+func (fs *RemoteFs) finalizeUploadPathAndRef(node *fsNode) (string, string) {
+	path, ref := node.pathAndRef()
+	return fs.remotePath(path), ref
 }
 
 func (fs *RemoteFs) Release(path string, fh uint64) (errc int) {

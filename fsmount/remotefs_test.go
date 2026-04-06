@@ -536,6 +536,40 @@ func TestRemoteFsFlushAfterActiveRenameUploadsToNewPath(t *testing.T) {
 	}
 }
 
+func TestRemoteFsFinalizeUploadPathAndRefUsesMountedRootAfterActiveRename(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	fs.root = "/o_test"
+
+	oldPath := "/draft.ai"
+	newPath := "/final.ai"
+
+	errc, fh := fs.Create(oldPath, fuse.O_RDWR, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errc)
+	}
+
+	payload := []byte("rename-then-finalize")
+	if n := fs.Write(oldPath, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+
+	if errc := fs.Rename(oldPath, newPath); errc != 0 {
+		t.Fatalf("Rename returned unexpected error: %d", errc)
+	}
+
+	node, ok := vfs.fetch(newPath)
+	if !ok {
+		t.Fatal("expected renamed path to exist in VFS")
+	}
+
+	finalPath, _ := fs.finalizeUploadPathAndRef(node)
+	if finalPath != "/o_test/final.ai" {
+		t.Fatalf("finalize upload path = %q, want %q", finalPath, "/o_test/final.ai")
+	}
+}
+
 func TestRemoteFsPublicTruncateZeroSkipsHydrationAndResetsWorkingCopy(t *testing.T) {
 	fs, vfs, cacheStore := newTestRemoteFs(t)
 	defer vfs.destroy()
