@@ -75,7 +75,6 @@ type SyncCreateParams struct {
 	Description         string          `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	DestPath            string          `url:"dest_path,omitempty" json:"dest_path,omitempty" path:"dest_path"`
 	DestRemoteServerId  int64           `url:"dest_remote_server_id,omitempty" json:"dest_remote_server_id,omitempty" path:"dest_remote_server_id"`
-	DestSiteId          int64           `url:"dest_site_id,omitempty" json:"dest_site_id,omitempty" path:"dest_site_id"`
 	Disabled            *bool           `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
 	ExcludePatterns     []string        `url:"exclude_patterns,omitempty" json:"exclude_patterns,omitempty" path:"exclude_patterns"`
 	HolidayRegion       string          `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
@@ -89,7 +88,6 @@ type SyncCreateParams struct {
 	ScheduleTimesOfDay  []string        `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
 	SrcPath             string          `url:"src_path,omitempty" json:"src_path,omitempty" path:"src_path"`
 	SrcRemoteServerId   int64           `url:"src_remote_server_id,omitempty" json:"src_remote_server_id,omitempty" path:"src_remote_server_id"`
-	SrcSiteId           int64           `url:"src_site_id,omitempty" json:"src_site_id,omitempty" path:"src_site_id"`
 	SyncIntervalMinutes int64           `url:"sync_interval_minutes,omitempty" json:"sync_interval_minutes,omitempty" path:"sync_interval_minutes"`
 	Trigger             SyncTriggerEnum `url:"trigger,omitempty" json:"trigger,omitempty" path:"trigger"`
 	TriggerFile         string          `url:"trigger_file,omitempty" json:"trigger_file,omitempty" path:"trigger_file"`
@@ -112,7 +110,6 @@ type SyncUpdateParams struct {
 	Description         string          `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	DestPath            string          `url:"dest_path,omitempty" json:"dest_path,omitempty" path:"dest_path"`
 	DestRemoteServerId  int64           `url:"dest_remote_server_id,omitempty" json:"dest_remote_server_id,omitempty" path:"dest_remote_server_id"`
-	DestSiteId          int64           `url:"dest_site_id,omitempty" json:"dest_site_id,omitempty" path:"dest_site_id"`
 	Disabled            *bool           `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
 	ExcludePatterns     []string        `url:"exclude_patterns,omitempty" json:"exclude_patterns,omitempty" path:"exclude_patterns"`
 	HolidayRegion       string          `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
@@ -126,7 +123,6 @@ type SyncUpdateParams struct {
 	ScheduleTimesOfDay  []string        `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
 	SrcPath             string          `url:"src_path,omitempty" json:"src_path,omitempty" path:"src_path"`
 	SrcRemoteServerId   int64           `url:"src_remote_server_id,omitempty" json:"src_remote_server_id,omitempty" path:"src_remote_server_id"`
-	SrcSiteId           int64           `url:"src_site_id,omitempty" json:"src_site_id,omitempty" path:"src_site_id"`
 	SyncIntervalMinutes int64           `url:"sync_interval_minutes,omitempty" json:"sync_interval_minutes,omitempty" path:"sync_interval_minutes"`
 	Trigger             SyncTriggerEnum `url:"trigger,omitempty" json:"trigger,omitempty" path:"trigger"`
 	TriggerFile         string          `url:"trigger_file,omitempty" json:"trigger_file,omitempty" path:"trigger_file"`
