@@ -11,6 +11,8 @@ type Notification struct {
 	Path                     string   `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	GroupId                  int64    `json:"group_id,omitempty" path:"group_id,omitempty" url:"group_id,omitempty"`
 	GroupName                string   `json:"group_name,omitempty" path:"group_name,omitempty" url:"group_name,omitempty"`
+	GroupIds                 []int64  `json:"group_ids,omitempty" path:"group_ids,omitempty" url:"group_ids,omitempty"`
+	GroupNames               []string `json:"group_names,omitempty" path:"group_names,omitempty" url:"group_names,omitempty"`
 	TriggeringGroupIds       []int64  `json:"triggering_group_ids,omitempty" path:"triggering_group_ids,omitempty" url:"triggering_group_ids,omitempty"`
 	TriggeringUserIds        []int64  `json:"triggering_user_ids,omitempty" path:"triggering_user_ids,omitempty" url:"triggering_user_ids,omitempty"`
 	TriggerByShareRecipients *bool    `json:"trigger_by_share_recipients,omitempty" path:"trigger_by_share_recipients,omitempty" url:"trigger_by_share_recipients,omitempty"`
@@ -67,6 +69,7 @@ type NotificationCreateParams struct {
 	TriggeringUserIds        []int64  `url:"triggering_user_ids,omitempty" json:"triggering_user_ids,omitempty" path:"triggering_user_ids"`
 	TriggerByShareRecipients *bool    `url:"trigger_by_share_recipients,omitempty" json:"trigger_by_share_recipients,omitempty" path:"trigger_by_share_recipients"`
 	GroupId                  int64    `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
+	GroupIds                 string   `url:"group_ids,omitempty" json:"group_ids,omitempty" path:"group_ids"`
 	Path                     string   `url:"path,omitempty" json:"path,omitempty" path:"path"`
 	Username                 string   `url:"username,omitempty" json:"username,omitempty" path:"username"`
 }
