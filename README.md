@@ -694,7 +694,6 @@ if err != nil {
 | `not-authorized/api-key-only-for-desktop-app` | `ErrApiKeyOnlyForDesktopApp` | Api Key Only For Desktop App |
 | `not-authorized/api-key-only-for-mobile-app` | `ErrApiKeyOnlyForMobileApp` | Api Key Only For Mobile App |
 | `not-authorized/api-key-only-for-office-integration` | `ErrApiKeyOnlyForOfficeIntegration` | Api Key Only For Office Integration |
-| `not-authorized/billing-or-site-admin-permission-required` | `ErrBillingOrSiteAdminPermissionRequired` | Billing Or Site Admin Permission Required |
 | `not-authorized/billing-permission-required` | `ErrBillingPermissionRequired` | Billing Permission Required |
 | `not-authorized/bundle-maximum-uses-reached` | `ErrBundleMaximumUsesReached` | Bundle Maximum Uses Reached |
 | `not-authorized/bundle-permission-required` | `ErrBundlePermissionRequired` | Bundle Permission Required |
@@ -726,6 +725,11 @@ if err != nil {
 | `not-authorized/reauthentication-needed-action` | `ErrReauthenticationNeededAction` | Reauthentication Needed Action |
 | `not-authorized/recaptcha-failed` | `ErrRecaptchaFailed` | Recaptcha Failed |
 | `not-authorized/self-managed-required` | `ErrSelfManagedRequired` | Self Managed Required |
+| `not-authorized/site-admin-or-partner-admin-permission-required` | `ErrSiteAdminOrPartnerAdminPermissionRequired` | Site Admin Or Partner Admin Permission Required |
+| `not-authorized/site-admin-or-workspace-admin-or-folder-admin-permission-required` | `ErrSiteAdminOrWorkspaceAdminOrFolderAdminPermissionRequired` | Site Admin Or Workspace Admin Or Folder Admin Permission Required |
+| `not-authorized/site-admin-or-workspace-admin-or-partner-admin-or-folder-admin-permission-required` | `ErrSiteAdminOrWorkspaceAdminOrPartnerAdminOrFolderAdminPermissionRequired` | Site Admin Or Workspace Admin Or Partner Admin Or Folder Admin Permission Required |
+| `not-authorized/site-admin-or-workspace-admin-or-partner-admin-permission-required` | `ErrSiteAdminOrWorkspaceAdminOrPartnerAdminPermissionRequired` | Site Admin Or Workspace Admin Or Partner Admin Permission Required |
+| `not-authorized/site-admin-or-workspace-admin-permission-required` | `ErrSiteAdminOrWorkspaceAdminPermissionRequired` | Site Admin Or Workspace Admin Permission Required |
 | `not-authorized/site-admin-required` | `ErrSiteAdminRequired` | Site Admin Required |
 | `not-authorized/site-files-are-immutable` | `ErrSiteFilesAreImmutable` | Site Files Are Immutable |
 | `not-authorized/two-factor-authentication-required` | `ErrTwoFactorAuthenticationRequired` | Two Factor Authentication Required |

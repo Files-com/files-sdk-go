@@ -84,6 +84,12 @@ type Site struct {
 	NonSsoGroupsAllowed                      *bool       `json:"non_sso_groups_allowed,omitempty" path:"non_sso_groups_allowed,omitempty" url:"non_sso_groups_allowed,omitempty"`
 	NonSsoUsersAllowed                       *bool       `json:"non_sso_users_allowed,omitempty" path:"non_sso_users_allowed,omitempty" url:"non_sso_users_allowed,omitempty"`
 	FolderPermissionsGroupsOnly              *bool       `json:"folder_permissions_groups_only,omitempty" path:"folder_permissions_groups_only,omitempty" url:"folder_permissions_groups_only,omitempty"`
+	GroupAdminsCanAddUsers                   *bool       `json:"group_admins_can_add_users,omitempty" path:"group_admins_can_add_users,omitempty" url:"group_admins_can_add_users,omitempty"`
+	GroupAdminsCanDeleteUsers                *bool       `json:"group_admins_can_delete_users,omitempty" path:"group_admins_can_delete_users,omitempty" url:"group_admins_can_delete_users,omitempty"`
+	GroupAdminsCanEnableDisableUsers         *bool       `json:"group_admins_can_enable_disable_users,omitempty" path:"group_admins_can_enable_disable_users,omitempty" url:"group_admins_can_enable_disable_users,omitempty"`
+	GroupAdminsCanModifyUsers                *bool       `json:"group_admins_can_modify_users,omitempty" path:"group_admins_can_modify_users,omitempty" url:"group_admins_can_modify_users,omitempty"`
+	GroupAdminsCanResetPasswords             *bool       `json:"group_admins_can_reset_passwords,omitempty" path:"group_admins_can_reset_passwords,omitempty" url:"group_admins_can_reset_passwords,omitempty"`
+	GroupAdminsCanSetUserPassword            *bool       `json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password,omitempty" url:"group_admins_can_set_user_password,omitempty"`
 	Hipaa                                    *bool       `json:"hipaa,omitempty" path:"hipaa,omitempty" url:"hipaa,omitempty"`
 	Icon128                                  Image       `json:"icon128,omitempty" path:"icon128,omitempty" url:"icon128,omitempty"`
 	Icon16                                   Image       `json:"icon16,omitempty" path:"icon16,omitempty" url:"icon16,omitempty"`
@@ -185,7 +191,6 @@ type Site struct {
 	WelcomeEmailEnabled                      *bool       `json:"welcome_email_enabled,omitempty" path:"welcome_email_enabled,omitempty" url:"welcome_email_enabled,omitempty"`
 	WelcomeScreen                            string      `json:"welcome_screen,omitempty" path:"welcome_screen,omitempty" url:"welcome_screen,omitempty"`
 	WindowsModeFtp                           *bool       `json:"windows_mode_ftp,omitempty" path:"windows_mode_ftp,omitempty" url:"windows_mode_ftp,omitempty"`
-	GroupAdminsCanSetUserPassword            *bool       `json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password,omitempty" url:"group_admins_can_set_user_password,omitempty"`
 }
 
 func (s Site) Identifier() interface{} {
@@ -300,6 +305,11 @@ type SiteUpdateParams struct {
 	ProtocolAccessGroupsOnly                 *bool       `url:"protocol_access_groups_only,omitempty" json:"protocol_access_groups_only,omitempty" path:"protocol_access_groups_only"`
 	RevokeBundleAccessOnDisableOrDelete      *bool       `url:"revoke_bundle_access_on_disable_or_delete,omitempty" json:"revoke_bundle_access_on_disable_or_delete,omitempty" path:"revoke_bundle_access_on_disable_or_delete"`
 	BundleWatermarkValue                     interface{} `url:"bundle_watermark_value,omitempty" json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value"`
+	GroupAdminsCanAddUsers                   *bool       `url:"group_admins_can_add_users,omitempty" json:"group_admins_can_add_users,omitempty" path:"group_admins_can_add_users"`
+	GroupAdminsCanDeleteUsers                *bool       `url:"group_admins_can_delete_users,omitempty" json:"group_admins_can_delete_users,omitempty" path:"group_admins_can_delete_users"`
+	GroupAdminsCanEnableDisableUsers         *bool       `url:"group_admins_can_enable_disable_users,omitempty" json:"group_admins_can_enable_disable_users,omitempty" path:"group_admins_can_enable_disable_users"`
+	GroupAdminsCanModifyUsers                *bool       `url:"group_admins_can_modify_users,omitempty" json:"group_admins_can_modify_users,omitempty" path:"group_admins_can_modify_users"`
+	GroupAdminsCanResetPasswords             *bool       `url:"group_admins_can_reset_passwords,omitempty" json:"group_admins_can_reset_passwords,omitempty" path:"group_admins_can_reset_passwords"`
 	GroupAdminsCanSetUserPassword            *bool       `url:"group_admins_can_set_user_password,omitempty" json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password"`
 	BundleRecipientBlacklistFreeEmailDomains *bool       `url:"bundle_recipient_blacklist_free_email_domains,omitempty" json:"bundle_recipient_blacklist_free_email_domains,omitempty" path:"bundle_recipient_blacklist_free_email_domains"`
 	BundleRecipientBlacklistDomains          []string    `url:"bundle_recipient_blacklist_domains,omitempty" json:"bundle_recipient_blacklist_domains,omitempty" path:"bundle_recipient_blacklist_domains"`

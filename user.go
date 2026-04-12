@@ -55,6 +55,7 @@ type User struct {
 	PartnerName                      string     `json:"partner_name,omitempty" path:"partner_name,omitempty" url:"partner_name,omitempty"`
 	PasswordSetAt                    *time.Time `json:"password_set_at,omitempty" path:"password_set_at,omitempty" url:"password_set_at,omitempty"`
 	PasswordValidityDays             int64      `json:"password_validity_days,omitempty" path:"password_validity_days,omitempty" url:"password_validity_days,omitempty"`
+	PrimaryGroupId                   int64      `json:"primary_group_id,omitempty" path:"primary_group_id,omitempty" url:"primary_group_id,omitempty"`
 	PublicKeysCount                  int64      `json:"public_keys_count,omitempty" path:"public_keys_count,omitempty" url:"public_keys_count,omitempty"`
 	ReceiveAdminAlerts               *bool      `json:"receive_admin_alerts,omitempty" path:"receive_admin_alerts,omitempty" url:"receive_admin_alerts,omitempty"`
 	Require2fa                       string     `json:"require_2fa,omitempty" path:"require_2fa,omitempty" url:"require_2fa,omitempty"`
@@ -217,6 +218,7 @@ type UserCreateParams struct {
 	PartnerAdmin                  *bool                        `url:"partner_admin,omitempty" json:"partner_admin,omitempty" path:"partner_admin"`
 	PartnerId                     int64                        `url:"partner_id,omitempty" json:"partner_id,omitempty" path:"partner_id"`
 	PasswordValidityDays          int64                        `url:"password_validity_days,omitempty" json:"password_validity_days,omitempty" path:"password_validity_days"`
+	PrimaryGroupId                int64                        `url:"primary_group_id,omitempty" json:"primary_group_id,omitempty" path:"primary_group_id"`
 	ReadonlySiteAdmin             *bool                        `url:"readonly_site_admin,omitempty" json:"readonly_site_admin,omitempty" path:"readonly_site_admin"`
 	ReceiveAdminAlerts            *bool                        `url:"receive_admin_alerts,omitempty" json:"receive_admin_alerts,omitempty" path:"receive_admin_alerts"`
 	RequireLoginBy                *time.Time                   `url:"require_login_by,omitempty" json:"require_login_by,omitempty" path:"require_login_by"`
@@ -290,6 +292,7 @@ type UserUpdateParams struct {
 	PartnerAdmin                  *bool                        `url:"partner_admin,omitempty" json:"partner_admin,omitempty" path:"partner_admin"`
 	PartnerId                     int64                        `url:"partner_id,omitempty" json:"partner_id,omitempty" path:"partner_id"`
 	PasswordValidityDays          int64                        `url:"password_validity_days,omitempty" json:"password_validity_days,omitempty" path:"password_validity_days"`
+	PrimaryGroupId                int64                        `url:"primary_group_id,omitempty" json:"primary_group_id,omitempty" path:"primary_group_id"`
 	ReadonlySiteAdmin             *bool                        `url:"readonly_site_admin,omitempty" json:"readonly_site_admin,omitempty" path:"readonly_site_admin"`
 	ReceiveAdminAlerts            *bool                        `url:"receive_admin_alerts,omitempty" json:"receive_admin_alerts,omitempty" path:"receive_admin_alerts"`
 	RequireLoginBy                *time.Time                   `url:"require_login_by,omitempty" json:"require_login_by,omitempty" path:"require_login_by"`
