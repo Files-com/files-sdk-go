@@ -844,10 +844,13 @@ func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n in
 		return -fuse.EIO
 	}
 
-	session, _, err := node.ensureWriteSession(path)
+	session, created, err := node.ensureWriteSession(path)
 	if err != nil {
 		fs.log.Error("RemoteFs: Write: failed to create write session for %v: %v", path, err)
 		return -fuse.EIO
+	}
+	if created {
+		node.setPendingVisible()
 	}
 	session.addHandle(fh)
 
@@ -1078,6 +1081,7 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 
 	reader, err := os.Open(session.workingCopyPath)
 	if err != nil {
+		node.clearPendingVisible()
 		node.writeSessionFinishUpload(session.snapshot().currentSize, err)
 		return
 	}
@@ -1100,12 +1104,14 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 		if !errors.Is(err, context.Canceled) && !files_sdk.IsNotExist(err) {
 			fs.log.Error("Error uploading file from working copy: %v (%v): %v", remotePath, localPath, err)
 		}
+		node.clearPendingVisible()
 		_ = node.writeSessionFinishUpload(session.snapshot().currentSize, err)
 		return
 	}
 
 	if err := fs.refreshReadCacheFromWorkingCopy(path, session); err != nil {
 		fs.log.Error("Error refreshing cache from working copy: %v (%v): %v", remotePath, localPath, err)
+		node.clearPendingVisible()
 		_ = node.writeSessionFinishUpload(size, err)
 		return
 	}
@@ -1270,9 +1276,17 @@ func (fs *RemoteFs) Readdir(path string,
 		if openNode.path == fs.root || openNode.path == path || strings.HasPrefix(openNode.path, fs.localFsRoot) {
 			continue
 		}
-		if !slices.Contains(entries, openNode.path) && path == filepath.Dir(openNode.path) {
+		if !slices.Contains(entries, openNode.path) && path == path_lib.Dir(openNode.path) {
 			fs.log.Debug("RemoteFs: Readdir: Child entries %v: for path %s, does not include open handle: %v, adding %v", entries, path, handle, openNode.path)
 			entries = append(entries, openNode.path)
+		}
+	}
+
+	// include pending-visible nodes so that files being uploaded remain visible
+	// even after the handle is released but before the remote listing catches up
+	for p := range fs.vfs.pendingVisibleChildPaths(path) {
+		if !slices.Contains(entries, p) {
+			entries = append(entries, p)
 		}
 	}
 
@@ -1867,6 +1881,7 @@ func (fs *RemoteFs) delete(path string) (errc int) {
 
 func (fs *RemoteFs) finalizeDelete(path string) {
 	if node, ok := fs.vfs.fetch(path); ok {
+		node.clearPendingVisible()
 		node.markDeleted()
 	}
 	fs.vfs.remove(path)
@@ -2096,6 +2111,7 @@ func (fs *RemoteFs) createNode(path string, item files_sdk.File) *fsNode {
 	if nt == nodeTypeFile && node.hasActiveWriteSession() {
 		return node
 	}
+	node.clearPendingVisible()
 	creationTime := item.CreationTime()
 	if nt == nodeTypeFile && !existingCreationTime.IsZero() {
 		creationTime = existingCreationTime

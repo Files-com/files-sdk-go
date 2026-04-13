@@ -232,6 +232,24 @@ func (vfs *virtualfs) fetchLockTarget(path string) (*fsNode, bool) {
 	return nil, false
 }
 
+func (vfs *virtualfs) pendingVisibleChildPaths(dirPath string) map[string]struct{} {
+	vfs.nodesMu.Lock()
+	defer vfs.nodesMu.Unlock()
+
+	pending := make(map[string]struct{})
+	dirNode, ok := vfs.nodes[dirPath]
+	if !ok || dirNode.info.nodeType != nodeTypeDir {
+		return pending
+	}
+	// Collect direct children of dirPath that are still waiting for remote confirmation.
+	for nodePath, node := range vfs.nodes {
+		if nodePath != dirPath && path_lib.Dir(nodePath) == dirPath && node.isPendingVisible() {
+			pending[nodePath] = struct{}{}
+		}
+	}
+	return pending
+}
+
 func isMsOfficeOwnerFile(path string) bool {
 	filename := path_lib.Base(path)
 	return strings.HasPrefix(filename, officeOwnerFilePrefix)

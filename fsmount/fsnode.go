@@ -17,6 +17,10 @@ type fsNode struct {
 	info         fsNodeInfo
 	writeSession *writeSession
 
+	// pendingVisible keeps a locally-created file visible in directory listings
+	// until the remote listing confirms its existence or the upload fails.
+	pendingVisible bool
+
 	cacheTTL time.Duration
 	logger   lib.LeveledLogger
 
@@ -179,6 +183,24 @@ func (n *fsNode) expireInfo() {
 	defer n.statusMu.Unlock()
 	n.infoExpires = timeZero
 	n.downloadUri = ""
+}
+
+func (n *fsNode) setPendingVisible() {
+	n.statusMu.Lock()
+	defer n.statusMu.Unlock()
+	n.pendingVisible = true
+}
+
+func (n *fsNode) clearPendingVisible() {
+	n.statusMu.Lock()
+	defer n.statusMu.Unlock()
+	n.pendingVisible = false
+}
+
+func (n *fsNode) isPendingVisible() bool {
+	n.statusMu.Lock()
+	defer n.statusMu.Unlock()
+	return n.pendingVisible
 }
 
 func (n *fsNode) childPathsExpired() bool {

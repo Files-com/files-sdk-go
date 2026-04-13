@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
+	"slices"
 	"testing"
 	"time"
 
@@ -56,6 +58,7 @@ func newTestRemoteFs(t *testing.T) (*RemoteFs, *virtualfs, cacheStore) {
 
 type fakeRemoteBackend struct {
 	findFunc           func(params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error)
+	listForFunc        func(params files_sdk.FolderListForParams, opts ...files_sdk.RequestResponseOption) (remoteFileIter, error)
 	uploadFunc         func(opts ...file.UploadOption) error
 	moveFunc           func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error)
 	waitFunc           func(action files_sdk.FileAction, status func(files_sdk.FileMigration), opts ...files_sdk.RequestResponseOption) (files_sdk.FileMigration, error)
@@ -75,6 +78,9 @@ func (b *fakeRemoteBackend) find(params files_sdk.FileFindParams, opts ...files_
 }
 
 func (b *fakeRemoteBackend) listFor(params files_sdk.FolderListForParams, opts ...files_sdk.RequestResponseOption) (remoteFileIter, error) {
+	if b.listForFunc != nil {
+		return b.listForFunc(params, opts...)
+	}
 	return nil, nil
 }
 
@@ -1047,5 +1053,229 @@ func TestFilescomfsLocalToRemoteRenameUploadsContentAndPreservesCreationTime(t *
 			t.Fatalf("expected local temp file to be removed: %s", oldFq)
 		}
 		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+// fakeFileIter is a simple iterator over a slice of files_sdk.File for testing.
+type fakeFileIter struct {
+	files []files_sdk.File
+	idx   int
+}
+
+func (it *fakeFileIter) Next() bool {
+	if it.idx < len(it.files) {
+		it.idx++
+		return true
+	}
+	return false
+}
+
+func (it *fakeFileIter) File() files_sdk.File {
+	return it.files[it.idx-1]
+}
+
+func (it *fakeFileIter) Err() error {
+	return nil
+}
+
+func TestPendingVisibleChildPathsReturnsPendingNodes(t *testing.T) {
+	_, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	dir := vfs.getOrCreate("/uploads", nodeTypeDir)
+	dir.extendTtl()
+
+	a := vfs.getOrCreate("/uploads/a.txt", nodeTypeFile)
+	a.setPendingVisible()
+
+	b := vfs.getOrCreate("/uploads/b.txt", nodeTypeFile)
+	b.setPendingVisible()
+
+	// c exists but is not pending — already confirmed remote
+	vfs.getOrCreate("/uploads/c.txt", nodeTypeFile)
+
+	// d is pending but in a different directory
+	d := vfs.getOrCreate("/other/d.txt", nodeTypeFile)
+	d.setPendingVisible()
+
+	pending := vfs.pendingVisibleChildPaths("/uploads")
+	if len(pending) != 2 {
+		t.Fatalf("expected 2 pending paths, got %d: %v", len(pending), pending)
+	}
+	if _, ok := pending["/uploads/a.txt"]; !ok {
+		t.Fatal("expected /uploads/a.txt in pending set")
+	}
+	if _, ok := pending["/uploads/b.txt"]; !ok {
+		t.Fatal("expected /uploads/b.txt in pending set")
+	}
+}
+
+func TestReaddirShowsPendingVisibleFilesAfterRemoteRefresh(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	dir := vfs.getOrCreate("/docs", nodeTypeDir)
+	dir.extendTtl()
+
+	type createdFile struct {
+		path string
+		fh   uint64
+	}
+	var created []createdFile
+
+	// Create 3 files through the real Create→Write path
+	for _, name := range []string{"one.pdf", "two.pdf", "three.pdf"} {
+		path := fmt.Sprintf("/docs/%s", name)
+		errc, fh := fs.Create(path, fuse.O_RDWR, 0o644)
+		if errc != 0 {
+			t.Fatalf("Create %s returned unexpected error: %d", name, errc)
+		}
+		payload := []byte("data")
+		if n := fs.Write(path, payload, 0, fh); n != len(payload) {
+			t.Fatalf("Write %s returned %d, want %d", name, n, len(payload))
+		}
+		created = append(created, createdFile{path: path, fh: fh})
+	}
+
+	// Release the handles before the refresh so the listing must rely on
+	// pendingVisible rather than the open-handle merge.
+	for _, file := range created {
+		if errc := fs.Release(file.path, file.fh); errc != 0 {
+			t.Fatalf("Release %s returned unexpected error: %d", file.path, errc)
+		}
+	}
+
+	// Remote listing only returns one.pdf (the other two haven't propagated yet)
+	backend := fs.backend.(*fakeRemoteBackend)
+	backend.listForFunc = func(params files_sdk.FolderListForParams, opts ...files_sdk.RequestResponseOption) (remoteFileIter, error) {
+		return &fakeFileIter{files: []files_sdk.File{
+			{DisplayName: "one.pdf", Size: 4, Type: "file"},
+		}}, nil
+	}
+
+	// Expire directory info so loadDir refreshes from remote
+	dir.expireInfo()
+
+	// Readdir should show all 3 files: 1 from remote + 2 pending-visible
+	var names []string
+	fs.Readdir("/docs", func(name string, stat *fuse.Stat_t, ofst int64) bool {
+		if name != "." && name != ".." {
+			names = append(names, name)
+		}
+		return true
+	}, 0, 0)
+
+	slices.Sort(names)
+	expected := []string{"one.pdf", "three.pdf", "two.pdf"}
+	if !slices.Equal(names, expected) {
+		t.Fatalf("Readdir names = %v, want %v", names, expected)
+	}
+}
+
+func TestCreateNodeClearsPendingVisible(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	vfs.getOrCreate("/", nodeTypeDir)
+
+	node := vfs.getOrCreate("/report.xlsx", nodeTypeFile)
+	node.setPendingVisible()
+
+	if !node.isPendingVisible() {
+		t.Fatal("expected pendingVisible to be true after setPendingVisible")
+	}
+
+	// Simulate remote confirmation via createNode (called during listDir)
+	confirmed := fs.createNode("/report.xlsx", files_sdk.File{
+		DisplayName: "report.xlsx",
+		Size:        500,
+		Type:        "file",
+	})
+
+	if confirmed.isPendingVisible() {
+		t.Fatal("expected pendingVisible to be false after createNode confirms remote existence")
+	}
+}
+
+func TestUploadFailureClearsPendingVisible(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	path := "/fail.bin"
+
+	// Force the upload to fail
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, p string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+		return 0, fmt.Errorf("simulated upload failure")
+	}
+
+	errc, fh := fs.Create(path, fuse.O_RDWR, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errc)
+	}
+
+	node, ok := vfs.fetch(path)
+	if !ok {
+		t.Fatal("expected node to exist after Create")
+	}
+
+	payload := []byte("will fail")
+	if n := fs.Write(path, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+
+	if !node.isPendingVisible() {
+		t.Fatal("expected pendingVisible to be true after Write creates session")
+	}
+
+	// Flush triggers the upload which will fail
+	fs.Flush(path, fh)
+
+	if node.isPendingVisible() {
+		t.Fatal("expected pendingVisible to be false after upload failure")
+	}
+}
+
+func TestCreateWithoutWriteDoesNotSetPendingVisible(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	path := "/empty.txt"
+	errc, fh := fs.Create(path, fuse.O_RDWR, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errc)
+	}
+
+	node, ok := vfs.fetch(path)
+	if !ok {
+		t.Fatal("expected node to exist after Create")
+	}
+	if node.isPendingVisible() {
+		t.Fatal("expected pendingVisible to be false after Create with no Write")
+	}
+
+	fs.Release(path, fh)
+}
+
+func TestTruncateDoesNotSetPendingVisible(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	path := "/trunc.bin"
+	errc, fh := fs.Create(path, fuse.O_RDWR, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errc)
+	}
+
+	node, ok := vfs.fetch(path)
+	if !ok {
+		t.Fatal("expected node to exist after Create")
+	}
+
+	if errc := fs.Truncate(path, 0, fh); errc != 0 {
+		t.Fatalf("Truncate returned unexpected error: %d", errc)
+	}
+
+	if node.isPendingVisible() {
+		t.Fatal("expected pendingVisible to be false after Truncate without Write")
 	}
 }
