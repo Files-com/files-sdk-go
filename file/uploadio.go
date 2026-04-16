@@ -318,12 +318,25 @@ func (u *uploadIO) buildReader(offset OffSet) (ProxyReader, error) {
 	readerAt, readerAtOk := u.ReaderAt()
 
 	if u.Size != nil && readerAtOk {
-		return &ProxyReaderAt{
-			ReaderAt: readerAt,
-			off:      offset.off,
-			len:      offset.len,
-			onRead:   u.Progress,
-		}, nil
+		// Test if ReadAt is actually supported by doing a small test read
+		testBuf := make([]byte, 1)
+		_, err := readerAt.ReadAt(testBuf, 0)
+		if err != nil && errors.Is(err, errors.ErrUnsupported) {
+			// ReadAt not supported, fall back to regular reader approach
+			readerAtOk = false
+		} else if err != nil && err != io.EOF {
+			// Other error, propagate it
+			return nil, err
+		}
+
+		if readerAtOk {
+			return &ProxyReaderAt{
+				ReaderAt: readerAt,
+				off:      offset.off,
+				len:      offset.len,
+				onRead:   u.Progress,
+			}, nil
+		}
 	}
 
 	if u.Size == nil || *u.FileUploadPart.ParallelParts {
