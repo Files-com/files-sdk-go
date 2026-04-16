@@ -15,6 +15,7 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/fsmount/events"
 	dc "github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/disk"
 	mc "github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/mem"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/preflight"
 	"github.com/hashicorp/go-retryablehttp"
 
 	"github.com/Files-com/files-sdk-go/v3/ignore"
@@ -193,7 +194,7 @@ func Mount(params MountParams) (*Host, error) {
 	opts := mountOpts(params)
 
 	// test that the fuse library can be loaded
-	if err := loadFuse(); err != nil {
+	if err := preflight.LoadFuse(); err != nil {
 		return nil, err
 	}
 
@@ -465,17 +466,4 @@ func defaultMountOpts(params MountParams) []string {
 	// sets the volume name that is passed to the fuse implementation
 	opts = append(opts, "-o", "volname="+volname)
 	return opts
-}
-
-// Test if the fuse library can be loaded, and gracefully handle any error.
-func loadFuse() (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("%v", r)
-		}
-	}()
-
-	// This will panic if the fuse library cannot be loaded.
-	_, _ = fuse.OptParse([]string{}, "")
-	return
 }
