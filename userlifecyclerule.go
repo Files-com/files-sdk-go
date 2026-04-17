@@ -57,6 +57,7 @@ func (u UserLifecycleRuleAuthenticationMethodEnum) Enum() map[string]UserLifecyc
 		"email_signup":                UserLifecycleRuleAuthenticationMethodEnum("email_signup"),
 		"password_with_imported_hash": UserLifecycleRuleAuthenticationMethodEnum("password_with_imported_hash"),
 		"password_and_ssh_key":        UserLifecycleRuleAuthenticationMethodEnum("password_and_ssh_key"),
+		"all_non_sso":                 UserLifecycleRuleAuthenticationMethodEnum("all_non_sso"),
 	}
 }
 
