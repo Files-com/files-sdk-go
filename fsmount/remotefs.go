@@ -1244,6 +1244,14 @@ func (fs *RemoteFs) Readdir(path string,
 	ofst int64,
 	fh uint64) (errc int) {
 
+	readdirStart := time.Now()
+	defer func() {
+		if elapsed := time.Since(readdirStart); elapsed > 2*time.Second {
+			localPath, remotePath := fs.paths(path)
+			fs.log.Debug("RemoteFs: Readdir: slow response (%v): %v (%v)", elapsed, remotePath, localPath)
+		}
+	}()
+
 	localPath, remotePath := fs.paths(path)
 
 	// This happens a lot, so log at trace level.
@@ -1253,8 +1261,12 @@ func (fs *RemoteFs) Readdir(path string,
 
 	// Force a load of the directory entries from the remote to make sure
 	// the local vfs representation is up to date.
+	start := time.Now()
 	if errc = fs.loadDir(fillNode); errc != 0 {
 		return errc
+	}
+	if elapsed := time.Since(start); elapsed > 2*time.Second {
+		fs.log.Debug("RemoteFs: loadDir: slow response (%v): %v (%v)", elapsed, remotePath, localPath)
 	}
 
 	fill(".", nil, 0)
