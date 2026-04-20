@@ -28,6 +28,11 @@ type MetadataCategoryFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+type MetadataCategoryListForParams struct {
+	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	ListParams
+}
+
 type MetadataCategoryCreateParams struct {
 	Name           string   `url:"name" json:"name" path:"name"`
 	DefaultColumns []string `url:"default_columns,omitempty" json:"default_columns,omitempty" path:"default_columns"`

@@ -56,6 +56,22 @@ func Find(params files_sdk.MetadataCategoryFindParams, opts ...files_sdk.Request
 	return (&Client{}).Find(params, opts...)
 }
 
+func (c *Client) ListFor(params files_sdk.MetadataCategoryListForParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
+	path, err := lib.BuildPath("/metadata_categories/list_by_path/{path}", params)
+	if err != nil {
+		return i, err
+	}
+	i.ListParams = &params
+	list := files_sdk.MetadataCategoryCollection{}
+	i.Query = listquery.Build(c.Config, path, &list, opts...)
+	return i, nil
+}
+
+func ListFor(params files_sdk.MetadataCategoryListForParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).ListFor(params, opts...)
+}
+
 func (c *Client) Create(params files_sdk.MetadataCategoryCreateParams, opts ...files_sdk.RequestResponseOption) (metadataCategory files_sdk.MetadataCategory, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/metadata_categories", Params: params, Entity: &metadataCategory}, opts...)
 	return

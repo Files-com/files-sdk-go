@@ -88,6 +88,7 @@ type Site struct {
 	GroupAdminsCanDeleteUsers                *bool       `json:"group_admins_can_delete_users,omitempty" path:"group_admins_can_delete_users,omitempty" url:"group_admins_can_delete_users,omitempty"`
 	GroupAdminsCanEnableDisableUsers         *bool       `json:"group_admins_can_enable_disable_users,omitempty" path:"group_admins_can_enable_disable_users,omitempty" url:"group_admins_can_enable_disable_users,omitempty"`
 	GroupAdminsCanModifyUsers                *bool       `json:"group_admins_can_modify_users,omitempty" path:"group_admins_can_modify_users,omitempty" url:"group_admins_can_modify_users,omitempty"`
+	GroupAdminsCanBypassUserLifecycleRules   *bool       `json:"group_admins_can_bypass_user_lifecycle_rules,omitempty" path:"group_admins_can_bypass_user_lifecycle_rules,omitempty" url:"group_admins_can_bypass_user_lifecycle_rules,omitempty"`
 	GroupAdminsCanResetPasswords             *bool       `json:"group_admins_can_reset_passwords,omitempty" path:"group_admins_can_reset_passwords,omitempty" url:"group_admins_can_reset_passwords,omitempty"`
 	GroupAdminsCanSetUserPassword            *bool       `json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password,omitempty" url:"group_admins_can_set_user_password,omitempty"`
 	Hipaa                                    *bool       `json:"hipaa,omitempty" path:"hipaa,omitempty" url:"hipaa,omitempty"`
@@ -309,6 +310,7 @@ type SiteUpdateParams struct {
 	GroupAdminsCanDeleteUsers                *bool       `url:"group_admins_can_delete_users,omitempty" json:"group_admins_can_delete_users,omitempty" path:"group_admins_can_delete_users"`
 	GroupAdminsCanEnableDisableUsers         *bool       `url:"group_admins_can_enable_disable_users,omitempty" json:"group_admins_can_enable_disable_users,omitempty" path:"group_admins_can_enable_disable_users"`
 	GroupAdminsCanModifyUsers                *bool       `url:"group_admins_can_modify_users,omitempty" json:"group_admins_can_modify_users,omitempty" path:"group_admins_can_modify_users"`
+	GroupAdminsCanBypassUserLifecycleRules   *bool       `url:"group_admins_can_bypass_user_lifecycle_rules,omitempty" json:"group_admins_can_bypass_user_lifecycle_rules,omitempty" path:"group_admins_can_bypass_user_lifecycle_rules"`
 	GroupAdminsCanResetPasswords             *bool       `url:"group_admins_can_reset_passwords,omitempty" json:"group_admins_can_reset_passwords,omitempty" path:"group_admins_can_reset_passwords"`
 	GroupAdminsCanSetUserPassword            *bool       `url:"group_admins_can_set_user_password,omitempty" json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password"`
 	BundleRecipientBlacklistFreeEmailDomains *bool       `url:"bundle_recipient_blacklist_free_email_domains,omitempty" json:"bundle_recipient_blacklist_free_email_domains,omitempty" path:"bundle_recipient_blacklist_free_email_domains"`

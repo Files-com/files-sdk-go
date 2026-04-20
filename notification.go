@@ -24,6 +24,7 @@ type Notification struct {
 	NotifyOnUpload           *bool    `json:"notify_on_upload,omitempty" path:"notify_on_upload,omitempty" url:"notify_on_upload,omitempty"`
 	Recursive                *bool    `json:"recursive,omitempty" path:"recursive,omitempty" url:"recursive,omitempty"`
 	SendInterval             string   `json:"send_interval,omitempty" path:"send_interval,omitempty" url:"send_interval,omitempty"`
+	Subject                  string   `json:"subject,omitempty" path:"subject,omitempty" url:"subject,omitempty"`
 	Message                  string   `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
 	TriggeringFilenames      []string `json:"triggering_filenames,omitempty" path:"triggering_filenames,omitempty" url:"triggering_filenames,omitempty"`
 	Unsubscribed             *bool    `json:"unsubscribed,omitempty" path:"unsubscribed,omitempty" url:"unsubscribed,omitempty"`
@@ -63,6 +64,7 @@ type NotificationCreateParams struct {
 	NotifyUserActions        *bool    `url:"notify_user_actions,omitempty" json:"notify_user_actions,omitempty" path:"notify_user_actions"`
 	Recursive                *bool    `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
 	SendInterval             string   `url:"send_interval,omitempty" json:"send_interval,omitempty" path:"send_interval"`
+	Subject                  string   `url:"subject,omitempty" json:"subject,omitempty" path:"subject"`
 	Message                  string   `url:"message,omitempty" json:"message,omitempty" path:"message"`
 	TriggeringFilenames      []string `url:"triggering_filenames,omitempty" json:"triggering_filenames,omitempty" path:"triggering_filenames"`
 	TriggeringGroupIds       []int64  `url:"triggering_group_ids,omitempty" json:"triggering_group_ids,omitempty" path:"triggering_group_ids"`
@@ -84,6 +86,7 @@ type NotificationUpdateParams struct {
 	NotifyUserActions        *bool    `url:"notify_user_actions,omitempty" json:"notify_user_actions,omitempty" path:"notify_user_actions"`
 	Recursive                *bool    `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
 	SendInterval             string   `url:"send_interval,omitempty" json:"send_interval,omitempty" path:"send_interval"`
+	Subject                  string   `url:"subject,omitempty" json:"subject,omitempty" path:"subject"`
 	Message                  string   `url:"message,omitempty" json:"message,omitempty" path:"message"`
 	TriggeringFilenames      []string `url:"triggering_filenames,omitempty" json:"triggering_filenames,omitempty" path:"triggering_filenames"`
 	TriggeringGroupIds       []int64  `url:"triggering_group_ids,omitempty" json:"triggering_group_ids,omitempty" path:"triggering_group_ids"`
