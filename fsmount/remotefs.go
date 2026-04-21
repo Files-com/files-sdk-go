@@ -63,6 +63,12 @@ var (
 	webSyncInterval = 15 * time.Second
 )
 
+const (
+	accessMaskExecute = 1
+	accessMaskWrite   = 2
+	accessMaskRead    = 4
+)
+
 // RemoteFs is a file system that implements the logic for interacting with the Files.com API
 // for a mounted file system. It handles all operations that are not handled by the LocalFs
 // implementation, which is used for temporary files and files that should not be uploaded to
@@ -297,6 +303,40 @@ func (fs *RemoteFs) Validate() error {
 	return err
 }
 
+func (fs *RemoteFs) denyIfKnownReadOnlyParent(path string, operation string) int {
+	parentPath := path_lib.Dir(path)
+	if parentPath == path {
+		return 0
+	}
+
+	parent, ok := fs.vfs.fetch(parentPath)
+	if !ok {
+		return 0
+	}
+
+	if permissions := parent.getRemotePermissions(); permissions != "" && !parent.isWritable() {
+		localPath, remotePath := fs.paths(path)
+		fs.log.Debug("RemoteFs: %s: parent directory is read-only: %v (%v) parent=%v permissions=%q", operation, remotePath, localPath, parentPath, permissions)
+		return -fuse.EACCES
+	}
+
+	return 0
+}
+
+func (fs *RemoteFs) denyIfKnownReadOnlyPath(node *fsNode, operation string) int {
+	if node == nil {
+		return 0
+	}
+
+	if permissions := node.getRemotePermissions(); permissions != "" && !node.isWritable() {
+		localPath, remotePath := fs.paths(node.path)
+		fs.log.Debug("RemoteFs: %s: path is read-only: %v (%v) permissions=%q", operation, remotePath, localPath, permissions)
+		return -fuse.EACCES
+	}
+
+	return 0
+}
+
 func (fs *RemoteFs) Mkdir(path string, mode uint32) (errc int) {
 	localPath, remotePath := fs.paths(path)
 	fs.log.Debug("RemoteFs: Mkdir: %v (%v) (mode=%o)", remotePath, localPath, mode)
@@ -307,6 +347,9 @@ func (fs *RemoteFs) Mkdir(path string, mode uint32) (errc int) {
 	}
 
 	if errc = fs.loadParent(path); errc != 0 {
+		return errc
+	}
+	if errc = fs.denyIfKnownReadOnlyParent(path, "Mkdir"); errc != 0 {
 		return errc
 	}
 	if node, ok := fs.vfs.fetch(path); ok && !node.infoExpired() {
@@ -344,6 +387,9 @@ func (fs *RemoteFs) Unlink(path string) (errc int) {
 	if node.info.nodeType == nodeTypeDir {
 		fs.log.Debug("RemoteFs: Unlink: Path is a directory: %v (%v)", remotePath, localPath)
 		return -fuse.EISDIR
+	}
+	if errc = fs.denyIfKnownReadOnlyParent(path, "Unlink"); errc != 0 {
+		return errc
 	}
 
 	// If the node is locked, it can not be deleted.
@@ -384,6 +430,9 @@ func (fs *RemoteFs) Rmdir(path string) (errc int) {
 		fs.log.Debug("RemoteFs: Rmdir: Path is not a directory: %v (%v)", remotePath, localPath)
 		return -fuse.ENOTDIR
 	}
+	if errc = fs.denyIfKnownReadOnlyParent(path, "Rmdir"); errc != 0 {
+		return errc
+	}
 	fs.log.Info("Deleting folder: %v (%v)", remotePath, localPath)
 
 	return fs.delete(path)
@@ -397,6 +446,12 @@ func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
 	node, ok := fs.vfs.fetch(oldpath)
 	if !ok {
 		return -fuse.ENOENT
+	}
+	if errc = fs.denyIfKnownReadOnlyParent(oldpath, "Rename"); errc != 0 {
+		return errc
+	}
+	if errc = fs.denyIfKnownReadOnlyParent(newpath, "Rename"); errc != 0 {
+		return errc
 	}
 
 	defer node.expireInfo()
@@ -478,19 +533,21 @@ func (fs *RemoteFs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh uint64) {
 	localPath, remotePath := fs.paths(path)
 	fuseFlags := ff.NewFuseFlags(flags)
-	fh, handle := fs.vfs.handles.Open(nil, fuseFlags)
+	var handle *fileHandle
 
-	fs.log.Debug("RemoteFs: Create: Creating file: %v (%v) (flags=%v, mode=%o, fh=%v)", remotePath, localPath, fuseFlags, mode, fh)
+	fs.log.Debug("RemoteFs: Create: Creating file: %v (%v) (flags=%v, mode=%o)", remotePath, localPath, fuseFlags, mode)
 
 	// Load the parent directory to populate the vfs nodes map
 	if errc = fs.loadParent(path); errc != 0 {
-		// Release handle on error since FUSE won't call Release() for failed creates
-		fs.vfs.handles.Release(fh)
-		return errc, fh
+		return errc, ^uint64(0)
+	}
+	if errc = fs.denyIfKnownReadOnlyParent(path, "Create"); errc != 0 {
+		return errc, ^uint64(0)
 	}
 
 	node, exists := fs.vfs.fetch(path)
 	if exists && node.hasActiveWriteSession() {
+		fh, handle = fs.vfs.handles.Open(nil, fuseFlags)
 		fs.log.Debug("RemoteFs: Create: joining existing write session: %v (%v)", remotePath, localPath)
 		handle.node = node
 		node.getWriteSession().addHandle(fh)
@@ -501,15 +558,14 @@ func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh ui
 	// so return an error for the Create call?
 	if exists && !node.infoExpired() {
 		fs.log.Debug("RemoteFs: Create: Node exists, cache data is recent, but no open writer: %v (%v)", remotePath, localPath)
-		// Release handle on error since FUSE won't call Release() for failed creates
-		fs.vfs.handles.Release(fh)
-		return -fuse.EEXIST, fh
+		return -fuse.EEXIST, ^uint64(0)
 	}
 
 	if !exists {
 		node = fs.vfs.getOrCreate(path, nodeTypeFile)
 	}
 
+	fh, handle = fs.vfs.handles.Open(nil, fuseFlags)
 	node.updateSize(0)
 	handle.node = node
 
@@ -540,6 +596,13 @@ func (fs *RemoteFs) Open(path string, flags int) (errc int, fh uint64) {
 	if errc != 0 {
 		return errc, ^uint64(0)
 	}
+
+	if !fuseFlags.IsReadOnly() {
+		if errc := fs.denyIfKnownReadOnlyPath(node, "Open"); errc != 0 {
+			return errc, ^uint64(0)
+		}
+	}
+
 	fh, handle := fs.vfs.handles.Open(node, fuseFlags)
 	fs.log.Trace("RemoteFs: Open: path=%v, flags=%v, fh=%v", path, fuseFlags, fh)
 
@@ -1694,6 +1757,16 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 		return errc
 	}
 
+	parentPath := path_lib.Dir(node.path)
+	if parentPath != node.path {
+		if parent, ok := fs.vfs.fetch(parentPath); ok {
+			if permissions := parent.getRemotePermissions(); permissions != "" && !parent.isWritable() {
+				fs.log.Debug("RemoteFs: lock: skipping lock for %v (%v) because parent directory %v has non-writable remote permissions %q", remotePath, localPath, parentPath, permissions)
+				return 0
+			}
+		}
+	}
+
 	// Make API call without holding lockMapMutex
 	var lock files_sdk.Lock
 	var err error
@@ -2121,6 +2194,7 @@ func (fs *RemoteFs) createNode(path string, item files_sdk.File) *fsNode {
 
 	node := fs.vfs.getOrCreate(path, nt)
 	if nt == nodeTypeFile && node.hasActiveWriteSession() {
+		node.setRemotePermissions(item.Permissions)
 		return node
 	}
 	node.clearPendingVisible()
@@ -2134,6 +2208,7 @@ func (fs *RemoteFs) createNode(path string, item files_sdk.File) *fsNode {
 		modTime:      item.ModTime(),
 		creationTime: creationTime,
 	})
+	node.setRemotePermissions(item.Permissions)
 	if item.DownloadUri != "" {
 		node.setDownloadURI(item.DownloadUri)
 	}
@@ -2206,10 +2281,35 @@ func (fs *RemoteFs) Chown(path string, uid uint32, gid uint32) int {
 }
 
 // Access checks file access permissions.
-// The return value of -fuse.ENOSYS indicates the method is not supported.
 func (fs *RemoteFs) Access(path string, mask uint32) int {
 	fs.log.Trace("RemoteFs: Access: path=%v, mask=%v", path, mask)
-	return -fuse.ENOSYS
+	node, errc := fs.fetchNodeWithParentRefresh(path)
+	if errc != 0 {
+		return errc
+	}
+
+	permissions := node.getRemotePermissions()
+	if permissions == "" {
+		return 0
+	}
+
+	if mask&accessMaskRead != 0 && !node.isReadable() {
+		return -fuse.EACCES
+	}
+	if mask&accessMaskWrite != 0 && !node.isWritable() {
+		return -fuse.EACCES
+	}
+	if mask&accessMaskExecute != 0 {
+		if node.info.nodeType == nodeTypeDir {
+			if !node.isListable() {
+				return -fuse.EACCES
+			}
+		} else {
+			return -fuse.EACCES
+		}
+	}
+
+	return 0
 }
 
 // Flush flushes cached file data.

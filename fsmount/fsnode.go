@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"time"
 
@@ -73,18 +74,19 @@ func truncate(s string, length int) string {
 }
 
 type fsNodeInfo struct {
-	nodeType     nodeType
-	size         int64
-	creationTime time.Time
-	modTime      time.Time
-	lockOwner    string
-	uid          uint32
-	gid          uint32
+	nodeType          nodeType
+	size              int64
+	creationTime      time.Time
+	modTime           time.Time
+	lockOwner         string
+	remotePermissions string
+	uid               uint32
+	gid               uint32
 }
 
 func (n fsNodeInfo) String() string {
-	return fmt.Sprintf("fsNodeInfo{type: %v, size: %d, created: %v, modified: %v, lockOwner: '%s', uid: %d, gid: %d}",
-		n.nodeType, n.size, n.creationTime, n.modTime, n.lockOwner, n.uid, n.gid)
+	return fmt.Sprintf("fsNodeInfo{type: %v, size: %d, created: %v, modified: %v, lockOwner: '%s', permissions: '%s', uid: %d, gid: %d}",
+		n.nodeType, n.size, n.creationTime, n.modTime, n.lockOwner, n.remotePermissions, n.uid, n.gid)
 }
 
 func (n *fsNode) String() string {
@@ -103,6 +105,9 @@ func (n *fsNode) updateInfo(info fsNodeInfo) {
 	}
 	if info.gid == 0 {
 		info.gid = n.info.gid
+	}
+	if info.remotePermissions == "" {
+		info.remotePermissions = n.info.remotePermissions
 	}
 
 	n.info = info
@@ -151,6 +156,50 @@ func (n *fsNode) setOwner(uid uint32, gid uint32) {
 	n.info.uid = uid
 	n.info.gid = gid
 	n.extendTtl()
+}
+
+func (n *fsNode) setRemotePermissions(permissions string) {
+	n.statusMu.Lock()
+	defer n.statusMu.Unlock()
+	n.info.remotePermissions = normalizeRemotePermissions(permissions)
+}
+
+func (n *fsNode) getRemotePermissions() string {
+	n.statusMu.Lock()
+	defer n.statusMu.Unlock()
+	return n.info.remotePermissions
+}
+
+func (n *fsNode) isWritable() bool {
+	return strings.Contains(n.getRemotePermissions(), "w")
+}
+
+func (n *fsNode) isReadable() bool {
+	return strings.Contains(n.getRemotePermissions(), "r")
+}
+
+func (n *fsNode) isListable() bool {
+	return strings.Contains(n.getRemotePermissions(), "l")
+}
+
+func normalizeRemotePermissions(permissions string) string {
+	return strings.ToLower(strings.TrimSpace(permissions))
+}
+
+func (n fsNodeInfo) hasKnownRemotePermissions() bool {
+	return n.remotePermissions != ""
+}
+
+func (n fsNodeInfo) isWritable() bool {
+	return strings.Contains(n.remotePermissions, "w")
+}
+
+func (n fsNodeInfo) isReadable() bool {
+	return strings.Contains(n.remotePermissions, "r")
+}
+
+func (n fsNodeInfo) isListable() bool {
+	return strings.Contains(n.remotePermissions, "l")
 }
 
 func (n *fsNode) updateChildPaths(buildChildPaths func(string) (map[string]struct{}, error)) (err error) {

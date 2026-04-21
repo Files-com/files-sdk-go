@@ -43,6 +43,7 @@ func newTestRemoteFs(t *testing.T) (*RemoteFs, *virtualfs, cacheStore) {
 		vfs:            vfs,
 		cacheStore:     cacheStore,
 		disableLocking: true,
+		lockMap:        make(map[string]*lockInfo),
 		readyGates:     map[string]*cache.ReadyGate{},
 		loadDirMutexes: fssync.NewPathMutex(),
 		backend:        &fakeRemoteBackend{},
@@ -64,6 +65,7 @@ type fakeRemoteBackend struct {
 	waitFunc           func(action files_sdk.FileAction, status func(files_sdk.FileMigration), opts ...files_sdk.RequestResponseOption) (files_sdk.FileMigration, error)
 	downloadToFileFunc func(params files_sdk.FileDownloadParams, filePath string, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error)
 	deleteFunc         func(params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponseOption) error
+	createLockFunc     func(params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (files_sdk.Lock, error)
 }
 
 func (b *fakeRemoteBackend) findCurrent(opts ...files_sdk.RequestResponseOption) (files_sdk.ApiKey, error) {
@@ -122,6 +124,9 @@ func (b *fakeRemoteBackend) download(params files_sdk.FileDownloadParams, opts .
 }
 
 func (b *fakeRemoteBackend) createLock(params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (files_sdk.Lock, error) {
+	if b.createLockFunc != nil {
+		return b.createLockFunc(params, opts...)
+	}
 	return files_sdk.Lock{}, nil
 }
 
@@ -178,6 +183,7 @@ func newTestFilescomfs(t *testing.T) (*Filescomfs, *RemoteFs, *LocalFs, *virtual
 		vfs:            vfs,
 		cacheStore:     cacheStore,
 		disableLocking: true,
+		lockMap:        make(map[string]*lockInfo),
 		readyGates:     map[string]*cache.ReadyGate{},
 		loadDirMutexes: fssync.NewPathMutex(),
 		backend:        &fakeRemoteBackend{},
@@ -1194,6 +1200,232 @@ func TestCreateNodeClearsPendingVisible(t *testing.T) {
 
 	if confirmed.isPendingVisible() {
 		t.Fatal("expected pendingVisible to be false after createNode confirms remote existence")
+	}
+}
+
+func TestCreateNodeStoresRemotePermissions(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	node := fs.createNode("/report.xlsx", files_sdk.File{
+		DisplayName: "report.xlsx",
+		Size:        500,
+		Type:        "file",
+		Permissions: "lrwd",
+	})
+
+	if got := node.getRemotePermissions(); got != "lrwd" {
+		t.Fatalf("remote permissions = %q, want %q", got, "lrwd")
+	}
+	if !node.isReadable() {
+		t.Fatal("expected node to be readable")
+	}
+	if !node.isWritable() {
+		t.Fatal("expected node to be writable")
+	}
+}
+
+func TestRemoteFsLockSkipsCreateWhenParentDirectoryIsReadOnly(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	fs.disableLocking = false
+	fs.backend = &fakeRemoteBackend{
+		createLockFunc: func(params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (files_sdk.Lock, error) {
+			t.Fatalf("expected remote lock creation to be skipped, got params %+v", params)
+			return files_sdk.Lock{}, nil
+		},
+	}
+
+	fs.createNode("/readonly", files_sdk.File{
+		Path:        "/readonly",
+		Type:        "directory",
+		Permissions: "lr",
+	})
+	node := vfs.getOrCreate("/readonly/report.xlsx", nodeTypeFile)
+
+	if errc := fs.lock(node, 123); errc != 0 {
+		t.Fatalf("lock returned %d, want 0", errc)
+	}
+}
+
+func TestRemoteFsLockCreatesRemoteLockWhenParentPermissionsUnknown(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	fs.disableLocking = false
+	createLockCalled := false
+	fs.backend = &fakeRemoteBackend{
+		createLockFunc: func(params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (files_sdk.Lock, error) {
+			createLockCalled = true
+			return files_sdk.Lock{}, nil
+		},
+	}
+
+	vfs.getOrCreate("/unknown", nodeTypeDir)
+	node := vfs.getOrCreate("/unknown/report.xlsx", nodeTypeFile)
+
+	if errc := fs.lock(node, 123); errc != 0 {
+		t.Fatalf("lock returned %d, want 0", errc)
+	}
+	if !createLockCalled {
+		t.Fatal("expected remote lock creation when parent permissions are unknown")
+	}
+}
+
+func TestRemoteFsCreateReturnsEACCESWhenParentDirectoryIsReadOnly(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	parent := vfs.getOrCreate("/readonly", nodeTypeDir)
+	parent.setRemotePermissions("lr")
+	parent.extendTtl()
+
+	errc, fh := fs.Create("/readonly/report.xlsx", fuse.O_RDWR|fuse.O_CREAT, 0o644)
+	if errc != -fuse.EACCES {
+		t.Fatalf("Create returned %d, want %d", errc, -fuse.EACCES)
+	}
+	if fh != ^uint64(0) {
+		t.Fatalf("Create fh = %d, want invalid handle", fh)
+	}
+	if _, ok := vfs.fetch("/readonly/report.xlsx"); ok {
+		t.Fatal("expected denied create not to add a child node")
+	}
+}
+
+func TestRemoteFsOpenWriteReturnsEACCESWhenFileIsReadOnly(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	fs.createNode("/readonly.txt", files_sdk.File{
+		Path:        "/readonly.txt",
+		Type:        "file",
+		Permissions: "lr",
+	})
+
+	errc, fh := fs.Open("/readonly.txt", fuse.O_RDWR)
+	if errc != -fuse.EACCES {
+		t.Fatalf("Open returned %d, want %d", errc, -fuse.EACCES)
+	}
+	if fh != ^uint64(0) {
+		t.Fatalf("Open fh = %d, want invalid handle", fh)
+	}
+}
+
+func TestRemoteFsAccessUsesKnownRemotePermissions(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	fs.createNode("/readonly.txt", files_sdk.File{
+		Path:        "/readonly.txt",
+		Type:        "file",
+		Permissions: "lr",
+	})
+	fs.createNode("/writable.txt", files_sdk.File{
+		Path:        "/writable.txt",
+		Type:        "file",
+		Permissions: "lrwd",
+	})
+	vfs.getOrCreate("/unknown.txt", nodeTypeFile)
+
+	if errc := fs.Access("/readonly.txt", accessMaskRead); errc != 0 {
+		t.Fatalf("Access(readonly, R_OK) returned %d, want 0", errc)
+	}
+	if errc := fs.Access("/readonly.txt", accessMaskWrite); errc != -fuse.EACCES {
+		t.Fatalf("Access(readonly, W_OK) returned %d, want %d", errc, -fuse.EACCES)
+	}
+	if errc := fs.Access("/writable.txt", accessMaskWrite); errc != 0 {
+		t.Fatalf("Access(writable, W_OK) returned %d, want 0", errc)
+	}
+	if errc := fs.Access("/unknown.txt", accessMaskWrite); errc != 0 {
+		t.Fatalf("Access(unknown, W_OK) returned %d, want 0", errc)
+	}
+}
+
+func TestGetStatUsesReadOnlyModesForKnownRemotePermissions(t *testing.T) {
+	fileInfo := fsNodeInfo{nodeType: nodeTypeFile, remotePermissions: "lr"}
+	fileStat := getStat(fileInfo, nil, 0, 0)
+	if got := fileStat.Mode & 0o777; got != 0o444 {
+		t.Fatalf("file mode = %o, want %o", got, 0o444)
+	}
+
+	dirInfo := fsNodeInfo{nodeType: nodeTypeDir, remotePermissions: "lr"}
+	dirStat := getStat(dirInfo, nil, 0, 0)
+	if got := dirStat.Mode & 0o777; got != 0o555 {
+		t.Fatalf("dir mode = %o, want %o", got, 0o555)
+	}
+
+	writableFileInfo := fsNodeInfo{nodeType: nodeTypeFile, remotePermissions: "lrwd"}
+	writableFileStat := getStat(writableFileInfo, nil, 0, 0)
+	if got := writableFileStat.Mode & 0o777; got != 0o644 {
+		t.Fatalf("writable file mode = %o, want %o", got, 0o644)
+	}
+}
+
+func TestRemoteFsMkdirReturnsEACCESWhenParentDirectoryIsReadOnly(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	parent := vfs.getOrCreate("/readonly", nodeTypeDir)
+	parent.setRemotePermissions("lr")
+	parent.extendTtl()
+
+	if errc := fs.Mkdir("/readonly/child", 0o755); errc != -fuse.EACCES {
+		t.Fatalf("Mkdir returned %d, want %d", errc, -fuse.EACCES)
+	}
+	if _, ok := vfs.fetch("/readonly/child"); ok {
+		t.Fatal("expected denied mkdir not to add a child node")
+	}
+}
+
+func TestRemoteFsUnlinkReturnsEACCESWhenParentDirectoryIsReadOnly(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	parent := vfs.getOrCreate("/readonly", nodeTypeDir)
+	parent.setRemotePermissions("lr")
+	parent.extendTtl()
+	node := vfs.getOrCreate("/readonly/report.xlsx", nodeTypeFile)
+	node.updateInfo(fsNodeInfo{nodeType: nodeTypeFile})
+	node.extendTtl()
+
+	if errc := fs.Unlink("/readonly/report.xlsx"); errc != -fuse.EACCES {
+		t.Fatalf("Unlink returned %d, want %d", errc, -fuse.EACCES)
+	}
+}
+
+func TestRemoteFsRmdirReturnsEACCESWhenParentDirectoryIsReadOnly(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	parent := vfs.getOrCreate("/readonly", nodeTypeDir)
+	parent.setRemotePermissions("lr")
+	parent.extendTtl()
+	child := vfs.getOrCreate("/readonly/child", nodeTypeDir)
+	child.updateInfo(fsNodeInfo{nodeType: nodeTypeDir})
+	child.extendTtl()
+
+	if errc := fs.Rmdir("/readonly/child"); errc != -fuse.EACCES {
+		t.Fatalf("Rmdir returned %d, want %d", errc, -fuse.EACCES)
+	}
+}
+
+func TestRemoteFsRenameReturnsEACCESWhenDestinationParentDirectoryIsReadOnly(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	srcParent := vfs.getOrCreate("/writable", nodeTypeDir)
+	srcParent.setRemotePermissions("lrwd")
+	srcParent.extendTtl()
+	dstParent := vfs.getOrCreate("/readonly", nodeTypeDir)
+	dstParent.setRemotePermissions("lr")
+	dstParent.extendTtl()
+	node := vfs.getOrCreate("/writable/report.xlsx", nodeTypeFile)
+	node.updateInfo(fsNodeInfo{nodeType: nodeTypeFile})
+	node.extendTtl()
+
+	if errc := fs.Rename("/writable/report.xlsx", "/readonly/report.xlsx"); errc != -fuse.EACCES {
+		t.Fatalf("Rename returned %d, want %d", errc, -fuse.EACCES)
 	}
 }
 
