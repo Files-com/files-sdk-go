@@ -7,7 +7,6 @@ import (
 
 	"github.com/Files-com/files-sdk-go/v3/file/status"
 	"github.com/Files-com/files-sdk-go/v3/lib/direction"
-	"github.com/bradfitz/iter"
 )
 
 type RetryPolicy struct {
@@ -40,7 +39,7 @@ func RetryByPolicy(ctx context.Context, job *Job, policy RetryPolicy, signalEven
 }
 
 func RetryByStatus(ctx context.Context, job *Job, signalEvents bool, policy RetryPolicy, s ...status.GetStatus) {
-	for i := range iter.N(policy.RetryCount) {
+	for i := range policy.RetryCount {
 		switch job.Direction {
 		case direction.DownloadType:
 			retryDownload(ctx, job, signalEvents, s)
@@ -117,7 +116,7 @@ func enqueueByStatus(ctx context.Context, job *Job, signalEvents bool, enqueue f
 	if signalEvents {
 		job.EndScan()
 	}
-	for range iter.N(count) {
+	for range count {
 		waitForComplete()
 	}
 	if signalEvents {

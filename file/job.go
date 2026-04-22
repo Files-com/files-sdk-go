@@ -15,7 +15,6 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/lib/direction"
 	libLog "github.com/Files-com/files-sdk-go/v3/lib/logpath"
 	"github.com/Files-com/files-sdk-go/v3/lib/timer"
-	"github.com/bradfitz/iter"
 	"github.com/chilts/sid"
 	"github.com/hashicorp/go-retryablehttp"
 	ignore "github.com/sabhiram/go-gitignore"
@@ -545,7 +544,7 @@ func WaitTellFinished[T any](job *Job, onStatusComplete chan T, beforeCallingFin
 	go func() {
 		wait := waitForAndCount(job.EndScanning.C, onStatusComplete)
 		n := len(job.Statuses) - wait
-		for range iter.N(n) {
+		for range n {
 			<-onStatusComplete
 		}
 		close(onStatusComplete)

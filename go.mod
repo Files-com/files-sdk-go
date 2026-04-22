@@ -1,10 +1,9 @@
 module github.com/Files-com/files-sdk-go/v3
 
-go 1.21.9
+go 1.22
 
 require (
 	github.com/appscode/go-querystring v0.0.0-20170504095604-0126cfb3f1dc
-	github.com/bradfitz/iter v0.0.0-20191230175014-e8f45d346db8
 	github.com/chilts/sid v0.0.0-20190607042430-660e94789ec9
 	github.com/dnaeon/go-vcr v1.2.0
 	github.com/dustin/go-humanize v1.0.1
