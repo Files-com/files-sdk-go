@@ -55,6 +55,7 @@ type RemoteServer struct {
 	S3CompatibleBucket                      string `json:"s3_compatible_bucket,omitempty" path:"s3_compatible_bucket,omitempty" url:"s3_compatible_bucket,omitempty"`
 	S3CompatibleEndpoint                    string `json:"s3_compatible_endpoint,omitempty" path:"s3_compatible_endpoint,omitempty" url:"s3_compatible_endpoint,omitempty"`
 	S3CompatibleRegion                      string `json:"s3_compatible_region,omitempty" path:"s3_compatible_region,omitempty" url:"s3_compatible_region,omitempty"`
+	S3CompatibleVirtualHostedStyle          *bool  `json:"s3_compatible_virtual_hosted_style,omitempty" path:"s3_compatible_virtual_hosted_style,omitempty" url:"s3_compatible_virtual_hosted_style,omitempty"`
 	S3CompatibleAccessKey                   string `json:"s3_compatible_access_key,omitempty" path:"s3_compatible_access_key,omitempty" url:"s3_compatible_access_key,omitempty"`
 	EnableDedicatedIps                      *bool  `json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips,omitempty" url:"enable_dedicated_ips,omitempty"`
 	FilesAgentPermissionSet                 string `json:"files_agent_permission_set,omitempty" path:"files_agent_permission_set,omitempty" url:"files_agent_permission_set,omitempty"`
@@ -281,6 +282,7 @@ type RemoteServerCreateParams struct {
 	S3CompatibleBucket                      string                                  `url:"s3_compatible_bucket,omitempty" json:"s3_compatible_bucket,omitempty" path:"s3_compatible_bucket"`
 	S3CompatibleEndpoint                    string                                  `url:"s3_compatible_endpoint,omitempty" json:"s3_compatible_endpoint,omitempty" path:"s3_compatible_endpoint"`
 	S3CompatibleRegion                      string                                  `url:"s3_compatible_region,omitempty" json:"s3_compatible_region,omitempty" path:"s3_compatible_region"`
+	S3CompatibleVirtualHostedStyle          *bool                                   `url:"s3_compatible_virtual_hosted_style,omitempty" json:"s3_compatible_virtual_hosted_style,omitempty" path:"s3_compatible_virtual_hosted_style"`
 	S3Region                                string                                  `url:"s3_region,omitempty" json:"s3_region,omitempty" path:"s3_region"`
 	ServerCertificate                       RemoteServerServerCertificateEnum       `url:"server_certificate,omitempty" json:"server_certificate,omitempty" path:"server_certificate"`
 	ServerHostKey                           string                                  `url:"server_host_key,omitempty" json:"server_host_key,omitempty" path:"server_host_key"`
@@ -380,6 +382,7 @@ type RemoteServerUpdateParams struct {
 	S3CompatibleBucket                      string                                  `url:"s3_compatible_bucket,omitempty" json:"s3_compatible_bucket,omitempty" path:"s3_compatible_bucket"`
 	S3CompatibleEndpoint                    string                                  `url:"s3_compatible_endpoint,omitempty" json:"s3_compatible_endpoint,omitempty" path:"s3_compatible_endpoint"`
 	S3CompatibleRegion                      string                                  `url:"s3_compatible_region,omitempty" json:"s3_compatible_region,omitempty" path:"s3_compatible_region"`
+	S3CompatibleVirtualHostedStyle          *bool                                   `url:"s3_compatible_virtual_hosted_style,omitempty" json:"s3_compatible_virtual_hosted_style,omitempty" path:"s3_compatible_virtual_hosted_style"`
 	S3Region                                string                                  `url:"s3_region,omitempty" json:"s3_region,omitempty" path:"s3_region"`
 	ServerCertificate                       RemoteServerServerCertificateEnum       `url:"server_certificate,omitempty" json:"server_certificate,omitempty" path:"server_certificate"`
 	ServerHostKey                           string                                  `url:"server_host_key,omitempty" json:"server_host_key,omitempty" path:"server_host_key"`
