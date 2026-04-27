@@ -31,6 +31,7 @@ type Bundle struct {
 	StartAccessOnDate                            *time.Time               `json:"start_access_on_date,omitempty" path:"start_access_on_date,omitempty" url:"start_access_on_date,omitempty"`
 	SkipCompany                                  *bool                    `json:"skip_company,omitempty" path:"skip_company,omitempty" url:"skip_company,omitempty"`
 	Id                                           int64                    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	BypassesSiteExpirationRules                  *bool                    `json:"bypasses_site_expiration_rules,omitempty" path:"bypasses_site_expiration_rules,omitempty" url:"bypasses_site_expiration_rules,omitempty"`
 	CreatedAt                                    *time.Time               `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 	DontSeparateSubmissionsByFolder              *bool                    `json:"dont_separate_submissions_by_folder,omitempty" path:"dont_separate_submissions_by_folder,omitempty" url:"dont_separate_submissions_by_folder,omitempty"`
 	MaxUses                                      int64                    `json:"max_uses,omitempty" path:"max_uses,omitempty" url:"max_uses,omitempty"`
@@ -102,6 +103,7 @@ type BundleCreateParams struct {
 	UserId                                       int64                 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Paths                                        []string              `url:"paths" json:"paths" path:"paths"`
 	Password                                     string                `url:"password,omitempty" json:"password,omitempty" path:"password"`
+	BypassesSiteExpirationRules                  *bool                 `url:"bypasses_site_expiration_rules,omitempty" json:"bypasses_site_expiration_rules,omitempty" path:"bypasses_site_expiration_rules"`
 	FormFieldSetId                               int64                 `url:"form_field_set_id,omitempty" json:"form_field_set_id,omitempty" path:"form_field_set_id"`
 	CreateSnapshot                               *bool                 `url:"create_snapshot,omitempty" json:"create_snapshot,omitempty" path:"create_snapshot"`
 	DontSeparateSubmissionsByFolder              *bool                 `url:"dont_separate_submissions_by_folder,omitempty" json:"dont_separate_submissions_by_folder,omitempty" path:"dont_separate_submissions_by_folder"`
@@ -141,6 +143,7 @@ type BundleUpdateParams struct {
 	Id                                           int64                 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Paths                                        []string              `url:"paths,omitempty" json:"paths,omitempty" path:"paths"`
 	Password                                     string                `url:"password,omitempty" json:"password,omitempty" path:"password"`
+	BypassesSiteExpirationRules                  *bool                 `url:"bypasses_site_expiration_rules,omitempty" json:"bypasses_site_expiration_rules,omitempty" path:"bypasses_site_expiration_rules"`
 	FormFieldSetId                               int64                 `url:"form_field_set_id,omitempty" json:"form_field_set_id,omitempty" path:"form_field_set_id"`
 	ClickwrapId                                  int64                 `url:"clickwrap_id,omitempty" json:"clickwrap_id,omitempty" path:"clickwrap_id"`
 	Code                                         string                `url:"code,omitempty" json:"code,omitempty" path:"code"`
