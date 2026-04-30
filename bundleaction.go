@@ -19,6 +19,8 @@ type BundleAction struct {
 	BundleRegistrationName  string             `json:"bundle_registration_name,omitempty" path:"bundle_registration_name,omitempty" url:"bundle_registration_name,omitempty"`
 	BundleRegistrationEmail string             `json:"bundle_registration_email,omitempty" path:"bundle_registration_email,omitempty" url:"bundle_registration_email,omitempty"`
 	BundleRegistrationIp    string             `json:"bundle_registration_ip,omitempty" path:"bundle_registration_ip,omitempty" url:"bundle_registration_ip,omitempty"`
+	FormFieldSetId          int64              `json:"form_field_set_id,omitempty" path:"form_field_set_id,omitempty" url:"form_field_set_id,omitempty"`
+	FormFieldData           interface{}        `json:"form_field_data,omitempty" path:"form_field_data,omitempty" url:"form_field_data,omitempty"`
 }
 
 func (b BundleAction) Identifier() interface{} {
