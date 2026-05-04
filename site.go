@@ -376,6 +376,7 @@ type SiteUpdateParams struct {
 	Disable2faWithDelay                      *bool       `url:"disable_2fa_with_delay,omitempty" json:"disable_2fa_with_delay,omitempty" path:"disable_2fa_with_delay"`
 	LdapPasswordChange                       string      `url:"ldap_password_change,omitempty" json:"ldap_password_change,omitempty" path:"ldap_password_change"`
 	LdapPasswordChangeConfirmation           string      `url:"ldap_password_change_confirmation,omitempty" json:"ldap_password_change_confirmation,omitempty" path:"ldap_password_change_confirmation"`
+	RedirectOldSubdomain                     *bool       `url:"redirect_old_subdomain,omitempty" json:"redirect_old_subdomain,omitempty" path:"redirect_old_subdomain"`
 	SmtpPassword                             string      `url:"smtp_password,omitempty" json:"smtp_password,omitempty" path:"smtp_password"`
 }
 
