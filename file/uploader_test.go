@@ -429,6 +429,48 @@ func TestUploadReader(t *testing.T) {
 		assert.Equal(t, "reader-at-size.txt", u.FileUploadPart.Path)
 	})
 
+	t.Run("configured user agent is sent on part uploads", func(t *testing.T) {
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+
+		filename := "user-agent.txt"
+		server.MockFiles[filename] = mockFile{File: files_sdk.File{Size: 10}}
+		client := server.Client()
+		client.Config.UserAgent = "Files.com Desktop Helper test"
+		client.Config.APIKey = "secret-api-key"
+
+		var mu sync.Mutex
+		var userAgents []string
+		var apiKeys []string
+		server.MockRoute("/upload/"+filename, func(c *gin.Context, _ interface{}) bool {
+			mu.Lock()
+			defer mu.Unlock()
+			userAgents = append(userAgents, c.Request.UserAgent())
+			apiKeys = append(apiKeys, c.Request.Header.Get("X-FilesAPI-Key"))
+			return false
+		})
+
+		_, err := client.UploadWithResume(
+			func(io uploadIO) (uploadIO, error) {
+				io.PartSizes = []int64{2, 4, 8, 16, 32}
+				return io, nil
+			},
+			UploadWithReaderAt(bytes.NewReader(bytes.NewBufferString("0123456789").Bytes())),
+			UploadWithDestinationPath(filename),
+			UploadWithSize(10),
+			UploadWithManager(lib.NewConstrainedWorkGroup(2)),
+		)
+
+		require.NoError(t, err)
+		require.NotEmpty(t, userAgents)
+		for _, userAgent := range userAgents {
+			assert.Equal(t, "Files.com Desktop Helper test", userAgent)
+		}
+		for _, apiKey := range apiKeys {
+			assert.Empty(t, apiKey, "raw upload requests must not receive API auth headers")
+		}
+	})
+
 	t.Run("io.ReaderAt and size with resume", func(t *testing.T) {
 		firstTry := func(t *testing.T, filename string) (context.Context, context.CancelFunc, *Client, *MockAPIServer, UploadResumable) {
 			ctx, cancel := context.WithCancel(context.Background())

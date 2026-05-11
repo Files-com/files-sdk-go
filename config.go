@@ -1,6 +1,7 @@
 package files_sdk
 
 import (
+	"cmp"
 	"fmt"
 	"net/http"
 	"os"
@@ -11,7 +12,8 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.3.102"
+var VERSION = "3.3.103"
+var defaultUserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
 
 const (
 	UserAgent   = "Files.com Go SDK"
@@ -53,7 +55,7 @@ func (c Config) Init() Config {
 	}
 
 	if c.UserAgent == "" {
-		c.UserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
+		c.UserAgent = defaultUserAgent
 	}
 
 	return c
@@ -95,8 +97,14 @@ func (c Config) GetAPIKey() string {
 	return lib.DefaultString(c.APIKey, os.Getenv("FILES_API_KEY"))
 }
 
+func (c Config) SetUserAgentHeader(headers *http.Header) {
+	if headers.Get("User-Agent") == "" {
+		headers.Set("User-Agent", cmp.Or(c.UserAgent, defaultUserAgent))
+	}
+}
+
 func (c Config) SetHeaders(headers *http.Header) {
-	headers.Set("User-Agent", c.UserAgent)
+	headers.Set("User-Agent", cmp.Or(c.UserAgent, defaultUserAgent))
 	if c.GetAPIKey() != "" {
 		headers.Set("X-FilesAPI-Key", c.GetAPIKey())
 	} else if c.SessionId != "" {

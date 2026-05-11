@@ -84,6 +84,11 @@ type CallParams struct {
 }
 
 func CallRaw(params *CallParams) (*http.Response, error) {
+	if params.Headers == nil {
+		params.Headers = &http.Header{}
+	}
+	params.Config.SetUserAgentHeader(params.Headers)
+
 	request, err := buildRequest(params)
 	if err != nil {
 		return &http.Response{}, err
