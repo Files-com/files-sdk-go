@@ -26,11 +26,9 @@ func DefaultRetryableHttp(logger Logger, client ...*http.Client) *retryablehttp.
 		retryClient.HTTPClient = DefaultClient
 	}
 	retryClient.Backoff = func(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
-		if resp != nil && (resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusServiceUnavailable) {
-			if s, ok := resp.Header["Retry-After"]; ok {
-				if sleep, err := strconv.ParseInt(s[0], 10, 64); err == nil {
-					return time.Second * time.Duration(sleep)
-				}
+		if resp != nil {
+			if sleep, ok := retryAfterDuration(resp.Header.Get("Retry-After"), time.Now()); ok {
+				return sleep
 			}
 		}
 
@@ -53,6 +51,28 @@ func DefaultRetryableHttp(logger Logger, client ...*http.Client) *retryablehttp.
 	}
 	retryClient.RetryMax = 3
 	return retryClient
+}
+
+func retryAfterDuration(value string, now time.Time) (time.Duration, bool) {
+	if value == "" {
+		return 0, false
+	}
+
+	if seconds, err := strconv.ParseInt(value, 10, 64); err == nil {
+		if seconds < 0 {
+			return 0, false
+		}
+		return time.Second * time.Duration(seconds), true
+	}
+
+	retryAt, err := http.ParseTime(value)
+	if err != nil {
+		return 0, false
+	}
+	if retryAt.Before(now) {
+		return 0, true
+	}
+	return retryAt.Sub(now), true
 }
 
 func defaultPooledClient() *http.Client {
