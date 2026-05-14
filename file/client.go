@@ -95,7 +95,7 @@ func (c *Client) DownloadRequestStatus(fileDownloadUrl string, downloadRequestId
 		return re, err
 	}
 
-	c.SetHeaders(&request.Header)
+	c.SetHeadersForRequest(request)
 
 	resp, err := files_sdk.WrapRequestOptions(c.Config, request, opts...)
 	if err != nil {
@@ -159,7 +159,7 @@ func (c *Client) Download(params files_sdk.FileDownloadParams, opts ...files_sdk
 		return params.File, err
 	}
 
-	c.SetHeaders(&request.Header)
+	c.SetHeadersForRequest(request)
 
 	_, err = files_sdk.WrapRequestOptions(c.Config, request, opts...)
 

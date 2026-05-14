@@ -7,6 +7,8 @@ import (
 	"io"
 	fs2 "io/fs"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,6 +41,122 @@ func CreateClient(fixture string) (client *Client, r *recorder.Recorder, err err
 	client.Config, r, err = test.CreateConfig(fixture)
 
 	return client, r, err
+}
+
+func TestClient_DownloadDoesNotSendAuthHeadersToOffOriginDownloadUri(t *testing.T) {
+	var gotHeaders http.Header
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotHeaders = r.Header.Clone()
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	client := &Client{Config: files_sdk.Config{
+		APIKey: "api-key",
+		AdditionalHeaders: map[string]string{
+			"X-FilesAPI-Auth":          "additional-session-id",
+			"X-Files-Reauthentication": "password:additional-password",
+		},
+	}.Init()}
+	_, err := client.Download(
+		files_sdk.FileDownloadParams{File: files_sdk.File{Path: "remote.txt", DownloadUri: server.URL + "/download"}},
+		files_sdk.ResponseBodyOption(func(body io.ReadCloser) error {
+			return body.Close()
+		}),
+	)
+
+	require.NoError(t, err)
+	assert.Empty(t, gotHeaders.Get("X-FilesAPI-Key"))
+	assert.Empty(t, gotHeaders.Get("X-FilesAPI-Auth"))
+	assert.Empty(t, gotHeaders.Get("X-Files-Reauthentication"))
+	assert.NotEmpty(t, gotHeaders.Get("User-Agent"))
+}
+
+func TestClient_DownloadSendsAuthHeadersToConfiguredEndpoint(t *testing.T) {
+	var gotHeaders http.Header
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotHeaders = r.Header.Clone()
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	client := &Client{Config: files_sdk.Config{APIKey: "api-key", EndpointOverride: server.URL}.Init()}
+	_, err := client.Download(
+		files_sdk.FileDownloadParams{File: files_sdk.File{Path: "remote.txt", DownloadUri: server.URL + "/download"}},
+		files_sdk.ResponseBodyOption(func(body io.ReadCloser) error {
+			return body.Close()
+		}),
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, "api-key", gotHeaders.Get("X-FilesAPI-Key"))
+	assert.Empty(t, gotHeaders.Get("X-FilesAPI-Auth"))
+}
+
+func TestClient_DownloadDoesNotSendAuthHeadersAfterOffOriginRedirect(t *testing.T) {
+	var firstRequestHeaders http.Header
+	var redirectedRequestHeaders http.Header
+
+	storageServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		redirectedRequestHeaders = r.Header.Clone()
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer storageServer.Close()
+
+	filesServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		firstRequestHeaders = r.Header.Clone()
+		http.Redirect(w, r, storageServer.URL+"/object", http.StatusFound)
+	}))
+	defer filesServer.Close()
+
+	client := &Client{Config: files_sdk.Config{
+		APIKey:           "api-key",
+		EndpointOverride: filesServer.URL,
+		AdditionalHeaders: map[string]string{
+			"X-FilesAPI-Auth":          "additional-session-id",
+			"X-Files-Reauthentication": "password:additional-password",
+		},
+	}.Init()}
+	_, err := client.Download(
+		files_sdk.FileDownloadParams{File: files_sdk.File{Path: "remote.txt", DownloadUri: filesServer.URL + "/download"}},
+		files_sdk.ResponseBodyOption(func(body io.ReadCloser) error {
+			return body.Close()
+		}),
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, "api-key", firstRequestHeaders.Get("X-FilesAPI-Key"))
+	assert.Equal(t, "additional-session-id", firstRequestHeaders.Get("X-FilesAPI-Auth"))
+	assert.Equal(t, "password:additional-password", firstRequestHeaders.Get("X-Files-Reauthentication"))
+	assert.Empty(t, redirectedRequestHeaders.Get("X-FilesAPI-Key"))
+	assert.Empty(t, redirectedRequestHeaders.Get("X-FilesAPI-Auth"))
+	assert.Empty(t, redirectedRequestHeaders.Get("X-Files-Reauthentication"))
+}
+
+func TestClient_DownloadRequestStatusDoesNotSendAuthHeadersToOffOriginStatusURL(t *testing.T) {
+	var gotHeaders http.Header
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotHeaders = r.Header.Clone()
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"status":"completed","bytes_transferred":12}}`))
+	}))
+	defer server.Close()
+
+	client := &Client{Config: files_sdk.Config{
+		SessionId: "session-id",
+		AdditionalHeaders: map[string]string{
+			"x-filesapi-key":           "additional-api-key",
+			"X-Files-Reauthentication": "password:additional-password",
+		},
+	}.Init()}
+	status, err := client.DownloadRequestStatus(server.URL+"/download", "request-id")
+
+	require.NoError(t, err)
+	assert.Equal(t, "completed", status.Data.Status)
+	assert.Empty(t, gotHeaders.Get("X-FilesAPI-Key"))
+	assert.Empty(t, gotHeaders.Get("X-FilesAPI-Auth"))
+	assert.Empty(t, gotHeaders.Get("X-Files-Reauthentication"))
+	assert.NotEmpty(t, gotHeaders.Get("User-Agent"))
 }
 
 func createFileStructure(t *testing.T, tmpDir string, filesAndStatus []FileStatus) (filePaths []string) {

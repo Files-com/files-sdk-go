@@ -3,7 +3,9 @@ package files_sdk
 import (
 	"cmp"
 	"fmt"
+	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
@@ -12,13 +14,19 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.3.104"
+var VERSION = "3.3.105"
 var defaultUserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
 
 const (
 	UserAgent   = "Files.com Go SDK"
 	DefaultSite = "app"
 	APIPath     = "/api/rest/v1"
+)
+
+const (
+	apiKeyHeader           = "X-FilesAPI-Key"
+	sessionIdHeader        = "X-FilesAPI-Auth"
+	reauthenticationHeader = "X-Files-Reauthentication"
 )
 
 var GlobalConfig Config
@@ -73,7 +81,7 @@ func (c Config) Endpoint() string {
 }
 
 func (c Config) Do(req *http.Request) (*http.Response, error) {
-	return c.Client.StandardClient().Do(req)
+	return c.redirectSafeClient().StandardClient().Do(req)
 }
 
 func (c Config) SetCustomClient(client *http.Client) Config {
@@ -104,11 +112,19 @@ func (c Config) SetUserAgentHeader(headers *http.Header) {
 }
 
 func (c Config) SetHeaders(headers *http.Header) {
+	c.setHeadersForURL(headers, c.RootPath())
+}
+
+func (c Config) SetHeadersForRequest(req *http.Request) {
+	c.setHeadersForURL(&req.Header, req.URL.String())
+}
+
+func (c Config) setHeadersForURL(headers *http.Header, rawURL string) {
 	headers.Set("User-Agent", cmp.Or(c.UserAgent, defaultUserAgent))
 	if c.GetAPIKey() != "" {
-		headers.Set("X-FilesAPI-Key", c.GetAPIKey())
+		headers.Set(apiKeyHeader, c.GetAPIKey())
 	} else if c.SessionId != "" {
-		headers.Set("X-FilesAPI-Auth", c.SessionId)
+		headers.Set(sessionIdHeader, c.SessionId)
 	}
 	if c.Language != "" {
 		headers.Set("Accept-Language", c.Language)
@@ -116,6 +132,85 @@ func (c Config) SetHeaders(headers *http.Header) {
 	for key, value := range c.AdditionalHeaders {
 		headers.Set(key, value)
 	}
+	if !c.shouldSendAuthHeaders(rawURL) {
+		clearAuthHeaders(headers)
+	}
+}
+
+func (c Config) redirectSafeClient() *retryablehttp.Client {
+	retrySource := c.Client
+	if retrySource == nil {
+		initialized := c.Init()
+		retrySource = initialized.Client
+	}
+
+	httpClient := http.Client{}
+	if retrySource.HTTPClient != nil {
+		httpClient = *retrySource.HTTPClient
+	}
+	originalCheckRedirect := httpClient.CheckRedirect
+	// Go copies custom headers during redirects, including cross-origin redirects.
+	// Re-apply URL-aware headers to each redirected request so Files auth is
+	// stripped if a same-origin download URL redirects to a storage provider.
+	httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		c.SetHeadersForRequest(req)
+		if originalCheckRedirect != nil {
+			return originalCheckRedirect(req, via)
+		}
+		return nil
+	}
+
+	return &retryablehttp.Client{
+		HTTPClient:      &httpClient,
+		Logger:          retrySource.Logger,
+		RetryWaitMin:    retrySource.RetryWaitMin,
+		RetryWaitMax:    retrySource.RetryWaitMax,
+		RetryMax:        retrySource.RetryMax,
+		RequestLogHook:  retrySource.RequestLogHook,
+		ResponseLogHook: retrySource.ResponseLogHook,
+		CheckRetry:      retrySource.CheckRetry,
+		Backoff:         retrySource.Backoff,
+		ErrorHandler:    retrySource.ErrorHandler,
+		PrepareRetry:    retrySource.PrepareRetry,
+	}
+}
+
+func (c Config) shouldSendAuthHeaders(rawURL string) bool {
+	if rawURL == "" {
+		return false
+	}
+
+	destination, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+
+	if destination.Host == "" {
+		return true
+	}
+
+	endpoint, err := url.Parse(c.Endpoint())
+	if err != nil {
+		return false
+	}
+
+	return strings.EqualFold(destination.Scheme, endpoint.Scheme) && normalizedURLHost(destination) == normalizedURLHost(endpoint)
+}
+
+func clearAuthHeaders(headers *http.Header) {
+	headers.Del(apiKeyHeader)
+	headers.Del(sessionIdHeader)
+	headers.Del(reauthenticationHeader)
+}
+
+func normalizedURLHost(u *url.URL) string {
+	host := strings.ToLower(u.Hostname())
+	port := u.Port()
+	// Treat default ports as equivalent to an omitted port for origin comparison.
+	if port == "" || (u.Scheme == "https" && port == "443") || (u.Scheme == "http" && port == "80") {
+		return host
+	}
+	return net.JoinHostPort(host, port)
 }
 
 func (c Config) FeatureFlag(flag string) bool {
