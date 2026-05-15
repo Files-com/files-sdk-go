@@ -565,28 +565,33 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 	}
 	headers := http.Header{}
 	headers.Add("Content-Length", strconv.FormatInt(int64(part.ProxyReader.Len()), 10))
-	// Rewind is the only replay-safety signal this reader exposes. It also resets
-	// the reader, so the retry body factory rewinds again before each retry read.
+	params := &files_sdk.CallParams{
+		Method:  part.HttpMethod,
+		Config:  u.Config,
+		Uri:     part.UploadUri,
+		BodyIo:  part.ProxyReader,
+		Headers: &headers,
+		Context: ctx,
+	}
 	canReplay := func() bool {
+		if part.ProxyReader.Len() == 0 {
+			return true
+		}
 		return part.ProxyReader.Rewind()
 	}
-	retryableBody := retryablehttp.ReaderFunc(func() (io.Reader, error) {
-		if !part.ProxyReader.Rewind() {
-			return nil, errors.New("upload part body not rewindable")
-		}
-		return uploadPartRetryReader{Reader: part.ProxyReader, len: part.ProxyReader.Len()}, nil
-	})
+	params.Client = lib.UploadRetryableHttp(u.Config.Client, canReplay)
+	if part.ProxyReader.Len() > 0 {
+		// Rewind is the only replay-safety signal this reader exposes. It also resets
+		// the reader, so the retry body factory rewinds again before each retry read.
+		params.RetryableBody = retryablehttp.ReaderFunc(func() (io.Reader, error) {
+			if !part.ProxyReader.Rewind() {
+				return nil, errors.New("upload part body not rewindable")
+			}
+			return uploadPartRetryReader{Reader: part.ProxyReader, len: part.ProxyReader.Len()}, nil
+		})
+	}
 	res, err := files_sdk.CallRaw(
-		&files_sdk.CallParams{
-			Method:        part.HttpMethod,
-			Config:        u.Config,
-			Uri:           part.UploadUri,
-			BodyIo:        part.ProxyReader,
-			RetryableBody: retryableBody,
-			Client:        lib.UploadRetryableHttp(u.Config.Client, canReplay),
-			Headers:       &headers,
-			Context:       ctx,
-		},
+		params,
 	)
 	if err != nil {
 		return files_sdk.EtagsParam{}, err

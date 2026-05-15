@@ -513,6 +513,81 @@ func TestUploadReader(t *testing.T) {
 		}
 	})
 
+	t.Run("zero-size upload part uses empty request body", func(t *testing.T) {
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+
+		filename := "zero-size.txt"
+		server.MockFiles[filename] = mockFile{File: files_sdk.File{Size: 0}}
+		client := server.Client()
+
+		var contentLength int64
+		var transferEncoding []string
+		var uploadRequests int
+		server.MockRoute("/upload/"+filename, func(c *gin.Context, _ interface{}) bool {
+			uploadRequests++
+			contentLength = c.Request.ContentLength
+			transferEncoding = c.Request.TransferEncoding
+			return false
+		})
+
+		u, err := client.UploadWithResume(
+			UploadWithReaderAt(bytes.NewReader(nil)),
+			UploadWithDestinationPath(filename),
+			UploadWithSize(0),
+			UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+		)
+
+		require.NoError(t, err)
+		require.Equal(t, 1, uploadRequests)
+		assert.Equal(t, int64(0), contentLength)
+		assert.Empty(t, transferEncoding)
+		assert.Equal(t, filename, u.FileUploadPart.Path)
+	})
+
+	t.Run("zero-size upload part retries request timeout", func(t *testing.T) {
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+
+		filename := "zero-size-retry.txt"
+		server.MockFiles[filename] = mockFile{File: files_sdk.File{Size: 0}}
+		client := server.Client()
+
+		var contentLength int64
+		var transferEncoding []string
+		var attempts int
+		server.MockRoute("/upload/"+filename, func(c *gin.Context, _ interface{}) bool {
+			attempts++
+			contentLength = c.Request.ContentLength
+			transferEncoding = c.Request.TransferEncoding
+			if attempts == 1 {
+				c.Data(
+					http.StatusBadRequest,
+					"application/xml",
+					[]byte(`<?xml version="1.0" encoding="UTF-8"?><Error><Code>RequestTimeout</Code><Message>Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed.</Message></Error>`),
+				)
+				return true
+			}
+
+			c.Header("Etag", "etag")
+			c.Status(http.StatusOK)
+			return true
+		})
+
+		u, err := client.UploadWithResume(
+			UploadWithReaderAt(bytes.NewReader(nil)),
+			UploadWithDestinationPath(filename),
+			UploadWithSize(0),
+			UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+		)
+
+		require.NoError(t, err)
+		require.Equal(t, 2, attempts)
+		assert.Equal(t, int64(0), contentLength)
+		assert.Empty(t, transferEncoding)
+		assert.Equal(t, filename, u.FileUploadPart.Path)
+	})
+
 	t.Run("io.ReaderAt and size with resume", func(t *testing.T) {
 		firstTry := func(t *testing.T, filename string) (context.Context, context.CancelFunc, *Client, *MockAPIServer, UploadResumable) {
 			ctx, cancel := context.WithCancel(context.Background())
