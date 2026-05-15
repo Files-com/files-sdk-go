@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	path_lib "path"
@@ -13,6 +14,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/Files-com/files-sdk-go/v3/file"
@@ -758,13 +760,13 @@ func (fs *RemoteFs) Truncate(path string, size int64, fh uint64) (errc int) {
 	}
 	session.addHandle(fh)
 	if err := fs.ensureWriteSessionBaseline(path, node, session, size == 0, fh); err != nil {
-		if errc := fs.handleError(path, err); errc != 0 {
+		if errc := fs.handleUploadSessionError(path, err, session); errc != 0 {
 			return errc
 		}
 		return -fuse.EIO
 	}
 	if err := fs.truncateWorkingCopy(session, size); err != nil {
-		fs.log.Error("RemoteFs: Truncate: working copy truncate failed for %v: %v", path, err)
+		fs.log.Error("RemoteFs: Truncate: working copy truncate failed for %v: %s", path, uploadLogMessage(err))
 		return -fuse.EIO
 	}
 	node.extendTtl()
@@ -903,7 +905,7 @@ func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n in
 	}
 
 	if err := node.poisonedWriteSessionErr(); err != nil {
-		fs.log.Debug("RemoteFs: Write: poisoned write session for path=%v: %v", path, err)
+		fs.log.Debug("RemoteFs: Write: poisoned write session for path=%v: %s", path, uploadLogMessage(err))
 		return -fuse.EIO
 	}
 
@@ -918,7 +920,7 @@ func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n in
 	session.addHandle(fh)
 
 	if err := fs.ensureWriteSessionBaseline(path, node, session, false, fh); err != nil {
-		if errc := fs.handleError(path, err); errc != 0 {
+		if errc := fs.handleUploadSessionError(path, err, session); errc != 0 {
 			return errc
 		}
 		return -fuse.EIO
@@ -1100,7 +1102,7 @@ func (fs *RemoteFs) flushWriteSession(path string, node *fsNode, fh uint64) int 
 	if session.lastUploadErr != nil {
 		err := session.lastUploadErr
 		session.mu.Unlock()
-		fs.log.Debug("RemoteFs: flushWriteSession: poisoned session for %v: %v", path, err)
+		fs.log.Debug("RemoteFs: flushWriteSession: poisoned session for %v: %s", path, uploadLogMessage(err))
 		return -fuse.EIO
 	}
 	if !session.dirty && !session.uploading && !session.finalizing {
@@ -1164,8 +1166,10 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 
 	size, err := fs.uploadWorkingCopyWithSDK(ctx, node, path, reader, mtime, fh)
 	if err != nil {
-		if !errors.Is(err, context.Canceled) && !files_sdk.IsNotExist(err) {
-			fs.log.Error("Error uploading file from working copy: %v (%v): %v", remotePath, localPath, err)
+		if errors.Is(err, context.Canceled) {
+			fs.log.Info("Upload canceled from working copy: %v (%v)", remotePath, localPath)
+		} else if !files_sdk.IsNotExist(err) {
+			fs.logUploadFailure("Upload failed from working copy", remotePath, localPath, err)
 		}
 		node.clearPendingVisible()
 		_ = node.writeSessionFinishUpload(session.snapshot().currentSize, err)
@@ -1191,6 +1195,7 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 	session.mtime = mtime
 	session.mtimeExplicit = false
 	session.mu.Unlock()
+	fs.log.Info("Upload completed from working copy: %v (%v)", remotePath, localPath)
 	_ = node.writeSessionFinishUpload(size, nil)
 }
 
@@ -1228,7 +1233,7 @@ func (fs *RemoteFs) uploadWorkingCopyWithSDK(ctx context.Context, node *fsNode, 
 	}
 	u, err := fs.backend.uploadWithResume(opts...)
 	if err != nil {
-		fs.log.Debug("RemoteFs: uploadWorkingCopyWithSDK failed for %v (%v): %v", remotePath, localPath, err)
+		fs.log.Debug("RemoteFs: uploadWorkingCopyWithSDK failed for %v (%v): %s", remotePath, localPath, uploadLogMessage(err))
 		return 0, err
 	}
 	return u.Size, nil
@@ -1237,6 +1242,35 @@ func (fs *RemoteFs) uploadWorkingCopyWithSDK(ctx context.Context, node *fsNode, 
 func (fs *RemoteFs) finalizeUploadPathAndRef(node *fsNode) (string, string) {
 	path, ref := node.pathAndRef()
 	return fs.remotePath(path), ref
+}
+
+func (fs *RemoteFs) logUploadFailure(prefix string, remotePath string, localPath string, err error) {
+	fs.log.Error("%s: %v (%v): %s", prefix, remotePath, localPath, uploadLogMessage(err))
+}
+
+func uploadLogMessage(err error) string {
+	if classified, ok := lib.ClassifyS3Error(err); ok {
+		return classified.Message
+	}
+
+	var netErr net.Error
+	if errors.As(err, &netErr) && netErr.Timeout() {
+		return "Network timeout"
+	}
+	if os.IsTimeout(err) {
+		return "Network timeout"
+	}
+	if errors.Is(err, syscall.ECONNREFUSED) {
+		return "Connection refused"
+	}
+	if errors.Is(err, syscall.ECONNRESET) {
+		return "Connection reset by peer"
+	}
+	if errors.Is(err, syscall.EPIPE) {
+		return "Client disconnected during transfer"
+	}
+
+	return "Error returned by the remote service"
 }
 
 func (fs *RemoteFs) Release(path string, fh uint64) (errc int) {
@@ -1415,7 +1449,7 @@ func (fs *RemoteFs) Fsync(path string, datasync bool, fh uint64) (errc int) {
 			return 0
 		}
 		if err := node.poisonedWriteSessionErr(); err != nil {
-			fs.log.Debug("RemoteFs: Fsync: poisoned write session for path=%v: %v", path, err)
+			fs.log.Debug("RemoteFs: Fsync: poisoned write session for path=%v: %s", path, uploadLogMessage(err))
 			return -fuse.EIO
 		}
 		return fs.flushWriteSession(path, node, fh)
@@ -1538,13 +1572,13 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 
 	if uploadErr != nil {
 		if !errors.Is(uploadErr, context.Canceled) && !files_sdk.IsNotExist(uploadErr) {
-			fs.log.Error("Error uploading file during rename: %v (%v): %v", remotePath, localPath, uploadErr)
+			fs.logUploadFailure("Error uploading file during rename", remotePath, localPath, uploadErr)
 		}
 		return uploadErr
 	}
 
 	// Update the node's info after both upload and cache population succeed.
-	fs.log.Info("Upload completed: %v (%v).", remotePath, localPath)
+	fs.log.Info("Upload completed during rename: %v (%v).", remotePath, localPath)
 	node.updateInfo(fsNodeInfo{
 		nodeType:     nodeTypeFile,
 		size:         fileInfo.Size(),
@@ -1906,8 +1940,22 @@ func (fs *RemoteFs) remotePath(path string) string {
 
 func (fs *RemoteFs) handleError(path string, err error) int {
 	if err != nil {
+		return fs.handleErrorMessage(path, err, err.Error())
+	}
+	return 0
+}
+
+func (fs *RemoteFs) handleUploadSessionError(path string, err error, session *writeSession) int {
+	if writeSessionLastUploadErr(session, err) {
+		return fs.handleErrorMessage(path, err, uploadLogMessage(err))
+	}
+	return fs.handleError(path, err)
+}
+
+func (fs *RemoteFs) handleErrorMessage(path string, err error, message string) int {
+	if err != nil {
 		localPath, remotePath := fs.paths(path)
-		fs.log.Error("%v (%v): %v", remotePath, localPath, err)
+		fs.log.Error("%v (%v): %s", remotePath, localPath, message)
 
 		if files_sdk.IsNotAuthenticated(err) {
 			fs.events.Publish(events.AuthenticationFailedEvent{
@@ -1933,6 +1981,16 @@ func (fs *RemoteFs) handleError(path string, err error) int {
 		return -fuse.EIO
 	}
 	return 0
+}
+
+func writeSessionLastUploadErr(session *writeSession, err error) bool {
+	if session == nil || err == nil {
+		return false
+	}
+	session.mu.Lock()
+	lastUploadErr := session.lastUploadErr
+	session.mu.Unlock()
+	return lastUploadErr != nil && errors.Is(err, lastUploadErr)
 }
 
 func isResourceLocked(err error) bool {

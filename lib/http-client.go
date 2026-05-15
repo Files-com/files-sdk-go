@@ -1,7 +1,11 @@
 package lib
 
 import (
+	"bytes"
 	"context"
+	"encoding/xml"
+	"io"
+	"math/rand"
 	"net"
 	"net/http"
 	"strconv"
@@ -41,16 +45,126 @@ func DefaultRetryableHttp(logger Logger, client ...*http.Client) *retryablehttp.
 
 		if ok && resp != nil {
 			// Don't waste time retrying an expired URL
-			if url, err := downloadurl.New(resp.Request.URL.String()); err == nil && !url.IsZero() {
-				if _, valid := url.Valid(time.Millisecond * 100); !valid {
-					return false, err
-				}
+			if !requestURLValidForRetry(resp) {
+				return false, err
 			}
 		}
 		return ok, err
 	}
 	retryClient.RetryMax = 3
 	return retryClient
+}
+
+func UploadRetryableHttp(base *retryablehttp.Client, canReplay func() bool) *retryablehttp.Client {
+	if base == nil {
+		base = DefaultRetryableHttp(nil)
+	}
+
+	retryClient := *base
+	baseCheckRetry := retryClient.CheckRetry
+	if baseCheckRetry == nil {
+		baseCheckRetry = retryablehttp.DefaultRetryPolicy
+	}
+	baseBackoff := retryClient.Backoff
+	if baseBackoff == nil {
+		baseBackoff = retryablehttp.DefaultBackoff
+	}
+	// CheckRetry and Backoff run sequentially for one request;
+	// upload code builds this wrapper per upload part so retryClass is not shared across requests.
+	retryClass := ""
+
+	retryClient.CheckRetry = func(ctx context.Context, resp *http.Response, err error) (bool, error) {
+		retryClass = ""
+		classified := peekS3XMLClass(resp)
+		ok, retryErr := baseCheckRetry(ctx, resp, err)
+		if (ok || classified.Retryable) && !requestURLValidForRetry(resp) {
+			return false, retryErr
+		}
+		if !ok && classified.Retryable {
+			ok = true
+		}
+		if ok && canReplay != nil && !canReplay() {
+			return false, retryErr
+		}
+		if ok {
+			retryClass = classified.Class
+		}
+		return ok, retryErr
+	}
+
+	retryClient.Backoff = func(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
+		if d := baseBackoff(min, max, attemptNum, resp); d > 0 {
+			return d
+		}
+		if retryClass == "rate_limit" {
+			return uploadRetryRateLimitBackoff(attemptNum)
+		}
+		return 0
+	}
+
+	return &retryClient
+}
+
+func peekS3XMLClass(resp *http.Response) S3ErrorClassification {
+	if resp == nil || resp.Body == nil || !isS3XMLRetryStatus(resp.StatusCode) || !IsXML(resp) {
+		return S3ErrorClassification{}
+	}
+
+	peek, err := readAndRestoreResponseBody(resp, 4*1024)
+	if err != nil {
+		return S3ErrorClassification{}
+	}
+
+	var s3Err S3Error
+	if err := xml.Unmarshal(peek, &s3Err); err != nil || s3Err.Code == "" {
+		return S3ErrorClassification{}
+	}
+	return ClassifyS3ErrorCode(s3Err.Code)
+}
+
+func readAndRestoreResponseBody(resp *http.Response, limit int64) ([]byte, error) {
+	peek, err := io.ReadAll(io.LimitReader(resp.Body, limit))
+	if err != nil {
+		return nil, err
+	}
+	resp.Body = io.NopCloser(io.MultiReader(bytes.NewReader(peek), resp.Body))
+	return peek, nil
+}
+
+func isS3XMLRetryStatus(status int) bool {
+	switch status {
+	case http.StatusBadRequest, http.StatusForbidden, http.StatusTooManyRequests, http.StatusInternalServerError, http.StatusServiceUnavailable:
+		return true
+	default:
+		return false
+	}
+}
+
+func requestURLValidForRetry(resp *http.Response) bool {
+	if resp == nil || resp.Request == nil || resp.Request.URL == nil {
+		return true
+	}
+	url, err := downloadurl.New(resp.Request.URL.String())
+	if err != nil || url.IsZero() {
+		return true
+	}
+	_, valid := url.Valid(time.Millisecond * 100)
+	return valid
+}
+
+func uploadRetryRateLimitBackoff(attemptNum int) time.Duration {
+	if attemptNum < 1 {
+		attemptNum = 1
+	}
+
+	maxDelay := time.Second << (attemptNum - 1)
+	const capDelay = 4 * time.Second
+	if maxDelay > capDelay {
+		maxDelay = capDelay
+	}
+
+	minDelay := maxDelay / 2
+	return minDelay + time.Duration(rand.Int63n(int64(maxDelay-minDelay)))
 }
 
 func retryAfterDuration(value string, now time.Time) (time.Duration, bool) {

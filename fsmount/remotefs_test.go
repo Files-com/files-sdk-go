@@ -6,8 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"os"
+	"path/filepath"
 	"slices"
+	"strings"
+	"sync"
+	"syscall"
 	"testing"
 	"time"
 
@@ -18,8 +23,15 @@ import (
 	lim "github.com/Files-com/files-sdk-go/v3/fsmount/internal/limit"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/log"
 	fssync "github.com/Files-com/files-sdk-go/v3/fsmount/internal/sync"
+	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/winfsp/cgofuse/fuse"
 )
+
+type timeoutUploadError struct{}
+
+func (timeoutUploadError) Error() string   { return "raw timeout detail" }
+func (timeoutUploadError) Timeout() bool   { return true }
+func (timeoutUploadError) Temporary() bool { return true }
 
 func newTestRemoteFs(t *testing.T) (*RemoteFs, *virtualfs, cacheStore) {
 	t.Helper()
@@ -150,6 +162,32 @@ func (b *fakeRemoteBackend) wait(action files_sdk.FileAction, status func(files_
 		return b.waitFunc(action, status, opts...)
 	}
 	return files_sdk.FileMigration{Status: "completed"}, nil
+}
+
+type captureMountLogger struct {
+	mu           sync.Mutex
+	visibleLines []string
+}
+
+func (l *captureMountLogger) Debug(format string, v ...any) { l.append("DEBUG", format, v...) }
+func (l *captureMountLogger) Error(format string, v ...any) { l.append("ERROR", format, v...) }
+func (l *captureMountLogger) Info(format string, v ...any)  { l.append("INFO", format, v...) }
+func (l *captureMountLogger) Trace(format string, v ...any) { l.append("TRACE", format, v...) }
+func (l *captureMountLogger) Warn(format string, v ...any)  { l.append("WARN", format, v...) }
+
+func (l *captureMountLogger) append(level, format string, v ...any) {
+	line := fmt.Sprintf("%s "+format, append([]any{level}, v...)...)
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if level != "DEBUG" && level != "TRACE" {
+		l.visibleLines = append(l.visibleLines, line)
+	}
+}
+
+func (l *captureMountLogger) visibleJoined() string {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return strings.Join(l.visibleLines, "\n")
 }
 
 func newTestFilescomfs(t *testing.T) (*Filescomfs, *RemoteFs, *LocalFs, *virtualfs, cacheStore) {
@@ -582,6 +620,44 @@ func TestRemoteFsFinalizeUploadPathAndRefUsesMountedRootAfterActiveRename(t *tes
 	}
 }
 
+func TestRemoteFsRenameUploadFailureLogsSanitizedStorageError(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	logger := &captureMountLogger{}
+	fs.log = logger
+
+	rawMessage := "Your socket connection to the server was not read from or written to within the timeout period.\nIdle connections will be closed."
+	fs.backend = &fakeRemoteBackend{
+		uploadFunc: func(opts ...file.UploadOption) error {
+			return lib.S3Error{Code: "RequestTimeout", Message: rawMessage}
+		},
+	}
+
+	src := filepath.Join(t.TempDir(), "rename-timeout.pdf")
+	if err := os.WriteFile(src, []byte("rename-timeout"), 0o600); err != nil {
+		t.Fatalf("WriteFile failed: %v", err)
+	}
+
+	err := fs.uploadFile(src, "/rename-timeout.pdf")
+	if err == nil {
+		t.Fatal("expected rename upload to fail")
+	}
+
+	logs := logger.visibleJoined()
+	if count := strings.Count(logs, "Error uploading file during rename:"); count != 1 {
+		t.Fatalf("rename failure log count = %d, want 1. logs:\n%s", count, logs)
+	}
+	if !strings.Contains(logs, "Upload to backend storage timed out") {
+		t.Fatalf("expected safe timeout message, got:\n%s", logs)
+	}
+	for _, raw := range []string{"RequestTimeout", "Your socket connection", "Idle connections"} {
+		if strings.Contains(logs, raw) {
+			t.Fatalf("expected user-visible logs to omit raw provider text %q, got:\n%s", raw, logs)
+		}
+	}
+}
+
 func TestRemoteFsPublicTruncateZeroSkipsHydrationAndResetsWorkingCopy(t *testing.T) {
 	fs, vfs, cacheStore := newTestRemoteFs(t)
 	defer vfs.destroy()
@@ -685,6 +761,44 @@ func TestRemoteFsPublicFlushUploadsWorkingCopyAndRefreshesCache(t *testing.T) {
 	}
 }
 
+func TestRemoteFsWorkingCopyUploadSuccessLogsLifecycle(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	logger := &captureMountLogger{}
+	fs.log = logger
+
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return 0, err
+		}
+		return int64(len(data)), nil
+	}
+
+	path := "/lifecycle-success.ai"
+	errc, fh := fs.Create(path, fuse.O_RDWR, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errc)
+	}
+
+	payload := []byte("lifecycle-success")
+	if n := fs.Write(path, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+	if errc := fs.Flush(path, fh); errc != 0 {
+		t.Fatalf("Flush returned unexpected error: %d", errc)
+	}
+
+	logs := logger.visibleJoined()
+	if count := strings.Count(logs, "Starting upload from working copy:"); count != 1 {
+		t.Fatalf("start log count = %d, want 1. logs:\n%s", count, logs)
+	}
+	if count := strings.Count(logs, "Upload completed from working copy:"); count != 1 {
+		t.Fatalf("completion log count = %d, want 1. logs:\n%s", count, logs)
+	}
+}
+
 func TestRemoteFsPublicFlushPoisonsSessionAfterUploadFailure(t *testing.T) {
 	fs, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()
@@ -727,6 +841,187 @@ func TestRemoteFsPublicFlushPoisonsSessionAfterUploadFailure(t *testing.T) {
 	}
 	if node, ok := vfs.fetch(path); !ok || node.getWriteSession() == nil {
 		t.Fatal("expected poisoned write session to remain after failed release")
+	}
+}
+
+func TestRemoteFsWorkingCopyUploadFailureLogsSanitizedStorageError(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	logger := &captureMountLogger{}
+	fs.log = logger
+
+	rawMessage := "Your socket connection to the server was not read from or written to within the timeout period.\nIdle connections will be closed."
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+		_, _ = io.ReadAll(reader)
+		return 0, lib.S3Error{Code: "RequestTimeout", Message: rawMessage}
+	}
+
+	path := "/timeout.pdf"
+	errc, fh := fs.Create(path, fuse.O_RDWR, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errc)
+	}
+
+	payload := []byte("upload-timeout")
+	if n := fs.Write(path, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+	if errc := fs.Flush(path, fh); errc == 0 {
+		t.Fatal("expected Flush to fail after upload timeout")
+	}
+	if errc := fs.Truncate(path, int64(len(payload)+1), fh); errc == 0 {
+		t.Fatal("expected Truncate to fail after failed upload")
+	}
+
+	logs := logger.visibleJoined()
+	if count := strings.Count(logs, "Starting upload from working copy:"); count != 1 {
+		t.Fatalf("start log count = %d, want 1. logs:\n%s", count, logs)
+	}
+	if count := strings.Count(logs, "Upload failed from working copy:"); count != 1 {
+		t.Fatalf("failure log count = %d, want 1. logs:\n%s", count, logs)
+	}
+	if !strings.Contains(logs, "Upload to backend storage timed out") {
+		t.Fatalf("expected safe Files.com-facing timeout message, got:\n%s", logs)
+	}
+	if count := strings.Count(logs, "Upload to backend storage timed out"); count != 2 {
+		t.Fatalf("safe timeout message count = %d, want 2 after initial failure and follow-up operation. logs:\n%s", count, logs)
+	}
+	if strings.Contains(logs, "error_class=") {
+		t.Fatalf("expected user-visible logs to omit internal error class, got:\n%s", logs)
+	}
+	for _, raw := range []string{"RequestTimeout", "Your socket connection", "Idle connections"} {
+		if strings.Contains(logs, raw) {
+			t.Fatalf("expected user-visible logs to omit raw provider text %q, got:\n%s", raw, logs)
+		}
+	}
+	for _, line := range logger.visibleLines {
+		if strings.Contains(line, "\n") || strings.Contains(line, "\r") {
+			t.Fatalf("expected each log entry to stay on one line, got %q", line)
+		}
+	}
+}
+
+func TestRemoteFsWorkingCopyUploadFailureLogsSafeFallbackForNonS3Error(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	logger := &captureMountLogger{}
+	fs.log = logger
+
+	rawMessage := "dial tcp 10.0.0.1:443: connect: raw provider network failure"
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+		_, _ = io.ReadAll(reader)
+		return 0, errors.New(rawMessage)
+	}
+
+	path := "/network-error.pdf"
+	errc, fh := fs.Create(path, fuse.O_RDWR, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errc)
+	}
+
+	payload := []byte("upload-network-error")
+	if n := fs.Write(path, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+	if errc := fs.Flush(path, fh); errc == 0 {
+		t.Fatal("expected Flush to fail after upload error")
+	}
+	if errc := fs.Truncate(path, int64(len(payload)+1), fh); errc == 0 {
+		t.Fatal("expected Truncate to fail after failed upload")
+	}
+
+	logs := logger.visibleJoined()
+	if count := strings.Count(logs, "Upload failed from working copy:"); count != 1 {
+		t.Fatalf("failure log count = %d, want 1. logs:\n%s", count, logs)
+	}
+	if !strings.Contains(logs, "Error returned by the remote service") {
+		t.Fatalf("expected safe fallback message, got:\n%s", logs)
+	}
+	if count := strings.Count(logs, "Error returned by the remote service"); count != 2 {
+		t.Fatalf("safe fallback message count = %d, want 2 after initial failure and follow-up operation. logs:\n%s", count, logs)
+	}
+	if strings.Contains(logs, rawMessage) {
+		t.Fatalf("expected user-visible logs to omit raw error %q, got:\n%s", rawMessage, logs)
+	}
+}
+
+func TestUploadLogMessageTransportFallbacks(t *testing.T) {
+	tests := []struct {
+		name    string
+		err     error
+		message string
+	}{
+		{
+			name:    "net timeout",
+			err:     &net.OpError{Op: "dial", Net: "tcp", Err: timeoutUploadError{}},
+			message: "Network timeout",
+		},
+		{
+			name:    "os timeout",
+			err:     os.ErrDeadlineExceeded,
+			message: "Network timeout",
+		},
+		{
+			name:    "connection refused",
+			err:     fmt.Errorf("wrapped: %w", syscall.ECONNREFUSED),
+			message: "Connection refused",
+		},
+		{
+			name:    "connection reset",
+			err:     fmt.Errorf("wrapped: %w", syscall.ECONNRESET),
+			message: "Connection reset by peer",
+		},
+		{
+			name:    "broken pipe",
+			err:     fmt.Errorf("wrapped: %w", syscall.EPIPE),
+			message: "Client disconnected during transfer",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := uploadLogMessage(test.err); got != test.message {
+				t.Fatalf("uploadLogMessage() = %q, want %q", got, test.message)
+			}
+		})
+	}
+}
+
+func TestRemoteFsWorkingCopyUploadCancellationLogsCanceled(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	logger := &captureMountLogger{}
+	fs.log = logger
+
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+		_, _ = io.ReadAll(reader)
+		return 0, context.Canceled
+	}
+
+	path := "/cancel.pdf"
+	errc, fh := fs.Create(path, fuse.O_RDWR, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errc)
+	}
+
+	payload := []byte("upload-canceled")
+	if n := fs.Write(path, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+	_ = fs.Flush(path, fh)
+
+	logs := logger.visibleJoined()
+	if count := strings.Count(logs, "Starting upload from working copy:"); count != 1 {
+		t.Fatalf("start log count = %d, want 1. logs:\n%s", count, logs)
+	}
+	if count := strings.Count(logs, "Upload canceled from working copy:"); count != 1 {
+		t.Fatalf("cancellation log count = %d, want 1. logs:\n%s", count, logs)
+	}
+	if strings.Contains(logs, "Upload failed from working copy:") {
+		t.Fatalf("expected cancellation not to log failure, got:\n%s", logs)
 	}
 }
 

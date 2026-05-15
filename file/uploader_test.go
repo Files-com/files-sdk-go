@@ -3,6 +3,7 @@ package file
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"math"
@@ -37,6 +38,47 @@ func (m *MockUploader) UploadWithResume(...UploadOption) (UploadResumable, error
 
 func (m *MockUploader) Find(files_sdk.FileFindParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
 	return m.File, m.findError
+}
+
+func uploadWithS3PartError(t *testing.T, code string, status int, readerOpt UploadOption) (UploadResumable, error, int) {
+	t.Helper()
+
+	server := (&MockAPIServer{T: t}).Do()
+	t.Cleanup(server.Shutdown)
+
+	attempts := 0
+	server.MockRoute("/upload/file.bak", func(c *gin.Context, _ interface{}) bool {
+		attempts++
+		c.Data(
+			status,
+			"application/xml",
+			[]byte(fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?><Error><Code>%s</Code><Message>provider message</Message></Error>`, code)),
+		)
+		return true
+	})
+
+	client := server.Client()
+	u, err := client.UploadWithResume(
+		UploadWithSize(1024),
+		readerOpt,
+		UploadWithDestinationPath("file.bak"),
+		UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+	)
+
+	return u, err, attempts
+}
+
+func TestUploadRetryLogError(t *testing.T) {
+	rawMessage := "Your socket connection to the server was not read from or written to within the timeout period.\nIdle connections will be closed."
+	logError := uploadRetryLogError(lib.S3Error{Code: "RequestTimeout", Message: rawMessage})
+
+	require.Equal(t, "Upload to backend storage timed out.", logError)
+	require.NotContains(t, logError, "RequestTimeout")
+	require.NotContains(t, logError, "Your socket connection")
+	require.NotContains(t, logError, "Idle connections")
+
+	logError = uploadRetryLogError(errors.New("first line\nsecond line"))
+	require.Equal(t, "first line second line", logError)
 }
 
 func (m *MockUploader) CreateFolder(files_sdk.FolderCreateParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
@@ -727,6 +769,161 @@ func TestUploadReader(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, "file.bak", u.FileUploadPart.Path)
+	})
+
+	t.Run("s3 request timeout is retried for rewindable upload part", func(t *testing.T) {
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+
+		attempts := 0
+		server.MockRoute("/upload/file.bak", func(c *gin.Context, _ interface{}) bool {
+			attempts++
+			if attempts == 1 {
+				c.Data(
+					http.StatusBadRequest,
+					"application/xml",
+					[]byte(`<?xml version="1.0" encoding="UTF-8"?><Error><Code>RequestTimeout</Code><Message>Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed.</Message></Error>`),
+				)
+				return true
+			}
+
+			c.Header("Etag", "etag")
+			c.Status(http.StatusOK)
+			return true
+		})
+
+		client := server.Client()
+		u, err := client.UploadWithResume(
+			UploadWithSize(1024),
+			UploadWithReaderAt(bytes.NewReader(make([]byte, 1024))),
+			UploadWithDestinationPath("file.bak"),
+			UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+		)
+
+		require.NoError(t, err)
+		require.Equal(t, 2, attempts)
+		require.Equal(t, "file.bak", u.FileUploadPart.Path)
+	})
+
+	t.Run("s3 request timeout exhausts retryablehttp retries", func(t *testing.T) {
+		u, err, attempts := uploadWithS3PartError(t, "RequestTimeout", http.StatusBadRequest, UploadWithReaderAt(bytes.NewReader(make([]byte, 1024))))
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "RequestTimeout")
+		require.Equal(t, 4, attempts)
+		require.Equal(t, "file.bak", u.FileUploadPart.Path)
+	})
+
+	t.Run("s3 request timeout is not retried when upload part cannot rewind", func(t *testing.T) {
+		u, err, attempts := uploadWithS3PartError(t, "RequestTimeout", http.StatusBadRequest, UploadWithReader(bytes.NewBuffer(make([]byte, 1024))))
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "RequestTimeout")
+		require.Equal(t, 1, attempts)
+		require.Equal(t, "file.bak", u.FileUploadPart.Path)
+	})
+
+	t.Run("multipart s3 timeout error can join repeated provider text before fsmount sanitizes", func(t *testing.T) {
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+
+		server.MockRoute("/upload/file.bak", func(c *gin.Context, _ interface{}) bool {
+			c.Data(
+				http.StatusBadRequest,
+				"application/xml",
+				[]byte(`<?xml version="1.0" encoding="UTF-8"?><Error><Code>RequestTimeout</Code><Message>Your socket connection to the server was not read from or written to within the timeout period. Idle connections will be closed.</Message></Error>`),
+			)
+			return true
+		})
+
+		client := server.Client()
+		u, err := client.UploadWithResume(
+			func(io uploadIO) (uploadIO, error) {
+				io.PartSizes = []int64{2, 4, 8, 16, 32}
+				return io, nil
+			},
+			UploadWithSize(10),
+			UploadWithReaderAt(bytes.NewReader(bytes.NewBufferString("0123456789").Bytes())),
+			UploadWithDestinationPath("file.bak"),
+			UploadWithManager(lib.NewConstrainedWorkGroup(3)),
+		)
+
+		require.Error(t, err)
+		require.GreaterOrEqual(t, len(u.Parts), 2)
+		require.GreaterOrEqual(t, strings.Count(err.Error(), "RequestTimeout"), 2)
+		require.GreaterOrEqual(t, strings.Count(err.Error(), "Your socket connection"), 2)
+	})
+
+	t.Run("transient s3 upload part errors are retried for rewindable upload parts", func(t *testing.T) {
+		tests := []struct {
+			code   string
+			status int
+		}{
+			{"SlowDown", http.StatusServiceUnavailable},
+			{"DatabaseTimeout", http.StatusServiceUnavailable},
+		}
+
+		for _, test := range tests {
+			t.Run(test.code, func(t *testing.T) {
+				server := (&MockAPIServer{T: t}).Do()
+				defer server.Shutdown()
+
+				attempts := 0
+				server.MockRoute("/upload/file.bak", func(c *gin.Context, _ interface{}) bool {
+					attempts++
+					if attempts == 1 {
+						c.Data(
+							test.status,
+							"application/xml",
+							[]byte(fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?><Error><Code>%s</Code><Message>provider message</Message></Error>`, test.code)),
+						)
+						return true
+					}
+
+					c.Header("Etag", "etag")
+					c.Status(http.StatusOK)
+					return true
+				})
+
+				client := server.Client()
+				u, err := client.UploadWithResume(
+					UploadWithSize(1024),
+					UploadWithReaderAt(bytes.NewReader(make([]byte, 1024))),
+					UploadWithDestinationPath("file.bak"),
+					UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+				)
+
+				require.NoError(t, err)
+				require.Equal(t, 2, attempts)
+				require.Equal(t, "file.bak", u.FileUploadPart.Path)
+			})
+		}
+	})
+
+	t.Run("terminal s3 upload part errors are not retried as transient errors", func(t *testing.T) {
+		tests := []struct {
+			code   string
+			status int
+		}{
+			{"AccessDenied", http.StatusForbidden},
+			{"NoSuchKey", http.StatusNotFound},
+			{"NoSuchUpload", http.StatusNotFound},
+			{"InvalidPart", http.StatusBadRequest},
+			{"EntityTooSmall", http.StatusBadRequest},
+			{"InvalidRequest", http.StatusBadRequest},
+			{"SignatureDoesNotMatch", http.StatusForbidden},
+		}
+
+		for _, test := range tests {
+			t.Run(test.code, func(t *testing.T) {
+				u, err, attempts := uploadWithS3PartError(t, test.code, test.status, UploadWithReaderAt(bytes.NewReader(make([]byte, 1024))))
+
+				require.Error(t, err)
+				require.Contains(t, err.Error(), test.code)
+				require.Equal(t, 1, attempts)
+				require.Equal(t, "file.bak", u.FileUploadPart.Path)
+			})
+		}
 	})
 
 	t.Run("request expired error", func(t *testing.T) {

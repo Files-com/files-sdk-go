@@ -17,7 +17,10 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/file/manager"
 	"github.com/Files-com/files-sdk-go/v3/file/status"
 	"github.com/Files-com/files-sdk-go/v3/lib"
+	"github.com/hashicorp/go-retryablehttp"
 )
+
+const maxUploadPartAttempts = 3
 
 type Progress func(int64)
 
@@ -390,20 +393,15 @@ func (u *uploadIO) runUploadPart(ctx context.Context, part *Part) {
 		part.EtagsParam, part.error = u.uploadPart(ctx, part)
 		part.bytes = int64(part.ProxyReader.BytesRead())
 		part.Touch()
-		if part.error == nil && runCount < 3 {
+		if part.error == nil {
 			break
 		} else if lib.S3ErrorIsRequestHasExpired(part.error) || files_sdk.IsExpired(part.error) {
+			if runCount >= maxUploadPartAttempts {
+				break
+			}
 			part.FileUploadPart.Expires = ""
 			part.FileUploadPart.UploadUri = ""
-			if part.ProxyReader.Rewind() {
-				u.LogPath(u.Path, map[string]any{
-					"timestamp": time.Now(),
-					"error":     part.error,
-					"part":      part.PartNumber,
-					"run_count": runCount,
-					"message":   "clearing upload_uri and fetching new one",
-				})
-			} else {
+			if !u.rewindPartForRetry(part, runCount, "clearing upload_uri and fetching new one") {
 				break
 			}
 		} else {
@@ -412,6 +410,33 @@ func (u *uploadIO) runUploadPart(ctx context.Context, part *Part) {
 	}
 
 	u.onComplete <- part
+}
+
+func (u *uploadIO) rewindPartForRetry(part *Part, runCount int, message string) bool {
+	if !part.ProxyReader.Rewind() {
+		return false
+	}
+
+	logAttrs := map[string]any{
+		"timestamp": time.Now(),
+		"error":     uploadRetryLogError(part.error),
+		"part":      part.PartNumber,
+		"run_count": runCount,
+		"message":   message,
+	}
+
+	u.LogPath(u.Path, logAttrs)
+	return true
+}
+
+func uploadRetryLogError(err error) string {
+	if err == nil {
+		return ""
+	}
+	if classified, ok := lib.ClassifyS3Error(err); ok {
+		return classified.Message
+	}
+	return strings.Join(strings.Fields(err.Error()), " ")
 }
 
 func (u *uploadIO) uploadParts(ctx context.Context) {
@@ -540,14 +565,27 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 	}
 	headers := http.Header{}
 	headers.Add("Content-Length", strconv.FormatInt(int64(part.ProxyReader.Len()), 10))
+	// Rewind is the only replay-safety signal this reader exposes. It also resets
+	// the reader, so the retry body factory rewinds again before each retry read.
+	canReplay := func() bool {
+		return part.ProxyReader.Rewind()
+	}
+	retryableBody := retryablehttp.ReaderFunc(func() (io.Reader, error) {
+		if !part.ProxyReader.Rewind() {
+			return nil, errors.New("upload part body not rewindable")
+		}
+		return uploadPartRetryReader{Reader: part.ProxyReader, len: part.ProxyReader.Len()}, nil
+	})
 	res, err := files_sdk.CallRaw(
 		&files_sdk.CallParams{
-			Method:  part.HttpMethod,
-			Config:  u.Config,
-			Uri:     part.UploadUri,
-			BodyIo:  part.ProxyReader,
-			Headers: &headers,
-			Context: ctx,
+			Method:        part.HttpMethod,
+			Config:        u.Config,
+			Uri:           part.UploadUri,
+			BodyIo:        part.ProxyReader,
+			RetryableBody: retryableBody,
+			Client:        lib.UploadRetryableHttp(u.Config.Client, canReplay),
+			Headers:       &headers,
+			Context:       ctx,
 		},
 	)
 	if err != nil {
@@ -571,6 +609,15 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 		Etag: etag,
 		Part: strconv.FormatInt(part.PartNumber, 10),
 	}, nil
+}
+
+type uploadPartRetryReader struct {
+	io.Reader
+	len int
+}
+
+func (r uploadPartRetryReader) Len() int {
+	return r.len
 }
 
 func (u *uploadIO) usesSameUrl(file files_sdk.FileUploadPart) bool {
