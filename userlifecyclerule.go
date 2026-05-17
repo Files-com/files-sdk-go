@@ -16,6 +16,7 @@ type UserLifecycleRule struct {
 	IncludeSiteAdmins    *bool   `json:"include_site_admins,omitempty" path:"include_site_admins,omitempty" url:"include_site_admins,omitempty"`
 	ApplyToAllWorkspaces *bool   `json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces,omitempty" url:"apply_to_all_workspaces,omitempty"`
 	Name                 string  `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	NotifyUsers          *bool   `json:"notify_users,omitempty" path:"notify_users,omitempty" url:"notify_users,omitempty"`
 	PartnerTag           string  `json:"partner_tag,omitempty" path:"partner_tag,omitempty" url:"partner_tag,omitempty"`
 	SiteId               int64   `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
 	WorkspaceId          int64   `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
@@ -93,6 +94,7 @@ type UserLifecycleRuleCreateParams struct {
 	IncludeSiteAdmins    *bool                                     `url:"include_site_admins,omitempty" json:"include_site_admins,omitempty" path:"include_site_admins"`
 	IncludeFolderAdmins  *bool                                     `url:"include_folder_admins,omitempty" json:"include_folder_admins,omitempty" path:"include_folder_admins"`
 	Name                 string                                    `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	NotifyUsers          *bool                                     `url:"notify_users,omitempty" json:"notify_users,omitempty" path:"notify_users"`
 	PartnerTag           string                                    `url:"partner_tag,omitempty" json:"partner_tag,omitempty" path:"partner_tag"`
 	UserState            UserLifecycleRuleUserStateEnum            `url:"user_state,omitempty" json:"user_state,omitempty" path:"user_state"`
 	UserTag              string                                    `url:"user_tag,omitempty" json:"user_tag,omitempty" path:"user_tag"`
@@ -109,6 +111,7 @@ type UserLifecycleRuleUpdateParams struct {
 	IncludeSiteAdmins    *bool                                     `url:"include_site_admins,omitempty" json:"include_site_admins,omitempty" path:"include_site_admins"`
 	IncludeFolderAdmins  *bool                                     `url:"include_folder_admins,omitempty" json:"include_folder_admins,omitempty" path:"include_folder_admins"`
 	Name                 string                                    `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	NotifyUsers          *bool                                     `url:"notify_users,omitempty" json:"notify_users,omitempty" path:"notify_users"`
 	PartnerTag           string                                    `url:"partner_tag,omitempty" json:"partner_tag,omitempty" path:"partner_tag"`
 	UserState            UserLifecycleRuleUserStateEnum            `url:"user_state,omitempty" json:"user_state,omitempty" path:"user_state"`
 	UserTag              string                                    `url:"user_tag,omitempty" json:"user_tag,omitempty" path:"user_tag"`
