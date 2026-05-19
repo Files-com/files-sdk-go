@@ -48,6 +48,10 @@ const (
 	// maxEvictionAttempts is the maximum number of consecutive pinned files
 	// checked during eviction before concluding that all files are pinned.
 	maxEvictionAttempts = 10
+
+	// partialKeyPrefix separates in-memory partial entries from canonical cache entries.
+	// NUL cannot appear in valid filesystem paths, and this prefix is never written to disk.
+	partialKeyPrefix = "\x00partial\x00"
 )
 
 // page is a convenient way to think about a chunk of an individual file
@@ -63,6 +67,9 @@ type entry struct {
 
 	// the last time the file was written to the cache
 	mod time.Time
+
+	// metadata marks the entry as a completed cache entry for a specific remote version.
+	metadata cache.EntryMetadata
 }
 
 // MemoryCache implements a simple in memory LRU cache for file data with an interface that roughly
@@ -299,8 +306,96 @@ func (mc *MemoryCache) Read(path string, buff []byte, ofst int64) (n int, err er
 	return read, nil
 }
 
+func (mc *MemoryCache) ReadComplete(path string, meta cache.EntryMetadata, buff []byte, ofst int64) (n int, err error) {
+	mc.filesMu.RLock()
+	ent, ok := mc.files[path]
+	if !ok {
+		mc.filesMu.RUnlock()
+		return 0, nil
+	}
+	stored := ent.metadata
+	mc.filesMu.RUnlock()
+
+	if !stored.Complete {
+		return 0, nil
+	}
+	if !stored.Matches(meta) {
+		mc.Delete(path)
+		return 0, nil
+	}
+
+	return mc.Read(path, buff, ofst)
+}
+
+func (mc *MemoryCache) ReadPartial(path string, buff []byte, ofst int64) (n int, err error) {
+	return mc.Read(memoryPartialKey(path), buff, ofst)
+}
+
+func (mc *MemoryCache) Commit(path string, meta cache.EntryMetadata) error {
+	mc.writeMu.Lock()
+	defer mc.writeMu.Unlock()
+
+	mc.filesMu.Lock()
+	ent, ok := mc.files[path]
+	if !ok {
+		if meta.Size != 0 {
+			mc.filesMu.Unlock()
+			return fmt.Errorf("memoryCache: cache entry not found for commit: %s", path)
+		}
+		ent = &entry{pages: make(map[int64]page), mod: time.Now()}
+		mc.files[path] = ent
+		mc.stats.FileCount.Add(1)
+	}
+	if ent.size < meta.Size {
+		mc.filesMu.Unlock()
+		return fmt.Errorf("memoryCache: cache entry size mismatch for %s: got %d, want %d", path, ent.size, meta.Size)
+	}
+	if ent.size > meta.Size {
+		freed := truncateEntryToSize(ent, meta.Size)
+		mc.stats.SizeBytes.Add(-freed)
+	}
+	meta.Path = path
+	meta.Complete = true
+	ent.metadata = meta
+	ent.mod = time.Now()
+	mc.filesMu.Unlock()
+
+	_ = mc.lru.Add(path, struct{}{})
+	return nil
+}
+
+func (mc *MemoryCache) WritePartial(path string, buff []byte, ofst int64) (n int, err error) {
+	return mc.Write(memoryPartialKey(path), buff, ofst)
+}
+
+func truncateEntryToSize(ent *entry, size int64) int64 {
+	var freed int64
+	for pageIdx, pg := range ent.pages {
+		if pageIdx*pageSize >= size {
+			freed += int64(len(pg))
+			delete(ent.pages, pageIdx)
+		}
+	}
+	if size > 0 {
+		lastPageIdx := (size - 1) / pageSize
+		if pg, ok := ent.pages[lastPageIdx]; ok {
+			keep := int(size % pageSize)
+			if keep == 0 {
+				keep = pageSize
+			}
+			clear(pg[keep:])
+		}
+	}
+	ent.size = size
+	return freed
+}
+
 // Delete removes the cached file at the given path from the cache.
 func (mc *MemoryCache) Delete(path string) bool {
+	if mc.isPinned(path) {
+		return false
+	}
+
 	// Try to remove via LRU so onEvict frees memory & updates stats
 	if ok := mc.lru.Remove(path); ok {
 		return true
@@ -321,6 +416,10 @@ func (mc *MemoryCache) Delete(path string) bool {
 		return true
 	}
 	return false
+}
+
+func (mc *MemoryCache) DeletePartial(path string) bool {
+	return mc.Delete(memoryPartialKey(path))
 }
 
 // Stats returns the current cache statistics.
@@ -366,6 +465,10 @@ func (mc *MemoryCache) Pin(path string) {
 
 	mc.pinnedFiles[path]++
 	mc.log.Trace("MemoryCache: pinned %s (count: %d)", path, mc.pinnedFiles[path])
+}
+
+func (mc *MemoryCache) PinPartial(path string) {
+	mc.Pin(memoryPartialKey(path))
 }
 
 // Unpin decrements the reference count for a file.
@@ -423,6 +526,10 @@ func (mc *MemoryCache) Unpin(path string) {
 			mc.lru.Remove(oldestKey)
 		}
 	}
+}
+
+func (mc *MemoryCache) UnpinPartial(path string) {
+	mc.Unpin(memoryPartialKey(path))
 }
 
 // isPinned checks if a file is currently pinned (has open file handles).
@@ -531,6 +638,9 @@ func (mc *MemoryCache) runMaintenanceOnce(_ context.Context) {
 	agedOut := make([]string, 0, len(mc.files))
 	for path, ent := range mc.files {
 		if time.Since(ent.mod) > mc.MaxAge {
+			if mc.isPinned(path) {
+				continue
+			}
 			agedOut = append(agedOut, path)
 		}
 	}
@@ -585,4 +695,8 @@ func (mc *MemoryCache) validateOpts() error {
 		mc.log = &log.NoOpLogger{}
 	}
 	return nil
+}
+
+func memoryPartialKey(path string) string {
+	return partialKeyPrefix + path
 }

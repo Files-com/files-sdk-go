@@ -1,11 +1,13 @@
 package disk_test
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
+	fscache "github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/disk"
 )
 
@@ -174,6 +176,180 @@ func TestDiskCacheDelete(t *testing.T) {
 	}
 }
 
+func TestDiskCacheDeletePinnedFileDoesNotRemove(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	cache, err := disk.NewDiskCache(tmpDir)
+	if err != nil {
+		t.Fatalf("NewDiskCache failed: %v", err)
+	}
+
+	path := "/test/pinned-delete.txt"
+	data := []byte("pinned data")
+	if _, err := cache.Write(path, data, 0); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+	cache.Pin(path)
+
+	if deleted := cache.Delete(path); deleted {
+		t.Fatal("Delete returned true for pinned file")
+	}
+	readBuf := make([]byte, len(data))
+	n, err := cache.Read(path, readBuf, 0)
+	if err != nil {
+		t.Fatalf("Read failed: %v", err)
+	}
+	if n != len(data) || string(readBuf[:n]) != string(data) {
+		t.Fatalf("pinned data after Delete = %q, want %q", string(readBuf[:n]), string(data))
+	}
+
+	cache.Unpin(path)
+	if deleted := cache.Delete(path); !deleted {
+		t.Fatal("Delete returned false after unpin")
+	}
+	n, err = cache.Read(path, readBuf, 0)
+	if err != nil {
+		t.Fatalf("Read after unpin/delete failed: %v", err)
+	}
+	if n != 0 {
+		t.Fatalf("Read after unpin/delete returned %d bytes, want 0", n)
+	}
+}
+
+func TestDiskCacheMaintenanceRemovesUncommittedDataFiles(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	cache, err := disk.NewDiskCache(
+		tmpDir,
+		disk.WithMaintenanceInterval(10*time.Millisecond),
+	)
+	if err != nil {
+		t.Fatalf("NewDiskCache failed: %v", err)
+	}
+	cache.StartMaintenance()
+	defer cache.StopMaintenance()
+
+	path := "/test/incomplete-download.bin"
+	data := []byte("partial data")
+	if _, err := cache.Write(path, data, 0); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	waitForDiskReadBytes(t, cache, path, 0)
+}
+
+func TestDiskCacheMaintenanceKeepsPinnedUncommittedDataFiles(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	cache, err := disk.NewDiskCache(
+		tmpDir,
+		disk.WithMaintenanceInterval(10*time.Millisecond),
+	)
+	if err != nil {
+		t.Fatalf("NewDiskCache failed: %v", err)
+	}
+	cache.StartMaintenance()
+	defer cache.StopMaintenance()
+
+	path := "/test/active-download.bin"
+	data := []byte("partial data")
+	if _, err := cache.Write(path, data, 0); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+	cache.Pin(path)
+
+	time.Sleep(50 * time.Millisecond)
+	readBuf := make([]byte, len(data))
+	n, err := cache.Read(path, readBuf, 0)
+	if err != nil {
+		t.Fatalf("Read failed: %v", err)
+	}
+	if n != len(data) || string(readBuf[:n]) != string(data) {
+		t.Fatalf("pinned data after maintenance = %q, want %q", string(readBuf[:n]), string(data))
+	}
+
+	cache.Unpin(path)
+	waitForDiskReadBytes(t, cache, path, 0)
+}
+
+func TestDiskCacheMaintenanceKeepsCompletedDataFiles(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	cache, err := disk.NewDiskCache(
+		tmpDir,
+		disk.WithMaintenanceInterval(10*time.Millisecond),
+	)
+	if err != nil {
+		t.Fatalf("NewDiskCache failed: %v", err)
+	}
+	cache.StartMaintenance()
+	defer cache.StopMaintenance()
+
+	path := "/test/complete-download.bin"
+	data := []byte("complete data")
+	mtime := time.Now().Add(-time.Minute).Round(0)
+	if _, err := cache.Write(path, data, 0); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+	if err := cache.Commit(path, fscache.NewEntryMetadata(path, int64(len(data)), mtime)); err != nil {
+		t.Fatalf("Commit failed: %v", err)
+	}
+
+	time.Sleep(50 * time.Millisecond)
+
+	readBuf := make([]byte, len(data))
+	n, err := cache.ReadComplete(path, fscache.NewEntryMetadata(path, int64(len(data)), mtime), readBuf, 0)
+	if err != nil {
+		t.Fatalf("ReadComplete failed: %v", err)
+	}
+	if n != len(data) || string(readBuf[:n]) != string(data) {
+		t.Fatalf("completed data after maintenance = %q, want %q", string(readBuf[:n]), string(data))
+	}
+}
+
+func TestDiskCacheCommitTruncatesPinnedLargerEntry(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	cache, err := disk.NewDiskCache(tmpDir)
+	if err != nil {
+		t.Fatalf("NewDiskCache failed: %v", err)
+	}
+
+	path := "/test/shrink.bin"
+	oldPayload := bytes.Repeat([]byte("o"), 1024)
+	newPayload := bytes.Repeat([]byte("n"), 256)
+	oldMtime := time.Now().Add(-time.Hour).Round(0)
+	newMtime := oldMtime.Add(time.Second)
+	if _, err := cache.Write(path, oldPayload, 0); err != nil {
+		t.Fatalf("old Write failed: %v", err)
+	}
+	if err := cache.Commit(path, fscache.NewEntryMetadata(path, int64(len(oldPayload)), oldMtime)); err != nil {
+		t.Fatalf("old Commit failed: %v", err)
+	}
+
+	cache.Pin(path)
+	defer cache.Unpin(path)
+
+	if _, err := cache.Write(path, newPayload, 0); err != nil {
+		t.Fatalf("new Write failed: %v", err)
+	}
+	if err := cache.Commit(path, fscache.NewEntryMetadata(path, int64(len(newPayload)), newMtime)); err != nil {
+		t.Fatalf("new Commit failed: %v", err)
+	}
+	if got := cache.Stats().SizeBytes.Load(); got != int64(len(newPayload)) {
+		t.Fatalf("cache SizeBytes = %d, want %d", got, len(newPayload))
+	}
+
+	readBuf := make([]byte, len(newPayload))
+	n, err := cache.ReadComplete(path, fscache.NewEntryMetadata(path, int64(len(newPayload)), newMtime), readBuf, 0)
+	if err != nil {
+		t.Fatalf("ReadComplete failed: %v", err)
+	}
+	if n != len(newPayload) || !bytes.Equal(readBuf[:n], newPayload) {
+		t.Fatalf("ReadComplete returned n=%d payload=%q, want %q", n, string(readBuf[:n]), string(newPayload))
+	}
+}
+
 // TestDiskCachePinUnpin verifies that pinned files are not evicted
 func TestDiskCachePinUnpin(t *testing.T) {
 	tmpDir := t.TempDir()
@@ -228,6 +404,26 @@ func TestDiskCachePinUnpin(t *testing.T) {
 	}
 	if n != 0 {
 		t.Errorf("Expected to read %d bytes from pinned file, read %d", 0, n)
+	}
+}
+
+func waitForDiskReadBytes(t *testing.T, cache *disk.DiskCache, path string, want int) {
+	t.Helper()
+
+	deadline := time.Now().Add(2 * time.Second)
+	readBuf := make([]byte, max(want, 1))
+	for {
+		n, err := cache.Read(path, readBuf, 0)
+		if err != nil {
+			t.Fatalf("Read failed: %v", err)
+		}
+		if n == want {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("timed out waiting for Read(%s) = %d bytes, got %d", path, want, n)
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 }
 
@@ -335,6 +531,9 @@ func TestDiskCacheMaintenance(t *testing.T) {
 	_, err = cache.Write(path, data, 0)
 	if err != nil {
 		t.Fatalf("Write failed: %v", err)
+	}
+	if err := cache.Commit(path, fscache.NewEntryMetadata(path, int64(len(data)), time.Now())); err != nil {
+		t.Fatalf("Commit failed: %v", err)
 	}
 
 	// Wait for at least one maintenance cycle

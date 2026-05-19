@@ -120,20 +120,21 @@ type RemoteFs struct {
 // implementations. e.g. an in-memory cache implementation vs a disk-based cache implementation.
 type cacheStore interface {
 	Read(path string, buff []byte, ofst int64) (n int, err error)
+	ReadComplete(path string, meta cache.EntryMetadata, buff []byte, ofst int64) (n int, err error)
+	ReadPartial(path string, buff []byte, ofst int64) (n int, err error)
 	Write(path string, buff []byte, ofst int64) (n int, err error)
+	WritePartial(path string, buff []byte, ofst int64) (n int, err error)
+	Commit(path string, meta cache.EntryMetadata) error
 	Delete(path string) bool
+	DeletePartial(path string) bool
 	StartMaintenance()
 	StopMaintenance()
 	// Pin increments the reference count for a file, preventing it from being evicted
 	Pin(path string)
+	PinPartial(path string)
 	// Unpin decrements the reference count for a file
 	Unpin(path string)
-}
-
-type uploadWorkingCopyReader interface {
-	io.Reader
-	io.ReaderAt
-	Stat() (os.FileInfo, error)
+	UnpinPartial(path string)
 }
 
 // cacheReader wraps the cacheStore to provide an io.Reader interface for reading cached files.
@@ -179,6 +180,16 @@ func (cw *cacheWriterAdapter) Write(p []byte) (n int, err error) {
 		*cw.offset += int64(n)
 	}
 	return n, err
+}
+
+type uploadWorkingCopyReader interface {
+	io.Reader
+	io.ReaderAt
+	Stat() (os.FileInfo, error)
+}
+
+func cacheEntryMetadata(path string, size int64, modTime time.Time) cache.EntryMetadata {
+	return cache.NewEntryMetadata(path, size, modTime)
 }
 
 type lockInfo struct {
@@ -841,14 +852,11 @@ func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int
 
 	// Attempt to read from the cache only when no download is in progress for this path.
 	// If a download is active, the cache entry is partially written and a Read call may return
-	// fewer bytes than len(buff) (a short read). WinFSP does not handle short reads from the
-	// FUSE layer correctly: it may advance its internal file pointer by the full requested size
-	// rather than the actual number of bytes returned, causing the skipped region to appear as
-	// zeros or garbage in the assembled file. By skipping the early cache check when a gate is
+	// fewer bytes than len(buff) (a short read). By skipping the early cache check when a gate is
 	// active, all reads during an active download go through WaitFor, which blocks until the
 	// full requested range is available, guaranteeing a non-short read.
 	if _, isDownloading := fs.peekGate(path); !isDownloading {
-		n, err := fs.cacheStore.Read(path, buff, ofst)
+		n, err := fs.cacheStore.ReadComplete(path, cacheEntryMetadata(path, size, node.info.modTime), buff, ofst)
 		if err != nil {
 			fs.log.Debug("RemoteFs: Read: cache.Read error: %v", err)
 		}
@@ -863,12 +871,12 @@ func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int
 	// or the disk cache, so read from the remote API.
 	endOffset := ofst + int64(len(buff))
 	readyGate, exists := fs.findOrCreateGate(path)
+	readyGate.Add()
+	defer fs.releaseGateWaiter(path, readyGate)
 	if !exists {
 		// start the download in a new goroutine, which will populate the disk cache
-		go fs.fillCache(context.Background(), path, node.downloadUri, readyGate, fh)
+		go fs.fillCache(context.Background(), path, node.downloadUri, cacheEntryMetadata(path, size, node.info.modTime), readyGate, fh, true)
 	}
-	readyGate.Add()
-	defer readyGate.Done()
 
 	// wait for the requested range to be available in the cache
 	if err := readyGate.WaitFor(endOffset); err != nil {
@@ -887,7 +895,7 @@ func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int
 	}
 	// now read from cache
 	want := min(endOffset-ofst, int64(len(buff)))
-	n, err := fs.cacheStore.Read(path, buff[:want], ofst)
+	n, err := fs.cacheStore.ReadPartial(path, buff[:want], ofst)
 	if err != nil {
 		fs.log.Debug("RemoteFs: Read: diskCache.Read error after WaitFor: %v", err)
 		return -fuse.EAGAIN
@@ -1057,7 +1065,7 @@ func (fs *RemoteFs) truncateWorkingCopy(session *writeSession, size int64) error
 	return nil
 }
 
-func (fs *RemoteFs) refreshReadCacheFromWorkingCopy(path string, session *writeSession) error {
+func (fs *RemoteFs) refreshReadCacheFromWorkingCopy(path string, session *writeSession, size int64, mtime time.Time) error {
 	if fs.cacheStore == nil {
 		return nil
 	}
@@ -1071,13 +1079,18 @@ func (fs *RemoteFs) refreshReadCacheFromWorkingCopy(path string, session *writeS
 	}
 	defer cacheFile.Close()
 
-	_ = fs.cacheStore.Delete(path)
+	_ = fs.cacheStore.DeletePartial(path)
+	fs.cacheStore.PinPartial(path)
+	defer func() {
+		fs.cacheStore.UnpinPartial(path)
+		_ = fs.cacheStore.DeletePartial(path)
+	}()
 	buf := make([]byte, cacheWriteSize)
 	var ofst int64
 	for {
 		n, readErr := cacheFile.Read(buf)
 		if n > 0 {
-			if _, err := fs.cacheStore.Write(path, buf[:n], ofst); err != nil {
+			if _, err := fs.cacheStore.WritePartial(path, buf[:n], ofst); err != nil {
 				return err
 			}
 			ofst += int64(n)
@@ -1086,7 +1099,10 @@ func (fs *RemoteFs) refreshReadCacheFromWorkingCopy(path string, session *writeS
 			continue
 		}
 		if errors.Is(readErr, io.EOF) {
-			return nil
+			if ofst != size {
+				return io.ErrUnexpectedEOF
+			}
+			return fs.commitCacheEntryFromPartial(path, path, cacheEntryMetadata(path, size, mtime), false)
 		}
 		return readErr
 	}
@@ -1176,11 +1192,12 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 		return
 	}
 
-	if err := fs.refreshReadCacheFromWorkingCopy(path, session); err != nil {
+	if err := fs.refreshReadCacheFromWorkingCopy(path, session, size, mtime); err != nil {
+		// The remote upload has already succeeded, so a cache refresh failure should only
+		// invalidate the local cache. Do not poison or finish the write session with this
+		// error, or the caller would see a successful save as a failed upload.
 		fs.log.Error("Error refreshing cache from working copy: %v (%v): %v", remotePath, localPath, err)
-		node.clearPendingVisible()
-		_ = node.writeSessionFinishUpload(size, err)
-		return
+		_ = fs.cacheStore.Delete(path)
 	}
 
 	node.updateInfo(fsNodeInfo{
@@ -1506,6 +1523,12 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 	node := fs.vfs.getOrCreate(dst, nodeTypeFile)
 	uploadErrCh := make(chan error, 1)
 	cacheErrCh := make(chan error, 1)
+	_ = fs.cacheStore.DeletePartial(dst)
+	fs.cacheStore.PinPartial(dst)
+	defer func() {
+		fs.cacheStore.UnpinPartial(dst)
+		_ = fs.cacheStore.DeletePartial(dst)
+	}()
 
 	go func() {
 		uploadErrCh <- fs.ops.WithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
@@ -1533,7 +1556,7 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 			buffer := make([]byte, cacheWriteSize)
 			n, readErr := cacheFile.Read(buffer)
 			if n > 0 {
-				if _, err := fs.cacheStore.Write(dst, buffer[:n], offset); err != nil {
+				if _, err := fs.cacheStore.WritePartial(dst, buffer[:n], offset); err != nil {
 					cacheErrCh <- err
 					return
 				}
@@ -1560,9 +1583,9 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 				cancel()
 			}
 		case cacheErr = <-cacheErrCh:
-			if cacheErr != nil {
-				fs.cacheStore.Delete(dst)
-			}
+			// The cache goroutine writes to the partial namespace, which is cleaned up by the
+			// function defer. A prior committed dst entry remains valid unless the
+			// upload succeeds and updates the remote version.
 		}
 	}
 
@@ -1576,8 +1599,15 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 		}
 		return uploadErr
 	}
+	if cacheErr == nil {
+		if err := fs.commitCacheEntryFromPartial(dst, dst, cacheEntryMetadata(dst, fileInfo.Size(), fileInfo.ModTime()), false); err != nil {
+			_ = fs.cacheStore.Delete(dst)
+			fs.log.Error("Error committing cache during rename upload; invalidating cache entry: %v (%v): %v", remotePath, localPath, err)
+		}
+	}
 
-	// Update the node's info after both upload and cache population succeed.
+	// Update the node's info after the upload succeeds. Cache commit failures are logged above
+	// and treated as cache misses because the remote write has already completed.
 	fs.log.Info("Upload completed during rename: %v (%v).", remotePath, localPath)
 	node.updateInfo(fsNodeInfo{
 		nodeType:     nodeTypeFile,
@@ -1623,31 +1653,93 @@ func (fs *RemoteFs) removeGate(path string, s *cache.ReadyGate) {
 	fs.gatesMu.Unlock()
 }
 
+func (fs *RemoteFs) releaseGateWaiter(path string, readyGate *cache.ReadyGate) {
+	if readyGate.Done() {
+		fs.removeGate(path, readyGate)
+		readyGate.Cleanup()
+	}
+}
+
+func (fs *RemoteFs) commitCacheEntryFromPartial(srcPath string, dstPath string, meta cache.EntryMetadata, deleteSource bool) error {
+	_ = fs.cacheStore.Delete(dstPath)
+	fs.cacheStore.Pin(dstPath)
+	committed := false
+	defer func() {
+		fs.cacheStore.Unpin(dstPath)
+		if !committed {
+			_ = fs.cacheStore.Delete(dstPath)
+		}
+	}()
+
+	buf := make([]byte, cacheWriteSize)
+	var copied int64
+	for copied < meta.Size {
+		want := min(int64(len(buf)), meta.Size-copied)
+		n, err := fs.cacheStore.ReadPartial(srcPath, buf[:want], copied)
+		if err != nil {
+			return err
+		}
+		if n == 0 {
+			return io.ErrUnexpectedEOF
+		}
+		written, err := fs.cacheStore.Write(dstPath, buf[:n], copied)
+		if err != nil {
+			return err
+		}
+		if written != n {
+			return io.ErrShortWrite
+		}
+		copied += int64(n)
+	}
+
+	if meta.Size == 0 {
+		if _, err := fs.cacheStore.Write(dstPath, nil, 0); err != nil {
+			return err
+		}
+	}
+
+	if err := fs.cacheStore.Commit(dstPath, meta); err != nil {
+		return err
+	}
+	committed = true
+	if deleteSource {
+		_ = fs.cacheStore.DeletePartial(srcPath)
+	}
+	return nil
+}
+
 // ensureFullyCached ensures the remote file at path is fully downloaded to the cache.
 // If a download is already in progress it joins that download; otherwise it starts one.
-// It blocks until all size bytes are available in the cache (or the download finishes
-// short, indicated by io.EOF from WaitFor).
+// It blocks until all size bytes are available in the cache.
 //
-// A fast-path probe checks whether the last byte of the file is already readable. Because
-// fillCache writes sequentially, a readable last byte means the full file is present and
-// no network round-trip is needed.
+// A fast-path probe checks whether the last byte of a complete, metadata-matching cache
+// entry is already readable, which means no network round-trip is needed.
 func (fs *RemoteFs) ensureFullyCached(path, uri string, size int64, fh uint64) error {
 	if size <= 0 {
 		return nil
 	}
-	// Fast path: if the last byte is in the cache, the full file is present.
-	probe := [1]byte{}
-	if n, _ := fs.cacheStore.Read(path, probe[:], size-1); n == 1 {
-		return nil
+	if node, ok := fs.vfs.fetch(path); ok {
+		meta := cacheEntryMetadata(path, size, node.info.modTime)
+		probe := [1]byte{}
+		if n, _ := fs.cacheStore.ReadComplete(path, meta, probe[:], size-1); n == 1 {
+			return nil
+		}
 	}
 	// Slow path: join or start a download and wait for the full file.
 	readyGate, exists := fs.findOrCreateGate(path)
-	if !exists {
-		go fs.fillCache(context.Background(), path, uri, readyGate, fh)
-	}
 	readyGate.Add()
-	defer readyGate.Done()
-	if err := readyGate.WaitFor(size); err != nil && err != io.EOF {
+	defer fs.releaseGateWaiter(path, readyGate)
+	if !exists {
+		node, ok := fs.vfs.fetch(path)
+		if !ok {
+			err := fmt.Errorf("ensureFullyCached: vfs node missing for %s", path)
+			readyGate.Finish(err, 0)
+			fs.removeGate(path, readyGate)
+			return err
+		}
+		go fs.fillCache(context.Background(), path, uri, cacheEntryMetadata(path, size, node.info.modTime), readyGate, fh, false)
+	}
+	if err := readyGate.WaitFor(size); err != nil {
 		return err
 	}
 	return nil
@@ -1665,13 +1757,23 @@ func (fs *RemoteFs) peekGate(path string) (*cache.ReadyGate, bool) {
 	return s, ok
 }
 
-func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, readyGate *cache.ReadyGate, fh uint64) {
+func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, meta cache.EntryMetadata, readyGate *cache.ReadyGate, fh uint64, cancelOnActiveWrite bool) {
 	_, cancel := context.WithCancel(ctx)
+	readyGate.SetTotal(meta.Size)
 	readyGate.SetCancel(cancel)
+	readyGate.SetCleanup(func() {
+		fs.cacheStore.UnpinPartial(path)
+		_ = fs.cacheStore.DeletePartial(path)
+	})
 	defer func() {
 		cancel()
 		fs.removeGate(path, readyGate)
+		if readyGate.Drained() {
+			readyGate.Cleanup()
+		}
 	}()
+	_ = fs.cacheStore.DeletePartial(path)
+	fs.cacheStore.PinPartial(path)
 
 	var f files_sdk.File
 	var err error
@@ -1693,9 +1795,14 @@ func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, read
 				// the ready gate every cacheWriteSize bytes to signal that data is available for reading.
 				var off int64 = 0
 				for {
-					if node, ok := fs.vfs.fetch(path); ok && node.hasActiveWriteSession() {
-						readyGate.Finish(nil, off)
-						return nil
+					if cancelOnActiveWrite {
+						if node, ok := fs.vfs.fetch(path); ok && node.hasHydratedWriteSession() {
+							// A public read should not keep serving old remote bytes after
+							// a local write has its baseline. Before hydration completes,
+							// this same download may be supplying that baseline.
+							readyGate.Finish(context.Canceled, off)
+							return nil
+						}
 					}
 
 					nr, er := resp.Body.Read(buf)
@@ -1703,7 +1810,7 @@ func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, read
 						// TODO: consider altering Write to keep data in memory and periodically flush to disk
 						// to reduce the number of disk writes. This would require more memory usage, but would
 						// improve read and write performance by avoiding constantly opening/closing the file.
-						written, err := fs.cacheStore.Write(path, buf[:nr], off)
+						written, err := fs.cacheStore.WritePartial(path, buf[:nr], off)
 						if err != nil || written != nr {
 							// there was an error writing to the disk cache, or not all bytes that were read from the
 							// remote API were written to the disk cache.
@@ -1715,6 +1822,15 @@ func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, read
 					}
 					if er != nil {
 						if er == io.EOF {
+							if off != meta.Size {
+								err := io.ErrUnexpectedEOF
+								readyGate.Finish(err, off)
+								return err
+							}
+							if err := fs.commitCacheEntryFromPartial(path, path, meta, false); err != nil {
+								readyGate.Finish(err, off)
+								return err
+							}
 							readyGate.Finish(nil, off)
 							return nil
 						}

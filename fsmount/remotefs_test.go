@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -19,6 +20,7 @@ import (
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/file"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/disk"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/mem"
 	lim "github.com/Files-com/files-sdk-go/v3/fsmount/internal/limit"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/log"
@@ -64,6 +66,9 @@ func newTestRemoteFs(t *testing.T) (*RemoteFs, *virtualfs, cacheStore) {
 			lim.FuseOpUpload:   uploadOpLimit,
 			lim.FuseOpOther:    otherOpLimit,
 		}, globalOpLimit),
+		bufferPool: fssync.NewPool(func() []byte {
+			return make([]byte, cacheWriteSize)
+		}),
 	}
 
 	return fs, vfs, cacheStore
@@ -76,6 +81,7 @@ type fakeRemoteBackend struct {
 	moveFunc           func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error)
 	waitFunc           func(action files_sdk.FileAction, status func(files_sdk.FileMigration), opts ...files_sdk.RequestResponseOption) (files_sdk.FileMigration, error)
 	downloadToFileFunc func(params files_sdk.FileDownloadParams, filePath string, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error)
+	downloadFunc       func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error)
 	deleteFunc         func(params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponseOption) error
 	createLockFunc     func(params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (files_sdk.Lock, error)
 }
@@ -132,6 +138,9 @@ func (b *fakeRemoteBackend) downloadToFile(params files_sdk.FileDownloadParams, 
 }
 
 func (b *fakeRemoteBackend) download(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+	if b.downloadFunc != nil {
+		return b.downloadFunc(params, opts...)
+	}
 	return files_sdk.File{}, nil
 }
 
@@ -162,6 +171,105 @@ func (b *fakeRemoteBackend) wait(action files_sdk.FileAction, status func(files_
 		return b.waitFunc(action, status, opts...)
 	}
 	return files_sdk.FileMigration{Status: "completed"}, nil
+}
+
+func fakeDownloadResponse(payload []byte, reportedSize int64) func(files_sdk.FileDownloadParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+	return func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+		resp := &http.Response{
+			StatusCode:    http.StatusOK,
+			Body:          io.NopCloser(bytes.NewReader(payload)),
+			ContentLength: int64(len(payload)),
+		}
+		if _, err := files_sdk.BuildResponse(resp, opts...); err != nil {
+			return files_sdk.File{}, err
+		}
+		return files_sdk.File{
+			Path: params.File.Path,
+			Type: "file",
+			Size: reportedSize,
+		}, nil
+	}
+}
+
+type blockingDownloadReader struct {
+	payload      []byte
+	firstChunk   int
+	offset       int
+	firstWritten chan struct{}
+	release      chan struct{}
+	once         sync.Once
+}
+
+func newBlockingDownloadReader(payload []byte, firstChunk int) *blockingDownloadReader {
+	return &blockingDownloadReader{
+		payload:      payload,
+		firstChunk:   firstChunk,
+		firstWritten: make(chan struct{}),
+		release:      make(chan struct{}),
+	}
+}
+
+func (r *blockingDownloadReader) Read(p []byte) (int, error) {
+	if r.offset >= len(r.payload) {
+		return 0, io.EOF
+	}
+
+	if r.offset == 0 {
+		n := copy(p, r.payload[:min(r.firstChunk, len(r.payload))])
+		r.offset += n
+		r.once.Do(func() { close(r.firstWritten) })
+		return n, nil
+	}
+
+	<-r.release
+	n := copy(p, r.payload[r.offset:])
+	r.offset += n
+	return n, nil
+}
+
+func waitForPartialCacheBytes(t *testing.T, cacheStore cacheStore, path string, want int) []byte {
+	t.Helper()
+
+	deadline := time.Now().Add(2 * time.Second)
+	buf := make([]byte, want)
+	for {
+		n, err := cacheStore.ReadPartial(path, buf, 0)
+		if err != nil {
+			t.Fatalf("partial cache Read failed: %v", err)
+		}
+		if n >= want {
+			return buf[:n]
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("timed out waiting for %d partial cached bytes at %s, got %d", want, path, n)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+type notifyingCache struct {
+	cacheStore
+	writePartialPath string
+	wrote            chan struct{}
+	once             sync.Once
+}
+
+func (c *notifyingCache) WritePartial(path string, buff []byte, ofst int64) (int, error) {
+	n, err := c.cacheStore.WritePartial(path, buff, ofst)
+	if path == c.writePartialPath && n > 0 {
+		c.once.Do(func() { close(c.wrote) })
+	}
+	return n, err
+}
+
+func newTestDiskCache(t *testing.T) *disk.DiskCache {
+	t.Helper()
+
+	cacheStore, err := disk.NewDiskCache(t.TempDir())
+	if err != nil {
+		t.Fatalf("NewDiskCache failed: %v", err)
+	}
+	return cacheStore
 }
 
 type captureMountLogger struct {
@@ -230,6 +338,9 @@ func newTestFilescomfs(t *testing.T) (*Filescomfs, *RemoteFs, *LocalFs, *virtual
 			lim.FuseOpUpload:   uploadOpLimit,
 			lim.FuseOpOther:    otherOpLimit,
 		}, globalOpLimit),
+		bufferPool: fssync.NewPool(func() []byte {
+			return make([]byte, cacheWriteSize)
+		}),
 	}
 	local := newLocalFs(params, vfs, &log.NoOpLogger{})
 	local.Init()
@@ -278,6 +389,391 @@ func TestRemoteFsPublicWriteReadGetattrUsesWorkingCopy(t *testing.T) {
 	}
 	if stat.Nlink != 1 {
 		t.Fatalf("Getattr nlink = %d, want 1", stat.Nlink)
+	}
+}
+
+func TestRemoteFsReadIgnoresUncommittedDiskCacheAfterRestart(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	cacheStore := newTestDiskCache(t)
+	fs.cacheStore = cacheStore
+
+	path := "/large.bin"
+	remotePayload := bytes.Repeat([]byte("r"), cacheWriteSize+17)
+	partialPayload := remotePayload[:cacheWriteSize/2]
+	if _, err := cacheStore.Write(path, partialPayload, 0); err != nil {
+		t.Fatalf("cache Write failed: %v", err)
+	}
+
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeFile,
+		size:         int64(len(remotePayload)),
+		modTime:      modTime,
+		creationTime: modTime,
+	})
+	node.setDownloadURI("https://example.invalid/download")
+
+	downloadCalls := 0
+	fs.backend = &fakeRemoteBackend{
+		downloadFunc: func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+			downloadCalls++
+			return fakeDownloadResponse(remotePayload, int64(len(remotePayload)))(params, opts...)
+		},
+	}
+
+	errc, fh := fs.Open(path, fuse.O_RDONLY)
+	if errc != 0 {
+		t.Fatalf("Open returned unexpected error: %d", errc)
+	}
+	defer fs.Release(path, fh)
+
+	buf := make([]byte, len(remotePayload))
+	n := fs.Read(path, buf, 0, fh)
+	if n != len(remotePayload) {
+		t.Fatalf("Read returned %d, want %d", n, len(remotePayload))
+	}
+	if !bytes.Equal(buf[:n], remotePayload) {
+		t.Fatalf("Read returned stale cache payload prefix %q, want remote payload prefix %q", string(buf[:16]), string(remotePayload[:16]))
+	}
+	if downloadCalls != 1 {
+		t.Fatalf("download calls = %d, want 1", downloadCalls)
+	}
+}
+
+func TestRemoteFsCommitReplacesLargerPinnedEntryWithSmallerContent(t *testing.T) {
+	run := func(t *testing.T, cacheStore cacheStore) {
+		t.Helper()
+
+		fs, vfs, _ := newTestRemoteFs(t)
+		defer vfs.destroy()
+		fs.cacheStore = cacheStore
+
+		path := "/shrink.bin"
+		oldPayload := bytes.Repeat([]byte("o"), cacheWriteSize+1024)
+		newPayload := bytes.Repeat([]byte("n"), cacheWriteSize/2)
+		oldMtime := time.Now().Add(-time.Hour).Round(0)
+		newMtime := oldMtime.Add(time.Second)
+		if _, err := cacheStore.Write(path, oldPayload, 0); err != nil {
+			t.Fatalf("old cache Write failed: %v", err)
+		}
+		if err := cacheStore.Commit(path, cacheEntryMetadata(path, int64(len(oldPayload)), oldMtime)); err != nil {
+			t.Fatalf("old cache Commit failed: %v", err)
+		}
+
+		node := vfs.getOrCreate(path, nodeTypeFile)
+		node.updateInfo(fsNodeInfo{
+			nodeType:     nodeTypeFile,
+			size:         int64(len(newPayload)),
+			modTime:      newMtime,
+			creationTime: newMtime,
+		})
+		node.setDownloadURI("https://example.invalid/download")
+		fs.backend = &fakeRemoteBackend{
+			downloadFunc: fakeDownloadResponse(newPayload, int64(len(newPayload))),
+		}
+
+		errc, fh := fs.Open(path, fuse.O_RDONLY)
+		if errc != 0 {
+			t.Fatalf("Open returned unexpected error: %d", errc)
+		}
+		defer fs.Release(path, fh)
+
+		buf := make([]byte, len(newPayload))
+		n := fs.Read(path, buf, 0, fh)
+		if n != len(newPayload) {
+			t.Fatalf("Read returned %d, want %d", n, len(newPayload))
+		}
+		if !bytes.Equal(buf[:n], newPayload) {
+			t.Fatalf("Read returned %q, want %q", string(buf[:n]), string(newPayload))
+		}
+
+		committed := make([]byte, len(newPayload))
+		n, err := cacheStore.ReadComplete(path, cacheEntryMetadata(path, int64(len(newPayload)), newMtime), committed, 0)
+		if err != nil {
+			t.Fatalf("ReadComplete failed: %v", err)
+		}
+		if n != len(newPayload) || !bytes.Equal(committed[:n], newPayload) {
+			t.Fatalf("ReadComplete returned n=%d payload=%q, want %q", n, string(committed[:n]), string(newPayload))
+		}
+	}
+
+	t.Run("disk", func(t *testing.T) {
+		run(t, newTestDiskCache(t))
+	})
+
+	t.Run("memory", func(t *testing.T) {
+		cacheStore, err := mem.NewMemoryCache()
+		if err != nil {
+			t.Fatalf("NewMemoryCache failed: %v", err)
+		}
+		run(t, cacheStore)
+	})
+}
+
+func TestRemoteFsReadFailsAndDoesNotCommitShortDownload(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	cacheStore := newTestDiskCache(t)
+	fs.cacheStore = cacheStore
+
+	path := "/short-download.bin"
+	shortPayload := bytes.Repeat([]byte("s"), cacheWriteSize/2)
+	expectedSize := int64(cacheWriteSize + 1)
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeFile,
+		size:         expectedSize,
+		modTime:      modTime,
+		creationTime: modTime,
+	})
+	node.setDownloadURI("https://example.invalid/download")
+
+	fs.backend = &fakeRemoteBackend{
+		downloadFunc: fakeDownloadResponse(shortPayload, expectedSize),
+	}
+
+	errc, fh := fs.Open(path, fuse.O_RDONLY)
+	if errc != 0 {
+		t.Fatalf("Open returned unexpected error: %d", errc)
+	}
+	defer fs.Release(path, fh)
+
+	buf := make([]byte, expectedSize)
+	n := fs.Read(path, buf, 0, fh)
+	if n != -fuse.EIO {
+		t.Fatalf("Read returned %d, want %d for short download", n, -fuse.EIO)
+	}
+
+	raw := make([]byte, len(shortPayload))
+	if n, err := cacheStore.Read(path, raw, 0); err != nil || n != 0 {
+		t.Fatalf("cache Read after short download returned n=%d err=%v, want empty cache", n, err)
+	}
+}
+
+func TestRemoteFsReadDeletesPartialCacheAfterDownloadWaitersDrain(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	cacheStore := newTestDiskCache(t)
+	fs.cacheStore = cacheStore
+
+	path := "/cleanup-partial.bin"
+	payload := bytes.Repeat([]byte("p"), cacheWriteSize+11)
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeFile,
+		size:         int64(len(payload)),
+		modTime:      modTime,
+		creationTime: modTime,
+	})
+	node.setDownloadURI("https://example.invalid/download")
+
+	fs.backend = &fakeRemoteBackend{
+		downloadFunc: fakeDownloadResponse(payload, int64(len(payload))),
+	}
+
+	errc, fh := fs.Open(path, fuse.O_RDONLY)
+	if errc != 0 {
+		t.Fatalf("Open returned unexpected error: %d", errc)
+	}
+	defer fs.Release(path, fh)
+
+	buf := make([]byte, len(payload))
+	if n := fs.Read(path, buf, 0, fh); n != len(payload) {
+		t.Fatalf("Read returned %d, want %d", n, len(payload))
+	}
+
+	partial := make([]byte, len(payload))
+	if n, err := cacheStore.ReadPartial(path, partial, 0); err != nil || n != 0 {
+		t.Fatalf("partial cache Read after drained read returned n=%d err=%v, want empty partial cache", n, err)
+	}
+
+	committed := make([]byte, len(payload))
+	if n, err := cacheStore.ReadComplete(path, cacheEntryMetadata(path, int64(len(payload)), modTime), committed, 0); err != nil || n != len(payload) {
+		t.Fatalf("committed cache ReadComplete returned n=%d err=%v, want %d", n, err, len(payload))
+	}
+}
+
+func TestRemoteFsPartialNamespaceDoesNotCollideWithSuffixPath(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	cacheStore := newTestDiskCache(t)
+	fs.cacheStore = cacheStore
+
+	path := "/namespace-source.bin"
+	suffixPath := path + ".filescom-cache-partial"
+	suffixPayload := []byte("real file cache entry")
+	suffixModTime := time.Now().Add(-2 * time.Minute).Round(0)
+	if _, err := cacheStore.Write(suffixPath, suffixPayload, 0); err != nil {
+		t.Fatalf("suffix cache Write failed: %v", err)
+	}
+	if err := cacheStore.Commit(suffixPath, cacheEntryMetadata(suffixPath, int64(len(suffixPayload)), suffixModTime)); err != nil {
+		t.Fatalf("suffix cache Commit failed: %v", err)
+	}
+
+	payload := bytes.Repeat([]byte("n"), cacheWriteSize+7)
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeFile,
+		size:         int64(len(payload)),
+		modTime:      modTime,
+		creationTime: modTime,
+	})
+	node.setDownloadURI("https://example.invalid/download")
+	fs.backend = &fakeRemoteBackend{
+		downloadFunc: fakeDownloadResponse(payload, int64(len(payload))),
+	}
+
+	errc, fh := fs.Open(path, fuse.O_RDONLY)
+	if errc != 0 {
+		t.Fatalf("Open returned unexpected error: %d", errc)
+	}
+	defer fs.Release(path, fh)
+
+	buf := make([]byte, len(payload))
+	if n := fs.Read(path, buf, 0, fh); n != len(payload) {
+		t.Fatalf("Read returned %d, want %d", n, len(payload))
+	}
+
+	suffixBuf := make([]byte, len(suffixPayload))
+	n, err := cacheStore.ReadComplete(suffixPath, cacheEntryMetadata(suffixPath, int64(len(suffixPayload)), suffixModTime), suffixBuf, 0)
+	if err != nil {
+		t.Fatalf("suffix ReadComplete failed: %v", err)
+	}
+	if n != len(suffixPayload) || string(suffixBuf[:n]) != string(suffixPayload) {
+		t.Fatalf("suffix cache entry after partial cleanup = %q, want %q", string(suffixBuf[:n]), string(suffixPayload))
+	}
+}
+
+func TestRemoteFsReadPinsPartialCacheDuringActiveDownload(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	cacheStore, err := mem.NewMemoryCache()
+	if err != nil {
+		t.Fatalf("NewMemoryCache failed: %v", err)
+	}
+
+	path := "/pinned-partial.bin"
+	payload := bytes.Repeat([]byte("d"), cacheWriteSize+19)
+	firstChunk := cacheWriteSize / 2
+	observedCache := &notifyingCache{
+		cacheStore:       cacheStore,
+		writePartialPath: path,
+		wrote:            make(chan struct{}),
+	}
+	fs.cacheStore = observedCache
+	reader := newBlockingDownloadReader(payload, firstChunk)
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeFile,
+		size:         int64(len(payload)),
+		modTime:      modTime,
+		creationTime: modTime,
+	})
+	node.setDownloadURI("https://example.invalid/download")
+
+	fs.backend = &fakeRemoteBackend{
+		downloadFunc: func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+			resp := &http.Response{
+				StatusCode:    http.StatusOK,
+				Body:          io.NopCloser(reader),
+				ContentLength: int64(len(payload)),
+			}
+			if _, err := files_sdk.BuildResponse(resp, opts...); err != nil {
+				return files_sdk.File{}, err
+			}
+			return files_sdk.File{Path: params.File.Path, Type: "file", Size: int64(len(payload))}, nil
+		},
+	}
+
+	errc, fh := fs.Open(path, fuse.O_RDONLY)
+	if errc != 0 {
+		t.Fatalf("Open returned unexpected error: %d", errc)
+	}
+	defer fs.Release(path, fh)
+
+	readDone := make(chan int, 1)
+	go func() {
+		buf := make([]byte, len(payload))
+		readDone <- fs.Read(path, buf, 0, fh)
+	}()
+
+	<-reader.firstWritten
+	select {
+	case <-observedCache.wrote:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for partial cache write")
+	}
+	got := waitForPartialCacheBytes(t, cacheStore, path, firstChunk)
+	if !bytes.Equal(got[:firstChunk], payload[:firstChunk]) {
+		t.Fatalf("partial payload prefix = %q, want %q", string(got[:firstChunk]), string(payload[:firstChunk]))
+	}
+
+	_ = cacheStore.DeletePartial(path)
+	got = waitForPartialCacheBytes(t, cacheStore, path, firstChunk)
+	if !bytes.Equal(got[:firstChunk], payload[:firstChunk]) {
+		t.Fatal("expected pinned active partial cache entry to survive Delete")
+	}
+
+	close(reader.release)
+	select {
+	case n := <-readDone:
+		if n != len(payload) {
+			t.Fatalf("Read returned %d, want %d", n, len(payload))
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for read to finish")
+	}
+
+	partial := make([]byte, len(payload))
+	if n, err := cacheStore.ReadPartial(path, partial, 0); err != nil || n != 0 {
+		t.Fatalf("partial cache Read after read returned n=%d err=%v, want empty partial cache", n, err)
+	}
+}
+
+func TestRemoteFsEnsureFullyCachedMissingNodeReturnsError(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	path := "/missing-hydration-node.bin"
+	err := fs.ensureFullyCached(path, "https://example.invalid/download", 10, 0)
+	if err == nil || !strings.Contains(err.Error(), "vfs node missing") {
+		t.Fatalf("ensureFullyCached error = %v, want missing node error", err)
+	}
+	if _, ok := fs.peekGate(path); ok {
+		t.Fatal("ensureFullyCached left a ready gate after missing node error")
+	}
+}
+
+func TestRemoteFsCommitCacheEntryFromPartialCleansDestinationOnError(t *testing.T) {
+	fs, vfs, cacheStore := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	src := "/commit-source.bin"
+	dst := "/commit-destination.bin"
+	payload := []byte("short")
+	if _, err := cacheStore.WritePartial(src, payload, 0); err != nil {
+		t.Fatalf("source partial cache Write failed: %v", err)
+	}
+
+	err := fs.commitCacheEntryFromPartial(src, dst, cacheEntryMetadata(dst, int64(len(payload)+1), time.Now()), false)
+	if !errors.Is(err, io.ErrUnexpectedEOF) {
+		t.Fatalf("commitCacheEntryFromPartial error = %v, want %v", err, io.ErrUnexpectedEOF)
+	}
+
+	buf := make([]byte, len(payload))
+	if n, err := cacheStore.Read(dst, buf, 0); err != nil || n != 0 {
+		t.Fatalf("destination cache after failed commit returned n=%d err=%v, want empty", n, err)
 	}
 }
 
@@ -658,22 +1154,57 @@ func TestRemoteFsRenameUploadFailureLogsSanitizedStorageError(t *testing.T) {
 	}
 }
 
+func TestRemoteFsRenameUploadFailureDoesNotCommitDiskCache(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	cacheStore := newTestDiskCache(t)
+	fs.cacheStore = cacheStore
+
+	uploadErr := errors.New("upload failed")
+	fs.backend = &fakeRemoteBackend{
+		uploadFunc: func(opts ...file.UploadOption) error {
+			return uploadErr
+		},
+	}
+
+	src := filepath.Join(t.TempDir(), "rename-failure.pdf")
+	payload := bytes.Repeat([]byte("u"), cacheWriteSize+3)
+	if err := os.WriteFile(src, payload, 0o600); err != nil {
+		t.Fatalf("WriteFile failed: %v", err)
+	}
+
+	dst := "/rename-failure.pdf"
+	if err := fs.uploadFile(src, dst); !errors.Is(err, uploadErr) {
+		t.Fatalf("uploadFile error = %v, want %v", err, uploadErr)
+	}
+
+	buf := make([]byte, len(payload))
+	if n, err := cacheStore.Read(dst, buf, 0); err != nil || n != 0 {
+		t.Fatalf("cache Read after failed upload returned n=%d err=%v, want empty cache", n, err)
+	}
+}
+
 func TestRemoteFsPublicTruncateZeroSkipsHydrationAndResetsWorkingCopy(t *testing.T) {
 	fs, vfs, cacheStore := newTestRemoteFs(t)
 	defer vfs.destroy()
 
 	path := "/existing.ai"
 	original := []byte("old remote contents")
+	modTime := time.Now().Round(0)
 	if _, err := cacheStore.Write(path, original, 0); err != nil {
 		t.Fatalf("cache Write failed: %v", err)
+	}
+	if err := cacheStore.Commit(path, cacheEntryMetadata(path, int64(len(original)), modTime)); err != nil {
+		t.Fatalf("cache Commit failed: %v", err)
 	}
 
 	node := vfs.getOrCreate(path, nodeTypeFile)
 	node.updateInfo(fsNodeInfo{
 		nodeType:     nodeTypeFile,
 		size:         int64(len(original)),
-		modTime:      time.Now(),
-		creationTime: time.Now(),
+		modTime:      modTime,
+		creationTime: modTime,
 	})
 	node.setDownloadURI("https://example.invalid/download")
 
@@ -1034,16 +1565,20 @@ func TestRemoteFsInPlaceWritesAndFlushDoNotChangeSizeUntilTruncate(t *testing.T)
 	finalSize := 2498560
 
 	initial := bytes.Repeat([]byte("a"), initialSize)
+	initialMtime := time.Now().Round(0)
 	if _, err := cacheStore.Write(path, initial, 0); err != nil {
 		t.Fatalf("cache Write failed: %v", err)
+	}
+	if err := cacheStore.Commit(path, cacheEntryMetadata(path, int64(initialSize), initialMtime)); err != nil {
+		t.Fatalf("cache Commit failed: %v", err)
 	}
 
 	node := vfs.getOrCreate(path, nodeTypeFile)
 	node.updateInfo(fsNodeInfo{
 		nodeType:     nodeTypeFile,
 		size:         int64(initialSize),
-		modTime:      time.Now(),
-		creationTime: time.Now(),
+		modTime:      initialMtime,
+		creationTime: initialMtime,
 	})
 	node.setDownloadURI("https://example.invalid/download")
 
@@ -1093,6 +1628,179 @@ func TestRemoteFsInPlaceWritesAndFlushDoNotChangeSizeUntilTruncate(t *testing.T)
 	}
 }
 
+func TestRemoteFsSparseInPlaceWriteHydratesWhenCacheMtimeStale(t *testing.T) {
+	fs, vfs, cacheStore := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	const lineSize = 16
+	const lineCount = 1024
+
+	path := "/sparse-stale-mtime.txt"
+	original := make([]byte, 0, lineCount*lineSize)
+	for i := range lineCount {
+		original = append(original, fmt.Sprintf("ORIGINAL-%06d\n", i)...)
+	}
+
+	cacheMtime := time.Now().Add(-time.Hour).Round(0)
+	nodeMtime := cacheMtime.Add(time.Second)
+	if _, err := cacheStore.Write(path, original, 0); err != nil {
+		t.Fatalf("cache Write failed: %v", err)
+	}
+	if err := cacheStore.Commit(path, cacheEntryMetadata(path, int64(len(original)), cacheMtime)); err != nil {
+		t.Fatalf("cache Commit failed: %v", err)
+	}
+
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeFile,
+		size:         int64(len(original)),
+		modTime:      nodeMtime,
+		creationTime: nodeMtime,
+	})
+	node.setDownloadURI("https://example.invalid/download")
+
+	fs.backend = &fakeRemoteBackend{
+		downloadFunc: fakeDownloadResponse(original, int64(len(original))),
+	}
+
+	var uploaded []byte
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return 0, err
+		}
+		uploaded = append(uploaded[:0], data...)
+		return int64(len(data)), nil
+	}
+
+	errc, fh := fs.Open(path, fuse.O_RDWR)
+	if errc != 0 {
+		t.Fatalf("Open returned unexpected error: %d", errc)
+	}
+	defer fs.Release(path, fh)
+
+	writes := []struct {
+		offset  int64
+		content []byte
+	}{
+		{0, []byte("CHANGE01-000000\n")},
+		{int64(lineCount-1) * lineSize, []byte("CHANGE04-FINALE\n")},
+	}
+	for _, w := range writes {
+		if n := fs.Write(path, w.content, w.offset, fh); n != len(w.content) {
+			t.Fatalf("Write at offset %d returned %d, want %d", w.offset, n, len(w.content))
+		}
+	}
+	if errc := fs.Flush(path, fh); errc != 0 {
+		t.Fatalf("Flush returned unexpected error: %d", errc)
+	}
+	if len(uploaded) != len(original) {
+		t.Fatalf("uploaded size = %d, want %d", len(uploaded), len(original))
+	}
+
+	unchangedLine := 100
+	offset := unchangedLine * lineSize
+	got := string(uploaded[offset : offset+lineSize])
+	want := fmt.Sprintf("ORIGINAL-%06d\n", unchangedLine)
+	if got != want {
+		t.Fatalf("line %d after sparse write = %q, want %q", unchangedLine, got, want)
+	}
+}
+
+func TestRemoteFsHydrationJoinedToPublicReadDownloadDoesNotCancel(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	cacheStore := newTestDiskCache(t)
+	fs.cacheStore = cacheStore
+
+	path := "/shared-download-baseline.txt"
+	payload := bytes.Repeat([]byte("r"), cacheWriteSize+64)
+	reader := newBlockingDownloadReader(payload, cacheWriteSize/2)
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeFile,
+		size:         int64(len(payload)),
+		modTime:      modTime,
+		creationTime: modTime,
+	})
+	node.setDownloadURI("https://example.invalid/download")
+
+	fs.backend = &fakeRemoteBackend{
+		downloadFunc: func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+			resp := &http.Response{
+				StatusCode:    http.StatusOK,
+				Body:          io.NopCloser(reader),
+				ContentLength: int64(len(payload)),
+			}
+			if _, err := files_sdk.BuildResponse(resp, opts...); err != nil {
+				return files_sdk.File{}, err
+			}
+			return files_sdk.File{Path: params.File.Path, Type: "file", Size: int64(len(payload))}, nil
+		},
+	}
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return 0, err
+		}
+		return int64(len(data)), nil
+	}
+
+	errc, readFh := fs.Open(path, fuse.O_RDONLY)
+	if errc != 0 {
+		t.Fatalf("read Open returned unexpected error: %d", errc)
+	}
+	defer fs.Release(path, readFh)
+
+	readDone := make(chan int, 1)
+	go func() {
+		buf := make([]byte, len(payload))
+		readDone <- fs.Read(path, buf, 0, readFh)
+	}()
+	<-reader.firstWritten
+
+	errc, writeFh := fs.Open(path, fuse.O_RDWR)
+	if errc != 0 {
+		t.Fatalf("write Open returned unexpected error: %d", errc)
+	}
+	defer fs.Release(path, writeFh)
+
+	writeDone := make(chan int, 1)
+	go func() {
+		writeDone <- fs.Write(path, []byte("W"), 0, writeFh)
+	}()
+
+	deadline := time.Now().Add(2 * time.Second)
+	for !node.hasActiveWriteSession() {
+		if time.Now().After(deadline) {
+			t.Fatal("timed out waiting for active write session")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	close(reader.release)
+
+	select {
+	case n := <-writeDone:
+		if n != 1 {
+			t.Fatalf("Write returned %d, want 1", n)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for write to finish")
+	}
+
+	select {
+	case n := <-readDone:
+		if n != len(payload) {
+			t.Fatalf("Read returned %d, want %d", n, len(payload))
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for read to finish")
+	}
+}
+
 func TestRemoteFsGetattrKeepsStableMtimeDuringWriteSessionAndPublishesOnFlush(t *testing.T) {
 	fs, vfs, cacheStore := newTestRemoteFs(t)
 	defer vfs.destroy()
@@ -1103,6 +1811,9 @@ func TestRemoteFsGetattrKeepsStableMtimeDuringWriteSessionAndPublishesOnFlush(t 
 
 	if _, err := cacheStore.Write(path, initial, 0); err != nil {
 		t.Fatalf("cache Write failed: %v", err)
+	}
+	if err := cacheStore.Commit(path, cacheEntryMetadata(path, int64(len(initial)), initialMtime)); err != nil {
+		t.Fatalf("cache Commit failed: %v", err)
 	}
 
 	node := vfs.getOrCreate(path, nodeTypeFile)

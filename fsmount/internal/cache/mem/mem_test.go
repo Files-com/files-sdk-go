@@ -1,9 +1,11 @@
 package mem_test
 
 import (
+	"bytes"
 	"testing"
 	"time"
 
+	fscache "github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/mem"
 )
 
@@ -159,6 +161,125 @@ func TestMemoryCacheDelete(t *testing.T) {
 	}
 	if n != 0 {
 		t.Errorf("Expected to read 0 bytes after delete, read %d", n)
+	}
+}
+
+func TestMemoryCacheReadCompleteRequiresCommit(t *testing.T) {
+	cache, err := mem.NewMemoryCache()
+	if err != nil {
+		t.Fatalf("NewMemoryCache failed: %v", err)
+	}
+
+	path := "/test/uncommitted.txt"
+	data := []byte("complete-sized data")
+	meta := fscache.NewEntryMetadata(path, int64(len(data)), time.Now())
+	if _, err := cache.Write(path, data, 0); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+
+	readBuf := make([]byte, len(data))
+	n, err := cache.ReadComplete(path, meta, readBuf, 0)
+	if err != nil {
+		t.Fatalf("ReadComplete before Commit failed: %v", err)
+	}
+	if n != 0 {
+		t.Fatalf("ReadComplete before Commit returned %d bytes, want 0", n)
+	}
+
+	if err := cache.Commit(path, meta); err != nil {
+		t.Fatalf("Commit failed: %v", err)
+	}
+	n, err = cache.ReadComplete(path, meta, readBuf, 0)
+	if err != nil {
+		t.Fatalf("ReadComplete after Commit failed: %v", err)
+	}
+	if n != len(data) || string(readBuf[:n]) != string(data) {
+		t.Fatalf("ReadComplete after Commit = %q, want %q", string(readBuf[:n]), string(data))
+	}
+}
+
+func TestMemoryCacheDeletePinnedFileDoesNotRemove(t *testing.T) {
+	cache, err := mem.NewMemoryCache()
+	if err != nil {
+		t.Fatalf("NewMemoryCache failed: %v", err)
+	}
+
+	path := "/test/pinned-delete.txt"
+	data := []byte("pinned data")
+	if _, err := cache.Write(path, data, 0); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+	cache.Pin(path)
+
+	if deleted := cache.Delete(path); deleted {
+		t.Fatal("Delete returned true for pinned file")
+	}
+	readBuf := make([]byte, len(data))
+	n, err := cache.Read(path, readBuf, 0)
+	if err != nil {
+		t.Fatalf("Read failed: %v", err)
+	}
+	if n != len(data) || string(readBuf[:n]) != string(data) {
+		t.Fatalf("pinned data after Delete = %q, want %q", string(readBuf[:n]), string(data))
+	}
+
+	cache.Unpin(path)
+	if deleted := cache.Delete(path); !deleted {
+		t.Fatal("Delete returned false after unpin")
+	}
+	n, err = cache.Read(path, readBuf, 0)
+	if err != nil {
+		t.Fatalf("Read after unpin/delete failed: %v", err)
+	}
+	if n != 0 {
+		t.Fatalf("Read after unpin/delete returned %d bytes, want 0", n)
+	}
+}
+
+func TestMemoryCacheCommitTruncatesPinnedLargerEntry(t *testing.T) {
+	cache, err := mem.NewMemoryCache()
+	if err != nil {
+		t.Fatalf("NewMemoryCache failed: %v", err)
+	}
+
+	path := "/test/shrink.bin"
+	oldPayload := bytes.Repeat([]byte("o"), 1024)
+	newPayload := bytes.Repeat([]byte("n"), 256)
+	oldMtime := time.Now().Add(-time.Hour).Round(0)
+	newMtime := oldMtime.Add(time.Second)
+	if _, err := cache.Write(path, oldPayload, 0); err != nil {
+		t.Fatalf("old Write failed: %v", err)
+	}
+	if err := cache.Commit(path, fscache.NewEntryMetadata(path, int64(len(oldPayload)), oldMtime)); err != nil {
+		t.Fatalf("old Commit failed: %v", err)
+	}
+
+	cache.Pin(path)
+	defer cache.Unpin(path)
+
+	if _, err := cache.Write(path, newPayload, 0); err != nil {
+		t.Fatalf("new Write failed: %v", err)
+	}
+	if err := cache.Commit(path, fscache.NewEntryMetadata(path, int64(len(newPayload)), newMtime)); err != nil {
+		t.Fatalf("new Commit failed: %v", err)
+	}
+
+	readBuf := make([]byte, len(newPayload))
+	n, err := cache.ReadComplete(path, fscache.NewEntryMetadata(path, int64(len(newPayload)), newMtime), readBuf, 0)
+	if err != nil {
+		t.Fatalf("ReadComplete failed: %v", err)
+	}
+	if n != len(newPayload) || !bytes.Equal(readBuf[:n], newPayload) {
+		t.Fatalf("ReadComplete returned n=%d payload=%q, want %q", n, string(readBuf[:n]), string(newPayload))
+	}
+
+	tailBuf := make([]byte, 1)
+	n, err = cache.Read(path, tailBuf, int64(len(newPayload)))
+	if err != nil {
+		t.Fatalf("Read past committed size failed: %v", err)
+	}
+	if n != 0 {
+		t.Fatalf("Read past committed size returned %d bytes, want 0", n)
 	}
 }
 

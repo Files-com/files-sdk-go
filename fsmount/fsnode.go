@@ -275,6 +275,19 @@ func (n *fsNode) hasActiveWriteSession() bool {
 	return n.writeSession != nil
 }
 
+func (n *fsNode) hasHydratedWriteSession() bool {
+	n.writeMu.Lock()
+	session := n.writeSession
+	n.writeMu.Unlock()
+	if session == nil {
+		return false
+	}
+
+	session.mu.Lock()
+	defer session.mu.Unlock()
+	return session.hydrated
+}
+
 func (n *fsNode) getWriteSession() *writeSession {
 	n.writeMu.Lock()
 	defer n.writeMu.Unlock()

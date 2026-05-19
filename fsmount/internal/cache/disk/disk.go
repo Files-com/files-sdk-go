@@ -56,6 +56,12 @@ const (
 	// dataDir is the directory within the cache root where the downloaded file data will be stored
 	dataDir = "data"
 
+	// partialDir is the directory within the cache root where in-progress file data will be stored
+	partialDir = "partial"
+
+	// metadataDir is the directory within the cache root where completed cache entry metadata is stored
+	metadataDir = "metadata"
+
 	lruStateFile = "lru.json"
 
 	// maxEvictionAttempts is the maximum number of consecutive pinned files
@@ -107,6 +113,7 @@ type DiskCache struct {
 	// Maintenance tasks include:
 	//   - Stats are reloaded from disk
 	//   - Old files are deleted based on MaxAge
+	//   - Unpinned data files without completed metadata are deleted
 	MaintenanceInterval time.Duration
 
 	// LruFlushInterval is the interval at which the LRU state is persisted to disk.
@@ -140,6 +147,8 @@ type DiskCache struct {
 
 	stateDir string
 	dataDir  string
+	partDir  string
+	metaDir  string
 
 	lruDirty atomic.Bool
 }
@@ -162,18 +171,28 @@ func NewDiskCache(path string, opts ...Option) (*DiskCache, error) {
 
 	// ensure data and state directories exist
 	dataDir := filepath.Join(path, dataDir)
+	partDir := filepath.Join(path, partialDir)
 	stateDir := filepath.Join(path, stateDir)
+	metaDir := filepath.Join(stateDir, metadataDir)
 	if err := os.MkdirAll(dataDir, 0o755); err != nil {
 		return nil, fmt.Errorf("diskCache: error creating data directory in cache root %s: %w", path, err)
 	}
+	if err := os.MkdirAll(partDir, 0o755); err != nil {
+		return nil, fmt.Errorf("diskCache: error creating partial data directory in cache root %s: %w", path, err)
+	}
 	if err := os.MkdirAll(stateDir, 0o755); err != nil {
 		return nil, fmt.Errorf("diskCache: error creating state directory in cache root %s: %w", path, err)
+	}
+	if err := os.MkdirAll(metaDir, 0o755); err != nil {
+		return nil, fmt.Errorf("diskCache: error creating metadata directory in cache root %s: %w", path, err)
 	}
 
 	dc := &DiskCache{
 		CacheRoot:           path,
 		dataDir:             dataDir,
+		partDir:             partDir,
 		stateDir:            stateDir,
+		metaDir:             metaDir,
 		Capacity:            DefaultCapacity,
 		Disabled:            false,
 		LruFlushInterval:    DefaultLruFlushInterval,
@@ -288,6 +307,41 @@ func (dc *DiskCache) Read(path string, buff []byte, ofst int64) (n int, err erro
 	return n, nil
 }
 
+func (dc *DiskCache) ReadComplete(path string, meta cache.EntryMetadata, buff []byte, ofst int64) (n int, err error) {
+	if dc.Disabled {
+		return 0, nil
+	}
+	fqPath := dc.entryPath(path)
+	stored, err := dc.readEntryMetadata(path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	if !stored.Matches(meta) {
+		_ = dc.Delete(path)
+		return 0, nil
+	}
+	info, err := os.Stat(fqPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			_ = dc.deleteMetadata(path)
+			return 0, nil
+		}
+		return 0, err
+	}
+	if info.Size() != meta.Size {
+		_ = dc.Delete(path)
+		return 0, nil
+	}
+	return dc.Read(path, buff, ofst)
+}
+
+func (dc *DiskCache) ReadPartial(path string, buff []byte, ofst int64) (n int, err error) {
+	return dc.Read(dc.partialEntryPath(path), buff, ofst)
+}
+
 // Write writes data from buff to the cached file at the given path starting at offset ofst.
 // Writing at an offset past the end of the file will grow the file and fill the gap with zeros.
 //
@@ -379,6 +433,59 @@ func (dc *DiskCache) Write(path string, buff []byte, ofst int64) (n int, err err
 	return n, nil
 }
 
+func (dc *DiskCache) WritePartial(path string, buff []byte, ofst int64) (n int, err error) {
+	return dc.Write(dc.partialEntryPath(path), buff, ofst)
+}
+
+func (dc *DiskCache) Commit(path string, meta cache.EntryMetadata) error {
+	if dc.Disabled {
+		return nil
+	}
+	dc.writeMu.Lock()
+	defer dc.writeMu.Unlock()
+
+	fqPath := dc.entryPath(path)
+	info, err := os.Stat(fqPath)
+	if err != nil {
+		return err
+	}
+	if info.IsDir() {
+		return fmt.Errorf("diskCache: cannot commit directory cache entry %s", fqPath)
+	}
+	if info.Size() < meta.Size {
+		return fmt.Errorf("diskCache: cache entry size mismatch for %s: got %d, want %d", path, info.Size(), meta.Size)
+	}
+	if info.Size() > meta.Size {
+		if err := os.Truncate(fqPath, meta.Size); err != nil {
+			return fmt.Errorf("diskCache: truncating cache entry %s to %d failed: %w", path, meta.Size, err)
+		}
+		dc.stats.SizeBytes.Add(meta.Size - info.Size())
+	}
+	meta.Path = path
+	meta.Complete = true
+
+	metaPath := dc.metadataPath(path)
+	if err := os.MkdirAll(filepath.Dir(metaPath), 0o755); err != nil {
+		return err
+	}
+	tmpPath := metaPath + ".tmp"
+	file, err := os.Create(tmpPath)
+	if err != nil {
+		return err
+	}
+	encErr := json.NewEncoder(file).Encode(meta)
+	closeErr := file.Close()
+	if encErr != nil {
+		_ = os.Remove(tmpPath)
+		return encErr
+	}
+	if closeErr != nil {
+		_ = os.Remove(tmpPath)
+		return closeErr
+	}
+	return os.Rename(tmpPath, metaPath)
+}
+
 // Delete removes the cached file from the cache. It returns true if the file was deleted.
 func (dc *DiskCache) Delete(path string) bool {
 	if dc.Disabled {
@@ -386,8 +493,23 @@ func (dc *DiskCache) Delete(path string) bool {
 	}
 
 	fqPath := dc.entryPath(path)
+	if dc.isPinned(fqPath) {
+		return false
+	}
+	_ = dc.deleteMetadata(path)
+	_, statErr := os.Stat(fqPath)
+	exists := statErr == nil
 	deleted := dc.lru.Remove(fqPath)
+	if !deleted && exists {
+		if err := dc.deleteFile(fqPath); err == nil {
+			deleted = true
+		}
+	}
 	return deleted
+}
+
+func (dc *DiskCache) DeletePartial(path string) bool {
+	return dc.Delete(dc.partialEntryPath(path))
 }
 
 // StartMaintenance starts the maintenance goroutine if it is not already running.
@@ -479,6 +601,10 @@ func (dc *DiskCache) Pin(path string) {
 	dc.log.Trace("DiskCache: pinned %s (fqPath: %s, count: %d)", path, fqPath, dc.pinnedFiles[fqPath])
 }
 
+func (dc *DiskCache) PinPartial(path string) {
+	dc.Pin(dc.partialEntryPath(path))
+}
+
 // Unpin decrements the reference count for a file.
 // When the count reaches zero, the file becomes eligible for eviction.
 // This should be called when a file handle is closed.
@@ -536,6 +662,10 @@ func (dc *DiskCache) Unpin(path string) {
 			dc.lru.Remove(oldestKey)
 		}
 	}
+}
+
+func (dc *DiskCache) UnpinPartial(path string) {
+	dc.Unpin(dc.partialEntryPath(path))
 }
 
 // isPinned checks if a file is currently pinned (has open file handles).
@@ -612,24 +742,26 @@ func (dc *DiskCache) loadStats() error {
 	// initialize stats by scanning files in the cache directory
 	var totalSize int64
 	var fileCount int64
-	err := filepath.Walk(dc.dataDir, func(p string, info os.FileInfo, err error) error {
+	for _, root := range []string{dc.dataDir, dc.partDir} {
+		err := filepath.Walk(root, func(p string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if !info.IsDir() {
+				fileCount++
+				totalSize += info.Size()
+				if !dc.lru.Contains(p) {
+					// TODO: decide what to do in this case - for now just log it
+					dc.log.Trace("DiskCache: loadStats: LRU does not contain %s", p)
+				}
+			}
+			return nil
+		})
 		if err != nil {
+			dc.log.Debug("DiskCache: loadStats: failed to load stats: %v", err)
 			return err
 		}
-
-		if !info.IsDir() {
-			fileCount++
-			totalSize += info.Size()
-			if !dc.lru.Contains(p) {
-				// TODO: decide what to do in this case - for now just log it
-				dc.log.Trace("DiskCache: loadStats: LRU does not contain %s", p)
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		dc.log.Debug("DiskCache: loadStats: failed to load stats: %v", err)
-		return err
 	}
 	dc.stats.CapacityBytes = dc.Capacity
 	dc.stats.CapacityBytesRemaining = dc.Capacity - totalSize
@@ -713,12 +845,104 @@ func (dc *DiskCache) entryPath(path string) string {
 		// path is already a full path in the cache
 		return path
 	}
+	if path != dc.partDir && strings.HasPrefix(path, dc.partDir) {
+		// path is already a full path in the cache
+		return path
+	}
+	return dc.cachePath(dc.dataDir, path)
+}
+
+func (dc *DiskCache) partialEntryPath(path string) string {
+	if path != dc.partDir && strings.HasPrefix(path, dc.partDir) {
+		return path
+	}
+	return dc.cachePath(dc.partDir, path)
+}
+
+func (dc *DiskCache) cachePath(root string, path string) string {
 	sum := sha256.Sum256([]byte(path))
 	h := hex.EncodeToString(sum[:])
 	n := min(shardPrefixLen, len(h))
 	dir := h[:n]
 	name := h[n:] + "-" + filepath.Base(path)
-	return filepath.Join(dc.dataDir, dir, name)
+	return filepath.Join(root, dir, name)
+}
+
+func (dc *DiskCache) metadataPath(path string) string {
+	sum := sha256.Sum256([]byte(path))
+	h := hex.EncodeToString(sum[:])
+	n := min(shardPrefixLen, len(h))
+	dir := h[:n]
+	name := h[n:] + ".json"
+	return filepath.Join(dc.metaDir, dir, name)
+}
+
+func (dc *DiskCache) metadataPathForEntryPath(path string) (string, bool) {
+	fqPath := dc.entryPath(path)
+	rel, err := filepath.Rel(dc.dataDir, fqPath)
+	if err != nil || rel == "." || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+		return "", false
+	}
+	shard := filepath.Dir(rel)
+	if shard == "." || shard == "" || strings.Contains(shard, string(os.PathSeparator)) {
+		return "", false
+	}
+	hashRest, _, ok := strings.Cut(filepath.Base(rel), "-")
+	if !ok || hashRest == "" {
+		return "", false
+	}
+	return filepath.Join(dc.metaDir, shard, hashRest+".json"), true
+}
+
+func (dc *DiskCache) hasCompletedMetadataForEntryPath(path string, size int64) bool {
+	metaPath, ok := dc.metadataPathForEntryPath(path)
+	if !ok {
+		return false
+	}
+	file, err := os.Open(metaPath)
+	if err != nil {
+		return false
+	}
+	defer file.Close()
+
+	var meta cache.EntryMetadata
+	if err := json.NewDecoder(file).Decode(&meta); err != nil {
+		return false
+	}
+	return meta.Complete && meta.Size == size && dc.entryPath(meta.Path) == dc.entryPath(path)
+}
+
+func (dc *DiskCache) readEntryMetadata(path string) (cache.EntryMetadata, error) {
+	var meta cache.EntryMetadata
+	file, err := os.Open(dc.metadataPath(path))
+	if err != nil {
+		return meta, err
+	}
+	defer file.Close()
+	if err := json.NewDecoder(file).Decode(&meta); err != nil {
+		return meta, err
+	}
+	return meta, nil
+}
+
+func (dc *DiskCache) deleteMetadata(path string) error {
+	err := os.Remove(dc.metadataPath(path))
+	if err == nil || errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	return err
+}
+
+func (dc *DiskCache) deleteMetadataForEntryPath(path string) error {
+	metaPath, ok := dc.metadataPathForEntryPath(path)
+	if !ok {
+		return nil
+	}
+	err := os.Remove(metaPath)
+	if err == nil || errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	return err
 }
 
 type lruState struct {
@@ -819,7 +1043,7 @@ func (dc *DiskCache) runMaintenanceOnce(ctx context.Context) {
 		return
 	}
 
-	var agedOut []fileMeta
+	var deleteCandidates []fileMeta
 	var retainedSize, retainedCount int64
 	filesOnDisk := make(map[string]struct{}, 1024)
 	var notInLru []string
@@ -829,43 +1053,67 @@ func (dc *DiskCache) runMaintenanceOnce(ctx context.Context) {
 	dc.writeMu.Lock()
 	dc.log.Debug("DiskCache: performing maintenance")
 	start := time.Now()
-	_ = filepath.WalkDir(dc.dataDir, func(p string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
+	for _, root := range []string{dc.dataDir, dc.partDir} {
+		_ = filepath.WalkDir(root, func(p string, d fs.DirEntry, err error) error {
+			if err != nil || d.IsDir() {
+				return nil
+			}
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+			}
+
+			info, ierr := d.Info()
+			if ierr != nil {
+				// the maintenance is best-effort, so just log and continue
+				dc.log.Debug("DiskCache: maintenance: error stating file %s: %v", p, ierr)
+				return nil
+			}
+
+			filesOnDisk[p] = struct{}{}
+
+			if !dc.hasCompletedMetadataForEntryPath(p, info.Size()) {
+				if dc.isPinned(p) {
+					retainedCount++
+					retainedSize += info.Size()
+					if !dc.lru.Contains(p) {
+						notInLru = append(notInLru, p)
+					}
+					return nil
+				}
+				deleteCandidates = append(deleteCandidates, fileMeta{path: p, size: info.Size(), mod: info.ModTime()})
+				return nil
+			}
+
+			expired := dc.MaxAge > 0 && time.Since(info.ModTime()) > dc.MaxAge
+			if expired {
+				if dc.isPinned(p) {
+					retainedCount++
+					retainedSize += info.Size()
+					if !dc.lru.Contains(p) {
+						notInLru = append(notInLru, p)
+					}
+					return nil
+				}
+				deleteCandidates = append(deleteCandidates, fileMeta{path: p, size: info.Size(), mod: info.ModTime()})
+				return nil
+			}
+			retainedCount++
+			retainedSize += info.Size()
+
+			if !dc.lru.Contains(p) {
+				// these will be added later outside the lock
+				notInLru = append(notInLru, p)
+			}
 			return nil
-		}
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-
-		info, ierr := d.Info()
-		if ierr != nil {
-			// the maintenance is best-effort, so just log and continue
-			dc.log.Debug("DiskCache: maintenance: error stating file %s: %v", p, ierr)
-			return nil
-		}
-
-		filesOnDisk[p] = struct{}{}
-
-		expired := dc.MaxAge > 0 && time.Since(info.ModTime()) > dc.MaxAge
-		if expired {
-			agedOut = append(agedOut, fileMeta{path: p, size: info.Size(), mod: info.ModTime()})
-			return nil
-		}
-		retainedCount++
-		retainedSize += info.Size()
-
-		if !dc.lru.Contains(p) {
-			// these will be added later outside the lock
-			notInLru = append(notInLru, p)
-		}
-		return nil
-	})
+		})
+	}
 	dc.writeMu.Unlock()
 
 	// apply deletions, no need to hold any locks as deleteFile holds delMu
-	for _, old := range agedOut {
+	for _, old := range deleteCandidates {
+		_ = dc.deleteMetadataForEntryPath(old.path)
 		// prefer LRU so onEvict -> deleteFile runs.
 		if removed := dc.lru.Remove(old.path); !removed {
 			// not in LRU: delete directly, and ignore errors because
@@ -935,6 +1183,10 @@ func (dc *DiskCache) deleteIfExpired(path string, info os.FileInfo) (deleted boo
 	if dc.MaxAge > 0 {
 		age := time.Since(info.ModTime())
 		if age > dc.MaxAge {
+			if dc.isPinned(fqPath) {
+				return false, nil
+			}
+			_ = dc.deleteMetadataForEntryPath(fqPath)
 			if removed := dc.lru.Remove(fqPath); removed {
 				// deleted via LRU evict callback
 				return removed, nil
@@ -957,15 +1209,20 @@ func (dc *DiskCache) deleteOneByMtime() bool {
 		t    time.Time
 	}
 	var oldest *fi
-	_ = filepath.Walk(dc.dataDir, func(p string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() {
+	for _, root := range []string{dc.dataDir, dc.partDir} {
+		_ = filepath.Walk(root, func(p string, info os.FileInfo, err error) error {
+			if err != nil || info.IsDir() {
+				return nil
+			}
+			if dc.isPinned(p) {
+				return nil
+			}
+			if oldest == nil || info.ModTime().Before(oldest.t) {
+				oldest = &fi{path: p, t: info.ModTime()}
+			}
 			return nil
-		}
-		if oldest == nil || info.ModTime().Before(oldest.t) {
-			oldest = &fi{path: p, t: info.ModTime()}
-		}
-		return nil
-	})
+		})
+	}
 	if oldest == nil {
 		return false
 	}
