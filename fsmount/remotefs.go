@@ -105,7 +105,8 @@ type RemoteFs struct {
 	gatesMu    sync.Mutex
 	readyGates map[string]*cache.ReadyGate
 
-	events events.EventPublisher
+	events      events.EventPublisher
+	transferSeq uint64
 
 	ops *lim.FuseOpLimiter
 
@@ -1159,9 +1160,13 @@ func (fs *RemoteFs) flushWriteSession(path string, node *fsNode, fh uint64) int 
 func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, session *writeSession, fh uint64) {
 	localPath, remotePath := fs.paths(path)
 	fs.log.Info("Starting upload from working copy: %v (%v)", remotePath, localPath)
+	sessionSnapshot := session.snapshot()
+	transfer := fs.newTransferReporter(events.TransferDirectionUpload, path, sessionSnapshot.currentSize)
+	transfer.Queued()
 
 	reader, err := os.Open(session.workingCopyPath)
 	if err != nil {
+		transfer.Error(err, transferredBytesUnchanged)
 		node.clearPendingVisible()
 		node.writeSessionFinishUpload(session.snapshot().currentSize, err)
 		return
@@ -1171,7 +1176,12 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	node.writeSessionStartUpload(cancel)
+	if _, ok := node.writeSessionStartUpload(cancel, transfer); !ok {
+		err := fmt.Errorf("write session missing for %s", path)
+		transfer.Error(err, transferredBytesUnchanged)
+		node.clearPendingVisible()
+		return
+	}
 
 	session.mu.Lock()
 	mtime := session.mtime
@@ -1187,6 +1197,7 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 		} else if !files_sdk.IsNotExist(err) {
 			fs.logUploadFailure("Upload failed from working copy", remotePath, localPath, err)
 		}
+		transfer.Error(err, transferredBytesUnchanged)
 		node.clearPendingVisible()
 		_ = node.writeSessionFinishUpload(session.snapshot().currentSize, err)
 		return
@@ -1213,6 +1224,7 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 	session.mtimeExplicit = false
 	session.mu.Unlock()
 	fs.log.Info("Upload completed from working copy: %v (%v)", remotePath, localPath)
+	transfer.Complete(size)
 	_ = node.writeSessionFinishUpload(size, nil)
 }
 
@@ -1482,12 +1494,22 @@ func (fs *RemoteFs) Fsync(path string, datasync bool, fh uint64) (errc int) {
 // copyWriterToCache copies the writer's temp file content to the cache.
 // This is called before closing the writer to preserve the uploaded content for subsequent writes.
 func (fs *RemoteFs) uploadProgressFunc(node *fsNode) func(int64) {
+	return fs.uploadProgressFuncWithTransfer(node, nil)
+}
+
+func (fs *RemoteFs) uploadProgressFuncWithTransfer(node *fsNode, transfer *transferReporter) func(int64) {
 	return func(delta int64) {
 		// If the write was successful, extend the node's ttl and keep track of the number
 		// of bytes written for logging purposes.
 		// Extend the node's TTL and keep track of bytes written for logging/sweeping.
 		node.extendTtl()
-		node.writeSessionRecordProgress(delta)
+		if sessionTransfer := node.writeSessionRecordProgress(delta); sessionTransfer != nil {
+			sessionTransfer.Progress(delta)
+			return
+		}
+		if transfer != nil {
+			transfer.Progress(delta)
+		}
 	}
 }
 
@@ -1517,6 +1539,8 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 	}
 
 	localPath, remotePath := fs.paths(dst)
+	transfer := fs.newTransferReporter(events.TransferDirectionUpload, dst, fileInfo.Size())
+	transfer.Queued()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -1538,7 +1562,7 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 				file.UploadWithSize(fileInfo.Size()),
 				file.UploadWithDestinationPath(remotePath),
 				file.UploadWithProvidedMtime(fileInfo.ModTime()),
-				file.UploadWithProgress(fs.uploadProgressFunc(node)),
+				file.UploadWithProgress(fs.uploadProgressFuncWithTransfer(node, transfer)),
 				file.WithUploadStartedCallback(func(part files_sdk.FileUploadPart) {
 					fs.log.Debug("RemoteFs: uploadFile: uploading part number %d, of: %v, ref: '%v'", part.PartNumber, remotePath, part.Ref)
 				}),
@@ -1597,6 +1621,7 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 		if !errors.Is(uploadErr, context.Canceled) && !files_sdk.IsNotExist(uploadErr) {
 			fs.logUploadFailure("Error uploading file during rename", remotePath, localPath, uploadErr)
 		}
+		transfer.Error(uploadErr, transferredBytesUnchanged)
 		return uploadErr
 	}
 	if cacheErr == nil {
@@ -1609,6 +1634,7 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 	// Update the node's info after the upload succeeds. Cache commit failures are logged above
 	// and treated as cache misses because the remote write has already completed.
 	fs.log.Info("Upload completed during rename: %v (%v).", remotePath, localPath)
+	transfer.Complete(fileInfo.Size())
 	node.updateInfo(fsNodeInfo{
 		nodeType:     nodeTypeFile,
 		size:         fileInfo.Size(),
@@ -1621,14 +1647,29 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 
 // this is a convenience method for downloading a file from the remote API to the local file system
 // for use by the Rename operation when moving a file from the RemoteFs to the LocalFs.
-func (fs *RemoteFs) downloadFile(src, dst string) error {
+func (fs *RemoteFs) downloadFile(src, dst string, eventLocalPath string) error {
 	fs.log.Debug("RemoteFs: Downloading file: %v to %v", src, dst)
+	transfer := fs.newTransferReporterForPaths(events.TransferDirectionDownload, eventLocalPath, fs.remotePath(src), 0)
+	transfer.Queued()
+	var downloaded files_sdk.File
 	err := fs.ops.WithLimit(context.Background(), lim.FuseOpDownload, func(ctx context.Context) error {
-		_, err := fs.backend.downloadToFile(files_sdk.FileDownloadParams{Path: src}, dst)
+		var err error
+		downloaded, err = fs.backend.downloadToFile(files_sdk.FileDownloadParams{Path: src}, dst)
 		return err
 	})
+	if err != nil {
+		transfer.Error(err, transferredBytesUnchanged)
+		return err
+	}
 
-	return err
+	size := downloaded.Size
+	if size == 0 {
+		if info, statErr := os.Stat(dst); statErr == nil {
+			size = info.Size()
+		}
+	}
+	transfer.Complete(size)
+	return nil
 }
 
 func (fs *RemoteFs) findOrCreateGate(path string) (*cache.ReadyGate, bool) {
@@ -1774,6 +1815,8 @@ func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, meta
 	}()
 	_ = fs.cacheStore.DeletePartial(path)
 	fs.cacheStore.PinPartial(path)
+	transfer := fs.newTransferReporter(events.TransferDirectionDownload, path, meta.Size)
+	transfer.Queued()
 
 	var f files_sdk.File
 	var err error
@@ -1801,6 +1844,7 @@ func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, meta
 							// a local write has its baseline. Before hydration completes,
 							// this same download may be supplying that baseline.
 							readyGate.Finish(context.Canceled, off)
+							transfer.Error(context.Canceled, off)
 							return nil
 						}
 					}
@@ -1814,27 +1858,34 @@ func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, meta
 						if err != nil || written != nr {
 							// there was an error writing to the disk cache, or not all bytes that were read from the
 							// remote API were written to the disk cache.
-							readyGate.Finish(fmt.Errorf("error writing to disk cache for %v: %v", path, err), off)
-							return err
+							cacheErr := fmt.Errorf("error writing to disk cache for %v: %v", path, err)
+							readyGate.Finish(cacheErr, off)
+							transfer.Error(cacheErr, off)
+							return cacheErr
 						}
 						off += int64(written)
 						readyGate.SetAvailable(off)
+						transfer.Progress(int64(written))
 					}
 					if er != nil {
 						if er == io.EOF {
 							if off != meta.Size {
 								err := io.ErrUnexpectedEOF
 								readyGate.Finish(err, off)
+								transfer.Error(err, off)
 								return err
 							}
 							if err := fs.commitCacheEntryFromPartial(path, path, meta, false); err != nil {
 								readyGate.Finish(err, off)
+								transfer.Error(err, off)
 								return err
 							}
 							readyGate.Finish(nil, off)
+							transfer.Complete(off)
 							return nil
 						}
 						readyGate.Finish(er, off)
+						transfer.Error(er, off)
 						return er
 					}
 					// TODO: consider canceling the download if there are no active readers/waiters
@@ -1847,6 +1898,7 @@ func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, meta
 
 	if err != nil {
 		readyGate.Finish(err, -1)
+		transfer.Error(err, transferredBytesUnchanged)
 		return
 	}
 	if f.Size > 0 {

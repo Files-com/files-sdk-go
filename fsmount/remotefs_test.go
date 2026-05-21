@@ -19,6 +19,7 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/file"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/events"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/disk"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/mem"
@@ -72,6 +73,62 @@ func newTestRemoteFs(t *testing.T) (*RemoteFs, *virtualfs, cacheStore) {
 	}
 
 	return fs, vfs, cacheStore
+}
+
+type captureEventPublisher struct {
+	mu     sync.Mutex
+	events []events.MountEvent
+}
+
+func (p *captureEventPublisher) Publish(event events.MountEvent) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.events = append(p.events, event)
+}
+
+func (p *captureEventPublisher) transferEvents() []events.TransferEvent {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	transfers := make([]events.TransferEvent, 0, len(p.events))
+	for _, event := range p.events {
+		if transfer, ok := event.(events.TransferEvent); ok {
+			transfers = append(transfers, transfer)
+		}
+	}
+	return transfers
+}
+
+func (p *captureEventPublisher) waitForTransferEvents(t *testing.T, count int) []events.TransferEvent {
+	t.Helper()
+
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		transfers := p.transferEvents()
+		if len(transfers) >= count {
+			return transfers
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("timed out waiting for %d transfer events, got %d", count, len(transfers))
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func assertStableTransferID(t *testing.T, transfers []events.TransferEvent) {
+	t.Helper()
+	if len(transfers) == 0 {
+		t.Fatal("expected transfer events")
+	}
+	id := transfers[0].ID
+	if id == "" {
+		t.Fatal("expected non-empty transfer ID")
+	}
+	for i, transfer := range transfers {
+		if transfer.ID != id {
+			t.Fatalf("transfer event %d ID = %q, want %q", i, transfer.ID, id)
+		}
+	}
 }
 
 type fakeRemoteBackend struct {
@@ -355,6 +412,297 @@ func newTestFilescomfs(t *testing.T) (*Filescomfs, *RemoteFs, *LocalFs, *virtual
 	}
 
 	return fs, remote, local, vfs, cacheStore
+}
+
+func TestTransferReporterThrottlesProgressEvents(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	publisher := &captureEventPublisher{}
+	fs.events = publisher
+
+	reporter := fs.newTransferReporter(events.TransferDirectionUpload, "/throttle.bin", transferProgressMinBytes*2)
+	reporter.Queued()
+	reporter.Progress(1)
+	reporter.Progress(1)
+	reporter.Progress(transferProgressMinBytes)
+	reporter.Complete(transferProgressMinBytes + 2)
+
+	transfers := publisher.transferEvents()
+	if len(transfers) != 4 {
+		t.Fatalf("transfer event count = %d, want 4", len(transfers))
+	}
+	assertStableTransferID(t, transfers)
+
+	wantStatuses := []events.TransferStatus{
+		events.TransferStatusQueued,
+		events.TransferStatusTransferring,
+		events.TransferStatusTransferring,
+		events.TransferStatusComplete,
+	}
+	for i, want := range wantStatuses {
+		if transfers[i].Status != want {
+			t.Fatalf("transfer event %d status = %q, want %q", i, transfers[i].Status, want)
+		}
+	}
+}
+
+func TestTransferReporterRewindsNegativeProgress(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	publisher := &captureEventPublisher{}
+	fs.events = publisher
+
+	reporter := fs.newTransferReporter(events.TransferDirectionUpload, "/retry.bin", transferProgressMinBytes*2)
+	reporter.Queued()
+	reporter.Progress(transferProgressMinBytes)
+	reporter.Progress(-transferProgressMinBytes * 2)
+	reporter.Progress(transferProgressMinBytes)
+	reporter.Complete(transferredBytesUnchanged)
+
+	transfers := publisher.transferEvents()
+	if len(transfers) != 4 {
+		t.Fatalf("transfer event count = %d, want 4", len(transfers))
+	}
+	assertStableTransferID(t, transfers)
+
+	if transfers[1].TransferredBytes != transferProgressMinBytes {
+		t.Fatalf("first progress transferred bytes = %d, want %d", transfers[1].TransferredBytes, transferProgressMinBytes)
+	}
+	if transfers[2].TransferredBytes != transferProgressMinBytes {
+		t.Fatalf("second progress transferred bytes = %d, want %d", transfers[2].TransferredBytes, transferProgressMinBytes)
+	}
+	last := transfers[len(transfers)-1]
+	if last.Status != events.TransferStatusComplete {
+		t.Fatalf("last status = %q, want complete", last.Status)
+	}
+	if last.TransferredBytes != transferProgressMinBytes {
+		t.Fatalf("complete transferred bytes = %d, want %d", last.TransferredBytes, transferProgressMinBytes)
+	}
+}
+
+func TestTransferReporterNoOpPublisherIsOptional(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	fs.events = &events.NoOpEventPublisher{}
+	reporter := fs.newTransferReporter(events.TransferDirectionUpload, "/noop.bin", 10)
+	reporter.Queued()
+	reporter.Progress(5)
+	reporter.Complete(10)
+}
+
+func TestRemoteFsWriteSessionUploadPublishesTransferEvents(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	publisher := &captureEventPublisher{}
+	fs.events = publisher
+
+	path := "/illustrator-transfer.ai"
+	payload := bytes.Repeat([]byte("u"), int(transferProgressMinBytes)+1)
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return 0, err
+		}
+		progress := fs.uploadProgressFunc(node)
+		progress(int64(len(data) / 2))
+		progress(int64(len(data) - len(data)/2))
+		return int64(len(data)), nil
+	}
+
+	errc, fh := fs.Create(path, fuse.O_RDWR|fuse.O_CREAT, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errc)
+	}
+	defer fs.Release(path, fh)
+
+	if n := fs.Write(path, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+	if errc := fs.Flush(path, fh); errc != 0 {
+		t.Fatalf("Flush returned unexpected error: %d", errc)
+	}
+
+	transfers := publisher.waitForTransferEvents(t, 3)
+	assertStableTransferID(t, transfers)
+	if transfers[0].Status != events.TransferStatusQueued {
+		t.Fatalf("first status = %q, want queued", transfers[0].Status)
+	}
+	if transfers[1].Status != events.TransferStatusTransferring {
+		t.Fatalf("second status = %q, want transferring", transfers[1].Status)
+	}
+	last := transfers[len(transfers)-1]
+	if last.Status != events.TransferStatusComplete {
+		t.Fatalf("last status = %q, want complete", last.Status)
+	}
+	if last.Direction != events.TransferDirectionUpload {
+		t.Fatalf("direction = %q, want upload", last.Direction)
+	}
+	if last.LocalPath != fs.localPath(path) {
+		t.Fatalf("local path = %q, want %q", last.LocalPath, fs.localPath(path))
+	}
+	if last.RemotePath != fs.remotePath(path) {
+		t.Fatalf("remote path = %q, want %q", last.RemotePath, fs.remotePath(path))
+	}
+	if last.Size != int64(len(payload)) || last.TransferredBytes != int64(len(payload)) {
+		t.Fatalf("last size/transferred = %d/%d, want %d", last.Size, last.TransferredBytes, len(payload))
+	}
+	if last.EndedAt.IsZero() {
+		t.Fatal("expected complete event to include EndedAt")
+	}
+}
+
+func TestRemoteFsWriteSessionUploadPublishesErroredTransferEvent(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	publisher := &captureEventPublisher{}
+	fs.events = publisher
+
+	uploadErr := errors.New("backend exploded")
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+		return 0, uploadErr
+	}
+
+	path := "/upload-error.ai"
+	errc, fh := fs.Create(path, fuse.O_RDWR|fuse.O_CREAT, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errc)
+	}
+	defer fs.Release(path, fh)
+
+	if n := fs.Write(path, []byte("data"), 0, fh); n != 4 {
+		t.Fatalf("Write returned %d, want 4", n)
+	}
+	if errc := fs.Flush(path, fh); errc != -fuse.EIO {
+		t.Fatalf("Flush returned %d, want %d", errc, -fuse.EIO)
+	}
+
+	transfers := publisher.waitForTransferEvents(t, 2)
+	assertStableTransferID(t, transfers)
+	last := transfers[len(transfers)-1]
+	if last.Status != events.TransferStatusErrored {
+		t.Fatalf("last status = %q, want errored", last.Status)
+	}
+	if !strings.Contains(last.Error, uploadErr.Error()) {
+		t.Fatalf("last error = %q, want to contain %q", last.Error, uploadErr.Error())
+	}
+}
+
+func TestRemoteFsFillCachePublishesDownloadTransferEvents(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	publisher := &captureEventPublisher{}
+	fs.events = publisher
+
+	path := "/download-transfer.bin"
+	payload := bytes.Repeat([]byte("d"), cacheWriteSize+3)
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeFile,
+		size:         int64(len(payload)),
+		modTime:      modTime,
+		creationTime: modTime,
+	})
+	fs.backend = &fakeRemoteBackend{
+		downloadFunc: fakeDownloadResponse(payload, int64(len(payload))),
+	}
+
+	readyGate := cache.NewReadyGate()
+	fs.fillCache(context.Background(), path, "https://example.invalid/download", cacheEntryMetadata(path, int64(len(payload)), modTime), readyGate, 0, false)
+
+	transfers := publisher.waitForTransferEvents(t, 3)
+	assertStableTransferID(t, transfers)
+	if transfers[0].Status != events.TransferStatusQueued {
+		t.Fatalf("first status = %q, want queued", transfers[0].Status)
+	}
+	if transfers[1].Status != events.TransferStatusTransferring {
+		t.Fatalf("second status = %q, want transferring", transfers[1].Status)
+	}
+	last := transfers[len(transfers)-1]
+	if last.Status != events.TransferStatusComplete {
+		t.Fatalf("last status = %q, want complete", last.Status)
+	}
+	if last.Direction != events.TransferDirectionDownload {
+		t.Fatalf("direction = %q, want download", last.Direction)
+	}
+	if last.LocalPath != fs.localPath(path) {
+		t.Fatalf("local path = %q, want %q", last.LocalPath, fs.localPath(path))
+	}
+	if last.RemotePath != fs.remotePath(path) {
+		t.Fatalf("remote path = %q, want %q", last.RemotePath, fs.remotePath(path))
+	}
+	if last.Size != int64(len(payload)) || last.TransferredBytes != int64(len(payload)) {
+		t.Fatalf("last size/transferred = %d/%d, want %d", last.Size, last.TransferredBytes, len(payload))
+	}
+}
+
+func TestRemoteFsDownloadFilePublishesTransferEventsWithStatFallback(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	publisher := &captureEventPublisher{}
+	fs.events = publisher
+
+	src := "/download-for-rename.bin"
+	payload := []byte("downloaded through cross-boundary rename")
+	dst := filepath.Join(t.TempDir(), "download-for-rename.bin")
+	eventLocalPath := filepath.Join(t.TempDir(), "mount", "download-for-rename.bin")
+	fs.backend = &fakeRemoteBackend{
+		downloadToFileFunc: func(params files_sdk.FileDownloadParams, filePath string, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+			if params.Path != src {
+				t.Fatalf("download path = %q, want %q", params.Path, src)
+			}
+			if filePath != dst {
+				t.Fatalf("download destination = %q, want %q", filePath, dst)
+			}
+			if err := os.WriteFile(filePath, payload, 0o600); err != nil {
+				return files_sdk.File{}, err
+			}
+			return files_sdk.File{
+				Path: params.Path,
+				Type: "file",
+				Size: 0,
+			}, nil
+		},
+	}
+
+	if err := fs.downloadFile(src, dst, eventLocalPath); err != nil {
+		t.Fatalf("downloadFile returned error: %v", err)
+	}
+
+	transfers := publisher.transferEvents()
+	if len(transfers) != 2 {
+		t.Fatalf("transfer event count = %d, want 2", len(transfers))
+	}
+	assertStableTransferID(t, transfers)
+	if transfers[0].Status != events.TransferStatusQueued {
+		t.Fatalf("first status = %q, want queued", transfers[0].Status)
+	}
+	last := transfers[len(transfers)-1]
+	if last.Status != events.TransferStatusComplete {
+		t.Fatalf("last status = %q, want complete", last.Status)
+	}
+	if last.Direction != events.TransferDirectionDownload {
+		t.Fatalf("direction = %q, want download", last.Direction)
+	}
+	if last.LocalPath != eventLocalPath {
+		t.Fatalf("local path = %q, want %q", last.LocalPath, eventLocalPath)
+	}
+	if last.RemotePath != fs.remotePath(src) {
+		t.Fatalf("remote path = %q, want %q", last.RemotePath, fs.remotePath(src))
+	}
+	if last.Size != int64(len(payload)) || last.TransferredBytes != int64(len(payload)) {
+		t.Fatalf("last size/transferred = %d/%d, want %d", last.Size, last.TransferredBytes, len(payload))
+	}
+	if last.EndedAt.IsZero() {
+		t.Fatal("expected complete event to include EndedAt")
+	}
 }
 
 func TestRemoteFsPublicWriteReadGetattrUsesWorkingCopy(t *testing.T) {

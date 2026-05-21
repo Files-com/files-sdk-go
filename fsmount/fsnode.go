@@ -60,6 +60,7 @@ type activeUpload struct {
 	done         chan struct{}
 	doneClosed   bool
 	ref          string
+	transfer     *transferReporter
 	bytesWritten int64
 	lastActivity time.Time
 	// Guards fields inside activeUpload
@@ -483,7 +484,7 @@ func (n *fsNode) writeSessionCaptureRef(ref string) bool {
 	return true
 }
 
-func (n *fsNode) writeSessionStartUpload(cancel context.CancelFunc) (*activeUpload, bool) {
+func (n *fsNode) writeSessionStartUpload(cancel context.CancelFunc, transfer *transferReporter) (*activeUpload, bool) {
 	n.writeMu.Lock()
 	session := n.writeSession
 	n.writeMu.Unlock()
@@ -498,6 +499,7 @@ func (n *fsNode) writeSessionStartUpload(cancel context.CancelFunc) (*activeUplo
 		startedAt:    time.Now(),
 		cancel:       cancel,
 		done:         make(chan struct{}),
+		transfer:     transfer,
 		lastActivity: time.Now(),
 	}
 	session.upload = upload
@@ -536,12 +538,12 @@ func (n *fsNode) writeSessionFinishUpload(size int64, err error) bool {
 	return true
 }
 
-func (n *fsNode) writeSessionRecordProgress(delta int64) bool {
+func (n *fsNode) writeSessionRecordProgress(delta int64) *transferReporter {
 	n.writeMu.Lock()
 	session := n.writeSession
 	n.writeMu.Unlock()
 	if session == nil {
-		return false
+		return nil
 	}
 
 	session.mu.Lock()
@@ -549,8 +551,9 @@ func (n *fsNode) writeSessionRecordProgress(delta int64) bool {
 	session.mu.Unlock()
 	if upload != nil {
 		upload.recordProgress(delta)
+		return upload.transfer
 	}
-	return true
+	return nil
 }
 
 func (n *fsNode) poisonedWriteSessionErr() error {

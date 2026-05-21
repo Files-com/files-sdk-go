@@ -213,7 +213,7 @@ func (fs *Filescomfs) Rename(oldpath string, newpath string) (errc int) {
 		// a best effort has been made to ensure that any active upload has finalized
 		// before proceeding with the download
 		fqNew := fs.local.fqPath(newpath)
-		err := fs.remote.downloadFile(oldpath, fqNew)
+		err := fs.remote.downloadFile(oldpath, fqNew, fs.remote.localPath(newpath))
 		if err != nil {
 			// if the file is not found on the remote, create an empty file locally to satisfy the rename
 			if files_sdk.IsNotExist(err) {
