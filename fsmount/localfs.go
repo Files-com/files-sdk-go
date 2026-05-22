@@ -52,8 +52,7 @@ func newLocalFs(params MountParams, vfs *virtualfs, ll lib.LeveledLogger) *Local
 }
 
 func (fs *LocalFs) Init() {
-	// Guard with a sync.Once because Init is called from fsmount.Mount, but cgofuse also calls Init
-	// when it mounts the file system.
+	// Guard with a sync.Once because validation and cgofuse startup can both initialize the local file system.
 	fs.initOnce.Do(func() {
 		// store the time the file system was initialized to use as the creation time for the root directory
 		fs.initTime = time.Now()

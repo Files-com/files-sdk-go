@@ -38,6 +38,12 @@ const (
 
 	// DefaultDebugFuseLog is the default path to the fuse debug log. [Windows only]
 	DefaultDebugFuseLog = "fuse.log"
+
+	// DefaultMountStartupTimeout is the default maximum time to wait for FUSE to initialize the file system.
+	DefaultMountStartupTimeout = 30 * time.Second
+
+	// mountAbortWaitTimeout is the maximum time to wait synchronously for cgofuse to exit after an abort.
+	mountAbortWaitTimeout = 5 * time.Second
 )
 
 // MountParams contains the parameters for mounting a Files.com file system using FUSE.
@@ -90,6 +96,10 @@ type MountParams struct {
 	// Optional. If set to true, will initialize fuse configured to provide extra debug information.
 	// Defaults to false.
 	DebugFuse bool
+
+	// Optional. Maximum time to wait for FUSE to initialize the file system before Mount returns an error.
+	// Defaults to 30 seconds when unset or non-positive.
+	MountStartupTimeout time.Duration
 
 	// Optional. The path to the fuse debug log. Only used if DebugFuse is set to true.
 	// Defaults to fuse.log [Windows only]
@@ -187,6 +197,7 @@ func Mount(params MountParams) (*Host, error) {
 	}
 	// test that the fs can list the root
 	if err := fs.Validate(); err != nil {
+		fs.Destroy()
 		return nil, err
 	}
 
@@ -202,19 +213,111 @@ func Mount(params MountParams) (*Host, error) {
 	fuseHost := fuse.NewFileSystemHost(fs)
 	fuseHost.SetCapReaddirPlus(true)
 
+	mountErr := make(chan error, 1)
+	mountStarted := make(chan struct{})
 	go func() {
+		close(mountStarted)
+		defer func() {
+			if r := recover(); r != nil {
+				err := fmt.Errorf("failed to mount file system at %s: %v", fs.mountPoint, r)
+				fs.log.Error(err.Error())
+				mntRegistry.remove(fs.mountPoint)
+				mountErr <- err
+			}
+		}()
+
 		mounted := fuseHost.Mount(fs.mountPoint, opts)
 		if !mounted {
-			fs.log.Error("Failed to mount file system at %s", fs.mountPoint)
+			err := fmt.Errorf("failed to mount file system at %s", fs.mountPoint)
+			fs.log.Error(err.Error())
 			mntRegistry.remove(fs.mountPoint)
+			mountErr <- err
 			return
 		}
+		mountErr <- nil
 	}()
 
-	return mntRegistry.add(fs.mountPoint, &Host{
+	<-mountStarted
+	startupTimeout := mountStartupTimeout(params)
+	startupTimer := time.NewTimer(startupTimeout)
+	defer startupTimer.Stop()
+
+	select {
+	case <-fs.mountReady:
+		select {
+		case err := <-mountErr:
+			if err != nil {
+				fs.Destroy()
+				return nil, err
+			}
+			fs.Destroy()
+			return nil, fmt.Errorf("mount exited shortly after becoming ready at %s", fs.mountPoint)
+		default:
+		}
+	case err := <-mountErr:
+		if err != nil {
+			fs.Destroy()
+			return nil, err
+		}
+		fs.Destroy()
+		return nil, fmt.Errorf("mount exited during startup at %s", fs.mountPoint)
+	case <-startupTimer.C:
+		abortMountStartup(fuseHost, fs, mountErr)
+		return nil, fmt.Errorf("timed out waiting for file system mount at %s", fs.mountPoint)
+	}
+
+	host, err := mntRegistry.add(fs.mountPoint, &Host{
 		fuseHost: fuseHost,
 		fs:       fs,
 	})
+	if err != nil {
+		abortMountStartup(fuseHost, fs, mountErr)
+		return nil, err
+	}
+
+	return host, nil
+}
+
+func abortMountStartup(fuseHost *fuse.FileSystemHost, fs *Filescomfs, mountErr <-chan error) {
+	fuseHost.Unmount()
+	if waitForMountExit(mountErr, mountAbortWaitTimeout) {
+		fs.log.Debug("Aborted file system mount startup at %s", fs.mountPoint)
+		fs.Destroy()
+		return
+	}
+
+	fs.log.Error("Timed out waiting for file system mount at %s to exit after abort", fs.mountPoint)
+	go destroyAfterMountExit(fuseHost, fs, mountErr)
+}
+
+func waitForMountExit(mountErr <-chan error, timeout time.Duration) bool {
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+
+	select {
+	case <-mountErr:
+		return true
+	case <-timer.C:
+		return false
+	}
+}
+
+func destroyAfterMountExit(fuseHost *fuse.FileSystemHost, fs *Filescomfs, mountErr <-chan error) {
+	select {
+	case <-mountErr:
+	case <-fs.mountReady:
+		// Init may have raced with the first Unmount, so re-issue it and wait for cgofuse to exit.
+		fuseHost.Unmount()
+		<-mountErr
+	}
+	fs.Destroy()
+}
+
+func mountStartupTimeout(params MountParams) time.Duration {
+	if params.MountStartupTimeout > 0 {
+		return params.MountStartupTimeout
+	}
+	return DefaultMountStartupTimeout
 }
 
 // TODO: remove if/when the entire SDK has http2 configured by default
@@ -278,6 +381,7 @@ func newFs(params MountParams, logger lib.LeveledLogger) (*Filescomfs, error) {
 		local:       localfs,
 		vfs:         vfs,
 		events:      params.EventPublisher,
+		mountReady:  make(chan struct{}),
 	}
 	if fs.events == nil {
 		fs.events = &events.NoOpEventPublisher{}

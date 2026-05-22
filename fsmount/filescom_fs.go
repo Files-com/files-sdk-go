@@ -48,13 +48,16 @@ type Filescomfs struct {
 	ignore         *gogitignore.GitIgnore
 	events         events.EventPublisher
 	initOnce       sync.Once
+	destroyOnce    sync.Once
+	mountReady     chan struct{}
+	mountReadyOnce sync.Once
 }
 
 // Init initializes the Filescomfs file system.
 func (fs *Filescomfs) Init() {
 	defer logPanics(fs.log)
-	// Guard with a sync.Once because Init is called from fsmount.Mount, but cgofuse also calls Init
-	// when it mounts the file system.
+	// cgofuse should call Init once per mount, but keep it idempotent so duplicate startup callbacks
+	// cannot start duplicate background maintenance.
 	fs.initOnce.Do(func() {
 		fs.remote.Init()
 		fs.local.Init()
@@ -62,23 +65,34 @@ func (fs *Filescomfs) Init() {
 		fs.log.Info("Files.com file system initialized successfully.")
 		fs.log.Debug("Mount point: %s, Remote file system root: %s, Local file system root: %s", fs.mountPoint, fs.remote.root, fs.local.localFsRoot)
 	})
+	fs.signalMountReady()
 }
 
 func (fs *Filescomfs) Destroy() {
 	defer logPanics(fs.log)
-	fs.log.Info("Shutting down Files.com file system mounted at: %s", fs.mountPoint)
-	fs.remote.Destroy()
-	fs.local.Destroy()
-	fs.vfs.destroy()
+	fs.destroyOnce.Do(func() {
+		fs.log.Info("Shutting down Files.com file system mounted at: %s", fs.mountPoint)
+		fs.remote.Destroy()
+		fs.local.Destroy()
+		fs.vfs.destroy()
+	})
 }
 
 // Validate checks if the Filescomfs file system is valid by attempting to list the root directories of the RemoteFs and LocalFs.
 func (fs *Filescomfs) Validate() error {
 	defer logPanics(fs.log)
-	fs.Init()
 	lerr := fs.local.Validate()
 	rerr := fs.remote.Validate()
 	return errors.Join(lerr, rerr)
+}
+
+func (fs *Filescomfs) signalMountReady() {
+	if fs.mountReady == nil {
+		return
+	}
+	fs.mountReadyOnce.Do(func() {
+		close(fs.mountReady)
+	})
 }
 
 func (fs *Filescomfs) Statfs(path string, stat *fuse.Statfs_t) (errc int) {

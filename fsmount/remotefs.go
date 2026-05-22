@@ -251,8 +251,7 @@ func newRemoteFs(params MountParams, vfs *virtualfs, log log.Logger, cs cacheSto
 }
 
 func (fs *RemoteFs) Init() {
-	// Guard with a sync.Once because Init is called from fsmount.Mount, but cgofuse also calls Init
-	// when it mounts the file system.
+	// Guard with a sync.Once because validation and cgofuse startup can both initialize the remote file system.
 	fs.initOnce.Do(func() {
 		if fs.backend == nil {
 			fs.backend = &sdkRemoteBackend{
