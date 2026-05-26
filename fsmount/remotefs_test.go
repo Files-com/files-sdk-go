@@ -132,15 +132,16 @@ func assertStableTransferID(t *testing.T, transfers []events.TransferEvent) {
 }
 
 type fakeRemoteBackend struct {
-	findFunc           func(params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error)
-	listForFunc        func(params files_sdk.FolderListForParams, opts ...files_sdk.RequestResponseOption) (remoteFileIter, error)
-	uploadFunc         func(opts ...file.UploadOption) error
-	moveFunc           func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error)
-	waitFunc           func(action files_sdk.FileAction, status func(files_sdk.FileMigration), opts ...files_sdk.RequestResponseOption) (files_sdk.FileMigration, error)
-	downloadToFileFunc func(params files_sdk.FileDownloadParams, filePath string, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error)
-	downloadFunc       func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error)
-	deleteFunc         func(params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponseOption) error
-	createLockFunc     func(params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (files_sdk.Lock, error)
+	findFunc             func(params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error)
+	listForFunc          func(params files_sdk.FolderListForParams, opts ...files_sdk.RequestResponseOption) (remoteFileIter, error)
+	uploadFunc           func(opts ...file.UploadOption) error
+	uploadWithResumeFunc func(opts ...file.UploadOption) (file.UploadResumable, error)
+	moveFunc             func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error)
+	waitFunc             func(action files_sdk.FileAction, status func(files_sdk.FileMigration), opts ...files_sdk.RequestResponseOption) (files_sdk.FileMigration, error)
+	downloadToFileFunc   func(params files_sdk.FileDownloadParams, filePath string, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error)
+	downloadFunc         func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error)
+	deleteFunc           func(params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponseOption) error
+	createLockFunc       func(params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (files_sdk.Lock, error)
 }
 
 func (b *fakeRemoteBackend) findCurrent(opts ...files_sdk.RequestResponseOption) (files_sdk.ApiKey, error) {
@@ -177,6 +178,12 @@ func (b *fakeRemoteBackend) update(params files_sdk.FileUpdateParams, opts ...fi
 }
 
 func (b *fakeRemoteBackend) uploadWithResume(opts ...file.UploadOption) (file.UploadResumable, error) {
+	if b.uploadWithResumeFunc != nil {
+		return b.uploadWithResumeFunc(opts...)
+	}
+	if b.uploadFunc != nil {
+		return file.UploadResumable{}, b.uploadFunc(opts...)
+	}
 	return file.UploadResumable{}, nil
 }
 
@@ -1533,6 +1540,82 @@ func TestRemoteFsRenameUploadFailureDoesNotCommitDiskCache(t *testing.T) {
 	}
 }
 
+func TestRemoteFsUploadFileUsesUploadResponseMetadataForPostUploadReads(t *testing.T) {
+	fs, vfs, cacheStore := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	src := filepath.Join(t.TempDir(), "rename-cache.bin")
+	dst := "/rename-cache.bin"
+	payload := []byte("rename-upload-cache")
+	if err := os.WriteFile(src, payload, 0o600); err != nil {
+		t.Fatalf("WriteFile failed: %v", err)
+	}
+	localMtime := time.Date(2026, 5, 21, 11, 30, 45, 0, time.UTC)
+	if err := os.Chtimes(src, localMtime, localMtime); err != nil {
+		t.Fatalf("Chtimes failed: %v", err)
+	}
+
+	remoteMtime := localMtime.Add(30 * time.Second)
+	remoteFile := files_sdk.File{
+		DisplayName: "rename-cache.bin",
+		Path:        dst,
+		Type:        "file",
+		Size:        int64(len(payload)),
+		Mtime:       &remoteMtime,
+		DownloadUri: "https://example.invalid/download",
+	}
+
+	backend := fs.backend.(*fakeRemoteBackend)
+	backend.uploadWithResumeFunc = func(opts ...file.UploadOption) (file.UploadResumable, error) {
+		return file.UploadResumable{File: remoteFile}, nil
+	}
+	downloadCalls := 0
+	backend.downloadFunc = func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+		downloadCalls++
+		return fakeDownloadResponse(payload, int64(len(payload)))(params, opts...)
+	}
+
+	if err := fs.uploadFile(src, dst); err != nil {
+		t.Fatalf("uploadFile returned error: %v", err)
+	}
+
+	node, ok := vfs.fetch(dst)
+	if !ok {
+		t.Fatal("expected node to exist after uploadFile")
+	}
+	if !node.info.modTime.Equal(remoteMtime) {
+		t.Fatalf("node mtime = %v, want upload response mtime %v", node.info.modTime, remoteMtime)
+	}
+
+	buf := make([]byte, len(payload))
+	n, err := cacheStore.ReadComplete(dst, cacheEntryMetadata(dst, int64(len(payload)), remoteMtime), buf, 0)
+	if err != nil {
+		t.Fatalf("cache ReadComplete failed: %v", err)
+	}
+	if n != len(payload) || !bytes.Equal(buf[:n], payload) {
+		t.Fatalf("cache ReadComplete returned n=%d payload=%q, want %q", n, string(buf[:n]), string(payload))
+	}
+
+	fs.createNode(dst, remoteFile)
+
+	errc, fh := fs.Open(dst, fuse.O_RDONLY)
+	if errc != 0 {
+		t.Fatalf("Open returned unexpected error: %d", errc)
+	}
+	defer fs.Release(dst, fh)
+
+	readBuf := make([]byte, len(payload))
+	if n := fs.Read(dst, readBuf, 0, fh); n != len(payload) {
+		t.Fatalf("Read returned %d, want %d", n, len(payload))
+	}
+	if !bytes.Equal(readBuf, payload) {
+		t.Fatalf("Read returned %q, want %q", string(readBuf), string(payload))
+	}
+	if downloadCalls != 0 {
+		t.Fatalf("download calls = %d, want 0", downloadCalls)
+	}
+}
+
 func TestRemoteFsPublicTruncateZeroSkipsHydrationAndResetsWorkingCopy(t *testing.T) {
 	fs, vfs, cacheStore := newTestRemoteFs(t)
 	defer vfs.destroy()
@@ -1620,13 +1703,18 @@ func TestRemoteFsPublicFlushUploadsWorkingCopyAndRefreshesCache(t *testing.T) {
 		t.Fatalf("uploaded payload = %q, want %q", string(uploaded), string(payload))
 	}
 
+	node, ok := vfs.fetch(path)
+	if !ok {
+		t.Fatal("expected node to exist after Flush")
+	}
+
 	buf := make([]byte, len(payload))
-	n, err := cacheStore.Read(path, buf, 0)
+	n, err := cacheStore.ReadComplete(path, cacheEntryMetadata(path, int64(len(payload)), node.info.modTime), buf, 0)
 	if err != nil {
-		t.Fatalf("cache Read failed: %v", err)
+		t.Fatalf("cache ReadComplete failed: %v", err)
 	}
 	if n != len(payload) {
-		t.Fatalf("cache Read returned %d, want %d", n, len(payload))
+		t.Fatalf("cache ReadComplete returned %d, want %d", n, len(payload))
 	}
 	if !bytes.Equal(buf[:n], payload) {
 		t.Fatalf("cache payload = %q, want %q", string(buf[:n]), string(payload))
@@ -1637,6 +1725,86 @@ func TestRemoteFsPublicFlushUploadsWorkingCopyAndRefreshesCache(t *testing.T) {
 	}
 	if node, ok := vfs.fetch(path); ok && node.getWriteSession() != nil {
 		t.Fatal("expected write session to be cleared after successful release")
+	}
+}
+
+func TestRemoteFsFlushUsesUploadResponseMetadataForPostUploadReads(t *testing.T) {
+	fs, vfs, cacheStore := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	path := "/post-upload.bin"
+	payload := []byte("post-upload-cache")
+	remoteMtime := time.Date(2026, 5, 21, 12, 30, 45, 0, time.UTC)
+	remoteFile := files_sdk.File{
+		DisplayName: "post-upload.bin",
+		Path:        path,
+		Type:        "file",
+		Size:        int64(len(payload)),
+		Mtime:       &remoteMtime,
+		DownloadUri: "https://example.invalid/download",
+	}
+
+	backend := fs.backend.(*fakeRemoteBackend)
+	backend.uploadWithResumeFunc = func(opts ...file.UploadOption) (file.UploadResumable, error) {
+		return file.UploadResumable{File: remoteFile}, nil
+	}
+	downloadCalls := 0
+	backend.downloadFunc = func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+		downloadCalls++
+		return fakeDownloadResponse(payload, int64(len(payload)))(params, opts...)
+	}
+
+	errc, fh := fs.Create(path, fuse.O_RDWR, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errc)
+	}
+
+	if n := fs.Write(path, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+
+	if errc := fs.Flush(path, fh); errc != 0 {
+		t.Fatalf("Flush returned unexpected error: %d", errc)
+	}
+
+	node, ok := vfs.fetch(path)
+	if !ok {
+		t.Fatal("expected node to exist after Flush")
+	}
+	if !node.info.modTime.Equal(remoteMtime) {
+		t.Fatalf("node mtime = %v, want upload response mtime %v", node.info.modTime, remoteMtime)
+	}
+
+	buf := make([]byte, len(payload))
+	n, err := cacheStore.ReadComplete(path, cacheEntryMetadata(path, int64(len(payload)), remoteMtime), buf, 0)
+	if err != nil {
+		t.Fatalf("cache ReadComplete failed: %v", err)
+	}
+	if n != len(payload) || !bytes.Equal(buf[:n], payload) {
+		t.Fatalf("cache ReadComplete returned n=%d payload=%q, want %q", n, string(buf[:n]), string(payload))
+	}
+
+	if errc := fs.Release(path, fh); errc != 0 {
+		t.Fatalf("Release returned unexpected error: %d", errc)
+	}
+
+	fs.createNode(path, remoteFile)
+
+	errc, readFh := fs.Open(path, fuse.O_RDONLY)
+	if errc != 0 {
+		t.Fatalf("Open returned unexpected error: %d", errc)
+	}
+	defer fs.Release(path, readFh)
+
+	readBuf := make([]byte, len(payload))
+	if n := fs.Read(path, readBuf, 0, readFh); n != len(payload) {
+		t.Fatalf("Read returned %d, want %d", n, len(payload))
+	}
+	if !bytes.Equal(readBuf, payload) {
+		t.Fatalf("Read returned %q, want %q", string(readBuf), string(payload))
+	}
+	if downloadCalls != 0 {
+		t.Fatalf("download calls = %d, want 0", downloadCalls)
 	}
 }
 

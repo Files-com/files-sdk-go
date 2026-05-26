@@ -189,6 +189,33 @@ type uploadWorkingCopyReader interface {
 	Stat() (os.FileInfo, error)
 }
 
+type uploadedFileMetadata struct {
+	size    int64
+	modTime time.Time
+}
+
+type uploadFileResult struct {
+	metadata uploadedFileMetadata
+	err      error
+}
+
+func (fs *RemoteFs) uploadedFileMetadata(path string, uploaded files_sdk.File, fallbackSize int64, fallbackModTime time.Time) uploadedFileMetadata {
+	size := uploaded.Size
+	if size == 0 && fallbackSize != 0 {
+		fs.log.Debug("RemoteFs: upload response missing size for %v; using local size %d", path, fallbackSize)
+		size = fallbackSize
+	}
+	modTime := uploaded.ModTime()
+	if modTime.IsZero() {
+		fs.log.Debug("RemoteFs: upload response missing mtime for %v; using local mtime %v", path, fallbackModTime)
+		modTime = fallbackModTime
+	}
+	return uploadedFileMetadata{
+		size:    size,
+		modTime: modTime,
+	}
+}
+
 func cacheEntryMetadata(path string, size int64, modTime time.Time) cache.EntryMetadata {
 	return cache.NewEntryMetadata(path, size, modTime)
 }
@@ -1189,7 +1216,7 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 	}
 	session.mu.Unlock()
 
-	size, err := fs.uploadWorkingCopyWithSDK(ctx, node, path, reader, mtime, fh)
+	uploaded, err := fs.uploadWorkingCopyWithSDK(ctx, node, path, reader, mtime, fh)
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
 			fs.log.Info("Upload canceled from working copy: %v (%v)", remotePath, localPath)
@@ -1202,7 +1229,7 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 		return
 	}
 
-	if err := fs.refreshReadCacheFromWorkingCopy(path, session, size, mtime); err != nil {
+	if err := fs.refreshReadCacheFromWorkingCopy(path, session, uploaded.size, uploaded.modTime); err != nil {
 		// The remote upload has already succeeded, so a cache refresh failure should only
 		// invalidate the local cache. Do not poison or finish the write session with this
 		// error, or the caller would see a successful save as a failed upload.
@@ -1212,30 +1239,34 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 
 	node.updateInfo(fsNodeInfo{
 		nodeType:     nodeTypeFile,
-		size:         size,
-		modTime:      mtime,
+		size:         uploaded.size,
+		modTime:      uploaded.modTime,
 		creationTime: node.info.creationTime,
 		uid:          node.info.uid,
 		gid:          node.info.gid,
 	})
 	session.mu.Lock()
-	session.mtime = mtime
+	session.mtime = uploaded.modTime
 	session.mtimeExplicit = false
 	session.mu.Unlock()
 	fs.log.Info("Upload completed from working copy: %v (%v)", remotePath, localPath)
-	transfer.Complete(size)
-	_ = node.writeSessionFinishUpload(size, nil)
+	transfer.Complete(sessionSnapshot.currentSize)
+	_ = node.writeSessionFinishUpload(uploaded.size, nil)
 }
 
-func (fs *RemoteFs) uploadWorkingCopyWithSDK(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+func (fs *RemoteFs) uploadWorkingCopyWithSDK(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
 	if fs.uploadWorkingCopy != nil {
-		return fs.uploadWorkingCopy(ctx, node, path, reader, mtime, fh)
+		size, err := fs.uploadWorkingCopy(ctx, node, path, reader, mtime, fh)
+		if err != nil {
+			return uploadedFileMetadata{}, err
+		}
+		return uploadedFileMetadata{size: size, modTime: mtime}, nil
 	}
 
 	localPath, remotePath := fs.paths(path)
 	fileInfo, err := reader.Stat()
 	if err != nil {
-		return 0, err
+		return uploadedFileMetadata{}, err
 	}
 	opts := []file.UploadOption{
 		file.UploadWithContext(ctx),
@@ -1262,9 +1293,9 @@ func (fs *RemoteFs) uploadWorkingCopyWithSDK(ctx context.Context, node *fsNode, 
 	u, err := fs.backend.uploadWithResume(opts...)
 	if err != nil {
 		fs.log.Debug("RemoteFs: uploadWorkingCopyWithSDK failed for %v (%v): %s", remotePath, localPath, uploadLogMessage(err))
-		return 0, err
+		return uploadedFileMetadata{}, err
 	}
-	return u.Size, nil
+	return fs.uploadedFileMetadata(path, u.File, fileInfo.Size(), mtime), nil
 }
 
 func (fs *RemoteFs) finalizeUploadPathAndRef(node *fsNode) (string, string) {
@@ -1544,7 +1575,7 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 	defer cancel()
 
 	node := fs.vfs.getOrCreate(dst, nodeTypeFile)
-	uploadErrCh := make(chan error, 1)
+	uploadResultCh := make(chan uploadFileResult, 1)
 	cacheErrCh := make(chan error, 1)
 	_ = fs.cacheStore.DeletePartial(dst)
 	fs.cacheStore.PinPartial(dst)
@@ -1554,7 +1585,13 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 	}()
 
 	go func() {
-		uploadErrCh <- fs.ops.WithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
+		result := uploadFileResult{
+			metadata: uploadedFileMetadata{
+				size:    fileInfo.Size(),
+				modTime: fileInfo.ModTime(),
+			},
+		}
+		result.err = fs.ops.WithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
 			uploadOpts := []file.UploadOption{
 				file.UploadWithContext(ctx),
 				file.UploadWithReaderAt(uploadFile),
@@ -1569,8 +1606,14 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 			if fs.writeConcurrency != 0 {
 				uploadOpts = append(uploadOpts, file.UploadWithManager(manager.ConcurrencyManager{}.New(fs.writeConcurrency)))
 			}
-			return fs.backend.upload(uploadOpts...)
+			u, err := fs.backend.uploadWithResume(uploadOpts...)
+			if err != nil {
+				return err
+			}
+			result.metadata = fs.uploadedFileMetadata(dst, u.File, fileInfo.Size(), fileInfo.ModTime())
+			return nil
 		})
+		uploadResultCh <- result
 	}()
 
 	go func() {
@@ -1597,12 +1640,12 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 		}
 	}()
 
-	var uploadErr error
+	var uploadResult uploadFileResult
 	var cacheErr error
 	for i := 0; i < 2; i++ {
 		select {
-		case uploadErr = <-uploadErrCh:
-			if uploadErr != nil {
+		case uploadResult = <-uploadResultCh:
+			if uploadResult.err != nil {
 				cancel()
 			}
 		case cacheErr = <-cacheErrCh:
@@ -1616,15 +1659,15 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 		fs.log.Error("Error populating cache during rename upload; invalidating cache entry: %v (%v): %v", remotePath, localPath, cacheErr)
 	}
 
-	if uploadErr != nil {
-		if !errors.Is(uploadErr, context.Canceled) && !files_sdk.IsNotExist(uploadErr) {
-			fs.logUploadFailure("Error uploading file during rename", remotePath, localPath, uploadErr)
+	if uploadResult.err != nil {
+		if !errors.Is(uploadResult.err, context.Canceled) && !files_sdk.IsNotExist(uploadResult.err) {
+			fs.logUploadFailure("Error uploading file during rename", remotePath, localPath, uploadResult.err)
 		}
-		transfer.Error(uploadErr, transferredBytesUnchanged)
-		return uploadErr
+		transfer.Error(uploadResult.err, transferredBytesUnchanged)
+		return uploadResult.err
 	}
 	if cacheErr == nil {
-		if err := fs.commitCacheEntryFromPartial(dst, dst, cacheEntryMetadata(dst, fileInfo.Size(), fileInfo.ModTime()), false); err != nil {
+		if err := fs.commitCacheEntryFromPartial(dst, dst, cacheEntryMetadata(dst, uploadResult.metadata.size, uploadResult.metadata.modTime), false); err != nil {
 			_ = fs.cacheStore.Delete(dst)
 			fs.log.Error("Error committing cache during rename upload; invalidating cache entry: %v (%v): %v", remotePath, localPath, err)
 		}
@@ -1636,8 +1679,8 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 	transfer.Complete(fileInfo.Size())
 	node.updateInfo(fsNodeInfo{
 		nodeType:     nodeTypeFile,
-		size:         fileInfo.Size(),
-		modTime:      fileInfo.ModTime(),
+		size:         uploadResult.metadata.size,
+		modTime:      uploadResult.metadata.modTime,
 		creationTime: node.info.creationTime,
 	})
 
