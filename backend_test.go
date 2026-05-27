@@ -59,3 +59,33 @@ func TestCallRawPreservesExplicitUserAgentHeader(t *testing.T) {
 
 	assert.Equal(t, "Custom Transfer Client", gotUserAgent)
 }
+
+func TestSetHeadersUsesSessionIdWhenAPIKeyOnlyComesFromEnvironment(t *testing.T) {
+	t.Setenv("FILES_API_KEY", "env-secret")
+
+	headers := http.Header{}
+	config := Config{SessionId: "session-secret"}.Init()
+	config.SetHeaders(&headers)
+
+	assert.Empty(t, headers.Get(apiKeyHeader))
+	assert.Equal(t, "session-secret", headers.Get(sessionIdHeader))
+}
+
+func TestGetAPIKeyIgnoresEnvironmentWhenSessionIdIsConfigured(t *testing.T) {
+	t.Setenv("FILES_API_KEY", "env-secret")
+
+	config := Config{SessionId: "session-secret"}.Init()
+
+	assert.Empty(t, config.GetAPIKey())
+}
+
+func TestSetHeadersUsesExplicitAPIKeyBeforeSessionId(t *testing.T) {
+	t.Setenv("FILES_API_KEY", "env-secret")
+
+	headers := http.Header{}
+	config := Config{APIKey: "explicit-secret", SessionId: "session-secret"}.Init()
+	config.SetHeaders(&headers)
+
+	assert.Equal(t, "explicit-secret", headers.Get(apiKeyHeader))
+	assert.Empty(t, headers.Get(sessionIdHeader))
+}

@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.3.115"
+var VERSION = "3.3.116"
 var defaultUserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
 
 const (
@@ -102,6 +102,9 @@ func (c Config) RootPath() string {
 }
 
 func (c Config) GetAPIKey() string {
+	if c.SessionId != "" && c.APIKey == "" {
+		return ""
+	}
 	return lib.DefaultString(c.APIKey, os.Getenv("FILES_API_KEY"))
 }
 
@@ -121,8 +124,9 @@ func (c Config) SetHeadersForRequest(req *http.Request) {
 
 func (c Config) setHeadersForURL(headers *http.Header, rawURL string) {
 	headers.Set("User-Agent", cmp.Or(c.UserAgent, defaultUserAgent))
-	if c.GetAPIKey() != "" {
-		headers.Set(apiKeyHeader, c.GetAPIKey())
+	apiKey := c.GetAPIKey()
+	if apiKey != "" {
+		headers.Set(apiKeyHeader, apiKey)
 	} else if c.SessionId != "" {
 		headers.Set(sessionIdHeader, c.SessionId)
 	}
