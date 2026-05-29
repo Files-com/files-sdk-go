@@ -152,14 +152,15 @@ type FileZipParams struct {
 
 // Begin File Upload
 type FileBeginUploadParams struct {
-	Path         string `url:"-,omitempty" json:"-,omitempty" path:"path"`
-	MkdirParents *bool  `url:"mkdir_parents,omitempty" json:"mkdir_parents,omitempty" path:"mkdir_parents"`
-	Part         int64  `url:"part,omitempty" json:"part,omitempty" path:"part"`
-	Parts        int64  `url:"parts,omitempty" json:"parts,omitempty" path:"parts"`
-	Ref          string `url:"ref,omitempty" json:"ref,omitempty" path:"ref"`
-	Restart      int64  `url:"restart,omitempty" json:"restart,omitempty" path:"restart"`
-	Size         int64  `url:"size,omitempty" json:"size,omitempty" path:"size"`
-	WithRename   *bool  `url:"with_rename,omitempty" json:"with_rename,omitempty" path:"with_rename"`
+	Path           string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	MkdirParents   *bool  `url:"mkdir_parents,omitempty" json:"mkdir_parents,omitempty" path:"mkdir_parents"`
+	Part           int64  `url:"part,omitempty" json:"part,omitempty" path:"part"`
+	Parts          int64  `url:"parts,omitempty" json:"parts,omitempty" path:"parts"`
+	Ref            string `url:"ref,omitempty" json:"ref,omitempty" path:"ref"`
+	Restart        int64  `url:"restart,omitempty" json:"restart,omitempty" path:"restart"`
+	Size           int64  `url:"size,omitempty" json:"size,omitempty" path:"size"`
+	WithRename     *bool  `url:"with_rename,omitempty" json:"with_rename,omitempty" path:"with_rename"`
+	BufferedUpload *bool  `url:"buffered_upload,omitempty" json:"buffered_upload,omitempty" path:"buffered_upload"`
 }
 
 func (f File) ToFolder() (Folder, error) {
