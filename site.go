@@ -12,6 +12,7 @@ type Site struct {
 	Id                                       int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name                                     string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	AdditionalTextFileTypes                  []string    `json:"additional_text_file_types,omitempty" path:"additional_text_file_types,omitempty" url:"additional_text_file_types,omitempty"`
+	AiFeatureAvailability                    interface{} `json:"ai_feature_availability,omitempty" path:"ai_feature_availability,omitempty" url:"ai_feature_availability,omitempty"`
 	Allowed2faMethodSms                      *bool       `json:"allowed_2fa_method_sms,omitempty" path:"allowed_2fa_method_sms,omitempty" url:"allowed_2fa_method_sms,omitempty"`
 	Allowed2faMethodTotp                     *bool       `json:"allowed_2fa_method_totp,omitempty" path:"allowed_2fa_method_totp,omitempty" url:"allowed_2fa_method_totp,omitempty"`
 	Allowed2faMethodWebauthn                 *bool       `json:"allowed_2fa_method_webauthn,omitempty" path:"allowed_2fa_method_webauthn,omitempty" url:"allowed_2fa_method_webauthn,omitempty"`
@@ -72,6 +73,7 @@ type Site struct {
 	MobileAppSessionIpPinning                *bool       `json:"mobile_app_session_ip_pinning,omitempty" path:"mobile_app_session_ip_pinning,omitempty" url:"mobile_app_session_ip_pinning,omitempty"`
 	MobileAppSessionLifetime                 int64       `json:"mobile_app_session_lifetime,omitempty" path:"mobile_app_session_lifetime,omitempty" url:"mobile_app_session_lifetime,omitempty"`
 	DisallowedCountries                      string      `json:"disallowed_countries,omitempty" path:"disallowed_countries,omitempty" url:"disallowed_countries,omitempty"`
+	DisableAllAiFeatures                     *bool       `json:"disable_all_ai_features,omitempty" path:"disable_all_ai_features,omitempty" url:"disable_all_ai_features,omitempty"`
 	DisableFilesCertificateGeneration        *bool       `json:"disable_files_certificate_generation,omitempty" path:"disable_files_certificate_generation,omitempty" url:"disable_files_certificate_generation,omitempty"`
 	DisableNotifications                     *bool       `json:"disable_notifications,omitempty" path:"disable_notifications,omitempty" url:"disable_notifications,omitempty"`
 	DisablePasswordReset                     *bool       `json:"disable_password_reset,omitempty" path:"disable_password_reset,omitempty" url:"disable_password_reset,omitempty"`
@@ -235,6 +237,8 @@ type SiteUpdateParams struct {
 	MotdUseForFtp                            *bool       `url:"motd_use_for_ftp,omitempty" json:"motd_use_for_ftp,omitempty" path:"motd_use_for_ftp"`
 	MotdUseForSftp                           *bool       `url:"motd_use_for_sftp,omitempty" json:"motd_use_for_sftp,omitempty" path:"motd_use_for_sftp"`
 	LeftNavigationVisibility                 interface{} `url:"left_navigation_visibility,omitempty" json:"left_navigation_visibility,omitempty" path:"left_navigation_visibility"`
+	DisableAllAiFeatures                     *bool       `url:"disable_all_ai_features,omitempty" json:"disable_all_ai_features,omitempty" path:"disable_all_ai_features"`
+	AiFeatureAvailability                    interface{} `url:"ai_feature_availability,omitempty" json:"ai_feature_availability,omitempty" path:"ai_feature_availability"`
 	AdditionalTextFileTypes                  []string    `url:"additional_text_file_types,omitempty" json:"additional_text_file_types,omitempty" path:"additional_text_file_types"`
 	BundleRequireNote                        *bool       `url:"bundle_require_note,omitempty" json:"bundle_require_note,omitempty" path:"bundle_require_note"`
 	BundleSendSharedReceipts                 *bool       `url:"bundle_send_shared_receipts,omitempty" json:"bundle_send_shared_receipts,omitempty" path:"bundle_send_shared_receipts"`

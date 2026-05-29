@@ -118,6 +118,7 @@ const (
 	ErrFolderAdminPermissionRequired                                          ResponseErrorType = "not-authorized/folder-admin-permission-required"
 	ErrFullPermissionRequired                                                 ResponseErrorType = "not-authorized/full-permission-required"
 	ErrHistoryPermissionRequired                                              ResponseErrorType = "not-authorized/history-permission-required"
+	ErrInAppAiAssistantUnavailable                                            ResponseErrorType = "not-authorized/in-app-ai-assistant-unavailable"
 	ErrInsufficientPermissionForParams                                        ResponseErrorType = "not-authorized/insufficient-permission-for-params"
 	ErrInsufficientPermissionForSite                                          ResponseErrorType = "not-authorized/insufficient-permission-for-site"
 	ErrMoverAccessDenied                                                      ResponseErrorType = "not-authorized/mover-access-denied"

@@ -705,6 +705,7 @@ if err != nil {
 | `not-authorized/folder-admin-permission-required` | `ErrFolderAdminPermissionRequired` | Folder Admin Permission Required |
 | `not-authorized/full-permission-required` | `ErrFullPermissionRequired` | Full Permission Required |
 | `not-authorized/history-permission-required` | `ErrHistoryPermissionRequired` | History Permission Required |
+| `not-authorized/in-app-ai-assistant-unavailable` | `ErrInAppAiAssistantUnavailable` | In App Ai Assistant Unavailable |
 | `not-authorized/insufficient-permission-for-params` | `ErrInsufficientPermissionForParams` | Insufficient Permission For Params |
 | `not-authorized/insufficient-permission-for-site` | `ErrInsufficientPermissionForSite` | Insufficient Permission For Site |
 | `not-authorized/mover-access-denied` | `ErrMoverAccessDenied` | Mover Access Denied |
