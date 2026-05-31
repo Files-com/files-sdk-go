@@ -79,6 +79,7 @@ type User struct {
 	WorkspaceAdmin                         *bool      `json:"workspace_admin,omitempty" path:"workspace_admin,omitempty" url:"workspace_admin,omitempty"`
 	SiteId                                 int64      `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
 	WorkspaceId                            int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	DefaultWorkspaceId                     int64      `json:"default_workspace_id,omitempty" path:"default_workspace_id,omitempty" url:"default_workspace_id,omitempty"`
 	SkipWelcomeScreen                      *bool      `json:"skip_welcome_screen,omitempty" path:"skip_welcome_screen,omitempty" url:"skip_welcome_screen,omitempty"`
 	SslRequired                            string     `json:"ssl_required,omitempty" path:"ssl_required,omitempty" url:"ssl_required,omitempty"`
 	SsoStrategyId                          int64      `json:"sso_strategy_id,omitempty" path:"sso_strategy_id,omitempty" url:"sso_strategy_id,omitempty"`
@@ -213,6 +214,7 @@ type UserCreateParams struct {
 	BypassSiteAllowedIps                   *bool                        `url:"bypass_site_allowed_ips,omitempty" json:"bypass_site_allowed_ips,omitempty" path:"bypass_site_allowed_ips"`
 	DavPermission                          *bool                        `url:"dav_permission,omitempty" json:"dav_permission,omitempty" path:"dav_permission"`
 	DesktopConfigurationProfileId          int64                        `url:"desktop_configuration_profile_id,omitempty" json:"desktop_configuration_profile_id,omitempty" path:"desktop_configuration_profile_id"`
+	DefaultWorkspaceId                     int64                        `url:"default_workspace_id,omitempty" json:"default_workspace_id,omitempty" path:"default_workspace_id"`
 	Disabled                               *bool                        `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
 	FilesystemLayout                       UserFilesystemLayoutEnum     `url:"filesystem_layout,omitempty" json:"filesystem_layout,omitempty" path:"filesystem_layout"`
 	FtpPermission                          *bool                        `url:"ftp_permission,omitempty" json:"ftp_permission,omitempty" path:"ftp_permission"`
@@ -295,6 +297,7 @@ type UserUpdateParams struct {
 	BypassSiteAllowedIps                   *bool                        `url:"bypass_site_allowed_ips,omitempty" json:"bypass_site_allowed_ips,omitempty" path:"bypass_site_allowed_ips"`
 	DavPermission                          *bool                        `url:"dav_permission,omitempty" json:"dav_permission,omitempty" path:"dav_permission"`
 	DesktopConfigurationProfileId          int64                        `url:"desktop_configuration_profile_id,omitempty" json:"desktop_configuration_profile_id,omitempty" path:"desktop_configuration_profile_id"`
+	DefaultWorkspaceId                     int64                        `url:"default_workspace_id,omitempty" json:"default_workspace_id,omitempty" path:"default_workspace_id"`
 	Disabled                               *bool                        `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
 	FilesystemLayout                       UserFilesystemLayoutEnum     `url:"filesystem_layout,omitempty" json:"filesystem_layout,omitempty" path:"filesystem_layout"`
 	FtpPermission                          *bool                        `url:"ftp_permission,omitempty" json:"ftp_permission,omitempty" path:"ftp_permission"`
