@@ -235,21 +235,15 @@ func TestRegisterSyncAfterActionsDownloadDeleteSourceEmptyFoldersUsesNonRecursiv
 	job, _ := syncAfterActionDownloadJob(filepath.Join(t.TempDir(), "source"), "source-folder")
 	logCh := make(chan status.Log, 1)
 
-	registerSyncAfterActions(
-		job,
-		SyncAfterActions{
-			DeleteSourceEmptyFolders: true,
-			Log: func(log status.Log, err error) {
-				require.NoError(t, err)
-				logCh <- log
-			},
+	actions := SyncAfterActions{
+		DeleteSourceEmptyFolders: true,
+		Log: func(log status.Log, err error) {
+			require.NoError(t, err)
+			logCh <- log
 		},
-		false,
-		files_sdk.Config{EndpointOverride: server.URL}.Init(),
-	)
-
-	job.Start()
-	job.Finish()
+	}
+	config := files_sdk.Config{EndpointOverride: server.URL}.Init()
+	runSyncAfterEmptyFolders(job, actions, false, config)
 
 	log := requireSyncActionLog(t, logCh)
 	assert.Equal(t, 2, listRequests)
@@ -288,21 +282,15 @@ func TestRegisterSyncAfterActionsDownloadDeleteSourceEmptyFoldersWalksDepthFirst
 	job, _ := syncAfterActionDownloadJob(filepath.Join(t.TempDir(), "source"), "source-folder")
 	logCh := make(chan status.Log, 1)
 
-	registerSyncAfterActions(
-		job,
-		SyncAfterActions{
-			DeleteSourceEmptyFolders: true,
-			Log: func(log status.Log, err error) {
-				require.NoError(t, err)
-				logCh <- log
-			},
+	actions := SyncAfterActions{
+		DeleteSourceEmptyFolders: true,
+		Log: func(log status.Log, err error) {
+			require.NoError(t, err)
+			logCh <- log
 		},
-		false,
-		files_sdk.Config{EndpointOverride: server.URL}.Init(),
-	)
-
-	job.Start()
-	job.Finish()
+	}
+	config := files_sdk.Config{EndpointOverride: server.URL}.Init()
+	runSyncAfterEmptyFolders(job, actions, false, config)
 
 	requireSyncActionLog(t, logCh)
 	assert.Equal(t, []string{
@@ -341,21 +329,15 @@ func TestRegisterSyncAfterActionsDownloadDeleteSourceEmptyFoldersCleansChildFold
 	job, _ := syncAfterActionDownloadJob(filepath.Join(t.TempDir(), "source"), "source-folder")
 	logCh := make(chan status.Log, 1)
 
-	registerSyncAfterActions(
-		job,
-		SyncAfterActions{
-			DeleteSourceEmptyFolders: true,
-			Log: func(log status.Log, err error) {
-				require.NoError(t, err)
-				logCh <- log
-			},
+	actions := SyncAfterActions{
+		DeleteSourceEmptyFolders: true,
+		Log: func(log status.Log, err error) {
+			require.NoError(t, err)
+			logCh <- log
 		},
-		false,
-		files_sdk.Config{EndpointOverride: server.URL}.Init(),
-	)
-
-	job.Start()
-	job.Finish()
+	}
+	config := files_sdk.Config{EndpointOverride: server.URL}.Init()
+	runSyncAfterEmptyFolders(job, actions, false, config)
 
 	requireSyncActionLog(t, logCh)
 	assert.Equal(t, 2, nestedListRequests)
@@ -370,25 +352,54 @@ func TestRegisterSyncAfterActionsDeleteSourceEmptyFoldersOnFinish(t *testing.T) 
 	job, _ := syncAfterActionUploadJob(sourcePath)
 	logCh := make(chan status.Log, 1)
 
-	registerSyncAfterActions(
-		job,
-		SyncAfterActions{
-			DeleteSourceEmptyFolders: true,
-			Log: func(log status.Log, err error) {
-				require.NoError(t, err)
-				logCh <- log
-			},
+	actions := SyncAfterActions{
+		DeleteSourceEmptyFolders: true,
+		Log: func(log status.Log, err error) {
+			require.NoError(t, err)
+			logCh <- log
 		},
-		false,
-		files_sdk.Config{}.Init(),
-	)
-
-	job.Start()
-	job.Finish()
+	}
+	runSyncAfterEmptyFolders(job, actions, false, files_sdk.Config{}.Init())
 
 	log := requireSyncActionLog(t, logCh)
 	assert.Equal(t, "delete source folder", log.Action)
 	assert.Equal(t, sourceDir, log.Path)
+	assert.NoDirExists(t, sourceDir)
+}
+
+func TestSyncAfterEmptyFoldersRunBeforeJobFinish(t *testing.T) {
+	sourceDir := filepath.Join(t.TempDir(), "source")
+	require.NoError(t, os.MkdirAll(sourceDir, 0750))
+
+	job, fileStatus := syncAfterActionUploadJob(sourceDir)
+	job.Type = directory.Dir
+	logCh := make(chan status.Log, 1)
+	var logErr error
+	finishedWhenLogged := true
+	actions := SyncAfterActions{
+		DeleteSourceEmptyFolders: true,
+		Log: func(log status.Log, err error) {
+			logErr = err
+			finishedWhenLogged = job.Finished.Called()
+			logCh <- log
+		},
+	}
+
+	onComplete := make(chan *UploadStatus, 1)
+	WaitTellFinished(job, onComplete, func() {
+		runSyncAfterEmptyFolders(job, actions, false, files_sdk.Config{}.Init())
+	})
+
+	job.Start()
+	job.EndScan()
+	onComplete <- fileStatus
+	job.Wait()
+
+	log := requireSyncActionLog(t, logCh)
+	require.NoError(t, logErr)
+	assert.Equal(t, "delete source folder", log.Action)
+	assert.False(t, finishedWhenLogged)
+	assert.True(t, job.Finished.Called())
 	assert.NoDirExists(t, sourceDir)
 }
 
@@ -403,21 +414,14 @@ func TestRegisterSyncAfterActionsDeleteSourceEmptyFoldersForFolderSourceStaysInS
 	job.Type = directory.Dir
 	logCh := make(chan status.Log, 1)
 
-	registerSyncAfterActions(
-		job,
-		SyncAfterActions{
-			DeleteSourceEmptyFolders: true,
-			Log: func(log status.Log, err error) {
-				require.NoError(t, err)
-				logCh <- log
-			},
+	actions := SyncAfterActions{
+		DeleteSourceEmptyFolders: true,
+		Log: func(log status.Log, err error) {
+			require.NoError(t, err)
+			logCh <- log
 		},
-		false,
-		files_sdk.Config{}.Init(),
-	)
-
-	job.Start()
-	job.Finish()
+	}
+	runSyncAfterEmptyFolders(job, actions, false, files_sdk.Config{}.Init())
 
 	log := requireSyncActionLog(t, logCh)
 	assert.Equal(t, "delete source folder", log.Action)
@@ -434,21 +438,15 @@ func TestRegisterSyncAfterActionsSkipsDeleteSourceEmptyFoldersWhenJobErrored(t *
 	job, fileStatus := syncAfterActionUploadJob(sourcePath)
 	logCh := make(chan status.Log, 1)
 
-	registerSyncAfterActions(
-		job,
-		SyncAfterActions{
-			DeleteSourceEmptyFolders: true,
-			Log: func(log status.Log, err error) {
-				logCh <- log
-			},
+	actions := SyncAfterActions{
+		DeleteSourceEmptyFolders: true,
+		Log: func(log status.Log, err error) {
+			logCh <- log
 		},
-		false,
-		files_sdk.Config{}.Init(),
-	)
+	}
 
-	job.Start()
 	job.UpdateStatus(status.Errored, fileStatus, errors.New("failed transfer"))
-	job.Finish()
+	runSyncAfterEmptyFolders(job, actions, false, files_sdk.Config{}.Init())
 
 	assertNoSyncActionLog(t, logCh)
 	assert.DirExists(t, sourceDir)
@@ -463,20 +461,15 @@ func TestRegisterSyncAfterActionsCancelSkipsDeleteSourceEmptyFolders(t *testing.
 	job.WithContext(context.Background())
 	logCh := make(chan status.Log, 1)
 
-	registerSyncAfterActions(
-		job,
-		SyncAfterActions{
-			DeleteSourceEmptyFolders: true,
-			Log: func(log status.Log, err error) {
-				logCh <- log
-			},
+	actions := SyncAfterActions{
+		DeleteSourceEmptyFolders: true,
+		Log: func(log status.Log, err error) {
+			logCh <- log
 		},
-		false,
-		files_sdk.Config{}.Init(),
-	)
+	}
 
-	job.Start()
 	job.Cancel()
+	runSyncAfterEmptyFolders(job, actions, false, files_sdk.Config{}.Init())
 
 	assertNoSyncActionLog(t, logCh)
 	assert.DirExists(t, sourceDir)

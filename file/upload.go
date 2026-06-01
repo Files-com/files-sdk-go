@@ -265,7 +265,7 @@ func (c *Client) Uploader(params UploaderParams, opts ...files_sdk.RequestRespon
 		job.LocalPath = params.LocalPath
 		job.RemotePath = params.RemotePath
 
-		uploader(files_sdk.ContextOption(opts), c, params).CodeStart()
+		uploader(files_sdk.ContextOption(opts), c, params, opts...).CodeStart()
 	}
 	registerSyncAfterActions(job, params.SyncAfterActions, params.DryRun, c.Config, opts...)
 

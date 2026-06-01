@@ -61,6 +61,20 @@ func (a SyncAfterActions) runEmptyFolders(job *Job, config files_sdk.Config, opt
 	a.log(DeleteEmptySourceFolders{Config: config, Direction: job.Direction}.call(job, opts...))
 }
 
+func runSyncAfterEmptyFolders(job *Job, actions SyncAfterActions, dryRun bool, config files_sdk.Config, opts ...files_sdk.RequestResponseOption) {
+	if dryRun || !actions.DeleteSourceEmptyFolders {
+		return
+	}
+	if err := actions.Validate(); err != nil {
+		return
+	}
+	if job.Canceled.Called() || job.Count(status.Errored) != 0 {
+		return
+	}
+
+	actions.runEmptyFolders(job, config, opts...)
+}
+
 func registerSyncAfterActions(job *Job, actions SyncAfterActions, dryRun bool, config files_sdk.Config, opts ...files_sdk.RequestResponseOption) {
 	if dryRun || !actions.Enabled() {
 		return
@@ -76,25 +90,6 @@ func registerSyncAfterActions(job *Job, actions SyncAfterActions, dryRun bool, c
 		}
 		actions.runFile(f, config, opts...)
 	}, status.Complete, status.Skipped)
-
-	if actions.DeleteSourceEmptyFolders {
-		codeStart := job.CodeStart
-		job.CodeStart = func() {
-			go func() {
-				job.Wait()
-				if job.Canceled.Called() {
-					return
-				}
-				if job.Count(status.Errored) == 0 {
-					actions.runEmptyFolders(job, config, opts...)
-				}
-			}()
-
-			if codeStart != nil {
-				codeStart()
-			}
-		}
-	}
 }
 
 // DeleteSource files after a sync

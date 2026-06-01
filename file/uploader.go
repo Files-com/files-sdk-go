@@ -22,7 +22,7 @@ type Uploader interface {
 	CreateFolder(files_sdk.FolderCreateParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error)
 }
 
-func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *Job {
+func uploader(parentCtx context.Context, c Uploader, params UploaderParams, opts ...files_sdk.RequestResponseOption) *Job {
 	var job *Job
 	if params.Job == nil {
 		job = (&Job{}).Init()
@@ -50,7 +50,10 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *Job
 		job.Scan()
 
 		go enqueueIndexedUploads(job, jobCtx, onComplete)
-		WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, job.RetryPolicy.(RetryPolicy), false) })
+		WaitTellFinished(job, onComplete, func() {
+			RetryByPolicy(jobCtx, job, job.RetryPolicy.(RetryPolicy), false)
+			runSyncAfterEmptyFolders(job, params.SyncAfterActions, params.DryRun, params.config, opts...)
+		})
 
 		metaFile := UploadStatus{
 			job:             job,

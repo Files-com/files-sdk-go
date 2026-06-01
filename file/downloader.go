@@ -19,7 +19,7 @@ import (
 	gitignore "github.com/sabhiram/go-gitignore"
 )
 
-func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *Job {
+func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams, opts ...files_sdk.RequestResponseOption) *Job {
 	job := (&Job{}).Init()
 	SetJobParams(job, direction.DownloadType, params, params.config.Logger, fileSys)
 	job.Config = params.config
@@ -104,7 +104,10 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams) *Jo
 	job.CodeStart = func() {
 		job.Scan()
 		go enqueueIndexedDownloads(job, jobCtx, onComplete)
-		WaitTellFinished(job, onComplete, func() { RetryByPolicy(jobCtx, job, job.RetryPolicy.(RetryPolicy), false) })
+		WaitTellFinished(job, onComplete, func() {
+			RetryByPolicy(jobCtx, job, job.RetryPolicy.(RetryPolicy), false)
+			runSyncAfterEmptyFolders(job, params.SyncAfterActions, params.DryRun, params.config, opts...)
+		})
 
 		// ignore.New only returns an error if run on an unsupported OS
 		job.Ignore, _ = ignore.New(params.Ignore...)

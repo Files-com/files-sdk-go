@@ -62,7 +62,7 @@ type DownloaderParams struct {
 
 func (c *Client) Downloader(params DownloaderParams, opts ...files_sdk.RequestResponseOption) *Job {
 	params.config = c.Config
-	job := downloader(files_sdk.ContextOption(opts), (&FS{}).Init(c.Config, true), params)
+	job := downloader(files_sdk.ContextOption(opts), (&FS{}).Init(c.Config, true), params, opts...)
 	registerSyncAfterActions(job, params.SyncAfterActions, params.DryRun, c.Config, opts...)
 	return job
 }
