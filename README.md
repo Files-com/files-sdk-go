@@ -695,6 +695,7 @@ if err != nil {
 | `bad-request/part-number-too-large` | `ErrPartNumberTooLarge` | Part Number Too Large |
 | `bad-request/path-cannot-have-trailing-whitespace` | `ErrPathCannotHaveTrailingWhitespace` | Path Cannot Have Trailing Whitespace |
 | `bad-request/reauthentication-needed-fields` | `ErrReauthenticationNeededFields` | Reauthentication Needed Fields |
+| `bad-request/request-body-too-large` | `ErrRequestBodyTooLarge` | Request Body Too Large |
 | `bad-request/request-params-contain-invalid-character` | `ErrRequestParamsContainInvalidCharacter` | Request Params Contain Invalid Character |
 | `bad-request/request-params-invalid` | `ErrRequestParamsInvalid` | Request Params Invalid |
 | `bad-request/request-params-required` | `ErrRequestParamsRequired` | Request Params Required |
@@ -758,6 +759,7 @@ if err != nil {
 | `not-authorized/reauthentication-failed-final` | `ErrReauthenticationFailedFinal` | Reauthentication Failed Final |
 | `not-authorized/reauthentication-needed-action` | `ErrReauthenticationNeededAction` | Reauthentication Needed Action |
 | `not-authorized/recaptcha-failed` | `ErrRecaptchaFailed` | Recaptcha Failed |
+| `not-authorized/remote-desktop-debug-logging-disabled` | `ErrRemoteDesktopDebugLoggingDisabled` | Remote Desktop Debug Logging Disabled |
 | `not-authorized/self-managed-required` | `ErrSelfManagedRequired` | Self Managed Required |
 | `not-authorized/site-admin-or-partner-admin-permission-required` | `ErrSiteAdminOrPartnerAdminPermissionRequired` | Site Admin Or Partner Admin Permission Required |
 | `not-authorized/site-admin-or-workspace-admin-or-folder-admin-permission-required` | `ErrSiteAdminOrWorkspaceAdminOrFolderAdminPermissionRequired` | Site Admin Or Workspace Admin Or Folder Admin Permission Required |
