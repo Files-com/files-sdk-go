@@ -1111,6 +1111,37 @@ func TestUploadPauseResume(t *testing.T) {
 		assert.Equal(t, status.Canceled, job.Statuses[0].Status())
 	})
 
+	t.Run("does not duplicate caller events reporter when reusing job", func(t *testing.T) {
+		root := t.TempDir()
+		localPath := filepath.Join(root, "missing.txt")
+		client := &Client{Config: files_sdk.Config{}.Init()}
+
+		var mu sync.Mutex
+		reporterCalls := 0
+		reporter := CreateFileEvents(func(JobFile) {
+			mu.Lock()
+			reporterCalls++
+			mu.Unlock()
+		}, status.Errored)
+
+		job := client.Uploader(
+			UploaderParams{
+				LocalPath:      localPath,
+				RemotePath:     "missing.txt",
+				EventsReporter: reporter,
+			},
+		)
+		job.Start()
+		job.Wait()
+
+		require.Len(t, job.Statuses, 1)
+		assert.Equal(t, status.Errored, job.Statuses[0].Status())
+
+		mu.Lock()
+		assert.Equal(t, 1, reporterCalls)
+		mu.Unlock()
+	})
+
 	t.Run("resume skips completed paths", func(t *testing.T) {
 		root := t.TempDir()
 		server := (&MockAPIServer{T: t}).Do()

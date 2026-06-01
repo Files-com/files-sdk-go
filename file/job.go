@@ -137,8 +137,10 @@ func (r *Job) SetManager(m *manager.Manager) {
 }
 
 func (r *Job) SetEventsReporter(e EventsReporter) {
-	if len(e) > 0 {
-		r.EventsReporter = e
+	for event, reporters := range e {
+		if len(reporters) > 0 {
+			r.EventsReporter[event] = append(r.EventsReporter[event], reporters...)
+		}
 	}
 }
 

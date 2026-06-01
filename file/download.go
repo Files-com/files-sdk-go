@@ -13,12 +13,15 @@ func (c *Client) DownloadRetry(job Job, opts ...files_sdk.RequestResponseOption)
 	newJob := job.ClearStatuses()
 	return c.Downloader(
 		DownloaderParams{
-			RemotePath:     newJob.RemotePath,
-			Sync:           newJob.Sync,
-			Manager:        newJob.Manager,
-			LocalPath:      newJob.LocalPath,
-			RetryPolicy:    newJob.RetryPolicy.(RetryPolicy),
-			EventsReporter: newJob.EventsReporter,
+			RemotePath:       newJob.RemotePath,
+			Sync:             newJob.Sync,
+			Manager:          newJob.Manager,
+			LocalPath:        newJob.LocalPath,
+			RetryPolicy:      newJob.RetryPolicy.(RetryPolicy),
+			EventsReporter:   newJob.EventsReporter,
+			Ignore:           newJob.Params.(DownloaderParams).Ignore,
+			Include:          newJob.Params.(DownloaderParams).Include,
+			SyncAfterActions: newJob.Params.(DownloaderParams).SyncAfterActions,
 		},
 		opts...)
 }
@@ -46,6 +49,8 @@ type DownloaderParams struct {
 	Sync          bool
 	PreserveTimes bool
 	NoOverwrite   bool
+	// SyncAfterActions optionally run source cleanup/move actions after sync comparison.
+	SyncAfterActions SyncAfterActions
 	RetryPolicy
 	*manager.Manager
 	EventsReporter
@@ -57,7 +62,9 @@ type DownloaderParams struct {
 
 func (c *Client) Downloader(params DownloaderParams, opts ...files_sdk.RequestResponseOption) *Job {
 	params.config = c.Config
-	return downloader(files_sdk.ContextOption(opts), (&FS{}).Init(c.Config, true), params)
+	job := downloader(files_sdk.ContextOption(opts), (&FS{}).Init(c.Config, true), params)
+	registerSyncAfterActions(job, params.SyncAfterActions, params.DryRun, c.Config, opts...)
+	return job
 }
 
 type Entity struct {

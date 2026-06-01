@@ -26,10 +26,10 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams) *Job
 	var job *Job
 	if params.Job == nil {
 		job = (&Job{}).Init()
+		SetJobParams(job, direction.UploadType, params, params.config.Logger, (&FS{}).Init(params.config, true))
 	} else {
 		job = params.Job
 	}
-	SetJobParams(job, direction.UploadType, params, params.config.Logger, (&FS{}).Init(params.config, true))
 	job.Config = params.config
 	jobCtx := job.WithContext(parentCtx)
 

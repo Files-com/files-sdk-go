@@ -175,13 +175,15 @@ func (c *Client) UploadRetry(job Job, opts ...files_sdk.RequestResponseOption) *
 	newJob := job.ClearStatuses()
 	return c.Uploader(
 		UploaderParams{
-			Sync:           newJob.Sync,
-			LocalPath:      newJob.LocalPath,
-			RemotePath:     newJob.RemotePath,
-			EventsReporter: newJob.EventsReporter,
-			Manager:        newJob.Manager,
-			RetryPolicy:    newJob.RetryPolicy.(RetryPolicy),
-			Ignore:         newJob.Params.(UploaderParams).Ignore,
+			Sync:             newJob.Sync,
+			LocalPath:        newJob.LocalPath,
+			RemotePath:       newJob.RemotePath,
+			EventsReporter:   newJob.EventsReporter,
+			Manager:          newJob.Manager,
+			RetryPolicy:      newJob.RetryPolicy.(RetryPolicy),
+			Ignore:           newJob.Params.(UploaderParams).Ignore,
+			Include:          newJob.Params.(UploaderParams).Include,
+			SyncAfterActions: newJob.Params.(UploaderParams).SyncAfterActions,
 		},
 		opts...,
 	)
@@ -204,6 +206,8 @@ type UploaderParams struct {
 	DryRun bool
 	// NoOverwrite do not overwrite existing files.
 	NoOverwrite bool
+	// SyncAfterActions optionally run source cleanup/move actions after sync comparison.
+	SyncAfterActions SyncAfterActions
 	// PriorResumable restores mid-upload state so the upload continues from where it left off.
 	PriorResumable UploadResumable
 	// PriorJobCheckpoint restores folder-level upload state on resume.
@@ -257,9 +261,13 @@ func (c *Client) Uploader(params UploaderParams, opts ...files_sdk.RequestRespon
 		} else {
 			params.LocalPath = absolutePath
 		}
+		job.Params = params
+		job.LocalPath = params.LocalPath
+		job.RemotePath = params.RemotePath
 
 		uploader(files_sdk.ContextOption(opts), c, params).CodeStart()
 	}
+	registerSyncAfterActions(job, params.SyncAfterActions, params.DryRun, c.Config, opts...)
 
 	return job
 }
