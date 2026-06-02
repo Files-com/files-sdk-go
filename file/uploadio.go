@@ -79,11 +79,18 @@ type uploadIO struct {
 	Size     *int64
 	Progress
 	Manager       lib.ConcurrencyManagerWithSubWorker
+	managerSet    bool
 	ProvidedMtime *time.Time
 	Parts
 	files_sdk.FileUploadPart
-	MkdirParents    *bool
-	passedInContext context.Context
+	MkdirParents               *bool
+	passedInContext            context.Context
+	uploadV2                   bool
+	uploadV2ManagerProvider    uploadV2AdaptiveManagerProvider
+	uploadV2HTTPClientProvider uploadV2HTTPClientProvider
+	uploadV2ReadyRunway        uploadV2ReadyRunwayConfig
+	uploadV2Tuning             UploadV2Tuning
+	uploadV1Stats              uploadV1SchedulerStats
 
 	onComplete    chan *Part
 	partsFinished chan struct{}
@@ -101,6 +108,7 @@ type uploadIO struct {
 func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
 	u.notResumable = &atomic.Bool{}
 	u.notResumable.Store(false)
+	u.uploadV1Stats.enable(u.Client != nil && u.Config.InDebug())
 
 	if u.Path == "" {
 		return u.UploadResumable(), errors.New("UploadWithDestinationPath is required")
@@ -172,9 +180,14 @@ func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
 		}
 	}
 
-	partCtx, cancel := context.WithCancelCause(ctx)
-
 	u.FileUploadPart.Path = u.Path
+	if u.uploadV2Enabled() {
+		if resumable, err, handled := u.runUploadV2(ctx); handled {
+			return resumable, err
+		}
+	}
+
+	partCtx, cancel := context.WithCancelCause(ctx)
 	go u.uploadParts(partCtx)
 	return u.waitOnParts(ctx, cancel)
 }
@@ -204,6 +217,7 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 		case <-u.partsFinished:
 			close(u.onComplete)
 			if allErrors != nil {
+				u.logUploadV1SchedulerSummary(allErrors)
 				u.LogPath(u.Path, map[string]any{
 					"timestamp": time.Now(),
 					"error":     allErrors.Error(),
@@ -211,6 +225,7 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 					"message":   "rewindSuccessfulParts",
 				})
 				u.rewindSuccessfulParts()
+				u.logUploadV2Complete(allErrors, u.bytesWritten)
 				return u.UploadResumable(), allErrors
 			}
 			// Use a detached context so a job cancellation doesn't prevent
@@ -221,8 +236,11 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 			}
 			u.Manager.WaitWithContext(context.Background())
 			var err error
+			finalizeStart := time.Now()
 			u.file, err = u.completeUpload(context.Background(), u.ProvidedMtime, u.etags, u.bytesWritten, path, ref)
+			u.uploadV1Stats.recordFinalize(time.Since(finalizeStart), err)
 			u.Manager.Done()
+			u.logUploadV1SchedulerSummary(err)
 			if err != nil {
 				u.LogPath(u.Path, map[string]any{
 					"timestamp": time.Now(),
@@ -232,6 +250,7 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 				})
 				u.rewindSuccessfulParts()
 			}
+			u.logUploadV2Complete(err, u.bytesWritten)
 			return u.UploadResumable(), err
 		case part := <-u.onComplete:
 			if part.error == nil {
@@ -296,6 +315,7 @@ func (u *uploadIO) partBuilder(offset OffSet, final bool, number int) *Part {
 			u.ensurePartNumber(part)
 		}
 	}
+	part.FileUploadPart.PartNumber = int64(number)
 
 	// Parts are stored so a retry can pick up failed parts. Since io.Reader is a stream is better to just retry the whole file
 	if _, readerAtOk := u.ReaderAt(); readerAtOk && u.Size != nil {
@@ -364,7 +384,9 @@ func (u *uploadIO) manageUpdatePart(ctx context.Context, part *Part, wait lib.Co
 		return true
 	}
 
+	waitStart := time.Now()
 	if wait.WaitWithContext(ctx) {
+		u.uploadV1Stats.recordScheduled(time.Since(waitStart), true, wait.RunningCount())
 		if *u.FileUploadPart.ParallelParts {
 			go func() {
 				u.runUploadPart(ctx, part)
@@ -378,6 +400,7 @@ func (u *uploadIO) manageUpdatePart(ctx context.Context, part *Part, wait lib.Co
 			return true
 		}
 	} else {
+		u.uploadV1Stats.recordScheduled(time.Since(waitStart), false, wait.RunningCount())
 		part.error = ctx.Err()
 		u.onComplete <- part
 		return true
@@ -388,6 +411,7 @@ func (u *uploadIO) manageUpdatePart(ctx context.Context, part *Part, wait lib.Co
 
 func (u *uploadIO) runUploadPart(ctx context.Context, part *Part) {
 	runCount := 0
+	start := time.Now()
 	for {
 		runCount++
 		part.EtagsParam, part.error = u.uploadPart(ctx, part)
@@ -409,6 +433,7 @@ func (u *uploadIO) runUploadPart(ctx context.Context, part *Part) {
 		}
 	}
 
+	u.uploadV1Stats.recordPartComplete(part.bytes, time.Since(start), part.error)
 	u.onComplete <- part
 }
 
@@ -474,7 +499,7 @@ func (u *uploadIO) uploadParts(ctx context.Context) {
 		iterator = u.ByteOffset.Resume(u.Size, lastPart.off, lastPart.number-1)
 		offset, iterator, index = iterator()
 	} else {
-		iterator = u.ByteOffset.BySize(u.Size)
+		iterator = u.ByteOffset.Resume(u.Size, 0, 0)
 	}
 
 	for {
@@ -549,12 +574,16 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 				MkdirParents: lib.Bool(true),
 			}
 
+			start := time.Now()
 			part.FileUploadPart, err = u.startUpload(ctx, params)
+			u.uploadV1Stats.recordUploadURLRefresh(time.Since(start), err)
 			if err != nil && files_sdk.IsNotExist(err) && params.Ref != "" {
 				// Stale upload session (server cleaned it up) — retry without the ref
 				// to start a fresh session instead of failing the part.
 				params.Ref = ""
+				start = time.Now()
 				part.FileUploadPart, err = u.startUpload(ctx, params)
+				u.uploadV1Stats.recordUploadURLRefresh(time.Since(start), err)
 			}
 			part.FileUploadPart.PartNumber = int64(part.number) // Ensure it didn't change PartNumber
 
@@ -590,15 +619,19 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 			return uploadPartRetryReader{Reader: part.ProxyReader, len: part.ProxyReader.Len()}, nil
 		})
 	}
+	callStart := time.Now()
 	res, err := files_sdk.CallRaw(
 		params,
 	)
 	if err != nil {
+		u.uploadV1Stats.recordHTTPCall(time.Since(callStart), int64(part.ProxyReader.Len()), err)
 		return files_sdk.EtagsParam{}, err
 	}
 	if err := lib.ResponseErrors(res, files_sdk.APIError(), lib.S3XMLError, lib.NonOkError); err != nil {
+		u.uploadV1Stats.recordHTTPCall(time.Since(callStart), int64(part.ProxyReader.Len()), err)
 		return files_sdk.EtagsParam{}, err
 	}
+	u.uploadV1Stats.recordHTTPCall(time.Since(callStart), int64(part.ProxyReader.Len()), nil)
 	etag := strings.Trim(res.Header.Get("Etag"), "\"")
 	if etag == "" {
 		// With remote mounts this has no value, but the code strip the value causing a validation error.

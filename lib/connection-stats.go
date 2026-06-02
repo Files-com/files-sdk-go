@@ -65,3 +65,69 @@ func GetConnectionStatsFromClient(client *http.Client) (map[string]int, bool) {
 	}
 	return transport.GetConnectionStats(), true
 }
+
+func CloneHTTPClientWithMaxConnsPerHost(client *http.Client, maxConnsPerHost int) (*http.Client, bool) {
+	if client == nil || maxConnsPerHost <= 0 {
+		return client, false
+	}
+
+	cloned := *client
+	switch transport := client.Transport.(type) {
+	case *Transport:
+		cloned.Transport = transport.cloneWithMaxConnsPerHost(maxConnsPerHost)
+	case *http.Transport:
+		cloned.Transport = cloneHTTPTransportWithMaxConnsPerHost(transport, maxConnsPerHost)
+	case nil:
+		defaultTransport, ok := http.DefaultTransport.(*http.Transport)
+		if !ok {
+			return client, false
+		}
+		cloned.Transport = cloneHTTPTransportWithMaxConnsPerHost(defaultTransport, maxConnsPerHost)
+	default:
+		return client, false
+	}
+	return &cloned, true
+}
+
+func (t *Transport) cloneWithMaxConnsPerHost(maxConnsPerHost int) *Transport {
+	var base *http.Transport
+	if t.Transport != nil {
+		base = t.Transport
+	} else if defaultTransport, ok := http.DefaultTransport.(*http.Transport); ok {
+		base = defaultTransport
+	} else {
+		base = &http.Transport{}
+	}
+
+	cloned := &Transport{
+		Transport:   cloneHTTPTransportWithMaxConnsPerHost(base, maxConnsPerHost),
+		Dialer:      t.Dialer,
+		connections: make(map[string]*int32),
+	}
+	if cloned.Dialer == nil {
+		cloned.Dialer = &net.Dialer{}
+	}
+	cloned.Transport.DialContext = cloned.DialContext
+	return cloned
+}
+
+func cloneHTTPTransportWithMaxConnsPerHost(transport *http.Transport, maxConnsPerHost int) *http.Transport {
+	cloned := transport.Clone()
+	applyHTTPTransportMaxConnsPerHost(cloned, maxConnsPerHost)
+	return cloned
+}
+
+func applyHTTPTransportMaxConnsPerHost(transport *http.Transport, maxConnsPerHost int) {
+	if maxConnsPerHost <= 0 {
+		return
+	}
+	if transport.MaxConnsPerHost == 0 || transport.MaxConnsPerHost < maxConnsPerHost {
+		transport.MaxConnsPerHost = maxConnsPerHost
+	}
+	if transport.MaxIdleConns < maxConnsPerHost {
+		transport.MaxIdleConns = maxConnsPerHost
+	}
+	if transport.MaxIdleConnsPerHost < maxConnsPerHost {
+		transport.MaxIdleConnsPerHost = maxConnsPerHost
+	}
+}

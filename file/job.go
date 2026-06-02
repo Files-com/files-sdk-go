@@ -111,6 +111,9 @@ type Job struct {
 	retryablehttp.Logger
 	RemoteFs fs.FS
 	*lib.Meter
+	adaptiveUploadV2Mu       sync.Mutex
+	adaptiveUploadV2Managers map[uploadV2AdaptiveManagerCacheKey]*lib.AdaptiveConcurrencyManager
+	adaptiveUploadV2Clients  map[uploadV2HTTPClientCacheKey]uploadV2HTTPClientCacheEntry
 }
 
 func (r *Job) Init() *Job {
@@ -156,6 +159,9 @@ func (r *Job) ClearStatuses() Job {
 	newJob := *r
 	newJob.Reset()
 	newJob.Statuses = []IFile{}
+	newJob.adaptiveUploadV2Mu = sync.Mutex{}
+	newJob.adaptiveUploadV2Managers = nil
+	newJob.adaptiveUploadV2Clients = nil
 	return newJob
 }
 

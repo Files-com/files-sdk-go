@@ -333,6 +333,21 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 		if params, ok := job.Params.(UploaderParams); ok && params.PreserveTimes {
 			opts = append(opts, UploadWithProvidedMtime(*uploadStatus.File().Mtime))
 		}
+		if params, ok := job.Params.(UploaderParams); ok && params.AdaptiveConcurrency {
+			opts = append(opts, UploadWithV2())
+			opts = append(opts, uploadWithV2AdaptiveManagerProvider(job.uploadV2AdaptiveManager))
+			opts = append(opts, uploadWithV2HTTPClientProvider(job.uploadV2HTTPClient))
+			if params.AdaptiveUploadReadyRunwaySet {
+				opts = append(opts, UploadWithV2ReadyRunway(params.AdaptiveUploadReadyRunwayParts, params.AdaptiveUploadReadyRunwayBytes))
+			}
+			tuning := params.AdaptiveUploadV2Tuning
+			if tuning.S3WorkloadBytes == 0 {
+				tuning.S3WorkloadBytes = job.uploadV2WorkloadBytes(uploadStatus.File().Size, tuning)
+			}
+			if params.AdaptiveUploadV2TuningSet || tuning.S3WorkloadBytes > 0 {
+				opts = append(opts, UploadWithV2Tuning(tuning))
+			}
+		}
 
 		uploadStatus.UploadResumable, err = uploadStatus.UploadWithResume(opts...)
 		if err != nil {

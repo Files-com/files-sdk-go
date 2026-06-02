@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -195,4 +196,66 @@ func TestProxyReader_CloseWithOnRead(t *testing.T) {
 	if bytesRead != 10 {
 		t.Errorf("Expected bytesRead to be 10, got %d", bytesRead)
 	}
+}
+
+func TestProxyReaderAtTracksReadDurationWhenEnabled(t *testing.T) {
+	reader := &ProxyReaderAt{
+		ReaderAt:          delayedReaderAt{reader: bytes.NewReader([]byte("duration"))},
+		len:               8,
+		trackReadDuration: true,
+	}
+
+	_, err := io.ReadAll(reader)
+
+	assert.NoError(t, err)
+	assert.Greater(t, reader.ReadDuration().Nanoseconds(), int64(0))
+	assert.True(t, reader.Rewind())
+	assert.Equal(t, int64(0), reader.ReadDuration().Nanoseconds())
+}
+
+func TestProxyReaderAtSkipsReadDurationWhenDisabled(t *testing.T) {
+	reader := &ProxyReaderAt{
+		ReaderAt: bytes.NewReader([]byte("duration")),
+		len:      8,
+	}
+
+	_, err := io.ReadAll(reader)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), reader.ReadDuration().Nanoseconds())
+}
+
+func TestProxySectionReaderTracksProgressDurationAndRewinds(t *testing.T) {
+	var progress int64
+	reader := newProxySectionReader(delayedReaderAt{reader: bytes.NewReader([]byte("section"))}, 0, 7, func(delta int64) {
+		progress += delta
+	}, true)
+
+	first, err := io.ReadAll(reader)
+	assert.NoError(t, err)
+	assert.Equal(t, "section", string(first))
+	assert.Equal(t, int64(7), reader.BytesRead())
+	assert.Equal(t, int64(7), progress)
+	assert.Greater(t, reader.ReadDuration().Nanoseconds(), int64(0))
+
+	assert.True(t, reader.Rewind())
+	assert.Equal(t, int64(0), reader.BytesRead())
+	assert.Equal(t, int64(0), progress)
+	assert.Equal(t, int64(0), reader.ReadDuration().Nanoseconds())
+
+	second, err := io.ReadAll(reader)
+	assert.NoError(t, err)
+	assert.Equal(t, "section", string(second))
+	assert.Equal(t, int64(7), reader.BytesRead())
+	assert.Equal(t, int64(7), progress)
+	assert.Greater(t, reader.ReadDuration().Nanoseconds(), int64(0))
+}
+
+type delayedReaderAt struct {
+	reader *bytes.Reader
+}
+
+func (r delayedReaderAt) ReadAt(p []byte, off int64) (int, error) {
+	time.Sleep(time.Microsecond)
+	return r.reader.ReadAt(p, off)
 }

@@ -9,9 +9,11 @@ import (
 )
 
 var (
-	ConcurrentFiles         = 50
-	ConcurrentFileParts     = 50
-	ConcurrentDirectoryList = 100
+	ConcurrentFiles                     = 50
+	ConcurrentFileParts                 = 50
+	ConcurrentDirectoryList             = 100
+	AdaptiveUploadV2ConcurrentFiles     = 100
+	AdaptiveUploadV2ConcurrentFileParts = 1024
 )
 
 type Manager struct {

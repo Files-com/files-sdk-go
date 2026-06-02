@@ -84,6 +84,7 @@ func UploadWithProvidedMtimePtr(providedMtime *time.Time) UploadOption {
 func UploadWithManager(manager lib.ConcurrencyManagerWithSubWorker) UploadOption {
 	return func(params uploadIO) (uploadIO, error) {
 		params.Manager = manager
+		params.managerSet = true
 		return params, nil
 	}
 }
@@ -221,6 +222,23 @@ type UploaderParams struct {
 	*Job
 	config        files_sdk.Config
 	PreserveTimes bool
+	// AdaptiveConcurrency enables the opt-in upload V2 engine. Any configured
+	// concurrent connection limit is used as a maximum cap, not a fixed target.
+	AdaptiveConcurrency bool
+	// AdaptiveUploadReadyRunwaySet applies the ready-runway values below. When
+	// false, V2 uses its built-in defaults.
+	AdaptiveUploadReadyRunwaySet bool
+	// AdaptiveUploadReadyRunwayParts controls how many upload parts V2 may
+	// prepare ahead of admitted HTTP concurrency. Zero disables the runway.
+	AdaptiveUploadReadyRunwayParts int
+	// AdaptiveUploadReadyRunwayBytes caps the extra queued bytes for prepared
+	// runway parts. Zero leaves queued runway bytes uncapped.
+	AdaptiveUploadReadyRunwayBytes int64
+	// AdaptiveUploadV2TuningSet applies diagnostic V2 tuning overrides below.
+	// When false, V2 uses built-in defaults.
+	AdaptiveUploadV2TuningSet bool
+	// AdaptiveUploadV2Tuning holds opt-in V2 diagnostics and benchmark tuning.
+	AdaptiveUploadV2Tuning UploadV2Tuning
 }
 
 func expand(path string) (string, error) {

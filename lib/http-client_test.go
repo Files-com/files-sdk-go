@@ -121,6 +121,25 @@ func TestUploadRetryableHttpLeavesBodyReadableAfterPeek(t *testing.T) {
 	require.Equal(t, body, string(readBody))
 }
 
+func TestUploadRetryableHttpClosesOriginalBodyAfterPeek(t *testing.T) {
+	body := `<?xml version="1.0" encoding="UTF-8"?><Error><Code>RequestTimeout</Code><Message>provider message</Message></Error>`
+	bodyCloser := &closeTrackingReadCloser{Reader: strings.NewReader(body)}
+	client := UploadRetryableHttp(DefaultRetryableHttp(nil), func() bool { return true })
+	resp := &http.Response{
+		StatusCode: http.StatusBadRequest,
+		Header:     http.Header{"Content-Type": []string{"application/xml"}},
+		Body:       bodyCloser,
+	}
+
+	ok, err := client.CheckRetry(context.Background(), resp, nil)
+	closeErr := resp.Body.Close()
+
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.NoError(t, closeErr)
+	require.True(t, bodyCloser.closed)
+}
+
 func TestUploadRetryableHttpDoesNotRetryWhenBodyCannotReplay(t *testing.T) {
 	body := `<?xml version="1.0" encoding="UTF-8"?><Error><Code>RequestTimeout</Code><Message>provider message</Message></Error>`
 	client := UploadRetryableHttp(DefaultRetryableHttp(nil), func() bool { return false })
@@ -197,6 +216,23 @@ func TestUploadRetryableHttpBackoffDoesNotJitterRequestTimeoutS3XML(t *testing.T
 	require.Equal(t, time.Duration(0), client.Backoff(0, 0, 0, resp))
 }
 
+func TestCloneHTTPClientWithMaxConnsPerHostRaisesTransportWithoutMutatingOriginal(t *testing.T) {
+	transport := DefaultPooledTransport()
+	client := &http.Client{Transport: transport}
+
+	cloned, ok := CloneHTTPClientWithMaxConnsPerHost(client, 1024)
+
+	require.True(t, ok)
+	require.NotSame(t, client, cloned)
+	require.NotSame(t, transport, cloned.Transport)
+	require.Equal(t, 75, transport.MaxConnsPerHost)
+	clonedTransport, ok := cloned.Transport.(*Transport)
+	require.True(t, ok)
+	require.Equal(t, 1024, clonedTransport.MaxConnsPerHost)
+	require.Equal(t, 1024, clonedTransport.MaxIdleConns)
+	require.Equal(t, 1024, clonedTransport.MaxIdleConnsPerHost)
+}
+
 func assertUploadRetryBackoffBetween(t *testing.T, delay time.Duration, minDelay time.Duration, maxDelay time.Duration) {
 	t.Helper()
 
@@ -214,4 +250,14 @@ func s3XMLResponse(status int, code string) *http.Response {
 
 func expiredS3URL() string {
 	return "https://example.com/upload?X-Amz-Date=" + time.Now().Add(-time.Hour).UTC().Format("20060102T150405Z") + "&X-Amz-Expires=60"
+}
+
+type closeTrackingReadCloser struct {
+	*strings.Reader
+	closed bool
+}
+
+func (c *closeTrackingReadCloser) Close() error {
+	c.closed = true
+	return nil
 }

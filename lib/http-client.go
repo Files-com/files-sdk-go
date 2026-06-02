@@ -56,6 +56,17 @@ func DefaultRetryableHttp(logger Logger, client ...*http.Client) *retryablehttp.
 }
 
 func UploadRetryableHttp(base *retryablehttp.Client, canReplay func() bool) *retryablehttp.Client {
+	return UploadRetryableHttpWithObserver(base, canReplay, nil)
+}
+
+type UploadRetryAttempt struct {
+	StatusCode int
+	Retryable  bool
+	RetryAfter time.Duration
+	Err        error
+}
+
+func UploadRetryableHttpWithObserver(base *retryablehttp.Client, canReplay func() bool, observer func(UploadRetryAttempt)) *retryablehttp.Client {
 	if base == nil {
 		base = DefaultRetryableHttp(nil)
 	}
@@ -88,6 +99,14 @@ func UploadRetryableHttp(base *retryablehttp.Client, canReplay func() bool) *ret
 		}
 		if ok {
 			retryClass = classified.Class
+		}
+		if observer != nil && (resp != nil || err != nil) {
+			attempt := UploadRetryAttempt{Retryable: ok, Err: err}
+			if resp != nil {
+				attempt.StatusCode = resp.StatusCode
+				attempt.RetryAfter, _ = retryAfterDuration(resp.Header.Get("Retry-After"), time.Now())
+			}
+			observer(attempt)
 		}
 		return ok, retryErr
 	}
@@ -123,12 +142,21 @@ func peekS3XMLClass(resp *http.Response) S3ErrorClassification {
 }
 
 func readAndRestoreResponseBody(resp *http.Response, limit int64) ([]byte, error) {
+	originalBody := resp.Body
 	peek, err := io.ReadAll(io.LimitReader(resp.Body, limit))
 	if err != nil {
 		return nil, err
 	}
-	resp.Body = io.NopCloser(io.MultiReader(bytes.NewReader(peek), resp.Body))
+	resp.Body = replayReadCloser{
+		Reader: io.MultiReader(bytes.NewReader(peek), originalBody),
+		Closer: originalBody,
+	}
 	return peek, nil
+}
+
+type replayReadCloser struct {
+	io.Reader
+	io.Closer
 }
 
 func isS3XMLRetryStatus(status int) bool {
