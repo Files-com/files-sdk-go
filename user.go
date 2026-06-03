@@ -339,6 +339,7 @@ type UserUpdateParams struct {
 	UserHome                               string                       `url:"user_home,omitempty" json:"user_home,omitempty" path:"user_home"`
 	WorkspaceAdmin                         *bool                        `url:"workspace_admin,omitempty" json:"workspace_admin,omitempty" path:"workspace_admin"`
 	Username                               string                       `url:"username,omitempty" json:"username,omitempty" path:"username"`
+	WorkspaceId                            int64                        `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	Clear2fa                               *bool                        `url:"clear_2fa,omitempty" json:"clear_2fa,omitempty" path:"clear_2fa"`
 	ConvertToPartnerUser                   *bool                        `url:"convert_to_partner_user,omitempty" json:"convert_to_partner_user,omitempty" path:"convert_to_partner_user"`
 }
