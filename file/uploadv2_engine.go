@@ -170,7 +170,7 @@ func configuredUploadV2HTTPClient(client *Client, maxConnsPerHost int, maxIdleCo
 	if client == nil || client.Config.Client == nil || client.Config.Client.HTTPClient == nil {
 		return client, uploadV2HTTPClientLimits{}
 	}
-	httpClient, ok := lib.CloneHTTPClientWithMaxConnsPerHost(client.Config.Client.HTTPClient, maxConnsPerHost)
+	httpClient, ok := lib.CloneHTTPClientWithExactMaxConnsPerHost(client.Config.Client.HTTPClient, maxConnsPerHost)
 	if !ok {
 		limits := uploadV2HTTPClientLimitsForClient(client.Config.Client.HTTPClient)
 		limits.adjusted = false
@@ -220,6 +220,10 @@ func uploadV2HTTPMaxConnsPerHost(plan uploadV2PartPlan, tuning UploadV2Tuning, m
 	if workloadBytes <= 0 && plan.totalSize != nil {
 		workloadBytes = *plan.totalSize
 	}
+	// The transport can open based on workload bytes before the adaptive
+	// manager unlocks growth above the S3 soft ceiling. That keeps connection
+	// headroom ready for large transfers, while actual concurrency still has to
+	// prove sustained throughput before it probes above the default plateau.
 	if probeBytes > 0 && workloadBytes >= probeBytes {
 		return maxConnsPerHost
 	}

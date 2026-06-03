@@ -391,7 +391,7 @@ Target-specific bounds:
 
 | Target class | `MaxTarget` | `MaxRampStep` | `WaitFloor` | `WaitCeiling` | Rationale |
 |---|---:|---:|---:|---:|---|
-| `s3` | 1024 hard cap with 150 soft growth ceiling | measured enterprise soft ceiling | throughput/loss driven below cap | throughput/loss driven | Dominant path; direct object-store uploads start at the measured 150-active-part C3/S3 ceiling. VM testing showed immediate 200+ active/transport headroom added connection churn and reduced throughput for the Stage 1 workloads. Higher headroom stays available, but the soft ceiling only unlocks after sustained bytes and throughput prove the extra connection footprint is worth probing. |
+| `s3` | 1024 hard cap with 150 soft growth ceiling | measured enterprise soft ceiling | throughput/loss driven below cap | throughput/loss driven | Dominant path; direct object-store uploads start at the measured 150-active-part C3/S3 plateau. Stage 1 VM testing validates the default plateau for the tested workloads, not field growth above 150. Higher headroom stays available, but the soft ceiling only unlocks after sustained bytes and throughput prove the extra connection footprint is worth probing. |
 | `fiw` | 192 | 6 | 25 ms | 225 ms | Service-mediated HTTP path; higher than agent, lower than direct S3 until FIW-specific load behavior proves more headroom |
 | `agent` | 128 | 4 | 30 ms | 250 ms | Proxy/agent path has the strictest server-side envelope and explicit load-control feedback |
 | `generic` | 64 | 4 | 30 ms | 250 ms | Unknown endpoint fallback favors stability |
@@ -405,13 +405,13 @@ Target-specific bounds:
 | `high` | use the target-class ceiling |
 | `auto` | use the target-class ceiling and let Vegas settle below it |
 
-The direct-S3 Stage 1 default uses `InitialTarget=150` and a `150` soft growth ceiling because cloud C3-to-S3 validation showed this range matched or stayed within 5% of the best static baseline for `20x200MiB`, `200x200MiB`, and `1x20GiB`, while immediate `200` and `1024` active/transport ceilings caused overshoot, retries, or established-connection churn. This is still adaptive for slower links: the controller can shrink on latency, failures, 429/503, or transport back-pressure. It is also not a hardcoded final ceiling: the manager retains `MaxTarget=1024`, but unlocks growth above 150 only after enough bytes and measured throughput indicate a larger transfer on a fast path. The HTTP transport uses the soft ceiling for benchmark-sized workloads and opens the larger cap for workloads that are large enough to justify high-ceiling probing.
+The direct-S3 Stage 1 default uses `InitialTarget=150` and a `150` soft growth ceiling because cloud C3-to-S3 validation of `--adaptive-concurrency` with no numeric tuning matched or stayed within 5% of the best static baseline for `20x200MiB`, `200x200MiB`, and `1x20GiB`. The closest result was the `200x200MiB` workload at roughly 4.90% slower, so this should be treated as a thin no-regression margin rather than a comfortable win. Those field workloads are all below the default 64 GiB ceiling-unlock threshold, so they validate the default 150 plateau and shrink path, not the grow-above-150 field path. The above-150 path is unit-tested and remains available through `MaxTarget=1024`, but it only unlocks after enough bytes and measured throughput indicate a larger transfer on a fast path. This is still adaptive for slower links: the controller can shrink on latency, failures, 429/503, or transport back-pressure. The HTTP transport uses the soft ceiling for benchmark-sized workloads and opens the larger cap for workloads that are large enough to justify high-ceiling probing.
 
 S3 keeps idle HTTP retention capped below the active ceiling. Directory/job uploads must share one adjusted V2 HTTP client per target class so many-file jobs do not create one transport pool per file. This avoids accumulating hundreds of idle established connections on many-file jobs.
 
 ### Diagnostic tuning knobs
 
-V2 keeps normal users on automatic defaults, but numeric benchmark tuning must not require rebuilding the CLI. The CLI therefore exposes hidden S3-only diagnostic flags that map to `file.UploadV2Tuning` and only take effect when adaptive upload V2 is enabled:
+V2 keeps normal users on automatic defaults: `--adaptive-concurrency` without numeric tuning is the product contract and the benchmark success path. Numeric benchmark exploration must not require rebuilding the CLI, so the CLI exposes hidden S3-only diagnostic flags that map to `file.UploadV2Tuning` and only take effect when adaptive upload V2 is enabled:
 
 | Area | Hidden flags |
 |---|---|
@@ -421,6 +421,7 @@ V2 keeps normal users on automatic defaults, but numeric benchmark tuning must n
 | S3 soft ceiling | `--adaptive-upload-v2-s3-growth-ceiling`, `--adaptive-upload-v2-s3-growth-ceiling-probe-bytes`, `--adaptive-upload-v2-s3-growth-ceiling-probe-rate-bps` |
 | Latency protection | `--adaptive-upload-v2-s3-latency-queue-high`, `--adaptive-upload-v2-s3-latency-growth-queue-high` |
 | Part-size planning | `--adaptive-upload-v2-s3-part-size-mib`, `--adaptive-upload-v2-s3-workload-bytes`, `--adaptive-upload-v2-s3-workload-target-part-multiplier`, `--adaptive-upload-v2-s3-workload-min-part-size-mib`, `--adaptive-upload-v2-s3-workload-scan-wait-ms` |
+| Ready runway | `--adaptive-upload-ready-runway-parts`, `--adaptive-upload-ready-runway-bytes` |
 
 These are intentionally hidden escape hatches for benchmark runs, customer diagnostics, and rollout tuning. They should not be promoted as normal CLI UX, and changing the values should never change V1 upload behavior.
 

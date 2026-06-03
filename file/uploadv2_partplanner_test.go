@@ -356,11 +356,14 @@ func TestUploadV2FeatureFlagEnablesAdaptiveConcurrencyAndPlanner(t *testing.T) {
 
 func TestUploadV2ChecksumTrailerFeatureFlagUsesAWSChunkedForSignedS3URL(t *testing.T) {
 	var decoded bytes.Buffer
+	expectedAlgorithm := uploadV2ChecksumTrailerAlgorithm.OrBestForPlatform()
+	expectedTrailerHeader, err := expectedAlgorithm.TrailerHeader()
+	require.NoError(t, err)
 	transport := uploadV2RoundTripFunc(func(req *http.Request) (*http.Response, error) {
 		assert.Equal(t, uploadchecksum.ContentEncodingAWSChunked, req.Header.Get("Content-Encoding"))
 		assert.Equal(t, uploadchecksum.ContentSHA256StreamingUnsignedTrailer, req.Header.Get("x-amz-content-sha256"))
-		assert.Equal(t, string(uploadchecksum.ChecksumAlgorithmCRC32C), req.Header.Get("x-amz-sdk-checksum-algorithm"))
-		assert.Equal(t, "x-amz-checksum-crc32c", req.Header.Get("x-amz-trailer"))
+		assert.Equal(t, string(expectedAlgorithm), req.Header.Get("x-amz-sdk-checksum-algorithm"))
+		assert.Equal(t, expectedTrailerHeader, req.Header.Get("x-amz-trailer"))
 		assert.Equal(t, "5", req.Header.Get("x-amz-decoded-content-length"))
 		assert.NotEqual(t, "5", req.Header.Get("Content-Length"))
 		assert.Equal(t, req.ContentLength, mustParseInt64(t, req.Header.Get("Content-Length")))
@@ -784,6 +787,35 @@ func TestUploadV2RaisesDefaultHTTPTransportCapForSDKClient(t *testing.T) {
 	assert.Equal(t, uploadV2DefaultHTTPIdleConnectionCap, attrs["upload_max_idle_conns_per_host"])
 }
 
+func TestUploadV2LowersPreconfiguredHTTPTransportCapToS3GrowthCeiling(t *testing.T) {
+	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
+	size := int64(200) * uploadV2MiB
+	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+	require.True(t, ok, reason)
+	client := &Client{Config: files_sdk.Config{}.Init()}
+	originalTransport, ok := client.Config.Client.HTTPClient.Transport.(*lib.Transport)
+	require.True(t, ok)
+	originalTransport.MaxConnsPerHost = uploadV2S3MaxConcurrency
+
+	engine := newUploadV2Engine(&uploadIO{
+		Client:         client,
+		FileUploadPart: part,
+		Size:           &size,
+		uploadV2Tuning: UploadV2Tuning{S3WorkloadBytes: int64(200*200) * uploadV2MiB},
+	}, plan)
+
+	adjustedTransport, ok := engine.u.Config.Client.HTTPClient.Transport.(*lib.Transport)
+	require.True(t, ok)
+	assert.NotSame(t, originalTransport, adjustedTransport)
+	assert.Equal(t, uploadV2S3MaxConcurrency, originalTransport.MaxConnsPerHost)
+	assert.Equal(t, uploadV2S3GrowthCeiling, adjustedTransport.MaxConnsPerHost)
+	assert.Equal(t, uploadV2DefaultHTTPIdleConnectionCap, adjustedTransport.MaxIdleConns)
+	assert.Equal(t, uploadV2DefaultHTTPIdleConnectionCap, adjustedTransport.MaxIdleConnsPerHost)
+	assert.Equal(t, uploadV2S3GrowthCeiling, engine.httpClientLimits.maxConnsPerHost)
+	attrs := engine.uploadV2EnabledLogAttrs(uploadV2ReadyRunwayConfig{})
+	assert.Equal(t, uploadV2S3GrowthCeiling, attrs["upload_max_conns_per_host"])
+}
+
 func TestUploadV2RaisesHTTPTransportCapForLargeS3Workload(t *testing.T) {
 	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
 	size := int64(256) * uploadV2MiB
@@ -825,6 +857,28 @@ func TestUploadV2HTTPTransportCapTracksS3GrowthCeiling(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestUploadV2LargeS3WorkloadOpensTransportBeforeAdaptiveGrowthUnlocks(t *testing.T) {
+	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
+	size := uploadV2S3GrowthCeilingProbeBytes
+	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+	require.True(t, ok, reason)
+	tuning := UploadV2Tuning{S3WorkloadBytes: uploadV2S3GrowthCeilingProbeBytes}
+
+	maxConnsPerHost := uploadV2HTTPMaxConnsPerHost(plan, tuning, uploadV2S3MaxConcurrency)
+	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(uploadV2AdaptiveConcurrencyConfigWithInitial(
+		plan,
+		uploadV2S3MaxConcurrency,
+		uploadV2InitialConcurrencyForPlan(plan, uploadV2S3MaxConcurrency, tuning),
+		tuning,
+	))
+	snapshot := manager.Snapshot()
+
+	assert.Equal(t, uploadV2S3MaxConcurrency, maxConnsPerHost)
+	assert.Equal(t, uploadV2S3InitialConcurrency, snapshot.Target)
+	assert.Equal(t, uploadV2S3GrowthCeiling, snapshot.GrowthCeiling)
+	assert.False(t, snapshot.GrowthCeilingUnlocked)
 }
 
 func TestUploadV2JobHTTPClientUsesS3GrowthCeilingForBenchmarkWorkload(t *testing.T) {

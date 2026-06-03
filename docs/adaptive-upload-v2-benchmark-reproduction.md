@@ -21,6 +21,16 @@ Recommended datasets:
 | `20x200` | 20 files, 200 MiB each | Short multi-file ramp and scheduling overhead |
 | `200x200` | 200 files, 200 MiB each | Sustained multi-file throughput and adaptive stability |
 | `1x20GiB` | 1 file, 20 GiB | Single large-file ramp and per-file part scheduling |
+| `1x80GiB` or `512x200` | One 80 GiB file, or 512 files at 200 MiB each | Optional above-ceiling validation; large enough to exercise the default S3 growth-ceiling unlock path |
+
+Interpret the datasets separately:
+
+| Dataset | What It Validates | What It Does Not Prove |
+| --- | --- | --- |
+| `20x200` | Short-job ramp behavior, part creation overhead, and scheduling latency | Sustained maximum throughput or above-150 probing |
+| `200x200` | Default 150-plateau stability and sustained multi-file throughput | That above-150 probing improves field throughput |
+| `1x20GiB` | Single large-file part sizing, ready runway, and per-file scheduling | Aggregate many-file concurrency behavior or above-150 probing |
+| `1x80GiB` / `512x200` | Above-ceiling unlock and probe behavior with defaults | Small-job ramp behavior |
 
 Example data generation pattern:
 
@@ -36,6 +46,14 @@ for i in $(seq -w 1 200); do
 done
 
 dd if=/dev/urandom of="./upload-sources/1x20GiB/file-001.bin" bs=1M count=20480 status=none
+
+# Optional above-ceiling dataset:
+mkdir -p ./upload-sources/1x80GiB ./upload-sources/512x200
+dd if=/dev/urandom of="./upload-sources/1x80GiB/file-001.bin" bs=1M count=81920 status=none
+
+for i in $(seq -w 1 512); do
+  dd if=/dev/urandom of="./upload-sources/512x200/file-${i}.bin" bs=1M count=200 status=none
+done
 ```
 
 ## Metrics Collection
@@ -47,10 +65,18 @@ Capture at least these metrics per run:
 - CLI process CPU percent sampled during the upload.
 - CLI process resident memory sampled during the upload.
 - Network transmit and receive byte deltas from the host network interface.
+- Host network link speed and observed NIC transmit utilization.
 - Maximum observed HTTPS connection count for the CLI process.
 - CLI debug logs containing upload V1/V2 scheduler summaries and adaptive telemetry.
 
-A generic sampler can poll once per second while the CLI process is running:
+Capture the host link speed before running uploads:
+
+```sh
+ip link show "${NET_IFACE}"
+ethtool "${NET_IFACE}" 2>/dev/null | grep -E 'Speed|Duplex|Link detected' || true
+```
+
+A generic sampler can poll once per second while the CLI process is running. Prefer `sar` or `ifstat` when available, and keep raw byte counters so utilization can be recalculated after the run:
 
 ```sh
 while kill -0 "${CLI_PID}" 2>/dev/null; do
@@ -59,6 +85,8 @@ while kill -0 "${CLI_PID}" 2>/dev/null; do
   ss -tanp 2>/dev/null | grep -c "${CLI_PROCESS_NAME}" || true
   cat "/sys/class/net/${NET_IFACE}/statistics/tx_bytes"
   cat "/sys/class/net/${NET_IFACE}/statistics/rx_bytes"
+  sar -n DEV 1 1 2>/dev/null | grep "${NET_IFACE}" || true
+  ifstat -i "${NET_IFACE}" 1 1 2>/dev/null || true
   sleep 1
 done
 ```
@@ -67,7 +95,7 @@ Use an equivalent command on hosts that do not provide `ss` or `/sys/class/net`.
 
 ## Baseline Runs
 
-Run static uploads without adaptive upload V2. Test representative concurrency values so the adaptive default is compared against the best static result, not only against the existing default.
+Run static uploads without adaptive upload V2. Test representative concurrency values so the adaptive default is compared against the best static result, not only against the existing default. Static sweeps are for baseline characterization only; they are not tuning instructions for the adaptive path.
 
 Recommended static limits:
 
@@ -75,6 +103,7 @@ Recommended static limits:
 - `100`
 - `150`
 - `200`
+- `300` when specifically checking whether the host is line-rate-bound at or above 150
 
 Generic command shape:
 
@@ -90,7 +119,7 @@ Record one row per dataset and static limit.
 
 ## Adaptive Runs
 
-Run the same datasets with adaptive upload V2 enabled. Do not pass exact tuning values for the primary default comparison. User-provided concurrency, when present, should be treated only as a maximum cap.
+Run the same datasets with adaptive upload V2 enabled. Do not pass exact tuning values for the primary default comparison: `--adaptive-concurrency` with no numeric tuning is the behavior being validated. User-provided concurrency, when present, should be treated only as a maximum cap.
 
 Generic command shape:
 
@@ -102,7 +131,9 @@ files-cli upload \
   "remote/path/${RUN_ID}/adaptive-default/${DATASET}"
 ```
 
-Diagnostic tuning flags may be used for development-only exploration, but those runs should be labeled separately and should not replace the default adaptive comparison.
+Diagnostic tuning flags may be used for development-only exploration, but those runs should be labeled separately and should not replace the default adaptive comparison or be reported as the product result.
+
+For above-ceiling validation, still use the default adaptive command. The workload itself must be large enough to cross the default S3 ceiling-unlock threshold; do not lower the threshold just to make the run shorter unless the row is explicitly labeled as a diagnostic override.
 
 ## Comparison
 
@@ -120,6 +151,10 @@ The target result for this tuning pass is adaptive default at least matching, or
 - `20x200`
 - `200x200`
 - `1x20GiB`
+
+These recommended datasets validate default plateau behavior for Stage 1. They are below the default S3 ceiling-unlock threshold, so they are not evidence that the grow-above-150 path improved field throughput. A separate larger workload at or above the unlock threshold is required when specifically validating above-ceiling probing.
+
+When reporting results, call out which mechanism each row validates. For example, `200x200` is the best row for plateau and NIC-saturation discussion, while `20x200` and `1x20GiB` primarily validate ramp, part planning, and scheduling overhead.
 
 ## Validation Checks
 

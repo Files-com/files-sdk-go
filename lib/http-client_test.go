@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -231,6 +232,89 @@ func TestCloneHTTPClientWithMaxConnsPerHostRaisesTransportWithoutMutatingOrigina
 	require.Equal(t, 1024, clonedTransport.MaxConnsPerHost)
 	require.Equal(t, 1024, clonedTransport.MaxIdleConns)
 	require.Equal(t, 1024, clonedTransport.MaxIdleConnsPerHost)
+}
+
+func TestCloneHTTPClientWithMaxConnsPerHostSharesConnectionStats(t *testing.T) {
+	transport := DefaultPooledTransport()
+	client := &http.Client{Transport: transport}
+
+	cloned, ok := CloneHTTPClientWithMaxConnsPerHost(client, 1024)
+
+	require.True(t, ok)
+	clonedTransport, ok := cloned.Transport.(*Transport)
+	require.True(t, ok)
+	require.Same(t, transport.connectionStats(), clonedTransport.connectionStats())
+
+	counter := int32(3)
+	stats := clonedTransport.connectionStats()
+	stats.mu.Lock()
+	stats.connections["uploads.files.com:443"] = &counter
+	stats.mu.Unlock()
+
+	connectionStats, ok := GetConnectionStatsFromClient(client)
+	require.True(t, ok)
+	require.Equal(t, map[string]int{"uploads.files.com:443": 3}, connectionStats)
+}
+
+func TestCloneHTTPClientWithExactMaxConnsPerHostLowersTransportWithoutMutatingOriginal(t *testing.T) {
+	transport := DefaultPooledTransport()
+	transport.MaxConnsPerHost = 1024
+	transport.MaxIdleConns = 1024
+	transport.MaxIdleConnsPerHost = 1024
+	client := &http.Client{Transport: transport}
+
+	cloned, ok := CloneHTTPClientWithExactMaxConnsPerHost(client, 150)
+
+	require.True(t, ok)
+	require.NotSame(t, client, cloned)
+	require.NotSame(t, transport, cloned.Transport)
+	require.Equal(t, 1024, transport.MaxConnsPerHost)
+	clonedTransport, ok := cloned.Transport.(*Transport)
+	require.True(t, ok)
+	require.Equal(t, 150, clonedTransport.MaxConnsPerHost)
+	require.Equal(t, 1024, clonedTransport.MaxIdleConns)
+	require.Equal(t, 1024, clonedTransport.MaxIdleConnsPerHost)
+}
+
+func TestCloneHTTPClientWithExactMaxConnsPerHostSharesConnectionStats(t *testing.T) {
+	transport := DefaultPooledTransport()
+	transport.MaxConnsPerHost = 1024
+	client := &http.Client{Transport: transport}
+
+	cloned, ok := CloneHTTPClientWithExactMaxConnsPerHost(client, 150)
+
+	require.True(t, ok)
+	clonedTransport, ok := cloned.Transport.(*Transport)
+	require.True(t, ok)
+	require.Same(t, transport.connectionStats(), clonedTransport.connectionStats())
+
+	counter := int32(2)
+	stats := clonedTransport.connectionStats()
+	stats.mu.Lock()
+	stats.connections["s3.amazonaws.com:443"] = &counter
+	stats.mu.Unlock()
+
+	connectionStats, ok := GetConnectionStatsFromClient(client)
+	require.True(t, ok)
+	require.Equal(t, map[string]int{"s3.amazonaws.com:443": 2}, connectionStats)
+}
+
+func TestTransportConnectionStatsLazyInitIsRaceSafe(t *testing.T) {
+	transport := &Transport{}
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	for i := 0; i < 32; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			require.NotNil(t, transport.connectionStats())
+		}()
+	}
+
+	close(start)
+	wg.Wait()
+	require.NotNil(t, transport.connectionStats())
 }
 
 func assertUploadRetryBackoffBetween(t *testing.T, delay time.Duration, minDelay time.Duration, maxDelay time.Duration) {

@@ -101,7 +101,7 @@ func (p uploadV2PartPlan) withTuning(tuning UploadV2Tuning) (uploadV2PartPlan, b
 func (p uploadV2PartPlan) withS3WorkloadTuning(tuning UploadV2Tuning) (uploadV2PartPlan, bool, string) {
 	targetParts := uploadV2S3WorkloadTargetPartCount(tuning)
 	partSize := s3WorkloadPartSize(tuning.S3WorkloadBytes, p.partSize, targetParts, tuning)
-	partSize = maxInt64(partSize, roundUpToMiB(ceilDiv(*p.totalSize, uploadV2S3MaxPartCount)))
+	partSize = max(partSize, roundUpToMiB(ceilDiv(*p.totalSize, uploadV2S3MaxPartCount)))
 	if partSize <= 0 || partSize >= p.partSize {
 		return p, true, ""
 	}
@@ -142,7 +142,7 @@ func newUploadV2PartPlan(target uploadV2TargetClass, totalSize *int64) (uploadV2
 		if *totalSize > uploadV2S3MaxObjectSize {
 			return uploadV2PartPlan{}, false, "s3_object_too_large"
 		}
-		plan.partSize = roundUpToMiB(maxInt64(
+		plan.partSize = roundUpToMiB(max(
 			s3KnownSizePreferredPartSize(*totalSize),
 			uploadV2S3MinPartSize,
 			ceilDiv(*totalSize, uploadV2S3MaxPartCount),
@@ -302,7 +302,7 @@ func s3WorkloadPartSize(workloadBytes int64, currentPartSize int64, targetParts 
 		minPartSize = tuning.S3WorkloadMinPartSizeMiB * uploadV2MiB
 	}
 	partSize := floorPowerOfTwoMiB(ceilDiv(workloadBytes, targetParts))
-	partSize = maxInt64(partSize, uploadV2S3MinPartSize, minPartSize)
+	partSize = max(partSize, uploadV2S3MinPartSize, minPartSize)
 	if partSize > currentPartSize {
 		return currentPartSize
 	}
@@ -361,14 +361,4 @@ func ceilDiv(n int64, d int64) int64 {
 
 func roundUpToMiB(n int64) int64 {
 	return ceilDiv(n, uploadV2MiB) * uploadV2MiB
-}
-
-func maxInt64(values ...int64) int64 {
-	var max int64
-	for _, value := range values {
-		if value > max {
-			max = value
-		}
-	}
-	return max
 }

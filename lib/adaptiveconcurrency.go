@@ -18,42 +18,56 @@ type AdaptiveConcurrencySample struct {
 }
 
 type AdaptiveConcurrencyManager struct {
-	mu                                 sync.Mutex
-	wg                                 sync.WaitGroup
-	notify                             chan struct{}
-	waiters                            int
-	running                            int
-	target                             int
-	max                                int
-	min                                int
-	growthCeiling                      int
-	growthCeilingProbeBytes            int64
-	growthCeilingProbeRate             float64
-	peakTarget                         int
-	peakRunning                        int
-	throughputFloor                    int
-	successes                          int
-	growEvery                          int
-	growStep                           int
-	sqrtGrowth                         bool
-	failureShrink                      int
-	backPressureShrink                 int
-	backPressurePause                  time.Duration
-	throughputWindow                   int
-	throughputMinGain                  int
-	throughputShrink                   int
-	throughputHold                     int
-	throughputProbeMin                 int
-	throughputProbeFloor               int
-	throughputProbeFloorRate           float64
-	throughputProbePlateau             int
-	throughputProbeMinGainPerTarget    float64
-	throughputProbeStartTarget         int
-	throughputProbeMisses              int
-	latencyFloor                       int
-	latencyShrink                      int
-	latencyQueueHigh                   float64
-	latencyGrowthQueueHigh             float64
+	// Coordination state.
+	mu      sync.Mutex
+	wg      sync.WaitGroup
+	notify  chan struct{}
+	waiters int
+	running int
+
+	// Target bounds and growth controls.
+	target                  int
+	max                     int
+	min                     int
+	growthCeiling           int
+	growthCeilingProbeBytes int64
+	growthCeilingProbeRate  float64
+	peakTarget              int
+	peakRunning             int
+	throughputFloor         int
+	successes               int
+	growEvery               int
+	growStep                int
+	sqrtGrowth              bool
+
+	// Failure, back-pressure, and retry controls.
+	failureShrink      int
+	backPressureShrink int
+	backPressurePause  time.Duration
+	pauseUntil         time.Time
+
+	// Throughput window and probe controls.
+	throughputWindow                int
+	throughputMinGain               int
+	throughputShrink                int
+	throughputHold                  int
+	throughputProbeMin              int
+	throughputProbeFloor            int
+	throughputProbeFloorRate        float64
+	throughputProbePlateau          int
+	throughputProbeMinGainPerTarget float64
+	throughputProbeStartTarget      int
+	throughputProbeMisses           int
+	probePending                    bool
+	throughputHoldRemaining         int
+
+	// Latency controls.
+	latencyFloor           int
+	latencyShrink          int
+	latencyQueueHigh       float64
+	latencyGrowthQueueHigh float64
+
+	// Aggregate counters exposed through snapshots and upload telemetry.
 	runningWorkers                     int32
 	successTotal                       int
 	failureTotal                       int
@@ -66,23 +80,22 @@ type AdaptiveConcurrencyManager struct {
 	throughputProbeEfficiencyMissTotal int
 	latencyBackoffTotal                int
 	latencyGrowthSuppressionTotal      int
-	pauseUntil                         time.Time
 	durationTotal                      time.Duration
 	bytesTotal                         int64
-	windowSamples                      int
-	windowBytes                        int64
-	windowDuration                     time.Duration
-	windowStartedAt                    time.Time
-	probePending                       bool
-	lastThroughput                     float64
-	bestThroughput                     float64
-	lastThroughputProbeGain            float64
-	lastThroughputProbeTargetDelta     int
-	lastThroughputProbeGainPerTarget   float64
-	minDurationPerByte                 float64
-	lastDurationPerByte                float64
-	lastQueueEstimate                  float64
-	throughputHoldRemaining            int
+
+	// Current throughput and latency sample state.
+	windowSamples                    int
+	windowBytes                      int64
+	windowDuration                   time.Duration
+	windowStartedAt                  time.Time
+	lastThroughput                   float64
+	bestThroughput                   float64
+	lastThroughputProbeGain          float64
+	lastThroughputProbeTargetDelta   int
+	lastThroughputProbeGainPerTarget float64
+	minDurationPerByte               float64
+	lastDurationPerByte              float64
+	lastQueueEstimate                float64
 }
 
 type AdaptiveConcurrencyManagerWithSample interface {

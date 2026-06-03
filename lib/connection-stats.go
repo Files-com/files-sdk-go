@@ -11,16 +11,22 @@ import (
 type Transport struct {
 	*http.Transport
 	*net.Dialer
+	stats   *connectionStats
+	statsMu sync.Mutex
+}
+
+type connectionStats struct {
 	connections map[string]*int32
 	mu          sync.RWMutex
 }
 
 func (t *Transport) GetConnectionStats() map[string]int {
-	t.mu.RLock()
-	defer t.mu.RUnlock() // Keep the read lock for the entire function
+	stats := t.connectionStats()
+	stats.mu.RLock()
+	defer stats.mu.RUnlock() // Keep the read lock for the entire function
 
 	copiedMap := make(map[string]int)
-	for key, value := range t.connections {
+	for key, value := range stats.connections {
 		copiedMap[key] = int(atomic.LoadInt32(value))
 	}
 	return copiedMap
@@ -30,19 +36,33 @@ func (t *Transport) DialContext(ctx context.Context, network, address string) (n
 	conn, err := t.Dialer.DialContext(ctx, network, address)
 
 	if err == nil {
-		t.mu.Lock()
-		counter, ok := t.connections[address]
+		stats := t.connectionStats()
+		stats.mu.Lock()
+		counter, ok := stats.connections[address]
 		if !ok {
 			intCounter := int32(0)
 			counter = &intCounter
-			t.connections[address] = counter
+			stats.connections[address] = counter
 		}
-		t.mu.Unlock()
+		stats.mu.Unlock()
 		atomic.AddInt32(counter, 1)
 		return &Conn{Conn: conn, counter: counter}, err
 	}
 
 	return conn, err
+}
+
+func (t *Transport) connectionStats() *connectionStats {
+	t.statsMu.Lock()
+	defer t.statsMu.Unlock()
+	if t.stats == nil {
+		t.stats = newConnectionStats()
+	}
+	return t.stats
+}
+
+func newConnectionStats() *connectionStats {
+	return &connectionStats{connections: make(map[string]*int32)}
 }
 
 type Conn struct {
@@ -89,6 +109,29 @@ func CloneHTTPClientWithMaxConnsPerHost(client *http.Client, maxConnsPerHost int
 	return &cloned, true
 }
 
+func CloneHTTPClientWithExactMaxConnsPerHost(client *http.Client, maxConnsPerHost int) (*http.Client, bool) {
+	if client == nil || maxConnsPerHost <= 0 {
+		return client, false
+	}
+
+	cloned := *client
+	switch transport := client.Transport.(type) {
+	case *Transport:
+		cloned.Transport = transport.cloneWithExactMaxConnsPerHost(maxConnsPerHost)
+	case *http.Transport:
+		cloned.Transport = cloneHTTPTransportWithExactMaxConnsPerHost(transport, maxConnsPerHost)
+	case nil:
+		defaultTransport, ok := http.DefaultTransport.(*http.Transport)
+		if !ok {
+			return client, false
+		}
+		cloned.Transport = cloneHTTPTransportWithExactMaxConnsPerHost(defaultTransport, maxConnsPerHost)
+	default:
+		return client, false
+	}
+	return &cloned, true
+}
+
 func (t *Transport) cloneWithMaxConnsPerHost(maxConnsPerHost int) *Transport {
 	var base *http.Transport
 	if t.Transport != nil {
@@ -100,9 +143,31 @@ func (t *Transport) cloneWithMaxConnsPerHost(maxConnsPerHost int) *Transport {
 	}
 
 	cloned := &Transport{
-		Transport:   cloneHTTPTransportWithMaxConnsPerHost(base, maxConnsPerHost),
-		Dialer:      t.Dialer,
-		connections: make(map[string]*int32),
+		Transport: cloneHTTPTransportWithMaxConnsPerHost(base, maxConnsPerHost),
+		Dialer:    t.Dialer,
+		stats:     t.connectionStats(),
+	}
+	if cloned.Dialer == nil {
+		cloned.Dialer = &net.Dialer{}
+	}
+	cloned.Transport.DialContext = cloned.DialContext
+	return cloned
+}
+
+func (t *Transport) cloneWithExactMaxConnsPerHost(maxConnsPerHost int) *Transport {
+	var base *http.Transport
+	if t.Transport != nil {
+		base = t.Transport
+	} else if defaultTransport, ok := http.DefaultTransport.(*http.Transport); ok {
+		base = defaultTransport
+	} else {
+		base = &http.Transport{}
+	}
+
+	cloned := &Transport{
+		Transport: cloneHTTPTransportWithExactMaxConnsPerHost(base, maxConnsPerHost),
+		Dialer:    t.Dialer,
+		stats:     t.connectionStats(),
 	}
 	if cloned.Dialer == nil {
 		cloned.Dialer = &net.Dialer{}
@@ -117,6 +182,12 @@ func cloneHTTPTransportWithMaxConnsPerHost(transport *http.Transport, maxConnsPe
 	return cloned
 }
 
+func cloneHTTPTransportWithExactMaxConnsPerHost(transport *http.Transport, maxConnsPerHost int) *http.Transport {
+	cloned := transport.Clone()
+	applyHTTPTransportExactMaxConnsPerHost(cloned, maxConnsPerHost)
+	return cloned
+}
+
 func applyHTTPTransportMaxConnsPerHost(transport *http.Transport, maxConnsPerHost int) {
 	if maxConnsPerHost <= 0 {
 		return
@@ -124,6 +195,19 @@ func applyHTTPTransportMaxConnsPerHost(transport *http.Transport, maxConnsPerHos
 	if transport.MaxConnsPerHost == 0 || transport.MaxConnsPerHost < maxConnsPerHost {
 		transport.MaxConnsPerHost = maxConnsPerHost
 	}
+	if transport.MaxIdleConns < maxConnsPerHost {
+		transport.MaxIdleConns = maxConnsPerHost
+	}
+	if transport.MaxIdleConnsPerHost < maxConnsPerHost {
+		transport.MaxIdleConnsPerHost = maxConnsPerHost
+	}
+}
+
+func applyHTTPTransportExactMaxConnsPerHost(transport *http.Transport, maxConnsPerHost int) {
+	if maxConnsPerHost <= 0 {
+		return
+	}
+	transport.MaxConnsPerHost = maxConnsPerHost
 	if transport.MaxIdleConns < maxConnsPerHost {
 		transport.MaxIdleConns = maxConnsPerHost
 	}

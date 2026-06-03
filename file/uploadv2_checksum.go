@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	uploadV2ChecksumTrailerAlgorithm = uploadchecksum.ChecksumAlgorithmCRC32C
-	uploadV2ChecksumTrailerChunkSize = uploadchecksum.DefaultChunkSize
+	uploadV2ChecksumTrailerAlgorithm uploadchecksum.Algorithm = ""
+	uploadV2ChecksumTrailerChunkSize                          = uploadchecksum.DefaultChunkSize
 )
 
 var errUploadV2ChecksumTrailerUnsignedUploadURL = errors.New("upload v2 checksum trailer requires upload URL signed for AWS trailer headers")
