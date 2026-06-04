@@ -86,6 +86,7 @@ type uploadIO struct {
 	MkdirParents               *bool
 	passedInContext            context.Context
 	uploadV2                   bool
+	uploadV2UseSDKDefaultCaps  bool
 	uploadV2ManagerProvider    uploadV2AdaptiveManagerProvider
 	uploadV2HTTPClientProvider uploadV2HTTPClientProvider
 	uploadV2ReadyRunway        uploadV2ReadyRunwayConfig

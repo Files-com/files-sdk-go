@@ -26,19 +26,20 @@ type AdaptiveConcurrencyManager struct {
 	running int
 
 	// Target bounds and growth controls.
-	target                  int
-	max                     int
-	min                     int
-	growthCeiling           int
-	growthCeilingProbeBytes int64
-	growthCeilingProbeRate  float64
-	peakTarget              int
-	peakRunning             int
-	throughputFloor         int
-	successes               int
-	growEvery               int
-	growStep                int
-	sqrtGrowth              bool
+	target                      int
+	max                         int
+	min                         int
+	growthCeiling               int
+	growthCeilingProbeBytes     int64
+	growthCeilingProbeSuccesses int
+	growthCeilingProbeRate      float64
+	peakTarget                  int
+	peakRunning                 int
+	throughputFloor             int
+	successes                   int
+	growEvery                   int
+	growStep                    int
+	sqrtGrowth                  bool
 
 	// Failure, back-pressure, and retry controls.
 	failureShrink      int
@@ -56,6 +57,7 @@ type AdaptiveConcurrencyManager struct {
 	throughputProbeFloorRate        float64
 	throughputProbePlateau          int
 	throughputProbeMinGainPerTarget float64
+	throughputProbeLossTolerance    int
 	throughputProbeStartTarget      int
 	throughputProbeMisses           int
 	probePending                    bool
@@ -108,6 +110,7 @@ type AdaptiveConcurrencySnapshot struct {
 	Max                                     int
 	GrowthCeiling                           int
 	GrowthCeilingUnlocked                   bool
+	GrowthCeilingProbeSuccessThreshold      int
 	Running                                 int
 	PeakTarget                              int
 	PeakRunning                             int
@@ -140,6 +143,7 @@ type AdaptiveConcurrencyConfig struct {
 	MinTarget                              int
 	GrowthCeiling                          int
 	GrowthCeilingProbeBytes                int64
+	GrowthCeilingProbeSuccesses            int
 	GrowthCeilingProbeRate                 float64
 	ThroughputFloor                        int
 	GrowEvery                              int
@@ -157,6 +161,7 @@ type AdaptiveConcurrencyConfig struct {
 	ThroughputProbeFloorRate               float64
 	ThroughputProbePlateauTarget           int
 	ThroughputProbeMinGainPerTargetPercent float64
+	ThroughputProbeLossTolerancePercent    int
 	LatencyFloor                           int
 	LatencyShrinkPercent                   int
 	LatencyQueueHigh                       float64
@@ -201,6 +206,10 @@ func NewAdaptiveConcurrencyManagerWithConfig(config AdaptiveConcurrencyConfig) *
 	growthCeilingProbeBytes := config.GrowthCeilingProbeBytes
 	if growthCeilingProbeBytes < 0 {
 		growthCeilingProbeBytes = 0
+	}
+	growthCeilingProbeSuccesses := config.GrowthCeilingProbeSuccesses
+	if growthCeilingProbeSuccesses < 0 {
+		growthCeilingProbeSuccesses = 0
 	}
 	growthCeilingProbeRate := config.GrowthCeilingProbeRate
 	if growthCeilingProbeRate < 0 {
@@ -259,6 +268,10 @@ func NewAdaptiveConcurrencyManagerWithConfig(config AdaptiveConcurrencyConfig) *
 	if throughputProbeMinGainPerTarget < 0 {
 		throughputProbeMinGainPerTarget = 0
 	}
+	throughputProbeLossTolerance := config.ThroughputProbeLossTolerancePercent
+	if throughputProbeLossTolerance < 0 {
+		throughputProbeLossTolerance = 0
+	}
 	latencyShrink := config.LatencyShrinkPercent
 	if latencyShrink < 0 {
 		latencyShrink = 0
@@ -282,6 +295,7 @@ func NewAdaptiveConcurrencyManagerWithConfig(config AdaptiveConcurrencyConfig) *
 		min:                             minTarget,
 		growthCeiling:                   growthCeiling,
 		growthCeilingProbeBytes:         growthCeilingProbeBytes,
+		growthCeilingProbeSuccesses:     growthCeilingProbeSuccesses,
 		growthCeilingProbeRate:          growthCeilingProbeRate,
 		peakTarget:                      initialTarget,
 		throughputFloor:                 throughputFloor,
@@ -300,6 +314,7 @@ func NewAdaptiveConcurrencyManagerWithConfig(config AdaptiveConcurrencyConfig) *
 		throughputProbeFloorRate:        throughputProbeFloorRate,
 		throughputProbePlateau:          throughputProbePlateau,
 		throughputProbeMinGainPerTarget: throughputProbeMinGainPerTarget,
+		throughputProbeLossTolerance:    throughputProbeLossTolerance,
 		latencyFloor:                    latencyFloor,
 		latencyShrink:                   min(latencyShrink, 100),
 		latencyQueueHigh:                latencyQueueHigh,
@@ -432,13 +447,25 @@ func (a *AdaptiveConcurrencyManager) growthCeilingUnlockedLocked() bool {
 	if a.growthCeiling <= 0 {
 		return true
 	}
-	if a.growthCeilingProbeBytes > 0 && a.bytesTotal < a.growthCeilingProbeBytes {
+	if !a.growthCeilingProbeWorkReadyLocked() {
 		return false
 	}
 	if a.growthCeilingProbeRate > 0 && a.bestThroughput < a.growthCeilingProbeRate {
 		return false
 	}
 	return true
+}
+
+func (a *AdaptiveConcurrencyManager) growthCeilingProbeWorkReadyLocked() bool {
+	bytesGateEnabled := a.growthCeilingProbeBytes > 0
+	successGateEnabled := a.growthCeilingProbeSuccesses > 0
+	if !bytesGateEnabled && !successGateEnabled {
+		return true
+	}
+	if bytesGateEnabled && a.bytesTotal >= a.growthCeilingProbeBytes {
+		return true
+	}
+	return successGateEnabled && a.successTotal >= a.growthCeilingProbeSuccesses
 }
 
 func (a *AdaptiveConcurrencyManager) shouldProbeGrowthLocked() bool {
@@ -558,6 +585,11 @@ func (a *AdaptiveConcurrencyManager) recordThroughputLocked(sample AdaptiveConcu
 		a.throughputProbeStartTarget = 0
 		return
 	}
+	if a.shouldAcceptNeutralThroughputProbeLocked(rate, previousBest) {
+		a.throughputProbeMisses = 0
+		a.throughputProbeStartTarget = 0
+		return
+	}
 	if requiredGain > float64(a.throughputMinGain) && a.lastThroughputProbeGain >= float64(a.throughputMinGain) {
 		a.throughputProbeEfficiencyMissTotal++
 	}
@@ -587,6 +619,19 @@ func (a *AdaptiveConcurrencyManager) requiredThroughputProbeGainPercentLocked() 
 		return plateauRequired
 	}
 	return required
+}
+
+func (a *AdaptiveConcurrencyManager) shouldAcceptNeutralThroughputProbeLocked(rate float64, previousBest float64) bool {
+	if a.throughputProbeLossTolerance <= 0 || previousBest <= 0 {
+		return false
+	}
+	if a.growthCeiling <= 0 || a.target <= a.growthCeiling || !a.growthCeilingUnlockedLocked() {
+		return false
+	}
+	if a.throughputProbePlateau > 0 && a.target > a.throughputProbePlateau {
+		return false
+	}
+	return rate >= previousBest*(1-float64(a.throughputProbeLossTolerance)/100)
 }
 
 func (a *AdaptiveConcurrencyManager) throughputProbeTargetDeltaLocked() int {
@@ -802,6 +847,7 @@ func (a *AdaptiveConcurrencyManager) Snapshot() AdaptiveConcurrencySnapshot {
 		Max:                                     a.max,
 		GrowthCeiling:                           a.growthCeiling,
 		GrowthCeilingUnlocked:                   a.growthCeilingUnlockedLocked(),
+		GrowthCeilingProbeSuccessThreshold:      a.growthCeilingProbeSuccesses,
 		Running:                                 a.running,
 		PeakTarget:                              a.peakTarget,
 		PeakRunning:                             a.peakRunning,

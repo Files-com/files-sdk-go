@@ -10,6 +10,15 @@ This document describes the benchmark shape used to compare static upload concur
 - Use an empty remote test directory or prefix for each benchmark run.
 - Enable CLI debug logging so upload V1 and V2 scheduler summaries, adaptive telemetry, HTTP client limits, and retry observations are captured.
 
+Before high-throughput Linux runs, apply and verify the SDK-backed tuning command instead of manually setting individual sysctls:
+
+```sh
+files-cli os-tuning high-throughput repair --apply
+files-cli os-tuning high-throughput verify
+```
+
+The Linux tuning result should include BBR, `fq`, larger TCP buffers, the widened ephemeral port range, `net.ipv4.tcp_slow_start_after_idle=0`, and, when supported by the active NIC, a `net.nic.<iface>.ring` row that sets RX/TX rings to the maximum values reported by `ethtool -g`.
+
 ## Test Data
 
 Create fixed-size binary inputs on local disk. The same source files should be reused for baseline and adaptive runs.
@@ -134,6 +143,10 @@ files-cli upload \
 Diagnostic tuning flags may be used for development-only exploration, but those runs should be labeled separately and should not replace the default adaptive comparison or be reported as the product result.
 
 For above-ceiling validation, still use the default adaptive command. The workload itself must be large enough to cross the default S3 ceiling-unlock threshold; do not lower the threshold just to make the run shorter unless the row is explicitly labeled as a diagnostic override.
+
+## Optional PGO Validation
+
+PGO should be benchmark-gated and reported separately. Collect CPU profiles from representative adaptive runs, merge them with `go tool pprof -proto`, build the CLI with the resulting profile, and compare throughput, CPU, RSS, and NIC utilization against the non-PGO adaptive build. Commit a `default.pgo` only when the result is neutral or positive across the benchmark matrix.
 
 ## Comparison
 

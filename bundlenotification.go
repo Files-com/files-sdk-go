@@ -23,9 +23,10 @@ func (b BundleNotification) Identifier() interface{} {
 type BundleNotificationCollection []BundleNotification
 
 type BundleNotificationListParams struct {
-	UserId int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
-	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	UserId   int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	SortBy   interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter   interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	BundleId int64       `url:"bundle_id,omitempty" json:"bundle_id,omitempty" path:"bundle_id"`
 	ListParams
 }
 

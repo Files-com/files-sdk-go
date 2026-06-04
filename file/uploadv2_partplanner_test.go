@@ -835,28 +835,54 @@ func TestUploadV2RaisesHTTPTransportCapForLargeS3Workload(t *testing.T) {
 
 func TestUploadV2HTTPTransportCapTracksS3GrowthCeiling(t *testing.T) {
 	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
-	size := int64(200) * uploadV2MiB
-	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
-	require.True(t, ok, reason)
 
 	cases := []struct {
 		name          string
+		fileSize      int64
 		workloadBytes int64
+		tunePlan      bool
 		want          int
 	}{
-		{name: "twenty by two hundred mib", workloadBytes: int64(20*200) * uploadV2MiB, want: uploadV2S3GrowthCeiling},
-		{name: "two hundred by two hundred mib", workloadBytes: int64(200*200) * uploadV2MiB, want: uploadV2S3GrowthCeiling},
-		{name: "single twenty gib file", workloadBytes: int64(20) * uploadV2GiB, want: uploadV2S3GrowthCeiling},
-		{name: "large enough to probe above ceiling", workloadBytes: uploadV2S3GrowthCeilingProbeBytes, want: uploadV2S3MaxConcurrency},
+		{name: "twenty by two hundred mib", fileSize: int64(200) * uploadV2MiB, workloadBytes: int64(20*200) * uploadV2MiB, want: uploadV2S3GrowthCeiling},
+		{name: "two hundred by two hundred mib", fileSize: int64(200) * uploadV2MiB, workloadBytes: int64(200*200) * uploadV2MiB, tunePlan: true, want: uploadV2S3GrowthCeiling},
+		{name: "single twenty gib file", fileSize: int64(20) * uploadV2GiB, workloadBytes: int64(20) * uploadV2GiB, want: uploadV2S3GrowthCeiling},
+		{name: "large enough to probe above ceiling", fileSize: int64(200) * uploadV2MiB, workloadBytes: uploadV2S3GrowthCeilingProbeBytes, want: uploadV2S3MaxConcurrency},
 	}
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			got := uploadV2HTTPMaxConnsPerHost(plan, UploadV2Tuning{S3WorkloadBytes: tt.workloadBytes}, uploadV2S3MaxConcurrency)
+			plan, ok, reason := newUploadV2PartPlanForUpload(part, &tt.fileSize)
+			require.True(t, ok, reason)
+			tuning := UploadV2Tuning{S3WorkloadBytes: tt.workloadBytes}
+			testPlan := plan
+			if tt.tunePlan {
+				var ok bool
+				testPlan, ok, reason = testPlan.withTuning(tuning)
+				require.True(t, ok, reason)
+			}
+			got := uploadV2HTTPMaxConnsPerHost(testPlan, tuning, uploadV2S3MaxConcurrency)
 
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestUploadV2HTTPTransportCapOpensForManySmallS3Parts(t *testing.T) {
+	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
+	size := int64(8) * uploadV2MiB
+	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+	require.True(t, ok, reason)
+	tuning := UploadV2Tuning{
+		S3WorkloadBytes:               int64(1000*8) * uploadV2MiB,
+		S3GrowthCeilingProbeSuccesses: 384,
+	}
+	plan, ok, reason = plan.withTuning(tuning)
+	require.True(t, ok, reason)
+
+	got := uploadV2HTTPMaxConnsPerHost(plan, tuning, uploadV2S3MaxConcurrency)
+
+	assert.Equal(t, int64(8)*uploadV2MiB, plan.partSize)
+	assert.Equal(t, uploadV2S3MaxConcurrency, got)
 }
 
 func TestUploadV2LargeS3WorkloadOpensTransportBeforeAdaptiveGrowthUnlocks(t *testing.T) {
@@ -945,6 +971,23 @@ func TestUploadV2S3RespectsExplicitManagerCap(t *testing.T) {
 	assert.Equal(t, 16, engine.manager.Target())
 }
 
+func TestUploadV2S3IgnoresSchedulingOnlyManagerCap(t *testing.T) {
+	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
+	size := int64(256) * uploadV2MiB
+	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+	require.True(t, ok, reason)
+
+	engine := newUploadV2Engine(&uploadIO{
+		FileUploadPart:            part,
+		Manager:                   lib.NewConstrainedWorkGroup(50),
+		managerSet:                true,
+		uploadV2UseSDKDefaultCaps: true,
+	}, plan)
+
+	assert.Equal(t, uploadV2S3MaxConcurrency, engine.manager.Max())
+	assert.Nil(t, engine.globalManager)
+}
+
 func TestUploadV2ResultsBufferUsesAdaptiveMax(t *testing.T) {
 	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
 	size := int64(10) * uploadV2GiB
@@ -1021,8 +1064,10 @@ func TestUploadV2S3AdaptiveConfigUsesEnterprisePlateauEconomics(t *testing.T) {
 	assert.Equal(t, uploadV2S3ThroughputProbeFloor, config.ThroughputProbeFloor)
 	assert.Equal(t, uploadV2S3ThroughputProbePlateau, config.ThroughputProbePlateauTarget)
 	assert.Equal(t, uploadV2S3ThroughputProbeMinGainPerTargetPercent, config.ThroughputProbeMinGainPerTargetPercent)
+	assert.Equal(t, uploadV2S3ThroughputProbeLossTolerancePercent, config.ThroughputProbeLossTolerancePercent)
 	assert.Equal(t, uploadV2S3GrowthCeiling, config.GrowthCeiling)
 	assert.Equal(t, int64(uploadV2S3GrowthCeilingProbeBytes), config.GrowthCeilingProbeBytes)
+	assert.Equal(t, uploadV2S3GrowthCeilingProbeSuccesses, config.GrowthCeilingProbeSuccesses)
 	assert.Equal(t, float64(uploadV2S3GrowthCeilingProbeRate), config.GrowthCeilingProbeRate)
 	assert.Equal(t, 8, config.ThroughputShrinkPercent)
 	assert.Equal(t, 8, config.LatencyShrinkPercent)
@@ -1049,8 +1094,10 @@ func TestUploadV2S3AdaptiveConfigAppliesDiagnosticTuning(t *testing.T) {
 		S3ThroughputShrinkPercent:                5,
 		S3ThroughputHoldWindows:                  3,
 		S3ThroughputProbeMinGainPerTargetPercent: 0.05,
+		S3ThroughputProbeLossTolerancePercent:    3,
 		S3GrowthCeiling:                          190,
 		S3GrowthCeilingProbeBytes:                123456789,
+		S3GrowthCeilingProbeSuccesses:            77,
 		S3GrowthCeilingProbeRateBytesPerSecond:   987654321,
 		S3LatencyQueueHigh:                       130,
 		S3LatencyGrowthQueueHigh:                 140,
@@ -1072,8 +1119,10 @@ func TestUploadV2S3AdaptiveConfigAppliesDiagnosticTuning(t *testing.T) {
 	assert.Equal(t, 5, config.ThroughputShrinkPercent)
 	assert.Equal(t, 3, config.ThroughputHoldWindows)
 	assert.Equal(t, 0.05, config.ThroughputProbeMinGainPerTargetPercent)
+	assert.Equal(t, 3, config.ThroughputProbeLossTolerancePercent)
 	assert.Equal(t, 190, config.GrowthCeiling)
 	assert.Equal(t, int64(123456789), config.GrowthCeilingProbeBytes)
+	assert.Equal(t, 77, config.GrowthCeilingProbeSuccesses)
 	assert.Equal(t, float64(987654321), config.GrowthCeilingProbeRate)
 	assert.Equal(t, float64(130), config.LatencyQueueHigh)
 	assert.Equal(t, float64(140), config.LatencyGrowthQueueHigh)
@@ -1258,6 +1307,30 @@ func TestUploadV2S3FastThroughputCanReachEnterpriseConcurrency(t *testing.T) {
 	assert.Greater(t, snapshot.BestThroughputBytesPerSecond, float64(uploadV2S3ThroughputProbeFloorRate))
 }
 
+func TestUploadV2S3LargeUnlockedProbeClimbsToPlateauOnNeutralThroughput(t *testing.T) {
+	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
+	size := int64(80) * uploadV2GiB
+	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+	require.True(t, ok, reason)
+	tuning := UploadV2Tuning{S3GrowthCeilingProbeBytes: 1}
+
+	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(uploadV2SharedAdaptiveConcurrencyConfig(plan, uploadV2S3MaxConcurrency, tuning))
+
+	for i := 0; i < 360; i++ {
+		manager.Wait()
+		manager.DoneWithSample(lib.AdaptiveConcurrencySample{
+			Success:  true,
+			Bytes:    plan.partSize,
+			Duration: 40 * time.Millisecond,
+		})
+	}
+
+	snapshot := manager.Snapshot()
+	assert.True(t, snapshot.GrowthCeilingUnlocked)
+	assert.GreaterOrEqual(t, snapshot.PeakTarget, uploadV2S3ThroughputProbePlateau)
+	assert.Greater(t, snapshot.Target, uploadV2S3GrowthCeiling)
+}
+
 func TestUploadV2S3SeekableRunwayScalesWithInitialTarget(t *testing.T) {
 	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
 	size := int64(20) * uploadV2GiB
@@ -1298,6 +1371,7 @@ func TestUploadV2ExplicitReadyRunwayIsRespectedForS3(t *testing.T) {
 }
 
 func TestUploadV2JobSharesAdaptiveManagerAcrossFiles(t *testing.T) {
+	resetUploadV2SharedAdaptiveManagersForTest()
 	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
 	size := int64(10) * uploadV2GiB
 	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
@@ -1315,7 +1389,40 @@ func TestUploadV2JobSharesAdaptiveManagerAcrossFiles(t *testing.T) {
 	assert.Equal(t, 50, second.Target())
 }
 
+func TestUploadV2JobsShareAdaptiveManagerGlobally(t *testing.T) {
+	resetUploadV2SharedAdaptiveManagersForTest()
+	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
+	size := int64(10) * uploadV2GiB
+	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+	require.True(t, ok, reason)
+	firstJob := (&Job{}).Init()
+	secondJob := (&Job{}).Init()
+
+	first := firstJob.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{})
+	second := secondJob.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{})
+
+	assert.Same(t, first, second)
+}
+
+func TestUploadV2SharedAdaptiveManagerKeepsExplicitCapsSeparate(t *testing.T) {
+	resetUploadV2SharedAdaptiveManagersForTest()
+	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
+	size := int64(10) * uploadV2GiB
+	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+	require.True(t, ok, reason)
+	firstJob := (&Job{}).Init()
+	secondJob := (&Job{}).Init()
+
+	limited := firstJob.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{})
+	defaulted := secondJob.uploadV2AdaptiveManager(plan, uploadV2S3MaxConcurrency, UploadV2Tuning{})
+
+	assert.NotSame(t, limited, defaulted)
+	assert.Equal(t, 50, limited.Max())
+	assert.Equal(t, uploadV2S3MaxConcurrency, defaulted.Max())
+}
+
 func TestUploadV2JobSharedManagerIgnoresPlannerOnlyTuning(t *testing.T) {
+	resetUploadV2SharedAdaptiveManagersForTest()
 	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
 	size := int64(20) * uploadV2GiB
 	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
@@ -1335,6 +1442,7 @@ func TestUploadV2JobSharedManagerIgnoresPlannerOnlyTuning(t *testing.T) {
 }
 
 func TestUploadV2JobSharedManagerDoesNotStartAtTinyFilePartCount(t *testing.T) {
+	resetUploadV2SharedAdaptiveManagersForTest()
 	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
 	tinySize := int64(1)
 	tinyPlan, ok, reason := newUploadV2PartPlanForUpload(part, &tinySize)
@@ -1351,7 +1459,8 @@ func TestUploadV2JobSharedManagerDoesNotStartAtTinyFilePartCount(t *testing.T) {
 	assert.Equal(t, 50, second.Target())
 }
 
-func TestUploadV2ClearStatusesResetsSharedAdaptiveManagers(t *testing.T) {
+func TestUploadV2ClearStatusesKeepsSharedAdaptiveManagers(t *testing.T) {
+	resetUploadV2SharedAdaptiveManagersForTest()
 	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
 	size := int64(10) * uploadV2GiB
 	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
@@ -1366,7 +1475,7 @@ func TestUploadV2ClearStatusesResetsSharedAdaptiveManagers(t *testing.T) {
 	retryJob := job.ClearStatuses()
 	second := retryJob.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{})
 
-	assert.NotSame(t, first, second)
+	assert.Same(t, first, second)
 	assert.Equal(t, 50, second.Target())
 }
 
@@ -1707,6 +1816,12 @@ func uploadV2TestPart(uploadURI string) files_sdk.FileUploadPart {
 		UploadUri:     uploadURI,
 		ParallelParts: lib.Bool(true),
 	}
+}
+
+func resetUploadV2SharedAdaptiveManagersForTest() {
+	uploadV2SharedAdaptiveManagers.mu.Lock()
+	defer uploadV2SharedAdaptiveManagers.mu.Unlock()
+	uploadV2SharedAdaptiveManagers.managers = nil
 }
 
 func uploadV2TestQuery(t *testing.T, uploadURI string) url.Values {

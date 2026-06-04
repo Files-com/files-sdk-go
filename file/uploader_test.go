@@ -18,6 +18,7 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/directory"
+	uploadManager "github.com/Files-com/files-sdk-go/v3/file/manager"
 	"github.com/Files-com/files-sdk-go/v3/file/status"
 	"github.com/Files-com/files-sdk-go/v3/ignore"
 	"github.com/Files-com/files-sdk-go/v3/lib"
@@ -34,6 +35,36 @@ type MockUploader struct {
 
 func (m *MockUploader) UploadWithResume(...UploadOption) (UploadResumable, error) {
 	return UploadResumable{}, m.uploadError
+}
+
+type recordingUploader struct {
+	MockUploader
+	mu       sync.Mutex
+	uploadIO uploadIO
+}
+
+func (r *recordingUploader) UploadWithResume(opts ...UploadOption) (UploadResumable, error) {
+	io := uploadIO{
+		Manager:         uploadManager.Default().FilePartsManager,
+		passedInContext: context.Background(),
+	}
+	for _, opt := range opts {
+		var err error
+		io, err = opt(io)
+		if err != nil {
+			return UploadResumable{}, err
+		}
+	}
+	r.mu.Lock()
+	r.uploadIO = io
+	r.mu.Unlock()
+	return UploadResumable{}, r.uploadError
+}
+
+func (r *recordingUploader) recordedUploadIO() uploadIO {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.uploadIO
 }
 
 func (m *MockUploader) Find(files_sdk.FileFindParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
@@ -83,6 +114,83 @@ func TestUploadRetryLogError(t *testing.T) {
 
 func (m *MockUploader) CreateFolder(files_sdk.FolderCreateParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
 	return files_sdk.File{}, nil
+}
+
+func TestUploaderAdaptiveConcurrencyUseSDKDefaultCapsKeepsJobPartManagerForFallback(t *testing.T) {
+	cases := []struct {
+		name                 string
+		params               UploaderParams
+		wantSDKDefaultV2Caps bool
+	}{
+		{
+			name: "nil manager uses sdk default caps",
+			params: UploaderParams{
+				AdaptiveConcurrency: true,
+			},
+			wantSDKDefaultV2Caps: true,
+		},
+		{
+			name: "manager used for scheduling only",
+			params: UploaderParams{
+				AdaptiveConcurrency:                  true,
+				AdaptiveConcurrencyUseSDKDefaultCaps: true,
+				Manager:                              uploadManager.Build(100, 1),
+			},
+			wantSDKDefaultV2Caps: true,
+		},
+		{
+			name: "explicit manager cap",
+			params: UploaderParams{
+				AdaptiveConcurrency: true,
+				Manager:             uploadManager.Build(7, 1),
+			},
+			wantSDKDefaultV2Caps: false,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			root := t.TempDir()
+			path := filepath.Join(root, "upload.bin")
+			require.NoError(t, os.WriteFile(path, []byte("payload"), 0600))
+			job := (&Job{
+				Params: tt.params,
+				Config: files_sdk.Config{}.Init(),
+				Logger: lib.NullLogger{},
+			}).Init()
+			job.SetManager(tt.params.Manager)
+			job.Ignore, _ = ignore.New()
+			job.Type = directory.File
+			uploader := &recordingUploader{}
+			uploadStatus := &UploadStatus{
+				Mutex:      &sync.RWMutex{},
+				Uploader:   uploader,
+				job:        job,
+				localPath:  path,
+				remotePath: "upload.bin",
+				status:     status.Indexed,
+				file: files_sdk.File{
+					Path: "upload.bin",
+					Size: 7,
+				},
+			}
+			job.Add(uploadStatus)
+			onComplete := make(chan *UploadStatus, 1)
+
+			ctx := context.Background()
+			require.True(t, job.FilesManager.WaitWithContext(ctx))
+			enqueueUpload(ctx, job, uploadStatus, onComplete)
+			<-onComplete
+
+			recorded := uploader.recordedUploadIO()
+			assert.True(t, recorded.uploadV2)
+			assert.True(t, recorded.managerSet)
+			assert.Equal(t, tt.wantSDKDefaultV2Caps, recorded.uploadV2UseSDKDefaultCaps)
+			maxer, ok := recorded.Manager.(interface{ Max() int })
+			require.True(t, ok)
+			assert.Equal(t, job.FilePartsManager.Max(), maxer.Max())
+		})
+	}
 }
 
 func Test_excludeFile(t *testing.T) {

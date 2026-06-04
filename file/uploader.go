@@ -320,6 +320,8 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 			}
 		}
 
+		params, _ := job.Params.(UploaderParams)
+		useSDKDefaultAdaptiveCaps := params.AdaptiveConcurrency && (params.AdaptiveConcurrencyUseSDKDefaultCaps || params.Manager == nil)
 		opts := []UploadOption{
 			UploadWithContext(ctx),
 			UploadWithManager(job.FilePartsManager),
@@ -329,11 +331,14 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 			UploadWithProgress(progressFn),
 			UploadWithDestinationPath(uploadStatus.RemotePath()),
 		}
+		if useSDKDefaultAdaptiveCaps {
+			opts = append(opts, uploadWithV2SDKDefaultCaps())
+		}
 
-		if params, ok := job.Params.(UploaderParams); ok && params.PreserveTimes {
+		if params.PreserveTimes {
 			opts = append(opts, UploadWithProvidedMtime(*uploadStatus.File().Mtime))
 		}
-		if params, ok := job.Params.(UploaderParams); ok && params.AdaptiveConcurrency {
+		if params.AdaptiveConcurrency {
 			opts = append(opts, UploadWithV2())
 			opts = append(opts, uploadWithV2AdaptiveManagerProvider(job.uploadV2AdaptiveManager))
 			opts = append(opts, uploadWithV2HTTPClientProvider(job.uploadV2HTTPClient))

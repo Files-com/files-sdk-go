@@ -3,6 +3,7 @@ package file
 import (
 	"context"
 	"errors"
+	"sync"
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
@@ -16,9 +17,11 @@ const (
 	uploadV2S3ThroughputProbePlateau                 = 200
 	uploadV2S3ThroughputProbeFloorRate               = 96 * 1024 * 1024
 	uploadV2S3ThroughputProbeMinGainPerTargetPercent = 0.15
+	uploadV2S3ThroughputProbeLossTolerancePercent    = 2
 	uploadV2S3MaxConcurrency                         = 1024
 	uploadV2S3GrowthCeiling                          = 150
 	uploadV2S3GrowthCeilingProbeBytes                = 64 * uploadV2GiB
+	uploadV2S3GrowthCeilingProbeSuccesses            = 0
 	uploadV2S3GrowthCeilingProbeRate                 = 96 * 1024 * 1024
 	uploadV2S3InitialConcurrency                     = 150
 	uploadV2S3AdaptiveFloor                          = 50
@@ -35,35 +38,69 @@ const (
 // UploadV2Tuning overrides V2 upload defaults for diagnostics and benchmark
 // tuning. Zero values keep the built-in defaults.
 type UploadV2Tuning struct {
-	S3InitialTarget                          int
-	S3AdaptiveFloor                          int
-	S3GrowEvery                              int
-	S3GrowStep                               int
-	S3ThroughputWindow                       int
-	S3ThroughputMinGainPercent               int
-	S3ThroughputProbeMinWindows              int
-	S3ThroughputProbeFloor                   int
+	// S3InitialTarget is the starting adaptive concurrency target for S3 uploads.
+	S3InitialTarget int
+	// S3AdaptiveFloor is the lowest adaptive target the S3 controller should shrink toward.
+	S3AdaptiveFloor int
+	// S3GrowEvery is the number of successful part samples required before a normal growth step.
+	S3GrowEvery int
+	// S3GrowStep is the number of additional concurrent part slots added during normal growth.
+	S3GrowStep int
+	// S3ThroughputWindow is the number of recent part samples used for throughput decisions.
+	S3ThroughputWindow int
+	// S3ThroughputMinGainPercent is the required throughput improvement for normal growth.
+	S3ThroughputMinGainPercent int
+	// S3ThroughputProbeMinWindows is the number of missed probe windows before backing off.
+	S3ThroughputProbeMinWindows int
+	// S3ThroughputProbeFloor is the fast-link target floor used when measured throughput is high.
+	S3ThroughputProbeFloor int
+	// S3ThroughputProbeFloorRateBytesPerSecond is the measured throughput required to use the probe floor.
 	S3ThroughputProbeFloorRateBytesPerSecond int64
-	S3ThroughputProbePlateau                 int
-	S3ThroughputShrinkPercent                int
-	S3ThroughputHoldWindows                  int
+	// S3ThroughputProbePlateau is the target used as the first high-throughput probe plateau.
+	S3ThroughputProbePlateau int
+	// S3ThroughputShrinkPercent is the percent to shrink the target after throughput regression.
+	S3ThroughputShrinkPercent int
+	// S3ThroughputHoldWindows is the number of throughput windows to hold after a shrink.
+	S3ThroughputHoldWindows int
+	// S3ThroughputProbeMinGainPerTargetPercent is the minimum gain required per extra target above the plateau.
 	S3ThroughputProbeMinGainPerTargetPercent float64
-	S3GrowthCeiling                          int
-	S3GrowthCeilingProbeBytes                int64
-	S3GrowthCeilingProbeRateBytesPerSecond   int64
-	S3LatencyQueueHigh                       float64
-	S3LatencyGrowthQueueHigh                 float64
-	S3PartSizeMiB                            int64
-	S3WorkloadBytes                          int64
-	S3WorkloadTargetPartMultiplier           int
-	S3WorkloadMinPartSizeMiB                 int64
-	S3WorkloadScanWaitMillis                 int
+	// S3ThroughputProbeLossTolerancePercent is the tolerated throughput loss while probing above the plateau.
+	S3ThroughputProbeLossTolerancePercent int
+	// S3GrowthCeiling is the soft concurrency ceiling before large-workload probing unlocks higher targets.
+	S3GrowthCeiling int
+	// S3GrowthCeilingProbeBytes is the workload size required before probing above the soft ceiling.
+	S3GrowthCeilingProbeBytes int64
+	// S3GrowthCeilingProbeSuccesses is the successful part count required before probing above the soft ceiling.
+	S3GrowthCeilingProbeSuccesses int
+	// S3GrowthCeilingProbeRateBytesPerSecond is the throughput required before probing above the soft ceiling.
+	S3GrowthCeilingProbeRateBytesPerSecond int64
+	// S3LatencyQueueHigh is the observed queue/latency threshold that triggers backoff.
+	S3LatencyQueueHigh float64
+	// S3LatencyGrowthQueueHigh is the queue/latency threshold that suppresses further growth.
+	S3LatencyGrowthQueueHigh float64
+	// S3PartSizeMiB forces the known-size S3 part size in MiB. Zero uses the planner.
+	S3PartSizeMiB int64
+	// S3WorkloadBytes overrides the aggregate upload job size used by the workload-aware planner.
+	S3WorkloadBytes int64
+	// S3WorkloadTargetPartMultiplier sets desired planned parts per initial target for workload sizing.
+	S3WorkloadTargetPartMultiplier int
+	// S3WorkloadMinPartSizeMiB sets the minimum workload-tuned S3 part size in MiB.
+	S3WorkloadMinPartSizeMiB int64
+	// S3WorkloadScanWaitMillis is how long a job may wait for directory scanning before sizing from estimates.
+	S3WorkloadScanWaitMillis int
 }
 
 // UploadWithV2 enables opt-in upload v2 behavior for this upload.
 func UploadWithV2() UploadOption {
 	return func(params uploadIO) (uploadIO, error) {
 		params.uploadV2 = true
+		return params, nil
+	}
+}
+
+func uploadWithV2SDKDefaultCaps() UploadOption {
+	return func(params uploadIO) (uploadIO, error) {
+		params.uploadV2UseSDKDefaultCaps = true
 		return params, nil
 	}
 }
@@ -139,11 +176,17 @@ func (t UploadV2Tuning) validate() error {
 	if t.S3ThroughputProbeMinGainPerTargetPercent < 0 {
 		return errors.New("upload v2 tuning s3 throughput probe min gain per target percent must be greater than or equal to zero")
 	}
+	if t.S3ThroughputProbeLossTolerancePercent < 0 {
+		return errors.New("upload v2 tuning s3 throughput probe loss tolerance percent must be greater than or equal to zero")
+	}
 	if t.S3GrowthCeiling < 0 {
 		return errors.New("upload v2 tuning s3 growth ceiling must be greater than or equal to zero")
 	}
 	if t.S3GrowthCeilingProbeBytes < 0 {
 		return errors.New("upload v2 tuning s3 growth ceiling probe bytes must be greater than or equal to zero")
+	}
+	if t.S3GrowthCeilingProbeSuccesses < 0 {
+		return errors.New("upload v2 tuning s3 growth ceiling probe successes must be greater than or equal to zero")
 	}
 	if t.S3GrowthCeilingProbeRateBytesPerSecond < 0 {
 		return errors.New("upload v2 tuning s3 growth ceiling probe rate must be greater than or equal to zero")
@@ -206,8 +249,9 @@ type uploadV2HTTPClientCacheKey struct {
 }
 
 type uploadV2AdaptiveManagerCacheKey struct {
-	target uploadV2TargetClass
-	tuning UploadV2Tuning
+	target         uploadV2TargetClass
+	maxConcurrency int
+	tuning         UploadV2Tuning
 }
 
 type uploadV2HTTPClientCacheEntry struct {
@@ -231,23 +275,35 @@ func (c uploadV2ReadyRunwayConfig) resolved() uploadV2ReadyRunwayConfig {
 	}
 }
 
-func (r *Job) uploadV2AdaptiveManager(plan uploadV2PartPlan, maxConcurrency int, tuning UploadV2Tuning) *lib.AdaptiveConcurrencyManager {
+type uploadV2SharedAdaptiveManagerRegistry struct {
+	mu       sync.Mutex
+	managers map[uploadV2AdaptiveManagerCacheKey]*lib.AdaptiveConcurrencyManager
+}
+
+var uploadV2SharedAdaptiveManagers uploadV2SharedAdaptiveManagerRegistry
+
+func (s *uploadV2SharedAdaptiveManagerRegistry) get(plan uploadV2PartPlan, maxConcurrency int, tuning UploadV2Tuning) *lib.AdaptiveConcurrencyManager {
 	tuning = tuning.managerTuning()
 	key := uploadV2AdaptiveManagerCacheKey{
-		target: plan.target,
-		tuning: tuning,
+		target:         plan.target,
+		maxConcurrency: maxConcurrency,
+		tuning:         tuning,
 	}
-	r.adaptiveUploadV2Mu.Lock()
-	defer r.adaptiveUploadV2Mu.Unlock()
-	if r.adaptiveUploadV2Managers == nil {
-		r.adaptiveUploadV2Managers = make(map[uploadV2AdaptiveManagerCacheKey]*lib.AdaptiveConcurrencyManager)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.managers == nil {
+		s.managers = make(map[uploadV2AdaptiveManagerCacheKey]*lib.AdaptiveConcurrencyManager)
 	}
-	if manager := r.adaptiveUploadV2Managers[key]; manager != nil {
+	if manager := s.managers[key]; manager != nil {
 		return manager
 	}
 	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(uploadV2SharedAdaptiveConcurrencyConfig(plan, maxConcurrency, tuning))
-	r.adaptiveUploadV2Managers[key] = manager
+	s.managers[key] = manager
 	return manager
+}
+
+func (r *Job) uploadV2AdaptiveManager(plan uploadV2PartPlan, maxConcurrency int, tuning UploadV2Tuning) *lib.AdaptiveConcurrencyManager {
+	return uploadV2SharedAdaptiveManagers.get(plan, maxConcurrency, tuning)
 }
 
 func (r *Job) uploadV2WorkloadBytes(currentFileSize int64, tuning UploadV2Tuning) int64 {
@@ -413,6 +469,7 @@ func (u *uploadIO) logUploadV2Complete(err error, bytesWritten int64) {
 		attrs["adaptive_max_target"] = snapshot.Max
 		attrs["adaptive_growth_ceiling"] = snapshot.GrowthCeiling
 		attrs["adaptive_growth_ceiling_unlocked"] = snapshot.GrowthCeilingUnlocked
+		attrs["adaptive_growth_ceiling_probe_success_threshold"] = snapshot.GrowthCeilingProbeSuccessThreshold
 		attrs["adaptive_peak_target"] = snapshot.PeakTarget
 		attrs["adaptive_peak_running"] = snapshot.PeakRunning
 		attrs["adaptive_success_total"] = snapshot.SuccessTotal
@@ -441,7 +498,7 @@ func (u *uploadIO) logUploadV2Complete(err error, bytesWritten int64) {
 }
 
 func (u *uploadIO) uploadV2MaxConcurrency() int {
-	if u.managerSet {
+	if u.managerSet && !u.uploadV2UseSDKDefaultCaps {
 		if maxer, ok := u.Manager.(interface{ Max() int }); ok {
 			return maxer.Max()
 		}
@@ -504,8 +561,10 @@ func uploadV2AdaptiveConcurrencyConfigWithInitial(plan uploadV2PartPlan, maxConc
 		config.ThroughputProbeFloorRate = uploadV2S3ThroughputProbeFloorRate
 		config.ThroughputProbePlateauTarget = min(uploadV2S3ThroughputProbePlateau, maxConcurrency)
 		config.ThroughputProbeMinGainPerTargetPercent = uploadV2S3ThroughputProbeMinGainPerTargetPercent
+		config.ThroughputProbeLossTolerancePercent = uploadV2S3ThroughputProbeLossTolerancePercent
 		config.GrowthCeiling = min(uploadV2S3GrowthCeiling, maxConcurrency)
 		config.GrowthCeilingProbeBytes = uploadV2S3GrowthCeilingProbeBytes
+		config.GrowthCeilingProbeSuccesses = uploadV2S3GrowthCeilingProbeSuccesses
 		config.GrowthCeilingProbeRate = uploadV2S3GrowthCeilingProbeRate
 		config.LatencyFloor = min(uploadV2S3AdaptiveFloor, initial)
 		config.LatencyShrinkPercent = 8
@@ -569,11 +628,17 @@ func applyS3UploadV2Tuning(config *lib.AdaptiveConcurrencyConfig, tuning UploadV
 	if tuning.S3ThroughputProbeMinGainPerTargetPercent > 0 {
 		config.ThroughputProbeMinGainPerTargetPercent = tuning.S3ThroughputProbeMinGainPerTargetPercent
 	}
+	if tuning.S3ThroughputProbeLossTolerancePercent > 0 {
+		config.ThroughputProbeLossTolerancePercent = tuning.S3ThroughputProbeLossTolerancePercent
+	}
 	if tuning.S3GrowthCeiling > 0 {
 		config.GrowthCeiling = min(tuning.S3GrowthCeiling, maxConcurrency)
 	}
 	if tuning.S3GrowthCeilingProbeBytes > 0 {
 		config.GrowthCeilingProbeBytes = tuning.S3GrowthCeilingProbeBytes
+	}
+	if tuning.S3GrowthCeilingProbeSuccesses > 0 {
+		config.GrowthCeilingProbeSuccesses = tuning.S3GrowthCeilingProbeSuccesses
 	}
 	if tuning.S3GrowthCeilingProbeRateBytesPerSecond > 0 {
 		config.GrowthCeilingProbeRate = float64(tuning.S3GrowthCeilingProbeRateBytesPerSecond)

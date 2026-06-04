@@ -42,6 +42,7 @@ type Bundle struct {
 	SnapshotId                                   int64                    `json:"snapshot_id,omitempty" path:"snapshot_id,omitempty" url:"snapshot_id,omitempty"`
 	UserId                                       int64                    `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	Username                                     string                   `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
+	GroupId                                      int64                    `json:"group_id,omitempty" path:"group_id,omitempty" url:"group_id,omitempty"`
 	ClickwrapId                                  int64                    `json:"clickwrap_id,omitempty" path:"clickwrap_id,omitempty" url:"clickwrap_id,omitempty"`
 	InboxId                                      int64                    `json:"inbox_id,omitempty" path:"inbox_id,omitempty" url:"inbox_id,omitempty"`
 	WatermarkAttachment                          Image                    `json:"watermark_attachment,omitempty" path:"watermark_attachment,omitempty" url:"watermark_attachment,omitempty"`
@@ -110,6 +111,7 @@ type BundleCreateParams struct {
 	ExpiresAt                                    *time.Time            `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
 	FinalizeSnapshot                             *bool                 `url:"finalize_snapshot,omitempty" json:"finalize_snapshot,omitempty" path:"finalize_snapshot"`
 	MaxUses                                      int64                 `url:"max_uses,omitempty" json:"max_uses,omitempty" path:"max_uses"`
+	GroupId                                      int64                 `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
 	Description                                  string                `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	Note                                         string                `url:"note,omitempty" json:"note,omitempty" path:"note"`
 	Code                                         string                `url:"code,omitempty" json:"code,omitempty" path:"code"`
@@ -154,6 +156,7 @@ type BundleUpdateParams struct {
 	FinalizeSnapshot                             *bool                 `url:"finalize_snapshot,omitempty" json:"finalize_snapshot,omitempty" path:"finalize_snapshot"`
 	InboxId                                      int64                 `url:"inbox_id,omitempty" json:"inbox_id,omitempty" path:"inbox_id"`
 	MaxUses                                      int64                 `url:"max_uses,omitempty" json:"max_uses,omitempty" path:"max_uses"`
+	GroupId                                      int64                 `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
 	Note                                         string                `url:"note,omitempty" json:"note,omitempty" path:"note"`
 	PathTemplate                                 string                `url:"path_template,omitempty" json:"path_template,omitempty" path:"path_template"`
 	PathTemplateTimeZone                         string                `url:"path_template_time_zone,omitempty" json:"path_template_time_zone,omitempty" path:"path_template_time_zone"`

@@ -35,6 +35,7 @@ type Site struct {
 	BundleExpiration                         int64       `json:"bundle_expiration,omitempty" path:"bundle_expiration,omitempty" url:"bundle_expiration,omitempty"`
 	BundleNotFoundMessage                    string      `json:"bundle_not_found_message,omitempty" path:"bundle_not_found_message,omitempty" url:"bundle_not_found_message,omitempty"`
 	BundlePasswordRequired                   *bool       `json:"bundle_password_required,omitempty" path:"bundle_password_required,omitempty" url:"bundle_password_required,omitempty"`
+	BundlesDefaultOwnedByPrimaryGroup        *bool       `json:"bundles_default_owned_by_primary_group,omitempty" path:"bundles_default_owned_by_primary_group,omitempty" url:"bundles_default_owned_by_primary_group,omitempty"`
 	BundleRecipientBlacklistDomains          []string    `json:"bundle_recipient_blacklist_domains,omitempty" path:"bundle_recipient_blacklist_domains,omitempty" url:"bundle_recipient_blacklist_domains,omitempty"`
 	BundleRecipientBlacklistFreeEmailDomains *bool       `json:"bundle_recipient_blacklist_free_email_domains,omitempty" path:"bundle_recipient_blacklist_free_email_domains,omitempty" url:"bundle_recipient_blacklist_free_email_domains,omitempty"`
 	BundleRegistrationNotifications          string      `json:"bundle_registration_notifications,omitempty" path:"bundle_registration_notifications,omitempty" url:"bundle_registration_notifications,omitempty"`
@@ -242,6 +243,7 @@ type SiteUpdateParams struct {
 	AdditionalTextFileTypes                  []string    `url:"additional_text_file_types,omitempty" json:"additional_text_file_types,omitempty" path:"additional_text_file_types"`
 	BundleRequireNote                        *bool       `url:"bundle_require_note,omitempty" json:"bundle_require_note,omitempty" path:"bundle_require_note"`
 	BundleSendSharedReceipts                 *bool       `url:"bundle_send_shared_receipts,omitempty" json:"bundle_send_shared_receipts,omitempty" path:"bundle_send_shared_receipts"`
+	BundlesDefaultOwnedByPrimaryGroup        *bool       `url:"bundles_default_owned_by_primary_group,omitempty" json:"bundles_default_owned_by_primary_group,omitempty" path:"bundles_default_owned_by_primary_group"`
 	CalculateFileChecksumsCrc32              *bool       `url:"calculate_file_checksums_crc32,omitempty" json:"calculate_file_checksums_crc32,omitempty" path:"calculate_file_checksums_crc32"`
 	CalculateFileChecksumsMd5                *bool       `url:"calculate_file_checksums_md5,omitempty" json:"calculate_file_checksums_md5,omitempty" path:"calculate_file_checksums_md5"`
 	CalculateFileChecksumsSha1               *bool       `url:"calculate_file_checksums_sha1,omitempty" json:"calculate_file_checksums_sha1,omitempty" path:"calculate_file_checksums_sha1"`

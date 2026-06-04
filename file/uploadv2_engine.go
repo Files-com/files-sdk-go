@@ -139,7 +139,7 @@ func newUploadV2Engine(u *uploadIO, plan uploadV2PartPlan) *uploadV2Engine {
 		httpClientLimits = u.configureUploadV2HTTPClient(transportMaxConcurrency, idleConnectionCap)
 	}
 	var globalManager lib.ConcurrencyManager
-	if u.managerSet {
+	if u.managerSet && !u.uploadV2UseSDKDefaultCaps {
 		globalManager = u.Manager
 	}
 	engine := &uploadV2Engine{
@@ -221,10 +221,18 @@ func uploadV2HTTPMaxConnsPerHost(plan uploadV2PartPlan, tuning UploadV2Tuning, m
 		workloadBytes = *plan.totalSize
 	}
 	// The transport can open based on workload bytes before the adaptive
-	// manager unlocks growth above the S3 soft ceiling. That keeps connection
-	// headroom ready for large transfers, while actual concurrency still has to
+	// manager unlocks growth above the S3 soft ceiling. It can also open when
+	// the workload implies enough scheduled parts for many-file probing. That
+	// keeps connection headroom ready, while actual concurrency still has to
 	// prove sustained throughput before it probes above the default plateau.
 	if probeBytes > 0 && workloadBytes >= probeBytes {
+		return maxConnsPerHost
+	}
+	probeSuccesses := uploadV2S3GrowthCeilingProbeSuccesses
+	if tuning.S3GrowthCeilingProbeSuccesses > 0 {
+		probeSuccesses = tuning.S3GrowthCeilingProbeSuccesses
+	}
+	if probeSuccesses > 0 && workloadBytes > 0 && plan.partSize > 0 && ceilDiv(workloadBytes, plan.partSize) >= int64(probeSuccesses) {
 		return maxConnsPerHost
 	}
 	return ceiling

@@ -101,7 +101,7 @@ Target: ~3 weeks of additional work after Stage 1 ships.
 | Pre-flight bandwidth probe | — | ✅ |
 | `--transfer-profile` CLI flag | — | ✅ |
 | Structured JSON telemetry | — | ✅ |
-| BBR / kernel tuning docs | — | ✅ |
+| High-throughput OS tuning command | Linux inspect/apply/verify command | macOS/Windows expansion |
 
 Out of scope for both stages:
 
@@ -417,13 +417,17 @@ V2 keeps normal users on automatic defaults: `--adaptive-concurrency` without nu
 |---|---|
 | Startup and floor | `--adaptive-upload-v2-s3-initial-target`, `--adaptive-upload-v2-s3-adaptive-floor` |
 | Growth cadence | `--adaptive-upload-v2-s3-grow-every`, `--adaptive-upload-v2-s3-grow-step` |
-| Throughput probe behavior | `--adaptive-upload-v2-s3-throughput-window`, `--adaptive-upload-v2-s3-throughput-min-gain-percent`, `--adaptive-upload-v2-s3-probe-min-windows`, `--adaptive-upload-v2-s3-probe-floor-target`, `--adaptive-upload-v2-s3-probe-floor-rate-bps`, `--adaptive-upload-v2-s3-probe-plateau-target`, `--adaptive-upload-v2-s3-throughput-shrink-percent`, `--adaptive-upload-v2-s3-throughput-hold-windows`, `--adaptive-upload-v2-s3-probe-min-gain-per-target-percent` |
-| S3 soft ceiling | `--adaptive-upload-v2-s3-growth-ceiling`, `--adaptive-upload-v2-s3-growth-ceiling-probe-bytes`, `--adaptive-upload-v2-s3-growth-ceiling-probe-rate-bps` |
+| Throughput probe behavior | `--adaptive-upload-v2-s3-throughput-window`, `--adaptive-upload-v2-s3-throughput-min-gain-percent`, `--adaptive-upload-v2-s3-probe-min-windows`, `--adaptive-upload-v2-s3-probe-floor-target`, `--adaptive-upload-v2-s3-probe-floor-rate-bps`, `--adaptive-upload-v2-s3-probe-plateau-target`, `--adaptive-upload-v2-s3-throughput-shrink-percent`, `--adaptive-upload-v2-s3-throughput-hold-windows`, `--adaptive-upload-v2-s3-probe-min-gain-per-target-percent`, `--adaptive-upload-v2-s3-probe-loss-tolerance-percent` |
+| S3 soft ceiling | `--adaptive-upload-v2-s3-growth-ceiling`, `--adaptive-upload-v2-s3-growth-ceiling-probe-bytes`, `--adaptive-upload-v2-s3-growth-ceiling-probe-successes`, `--adaptive-upload-v2-s3-growth-ceiling-probe-rate-bps` |
 | Latency protection | `--adaptive-upload-v2-s3-latency-queue-high`, `--adaptive-upload-v2-s3-latency-growth-queue-high` |
 | Part-size planning | `--adaptive-upload-v2-s3-part-size-mib`, `--adaptive-upload-v2-s3-workload-bytes`, `--adaptive-upload-v2-s3-workload-target-part-multiplier`, `--adaptive-upload-v2-s3-workload-min-part-size-mib`, `--adaptive-upload-v2-s3-workload-scan-wait-ms` |
 | Ready runway | `--adaptive-upload-ready-runway-parts`, `--adaptive-upload-ready-runway-bytes` |
 
 These are intentionally hidden escape hatches for benchmark runs, customer diagnostics, and rollout tuning. They should not be promoted as normal CLI UX, and changing the values should never change V1 upload behavior.
+
+### High-Throughput OS Tuning
+
+The SDK exposes a reusable high-throughput OS tuning workflow in `lib/ostuning` and the CLI surfaces it as `files-cli os-tuning high-throughput`. On Linux, the command supports plan, verify, repair, and restore modes for BBR, `fq`, TCP buffer limits, ephemeral port range, `tcp_slow_start_after_idle`, and supported NIC ring sizes. The CLI command is intentionally outside upload execution; users opt into host-level repair separately from the upload command, and SDK callers such as Desktop Helper can reuse the same inspect/plan/repair/restore API.
 
 Recent local proxy/agent testing with the split-plane controller showed:
 
@@ -438,6 +442,8 @@ For the agent target, `MaxTarget=128` provides headroom for scenarios where the 
 If a user supplies `--concurrent-connection-limit=75`, adaptive mode should not open 75 HTTP requests immediately. It should set `MaxTarget=75`, start at `InitialTarget=8`, and ramp up by at most the target-class `MaxRampStep` per cooldown while success/goodput/queue wait justify the increase. If the server returns 429/503 with `Retry-After`, or the client observes connection loss/reset, the controller shrinks and pauses new work before retrying.
 
 When the CLI's `--concurrent-connection-limit` is set in adaptive mode, it becomes `MaxTarget` for both stages, overriding the stage default. It is a ceiling, not a target and not startup concurrency. Existing customers who need old static behavior can disable adaptive mode.
+
+SDK jobs that do not provide an explicit manager share one default process-wide manager. This protects Desktop, FIW, and other multi-job callers from multiplying file, part, and directory-listing concurrency every time they start a separate upload job. The shared default manager is initialized atomically once per process. For adaptive uploads, a nil manager remains a job-scheduling and V1-fallback default, not a V2 upload cap, so V2 still uses target-specific concurrency caps. V2 adaptive upload learning is also shared across jobs by target class, effective max cap, and manager-relevant tuning so a directory job, individual file jobs, and retry jobs all benefit from the same learned concurrency envelope. Passing an explicit manager remains the escape hatch for a caller that needs a separate cap or tenant-specific limiter.
 
 ## Telemetry
 
@@ -604,6 +610,7 @@ Stage 1 ends here. The CLI has one adaptive upload controller that works across 
 - **Outcome misclassification.** If `outcomeFromHTTPResult` returns the wrong outcome (e.g., labels a 5xx as `ServerBackPressure`), Vegas misreacts. Test exhaustively against each error class.
 - **The V1/V2 split temptation.** Keep V2-only high-scale features behind explicit feature flags while V2 is under validation. The `upload-v2-checksum-trailer` flag is additive and must not alter V1 upload behavior or the default V2 wire format.
 - **MaxTarget semantics.** If `--concurrent-connection-limit` is left at 50, V2's `MaxTarget` is 50 and high-scale customers get the same ceiling as V1. The flag becomes the ceiling, not the target. In adaptive mode it must not become startup concurrency.
+- **Per-job default managers.** Default SDK jobs must not create independent managers. Desktop/FIW can start multiple directory or file jobs concurrently; without a shared default manager, aggregate concurrency multiplies across jobs and defeats the adaptive controller.
 - **Two controllers fighting.** If part size and concurrency both adapt from the same short-window throughput samples, the system can oscillate and make regressions hard to explain. Stage 1 part sizing should be deterministic.
 - **Applying S3 constraints everywhere.** FIW and agent uploads do not need S3's 5 MiB minimum or 10,000-part correction. Applying those constraints globally makes retry units larger than necessary and hides target-specific behavior.
 - **Unknown-size over-optimization.** Unknown-size uploads cannot guarantee S3 part-count correctness from total size. Keep the algorithm simple, bounded, and explicit about failure when a stream exceeds representable bounds.

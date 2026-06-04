@@ -5,6 +5,7 @@ import (
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/file/manager"
 	"github.com/Files-com/files-sdk-go/v3/file/status"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/stretchr/testify/assert"
@@ -131,6 +132,25 @@ func TestJob_TotalBytes(t *testing.T) {
 	job.Add(file)
 	job.Add(file)
 	assert.Equal(int64(30000), job.TotalBytes())
+}
+
+func TestJobSetManagerUsesSharedDefault(t *testing.T) {
+	first := (&Job{}).Init()
+	second := (&Job{}).Init()
+
+	first.SetManager(nil)
+	second.SetManager(nil)
+
+	assert.Same(t, first.Manager, second.Manager)
+}
+
+func TestJobSetManagerKeepsExplicitManagerIsolated(t *testing.T) {
+	job := (&Job{}).Init()
+	explicit := manager.New(2, 3, 4)
+
+	job.SetManager(explicit)
+
+	assert.Same(t, explicit, job.Manager)
 }
 
 func TestJob_RemainingBytes(t *testing.T) {

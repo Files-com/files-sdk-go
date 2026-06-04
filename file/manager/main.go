@@ -4,16 +4,30 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"sync"
 
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
 var (
-	ConcurrentFiles                     = 50
-	ConcurrentFileParts                 = 50
-	ConcurrentDirectoryList             = 100
-	AdaptiveUploadV2ConcurrentFiles     = 100
+	// ConcurrentFiles is the default number of files a transfer job may process at once.
+	ConcurrentFiles = 50
+	// ConcurrentFileParts is the default job-wide cap for concurrent upload/download part work.
+	ConcurrentFileParts = 50
+	// ConcurrentDirectoryList is the default number of local directory listing operations that may run at once.
+	ConcurrentDirectoryList = 100
+	// AdaptiveUploadV2ConcurrentFiles is the V2 upload job-level file concurrency cap.
+	// Adaptive upload V2 still controls HTTP part concurrency dynamically; this value prevents
+	// large multi-file jobs from being serialized while the per-destination controller learns.
+	AdaptiveUploadV2ConcurrentFiles = 300
+	// AdaptiveUploadV2ConcurrentFileParts is the V2 upload HTTP part concurrency cap.
+	// The adaptive manager treats this as a maximum, not a fixed target.
 	AdaptiveUploadV2ConcurrentFileParts = 1024
+)
+
+var (
+	sharedDefaultOnce    sync.Once
+	sharedDefaultManager *Manager
 )
 
 type Manager struct {
@@ -49,6 +63,13 @@ func New(files, fileParts, directoryListing int) *Manager {
 
 func Default() *Manager {
 	return New(ConcurrentFiles, ConcurrentFileParts, ConcurrentDirectoryList)
+}
+
+func SharedDefault() *Manager {
+	sharedDefaultOnce.Do(func() {
+		sharedDefaultManager = Default()
+	})
+	return sharedDefaultManager
 }
 
 func Sync() *Manager {

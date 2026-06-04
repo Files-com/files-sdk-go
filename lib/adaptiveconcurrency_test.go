@@ -240,6 +240,51 @@ func TestAdaptiveConcurrencyManagerAcceptsStrongGainAboveProbePlateau(t *testing
 	assert.Greater(t, snapshot.LastThroughputProbeGainPerTargetPercent, 0.15)
 }
 
+func TestAdaptiveConcurrencyManagerAcceptsNeutralGainThroughProbePlateau(t *testing.T) {
+	manager := NewAdaptiveConcurrencyManagerWithConfig(AdaptiveConcurrencyConfig{
+		MaxConcurrency:                         200,
+		InitialTarget:                          150,
+		MinTarget:                              8,
+		GrowthCeiling:                          150,
+		GrowthCeilingProbeSuccesses:            1,
+		GrowthCeilingProbeRate:                 1,
+		GrowEvery:                              2,
+		GrowStep:                               20,
+		FailureShrinkPercent:                   35,
+		BackPressureShrinkPercent:              10,
+		ThroughputWindow:                       2,
+		ThroughputMinGainPercent:               1,
+		ThroughputShrinkPercent:                10,
+		ThroughputProbePlateauTarget:           200,
+		ThroughputProbeMinGainPerTargetPercent: 0.15,
+		ThroughputProbeLossTolerancePercent:    2,
+	})
+
+	for i := 0; i < 2; i++ {
+		manager.Wait()
+		manager.DoneWithSample(AdaptiveConcurrencySample{
+			Success:  true,
+			Bytes:    1_000_000,
+			Duration: 100 * time.Millisecond,
+		})
+	}
+	assert.Equal(t, 170, manager.Target())
+
+	for i := 0; i < 2; i++ {
+		manager.Wait()
+		manager.DoneWithSample(AdaptiveConcurrencySample{
+			Success:  true,
+			Bytes:    990_000,
+			Duration: 100 * time.Millisecond,
+		})
+	}
+
+	snapshot := manager.Snapshot()
+	assert.Equal(t, 0, snapshot.ThroughputBackoffTotal)
+	assert.Equal(t, 0, snapshot.ThroughputProbeEfficiencyMissTotal)
+	assert.GreaterOrEqual(t, snapshot.Target, 170)
+}
+
 func TestAdaptiveConcurrencyManagerRequiresProbeGainThroughPlateau(t *testing.T) {
 	manager := NewAdaptiveConcurrencyManagerWithConfig(AdaptiveConcurrencyConfig{
 		MaxConcurrency:                         220,
@@ -321,6 +366,96 @@ func TestAdaptiveConcurrencyManagerUnlocksGrowthCeilingAfterSustainedThroughput(
 	assert.True(t, snapshot.GrowthCeilingUnlocked)
 	assert.Equal(t, 170, snapshot.Target)
 	assert.Equal(t, 150, snapshot.GrowthCeiling)
+}
+
+func TestAdaptiveConcurrencyManagerUnlocksGrowthCeilingAfterManySuccessfulParts(t *testing.T) {
+	manager := NewAdaptiveConcurrencyManagerWithConfig(AdaptiveConcurrencyConfig{
+		MaxConcurrency:              220,
+		InitialTarget:               150,
+		MinTarget:                   8,
+		GrowthCeiling:               150,
+		GrowthCeilingProbeBytes:     10_000,
+		GrowthCeilingProbeSuccesses: 4,
+		GrowthCeilingProbeRate:      1,
+		GrowEvery:                   2,
+		GrowStep:                    20,
+		ThroughputWindow:            2,
+		ThroughputMinGainPercent:    1,
+		ThroughputShrinkPercent:     10,
+	})
+
+	for i := 0; i < 4; i++ {
+		manager.Wait()
+		manager.DoneWithSample(AdaptiveConcurrencySample{
+			Success:  true,
+			Bytes:    100,
+			Duration: 10 * time.Millisecond,
+		})
+	}
+
+	snapshot := manager.Snapshot()
+	assert.True(t, snapshot.GrowthCeilingUnlocked)
+	assert.Equal(t, 170, snapshot.Target)
+	assert.Equal(t, 150, snapshot.GrowthCeiling)
+	assert.Equal(t, 4, snapshot.GrowthCeilingProbeSuccessThreshold)
+}
+
+func TestAdaptiveConcurrencyManagerDoesNotTreatDisabledBytesGateAsReady(t *testing.T) {
+	manager := NewAdaptiveConcurrencyManagerWithConfig(AdaptiveConcurrencyConfig{
+		MaxConcurrency:              220,
+		InitialTarget:               150,
+		MinTarget:                   8,
+		GrowthCeiling:               150,
+		GrowthCeilingProbeSuccesses: 4,
+		GrowthCeilingProbeRate:      1,
+		GrowEvery:                   2,
+		GrowStep:                    20,
+		ThroughputWindow:            2,
+		ThroughputMinGainPercent:    1,
+		ThroughputShrinkPercent:     10,
+	})
+
+	for i := 0; i < 2; i++ {
+		manager.Wait()
+		manager.DoneWithSample(AdaptiveConcurrencySample{
+			Success:  true,
+			Bytes:    100,
+			Duration: 10 * time.Millisecond,
+		})
+	}
+
+	snapshot := manager.Snapshot()
+	assert.False(t, snapshot.GrowthCeilingUnlocked)
+	assert.Equal(t, 150, snapshot.Target)
+}
+
+func TestAdaptiveConcurrencyManagerKeepsGrowthCeilingWithoutThroughput(t *testing.T) {
+	manager := NewAdaptiveConcurrencyManagerWithConfig(AdaptiveConcurrencyConfig{
+		MaxConcurrency:              220,
+		InitialTarget:               150,
+		MinTarget:                   8,
+		GrowthCeiling:               150,
+		GrowthCeilingProbeSuccesses: 2,
+		GrowthCeilingProbeRate:      10_000_000,
+		GrowEvery:                   2,
+		GrowStep:                    20,
+		ThroughputWindow:            2,
+		ThroughputMinGainPercent:    1,
+		ThroughputShrinkPercent:     10,
+	})
+
+	for i := 0; i < 4; i++ {
+		manager.Wait()
+		manager.DoneWithSample(AdaptiveConcurrencySample{
+			Success:  true,
+			Bytes:    100,
+			Duration: time.Second,
+		})
+	}
+
+	snapshot := manager.Snapshot()
+	assert.False(t, snapshot.GrowthCeilingUnlocked)
+	assert.Equal(t, 150, snapshot.Target)
 }
 
 func TestAdaptiveConcurrencyManagerUsesProbeStepGainAbovePlateau(t *testing.T) {

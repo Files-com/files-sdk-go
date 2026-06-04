@@ -225,6 +225,9 @@ type UploaderParams struct {
 	// AdaptiveConcurrency enables the opt-in upload V2 engine. Any configured
 	// concurrent connection limit is used as a maximum cap, not a fixed target.
 	AdaptiveConcurrency bool
+	// AdaptiveConcurrencyUseSDKDefaultCaps keeps V2 target-specific concurrency
+	// caps when Manager is present only for shared job scheduling.
+	AdaptiveConcurrencyUseSDKDefaultCaps bool
 	// AdaptiveUploadReadyRunwaySet applies the ready-runway values below. When
 	// false, V2 uses its built-in defaults.
 	AdaptiveUploadReadyRunwaySet bool
