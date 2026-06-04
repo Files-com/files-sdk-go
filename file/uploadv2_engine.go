@@ -64,6 +64,7 @@ const uploadV2DefaultSeekableS3ReadyRunwayMinParts = 32
 const uploadV2DefaultSeekableS3ReadyRunwayMaxParts = 128
 const uploadV2DefaultSeekableS3ReadyRunwayTargetDivisor = 2
 const uploadV2DefaultHTTPIdleConnectionCap = 128
+const uploadV2SmallS3KnownSizeConcurrencyCutoff = uploadV2GiB
 
 type uploadV2ProgressBatcher struct {
 	progress func(int64)
@@ -117,6 +118,60 @@ type uploadV2PartResult struct {
 	backPressure bool
 	retryAfter   time.Duration
 	err          error
+}
+
+type uploadV2PartConcurrencyGate struct {
+	parent lib.ConcurrencyManager
+	local  *lib.ConstrainedWorkGroup
+}
+
+func newUploadV2PartConcurrencyGate(parent lib.ConcurrencyManager, limit int) *uploadV2PartConcurrencyGate {
+	return &uploadV2PartConcurrencyGate{
+		parent: parent,
+		local:  lib.NewConstrainedWorkGroup(max(1, limit)),
+	}
+}
+
+func (g *uploadV2PartConcurrencyGate) Wait() {
+	g.local.Wait()
+	g.parent.Wait()
+}
+
+func (g *uploadV2PartConcurrencyGate) WaitWithContext(ctx context.Context) bool {
+	if !g.local.WaitWithContext(ctx) {
+		return false
+	}
+	if g.parent.WaitWithContext(ctx) {
+		return true
+	}
+	g.local.Done()
+	return false
+}
+
+func (g *uploadV2PartConcurrencyGate) Done() {
+	g.DoneWithSample(lib.AdaptiveConcurrencySample{Success: true})
+}
+
+func (g *uploadV2PartConcurrencyGate) DoneWithSample(sample lib.AdaptiveConcurrencySample) {
+	if sampler, ok := g.parent.(lib.AdaptiveConcurrencyManagerWithSample); ok {
+		sampler.DoneWithSample(sample)
+	} else {
+		g.parent.Done()
+	}
+	g.local.Done()
+}
+
+func (g *uploadV2PartConcurrencyGate) WaitAllDone() {
+	g.local.WaitAllDone()
+	g.parent.WaitAllDone()
+}
+
+func (g *uploadV2PartConcurrencyGate) RunningCount() int {
+	return g.local.RunningCount()
+}
+
+func (g *uploadV2PartConcurrencyGate) WaitForADone() bool {
+	return g.local.WaitForADone()
 }
 
 func newUploadV2Engine(u *uploadIO, plan uploadV2PartPlan) *uploadV2Engine {
@@ -344,7 +399,45 @@ func sortedUploadV2Parts(parts Parts) Parts {
 }
 
 func (e *uploadV2Engine) resultsBufferSize() int {
-	return max(1, e.manager.Max())
+	return max(1, e.partConcurrencyLimit())
+}
+
+func (e *uploadV2Engine) partConcurrencyManager() lib.ConcurrencyManager {
+	parent := e.manager.NewSubWorker()
+	limit := e.partConcurrencyLimit()
+	if limit >= e.manager.Max() {
+		return parent
+	}
+	return newUploadV2PartConcurrencyGate(parent, limit)
+}
+
+func (e *uploadV2Engine) partConcurrencyLimit() int {
+	limit := max(1, e.manager.Max())
+	if e.plan.target != uploadV2TargetS3 || e.plan.totalSize == nil || *e.plan.totalSize >= uploadV2SmallS3KnownSizeConcurrencyCutoff {
+		return limit
+	}
+	partCount := e.plan.estimatedPartCount()
+	if partCount <= 0 {
+		return limit
+	}
+	return min(limit, uploadV2SmallS3KnownSizeConcurrency(partCount))
+}
+
+func uploadV2SmallS3KnownSizeConcurrency(partCount int) int {
+	if partCount <= 0 {
+		return 0
+	}
+	if partCount <= 12 {
+		return partCount
+	}
+	return min(partCount, max(4, min(12, ceilDivInt(partCount, 2))))
+}
+
+func ceilDivInt(n int, d int) int {
+	if n <= 0 {
+		return 0
+	}
+	return (n + d - 1) / d
 }
 
 func (e *uploadV2Engine) resumeResetReason() string {
@@ -410,7 +503,7 @@ func (e *uploadV2Engine) run(ctx context.Context) (UploadResumable, error) {
 	partCtx, cancelParts := context.WithCancelCause(ctx)
 	defer cancelParts(nil)
 
-	wait := e.manager.NewSubWorker()
+	wait := e.partConcurrencyManager()
 	results := make(chan uploadV2PartResult, e.resultsBufferSize())
 	producerDone := make(chan struct{})
 
@@ -491,6 +584,8 @@ func (e *uploadV2Engine) uploadV2EnabledLogAttrs(readyRunway uploadV2ReadyRunway
 		"offset_upload":               e.usesPartOffsets(),
 		"adaptive_initial_target":     e.manager.Target(),
 		"adaptive_max_target":         e.manager.Max(),
+		"adaptive_part_target":        e.partConcurrencyLimit(),
+		"adaptive_planned_parts":      e.plan.estimatedPartCount(),
 		"ready_runway_parts":          readyRunway.parts,
 		"ready_runway_bytes":          readyRunway.bytes,
 		"upload_http_client_adjusted": e.httpClientLimits.adjusted,

@@ -118,16 +118,27 @@ func (m *MockUploader) CreateFolder(files_sdk.FolderCreateParams, ...files_sdk.R
 
 func TestUploaderAdaptiveConcurrencyUseSDKDefaultCapsKeepsJobPartManagerForFallback(t *testing.T) {
 	cases := []struct {
-		name                 string
-		params               UploaderParams
-		wantSDKDefaultV2Caps bool
+		name                       string
+		params                     UploaderParams
+		wantUploadV2               bool
+		wantSDKDefaultV2Caps       bool
+		wantSharedAdaptiveProvider bool
 	}{
+		{
+			name: "explicit manager without adaptive concurrency stays v1",
+			params: UploaderParams{
+				Manager: uploadManager.Build(7, 1),
+			},
+			wantUploadV2: false,
+		},
 		{
 			name: "nil manager uses sdk default caps",
 			params: UploaderParams{
 				AdaptiveConcurrency: true,
 			},
-			wantSDKDefaultV2Caps: true,
+			wantUploadV2:               true,
+			wantSDKDefaultV2Caps:       true,
+			wantSharedAdaptiveProvider: true,
 		},
 		{
 			name: "manager used for scheduling only",
@@ -136,14 +147,17 @@ func TestUploaderAdaptiveConcurrencyUseSDKDefaultCapsKeepsJobPartManagerForFallb
 				AdaptiveConcurrencyUseSDKDefaultCaps: true,
 				Manager:                              uploadManager.Build(100, 1),
 			},
-			wantSDKDefaultV2Caps: true,
+			wantUploadV2:               true,
+			wantSDKDefaultV2Caps:       true,
+			wantSharedAdaptiveProvider: true,
 		},
 		{
-			name: "explicit manager cap",
+			name: "explicit manager cap uses isolated adaptive manager",
 			params: UploaderParams{
 				AdaptiveConcurrency: true,
 				Manager:             uploadManager.Build(7, 1),
 			},
+			wantUploadV2:         true,
 			wantSDKDefaultV2Caps: false,
 		},
 	}
@@ -183,9 +197,14 @@ func TestUploaderAdaptiveConcurrencyUseSDKDefaultCapsKeepsJobPartManagerForFallb
 			<-onComplete
 
 			recorded := uploader.recordedUploadIO()
-			assert.True(t, recorded.uploadV2)
+			assert.Equal(t, tt.wantUploadV2, recorded.uploadV2)
 			assert.True(t, recorded.managerSet)
 			assert.Equal(t, tt.wantSDKDefaultV2Caps, recorded.uploadV2UseSDKDefaultCaps)
+			if tt.wantSharedAdaptiveProvider {
+				assert.NotNil(t, recorded.uploadV2ManagerProvider)
+			} else {
+				assert.Nil(t, recorded.uploadV2ManagerProvider)
+			}
 			maxer, ok := recorded.Manager.(interface{ Max() int })
 			require.True(t, ok)
 			assert.Equal(t, job.FilePartsManager.Max(), maxer.Max())

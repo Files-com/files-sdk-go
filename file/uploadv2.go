@@ -426,10 +426,7 @@ func (u *uploadIO) runUploadV2(ctx context.Context) (UploadResumable, error, boo
 }
 
 func (u *uploadIO) uploadV2Enabled() bool {
-	if u.uploadV2 {
-		return true
-	}
-	return u.Config.FeatureFlags[files_sdk.FeatureFlagAdaptiveUploadV2]
+	return u.uploadV2
 }
 
 func (u *uploadIO) logUploadV2(attrs map[string]any) {

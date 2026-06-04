@@ -222,11 +222,15 @@ type UploaderParams struct {
 	*Job
 	config        files_sdk.Config
 	PreserveTimes bool
-	// AdaptiveConcurrency enables the opt-in upload V2 engine. Any configured
-	// concurrent connection limit is used as a maximum cap, not a fixed target.
+	// AdaptiveConcurrency explicitly opts this upload job into the upload V2
+	// engine. Existing SDK callers remain on the V1 path unless this is true.
+	// Any configured concurrent connection limit is used as a maximum cap, not
+	// a fixed target.
 	AdaptiveConcurrency bool
 	// AdaptiveConcurrencyUseSDKDefaultCaps keeps V2 target-specific concurrency
-	// caps when Manager is present only for shared job scheduling.
+	// caps and shared adaptive learning when Manager is present only for job
+	// scheduling. When false and Manager is provided, V2 treats that Manager as
+	// an explicit isolated cap.
 	AdaptiveConcurrencyUseSDKDefaultCaps bool
 	// AdaptiveUploadReadyRunwaySet applies the ready-runway values below. When
 	// false, V2 uses its built-in defaults.

@@ -95,6 +95,23 @@ type Options struct {
 
 const ProfileHighThroughputUpload = "high-throughput-upload"
 
+const (
+	// MinimumOpenFileLimit is the lowest soft nofile value OS tuning treats as
+	// acceptable for high-throughput adaptive uploads.
+	MinimumOpenFileLimit = 8192
+	// PreferredOpenFileLimit is the recommended soft nofile value for hosts
+	// dedicated to high-throughput transfer workloads.
+	PreferredOpenFileLimit = 65536
+)
+
+type OpenFileLimitResult struct {
+	Supported  bool
+	BeforeSoft uint64
+	BeforeHard uint64
+	AfterSoft  uint64
+	Changed    bool
+}
+
 var supportedOS = []string{"linux", "darwin", "windows"}
 
 func SupportedOS() []string {

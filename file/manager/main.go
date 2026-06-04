@@ -19,7 +19,8 @@ var (
 	// AdaptiveUploadV2ConcurrentFiles is the V2 upload job-level file concurrency cap.
 	// Adaptive upload V2 still controls HTTP part concurrency dynamically; this value prevents
 	// large multi-file jobs from being serialized while the per-destination controller learns.
-	AdaptiveUploadV2ConcurrentFiles = 300
+	// The default is documented in docs/adaptive-upload-v2-file-concurrency-cap.md.
+	AdaptiveUploadV2ConcurrentFiles = 128
 	// AdaptiveUploadV2ConcurrentFileParts is the V2 upload HTTP part concurrency cap.
 	// The adaptive manager treats this as a maximum, not a fixed target.
 	AdaptiveUploadV2ConcurrentFileParts = 1024

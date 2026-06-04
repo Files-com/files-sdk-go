@@ -25,6 +25,16 @@ func darwinPlan(includeNetworkTest bool) Plan {
 				},
 				CanFailSoftly: true,
 			},
+			{
+				ID:          "darwin.inspect-nofile",
+				Title:       "Inspect open file descriptor limits",
+				Description: "Read the current shell soft and hard nofile limits. Adaptive uploads can open many sockets and files, so a low soft limit can cap the process before TCP is the bottleneck.",
+				Privilege:   PrivilegeUser,
+				Commands: []Command{
+					posix(openFileLimitInspectCommand()),
+				},
+				ExpectedOutcome: fmt.Sprintf("Soft nofile should be at least %d, with %d or higher preferred on dedicated high-throughput hosts.", MinimumOpenFileLimit, PreferredOpenFileLimit),
+			},
 		},
 		NetworkTests: networkTests,
 		SnapshotSteps: []Step{
@@ -62,6 +72,7 @@ func darwinPlan(includeNetworkTest bool) Plan {
 		Notes: []string{
 			"Expected gains are usually smaller than Linux because modern macOS already auto-tunes TCP windows and does not expose BBR as a generic sysctl.",
 			"Run a before/after upload benchmark on the same network before recommending this to desktop users.",
+			"Adaptive CLI uploads raise their own soft nofile limit to the preferred high-throughput limit at startup when macOS allows it. Persistent maxfiles changes should be deployed through MDM or an audited launch daemon after validating the target macOS release.",
 		},
 		References: []Reference{
 			{Title: "Apple guidance on querying system features with sysctl", URL: "https://developer.apple.com/documentation/Apple-Silicon/addressing-architectural-differences-in-your-macos-code"},

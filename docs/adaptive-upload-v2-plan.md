@@ -10,7 +10,7 @@ The current upload path (`targets/go/file/uploadio.go` and `targets/go/file/mana
 
 A static default cannot satisfy all three. An adaptive concurrency controller can: it observes queue wait time, grows when there is headroom, shrinks when contention rises, and settles at the right level for each environment automatically.
 
-This plan adds adaptive concurrency to the upload path as a new package (`file/uploadv2`) that runs alongside the existing implementation. V2 is opt-in; V1 is untouched until V2 proves itself.
+This plan adds adaptive concurrency to the upload path as a new package (`file/uploadv2`) that runs alongside the existing implementation. V2 is explicit opt-in for SDK callers; CLI uploads default to V2 with `--adaptive-concurrency=false` as the opt-out. V1 remains available as the rollback path.
 
 ## Stages
 
@@ -34,7 +34,7 @@ In scope for Stage 1:
 - Target-aware dynamic part-size planner.
 - Sample emission at part completion, with outcome mapping for S3, FIW, and agent paths.
 - Automatic upload target classification from the resolved upload URL.
-- CLI `--adaptive-concurrency` flag (default off).
+- CLI `--adaptive-concurrency` flag (default on; `false` opts out).
 - Stderr telemetry.
 - Defaults tuned by target class: S3 can grow higher, FIW sits in the middle, agent is capped lower and must respect proxy back-pressure. See Vegas Configuration.
 - Opt-in checksum trailer support behind `upload-v2-checksum-trailer`; disabled by default and only applied for supported V2 destinations, currently direct AWS S3, when the upload URL signs the required trailer headers.
@@ -409,6 +409,8 @@ The direct-S3 Stage 1 default uses `InitialTarget=150` and a `150` soft growth c
 
 S3 keeps idle HTTP retention capped below the active ceiling. Directory/job uploads must share one adjusted V2 HTTP client per target class so many-file jobs do not create one transport pool per file. This avoids accumulating hundreds of idle established connections on many-file jobs.
 
+Adaptive upload V2 uses a separate file-admission cap for multi-file jobs. The default is `128` files while the part-concurrency manager remains capped at `1024` and adapts toward the active target. The benchmark decision record is [Adaptive Upload V2 File-Admission Cap Decision](adaptive-upload-v2-file-concurrency-cap.md). In short, a tuned Tier_1/GVNIC VM benchmark compared file-admission caps `300`, `128`, and `50` while holding adaptive part concurrency constant. Cap `128` produced the best median throughput on both tested datasets while using less memory than `300`; cap `50` underfed the `1000x64MiB` workload.
+
 ### Diagnostic tuning knobs
 
 V2 keeps normal users on automatic defaults: `--adaptive-concurrency` without numeric tuning is the product contract and the benchmark success path. Numeric benchmark exploration must not require rebuilding the CLI, so the CLI exposes hidden S3-only diagnostic flags that map to `file.UploadV2Tuning` and only take effect when adaptive upload V2 is enabled:
@@ -422,6 +424,7 @@ V2 keeps normal users on automatic defaults: `--adaptive-concurrency` without nu
 | Latency protection | `--adaptive-upload-v2-s3-latency-queue-high`, `--adaptive-upload-v2-s3-latency-growth-queue-high` |
 | Part-size planning | `--adaptive-upload-v2-s3-part-size-mib`, `--adaptive-upload-v2-s3-workload-bytes`, `--adaptive-upload-v2-s3-workload-target-part-multiplier`, `--adaptive-upload-v2-s3-workload-min-part-size-mib`, `--adaptive-upload-v2-s3-workload-scan-wait-ms` |
 | Ready runway | `--adaptive-upload-ready-runway-parts`, `--adaptive-upload-ready-runway-bytes` |
+| File admission | `--adaptive-upload-v2-file-concurrency` |
 
 These are intentionally hidden escape hatches for benchmark runs, customer diagnostics, and rollout tuning. They should not be promoted as normal CLI UX, and changing the values should never change V1 upload behavior.
 
@@ -482,15 +485,18 @@ The V2 client cooperates with the proxy through the same neutral `Outcome` enum 
 
 The V2 client deliberately does not try to predict the proxy's controller state. It reacts to the signals the proxy emits (429s, transport-level failures, Retry-After hints) the same way the proxy reacts to signals from the agent. Symmetric back-pressure all the way down.
 
-Despite the proxy being default-on, the V2 client ships default-off and flips after validation (see Rollout). This is intentional: the proxy is a controlled deployment, while the CLI runs in arbitrary customer environments where regression risk is higher. The V2 client should not become the default until customer-side validation confirms behavior across the low/medium/high scale bands.
+Despite the proxy being default-on, SDK uploads stay opt-in so existing integrations and shared tenant services keep their current static manager behavior. The CLI can default to adaptive because it owns its transfer manager and exposes `--adaptive-concurrency=false` as the per-command rollback path.
 
 ## Backwards Compatibility
 
 - V1 (`file.UploadWithResume`, `file.Uploader`, the existing `manager.Manager` and `ConstrainedWorkGroup`) is untouched.
-- V2 is a separate package import. Existing SDK consumers see no change unless they explicitly opt in.
+- Existing SDK consumers see no change unless they explicitly opt in with `UploadWithV2()` or `UploaderParams.AdaptiveConcurrency`.
+- `FeatureFlagAdaptiveUploadV2` by itself does not upgrade existing SDK uploads. It remains a product/config gate, but upload code still requires an explicit per-upload or per-job opt-in.
+- After opt-in, adaptive upload uses the global shared adaptive manager by default so multi-file and multi-job SDK usage can learn from the broader workload.
+- When an SDK caller explicitly supplies a `manager.Manager` with adaptive upload enabled, that manager is treated as an isolation boundary and V2 uses a per-upload adaptive manager capped by the supplied manager.
 - V2's `AdaptiveConfig.Enabled = false` falls back to V1's `ConstrainedWorkGroup` behavior using `MaxTarget` as the static cap. Provides a per-call disable without removing the V2 import.
 - Default `AdaptiveConfig` values are tuned to behave at least as well as V1's defaults at medium scale, where V1 is roughly correct.
-- The CLI's `--adaptive-concurrency` flag selects V2 when true; default false initially.
+- The CLI's `--adaptive-concurrency` flag selects V2 by default; pass `--adaptive-concurrency=false` to use the V1/static upload path.
 
 ## Test Strategy
 
@@ -550,7 +556,7 @@ Stage 2 work can begin in parallel with Stage 1 validation, but Stage 2 features
 
 1. Stage 1 parity test suite passes consistently (10 consecutive runs, no flakes).
 2. Stage 1 target-class integration tests pass for S3, FIW, and agent paths.
-3. At least 30 days of opt-in customer usage with `--adaptive-concurrency=true` across S3, FIW, and agent-path workloads without regressions in transfer success rate or wall-clock time.
+3. CLI default-on validation passes for representative direct-S3, FIW, and agent-path workloads, with `--adaptive-concurrency=false` confirmed as the rollback path.
 4. Telemetry shows the controller converges, doesn't oscillate, and doesn't sit at target-class `MaxTarget` permanently except when the target is demonstrably ceiling-limited.
 5. Agent-path overload validation shows `MaxTarget=200` and `MaxTarget=500` are handled by client-side throttling and target reduction, not by repeated immediate 429s, connection-reset loops, or agent instability.
 6. Direct-S3 validation shows the default S3 ceiling reaches the measured enterprise throughput band without manual `--concurrent-connection-limit` tuning.
@@ -564,7 +570,7 @@ V2 replaces V1 (V1 deprecated, eventually removed) when all of the following hol
 1. Both stages have shipped.
 2. Stage 1 promotion criteria above are met for S3, FIW, and agent-path workloads.
 3. Stage 2 scale-band tests pass for low / medium / high simulated links.
-4. Stage 2 field validation with at least one direct-to-S3 customer cohort, 30 days clean.
+4. Stage 2 direct-to-S3 validation shows checksum and optimization behavior does not regress transfer success rate, resume behavior, or wall-clock time.
 5. Documented runbook for operator-visible behaviors.
 
 When those hold, a follow-up change:
@@ -582,12 +588,11 @@ When those hold, a follow-up change:
 2. Land `lib.AdaptiveConcurrencyManager` with unit tests. No callers yet.
 3. Land target classification and target-specific defaults for S3, FIW, agent, and generic URLs.
 4. Land the V2 target-aware part-size planner with unit tests. No caller default change yet.
-5. Land `file/uploadv2/` with Stage 1 defaults. Parity tests against V1. Default off via SDK config.
-6. Land CLI `--adaptive-concurrency` flag. Default off.
+5. Land `file/uploadv2/` with Stage 1 defaults. Parity tests against V1. SDK callers remain explicit opt-in.
+6. Land CLI `--adaptive-concurrency` flag. Default on with `--adaptive-concurrency=false` rollback.
 7. Internal validation against S3, FIW, and agent-path mocks, including back-pressure and retry-after behavior.
-8. Enable for select customers across S3-heavy, FIW-heavy, and agent-heavy workloads.
-9. Validate against 30 days of real workload telemetry split by target class.
-10. Flip CLI default to `--adaptive-concurrency=true` once metrics are clean across the dominant S3 path and the FIW/agent service-mediated paths.
+8. Validate CLI default-on behavior across S3-heavy, FIW-heavy, and agent-heavy workloads.
+9. Keep SDK adaptive upload explicit opt-in until customer and service owners choose where shared adaptive learning is appropriate.
 
 Stage 1 ends here. The CLI has one adaptive upload controller that works across direct S3, FIW, and agent-mediated uploads.
 

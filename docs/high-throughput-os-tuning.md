@@ -85,8 +85,19 @@ improvement for adaptive uploads:
   window as aggressively.
 - MTU probing.
 - Runtime-only NIC RX/TX ring increases when the driver supports them.
+- Open file descriptor limit inspection and persistent `nofile` remediation so
+  adaptive upload can use high HTTP part concurrency without being capped by a
+  low process descriptor limit.
 
-The privileged Linux plan writes `/etc/sysctl.d/99-files-high-throughput.conf`.
+The privileged Linux plan writes `/etc/sysctl.d/99-files-high-throughput.conf`
+and `/etc/security/limits.d/99-files-high-throughput-nofile.conf`.
+
+Adaptive CLI uploads also attempt to raise the current process soft `nofile`
+limit to the hard limit at transfer startup. That runtime raise helps current
+CLI runs, while the persistent limits file helps new shells and SDK callers that
+start outside the CLI. PAM limits do not automatically apply to already-running
+shells or all systemd services. For service-managed SDK callers, set an
+equivalent `LimitNOFILE` in the systemd service unit or drop-in.
 
 Files Agent already has a related Linux UDP buffer tuning path for QUIC:
 `lib/agent/linuxudpbuffer` in Files Integration Worker. That agent package
@@ -100,9 +111,15 @@ on an agent host the later high-throughput file wins for the shared
 ## macOS
 
 The macOS plan is intentionally conservative. It provides inspection commands
-and runtime-only candidate `sysctl` changes for socket and TCP buffer ceilings.
-macOS has fewer safe global knobs than Linux, and supported TCP sysctls vary by
-release, so unsupported keys should be treated as non-fatal.
+for TCP buffer ceilings and current `nofile` limits, plus runtime-only candidate
+`sysctl` changes for socket and TCP buffer ceilings. macOS has fewer safe global
+knobs than Linux, and supported TCP sysctls vary by release, so unsupported keys
+should be treated as non-fatal.
+
+Adaptive CLI uploads attempt to raise the current process soft `nofile` limit to
+the hard limit at transfer startup on macOS as well. Persistent `maxfiles`
+changes should be deployed through MDM or an audited launch daemon only after
+validating the target macOS release.
 
 The optional `--include-network-test` flag adds Apple's `networkQuality` command
 when available. This is a general Internet quality test against Apple's selected

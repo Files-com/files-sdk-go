@@ -18,6 +18,13 @@ files-cli os-tuning high-throughput verify
 ```
 
 The Linux tuning result should include BBR, `fq`, larger TCP buffers, the widened ephemeral port range, `net.ipv4.tcp_slow_start_after_idle=0`, and, when supported by the active NIC, a `net.nic.<iface>.ring` row that sets RX/TX rings to the maximum values reported by `ethtool -g`.
+It should also report the current soft and hard `nofile` limits. Adaptive CLI
+uploads attempt to raise their own soft `nofile` limit to the preferred
+high-throughput limit at startup, but benchmark hosts should still persist a
+high limit for new shells, services, and non-CLI SDK callers. On Linux, the
+repair plan installs
+`/etc/security/limits.d/99-files-high-throughput-nofile.conf`; systemd services
+need an equivalent `LimitNOFILE` setting in the unit or a drop-in.
 
 ## Test Data
 
@@ -128,14 +135,13 @@ Record one row per dataset and static limit.
 
 ## Adaptive Runs
 
-Run the same datasets with adaptive upload V2 enabled. Do not pass exact tuning values for the primary default comparison: `--adaptive-concurrency` with no numeric tuning is the behavior being validated. User-provided concurrency, when present, should be treated only as a maximum cap.
+Run the same datasets with adaptive upload V2 enabled. The CLI defaults adaptive upload on, so normal users do not need to pass a flag; benchmark scripts may still include `--adaptive-concurrency` to make the run label explicit. Do not pass exact tuning values for the primary default comparison. User-provided concurrency, when present, should be treated only as a maximum cap.
 
 Generic command shape:
 
 ```sh
 files-cli upload \
   --debug \
-  --adaptive-concurrency \
   "./upload-sources/${DATASET}" \
   "remote/path/${RUN_ID}/adaptive-default/${DATASET}"
 ```

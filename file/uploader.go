@@ -340,7 +340,9 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 		}
 		if params.AdaptiveConcurrency {
 			opts = append(opts, UploadWithV2())
-			opts = append(opts, uploadWithV2AdaptiveManagerProvider(job.uploadV2AdaptiveManager))
+			if useSDKDefaultAdaptiveCaps {
+				opts = append(opts, uploadWithV2AdaptiveManagerProvider(job.uploadV2AdaptiveManager))
+			}
 			opts = append(opts, uploadWithV2HTTPClientProvider(job.uploadV2HTTPClient))
 			if params.AdaptiveUploadReadyRunwaySet {
 				opts = append(opts, UploadWithV2ReadyRunway(params.AdaptiveUploadReadyRunwayParts, params.AdaptiveUploadReadyRunwayBytes))

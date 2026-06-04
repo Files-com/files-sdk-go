@@ -326,7 +326,7 @@ func TestUploadWithV2ReadyRunwayRejectsNegativeValues(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestUploadV2FeatureFlagEnablesAdaptiveConcurrencyAndPlanner(t *testing.T) {
+func TestUploadV2FeatureFlagAloneDoesNotUpgradeExistingSDKUploads(t *testing.T) {
 	server := (&MockAPIServer{T: t}).Do()
 	defer server.Shutdown()
 	server.MockFiles["v2-feature-flag.txt"] = mockFile{File: files_sdk.File{Size: 1}}
@@ -345,13 +345,12 @@ func TestUploadV2FeatureFlagEnablesAdaptiveConcurrencyAndPlanner(t *testing.T) {
 
 	require.NoError(t, err)
 	logText := logs.String()
-	assert.Contains(t, logText, "event: upload v2 enabled")
-	assert.Contains(t, logText, "adaptive_max_target: 9")
+	assert.NotContains(t, logText, "event: upload v2 enabled")
+	assert.NotContains(t, logText, "adaptive_max_target:")
 
 	uploadRequests := server.TrackRequest["/upload/*path"]
 	require.Len(t, uploadRequests, 1)
-	assert.Contains(t, uploadRequests[0], "part_number=1")
-	assert.Contains(t, uploadRequests[0], "part_offset=0")
+	assert.NotContains(t, uploadRequests[0], "part_offset=0")
 }
 
 func TestUploadV2ChecksumTrailerFeatureFlagUsesAWSChunkedForSignedS3URL(t *testing.T) {
@@ -998,6 +997,149 @@ func TestUploadV2ResultsBufferUsesAdaptiveMax(t *testing.T) {
 
 	assert.Equal(t, engine.manager.Max(), engine.resultsBufferSize())
 	assert.GreaterOrEqual(t, engine.resultsBufferSize(), engine.manager.Target())
+}
+
+func TestUploadV2SmallS3KnownFileCapsPerUploadConcurrency(t *testing.T) {
+	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
+	size := int64(162) * uploadV2MiB
+	tuning := UploadV2Tuning{S3WorkloadBytes: size}
+	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+	require.True(t, ok, reason)
+	plan, ok, reason = plan.withTuning(tuning)
+	require.True(t, ok, reason)
+	require.Equal(t, int64(8)*uploadV2MiB, plan.partSize)
+	require.Equal(t, 21, plan.estimatedPartCount())
+
+	engine := newUploadV2Engine(&uploadIO{
+		FileUploadPart: part,
+		Size:           &size,
+		uploadV2Tuning: tuning,
+	}, plan)
+
+	assert.Equal(t, 11, engine.partConcurrencyLimit())
+	assert.Equal(t, 11, engine.resultsBufferSize())
+	attrs := engine.uploadV2EnabledLogAttrs(uploadV2ReadyRunwayConfig{})
+	assert.Equal(t, 11, attrs["adaptive_part_target"])
+	assert.Equal(t, 21, attrs["adaptive_planned_parts"])
+}
+
+func TestUploadV2SmallS3KnownFileAllowsSmallPlannedPartSet(t *testing.T) {
+	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
+	size := int64(162) * uploadV2MiB
+	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+	require.True(t, ok, reason)
+	require.Equal(t, 11, plan.estimatedPartCount())
+
+	engine := newUploadV2Engine(&uploadIO{FileUploadPart: part, Size: &size}, plan)
+
+	assert.Equal(t, 11, engine.partConcurrencyLimit())
+	assert.Equal(t, 11, engine.resultsBufferSize())
+}
+
+func TestUploadV2LargeS3KnownFileKeepsAdaptiveMaxPerUploadConcurrency(t *testing.T) {
+	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
+	size := int64(10) * uploadV2GiB
+	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+	require.True(t, ok, reason)
+
+	engine := newUploadV2Engine(&uploadIO{FileUploadPart: part, Size: &size}, plan)
+
+	assert.Equal(t, engine.manager.Max(), engine.partConcurrencyLimit())
+	assert.Equal(t, engine.manager.Max(), engine.resultsBufferSize())
+}
+
+func TestUploadV2PartConcurrencyGateReportsAdaptiveSamples(t *testing.T) {
+	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(lib.AdaptiveConcurrencyConfig{
+		MaxConcurrency: 10,
+		InitialTarget:  10,
+	})
+	gate := newUploadV2PartConcurrencyGate(manager.NewSubWorker(), 2)
+
+	require.True(t, gate.WaitWithContext(context.Background()))
+	gate.DoneWithSample(lib.AdaptiveConcurrencySample{
+		Success:  true,
+		Bytes:    5,
+		Duration: time.Millisecond,
+	})
+	gate.WaitAllDone()
+
+	snapshot := manager.Snapshot()
+	assert.Equal(t, 1, snapshot.SuccessTotal)
+	assert.Equal(t, int64(5), snapshot.BytesTotal)
+}
+
+func TestUploadV2PartConcurrencyGateReleasesLocalSlotWhenParentWaitCancels(t *testing.T) {
+	parent := &uploadV2GateTestParent{}
+	gate := newUploadV2PartConcurrencyGate(parent, 1)
+
+	require.False(t, gate.WaitWithContext(context.Background()))
+	assert.Equal(t, 0, gate.RunningCount())
+	gate.WaitAllDone()
+
+	parent.allowWait.Store(true)
+	require.True(t, gate.WaitWithContext(context.Background()))
+	assert.Equal(t, 1, gate.RunningCount())
+	assert.Equal(t, 1, parent.RunningCount())
+
+	gate.Done()
+	gate.WaitAllDone()
+	assert.Equal(t, 0, gate.RunningCount())
+	assert.Equal(t, 0, parent.RunningCount())
+}
+
+func TestUploadV2PartConcurrencyGateReportsFailureSamples(t *testing.T) {
+	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(lib.AdaptiveConcurrencyConfig{
+		MaxConcurrency: 10,
+		InitialTarget:  10,
+	})
+	gate := newUploadV2PartConcurrencyGate(manager.NewSubWorker(), 2)
+
+	require.True(t, gate.WaitWithContext(context.Background()))
+	gate.DoneWithSample(lib.AdaptiveConcurrencySample{
+		Success:      false,
+		Bytes:        7,
+		Duration:     time.Millisecond,
+		BackPressure: true,
+		StatusCode:   http.StatusTooManyRequests,
+	})
+	gate.WaitAllDone()
+
+	snapshot := manager.Snapshot()
+	assert.Equal(t, 0, snapshot.SuccessTotal)
+	assert.Equal(t, 1, snapshot.FailureTotal)
+	assert.Equal(t, 1, snapshot.BackPressureTotal)
+	assert.Equal(t, int64(7), snapshot.BytesTotal)
+}
+
+type uploadV2GateTestParent struct {
+	allowWait atomic.Bool
+	running   atomic.Int32
+}
+
+func (p *uploadV2GateTestParent) Wait() {
+	p.running.Add(1)
+}
+
+func (p *uploadV2GateTestParent) Done() {
+	p.running.Add(-1)
+}
+
+func (p *uploadV2GateTestParent) WaitAllDone() {}
+
+func (p *uploadV2GateTestParent) RunningCount() int {
+	return int(p.running.Load())
+}
+
+func (p *uploadV2GateTestParent) WaitWithContext(context.Context) bool {
+	if !p.allowWait.Load() {
+		return false
+	}
+	p.running.Add(1)
+	return true
+}
+
+func (p *uploadV2GateTestParent) WaitForADone() bool {
+	return false
 }
 
 func TestUploadV2PreallocationIsBoundedByConcurrency(t *testing.T) {
