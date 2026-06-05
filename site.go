@@ -146,6 +146,7 @@ type Site struct {
 	PreventRootPermissionsForNonSiteAdmins   *bool       `json:"prevent_root_permissions_for_non_site_admins,omitempty" path:"prevent_root_permissions_for_non_site_admins,omitempty" url:"prevent_root_permissions_for_non_site_admins,omitempty"`
 	ProtocolAccessGroupsOnly                 *bool       `json:"protocol_access_groups_only,omitempty" path:"protocol_access_groups_only,omitempty" url:"protocol_access_groups_only,omitempty"`
 	Require2fa                               *bool       `json:"require_2fa,omitempty" path:"require_2fa,omitempty" url:"require_2fa,omitempty"`
+	Require2faExemptAllSsoUsers              *bool       `json:"require_2fa_exempt_all_sso_users,omitempty" path:"require_2fa_exempt_all_sso_users,omitempty" url:"require_2fa_exempt_all_sso_users,omitempty"`
 	Require2faStopTime                       *time.Time  `json:"require_2fa_stop_time,omitempty" path:"require_2fa_stop_time,omitempty" url:"require_2fa_stop_time,omitempty"`
 	RevokeBundleAccessOnDisableOrDelete      *bool       `json:"revoke_bundle_access_on_disable_or_delete,omitempty" path:"revoke_bundle_access_on_disable_or_delete,omitempty" url:"revoke_bundle_access_on_disable_or_delete,omitempty"`
 	Require2faUserType                       string      `json:"require_2fa_user_type,omitempty" path:"require_2fa_user_type,omitempty" url:"require_2fa_user_type,omitempty"`
@@ -330,6 +331,7 @@ type SiteUpdateParams struct {
 	Allowed2faMethodStatic                   *bool       `url:"allowed_2fa_method_static,omitempty" json:"allowed_2fa_method_static,omitempty" path:"allowed_2fa_method_static"`
 	Allowed2faMethodBypassForFtpSftpDav      *bool       `url:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty" json:"allowed_2fa_method_bypass_for_ftp_sftp_dav,omitempty" path:"allowed_2fa_method_bypass_for_ftp_sftp_dav"`
 	Require2fa                               *bool       `url:"require_2fa,omitempty" json:"require_2fa,omitempty" path:"require_2fa"`
+	Require2faExemptAllSsoUsers              *bool       `url:"require_2fa_exempt_all_sso_users,omitempty" json:"require_2fa_exempt_all_sso_users,omitempty" path:"require_2fa_exempt_all_sso_users"`
 	Require2faUserType                       string      `url:"require_2fa_user_type,omitempty" json:"require_2fa_user_type,omitempty" path:"require_2fa_user_type"`
 	Color2Top                                string      `url:"color2_top,omitempty" json:"color2_top,omitempty" path:"color2_top"`
 	Color2Left                               string      `url:"color2_left,omitempty" json:"color2_left,omitempty" path:"color2_left"`
