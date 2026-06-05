@@ -33,6 +33,8 @@ type Bundle struct {
 	Id                                           int64                    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	BypassesSiteExpirationRules                  *bool                    `json:"bypasses_site_expiration_rules,omitempty" path:"bypasses_site_expiration_rules,omitempty" url:"bypasses_site_expiration_rules,omitempty"`
 	CreatedAt                                    *time.Time               `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	Deleted                                      *bool                    `json:"deleted,omitempty" path:"deleted,omitempty" url:"deleted,omitempty"`
+	DeletedAt                                    *time.Time               `json:"deleted_at,omitempty" path:"deleted_at,omitempty" url:"deleted_at,omitempty"`
 	DontSeparateSubmissionsByFolder              *bool                    `json:"dont_separate_submissions_by_folder,omitempty" path:"dont_separate_submissions_by_folder,omitempty" url:"dont_separate_submissions_by_folder,omitempty"`
 	MaxUses                                      int64                    `json:"max_uses,omitempty" path:"max_uses,omitempty" url:"max_uses,omitempty"`
 	Note                                         string                   `json:"note,omitempty" path:"note,omitempty" url:"note,omitempty"`
@@ -93,6 +95,7 @@ type BundleListParams struct {
 	FilterPrefix interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	FilterLt     interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
 	FilterLteq   interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	Deleted      *bool       `url:"deleted,omitempty" json:"deleted,omitempty" path:"deleted"`
 	ListParams
 }
 
