@@ -1,7 +1,9 @@
 package file
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -754,6 +756,366 @@ expected 4194304 bytes sent 5242880 received`)
 		_, err := os.Open(filepath.Join(temp, "taco.png.download"))
 		require.Error(t, err)
 	})
+}
+
+func TestDownloadV2PreallocatedTempFileWriteAt(t *testing.T) {
+	size := int64(20 * 1024 * 1024)
+	source := bytes.Repeat([]byte("a"), int(size))
+	ranger := &downloadV2TestRangeFile{
+		data:        source,
+		downloadURI: "https://bucket.s3.us-east-1.amazonaws.com/native.bin?X-Amz-Signature=test",
+		info: Info{File: files_sdk.File{
+			DisplayName: "native.bin",
+			Path:        "native.bin",
+			Type:        "file",
+			Size:        size,
+			Crc32:       "crc32",
+		}, sizeTrust: TrustedSizeValue},
+	}
+	tmpPath := filepath.Join(t.TempDir(), "native.bin.download")
+	reportStatus := downloadV2TestStatus(ranger, ranger.info, DownloaderParams{
+		AdaptiveConcurrency: true,
+		Manager:             manager.Build(2, 1),
+	}, tmpPath)
+
+	used, finalSize, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	require.True(t, used)
+	require.NoError(t, err)
+	assert.Equal(t, size, finalSize)
+	assert.Equal(t, size, reportStatus.TransferBytes())
+	assert.ElementsMatch(t, []downloadV2TestRange{{off: 0, end: 16*1024*1024 - 1}, {off: 16 * 1024 * 1024, end: size - 1}}, ranger.Ranges())
+
+	written, err := os.ReadFile(tmpPath)
+	require.NoError(t, err)
+	assert.Equal(t, source, written)
+}
+
+func TestDownloadV2RequiresExplicitAdaptiveConcurrency(t *testing.T) {
+	size := int64(20 * 1024 * 1024)
+	ranger := &downloadV2TestRangeFile{
+		data:        make([]byte, size),
+		downloadURI: "https://bucket.s3.us-east-1.amazonaws.com/native.bin?X-Amz-Signature=test",
+		info: Info{File: files_sdk.File{
+			DisplayName: "native.bin",
+			Path:        "native.bin",
+			Type:        "file",
+			Size:        size,
+			Crc32:       "crc32",
+		}, sizeTrust: TrustedSizeValue},
+	}
+	tmpPath := filepath.Join(t.TempDir(), "native.bin.download")
+	reportStatus := downloadV2TestStatus(ranger, ranger.info, DownloaderParams{
+		Manager: manager.Build(2, 1),
+	}, tmpPath)
+
+	used, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+
+	require.NoError(t, err)
+	assert.False(t, used)
+	assert.Empty(t, ranger.Ranges())
+}
+
+func TestDownloadV2FallsBackForUntrustedSize(t *testing.T) {
+	size := int64(20 * 1024 * 1024)
+	ranger := &downloadV2TestRangeFile{
+		data: make([]byte, size),
+		info: Info{File: files_sdk.File{
+			DisplayName: "remote-mount.bin",
+			Path:        "remote-mount.bin",
+			Type:        "file",
+			Size:        size,
+			Crc32:       "crc32",
+		}, sizeTrust: UntrustedSizeValue},
+	}
+	tmpPath := filepath.Join(t.TempDir(), "remote-mount.bin.download")
+	reportStatus := downloadV2TestStatus(ranger, ranger.info, DownloaderParams{
+		AdaptiveConcurrency: true,
+		Manager:             manager.Build(2, 1),
+	}, tmpPath)
+
+	used, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	require.NoError(t, err)
+	assert.False(t, used)
+	assert.Empty(t, ranger.Ranges())
+}
+
+func TestDownloadV2TruncatesFailedPreallocatedTempFileToContiguousPrefix(t *testing.T) {
+	size := int64(20 * 1024 * 1024)
+	ranger := &downloadV2TestRangeFile{
+		data:               bytes.Repeat([]byte("b"), int(size)),
+		downloadURI:        "https://bucket.s3.us-east-1.amazonaws.com/native.bin?X-Amz-Signature=test",
+		failAfterOffset:    16 * 1024 * 1024,
+		failAfterReadBytes: 1024 * 1024,
+		info: Info{File: files_sdk.File{
+			DisplayName: "native.bin",
+			Path:        "native.bin",
+			Type:        "file",
+			Size:        size,
+			Crc32:       "crc32",
+		}, sizeTrust: TrustedSizeValue},
+	}
+	tmpPath := filepath.Join(t.TempDir(), "native.bin.download")
+	reportStatus := downloadV2TestStatus(ranger, ranger.info, DownloaderParams{
+		AdaptiveConcurrency: true,
+		Manager:             manager.Build(1, 1),
+	}, tmpPath)
+
+	used, finalSize, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	require.True(t, used)
+	require.Error(t, err)
+	assert.Equal(t, int64(16*1024*1024), finalSize)
+	stat, statErr := os.Stat(tmpPath)
+	require.NoError(t, statErr)
+	assert.Equal(t, int64(16*1024*1024), stat.Size())
+}
+
+func TestDownloadV2DoesNotUseV2ForGenericNonS3DownloadURIWithCrc32(t *testing.T) {
+	size := int64(20 * 1024 * 1024)
+	ranger := &downloadV2TestRangeFile{
+		data:        make([]byte, size),
+		downloadURI: "https://files.example.com/download/native.bin",
+		info: Info{File: files_sdk.File{
+			DisplayName: "native.bin",
+			Path:        "native.bin",
+			Type:        "file",
+			Size:        size,
+			Crc32:       "crc32",
+		}, sizeTrust: TrustedSizeValue},
+	}
+	tmpPath := filepath.Join(t.TempDir(), "native.bin.download")
+	reportStatus := downloadV2TestStatus(ranger, ranger.info, DownloaderParams{
+		AdaptiveConcurrency: true,
+		Manager:             manager.Build(2, 1),
+	}, tmpPath)
+
+	used, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+
+	require.NoError(t, err)
+	assert.False(t, used)
+	assert.Empty(t, ranger.Ranges())
+}
+
+func TestDownloadV2FallsBackForSinglePartS3Download(t *testing.T) {
+	size := int64(9)
+	ranger := &downloadV2TestRangeFile{
+		data:        []byte("123456789"),
+		downloadURI: "https://bucket.s3.us-east-1.amazonaws.com/tiny.bin?X-Amz-Signature=test",
+		info: Info{File: files_sdk.File{
+			DisplayName: "tiny.bin",
+			Path:        "tiny.bin",
+			Type:        "file",
+			Size:        size,
+			Crc32:       "crc32",
+		}, sizeTrust: TrustedSizeValue},
+	}
+	tmpPath := filepath.Join(t.TempDir(), "tiny.bin.download")
+	reportStatus := downloadV2TestStatus(ranger, ranger.info, DownloaderParams{
+		AdaptiveConcurrency: true,
+		Manager:             manager.Build(2, 1),
+	}, tmpPath)
+
+	used, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+
+	require.NoError(t, err)
+	assert.False(t, used)
+	assert.Empty(t, ranger.Ranges())
+}
+
+func TestDownloadV2UsesAgentProxyDownloadURI(t *testing.T) {
+	size := int64(20 * 1024 * 1024)
+	source := bytes.Repeat([]byte("a"), int(size))
+	ranger := &downloadV2TestRangeFile{
+		data:        source,
+		downloadURI: "https://app-us-east-1.files.com/agent-proxy/g-7/transfers/12D3KooW/downloads?X-Files-Date=20260605T211830Z&X-Files-Expires=180&jwt=test",
+		info: Info{File: files_sdk.File{
+			DisplayName: "agent.bin",
+			Path:        "agent.bin",
+			Type:        "file",
+			Size:        size,
+		}, sizeTrust: TrustedSizeValue},
+	}
+	tmpPath := filepath.Join(t.TempDir(), "agent.bin.download")
+	reportStatus := downloadV2TestStatus(ranger, ranger.info, DownloaderParams{
+		AdaptiveConcurrency: true,
+		Manager:             manager.Build(15, 1),
+	}, tmpPath)
+
+	used, finalSize, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	require.True(t, used)
+	require.NoError(t, err)
+	assert.Equal(t, size, finalSize)
+	assert.Equal(t, size, reportStatus.TransferBytes())
+	assert.ElementsMatch(t, []downloadV2TestRange{{off: 0, end: 16*1024*1024 - 1}, {off: 16 * 1024 * 1024, end: size - 1}}, ranger.Ranges())
+
+	written, err := os.ReadFile(tmpPath)
+	require.NoError(t, err)
+	assert.Equal(t, source, written)
+}
+
+func TestDownloadV2ClassifiesOnlyAgentProxyURLsAsAgent(t *testing.T) {
+	target, ok := classifyDownloadV2URI("https://app-us-east-1.files.com/agent-proxy/g-7/transfers/12D3KooW/downloads?jwt=test")
+	require.True(t, ok)
+	assert.Equal(t, downloadV2TargetAgent, target)
+
+	_, ok = classifyDownloadV2URI("https://agent.example.com/download/native.bin")
+	assert.False(t, ok)
+
+	_, ok = classifyDownloadV2URI("https://app-us-east-1.files.com/agent-proxy/g-7/transfers/12D3KooW/uploads?jwt=test")
+	assert.False(t, ok)
+}
+
+func TestDownloadV2SharedManagerDoesNotStartAtTinyFilePartCount(t *testing.T) {
+	registry := downloadV2SharedAdaptiveManagerRegistry{}
+	adaptiveManager := registry.get(downloadV2TargetS3, manager.AdaptiveDownloadV2ConcurrentFileParts, 1024, 16*1024*1024)
+
+	assert.Equal(t, uploadV2S3InitialConcurrency, adaptiveManager.Snapshot().Target)
+}
+
+func TestDownloadV2AgentManagerStartsAtLegacyRangeConcurrency(t *testing.T) {
+	adaptiveManager := lib.NewAdaptiveConcurrencyManagerWithConfig(downloadV2AdaptiveConcurrencyConfig(
+		downloadV2TargetAgent,
+		manager.AdaptiveDownloadV2ConcurrentFileParts,
+		20*1024*1024,
+		16*1024*1024,
+	))
+
+	assert.Equal(t, 15, adaptiveManager.Snapshot().Target)
+}
+
+func TestDownloadV2CopyAtCoalescesShortReadsBeforeWriting(t *testing.T) {
+	expected := int64(downloadV2CopyBufferSize*2 + 123)
+	writer := &downloadV2RecordingWriterAt{}
+	reader := &downloadV2ShortChunkReader{remaining: expected, chunkSize: 4 * 1024}
+
+	written, err := downloadV2CopyAt(writer, 0, expected, reader, nil)
+	require.NoError(t, err)
+	assert.Equal(t, expected, written)
+	assert.Equal(t, []int{downloadV2CopyBufferSize, downloadV2CopyBufferSize, 123}, writer.writeSizes)
+}
+
+type downloadV2TestRange struct {
+	off int64
+	end int64
+}
+
+type downloadV2TestRangeFile struct {
+	data               []byte
+	downloadURI        string
+	info               Info
+	mu                 sync.Mutex
+	ranges             []downloadV2TestRange
+	failAfterOffset    int64
+	failAfterReadBytes int64
+}
+
+func (f *downloadV2TestRangeFile) Stat() (fs.FileInfo, error) {
+	return f.info, nil
+}
+
+func (f *downloadV2TestRangeFile) Read([]byte) (int, error) {
+	return 0, io.EOF
+}
+
+func (f *downloadV2TestRangeFile) Close() error {
+	return nil
+}
+
+func (f *downloadV2TestRangeFile) ReaderRange(off int64, end int64) (io.ReadCloser, error) {
+	f.mu.Lock()
+	f.ranges = append(f.ranges, downloadV2TestRange{off: off, end: end})
+	f.mu.Unlock()
+	reader := io.NewSectionReader(bytes.NewReader(f.data), off, end-off+1)
+	if f.failAfterReadBytes > 0 && off >= f.failAfterOffset {
+		return &downloadV2FailingReadCloser{reader: reader, remaining: f.failAfterReadBytes}, nil
+	}
+	return io.NopCloser(reader), nil
+}
+
+func (f *downloadV2TestRangeFile) downloadV2URI(context.Context) (string, error) {
+	return f.downloadURI, nil
+}
+
+func (f *downloadV2TestRangeFile) Ranges() []downloadV2TestRange {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]downloadV2TestRange(nil), f.ranges...)
+}
+
+type downloadV2FailingReadCloser struct {
+	reader    io.Reader
+	remaining int64
+}
+
+func (r *downloadV2FailingReadCloser) Read(p []byte) (int, error) {
+	if r.remaining <= 0 {
+		return 0, errors.New("forced range read failure")
+	}
+	if int64(len(p)) > r.remaining {
+		p = p[:r.remaining]
+	}
+	n, err := r.reader.Read(p)
+	r.remaining -= int64(n)
+	if err != nil {
+		return n, err
+	}
+	return n, nil
+}
+
+func (r *downloadV2FailingReadCloser) Close() error {
+	return nil
+}
+
+type downloadV2ShortChunkReader struct {
+	remaining int64
+	chunkSize int
+}
+
+func (r *downloadV2ShortChunkReader) Read(p []byte) (int, error) {
+	if r.remaining <= 0 {
+		return 0, io.EOF
+	}
+	if len(p) > r.chunkSize {
+		p = p[:r.chunkSize]
+	}
+	if int64(len(p)) > r.remaining {
+		p = p[:r.remaining]
+	}
+	for i := range p {
+		p[i] = 'x'
+	}
+	r.remaining -= int64(len(p))
+	return len(p), nil
+}
+
+type downloadV2RecordingWriterAt struct {
+	writeSizes []int
+}
+
+func (w *downloadV2RecordingWriterAt) WriteAt(p []byte, _ int64) (int, error) {
+	w.writeSizes = append(w.writeSizes, len(p))
+	return len(p), nil
+}
+
+func downloadV2TestStatus(file fs.File, info Info, params DownloaderParams, tmpPath string) *DownloadStatus {
+	config := files_sdk.Config{}.Init()
+	job := (&Job{
+		Config:  config,
+		Logger:  config.Logger,
+		Params:  params,
+		Manager: params.Manager,
+	}).Init()
+	job.SetManager(params.Manager)
+	return &DownloadStatus{
+		fsFile:     file,
+		FileInfo:   info,
+		file:       info.File,
+		job:        job,
+		localPath:  filepath.Join(filepath.Dir(tmpPath), info.Name()),
+		remotePath: info.File.Path,
+		status:     status.Queued,
+		Mutex:      &sync.RWMutex{},
+		TmpPath:    tmpPath,
+	}
 }
 
 func TestDownload(t *testing.T) {

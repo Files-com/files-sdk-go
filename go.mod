@@ -17,12 +17,11 @@ require (
 	github.com/snabb/httpreaderat v1.0.1
 	github.com/stretchr/testify v1.10.0
 	github.com/winfsp/cgofuse v1.6.1-0.20250813110601-7d90b0992471 // includes fixes from https://github.com/winfsp/cgofuse/pull/98, update when the next version is released
+	golang.org/x/sync v0.11.0
 	golang.org/x/sys v0.30.0
 	golang.org/x/text v0.22.0 // latest supported for go 1.21
 	moul.io/http2curl/v2 v2.3.0
 )
-
-require golang.org/x/sync v0.11.0
 
 require (
 	github.com/bytedance/sonic v1.13.2 // indirect

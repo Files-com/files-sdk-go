@@ -356,27 +356,37 @@ func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *Dow
 		if startOffset > 0 {
 			reportStatus.IncrementTransferBytes(startOffset)
 		}
-		writer := openFile(tmpName, reportStatus, startOffset)
-		downloadParts := (&DownloadParts{}).Init(
-			reportStatus.fsFile,
-			remoteStat,
-			reportStatus.Job().Manager.FilePartsManager,
-			writer,
-			reportStatus.Job().Config,
-			startOffset,
-		)
+		var finalSize int64
+		downloadV2Used, downloadV2FinalSize, downloadV2Err := runDownloadV2IfSupported(ctx, reportStatus, remoteStat, tmpName, startOffset)
+		if downloadV2Used {
+			finalSize = downloadV2FinalSize
+			if downloadV2Err != nil {
+				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, downloadV2Err)
+			}
+		} else {
+			writer := openFile(tmpName, reportStatus, startOffset)
+			downloadParts := (&DownloadParts{}).Init(
+				reportStatus.fsFile,
+				remoteStat,
+				reportStatus.Job().Manager.FilePartsManager,
+				writer,
+				reportStatus.Job().Config,
+				startOffset,
+			)
 
-		lib.AnyError(func(err error) {
-			reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
-		},
-			func() error { return downloadParts.Run(ctx) },
-			func() error { return downloadParts.CloseError },
-		)
+			lib.AnyError(func(err error) {
+				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
+			},
+				func() error { return downloadParts.Run(ctx) },
+				func() error { return downloadParts.CloseError },
+			)
+			finalSize = downloadParts.FinalSize()
+		}
 
 		cause := context.Cause(ctx)
 
 		if reportStatus.Status().Is(status.Valid...) {
-			reportStatus.SetFinalSize(downloadParts.FinalSize())
+			reportStatus.SetFinalSize(finalSize)
 			err := finalizeTmpDownload(tmpName, reportStatus.LocalPath())
 			if err != nil {
 				removeTmpDownload(tmpName)

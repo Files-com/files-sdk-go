@@ -29,6 +29,8 @@ func TestHighThroughputUploadPlanLinux(t *testing.T) {
 	require.NotContains(t, plan.AdminSteps[1].Commands[0].CommandLine, "sudo")
 	require.Contains(t, plan.AdminSteps[2].Commands[0].CommandLine, "99-files-high-throughput-nofile.conf")
 	require.Contains(t, plan.AdminSteps[2].Commands[0].CommandLine, "* soft nofile 65536")
+	require.Contains(t, plan.AdminSteps[2].Description, "wildcard PAM limits for all users")
+	require.Contains(t, plan.AdminSteps[2].Description, "hard nofile ceiling of 1,048,576")
 	require.Contains(t, plan.AdminSteps[2].ExpectedOutcome, "LimitNOFILE")
 	require.Contains(t, plan.RestoreSteps[0].Commands[0].CommandLine, "sysctl --system")
 	require.Contains(t, plan.RestoreSteps[0].Commands[0].CommandLine, "nofile.limits_file_b64")

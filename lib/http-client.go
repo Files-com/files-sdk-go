@@ -235,6 +235,7 @@ func DefaultPooledTransport() *Transport {
 			ExpectContinueTimeout: 1 * time.Second,
 			MaxIdleConnsPerHost:   75,
 			MaxConnsPerHost:       75,
+			ForceAttemptHTTP2:     true,
 		},
 		stats: newConnectionStats(),
 		Dialer: &net.Dialer{

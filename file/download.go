@@ -13,15 +13,17 @@ func (c *Client) DownloadRetry(job Job, opts ...files_sdk.RequestResponseOption)
 	newJob := job.ClearStatuses()
 	return c.Downloader(
 		DownloaderParams{
-			RemotePath:       newJob.RemotePath,
-			Sync:             newJob.Sync,
-			Manager:          newJob.Manager,
-			LocalPath:        newJob.LocalPath,
-			RetryPolicy:      newJob.RetryPolicy.(RetryPolicy),
-			EventsReporter:   newJob.EventsReporter,
-			Ignore:           newJob.Params.(DownloaderParams).Ignore,
-			Include:          newJob.Params.(DownloaderParams).Include,
-			SyncAfterActions: newJob.Params.(DownloaderParams).SyncAfterActions,
+			RemotePath:                           newJob.RemotePath,
+			Sync:                                 newJob.Sync,
+			Manager:                              newJob.Manager,
+			LocalPath:                            newJob.LocalPath,
+			RetryPolicy:                          newJob.RetryPolicy.(RetryPolicy),
+			EventsReporter:                       newJob.EventsReporter,
+			Ignore:                               newJob.Params.(DownloaderParams).Ignore,
+			Include:                              newJob.Params.(DownloaderParams).Include,
+			SyncAfterActions:                     newJob.Params.(DownloaderParams).SyncAfterActions,
+			AdaptiveConcurrency:                  newJob.Params.(DownloaderParams).AdaptiveConcurrency,
+			AdaptiveConcurrencyUseSDKDefaultCaps: newJob.Params.(DownloaderParams).AdaptiveConcurrencyUseSDKDefaultCaps,
 		},
 		opts...)
 }
@@ -58,12 +60,20 @@ type DownloaderParams struct {
 	DryRun             bool
 	PriorJobCheckpoint *JobDownloadCheckpoint
 	ResumeTmpPath      string // Full path to the temp file from a prior paused download session.
+	// AdaptiveConcurrency enables opt-in download V2 adaptive range concurrency.
+	AdaptiveConcurrency bool
+	// AdaptiveConcurrencyUseSDKDefaultCaps uses SDK V2 caps instead of treating an
+	// explicitly supplied Manager as an isolation boundary.
+	AdaptiveConcurrencyUseSDKDefaultCaps bool
 }
 
 func (c *Client) Downloader(params DownloaderParams, opts ...files_sdk.RequestResponseOption) *Job {
 	params.config = c.Config
-	job := downloader(files_sdk.ContextOption(opts), (&FS{}).Init(c.Config, true), params, opts...)
-	registerSyncAfterActions(job, params.SyncAfterActions, params.DryRun, c.Config, opts...)
+	if params.AdaptiveConcurrency && (params.AdaptiveConcurrencyUseSDKDefaultCaps || params.Manager == nil) {
+		params.config = params.config.SetCustomClient(manager.New(manager.AdaptiveDownloadV2ConcurrentFiles, manager.AdaptiveDownloadV2ConcurrentFileParts, manager.ConcurrentDirectoryList).CreateMatchingClient(params.config.HTTPClient))
+	}
+	job := downloader(files_sdk.ContextOption(opts), (&FS{}).Init(params.config, true), params, opts...)
+	registerSyncAfterActions(job, params.SyncAfterActions, params.DryRun, params.config, opts...)
 	return job
 }
 

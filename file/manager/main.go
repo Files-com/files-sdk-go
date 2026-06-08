@@ -24,6 +24,11 @@ var (
 	// AdaptiveUploadV2ConcurrentFileParts is the V2 upload HTTP part concurrency cap.
 	// The adaptive manager treats this as a maximum, not a fixed target.
 	AdaptiveUploadV2ConcurrentFileParts = 1024
+	// AdaptiveDownloadV2ConcurrentFiles is the V2 download job-level file concurrency cap.
+	AdaptiveDownloadV2ConcurrentFiles = 128
+	// AdaptiveDownloadV2ConcurrentFileParts is the V2 download HTTP range concurrency cap.
+	// The adaptive manager treats this as a maximum, not a fixed target.
+	AdaptiveDownloadV2ConcurrentFileParts = 1024
 )
 
 var (

@@ -102,7 +102,7 @@ EOF`),
 			{
 				ID:          "linux.persist-nofile",
 				Title:       "Persist high-throughput open file descriptor limits",
-				Description: "Install a Files.com-managed PAM limits file so new login sessions have enough file descriptors for high-throughput transfer processes. This does not change the parent shell running the repair command.",
+				Description: "Install a Files.com-managed PAM limits file so new login sessions have enough file descriptors for high-throughput transfer processes. This writes wildcard PAM limits for all users on the host, including a hard nofile ceiling of 1,048,576, and does not change the parent shell running the repair command.",
 				Privilege:   PrivilegeAdministrator,
 				Commands: []Command{
 					posix(fmt.Sprintf(`tee %s >/dev/null <<'EOF'
