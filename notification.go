@@ -27,6 +27,7 @@ type Notification struct {
 	Subject                  string   `json:"subject,omitempty" path:"subject,omitempty" url:"subject,omitempty"`
 	Message                  string   `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
 	TriggeringFilenames      []string `json:"triggering_filenames,omitempty" path:"triggering_filenames,omitempty" url:"triggering_filenames,omitempty"`
+	WorkspaceId              int64    `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	Unsubscribed             *bool    `json:"unsubscribed,omitempty" path:"unsubscribed,omitempty" url:"unsubscribed,omitempty"`
 	UnsubscribedReason       string   `json:"unsubscribed_reason,omitempty" path:"unsubscribed_reason,omitempty" url:"unsubscribed_reason,omitempty"`
 	UserId                   int64    `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
@@ -70,6 +71,7 @@ type NotificationCreateParams struct {
 	TriggeringGroupIds       []int64  `url:"triggering_group_ids,omitempty" json:"triggering_group_ids,omitempty" path:"triggering_group_ids"`
 	TriggeringUserIds        []int64  `url:"triggering_user_ids,omitempty" json:"triggering_user_ids,omitempty" path:"triggering_user_ids"`
 	TriggerByShareRecipients *bool    `url:"trigger_by_share_recipients,omitempty" json:"trigger_by_share_recipients,omitempty" path:"trigger_by_share_recipients"`
+	WorkspaceId              int64    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	GroupId                  int64    `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
 	GroupIds                 string   `url:"group_ids,omitempty" json:"group_ids,omitempty" path:"group_ids"`
 	Path                     string   `url:"path,omitempty" json:"path,omitempty" path:"path"`
@@ -92,6 +94,7 @@ type NotificationUpdateParams struct {
 	TriggeringGroupIds       []int64  `url:"triggering_group_ids,omitempty" json:"triggering_group_ids,omitempty" path:"triggering_group_ids"`
 	TriggeringUserIds        []int64  `url:"triggering_user_ids,omitempty" json:"triggering_user_ids,omitempty" path:"triggering_user_ids"`
 	TriggerByShareRecipients *bool    `url:"trigger_by_share_recipients,omitempty" json:"trigger_by_share_recipients,omitempty" path:"trigger_by_share_recipients"`
+	WorkspaceId              int64    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 type NotificationDeleteParams struct {
