@@ -32,6 +32,7 @@ func (u KeyLifecycleRuleKeyTypeEnum) Enum() map[string]KeyLifecycleRuleKeyTypeEn
 	return map[string]KeyLifecycleRuleKeyTypeEnum{
 		"gpg": KeyLifecycleRuleKeyTypeEnum("gpg"),
 		"ssh": KeyLifecycleRuleKeyTypeEnum("ssh"),
+		"api": KeyLifecycleRuleKeyTypeEnum("api"),
 	}
 }
 

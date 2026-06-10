@@ -189,6 +189,7 @@ type Site struct {
 	UserRequestsNotifyAdmins                 *bool       `json:"user_requests_notify_admins,omitempty" path:"user_requests_notify_admins,omitempty" url:"user_requests_notify_admins,omitempty"`
 	UsersCanCreateApiKeys                    *bool       `json:"users_can_create_api_keys,omitempty" path:"users_can_create_api_keys,omitempty" url:"users_can_create_api_keys,omitempty"`
 	UsersCanCreateSshKeys                    *bool       `json:"users_can_create_ssh_keys,omitempty" path:"users_can_create_ssh_keys,omitempty" url:"users_can_create_ssh_keys,omitempty"`
+	UsernameDisplay                          string      `json:"username_display,omitempty" path:"username_display,omitempty" url:"username_display,omitempty"`
 	WelcomeCustomText                        string      `json:"welcome_custom_text,omitempty" path:"welcome_custom_text,omitempty" url:"welcome_custom_text,omitempty"`
 	EmailFooterCustomText                    string      `json:"email_footer_custom_text,omitempty" path:"email_footer_custom_text,omitempty" url:"email_footer_custom_text,omitempty"`
 	WelcomeEmailCc                           string      `json:"welcome_email_cc,omitempty" path:"welcome_email_cc,omitempty" url:"welcome_email_cc,omitempty"`
@@ -252,6 +253,7 @@ type SiteUpdateParams struct {
 	LegacyChecksumsMode                      *bool       `url:"legacy_checksums_mode,omitempty" json:"legacy_checksums_mode,omitempty" path:"legacy_checksums_mode"`
 	MigrateRemoteServerSyncToSync            *bool       `url:"migrate_remote_server_sync_to_sync,omitempty" json:"migrate_remote_server_sync_to_sync,omitempty" path:"migrate_remote_server_sync_to_sync"`
 	As2MessageRetentionDays                  int64       `url:"as2_message_retention_days,omitempty" json:"as2_message_retention_days,omitempty" path:"as2_message_retention_days"`
+	UsernameDisplay                          string      `url:"username_display,omitempty" json:"username_display,omitempty" path:"username_display"`
 	SessionExpiryMinutes                     int64       `url:"session_expiry_minutes,omitempty" json:"session_expiry_minutes,omitempty" path:"session_expiry_minutes"`
 	SslRequired                              *bool       `url:"ssl_required,omitempty" json:"ssl_required,omitempty" path:"ssl_required"`
 	SftpInsecureCiphers                      *bool       `url:"sftp_insecure_ciphers,omitempty" json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers"`
