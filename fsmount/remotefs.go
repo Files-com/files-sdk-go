@@ -88,9 +88,10 @@ type RemoteFs struct {
 	disableLocking   bool
 	ignore           *gogitignore.GitIgnore
 
+	providerBackend   ProviderBackend
 	backend           remoteBackend
 	currentUserId     int64
-	uploadWorkingCopy func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error)
+	uploadWorkingCopy func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error)
 	lockMap           map[string]*lockInfo
 	lockMapMutex      sync.Mutex
 	loadDirMutexes    *fssync.PathMutex
@@ -216,6 +217,27 @@ func (fs *RemoteFs) uploadedFileMetadata(path string, uploaded files_sdk.File, f
 	}
 }
 
+func (fs *RemoteFs) providerUploadedSize(path string, uploaded ProviderEntry, fallbackSize int64) int64 {
+	if uploaded.Size != 0 || fallbackSize == 0 {
+		return uploaded.Size
+	}
+	fs.log.Warn("RemoteFs: provider upload response reported zero size for non-empty file %v; using local size %d", path, fallbackSize)
+	return fallbackSize
+}
+
+type progressReader struct {
+	reader   io.Reader
+	progress func(int64)
+}
+
+func (r *progressReader) Read(p []byte) (int, error) {
+	n, err := r.reader.Read(p)
+	if n > 0 && r.progress != nil {
+		r.progress(int64(n))
+	}
+	return n, err
+}
+
 func cacheEntryMetadata(path string, size int64, modTime time.Time) cache.EntryMetadata {
 	return cache.NewEntryMetadata(path, size, modTime)
 }
@@ -256,6 +278,37 @@ func newRemoteFs(params MountParams, vfs *virtualfs, log log.Logger, cs cacheSto
 			return make([]byte, cacheWriteSize)
 		}),
 	}
+	if params.ProviderBackend != nil {
+		fs.providerBackend = params.ProviderBackend
+		fs.disableLocking = true
+		fs.backend = &providerRemoteBackend{provider: params.ProviderBackend}
+		fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+			fileInfo, err := reader.Stat()
+			if err != nil {
+				return uploadedFileMetadata{}, err
+			}
+			remotePath := fs.remotePath(path)
+			writeReader := io.Reader(reader)
+			if node != nil {
+				writeReader = &progressReader{
+					reader:   reader,
+					progress: fs.uploadProgressFunc(node),
+				}
+			}
+			entry, err := params.ProviderBackend.Write(ctx, remotePath, writeReader, fileInfo.Size(), mtime)
+			if err != nil {
+				return uploadedFileMetadata{}, err
+			}
+			uploadedModTime := entry.ModTime
+			if uploadedModTime.IsZero() {
+				uploadedModTime = mtime
+			}
+			return uploadedFileMetadata{
+				size:    fs.providerUploadedSize(remotePath, entry, fileInfo.Size()),
+				modTime: uploadedModTime,
+			}, nil
+		}
+	}
 
 	// ensure write concurrency and cache TTL are positive
 	if fs.writeConcurrency <= 0 {
@@ -290,13 +343,17 @@ func (fs *RemoteFs) Init() {
 			fs.lockMap = make(map[string]*lockInfo)
 		}
 
-		// no need to guard this with an operation limit since it's only called once during initialization
-		key, err := fs.backend.findCurrent()
-		if err != nil {
-			fs.log.Error("Failed to find metadata for current API key, file exclusivity locks may not work as expected: %v", err)
-			// set locking to false?
+		// Skip the API key lookup on provider mounts: there is no Files.com API
+		// key, locking is disabled, and currentUserId is unused on this path.
+		if fs.providerBackend == nil {
+			// no need to guard this with an operation limit since it's only called once during initialization
+			key, err := fs.backend.findCurrent()
+			if err != nil {
+				fs.log.Error("Failed to find metadata for current API key, file exclusivity locks may not work as expected: %v", err)
+				// set locking to false?
+			}
+			fs.currentUserId = key.UserId
 		}
-		fs.currentUserId = key.UserId
 		// store the time the file system was initialized to use as the creation time for the root directory
 		fs.initTime = time.Now()
 		fs.log.Debug("RemoteFs: RemoteFs initialized successfully. Remote file system root: %s", fs.root)
@@ -1106,19 +1163,45 @@ func (fs *RemoteFs) refreshReadCacheFromWorkingCopy(path string, session *writeS
 	}
 	defer cacheFile.Close()
 
+	return fs.refreshReadCacheFromReader(path, cacheFile, size, mtime)
+}
+
+func (fs *RemoteFs) refreshReadCacheFromFile(path string, filePath string, size int64, mtime time.Time) error {
+	if fs.cacheStore == nil {
+		return nil
+	}
+
+	cacheFile, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer cacheFile.Close()
+
+	return fs.refreshReadCacheFromReader(path, cacheFile, size, mtime)
+}
+
+func (fs *RemoteFs) refreshReadCacheFromReader(path string, reader io.Reader, size int64, mtime time.Time) error {
 	_ = fs.cacheStore.DeletePartial(path)
 	fs.cacheStore.PinPartial(path)
 	defer func() {
 		fs.cacheStore.UnpinPartial(path)
 		_ = fs.cacheStore.DeletePartial(path)
 	}()
+
+	if _, err := fs.writePartialCacheFromReader(path, reader, size); err != nil {
+		return err
+	}
+	return fs.commitCacheEntryFromPartial(path, path, cacheEntryMetadata(path, size, mtime), false)
+}
+
+func (fs *RemoteFs) writePartialCacheFromReader(path string, reader io.Reader, expectedSize int64) (int64, error) {
 	buf := make([]byte, cacheWriteSize)
 	var ofst int64
 	for {
-		n, readErr := cacheFile.Read(buf)
+		n, readErr := reader.Read(buf)
 		if n > 0 {
 			if _, err := fs.cacheStore.WritePartial(path, buf[:n], ofst); err != nil {
-				return err
+				return ofst, err
 			}
 			ofst += int64(n)
 		}
@@ -1126,12 +1209,12 @@ func (fs *RemoteFs) refreshReadCacheFromWorkingCopy(path string, session *writeS
 			continue
 		}
 		if errors.Is(readErr, io.EOF) {
-			if ofst != size {
-				return io.ErrUnexpectedEOF
+			if expectedSize >= 0 && ofst != expectedSize {
+				return ofst, io.ErrUnexpectedEOF
 			}
-			return fs.commitCacheEntryFromPartial(path, path, cacheEntryMetadata(path, size, mtime), false)
+			return ofst, nil
 		}
-		return readErr
+		return ofst, readErr
 	}
 }
 
@@ -1256,11 +1339,7 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 
 func (fs *RemoteFs) uploadWorkingCopyWithSDK(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
 	if fs.uploadWorkingCopy != nil {
-		size, err := fs.uploadWorkingCopy(ctx, node, path, reader, mtime, fh)
-		if err != nil {
-			return uploadedFileMetadata{}, err
-		}
-		return uploadedFileMetadata{size: size, modTime: mtime}, nil
+		return fs.uploadWorkingCopy(ctx, node, path, reader, mtime, fh)
 	}
 
 	localPath, remotePath := fs.paths(path)
@@ -1529,8 +1608,6 @@ func (fs *RemoteFs) uploadProgressFunc(node *fsNode) func(int64) {
 
 func (fs *RemoteFs) uploadProgressFuncWithTransfer(node *fsNode, transfer *transferReporter) func(int64) {
 	return func(delta int64) {
-		// If the write was successful, extend the node's ttl and keep track of the number
-		// of bytes written for logging purposes.
 		// Extend the node's TTL and keep track of bytes written for logging/sweeping.
 		node.extendTtl()
 		if sessionTransfer := node.writeSessionRecordProgress(delta); sessionTransfer != nil {
@@ -1543,24 +1620,16 @@ func (fs *RemoteFs) uploadProgressFuncWithTransfer(node *fsNode, transfer *trans
 	}
 }
 
-// this is a convenience method for uploading a file from the local file system to the remote API
+// this is a convenience method for uploading a file from the local file system to the remote backend
 // for use by the Rename operation when moving a file from the LocalFs to the RemoteFs.
 func (fs *RemoteFs) uploadFile(src, dst string) error {
 	fs.log.Debug("Uploading file: %v to %v", src, dst)
 
-	// Open independent file handles so the upload path can use a seekable reader
-	// while cache population reads sequentially in parallel.
 	uploadFile, err := os.Open(src)
 	if err != nil {
 		return err
 	}
 	defer uploadFile.Close()
-
-	cacheFile, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer cacheFile.Close()
 
 	// Get file info for size and mtime
 	fileInfo, err := uploadFile.Stat()
@@ -1575,6 +1644,57 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 	defer cancel()
 
 	node := fs.vfs.getOrCreate(dst, nodeTypeFile)
+	if fs.providerBackend != nil {
+		var uploaded ProviderEntry
+		err := fs.ops.WithLimit(ctx, lim.FuseOpUpload, func(ctx context.Context) error {
+			var writeErr error
+			uploadReader := &progressReader{
+				reader:   uploadFile,
+				progress: fs.uploadProgressFuncWithTransfer(node, transfer),
+			}
+			uploaded, writeErr = fs.providerBackend.Write(ctx, remotePath, uploadReader, fileInfo.Size(), fileInfo.ModTime())
+			return writeErr
+		})
+		if err != nil {
+			if !errors.Is(err, context.Canceled) && !files_sdk.IsNotExist(err) {
+				fs.logUploadFailure("Error uploading file during rename", remotePath, localPath, err)
+			}
+			transfer.Error(err, transferredBytesUnchanged)
+			return err
+		}
+
+		modTime := uploaded.ModTime
+		if modTime.IsZero() {
+			modTime = fileInfo.ModTime()
+		}
+		// Provider writes consume the source reader directly. Cache population is
+		// intentionally serialized after Write for now; SDK uploads can do this in
+		// parallel because they use the SDK upload manager and a separate cache reader.
+		if err := fs.refreshReadCacheFromFile(dst, src, fileInfo.Size(), modTime); err != nil {
+			_ = fs.cacheStore.Delete(dst)
+			fs.log.Error("Error refreshing cache during provider rename upload; invalidating cache entry: %v (%v): %v", remotePath, localPath, err)
+		}
+
+		size := fs.providerUploadedSize(remotePath, uploaded, fileInfo.Size())
+		fs.log.Info("Upload completed during rename: %v (%v).", remotePath, localPath)
+		transfer.Complete(size)
+		node.updateInfo(fsNodeInfo{
+			nodeType:     nodeTypeFile,
+			size:         size,
+			modTime:      modTime,
+			creationTime: node.info.creationTime,
+		})
+		return nil
+	}
+
+	// Open an independent file handle so cache population can read sequentially
+	// in parallel while the SDK upload uses the seekable reader above.
+	cacheFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer cacheFile.Close()
+
 	uploadResultCh := make(chan uploadFileResult, 1)
 	cacheErrCh := make(chan error, 1)
 	_ = fs.cacheStore.DeletePartial(dst)
@@ -1617,27 +1737,8 @@ func (fs *RemoteFs) uploadFile(src, dst string) error {
 	}()
 
 	go func() {
-		var offset int64
-		for {
-			buffer := make([]byte, cacheWriteSize)
-			n, readErr := cacheFile.Read(buffer)
-			if n > 0 {
-				if _, err := fs.cacheStore.WritePartial(dst, buffer[:n], offset); err != nil {
-					cacheErrCh <- err
-					return
-				}
-				offset += int64(n)
-			}
-			if readErr == nil {
-				continue
-			}
-			if errors.Is(readErr, io.EOF) {
-				cacheErrCh <- nil
-				return
-			}
-			cacheErrCh <- readErr
-			return
-		}
+		_, err := fs.writePartialCacheFromReader(dst, cacheFile, fileInfo.Size())
+		cacheErrCh <- err
 	}()
 
 	var uploadResult uploadFileResult

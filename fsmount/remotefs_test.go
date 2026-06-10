@@ -509,15 +509,15 @@ func TestRemoteFsWriteSessionUploadPublishesTransferEvents(t *testing.T) {
 
 	path := "/illustrator-transfer.ai"
 	payload := bytes.Repeat([]byte("u"), int(transferProgressMinBytes)+1)
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
 		data, err := io.ReadAll(reader)
 		if err != nil {
-			return 0, err
+			return uploadedFileMetadata{}, err
 		}
 		progress := fs.uploadProgressFunc(node)
 		progress(int64(len(data) / 2))
 		progress(int64(len(data) - len(data)/2))
-		return int64(len(data)), nil
+		return testUploadedMetadata(int64(len(data)), mtime), nil
 	}
 
 	errc, fh := fs.Create(path, fuse.O_RDWR|fuse.O_CREAT, 0o644)
@@ -562,6 +562,178 @@ func TestRemoteFsWriteSessionUploadPublishesTransferEvents(t *testing.T) {
 	}
 }
 
+func TestRemoteFsProviderWriteSessionUploadPublishesTransferProgress(t *testing.T) {
+	_, vfs, cacheStore := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	publisher := &captureEventPublisher{}
+	provider := &testProviderBackend{
+		writeFunc: func(_ context.Context, path string, reader io.Reader, size int64, modTime time.Time) (ProviderEntry, error) {
+			n, err := io.Copy(io.Discard, reader)
+			if err != nil {
+				return ProviderEntry{}, err
+			}
+			return ProviderEntry{
+				Path:    path,
+				Type:    ProviderTypeFile,
+				Size:    n,
+				ModTime: modTime,
+			}, nil
+		},
+	}
+	fs, err := newRemoteFs(MountParams{
+		Config:          &files_sdk.Config{},
+		ProviderBackend: provider,
+		TmpFsPath:       t.TempDir(),
+		EventPublisher:  publisher,
+	}, vfs, &log.NoOpLogger{}, cacheStore)
+	if err != nil {
+		t.Fatalf("newRemoteFs failed: %v", err)
+	}
+
+	path := "/provider-write-session.bin"
+	payload := bytes.Repeat([]byte("p"), int(transferProgressMinBytes)+1)
+	errc, fh := fs.Create(path, fuse.O_RDWR|fuse.O_CREAT, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errc)
+	}
+	defer fs.Release(path, fh)
+
+	if n := fs.Write(path, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+	if errc := fs.Flush(path, fh); errc != 0 {
+		t.Fatalf("Flush returned unexpected error: %d", errc)
+	}
+
+	transfers := publisher.waitForTransferEvents(t, 3)
+	assertStableTransferID(t, transfers)
+	if transfers[0].Status != events.TransferStatusQueued {
+		t.Fatalf("first status = %q, want queued", transfers[0].Status)
+	}
+	if transfers[1].Status != events.TransferStatusTransferring {
+		t.Fatalf("second status = %q, want transferring", transfers[1].Status)
+	}
+	last := transfers[len(transfers)-1]
+	if last.Status != events.TransferStatusComplete {
+		t.Fatalf("last status = %q, want complete", last.Status)
+	}
+	if last.TransferredBytes != int64(len(payload)) {
+		t.Fatalf("complete transferred bytes = %d, want %d", last.TransferredBytes, len(payload))
+	}
+}
+
+func TestRemoteFsProviderWriteSessionUploadUsesProviderReturnedModTime(t *testing.T) {
+	_, vfs, cacheStore := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	providerModTime := time.Date(2026, 6, 8, 14, 30, 0, 0, time.UTC)
+	provider := &testProviderBackend{
+		writeFunc: func(_ context.Context, path string, reader io.Reader, size int64, modTime time.Time) (ProviderEntry, error) {
+			n, err := io.Copy(io.Discard, reader)
+			if err != nil {
+				return ProviderEntry{}, err
+			}
+			return ProviderEntry{
+				Path:    path,
+				Type:    ProviderTypeFile,
+				Size:    n,
+				ModTime: providerModTime,
+			}, nil
+		},
+	}
+	fs, err := newRemoteFs(MountParams{
+		Config:          &files_sdk.Config{},
+		ProviderBackend: provider,
+		TmpFsPath:       t.TempDir(),
+	}, vfs, &log.NoOpLogger{}, cacheStore)
+	if err != nil {
+		t.Fatalf("newRemoteFs failed: %v", err)
+	}
+
+	path := "/provider-returned-mtime.bin"
+	payload := []byte("provider returned mtime")
+	errc, fh := fs.Create(path, fuse.O_RDWR|fuse.O_CREAT, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errc)
+	}
+	defer fs.Release(path, fh)
+
+	if n := fs.Write(path, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+	if errc := fs.Flush(path, fh); errc != 0 {
+		t.Fatalf("Flush returned unexpected error: %d", errc)
+	}
+
+	node, ok := vfs.fetch(path)
+	if !ok {
+		t.Fatal("expected node to exist after Flush")
+	}
+	if !node.info.modTime.Equal(providerModTime) {
+		t.Fatalf("node mtime = %v, want provider mtime %v", node.info.modTime, providerModTime)
+	}
+
+	buf := make([]byte, len(payload))
+	n, err := cacheStore.ReadComplete(path, cacheEntryMetadata(path, int64(len(payload)), providerModTime), buf, 0)
+	if err != nil {
+		t.Fatalf("cache ReadComplete failed: %v", err)
+	}
+	if n != len(payload) || !bytes.Equal(buf[:n], payload) {
+		t.Fatalf("cached bytes n=%d data=%q, want %q", n, string(buf[:n]), string(payload))
+	}
+}
+
+func TestRemoteFsProviderRenameUploadPublishesTransferProgress(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	publisher := &captureEventPublisher{}
+	fs.events = publisher
+
+	payload := bytes.Repeat([]byte("p"), int(transferProgressMinBytes)+1)
+	src := filepath.Join(t.TempDir(), "provider-rename-progress.bin")
+	if err := os.WriteFile(src, payload, 0o600); err != nil {
+		t.Fatalf("WriteFile failed: %v", err)
+	}
+	dst := "/provider-rename-progress.bin"
+
+	fs.providerBackend = &testProviderBackend{
+		writeFunc: func(_ context.Context, path string, reader io.Reader, size int64, modTime time.Time) (ProviderEntry, error) {
+			n, err := io.Copy(io.Discard, reader)
+			if err != nil {
+				return ProviderEntry{}, err
+			}
+			return ProviderEntry{
+				Path:    path,
+				Type:    ProviderTypeFile,
+				Size:    n,
+				ModTime: modTime,
+			}, nil
+		},
+	}
+
+	if err := fs.uploadFile(src, dst); err != nil {
+		t.Fatalf("uploadFile returned error: %v", err)
+	}
+
+	transfers := publisher.waitForTransferEvents(t, 3)
+	assertStableTransferID(t, transfers)
+	if transfers[0].Status != events.TransferStatusQueued {
+		t.Fatalf("first status = %q, want queued", transfers[0].Status)
+	}
+	if transfers[1].Status != events.TransferStatusTransferring {
+		t.Fatalf("second status = %q, want transferring", transfers[1].Status)
+	}
+	last := transfers[len(transfers)-1]
+	if last.Status != events.TransferStatusComplete {
+		t.Fatalf("last status = %q, want complete", last.Status)
+	}
+	if last.TransferredBytes != int64(len(payload)) {
+		t.Fatalf("complete transferred bytes = %d, want %d", last.TransferredBytes, len(payload))
+	}
+}
+
 func TestRemoteFsWriteSessionUploadPublishesErroredTransferEvent(t *testing.T) {
 	fs, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()
@@ -570,8 +742,8 @@ func TestRemoteFsWriteSessionUploadPublishesErroredTransferEvent(t *testing.T) {
 	fs.events = publisher
 
 	uploadErr := errors.New("backend exploded")
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
-		return 0, uploadErr
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		return uploadedFileMetadata{}, uploadErr
 	}
 
 	path := "/upload-error.ai"
@@ -1396,14 +1568,14 @@ func TestRemoteFsFlushAfterActiveRenameUploadsToNewPath(t *testing.T) {
 
 	var uploadedPath string
 	var uploaded []byte
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
 		data, err := io.ReadAll(reader)
 		if err != nil {
-			return 0, err
+			return uploadedFileMetadata{}, err
 		}
 		uploadedPath = path
 		uploaded = append([]byte(nil), data...)
-		return int64(len(data)), nil
+		return testUploadedMetadata(int64(len(data)), mtime), nil
 	}
 
 	errc, fh := fs.Create(oldPath, fuse.O_RDWR, 0o644)
@@ -1675,13 +1847,13 @@ func TestRemoteFsPublicFlushUploadsWorkingCopyAndRefreshesCache(t *testing.T) {
 	defer vfs.destroy()
 
 	var uploaded []byte
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
 		data, err := io.ReadAll(reader)
 		if err != nil {
-			return 0, err
+			return uploadedFileMetadata{}, err
 		}
 		uploaded = append([]byte(nil), data...)
-		return int64(len(data)), nil
+		return testUploadedMetadata(int64(len(data)), mtime), nil
 	}
 
 	path := "/flush.ai"
@@ -1815,12 +1987,12 @@ func TestRemoteFsWorkingCopyUploadSuccessLogsLifecycle(t *testing.T) {
 	logger := &captureMountLogger{}
 	fs.log = logger
 
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
 		data, err := io.ReadAll(reader)
 		if err != nil {
-			return 0, err
+			return uploadedFileMetadata{}, err
 		}
-		return int64(len(data)), nil
+		return testUploadedMetadata(int64(len(data)), mtime), nil
 	}
 
 	path := "/lifecycle-success.ai"
@@ -1851,9 +2023,9 @@ func TestRemoteFsPublicFlushPoisonsSessionAfterUploadFailure(t *testing.T) {
 	defer vfs.destroy()
 
 	uploadErr := errors.New("upload failed")
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
 		_, _ = io.ReadAll(reader)
-		return 0, uploadErr
+		return uploadedFileMetadata{}, uploadErr
 	}
 
 	path := "/poison.ai"
@@ -1899,9 +2071,9 @@ func TestRemoteFsWorkingCopyUploadFailureLogsSanitizedStorageError(t *testing.T)
 	fs.log = logger
 
 	rawMessage := "Your socket connection to the server was not read from or written to within the timeout period.\nIdle connections will be closed."
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
 		_, _ = io.ReadAll(reader)
-		return 0, lib.S3Error{Code: "RequestTimeout", Message: rawMessage}
+		return uploadedFileMetadata{}, lib.S3Error{Code: "RequestTimeout", Message: rawMessage}
 	}
 
 	path := "/timeout.pdf"
@@ -1957,9 +2129,9 @@ func TestRemoteFsWorkingCopyUploadFailureLogsSafeFallbackForNonS3Error(t *testin
 	fs.log = logger
 
 	rawMessage := "dial tcp 10.0.0.1:443: connect: raw provider network failure"
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
 		_, _ = io.ReadAll(reader)
-		return 0, errors.New(rawMessage)
+		return uploadedFileMetadata{}, errors.New(rawMessage)
 	}
 
 	path := "/network-error.pdf"
@@ -2043,9 +2215,9 @@ func TestRemoteFsWorkingCopyUploadCancellationLogsCanceled(t *testing.T) {
 	logger := &captureMountLogger{}
 	fs.log = logger
 
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
 		_, _ = io.ReadAll(reader)
-		return 0, context.Canceled
+		return uploadedFileMetadata{}, context.Canceled
 	}
 
 	path := "/cancel.pdf"
@@ -2098,12 +2270,12 @@ func TestRemoteFsInPlaceWritesAndFlushDoNotChangeSizeUntilTruncate(t *testing.T)
 	})
 	node.setDownloadURI("https://example.invalid/download")
 
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
 		data, err := io.ReadAll(reader)
 		if err != nil {
-			return 0, err
+			return uploadedFileMetadata{}, err
 		}
-		return int64(len(data)), nil
+		return testUploadedMetadata(int64(len(data)), mtime), nil
 	}
 
 	errc, fh := fs.Open(path, fuse.O_RDWR)
@@ -2180,13 +2352,13 @@ func TestRemoteFsSparseInPlaceWriteHydratesWhenCacheMtimeStale(t *testing.T) {
 	}
 
 	var uploaded []byte
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
 		data, err := io.ReadAll(reader)
 		if err != nil {
-			return 0, err
+			return uploadedFileMetadata{}, err
 		}
 		uploaded = append(uploaded[:0], data...)
-		return int64(len(data)), nil
+		return testUploadedMetadata(int64(len(data)), mtime), nil
 	}
 
 	errc, fh := fs.Open(path, fuse.O_RDWR)
@@ -2256,12 +2428,12 @@ func TestRemoteFsHydrationJoinedToPublicReadDownloadDoesNotCancel(t *testing.T) 
 			return files_sdk.File{Path: params.File.Path, Type: "file", Size: int64(len(payload))}, nil
 		},
 	}
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
 		data, err := io.ReadAll(reader)
 		if err != nil {
-			return 0, err
+			return uploadedFileMetadata{}, err
 		}
-		return int64(len(data)), nil
+		return testUploadedMetadata(int64(len(data)), mtime), nil
 	}
 
 	errc, readFh := fs.Open(path, fuse.O_RDONLY)
@@ -2342,13 +2514,13 @@ func TestRemoteFsGetattrKeepsStableMtimeDuringWriteSessionAndPublishesOnFlush(t 
 	node.setDownloadURI("https://example.invalid/download")
 
 	var uploadedMtime time.Time
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
 		_, err := io.ReadAll(reader)
 		if err != nil {
-			return 0, err
+			return uploadedFileMetadata{}, err
 		}
 		uploadedMtime = mtime
-		return int64(len(initial)), nil
+		return testUploadedMetadata(int64(len(initial)), mtime), nil
 	}
 
 	errc, fh := fs.Open(path, fuse.O_RDWR)
@@ -2958,8 +3130,8 @@ func TestUploadFailureClearsPendingVisible(t *testing.T) {
 	path := "/fail.bin"
 
 	// Force the upload to fail
-	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, p string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (int64, error) {
-		return 0, fmt.Errorf("simulated upload failure")
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, p string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		return uploadedFileMetadata{}, fmt.Errorf("simulated upload failure")
 	}
 
 	errc, fh := fs.Create(path, fuse.O_RDWR, 0o644)

@@ -48,8 +48,13 @@ const (
 
 // MountParams contains the parameters for mounting a Files.com file system using FUSE.
 type MountParams struct {
-	// Required. Files.com API configuration.
+	// Optional when ProviderBackend is set. Files.com API mounts still require
+	// a usable API configuration.
 	Config *files_sdk.Config
+
+	// Optional. When set, fsmount talks to this backend instead of the Files.com API.
+	// This is intended for direct provider mounts implemented by the caller.
+	ProviderBackend ProviderBackend
 
 	// Path to mount the file system.
 	//
@@ -167,15 +172,22 @@ func Mount(params MountParams) (*Host, error) {
 	mountMu.Lock()
 	defer mountMu.Unlock()
 
+	if params.Config == nil {
+		params.Config = &files_sdk.Config{}
+	}
 	logger := lib.NewLeveledLogger(params.Config.Logger)
 
 	params.Config.Client = retriableClientWithHTTP2()
 
-	// make sure the API key is valid before attempting to mount
-	apiKeyClient := &api_key.Client{Config: *params.Config}
-	_, err := apiKeyClient.FindCurrent()
-	if err != nil {
-		return nil, err
+	if params.ProviderBackend != nil {
+		params.DisableLocking = true
+	} else {
+		// make sure the API key is valid before attempting to mount
+		apiKeyClient := &api_key.Client{Config: *params.Config}
+		_, err := apiKeyClient.FindCurrent()
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if mntRegistry == nil {
