@@ -174,6 +174,10 @@ func (g *uploadV2PartConcurrencyGate) WaitForADone() bool {
 	return g.local.WaitForADone()
 }
 
+func (g *uploadV2PartConcurrencyGate) WaitForADoneWithContext(ctx context.Context) bool {
+	return g.local.WaitForADoneWithContext(ctx)
+}
+
 func newUploadV2Engine(u *uploadIO, plan uploadV2PartPlan) *uploadV2Engine {
 	maxConcurrency := u.uploadV2MaxConcurrency()
 	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(uploadV2AdaptiveConcurrencyConfigWithInitial(plan, maxConcurrency, uploadV2InitialConcurrencyForPlan(plan, maxConcurrency, u.uploadV2Tuning), u.uploadV2Tuning))
@@ -1315,7 +1319,7 @@ func (e *uploadV2Engine) usesPartOffsets() bool {
 	return e.usePartOffsets
 }
 
-func uploadV2UsesPartOffsets(target uploadV2TargetClass) bool {
+func uploadV2UsesPartOffsets(target TransferV2TargetClass) bool {
 	return target != uploadV2TargetS3
 }
 

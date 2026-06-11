@@ -23,6 +23,7 @@ type AdaptiveConcurrencyManager struct {
 	wg      sync.WaitGroup
 	notify  chan struct{}
 	waiters int
+	done    chan struct{}
 	running int
 
 	// Target bounds and growth controls.
@@ -320,6 +321,7 @@ func NewAdaptiveConcurrencyManagerWithConfig(config AdaptiveConcurrencyConfig) *
 		latencyQueueHigh:                latencyQueueHigh,
 		latencyGrowthQueueHigh:          latencyGrowthQueueHigh,
 		notify:                          make(chan struct{}),
+		done:                            make(chan struct{}),
 	}
 }
 
@@ -343,6 +345,12 @@ func (a *AdaptiveConcurrencyManager) WaitWithContext(ctx context.Context) bool {
 
 func (a *AdaptiveConcurrencyManager) Done() {
 	a.DoneWithSample(AdaptiveConcurrencySample{Success: true})
+}
+
+func (a *AdaptiveConcurrencyManager) DoneNeutral() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.releaseLocked()
 }
 
 func (a *AdaptiveConcurrencyManager) DoneWithSample(sample AdaptiveConcurrencySample) {
@@ -411,9 +419,14 @@ func (a *AdaptiveConcurrencyManager) DoneWithSample(sample AdaptiveConcurrencySa
 			a.shrinkTotal++
 		}
 	}
+	a.releaseLocked()
+}
+
+func (a *AdaptiveConcurrencyManager) releaseLocked() {
 	a.running--
 	atomic.AddInt32(&a.runningWorkers, -1)
 	a.wg.Done()
+	a.signalDoneLocked()
 	a.signalLocked()
 }
 
@@ -788,12 +801,24 @@ func (a *AdaptiveConcurrencyManager) notifyLocked() chan struct{} {
 	return a.notify
 }
 
+func (a *AdaptiveConcurrencyManager) doneLocked() chan struct{} {
+	if a.done == nil {
+		a.done = make(chan struct{})
+	}
+	return a.done
+}
+
 func (a *AdaptiveConcurrencyManager) signalLocked() {
 	if a.waiters == 0 {
 		return
 	}
 	close(a.notifyLocked())
 	a.notify = make(chan struct{})
+}
+
+func (a *AdaptiveConcurrencyManager) signalDoneLocked() {
+	close(a.doneLocked())
+	a.done = make(chan struct{})
 }
 
 func (a *AdaptiveConcurrencyManager) WaitAllDone() {
@@ -805,19 +830,24 @@ func (a *AdaptiveConcurrencyManager) RunningCount() int {
 }
 
 func (a *AdaptiveConcurrencyManager) WaitForADone() bool {
+	return a.WaitForADoneWithContext(context.Background())
+}
+
+func (a *AdaptiveConcurrencyManager) WaitForADoneWithContext(ctx context.Context) bool {
 	a.mu.Lock()
 	if a.running == 0 {
 		a.mu.Unlock()
 		return false
 	}
-	notify := a.notifyLocked()
-	a.waiters++
+	done := a.doneLocked()
 	a.mu.Unlock()
-	<-notify
-	a.mu.Lock()
-	a.waiters--
-	a.mu.Unlock()
-	return true
+
+	select {
+	case <-ctx.Done():
+		return false
+	case <-done:
+		return true
+	}
 }
 
 func (a *AdaptiveConcurrencyManager) NewSubWorker() ConcurrencyManager {
@@ -879,26 +909,24 @@ type AdaptiveConcurrencySubWorker struct {
 	parent       *AdaptiveConcurrencyManager
 	wg           sync.WaitGroup
 	runningCount int32
-	cond         *sync.Cond
-	initOnce     sync.Once
-}
-
-func (s *AdaptiveConcurrencySubWorker) init() {
-	s.cond = sync.NewCond(&sync.Mutex{})
+	mu           sync.Mutex
+	notify       chan struct{}
 }
 
 func (s *AdaptiveConcurrencySubWorker) Wait() {
-	s.initOnce.Do(s.init)
 	s.parent.Wait()
+	s.mu.Lock()
 	s.wg.Add(1)
 	atomic.AddInt32(&s.runningCount, 1)
+	s.mu.Unlock()
 }
 
 func (s *AdaptiveConcurrencySubWorker) WaitWithContext(ctx context.Context) bool {
-	s.initOnce.Do(s.init)
 	if s.parent.WaitWithContext(ctx) {
+		s.mu.Lock()
 		s.wg.Add(1)
 		atomic.AddInt32(&s.runningCount, 1)
+		s.mu.Unlock()
 		return true
 	}
 	return false
@@ -908,14 +936,23 @@ func (s *AdaptiveConcurrencySubWorker) Done() {
 	s.DoneWithSample(AdaptiveConcurrencySample{Success: true})
 }
 
+func (s *AdaptiveConcurrencySubWorker) DoneNeutral() {
+	s.done(s.parent.DoneNeutral)
+}
+
 func (s *AdaptiveConcurrencySubWorker) DoneWithSample(sample AdaptiveConcurrencySample) {
-	s.initOnce.Do(s.init)
-	s.cond.L.Lock()
-	defer s.cond.L.Unlock()
+	s.done(func() {
+		s.parent.DoneWithSample(sample)
+	})
+}
+
+func (s *AdaptiveConcurrencySubWorker) done(parentDone func()) {
+	s.mu.Lock()
 	atomic.AddInt32(&s.runningCount, -1)
 	s.wg.Done()
-	s.parent.DoneWithSample(sample)
-	s.cond.Signal()
+	s.signalDoneLocked()
+	s.mu.Unlock()
+	parentDone()
 }
 
 func (s *AdaptiveConcurrencySubWorker) WaitAllDone() {
@@ -927,12 +964,34 @@ func (s *AdaptiveConcurrencySubWorker) RunningCount() int {
 }
 
 func (s *AdaptiveConcurrencySubWorker) WaitForADone() bool {
-	s.initOnce.Do(s.init)
-	s.cond.L.Lock()
-	defer s.cond.L.Unlock()
+	return s.WaitForADoneWithContext(context.Background())
+}
+
+func (s *AdaptiveConcurrencySubWorker) WaitForADoneWithContext(ctx context.Context) bool {
+	s.mu.Lock()
 	if s.RunningCount() == 0 {
+		s.mu.Unlock()
 		return false
 	}
-	s.cond.Wait()
-	return true
+	notify := s.notifyLocked()
+	s.mu.Unlock()
+
+	select {
+	case <-ctx.Done():
+		return false
+	case <-notify:
+		return true
+	}
+}
+
+func (s *AdaptiveConcurrencySubWorker) notifyLocked() chan struct{} {
+	if s.notify == nil {
+		s.notify = make(chan struct{})
+	}
+	return s.notify
+}
+
+func (s *AdaptiveConcurrencySubWorker) signalDoneLocked() {
+	close(s.notifyLocked())
+	s.notify = make(chan struct{})
 }

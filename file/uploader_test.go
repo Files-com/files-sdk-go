@@ -605,7 +605,7 @@ func TestUploadReader(t *testing.T) {
 		filename := "user-agent.txt"
 		server.MockFiles[filename] = mockFile{File: files_sdk.File{Size: 10}}
 		client := server.Client()
-		client.Config.UserAgent = "Files.com Desktop Helper test"
+		client.Config.UserAgent = "Files.com custom client test"
 		client.Config.APIKey = "secret-api-key"
 
 		var mu sync.Mutex
@@ -633,7 +633,7 @@ func TestUploadReader(t *testing.T) {
 		require.NoError(t, err)
 		require.NotEmpty(t, userAgents)
 		for _, userAgent := range userAgents {
-			assert.Equal(t, "Files.com Desktop Helper test", userAgent)
+			assert.Equal(t, "Files.com custom client test", userAgent)
 		}
 		for _, apiKey := range apiKeys {
 			assert.Empty(t, apiKey, "raw upload requests must not receive API auth headers")

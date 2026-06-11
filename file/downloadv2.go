@@ -27,11 +27,9 @@ const (
 	downloadV2OutputPreallocAt = "preallocated_temp_file_write_at"
 )
 
-type downloadV2TargetClass string
-
 const (
-	downloadV2TargetS3    downloadV2TargetClass = "s3"
-	downloadV2TargetAgent downloadV2TargetClass = "agent"
+	downloadV2TargetS3      = TransferV2TargetS3
+	downloadV2TargetDefault = TransferV2TargetDefault
 )
 
 type downloadV2Part struct {
@@ -55,7 +53,7 @@ type downloadV2Engine struct {
 	ranger       ReaderRange
 	file         *os.File
 	manager      *lib.AdaptiveConcurrencyManager
-	target       downloadV2TargetClass
+	target       TransferV2TargetClass
 	totalSize    int64
 	startOffset  int64
 	partSize     int64
@@ -67,7 +65,7 @@ type downloadV2Engine struct {
 }
 
 type downloadV2AdaptiveManagerCacheKey struct {
-	target         downloadV2TargetClass
+	target         TransferV2TargetClass
 	maxConcurrency int
 }
 
@@ -113,7 +111,7 @@ func runDownloadV2IfSupported(ctx context.Context, reportStatus *DownloadStatus,
 	if totalSize-startOffset <= downloadV2SmallFileFallbackSize() {
 		return false, 0, nil
 	}
-	target, ok := classifyDownloadV2Target(ctx, remoteStat, ranger)
+	target, ok := classifyDownloadV2Target(ctx, remoteStat, ranger, params.AdaptiveDownloadV2TargetClassifier)
 	if !ok {
 		return false, 0, nil
 	}
@@ -133,7 +131,7 @@ func runDownloadV2IfSupported(ctx context.Context, reportStatus *DownloadStatus,
 	return true, engine.FinalSize(), nil
 }
 
-func newDownloadV2Engine(reportStatus *DownloadStatus, ranger ReaderRange, file *os.File, target downloadV2TargetClass, totalSize int64, startOffset int64, partSize int64, params DownloaderParams) *downloadV2Engine {
+func newDownloadV2Engine(reportStatus *DownloadStatus, ranger ReaderRange, file *os.File, target TransferV2TargetClass, totalSize int64, startOffset int64, partSize int64, params DownloaderParams) *downloadV2Engine {
 	maxConcurrency := downloadV2MaxConcurrency(reportStatus.Job(), params)
 	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(downloadV2AdaptiveConcurrencyConfig(target, maxConcurrency, totalSize, partSize))
 	if params.Manager == nil || params.AdaptiveConcurrencyUseSDKDefaultCaps {
@@ -377,19 +375,19 @@ func downloadV2BuildParts(startOffset int64, totalSize int64, partSize int64) []
 	return parts
 }
 
-func downloadV2KnownSizePartSize(target downloadV2TargetClass, totalSize int64) int64 {
+func downloadV2KnownSizePartSize(target TransferV2TargetClass, totalSize int64) int64 {
 	switch target {
 	case downloadV2TargetS3:
 		return s3KnownSizePreferredPartSize(totalSize)
 	default:
-		return agentKnownSizePreferredPartSize(totalSize)
+		return defaultKnownSizePreferredPartSize(totalSize)
 	}
 }
 
 func downloadV2SmallFileFallbackSize() int64 {
 	return min(
 		s3KnownSizePreferredPartSize(0),
-		agentKnownSizePreferredPartSize(0),
+		defaultKnownSizePreferredPartSize(0),
 	)
 }
 
@@ -397,10 +395,10 @@ func downloadV2MaxConcurrency(job *Job, params DownloaderParams) int {
 	if params.Manager != nil && !params.AdaptiveConcurrencyUseSDKDefaultCaps {
 		return max(1, job.Manager.FilePartsManager.Max())
 	}
-	return manager.AdaptiveDownloadV2ConcurrentFileParts
+	return manager.EffectiveAdaptiveDownloadV2ConcurrentFileParts()
 }
 
-func downloadV2AdaptiveConcurrencyConfig(target downloadV2TargetClass, maxConcurrency int, totalSize int64, partSize int64) lib.AdaptiveConcurrencyConfig {
+func downloadV2AdaptiveConcurrencyConfig(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64) lib.AdaptiveConcurrencyConfig {
 	maxConcurrency = max(1, maxConcurrency)
 	switch target {
 	case downloadV2TargetS3:
@@ -421,7 +419,7 @@ func downloadV2AdaptiveConcurrencyConfig(target downloadV2TargetClass, maxConcur
 	}
 }
 
-func (s *downloadV2SharedAdaptiveManagerRegistry) get(target downloadV2TargetClass, maxConcurrency int, totalSize int64, partSize int64) *lib.AdaptiveConcurrencyManager {
+func (s *downloadV2SharedAdaptiveManagerRegistry) get(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64) *lib.AdaptiveConcurrencyManager {
 	key := downloadV2AdaptiveManagerCacheKey{target: target, maxConcurrency: maxConcurrency}
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -436,7 +434,7 @@ func (s *downloadV2SharedAdaptiveManagerRegistry) get(target downloadV2TargetCla
 	return manager
 }
 
-func downloadV2SharedAdaptiveConcurrencyConfig(target downloadV2TargetClass, maxConcurrency int, totalSize int64, partSize int64) lib.AdaptiveConcurrencyConfig {
+func downloadV2SharedAdaptiveConcurrencyConfig(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64) lib.AdaptiveConcurrencyConfig {
 	if target == downloadV2TargetS3 {
 		plan := uploadV2PartPlan{target: uploadV2TargetS3, totalSize: &totalSize, partSize: partSize, mode: "download_v2_known_size"}
 		return uploadV2SharedAdaptiveConcurrencyConfig(plan, maxConcurrency, UploadV2Tuning{})
@@ -444,7 +442,7 @@ func downloadV2SharedAdaptiveConcurrencyConfig(target downloadV2TargetClass, max
 	return downloadV2AdaptiveConcurrencyConfig(target, maxConcurrency, totalSize, partSize)
 }
 
-func classifyDownloadV2Target(ctx context.Context, _ goFs.FileInfo, ranger ReaderRange) (downloadV2TargetClass, bool) {
+func classifyDownloadV2Target(ctx context.Context, _ goFs.FileInfo, ranger ReaderRange, classifier DownloadV2TargetClassifier) (TransferV2TargetClass, bool) {
 	provider, ok := ranger.(downloadV2URIProvider)
 	if !ok {
 		return "", false
@@ -453,26 +451,22 @@ func classifyDownloadV2Target(ctx context.Context, _ goFs.FileInfo, ranger Reade
 	if err != nil {
 		return "", false
 	}
-	return classifyDownloadV2URI(downloadURI)
+	return classifyDownloadV2URI(downloadURI, classifier)
 }
 
-func classifyDownloadV2URI(downloadURI string) (downloadV2TargetClass, bool) {
+func classifyDownloadV2URI(downloadURI string, classifiers ...DownloadV2TargetClassifier) (TransferV2TargetClass, bool) {
 	parsed, err := url.Parse(downloadURI)
 	if err != nil {
 		return "", false
+	}
+	if len(classifiers) > 0 && classifiers[0] != nil {
+		return normalizeTransferV2TargetClass(classifiers[0](downloadURI)), true
 	}
 	host := strings.ToLower(parsed.Hostname())
 	if isS3UploadHost(host) {
 		return downloadV2TargetS3, true
 	}
-	if isAgentProxyDownloadPath(strings.ToLower(parsed.EscapedPath())) || strings.Contains(host, "agent-proxy") {
-		return downloadV2TargetAgent, true
-	}
-	return "", false
-}
-
-func isAgentProxyDownloadPath(path string) bool {
-	return strings.Contains(path, "/agent-proxy/") && strings.HasSuffix(path, "/downloads")
+	return downloadV2TargetDefault, true
 }
 
 func downloadV2ReaderRange(ctx context.Context, ranger ReaderRange, off int64, end int64) (io.ReadCloser, error) {

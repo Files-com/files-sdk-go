@@ -53,7 +53,7 @@ func BenchmarkUploadV2PartPlannerKnownSize5TiBS3(b *testing.B) {
 }
 
 func BenchmarkUploadV2UnknownSizeGrowth(b *testing.B) {
-	plan, ok, reason := newUploadV2PartPlan(uploadV2TargetFIW, nil)
+	plan, ok, reason := newUploadV2PartPlan(uploadV2TargetDefault, nil)
 	if !ok {
 		b.Fatal(reason)
 	}

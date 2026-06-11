@@ -949,6 +949,119 @@ func TestAdaptiveConcurrencyManagerShrinksAfterSuccessfulPartWithBackPressure(t 
 	assert.Equal(t, 1, snapshot.ShrinkTotal)
 }
 
+func TestAdaptiveConcurrencyManagerDoneNeutralReleasesWithoutSampling(t *testing.T) {
+	manager := NewAdaptiveConcurrencyManagerWithConfig(AdaptiveConcurrencyConfig{
+		MaxConcurrency:            2,
+		InitialTarget:             1,
+		MinTarget:                 1,
+		GrowEvery:                 1,
+		GrowStep:                  1,
+		FailureShrinkPercent:      50,
+		BackPressureShrinkPercent: 50,
+	})
+	manager.Wait()
+
+	acquired := make(chan bool, 1)
+	go func() {
+		acquired <- manager.WaitWithContext(context.Background())
+	}()
+
+	manager.DoneNeutral()
+	select {
+	case ok := <-acquired:
+		assert.True(t, ok)
+	case <-time.After(250 * time.Millisecond):
+		t.Fatal("WaitWithContext did not acquire after DoneNeutral")
+	}
+	manager.DoneNeutral()
+
+	snapshot := manager.Snapshot()
+	assert.Equal(t, 1, snapshot.Target)
+	assert.Equal(t, 0, snapshot.Running)
+	assert.Equal(t, 0, snapshot.SuccessTotal)
+	assert.Equal(t, 0, snapshot.FailureTotal)
+	assert.Equal(t, 0, snapshot.BackPressureTotal)
+	assert.Equal(t, 0, snapshot.GrowTotal)
+	assert.Equal(t, 0, snapshot.ShrinkTotal)
+	assert.Equal(t, int64(0), snapshot.BytesTotal)
+}
+
+func TestAdaptiveConcurrencySubWorkerDoneNeutralReleasesParentWithoutSampling(t *testing.T) {
+	manager := NewAdaptiveConcurrencyManager(1)
+	subWorker := manager.NewSubWorker().(*AdaptiveConcurrencySubWorker)
+	subWorker.Wait()
+
+	subWorker.DoneNeutral()
+
+	assert.Equal(t, 0, subWorker.RunningCount())
+	snapshot := manager.Snapshot()
+	assert.Equal(t, 0, snapshot.Running)
+	assert.Equal(t, 0, snapshot.SuccessTotal)
+	assert.Equal(t, 0, snapshot.FailureTotal)
+	assert.Equal(t, 0, snapshot.ShrinkTotal)
+}
+
+func TestAdaptiveConcurrencyManagerWaitForADoneWithContextCancels(t *testing.T) {
+	manager := NewAdaptiveConcurrencyManager(1)
+	manager.Wait()
+	defer manager.DoneNeutral()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan bool, 1)
+	go func() {
+		done <- manager.WaitForADoneWithContext(ctx)
+	}()
+
+	cancel()
+	select {
+	case ok := <-done:
+		assert.False(t, ok)
+	case <-time.After(250 * time.Millisecond):
+		t.Fatal("WaitForADoneWithContext did not return after cancellation")
+	}
+}
+
+func TestAdaptiveConcurrencyManagerWaitForADoneWithContextWakesOnDone(t *testing.T) {
+	manager := NewAdaptiveConcurrencyManager(1)
+	manager.Wait()
+
+	done := make(chan bool, 1)
+	waitingCtx, waiting := newObservedWaitContext()
+	go func() {
+		done <- manager.WaitForADoneWithContext(waitingCtx)
+	}()
+
+	<-waiting
+	manager.DoneNeutral()
+	select {
+	case ok := <-done:
+		assert.True(t, ok)
+	case <-time.After(250 * time.Millisecond):
+		t.Fatal("WaitForADoneWithContext did not return after DoneNeutral")
+	}
+}
+
+func TestAdaptiveConcurrencySubWorkerWaitForADoneWithContextCancels(t *testing.T) {
+	manager := NewAdaptiveConcurrencyManager(1)
+	subWorker := manager.NewSubWorker().(*AdaptiveConcurrencySubWorker)
+	subWorker.Wait()
+	defer subWorker.DoneNeutral()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan bool, 1)
+	go func() {
+		done <- subWorker.WaitForADoneWithContext(ctx)
+	}()
+
+	cancel()
+	select {
+	case ok := <-done:
+		assert.False(t, ok)
+	case <-time.After(250 * time.Millisecond):
+		t.Fatal("WaitForADoneWithContext did not return after cancellation")
+	}
+}
+
 func TestAdaptiveConcurrencyManagerWaitWithContextCancelsWhileAtCapacity(t *testing.T) {
 	manager := NewAdaptiveConcurrencyManager(1)
 	manager.Wait()

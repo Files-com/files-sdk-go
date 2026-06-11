@@ -24,6 +24,7 @@ func (c *Client) DownloadRetry(job Job, opts ...files_sdk.RequestResponseOption)
 			SyncAfterActions:                     newJob.Params.(DownloaderParams).SyncAfterActions,
 			AdaptiveConcurrency:                  newJob.Params.(DownloaderParams).AdaptiveConcurrency,
 			AdaptiveConcurrencyUseSDKDefaultCaps: newJob.Params.(DownloaderParams).AdaptiveConcurrencyUseSDKDefaultCaps,
+			AdaptiveDownloadV2TargetClassifier:   newJob.Params.(DownloaderParams).AdaptiveDownloadV2TargetClassifier,
 		},
 		opts...)
 }
@@ -65,12 +66,16 @@ type DownloaderParams struct {
 	// AdaptiveConcurrencyUseSDKDefaultCaps uses SDK V2 caps instead of treating an
 	// explicitly supplied Manager as an isolation boundary.
 	AdaptiveConcurrencyUseSDKDefaultCaps bool
+	// AdaptiveDownloadV2TargetClassifier optionally overrides the SDK's download
+	// V2 target classifier. Custom targets use default SDK transfer behavior but
+	// keep separate adaptive manager cache entries and telemetry target labels.
+	AdaptiveDownloadV2TargetClassifier DownloadV2TargetClassifier
 }
 
 func (c *Client) Downloader(params DownloaderParams, opts ...files_sdk.RequestResponseOption) *Job {
 	params.config = c.Config
 	if params.AdaptiveConcurrency && (params.AdaptiveConcurrencyUseSDKDefaultCaps || params.Manager == nil) {
-		params.config = params.config.SetCustomClient(manager.New(manager.AdaptiveDownloadV2ConcurrentFiles, manager.AdaptiveDownloadV2ConcurrentFileParts, manager.ConcurrentDirectoryList).CreateMatchingClient(params.config.HTTPClient))
+		params.config = params.config.SetCustomClient(manager.New(manager.AdaptiveDownloadV2ConcurrentFiles, manager.EffectiveAdaptiveDownloadV2ConcurrentFileParts(), manager.ConcurrentDirectoryList).CreateMatchingClient(params.config.HTTPClient))
 	}
 	job := downloader(files_sdk.ContextOption(opts), (&FS{}).Init(params.config, true), params, opts...)
 	registerSyncAfterActions(job, params.SyncAfterActions, params.DryRun, params.config, opts...)

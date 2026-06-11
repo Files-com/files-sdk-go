@@ -8,6 +8,7 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/directory"
+	"github.com/Files-com/files-sdk-go/v3/file/manager"
 	"github.com/Files-com/files-sdk-go/v3/file/status"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
@@ -29,11 +30,40 @@ const (
 	uploadV2S3LatencyGrowthQueueHigh                 = 96
 	uploadV2S3WorkloadTargetPartMultiplier           = 8
 	uploadV2S3WorkloadMinPartSizeMiB                 = 8
+	uploadV2DefaultMaxConcurrency                    = 64
 	uploadV2WorkloadScanWait                         = 250 * time.Millisecond
 	uploadV2WorkloadScanPoll                         = 10 * time.Millisecond
 	uploadV2DefaultReadyRunwayParts                  = 4
 	uploadV2DefaultReadyRunwayBytes                  = 256 * uploadV2MiB
 )
+
+// TransferV2TargetClass identifies the destination class used by adaptive
+// transfer V2. SDK defaults only distinguish S3 from the generic default
+// target; callers may return their own target class names from classifier hooks
+// to isolate adaptive manager learning and telemetry.
+type TransferV2TargetClass string
+
+const (
+	// TransferV2TargetDefault is the generic adaptive transfer target.
+	TransferV2TargetDefault TransferV2TargetClass = "default"
+	// TransferV2TargetS3 is the adaptive transfer target for S3 upload/download URLs.
+	TransferV2TargetS3 TransferV2TargetClass = "s3"
+)
+
+// UploadV2TargetClassifier overrides the SDK's upload V2 target classifier.
+// Returning an empty target uses TransferV2TargetDefault.
+type UploadV2TargetClassifier func(files_sdk.FileUploadPart) TransferV2TargetClass
+
+// DownloadV2TargetClassifier overrides the SDK's download V2 target classifier.
+// Returning an empty target uses TransferV2TargetDefault.
+type DownloadV2TargetClassifier func(downloadURI string) TransferV2TargetClass
+
+func normalizeTransferV2TargetClass(target TransferV2TargetClass) TransferV2TargetClass {
+	if target == "" {
+		return TransferV2TargetDefault
+	}
+	return target
+}
 
 // UploadV2Tuning overrides V2 upload defaults for diagnostics and benchmark
 // tuning. Zero values keep the built-in defaults.
@@ -132,6 +162,16 @@ func UploadWithV2Tuning(tuning UploadV2Tuning) UploadOption {
 			return params, err
 		}
 		params.uploadV2Tuning = tuning
+		return params, nil
+	}
+}
+
+// UploadWithV2TargetClassifier sets a custom upload V2 target classifier.
+// Custom targets use default SDK transfer behavior but keep separate adaptive
+// manager cache entries and telemetry target labels.
+func UploadWithV2TargetClassifier(classifier UploadV2TargetClassifier) UploadOption {
+	return func(params uploadIO) (uploadIO, error) {
+		params.uploadV2TargetClassifier = classifier
 		return params, nil
 	}
 }
@@ -243,13 +283,13 @@ func uploadWithV2HTTPClientProvider(provider uploadV2HTTPClientProvider) UploadO
 }
 
 type uploadV2HTTPClientCacheKey struct {
-	target              uploadV2TargetClass
+	target              TransferV2TargetClass
 	maxConnsPerHost     int
 	maxIdleConnsPerHost int
 }
 
 type uploadV2AdaptiveManagerCacheKey struct {
-	target         uploadV2TargetClass
+	target         TransferV2TargetClass
 	maxConcurrency int
 	tuning         UploadV2Tuning
 }
@@ -501,15 +541,11 @@ func (u *uploadIO) uploadV2MaxConcurrency() int {
 		}
 	}
 
-	switch classifyUploadV2Target(u.FileUploadPart) {
+	switch classifyUploadV2Target(u.FileUploadPart, u.uploadV2TargetClassifier) {
 	case uploadV2TargetS3:
-		return uploadV2S3MaxConcurrency
-	case uploadV2TargetAgent:
-		return 128
-	case uploadV2TargetFIW:
-		return 192
+		return manager.EffectiveAdaptiveUploadV2ConcurrentFileParts(uploadV2S3MaxConcurrency)
 	default:
-		return 64
+		return manager.EffectiveAdaptiveUploadV2ConcurrentFileParts(uploadV2DefaultMaxConcurrency)
 	}
 }
 
@@ -568,20 +604,6 @@ func uploadV2AdaptiveConcurrencyConfigWithInitial(plan uploadV2PartPlan, maxConc
 		config.LatencyQueueHigh = uploadV2S3LatencyQueueHigh
 		config.LatencyGrowthQueueHigh = uploadV2S3LatencyGrowthQueueHigh
 		applyS3UploadV2Tuning(&config, tuning, maxConcurrency, initial)
-	case uploadV2TargetFIW:
-		config.MinTarget = min(4, maxConcurrency)
-		config.GrowEvery = 4
-		config.GrowStep = min(2, max(1, maxConcurrency/32))
-		config.FailureShrinkPercent = 50
-		config.BackPressureShrinkPercent = 25
-		config.BackPressurePause = 250 * time.Millisecond
-	case uploadV2TargetAgent:
-		config.MinTarget = min(2, maxConcurrency)
-		config.GrowEvery = 6
-		config.GrowStep = 1
-		config.FailureShrinkPercent = 50
-		config.BackPressureShrinkPercent = 35
-		config.BackPressurePause = 500 * time.Millisecond
 	}
 	return config
 }

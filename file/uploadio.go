@@ -87,6 +87,7 @@ type uploadIO struct {
 	passedInContext            context.Context
 	uploadV2                   bool
 	uploadV2UseSDKDefaultCaps  bool
+	uploadV2TargetClassifier   UploadV2TargetClassifier
 	uploadV2ManagerProvider    uploadV2AdaptiveManagerProvider
 	uploadV2HTTPClientProvider uploadV2HTTPClientProvider
 	uploadV2ReadyRunway        uploadV2ReadyRunwayConfig

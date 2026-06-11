@@ -340,6 +340,9 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 		}
 		if params.AdaptiveConcurrency {
 			opts = append(opts, UploadWithV2())
+			if params.AdaptiveUploadV2TargetClassifier != nil {
+				opts = append(opts, UploadWithV2TargetClassifier(params.AdaptiveUploadV2TargetClassifier))
+			}
 			if useSDKDefaultAdaptiveCaps {
 				opts = append(opts, uploadWithV2AdaptiveManagerProvider(job.uploadV2AdaptiveManager))
 			}

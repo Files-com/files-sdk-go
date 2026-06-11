@@ -16,8 +16,8 @@ files-cli os-tuning high-throughput repair --os windows --interface "Ethernet 2"
 ```
 
 The plan separates user-level inspection commands from privileged changes. This
-is intentional so CLI, Desktop Helper, and agent-facing installers can present
-the same recommendations with their own approval and elevation workflow.
+is intentional so CLI and SDK callers can present the same recommendations with
+their own approval and elevation workflow.
 
 ## Workflow
 
@@ -100,14 +100,10 @@ automatically apply to already-running shells or all systemd services. For
 service-managed SDK callers, set an equivalent `LimitNOFILE` in the systemd
 service unit or drop-in.
 
-Files Agent already has a related Linux UDP buffer tuning path for QUIC:
-`lib/agent/linuxudpbuffer` in Files Integration Worker. That agent package
-writes `/etc/sysctl.d/80-files-agent-udp-buffers.conf` and ensures
-`net.core.rmem_max` and `net.core.wmem_max` are at least `7,500,000` bytes so
-quic-go can request larger UDP buffers. The high-throughput upload plan uses a
-later sysctl file and higher shared socket buffer ceilings. The two can coexist;
-on an agent host the later high-throughput file wins for the shared
-`rmem_max`/`wmem_max` maxima.
+Other Files.com products may apply their own Linux UDP buffer tuning for QUIC.
+The high-throughput upload plan uses a later sysctl file and higher shared
+socket buffer ceilings. The two can coexist; the later high-throughput file wins
+for the shared `rmem_max`/`wmem_max` maxima.
 
 ## macOS
 
@@ -124,7 +120,7 @@ launch daemon only after validating the target macOS release.
 
 The optional `--include-network-test` flag adds Apple's `networkQuality` command
 when available. This is a general Internet quality test against Apple's selected
-test endpoint, not a Files.com, S3, or agent upload benchmark. `verify` runs it
+test endpoint, not a Files.com or S3 upload benchmark. `verify` runs it
 once. `repair --apply` runs it before the host-wide repair changes and runs the
 post-repair measurement only when privileged repair commands actually ran. That
 active bandwidth test is intentionally not part of the default `verify` path

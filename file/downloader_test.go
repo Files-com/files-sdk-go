@@ -869,7 +869,7 @@ func TestDownloadV2TruncatesFailedPreallocatedTempFileToContiguousPrefix(t *test
 	assert.Equal(t, int64(16*1024*1024), stat.Size())
 }
 
-func TestDownloadV2DoesNotUseV2ForGenericNonS3DownloadURIWithCrc32(t *testing.T) {
+func TestDownloadV2UsesDefaultTargetForGenericNonS3DownloadURIWithCrc32(t *testing.T) {
 	size := int64(20 * 1024 * 1024)
 	ranger := &downloadV2TestRangeFile{
 		data:        make([]byte, size),
@@ -888,11 +888,12 @@ func TestDownloadV2DoesNotUseV2ForGenericNonS3DownloadURIWithCrc32(t *testing.T)
 		Manager:             manager.Build(2, 1),
 	}, tmpPath)
 
-	used, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	used, finalSize, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
 
 	require.NoError(t, err)
-	assert.False(t, used)
-	assert.Empty(t, ranger.Ranges())
+	assert.True(t, used)
+	assert.Equal(t, size, finalSize)
+	assert.NotEmpty(t, ranger.Ranges())
 }
 
 func TestDownloadV2FallsBackForSinglePartS3Download(t *testing.T) {
@@ -921,20 +922,20 @@ func TestDownloadV2FallsBackForSinglePartS3Download(t *testing.T) {
 	assert.Empty(t, ranger.Ranges())
 }
 
-func TestDownloadV2UsesAgentProxyDownloadURI(t *testing.T) {
+func TestDownloadV2UsesDefaultDownloadURI(t *testing.T) {
 	size := int64(20 * 1024 * 1024)
 	source := bytes.Repeat([]byte("a"), int(size))
 	ranger := &downloadV2TestRangeFile{
 		data:        source,
-		downloadURI: "https://app-us-east-1.files.com/agent-proxy/g-7/transfers/12D3KooW/downloads?X-Files-Date=20260605T211830Z&X-Files-Expires=180&jwt=test",
+		downloadURI: "https://app-us-east-1.files.com/download/native.bin?X-Files-Date=20260605T211830Z&X-Files-Expires=180&jwt=test",
 		info: Info{File: files_sdk.File{
-			DisplayName: "agent.bin",
-			Path:        "agent.bin",
+			DisplayName: "default.bin",
+			Path:        "default.bin",
 			Type:        "file",
 			Size:        size,
 		}, sizeTrust: TrustedSizeValue},
 	}
-	tmpPath := filepath.Join(t.TempDir(), "agent.bin.download")
+	tmpPath := filepath.Join(t.TempDir(), "default.bin.download")
 	reportStatus := downloadV2TestStatus(ranger, ranger.info, DownloaderParams{
 		AdaptiveConcurrency: true,
 		Manager:             manager.Build(15, 1),
@@ -952,15 +953,22 @@ func TestDownloadV2UsesAgentProxyDownloadURI(t *testing.T) {
 	assert.Equal(t, source, written)
 }
 
-func TestDownloadV2ClassifiesOnlyAgentProxyURLsAsAgent(t *testing.T) {
-	target, ok := classifyDownloadV2URI("https://app-us-east-1.files.com/agent-proxy/g-7/transfers/12D3KooW/downloads?jwt=test")
+func TestDownloadV2ClassifiesS3AndDefaultDownloadURLs(t *testing.T) {
+	target, ok := classifyDownloadV2URI("https://s3.amazonaws.com/bucket/key?X-Amz-Signature=test")
 	require.True(t, ok)
-	assert.Equal(t, downloadV2TargetAgent, target)
+	assert.Equal(t, downloadV2TargetS3, target)
 
-	_, ok = classifyDownloadV2URI("https://agent.example.com/download/native.bin")
-	assert.False(t, ok)
+	target, ok = classifyDownloadV2URI("https://uploads.example.com/download/native.bin")
+	require.True(t, ok)
+	assert.Equal(t, downloadV2TargetDefault, target)
 
-	_, ok = classifyDownloadV2URI("https://app-us-east-1.files.com/agent-proxy/g-7/transfers/12D3KooW/uploads?jwt=test")
+	target, ok = classifyDownloadV2URI("https://uploads.example.com/download/native.bin", func(string) TransferV2TargetClass {
+		return "custom"
+	})
+	require.True(t, ok)
+	assert.Equal(t, TransferV2TargetClass("custom"), target)
+
+	_, ok = classifyDownloadV2URI("://bad")
 	assert.False(t, ok)
 }
 
@@ -971,9 +979,9 @@ func TestDownloadV2SharedManagerDoesNotStartAtTinyFilePartCount(t *testing.T) {
 	assert.Equal(t, uploadV2S3InitialConcurrency, adaptiveManager.Snapshot().Target)
 }
 
-func TestDownloadV2AgentManagerStartsAtLegacyRangeConcurrency(t *testing.T) {
+func TestDownloadV2DefaultManagerStartsAtLegacyRangeConcurrency(t *testing.T) {
 	adaptiveManager := lib.NewAdaptiveConcurrencyManagerWithConfig(downloadV2AdaptiveConcurrencyConfig(
-		downloadV2TargetAgent,
+		downloadV2TargetDefault,
 		manager.AdaptiveDownloadV2ConcurrentFileParts,
 		20*1024*1024,
 		16*1024*1024,

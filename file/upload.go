@@ -176,15 +176,18 @@ func (c *Client) UploadRetry(job Job, opts ...files_sdk.RequestResponseOption) *
 	newJob := job.ClearStatuses()
 	return c.Uploader(
 		UploaderParams{
-			Sync:             newJob.Sync,
-			LocalPath:        newJob.LocalPath,
-			RemotePath:       newJob.RemotePath,
-			EventsReporter:   newJob.EventsReporter,
-			Manager:          newJob.Manager,
-			RetryPolicy:      newJob.RetryPolicy.(RetryPolicy),
-			Ignore:           newJob.Params.(UploaderParams).Ignore,
-			Include:          newJob.Params.(UploaderParams).Include,
-			SyncAfterActions: newJob.Params.(UploaderParams).SyncAfterActions,
+			Sync:                                 newJob.Sync,
+			LocalPath:                            newJob.LocalPath,
+			RemotePath:                           newJob.RemotePath,
+			EventsReporter:                       newJob.EventsReporter,
+			Manager:                              newJob.Manager,
+			RetryPolicy:                          newJob.RetryPolicy.(RetryPolicy),
+			Ignore:                               newJob.Params.(UploaderParams).Ignore,
+			Include:                              newJob.Params.(UploaderParams).Include,
+			SyncAfterActions:                     newJob.Params.(UploaderParams).SyncAfterActions,
+			AdaptiveConcurrency:                  newJob.Params.(UploaderParams).AdaptiveConcurrency,
+			AdaptiveConcurrencyUseSDKDefaultCaps: newJob.Params.(UploaderParams).AdaptiveConcurrencyUseSDKDefaultCaps,
+			AdaptiveUploadV2TargetClassifier:     newJob.Params.(UploaderParams).AdaptiveUploadV2TargetClassifier,
 		},
 		opts...,
 	)
@@ -227,11 +230,15 @@ type UploaderParams struct {
 	// Any configured concurrent connection limit is used as a maximum cap, not
 	// a fixed target.
 	AdaptiveConcurrency bool
-	// AdaptiveConcurrencyUseSDKDefaultCaps keeps V2 target-specific concurrency
-	// caps and shared adaptive learning when Manager is present only for job
-	// scheduling. When false and Manager is provided, V2 treats that Manager as
-	// an explicit isolated cap.
+	// AdaptiveConcurrencyUseSDKDefaultCaps keeps SDK V2 concurrency caps and
+	// shared adaptive learning when Manager is present only for job scheduling.
+	// When false and Manager is provided, V2 treats that Manager as an explicit
+	// isolated cap.
 	AdaptiveConcurrencyUseSDKDefaultCaps bool
+	// AdaptiveUploadV2TargetClassifier optionally overrides the SDK's upload V2
+	// target classifier. Custom targets use default SDK transfer behavior but
+	// keep separate adaptive manager cache entries and telemetry target labels.
+	AdaptiveUploadV2TargetClassifier UploadV2TargetClassifier
 	// AdaptiveUploadReadyRunwaySet applies the ready-runway values below. When
 	// false, V2 uses its built-in defaults.
 	AdaptiveUploadReadyRunwaySet bool

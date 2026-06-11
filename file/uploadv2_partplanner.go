@@ -20,17 +20,13 @@ const (
 	uploadV2UnknownGrowEvery = 128
 )
 
-type uploadV2TargetClass string
-
 const (
-	uploadV2TargetS3      uploadV2TargetClass = "s3"
-	uploadV2TargetFIW     uploadV2TargetClass = "fiw"
-	uploadV2TargetAgent   uploadV2TargetClass = "agent"
-	uploadV2TargetGeneric uploadV2TargetClass = "generic"
+	uploadV2TargetS3      = TransferV2TargetS3
+	uploadV2TargetDefault = TransferV2TargetDefault
 )
 
 type uploadV2PartPlan struct {
-	target     uploadV2TargetClass
+	target     TransferV2TargetClass
 	totalSize  *int64
 	partSize   int64
 	unknownCap int64
@@ -46,12 +42,12 @@ func newUploadV2PartIterator(part files_sdk.FileUploadPart, totalSize *int64, of
 	return plan.resume(off, index), true
 }
 
-func newUploadV2PartPlanForUpload(part files_sdk.FileUploadPart, totalSize *int64) (uploadV2PartPlan, bool, string) {
+func newUploadV2PartPlanForUpload(part files_sdk.FileUploadPart, totalSize *int64, classifiers ...UploadV2TargetClassifier) (uploadV2PartPlan, bool, string) {
 	if !lib.UnWrapBool(part.ParallelParts) {
 		return uploadV2PartPlan{}, false, "parallel_parts_disabled"
 	}
 
-	target := classifyUploadV2Target(part)
+	target := classifyUploadV2Target(part, classifiers...)
 	plan, ok, reason := newUploadV2PartPlan(target, totalSize)
 	if !ok {
 		return uploadV2PartPlan{}, false, reason
@@ -60,7 +56,7 @@ func newUploadV2PartPlanForUpload(part files_sdk.FileUploadPart, totalSize *int6
 }
 
 func (u *uploadIO) newUploadV2PartPlanForUpload() (uploadV2PartPlan, bool, string) {
-	plan, ok, reason := newUploadV2PartPlanForUpload(u.FileUploadPart, u.Size)
+	plan, ok, reason := newUploadV2PartPlanForUpload(u.FileUploadPart, u.Size, u.uploadV2TargetClassifier)
 	if !ok {
 		return uploadV2PartPlan{}, false, reason
 	}
@@ -117,7 +113,8 @@ func (p uploadV2PartPlan) withS3WorkloadTuning(tuning UploadV2Tuning) (uploadV2P
 	return p, true, ""
 }
 
-func newUploadV2PartPlan(target uploadV2TargetClass, totalSize *int64) (uploadV2PartPlan, bool, string) {
+func newUploadV2PartPlan(target TransferV2TargetClass, totalSize *int64) (uploadV2PartPlan, bool, string) {
+	target = normalizeTransferV2TargetClass(target)
 	plan := uploadV2PartPlan{target: target, totalSize: totalSize}
 	if totalSize == nil {
 		if target == uploadV2TargetS3 {
@@ -125,14 +122,7 @@ func newUploadV2PartPlan(target uploadV2TargetClass, totalSize *int64) (uploadV2
 		}
 		plan.partSize = 8 * uploadV2MiB
 		plan.mode = "unknown_size_growth"
-		switch target {
-		case uploadV2TargetFIW:
-			plan.unknownCap = 64 * uploadV2MiB
-		case uploadV2TargetAgent, uploadV2TargetGeneric:
-			plan.unknownCap = 32 * uploadV2MiB
-		default:
-			plan.unknownCap = 32 * uploadV2MiB
-		}
+		plan.unknownCap = 32 * uploadV2MiB
 		return plan, true, ""
 	}
 
@@ -150,12 +140,8 @@ func newUploadV2PartPlan(target uploadV2TargetClass, totalSize *int64) (uploadV2
 		if plan.partSize > uploadV2S3MaxPartSize {
 			return uploadV2PartPlan{}, false, "s3_part_too_large"
 		}
-	case uploadV2TargetFIW:
-		plan.partSize = fiwKnownSizePreferredPartSize(*totalSize)
-	case uploadV2TargetAgent, uploadV2TargetGeneric:
-		plan.partSize = agentKnownSizePreferredPartSize(*totalSize)
 	default:
-		plan.partSize = agentKnownSizePreferredPartSize(*totalSize)
+		plan.partSize = defaultKnownSizePreferredPartSize(*totalSize)
 	}
 
 	if plan.partSize <= 0 {
@@ -224,18 +210,7 @@ func s3KnownSizePreferredPartSize(totalSize int64) int64 {
 	}
 }
 
-func fiwKnownSizePreferredPartSize(totalSize int64) int64 {
-	switch {
-	case totalSize < 16*uploadV2GiB:
-		return 32 * uploadV2MiB
-	case totalSize < 256*uploadV2GiB:
-		return 64 * uploadV2MiB
-	default:
-		return 128 * uploadV2MiB
-	}
-}
-
-func agentKnownSizePreferredPartSize(totalSize int64) int64 {
+func defaultKnownSizePreferredPartSize(totalSize int64) int64 {
 	switch {
 	case totalSize < 8*uploadV2GiB:
 		return 16 * uploadV2MiB
@@ -321,24 +296,21 @@ func floorPowerOfTwoMiB(bytes int64) int64 {
 	return power * uploadV2MiB
 }
 
-func classifyUploadV2Target(part files_sdk.FileUploadPart) uploadV2TargetClass {
+func classifyUploadV2Target(part files_sdk.FileUploadPart, classifiers ...UploadV2TargetClassifier) TransferV2TargetClass {
+	if len(classifiers) > 0 && classifiers[0] != nil {
+		return normalizeTransferV2TargetClass(classifiers[0](part))
+	}
+
 	parsed, err := url.Parse(part.UploadUri)
 	if err != nil {
-		return uploadV2TargetFIW
+		return uploadV2TargetDefault
 	}
 	host := strings.ToLower(parsed.Hostname())
-	path := strings.ToLower(parsed.EscapedPath())
 
 	if isS3UploadHost(host) {
 		return uploadV2TargetS3
 	}
-	if strings.Contains(host, "agent") || strings.Contains(path, "agent") {
-		return uploadV2TargetAgent
-	}
-	if strings.Contains(host, "fiw") || strings.Contains(host, "files-integration-worker") {
-		return uploadV2TargetFIW
-	}
-	return uploadV2TargetFIW
+	return uploadV2TargetDefault
 }
 
 func isS3UploadHost(host string) bool {

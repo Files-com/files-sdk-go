@@ -86,7 +86,7 @@ func uploadV2ChecksumTrailerDecision(u *uploadIO, plan uploadV2PartPlan) (bool, 
 	return true, ""
 }
 
-func uploadV2ChecksumTrailerSupportedDestination(target uploadV2TargetClass) bool {
+func uploadV2ChecksumTrailerSupportedDestination(target TransferV2TargetClass) bool {
 	return target == uploadV2TargetS3
 }
 

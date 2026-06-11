@@ -119,9 +119,9 @@ func TestUploadV2PartPlannerKnownSizeTargetDefaults(t *testing.T) {
 		uri     string
 		wantLen int64
 	}{
-		{name: "fiw", uri: "https://fiw.example.com/upload/file", wantLen: 32 * uploadV2MiB},
-		{name: "agent", uri: "https://agent.example.com/upload/file", wantLen: 16 * uploadV2MiB},
-		{name: "parallel non s3 defaults to fiw", uri: "https://uploads.example.com/upload/file", wantLen: 32 * uploadV2MiB},
+		{name: "default", uri: "https://uploads.example.com/upload/file", wantLen: 16 * uploadV2MiB},
+		{name: "custom named host still uses default", uri: "https://gateway.example.com/upload/file", wantLen: 16 * uploadV2MiB},
+		{name: "parallel non s3 defaults to default", uri: "https://files.example.com/upload/file", wantLen: 16 * uploadV2MiB},
 	}
 
 	for _, test := range tests {
@@ -138,17 +138,14 @@ func TestUploadV2PartPlannerKnownSizeTargetDefaults(t *testing.T) {
 func TestUploadV2KnownSizeNonS3PreferredPartSizeTiers(t *testing.T) {
 	tests := []struct {
 		name      string
-		target    uploadV2TargetClass
+		target    TransferV2TargetClass
 		totalSize int64
 		want      int64
 	}{
-		{name: "fiw medium uses thirty two mib", target: uploadV2TargetFIW, totalSize: 15 * uploadV2GiB, want: 32 * uploadV2MiB},
-		{name: "fiw large uses sixty four mib", target: uploadV2TargetFIW, totalSize: 16 * uploadV2GiB, want: 64 * uploadV2MiB},
-		{name: "fiw huge uses one hundred twenty eight mib", target: uploadV2TargetFIW, totalSize: 256 * uploadV2GiB, want: 128 * uploadV2MiB},
-		{name: "agent medium uses sixteen mib", target: uploadV2TargetAgent, totalSize: 7 * uploadV2GiB, want: 16 * uploadV2MiB},
-		{name: "agent large uses thirty two mib", target: uploadV2TargetAgent, totalSize: 8 * uploadV2GiB, want: 32 * uploadV2MiB},
-		{name: "agent huge uses sixty four mib", target: uploadV2TargetAgent, totalSize: 128 * uploadV2GiB, want: 64 * uploadV2MiB},
-		{name: "generic follows agent tiers", target: uploadV2TargetGeneric, totalSize: 128 * uploadV2GiB, want: 64 * uploadV2MiB},
+		{name: "default medium uses sixteen mib", target: uploadV2TargetDefault, totalSize: 7 * uploadV2GiB, want: 16 * uploadV2MiB},
+		{name: "default large uses thirty two mib", target: uploadV2TargetDefault, totalSize: 8 * uploadV2GiB, want: 32 * uploadV2MiB},
+		{name: "default huge uses sixty four mib", target: uploadV2TargetDefault, totalSize: 128 * uploadV2GiB, want: 64 * uploadV2MiB},
+		{name: "custom follows default tiers", target: TransferV2TargetClass("custom"), totalSize: 128 * uploadV2GiB, want: 64 * uploadV2MiB},
 	}
 
 	for _, test := range tests {
@@ -160,9 +157,22 @@ func TestUploadV2KnownSizeNonS3PreferredPartSizeTiers(t *testing.T) {
 	}
 }
 
+func TestUploadV2TargetClassifierCanReturnCustomTarget(t *testing.T) {
+	part := uploadV2TestPart("https://uploads.example.com/upload/file")
+	size := int64(100) * uploadV2MiB
+
+	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size, func(files_sdk.FileUploadPart) TransferV2TargetClass {
+		return "custom"
+	})
+
+	require.True(t, ok, reason)
+	assert.Equal(t, TransferV2TargetClass("custom"), plan.target)
+	assert.Equal(t, int64(16)*uploadV2MiB, plan.partSize)
+}
+
 func TestUploadV2PartPlannerUnknownSizeGrowth(t *testing.T) {
-	t.Run("generic caps at thirty two mib", func(t *testing.T) {
-		plan, ok, _ := newUploadV2PartPlan(uploadV2TargetGeneric, nil)
+	t.Run("default caps at thirty two mib", func(t *testing.T) {
+		plan, ok, _ := newUploadV2PartPlan(uploadV2TargetDefault, nil)
 		require.True(t, ok)
 		assert.Equal(t, 8*uploadV2MiB, plan.partSizeForIndex(0))
 		assert.Equal(t, 8*uploadV2MiB, plan.partSizeForIndex(127))
@@ -171,14 +181,14 @@ func TestUploadV2PartPlannerUnknownSizeGrowth(t *testing.T) {
 		assert.Equal(t, 32*uploadV2MiB, plan.partSizeForIndex(384))
 	})
 
-	t.Run("fiw caps at sixty four mib", func(t *testing.T) {
-		plan, ok, _ := newUploadV2PartPlan(uploadV2TargetFIW, nil)
+	t.Run("custom caps at thirty two mib", func(t *testing.T) {
+		plan, ok, _ := newUploadV2PartPlan(TransferV2TargetClass("custom"), nil)
 		require.True(t, ok)
 		assert.Equal(t, 8*uploadV2MiB, plan.partSizeForIndex(0))
+		assert.Equal(t, 8*uploadV2MiB, plan.partSizeForIndex(127))
 		assert.Equal(t, 16*uploadV2MiB, plan.partSizeForIndex(128))
 		assert.Equal(t, 32*uploadV2MiB, plan.partSizeForIndex(256))
-		assert.Equal(t, 64*uploadV2MiB, plan.partSizeForIndex(384))
-		assert.Equal(t, 64*uploadV2MiB, plan.partSizeForIndex(512))
+		assert.Equal(t, 32*uploadV2MiB, plan.partSizeForIndex(384))
 	})
 
 	t.Run("s3 unknown size uses v1 fallback", func(t *testing.T) {
@@ -251,7 +261,7 @@ func TestUploadV2PartPlannerIsGated(t *testing.T) {
 	v2Iterator, ok := newUploadV2PartIterator(v1.FileUploadPart, v1.Size, 0, 0)
 	require.True(t, ok)
 	v2Offset, _, _ := v2Iterator()
-	assert.Equal(t, 32*uploadV2MiB, v2Offset.len)
+	assert.Equal(t, 16*uploadV2MiB, v2Offset.len)
 }
 
 func TestUploadWithV2EnablesAdaptiveConcurrencyAndTelemetry(t *testing.T) {
@@ -274,7 +284,7 @@ func TestUploadWithV2EnablesAdaptiveConcurrencyAndTelemetry(t *testing.T) {
 	require.NoError(t, err)
 	logText := logs.String()
 	assert.Contains(t, logText, "event: upload v2 enabled")
-	assert.Contains(t, logText, "target_class: fiw")
+	assert.Contains(t, logText, "target_class: default")
 	assert.Contains(t, logText, "part_size_mode: known_size")
 	assert.Contains(t, logText, "adaptive_initial_target: 8")
 	assert.Contains(t, logText, "adaptive_max_target: 75")
@@ -476,7 +486,7 @@ func TestUploadV2ChecksumTrailerFeatureFlagSkipsUnsupportedDestination(t *testin
 			Request:    req,
 		}, nil
 	})
-	part := uploadV2TestPart("https://fiw.example.com/upload/key?part_number=1")
+	part := uploadV2TestPart("https://uploads.example.com/upload/key?part_number=1")
 	part.HttpMethod = "POST"
 	part.PartNumber = 1
 	config := files_sdk.Config{}.Init().SetCustomClient(&http.Client{Transport: transport})
@@ -1142,8 +1152,12 @@ func (p *uploadV2GateTestParent) WaitForADone() bool {
 	return false
 }
 
+func (p *uploadV2GateTestParent) WaitForADoneWithContext(context.Context) bool {
+	return false
+}
+
 func TestUploadV2PreallocationIsBoundedByConcurrency(t *testing.T) {
-	part := uploadV2TestPart("https://fiw.example.com/upload/file")
+	part := uploadV2TestPart("https://uploads.example.com/upload/file")
 	size := int64(1) << 50
 	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
 	require.True(t, ok, reason)
@@ -1737,8 +1751,8 @@ func TestUploadV2ResumeValidation(t *testing.T) {
 
 	t.Run("accepts contiguous offset parts", func(t *testing.T) {
 		engine.u.Parts = Parts{
-			NewPart(1, 0, 32*uploadV2MiB, 32*uploadV2MiB, "one", "1", ""),
-			NewPart(2, 32*uploadV2MiB, 32*uploadV2MiB, 0, "", "", "interrupted"),
+			NewPart(1, 0, 16*uploadV2MiB, 16*uploadV2MiB, "one", "1", ""),
+			NewPart(2, 16*uploadV2MiB, 16*uploadV2MiB, 0, "", "", "interrupted"),
 		}
 		engine.u.Parts[0].FileUploadPart.UploadUri = "https://uploads.example.com/upload/file?part_number=1&part_offset=0"
 		assert.Empty(t, engine.resumeResetReason())
@@ -1746,8 +1760,8 @@ func TestUploadV2ResumeValidation(t *testing.T) {
 
 	t.Run("rejects offset gaps", func(t *testing.T) {
 		engine.u.Parts = Parts{
-			NewPart(1, 0, 32*uploadV2MiB, 32*uploadV2MiB, "one", "1", ""),
-			NewPart(2, 64*uploadV2MiB, 32*uploadV2MiB, 0, "", "", "interrupted"),
+			NewPart(1, 0, 16*uploadV2MiB, 16*uploadV2MiB, "one", "1", ""),
+			NewPart(2, 32*uploadV2MiB, 16*uploadV2MiB, 0, "", "", "interrupted"),
 		}
 		engine.u.Parts[0].FileUploadPart.UploadUri = "https://uploads.example.com/upload/file?part_number=1&part_offset=0"
 		assert.Equal(t, "non_contiguous_part_offset", engine.resumeResetReason())
@@ -1755,7 +1769,7 @@ func TestUploadV2ResumeValidation(t *testing.T) {
 
 	t.Run("rejects successful offset upload parts without part offset", func(t *testing.T) {
 		engine.u.Parts = Parts{
-			NewPart(1, 0, 32*uploadV2MiB, 32*uploadV2MiB, "one", "1", ""),
+			NewPart(1, 0, 16*uploadV2MiB, 16*uploadV2MiB, "one", "1", ""),
 		}
 		engine.u.Parts[0].FileUploadPart.UploadUri = "https://uploads.example.com/upload/file?part_number=1"
 		assert.Equal(t, "successful_offset_part_missing_part_offset", engine.resumeResetReason())
