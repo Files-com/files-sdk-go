@@ -70,7 +70,7 @@ type DownloaderParams struct {
 func (c *Client) Downloader(params DownloaderParams, opts ...files_sdk.RequestResponseOption) *Job {
 	params.config = c.Config
 	if params.AdaptiveConcurrency && (params.AdaptiveConcurrencyUseSDKDefaultCaps || params.Manager == nil) {
-		params.config = params.config.SetCustomClient(manager.New(manager.AdaptiveDownloadV2ConcurrentFiles, manager.AdaptiveDownloadV2ConcurrentFileParts, manager.ConcurrentDirectoryList).CreateMatchingClient(params.config.HTTPClient))
+		params.config = params.config.SetCustomClient(manager.New(manager.AdaptiveDownloadV2ConcurrentFiles, manager.EffectiveAdaptiveDownloadV2ConcurrentFileParts(), manager.ConcurrentDirectoryList).CreateMatchingClient(params.config.HTTPClient))
 	}
 	job := downloader(files_sdk.ContextOption(opts), (&FS{}).Init(params.config, true), params, opts...)
 	registerSyncAfterActions(job, params.SyncAfterActions, params.DryRun, params.config, opts...)

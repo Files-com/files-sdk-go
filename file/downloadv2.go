@@ -397,7 +397,7 @@ func downloadV2MaxConcurrency(job *Job, params DownloaderParams) int {
 	if params.Manager != nil && !params.AdaptiveConcurrencyUseSDKDefaultCaps {
 		return max(1, job.Manager.FilePartsManager.Max())
 	}
-	return manager.AdaptiveDownloadV2ConcurrentFileParts
+	return manager.EffectiveAdaptiveDownloadV2ConcurrentFileParts()
 }
 
 func downloadV2AdaptiveConcurrencyConfig(target downloadV2TargetClass, maxConcurrency int, totalSize int64, partSize int64) lib.AdaptiveConcurrencyConfig {

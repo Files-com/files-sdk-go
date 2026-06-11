@@ -5,6 +5,7 @@ import (
 	"math"
 	"net/http"
 	"sync"
+	"sync/atomic"
 
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
@@ -35,6 +36,60 @@ var (
 	sharedDefaultOnce    sync.Once
 	sharedDefaultManager *Manager
 )
+
+var (
+	adaptiveUploadV2ConcurrentFilePartsOverride   atomic.Int64
+	adaptiveDownloadV2ConcurrentFilePartsOverride atomic.Int64
+)
+
+// SetAdaptiveUploadV2ConcurrentFileParts sets the process-wide maximum for
+// adaptive upload V2 HTTP part concurrency. Values less than 1 reset the SDK
+// to its target-specific defaults.
+func SetAdaptiveUploadV2ConcurrentFileParts(maxConcurrentFileParts int) {
+	adaptiveUploadV2ConcurrentFilePartsOverride.Store(adaptiveConcurrentFilePartsOverride(maxConcurrentFileParts))
+}
+
+// EffectiveAdaptiveUploadV2ConcurrentFileParts returns defaultMax capped by the
+// process-wide adaptive upload V2 override, when one is configured.
+func EffectiveAdaptiveUploadV2ConcurrentFileParts(defaultMax int) int {
+	return effectiveAdaptiveConcurrentFileParts(defaultMax, adaptiveUploadV2ConcurrentFilePartsOverride.Load())
+}
+
+// SetAdaptiveDownloadV2ConcurrentFileParts sets the process-wide maximum for
+// adaptive download V2 HTTP range concurrency. Values less than 1 reset the SDK
+// to its default.
+func SetAdaptiveDownloadV2ConcurrentFileParts(maxConcurrentFileParts int) {
+	adaptiveDownloadV2ConcurrentFilePartsOverride.Store(adaptiveConcurrentFilePartsOverride(maxConcurrentFileParts))
+}
+
+// EffectiveAdaptiveDownloadV2ConcurrentFileParts returns the adaptive download
+// V2 max with the process-wide override applied, when one is configured.
+func EffectiveAdaptiveDownloadV2ConcurrentFileParts() int {
+	return effectiveAdaptiveConcurrentFileParts(
+		AdaptiveDownloadV2ConcurrentFileParts,
+		adaptiveDownloadV2ConcurrentFilePartsOverride.Load(),
+	)
+}
+
+func adaptiveConcurrentFilePartsOverride(maxConcurrentFileParts int) int64 {
+	if maxConcurrentFileParts < 1 {
+		return 0
+	}
+	return int64(maxConcurrentFileParts)
+}
+
+func effectiveAdaptiveConcurrentFileParts(defaultMax int, override int64) int {
+	if defaultMax < 1 {
+		defaultMax = 1
+	}
+	if override < 1 {
+		return defaultMax
+	}
+	if overrideMax := int(override); overrideMax < defaultMax {
+		return overrideMax
+	}
+	return defaultMax
+}
 
 type Manager struct {
 	FilesManager            ConcurrencyManager

@@ -8,6 +8,7 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/directory"
+	"github.com/Files-com/files-sdk-go/v3/file/manager"
 	"github.com/Files-com/files-sdk-go/v3/file/status"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
@@ -503,13 +504,13 @@ func (u *uploadIO) uploadV2MaxConcurrency() int {
 
 	switch classifyUploadV2Target(u.FileUploadPart) {
 	case uploadV2TargetS3:
-		return uploadV2S3MaxConcurrency
+		return manager.EffectiveAdaptiveUploadV2ConcurrentFileParts(uploadV2S3MaxConcurrency)
 	case uploadV2TargetAgent:
-		return 128
+		return manager.EffectiveAdaptiveUploadV2ConcurrentFileParts(128)
 	case uploadV2TargetFIW:
-		return 192
+		return manager.EffectiveAdaptiveUploadV2ConcurrentFileParts(192)
 	default:
-		return 64
+		return manager.EffectiveAdaptiveUploadV2ConcurrentFileParts(64)
 	}
 }
 
