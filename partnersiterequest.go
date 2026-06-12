@@ -8,15 +8,15 @@ import (
 )
 
 type PartnerSiteRequest struct {
-	Id           int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	PartnerId    int64      `json:"partner_id,omitempty" path:"partner_id,omitempty" url:"partner_id,omitempty"`
-	LinkedSiteId int64      `json:"linked_site_id,omitempty" path:"linked_site_id,omitempty" url:"linked_site_id,omitempty"`
-	Status       string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
-	MainSiteName string     `json:"main_site_name,omitempty" path:"main_site_name,omitempty" url:"main_site_name,omitempty"`
-	PairingKey   string     `json:"pairing_key,omitempty" path:"pairing_key,omitempty" url:"pairing_key,omitempty"`
-	CreatedAt    *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	UpdatedAt    *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
-	SiteUrl      string     `json:"site_url,omitempty" path:"site_url,omitempty" url:"site_url,omitempty"`
+	Id            int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	HostPartnerId int64      `json:"host_partner_id,omitempty" path:"host_partner_id,omitempty" url:"host_partner_id,omitempty"`
+	GuestSiteId   int64      `json:"guest_site_id,omitempty" path:"guest_site_id,omitempty" url:"guest_site_id,omitempty"`
+	Status        string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	HostSiteName  string     `json:"host_site_name,omitempty" path:"host_site_name,omitempty" url:"host_site_name,omitempty"`
+	PairingKey    string     `json:"pairing_key,omitempty" path:"pairing_key,omitempty" url:"pairing_key,omitempty"`
+	CreatedAt     *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	UpdatedAt     *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
+	SiteUrl       string     `json:"site_url,omitempty" path:"site_url,omitempty" url:"site_url,omitempty"`
 }
 
 func (p PartnerSiteRequest) Identifier() interface{} {
@@ -34,8 +34,8 @@ type PartnerSiteRequestFindByPairingKeyParams struct {
 }
 
 type PartnerSiteRequestCreateParams struct {
-	PartnerId int64  `url:"partner_id" json:"partner_id" path:"partner_id"`
-	SiteUrl   string `url:"site_url" json:"site_url" path:"site_url"`
+	HostPartnerId int64  `url:"host_partner_id" json:"host_partner_id" path:"host_partner_id"`
+	SiteUrl       string `url:"site_url" json:"site_url" path:"site_url"`
 }
 
 // Reject partner site request

@@ -18,6 +18,7 @@ type Partner struct {
 	Name                       string  `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Notes                      string  `json:"notes,omitempty" path:"notes,omitempty" url:"notes,omitempty"`
 	PartnerAdminIds            []int64 `json:"partner_admin_ids,omitempty" path:"partner_admin_ids,omitempty" url:"partner_admin_ids,omitempty"`
+	PartnershipRole            string  `json:"partnership_role,omitempty" path:"partnership_role,omitempty" url:"partnership_role,omitempty"`
 	ResponsibleGroupId         int64   `json:"responsible_group_id,omitempty" path:"responsible_group_id,omitempty" url:"responsible_group_id,omitempty"`
 	ResponsibleUserId          int64   `json:"responsible_user_id,omitempty" path:"responsible_user_id,omitempty" url:"responsible_user_id,omitempty"`
 	RootFolder                 string  `json:"root_folder,omitempty" path:"root_folder,omitempty" url:"root_folder,omitempty"`

@@ -7,12 +7,15 @@ import (
 )
 
 type PartnerSite struct {
-	PartnerId      int64  `json:"partner_id,omitempty" path:"partner_id,omitempty" url:"partner_id,omitempty"`
-	PartnerName    string `json:"partner_name,omitempty" path:"partner_name,omitempty" url:"partner_name,omitempty"`
-	LinkedSiteId   int64  `json:"linked_site_id,omitempty" path:"linked_site_id,omitempty" url:"linked_site_id,omitempty"`
-	LinkedSiteName string `json:"linked_site_name,omitempty" path:"linked_site_name,omitempty" url:"linked_site_name,omitempty"`
-	MainSiteId     int64  `json:"main_site_id,omitempty" path:"main_site_id,omitempty" url:"main_site_id,omitempty"`
-	MainSiteName   string `json:"main_site_name,omitempty" path:"main_site_name,omitempty" url:"main_site_name,omitempty"`
+	HostPartnerId    int64  `json:"host_partner_id,omitempty" path:"host_partner_id,omitempty" url:"host_partner_id,omitempty"`
+	HostPartnerName  string `json:"host_partner_name,omitempty" path:"host_partner_name,omitempty" url:"host_partner_name,omitempty"`
+	GuestPartnerId   int64  `json:"guest_partner_id,omitempty" path:"guest_partner_id,omitempty" url:"guest_partner_id,omitempty"`
+	GuestPartnerName string `json:"guest_partner_name,omitempty" path:"guest_partner_name,omitempty" url:"guest_partner_name,omitempty"`
+	HostSiteId       int64  `json:"host_site_id,omitempty" path:"host_site_id,omitempty" url:"host_site_id,omitempty"`
+	HostSiteName     string `json:"host_site_name,omitempty" path:"host_site_name,omitempty" url:"host_site_name,omitempty"`
+	GuestSiteId      int64  `json:"guest_site_id,omitempty" path:"guest_site_id,omitempty" url:"guest_site_id,omitempty"`
+	GuestSiteName    string `json:"guest_site_name,omitempty" path:"guest_site_name,omitempty" url:"guest_site_name,omitempty"`
+	WorkspaceId      int64  `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 }
 
 // Identifier no path or id
