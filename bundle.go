@@ -100,7 +100,8 @@ type BundleListParams struct {
 }
 
 type BundleFindParams struct {
-	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Id      int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Deleted *bool `url:"deleted,omitempty" json:"deleted,omitempty" path:"deleted"`
 }
 
 type BundleCreateParams struct {
