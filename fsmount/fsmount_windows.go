@@ -92,7 +92,7 @@ func mountOpts(params MountParams) []string {
 	// sees when probing temp files on the file system.
 	// opts = append(opts, "-o", "uid=-1")
 	// opts = append(opts, "-o", "gid=-1")
-	if params.VolumeName != "" {
+	if params.VolumeName != "" && !params.DisableMountVolumePrefix {
 		opts = append(opts, "--VolumePrefix=\\Files.com\\"+params.VolumeName)
 	}
 

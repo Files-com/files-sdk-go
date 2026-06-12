@@ -82,6 +82,11 @@ type MountParams struct {
 	// share name for the UNC path. Defaults to "Files.com".
 	VolumeName string
 
+	// Optional. On Windows, disables the volume prefix mount option. If set to true, the --VolumePrefix
+	// option will not be used when starting the mount.
+	// Defaults to false.
+	DisableMountVolumePrefix bool
+
 	// Optional. Files.com path to mount as the root of the file system. Defaults to the site root.
 	Root string
 
