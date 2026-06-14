@@ -10,13 +10,12 @@ import (
 type PartnerSiteRequest struct {
 	Id            int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	HostPartnerId int64      `json:"host_partner_id,omitempty" path:"host_partner_id,omitempty" url:"host_partner_id,omitempty"`
-	GuestSiteId   int64      `json:"guest_site_id,omitempty" path:"guest_site_id,omitempty" url:"guest_site_id,omitempty"`
+	GuestSiteUrl  string     `json:"guest_site_url,omitempty" path:"guest_site_url,omitempty" url:"guest_site_url,omitempty"`
 	Status        string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
 	HostSiteName  string     `json:"host_site_name,omitempty" path:"host_site_name,omitempty" url:"host_site_name,omitempty"`
 	PairingKey    string     `json:"pairing_key,omitempty" path:"pairing_key,omitempty" url:"pairing_key,omitempty"`
 	CreatedAt     *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 	UpdatedAt     *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
-	SiteUrl       string     `json:"site_url,omitempty" path:"site_url,omitempty" url:"site_url,omitempty"`
 }
 
 func (p PartnerSiteRequest) Identifier() interface{} {
@@ -26,6 +25,8 @@ func (p PartnerSiteRequest) Identifier() interface{} {
 type PartnerSiteRequestCollection []PartnerSiteRequest
 
 type PartnerSiteRequestListParams struct {
+	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
@@ -35,17 +36,15 @@ type PartnerSiteRequestFindByPairingKeyParams struct {
 
 type PartnerSiteRequestCreateParams struct {
 	HostPartnerId int64  `url:"host_partner_id" json:"host_partner_id" path:"host_partner_id"`
-	SiteUrl       string `url:"site_url" json:"site_url" path:"site_url"`
+	GuestSiteUrl  string `url:"guest_site_url" json:"guest_site_url" path:"guest_site_url"`
 }
 
-// Reject partner site request
 type PartnerSiteRequestRejectParams struct {
-	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	PairingKey string `url:"pairing_key" json:"pairing_key" path:"pairing_key"`
 }
 
-// Approve partner site request
 type PartnerSiteRequestApproveParams struct {
-	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	PairingKey string `url:"pairing_key" json:"pairing_key" path:"pairing_key"`
 }
 
 type PartnerSiteRequestDeleteParams struct {

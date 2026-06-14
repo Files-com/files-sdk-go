@@ -10,6 +10,7 @@ import (
 type EventChannel struct {
 	Id             int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name           string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	WorkspaceId    int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	Description    string     `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
 	Enabled        *bool      `json:"enabled,omitempty" path:"enabled,omitempty" url:"enabled,omitempty"`
 	DefaultChannel *bool      `json:"default_channel,omitempty" path:"default_channel,omitempty" url:"default_channel,omitempty"`
@@ -35,6 +36,7 @@ type EventChannelFindParams struct {
 
 type EventChannelCreateParams struct {
 	Name           string `url:"name" json:"name" path:"name"`
+	WorkspaceId    int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	Description    string `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	Enabled        *bool  `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
 	DefaultChannel *bool  `url:"default_channel,omitempty" json:"default_channel,omitempty" path:"default_channel"`
@@ -43,6 +45,7 @@ type EventChannelCreateParams struct {
 type EventChannelUpdateParams struct {
 	Id             int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name           string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	WorkspaceId    int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	Description    string `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	Enabled        *bool  `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
 	DefaultChannel *bool  `url:"default_channel,omitempty" json:"default_channel,omitempty" path:"default_channel"`

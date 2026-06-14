@@ -58,7 +58,7 @@ func Create(params files_sdk.PartnerSiteRequestCreateParams, opts ...files_sdk.R
 }
 
 func (c *Client) Reject(params files_sdk.PartnerSiteRequestRejectParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/partner_site_requests/{id}/reject", Params: params, Entity: nil}, opts...)
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/partner_site_requests/reject", Params: params, Entity: nil}, opts...)
 	return
 }
 
@@ -67,7 +67,7 @@ func Reject(params files_sdk.PartnerSiteRequestRejectParams, opts ...files_sdk.R
 }
 
 func (c *Client) Approve(params files_sdk.PartnerSiteRequestApproveParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/partner_site_requests/{id}/approve", Params: params, Entity: nil}, opts...)
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/partner_site_requests/approve", Params: params, Entity: nil}, opts...)
 	return
 }
 
