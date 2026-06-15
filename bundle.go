@@ -173,10 +173,10 @@ type BundleUpdateParams struct {
 	StartAccessOnDate                            *time.Time            `url:"start_access_on_date,omitempty" json:"start_access_on_date,omitempty" path:"start_access_on_date"`
 	SkipEmail                                    *bool                 `url:"skip_email,omitempty" json:"skip_email,omitempty" path:"skip_email"`
 	SkipName                                     *bool                 `url:"skip_name,omitempty" json:"skip_name,omitempty" path:"skip_name"`
-	WorkspaceId                                  int64                 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	UserId                                       int64                 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	WatermarkAttachmentDelete                    *bool                 `url:"watermark_attachment_delete,omitempty" json:"watermark_attachment_delete,omitempty" path:"watermark_attachment_delete"`
 	WatermarkAttachmentFile                      io.Writer             `url:"watermark_attachment_file,omitempty" json:"watermark_attachment_file,omitempty" path:"watermark_attachment_file"`
+	WorkspaceId                                  int64                 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 type BundleDeleteParams struct {
