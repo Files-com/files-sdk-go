@@ -560,7 +560,11 @@ func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
 			action, err := fs.backend.move(files_sdk.FileMoveParams{
 				Path:        oldRemotePath,
 				Destination: newRemotePath,
-				Overwrite:   lib.Ptr(true),
+				// FUSE Rename only provides old and new paths; it does not tell us
+				// whether the shell already prompted and confirmed a replacement.
+				// Keep overwrite=true so confirmed Explorer/Finder replacement flows
+				// complete instead of failing at the API layer.
+				Overwrite: lib.Ptr(true),
 			})
 			if err != nil {
 				return err
