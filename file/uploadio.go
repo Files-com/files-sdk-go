@@ -94,9 +94,10 @@ type uploadIO struct {
 	uploadV2Tuning             UploadV2Tuning
 	uploadV1Stats              uploadV1SchedulerStats
 
-	onComplete    chan *Part
-	partsFinished chan struct{}
-	bytesWritten  int64
+	onComplete      chan *Part
+	partsFinished   chan struct{}
+	transferStarted *atomic.Bool
+	bytesWritten    int64
 	*Client
 	etags                      []files_sdk.EtagsParam
 	file                       files_sdk.File
@@ -110,6 +111,7 @@ type uploadIO struct {
 func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
 	u.notResumable = &atomic.Bool{}
 	u.notResumable.Store(false)
+	u.transferStarted = &atomic.Bool{}
 	u.uploadV1Stats.enable(u.Client != nil && u.Config.InDebug())
 
 	if u.Path == "" {
@@ -530,12 +532,23 @@ func (u *uploadIO) startUpload(ctx context.Context, beginUpload files_sdk.FileBe
 	if err != nil {
 		return files_sdk.FileUploadPart{}, err
 	}
-	u.Progress(0)
+	if !u.uploadV2 {
+		u.markTransferStarted()
+	}
 	part := uploads[0]
 	if u.startedCallback != nil {
 		u.startedCallback(part)
 	}
 	return part, err
+}
+
+func (u *uploadIO) markTransferStarted() {
+	// uploadIO is scoped to one file. Upload v2 acquires capacity once per part,
+	// so keep the zero-byte start signal idempotent across parts.
+	if !u.transferStarted.CompareAndSwap(false, true) {
+		return
+	}
+	u.Progress(0)
 }
 
 func (u *uploadIO) completeUpload(ctx context.Context, providedMtime *time.Time, etags []files_sdk.EtagsParam, bytesWritten int64, path string, ref string) (files_sdk.File, error) {

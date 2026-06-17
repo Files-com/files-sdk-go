@@ -328,6 +328,88 @@ func TestUploadWithV2ReadyRunwayOverridesDefaults(t *testing.T) {
 	assert.Contains(t, logText, "ready_runway_bytes: 67108864")
 }
 
+func TestUploadWithV2KeepsStatusQueuedUntilAdaptivePartSlot(t *testing.T) {
+	server := (&MockAPIServer{T: t}).Do()
+	defer server.Shutdown()
+	server.MockFiles["v2-queued.txt"] = mockFile{File: files_sdk.File{Size: 1}}
+
+	client := server.Client()
+	job := (&Job{
+		Config: client.Config,
+		Logger: client.Config.Logger,
+	}).Init()
+	uploadStatus := &UploadStatus{
+		Mutex:      &sync.RWMutex{},
+		status:     status.Queued,
+		job:        job,
+		localPath:  "v2-queued.txt",
+		remotePath: "v2-queued.txt",
+		file: files_sdk.File{
+			Path: "v2-queued.txt",
+			Size: 1,
+		},
+	}
+	blockedManager := lib.NewAdaptiveConcurrencyManagerWithConfig(lib.AdaptiveConcurrencyConfig{
+		MaxConcurrency: 1,
+		InitialTarget:  1,
+		MinTarget:      1,
+	})
+	blockedManager.Wait()
+	released := false
+	done := make(chan error, 1)
+	defer func() {
+		if !released {
+			released = true
+			blockedManager.DoneNeutral()
+			select {
+			case <-done:
+			case <-time.After(time.Second):
+			}
+		}
+	}()
+
+	go func() {
+		_, err := client.UploadWithResume(
+			UploadWithV2(),
+			UploadWithReaderAt(bytes.NewReader([]byte("x"))),
+			UploadWithDestinationPath("v2-queued.txt"),
+			UploadWithSize(1),
+			UploadWithManager(lib.NewConstrainedWorkGroup(2)),
+			UploadWithProgress(uploadProgress(uploadStatus)),
+			uploadWithV2AdaptiveManagerProvider(func(uploadV2PartPlan, int, UploadV2Tuning) *lib.AdaptiveConcurrencyManager {
+				return blockedManager
+			}),
+		)
+		done <- err
+	}()
+
+	trackedRequestCount := func(route string) int {
+		server.traceMutex.Lock()
+		defer server.traceMutex.Unlock()
+		return len(server.TrackRequest[route])
+	}
+	deadline := time.Now().Add(time.Second)
+	for time.Now().Before(deadline) && trackedRequestCount("/api/rest/v1/file_actions/begin_upload/*path") == 0 {
+		time.Sleep(10 * time.Millisecond)
+	}
+	require.NotZero(t, trackedRequestCount("/api/rest/v1/file_actions/begin_upload/*path"))
+
+	time.Sleep(50 * time.Millisecond)
+	assert.Equal(t, status.Queued, uploadStatus.Status())
+	assert.Zero(t, trackedRequestCount("/upload/*path"))
+
+	released = true
+	blockedManager.DoneNeutral()
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for upload v2 to finish")
+	}
+	assert.Equal(t, status.Uploading, uploadStatus.Status())
+	assert.Equal(t, 1, trackedRequestCount("/upload/*path"))
+}
+
 func TestUploadWithV2ReadyRunwayRejectsNegativeValues(t *testing.T) {
 	_, err := UploadWithV2ReadyRunway(-1, 0)(uploadIO{})
 	require.Error(t, err)

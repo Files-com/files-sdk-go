@@ -163,7 +163,6 @@ func (e *downloadV2Engine) Run(parentCtx context.Context) (err error) {
 		}
 	}()
 
-	e.reportStatus.Job().UpdateStatusWithBytes(status.Downloading, e.reportStatus, 0)
 	if err = downloadV2PreallocateFile(e.file, e.totalSize); err != nil {
 		return err
 	}
@@ -182,12 +181,17 @@ func (e *downloadV2Engine) Run(parentCtx context.Context) (err error) {
 			wg.Wait()
 			close(results)
 		}()
+		started := false
 		for _, part := range e.parts {
 			if ctx.Err() != nil {
 				return
 			}
 			if !e.manager.WaitWithContext(ctx) {
 				return
+			}
+			if !started {
+				e.reportStatus.Job().UpdateStatusWithBytes(status.Downloading, e.reportStatus, 0)
+				started = true
 			}
 			wg.Add(1)
 			go func(part downloadV2Part) {

@@ -790,6 +790,75 @@ func TestDownloadV2PreallocatedTempFileWriteAt(t *testing.T) {
 	assert.Equal(t, source, written)
 }
 
+func TestDownloadV2KeepsStatusQueuedUntilAdaptivePartSlot(t *testing.T) {
+	size := int64(20 * 1024 * 1024)
+	source := bytes.Repeat([]byte("a"), int(size))
+	ranger := &downloadV2TestRangeFile{
+		data:        source,
+		downloadURI: "https://bucket.s3.us-east-1.amazonaws.com/native.bin?X-Amz-Signature=test",
+		info: Info{File: files_sdk.File{
+			DisplayName: "native.bin",
+			Path:        "native.bin",
+			Type:        "file",
+			Size:        size,
+			Crc32:       "crc32",
+		}, sizeTrust: TrustedSizeValue},
+	}
+	tmpPath := filepath.Join(t.TempDir(), "native.bin.download")
+	params := DownloaderParams{
+		AdaptiveConcurrency: true,
+		Manager:             manager.Build(2, 1),
+	}
+	reportStatus := downloadV2TestStatus(ranger, ranger.info, params, tmpPath)
+	downloadingEvents := 0
+	reportStatus.Job().RegisterFileEvent(func(JobFile) {
+		downloadingEvents++
+	}, status.Downloading)
+	file, err := os.OpenFile(tmpPath, os.O_CREATE|os.O_RDWR, 0644)
+	require.NoError(t, err)
+
+	blockedManager := lib.NewAdaptiveConcurrencyManagerWithConfig(lib.AdaptiveConcurrencyConfig{
+		MaxConcurrency: 1,
+		InitialTarget:  1,
+		MinTarget:      1,
+	})
+	blockedManager.Wait()
+	released := false
+	done := make(chan error, 1)
+	defer func() {
+		if !released {
+			released = true
+			blockedManager.DoneNeutral()
+			select {
+			case <-done:
+			case <-time.After(time.Second):
+			}
+		}
+	}()
+
+	engine := newDownloadV2Engine(reportStatus, ranger, file, downloadV2TargetS3, size, 0, downloadV2KnownSizePartSize(downloadV2TargetS3, size), params)
+	engine.manager = blockedManager
+	go func() {
+		done <- engine.Run(context.Background())
+	}()
+
+	time.Sleep(50 * time.Millisecond)
+	assert.Equal(t, status.Queued, reportStatus.Status())
+	assert.Empty(t, ranger.Ranges())
+
+	released = true
+	blockedManager.DoneNeutral()
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for download v2 to finish")
+	}
+	assert.Equal(t, 1, downloadingEvents)
+	assert.Equal(t, size, reportStatus.TransferBytes())
+	assert.NotEmpty(t, ranger.Ranges())
+}
+
 func TestDownloadV2RequiresExplicitAdaptiveConcurrency(t *testing.T) {
 	size := int64(20 * 1024 * 1024)
 	ranger := &downloadV2TestRangeFile{

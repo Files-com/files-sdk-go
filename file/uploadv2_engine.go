@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
@@ -179,6 +180,11 @@ func (g *uploadV2PartConcurrencyGate) WaitForADoneWithContext(ctx context.Contex
 }
 
 func newUploadV2Engine(u *uploadIO, plan uploadV2PartPlan) *uploadV2Engine {
+	if u.transferStarted == nil {
+		// Production uploads initialize this in Run. Some focused engine tests
+		// construct uploadIO directly, so keep the engine helper self-contained.
+		u.transferStarted = &atomic.Bool{}
+	}
 	maxConcurrency := u.uploadV2MaxConcurrency()
 	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(uploadV2AdaptiveConcurrencyConfigWithInitial(plan, maxConcurrency, uploadV2InitialConcurrencyForPlan(plan, maxConcurrency, u.uploadV2Tuning), u.uploadV2Tuning))
 	if u.uploadV2ManagerProvider != nil {
@@ -939,11 +945,13 @@ func (e *uploadV2Engine) waitForPartCapacity(ctx context.Context, wait lib.Concu
 	}
 	e.stats.recordAdaptiveWait(time.Since(start), true)
 	if e.globalManager == nil {
+		e.u.markTransferStarted()
 		return true
 	}
 	start = time.Now()
 	if e.globalManager.WaitWithContext(ctx) {
 		e.stats.recordGlobalWait(time.Since(start), true)
+		e.u.markTransferStarted()
 		return true
 	}
 	e.stats.recordGlobalWait(time.Since(start), false)
