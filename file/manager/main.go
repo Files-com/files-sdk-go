@@ -97,6 +97,12 @@ type Manager struct {
 	DirectoryListingManager ConcurrencyManager
 }
 
+// TransferStats describes current transfer worker usage.
+type TransferStats struct {
+	Active int
+	Max    int
+}
+
 type ConcurrencyManager struct {
 	*lib.ConstrainedWorkGroup
 	DownloadFilesAsSingleStream bool
@@ -161,5 +167,16 @@ func (m *Manager) CreateMatchingClient(client *http.Client) *http.Client {
 		defaultTransport.MaxConnsPerHost = m.FilePartsManager.Max()
 		client.Transport = defaultTransport
 		return client
+	}
+}
+
+// TransferStats returns the transfer worker usage for this manager.
+func (m *Manager) TransferStats() TransferStats {
+	if m == nil || m.FilePartsManager.ConstrainedWorkGroup == nil {
+		return TransferStats{}
+	}
+	return TransferStats{
+		Active: max(m.FilePartsManager.RunningCount(), 0),
+		Max:    max(m.FilePartsManager.Max(), 0),
 	}
 }

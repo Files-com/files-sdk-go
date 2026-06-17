@@ -1642,6 +1642,31 @@ func TestUploadV2JobsShareAdaptiveManagerGlobally(t *testing.T) {
 	assert.Same(t, first, second)
 }
 
+func TestAdaptiveTransferStatsReportsSharedUploadManagers(t *testing.T) {
+	resetUploadV2SharedAdaptiveManagersForTest()
+	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
+	size := int64(10) * uploadV2GiB
+	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+	require.True(t, ok, reason)
+	firstJob := (&Job{}).Init()
+	secondJob := (&Job{}).Init()
+
+	first := firstJob.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{})
+	second := secondJob.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{})
+	idle := secondJob.uploadV2AdaptiveManager(plan, 25, UploadV2Tuning{})
+	require.Same(t, first, second)
+	require.NotSame(t, first, idle)
+	first.Wait()
+	t.Cleanup(first.Done)
+
+	stats := AdaptiveTransferStats()
+
+	assert.Equal(t, 1, stats.Upload.Active)
+	assert.Equal(t, 50, stats.Upload.Max)
+	assert.Equal(t, 0, stats.Download.Active)
+	assert.Equal(t, 0, stats.Download.Max)
+}
+
 func TestUploadV2SharedAdaptiveManagerKeepsExplicitCapsSeparate(t *testing.T) {
 	resetUploadV2SharedAdaptiveManagersForTest()
 	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
@@ -2057,9 +2082,7 @@ func uploadV2TestPart(uploadURI string) files_sdk.FileUploadPart {
 }
 
 func resetUploadV2SharedAdaptiveManagersForTest() {
-	uploadV2SharedAdaptiveManagers.mu.Lock()
-	defer uploadV2SharedAdaptiveManagers.mu.Unlock()
-	uploadV2SharedAdaptiveManagers.managers = nil
+	uploadV2SharedAdaptiveManagers.resetForTest()
 }
 
 func uploadV2TestQuery(t *testing.T, uploadURI string) url.Values {

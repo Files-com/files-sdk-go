@@ -137,6 +137,9 @@ func (c *Conn) Close() (err error) {
 }
 
 func GetConnectionStatsFromClient(client *http.Client) (map[string]int, bool) {
+	if client == nil {
+		return nil, false
+	}
 	transport, ok := client.Transport.(*Transport)
 	if !ok {
 		return nil, false

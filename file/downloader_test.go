@@ -1048,6 +1048,24 @@ func TestDownloadV2SharedManagerDoesNotStartAtTinyFilePartCount(t *testing.T) {
 	assert.Equal(t, uploadV2S3InitialConcurrency, adaptiveManager.Snapshot().Target)
 }
 
+func TestAdaptiveTransferStatsReportsSharedDownloadManagers(t *testing.T) {
+	resetDownloadV2SharedAdaptiveManagersForTest()
+	first := downloadV2SharedAdaptiveManagers.get(downloadV2TargetDefault, 4, 20*1024*1024, 16*1024*1024)
+	second := downloadV2SharedAdaptiveManagers.get(downloadV2TargetDefault, 4, 20*1024*1024, 16*1024*1024)
+	idle := downloadV2SharedAdaptiveManagers.get(downloadV2TargetDefault, 8, 20*1024*1024, 16*1024*1024)
+	require.Same(t, first, second)
+	require.NotSame(t, first, idle)
+	first.Wait()
+	t.Cleanup(first.Done)
+
+	stats := AdaptiveTransferStats()
+
+	assert.Equal(t, 0, stats.Upload.Active)
+	assert.Equal(t, 0, stats.Upload.Max)
+	assert.Equal(t, 1, stats.Download.Active)
+	assert.Equal(t, 4, stats.Download.Max)
+}
+
 func TestDownloadV2DefaultManagerStartsAtLegacyRangeConcurrency(t *testing.T) {
 	adaptiveManager := lib.NewAdaptiveConcurrencyManagerWithConfig(downloadV2AdaptiveConcurrencyConfig(
 		downloadV2TargetDefault,
@@ -1068,6 +1086,10 @@ func TestDownloadV2CopyAtCoalescesShortReadsBeforeWriting(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, expected, written)
 	assert.Equal(t, []int{downloadV2CopyBufferSize, downloadV2CopyBufferSize, 123}, writer.writeSizes)
+}
+
+func resetDownloadV2SharedAdaptiveManagersForTest() {
+	downloadV2SharedAdaptiveManagers.resetForTest()
 }
 
 type downloadV2TestRange struct {

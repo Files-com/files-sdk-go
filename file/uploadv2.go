@@ -3,7 +3,6 @@ package file
 import (
 	"context"
 	"errors"
-	"sync"
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
@@ -316,8 +315,7 @@ func (c uploadV2ReadyRunwayConfig) resolved() uploadV2ReadyRunwayConfig {
 }
 
 type uploadV2SharedAdaptiveManagerRegistry struct {
-	mu       sync.Mutex
-	managers map[uploadV2AdaptiveManagerCacheKey]*lib.AdaptiveConcurrencyManager
+	adaptiveManagerRegistry[uploadV2AdaptiveManagerCacheKey]
 }
 
 var uploadV2SharedAdaptiveManagers uploadV2SharedAdaptiveManagerRegistry
@@ -329,17 +327,9 @@ func (s *uploadV2SharedAdaptiveManagerRegistry) get(plan uploadV2PartPlan, maxCo
 		maxConcurrency: maxConcurrency,
 		tuning:         tuning,
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.managers == nil {
-		s.managers = make(map[uploadV2AdaptiveManagerCacheKey]*lib.AdaptiveConcurrencyManager)
-	}
-	if manager := s.managers[key]; manager != nil {
-		return manager
-	}
-	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(uploadV2SharedAdaptiveConcurrencyConfig(plan, maxConcurrency, tuning))
-	s.managers[key] = manager
-	return manager
+	return s.managerFor(key, func() *lib.AdaptiveConcurrencyManager {
+		return lib.NewAdaptiveConcurrencyManagerWithConfig(uploadV2SharedAdaptiveConcurrencyConfig(plan, maxConcurrency, tuning))
+	})
 }
 
 func (r *Job) uploadV2AdaptiveManager(plan uploadV2PartPlan, maxConcurrency int, tuning UploadV2Tuning) *lib.AdaptiveConcurrencyManager {

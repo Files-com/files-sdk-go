@@ -74,8 +74,7 @@ type downloadV2URIProvider interface {
 }
 
 type downloadV2SharedAdaptiveManagerRegistry struct {
-	mu       sync.Mutex
-	managers map[downloadV2AdaptiveManagerCacheKey]*lib.AdaptiveConcurrencyManager
+	adaptiveManagerRegistry[downloadV2AdaptiveManagerCacheKey]
 }
 
 var (
@@ -425,17 +424,9 @@ func downloadV2AdaptiveConcurrencyConfig(target TransferV2TargetClass, maxConcur
 
 func (s *downloadV2SharedAdaptiveManagerRegistry) get(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64) *lib.AdaptiveConcurrencyManager {
 	key := downloadV2AdaptiveManagerCacheKey{target: target, maxConcurrency: maxConcurrency}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.managers == nil {
-		s.managers = make(map[downloadV2AdaptiveManagerCacheKey]*lib.AdaptiveConcurrencyManager)
-	}
-	if manager := s.managers[key]; manager != nil {
-		return manager
-	}
-	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(downloadV2SharedAdaptiveConcurrencyConfig(target, maxConcurrency, totalSize, partSize))
-	s.managers[key] = manager
-	return manager
+	return s.managerFor(key, func() *lib.AdaptiveConcurrencyManager {
+		return lib.NewAdaptiveConcurrencyManagerWithConfig(downloadV2SharedAdaptiveConcurrencyConfig(target, maxConcurrency, totalSize, partSize))
+	})
 }
 
 func downloadV2SharedAdaptiveConcurrencyConfig(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64) lib.AdaptiveConcurrencyConfig {

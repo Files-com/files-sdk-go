@@ -54,3 +54,35 @@ func TestAdaptiveDownloadV2ConcurrentFilePartsOverrideCanReset(t *testing.T) {
 		t.Fatalf("EffectiveAdaptiveDownloadV2ConcurrentFileParts() = %d, want %d", got, AdaptiveDownloadV2ConcurrentFileParts)
 	}
 }
+
+func TestManagerTransferStats(t *testing.T) {
+	manager := New(2, 3, 1)
+	manager.FilePartsManager.Wait()
+	manager.FilePartsManager.Wait()
+	t.Cleanup(func() {
+		manager.FilePartsManager.Done()
+		manager.FilePartsManager.Done()
+	})
+
+	stats := manager.TransferStats()
+
+	if stats.Active != 2 {
+		t.Fatalf("TransferStats().Active = %d, want 2", stats.Active)
+	}
+	if stats.Max != 3 {
+		t.Fatalf("TransferStats().Max = %d, want 3", stats.Max)
+	}
+}
+
+func TestNilManagerTransferStats(t *testing.T) {
+	var manager *Manager
+
+	stats := manager.TransferStats()
+
+	if stats.Active != 0 {
+		t.Fatalf("TransferStats().Active = %d, want 0", stats.Active)
+	}
+	if stats.Max != 0 {
+		t.Fatalf("TransferStats().Max = %d, want 0", stats.Max)
+	}
+}
