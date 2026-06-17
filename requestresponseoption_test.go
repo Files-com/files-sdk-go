@@ -152,6 +152,37 @@ func TestBuildRequest(t *testing.T) {
 	assert.Equal(t, "custom-value", modifiedReq.Header.Get("X-Custom-Header"))
 }
 
+func TestWithWorkspaceIdSetsHeader(t *testing.T) {
+	req, err := http.NewRequest("GET", "http://example.com", nil)
+	require.NoError(t, err)
+
+	modifiedReq, err := BuildRequest(req, WithWorkspaceId(456))
+	require.NoError(t, err)
+
+	assert.Equal(t, "456", modifiedReq.Header.Get(workspaceIdHeader))
+}
+
+func TestWithWorkspaceIdCanUseDefaultWorkspace(t *testing.T) {
+	req, err := http.NewRequest("GET", "http://example.com", nil)
+	require.NoError(t, err)
+
+	modifiedReq, err := BuildRequest(req, WithWorkspaceId(0))
+	require.NoError(t, err)
+
+	assert.Equal(t, "0", modifiedReq.Header.Get(workspaceIdHeader))
+}
+
+func TestWithoutWorkspaceIdClearsHeader(t *testing.T) {
+	req, err := http.NewRequest("GET", "http://example.com", nil)
+	require.NoError(t, err)
+	req.Header.Set(workspaceIdHeader, "123")
+
+	modifiedReq, err := BuildRequest(req, WithoutWorkspaceId())
+	require.NoError(t, err)
+
+	assert.Empty(t, modifiedReq.Header.Get(workspaceIdHeader))
+}
+
 func TestBuildResponse(t *testing.T) {
 	// Test BuildResponse applies response options correctly
 	resp := &http.Response{

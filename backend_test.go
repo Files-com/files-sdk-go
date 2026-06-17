@@ -89,3 +89,21 @@ func TestSetHeadersUsesExplicitAPIKeyBeforeSessionId(t *testing.T) {
 	assert.Equal(t, "explicit-secret", headers.Get(apiKeyHeader))
 	assert.Empty(t, headers.Get(sessionIdHeader))
 }
+
+func TestSetHeadersUsesConfiguredWorkspaceId(t *testing.T) {
+	headers := http.Header{}
+	workspaceId := int64(123)
+	config := Config{WorkspaceId: &workspaceId}.Init()
+	config.SetHeaders(&headers)
+
+	assert.Equal(t, "123", headers.Get(workspaceIdHeader))
+}
+
+func TestSetHeadersUsesConfiguredDefaultWorkspaceId(t *testing.T) {
+	headers := http.Header{}
+	workspaceId := int64(0)
+	config := Config{WorkspaceId: &workspaceId}.Init()
+	config.SetHeaders(&headers)
+
+	assert.Equal(t, "0", headers.Get(workspaceIdHeader))
+}

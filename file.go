@@ -136,6 +136,28 @@ type FileMoveParams struct {
 	Overwrite   *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
+// Decrypt a GPG-encrypted file and save it to a destination path
+type FileGpgDecryptParams struct {
+	Path              string  `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	Destination       string  `url:"destination" json:"destination" path:"destination"`
+	GpgKeyIds         []int64 `url:"gpg_key_ids,omitempty" json:"gpg_key_ids,omitempty" path:"gpg_key_ids"`
+	GpgKeyPartnerId   int64   `url:"gpg_key_partner_id,omitempty" json:"gpg_key_partner_id,omitempty" path:"gpg_key_partner_id"`
+	UseAllPrivateKeys *bool   `url:"use_all_private_keys,omitempty" json:"use_all_private_keys,omitempty" path:"use_all_private_keys"`
+	IgnoreMdcError    *bool   `url:"ignore_mdc_error,omitempty" json:"ignore_mdc_error,omitempty" path:"ignore_mdc_error"`
+	Overwrite         *bool   `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
+}
+
+// Encrypt a file with GPG and save it to a destination path
+type FileGpgEncryptParams struct {
+	Path            string  `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	Destination     string  `url:"destination" json:"destination" path:"destination"`
+	GpgKeyIds       []int64 `url:"gpg_key_ids,omitempty" json:"gpg_key_ids,omitempty" path:"gpg_key_ids"`
+	GpgKeyPartnerId int64   `url:"gpg_key_partner_id,omitempty" json:"gpg_key_partner_id,omitempty" path:"gpg_key_partner_id"`
+	SigningKeyId    int64   `url:"signing_key_id,omitempty" json:"signing_key_id,omitempty" path:"signing_key_id"`
+	Armor           *bool   `url:"armor,omitempty" json:"armor,omitempty" path:"armor"`
+	Overwrite       *bool   `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
+}
+
 // Extract a ZIP file to a destination folder
 type FileUnzipParams struct {
 	Path        string `url:"path" json:"path" path:"path"`

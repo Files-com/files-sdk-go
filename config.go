@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/Files-com/files-sdk-go/v3/lib"
@@ -14,7 +15,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.3.150"
+var VERSION = "3.3.151"
 var defaultUserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
 
 const (
@@ -27,6 +28,7 @@ const (
 	apiKeyHeader           = "X-FilesAPI-Key"
 	sessionIdHeader        = "X-FilesAPI-Auth"
 	reauthenticationHeader = "X-Files-Reauthentication"
+	workspaceIdHeader      = "X-Files-Workspace-Id"
 )
 
 var GlobalConfig Config
@@ -38,6 +40,7 @@ func init() {
 type Config struct {
 	APIKey           string `header:"X-FilesAPI-Key" json:"api_key"`
 	SessionId        string `header:"X-FilesAPI-Auth" json:"session_id"`
+	WorkspaceId      *int64 `header:"X-Files-Workspace-Id" json:"workspace_id,omitempty"`
 	Language         string `header:"Accept-Language"`
 	Subdomain        string `json:"subdomain"`
 	EndpointOverride string `json:"endpoint_override"`
@@ -133,6 +136,9 @@ func (c Config) setHeadersForURL(headers *http.Header, rawURL string) {
 	if c.Language != "" {
 		headers.Set("Accept-Language", c.Language)
 	}
+	if c.WorkspaceId != nil {
+		headers.Set(workspaceIdHeader, strconv.FormatInt(*c.WorkspaceId, 10))
+	}
 	for key, value := range c.AdditionalHeaders {
 		headers.Set(key, value)
 	}
@@ -205,6 +211,7 @@ func clearAuthHeaders(headers *http.Header) {
 	headers.Del(apiKeyHeader)
 	headers.Del(sessionIdHeader)
 	headers.Del(reauthenticationHeader)
+	headers.Del(workspaceIdHeader)
 }
 
 func normalizedURLHost(u *url.URL) string {

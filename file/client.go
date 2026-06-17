@@ -243,6 +243,24 @@ func Move(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOpti
 	return (&Client{}).Move(params, opts...)
 }
 
+func (c *Client) GpgDecrypt(params files_sdk.FileGpgDecryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/gpg_decrypt/{path}", Params: params, Entity: &fileAction}, opts...)
+	return
+}
+
+func GpgDecrypt(params files_sdk.FileGpgDecryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	return (&Client{}).GpgDecrypt(params, opts...)
+}
+
+func (c *Client) GpgEncrypt(params files_sdk.FileGpgEncryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/gpg_encrypt/{path}", Params: params, Entity: &fileAction}, opts...)
+	return
+}
+
+func GpgEncrypt(params files_sdk.FileGpgEncryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	return (&Client{}).GpgEncrypt(params, opts...)
+}
+
 func (c *Client) Unzip(params files_sdk.FileUnzipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/unzip", Params: params, Entity: &fileAction}, opts...)
 	return

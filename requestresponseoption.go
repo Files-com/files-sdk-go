@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"strconv"
 )
 
 type requestResponseOption struct {
@@ -37,6 +38,20 @@ func RequestHeadersOption(headers *http.Header) RequestResponseOption {
 		for k, v := range *headers {
 			req.Header.Set(k, v[0])
 		}
+		return nil
+	})
+}
+
+func WithWorkspaceId(workspaceId int64) RequestResponseOption {
+	return RequestOption(func(req *http.Request) error {
+		req.Header.Set(workspaceIdHeader, strconv.FormatInt(workspaceId, 10))
+		return nil
+	})
+}
+
+func WithoutWorkspaceId() RequestResponseOption {
+	return RequestOption(func(req *http.Request) error {
+		req.Header.Del(workspaceIdHeader)
 		return nil
 	})
 }
