@@ -172,7 +172,7 @@ func requestURLValidForRetry(resp *http.Response) bool {
 	if resp == nil || resp.Request == nil || resp.Request.URL == nil {
 		return true
 	}
-	url, err := downloadurl.New(resp.Request.URL.String())
+	url, err := downloadurl.NewFromURL(resp.Request.URL)
 	if err != nil || url.IsZero() {
 		return true
 	}

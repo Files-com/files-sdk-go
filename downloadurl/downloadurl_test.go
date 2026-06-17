@@ -73,6 +73,59 @@ func TestDownloadUrl_New(t *testing.T) {
 	}
 }
 
+func TestDownloadUrl_NewFromURL(t *testing.T) {
+	expiresAt := time.Now().Add(time.Minute * 3).UTC().Truncate(time.Second)
+	parsedURL, err := url.ParseRequestURI(fmt.Sprintf("https://example.com?%v=%v", filesDate.date, expiresAt.Format(timeDateFormat)))
+	assert.NoError(t, err)
+
+	d, err := NewFromURL(parsedURL)
+	assert.NoError(t, err)
+	assert.Same(t, parsedURL, d.URL)
+	assert.Equal(t, expiresAt, d.Time)
+}
+
+func TestDownloadUrl_Init(t *testing.T) {
+	expiresAt := time.Now().Add(time.Minute * 3).UTC().Truncate(time.Second)
+	parsedURL, err := url.ParseRequestURI(fmt.Sprintf("https://example.com?%v=%v", filesDate.date, expiresAt.Format(timeDateFormat)))
+	assert.NoError(t, err)
+
+	d := &URL{}
+	err = d.Init(parsedURL)
+
+	assert.NoError(t, err)
+	assert.Same(t, parsedURL, d.URL)
+	assert.Equal(t, expiresAt, d.Time)
+}
+
+func TestDownloadUrl_InitNilURL(t *testing.T) {
+	d := &URL{}
+
+	err := d.Init(nil)
+
+	assert.ErrorContains(t, err, "nil URL")
+	assert.Nil(t, d.URL)
+}
+
+func TestDownloadUrl_InitResetsPreviousState(t *testing.T) {
+	expiresAt := time.Now().Add(time.Minute * 3).UTC().Truncate(time.Second)
+	parsedURL, err := url.ParseRequestURI(fmt.Sprintf("https://example.com?%v=%v", filesDate.date, expiresAt.Format(timeDateFormat)))
+	assert.NoError(t, err)
+
+	d, err := NewFromURL(parsedURL)
+	assert.NoError(t, err)
+	assert.False(t, d.Time.IsZero())
+
+	invalidURL, err := url.ParseRequestURI("https://example.com?jwt=test")
+	assert.NoError(t, err)
+
+	err = d.Init(invalidURL)
+
+	assert.Error(t, err)
+	assert.Same(t, invalidURL, d.URL)
+	assert.True(t, d.Time.IsZero())
+	assert.Empty(t, d.Type)
+}
+
 func TestDownloadUrl_Valid(t *testing.T) {
 	type args struct {
 		within time.Duration
