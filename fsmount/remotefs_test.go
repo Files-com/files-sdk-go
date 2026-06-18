@@ -2208,6 +2208,58 @@ func TestUploadLogMessageTransportFallbacks(t *testing.T) {
 	}
 }
 
+func TestFormatFuseErrno(t *testing.T) {
+	tests := []struct {
+		name string
+		errc int
+		want string
+	}{
+		{name: "success", errc: 0, want: "OK"},
+		{name: "negative errno", errc: -fuse.EACCES, want: "EACCES"},
+		{name: "positive errno", errc: fuse.ENOENT, want: "ENOENT"},
+		{name: "unknown errno", errc: -9999, want: "errno_9999"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := formatFuseErrno(test.errc); got != test.want {
+				t.Fatalf("formatFuseErrno(%d) = %q, want %q", test.errc, got, test.want)
+			}
+		})
+	}
+}
+
+func TestClassifyMountError(t *testing.T) {
+	tests := []struct {
+		name      string
+		err       error
+		wantClass string
+		wantErrc  int
+	}{
+		{name: "nil", err: nil, wantClass: "none", wantErrc: 0},
+		{name: "not authenticated", err: files_sdk.ResponseError{Type: string(files_sdk.ErrInvalidCredentials)}, wantClass: "not_authenticated", wantErrc: -fuse.EPERM},
+		{name: "not exist", err: files_sdk.ResponseError{Type: string(files_sdk.ErrFileNotFound)}, wantClass: "not_exist", wantErrc: -fuse.ENOENT},
+		{name: "exists", err: files_sdk.ResponseError{Type: string(files_sdk.ErrDestinationExists)}, wantClass: "exist", wantErrc: -fuse.EEXIST},
+		{name: "no slots available", err: lim.ErrNoSlotsAvailable, wantClass: "no_slots_available", wantErrc: -fuse.EAGAIN},
+		{name: "folder not empty", err: files_sdk.ResponseError{Type: string(files_sdk.ErrFolderNotEmpty)}, wantClass: "folder_not_empty", wantErrc: -fuse.ENOTEMPTY},
+		{name: "resource locked message", err: errors.New("resource locked by another operation"), wantClass: "resource_locked", wantErrc: -fuse.EAGAIN},
+		{name: "resource locked type without message", err: files_sdk.ResponseError{Type: string(files_sdk.ErrResourceLocked)}, wantClass: "unknown", wantErrc: -fuse.EIO},
+		{name: "unknown", err: errors.New("backend exploded"), wantClass: "unknown", wantErrc: -fuse.EIO},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			gotClass, gotErrc := classifyMountError(test.err)
+			if gotClass != test.wantClass {
+				t.Fatalf("classifyMountError() class = %q, want %q", gotClass, test.wantClass)
+			}
+			if gotErrc != test.wantErrc {
+				t.Fatalf("classifyMountError() errc = %d (%s), want %d (%s)", gotErrc, formatFuseErrno(gotErrc), test.wantErrc, formatFuseErrno(test.wantErrc))
+			}
+		})
+	}
+}
+
 func TestRemoteFsWorkingCopyUploadCancellationLogsCanceled(t *testing.T) {
 	fs, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()

@@ -413,6 +413,17 @@ func (fs *RemoteFs) denyIfKnownReadOnlyParent(path string, operation string) int
 
 	if permissions := parent.getRemotePermissions(); permissions != "" && !parent.isWritable() {
 		localPath, remotePath := fs.paths(path)
+		fs.log.Debug(
+			"mount_permission_denied source=cached_parent_permissions op=%s path=%q remote_path=%q local_path=%q parent=%q permissions=%q errc=%d errno=%s",
+			operation,
+			path,
+			remotePath,
+			localPath,
+			parentPath,
+			permissions,
+			-fuse.EACCES,
+			formatFuseErrno(-fuse.EACCES),
+		)
 		fs.log.Debug("RemoteFs: %s: parent directory is read-only: %v (%v) parent=%v permissions=%q", operation, remotePath, localPath, parentPath, permissions)
 		return -fuse.EACCES
 	}
@@ -427,6 +438,16 @@ func (fs *RemoteFs) denyIfKnownReadOnlyPath(node *fsNode, operation string) int 
 
 	if permissions := node.getRemotePermissions(); permissions != "" && !node.isWritable() {
 		localPath, remotePath := fs.paths(node.path)
+		fs.log.Debug(
+			"mount_permission_denied source=cached_path_permissions op=%s path=%q remote_path=%q local_path=%q permissions=%q errc=%d errno=%s",
+			operation,
+			node.path,
+			remotePath,
+			localPath,
+			permissions,
+			-fuse.EACCES,
+			formatFuseErrno(-fuse.EACCES),
+		)
 		fs.log.Debug("RemoteFs: %s: path is read-only: %v (%v) permissions=%q", operation, remotePath, localPath, permissions)
 		return -fuse.EACCES
 	}
@@ -651,7 +672,9 @@ func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh ui
 		fh, handle = fs.vfs.handles.Open(nil, fuseFlags)
 		fs.log.Debug("RemoteFs: Create: joining existing write session: %v (%v)", remotePath, localPath)
 		handle.node = node
-		node.getWriteSession().addHandle(fh)
+		session := node.getWriteSession()
+		session.addHandle(fh)
+		fs.logWriteSessionMilestone(path, "create_join_existing_session", fh, session, "flags=%v mode=%o", fuseFlags, mode)
 		return errc, fh
 	}
 
@@ -669,6 +692,7 @@ func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh ui
 	fh, handle = fs.vfs.handles.Open(nil, fuseFlags)
 	node.updateSize(0)
 	handle.node = node
+	fs.logWriteSessionMilestone(path, "create_handle_opened", fh, nil, "flags=%v mode=%o", fuseFlags, mode)
 
 	// Pin the file in cache to prevent eviction while the handle is open
 	// NOTE: If an error is returned below, Unpin() must be called manually since FUSE will
@@ -683,10 +707,13 @@ func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh ui
 			fs.cacheStore.Unpin(path)
 		}
 		fs.vfs.handles.Release(fh)
+		fs.logWriteSessionMilestone(path, "create_lock_failed", fh, nil, "errc=%d errno=%s", errc, formatFuseErrno(errc))
 		return errc, fh
 	}
+	fs.logWriteSessionMilestone(path, "create_lock_acquired", fh, nil, "")
 
 	fs.log.Debug("RemoteFs: Create: opened write-capable handle for %v (%v), fh=%v", remotePath, localPath, fh)
+	fs.logWriteSessionMilestone(path, "create_write_handle_ready", fh, nil, "")
 
 	return errc, fh
 }
@@ -730,17 +757,21 @@ func (fs *RemoteFs) Open(path string, flags int) (errc int, fh uint64) {
 			fs.cacheStore.Unpin(path)
 		}
 		fs.vfs.handles.Release(fh)
+		fs.logWriteSessionMilestone(path, "open_lock_failed", fh, nil, "flags=%v errc=%d errno=%s", fuseFlags, errc, formatFuseErrno(errc))
 		return errc, fh
 	}
+	fs.logWriteSessionMilestone(path, "open_lock_acquired", fh, nil, "flags=%v", fuseFlags)
 
 	// A node with an active write session is already in write-owned state.
 	// Additional write-capable handles join the session instead of being rejected.
 	if session := node.getWriteSession(); session != nil {
 		session.addHandle(fh)
 		fs.log.Debug("RemoteFs: Open: joined active write session for path=%v, fh=%v", path, fh)
+		fs.logWriteSessionMilestone(path, "open_join_existing_session", fh, session, "flags=%v", fuseFlags)
 		return errc, fh
 	}
 	fs.log.Debug("RemoteFs: Open: opened write-capable handle for path=%v, fh=%v", path, fh)
+	fs.logWriteSessionMilestone(path, "open_write_handle_ready", fh, nil, "flags=%v", fuseFlags)
 
 	return errc, fh
 }
@@ -1008,14 +1039,17 @@ func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n in
 	session, created, err := node.ensureWriteSession(path)
 	if err != nil {
 		fs.log.Error("RemoteFs: Write: failed to create write session for %v: %v", path, err)
+		fs.logWriteSessionMilestone(path, "write_session_create_failed", fh, nil, "err=%q", err.Error())
 		return -fuse.EIO
 	}
 	if created {
 		node.setPendingVisible()
+		fs.logWriteSessionMilestone(path, "working_copy_created", fh, session, "offset=%d bytes=%d", ofst, len(buff))
 	}
 	session.addHandle(fh)
 
 	if err := fs.ensureWriteSessionBaseline(path, node, session, false, fh); err != nil {
+		fs.logWriteSessionMilestone(path, "baseline_hydration_failed", fh, session, "err=%q", err.Error())
 		if errc := fs.handleUploadSessionError(path, err, session); errc != 0 {
 			return errc
 		}
@@ -1025,6 +1059,7 @@ func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n in
 	written, err := fs.writeToWorkingCopy(session, buff, ofst)
 	if err != nil {
 		fs.log.Error("RemoteFs: Write: working copy write failed for %v: %v", path, err)
+		fs.logWriteSessionMilestone(path, "working_copy_write_failed", fh, session, "offset=%d bytes=%d err=%q", ofst, len(buff), err.Error())
 		return -fuse.EIO
 	}
 
@@ -1222,9 +1257,10 @@ func (fs *RemoteFs) writePartialCacheFromReader(path string, reader io.Reader, e
 	}
 }
 
-func (fs *RemoteFs) flushWriteSession(path string, node *fsNode, fh uint64) int {
+func (fs *RemoteFs) flushWriteSession(path string, node *fsNode, fh uint64) (errc int) {
 	session := node.getWriteSession()
 	if session == nil {
+		fs.logWriteSessionMilestone(path, "flush_no_session", fh, nil, "")
 		return 0
 	}
 
@@ -1233,52 +1269,66 @@ func (fs *RemoteFs) flushWriteSession(path string, node *fsNode, fh uint64) int 
 		err := session.lastUploadErr
 		session.mu.Unlock()
 		fs.log.Debug("RemoteFs: flushWriteSession: poisoned session for %v: %s", path, uploadLogMessage(err))
+		fs.logWriteSessionMilestone(path, "flush_poisoned", fh, session, "err=%q", uploadLogMessage(err))
 		return -fuse.EIO
 	}
 	if !session.dirty && !session.uploading && !session.finalizing {
 		session.mu.Unlock()
+		fs.logWriteSessionMilestone(path, "flush_clean", fh, session, "")
 		return 0
 	}
 	if session.uploading || session.finalizing {
 		session.mu.Unlock()
+		fs.logWriteSessionMilestone(path, "flush_wait_existing_upload", fh, session, "")
 		if err := node.waitForUploadWithProgressTimeout(fsyncTimeout); err != nil {
 			if errors.Is(err, context.DeadlineExceeded) {
+				fs.logWriteSessionMilestone(path, "flush_wait_timeout", fh, session, "errc=%d errno=%s", -fuse.ETIMEDOUT, formatFuseErrno(-fuse.ETIMEDOUT))
 				return -fuse.ETIMEDOUT
 			}
+			fs.logWriteSessionMilestone(path, "flush_wait_failed", fh, session, "err=%q errc=%d errno=%s", err.Error(), -fuse.EIO, formatFuseErrno(-fuse.EIO))
 			return -fuse.EIO
 		}
 		if err := node.poisonedWriteSessionErr(); err != nil {
+			fs.logWriteSessionMilestone(path, "flush_wait_poisoned", fh, session, "err=%q errc=%d errno=%s", uploadLogMessage(err), -fuse.EIO, formatFuseErrno(-fuse.EIO))
 			return -fuse.EIO
 		}
+		fs.logWriteSessionMilestone(path, "flush_wait_completed", fh, session, "")
 		return 0
 	}
 	session.finalizing = true
 	session.uploading = true
 	session.mu.Unlock()
+	fs.logWriteSessionMilestone(path, "flush_start_finalize", fh, session, "")
 
 	go fs.finalizeUploadFromWorkingCopy(path, node, session, fh)
 
 	if err := node.waitForUploadWithProgressTimeout(fsyncTimeout); err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
+			fs.logWriteSessionMilestone(path, "flush_finalize_timeout", fh, session, "errc=%d errno=%s", -fuse.ETIMEDOUT, formatFuseErrno(-fuse.ETIMEDOUT))
 			return -fuse.ETIMEDOUT
 		}
+		fs.logWriteSessionMilestone(path, "flush_finalize_wait_failed", fh, session, "err=%q errc=%d errno=%s", err.Error(), -fuse.EIO, formatFuseErrno(-fuse.EIO))
 		return -fuse.EIO
 	}
 	if err := node.poisonedWriteSessionErr(); err != nil {
+		fs.logWriteSessionMilestone(path, "flush_finalize_poisoned", fh, session, "err=%q errc=%d errno=%s", uploadLogMessage(err), -fuse.EIO, formatFuseErrno(-fuse.EIO))
 		return -fuse.EIO
 	}
+	fs.logWriteSessionMilestone(path, "flush_completed", fh, session, "")
 	return 0
 }
 
 func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, session *writeSession, fh uint64) {
 	localPath, remotePath := fs.paths(path)
 	fs.log.Info("Starting upload from working copy: %v (%v)", remotePath, localPath)
+	fs.logWriteSessionMilestone(path, "upload_finalize_started", fh, session, "")
 	sessionSnapshot := session.snapshot()
 	transfer := fs.newTransferReporter(events.TransferDirectionUpload, path, sessionSnapshot.currentSize)
 	transfer.Queued()
 
 	reader, err := os.Open(session.workingCopyPath)
 	if err != nil {
+		fs.logWriteSessionMilestone(path, "upload_open_working_copy_failed", fh, session, "err=%q", err.Error())
 		transfer.Error(err, transferredBytesUnchanged)
 		node.clearPendingVisible()
 		node.writeSessionFinishUpload(session.snapshot().currentSize, err)
@@ -1291,10 +1341,12 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 
 	if _, ok := node.writeSessionStartUpload(cancel, transfer); !ok {
 		err := fmt.Errorf("write session missing for %s", path)
+		fs.logWriteSessionMilestone(path, "upload_start_missing_session", fh, session, "err=%q", err.Error())
 		transfer.Error(err, transferredBytesUnchanged)
 		node.clearPendingVisible()
 		return
 	}
+	fs.logWriteSessionMilestone(path, "upload_started", fh, session, "size=%d", sessionSnapshot.currentSize)
 
 	session.mu.Lock()
 	mtime := session.mtime
@@ -1310,17 +1362,33 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 		} else if !files_sdk.IsNotExist(err) {
 			fs.logUploadFailure("Upload failed from working copy", remotePath, localPath, err)
 		}
+		class, mappedErrc := classifyMountError(err)
+		fs.log.Debug(
+			"mount_upload_error source=backend_upload path=%q remote_path=%q local_path=%q class=%s mapped_errc=%d mapped_errno=%s callback_errc=%d callback_errno=%s message=%q",
+			path,
+			remotePath,
+			localPath,
+			class,
+			mappedErrc,
+			formatFuseErrno(mappedErrc),
+			-fuse.EIO,
+			formatFuseErrno(-fuse.EIO),
+			uploadLogMessage(err),
+		)
+		fs.logWriteSessionMilestone(path, "upload_failed", fh, session, "err=%q class=%s mapped_errc=%d mapped_errno=%s message=%q", err.Error(), class, mappedErrc, formatFuseErrno(mappedErrc), uploadLogMessage(err))
 		transfer.Error(err, transferredBytesUnchanged)
 		node.clearPendingVisible()
 		_ = node.writeSessionFinishUpload(session.snapshot().currentSize, err)
 		return
 	}
+	fs.logWriteSessionMilestone(path, "upload_succeeded", fh, session, "size=%d", uploaded.size)
 
 	if err := fs.refreshReadCacheFromWorkingCopy(path, session, uploaded.size, uploaded.modTime); err != nil {
 		// The remote upload has already succeeded, so a cache refresh failure should only
 		// invalidate the local cache. Do not poison or finish the write session with this
 		// error, or the caller would see a successful save as a failed upload.
 		fs.log.Error("Error refreshing cache from working copy: %v (%v): %v", remotePath, localPath, err)
+		fs.logWriteSessionMilestone(path, "upload_cache_refresh_failed", fh, session, "err=%q", err.Error())
 		_ = fs.cacheStore.Delete(path)
 	}
 
@@ -1339,6 +1407,7 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 	fs.log.Info("Upload completed from working copy: %v (%v)", remotePath, localPath)
 	transfer.Complete(sessionSnapshot.currentSize)
 	_ = node.writeSessionFinishUpload(uploaded.size, nil)
+	fs.logWriteSessionMilestone(path, "upload_finalize_completed", fh, session, "size=%d", uploaded.size)
 }
 
 func (fs *RemoteFs) uploadWorkingCopyWithSDK(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
@@ -2077,6 +2146,7 @@ func (fs *RemoteFs) rename(oldpath, newpath string) {
 
 func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 	if fs.disableLocking {
+		fs.logWriteSessionMilestone(node.path, "lock_skipped_disabled", fh, nil, "")
 		return errc
 	}
 
@@ -2093,16 +2163,19 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 		if fs.currentUserId == linfo.Lock.UserId {
 			node.setLockOwner(linfo.Lock.Username)
 			fs.log.Debug("RemoteFs: lock: reusing existing same-user lock for %v (%v) fh=%v", remotePath, localPath, fh)
+			fs.logWriteSessionMilestone(node.path, "lock_reused_same_user", fh, nil, "owner=%q", linfo.Lock.Username)
 			return 0
 		}
 		node.setLockOwner(linfo.Lock.Username)
 		fs.log.Error("File '%v' is already locked by %v:", remotePath, linfo.Lock.Username)
+		fs.logWriteSessionMilestone(node.path, "lock_conflict", fh, nil, "owner=%q errc=%d errno=%s", linfo.Lock.Username, -fuse.ENOLCK, formatFuseErrno(-fuse.ENOLCK))
 		return -fuse.ENOLCK
 	}
 
 	if node.isLocked() {
 		fs.log.Error("File is already locked by %v: %v (%v) fh=%v", node.info.lockOwner, remotePath, localPath, fh)
 		errc = -fuse.ENOLCK
+		fs.logWriteSessionMilestone(node.path, "lock_node_already_locked", fh, nil, "owner=%q errc=%d errno=%s", node.info.lockOwner, errc, formatFuseErrno(errc))
 		return errc
 	}
 
@@ -2111,6 +2184,7 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 		if parent, ok := fs.vfs.fetch(parentPath); ok {
 			if permissions := parent.getRemotePermissions(); permissions != "" && !parent.isWritable() {
 				fs.log.Debug("RemoteFs: lock: skipping lock for %v (%v) because parent directory %v has non-writable remote permissions %q", remotePath, localPath, parentPath, permissions)
+				fs.logWriteSessionMilestone(node.path, "lock_skipped_readonly_parent", fh, nil, "parent=%q permissions=%q", parentPath, permissions)
 				return 0
 			}
 		}
@@ -2119,6 +2193,7 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 	// Make API call without holding lockMapMutex
 	var lock files_sdk.Lock
 	var err error
+	fs.logWriteSessionMilestone(node.path, "lock_create_started", fh, nil, "")
 	err = fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
 		lock, err = fs.backend.createLock(files_sdk.LockCreateParams{
 			Path:                 remotePath,
@@ -2130,6 +2205,7 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 		return err
 	})
 	if errors.Is(err, lim.ErrNoSlotsAvailable) {
+		fs.logWriteSessionMilestone(node.path, "lock_create_no_slots", fh, nil, "errc=%d errno=%s", -fuse.EAGAIN, formatFuseErrno(-fuse.EAGAIN))
 		return -fuse.EAGAIN
 	}
 
@@ -2142,22 +2218,26 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 		if ok && fs.currentUserId != linfo.Lock.UserId {
 			node.setLockOwner(linfo.Lock.Username)
 			fs.log.Error("File '%v' is already locked by %v:", remotePath, linfo.Lock.Username)
+			fs.logWriteSessionMilestone(node.path, "lock_backend_conflict", fh, nil, "owner=%q errc=%d errno=%s", linfo.Lock.Username, -fuse.ENOLCK, formatFuseErrno(-fuse.ENOLCK))
 			return -fuse.ENOLCK
 		}
 		if ok && fs.currentUserId == linfo.Lock.UserId {
 			// If the lock is already held by the current user, treat it as a success.
 			node.setLockOwner(linfo.Lock.Username)
 			fs.log.Debug("RemoteFs: lock: File is already locked by current user %v: %v (%v) fh=%v", fs.currentUserId, remotePath, localPath, fh)
+			fs.logWriteSessionMilestone(node.path, "lock_backend_same_user", fh, nil, "owner=%q", linfo.Lock.Username)
 			return 0
 		}
 		if node.uploadActive() {
 			node.setLockOwner("current-user")
 			fs.log.Debug("RemoteFs: lock: treating backend lock conflict as in-flight upload reuse for %v (%v) fh=%v", remotePath, localPath, fh)
+			fs.logWriteSessionMilestone(node.path, "lock_backend_conflict_upload_active", fh, nil, "")
 			return 0
 		}
 	}
 
 	if errc = fs.handleError(node.path, err); errc != 0 {
+		fs.logWriteSessionMilestone(node.path, "lock_create_failed", fh, nil, "errc=%d errno=%s", errc, formatFuseErrno(errc))
 		return errc
 	}
 
@@ -2168,11 +2248,13 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 	node.setLockOwner(lock.Username)
 
 	fs.log.Debug("RemoteFs: lock: created owner=%v, path=%v, fh=%v", lock.Username, remotePath, fh)
+	fs.logWriteSessionMilestone(node.path, "lock_created", fh, nil, "owner=%q", lock.Username)
 	return errc
 }
 
 func (fs *RemoteFs) unlock(path string, fh uint64) (errc int) {
 	if fs.disableLocking {
+		fs.logWriteSessionMilestone(path, "unlock_skipped_disabled", fh, nil, "")
 		return errc
 	}
 
@@ -2192,11 +2274,13 @@ func (fs *RemoteFs) unlock(path string, fh uint64) (errc int) {
 		// If the lock map doesn't have an entry for this path, it means the file
 		// was never locked, or it was locked by a different file handle.
 		fs.log.Debug("RemoteFs: unlock: File not locked: %v fh=%v", path, fh)
+		fs.logWriteSessionMilestone(path, "unlock_no_lock", fh, nil, "")
 		return errc
 	}
 	if lockInfo.Fh != fh {
 		// This is fine. It just means the file either wasn't locked or it was locked by a different file handle.
 		fs.log.Debug("RemoteFs: unlock: File not locked by this handle: %v fh=%v", path, fh)
+		fs.logWriteSessionMilestone(path, "unlock_different_handle", fh, nil, "lock_fh=%d", lockInfo.Fh)
 		return errc
 	}
 
@@ -2204,6 +2288,7 @@ func (fs *RemoteFs) unlock(path string, fh uint64) (errc int) {
 	fs.log.Debug("RemoteFs: unlock: file %v (%v)", remotePath, localPath)
 
 	// Make API call without holding lockMapMutex
+	fs.logWriteSessionMilestone(path, "unlock_delete_started", fh, nil, "")
 	err := fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
 		return fs.backend.deleteLock(files_sdk.LockDeleteParams{
 			Path:  remotePath,
@@ -2211,6 +2296,7 @@ func (fs *RemoteFs) unlock(path string, fh uint64) (errc int) {
 		})
 	})
 	if errors.Is(err, lim.ErrNoSlotsAvailable) {
+		fs.logWriteSessionMilestone(path, "unlock_delete_no_slots", fh, nil, "errc=%d errno=%s", -fuse.EAGAIN, formatFuseErrno(-fuse.EAGAIN))
 		return -fuse.EAGAIN
 	}
 
@@ -2223,10 +2309,12 @@ func (fs *RemoteFs) unlock(path string, fh uint64) (errc int) {
 		if node, ok := fs.vfs.fetch(path); ok {
 			node.setLockOwner("")
 		}
+		fs.logWriteSessionMilestone(path, "unlock_already_deleted", fh, nil, "")
 		return errc
 	}
 	// for any other error, handle it normally
 	if errc = fs.handleError(path, err); errc != 0 {
+		fs.logWriteSessionMilestone(path, "unlock_delete_failed", fh, nil, "errc=%d errno=%s", errc, formatFuseErrno(errc))
 		return errc
 	}
 
@@ -2237,6 +2325,7 @@ func (fs *RemoteFs) unlock(path string, fh uint64) (errc int) {
 	if node, ok := fs.vfs.fetch(path); ok {
 		node.setLockOwner("")
 	}
+	fs.logWriteSessionMilestone(path, "unlock_deleted", fh, nil, "")
 
 	return errc
 }
@@ -2272,30 +2361,50 @@ func (fs *RemoteFs) handleErrorMessage(path string, err error, message string) i
 		localPath, remotePath := fs.paths(path)
 		fs.log.Error("%v (%v): %s", remotePath, localPath, message)
 
-		if files_sdk.IsNotAuthenticated(err) {
+		class, errc := classifyMountError(err)
+		if class == "not_authenticated" {
 			fs.events.Publish(events.AuthenticationFailedEvent{
 				Reason: err.Error(),
 			})
-			return -fuse.EPERM
 		}
-		if files_sdk.IsNotExist(err) {
-			return -fuse.ENOENT
-		}
-		if files_sdk.IsExist(err) {
-			return -fuse.EEXIST
-		}
-		if errors.Is(err, lim.ErrNoSlotsAvailable) {
-			return -fuse.EAGAIN
-		}
-		if isFolderNotEmpty(err) {
-			return -fuse.ENOTEMPTY
-		}
-		if isResourceLocked(err) {
-			return -fuse.EAGAIN
-		}
-		return -fuse.EIO
+		fs.log.Debug(
+			"mount_error_mapped source=api path=%q remote_path=%q local_path=%q class=%s errc=%d errno=%s message=%q",
+			path,
+			remotePath,
+			localPath,
+			class,
+			errc,
+			formatFuseErrno(errc),
+			message,
+		)
+		return errc
 	}
 	return 0
+}
+
+func classifyMountError(err error) (string, int) {
+	if err == nil {
+		return "none", 0
+	}
+	if files_sdk.IsNotAuthenticated(err) {
+		return "not_authenticated", -fuse.EPERM
+	}
+	if files_sdk.IsNotExist(err) {
+		return "not_exist", -fuse.ENOENT
+	}
+	if files_sdk.IsExist(err) {
+		return "exist", -fuse.EEXIST
+	}
+	if errors.Is(err, lim.ErrNoSlotsAvailable) {
+		return "no_slots_available", -fuse.EAGAIN
+	}
+	if isFolderNotEmpty(err) {
+		return "folder_not_empty", -fuse.ENOTEMPTY
+	}
+	if isResourceLocked(err) {
+		return "resource_locked", -fuse.EAGAIN
+	}
+	return "unknown", -fuse.EIO
 }
 
 func writeSessionLastUploadErr(session *writeSession, err error) bool {
@@ -2347,13 +2456,29 @@ func (fs *RemoteFs) finalizeDelete(path string) {
 }
 
 func (fs *RemoteFs) loadParent(path string) (errc int) {
+	start := time.Now()
+	parentPath := path_lib.Dir(path)
+	defer func() {
+		elapsed := time.Since(start)
+		if errc == 0 && elapsed < mountDiagnosticsSlowThreshold {
+			return
+		}
+		fs.log.Debug(
+			"mount_metadata_refresh op=loadParent requested_path=%q parent=%q errc=%d errno=%s duration=%s",
+			path,
+			parentPath,
+			errc,
+			formatFuseErrno(errc),
+			elapsed,
+		)
+	}()
+
 	if path == "/" {
 		// If loading at the root, the parent can't be loaded. Just make sure the root exists.
 		_, errc = fs.findDir(path)
 		return errc
 	}
 
-	parentPath := path_lib.Dir(path)
 	parent, ok := fs.vfs.fetch(parentPath)
 
 	// Make sure the parent is actually a directory that exists before attempting to load it.
@@ -2416,9 +2541,30 @@ func (fs *RemoteFs) findDir(path string) (node *fsNode, errc int) {
 }
 
 func (fs *RemoteFs) loadDir(node *fsNode) (errc int) {
+	start := time.Now()
+	refreshed := false
+	defer func() {
+		elapsed := time.Since(start)
+		if errc == 0 && elapsed < mountDiagnosticsSlowThreshold {
+			return
+		}
+		localPath, remotePath := fs.paths(node.path)
+		fs.log.Debug(
+			"mount_metadata_refresh op=loadDir path=%q remote_path=%q local_path=%q refreshed=%t errc=%d errno=%s duration=%s",
+			node.path,
+			remotePath,
+			localPath,
+			refreshed,
+			errc,
+			formatFuseErrno(errc),
+			elapsed,
+		)
+	}()
+
 	fs.loadDirMutexes.Lock(node.path)
 	defer fs.loadDirMutexes.Unlock(node.path)
 	if node.infoExpired() {
+		refreshed = true
 		fs.log.Debug("RemoteFs: loadDir: Refreshing directory listing: %v", node.path)
 		err := node.updateChildPaths(fs.listDir)
 		if errors.Is(err, lim.ErrNoSlotsAvailable) {
@@ -2667,17 +2813,25 @@ func (fs *RemoteFs) Access(path string, mask uint32) int {
 	}
 
 	if mask&accessMaskRead != 0 && !node.isReadable() {
+		localPath, remotePath := fs.paths(path)
+		fs.log.Debug("mount_permission_denied source=access_permissions op=Access path=%q remote_path=%q local_path=%q mask=%d permissions=%q errc=%d errno=%s", path, remotePath, localPath, mask, permissions, -fuse.EACCES, formatFuseErrno(-fuse.EACCES))
 		return -fuse.EACCES
 	}
 	if mask&accessMaskWrite != 0 && !node.isWritable() {
+		localPath, remotePath := fs.paths(path)
+		fs.log.Debug("mount_permission_denied source=access_permissions op=Access path=%q remote_path=%q local_path=%q mask=%d permissions=%q errc=%d errno=%s", path, remotePath, localPath, mask, permissions, -fuse.EACCES, formatFuseErrno(-fuse.EACCES))
 		return -fuse.EACCES
 	}
 	if mask&accessMaskExecute != 0 {
 		if node.info.nodeType == nodeTypeDir {
 			if !node.isListable() {
+				localPath, remotePath := fs.paths(path)
+				fs.log.Debug("mount_permission_denied source=access_permissions op=Access path=%q remote_path=%q local_path=%q mask=%d permissions=%q errc=%d errno=%s", path, remotePath, localPath, mask, permissions, -fuse.EACCES, formatFuseErrno(-fuse.EACCES))
 				return -fuse.EACCES
 			}
 		} else {
+			localPath, remotePath := fs.paths(path)
+			fs.log.Debug("mount_permission_denied source=access_permissions op=Access path=%q remote_path=%q local_path=%q mask=%d permissions=%q errc=%d errno=%s", path, remotePath, localPath, mask, permissions, -fuse.EACCES, formatFuseErrno(-fuse.EACCES))
 			return -fuse.EACCES
 		}
 	}

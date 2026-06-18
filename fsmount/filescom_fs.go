@@ -97,6 +97,10 @@ func (fs *Filescomfs) signalMountReady() {
 
 func (fs *Filescomfs) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 	defer logPanics(fs.log)
+	start := time.Now()
+	defer func() {
+		fs.logMountCallback("Statfs", path, "filesystem", start, errc, "")
+	}()
 	fs.log.Trace("Statfs: path=%v", path)
 
 	totalBytes := remoteCapacityBytes()
@@ -129,8 +133,13 @@ func remoteCapacityBytes() uint64 {
 
 func (fs *Filescomfs) Mkdir(path string, mode uint32) (errc int) {
 	defer logPanics(fs.log)
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Mkdir", path, storage, start, errc, "mode=%o", mode)
+	}()
 	// determine if the directory should be created locally or remotely based on the ignore patterns
-	if fs.isStoredRemotely(path) {
+	if storage == "remote" {
 		errc = fs.remote.Mkdir(path, mode)
 		fs.log.Trace("Filescomfs: Mkdir: creating directory remotely: path=%v, mode=%v, errc=%v", path, mode, errc)
 		return errc
@@ -142,7 +151,12 @@ func (fs *Filescomfs) Mkdir(path string, mode uint32) (errc int) {
 
 func (fs *Filescomfs) Unlink(path string) (errc int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Unlink", path, storage, start, errc, "")
+	}()
+	if storage == "remote" {
 		errc = fs.remote.Unlink(path)
 		fs.log.Trace("Filescomfs: Unlink: deleting file remotely: path=%v, errc=%v", path, errc)
 		return errc
@@ -152,20 +166,29 @@ func (fs *Filescomfs) Unlink(path string) (errc int) {
 	return errc
 }
 
-func (fs *Filescomfs) Rmdir(path string) int {
+func (fs *Filescomfs) Rmdir(path string) (errc int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
-		errc := fs.remote.Rmdir(path)
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Rmdir", path, storage, start, errc, "")
+	}()
+	if storage == "remote" {
+		errc = fs.remote.Rmdir(path)
 		fs.log.Trace("Filescomfs: Rmdir: removing directory remotely: path=%v, errc=%v", path, errc)
 		return errc
 	}
-	errc := fs.local.Rmdir(path)
+	errc = fs.local.Rmdir(path)
 	fs.log.Trace("Filescomfs: Rmdir: removing directory locally: path=%v, errc=%v", path, errc)
 	return errc
 }
 
 func (fs *Filescomfs) Rename(oldpath string, newpath string) (errc int) {
 	defer logPanics(fs.log)
+	start := time.Now()
+	defer func() {
+		fs.logMountCallback("Rename", oldpath, "mixed", start, errc, "new_path=%q", newpath)
+	}()
 	fs.log.Trace("Filescomfs: Rename: renaming file: oldpath=%v, newpath=%v", oldpath, newpath)
 
 	// for renames that stay within the same storage (local to local, remote to remote)
@@ -260,7 +283,12 @@ func (fs *Filescomfs) Rename(oldpath string, newpath string) (errc int) {
 
 func (fs *Filescomfs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Utimens", path, storage, start, errc, "")
+	}()
+	if storage == "remote" {
 		errc = fs.remote.Utimens(path, tmsp)
 		fs.log.Trace("Filescomfs: Utimens: updating times remotely: path=%v, tmsp=%v, errc=%v", path, tmsp, errc)
 		return errc
@@ -272,7 +300,13 @@ func (fs *Filescomfs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 
 func (fs *Filescomfs) Create(path string, flags int, mode uint32) (errc int, fh uint64) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	fuseFlags := ff.NewFuseFlags(flags)
+	defer func() {
+		fs.logMountCallback("Create", path, storage, start, errc, "flags=%v mode=%o fh=%d", fuseFlags, mode, fh)
+	}()
+	if storage == "remote" {
 		errc, fh = fs.remote.Create(path, flags, mode)
 		fs.log.Trace("Filescomfs: Create: creating file remotely: path=%v, flags=%v, mode=%v, errc=%v, fh=%v", path, flags, mode, errc, fh)
 		return errc, fh
@@ -284,7 +318,13 @@ func (fs *Filescomfs) Create(path string, flags int, mode uint32) (errc int, fh 
 
 func (fs *Filescomfs) Open(path string, flags int) (errc int, fh uint64) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	fuseFlags := ff.NewFuseFlags(flags)
+	defer func() {
+		fs.logMountCallback("Open", path, storage, start, errc, "flags=%v fh=%d", fuseFlags, fh)
+	}()
+	if storage == "remote" {
 		errc, fh = fs.remote.Open(path, flags)
 		fs.log.Trace("Filescomfs: Open: opening file remotely: path=%v, flags=%v, errc=%v, fh=%v", path, flags, errc, fh)
 		return errc, fh
@@ -296,7 +336,12 @@ func (fs *Filescomfs) Open(path string, flags int) (errc int, fh uint64) {
 
 func (fs *Filescomfs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Getattr", path, storage, start, errc, "fh=%d", fh)
+	}()
+	if storage == "remote" {
 		fs.log.Trace("Filescomfs: Getattr: calling remote getattr: path=%v, fh=%v", path, fh)
 		errc = fs.remote.Getattr(path, stat, fh)
 		fs.log.Trace("Filescomfs: Getattr: remote getattr returned: path=%v, fh=%v, errc=%v, stat=%s", path, fh, errc, formatFuseStat(stat))
@@ -310,7 +355,12 @@ func (fs *Filescomfs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc i
 
 func (fs *Filescomfs) Truncate(path string, size int64, fh uint64) (errc int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Truncate", path, storage, start, errc, "size=%d fh=%d", size, fh)
+	}()
+	if storage == "remote" {
 		errc = fs.remote.Truncate(path, size, fh)
 		fs.log.Trace("Filescomfs: Truncate: truncating file remotely: path=%v, size=%v, fh=%v, errc=%v", path, size, fh, errc)
 		return errc
@@ -322,7 +372,12 @@ func (fs *Filescomfs) Truncate(path string, size int64, fh uint64) (errc int) {
 
 func (fs *Filescomfs) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Read", path, storage, start, n, "offset=%d bytes_requested=%d fh=%d", ofst, len(buff), fh)
+	}()
+	if storage == "remote" {
 		n = fs.remote.Read(path, buff, ofst, fh)
 		fs.log.Trace("Filescomfs: Read: reading file remotely: path=%v, ofst=%v, fh=%v, len(buff)=%v, n=%d", path, ofst, fh, len(buff), n)
 		return n
@@ -334,7 +389,12 @@ func (fs *Filescomfs) Read(path string, buff []byte, ofst int64, fh uint64) (n i
 
 func (fs *Filescomfs) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Write", path, storage, start, n, "offset=%d bytes_requested=%d fh=%d", ofst, len(buff), fh)
+	}()
+	if storage == "remote" {
 		n = fs.remote.Write(path, buff, ofst, fh)
 		fs.log.Trace("Filescomfs: Write: writing file remotely: path=%v, ofst=%v, fh=%v, len(buff)=%v, n=%v", path, ofst, fh, len(buff), n)
 		return n
@@ -346,7 +406,12 @@ func (fs *Filescomfs) Write(path string, buff []byte, ofst int64, fh uint64) (n 
 
 func (fs *Filescomfs) Release(path string, fh uint64) (errc int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Release", path, storage, start, errc, "fh=%d", fh)
+	}()
+	if storage == "remote" {
 		errc = fs.remote.Release(path, fh)
 		fs.log.Trace("Filescomfs: Release: releasing file remotely: path=%v, fh=%v, errc=%v", path, fh, errc)
 		return errc
@@ -358,7 +423,12 @@ func (fs *Filescomfs) Release(path string, fh uint64) (errc int) {
 
 func (fs *Filescomfs) Opendir(path string) (errc int, fh uint64) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Opendir", path, storage, start, errc, "fh=%d", fh)
+	}()
+	if storage == "remote" {
 		errc, fh = fs.remote.Opendir(path)
 		fs.log.Trace("Filescomfs: Opendir: opening directory remotely: path=%v, errc=%v, fh=%v", path, errc, fh)
 		return errc, fh
@@ -373,7 +443,12 @@ func (fs *Filescomfs) Readdir(path string,
 	ofst int64,
 	fh uint64) (errc int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Readdir", path, storage, start, errc, "offset=%d fh=%d", ofst, fh)
+	}()
+	if storage == "remote" {
 		errc = fs.remote.Readdir(path, fill, ofst, fh)
 		fs.log.Trace("Filescomfs: Readdir: reading directory remotely: path=%v, ofst=%v, fh=%v, errc=%v", path, ofst, fh, errc)
 		return errc
@@ -385,7 +460,12 @@ func (fs *Filescomfs) Readdir(path string,
 
 func (fs *Filescomfs) Releasedir(path string, fh uint64) (errc int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Releasedir", path, storage, start, errc, "fh=%d", fh)
+	}()
+	if storage == "remote" {
 		errc = fs.remote.Releasedir(path, fh)
 		fs.log.Trace("Filescomfs: Releasedir: releasing directory remotely: path=%v, fh=%v, errc=%v", path, fh, errc)
 		return errc
@@ -409,7 +489,12 @@ func (fs *Filescomfs) Chmod(path string, mode uint32) (errc int) {
 
 func (fs *Filescomfs) Fsync(path string, datasync bool, fh uint64) (errc int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Fsync", path, storage, start, errc, "datasync=%t fh=%d", datasync, fh)
+	}()
+	if storage == "remote" {
 		errc = fs.remote.Fsync(path, datasync, fh)
 		fs.log.Trace("Filescomfs: Fsync: syncing file remotely: path=%v, datasync=%v, fh=%v, errc=%v", path, datasync, fh, errc)
 		return errc
@@ -580,7 +665,12 @@ func (fs *Filescomfs) Chown(path string, uid uint32, gid uint32) (errc int) {
 // Access checks file access permissions.
 func (fs *Filescomfs) Access(path string, mask uint32) (errc int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Access", path, storage, start, errc, "mask=%d", mask)
+	}()
+	if storage == "remote" {
 		errc = fs.remote.Access(path, mask)
 		fs.log.Trace("Filescomfs: Access: checking access remotely: path=%v, mask=%v, errc=%v", path, mask, errc)
 		return errc
@@ -593,7 +683,12 @@ func (fs *Filescomfs) Access(path string, mask uint32) (errc int) {
 // Flush flushes cached file data.
 func (fs *Filescomfs) Flush(path string, fh uint64) (errc int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Flush", path, storage, start, errc, "fh=%d", fh)
+	}()
+	if storage == "remote" {
 		errc = fs.remote.Flush(path, fh)
 		fs.log.Trace("Filescomfs: Flush: flushing file remotely: path=%v, fh=%v, errc=%v", path, fh, errc)
 		return errc
@@ -606,7 +701,12 @@ func (fs *Filescomfs) Flush(path string, fh uint64) (errc int) {
 // Fsyncdir synchronizes directory contents.
 func (fs *Filescomfs) Fsyncdir(path string, datasync bool, fh uint64) (errc int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Fsyncdir", path, storage, start, errc, "datasync=%t fh=%d", datasync, fh)
+	}()
+	if storage == "remote" {
 		errc = fs.remote.Fsyncdir(path, datasync, fh)
 		fs.log.Trace("Filescomfs: Fsyncdir: syncing directory remotely: path=%v, datasync=%v, fh=%v, errc=%v", path, datasync, fh, errc)
 		return errc
@@ -619,7 +719,12 @@ func (fs *Filescomfs) Fsyncdir(path string, datasync bool, fh uint64) (errc int)
 // Getxattr gets extended attributes.
 func (fs *Filescomfs) Getxattr(path string, name string) (errc int, value []byte) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Getxattr", path, storage, start, errc, "name=%q value_len=%d", name, len(value))
+	}()
+	if storage == "remote" {
 		errc, value = fs.remote.Getxattr(path, name)
 		fs.log.Trace("Filescomfs: Getxattr: getting xattr remotely: path=%v, name=%v, errc=%v, valueLen=%v", path, name, errc, len(value))
 		return errc, value
@@ -632,7 +737,12 @@ func (fs *Filescomfs) Getxattr(path string, name string) (errc int, value []byte
 // Setxattr sets extended attributes.
 func (fs *Filescomfs) Setxattr(path string, name string, value []byte, flags int) (errc int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Setxattr", path, storage, start, errc, "name=%q flags=%d value_len=%d", name, flags, len(value))
+	}()
+	if storage == "remote" {
 		errc = fs.remote.Setxattr(path, name, value, flags)
 		fs.log.Trace("Filescomfs: Setxattr: setting xattr remotely: path=%v, name=%v, flags=%v, valueLen=%v, errc=%v", path, name, flags, len(value), errc)
 		return errc
@@ -645,7 +755,12 @@ func (fs *Filescomfs) Setxattr(path string, name string, value []byte, flags int
 // Removexattr removes extended attributes.
 func (fs *Filescomfs) Removexattr(path string, name string) (errc int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Removexattr", path, storage, start, errc, "name=%q", name)
+	}()
+	if storage == "remote" {
 		errc = fs.remote.Removexattr(path, name)
 		fs.log.Trace("Filescomfs: Removexattr: removing xattr remotely: path=%v, name=%v, errc=%v", path, name, errc)
 		return errc
@@ -658,7 +773,12 @@ func (fs *Filescomfs) Removexattr(path string, name string) (errc int) {
 // Listxattr lists extended attributes.
 func (fs *Filescomfs) Listxattr(path string, fill func(name string) bool) (errc int) {
 	defer logPanics(fs.log)
-	if fs.isStoredRemotely(path) {
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	defer func() {
+		fs.logMountCallback("Listxattr", path, storage, start, errc, "")
+	}()
+	if storage == "remote" {
 		errc = fs.remote.Listxattr(path, fill)
 		fs.log.Trace("Filescomfs: Listxattr: listing xattr remotely: path=%v, errc=%v", path, errc)
 		return errc
@@ -671,9 +791,14 @@ func (fs *Filescomfs) Listxattr(path string, fill func(name string) bool) (errc 
 // CreateEx is similar to Create except that it allows direct manipulation of the FileInfo_t struct.
 func (fs *Filescomfs) CreateEx(path string, mode uint32, fi *fuse.FileInfo_t) (errc int) {
 	defer logPanics(fs.log)
+	start := time.Now()
+	storage := fs.storageForPath(path)
 	fs.log.Trace("Filescomfs: CreateEx: path=%v, mode=%v, fi=%v", path, mode, fi)
 	fuseFlags := ff.NewFuseFlags(fi.Flags)
 	var fh uint64
+	defer func() {
+		fs.logMountCallback("CreateEx", path, storage, start, errc, "mode=%o flags=%v fh=%d", mode, fuseFlags, fh)
+	}()
 	if fuseFlags.IsCreate() {
 		errc, fh = fs.Create(path, fi.Flags, mode)
 		fs.log.Trace("Filescomfs: CreateEx: created file: path=%v, mode=%v, flags=%v, errc=%v, fh=%v", path, mode, fi.Flags, errc, fh)
@@ -688,8 +813,15 @@ func (fs *Filescomfs) CreateEx(path string, mode uint32, fi *fuse.FileInfo_t) (e
 // OpenEx is similar to Open except that it allows direct manipulation of the FileInfo_t struct.
 func (fs *Filescomfs) OpenEx(path string, fi *fuse.FileInfo_t) (errc int) {
 	defer logPanics(fs.log)
+	start := time.Now()
+	storage := fs.storageForPath(path)
+	fuseFlags := ff.NewFuseFlags(fi.Flags)
+	var fh uint64
+	defer func() {
+		fs.logMountCallback("OpenEx", path, storage, start, errc, "flags=%v fh=%d", fuseFlags, fh)
+	}()
 	fs.log.Trace("Filescomfs: OpenEx: path=%v, fi=%v", path, fi)
-	errc, fh := fs.Open(path, fi.Flags)
+	errc, fh = fs.Open(path, fi.Flags)
 	fs.log.Trace("Filescomfs: OpenEx: opened file: path=%v, flags=%v, errc=%v, fh=%v", path, fi.Flags, errc, fh)
 	fi.Fh = uint64(fh)
 	return errc
