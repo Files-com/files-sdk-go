@@ -11,7 +11,7 @@ type GroupUser struct {
 	GroupId   int64  `json:"group_id,omitempty" path:"group_id,omitempty" url:"group_id,omitempty"`
 	UserId    int64  `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	Admin     *bool  `json:"admin,omitempty" path:"admin,omitempty" url:"admin,omitempty"`
-	Usernames string `json:"usernames,omitempty" path:"usernames,omitempty" url:"usernames,omitempty"`
+	Username  string `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
 	Id        int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 }
 
