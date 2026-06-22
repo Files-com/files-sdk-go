@@ -70,6 +70,7 @@ type Site struct {
 	DesktopAppSessionLifetime                int64       `json:"desktop_app_session_lifetime,omitempty" path:"desktop_app_session_lifetime,omitempty" url:"desktop_app_session_lifetime,omitempty"`
 	LegacyChecksumsMode                      *bool       `json:"legacy_checksums_mode,omitempty" path:"legacy_checksums_mode,omitempty" url:"legacy_checksums_mode,omitempty"`
 	MigrateRemoteServerSyncToSync            *bool       `json:"migrate_remote_server_sync_to_sync,omitempty" path:"migrate_remote_server_sync_to_sync,omitempty" url:"migrate_remote_server_sync_to_sync,omitempty"`
+	McpDcrEnabled                            *bool       `json:"mcp_dcr_enabled,omitempty" path:"mcp_dcr_enabled,omitempty" url:"mcp_dcr_enabled,omitempty"`
 	MobileApp                                *bool       `json:"mobile_app,omitempty" path:"mobile_app,omitempty" url:"mobile_app,omitempty"`
 	MobileAppSessionIpPinning                *bool       `json:"mobile_app_session_ip_pinning,omitempty" path:"mobile_app_session_ip_pinning,omitempty" url:"mobile_app_session_ip_pinning,omitempty"`
 	MobileAppSessionLifetime                 int64       `json:"mobile_app_session_lifetime,omitempty" path:"mobile_app_session_lifetime,omitempty" url:"mobile_app_session_lifetime,omitempty"`
@@ -242,6 +243,7 @@ type SiteUpdateParams struct {
 	LeftNavigationVisibility                 interface{} `url:"left_navigation_visibility,omitempty" json:"left_navigation_visibility,omitempty" path:"left_navigation_visibility"`
 	DisableAllAiFeatures                     *bool       `url:"disable_all_ai_features,omitempty" json:"disable_all_ai_features,omitempty" path:"disable_all_ai_features"`
 	AiFeatureAvailability                    interface{} `url:"ai_feature_availability,omitempty" json:"ai_feature_availability,omitempty" path:"ai_feature_availability"`
+	McpDcrEnabled                            *bool       `url:"mcp_dcr_enabled,omitempty" json:"mcp_dcr_enabled,omitempty" path:"mcp_dcr_enabled"`
 	AdditionalTextFileTypes                  []string    `url:"additional_text_file_types,omitempty" json:"additional_text_file_types,omitempty" path:"additional_text_file_types"`
 	BundleRequireNote                        *bool       `url:"bundle_require_note,omitempty" json:"bundle_require_note,omitempty" path:"bundle_require_note"`
 	BundleSendSharedReceipts                 *bool       `url:"bundle_send_shared_receipts,omitempty" json:"bundle_send_shared_receipts,omitempty" path:"bundle_send_shared_receipts"`
