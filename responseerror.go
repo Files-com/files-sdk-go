@@ -108,6 +108,7 @@ const (
 	ErrApiKeyOnlyForDesktopApp                                                ResponseErrorType = "not-authorized/api-key-only-for-desktop-app"
 	ErrApiKeyOnlyForMobileApp                                                 ResponseErrorType = "not-authorized/api-key-only-for-mobile-app"
 	ErrApiKeyOnlyForOfficeIntegration                                         ResponseErrorType = "not-authorized/api-key-only-for-office-integration"
+	ErrBillingInformationHidden                                               ResponseErrorType = "not-authorized/billing-information-hidden"
 	ErrBillingPermissionRequired                                              ResponseErrorType = "not-authorized/billing-permission-required"
 	ErrBundleMaximumUsesReached                                               ResponseErrorType = "not-authorized/bundle-maximum-uses-reached"
 	ErrBundlePermissionRequired                                               ResponseErrorType = "not-authorized/bundle-permission-required"

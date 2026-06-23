@@ -717,6 +717,7 @@ if err != nil {
 | `not-authorized/api-key-only-for-desktop-app` | `ErrApiKeyOnlyForDesktopApp` | Api Key Only For Desktop App |
 | `not-authorized/api-key-only-for-mobile-app` | `ErrApiKeyOnlyForMobileApp` | Api Key Only For Mobile App |
 | `not-authorized/api-key-only-for-office-integration` | `ErrApiKeyOnlyForOfficeIntegration` | Api Key Only For Office Integration |
+| `not-authorized/billing-information-hidden` | `ErrBillingInformationHidden` | Billing Information Hidden |
 | `not-authorized/billing-permission-required` | `ErrBillingPermissionRequired` | Billing Permission Required |
 | `not-authorized/bundle-maximum-uses-reached` | `ErrBundleMaximumUsesReached` | Bundle Maximum Uses Reached |
 | `not-authorized/bundle-permission-required` | `ErrBundlePermissionRequired` | Bundle Permission Required |
