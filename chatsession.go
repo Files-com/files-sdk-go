@@ -8,7 +8,7 @@ import (
 )
 
 type ChatSession struct {
-	Id           int64         `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Id           string        `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	UserId       int64         `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	WorkspaceId  int64         `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	LastActiveAt *time.Time    `json:"last_active_at,omitempty" path:"last_active_at,omitempty" url:"last_active_at,omitempty"`
@@ -27,7 +27,7 @@ type ChatSessionListParams struct {
 }
 
 type ChatSessionFindParams struct {
-	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Id string `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 func (c *ChatSession) UnmarshalJSON(data []byte) error {

@@ -25,7 +25,7 @@ func (i *Iter) ChatSession() files_sdk.ChatSession {
 
 func (i *Iter) LoadResource(identifier interface{}, opts ...files_sdk.RequestResponseOption) (interface{}, error) {
 	params := files_sdk.ChatSessionFindParams{}
-	if id, ok := identifier.(int64); ok {
+	if id, ok := identifier.(string); ok {
 		params.Id = id
 	}
 	return i.Client.Find(params, opts...)
