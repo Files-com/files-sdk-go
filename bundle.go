@@ -37,6 +37,7 @@ type Bundle struct {
 	DeletedAt                                    *time.Time   `json:"deleted_at,omitempty" path:"deleted_at,omitempty" url:"deleted_at,omitempty"`
 	DontSeparateSubmissionsByFolder              *bool        `json:"dont_separate_submissions_by_folder,omitempty" path:"dont_separate_submissions_by_folder,omitempty" url:"dont_separate_submissions_by_folder,omitempty"`
 	MaxUses                                      int64        `json:"max_uses,omitempty" path:"max_uses,omitempty" url:"max_uses,omitempty"`
+	InternalName                                 string       `json:"internal_name,omitempty" path:"internal_name,omitempty" url:"internal_name,omitempty"`
 	Note                                         string       `json:"note,omitempty" path:"note,omitempty" url:"note,omitempty"`
 	PathTemplate                                 string       `json:"path_template,omitempty" path:"path_template,omitempty" url:"path_template,omitempty"`
 	PathTemplateTimeZone                         string       `json:"path_template_time_zone,omitempty" path:"path_template_time_zone,omitempty" url:"path_template_time_zone,omitempty"`
@@ -116,6 +117,7 @@ type BundleCreateParams struct {
 	FinalizeSnapshot                             *bool                 `url:"finalize_snapshot,omitempty" json:"finalize_snapshot,omitempty" path:"finalize_snapshot"`
 	MaxUses                                      int64                 `url:"max_uses,omitempty" json:"max_uses,omitempty" path:"max_uses"`
 	GroupId                                      int64                 `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
+	InternalName                                 string                `url:"internal_name,omitempty" json:"internal_name,omitempty" path:"internal_name"`
 	Description                                  string                `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	Note                                         string                `url:"note,omitempty" json:"note,omitempty" path:"note"`
 	Code                                         string                `url:"code,omitempty" json:"code,omitempty" path:"code"`
@@ -161,6 +163,7 @@ type BundleUpdateParams struct {
 	InboxId                                      int64                 `url:"inbox_id,omitempty" json:"inbox_id,omitempty" path:"inbox_id"`
 	MaxUses                                      int64                 `url:"max_uses,omitempty" json:"max_uses,omitempty" path:"max_uses"`
 	GroupId                                      int64                 `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
+	InternalName                                 string                `url:"internal_name,omitempty" json:"internal_name,omitempty" path:"internal_name"`
 	Note                                         string                `url:"note,omitempty" json:"note,omitempty" path:"note"`
 	PathTemplate                                 string                `url:"path_template,omitempty" json:"path_template,omitempty" path:"path_template"`
 	PathTemplateTimeZone                         string                `url:"path_template_time_zone,omitempty" json:"path_template_time_zone,omitempty" path:"path_template_time_zone"`
