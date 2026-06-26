@@ -243,6 +243,15 @@ func Move(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOpti
 	return (&Client{}).Move(params, opts...)
 }
 
+func (c *Client) Transform(params files_sdk.FileTransformParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/transform/{path}", Params: params, Entity: &fileAction}, opts...)
+	return
+}
+
+func Transform(params files_sdk.FileTransformParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	return (&Client{}).Transform(params, opts...)
+}
+
 func (c *Client) GpgDecrypt(params files_sdk.FileGpgDecryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/gpg_decrypt/{path}", Params: params, Entity: &fileAction}, opts...)
 	return

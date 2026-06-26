@@ -136,6 +136,17 @@ type FileMoveParams struct {
 	Overwrite   *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
+// Transform a file and save the output to a destination path
+type FileTransformParams struct {
+	Path          string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	Destination   string `url:"destination" json:"destination" path:"destination"`
+	TransformType string `url:"transform_type" json:"transform_type" path:"transform_type"`
+	TargetFormat  string `url:"target_format" json:"target_format" path:"target_format"`
+	Width         int64  `url:"width,omitempty" json:"width,omitempty" path:"width"`
+	Height        int64  `url:"height,omitempty" json:"height,omitempty" path:"height"`
+	Overwrite     *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
+}
+
 // Decrypt a GPG-encrypted file and save it to a destination path
 type FileGpgDecryptParams struct {
 	Path              string  `url:"-,omitempty" json:"-,omitempty" path:"path"`
