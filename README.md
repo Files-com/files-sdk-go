@@ -777,6 +777,7 @@ if err != nil {
 | `not-found/user-not-found` | `ErrUserNotFound` | User Not Found |
 | `processing-failure` | `ErrProcessingFailure` | Processing Failure |
 | `processing-failure/agent-unavailable` | `ErrAgentUnavailable` | Agent Unavailable |
+| `processing-failure/ai-task-cannot-be-run-manually` | `ErrAiTaskCannotBeRunManually` | Ai Task Cannot Be Run Manually |
 | `processing-failure/already-completed` | `ErrAlreadyCompleted` | Already Completed |
 | `processing-failure/automation-cannot-be-run-manually` | `ErrAutomationCannotBeRunManually` | Automation Cannot Be Run Manually |
 | `processing-failure/behavior-not-allowed-on-remote-server` | `ErrBehaviorNotAllowedOnRemoteServer` | Behavior Not Allowed On Remote Server |

@@ -166,6 +166,7 @@ const (
 	ErrSiteNotFound                                                           ResponseErrorType = "not-found/site-not-found"
 	ErrUserNotFound                                                           ResponseErrorType = "not-found/user-not-found"
 	ErrAgentUnavailable                                                       ResponseErrorType = "processing-failure/agent-unavailable"
+	ErrAiTaskCannotBeRunManually                                              ResponseErrorType = "processing-failure/ai-task-cannot-be-run-manually"
 	ErrAlreadyCompleted                                                       ResponseErrorType = "processing-failure/already-completed"
 	ErrAutomationCannotBeRunManually                                          ResponseErrorType = "processing-failure/automation-cannot-be-run-manually"
 	ErrBehaviorNotAllowedOnRemoteServer                                       ResponseErrorType = "processing-failure/behavior-not-allowed-on-remote-server"

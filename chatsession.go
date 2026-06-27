@@ -10,6 +10,7 @@ import (
 type ChatSession struct {
 	Id           string        `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	UserId       int64         `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	AiTaskId     int64         `json:"ai_task_id,omitempty" path:"ai_task_id,omitempty" url:"ai_task_id,omitempty"`
 	WorkspaceId  int64         `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	LastActiveAt *time.Time    `json:"last_active_at,omitempty" path:"last_active_at,omitempty" url:"last_active_at,omitempty"`
 	CreatedAt    *time.Time    `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
@@ -23,6 +24,7 @@ func (c ChatSession) Identifier() interface{} {
 type ChatSessionCollection []ChatSession
 
 type ChatSessionListParams struct {
+	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
