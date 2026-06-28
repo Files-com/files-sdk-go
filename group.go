@@ -14,6 +14,7 @@ type Group struct {
 	Notes                         string `json:"notes,omitempty" path:"notes,omitempty" url:"notes,omitempty"`
 	UserIds                       string `json:"user_ids,omitempty" path:"user_ids,omitempty" url:"user_ids,omitempty"`
 	Usernames                     string `json:"usernames,omitempty" path:"usernames,omitempty" url:"usernames,omitempty"`
+	AiAssistantPersonalityId      int64  `json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id,omitempty" url:"ai_assistant_personality_id,omitempty"`
 	FtpPermission                 *bool  `json:"ftp_permission,omitempty" path:"ftp_permission,omitempty" url:"ftp_permission,omitempty"`
 	SftpPermission                *bool  `json:"sftp_permission,omitempty" path:"sftp_permission,omitempty" url:"sftp_permission,omitempty"`
 	DavPermission                 *bool  `json:"dav_permission,omitempty" path:"dav_permission,omitempty" url:"dav_permission,omitempty"`
@@ -46,6 +47,7 @@ type GroupCreateParams struct {
 	Notes                         string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
 	UserIds                       string `url:"user_ids,omitempty" json:"user_ids,omitempty" path:"user_ids"`
 	AdminIds                      string `url:"admin_ids,omitempty" json:"admin_ids,omitempty" path:"admin_ids"`
+	AiAssistantPersonalityId      int64  `url:"ai_assistant_personality_id,omitempty" json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id"`
 	FtpPermission                 *bool  `url:"ftp_permission,omitempty" json:"ftp_permission,omitempty" path:"ftp_permission"`
 	SftpPermission                *bool  `url:"sftp_permission,omitempty" json:"sftp_permission,omitempty" path:"sftp_permission"`
 	DavPermission                 *bool  `url:"dav_permission,omitempty" json:"dav_permission,omitempty" path:"dav_permission"`
@@ -61,6 +63,7 @@ type GroupUpdateParams struct {
 	Notes                         string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
 	UserIds                       string `url:"user_ids,omitempty" json:"user_ids,omitempty" path:"user_ids"`
 	AdminIds                      string `url:"admin_ids,omitempty" json:"admin_ids,omitempty" path:"admin_ids"`
+	AiAssistantPersonalityId      int64  `url:"ai_assistant_personality_id,omitempty" json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id"`
 	FtpPermission                 *bool  `url:"ftp_permission,omitempty" json:"ftp_permission,omitempty" path:"ftp_permission"`
 	SftpPermission                *bool  `url:"sftp_permission,omitempty" json:"sftp_permission,omitempty" path:"sftp_permission"`
 	DavPermission                 *bool  `url:"dav_permission,omitempty" json:"dav_permission,omitempty" path:"dav_permission"`

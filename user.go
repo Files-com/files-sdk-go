@@ -26,6 +26,7 @@ type User struct {
 	DavPermission                          *bool      `json:"dav_permission,omitempty" path:"dav_permission,omitempty" url:"dav_permission,omitempty"`
 	Disabled                               *bool      `json:"disabled,omitempty" path:"disabled,omitempty" url:"disabled,omitempty"`
 	DisabledExpiredOrInactive              *bool      `json:"disabled_expired_or_inactive,omitempty" path:"disabled_expired_or_inactive,omitempty" url:"disabled_expired_or_inactive,omitempty"`
+	AiAssistantPersonalityId               int64      `json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id,omitempty" url:"ai_assistant_personality_id,omitempty"`
 	DesktopConfigurationProfileId          int64      `json:"desktop_configuration_profile_id,omitempty" path:"desktop_configuration_profile_id,omitempty" url:"desktop_configuration_profile_id,omitempty"`
 	Email                                  string     `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
 	FilesystemLayout                       string     `json:"filesystem_layout,omitempty" path:"filesystem_layout,omitempty" url:"filesystem_layout,omitempty"`
@@ -205,6 +206,7 @@ type UserCreateParams struct {
 	Password                               string                       `url:"password,omitempty" json:"password,omitempty" path:"password"`
 	PasswordConfirmation                   string                       `url:"password_confirmation,omitempty" json:"password_confirmation,omitempty" path:"password_confirmation"`
 	AnnouncementsRead                      *bool                        `url:"announcements_read,omitempty" json:"announcements_read,omitempty" path:"announcements_read"`
+	AiAssistantPersonalityId               int64                        `url:"ai_assistant_personality_id,omitempty" json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id"`
 	AllowedIps                             string                       `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
 	AttachmentsPermission                  *bool                        `url:"attachments_permission,omitempty" json:"attachments_permission,omitempty" path:"attachments_permission"`
 	AuthenticateUntil                      *time.Time                   `url:"authenticate_until,omitempty" json:"authenticate_until,omitempty" path:"authenticate_until"`
@@ -288,6 +290,7 @@ type UserUpdateParams struct {
 	Password                               string                       `url:"password,omitempty" json:"password,omitempty" path:"password"`
 	PasswordConfirmation                   string                       `url:"password_confirmation,omitempty" json:"password_confirmation,omitempty" path:"password_confirmation"`
 	AnnouncementsRead                      *bool                        `url:"announcements_read,omitempty" json:"announcements_read,omitempty" path:"announcements_read"`
+	AiAssistantPersonalityId               int64                        `url:"ai_assistant_personality_id,omitempty" json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id"`
 	AllowedIps                             string                       `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
 	AttachmentsPermission                  *bool                        `url:"attachments_permission,omitempty" json:"attachments_permission,omitempty" path:"attachments_permission"`
 	AuthenticateUntil                      *time.Time                   `url:"authenticate_until,omitempty" json:"authenticate_until,omitempty" path:"authenticate_until"`

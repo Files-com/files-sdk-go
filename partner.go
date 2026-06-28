@@ -14,6 +14,7 @@ type Partner struct {
 	AllowUserCreation          *bool   `json:"allow_user_creation,omitempty" path:"allow_user_creation,omitempty" url:"allow_user_creation,omitempty"`
 	CcEmailsToResponsibleParty *bool   `json:"cc_emails_to_responsible_party,omitempty" path:"cc_emails_to_responsible_party,omitempty" url:"cc_emails_to_responsible_party,omitempty"`
 	Id                         int64   `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	AiAssistantPersonalityId   int64   `json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id,omitempty" url:"ai_assistant_personality_id,omitempty"`
 	WorkspaceId                int64   `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	Name                       string  `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Notes                      string  `json:"notes,omitempty" path:"notes,omitempty" url:"notes,omitempty"`
@@ -43,6 +44,7 @@ type PartnerFindParams struct {
 }
 
 type PartnerCreateParams struct {
+	AiAssistantPersonalityId   int64  `url:"ai_assistant_personality_id,omitempty" json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id"`
 	AllowedIps                 string `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
 	AllowBypassing2faPolicies  *bool  `url:"allow_bypassing_2fa_policies,omitempty" json:"allow_bypassing_2fa_policies,omitempty" path:"allow_bypassing_2fa_policies"`
 	AllowCredentialChanges     *bool  `url:"allow_credential_changes,omitempty" json:"allow_credential_changes,omitempty" path:"allow_credential_changes"`
@@ -60,6 +62,7 @@ type PartnerCreateParams struct {
 
 type PartnerUpdateParams struct {
 	Id                         int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	AiAssistantPersonalityId   int64  `url:"ai_assistant_personality_id,omitempty" json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id"`
 	AllowedIps                 string `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
 	AllowBypassing2faPolicies  *bool  `url:"allow_bypassing_2fa_policies,omitempty" json:"allow_bypassing_2fa_policies,omitempty" path:"allow_bypassing_2fa_policies"`
 	AllowCredentialChanges     *bool  `url:"allow_credential_changes,omitempty" json:"allow_credential_changes,omitempty" path:"allow_credential_changes"`
