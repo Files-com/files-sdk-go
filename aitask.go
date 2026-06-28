@@ -13,6 +13,7 @@ type AiTask struct {
 	Name                  string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Description           string     `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
 	Prompt                string     `json:"prompt,omitempty" path:"prompt,omitempty" url:"prompt,omitempty"`
+	PermissionSet         string     `json:"permission_set,omitempty" path:"permission_set,omitempty" url:"permission_set,omitempty"`
 	Path                  string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	Source                string     `json:"source,omitempty" path:"source,omitempty" url:"source,omitempty"`
 	Disabled              *bool      `json:"disabled,omitempty" path:"disabled,omitempty" url:"disabled,omitempty"`
@@ -36,6 +37,19 @@ func (a AiTask) Identifier() interface{} {
 }
 
 type AiTaskCollection []AiTask
+
+type AiTaskPermissionSetEnum string
+
+func (u AiTaskPermissionSetEnum) String() string {
+	return string(u)
+}
+
+func (u AiTaskPermissionSetEnum) Enum() map[string]AiTaskPermissionSetEnum {
+	return map[string]AiTaskPermissionSetEnum{
+		"full":       AiTaskPermissionSetEnum("full"),
+		"files_only": AiTaskPermissionSetEnum("files_only"),
+	}
+}
 
 type AiTaskTriggerEnum string
 
@@ -63,21 +77,22 @@ type AiTaskFindParams struct {
 }
 
 type AiTaskCreateParams struct {
-	Description        string            `url:"description,omitempty" json:"description,omitempty" path:"description"`
-	Disabled           *bool             `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
-	HolidayRegion      string            `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
-	Interval           string            `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
-	Name               string            `url:"name" json:"name" path:"name"`
-	Path               string            `url:"path,omitempty" json:"path,omitempty" path:"path"`
-	Prompt             string            `url:"prompt" json:"prompt" path:"prompt"`
-	RecurringDay       int64             `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
-	ScheduleDaysOfWeek []int64           `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
-	ScheduleTimeZone   string            `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
-	ScheduleTimesOfDay []string          `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
-	Source             string            `url:"source,omitempty" json:"source,omitempty" path:"source"`
-	Trigger            AiTaskTriggerEnum `url:"trigger,omitempty" json:"trigger,omitempty" path:"trigger"`
-	TriggerActions     []string          `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
-	WorkspaceId        int64             `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
+	Description        string                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	Disabled           *bool                   `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
+	HolidayRegion      string                  `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
+	Interval           string                  `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
+	Name               string                  `url:"name" json:"name" path:"name"`
+	Path               string                  `url:"path,omitempty" json:"path,omitempty" path:"path"`
+	PermissionSet      AiTaskPermissionSetEnum `url:"permission_set,omitempty" json:"permission_set,omitempty" path:"permission_set"`
+	Prompt             string                  `url:"prompt" json:"prompt" path:"prompt"`
+	RecurringDay       int64                   `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
+	ScheduleDaysOfWeek []int64                 `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
+	ScheduleTimeZone   string                  `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
+	ScheduleTimesOfDay []string                `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
+	Source             string                  `url:"source,omitempty" json:"source,omitempty" path:"source"`
+	Trigger            AiTaskTriggerEnum       `url:"trigger,omitempty" json:"trigger,omitempty" path:"trigger"`
+	TriggerActions     []string                `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
+	WorkspaceId        int64                   `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 // Manually Run AI Task
@@ -86,22 +101,23 @@ type AiTaskManualRunParams struct {
 }
 
 type AiTaskUpdateParams struct {
-	Id                 int64             `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	Description        string            `url:"description,omitempty" json:"description,omitempty" path:"description"`
-	Disabled           *bool             `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
-	HolidayRegion      string            `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
-	Interval           string            `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
-	Name               string            `url:"name,omitempty" json:"name,omitempty" path:"name"`
-	Path               string            `url:"path,omitempty" json:"path,omitempty" path:"path"`
-	Prompt             string            `url:"prompt,omitempty" json:"prompt,omitempty" path:"prompt"`
-	RecurringDay       int64             `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
-	ScheduleDaysOfWeek []int64           `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
-	ScheduleTimeZone   string            `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
-	ScheduleTimesOfDay []string          `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
-	Source             string            `url:"source,omitempty" json:"source,omitempty" path:"source"`
-	Trigger            AiTaskTriggerEnum `url:"trigger,omitempty" json:"trigger,omitempty" path:"trigger"`
-	TriggerActions     []string          `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
-	WorkspaceId        int64             `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
+	Id                 int64                   `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Description        string                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	Disabled           *bool                   `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
+	HolidayRegion      string                  `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
+	Interval           string                  `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
+	Name               string                  `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	Path               string                  `url:"path,omitempty" json:"path,omitempty" path:"path"`
+	PermissionSet      AiTaskPermissionSetEnum `url:"permission_set,omitempty" json:"permission_set,omitempty" path:"permission_set"`
+	Prompt             string                  `url:"prompt,omitempty" json:"prompt,omitempty" path:"prompt"`
+	RecurringDay       int64                   `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
+	ScheduleDaysOfWeek []int64                 `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
+	ScheduleTimeZone   string                  `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
+	ScheduleTimesOfDay []string                `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
+	Source             string                  `url:"source,omitempty" json:"source,omitempty" path:"source"`
+	Trigger            AiTaskTriggerEnum       `url:"trigger,omitempty" json:"trigger,omitempty" path:"trigger"`
+	TriggerActions     []string                `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
+	WorkspaceId        int64                   `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 type AiTaskDeleteParams struct {
