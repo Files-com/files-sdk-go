@@ -76,6 +76,7 @@ func (u RemoteServerCredentialServerTypeEnum) Enum() map[string]RemoteServerCred
 		"filebase":             RemoteServerCredentialServerTypeEnum("filebase"),
 		"cloudflare":           RemoteServerCredentialServerTypeEnum("cloudflare"),
 		"linode":               RemoteServerCredentialServerTypeEnum("linode"),
+		"files_com":            RemoteServerCredentialServerTypeEnum("files_com"),
 	}
 }
 

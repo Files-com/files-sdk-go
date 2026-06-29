@@ -70,6 +70,7 @@ type RemoteServer struct {
 	OutboundAgentId                         int64  `json:"outbound_agent_id,omitempty" path:"outbound_agent_id,omitempty" url:"outbound_agent_id,omitempty"`
 	FilebaseBucket                          string `json:"filebase_bucket,omitempty" path:"filebase_bucket,omitempty" url:"filebase_bucket,omitempty"`
 	FilebaseAccessKey                       string `json:"filebase_access_key,omitempty" path:"filebase_access_key,omitempty" url:"filebase_access_key,omitempty"`
+	FilesApiKeyPrefix                       string `json:"files_api_key_prefix,omitempty" path:"files_api_key_prefix,omitempty" url:"files_api_key_prefix,omitempty"`
 	CloudflareBucket                        string `json:"cloudflare_bucket,omitempty" path:"cloudflare_bucket,omitempty" url:"cloudflare_bucket,omitempty"`
 	CloudflareAccessKey                     string `json:"cloudflare_access_key,omitempty" path:"cloudflare_access_key,omitempty" url:"cloudflare_access_key,omitempty"`
 	CloudflareEndpoint                      string `json:"cloudflare_endpoint,omitempty" path:"cloudflare_endpoint,omitempty" url:"cloudflare_endpoint,omitempty"`
@@ -97,6 +98,7 @@ type RemoteServer struct {
 	LinodeSecretKey                         string `json:"linode_secret_key,omitempty" path:"linode_secret_key,omitempty" url:"linode_secret_key,omitempty"`
 	S3CompatibleSecretKey                   string `json:"s3_compatible_secret_key,omitempty" path:"s3_compatible_secret_key,omitempty" url:"s3_compatible_secret_key,omitempty"`
 	WasabiSecretKey                         string `json:"wasabi_secret_key,omitempty" path:"wasabi_secret_key,omitempty" url:"wasabi_secret_key,omitempty"`
+	FilesApiKey                             string `json:"files_api_key,omitempty" path:"files_api_key,omitempty" url:"files_api_key,omitempty"`
 }
 
 func (r RemoteServer) Identifier() interface{} {
@@ -200,6 +202,7 @@ func (u RemoteServerServerTypeEnum) Enum() map[string]RemoteServerServerTypeEnum
 		"filebase":             RemoteServerServerTypeEnum("filebase"),
 		"cloudflare":           RemoteServerServerTypeEnum("cloudflare"),
 		"linode":               RemoteServerServerTypeEnum("linode"),
+		"files_com":            RemoteServerServerTypeEnum("files_com"),
 	}
 }
 
@@ -273,6 +276,7 @@ type RemoteServerCreateParams struct {
 	EnableDedicatedIps                      *bool                                                  `url:"enable_dedicated_ips,omitempty" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
 	FilebaseAccessKey                       string                                                 `url:"filebase_access_key,omitempty" json:"filebase_access_key,omitempty" path:"filebase_access_key"`
 	FilebaseBucket                          string                                                 `url:"filebase_bucket,omitempty" json:"filebase_bucket,omitempty" path:"filebase_bucket"`
+	FilesApiKey                             string                                                 `url:"files_api_key,omitempty" json:"files_api_key,omitempty" path:"files_api_key"`
 	FilesAgentPermissionSet                 RemoteServerFilesAgentPermissionSetEnum                `url:"files_agent_permission_set,omitempty" json:"files_agent_permission_set,omitempty" path:"files_agent_permission_set"`
 	FilesAgentRoot                          string                                                 `url:"files_agent_root,omitempty" json:"files_agent_root,omitempty" path:"files_agent_root"`
 	FilesAgentVersion                       string                                                 `url:"files_agent_version,omitempty" json:"files_agent_version,omitempty" path:"files_agent_version"`
@@ -375,6 +379,7 @@ type RemoteServerUpdateParams struct {
 	EnableDedicatedIps                      *bool                                                  `url:"enable_dedicated_ips,omitempty" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
 	FilebaseAccessKey                       string                                                 `url:"filebase_access_key,omitempty" json:"filebase_access_key,omitempty" path:"filebase_access_key"`
 	FilebaseBucket                          string                                                 `url:"filebase_bucket,omitempty" json:"filebase_bucket,omitempty" path:"filebase_bucket"`
+	FilesApiKey                             string                                                 `url:"files_api_key,omitempty" json:"files_api_key,omitempty" path:"files_api_key"`
 	FilesAgentPermissionSet                 RemoteServerFilesAgentPermissionSetEnum                `url:"files_agent_permission_set,omitempty" json:"files_agent_permission_set,omitempty" path:"files_agent_permission_set"`
 	FilesAgentRoot                          string                                                 `url:"files_agent_root,omitempty" json:"files_agent_root,omitempty" path:"files_agent_root"`
 	FilesAgentVersion                       string                                                 `url:"files_agent_version,omitempty" json:"files_agent_version,omitempty" path:"files_agent_version"`
