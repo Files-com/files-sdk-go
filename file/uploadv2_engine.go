@@ -270,14 +270,17 @@ func uploadV2HTTPMaxConnsPerHost(plan uploadV2PartPlan, tuning UploadV2Tuning, m
 	if maxConnsPerHost <= 0 || plan.target != uploadV2TargetS3 {
 		return maxConnsPerHost
 	}
-	ceiling := uploadV2S3GrowthCeiling
+	ceiling := AdaptiveTransferS3GrowthCeiling
+	if tuning.InitialTarget > 0 {
+		ceiling = tuning.InitialTarget
+	}
 	if tuning.S3GrowthCeiling > 0 {
 		ceiling = tuning.S3GrowthCeiling
 	}
 	if ceiling <= 0 || ceiling >= maxConnsPerHost {
 		return maxConnsPerHost
 	}
-	probeBytes := uploadV2S3GrowthCeilingProbeBytes
+	probeBytes := AdaptiveTransferS3GrowthCeilingProbeBytes
 	if tuning.S3GrowthCeilingProbeBytes > 0 {
 		probeBytes = tuning.S3GrowthCeilingProbeBytes
 	}
@@ -293,7 +296,7 @@ func uploadV2HTTPMaxConnsPerHost(plan uploadV2PartPlan, tuning UploadV2Tuning, m
 	if probeBytes > 0 && workloadBytes >= probeBytes {
 		return maxConnsPerHost
 	}
-	probeSuccesses := uploadV2S3GrowthCeilingProbeSuccesses
+	probeSuccesses := AdaptiveTransferS3GrowthCeilingProbeSuccesses
 	if tuning.S3GrowthCeilingProbeSuccesses > 0 {
 		probeSuccesses = tuning.S3GrowthCeilingProbeSuccesses
 	}

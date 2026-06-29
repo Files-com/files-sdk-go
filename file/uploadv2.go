@@ -13,28 +13,99 @@ import (
 )
 
 const (
-	uploadV2S3ThroughputProbeFloor                   = 150
-	uploadV2S3ThroughputProbePlateau                 = 200
-	uploadV2S3ThroughputProbeFloorRate               = 96 * 1024 * 1024
-	uploadV2S3ThroughputProbeMinGainPerTargetPercent = 0.15
-	uploadV2S3ThroughputProbeLossTolerancePercent    = 2
-	uploadV2S3MaxConcurrency                         = 1024
-	uploadV2S3GrowthCeiling                          = 150
-	uploadV2S3GrowthCeilingProbeBytes                = 64 * uploadV2GiB
-	uploadV2S3GrowthCeilingProbeSuccesses            = 0
-	uploadV2S3GrowthCeilingProbeRate                 = 96 * 1024 * 1024
-	uploadV2S3InitialConcurrency                     = 150
-	uploadV2S3AdaptiveFloor                          = 50
-	uploadV2S3LatencyQueueHigh                       = 160
-	uploadV2S3LatencyGrowthQueueHigh                 = 96
-	uploadV2S3WorkloadTargetPartMultiplier           = 8
-	uploadV2S3WorkloadMinPartSizeMiB                 = 8
-	uploadV2DefaultMaxConcurrency                    = 64
-	uploadV2WorkloadScanWait                         = 250 * time.Millisecond
-	uploadV2WorkloadScanPoll                         = 10 * time.Millisecond
-	uploadV2DefaultReadyRunwayParts                  = 4
-	uploadV2DefaultReadyRunwayBytes                  = 256 * uploadV2MiB
+	// AdaptiveTransferHighThroughputInitialTarget is the SDK's built-in starting target for high-throughput adaptive transfers.
+	AdaptiveTransferHighThroughputInitialTarget = 150
+	// AdaptiveTransferConservativeInitialTarget is a lower starting target for consumer desktops and lower-capacity networks.
+	AdaptiveTransferConservativeInitialTarget = 50
+
+	// AdaptiveTransferDefaultTargetInitialTarget is the generic transfer target starting concurrency.
+	AdaptiveTransferDefaultTargetInitialTarget = lib.AdaptiveConcurrencyDefaultInitialTarget
+	// AdaptiveDownloadDefaultTargetInitialTarget is the generic download target starting concurrency.
+	AdaptiveDownloadDefaultTargetInitialTarget = 15
+	// AdaptiveDownloadDefaultTargetMinTarget is the generic download target minimum concurrency.
+	AdaptiveDownloadDefaultTargetMinTarget = 1
+	// AdaptiveTransferDefaultTargetGrowEvery is the generic transfer target success count between growth steps.
+	AdaptiveTransferDefaultTargetGrowEvery = lib.AdaptiveConcurrencyDefaultGrowEvery
+	// AdaptiveTransferDefaultTargetGrowStep is the generic transfer target normal growth step.
+	AdaptiveTransferDefaultTargetGrowStep = lib.AdaptiveConcurrencyDefaultGrowStep
+	// AdaptiveTransferDefaultTargetFailureShrinkPercent is the generic transfer target shrink percentage after failure.
+	AdaptiveTransferDefaultTargetFailureShrinkPercent = lib.AdaptiveConcurrencyDefaultFailureShrinkPercent
+	// AdaptiveTransferDefaultTargetBackPressureShrinkPercent is the generic upload target shrink percentage after backpressure.
+	AdaptiveTransferDefaultTargetBackPressureShrinkPercent = lib.AdaptiveConcurrencyDefaultBackPressureShrinkPercent
+	// AdaptiveDownloadDefaultTargetBackPressureShrinkPercent is the generic download target shrink percentage after backpressure.
+	AdaptiveDownloadDefaultTargetBackPressureShrinkPercent = 35
+	// AdaptiveTransferDefaultTargetBackPressurePause is the generic upload target pause after backpressure.
+	AdaptiveTransferDefaultTargetBackPressurePause = lib.AdaptiveConcurrencyDefaultBackPressurePause
+	// AdaptiveDownloadDefaultTargetBackPressurePause is the generic download target pause after backpressure.
+	AdaptiveDownloadDefaultTargetBackPressurePause = 500 * time.Millisecond
+
+	// AdaptiveTransferS3MaxConcurrency is the SDK default maximum adaptive concurrency for S3 transfers.
+	AdaptiveTransferS3MaxConcurrency = 1024
+	// AdaptiveTransferDefaultMaxConcurrency is the SDK default maximum adaptive concurrency for generic transfers.
+	AdaptiveTransferDefaultMaxConcurrency = 64
+	// AdaptiveTransferS3InitialTarget is the S3 transfer starting concurrency.
+	AdaptiveTransferS3InitialTarget = AdaptiveTransferHighThroughputInitialTarget
+	// AdaptiveTransferS3MinTarget is the S3 transfer minimum concurrency.
+	AdaptiveTransferS3MinTarget = 8
+	// AdaptiveTransferS3AdaptiveFloor is the S3 throughput and latency floor.
+	AdaptiveTransferS3AdaptiveFloor = 50
+	// AdaptiveTransferS3GrowEvery is the S3 success count between growth steps.
+	AdaptiveTransferS3GrowEvery = 16
+	// AdaptiveTransferS3GrowStep is the S3 normal growth step.
+	AdaptiveTransferS3GrowStep = 4
+	// AdaptiveTransferS3FailureShrinkPercent is the S3 shrink percentage after failure.
+	AdaptiveTransferS3FailureShrinkPercent = 35
+	// AdaptiveTransferS3BackPressureShrinkPercent is the S3 shrink percentage after backpressure.
+	AdaptiveTransferS3BackPressureShrinkPercent = 10
+	// AdaptiveTransferS3BackPressurePause is the S3 pause after backpressure.
+	AdaptiveTransferS3BackPressurePause = 0
+	// AdaptiveTransferS3ThroughputWindow is the S3 throughput sample window.
+	AdaptiveTransferS3ThroughputWindow = 32
+	// AdaptiveTransferS3ThroughputMinGainPercent is the S3 required throughput gain percentage.
+	AdaptiveTransferS3ThroughputMinGainPercent = 1
+	// AdaptiveTransferS3ThroughputShrinkPercent is the S3 shrink percentage after throughput regression.
+	AdaptiveTransferS3ThroughputShrinkPercent = 8
+	// AdaptiveTransferS3ThroughputHoldWindows is the S3 throughput windows held after shrink.
+	AdaptiveTransferS3ThroughputHoldWindows = 1
+	// AdaptiveTransferS3ThroughputProbeMinWindows is the S3 repeated probe miss window threshold.
+	AdaptiveTransferS3ThroughputProbeMinWindows = 2
+	// AdaptiveTransferS3ThroughputProbeFloor is the S3 fast-link probe floor.
+	AdaptiveTransferS3ThroughputProbeFloor = AdaptiveTransferHighThroughputInitialTarget
+	// AdaptiveTransferS3ThroughputProbeFloorRateBytesPerSecond is the S3 fast-link probe floor rate.
+	AdaptiveTransferS3ThroughputProbeFloorRateBytesPerSecond = 96 * 1024 * 1024
+	// AdaptiveTransferS3ThroughputProbePlateau is the S3 initial high-throughput probe plateau.
+	AdaptiveTransferS3ThroughputProbePlateau = 200
+	// AdaptiveTransferS3ThroughputProbeMinGainPerTargetPercent is the S3 required gain per target above the plateau.
+	AdaptiveTransferS3ThroughputProbeMinGainPerTargetPercent = 0.15
+	// AdaptiveTransferS3ThroughputProbeLossTolerancePercent is the S3 tolerated throughput loss while probing.
+	AdaptiveTransferS3ThroughputProbeLossTolerancePercent = 2
+	// AdaptiveTransferS3GrowthCeiling is the S3 soft growth target before high-throughput probing.
+	AdaptiveTransferS3GrowthCeiling = AdaptiveTransferHighThroughputInitialTarget
+	// AdaptiveTransferS3GrowthCeilingProbeBytes is the S3 workload size required before probing above the soft target.
+	AdaptiveTransferS3GrowthCeilingProbeBytes = 64 * uploadV2GiB
+	// AdaptiveTransferS3GrowthCeilingProbeSuccesses is the S3 success count required before probing above the soft target.
+	AdaptiveTransferS3GrowthCeilingProbeSuccesses = 0
+	// AdaptiveTransferS3GrowthCeilingProbeRateBytesPerSecond is the S3 throughput required before probing above the soft target.
+	AdaptiveTransferS3GrowthCeilingProbeRateBytesPerSecond = 96 * 1024 * 1024
+	// AdaptiveTransferS3LatencyShrinkPercent is the S3 shrink percentage after latency pressure.
+	AdaptiveTransferS3LatencyShrinkPercent = 8
+	// AdaptiveTransferS3LatencyQueueHigh is the S3 latency queue threshold that triggers backoff.
+	AdaptiveTransferS3LatencyQueueHigh = 160
+	// AdaptiveTransferS3LatencyGrowthQueueHigh is the S3 latency queue threshold that suppresses growth.
+	AdaptiveTransferS3LatencyGrowthQueueHigh = 96
+	// AdaptiveTransferS3WorkloadTargetPartMultiplier is the S3 desired planned parts per initial target.
+	AdaptiveTransferS3WorkloadTargetPartMultiplier = 8
+	// AdaptiveTransferS3WorkloadMinPartSizeMiB is the S3 workload-tuned minimum part size.
+	AdaptiveTransferS3WorkloadMinPartSizeMiB = 8
+	// AdaptiveTransferS3WorkloadScanWaitMillis is the S3 workload scan wait before sizing from estimates.
+	AdaptiveTransferS3WorkloadScanWaitMillis = 250
+	// AdaptiveTransferDefaultReadyRunwayParts is the default prepared upload runway part count.
+	AdaptiveTransferDefaultReadyRunwayParts = 4
+	// AdaptiveTransferDefaultReadyRunwayBytes is the default prepared upload runway byte cap.
+	AdaptiveTransferDefaultReadyRunwayBytes = 256 * uploadV2MiB
 )
+
+const uploadV2WorkloadScanPoll = 10 * time.Millisecond
 
 // TransferV2TargetClass identifies the destination class used by adaptive
 // transfer V2. SDK defaults only distinguish S3 from the generic default
@@ -64,9 +135,56 @@ func normalizeTransferV2TargetClass(target TransferV2TargetClass) TransferV2Targ
 	return target
 }
 
-// UploadV2Tuning overrides V2 upload defaults for diagnostics and benchmark
+// AdaptiveTransferDefaults contains the primary transfer concurrency defaults
+// callers usually need when initializing adaptive managers directly.
+type AdaptiveTransferDefaults struct {
+	MaxConcurrency int
+	InitialTarget  int
+}
+
+// DefaultAdaptiveTransferDefaults returns the SDK's high-throughput adaptive
+// transfer defaults.
+func DefaultAdaptiveTransferDefaults() AdaptiveTransferDefaults {
+	return AdaptiveTransferDefaults{
+		MaxConcurrency: AdaptiveTransferS3MaxConcurrency,
+		InitialTarget:  AdaptiveTransferHighThroughputInitialTarget,
+	}
+}
+
+// ConservativeAdaptiveTransferDefaults returns the SDK's consumer-desktop
+// starting target while keeping room to probe higher on large fast transfers.
+func ConservativeAdaptiveTransferDefaults() AdaptiveTransferDefaults {
+	defaults := DefaultAdaptiveTransferDefaults()
+	defaults.InitialTarget = AdaptiveTransferConservativeInitialTarget
+	return defaults
+}
+
+// AdaptiveConcurrencyConfig returns a manager config that can be passed to
+// lib.NewAdaptiveConcurrencyManagerWithConfig.
+func (d AdaptiveTransferDefaults) AdaptiveConcurrencyConfig(target TransferV2TargetClass) lib.AdaptiveConcurrencyConfig {
+	target = normalizeTransferV2TargetClass(target)
+	maxConcurrency := d.MaxConcurrency
+	if maxConcurrency <= 0 {
+		maxConcurrency = AdaptiveTransferDefaultMaxConcurrency
+		if target == TransferV2TargetS3 {
+			maxConcurrency = AdaptiveTransferS3MaxConcurrency
+		}
+	}
+
+	plan := uploadV2PartPlan{target: target}
+	tuning := UploadV2Tuning{}
+	if d.InitialTarget > 0 {
+		tuning.InitialTarget = d.InitialTarget
+	}
+	initial := uploadV2InitialConcurrencyForSharedPlan(plan, maxConcurrency, tuning)
+	return uploadV2AdaptiveConcurrencyConfigWithInitial(plan, maxConcurrency, initial, tuning)
+}
+
+// UploadV2Tuning overrides transfer V2 defaults for diagnostics and benchmark
 // tuning. Zero values keep the built-in defaults.
 type UploadV2Tuning struct {
+	// InitialTarget is the starting adaptive concurrency target for all transfer targets.
+	InitialTarget int
 	// S3InitialTarget is the starting adaptive concurrency target for S3 uploads.
 	S3InitialTarget int
 	// S3AdaptiveFloor is the lowest adaptive target the S3 controller should shrink toward.
@@ -176,6 +294,9 @@ func UploadWithV2TargetClassifier(classifier UploadV2TargetClassifier) UploadOpt
 }
 
 func (t UploadV2Tuning) validate() error {
+	if t.InitialTarget < 0 {
+		return errors.New("transfer v2 tuning initial target must be greater than or equal to zero")
+	}
 	if t.S3InitialTarget < 0 {
 		return errors.New("upload v2 tuning s3 initial target must be greater than or equal to zero")
 	}
@@ -309,8 +430,8 @@ func (c uploadV2ReadyRunwayConfig) resolved() uploadV2ReadyRunwayConfig {
 		return c
 	}
 	return uploadV2ReadyRunwayConfig{
-		parts: uploadV2DefaultReadyRunwayParts,
-		bytes: uploadV2DefaultReadyRunwayBytes,
+		parts: AdaptiveTransferDefaultReadyRunwayParts,
+		bytes: AdaptiveTransferDefaultReadyRunwayBytes,
 	}
 }
 
@@ -401,7 +522,7 @@ func (r *Job) uploadV2WorkloadScanComplete(tuning UploadV2Tuning) bool {
 	if r == nil || r.Type == directory.File || r.EndScanning == nil || r.EndScanning.Called() {
 		return true
 	}
-	scanWait := uploadV2WorkloadScanWait
+	scanWait := time.Duration(AdaptiveTransferS3WorkloadScanWaitMillis) * time.Millisecond
 	if tuning.S3WorkloadScanWaitMillis > 0 {
 		scanWait = time.Duration(tuning.S3WorkloadScanWaitMillis) * time.Millisecond
 	}
@@ -573,9 +694,9 @@ func (u *uploadIO) uploadV2MaxConcurrency() int {
 
 	switch classifyUploadV2Target(u.FileUploadPart, u.uploadV2TargetClassifier) {
 	case uploadV2TargetS3:
-		return manager.EffectiveAdaptiveUploadV2ConcurrentFileParts(uploadV2S3MaxConcurrency)
+		return manager.EffectiveAdaptiveUploadV2ConcurrentFileParts(AdaptiveTransferS3MaxConcurrency)
 	default:
-		return manager.EffectiveAdaptiveUploadV2ConcurrentFileParts(uploadV2DefaultMaxConcurrency)
+		return manager.EffectiveAdaptiveUploadV2ConcurrentFileParts(AdaptiveTransferDefaultMaxConcurrency)
 	}
 }
 
@@ -599,43 +720,50 @@ func uploadV2AdaptiveConcurrencyConfigWithInitial(plan uploadV2PartPlan, maxConc
 	config := lib.AdaptiveConcurrencyConfig{
 		MaxConcurrency:            maxConcurrency,
 		InitialTarget:             initial,
-		GrowEvery:                 8,
-		GrowStep:                  1,
-		FailureShrinkPercent:      50,
-		BackPressureShrinkPercent: 50,
-		BackPressurePause:         time.Second,
+		GrowEvery:                 AdaptiveTransferDefaultTargetGrowEvery,
+		GrowStep:                  AdaptiveTransferDefaultTargetGrowStep,
+		FailureShrinkPercent:      AdaptiveTransferDefaultTargetFailureShrinkPercent,
+		BackPressureShrinkPercent: AdaptiveTransferDefaultTargetBackPressureShrinkPercent,
+		BackPressurePause:         AdaptiveTransferDefaultTargetBackPressurePause,
 	}
 	switch plan.target {
 	case uploadV2TargetS3:
-		config.MinTarget = min(8, maxConcurrency)
-		config.ThroughputFloor = min(uploadV2S3AdaptiveFloor, initial)
-		config.GrowEvery = 16
-		config.GrowStep = 4
+		config.MinTarget = min(AdaptiveTransferS3MinTarget, maxConcurrency)
+		config.ThroughputFloor = min(AdaptiveTransferS3AdaptiveFloor, initial)
+		config.GrowEvery = AdaptiveTransferS3GrowEvery
+		config.GrowStep = AdaptiveTransferS3GrowStep
 		config.SqrtGrowth = true
-		config.FailureShrinkPercent = 35
-		config.BackPressureShrinkPercent = 10
-		config.BackPressurePause = 0
-		config.ThroughputWindow = 32
-		config.ThroughputMinGainPercent = 1
-		config.ThroughputShrinkPercent = 8
-		config.ThroughputHoldWindows = 1
-		config.ThroughputProbeMinWindows = 2
-		config.ThroughputProbeFloor = min(uploadV2S3ThroughputProbeFloor, maxConcurrency)
-		config.ThroughputProbeFloorRate = uploadV2S3ThroughputProbeFloorRate
-		config.ThroughputProbePlateauTarget = min(uploadV2S3ThroughputProbePlateau, maxConcurrency)
-		config.ThroughputProbeMinGainPerTargetPercent = uploadV2S3ThroughputProbeMinGainPerTargetPercent
-		config.ThroughputProbeLossTolerancePercent = uploadV2S3ThroughputProbeLossTolerancePercent
-		config.GrowthCeiling = min(uploadV2S3GrowthCeiling, maxConcurrency)
-		config.GrowthCeilingProbeBytes = uploadV2S3GrowthCeilingProbeBytes
-		config.GrowthCeilingProbeSuccesses = uploadV2S3GrowthCeilingProbeSuccesses
-		config.GrowthCeilingProbeRate = uploadV2S3GrowthCeilingProbeRate
-		config.LatencyFloor = min(uploadV2S3AdaptiveFloor, initial)
-		config.LatencyShrinkPercent = 8
-		config.LatencyQueueHigh = uploadV2S3LatencyQueueHigh
-		config.LatencyGrowthQueueHigh = uploadV2S3LatencyGrowthQueueHigh
+		config.FailureShrinkPercent = AdaptiveTransferS3FailureShrinkPercent
+		config.BackPressureShrinkPercent = AdaptiveTransferS3BackPressureShrinkPercent
+		config.BackPressurePause = AdaptiveTransferS3BackPressurePause
+		config.ThroughputWindow = AdaptiveTransferS3ThroughputWindow
+		config.ThroughputMinGainPercent = AdaptiveTransferS3ThroughputMinGainPercent
+		config.ThroughputShrinkPercent = AdaptiveTransferS3ThroughputShrinkPercent
+		config.ThroughputHoldWindows = AdaptiveTransferS3ThroughputHoldWindows
+		config.ThroughputProbeMinWindows = AdaptiveTransferS3ThroughputProbeMinWindows
+		config.ThroughputProbeFloor = min(AdaptiveTransferS3ThroughputProbeFloor, maxConcurrency)
+		config.ThroughputProbeFloorRate = AdaptiveTransferS3ThroughputProbeFloorRateBytesPerSecond
+		config.ThroughputProbePlateauTarget = min(AdaptiveTransferS3ThroughputProbePlateau, maxConcurrency)
+		config.ThroughputProbeMinGainPerTargetPercent = AdaptiveTransferS3ThroughputProbeMinGainPerTargetPercent
+		config.ThroughputProbeLossTolerancePercent = AdaptiveTransferS3ThroughputProbeLossTolerancePercent
+		config.GrowthCeiling = min(AdaptiveTransferS3GrowthCeiling, maxConcurrency)
+		config.GrowthCeilingProbeBytes = AdaptiveTransferS3GrowthCeilingProbeBytes
+		config.GrowthCeilingProbeSuccesses = AdaptiveTransferS3GrowthCeilingProbeSuccesses
+		config.GrowthCeilingProbeRate = AdaptiveTransferS3GrowthCeilingProbeRateBytesPerSecond
+		config.LatencyFloor = min(AdaptiveTransferS3AdaptiveFloor, initial)
+		config.LatencyShrinkPercent = AdaptiveTransferS3LatencyShrinkPercent
+		config.LatencyQueueHigh = AdaptiveTransferS3LatencyQueueHigh
+		config.LatencyGrowthQueueHigh = AdaptiveTransferS3LatencyGrowthQueueHigh
+		applyTransferV2InitialTargetTuning(&config, tuning, maxConcurrency)
 		applyS3UploadV2Tuning(&config, tuning, maxConcurrency, initial)
 	}
 	return config
+}
+
+func applyTransferV2InitialTargetTuning(config *lib.AdaptiveConcurrencyConfig, tuning UploadV2Tuning, maxConcurrency int) {
+	if tuning.InitialTarget > 0 && config.GrowthCeiling > 0 {
+		config.GrowthCeiling = min(tuning.InitialTarget, maxConcurrency)
+	}
 }
 
 func applyS3UploadV2Tuning(config *lib.AdaptiveConcurrencyConfig, tuning UploadV2Tuning, maxConcurrency int, initial int) {
@@ -723,8 +851,14 @@ func uploadV2InitialConcurrencyForSharedPlan(plan uploadV2PartPlan, maxConcurren
 		if tuning.S3InitialTarget > 0 {
 			return min(maxConcurrency, tuning.S3InitialTarget)
 		}
-		return min(maxConcurrency, uploadV2S3InitialConcurrency)
+		if tuning.InitialTarget > 0 {
+			return min(maxConcurrency, tuning.InitialTarget)
+		}
+		return min(maxConcurrency, AdaptiveTransferS3InitialTarget)
 	default:
-		return min(8, maxConcurrency)
+		if tuning.InitialTarget > 0 {
+			return min(maxConcurrency, tuning.InitialTarget)
+		}
+		return min(AdaptiveTransferDefaultTargetInitialTarget, maxConcurrency)
 	}
 }

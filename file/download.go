@@ -25,6 +25,8 @@ func (c *Client) DownloadRetry(job Job, opts ...files_sdk.RequestResponseOption)
 			AdaptiveConcurrency:                  newJob.Params.(DownloaderParams).AdaptiveConcurrency,
 			AdaptiveConcurrencyUseSDKDefaultCaps: newJob.Params.(DownloaderParams).AdaptiveConcurrencyUseSDKDefaultCaps,
 			AdaptiveDownloadV2TargetClassifier:   newJob.Params.(DownloaderParams).AdaptiveDownloadV2TargetClassifier,
+			AdaptiveDownloadV2TuningSet:          newJob.Params.(DownloaderParams).AdaptiveDownloadV2TuningSet,
+			AdaptiveDownloadV2Tuning:             newJob.Params.(DownloaderParams).AdaptiveDownloadV2Tuning,
 		},
 		opts...)
 }
@@ -70,6 +72,11 @@ type DownloaderParams struct {
 	// V2 target classifier. Custom targets use default SDK transfer behavior but
 	// keep separate adaptive manager cache entries and telemetry target labels.
 	AdaptiveDownloadV2TargetClassifier DownloadV2TargetClassifier
+	// AdaptiveDownloadV2TuningSet applies V2 tuning overrides below.
+	// When false, V2 uses built-in defaults.
+	AdaptiveDownloadV2TuningSet bool
+	// AdaptiveDownloadV2Tuning holds opt-in V2 transfer tuning.
+	AdaptiveDownloadV2Tuning UploadV2Tuning
 }
 
 func (c *Client) Downloader(params DownloaderParams, opts ...files_sdk.RequestResponseOption) *Job {

@@ -248,10 +248,10 @@ type UploaderParams struct {
 	// AdaptiveUploadReadyRunwayBytes caps the extra queued bytes for prepared
 	// runway parts. Zero leaves queued runway bytes uncapped.
 	AdaptiveUploadReadyRunwayBytes int64
-	// AdaptiveUploadV2TuningSet applies diagnostic V2 tuning overrides below.
+	// AdaptiveUploadV2TuningSet applies V2 tuning overrides below.
 	// When false, V2 uses built-in defaults.
 	AdaptiveUploadV2TuningSet bool
-	// AdaptiveUploadV2Tuning holds opt-in V2 diagnostics and benchmark tuning.
+	// AdaptiveUploadV2Tuning holds opt-in V2 transfer tuning.
 	AdaptiveUploadV2Tuning UploadV2Tuning
 }
 

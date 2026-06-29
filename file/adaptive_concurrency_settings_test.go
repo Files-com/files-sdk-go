@@ -25,8 +25,8 @@ func TestUploadV2MaxConcurrencyDoesNotRaiseTargetDefault(t *testing.T) {
 
 	manager.SetAdaptiveUploadV2ConcurrentFileParts(1024)
 
-	if got := (&uploadIO{}).uploadV2MaxConcurrency(); got != uploadV2DefaultMaxConcurrency {
-		t.Fatalf("uploadV2MaxConcurrency() = %d, want %d", got, uploadV2DefaultMaxConcurrency)
+	if got := (&uploadIO{}).uploadV2MaxConcurrency(); got != AdaptiveTransferDefaultMaxConcurrency {
+		t.Fatalf("uploadV2MaxConcurrency() = %d, want %d", got, AdaptiveTransferDefaultMaxConcurrency)
 	}
 }
 

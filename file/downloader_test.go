@@ -1043,16 +1043,41 @@ func TestDownloadV2ClassifiesS3AndDefaultDownloadURLs(t *testing.T) {
 
 func TestDownloadV2SharedManagerDoesNotStartAtTinyFilePartCount(t *testing.T) {
 	registry := downloadV2SharedAdaptiveManagerRegistry{}
-	adaptiveManager := registry.get(downloadV2TargetS3, manager.AdaptiveDownloadV2ConcurrentFileParts, 1024, 16*1024*1024)
+	adaptiveManager := registry.get(downloadV2TargetS3, manager.AdaptiveDownloadV2ConcurrentFileParts, 1024, 16*1024*1024, UploadV2Tuning{})
 
-	assert.Equal(t, uploadV2S3InitialConcurrency, adaptiveManager.Snapshot().Target)
+	assert.Equal(t, AdaptiveTransferS3InitialTarget, adaptiveManager.Snapshot().Target)
+}
+
+func TestDownloadV2TuningOverridesS3InitialTargetAndProbeTarget(t *testing.T) {
+	config := downloadV2SharedAdaptiveConcurrencyConfig(
+		downloadV2TargetS3,
+		manager.AdaptiveDownloadV2ConcurrentFileParts,
+		1024,
+		16*1024*1024,
+		UploadV2Tuning{InitialTarget: AdaptiveTransferConservativeInitialTarget},
+	)
+
+	assert.Equal(t, AdaptiveTransferConservativeInitialTarget, config.InitialTarget)
+	assert.Equal(t, AdaptiveTransferConservativeInitialTarget, config.GrowthCeiling)
+}
+
+func TestDownloadV2InitialTargetTuningAppliesToDefaultTarget(t *testing.T) {
+	config := downloadV2AdaptiveConcurrencyConfig(
+		downloadV2TargetDefault,
+		manager.AdaptiveDownloadV2ConcurrentFileParts,
+		20*1024*1024,
+		16*1024*1024,
+		UploadV2Tuning{InitialTarget: AdaptiveTransferConservativeInitialTarget},
+	)
+
+	assert.Equal(t, AdaptiveTransferConservativeInitialTarget, config.InitialTarget)
 }
 
 func TestAdaptiveTransferStatsReportsSharedDownloadManagers(t *testing.T) {
 	resetDownloadV2SharedAdaptiveManagersForTest()
-	first := downloadV2SharedAdaptiveManagers.get(downloadV2TargetDefault, 4, 20*1024*1024, 16*1024*1024)
-	second := downloadV2SharedAdaptiveManagers.get(downloadV2TargetDefault, 4, 20*1024*1024, 16*1024*1024)
-	idle := downloadV2SharedAdaptiveManagers.get(downloadV2TargetDefault, 8, 20*1024*1024, 16*1024*1024)
+	first := downloadV2SharedAdaptiveManagers.get(downloadV2TargetDefault, 4, 20*1024*1024, 16*1024*1024, UploadV2Tuning{})
+	second := downloadV2SharedAdaptiveManagers.get(downloadV2TargetDefault, 4, 20*1024*1024, 16*1024*1024, UploadV2Tuning{})
+	idle := downloadV2SharedAdaptiveManagers.get(downloadV2TargetDefault, 8, 20*1024*1024, 16*1024*1024, UploadV2Tuning{})
 	require.Same(t, first, second)
 	require.NotSame(t, first, idle)
 	first.Wait()
@@ -1072,6 +1097,7 @@ func TestDownloadV2DefaultManagerStartsAtLegacyRangeConcurrency(t *testing.T) {
 		manager.AdaptiveDownloadV2ConcurrentFileParts,
 		20*1024*1024,
 		16*1024*1024,
+		UploadV2Tuning{},
 	))
 
 	assert.Equal(t, 15, adaptiveManager.Snapshot().Target)

@@ -263,11 +263,14 @@ func (p uploadV2PartPlan) estimatedPartCount() int {
 }
 
 func uploadV2S3WorkloadTargetPartCount(tuning UploadV2Tuning) int64 {
-	target := uploadV2S3InitialConcurrency
+	target := AdaptiveTransferS3InitialTarget
+	if tuning.InitialTarget > 0 {
+		target = tuning.InitialTarget
+	}
 	if tuning.S3InitialTarget > 0 {
 		target = tuning.S3InitialTarget
 	}
-	multiplier := uploadV2S3WorkloadTargetPartMultiplier
+	multiplier := AdaptiveTransferS3WorkloadTargetPartMultiplier
 	if tuning.S3WorkloadTargetPartMultiplier > 0 {
 		multiplier = tuning.S3WorkloadTargetPartMultiplier
 	}
@@ -281,7 +284,7 @@ func s3WorkloadPartSize(workloadBytes int64, currentPartSize int64, targetParts 
 	if ceilDiv(workloadBytes, currentPartSize) >= targetParts {
 		return currentPartSize
 	}
-	minPartSize := uploadV2S3WorkloadMinPartSizeMiB * uploadV2MiB
+	minPartSize := AdaptiveTransferS3WorkloadMinPartSizeMiB * uploadV2MiB
 	if tuning.S3WorkloadMinPartSizeMiB > 0 {
 		minPartSize = tuning.S3WorkloadMinPartSizeMiB * uploadV2MiB
 	}

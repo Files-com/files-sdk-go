@@ -838,7 +838,7 @@ func TestUploadV2S3UsesTargetDefaultConcurrencyWithoutExplicitManagerCap(t *test
 
 	engine := newUploadV2Engine(&uploadIO{FileUploadPart: part}, plan)
 
-	assert.Equal(t, uploadV2S3MaxConcurrency, engine.manager.Max())
+	assert.Equal(t, AdaptiveTransferS3MaxConcurrency, engine.manager.Max())
 	assert.Equal(t, 16, engine.manager.Target())
 }
 
@@ -857,23 +857,22 @@ func TestUploadV2RaisesDefaultHTTPTransportCapForSDKClient(t *testing.T) {
 		FileUploadPart: part,
 		Size:           &size,
 	}, plan)
-
 	adjustedTransport, ok := engine.u.Config.Client.HTTPClient.Transport.(*lib.Transport)
 	require.True(t, ok)
 	assert.NotSame(t, originalTransport, adjustedTransport)
 	assert.NotSame(t, client, engine.u.Client)
 	assert.Equal(t, 75, originalTransport.MaxConnsPerHost)
-	assert.Equal(t, uploadV2S3GrowthCeiling, adjustedTransport.MaxConnsPerHost)
+	assert.Equal(t, AdaptiveTransferS3GrowthCeiling, adjustedTransport.MaxConnsPerHost)
 	assert.Equal(t, uploadV2DefaultHTTPIdleConnectionCap, adjustedTransport.MaxIdleConns)
 	assert.Equal(t, uploadV2DefaultHTTPIdleConnectionCap, adjustedTransport.MaxIdleConnsPerHost)
 	assert.True(t, engine.httpClientLimits.adjusted)
 	assert.True(t, engine.httpClientLimits.available)
-	assert.Equal(t, uploadV2S3GrowthCeiling, engine.httpClientLimits.maxConnsPerHost)
+	assert.Equal(t, AdaptiveTransferS3GrowthCeiling, engine.httpClientLimits.maxConnsPerHost)
 	assert.Equal(t, uploadV2DefaultHTTPIdleConnectionCap, engine.httpClientLimits.maxIdleConns)
 	assert.Equal(t, uploadV2DefaultHTTPIdleConnectionCap, engine.httpClientLimits.maxIdleConnsPerHost)
 	attrs := engine.uploadV2EnabledLogAttrs(uploadV2ReadyRunwayConfig{})
 	assert.Equal(t, true, attrs["upload_http_client_adjusted"])
-	assert.Equal(t, uploadV2S3GrowthCeiling, attrs["upload_max_conns_per_host"])
+	assert.Equal(t, AdaptiveTransferS3GrowthCeiling, attrs["upload_max_conns_per_host"])
 	assert.Equal(t, uploadV2DefaultHTTPIdleConnectionCap, attrs["upload_max_idle_conns"])
 	assert.Equal(t, uploadV2DefaultHTTPIdleConnectionCap, attrs["upload_max_idle_conns_per_host"])
 }
@@ -886,7 +885,7 @@ func TestUploadV2LowersPreconfiguredHTTPTransportCapToS3GrowthCeiling(t *testing
 	client := &Client{Config: files_sdk.Config{}.Init()}
 	originalTransport, ok := client.Config.Client.HTTPClient.Transport.(*lib.Transport)
 	require.True(t, ok)
-	originalTransport.MaxConnsPerHost = uploadV2S3MaxConcurrency
+	originalTransport.MaxConnsPerHost = AdaptiveTransferS3MaxConcurrency
 
 	engine := newUploadV2Engine(&uploadIO{
 		Client:         client,
@@ -894,17 +893,16 @@ func TestUploadV2LowersPreconfiguredHTTPTransportCapToS3GrowthCeiling(t *testing
 		Size:           &size,
 		uploadV2Tuning: UploadV2Tuning{S3WorkloadBytes: int64(200*200) * uploadV2MiB},
 	}, plan)
-
 	adjustedTransport, ok := engine.u.Config.Client.HTTPClient.Transport.(*lib.Transport)
 	require.True(t, ok)
 	assert.NotSame(t, originalTransport, adjustedTransport)
-	assert.Equal(t, uploadV2S3MaxConcurrency, originalTransport.MaxConnsPerHost)
-	assert.Equal(t, uploadV2S3GrowthCeiling, adjustedTransport.MaxConnsPerHost)
+	assert.Equal(t, AdaptiveTransferS3MaxConcurrency, originalTransport.MaxConnsPerHost)
+	assert.Equal(t, AdaptiveTransferS3GrowthCeiling, adjustedTransport.MaxConnsPerHost)
 	assert.Equal(t, uploadV2DefaultHTTPIdleConnectionCap, adjustedTransport.MaxIdleConns)
 	assert.Equal(t, uploadV2DefaultHTTPIdleConnectionCap, adjustedTransport.MaxIdleConnsPerHost)
-	assert.Equal(t, uploadV2S3GrowthCeiling, engine.httpClientLimits.maxConnsPerHost)
+	assert.Equal(t, AdaptiveTransferS3GrowthCeiling, engine.httpClientLimits.maxConnsPerHost)
 	attrs := engine.uploadV2EnabledLogAttrs(uploadV2ReadyRunwayConfig{})
-	assert.Equal(t, uploadV2S3GrowthCeiling, attrs["upload_max_conns_per_host"])
+	assert.Equal(t, AdaptiveTransferS3GrowthCeiling, attrs["upload_max_conns_per_host"])
 }
 
 func TestUploadV2RaisesHTTPTransportCapForLargeS3Workload(t *testing.T) {
@@ -918,10 +916,10 @@ func TestUploadV2RaisesHTTPTransportCapForLargeS3Workload(t *testing.T) {
 		Client:         client,
 		FileUploadPart: part,
 		Size:           &size,
-		uploadV2Tuning: UploadV2Tuning{S3WorkloadBytes: uploadV2S3GrowthCeilingProbeBytes},
+		uploadV2Tuning: UploadV2Tuning{S3WorkloadBytes: AdaptiveTransferS3GrowthCeilingProbeBytes},
 	}, plan)
 
-	assert.Equal(t, uploadV2S3MaxConcurrency, engine.httpClientLimits.maxConnsPerHost)
+	assert.Equal(t, AdaptiveTransferS3MaxConcurrency, engine.httpClientLimits.maxConnsPerHost)
 }
 
 func TestUploadV2HTTPTransportCapTracksS3GrowthCeiling(t *testing.T) {
@@ -931,27 +929,30 @@ func TestUploadV2HTTPTransportCapTracksS3GrowthCeiling(t *testing.T) {
 		name          string
 		fileSize      int64
 		workloadBytes int64
+		initialTarget int
 		tunePlan      bool
 		want          int
 	}{
-		{name: "twenty by two hundred mib", fileSize: int64(200) * uploadV2MiB, workloadBytes: int64(20*200) * uploadV2MiB, want: uploadV2S3GrowthCeiling},
-		{name: "two hundred by two hundred mib", fileSize: int64(200) * uploadV2MiB, workloadBytes: int64(200*200) * uploadV2MiB, tunePlan: true, want: uploadV2S3GrowthCeiling},
-		{name: "single twenty gib file", fileSize: int64(20) * uploadV2GiB, workloadBytes: int64(20) * uploadV2GiB, want: uploadV2S3GrowthCeiling},
-		{name: "large enough to probe above ceiling", fileSize: int64(200) * uploadV2MiB, workloadBytes: uploadV2S3GrowthCeilingProbeBytes, want: uploadV2S3MaxConcurrency},
+		{name: "twenty by two hundred mib", fileSize: int64(200) * uploadV2MiB, workloadBytes: int64(20*200) * uploadV2MiB, want: AdaptiveTransferS3GrowthCeiling},
+		{name: "initial target lowers cap before probe", fileSize: int64(200) * uploadV2MiB, workloadBytes: int64(20*200) * uploadV2MiB, initialTarget: AdaptiveTransferConservativeInitialTarget, want: AdaptiveTransferConservativeInitialTarget},
+		{name: "two hundred by two hundred mib", fileSize: int64(200) * uploadV2MiB, workloadBytes: int64(200*200) * uploadV2MiB, tunePlan: true, want: AdaptiveTransferS3GrowthCeiling},
+		{name: "single twenty gib file", fileSize: int64(20) * uploadV2GiB, workloadBytes: int64(20) * uploadV2GiB, want: AdaptiveTransferS3GrowthCeiling},
+		{name: "large enough to probe above ceiling", fileSize: int64(200) * uploadV2MiB, workloadBytes: AdaptiveTransferS3GrowthCeilingProbeBytes, want: AdaptiveTransferS3MaxConcurrency},
+		{name: "initial target still probes above target", fileSize: int64(200) * uploadV2MiB, workloadBytes: AdaptiveTransferS3GrowthCeilingProbeBytes, initialTarget: AdaptiveTransferConservativeInitialTarget, want: AdaptiveTransferS3MaxConcurrency},
 	}
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			plan, ok, reason := newUploadV2PartPlanForUpload(part, &tt.fileSize)
 			require.True(t, ok, reason)
-			tuning := UploadV2Tuning{S3WorkloadBytes: tt.workloadBytes}
+			tuning := UploadV2Tuning{InitialTarget: tt.initialTarget, S3WorkloadBytes: tt.workloadBytes}
 			testPlan := plan
 			if tt.tunePlan {
 				var ok bool
 				testPlan, ok, reason = testPlan.withTuning(tuning)
 				require.True(t, ok, reason)
 			}
-			got := uploadV2HTTPMaxConnsPerHost(testPlan, tuning, uploadV2S3MaxConcurrency)
+			got := uploadV2HTTPMaxConnsPerHost(testPlan, tuning, AdaptiveTransferS3MaxConcurrency)
 
 			assert.Equal(t, tt.want, got)
 		})
@@ -970,31 +971,31 @@ func TestUploadV2HTTPTransportCapOpensForManySmallS3Parts(t *testing.T) {
 	plan, ok, reason = plan.withTuning(tuning)
 	require.True(t, ok, reason)
 
-	got := uploadV2HTTPMaxConnsPerHost(plan, tuning, uploadV2S3MaxConcurrency)
+	got := uploadV2HTTPMaxConnsPerHost(plan, tuning, AdaptiveTransferS3MaxConcurrency)
 
 	assert.Equal(t, int64(8)*uploadV2MiB, plan.partSize)
-	assert.Equal(t, uploadV2S3MaxConcurrency, got)
+	assert.Equal(t, AdaptiveTransferS3MaxConcurrency, got)
 }
 
 func TestUploadV2LargeS3WorkloadOpensTransportBeforeAdaptiveGrowthUnlocks(t *testing.T) {
 	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
-	size := uploadV2S3GrowthCeilingProbeBytes
+	size := AdaptiveTransferS3GrowthCeilingProbeBytes
 	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
 	require.True(t, ok, reason)
-	tuning := UploadV2Tuning{S3WorkloadBytes: uploadV2S3GrowthCeilingProbeBytes}
+	tuning := UploadV2Tuning{S3WorkloadBytes: AdaptiveTransferS3GrowthCeilingProbeBytes}
 
-	maxConnsPerHost := uploadV2HTTPMaxConnsPerHost(plan, tuning, uploadV2S3MaxConcurrency)
+	maxConnsPerHost := uploadV2HTTPMaxConnsPerHost(plan, tuning, AdaptiveTransferS3MaxConcurrency)
 	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(uploadV2AdaptiveConcurrencyConfigWithInitial(
 		plan,
-		uploadV2S3MaxConcurrency,
-		uploadV2InitialConcurrencyForPlan(plan, uploadV2S3MaxConcurrency, tuning),
+		AdaptiveTransferS3MaxConcurrency,
+		uploadV2InitialConcurrencyForPlan(plan, AdaptiveTransferS3MaxConcurrency, tuning),
 		tuning,
 	))
 	snapshot := manager.Snapshot()
 
-	assert.Equal(t, uploadV2S3MaxConcurrency, maxConnsPerHost)
-	assert.Equal(t, uploadV2S3InitialConcurrency, snapshot.Target)
-	assert.Equal(t, uploadV2S3GrowthCeiling, snapshot.GrowthCeiling)
+	assert.Equal(t, AdaptiveTransferS3MaxConcurrency, maxConnsPerHost)
+	assert.Equal(t, AdaptiveTransferS3InitialTarget, snapshot.Target)
+	assert.Equal(t, AdaptiveTransferS3GrowthCeiling, snapshot.GrowthCeiling)
 	assert.False(t, snapshot.GrowthCeilingUnlocked)
 }
 
@@ -1006,14 +1007,14 @@ func TestUploadV2JobHTTPClientUsesS3GrowthCeilingForBenchmarkWorkload(t *testing
 	client := &Client{Config: files_sdk.Config{}.Init()}
 	job := (&Job{}).Init()
 	tuning := UploadV2Tuning{S3WorkloadBytes: int64(200*200) * uploadV2MiB}
-	maxConnsPerHost := uploadV2HTTPMaxConnsPerHost(plan, tuning, uploadV2S3MaxConcurrency)
+	maxConnsPerHost := uploadV2HTTPMaxConnsPerHost(plan, tuning, AdaptiveTransferS3MaxConcurrency)
 	maxIdleConnsPerHost := uploadV2HTTPIdleConnectionCap(plan, maxConnsPerHost)
 
 	_, limits, ok := job.uploadV2HTTPClient(client, plan, maxConnsPerHost, maxIdleConnsPerHost)
 
 	require.True(t, ok)
-	assert.Equal(t, uploadV2S3GrowthCeiling, maxConnsPerHost)
-	assert.Equal(t, uploadV2S3GrowthCeiling, limits.maxConnsPerHost)
+	assert.Equal(t, AdaptiveTransferS3GrowthCeiling, maxConnsPerHost)
+	assert.Equal(t, AdaptiveTransferS3GrowthCeiling, limits.maxConnsPerHost)
 	assert.Equal(t, uploadV2DefaultHTTPIdleConnectionCap, limits.maxIdleConnsPerHost)
 }
 
@@ -1075,7 +1076,7 @@ func TestUploadV2S3IgnoresSchedulingOnlyManagerCap(t *testing.T) {
 		uploadV2UseSDKDefaultCaps: true,
 	}, plan)
 
-	assert.Equal(t, uploadV2S3MaxConcurrency, engine.manager.Max())
+	assert.Equal(t, AdaptiveTransferS3MaxConcurrency, engine.manager.Max())
 	assert.Nil(t, engine.globalManager)
 }
 
@@ -1277,17 +1278,17 @@ func TestUploadV2S3DefaultUsesMeasuredEnterpriseSoftCeiling(t *testing.T) {
 	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
 	require.True(t, ok, reason)
 
-	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(uploadV2AdaptiveConcurrencyConfig(plan, uploadV2S3MaxConcurrency))
+	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(uploadV2AdaptiveConcurrencyConfig(plan, AdaptiveTransferS3MaxConcurrency))
 
-	assert.Equal(t, uploadV2S3InitialConcurrency, manager.Target())
+	assert.Equal(t, AdaptiveTransferS3InitialTarget, manager.Target())
 	for i := 0; i < 16; i++ {
 		manager.Wait()
 		manager.DoneWithSample(lib.AdaptiveConcurrencySample{Success: true})
 	}
-	assert.Equal(t, uploadV2S3InitialConcurrency, manager.Target())
-	assert.Equal(t, uploadV2S3MaxConcurrency, manager.Max())
+	assert.Equal(t, AdaptiveTransferS3InitialTarget, manager.Target())
+	assert.Equal(t, AdaptiveTransferS3MaxConcurrency, manager.Max())
 	snapshot := manager.Snapshot()
-	assert.Equal(t, uploadV2S3GrowthCeiling, snapshot.GrowthCeiling)
+	assert.Equal(t, AdaptiveTransferS3GrowthCeiling, snapshot.GrowthCeiling)
 	assert.False(t, snapshot.GrowthCeilingUnlocked)
 }
 
@@ -1299,18 +1300,57 @@ func TestUploadV2S3AdaptiveConfigUsesEnterprisePlateauEconomics(t *testing.T) {
 
 	config := uploadV2AdaptiveConcurrencyConfig(plan, 1024)
 
-	assert.Equal(t, uploadV2S3ThroughputProbeFloor, config.ThroughputProbeFloor)
-	assert.Equal(t, uploadV2S3ThroughputProbePlateau, config.ThroughputProbePlateauTarget)
-	assert.Equal(t, uploadV2S3ThroughputProbeMinGainPerTargetPercent, config.ThroughputProbeMinGainPerTargetPercent)
-	assert.Equal(t, uploadV2S3ThroughputProbeLossTolerancePercent, config.ThroughputProbeLossTolerancePercent)
-	assert.Equal(t, uploadV2S3GrowthCeiling, config.GrowthCeiling)
-	assert.Equal(t, int64(uploadV2S3GrowthCeilingProbeBytes), config.GrowthCeilingProbeBytes)
-	assert.Equal(t, uploadV2S3GrowthCeilingProbeSuccesses, config.GrowthCeilingProbeSuccesses)
-	assert.Equal(t, float64(uploadV2S3GrowthCeilingProbeRate), config.GrowthCeilingProbeRate)
+	assert.Equal(t, AdaptiveTransferS3ThroughputProbeFloor, config.ThroughputProbeFloor)
+	assert.Equal(t, AdaptiveTransferS3ThroughputProbePlateau, config.ThroughputProbePlateauTarget)
+	assert.Equal(t, AdaptiveTransferS3ThroughputProbeMinGainPerTargetPercent, config.ThroughputProbeMinGainPerTargetPercent)
+	assert.Equal(t, AdaptiveTransferS3ThroughputProbeLossTolerancePercent, config.ThroughputProbeLossTolerancePercent)
+	assert.Equal(t, AdaptiveTransferS3GrowthCeiling, config.GrowthCeiling)
+	assert.Equal(t, int64(AdaptiveTransferS3GrowthCeilingProbeBytes), config.GrowthCeilingProbeBytes)
+	assert.Equal(t, AdaptiveTransferS3GrowthCeilingProbeSuccesses, config.GrowthCeilingProbeSuccesses)
+	assert.Equal(t, float64(AdaptiveTransferS3GrowthCeilingProbeRateBytesPerSecond), config.GrowthCeilingProbeRate)
 	assert.Equal(t, 8, config.ThroughputShrinkPercent)
 	assert.Equal(t, 8, config.LatencyShrinkPercent)
-	assert.Equal(t, float64(uploadV2S3LatencyQueueHigh), config.LatencyQueueHigh)
-	assert.Equal(t, float64(uploadV2S3LatencyGrowthQueueHigh), config.LatencyGrowthQueueHigh)
+	assert.Equal(t, float64(AdaptiveTransferS3LatencyQueueHigh), config.LatencyQueueHigh)
+	assert.Equal(t, float64(AdaptiveTransferS3LatencyGrowthQueueHigh), config.LatencyGrowthQueueHigh)
+}
+
+func TestAdaptiveTransferDefaultsBuildManagerConfig(t *testing.T) {
+	defaults := DefaultAdaptiveTransferDefaults()
+	assert.Equal(t, AdaptiveTransferS3MaxConcurrency, defaults.MaxConcurrency)
+	assert.Equal(t, AdaptiveTransferHighThroughputInitialTarget, defaults.InitialTarget)
+
+	conservative := ConservativeAdaptiveTransferDefaults()
+	config := conservative.AdaptiveConcurrencyConfig(TransferV2TargetS3)
+	assert.Equal(t, AdaptiveTransferS3MaxConcurrency, config.MaxConcurrency)
+	assert.Equal(t, AdaptiveTransferConservativeInitialTarget, config.InitialTarget)
+	assert.Equal(t, AdaptiveTransferConservativeInitialTarget, config.GrowthCeiling)
+
+	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(config)
+	assert.Equal(t, AdaptiveTransferConservativeInitialTarget, manager.Target())
+	assert.Equal(t, AdaptiveTransferS3MaxConcurrency, manager.Max())
+
+	generic := AdaptiveTransferDefaults{MaxConcurrency: 32, InitialTarget: 12}.AdaptiveConcurrencyConfig(TransferV2TargetDefault)
+	assert.Equal(t, 32, generic.MaxConcurrency)
+	assert.Equal(t, 12, generic.InitialTarget)
+	assert.Equal(t, 0, generic.GrowthCeiling)
+}
+
+func TestUploadV2InitialTargetTuningAppliesToAllTargets(t *testing.T) {
+	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
+	size := int64(10) * uploadV2GiB
+	s3Plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+	require.True(t, ok, reason)
+
+	for _, plan := range []uploadV2PartPlan{
+		{target: uploadV2TargetDefault, totalSize: &size, partSize: uploadV2S3MinPartSize},
+		s3Plan,
+	} {
+		config := uploadV2SharedAdaptiveConcurrencyConfig(plan, 1024, UploadV2Tuning{InitialTarget: AdaptiveTransferConservativeInitialTarget})
+		assert.Equal(t, AdaptiveTransferConservativeInitialTarget, config.InitialTarget)
+		if plan.target == uploadV2TargetS3 {
+			assert.Equal(t, AdaptiveTransferConservativeInitialTarget, config.GrowthCeiling)
+		}
+	}
 }
 
 func TestUploadV2S3AdaptiveConfigAppliesDiagnosticTuning(t *testing.T) {
@@ -1539,10 +1579,10 @@ func TestUploadV2S3FastThroughputCanReachEnterpriseConcurrency(t *testing.T) {
 	}
 
 	snapshot := manager.Snapshot()
-	assert.GreaterOrEqual(t, snapshot.Target, uploadV2S3ThroughputProbeFloor)
-	assert.GreaterOrEqual(t, snapshot.PeakTarget, uploadV2S3ThroughputProbeFloor)
+	assert.GreaterOrEqual(t, snapshot.Target, AdaptiveTransferS3ThroughputProbeFloor)
+	assert.GreaterOrEqual(t, snapshot.PeakTarget, AdaptiveTransferS3ThroughputProbeFloor)
 	assert.Equal(t, 0, snapshot.ThroughputBackoffTotal)
-	assert.Greater(t, snapshot.BestThroughputBytesPerSecond, float64(uploadV2S3ThroughputProbeFloorRate))
+	assert.Greater(t, snapshot.BestThroughputBytesPerSecond, float64(AdaptiveTransferS3ThroughputProbeFloorRateBytesPerSecond))
 }
 
 func TestUploadV2S3LargeUnlockedProbeClimbsToPlateauOnNeutralThroughput(t *testing.T) {
@@ -1552,7 +1592,7 @@ func TestUploadV2S3LargeUnlockedProbeClimbsToPlateauOnNeutralThroughput(t *testi
 	require.True(t, ok, reason)
 	tuning := UploadV2Tuning{S3GrowthCeilingProbeBytes: 1}
 
-	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(uploadV2SharedAdaptiveConcurrencyConfig(plan, uploadV2S3MaxConcurrency, tuning))
+	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(uploadV2SharedAdaptiveConcurrencyConfig(plan, AdaptiveTransferS3MaxConcurrency, tuning))
 
 	for i := 0; i < 360; i++ {
 		manager.Wait()
@@ -1565,8 +1605,8 @@ func TestUploadV2S3LargeUnlockedProbeClimbsToPlateauOnNeutralThroughput(t *testi
 
 	snapshot := manager.Snapshot()
 	assert.True(t, snapshot.GrowthCeilingUnlocked)
-	assert.GreaterOrEqual(t, snapshot.PeakTarget, uploadV2S3ThroughputProbePlateau)
-	assert.Greater(t, snapshot.Target, uploadV2S3GrowthCeiling)
+	assert.GreaterOrEqual(t, snapshot.PeakTarget, AdaptiveTransferS3ThroughputProbePlateau)
+	assert.Greater(t, snapshot.Target, AdaptiveTransferS3GrowthCeiling)
 }
 
 func TestUploadV2S3SeekableRunwayScalesWithInitialTarget(t *testing.T) {
@@ -1582,8 +1622,8 @@ func TestUploadV2S3SeekableRunwayScalesWithInitialTarget(t *testing.T) {
 	}, plan)
 
 	runway := engine.readyRunwayConfig()
-	assert.Equal(t, uploadV2S3InitialConcurrency/uploadV2DefaultSeekableS3ReadyRunwayTargetDivisor, runway.parts)
-	assert.Equal(t, uploadV2DefaultReadyRunwayBytes, runway.bytes)
+	assert.Equal(t, AdaptiveTransferS3InitialTarget/uploadV2DefaultSeekableS3ReadyRunwayTargetDivisor, runway.parts)
+	assert.Equal(t, AdaptiveTransferDefaultReadyRunwayBytes, runway.bytes)
 }
 
 func TestUploadV2ExplicitReadyRunwayIsRespectedForS3(t *testing.T) {
@@ -1677,11 +1717,11 @@ func TestUploadV2SharedAdaptiveManagerKeepsExplicitCapsSeparate(t *testing.T) {
 	secondJob := (&Job{}).Init()
 
 	limited := firstJob.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{})
-	defaulted := secondJob.uploadV2AdaptiveManager(plan, uploadV2S3MaxConcurrency, UploadV2Tuning{})
+	defaulted := secondJob.uploadV2AdaptiveManager(plan, AdaptiveTransferS3MaxConcurrency, UploadV2Tuning{})
 
 	assert.NotSame(t, limited, defaulted)
 	assert.Equal(t, 50, limited.Max())
-	assert.Equal(t, uploadV2S3MaxConcurrency, defaulted.Max())
+	assert.Equal(t, AdaptiveTransferS3MaxConcurrency, defaulted.Max())
 }
 
 func TestUploadV2JobSharedManagerIgnoresPlannerOnlyTuning(t *testing.T) {

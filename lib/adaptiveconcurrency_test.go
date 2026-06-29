@@ -28,6 +28,22 @@ func TestAdaptiveConcurrencyManagerSupportsCustomInitialTarget(t *testing.T) {
 	assert.Equal(t, 20, minimum.Max())
 }
 
+func TestAdaptiveConcurrencyDefaultsInitializeManager(t *testing.T) {
+	defaults := DefaultAdaptiveConcurrencyDefaults(256)
+	assert.Equal(t, 256, defaults.MaxConcurrency)
+	assert.Equal(t, AdaptiveConcurrencyDefaultInitialTarget, defaults.InitialTarget)
+
+	defaults.InitialTarget = 64
+	config := defaults.Config()
+	assert.Equal(t, 256, config.MaxConcurrency)
+	assert.Equal(t, 64, config.InitialTarget)
+	assert.Equal(t, AdaptiveConcurrencyDefaultGrowEvery, config.GrowEvery)
+
+	manager := NewAdaptiveConcurrencyManagerWithDefaults(defaults)
+	assert.Equal(t, 64, manager.Target())
+	assert.Equal(t, 256, manager.Max())
+}
+
 func TestAdaptiveConcurrencyManagerSupportsTunedConfig(t *testing.T) {
 	manager := NewAdaptiveConcurrencyManagerWithConfig(AdaptiveConcurrencyConfig{
 		MaxConcurrency:            50,

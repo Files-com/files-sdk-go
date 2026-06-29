@@ -67,6 +67,7 @@ type downloadV2Engine struct {
 type downloadV2AdaptiveManagerCacheKey struct {
 	target         TransferV2TargetClass
 	maxConcurrency int
+	tuning         UploadV2Tuning
 }
 
 type downloadV2URIProvider interface {
@@ -89,6 +90,15 @@ var (
 )
 
 func runDownloadV2IfSupported(ctx context.Context, reportStatus *DownloadStatus, remoteStat goFs.FileInfo, tmpName string, startOffset int64) (bool, int64, error) {
+	params, _ := reportStatus.Job().Params.(DownloaderParams)
+	if !params.AdaptiveConcurrency {
+		return false, 0, nil
+	}
+	if params.AdaptiveDownloadV2TuningSet {
+		if err := params.AdaptiveDownloadV2Tuning.validate(); err != nil {
+			return true, 0, err
+		}
+	}
 	target, totalSize, partSize, ok := downloadV2PlanIfSupported(ctx, reportStatus, remoteStat, startOffset)
 	if !ok {
 		return false, 0, nil
@@ -99,7 +109,6 @@ func runDownloadV2IfSupported(ctx context.Context, reportStatus *DownloadStatus,
 		return true, 0, err
 	}
 	ranger := reportStatus.fsFile.(ReaderRange)
-	params, _ := reportStatus.Job().Params.(DownloaderParams)
 	engine := newDownloadV2Engine(reportStatus, ranger, file, target, totalSize, startOffset, partSize, params)
 	if err := engine.Run(ctx); err != nil {
 		return true, engine.ContiguousSize(), err
@@ -202,9 +211,13 @@ func downloadV2AdmissionMinPartSize(totalSize int64) int64 {
 
 func newDownloadV2Engine(reportStatus *DownloadStatus, ranger ReaderRange, file *os.File, target TransferV2TargetClass, totalSize int64, startOffset int64, partSize int64, params DownloaderParams) *downloadV2Engine {
 	maxConcurrency := downloadV2MaxConcurrency(reportStatus.Job(), params)
-	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(downloadV2AdaptiveConcurrencyConfig(target, maxConcurrency, totalSize, partSize))
+	tuning := params.AdaptiveDownloadV2Tuning
+	if !params.AdaptiveDownloadV2TuningSet {
+		tuning = UploadV2Tuning{}
+	}
+	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(downloadV2AdaptiveConcurrencyConfig(target, maxConcurrency, totalSize, partSize, tuning))
 	if params.Manager == nil || params.AdaptiveConcurrencyUseSDKDefaultCaps {
-		manager = reportStatus.Job().downloadV2AdaptiveManager(target, maxConcurrency, totalSize, partSize)
+		manager = reportStatus.Job().downloadV2AdaptiveManager(target, maxConcurrency, totalSize, partSize, tuning)
 	}
 	return &downloadV2Engine{
 		reportStatus: reportStatus,
@@ -471,31 +484,37 @@ func downloadV2MaxConcurrency(job *Job, params DownloaderParams) int {
 	return manager.EffectiveAdaptiveDownloadV2ConcurrentFileParts()
 }
 
-func downloadV2AdaptiveConcurrencyConfig(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64) lib.AdaptiveConcurrencyConfig {
+func downloadV2AdaptiveConcurrencyConfig(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64, tuning UploadV2Tuning) lib.AdaptiveConcurrencyConfig {
 	maxConcurrency = max(1, maxConcurrency)
 	switch target {
 	case downloadV2TargetS3:
 		plan := uploadV2PartPlan{target: uploadV2TargetS3, totalSize: &totalSize, partSize: partSize, mode: "download_v2_known_size"}
-		initial := uploadV2InitialConcurrencyForPlan(plan, maxConcurrency, UploadV2Tuning{})
-		return uploadV2AdaptiveConcurrencyConfigWithInitial(plan, maxConcurrency, initial, UploadV2Tuning{})
+		initial := uploadV2InitialConcurrencyForPlan(plan, maxConcurrency, tuning)
+		return uploadV2AdaptiveConcurrencyConfigWithInitial(plan, maxConcurrency, initial, tuning)
 	default:
-		return lib.AdaptiveConcurrencyConfig{
-			MaxConcurrency:            maxConcurrency,
-			InitialTarget:             min(15, maxConcurrency),
-			MinTarget:                 1,
-			GrowEvery:                 8,
-			GrowStep:                  1,
-			FailureShrinkPercent:      50,
-			BackPressureShrinkPercent: 35,
-			BackPressurePause:         500 * time.Millisecond,
+		initial := min(AdaptiveDownloadDefaultTargetInitialTarget, maxConcurrency)
+		if tuning.InitialTarget > 0 {
+			initial = min(tuning.InitialTarget, maxConcurrency)
 		}
+		config := lib.AdaptiveConcurrencyConfig{
+			MaxConcurrency:            maxConcurrency,
+			InitialTarget:             initial,
+			MinTarget:                 AdaptiveDownloadDefaultTargetMinTarget,
+			GrowEvery:                 AdaptiveTransferDefaultTargetGrowEvery,
+			GrowStep:                  AdaptiveTransferDefaultTargetGrowStep,
+			FailureShrinkPercent:      AdaptiveTransferDefaultTargetFailureShrinkPercent,
+			BackPressureShrinkPercent: AdaptiveDownloadDefaultTargetBackPressureShrinkPercent,
+			BackPressurePause:         AdaptiveDownloadDefaultTargetBackPressurePause,
+		}
+		return config
 	}
 }
 
-func (s *downloadV2SharedAdaptiveManagerRegistry) get(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64) *lib.AdaptiveConcurrencyManager {
-	key := downloadV2AdaptiveManagerCacheKey{target: target, maxConcurrency: maxConcurrency}
+func (s *downloadV2SharedAdaptiveManagerRegistry) get(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64, tuning UploadV2Tuning) *lib.AdaptiveConcurrencyManager {
+	tuning = tuning.managerTuning()
+	key := downloadV2AdaptiveManagerCacheKey{target: target, maxConcurrency: maxConcurrency, tuning: tuning}
 	return s.managerFor(key, func() *lib.AdaptiveConcurrencyManager {
-		return lib.NewAdaptiveConcurrencyManagerWithConfig(downloadV2SharedAdaptiveConcurrencyConfig(target, maxConcurrency, totalSize, partSize))
+		return lib.NewAdaptiveConcurrencyManagerWithConfig(downloadV2SharedAdaptiveConcurrencyConfig(target, maxConcurrency, totalSize, partSize, tuning))
 	})
 }
 
@@ -523,9 +542,10 @@ func (r *Job) downloadV2AdmissionTarget() (target int, ok bool) {
 	return target, ok
 }
 
-func (r *Job) downloadV2AdaptiveManager(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64) *lib.AdaptiveConcurrencyManager {
-	key := downloadV2AdaptiveManagerCacheKey{target: target, maxConcurrency: maxConcurrency}
-	manager := downloadV2SharedAdaptiveManagers.get(target, maxConcurrency, totalSize, partSize)
+func (r *Job) downloadV2AdaptiveManager(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64, tuning UploadV2Tuning) *lib.AdaptiveConcurrencyManager {
+	tuning = tuning.managerTuning()
+	key := downloadV2AdaptiveManagerCacheKey{target: target, maxConcurrency: maxConcurrency, tuning: tuning}
+	manager := downloadV2SharedAdaptiveManagers.get(target, maxConcurrency, totalSize, partSize, tuning)
 	r.adaptiveDownloadV2Mu.Lock()
 	if r.adaptiveDownloadV2Managers == nil {
 		r.adaptiveDownloadV2Managers = make(map[downloadV2AdaptiveManagerCacheKey]*lib.AdaptiveConcurrencyManager)
@@ -535,12 +555,12 @@ func (r *Job) downloadV2AdaptiveManager(target TransferV2TargetClass, maxConcurr
 	return manager
 }
 
-func downloadV2SharedAdaptiveConcurrencyConfig(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64) lib.AdaptiveConcurrencyConfig {
+func downloadV2SharedAdaptiveConcurrencyConfig(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64, tuning UploadV2Tuning) lib.AdaptiveConcurrencyConfig {
 	if target == downloadV2TargetS3 {
 		plan := uploadV2PartPlan{target: uploadV2TargetS3, totalSize: &totalSize, partSize: partSize, mode: "download_v2_known_size"}
-		return uploadV2SharedAdaptiveConcurrencyConfig(plan, maxConcurrency, UploadV2Tuning{})
+		return uploadV2SharedAdaptiveConcurrencyConfig(plan, maxConcurrency, tuning)
 	}
-	return downloadV2AdaptiveConcurrencyConfig(target, maxConcurrency, totalSize, partSize)
+	return downloadV2AdaptiveConcurrencyConfig(target, maxConcurrency, totalSize, partSize, tuning)
 }
 
 func classifyDownloadV2Target(ctx context.Context, _ goFs.FileInfo, ranger ReaderRange, classifier DownloadV2TargetClassifier) (TransferV2TargetClass, bool) {

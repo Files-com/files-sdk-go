@@ -8,6 +8,23 @@ import (
 	"time"
 )
 
+const (
+	// AdaptiveConcurrencyDefaultInitialTarget is the default starting target used by NewAdaptiveConcurrencyManager.
+	AdaptiveConcurrencyDefaultInitialTarget = 8
+	// AdaptiveConcurrencyDefaultMinTarget is the default minimum target for config-based managers.
+	AdaptiveConcurrencyDefaultMinTarget = 2
+	// AdaptiveConcurrencyDefaultGrowEvery is the default success count between growth steps.
+	AdaptiveConcurrencyDefaultGrowEvery = 8
+	// AdaptiveConcurrencyDefaultGrowStep is the default normal growth step.
+	AdaptiveConcurrencyDefaultGrowStep = 1
+	// AdaptiveConcurrencyDefaultFailureShrinkPercent is the default shrink percentage after failure.
+	AdaptiveConcurrencyDefaultFailureShrinkPercent = 50
+	// AdaptiveConcurrencyDefaultBackPressureShrinkPercent is the default shrink percentage after backpressure.
+	AdaptiveConcurrencyDefaultBackPressureShrinkPercent = 50
+	// AdaptiveConcurrencyDefaultBackPressurePause is the default pause after backpressure.
+	AdaptiveConcurrencyDefaultBackPressurePause = time.Second
+)
+
 type AdaptiveConcurrencySample struct {
 	Success      bool
 	Duration     time.Duration
@@ -169,20 +186,58 @@ type AdaptiveConcurrencyConfig struct {
 	LatencyGrowthQueueHigh                 float64
 }
 
+// AdaptiveConcurrencyDefaults contains the primary concurrency settings callers
+// usually need when initializing an adaptive manager.
+type AdaptiveConcurrencyDefaults struct {
+	MaxConcurrency int
+	InitialTarget  int
+}
+
+// DefaultAdaptiveConcurrencyDefaults returns the SDK's default adaptive
+// concurrency settings with the supplied maximum concurrency.
+func DefaultAdaptiveConcurrencyDefaults(maxConcurrency int) AdaptiveConcurrencyDefaults {
+	return AdaptiveConcurrencyDefaults{
+		MaxConcurrency: maxConcurrency,
+		InitialTarget:  AdaptiveConcurrencyDefaultInitialTarget,
+	}
+}
+
+// Config returns a full manager config for these defaults.
+func (d AdaptiveConcurrencyDefaults) Config() AdaptiveConcurrencyConfig {
+	initialTarget := d.InitialTarget
+	if initialTarget <= 0 {
+		initialTarget = AdaptiveConcurrencyDefaultInitialTarget
+	}
+	return AdaptiveConcurrencyConfig{
+		MaxConcurrency:            d.MaxConcurrency,
+		InitialTarget:             initialTarget,
+		GrowEvery:                 AdaptiveConcurrencyDefaultGrowEvery,
+		GrowStep:                  AdaptiveConcurrencyDefaultGrowStep,
+		FailureShrinkPercent:      AdaptiveConcurrencyDefaultFailureShrinkPercent,
+		BackPressureShrinkPercent: AdaptiveConcurrencyDefaultBackPressureShrinkPercent,
+		BackPressurePause:         AdaptiveConcurrencyDefaultBackPressurePause,
+	}
+}
+
 func NewAdaptiveConcurrencyManager(maxConcurrency int) *AdaptiveConcurrencyManager {
-	return NewAdaptiveConcurrencyManagerWithInitial(maxConcurrency, 8)
+	return NewAdaptiveConcurrencyManagerWithInitial(maxConcurrency, AdaptiveConcurrencyDefaultInitialTarget)
+}
+
+// DefaultAdaptiveConcurrencyConfig returns the default manager config with the
+// supplied maximum concurrency. Callers can override individual fields before
+// passing it to NewAdaptiveConcurrencyManagerWithConfig.
+func DefaultAdaptiveConcurrencyConfig(maxConcurrency int) AdaptiveConcurrencyConfig {
+	return DefaultAdaptiveConcurrencyDefaults(maxConcurrency).Config()
+}
+
+func NewAdaptiveConcurrencyManagerWithDefaults(defaults AdaptiveConcurrencyDefaults) *AdaptiveConcurrencyManager {
+	return NewAdaptiveConcurrencyManagerWithConfig(defaults.Config())
 }
 
 func NewAdaptiveConcurrencyManagerWithInitial(maxConcurrency int, initialTarget int) *AdaptiveConcurrencyManager {
-	return NewAdaptiveConcurrencyManagerWithConfig(AdaptiveConcurrencyConfig{
-		MaxConcurrency:            maxConcurrency,
-		InitialTarget:             initialTarget,
-		GrowEvery:                 8,
-		GrowStep:                  1,
-		FailureShrinkPercent:      50,
-		BackPressureShrinkPercent: 50,
-		BackPressurePause:         time.Second,
-	})
+	config := DefaultAdaptiveConcurrencyConfig(maxConcurrency)
+	config.InitialTarget = initialTarget
+	return NewAdaptiveConcurrencyManagerWithConfig(config)
 }
 
 func NewAdaptiveConcurrencyManagerWithConfig(config AdaptiveConcurrencyConfig) *AdaptiveConcurrencyManager {
@@ -191,7 +246,7 @@ func NewAdaptiveConcurrencyManagerWithConfig(config AdaptiveConcurrencyConfig) *
 	initialTarget := min(max(config.InitialTarget, 1), maxConcurrency)
 	minTarget := config.MinTarget
 	if minTarget <= 0 {
-		minTarget = min(2, maxConcurrency)
+		minTarget = min(AdaptiveConcurrencyDefaultMinTarget, maxConcurrency)
 	}
 	minTarget = min(max(minTarget, 1), maxConcurrency)
 	growthCeiling := config.GrowthCeiling
@@ -225,7 +280,7 @@ func NewAdaptiveConcurrencyManagerWithConfig(config AdaptiveConcurrencyConfig) *
 	growStep := max(config.GrowStep, 1)
 	failureShrink := config.FailureShrinkPercent
 	if failureShrink <= 0 {
-		failureShrink = 50
+		failureShrink = AdaptiveConcurrencyDefaultFailureShrinkPercent
 	}
 	backPressureShrink := config.BackPressureShrinkPercent
 	if backPressureShrink < 0 {
