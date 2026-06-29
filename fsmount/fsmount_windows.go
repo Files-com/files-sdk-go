@@ -87,11 +87,10 @@ func mountOpts(params MountParams) []string {
 		opts = append(opts, "-o", "DebugLog="+logfile)
 	}
 
-	// TODO: Decide if these options can be used. Certain applications like InDesign expect and actually
-	// validate that the uid returned in the *fuse.Stat_t during Getattr matches what the program itself
-	// sees when probing temp files on the file system.
-	// opts = append(opts, "-o", "uid=-1")
-	// opts = append(opts, "-o", "gid=-1")
+	// Let WinFSP derive Windows security descriptors from the mounting user
+	// instead of raw stat UID/GID values that may not map to a Windows SID.
+	opts = append(opts, "-o", "uid=-1")
+	opts = append(opts, "-o", "gid=-1")
 	if params.VolumeName != "" && !params.DisableMountVolumePrefix {
 		opts = append(opts, "--VolumePrefix=\\Files\\"+params.VolumeName)
 	}
