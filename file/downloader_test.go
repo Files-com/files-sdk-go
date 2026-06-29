@@ -1103,6 +1103,7 @@ type downloadV2TestRangeFile struct {
 	info               Info
 	mu                 sync.Mutex
 	ranges             []downloadV2TestRange
+	downloadURICalls   int
 	failAfterOffset    int64
 	failAfterReadBytes int64
 }
@@ -1131,6 +1132,9 @@ func (f *downloadV2TestRangeFile) ReaderRange(off int64, end int64) (io.ReadClos
 }
 
 func (f *downloadV2TestRangeFile) downloadV2URI(context.Context) (string, error) {
+	f.mu.Lock()
+	f.downloadURICalls++
+	f.mu.Unlock()
 	return f.downloadURI, nil
 }
 

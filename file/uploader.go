@@ -223,21 +223,44 @@ func remotePath(ctx context.Context, localPath, remotePath string, c Uploader, j
 }
 
 func enqueueIndexedUploads(job *Job, jobCtx context.Context, onComplete chan *UploadStatus) {
+	params, _ := job.Params.(UploaderParams)
+	adaptiveAdmission := params.AdaptiveConcurrency && (params.AdaptiveConcurrencyUseSDKDefaultCaps || params.Manager == nil)
+	adaptiveTargets := uploadV2JobAdmissionTargets{job: job}
+	fileAdmissionManager := job.fileAdmissionManager()
 	for !job.EndScanning.Called() || job.Count(status.Indexed) > 0 {
 		if f, ok := job.EnqueueNext(); ok {
-			if job.FilesManager.WaitWithContext(jobCtx) {
-				go enqueueUpload(jobCtx, job, f.(*UploadStatus), onComplete)
+			uploadStatus := f.(*UploadStatus)
+			admitted := !shouldGateAdaptiveUploadAdmission(
+				uploadStatus,
+				adaptiveAdmission,
+				params.AdaptiveUploadV2TargetClassifier,
+				params.AdaptiveUploadV2Tuning,
+			) || waitForAdaptiveFileAdmission(jobCtx, fileAdmissionManager, adaptiveTargets, adaptiveFileAdmissionInitialTarget())
+			if admitted && fileAdmissionManager.WaitWithContext(jobCtx) {
+				go enqueueUpload(jobCtx, job, uploadStatus, onComplete)
 			} else {
-				job.UpdateStatus(status.Canceled, f.(*UploadStatus), nil)
-				onComplete <- f.(*UploadStatus)
+				job.UpdateStatus(status.Canceled, uploadStatus, nil)
+				onComplete <- uploadStatus
 			}
 		}
 	}
 }
 
+func shouldGateAdaptiveUploadAdmission(uploadStatus *UploadStatus, adaptiveAdmission bool, classifier UploadV2TargetClassifier, tuning UploadV2Tuning) bool {
+	if !(adaptiveAdmission &&
+		uploadStatus.error == nil &&
+		!uploadStatus.missingStat &&
+		!uploadStatus.dryRun &&
+		!uploadStatus.File().IsDir()) {
+		return false
+	}
+	part := uploadStatus.UploadResumable.FileUploadPart
+	return part.Ref == "" || uploadV2PartPlanEligible(part, uploadStatus.File().Size, classifier, tuning)
+}
+
 func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, onComplete chan *UploadStatus) {
 	finish := func() {
-		job.FilesManager.Done()
+		job.fileAdmissionManager().Done()
 		onComplete <- uploadStatus
 	}
 	if uploadStatus.error != nil || uploadStatus.missingStat {
@@ -343,16 +366,16 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 			if params.AdaptiveUploadV2TargetClassifier != nil {
 				opts = append(opts, UploadWithV2TargetClassifier(params.AdaptiveUploadV2TargetClassifier))
 			}
+			tuning := params.AdaptiveUploadV2Tuning
+			if tuning.S3WorkloadBytes == 0 {
+				tuning.S3WorkloadBytes = job.uploadV2WorkloadBytes(uploadStatus.File().Size, tuning)
+			}
 			if useSDKDefaultAdaptiveCaps {
 				opts = append(opts, uploadWithV2AdaptiveManagerProvider(job.uploadV2AdaptiveManager))
 			}
 			opts = append(opts, uploadWithV2HTTPClientProvider(job.uploadV2HTTPClient))
 			if params.AdaptiveUploadReadyRunwaySet {
 				opts = append(opts, UploadWithV2ReadyRunway(params.AdaptiveUploadReadyRunwayParts, params.AdaptiveUploadReadyRunwayBytes))
-			}
-			tuning := params.AdaptiveUploadV2Tuning
-			if tuning.S3WorkloadBytes == 0 {
-				tuning.S3WorkloadBytes = job.uploadV2WorkloadBytes(uploadStatus.File().Size, tuning)
 			}
 			if params.AdaptiveUploadV2TuningSet || tuning.S3WorkloadBytes > 0 {
 				opts = append(opts, UploadWithV2Tuning(tuning))

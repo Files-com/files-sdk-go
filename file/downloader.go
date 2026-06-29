@@ -160,13 +160,21 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams, opt
 }
 
 func enqueueIndexedDownloads(job *Job, jobCtx context.Context, onComplete chan *DownloadStatus) {
+	params, _ := job.Params.(DownloaderParams)
+	adaptiveAdmission := params.AdaptiveConcurrency && (params.AdaptiveConcurrencyUseSDKDefaultCaps || params.Manager == nil)
+	adaptiveTargets := downloadV2JobAdmissionTargets{job: job}
+	fileAdmissionManager := job.fileAdmissionManager()
 	for !job.EndScanning.Called() || job.Count(status.Indexed) > 0 {
 		if f, ok := job.EnqueueNext(); ok {
-			if job.FilesManager.WaitWithContext(jobCtx) {
-				go enqueueDownload(jobCtx, job, f.(*DownloadStatus), onComplete)
+			downloadStatus := f.(*DownloadStatus)
+			gateDownload := shouldGateAdaptiveDownloadAdmission(downloadStatus, adaptiveAdmission)
+			admitted := !gateDownload ||
+				waitForAdaptiveFileAdmission(jobCtx, fileAdmissionManager, adaptiveTargets, adaptiveFileAdmissionInitialTarget())
+			if admitted && fileAdmissionManager.WaitWithContext(jobCtx) {
+				go enqueueDownload(jobCtx, job, downloadStatus, onComplete)
 			} else {
-				job.UpdateStatus(status.Canceled, f.(*DownloadStatus), nil)
-				onComplete <- f.(*DownloadStatus)
+				job.UpdateStatus(status.Canceled, downloadStatus, nil)
+				onComplete <- downloadStatus
 			}
 		}
 	}
@@ -215,19 +223,19 @@ func createIndexedStatus(f Entity, params DownloaderParams, job *Job) {
 func enqueueDownload(ctx context.Context, job *Job, downloadStatus *DownloadStatus, signal chan *DownloadStatus) {
 	if downloadStatus.error != nil || downloadStatus.fsFile == nil {
 		job.UpdateStatus(status.Errored, downloadStatus, downloadStatus.RecentError())
-		job.FilesManager.Done()
+		job.fileAdmissionManager().Done()
 		signal <- downloadStatus
 		return
 	}
 	if _, ok := job.CompletedPaths[downloadStatus.LocalPath()]; ok {
 		job.UpdateStatus(status.Skipped, downloadStatus, nil)
-		job.FilesManager.Done()
+		job.fileAdmissionManager().Done()
 		signal <- downloadStatus
 		return
 	}
 	if ignoreDownloadJob(job, downloadStatus) {
 		job.UpdateStatus(status.Ignored, downloadStatus, nil)
-		job.FilesManager.Done()
+		job.fileAdmissionManager().Done()
 		signal <- downloadStatus
 		return
 	}
@@ -250,7 +258,7 @@ func ignorePath(path string, ignored, included *gitignore.GitIgnore) bool {
 func downloadFolderItem(ctx context.Context, signal chan *DownloadStatus, s *DownloadStatus) {
 	func(ctx context.Context, reportStatus *DownloadStatus) {
 		defer func() {
-			s.job.FilesManager.Done()
+			s.job.fileAdmissionManager().Done()
 			signal <- reportStatus
 		}()
 		dir, _ := filepath.Split(reportStatus.LocalPath())

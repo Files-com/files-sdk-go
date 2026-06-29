@@ -192,7 +192,7 @@ func TestUploaderAdaptiveConcurrencyUseSDKDefaultCapsKeepsJobPartManagerForFallb
 			onComplete := make(chan *UploadStatus, 1)
 
 			ctx := context.Background()
-			require.True(t, job.FilesManager.WaitWithContext(ctx))
+			require.True(t, job.fileAdmissionManager().WaitWithContext(ctx))
 			enqueueUpload(ctx, job, uploadStatus, onComplete)
 			<-onComplete
 

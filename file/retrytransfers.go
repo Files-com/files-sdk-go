@@ -107,8 +107,9 @@ func enqueueByStatus(ctx context.Context, job *Job, signalEvents bool, enqueue f
 	}
 	job.Logger.Printf("retrying %v files (%v)", strings.Join(types, ", "), len(files))
 
+	fileAdmissionManager := job.fileAdmissionManager()
 	for _, file := range files {
-		if job.FilesManager.WaitWithContext(jobCtx) {
+		if fileAdmissionManager.WaitWithContext(jobCtx) {
 			count += 1
 			go enqueue(file, jobCtx)
 		}

@@ -30,6 +30,11 @@ var (
 	// AdaptiveDownloadV2ConcurrentFileParts is the V2 download HTTP range concurrency cap.
 	// The adaptive manager treats this as a maximum, not a fixed target.
 	AdaptiveDownloadV2ConcurrentFileParts = 1024
+	// AdaptiveFileAdmissionFloor is the minimum number of concurrent files
+	// adaptive transfers keep admitted however low the learned part
+	// concurrency falls, so indexing, finishing, and growth probing still
+	// overlap.
+	AdaptiveFileAdmissionFloor = 4
 )
 
 var (

@@ -332,8 +332,48 @@ func (s *uploadV2SharedAdaptiveManagerRegistry) get(plan uploadV2PartPlan, maxCo
 	})
 }
 
+func uploadV2AdaptiveManagerKey(plan uploadV2PartPlan, maxConcurrency int, tuning UploadV2Tuning) uploadV2AdaptiveManagerCacheKey {
+	return uploadV2AdaptiveManagerCacheKey{
+		target:         plan.target,
+		maxConcurrency: maxConcurrency,
+		tuning:         tuning.managerTuning(),
+	}
+}
+
+type uploadV2JobAdmissionTargets struct {
+	job *Job
+}
+
+func (t uploadV2JobAdmissionTargets) admissionTarget() (int, bool) {
+	if t.job == nil {
+		return 0, false
+	}
+	return t.job.uploadV2AdmissionTarget()
+}
+
+func (r *Job) uploadV2AdmissionTarget() (target int, ok bool) {
+	r.adaptiveUploadV2Mu.Lock()
+	defer r.adaptiveUploadV2Mu.Unlock()
+	for _, manager := range r.adaptiveUploadV2Managers {
+		t := manager.Target()
+		if !ok || t < target {
+			target = t
+		}
+		ok = true
+	}
+	return target, ok
+}
+
 func (r *Job) uploadV2AdaptiveManager(plan uploadV2PartPlan, maxConcurrency int, tuning UploadV2Tuning) *lib.AdaptiveConcurrencyManager {
-	return uploadV2SharedAdaptiveManagers.get(plan, maxConcurrency, tuning)
+	key := uploadV2AdaptiveManagerKey(plan, maxConcurrency, tuning)
+	manager := uploadV2SharedAdaptiveManagers.get(plan, maxConcurrency, key.tuning)
+	r.adaptiveUploadV2Mu.Lock()
+	if r.adaptiveUploadV2Managers == nil {
+		r.adaptiveUploadV2Managers = make(map[uploadV2AdaptiveManagerCacheKey]*lib.AdaptiveConcurrencyManager)
+	}
+	r.adaptiveUploadV2Managers[key] = manager
+	r.adaptiveUploadV2Mu.Unlock()
+	return manager
 }
 
 func (r *Job) uploadV2WorkloadBytes(currentFileSize int64, tuning UploadV2Tuning) int64 {

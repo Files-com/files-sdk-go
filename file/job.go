@@ -111,8 +111,12 @@ type Job struct {
 	retryablehttp.Logger
 	RemoteFs fs.FS
 	*lib.Meter
-	adaptiveUploadV2Mu      sync.Mutex
-	adaptiveUploadV2Clients map[uploadV2HTTPClientCacheKey]uploadV2HTTPClientCacheEntry
+	fileAdmissionPool          lib.ConcurrencyManager
+	adaptiveUploadV2Mu         sync.Mutex
+	adaptiveUploadV2Clients    map[uploadV2HTTPClientCacheKey]uploadV2HTTPClientCacheEntry
+	adaptiveUploadV2Managers   map[uploadV2AdaptiveManagerCacheKey]*lib.AdaptiveConcurrencyManager
+	adaptiveDownloadV2Mu       sync.Mutex
+	adaptiveDownloadV2Managers map[downloadV2AdaptiveManagerCacheKey]*lib.AdaptiveConcurrencyManager
 }
 
 func (r *Job) Init() *Job {
@@ -136,6 +140,17 @@ func (r *Job) SetManager(m *manager.Manager) {
 	} else {
 		r.Manager = m
 	}
+	r.fileAdmissionPool = r.Manager.FilesManager.NewSubWorker()
+}
+
+func (r *Job) fileAdmissionManager() lib.ConcurrencyManager {
+	if r.Manager == nil {
+		r.SetManager(nil)
+	}
+	if r.fileAdmissionPool != nil {
+		return r.fileAdmissionPool
+	}
+	return r.FilesManager
 }
 
 func (r *Job) SetEventsReporter(e EventsReporter) {
@@ -160,6 +175,12 @@ func (r *Job) ClearStatuses() Job {
 	newJob.Statuses = []IFile{}
 	newJob.adaptiveUploadV2Mu = sync.Mutex{}
 	newJob.adaptiveUploadV2Clients = nil
+	newJob.adaptiveUploadV2Managers = nil
+	newJob.adaptiveDownloadV2Mu = sync.Mutex{}
+	newJob.adaptiveDownloadV2Managers = nil
+	if newJob.Manager != nil {
+		newJob.fileAdmissionPool = newJob.Manager.FilesManager.NewSubWorker()
+	}
 	return newJob
 }
 

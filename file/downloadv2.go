@@ -89,33 +89,8 @@ var (
 )
 
 func runDownloadV2IfSupported(ctx context.Context, reportStatus *DownloadStatus, remoteStat goFs.FileInfo, tmpName string, startOffset int64) (bool, int64, error) {
-	params, _ := reportStatus.Job().Params.(DownloaderParams)
-	if !params.AdaptiveConcurrency {
-		return false, 0, nil
-	}
-	if reportStatus.Job().Manager.FilePartsManager.DownloadFilesAsSingleStream {
-		return false, 0, nil
-	}
-	ranger, ok := reportStatus.fsFile.(ReaderRange)
+	target, totalSize, partSize, ok := downloadV2PlanIfSupported(ctx, reportStatus, remoteStat, startOffset)
 	if !ok {
-		return false, 0, nil
-	}
-	totalSize := remoteStat.Size()
-	if totalSize < 0 || startOffset < 0 || startOffset > totalSize {
-		return false, 0, nil
-	}
-	if untrusted, ok := remoteStat.(UntrustedSize); ok && untrusted.SizeTrust() == UntrustedSizeValue {
-		return false, 0, nil
-	}
-	if totalSize-startOffset <= downloadV2SmallFileFallbackSize() {
-		return false, 0, nil
-	}
-	target, ok := classifyDownloadV2Target(ctx, remoteStat, ranger, params.AdaptiveDownloadV2TargetClassifier)
-	if !ok {
-		return false, 0, nil
-	}
-	partSize := downloadV2KnownSizePartSize(target, totalSize)
-	if totalSize-startOffset <= partSize {
 		return false, 0, nil
 	}
 
@@ -123,6 +98,8 @@ func runDownloadV2IfSupported(ctx context.Context, reportStatus *DownloadStatus,
 	if err != nil {
 		return true, 0, err
 	}
+	ranger := reportStatus.fsFile.(ReaderRange)
+	params, _ := reportStatus.Job().Params.(DownloaderParams)
 	engine := newDownloadV2Engine(reportStatus, ranger, file, target, totalSize, startOffset, partSize, params)
 	if err := engine.Run(ctx); err != nil {
 		return true, engine.ContiguousSize(), err
@@ -130,11 +107,104 @@ func runDownloadV2IfSupported(ctx context.Context, reportStatus *DownloadStatus,
 	return true, engine.FinalSize(), nil
 }
 
+func downloadV2PlanIfSupported(ctx context.Context, reportStatus *DownloadStatus, remoteStat goFs.FileInfo, startOffset int64) (TransferV2TargetClass, int64, int64, bool) {
+	params, _ := reportStatus.Job().Params.(DownloaderParams)
+	if !params.AdaptiveConcurrency {
+		return "", 0, 0, false
+	}
+	if reportStatus.Job().Manager.FilePartsManager.DownloadFilesAsSingleStream {
+		return "", 0, 0, false
+	}
+	ranger, ok := reportStatus.fsFile.(ReaderRange)
+	if !ok {
+		return "", 0, 0, false
+	}
+	totalSize := remoteStat.Size()
+	if totalSize < 0 || startOffset < 0 || startOffset > totalSize {
+		return "", 0, 0, false
+	}
+	if untrusted, ok := remoteStat.(UntrustedSize); ok && untrusted.SizeTrust() == UntrustedSizeValue {
+		return "", 0, 0, false
+	}
+	if totalSize-startOffset <= downloadV2SmallFileFallbackSize() {
+		return "", 0, 0, false
+	}
+	target, ok := classifyDownloadV2Target(ctx, remoteStat, ranger, params.AdaptiveDownloadV2TargetClassifier)
+	if !ok {
+		return "", 0, 0, false
+	}
+	partSize := downloadV2KnownSizePartSize(target, totalSize)
+	if totalSize-startOffset <= partSize {
+		return "", 0, 0, false
+	}
+	return target, totalSize, partSize, true
+}
+
+func shouldGateAdaptiveDownloadAdmission(reportStatus *DownloadStatus, adaptiveAdmission bool) bool {
+	if !adaptiveAdmission ||
+		reportStatus == nil ||
+		reportStatus.error != nil ||
+		reportStatus.fsFile == nil ||
+		reportStatus.FileInfo == nil ||
+		reportStatus.dryRun ||
+		reportStatus.FileInfo.IsDir() {
+		return false
+	}
+	job := reportStatus.Job()
+	if job == nil || job.Manager == nil || job.Manager.FilePartsManager.DownloadFilesAsSingleStream {
+		return false
+	}
+	if _, ok := reportStatus.fsFile.(ReaderRange); !ok {
+		return false
+	}
+	totalSize := reportStatus.FileInfo.Size()
+	startOffset := downloadV2AdmissionStartOffset(reportStatus)
+	if totalSize < 0 || startOffset < 0 || startOffset > totalSize {
+		return false
+	}
+	if untrusted, ok := reportStatus.FileInfo.(UntrustedSize); ok && untrusted.SizeTrust() == UntrustedSizeValue {
+		return false
+	}
+	remaining := totalSize - startOffset
+	if remaining <= downloadV2SmallFileFallbackSize() {
+		return false
+	}
+	return remaining > downloadV2AdmissionMinPartSize(totalSize)
+}
+
+func downloadV2AdmissionStartOffset(reportStatus *DownloadStatus) int64 {
+	if reportStatus == nil || reportStatus.FileInfo == nil {
+		return 0
+	}
+	tmpName := reportStatus.TmpPath
+	if tmpName == "" {
+		tmpName = existingTmpDownloadPath(reportStatus.LocalPath(), reportStatus.tempPath)
+	}
+	if tmpName == "" {
+		return 0
+	}
+	fi, err := os.Stat(tmpName)
+	if err != nil {
+		return 0
+	}
+	if fi.Size() > reportStatus.FileInfo.Size() {
+		return 0
+	}
+	return fi.Size()
+}
+
+func downloadV2AdmissionMinPartSize(totalSize int64) int64 {
+	return min(
+		downloadV2KnownSizePartSize(downloadV2TargetS3, totalSize),
+		downloadV2KnownSizePartSize(downloadV2TargetDefault, totalSize),
+	)
+}
+
 func newDownloadV2Engine(reportStatus *DownloadStatus, ranger ReaderRange, file *os.File, target TransferV2TargetClass, totalSize int64, startOffset int64, partSize int64, params DownloaderParams) *downloadV2Engine {
 	maxConcurrency := downloadV2MaxConcurrency(reportStatus.Job(), params)
 	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(downloadV2AdaptiveConcurrencyConfig(target, maxConcurrency, totalSize, partSize))
 	if params.Manager == nil || params.AdaptiveConcurrencyUseSDKDefaultCaps {
-		manager = downloadV2SharedAdaptiveManagers.get(target, maxConcurrency, totalSize, partSize)
+		manager = reportStatus.Job().downloadV2AdaptiveManager(target, maxConcurrency, totalSize, partSize)
 	}
 	return &downloadV2Engine{
 		reportStatus: reportStatus,
@@ -427,6 +497,42 @@ func (s *downloadV2SharedAdaptiveManagerRegistry) get(target TransferV2TargetCla
 	return s.managerFor(key, func() *lib.AdaptiveConcurrencyManager {
 		return lib.NewAdaptiveConcurrencyManagerWithConfig(downloadV2SharedAdaptiveConcurrencyConfig(target, maxConcurrency, totalSize, partSize))
 	})
+}
+
+type downloadV2JobAdmissionTargets struct {
+	job *Job
+}
+
+func (t downloadV2JobAdmissionTargets) admissionTarget() (int, bool) {
+	if t.job == nil {
+		return 0, false
+	}
+	return t.job.downloadV2AdmissionTarget()
+}
+
+func (r *Job) downloadV2AdmissionTarget() (target int, ok bool) {
+	r.adaptiveDownloadV2Mu.Lock()
+	defer r.adaptiveDownloadV2Mu.Unlock()
+	for _, manager := range r.adaptiveDownloadV2Managers {
+		t := manager.Target()
+		if !ok || t < target {
+			target = t
+		}
+		ok = true
+	}
+	return target, ok
+}
+
+func (r *Job) downloadV2AdaptiveManager(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64) *lib.AdaptiveConcurrencyManager {
+	key := downloadV2AdaptiveManagerCacheKey{target: target, maxConcurrency: maxConcurrency}
+	manager := downloadV2SharedAdaptiveManagers.get(target, maxConcurrency, totalSize, partSize)
+	r.adaptiveDownloadV2Mu.Lock()
+	if r.adaptiveDownloadV2Managers == nil {
+		r.adaptiveDownloadV2Managers = make(map[downloadV2AdaptiveManagerCacheKey]*lib.AdaptiveConcurrencyManager)
+	}
+	r.adaptiveDownloadV2Managers[key] = manager
+	r.adaptiveDownloadV2Mu.Unlock()
+	return manager
 }
 
 func downloadV2SharedAdaptiveConcurrencyConfig(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64) lib.AdaptiveConcurrencyConfig {

@@ -63,6 +63,15 @@ func (u *uploadIO) newUploadV2PartPlanForUpload() (uploadV2PartPlan, bool, strin
 	return plan.withTuning(u.uploadV2Tuning)
 }
 
+func uploadV2PartPlanEligible(part files_sdk.FileUploadPart, size int64, classifier UploadV2TargetClassifier, tuning UploadV2Tuning) bool {
+	plan, ok, _ := newUploadV2PartPlanForUpload(part, &size, classifier)
+	if !ok {
+		return false
+	}
+	_, ok, _ = plan.withTuning(tuning)
+	return ok
+}
+
 func (p uploadV2PartPlan) withTuning(tuning UploadV2Tuning) (uploadV2PartPlan, bool, string) {
 	if p.target != uploadV2TargetS3 {
 		return p, true, ""
