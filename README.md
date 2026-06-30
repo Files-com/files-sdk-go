@@ -554,18 +554,17 @@ Customers commonly group resources by project, department, client, or region. Wo
 
 Every Site has an implicit Default workspace (ID `0`). Resources that are not explicitly assigned to a named workspace are considered part of the Default workspace.
 
-The Files.com Go SDK supports workspace scoping by using the `WorkspaceId` attribute on the `Config` object. Scope a single request by passing `WithWorkspaceId` in the request options.
+The Files.com Go SDK supports workspace scoping by using the `WorkspaceId` attribute on the `Config` object.
 ```go title="Example Request"
 import (
     files_sdk "github.com/Files-com/files-sdk-go/v3"
     "github.com/Files-com/files-sdk-go/v3/folder"
-    "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
-config := files_sdk.Config{WorkspaceId: lib.Int64(123)}.Init()
+config := files_sdk.Config{WorkspaceId: 123}.Init()
 client := folder.Client{Config: config}
 
-client.ListFor(files_sdk.FolderListForParams{}, files_sdk.WithWorkspaceId(456))
+client.ListFor(files_sdk.FolderListForParams{})
 ```
 
 ## Foreign Language Support

@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.3.173"
+var VERSION = "3.3.174"
 var defaultUserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
 
 const (
@@ -37,10 +37,12 @@ func init() {
 	GlobalConfig = Config{}.Init()
 }
 
+// Config controls Files.com API authentication, workspace scoping, and transport behavior.
 type Config struct {
-	APIKey           string `header:"X-FilesAPI-Key" json:"api_key"`
-	SessionId        string `header:"X-FilesAPI-Auth" json:"session_id"`
-	WorkspaceId      *int64 `header:"X-Files-Workspace-Id" json:"workspace_id,omitempty"`
+	APIKey    string `header:"X-FilesAPI-Key" json:"api_key"`
+	SessionId string `header:"X-FilesAPI-Auth" json:"session_id"`
+	// WorkspaceId scopes Files.com API requests when non-zero.
+	WorkspaceId      int64  `header:"X-Files-Workspace-Id" json:"workspace_id,omitempty"`
 	Language         string `header:"Accept-Language"`
 	Subdomain        string `json:"subdomain"`
 	EndpointOverride string `json:"endpoint_override"`
@@ -136,8 +138,8 @@ func (c Config) setHeadersForURL(headers *http.Header, rawURL string) {
 	if c.Language != "" {
 		headers.Set("Accept-Language", c.Language)
 	}
-	if c.WorkspaceId != nil {
-		headers.Set(workspaceIdHeader, strconv.FormatInt(*c.WorkspaceId, 10))
+	if c.WorkspaceId != 0 {
+		headers.Set(workspaceIdHeader, strconv.FormatInt(c.WorkspaceId, 10))
 	}
 	for key, value := range c.AdditionalHeaders {
 		headers.Set(key, value)

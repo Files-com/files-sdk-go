@@ -142,6 +142,7 @@ type FileTransformParams struct {
 	Destination   string `url:"destination" json:"destination" path:"destination"`
 	TransformType string `url:"transform_type" json:"transform_type" path:"transform_type"`
 	TargetFormat  string `url:"target_format" json:"target_format" path:"target_format"`
+	Script        string `url:"script,omitempty" json:"script,omitempty" path:"script"`
 	Width         int64  `url:"width,omitempty" json:"width,omitempty" path:"width"`
 	Height        int64  `url:"height,omitempty" json:"height,omitempty" path:"height"`
 	Overwrite     *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
