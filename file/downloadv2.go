@@ -210,7 +210,7 @@ func downloadV2AdmissionMinPartSize(totalSize int64) int64 {
 }
 
 func newDownloadV2Engine(reportStatus *DownloadStatus, ranger ReaderRange, file *os.File, target TransferV2TargetClass, totalSize int64, startOffset int64, partSize int64, params DownloaderParams) *downloadV2Engine {
-	maxConcurrency := downloadV2MaxConcurrency(reportStatus.Job(), params)
+	maxConcurrency := downloadV2MaxConcurrency(reportStatus.Job(), params, target)
 	tuning := params.AdaptiveDownloadV2Tuning
 	if !params.AdaptiveDownloadV2TuningSet {
 		tuning = UploadV2Tuning{}
@@ -477,11 +477,15 @@ func downloadV2SmallFileFallbackSize() int64 {
 	)
 }
 
-func downloadV2MaxConcurrency(job *Job, params DownloaderParams) int {
+func downloadV2MaxConcurrency(job *Job, params DownloaderParams, target TransferV2TargetClass) int {
 	if params.Manager != nil && !params.AdaptiveConcurrencyUseSDKDefaultCaps {
 		return max(1, job.Manager.FilePartsManager.Max())
 	}
-	return manager.EffectiveAdaptiveDownloadV2ConcurrentFileParts()
+	maxConcurrency := AdaptiveTransferDefaultMaxConcurrency
+	if target == downloadV2TargetS3 {
+		maxConcurrency = manager.AdaptiveDownloadV2ConcurrentFileParts
+	}
+	return manager.EffectiveAdaptiveDownloadV2ConcurrentFileParts(maxConcurrency)
 }
 
 func downloadV2AdaptiveConcurrencyConfig(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64, tuning UploadV2Tuning) lib.AdaptiveConcurrencyConfig {
@@ -557,7 +561,7 @@ func (r *Job) downloadV2AdaptiveManager(target TransferV2TargetClass, maxConcurr
 
 func downloadV2SharedAdaptiveConcurrencyConfig(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64, tuning UploadV2Tuning) lib.AdaptiveConcurrencyConfig {
 	if target == downloadV2TargetS3 {
-		plan := uploadV2PartPlan{target: uploadV2TargetS3, totalSize: &totalSize, partSize: partSize, mode: "download_v2_known_size"}
+		plan := uploadV2PartPlan{target: target, totalSize: &totalSize, partSize: partSize, mode: "download_v2_known_size"}
 		return uploadV2SharedAdaptiveConcurrencyConfig(plan, maxConcurrency, tuning)
 	}
 	return downloadV2AdaptiveConcurrencyConfig(target, maxConcurrency, totalSize, partSize, tuning)

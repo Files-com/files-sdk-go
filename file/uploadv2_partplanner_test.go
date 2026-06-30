@@ -286,7 +286,7 @@ func TestUploadWithV2EnablesAdaptiveConcurrencyAndTelemetry(t *testing.T) {
 	assert.Contains(t, logText, "event: upload v2 enabled")
 	assert.Contains(t, logText, "target_class: default")
 	assert.Contains(t, logText, "part_size_mode: known_size")
-	assert.Contains(t, logText, "adaptive_initial_target: 8")
+	assert.Contains(t, logText, "adaptive_initial_target: 16")
 	assert.Contains(t, logText, "adaptive_max_target: 75")
 	assert.Contains(t, logText, "ready_runway_parts: 4")
 	assert.Contains(t, logText, "ready_runway_bytes: 268435456")

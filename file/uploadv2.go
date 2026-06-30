@@ -19,9 +19,9 @@ const (
 	AdaptiveTransferConservativeInitialTarget = 50
 
 	// AdaptiveTransferDefaultTargetInitialTarget is the generic transfer target starting concurrency.
-	AdaptiveTransferDefaultTargetInitialTarget = lib.AdaptiveConcurrencyDefaultInitialTarget
+	AdaptiveTransferDefaultTargetInitialTarget = 16
 	// AdaptiveDownloadDefaultTargetInitialTarget is the generic download target starting concurrency.
-	AdaptiveDownloadDefaultTargetInitialTarget = 15
+	AdaptiveDownloadDefaultTargetInitialTarget = AdaptiveTransferDefaultTargetInitialTarget
 	// AdaptiveDownloadDefaultTargetMinTarget is the generic download target minimum concurrency.
 	AdaptiveDownloadDefaultTargetMinTarget = 1
 	// AdaptiveTransferDefaultTargetGrowEvery is the generic transfer target success count between growth steps.
@@ -42,7 +42,7 @@ const (
 	// AdaptiveTransferS3MaxConcurrency is the SDK default maximum adaptive concurrency for S3 transfers.
 	AdaptiveTransferS3MaxConcurrency = 1024
 	// AdaptiveTransferDefaultMaxConcurrency is the SDK default maximum adaptive concurrency for generic transfers.
-	AdaptiveTransferDefaultMaxConcurrency = 64
+	AdaptiveTransferDefaultMaxConcurrency = 32
 	// AdaptiveTransferS3InitialTarget is the S3 transfer starting concurrency.
 	AdaptiveTransferS3InitialTarget = AdaptiveTransferHighThroughputInitialTarget
 	// AdaptiveTransferS3MinTarget is the S3 transfer minimum concurrency.

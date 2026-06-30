@@ -69,9 +69,13 @@ func SetAdaptiveDownloadV2ConcurrentFileParts(maxConcurrentFileParts int) {
 
 // EffectiveAdaptiveDownloadV2ConcurrentFileParts returns the adaptive download
 // V2 max with the process-wide override applied, when one is configured.
-func EffectiveAdaptiveDownloadV2ConcurrentFileParts() int {
+func EffectiveAdaptiveDownloadV2ConcurrentFileParts(defaultMax ...int) int {
+	maxConcurrentFileParts := AdaptiveDownloadV2ConcurrentFileParts
+	if len(defaultMax) > 0 {
+		maxConcurrentFileParts = defaultMax[0]
+	}
 	return effectiveAdaptiveConcurrentFileParts(
-		AdaptiveDownloadV2ConcurrentFileParts,
+		maxConcurrentFileParts,
 		adaptiveDownloadV2ConcurrentFilePartsOverride.Load(),
 	)
 }

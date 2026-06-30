@@ -37,7 +37,19 @@ func TestDownloadV2MaxConcurrencyUsesAdaptiveDownloadOverride(t *testing.T) {
 
 	manager.SetAdaptiveDownloadV2ConcurrentFileParts(7)
 
-	if got := downloadV2MaxConcurrency(&Job{}, DownloaderParams{}); got != 7 {
+	if got := downloadV2MaxConcurrency(&Job{}, DownloaderParams{}, downloadV2TargetDefault); got != 7 {
 		t.Fatalf("downloadV2MaxConcurrency() = %d, want 7", got)
+	}
+}
+
+func TestDownloadV2MaxConcurrencyDoesNotRaiseTargetDefault(t *testing.T) {
+	t.Cleanup(func() {
+		manager.SetAdaptiveDownloadV2ConcurrentFileParts(0)
+	})
+
+	manager.SetAdaptiveDownloadV2ConcurrentFileParts(1024)
+
+	if got := downloadV2MaxConcurrency(&Job{}, DownloaderParams{}, downloadV2TargetDefault); got != AdaptiveTransferDefaultMaxConcurrency {
+		t.Fatalf("downloadV2MaxConcurrency() = %d, want %d", got, AdaptiveTransferDefaultMaxConcurrency)
 	}
 }

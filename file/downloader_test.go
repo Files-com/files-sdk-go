@@ -1091,16 +1091,17 @@ func TestAdaptiveTransferStatsReportsSharedDownloadManagers(t *testing.T) {
 	assert.Equal(t, 4, stats.Download.Max)
 }
 
-func TestDownloadV2DefaultManagerStartsAtLegacyRangeConcurrency(t *testing.T) {
+func TestDownloadV2DefaultManagerStartsAtDefaultTargetConcurrency(t *testing.T) {
 	adaptiveManager := lib.NewAdaptiveConcurrencyManagerWithConfig(downloadV2AdaptiveConcurrencyConfig(
 		downloadV2TargetDefault,
-		manager.AdaptiveDownloadV2ConcurrentFileParts,
+		AdaptiveTransferDefaultMaxConcurrency,
 		20*1024*1024,
 		16*1024*1024,
 		UploadV2Tuning{},
 	))
 
-	assert.Equal(t, 15, adaptiveManager.Snapshot().Target)
+	assert.Equal(t, AdaptiveDownloadDefaultTargetInitialTarget, adaptiveManager.Snapshot().Target)
+	assert.Equal(t, AdaptiveTransferDefaultMaxConcurrency, adaptiveManager.Snapshot().Max)
 }
 
 func TestDownloadV2CopyAtCoalescesShortReadsBeforeWriting(t *testing.T) {
