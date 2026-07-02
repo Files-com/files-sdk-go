@@ -10,6 +10,7 @@ import (
 type AiAssistantPersonality struct {
 	Id                   int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId          int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	Name                 string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	SystemPrompt         string     `json:"system_prompt,omitempty" path:"system_prompt,omitempty" url:"system_prompt,omitempty"`
 	UseByDefault         *bool      `json:"use_by_default,omitempty" path:"use_by_default,omitempty" url:"use_by_default,omitempty"`
 	ApplyToAllWorkspaces *bool      `json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces,omitempty" url:"apply_to_all_workspaces,omitempty"`
@@ -35,6 +36,7 @@ type AiAssistantPersonalityFindParams struct {
 
 type AiAssistantPersonalityCreateParams struct {
 	ApplyToAllWorkspaces *bool  `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
+	Name                 string `url:"name" json:"name" path:"name"`
 	SystemPrompt         string `url:"system_prompt" json:"system_prompt" path:"system_prompt"`
 	UseByDefault         *bool  `url:"use_by_default,omitempty" json:"use_by_default,omitempty" path:"use_by_default"`
 	WorkspaceId          int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
@@ -43,6 +45,7 @@ type AiAssistantPersonalityCreateParams struct {
 type AiAssistantPersonalityUpdateParams struct {
 	Id                   int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	ApplyToAllWorkspaces *bool  `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
+	Name                 string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	SystemPrompt         string `url:"system_prompt,omitempty" json:"system_prompt,omitempty" path:"system_prompt"`
 	UseByDefault         *bool  `url:"use_by_default,omitempty" json:"use_by_default,omitempty" path:"use_by_default"`
 	WorkspaceId          int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
