@@ -814,6 +814,23 @@ func TestUploadV2PartOffsetQuerySkipsS3(t *testing.T) {
 	assert.Equal(t, "signed", query.Get("X-Amz-Signature"))
 }
 
+func TestUploadV2PartOffsetQuerySkipsS3CompatiblePresignedMultipartURL(t *testing.T) {
+	part := files_sdk.FileUploadPart{
+		UploadUri:     "https://example.r2.cloudflarestorage.com/bucket/key?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=access%2F20260703%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260703T120000Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=7&uploadId=upload-id&X-Amz-Signature=signed",
+		ParallelParts: lib.Bool(true),
+		PartNumber:    7,
+	}
+	engine := newUploadV2TestEngine(t, part)
+
+	engine.decorateUploadURL(&part, 7, 33554432)
+
+	query := uploadV2TestQuery(t, part.UploadUri)
+	assert.Equal(t, "7", query.Get("partNumber"))
+	assert.Equal(t, "upload-id", query.Get("uploadId"))
+	assert.Empty(t, query.Get("part_offset"))
+	assert.Equal(t, "signed", query.Get("X-Amz-Signature"))
+}
+
 func TestUploadV2EngineCreationDoesNotReplaceManagerBeforeRun(t *testing.T) {
 	part := uploadV2TestPart("https://uploads.example.com/upload/file")
 	size := int64(100)

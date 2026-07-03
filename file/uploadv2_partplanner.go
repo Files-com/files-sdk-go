@@ -319,10 +319,19 @@ func classifyUploadV2Target(part files_sdk.FileUploadPart, classifiers ...Upload
 	}
 	host := strings.ToLower(parsed.Hostname())
 
-	if isS3UploadHost(host) {
+	if isS3UploadPartURL(parsed) || isS3UploadHost(host) {
 		return uploadV2TargetS3
 	}
 	return uploadV2TargetDefault
+}
+
+func isS3UploadPartURL(parsed *url.URL) bool {
+	query := parsed.Query()
+	return query.Get("X-Amz-Algorithm") == "AWS4-HMAC-SHA256" &&
+		query.Get("X-Amz-Credential") != "" &&
+		query.Get("X-Amz-Signature") != "" &&
+		query.Get("uploadId") != "" &&
+		query.Get("partNumber") != ""
 }
 
 func isS3UploadHost(host string) bool {
