@@ -671,6 +671,7 @@ if err != nil {
 | `bad-request/invalid-oauth-provider` | `ErrInvalidOauthProvider` | Invalid Oauth Provider |
 | `bad-request/invalid-path` | `ErrInvalidPath` | Invalid Path |
 | `bad-request/invalid-return-to-url` | `ErrInvalidReturnToUrl` | Invalid Return To Url |
+| `bad-request/invalid-search-query` | `ErrInvalidSearchQuery` | Invalid Search Query |
 | `bad-request/invalid-sort-field` | `ErrInvalidSortField` | Invalid Sort Field |
 | `bad-request/invalid-sort-filter-combination` | `ErrInvalidSortFilterCombination` | Invalid Sort Filter Combination |
 | `bad-request/invalid-upload-offset` | `ErrInvalidUploadOffset` | Invalid Upload Offset |

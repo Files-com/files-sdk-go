@@ -720,6 +720,8 @@ func uploadV2AdaptiveConcurrencyConfigWithInitial(plan uploadV2PartPlan, maxConc
 	config := lib.AdaptiveConcurrencyConfig{
 		MaxConcurrency:            maxConcurrency,
 		InitialTarget:             initial,
+		GrowthCeiling:             initial,
+		GrowthCeilingProbeBytes:   64 * uploadV2GiB,
 		GrowEvery:                 AdaptiveTransferDefaultTargetGrowEvery,
 		GrowStep:                  AdaptiveTransferDefaultTargetGrowStep,
 		FailureShrinkPercent:      AdaptiveTransferDefaultTargetFailureShrinkPercent,

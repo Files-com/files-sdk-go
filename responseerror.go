@@ -63,6 +63,7 @@ const (
 	ErrInvalidOauthProvider                                                   ResponseErrorType = "bad-request/invalid-oauth-provider"
 	ErrInvalidPath                                                            ResponseErrorType = "bad-request/invalid-path"
 	ErrInvalidReturnToUrl                                                     ResponseErrorType = "bad-request/invalid-return-to-url"
+	ErrInvalidSearchQuery                                                     ResponseErrorType = "bad-request/invalid-search-query"
 	ErrInvalidSortField                                                       ResponseErrorType = "bad-request/invalid-sort-field"
 	ErrInvalidSortFilterCombination                                           ResponseErrorType = "bad-request/invalid-sort-filter-combination"
 	ErrInvalidUploadOffset                                                    ResponseErrorType = "bad-request/invalid-upload-offset"

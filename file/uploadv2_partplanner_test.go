@@ -1349,7 +1349,7 @@ func TestAdaptiveTransferDefaultsBuildManagerConfig(t *testing.T) {
 	generic := AdaptiveTransferDefaults{MaxConcurrency: 32, InitialTarget: 12}.AdaptiveConcurrencyConfig(TransferV2TargetDefault)
 	assert.Equal(t, 32, generic.MaxConcurrency)
 	assert.Equal(t, 12, generic.InitialTarget)
-	assert.Equal(t, 0, generic.GrowthCeiling)
+	assert.Equal(t, 12, generic.GrowthCeiling)
 }
 
 func TestUploadV2InitialTargetTuningAppliesToAllTargets(t *testing.T) {
@@ -1806,6 +1806,20 @@ func TestUploadV2NetworkErrorsCountAsBackPressure(t *testing.T) {
 
 	assert.False(t, sample.Success)
 	assert.True(t, sample.BackPressure)
+}
+
+func TestUploadV2SuccessfulRetryDoesNotCountAsBackPressure(t *testing.T) {
+	result := uploadV2PartResult{
+		statusCode:   http.StatusOK,
+		backPressure: true,
+		retryAfter:   time.Second,
+	}
+
+	sample := result.sample()
+
+	assert.True(t, sample.Success)
+	assert.False(t, sample.BackPressure)
+	assert.Zero(t, sample.RetryAfter)
 }
 
 func TestUploadV2BufferedReaderPartsAreReplayable(t *testing.T) {

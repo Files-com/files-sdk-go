@@ -1446,13 +1446,19 @@ func (e *uploadV2Engine) etagsForComplete() []files_sdk.EtagsParam {
 }
 
 func (r uploadV2PartResult) sample() lib.AdaptiveConcurrencySample {
+	backPressure := uploadV2NetworkBackPressure(r.err) || uploadV2BackPressureStatus(r.statusCode)
+	retryAfter := time.Duration(0)
+	if r.err != nil || uploadV2BackPressureStatus(r.statusCode) {
+		backPressure = backPressure || r.backPressure
+		retryAfter = r.retryAfter
+	}
 	return lib.AdaptiveConcurrencySample{
 		Success:      r.err == nil,
 		Duration:     r.duration,
 		Bytes:        r.bytes,
 		StatusCode:   r.statusCode,
-		BackPressure: r.backPressure || uploadV2NetworkBackPressure(r.err) || uploadV2BackPressureStatus(r.statusCode),
-		RetryAfter:   r.retryAfter,
+		BackPressure: backPressure,
+		RetryAfter:   retryAfter,
 	}
 }
 
