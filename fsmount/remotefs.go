@@ -372,10 +372,16 @@ func (fs *RemoteFs) Init() {
 func (fs *RemoteFs) Destroy() {
 	fs.log.Debug("RemoteFs: Destroy: removing all file locks")
 
+	// Snapshot under the mutex, then release it: unlock re-acquires
+	// lockMapMutex, so unlocking while holding it self-deadlocks.
 	fs.lockMapMutex.Lock()
-	defer fs.lockMapMutex.Unlock()
-	for path, lockInfo := range fs.lockMap {
-		fs.unlock(path, lockInfo.Fh)
+	locks := make(map[string]*lockInfo, len(fs.lockMap))
+	for path, li := range fs.lockMap {
+		locks[path] = li
+	}
+	fs.lockMapMutex.Unlock()
+	for path, li := range locks {
+		fs.unlock(path, li.Fh)
 	}
 
 	fs.log.Debug("RemoteFs: Destroy: stopping cache maintenance")
@@ -2621,7 +2627,10 @@ func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, opErr 
 			childPath := path_lib.Join(path, path_lib.Base(lock.Path))
 
 			// Ignore paths where the lock is held by this file system.
-			if _, ok := fs.lockMap[childPath]; ok {
+			fs.lockMapMutex.Lock()
+			_, heldByUs := fs.lockMap[childPath]
+			fs.lockMapMutex.Unlock()
+			if heldByUs {
 				continue
 			}
 
