@@ -9,6 +9,7 @@ import (
 
 type ChatSession struct {
 	Id           string        `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Title        string        `json:"title,omitempty" path:"title,omitempty" url:"title,omitempty"`
 	UserId       int64         `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	AiTaskId     int64         `json:"ai_task_id,omitempty" path:"ai_task_id,omitempty" url:"ai_task_id,omitempty"`
 	WorkspaceId  int64         `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
