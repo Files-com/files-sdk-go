@@ -23,16 +23,20 @@ func (i *IterChan[T]) Init(ctx context.Context) *IterChan[T] {
 }
 
 func (i *IterChan[T]) Next() bool {
-	select {
-	case current := <-i.Send:
-		i.current.Store(current)
-	case err := <-i.SendError:
-		i.Error.Store(err)
-	case <-i.Done():
-		return false
+	for {
+		select {
+		case current := <-i.Send:
+			i.current.Store(current)
+			return true
+		case err := <-i.SendError:
+			// An error is not an iteration result: without a new value stored,
+			// Resource() would return nil or repeat the previous value. Record
+			// it for Err() and keep waiting for the next value or Done.
+			i.Error.Store(err)
+		case <-i.Done():
+			return false
+		}
 	}
-
-	return true
 }
 
 func (i *IterChan[T]) Current() interface{} {
