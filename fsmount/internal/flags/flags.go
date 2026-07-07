@@ -26,9 +26,14 @@ func (f FuseFlags) IsEventOnly() bool {
 	return int(f)&O_EVTONLY != 0
 }
 
-// IsReadOnly checks if the flag is set to read-only.
+// IsReadOnly reports whether the flags carry no write intent: the POSIX
+// access mode (low two bits: O_RDONLY=0, O_WRONLY=1, O_RDWR=2) is O_RDONLY
+// and no bit implying modification (O_CREAT, O_TRUNC, O_APPEND) is set.
+// Kernels set unrelated bits on read opens (e.g. Linux forces
+// O_LARGEFILE=0x8000 from 64-bit userspace), so the full flag word must not
+// be compared against zero.
 func (f FuseFlags) IsReadOnly() bool {
-	return int(f) == 0
+	return int(f)&0x3 == 0 && !f.IsCreate() && !f.IsTruncate() && !f.IsAppend()
 }
 
 // IsWriteOnly checks if the flag is set to write-only.

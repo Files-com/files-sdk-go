@@ -75,6 +75,19 @@ func TestFuseFlags(t *testing.T) {
 			expectedString:          "FuseFlags{O_CREAT|O_EXCL}",
 		},
 		{
+			name:                    "ReadOnlyWithKernelSetBits",
+			flags:                   fuse.O_RDONLY | 0x8000, // Linux forces O_LARGEFILE (0x8000) on every 64-bit open
+			expectedReadOnly:        true,
+			expectedWriteOnly:       false,
+			expectedReadWrite:       false,
+			expectedCreate:          false,
+			expectedExclusive:       false,
+			expectedTruncate:        false,
+			expectedAppend:          false,
+			expectedCreateExclusive: false,
+			expectedString:          "FuseFlags{O_EVTONLY|O_RDONLY}",
+		},
+		{
 			name:                    "TruncateAppend",
 			flags:                   fuse.O_TRUNC | fuse.O_APPEND,
 			expectedReadOnly:        false,
