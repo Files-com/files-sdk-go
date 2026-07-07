@@ -72,6 +72,38 @@ func TestIter_Next_PerPage_of_one(t *testing.T) {
 	assert.Equal(1, recordCount)
 }
 
+func TestIter_Reload(t *testing.T) {
+	assert := assert.New(t)
+	params := ListParams{PerPage: 2}
+	it := Iter{}
+	it.ListParams = &params
+
+	it.Query = func(values lib.Values, _ ...RequestResponseOption) (*[]interface{}, string, error) {
+		urlValues, err := values.ToValues()
+		assert.NoError(err)
+		if urlValues.Get("cursor") == "" {
+			ret := make([]interface{}, 2)
+			return &ret, "next-cursor", nil
+		}
+		ret := make([]interface{}, 2)
+		return &ret, "", nil
+	}
+
+	recordCount := 0
+	for it.Next() {
+		recordCount += 1
+	}
+	assert.Equal(4, recordCount)
+
+	reloaded := it.Reload()
+	reloadCount := 0
+	for reloaded.Next() {
+		reloadCount += 1
+	}
+	assert.Equal(4, reloadCount, "a reloaded iterator should iterate the full result set again")
+	assert.Equal(int64(2), reloaded.(*Iter).GetParams().PerPage, "Reload should preserve the original list params")
+}
+
 func TestIter_Next_No_Cursor(t *testing.T) {
 	assert := assert.New(t)
 	params := ListParams{}

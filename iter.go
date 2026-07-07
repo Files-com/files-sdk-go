@@ -188,7 +188,11 @@ func (i *Iter) NextPage() bool {
 // Reload ignores any id passed in and creates a new reset Iter
 func (i *Iter) Reload(opts ...RequestResponseOption) IterI {
 	newIter := *i
-	newIter.ListParams = &ListParams{}
+	newIter.Values = nil
+	newIter.CurrentIndex = 0
+	newIter.Page = 0
+	newIter.Error = nil
 	newIter.requestResponseOptions = opts
+	newIter.SetCursor("")
 	return &newIter
 }
