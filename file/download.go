@@ -27,6 +27,7 @@ func (c *Client) DownloadRetry(job Job, opts ...files_sdk.RequestResponseOption)
 			AdaptiveDownloadV2TargetClassifier:   newJob.Params.(DownloaderParams).AdaptiveDownloadV2TargetClassifier,
 			AdaptiveDownloadV2TuningSet:          newJob.Params.(DownloaderParams).AdaptiveDownloadV2TuningSet,
 			AdaptiveDownloadV2Tuning:             newJob.Params.(DownloaderParams).AdaptiveDownloadV2Tuning,
+			ZipBatch:                             newJob.Params.(DownloaderParams).ZipBatch,
 		},
 		opts...)
 }
@@ -77,6 +78,8 @@ type DownloaderParams struct {
 	AdaptiveDownloadV2TuningSet bool
 	// AdaptiveDownloadV2Tuning holds opt-in V2 transfer tuning.
 	AdaptiveDownloadV2Tuning UploadV2Tuning
+	// ZipBatch controls batched small-file downloads through the ZIP download endpoint.
+	ZipBatch ZipBatchParams
 }
 
 func (c *Client) Downloader(params DownloaderParams, opts ...files_sdk.RequestResponseOption) *Job {

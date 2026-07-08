@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.3.181"
+var VERSION = "3.3.182"
 var defaultUserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
 
 const (

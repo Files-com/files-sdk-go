@@ -1,8 +1,11 @@
 package file
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -10,7 +13,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	pathpkg "path"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -55,9 +60,20 @@ type MockAPIServer struct {
 	router *gin.Engine
 	Addr   string
 	*httptest.Server
-	downloads       *lib.Map[download]
-	MockFiles       map[string]mockFile
-	customResponses map[string]func(ctx *gin.Context, model interface{}) bool
+	downloads             *lib.Map[download]
+	MockFiles             map[string]mockFile
+	customResponses       map[string]func(ctx *gin.Context, model interface{}) bool
+	ZipCreateRequests     [][]string
+	DownloadRequests      []string
+	ZipOmitPaths          map[string]bool
+	ZipCreateResponse     func(paths []string) (int, any, bool)
+	ZipDownloadMutator    func(attempt int, paths []string, body []byte) []byte
+	ZipDownloadBefore     func(attempt int, paths []string)
+	ZipDownloadDelay      func(attempt int, paths []string) time.Duration
+	ZipDownloadChunkDelay func(attempt int, paths []string) time.Duration
+	DownloadDelay         func(path string) time.Duration
+	zipDownloads          map[string][]string
+	zipDownloadCount      int
 	*testing.T
 	TrackRequest map[string][]string
 	traceMutex   *sync.Mutex
@@ -76,6 +92,7 @@ func (d download) init() download {
 
 type mockFile struct {
 	files_sdk.File
+	Data     []byte
 	RealSize *int64
 	SizeTrust
 	ForceRequestStatus  string
@@ -112,6 +129,7 @@ func (f *MockAPIServer) Do() *MockAPIServer {
 	f.TrackRequest = make(map[string][]string)
 	f.traceMutex = &sync.Mutex{}
 	f.downloads = &lib.Map[download]{}
+	f.zipDownloads = make(map[string][]string)
 	f.router = gin.New()
 	f.router.Use(gin.LoggerWithWriter(TestLogger{f.T}))
 	f.Routes()
@@ -146,7 +164,14 @@ func (f *MockAPIServer) GetFile(file mockFile) (r io.Reader, contentLengthOk boo
 
 	contentLength = file.File.Size
 
-	if file.RealSize != nil {
+	if file.Data != nil {
+		r = bytes.NewReader(file.Data)
+		realSize = int64(len(file.Data))
+		if contentLength == 0 {
+			contentLength = realSize
+		}
+		return
+	} else if file.RealSize != nil {
 		realSize = *file.RealSize
 	} else {
 		realSize = contentLength
@@ -211,6 +236,7 @@ func (f *MockAPIServer) Routes() {
 				files = append(files, v.File)
 			}
 		}
+		sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
 
 		if len(files) > 0 {
 			c.JSON(http.StatusOK, files)
@@ -260,6 +286,12 @@ func (f *MockAPIServer) Routes() {
 			c.JSON(http.StatusNotFound, nil)
 			return
 		}
+		if f.DownloadDelay != nil {
+			time.Sleep(f.DownloadDelay(downloadJob.File.Path))
+		}
+		f.traceMutex.Lock()
+		f.DownloadRequests = append(f.DownloadRequests, downloadJob.File.Path)
+		f.traceMutex.Unlock()
 
 		if downloadJob.mockFile.MaxConnectionsMutex != nil {
 			downloadJob.mockFile.MaxConnectionsMutex.Lock()
@@ -352,6 +384,121 @@ func (f *MockAPIServer) Routes() {
 				return true
 			})
 		}
+	})
+	f.router.POST("/api/rest/v1/zip_downloads", func(c *gin.Context) {
+		f.trackRequest(c)
+		body, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, map[string]interface{}{"message": err.Error()})
+			return
+		}
+		// The production API declares `requires :paths`, so the key must be
+		// present as an array (an empty array is fine) even when encoded_paths is used.
+		var rawParams map[string]json.RawMessage
+		if err := json.Unmarshal(body, &rawParams); err != nil {
+			c.JSON(http.StatusBadRequest, map[string]interface{}{"message": err.Error()})
+			return
+		}
+		rawPaths, ok := rawParams["paths"]
+		if !ok {
+			c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"error": "paths is missing", "http-code": 422, "type": "bad-request"})
+			return
+		}
+		var requestPaths []string
+		if err := json.Unmarshal(rawPaths, &requestPaths); err != nil || requestPaths == nil {
+			c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{"error": "paths must be an array", "http-code": 422, "type": "bad-request"})
+			return
+		}
+
+		encodedPaths := requestPaths
+		if rawEncodedPaths, ok := rawParams["encoded_paths"]; ok {
+			if err := json.Unmarshal(rawEncodedPaths, &encodedPaths); err != nil {
+				c.JSON(http.StatusBadRequest, map[string]interface{}{"message": err.Error()})
+				return
+			}
+		}
+		paths := make([]string, 0, len(encodedPaths))
+		for _, encodedPath := range encodedPaths {
+			path, err := url.PathUnescape(encodedPath)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, map[string]interface{}{"message": err.Error()})
+				return
+			}
+			paths = append(paths, path)
+		}
+		f.traceMutex.Lock()
+		f.ZipCreateRequests = append(f.ZipCreateRequests, append([]string(nil), paths...))
+		f.traceMutex.Unlock()
+
+		if f.ZipCreateResponse != nil {
+			if status, body, handled := f.ZipCreateResponse(paths); handled {
+				c.JSON(status, body)
+				return
+			}
+		}
+
+		var responseErrors []files_sdk.ResponseError
+		for _, path := range paths {
+			if _, ok := f.MockFiles[path]; !ok {
+				responseErrors = append(responseErrors, files_sdk.ResponseError{ErrorMessage: fmt.Sprintf("Paths does not match existing file at: %s", path)})
+			}
+		}
+		if len(responseErrors) > 0 {
+			c.JSON(http.StatusUnprocessableEntity, files_sdk.ResponseError{ErrorMessage: responseErrors[0].ErrorMessage, Errors: responseErrors})
+			return
+		}
+
+		downloadID := sid.IdHex()
+		f.traceMutex.Lock()
+		f.zipDownloads[downloadID] = append([]string(nil), paths...)
+		f.traceMutex.Unlock()
+		c.JSON(http.StatusOK, map[string]string{"download_uri": "/zip/download?z=" + downloadID})
+	})
+	f.router.GET("/zip/download", func(c *gin.Context) {
+		f.trackRequest(c)
+		downloadID := c.Query("z")
+		f.traceMutex.Lock()
+		paths, ok := f.zipDownloads[downloadID]
+		f.zipDownloadCount++
+		attempt := f.zipDownloadCount
+		f.traceMutex.Unlock()
+		if !ok {
+			c.JSON(http.StatusNotFound, nil)
+			return
+		}
+		if f.ZipDownloadDelay != nil {
+			time.Sleep(f.ZipDownloadDelay(attempt, paths))
+		}
+
+		body, err := f.zipArchive(paths)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, map[string]interface{}{"message": err.Error()})
+			return
+		}
+		if f.ZipDownloadMutator != nil {
+			body = f.ZipDownloadMutator(attempt, paths, body)
+		}
+		if f.ZipDownloadBefore != nil {
+			f.ZipDownloadBefore(attempt, paths)
+		}
+		if f.ZipDownloadChunkDelay != nil {
+			c.Header("Content-Type", "application/zip")
+			c.Status(http.StatusOK)
+			for len(body) > 0 {
+				n := 32
+				if len(body) < n {
+					n = len(body)
+				}
+				_, _ = c.Writer.Write(body[:n])
+				c.Writer.Flush()
+				body = body[n:]
+				if delay := f.ZipDownloadChunkDelay(attempt, paths); delay > 0 {
+					time.Sleep(delay)
+				}
+			}
+			return
+		}
+		c.Data(http.StatusOK, "application/zip", body)
 	})
 	f.router.HEAD("/download/:download_id", func(c *gin.Context) {
 		f.trackRequest(c)
@@ -481,6 +628,61 @@ func (f *MockAPIServer) Routes() {
 	f.router.GET("/ping", func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})
+}
+
+func (f *MockAPIServer) zipArchive(paths []string) ([]byte, error) {
+	sortedPaths := append([]string(nil), paths...)
+	sort.Strings(sortedPaths)
+
+	out := bytes.NewBuffer(nil)
+	writer := zip.NewWriter(out)
+	counts := make(map[string]int, len(sortedPaths))
+	for _, path := range sortedPaths {
+		if f.ZipOmitPaths[path] {
+			continue
+		}
+		file, ok := f.MockFiles[path]
+		if !ok {
+			return nil, fmt.Errorf("missing mock file %s", path)
+		}
+		name := pathpkg.Base(path)
+		if count, ok := counts[name]; ok {
+			count++
+			counts[name] = count
+			var err error
+			name, err = mockZipBatchIncrementFilename(name, count)
+			if err != nil {
+				return nil, err
+			}
+		}
+		counts[name] = 0
+		entry, err := writer.Create(name)
+		if err != nil {
+			return nil, err
+		}
+		data := file.Data
+		if data == nil {
+			data = bytes.Repeat([]byte("x"), int(file.File.Size))
+		}
+		if _, err := entry.Write(data); err != nil {
+			return nil, err
+		}
+	}
+	if err := writer.Close(); err != nil {
+		return nil, err
+	}
+	return out.Bytes(), nil
+}
+
+func mockZipBatchIncrementFilename(filename string, count int) (string, error) {
+	dot := strings.LastIndex(filename, ".")
+	if dot > 0 && dot < len(filename)-1 {
+		return fmt.Sprintf("%s (%d)%s", filename[:dot], count, filename[dot:]), nil
+	}
+	if !strings.Contains(filename, ".") {
+		return fmt.Sprintf("%s (%d)", filename, count), nil
+	}
+	return "", fmt.Errorf("could not match filename/extension")
 }
 
 type readerCtx struct {

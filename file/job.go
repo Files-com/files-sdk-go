@@ -117,6 +117,9 @@ type Job struct {
 	adaptiveUploadV2Managers   map[uploadV2AdaptiveManagerCacheKey]*lib.AdaptiveConcurrencyManager
 	adaptiveDownloadV2Mu       sync.Mutex
 	adaptiveDownloadV2Managers map[downloadV2AdaptiveManagerCacheKey]*lib.AdaptiveConcurrencyManager
+	zipBatchStats              *zipBatchStats
+	scanStartedAt              time.Time
+	scanEndedAt                time.Time
 }
 
 func (r *Job) Init() *Job {
@@ -131,6 +134,7 @@ func (r *Job) Init() *Job {
 	r.Scanning = (&lib.Signal{}).Init()
 	r.EndScanning = (&lib.Signal{}).Init()
 	r.Meter, _ = lib.NewMeter(time.Millisecond*250, time.Second*5)
+	r.zipBatchStats = &zipBatchStats{}
 	return r
 }
 
@@ -178,6 +182,9 @@ func (r *Job) ClearStatuses() Job {
 	newJob.adaptiveUploadV2Managers = nil
 	newJob.adaptiveDownloadV2Mu = sync.Mutex{}
 	newJob.adaptiveDownloadV2Managers = nil
+	newJob.zipBatchStats = &zipBatchStats{}
+	newJob.scanStartedAt = time.Time{}
+	newJob.scanEndedAt = time.Time{}
 	if newJob.Manager != nil {
 		newJob.fileAdmissionPool = newJob.Manager.FilesManager.NewSubWorker()
 	}
@@ -185,10 +192,12 @@ func (r *Job) ClearStatuses() Job {
 }
 
 func (r *Job) Scan() {
+	r.scanStartedAt = time.Now()
 	r.Scanning.Call()
 }
 
 func (r *Job) EndScan() {
+	r.scanEndedAt = time.Now()
 	r.EndScanning.Call()
 }
 

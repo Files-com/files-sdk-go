@@ -864,7 +864,7 @@ func TestUploadV2RaisesDefaultHTTPTransportCapForSDKClient(t *testing.T) {
 	size := int64(256) * uploadV2MiB
 	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
 	require.True(t, ok, reason)
-	client := &Client{Config: files_sdk.Config{}.Init()}
+	client := &Client{Config: files_sdk.Config{}.Init().SetCustomClient(&http.Client{Transport: lib.DefaultPooledTransport()})}
 	originalTransport, ok := client.Config.Client.HTTPClient.Transport.(*lib.Transport)
 	require.True(t, ok)
 	require.Equal(t, 75, originalTransport.MaxConnsPerHost)
@@ -899,7 +899,7 @@ func TestUploadV2LowersPreconfiguredHTTPTransportCapToS3GrowthCeiling(t *testing
 	size := int64(200) * uploadV2MiB
 	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
 	require.True(t, ok, reason)
-	client := &Client{Config: files_sdk.Config{}.Init()}
+	client := &Client{Config: files_sdk.Config{}.Init().SetCustomClient(&http.Client{Transport: lib.DefaultPooledTransport()})}
 	originalTransport, ok := client.Config.Client.HTTPClient.Transport.(*lib.Transport)
 	require.True(t, ok)
 	originalTransport.MaxConnsPerHost = AdaptiveTransferS3MaxConcurrency
