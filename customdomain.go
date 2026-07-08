@@ -36,6 +36,7 @@ func (u CustomDomainDestinationEnum) Enum() map[string]CustomDomainDestinationEn
 		"site_alias":     CustomDomainDestinationEnum("site_alias"),
 		"public_hosting": CustomDomainDestinationEnum("public_hosting"),
 		"s3_endpoint":    CustomDomainDestinationEnum("s3_endpoint"),
+		"unassigned":     CustomDomainDestinationEnum("unassigned"),
 	}
 }
 
