@@ -19,6 +19,7 @@ type Partner struct {
 	Name                       string  `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Notes                      string  `json:"notes,omitempty" path:"notes,omitempty" url:"notes,omitempty"`
 	PartnerAdminIds            []int64 `json:"partner_admin_ids,omitempty" path:"partner_admin_ids,omitempty" url:"partner_admin_ids,omitempty"`
+	PartnerChannelTemplateId   int64   `json:"partner_channel_template_id,omitempty" path:"partner_channel_template_id,omitempty" url:"partner_channel_template_id,omitempty"`
 	PartnershipRole            string  `json:"partnership_role,omitempty" path:"partnership_role,omitempty" url:"partnership_role,omitempty"`
 	ResponsibleGroupId         int64   `json:"responsible_group_id,omitempty" path:"responsible_group_id,omitempty" url:"responsible_group_id,omitempty"`
 	ResponsibleUserId          int64   `json:"responsible_user_id,omitempty" path:"responsible_user_id,omitempty" url:"responsible_user_id,omitempty"`
@@ -52,6 +53,7 @@ type PartnerCreateParams struct {
 	AllowUserCreation          *bool  `url:"allow_user_creation,omitempty" json:"allow_user_creation,omitempty" path:"allow_user_creation"`
 	CcEmailsToResponsibleParty *bool  `url:"cc_emails_to_responsible_party,omitempty" json:"cc_emails_to_responsible_party,omitempty" path:"cc_emails_to_responsible_party"`
 	Notes                      string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
+	PartnerChannelTemplateId   int64  `url:"partner_channel_template_id,omitempty" json:"partner_channel_template_id,omitempty" path:"partner_channel_template_id"`
 	ResponsibleGroupId         int64  `url:"responsible_group_id,omitempty" json:"responsible_group_id,omitempty" path:"responsible_group_id"`
 	ResponsibleUserId          int64  `url:"responsible_user_id,omitempty" json:"responsible_user_id,omitempty" path:"responsible_user_id"`
 	Tags                       string `url:"tags,omitempty" json:"tags,omitempty" path:"tags"`
@@ -70,6 +72,7 @@ type PartnerUpdateParams struct {
 	AllowUserCreation          *bool  `url:"allow_user_creation,omitempty" json:"allow_user_creation,omitempty" path:"allow_user_creation"`
 	CcEmailsToResponsibleParty *bool  `url:"cc_emails_to_responsible_party,omitempty" json:"cc_emails_to_responsible_party,omitempty" path:"cc_emails_to_responsible_party"`
 	Notes                      string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
+	PartnerChannelTemplateId   int64  `url:"partner_channel_template_id,omitempty" json:"partner_channel_template_id,omitempty" path:"partner_channel_template_id"`
 	ResponsibleGroupId         int64  `url:"responsible_group_id,omitempty" json:"responsible_group_id,omitempty" path:"responsible_group_id"`
 	ResponsibleUserId          int64  `url:"responsible_user_id,omitempty" json:"responsible_user_id,omitempty" path:"responsible_user_id"`
 	Tags                       string `url:"tags,omitempty" json:"tags,omitempty" path:"tags"`

@@ -1,0 +1,1 @@
+package partner_channel_template
