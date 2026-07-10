@@ -79,6 +79,7 @@ type RemoteServer struct {
 	LinodeAccessKey                         string `json:"linode_access_key,omitempty" path:"linode_access_key,omitempty" url:"linode_access_key,omitempty"`
 	LinodeRegion                            string `json:"linode_region,omitempty" path:"linode_region,omitempty" url:"linode_region,omitempty"`
 	SupportsVersioning                      *bool  `json:"supports_versioning,omitempty" path:"supports_versioning,omitempty" url:"supports_versioning,omitempty"`
+	UserId                                  int64  `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	Password                                string `json:"password,omitempty" path:"password,omitempty" url:"password,omitempty"`
 	PrivateKey                              string `json:"private_key,omitempty" path:"private_key,omitempty" url:"private_key,omitempty"`
 	PrivateKeyPassphrase                    string `json:"private_key_passphrase,omitempty" path:"private_key_passphrase,omitempty" url:"private_key_passphrase,omitempty"`
@@ -222,6 +223,7 @@ func (u RemoteServerSslEnum) Enum() map[string]RemoteServerSslEnum {
 }
 
 type RemoteServerListParams struct {
+	UserId       int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterPrefix interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
@@ -237,6 +239,7 @@ type RemoteServerFindConfigurationFileParams struct {
 }
 
 type RemoteServerCreateParams struct {
+	UserId                                  int64                                                  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Password                                string                                                 `url:"password,omitempty" json:"password,omitempty" path:"password"`
 	PrivateKey                              string                                                 `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 	PrivateKeyPassphrase                    string                                                 `url:"private_key_passphrase,omitempty" json:"private_key_passphrase,omitempty" path:"private_key_passphrase"`

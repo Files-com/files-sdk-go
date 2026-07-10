@@ -20,6 +20,7 @@ type Group struct {
 	DavPermission                 *bool  `json:"dav_permission,omitempty" path:"dav_permission,omitempty" url:"dav_permission,omitempty"`
 	RestapiPermission             *bool  `json:"restapi_permission,omitempty" path:"restapi_permission,omitempty" url:"restapi_permission,omitempty"`
 	DesktopConfigurationProfileId int64  `json:"desktop_configuration_profile_id,omitempty" path:"desktop_configuration_profile_id,omitempty" url:"desktop_configuration_profile_id,omitempty"`
+	IntegrationCentricProfileId   int64  `json:"integration_centric_profile_id,omitempty" path:"integration_centric_profile_id,omitempty" url:"integration_centric_profile_id,omitempty"`
 	SiteId                        int64  `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
 	WorkspaceId                   int64  `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 }
@@ -53,6 +54,7 @@ type GroupCreateParams struct {
 	DavPermission                 *bool  `url:"dav_permission,omitempty" json:"dav_permission,omitempty" path:"dav_permission"`
 	RestapiPermission             *bool  `url:"restapi_permission,omitempty" json:"restapi_permission,omitempty" path:"restapi_permission"`
 	DesktopConfigurationProfileId int64  `url:"desktop_configuration_profile_id,omitempty" json:"desktop_configuration_profile_id,omitempty" path:"desktop_configuration_profile_id"`
+	IntegrationCentricProfileId   int64  `url:"integration_centric_profile_id,omitempty" json:"integration_centric_profile_id,omitempty" path:"integration_centric_profile_id"`
 	AllowedIps                    string `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
 	Name                          string `url:"name" json:"name" path:"name"`
 	WorkspaceId                   int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
@@ -69,6 +71,7 @@ type GroupUpdateParams struct {
 	DavPermission                 *bool  `url:"dav_permission,omitempty" json:"dav_permission,omitempty" path:"dav_permission"`
 	RestapiPermission             *bool  `url:"restapi_permission,omitempty" json:"restapi_permission,omitempty" path:"restapi_permission"`
 	DesktopConfigurationProfileId int64  `url:"desktop_configuration_profile_id,omitempty" json:"desktop_configuration_profile_id,omitempty" path:"desktop_configuration_profile_id"`
+	IntegrationCentricProfileId   int64  `url:"integration_centric_profile_id,omitempty" json:"integration_centric_profile_id,omitempty" path:"integration_centric_profile_id"`
 	AllowedIps                    string `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
 	Name                          string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }

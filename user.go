@@ -28,6 +28,7 @@ type User struct {
 	DisabledExpiredOrInactive              *bool      `json:"disabled_expired_or_inactive,omitempty" path:"disabled_expired_or_inactive,omitempty" url:"disabled_expired_or_inactive,omitempty"`
 	AiAssistantPersonalityId               int64      `json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id,omitempty" url:"ai_assistant_personality_id,omitempty"`
 	DesktopConfigurationProfileId          int64      `json:"desktop_configuration_profile_id,omitempty" path:"desktop_configuration_profile_id,omitempty" url:"desktop_configuration_profile_id,omitempty"`
+	IntegrationCentricProfileId            int64      `json:"integration_centric_profile_id,omitempty" path:"integration_centric_profile_id,omitempty" url:"integration_centric_profile_id,omitempty"`
 	Email                                  string     `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
 	FilesystemLayout                       string     `json:"filesystem_layout,omitempty" path:"filesystem_layout,omitempty" url:"filesystem_layout,omitempty"`
 	FirstLoginAt                           *time.Time `json:"first_login_at,omitempty" path:"first_login_at,omitempty" url:"first_login_at,omitempty"`
@@ -221,6 +222,7 @@ type UserCreateParams struct {
 	FilesystemLayout                       UserFilesystemLayoutEnum     `url:"filesystem_layout,omitempty" json:"filesystem_layout,omitempty" path:"filesystem_layout"`
 	FtpPermission                          *bool                        `url:"ftp_permission,omitempty" json:"ftp_permission,omitempty" path:"ftp_permission"`
 	HeaderText                             string                       `url:"header_text,omitempty" json:"header_text,omitempty" path:"header_text"`
+	IntegrationCentricProfileId            int64                        `url:"integration_centric_profile_id,omitempty" json:"integration_centric_profile_id,omitempty" path:"integration_centric_profile_id"`
 	Language                               string                       `url:"language,omitempty" json:"language,omitempty" path:"language"`
 	NotificationDailySendTime              int64                        `url:"notification_daily_send_time,omitempty" json:"notification_daily_send_time,omitempty" path:"notification_daily_send_time"`
 	Name                                   string                       `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -305,6 +307,7 @@ type UserUpdateParams struct {
 	FilesystemLayout                       UserFilesystemLayoutEnum     `url:"filesystem_layout,omitempty" json:"filesystem_layout,omitempty" path:"filesystem_layout"`
 	FtpPermission                          *bool                        `url:"ftp_permission,omitempty" json:"ftp_permission,omitempty" path:"ftp_permission"`
 	HeaderText                             string                       `url:"header_text,omitempty" json:"header_text,omitempty" path:"header_text"`
+	IntegrationCentricProfileId            int64                        `url:"integration_centric_profile_id,omitempty" json:"integration_centric_profile_id,omitempty" path:"integration_centric_profile_id"`
 	Language                               string                       `url:"language,omitempty" json:"language,omitempty" path:"language"`
 	NotificationDailySendTime              int64                        `url:"notification_daily_send_time,omitempty" json:"notification_daily_send_time,omitempty" path:"notification_daily_send_time"`
 	Name                                   string                       `url:"name,omitempty" json:"name,omitempty" path:"name"`
