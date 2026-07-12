@@ -89,6 +89,7 @@ type Site struct {
 	NonSsoUsersAllowed                       *bool       `json:"non_sso_users_allowed,omitempty" path:"non_sso_users_allowed,omitempty" url:"non_sso_users_allowed,omitempty"`
 	FolderPermissionsGroupsOnly              *bool       `json:"folder_permissions_groups_only,omitempty" path:"folder_permissions_groups_only,omitempty" url:"folder_permissions_groups_only,omitempty"`
 	GroupAdminsCanAddUsers                   *bool       `json:"group_admins_can_add_users,omitempty" path:"group_admins_can_add_users,omitempty" url:"group_admins_can_add_users,omitempty"`
+	GroupAdminsCanManageGroupMemberships     *bool       `json:"group_admins_can_manage_group_memberships,omitempty" path:"group_admins_can_manage_group_memberships,omitempty" url:"group_admins_can_manage_group_memberships,omitempty"`
 	GroupAdminsCanDeleteUsers                *bool       `json:"group_admins_can_delete_users,omitempty" path:"group_admins_can_delete_users,omitempty" url:"group_admins_can_delete_users,omitempty"`
 	GroupAdminsCanEnableDisableUsers         *bool       `json:"group_admins_can_enable_disable_users,omitempty" path:"group_admins_can_enable_disable_users,omitempty" url:"group_admins_can_enable_disable_users,omitempty"`
 	GroupAdminsCanModifyUsers                *bool       `json:"group_admins_can_modify_users,omitempty" path:"group_admins_can_modify_users,omitempty" url:"group_admins_can_modify_users,omitempty"`
@@ -318,6 +319,7 @@ type SiteUpdateParams struct {
 	RevokeBundleAccessOnDisableOrDelete      *bool       `url:"revoke_bundle_access_on_disable_or_delete,omitempty" json:"revoke_bundle_access_on_disable_or_delete,omitempty" path:"revoke_bundle_access_on_disable_or_delete"`
 	BundleWatermarkValue                     interface{} `url:"bundle_watermark_value,omitempty" json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value"`
 	GroupAdminsCanAddUsers                   *bool       `url:"group_admins_can_add_users,omitempty" json:"group_admins_can_add_users,omitempty" path:"group_admins_can_add_users"`
+	GroupAdminsCanManageGroupMemberships     *bool       `url:"group_admins_can_manage_group_memberships,omitempty" json:"group_admins_can_manage_group_memberships,omitempty" path:"group_admins_can_manage_group_memberships"`
 	GroupAdminsCanDeleteUsers                *bool       `url:"group_admins_can_delete_users,omitempty" json:"group_admins_can_delete_users,omitempty" path:"group_admins_can_delete_users"`
 	GroupAdminsCanEnableDisableUsers         *bool       `url:"group_admins_can_enable_disable_users,omitempty" json:"group_admins_can_enable_disable_users,omitempty" path:"group_admins_can_enable_disable_users"`
 	GroupAdminsCanModifyUsers                *bool       `url:"group_admins_can_modify_users,omitempty" json:"group_admins_can_modify_users,omitempty" path:"group_admins_can_modify_users"`
