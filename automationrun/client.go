@@ -55,3 +55,12 @@ func (c *Client) Find(params files_sdk.AutomationRunFindParams, opts ...files_sd
 func Find(params files_sdk.AutomationRunFindParams, opts ...files_sdk.RequestResponseOption) (automationRun files_sdk.AutomationRun, err error) {
 	return (&Client{}).Find(params, opts...)
 }
+
+func (c *Client) Cancel(params files_sdk.AutomationRunCancelParams, opts ...files_sdk.RequestResponseOption) (automationRun files_sdk.AutomationRun, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/automation_runs/{id}/cancel", Params: params, Entity: &automationRun}, opts...)
+	return
+}
+
+func Cancel(params files_sdk.AutomationRunCancelParams, opts ...files_sdk.RequestResponseOption) (automationRun files_sdk.AutomationRun, err error) {
+	return (&Client{}).Cancel(params, opts...)
+}

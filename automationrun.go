@@ -12,6 +12,7 @@ type AutomationRun struct {
 	AutomationId         int64       `json:"automation_id,omitempty" path:"automation_id,omitempty" url:"automation_id,omitempty"`
 	AutomationVersionId  int64       `json:"automation_version_id,omitempty" path:"automation_version_id,omitempty" url:"automation_version_id,omitempty"`
 	WorkspaceId          int64       `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	CancelRequestedAt    *time.Time  `json:"cancel_requested_at,omitempty" path:"cancel_requested_at,omitempty" url:"cancel_requested_at,omitempty"`
 	CompletedAt          *time.Time  `json:"completed_at,omitempty" path:"completed_at,omitempty" url:"completed_at,omitempty"`
 	CreatedAt            *time.Time  `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 	RetryAt              *time.Time  `json:"retry_at,omitempty" path:"retry_at,omitempty" url:"retry_at,omitempty"`
@@ -23,6 +24,7 @@ type AutomationRun struct {
 	SuccessfulOperations int64       `json:"successful_operations,omitempty" path:"successful_operations,omitempty" url:"successful_operations,omitempty"`
 	FailedOperations     int64       `json:"failed_operations,omitempty" path:"failed_operations,omitempty" url:"failed_operations,omitempty"`
 	Definition           interface{} `json:"definition,omitempty" path:"definition,omitempty" url:"definition,omitempty"`
+	NodeStates           interface{} `json:"node_states,omitempty" path:"node_states,omitempty" url:"node_states,omitempty"`
 	JournalUrl           string      `json:"journal_url,omitempty" path:"journal_url,omitempty" url:"journal_url,omitempty"`
 	StatusMessagesUrl    string      `json:"status_messages_url,omitempty" path:"status_messages_url,omitempty" url:"status_messages_url,omitempty"`
 }
@@ -42,6 +44,11 @@ type AutomationRunListParams struct {
 }
 
 type AutomationRunFindParams struct {
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+}
+
+// Cancel Automation Run
+type AutomationRunCancelParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
