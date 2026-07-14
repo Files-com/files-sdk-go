@@ -22,6 +22,7 @@ type Automation struct {
 	Disabled                         *bool                    `json:"disabled,omitempty" path:"disabled,omitempty" url:"disabled,omitempty"`
 	ExcludePattern                   string                   `json:"exclude_pattern,omitempty" path:"exclude_pattern,omitempty" url:"exclude_pattern,omitempty"`
 	ImportUrls                       []map[string]interface{} `json:"import_urls,omitempty" path:"import_urls,omitempty" url:"import_urls,omitempty"`
+	InboundEmailAddress              string                   `json:"inbound_email_address,omitempty" path:"inbound_email_address,omitempty" url:"inbound_email_address,omitempty"`
 	FlattenDestinationStructure      *bool                    `json:"flatten_destination_structure,omitempty" path:"flatten_destination_structure,omitempty" url:"flatten_destination_structure,omitempty"`
 	GroupIds                         []int64                  `json:"group_ids,omitempty" path:"group_ids,omitempty" url:"group_ids,omitempty"`
 	IgnoreLockedFolders              *bool                    `json:"ignore_locked_folders,omitempty" path:"ignore_locked_folders,omitempty" url:"ignore_locked_folders,omitempty"`
@@ -146,9 +147,10 @@ type AutomationCreateParams struct {
 	WorkspaceId                      int64                    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// Manually Run Automation
+// Manually Run Automation. v2 Automations require Site or Workspace Admin permission
 type AutomationManualRunParams struct {
-	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Id    int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Items []map[string]interface{} `url:"items,omitempty" json:"items,omitempty" path:"items"`
 }
 
 type AutomationUpdateParams struct {

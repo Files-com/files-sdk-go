@@ -10,6 +10,7 @@ type AutomationAuthoringSchema struct {
 	DefinitionSchema interface{}              `json:"definition_schema,omitempty" path:"definition_schema,omitempty" url:"definition_schema,omitempty"`
 	ErrorFamilies    []map[string]interface{} `json:"error_families,omitempty" path:"error_families,omitempty" url:"error_families,omitempty"`
 	Nodes            []map[string]interface{} `json:"nodes,omitempty" path:"nodes,omitempty" url:"nodes,omitempty"`
+	SchemaUrl        string                   `json:"schema_url,omitempty" path:"schema_url,omitempty" url:"schema_url,omitempty"`
 }
 
 // Identifier no path or id
