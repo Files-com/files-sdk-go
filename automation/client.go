@@ -56,6 +56,15 @@ func Find(params files_sdk.AutomationFindParams, opts ...files_sdk.RequestRespon
 	return (&Client{}).Find(params, opts...)
 }
 
+func (c *Client) GetAuthoringSchema(opts ...files_sdk.RequestResponseOption) (automationAuthoringSchema files_sdk.AutomationAuthoringSchema, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/automations/authoring_schema", Entity: &automationAuthoringSchema}, opts...)
+	return
+}
+
+func GetAuthoringSchema(opts ...files_sdk.RequestResponseOption) (automationAuthoringSchema files_sdk.AutomationAuthoringSchema, err error) {
+	return (&Client{}).GetAuthoringSchema(opts...)
+}
+
 func (c *Client) Create(params files_sdk.AutomationCreateParams, opts ...files_sdk.RequestResponseOption) (automation files_sdk.Automation, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/automations", Params: params, Entity: &automation}, opts...)
 	return

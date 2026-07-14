@@ -1,0 +1,1 @@
+package automation_authoring_schema
