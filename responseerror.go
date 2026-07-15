@@ -448,7 +448,7 @@ func (e *ResponseError) UnmarshalJSON(data []byte) error {
 
 		var jsonSyntaxErr *json.SyntaxError
 		if ok := errors.As(err, &jsonSyntaxErr); ok && jsonSyntaxErr.Error() == "invalid character '<' looking for beginning of value" {
-			return fmt.Errorf(string(data))
+			return fmt.Errorf("%s", string(data))
 		}
 	}
 

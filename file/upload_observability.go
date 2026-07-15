@@ -23,6 +23,10 @@ type uploadV1SchedulerStats struct {
 	httpCallErrors           int
 	httpCallBytes            int64
 	httpCallDuration         time.Duration
+	directAttempts           int
+	directSuccesses          int
+	directFailures           int
+	directDisabled           int
 	partCompleteCount        int
 	partCompleteErrors       int
 	partCompleteBytes        int64
@@ -85,6 +89,42 @@ func (s *uploadV1SchedulerStats) recordHTTPCall(duration time.Duration, bytes in
 	}
 }
 
+func (s *uploadV1SchedulerStats) recordDirectAttempt() {
+	if !s.enabled {
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.directAttempts++
+}
+
+func (s *uploadV1SchedulerStats) recordDirectSuccess() {
+	if !s.enabled {
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.directSuccesses++
+}
+
+func (s *uploadV1SchedulerStats) recordDirectFailure() {
+	if !s.enabled {
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.directFailures++
+}
+
+func (s *uploadV1SchedulerStats) recordDirectDisabled() {
+	if !s.enabled {
+		return
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.directDisabled++
+}
+
 func (s *uploadV1SchedulerStats) recordPartComplete(bytes int64, duration time.Duration, err error) {
 	if !s.enabled {
 		return
@@ -141,6 +181,10 @@ func (s *uploadV1SchedulerStats) addLogAttrs(attrs map[string]any) bool {
 	attrs["scheduler_http_call_errors"] = s.httpCallErrors
 	attrs["scheduler_http_call_bytes"] = s.httpCallBytes
 	attrs["scheduler_http_call_duration_ns"] = s.httpCallDuration.Nanoseconds()
+	attrs["scheduler_direct_attempts"] = s.directAttempts
+	attrs["scheduler_direct_successes"] = s.directSuccesses
+	attrs["scheduler_direct_failures"] = s.directFailures
+	attrs["scheduler_direct_disabled"] = s.directDisabled
 	attrs["scheduler_part_complete_count"] = s.partCompleteCount
 	attrs["scheduler_part_complete_errors"] = s.partCompleteErrors
 	attrs["scheduler_part_complete_bytes"] = s.partCompleteBytes

@@ -3,7 +3,6 @@
 package file
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -31,7 +30,7 @@ func Test_tmpDownloadPath(t *testing.T) {
 		}
 		path, err := tmpDownloadPath(filepath.Join(dir, "find-me"), "")
 		require.NoError(t, err)
-		assert.Equal(t, fmt.Sprintf(filepath.Join(dir, "find-me (1).download")), path, "it increments a number")
+		assert.Equal(t, filepath.Join(dir, "find-me (1).download"), path, "it increments a number")
 	})
 
 	t.Run("it increments a number lots of times", func(t *testing.T) {
@@ -46,7 +45,7 @@ func Test_tmpDownloadPath(t *testing.T) {
 
 		path, err := tmpDownloadPath(filepath.Join(dir, "find-me"), "")
 		require.NoError(t, err)
-		assert.NotEqual(t, fmt.Sprintf(filepath.Join(dir, "find-me (11).download")), path)
+		assert.NotEqual(t, filepath.Join(dir, "find-me (11).download"), path)
 	})
 
 	t.Run("it supports a temp path", func(t *testing.T) {
@@ -54,6 +53,6 @@ func Test_tmpDownloadPath(t *testing.T) {
 		tempDir := t.TempDir()
 		path, err := tmpDownloadPath(filepath.Join(dir, "find-me"), tempDir)
 		require.NoError(t, err)
-		assert.Equal(t, fmt.Sprintf(filepath.Join(tempDir, "find-me.download")), path)
+		assert.Equal(t, filepath.Join(tempDir, "find-me.download"), path)
 	})
 }

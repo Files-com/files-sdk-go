@@ -87,6 +87,7 @@ func (d *URL) parseTime() (err error) {
 			}
 		}
 		if err == nil {
+			d.Type = parser.urlType
 			break
 		}
 	}

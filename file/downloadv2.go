@@ -30,6 +30,7 @@ const (
 const (
 	downloadV2TargetS3      = TransferV2TargetS3
 	downloadV2TargetDefault = TransferV2TargetDefault
+	downloadV2TargetDirect  = TransferV2TargetDirect
 )
 
 type downloadV2Part struct {
@@ -59,9 +60,10 @@ type downloadV2Engine struct {
 	partSize     int64
 	parts        []downloadV2Part
 
-	mu         sync.Mutex
-	completed  map[int64]int64
-	contiguous int64
+	mu                     sync.Mutex
+	completed              map[int64]int64
+	contiguous             int64
+	directTransferDisabled bool
 }
 
 type downloadV2AdaptiveManagerCacheKey struct {
@@ -255,6 +257,9 @@ func (e *downloadV2Engine) Run(parentCtx context.Context) (err error) {
 
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
+	ctx, closeDirectClients := files_sdk.WithDirectTransferClientCache(ctx)
+	defer closeDirectClients()
+	ctx = context.WithValue(ctx, directTransferDownloadSuppressorContextKey{}, e)
 
 	results := make(chan downloadV2PartResult, max(1, e.manager.Max()))
 	var wg sync.WaitGroup
@@ -330,6 +335,35 @@ func (e *downloadV2Engine) markComplete(part downloadV2Part, bytes int64) {
 		delete(e.completed, e.contiguous)
 		e.contiguous += bytes
 	}
+}
+
+func (e *downloadV2Engine) directTransferDownloadAttemptAllowed() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return !e.directTransferDisabled
+}
+
+func (e *downloadV2Engine) disableDirectTransferDownload(reason string, err error) {
+	e.mu.Lock()
+	if e.directTransferDisabled {
+		e.mu.Unlock()
+		return
+	}
+	e.directTransferDisabled = true
+	e.mu.Unlock()
+
+	if e.reportStatus == nil || e.reportStatus.Job() == nil {
+		return
+	}
+	attrs := map[string]interface{}{
+		"message":   "direct download disabled; using proxy URL for remaining Download V2 ranges",
+		"direction": "download",
+		"reason":    reason,
+	}
+	if err != nil {
+		attrs["error"] = err.Error()
+	}
+	e.reportStatus.Job().Config.LogPath(e.reportStatus.RemotePath(), attrs)
 }
 
 func (e *downloadV2Engine) downloadPartWithRetry(ctx context.Context, part downloadV2Part) downloadV2PartResult {
@@ -482,7 +516,7 @@ func downloadV2MaxConcurrency(job *Job, params DownloaderParams, target Transfer
 		return max(1, job.Manager.FilePartsManager.Max())
 	}
 	maxConcurrency := AdaptiveTransferDefaultMaxConcurrency
-	if target == downloadV2TargetS3 {
+	if target == downloadV2TargetS3 || target == downloadV2TargetDirect {
 		maxConcurrency = manager.AdaptiveDownloadV2ConcurrentFileParts
 	}
 	return manager.EffectiveAdaptiveDownloadV2ConcurrentFileParts(maxConcurrency)
@@ -491,8 +525,8 @@ func downloadV2MaxConcurrency(job *Job, params DownloaderParams, target Transfer
 func downloadV2AdaptiveConcurrencyConfig(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64, tuning UploadV2Tuning) lib.AdaptiveConcurrencyConfig {
 	maxConcurrency = max(1, maxConcurrency)
 	switch target {
-	case downloadV2TargetS3:
-		plan := uploadV2PartPlan{target: uploadV2TargetS3, totalSize: &totalSize, partSize: partSize, mode: "download_v2_known_size"}
+	case downloadV2TargetS3, downloadV2TargetDirect:
+		plan := uploadV2PartPlan{target: target, totalSize: &totalSize, partSize: partSize, mode: "download_v2_known_size"}
 		initial := uploadV2InitialConcurrencyForPlan(plan, maxConcurrency, tuning)
 		return uploadV2AdaptiveConcurrencyConfigWithInitial(plan, maxConcurrency, initial, tuning)
 	default:
@@ -560,7 +594,7 @@ func (r *Job) downloadV2AdaptiveManager(target TransferV2TargetClass, maxConcurr
 }
 
 func downloadV2SharedAdaptiveConcurrencyConfig(target TransferV2TargetClass, maxConcurrency int, totalSize int64, partSize int64, tuning UploadV2Tuning) lib.AdaptiveConcurrencyConfig {
-	if target == downloadV2TargetS3 {
+	if target == downloadV2TargetS3 || target == downloadV2TargetDirect {
 		plan := uploadV2PartPlan{target: target, totalSize: &totalSize, partSize: partSize, mode: "download_v2_known_size"}
 		return uploadV2SharedAdaptiveConcurrencyConfig(plan, maxConcurrency, tuning)
 	}
@@ -576,7 +610,21 @@ func classifyDownloadV2Target(ctx context.Context, _ goFs.FileInfo, ranger Reade
 	if err != nil {
 		return "", false
 	}
+	if classifier == nil && downloadV2DirectTarget(ranger) {
+		return downloadV2TargetDirect, true
+	}
 	return classifyDownloadV2URI(downloadURI, classifier)
+}
+
+func downloadV2DirectTarget(ranger ReaderRange) bool {
+	file, ok := ranger.(*File)
+	if !ok {
+		return false
+	}
+	file.fileMutex.Lock()
+	info := file.File.DirectConnectionInfo
+	file.fileMutex.Unlock()
+	return files_sdk.DirectConnectionInfoPresent(info)
 }
 
 func classifyDownloadV2URI(downloadURI string, classifiers ...DownloadV2TargetClassifier) (TransferV2TargetClass, bool) {

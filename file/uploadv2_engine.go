@@ -893,7 +893,7 @@ func (e *uploadV2Engine) dispatchPreparedPart(ctx context.Context, wait lib.Conc
 
 func (e *uploadV2Engine) readyRunwayConfig() uploadV2ReadyRunwayConfig {
 	config := e.u.uploadV2ReadyRunway.resolved()
-	if !e.u.uploadV2ReadyRunway.configured && e.plan.target == uploadV2TargetS3 && !e.readyRunwayBuffersPartBytes() {
+	if !e.u.uploadV2ReadyRunway.configured && (e.plan.target == uploadV2TargetS3 || e.plan.target == uploadV2TargetDirect) && !e.readyRunwayBuffersPartBytes() {
 		parts := max(uploadV2DefaultSeekableS3ReadyRunwayMinParts, e.manager.Target()/uploadV2DefaultSeekableS3ReadyRunwayTargetDivisor)
 		parts = min(parts, uploadV2DefaultSeekableS3ReadyRunwayMaxParts)
 		if partCount := e.plan.estimatedPartCount(); partCount > 0 {
@@ -1119,14 +1119,15 @@ func (e *uploadV2Engine) uploadPart(ctx context.Context, part *uploadV2Part) (fi
 	}
 	backPressureSeen := false
 	retryAfterSeen := time.Duration(0)
-	params.Client = lib.UploadRetryableHttpWithObserver(e.u.Config.Client, canReplay, func(attempt lib.UploadRetryAttempt) {
+	observer := func(attempt lib.UploadRetryAttempt) {
 		if uploadV2BackPressureStatus(attempt.StatusCode) {
 			backPressureSeen = true
 			if attempt.RetryAfter > retryAfterSeen {
 				retryAfterSeen = attempt.RetryAfter
 			}
 		}
-	})
+	}
+	params.Client = lib.UploadRetryableHttpWithObserver(e.u.Config.Client, canReplay, observer)
 	if part.reader.Len() > 0 {
 		params.RetryableBody = retryablehttp.ReaderFunc(func() (io.Reader, error) {
 			if !part.reader.Rewind() {
@@ -1154,7 +1155,7 @@ func (e *uploadV2Engine) uploadPart(ctx context.Context, part *uploadV2Part) (fi
 		})
 	}
 	callStart := time.Now()
-	res, callErr := files_sdk.CallRaw(params)
+	res, callErr := e.callUploadV2Part(ctx, part, params, canReplay, observer)
 	callDuration := time.Since(callStart)
 	if callErr != nil {
 		e.stats.recordHTTPCall(callDuration, int64(part.reader.Len()), callErr)
@@ -1188,6 +1189,19 @@ func (e *uploadV2Engine) uploadPart(ctx context.Context, part *uploadV2Part) (fi
 		Etag: etag,
 		Part: strconv.Itoa(part.number),
 	}, statusCode, backPressureSeen, retryAfterSeen, nil
+}
+
+func (e *uploadV2Engine) callUploadV2Part(ctx context.Context, part *uploadV2Part, params *files_sdk.CallParams, canReplay func() bool, observer func(lib.UploadRetryAttempt)) (*http.Response, error) {
+	if res, ok := e.u.callRawWithDirectTransfer(ctx, part.upload.DirectConnectionInfo, params, directTransferUploadOptions{
+		partNumber: int64(part.number),
+		canReplay:  canReplay,
+		observer:   observer,
+		stats:      &e.stats,
+	}); ok {
+		return res, nil
+	}
+
+	return files_sdk.CallRaw(params)
 }
 
 func (e *uploadV2Engine) rewindPartForRetry(part *uploadV2Part, attempt int, err error, message string) bool {
@@ -1225,6 +1239,7 @@ func (e *uploadV2Engine) uploadForPart(number int, offset OffSet) files_sdk.File
 	}
 	if e.u.usesSameUrl(e.u.FileUploadPart) {
 		upload.UploadUri = e.u.FileUploadPart.UploadUri
+		upload.DirectConnectionInfo = e.u.FileUploadPart.DirectConnectionInfo
 		upload.Expires = e.u.FileUploadPart.Expires
 		if upload.PartNumber > 1 {
 			upload.Expires = e.u.FileUploadPart.ExpiresTime().Add(3 * time.Minute).Format(time.RFC3339)
@@ -1248,6 +1263,9 @@ func decorateUploadURLWithPartOffset(upload *files_sdk.FileUploadPart, partNumbe
 		return
 	}
 	upload.UploadUri = uploadURLWithPartOffset(upload.UploadUri, partNumber, partOffset)
+	if upload.DirectConnectionInfo.DirectUri != "" {
+		upload.DirectConnectionInfo.DirectUri = uploadURLWithPartOffset(upload.DirectConnectionInfo.DirectUri, partNumber, partOffset)
+	}
 }
 
 func uploadURLWithPartOffset(uploadURI string, partNumber int, partOffset int64) string {

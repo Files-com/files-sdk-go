@@ -118,6 +118,8 @@ const (
 	TransferV2TargetDefault TransferV2TargetClass = "default"
 	// TransferV2TargetS3 is the adaptive transfer target for S3 upload/download URLs.
 	TransferV2TargetS3 TransferV2TargetClass = "s3"
+	// TransferV2TargetDirect is the adaptive transfer target for direct transfers.
+	TransferV2TargetDirect TransferV2TargetClass = "direct"
 )
 
 // UploadV2TargetClassifier overrides the SDK's upload V2 target classifier.
@@ -729,7 +731,7 @@ func uploadV2AdaptiveConcurrencyConfigWithInitial(plan uploadV2PartPlan, maxConc
 		BackPressurePause:         AdaptiveTransferDefaultTargetBackPressurePause,
 	}
 	switch plan.target {
-	case uploadV2TargetS3:
+	case uploadV2TargetS3, uploadV2TargetDirect:
 		config.MinTarget = min(AdaptiveTransferS3MinTarget, maxConcurrency)
 		config.ThroughputFloor = min(AdaptiveTransferS3AdaptiveFloor, initial)
 		config.GrowEvery = AdaptiveTransferS3GrowEvery
@@ -757,7 +759,9 @@ func uploadV2AdaptiveConcurrencyConfigWithInitial(plan uploadV2PartPlan, maxConc
 		config.LatencyQueueHigh = AdaptiveTransferS3LatencyQueueHigh
 		config.LatencyGrowthQueueHigh = AdaptiveTransferS3LatencyGrowthQueueHigh
 		applyTransferV2InitialTargetTuning(&config, tuning, maxConcurrency)
-		applyS3UploadV2Tuning(&config, tuning, maxConcurrency, initial)
+		if plan.target == uploadV2TargetS3 {
+			applyS3UploadV2Tuning(&config, tuning, maxConcurrency, initial)
+		}
 	}
 	return config
 }
@@ -833,7 +837,7 @@ func applyS3UploadV2Tuning(config *lib.AdaptiveConcurrencyConfig, tuning UploadV
 func uploadV2InitialConcurrencyForPlan(plan uploadV2PartPlan, maxConcurrency int, tuning UploadV2Tuning) int {
 	initial := uploadV2InitialConcurrencyForSharedPlan(plan, maxConcurrency, tuning)
 	switch plan.target {
-	case uploadV2TargetS3:
+	case uploadV2TargetS3, uploadV2TargetDirect:
 		if plan.totalSize != nil && plan.partSize > 0 {
 			partCount := int(ceilDiv(*plan.totalSize, plan.partSize))
 			if partCount > 0 && partCount < initial {
@@ -857,6 +861,11 @@ func uploadV2InitialConcurrencyForSharedPlan(plan uploadV2PartPlan, maxConcurren
 			return min(maxConcurrency, tuning.InitialTarget)
 		}
 		return min(maxConcurrency, AdaptiveTransferS3InitialTarget)
+	case uploadV2TargetDirect:
+		if tuning.InitialTarget > 0 {
+			return min(maxConcurrency, tuning.InitialTarget)
+		}
+		return min(maxConcurrency, 64)
 	default:
 		if tuning.InitialTarget > 0 {
 			return min(maxConcurrency, tuning.InitialTarget)

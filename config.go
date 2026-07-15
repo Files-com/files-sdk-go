@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.3.193"
+var VERSION = "3.3.194"
 var defaultUserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
 
 const (
@@ -53,6 +53,8 @@ type Config struct {
 	UserAgent    string `json:"user_agents"`
 	Environment  `json:"environment"`
 	FeatureFlags map[string]bool `json:"feature_flags"`
+	// DisableDirectTransfers forces upload and download requests to use proxied transfer paths.
+	DisableDirectTransfers bool `json:"disable_direct_transfers"`
 }
 
 func (c Config) Init() Config {

@@ -17,6 +17,7 @@ func TestDownloadUrl_New(t *testing.T) {
 		name string
 		args
 		time.Time
+		urlType URLType
 	}{
 		{
 			name: "amazon s3 date",
@@ -27,7 +28,8 @@ func TestDownloadUrl_New(t *testing.T) {
 					return u.String()
 				},
 			},
-			Time: time.Now().Add(time.Minute * 3).UTC(),
+			Time:    time.Now().Add(time.Minute * 3).UTC(),
+			urlType: AmazonS3,
 		},
 		{
 			name: "files date",
@@ -38,7 +40,8 @@ func TestDownloadUrl_New(t *testing.T) {
 					return u.String()
 				},
 			},
-			Time: time.Now().Add(time.Minute * 3).UTC(),
+			Time:    time.Now().Add(time.Minute * 3).UTC(),
+			urlType: Files,
 		},
 		{
 			name: "google date",
@@ -49,7 +52,8 @@ func TestDownloadUrl_New(t *testing.T) {
 					return u.String()
 				},
 			},
-			Time: time.Now().Add(time.Minute * 3).UTC(),
+			Time:    time.Now().Add(time.Minute * 3).UTC(),
+			urlType: Google,
 		},
 		{
 			name: "azure blob storage",
@@ -60,7 +64,8 @@ func TestDownloadUrl_New(t *testing.T) {
 					return u.String()
 				},
 			},
-			Time: time.Now().Add(time.Minute * 3).UTC(),
+			Time:    time.Now().Add(time.Minute * 3).UTC(),
+			urlType: Azure,
 		},
 	}
 
@@ -69,6 +74,7 @@ func TestDownloadUrl_New(t *testing.T) {
 			d, err := New(tt.args.url(t, tt.Time))
 			assert.NoError(t, err)
 			assert.Equal(t, tt.Time.Truncate(time.Second), d.Time)
+			assert.Equal(t, tt.urlType, d.Type)
 		})
 	}
 }

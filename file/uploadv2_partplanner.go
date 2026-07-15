@@ -23,6 +23,7 @@ const (
 const (
 	uploadV2TargetS3      = TransferV2TargetS3
 	uploadV2TargetDefault = TransferV2TargetDefault
+	uploadV2TargetDirect  = TransferV2TargetDirect
 )
 
 type uploadV2PartPlan struct {
@@ -316,6 +317,9 @@ func classifyUploadV2Target(part files_sdk.FileUploadPart, classifiers ...Upload
 	parsed, err := url.Parse(part.UploadUri)
 	if err != nil {
 		return uploadV2TargetDefault
+	}
+	if files_sdk.DirectConnectionInfoPresent(part.DirectConnectionInfo) {
+		return uploadV2TargetDirect
 	}
 	host := strings.ToLower(parsed.Hostname())
 

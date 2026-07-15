@@ -93,6 +93,7 @@ type uploadIO struct {
 	uploadV2ReadyRunway        uploadV2ReadyRunwayConfig
 	uploadV2Tuning             UploadV2Tuning
 	uploadV1Stats              uploadV1SchedulerStats
+	directTransferDisabled     atomic.Bool
 
 	onComplete      chan *Part
 	partsFinished   chan struct{}
@@ -109,6 +110,9 @@ type uploadIO struct {
 }
 
 func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
+	ctx, closeDirectClients := files_sdk.WithDirectTransferClientCache(ctx)
+	defer closeDirectClients()
+
 	u.notResumable = &atomic.Bool{}
 	u.notResumable.Store(false)
 	u.transferStarted = &atomic.Bool{}
@@ -311,6 +315,7 @@ func (u *uploadIO) partBuilder(offset OffSet, final bool, number int) *Part {
 
 		if u.usesSameUrl(u.FileUploadPart) {
 			part.FileUploadPart.UploadUri = u.FileUploadPart.UploadUri
+			part.FileUploadPart.DirectConnectionInfo = u.FileUploadPart.DirectConnectionInfo
 			part.Expires = u.FileUploadPart.Expires
 			if part.PartNumber > 1 {
 				// When using the same URL, after each use, the expiry time is extended by 3 minutes.
@@ -330,15 +335,23 @@ func (u *uploadIO) partBuilder(offset OffSet, final bool, number int) *Part {
 }
 
 func (u *uploadIO) ensurePartNumber(part *Part) {
-	uri, err := url.Parse(part.UploadUri)
+	part.UploadUri = uploadURLWithPartNumber(part.UploadUri, part.PartNumber)
+	if part.DirectConnectionInfo.DirectUri != "" {
+		part.DirectConnectionInfo.DirectUri = uploadURLWithPartNumber(part.DirectConnectionInfo.DirectUri, part.PartNumber)
+	}
+}
+
+func uploadURLWithPartNumber(rawURL string, partNumber int64) string {
+	uri, err := url.Parse(rawURL)
 	if err == nil {
 		q := uri.Query()
 		q.Del("part_number")
 		q.Del("partNumber")
-		q.Add("part_number", strconv.FormatInt(part.PartNumber, 10))
+		q.Add("part_number", strconv.FormatInt(partNumber, 10))
 		uri.RawQuery = q.Encode()
-		part.UploadUri = uri.String()
+		return uri.String()
 	}
+	return rawURL
 }
 
 func (u *uploadIO) buildReader(offset OffSet) (ProxyReader, error) {
@@ -528,6 +541,9 @@ func (u *uploadIO) uploadParts(ctx context.Context) {
 }
 
 func (u *uploadIO) startUpload(ctx context.Context, beginUpload files_sdk.FileBeginUploadParams) (files_sdk.FileUploadPart, error) {
+	if !u.Config.DisableDirectTransfers && beginUpload.WithDirectConnectionInfo == nil {
+		beginUpload.WithDirectConnectionInfo = lib.Bool(true)
+	}
 	uploads, err := u.BeginUpload(beginUpload, files_sdk.WithContext(ctx))
 	if err != nil {
 		return files_sdk.FileUploadPart{}, err
@@ -635,9 +651,7 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 		})
 	}
 	callStart := time.Now()
-	res, err := files_sdk.CallRaw(
-		params,
-	)
+	res, err := u.callUploadPart(ctx, part, params, canReplay)
 	if err != nil {
 		u.uploadV1Stats.recordHTTPCall(time.Since(callStart), int64(part.ProxyReader.Len()), err)
 		return files_sdk.EtagsParam{}, err
@@ -662,6 +676,41 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 		Etag: etag,
 		Part: strconv.FormatInt(part.PartNumber, 10),
 	}, nil
+}
+
+func (u *uploadIO) callUploadPart(ctx context.Context, part *Part, params *files_sdk.CallParams, canReplay func() bool) (*http.Response, error) {
+	if res, ok := u.callRawWithDirectTransfer(ctx, part.DirectConnectionInfo, params, directTransferUploadOptions{
+		partNumber: part.PartNumber,
+		canReplay:  canReplay,
+		stats:      &u.uploadV1Stats,
+	}); ok {
+		return res, nil
+	}
+
+	return files_sdk.CallRaw(params)
+}
+
+func (u *uploadIO) directTransferUploadAvailable(info files_sdk.DirectConnectionInfo) bool {
+	return !u.Config.DisableDirectTransfers &&
+		!u.directTransferDisabled.Load() &&
+		files_sdk.DirectConnectionInfoPresent(info)
+}
+
+func (u *uploadIO) disableDirectTransfersForUpload(reason string, err error, partNumber int64) bool {
+	firstDisable := u.directTransferDisabled.CompareAndSwap(false, true)
+	if firstDisable {
+		attrs := map[string]any{
+			"message":   "direct upload disabled; using proxy URLs for remaining upload parts",
+			"direction": "upload",
+			"reason":    reason,
+			"part":      partNumber,
+		}
+		if err != nil {
+			attrs["error"] = err.Error()
+		}
+		u.LogPath(u.Path, attrs)
+	}
+	return firstDisable
 }
 
 type uploadPartRetryReader struct {

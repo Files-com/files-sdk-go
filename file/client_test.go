@@ -39,8 +39,36 @@ type FileStatus struct {
 func CreateClient(fixture string) (client *Client, r *recorder.Recorder, err error) {
 	client = &Client{}
 	client.Config, r, err = test.CreateConfig(fixture)
+	// Recorded fixtures predate direct connection info; focused tests cover the default-on behavior.
+	client.Config.DisableDirectTransfers = true
 
 	return client, r, err
+}
+
+func TestClient_DownloadUriRequestsDirectConnectionInfoByDefault(t *testing.T) {
+	server := (&MockAPIServer{T: t}).Do()
+	defer server.Shutdown()
+	server.MockFiles["remote.txt"] = mockFile{}
+
+	_, err := server.Client().DownloadUri(files_sdk.FileDownloadParams{Path: "remote.txt"})
+
+	require.NoError(t, err)
+	require.Len(t, server.TrackRequest["/api/rest/v1/files/*path"], 1)
+	assert.Contains(t, server.TrackRequest["/api/rest/v1/files/*path"][0], "with_direct_connection_info=true")
+}
+
+func TestClient_DownloadUriOmitsDirectConnectionInfoWhenDisabled(t *testing.T) {
+	server := (&MockAPIServer{T: t}).Do()
+	defer server.Shutdown()
+	server.MockFiles["remote.txt"] = mockFile{}
+	client := server.Client()
+	client.Config.DisableDirectTransfers = true
+
+	_, err := client.DownloadUri(files_sdk.FileDownloadParams{Path: "remote.txt"})
+
+	require.NoError(t, err)
+	require.Len(t, server.TrackRequest["/api/rest/v1/files/*path"], 1)
+	assert.NotContains(t, server.TrackRequest["/api/rest/v1/files/*path"][0], "with_direct_connection_info")
 }
 
 func TestClient_DownloadDoesNotSendAuthHeadersToOffOriginDownloadUri(t *testing.T) {

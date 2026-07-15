@@ -17,6 +17,7 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/directory"
+	"github.com/Files-com/files-sdk-go/v3/downloadurl"
 	"github.com/Files-com/files-sdk-go/v3/file/status"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/Files-com/files-sdk-go/v3/lib/uploadchecksum"
@@ -168,6 +169,18 @@ func TestUploadV2TargetClassifierCanReturnCustomTarget(t *testing.T) {
 	require.True(t, ok, reason)
 	assert.Equal(t, TransferV2TargetClass("custom"), plan.target)
 	assert.Equal(t, int64(16)*uploadV2MiB, plan.partSize)
+}
+
+func TestUploadV2ClassifiesDirectTarget(t *testing.T) {
+	part := uploadV2TestPart("https://files-agent-proxy.test/uploads")
+	part.DirectConnectionInfo = testDirectConnectionInfo("/uploads?jwt=direct-token")
+	size := int64(1024) * uploadV2MiB
+
+	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+
+	require.True(t, ok, reason)
+	assert.Equal(t, uploadV2TargetDirect, plan.target)
+	assert.Equal(t, defaultKnownSizePreferredPartSize(size), plan.partSize)
 }
 
 func TestUploadV2PartPlannerUnknownSizeGrowth(t *testing.T) {
@@ -814,6 +827,32 @@ func TestUploadV2PartOffsetQuerySkipsS3(t *testing.T) {
 	assert.Equal(t, "signed", query.Get("X-Amz-Signature"))
 }
 
+func TestUploadV2SameURLPartKeepsDirectConnectionInfo(t *testing.T) {
+	filesDate := time.Now().UTC().Format("20060102T150405Z")
+	part := files_sdk.FileUploadPart{
+		UploadUri:            "https://uploads.example.com/upload/file?X-Files-Date=" + filesDate + "&X-Files-Expires=300&partNumber=1&offset=old",
+		DirectConnectionInfo: testDirectConnectionInfo("/uploads?X-Files-Date=" + filesDate + "&X-Files-Expires=300&partNumber=1&offset=old&jwt=upload-token"),
+		ParallelParts:        lib.Bool(true),
+		PartNumber:           1,
+		Expires:              time.Now().Add(time.Hour).Format(time.RFC3339),
+	}
+	engine := newUploadV2TestEngine(t, part)
+	engine.usePartOffsets = true
+	downloadURL, err := downloadurl.New(part.UploadUri)
+	require.NoError(t, err)
+	require.Equal(t, downloadurl.Files, downloadURL.Type)
+
+	upload := engine.uploadForPart(2, OffSet{off: 33554432, len: 1})
+
+	require.Equal(t, part.DirectConnectionInfo.ServerName, upload.DirectConnectionInfo.ServerName)
+	query := uploadV2TestQuery(t, upload.DirectConnectionInfo.DirectUri)
+	assert.Equal(t, "2", query.Get("part_number"))
+	assert.Equal(t, "33554432", query.Get("part_offset"))
+	assert.Empty(t, query.Get("partNumber"))
+	assert.Empty(t, query.Get("offset"))
+	assert.Equal(t, "upload-token", query.Get("jwt"))
+}
+
 func TestUploadV2PartOffsetQuerySkipsS3CompatiblePresignedMultipartURL(t *testing.T) {
 	part := files_sdk.FileUploadPart{
 		UploadUri:     "https://example.r2.cloudflarestorage.com/bucket/key?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=access%2F20260703%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20260703T120000Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=7&uploadId=upload-id&X-Amz-Signature=signed",
@@ -1370,6 +1409,20 @@ func TestUploadV2InitialTargetTuningAppliesToAllTargets(t *testing.T) {
 	}
 }
 
+func TestUploadV2DirectAdaptiveConfigStartsAtHighThroughputTarget(t *testing.T) {
+	size := int64(1024) * uploadV2MiB
+	plan, ok, reason := newUploadV2PartPlan(uploadV2TargetDirect, &size)
+	require.True(t, ok, reason)
+
+	config := uploadV2AdaptiveConcurrencyConfig(plan, 200)
+
+	assert.Equal(t, 64, config.InitialTarget)
+	assert.Equal(t, AdaptiveTransferS3ThroughputProbeFloor, config.ThroughputProbeFloor)
+	assert.Equal(t, AdaptiveTransferS3ThroughputProbePlateau, config.ThroughputProbePlateauTarget)
+	assert.Equal(t, AdaptiveTransferS3GrowthCeiling, config.GrowthCeiling)
+	assert.Equal(t, float64(AdaptiveTransferS3LatencyGrowthQueueHigh), config.LatencyGrowthQueueHigh)
+}
+
 func TestUploadV2S3AdaptiveConfigAppliesDiagnosticTuning(t *testing.T) {
 	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
 	size := int64(10) * uploadV2GiB
@@ -1640,6 +1693,24 @@ func TestUploadV2S3SeekableRunwayScalesWithInitialTarget(t *testing.T) {
 
 	runway := engine.readyRunwayConfig()
 	assert.Equal(t, AdaptiveTransferS3InitialTarget/uploadV2DefaultSeekableS3ReadyRunwayTargetDivisor, runway.parts)
+	assert.Equal(t, AdaptiveTransferDefaultReadyRunwayBytes, runway.bytes)
+}
+
+func TestUploadV2DirectSeekableRunwayScalesWithInitialTarget(t *testing.T) {
+	part := uploadV2TestPart("https://files-agent-proxy.test/uploads")
+	part.DirectConnectionInfo = testDirectConnectionInfo("/uploads?jwt=direct-token")
+	size := int64(1024) * uploadV2MiB
+	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+	require.True(t, ok, reason)
+
+	engine := newUploadV2Engine(&uploadIO{
+		FileUploadPart: part,
+		Size:           &size,
+		readerAt:       bytes.NewReader(make([]byte, 1)),
+	}, plan)
+
+	runway := engine.readyRunwayConfig()
+	assert.Equal(t, 32, runway.parts)
 	assert.Equal(t, AdaptiveTransferDefaultReadyRunwayBytes, runway.bytes)
 }
 
