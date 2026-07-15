@@ -147,6 +147,11 @@ type AutomationCreateParams struct {
 	WorkspaceId                      int64                    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// Upgrade a legacy Automation to Automation v2
+type AutomationUpgradeParams struct {
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+}
+
 // Manually Run Automation. v2 Automations require Site or Workspace Admin permission
 type AutomationManualRunParams struct {
 	Id    int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`

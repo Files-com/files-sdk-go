@@ -74,6 +74,15 @@ func Create(params files_sdk.AutomationCreateParams, opts ...files_sdk.RequestRe
 	return (&Client{}).Create(params, opts...)
 }
 
+func (c *Client) Upgrade(params files_sdk.AutomationUpgradeParams, opts ...files_sdk.RequestResponseOption) (automation files_sdk.Automation, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/automations/{id}/upgrade", Params: params, Entity: &automation}, opts...)
+	return
+}
+
+func Upgrade(params files_sdk.AutomationUpgradeParams, opts ...files_sdk.RequestResponseOption) (automation files_sdk.Automation, err error) {
+	return (&Client{}).Upgrade(params, opts...)
+}
+
 func (c *Client) ManualRun(params files_sdk.AutomationManualRunParams, opts ...files_sdk.RequestResponseOption) (err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/automations/{id}/manual_run", Params: params, Entity: nil}, opts...)
 	return
