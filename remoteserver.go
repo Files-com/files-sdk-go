@@ -47,6 +47,11 @@ type RemoteServer struct {
 	AuthStatus                              string `json:"auth_status,omitempty" path:"auth_status,omitempty" url:"auth_status,omitempty"`
 	AuthAccountName                         string `json:"auth_account_name,omitempty" path:"auth_account_name,omitempty" url:"auth_account_name,omitempty"`
 	OneDriveAccountType                     string `json:"one_drive_account_type,omitempty" path:"one_drive_account_type,omitempty" url:"one_drive_account_type,omitempty"`
+	SharepointTenantId                      string `json:"sharepoint_tenant_id,omitempty" path:"sharepoint_tenant_id,omitempty" url:"sharepoint_tenant_id,omitempty"`
+	SharepointClientId                      string `json:"sharepoint_client_id,omitempty" path:"sharepoint_client_id,omitempty" url:"sharepoint_client_id,omitempty"`
+	SharepointAppAuthentication             *bool  `json:"sharepoint_app_authentication,omitempty" path:"sharepoint_app_authentication,omitempty" url:"sharepoint_app_authentication,omitempty"`
+	SharepointAppCredentialType             string `json:"sharepoint_app_credential_type,omitempty" path:"sharepoint_app_credential_type,omitempty" url:"sharepoint_app_credential_type,omitempty"`
+	SharepointSiteUrl                       string `json:"sharepoint_site_url,omitempty" path:"sharepoint_site_url,omitempty" url:"sharepoint_site_url,omitempty"`
 	AzureBlobStorageAccount                 string `json:"azure_blob_storage_account,omitempty" path:"azure_blob_storage_account,omitempty" url:"azure_blob_storage_account,omitempty"`
 	AzureBlobStorageContainer               string `json:"azure_blob_storage_container,omitempty" path:"azure_blob_storage_container,omitempty" url:"azure_blob_storage_container,omitempty"`
 	AzureBlobStorageHierarchicalNamespace   *bool  `json:"azure_blob_storage_hierarchical_namespace,omitempty" path:"azure_blob_storage_hierarchical_namespace,omitempty" url:"azure_blob_storage_hierarchical_namespace,omitempty"`
@@ -84,6 +89,8 @@ type RemoteServer struct {
 	PrivateKey                              string `json:"private_key,omitempty" path:"private_key,omitempty" url:"private_key,omitempty"`
 	PrivateKeyPassphrase                    string `json:"private_key_passphrase,omitempty" path:"private_key_passphrase,omitempty" url:"private_key_passphrase,omitempty"`
 	ResetAuthentication                     *bool  `json:"reset_authentication,omitempty" path:"reset_authentication,omitempty" url:"reset_authentication,omitempty"`
+	SharepointClientCertificate             string `json:"sharepoint_client_certificate,omitempty" path:"sharepoint_client_certificate,omitempty" url:"sharepoint_client_certificate,omitempty"`
+	SharepointClientSecret                  string `json:"sharepoint_client_secret,omitempty" path:"sharepoint_client_secret,omitempty" url:"sharepoint_client_secret,omitempty"`
 	SslCertificate                          string `json:"ssl_certificate,omitempty" path:"ssl_certificate,omitempty" url:"ssl_certificate,omitempty"`
 	AwsSecretKey                            string `json:"aws_secret_key,omitempty" path:"aws_secret_key,omitempty" url:"aws_secret_key,omitempty"`
 	AzureBlobStorageAccessKey               string `json:"azure_blob_storage_access_key,omitempty" path:"azure_blob_storage_access_key,omitempty" url:"azure_blob_storage_access_key,omitempty"`
@@ -244,6 +251,8 @@ type RemoteServerCreateParams struct {
 	PrivateKey                              string                                                 `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 	PrivateKeyPassphrase                    string                                                 `url:"private_key_passphrase,omitempty" json:"private_key_passphrase,omitempty" path:"private_key_passphrase"`
 	ResetAuthentication                     *bool                                                  `url:"reset_authentication,omitempty" json:"reset_authentication,omitempty" path:"reset_authentication"`
+	SharepointClientCertificate             string                                                 `url:"sharepoint_client_certificate,omitempty" json:"sharepoint_client_certificate,omitempty" path:"sharepoint_client_certificate"`
+	SharepointClientSecret                  string                                                 `url:"sharepoint_client_secret,omitempty" json:"sharepoint_client_secret,omitempty" path:"sharepoint_client_secret"`
 	SslCertificate                          string                                                 `url:"ssl_certificate,omitempty" json:"ssl_certificate,omitempty" path:"ssl_certificate"`
 	AwsSecretKey                            string                                                 `url:"aws_secret_key,omitempty" json:"aws_secret_key,omitempty" path:"aws_secret_key"`
 	AzureBlobStorageAccessKey               string                                                 `url:"azure_blob_storage_access_key,omitempty" json:"azure_blob_storage_access_key,omitempty" path:"azure_blob_storage_access_key"`
@@ -312,6 +321,9 @@ type RemoteServerCreateParams struct {
 	ServerCertificate                       RemoteServerServerCertificateEnum                      `url:"server_certificate,omitempty" json:"server_certificate,omitempty" path:"server_certificate"`
 	ServerHostKey                           string                                                 `url:"server_host_key,omitempty" json:"server_host_key,omitempty" path:"server_host_key"`
 	ServerType                              RemoteServerServerTypeEnum                             `url:"server_type,omitempty" json:"server_type,omitempty" path:"server_type"`
+	SharepointClientId                      string                                                 `url:"sharepoint_client_id,omitempty" json:"sharepoint_client_id,omitempty" path:"sharepoint_client_id"`
+	SharepointSiteUrl                       string                                                 `url:"sharepoint_site_url,omitempty" json:"sharepoint_site_url,omitempty" path:"sharepoint_site_url"`
+	SharepointTenantId                      string                                                 `url:"sharepoint_tenant_id,omitempty" json:"sharepoint_tenant_id,omitempty" path:"sharepoint_tenant_id"`
 	Ssl                                     RemoteServerSslEnum                                    `url:"ssl,omitempty" json:"ssl,omitempty" path:"ssl"`
 	Username                                string                                                 `url:"username,omitempty" json:"username,omitempty" path:"username"`
 	WasabiAccessKey                         string                                                 `url:"wasabi_access_key,omitempty" json:"wasabi_access_key,omitempty" path:"wasabi_access_key"`
@@ -347,6 +359,8 @@ type RemoteServerUpdateParams struct {
 	PrivateKey                              string                                                 `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 	PrivateKeyPassphrase                    string                                                 `url:"private_key_passphrase,omitempty" json:"private_key_passphrase,omitempty" path:"private_key_passphrase"`
 	ResetAuthentication                     *bool                                                  `url:"reset_authentication,omitempty" json:"reset_authentication,omitempty" path:"reset_authentication"`
+	SharepointClientCertificate             string                                                 `url:"sharepoint_client_certificate,omitempty" json:"sharepoint_client_certificate,omitempty" path:"sharepoint_client_certificate"`
+	SharepointClientSecret                  string                                                 `url:"sharepoint_client_secret,omitempty" json:"sharepoint_client_secret,omitempty" path:"sharepoint_client_secret"`
 	SslCertificate                          string                                                 `url:"ssl_certificate,omitempty" json:"ssl_certificate,omitempty" path:"ssl_certificate"`
 	AwsSecretKey                            string                                                 `url:"aws_secret_key,omitempty" json:"aws_secret_key,omitempty" path:"aws_secret_key"`
 	AzureBlobStorageAccessKey               string                                                 `url:"azure_blob_storage_access_key,omitempty" json:"azure_blob_storage_access_key,omitempty" path:"azure_blob_storage_access_key"`
@@ -415,6 +429,9 @@ type RemoteServerUpdateParams struct {
 	ServerCertificate                       RemoteServerServerCertificateEnum                      `url:"server_certificate,omitempty" json:"server_certificate,omitempty" path:"server_certificate"`
 	ServerHostKey                           string                                                 `url:"server_host_key,omitempty" json:"server_host_key,omitempty" path:"server_host_key"`
 	ServerType                              RemoteServerServerTypeEnum                             `url:"server_type,omitempty" json:"server_type,omitempty" path:"server_type"`
+	SharepointClientId                      string                                                 `url:"sharepoint_client_id,omitempty" json:"sharepoint_client_id,omitempty" path:"sharepoint_client_id"`
+	SharepointSiteUrl                       string                                                 `url:"sharepoint_site_url,omitempty" json:"sharepoint_site_url,omitempty" path:"sharepoint_site_url"`
+	SharepointTenantId                      string                                                 `url:"sharepoint_tenant_id,omitempty" json:"sharepoint_tenant_id,omitempty" path:"sharepoint_tenant_id"`
 	Ssl                                     RemoteServerSslEnum                                    `url:"ssl,omitempty" json:"ssl,omitempty" path:"ssl"`
 	Username                                string                                                 `url:"username,omitempty" json:"username,omitempty" path:"username"`
 	WasabiAccessKey                         string                                                 `url:"wasabi_access_key,omitempty" json:"wasabi_access_key,omitempty" path:"wasabi_access_key"`

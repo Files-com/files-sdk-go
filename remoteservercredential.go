@@ -22,6 +22,9 @@ type RemoteServerCredential struct {
 	FilebaseAccessKey                       string `json:"filebase_access_key,omitempty" path:"filebase_access_key,omitempty" url:"filebase_access_key,omitempty"`
 	CloudflareAccessKey                     string `json:"cloudflare_access_key,omitempty" path:"cloudflare_access_key,omitempty" url:"cloudflare_access_key,omitempty"`
 	LinodeAccessKey                         string `json:"linode_access_key,omitempty" path:"linode_access_key,omitempty" url:"linode_access_key,omitempty"`
+	SharepointTenantId                      string `json:"sharepoint_tenant_id,omitempty" path:"sharepoint_tenant_id,omitempty" url:"sharepoint_tenant_id,omitempty"`
+	SharepointClientId                      string `json:"sharepoint_client_id,omitempty" path:"sharepoint_client_id,omitempty" url:"sharepoint_client_id,omitempty"`
+	SharepointAppCredentialType             string `json:"sharepoint_app_credential_type,omitempty" path:"sharepoint_app_credential_type,omitempty" url:"sharepoint_app_credential_type,omitempty"`
 	Username                                string `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
 	Password                                string `json:"password,omitempty" path:"password,omitempty" url:"password,omitempty"`
 	PrivateKey                              string `json:"private_key,omitempty" path:"private_key,omitempty" url:"private_key,omitempty"`
@@ -39,6 +42,8 @@ type RemoteServerCredential struct {
 	GoogleCloudStorageS3CompatibleSecretKey string `json:"google_cloud_storage_s3_compatible_secret_key,omitempty" path:"google_cloud_storage_s3_compatible_secret_key,omitempty" url:"google_cloud_storage_s3_compatible_secret_key,omitempty"`
 	LinodeSecretKey                         string `json:"linode_secret_key,omitempty" path:"linode_secret_key,omitempty" url:"linode_secret_key,omitempty"`
 	S3CompatibleSecretKey                   string `json:"s3_compatible_secret_key,omitempty" path:"s3_compatible_secret_key,omitempty" url:"s3_compatible_secret_key,omitempty"`
+	SharepointClientCertificate             string `json:"sharepoint_client_certificate,omitempty" path:"sharepoint_client_certificate,omitempty" url:"sharepoint_client_certificate,omitempty"`
+	SharepointClientSecret                  string `json:"sharepoint_client_secret,omitempty" path:"sharepoint_client_secret,omitempty" url:"sharepoint_client_secret,omitempty"`
 	WasabiSecretKey                         string `json:"wasabi_secret_key,omitempty" path:"wasabi_secret_key,omitempty" url:"wasabi_secret_key,omitempty"`
 	CopyValuesFromCredentialId              int64  `json:"copy_values_from_credential_id,omitempty" path:"copy_values_from_credential_id,omitempty" url:"copy_values_from_credential_id,omitempty"`
 }
@@ -103,6 +108,8 @@ type RemoteServerCredentialCreateParams struct {
 	GoogleCloudStorageS3CompatibleAccessKey string                               `url:"google_cloud_storage_s3_compatible_access_key,omitempty" json:"google_cloud_storage_s3_compatible_access_key,omitempty" path:"google_cloud_storage_s3_compatible_access_key"`
 	LinodeAccessKey                         string                               `url:"linode_access_key,omitempty" json:"linode_access_key,omitempty" path:"linode_access_key"`
 	S3CompatibleAccessKey                   string                               `url:"s3_compatible_access_key,omitempty" json:"s3_compatible_access_key,omitempty" path:"s3_compatible_access_key"`
+	SharepointClientId                      string                               `url:"sharepoint_client_id,omitempty" json:"sharepoint_client_id,omitempty" path:"sharepoint_client_id"`
+	SharepointTenantId                      string                               `url:"sharepoint_tenant_id,omitempty" json:"sharepoint_tenant_id,omitempty" path:"sharepoint_tenant_id"`
 	Username                                string                               `url:"username,omitempty" json:"username,omitempty" path:"username"`
 	WasabiAccessKey                         string                               `url:"wasabi_access_key,omitempty" json:"wasabi_access_key,omitempty" path:"wasabi_access_key"`
 	Password                                string                               `url:"password,omitempty" json:"password,omitempty" path:"password"`
@@ -121,6 +128,8 @@ type RemoteServerCredentialCreateParams struct {
 	GoogleCloudStorageS3CompatibleSecretKey string                               `url:"google_cloud_storage_s3_compatible_secret_key,omitempty" json:"google_cloud_storage_s3_compatible_secret_key,omitempty" path:"google_cloud_storage_s3_compatible_secret_key"`
 	LinodeSecretKey                         string                               `url:"linode_secret_key,omitempty" json:"linode_secret_key,omitempty" path:"linode_secret_key"`
 	S3CompatibleSecretKey                   string                               `url:"s3_compatible_secret_key,omitempty" json:"s3_compatible_secret_key,omitempty" path:"s3_compatible_secret_key"`
+	SharepointClientCertificate             string                               `url:"sharepoint_client_certificate,omitempty" json:"sharepoint_client_certificate,omitempty" path:"sharepoint_client_certificate"`
+	SharepointClientSecret                  string                               `url:"sharepoint_client_secret,omitempty" json:"sharepoint_client_secret,omitempty" path:"sharepoint_client_secret"`
 	WasabiSecretKey                         string                               `url:"wasabi_secret_key,omitempty" json:"wasabi_secret_key,omitempty" path:"wasabi_secret_key"`
 	WorkspaceId                             int64                                `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	CopyValuesFromCredentialId              int64                                `url:"copy_values_from_credential_id,omitempty" json:"copy_values_from_credential_id,omitempty" path:"copy_values_from_credential_id"`
@@ -139,6 +148,8 @@ type RemoteServerCredentialUpdateParams struct {
 	GoogleCloudStorageS3CompatibleAccessKey string                               `url:"google_cloud_storage_s3_compatible_access_key,omitempty" json:"google_cloud_storage_s3_compatible_access_key,omitempty" path:"google_cloud_storage_s3_compatible_access_key"`
 	LinodeAccessKey                         string                               `url:"linode_access_key,omitempty" json:"linode_access_key,omitempty" path:"linode_access_key"`
 	S3CompatibleAccessKey                   string                               `url:"s3_compatible_access_key,omitempty" json:"s3_compatible_access_key,omitempty" path:"s3_compatible_access_key"`
+	SharepointClientId                      string                               `url:"sharepoint_client_id,omitempty" json:"sharepoint_client_id,omitempty" path:"sharepoint_client_id"`
+	SharepointTenantId                      string                               `url:"sharepoint_tenant_id,omitempty" json:"sharepoint_tenant_id,omitempty" path:"sharepoint_tenant_id"`
 	Username                                string                               `url:"username,omitempty" json:"username,omitempty" path:"username"`
 	WasabiAccessKey                         string                               `url:"wasabi_access_key,omitempty" json:"wasabi_access_key,omitempty" path:"wasabi_access_key"`
 	Password                                string                               `url:"password,omitempty" json:"password,omitempty" path:"password"`
@@ -157,6 +168,8 @@ type RemoteServerCredentialUpdateParams struct {
 	GoogleCloudStorageS3CompatibleSecretKey string                               `url:"google_cloud_storage_s3_compatible_secret_key,omitempty" json:"google_cloud_storage_s3_compatible_secret_key,omitempty" path:"google_cloud_storage_s3_compatible_secret_key"`
 	LinodeSecretKey                         string                               `url:"linode_secret_key,omitempty" json:"linode_secret_key,omitempty" path:"linode_secret_key"`
 	S3CompatibleSecretKey                   string                               `url:"s3_compatible_secret_key,omitempty" json:"s3_compatible_secret_key,omitempty" path:"s3_compatible_secret_key"`
+	SharepointClientCertificate             string                               `url:"sharepoint_client_certificate,omitempty" json:"sharepoint_client_certificate,omitempty" path:"sharepoint_client_certificate"`
+	SharepointClientSecret                  string                               `url:"sharepoint_client_secret,omitempty" json:"sharepoint_client_secret,omitempty" path:"sharepoint_client_secret"`
 	WasabiSecretKey                         string                               `url:"wasabi_secret_key,omitempty" json:"wasabi_secret_key,omitempty" path:"wasabi_secret_key"`
 }
 
