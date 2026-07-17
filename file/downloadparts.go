@@ -65,6 +65,8 @@ func (d *DownloadParts) Init(file fs.File, info fs.FileInfo, globalWait manager.
 }
 
 func (d *DownloadParts) Run(ctx context.Context) error {
+	ctx, closeDirectClients := files_sdk.WithDirectTransferClientCache(ctx)
+	defer closeDirectClients()
 	d.Context, d.CancelFunc = context.WithCancel(ctx)
 	d.queueContext, d.queueCancel = context.WithCancel(d.Context)
 	defer func() {
