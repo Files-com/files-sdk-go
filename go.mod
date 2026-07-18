@@ -1,6 +1,6 @@
 module github.com/Files-com/files-sdk-go/v3
 
-go 1.22
+go 1.25.0
 
 require (
 	github.com/appscode/go-querystring v0.0.0-20170504095604-0126cfb3f1dc
@@ -12,14 +12,15 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/lpar/calendar v0.2.0
 	github.com/panjf2000/ants/v2 v2.11.3
+	github.com/quic-go/quic-go v0.60.0
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
 	github.com/samber/lo v1.50.0
 	github.com/snabb/httpreaderat v1.0.1
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/winfsp/cgofuse v1.6.1-0.20250813110601-7d90b0992471 // includes fixes from https://github.com/winfsp/cgofuse/pull/98, update when the next version is released
-	golang.org/x/sync v0.11.0
-	golang.org/x/sys v0.30.0
-	golang.org/x/text v0.22.0 // latest supported for go 1.21
+	golang.org/x/sync v0.20.0
+	golang.org/x/sys v0.45.0
+	golang.org/x/text v0.37.0
 	moul.io/http2curl/v2 v2.3.0
 )
 
@@ -45,11 +46,12 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	golang.org/x/arch v0.14.0 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
-	golang.org/x/net v0.35.0 // indirect
+	golang.org/x/crypto v0.51.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

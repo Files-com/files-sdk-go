@@ -154,6 +154,44 @@ func TestDownloadDirectRedirectFallsBackWithoutContactingTarget(t *testing.T) {
 	require.Zero(t, targetRequests.Load())
 }
 
+func TestDownloadDirect429RetriesThenFallsBackToProxy(t *testing.T) {
+	directRequests := atomic.Int32{}
+	info := testDirectTransferInfo(t, "/downloads?jwt=direct-token", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		directRequests.Add(1)
+		w.Header().Set("Retry-After", "0")
+		w.WriteHeader(http.StatusTooManyRequests)
+	}))
+	proxyRequests := atomic.Int32{}
+	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		proxyRequests.Add(1)
+		_, _ = w.Write([]byte("proxy"))
+	}))
+	t.Cleanup(proxy.Close)
+
+	var body bytes.Buffer
+	client := &Client{Config: files_sdk.Config{
+		Environment: files_sdk.Development,
+		Logger:      log.New(io.Discard, "", 0),
+	}.Init()}
+	_, err := client.Download(
+		files_sdk.FileDownloadParams{File: files_sdk.File{
+			Path:                 "/download.bin",
+			DownloadUri:          proxy.URL + "/download.bin?jwt=proxy-token",
+			DirectConnectionInfo: info,
+		}},
+		files_sdk.ResponseBodyOption(func(responseBody io.ReadCloser) error {
+			defer responseBody.Close()
+			_, copyErr := io.Copy(&body, responseBody)
+			return copyErr
+		}),
+	)
+
+	require.NoError(t, err)
+	require.Equal(t, int32(downloadV2RetryAttempts), directRequests.Load())
+	require.Equal(t, int32(1), proxyRequests.Load())
+	require.Equal(t, "proxy", body.String())
+}
+
 func TestUploadDirectTransferDoesNotSendSDKCredentials(t *testing.T) {
 	var gotHeaders http.Header
 	var gotRequestURI string
@@ -260,6 +298,7 @@ func testDirectTransferCredentialHeaders() *http.Header {
 	headers.Set("X-Files-Reauthentication", "password:secret")
 	headers.Set("X-Files-Workspace-Id", "123")
 	headers.Set("Authorization", "Bearer option-token")
+	headers.Set("Proxy-Authorization", "Basic proxy-secret")
 	headers.Set("Cookie", "files_session=option-cookie")
 	return headers
 }
@@ -271,6 +310,7 @@ func requireDirectTransferCredentialsStripped(t *testing.T, headers http.Header)
 	require.Empty(t, headers.Get("X-Files-Reauthentication"))
 	require.Empty(t, headers.Get("X-Files-Workspace-Id"))
 	require.Empty(t, headers.Get("Authorization"))
+	require.Empty(t, headers.Get("Proxy-Authorization"))
 	require.Empty(t, headers.Get("Cookie"))
 	require.NotEmpty(t, headers.Get("User-Agent"))
 }

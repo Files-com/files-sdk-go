@@ -478,6 +478,10 @@ func uploadRetryLogError(err error) string {
 	if classified, ok := lib.ClassifyS3Error(err); ok {
 		return classified.Message
 	}
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) {
+		err = urlErr.Err
+	}
 	return strings.Join(strings.Fields(err.Error()), " ")
 }
 
@@ -706,7 +710,7 @@ func (u *uploadIO) disableDirectTransfersForUpload(reason string, err error, par
 			"part":      partNumber,
 		}
 		if err != nil {
-			attrs["error"] = err.Error()
+			attrs["error"] = uploadRetryLogError(err)
 		}
 		u.LogPath(u.Path, attrs)
 	}

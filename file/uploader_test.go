@@ -8,6 +8,7 @@ import (
 	"io/fs"
 	"math"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -110,6 +111,9 @@ func TestUploadRetryLogError(t *testing.T) {
 
 	logError = uploadRetryLogError(errors.New("first line\nsecond line"))
 	require.Equal(t, "first line second line", logError)
+
+	logError = uploadRetryLogError(&url.Error{Op: "Put", URL: "https://agent.example/uploads?jwt=secret", Err: errors.New("connection refused")})
+	require.Equal(t, "connection refused", logError)
 }
 
 func (m *MockUploader) CreateFolder(files_sdk.FolderCreateParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error) {

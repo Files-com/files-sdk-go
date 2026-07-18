@@ -172,15 +172,43 @@ func (c *Client) Download(params files_sdk.FileDownloadParams, opts ...files_sdk
 		directAttemptAllowed = directSuppressor.directTransferDownloadAttemptAllowed()
 	}
 	if directAttemptAllowed {
+		directContext, closeDirectClient := files_sdk.WithDirectTransferClientCache(files_sdk.ContextOption(opts))
+		defer closeDirectClient()
+		directOptions := append(directTransferDownloadFailureOptions(directSuppressor, opts...), files_sdk.WithContext(directContext))
 		if c.Config.InDebug() {
 			c.LogPath(params.Path, map[string]interface{}{"message": "direct download attempt", "direction": "download"})
 		}
-		_, err = files_sdk.WrapDirectTransferOptions(
-			c.Config,
-			params.File.DirectConnectionInfo,
-			request,
-			directTransferDownloadFailureOptions(directSuppressor, opts...)...,
-		)
+		for attempt := 1; attempt <= downloadV2RetryAttempts; attempt++ {
+			_, err = files_sdk.WrapDirectTransferOptions(
+				c.Config,
+				params.File.DirectConnectionInfo,
+				request,
+				directOptions...,
+			)
+			var responseErr *files_sdk.DirectTransferResponseError
+			if !errors.As(err, &responseErr) || responseErr.StatusCode != http.StatusTooManyRequests || attempt == downloadV2RetryAttempts {
+				break
+			}
+			if backpressure := directTransferBackpressureFromContext(directContext); backpressure != nil {
+				backpressure.record(responseErr.RetryAfter)
+			}
+			if responseErr.RetryAfter > 0 {
+				select {
+				case <-directContext.Done():
+					err = directContext.Err()
+				case <-time.After(responseErr.RetryAfter):
+				}
+				if err != nil {
+					break
+				}
+			}
+		}
+		var responseErr *files_sdk.DirectTransferResponseError
+		if errors.As(err, &responseErr) && responseErr.StatusCode == http.StatusTooManyRequests {
+			if backpressure := directTransferBackpressureFromContext(directContext); backpressure != nil {
+				backpressure.record(responseErr.RetryAfter)
+			}
+		}
 		if err == nil {
 			if c.Config.InDebug() {
 				c.LogPath(params.Path, map[string]interface{}{"message": "direct download success", "direction": "download"})
@@ -193,7 +221,7 @@ func (c *Client) Download(params files_sdk.FileDownloadParams, opts ...files_sdk
 		if directSuppressor != nil {
 			directSuppressor.disableDirectTransferDownload("direct_request_failed", err)
 		}
-		c.LogPath(params.Path, map[string]interface{}{"message": "direct download failed; falling back to proxy URL", "direction": "download", "reason": "direct_request_failed", "error": err.Error()})
+		c.LogPath(params.Path, map[string]interface{}{"message": "direct download failed; falling back to proxy URL", "direction": "download", "reason": "direct_request_failed", "error": uploadRetryLogError(err)})
 	}
 
 	_, err = files_sdk.WrapRequestOptions(c.Config, request, opts...)

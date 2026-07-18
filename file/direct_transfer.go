@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"sync"
+	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/lib"
@@ -16,6 +17,31 @@ type directTransferDownloadSuppressor interface {
 }
 
 type directTransferDownloadSuppressorContextKey struct{}
+
+type directTransferBackpressure struct {
+	retryAfter time.Duration
+	seen       bool
+}
+
+type directTransferBackpressureContextKey struct{}
+
+func directTransferBackpressureFromContext(ctx context.Context) *directTransferBackpressure {
+	if ctx == nil {
+		return nil
+	}
+	backpressure, _ := ctx.Value(directTransferBackpressureContextKey{}).(*directTransferBackpressure)
+	return backpressure
+}
+
+func (b *directTransferBackpressure) record(retryAfter time.Duration) {
+	if b == nil {
+		return
+	}
+	b.seen = true
+	if retryAfter > b.retryAfter {
+		b.retryAfter = retryAfter
+	}
+}
 
 func directTransferDownloadSuppressorFromContext(ctx context.Context) directTransferDownloadSuppressor {
 	if ctx == nil {

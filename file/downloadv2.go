@@ -361,7 +361,7 @@ func (e *downloadV2Engine) disableDirectTransferDownload(reason string, err erro
 		"reason":    reason,
 	}
 	if err != nil {
-		attrs["error"] = err.Error()
+		attrs["error"] = uploadRetryLogError(err)
 	}
 	e.reportStatus.Job().Config.LogPath(e.reportStatus.RemotePath(), attrs)
 }
@@ -388,9 +388,18 @@ func (e *downloadV2Engine) downloadPartWithRetry(ctx context.Context, part downl
 	return result
 }
 
-func (e *downloadV2Engine) downloadPart(ctx context.Context, part downloadV2Part) downloadV2PartResult {
+func (e *downloadV2Engine) downloadPart(ctx context.Context, part downloadV2Part) (result downloadV2PartResult) {
 	start := time.Now()
-	result := downloadV2PartResult{part: part}
+	result = downloadV2PartResult{part: part}
+	backpressure := &directTransferBackpressure{}
+	ctx = context.WithValue(ctx, directTransferBackpressureContextKey{}, backpressure)
+	defer func() {
+		if backpressure.seen {
+			result.statusCode = http.StatusTooManyRequests
+			result.backPressure = true
+			result.retryAfter = backpressure.retryAfter
+		}
+	}()
 	reader, err := downloadV2ReaderRange(ctx, e.ranger, part.off, part.off+part.len-1)
 	if err != nil {
 		result.err = err

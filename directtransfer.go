@@ -6,8 +6,10 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
+	"net/http/httptrace"
 	"net/netip"
 	"net/url"
 	"strconv"
@@ -17,6 +19,8 @@ import (
 
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/hashicorp/go-retryablehttp"
+	quic "github.com/quic-go/quic-go"
+	"github.com/quic-go/quic-go/http3"
 )
 
 // The connect budgets are package variables instead of constants so tests can
@@ -37,9 +41,26 @@ var (
 	ErrDirectTransferResponseStarted = errors.New("direct transfer response processing started")
 )
 
+// DirectTransferResponseError is an unsuccessful response from the Agent's
+// direct endpoint. It retains backpressure details while keeping Agent limits
+// out of the public response body.
+type DirectTransferResponseError struct {
+	StatusCode int
+	RetryAfter time.Duration
+}
+
+func (e *DirectTransferResponseError) Error() string {
+	return fmt.Sprintf("direct transfer returned status %d", e.StatusCode)
+}
+
+func (e *DirectTransferResponseError) Unwrap() error {
+	return ErrDirectTransferUnavailable
+}
+
 type directTransferClientCacheKey struct {
 	serverName string
 	caPEM      string
+	protocol   string
 	candidates string
 }
 
@@ -53,6 +74,9 @@ type directTransferClientCacheContextKey struct{}
 
 // WithDirectTransferClientCache scopes direct HTTP clients to one transfer.
 func WithDirectTransferClientCache(ctx context.Context) (context.Context, func()) {
+	if _, ok := ctx.Value(directTransferClientCacheContextKey{}).(*directTransferClientCache); ok {
+		return ctx, func() {}
+	}
 	cache := &directTransferClientCache{}
 	return context.WithValue(ctx, directTransferClientCacheContextKey{}, cache), cache.close
 }
@@ -151,8 +175,12 @@ func WrapDirectTransferOptions(config Config, info DirectConnectionInfo, request
 	}
 
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
+		directErr := &DirectTransferResponseError{
+			StatusCode: response.StatusCode,
+			RetryAfter: directTransferRetryAfter(response.Header.Get("Retry-After")),
+		}
 		lib.CloseBody(response)
-		return response, fmt.Errorf("%w: status %d", ErrDirectTransferUnavailable, response.StatusCode)
+		return response, directErr
 	}
 
 	processedResponse, err := BuildResponse(response, opts...)
@@ -161,6 +189,16 @@ func WrapDirectTransferOptions(config Config, info DirectConnectionInfo, request
 		return response, errors.Join(ErrDirectTransferResponseStarted, err)
 	}
 	return processedResponse, nil
+}
+
+func directTransferRetryAfter(value string) time.Duration {
+	if seconds, err := strconv.ParseInt(value, 10, 64); err == nil && seconds >= 0 {
+		return time.Duration(seconds) * time.Second
+	}
+	if retryAt, err := http.ParseTime(value); err == nil {
+		return max(time.Until(retryAt), 0)
+	}
+	return 0
 }
 
 func directTransferHTTPClient(ctx context.Context, config Config, info DirectConnectionInfo) (string, *http.Client, error) {
@@ -173,7 +211,7 @@ func directTransferHTTPClient(ctx context.Context, config Config, info DirectCon
 		return "", nil, err
 	}
 
-	candidates, err := directTransferCandidateAddresses(config, info)
+	protocol, candidates, err := directTransferCandidateAddresses(config, info)
 	if err != nil {
 		return "", nil, err
 	}
@@ -188,14 +226,29 @@ func directTransferHTTPClient(ctx context.Context, config Config, info DirectCon
 			RootCAs:    roots,
 			ServerName: info.ServerName,
 		}
-		transport := &http.Transport{
-			DialTLSContext: func(ctx context.Context, network, _ string) (net.Conn, error) {
-				return directTransferDialTLSCandidates(ctx, network, candidates, tlsConfig)
-			},
-			ResponseHeaderTimeout: directTransferResponseHeaderTimeout,
-			IdleConnTimeout:       30 * time.Second,
-			// The Agent direct listener is an HTTP/1.1 endpoint.
-			TLSNextProto: map[string]func(string, *tls.Conn) http.RoundTripper{},
+
+		var transport http.RoundTripper
+		switch protocol {
+		case "tcp":
+			transport = &http.Transport{
+				DialTLSContext: func(ctx context.Context, network, _ string) (net.Conn, error) {
+					return directTransferDialTLSCandidates(ctx, network, candidates, tlsConfig)
+				},
+				ResponseHeaderTimeout: directTransferResponseHeaderTimeout,
+				IdleConnTimeout:       30 * time.Second,
+				// The Agent direct listener is an HTTP/1.1 endpoint.
+				TLSNextProto: map[string]func(string, *tls.Conn) http.RoundTripper{},
+			}
+		case "quic":
+			tlsConfig.MinVersion = tls.VersionTLS13
+			transport = &directTransferHTTP3Transport{Transport: &http3.Transport{
+				TLSClientConfig: tlsConfig,
+				Dial: func(ctx context.Context, _ string, tlsConfig *tls.Config, quicConfig *quic.Config) (*quic.Conn, error) {
+					return directTransferDialQUICCandidates(ctx, candidates, tlsConfig, quicConfig)
+				},
+			}}
+		default:
+			return nil, ErrDirectTransferUnavailable
 		}
 
 		return &http.Client{
@@ -210,6 +263,7 @@ func directTransferHTTPClient(ctx context.Context, config Config, info DirectCon
 		client, err := cache.client(directTransferClientCacheKey{
 			serverName: info.ServerName,
 			caPEM:      info.CaPem,
+			protocol:   protocol,
 			candidates: strings.Join(candidates, ","),
 		}, build)
 		return directURL, client, err
@@ -246,42 +300,38 @@ func directTransferCertPool(caPEM string) (*x509.CertPool, error) {
 	return roots, nil
 }
 
-func directTransferCandidateAddresses(config Config, info DirectConnectionInfo) ([]string, error) {
+func directTransferCandidateAddresses(config Config, info DirectConnectionInfo) (string, []string, error) {
 	allowPrivateCandidates := config.Environment != Production
+	protocol := ""
 	candidates := make([]string, 0, len(info.Addresses))
 	for _, rawAddress := range info.Addresses {
-		candidate, ok := directTransferCandidateAddress(rawAddress, allowPrivateCandidates)
-		if ok {
+		candidateProtocol, candidate, ip, err := directTransferCandidateAddress(rawAddress)
+		if err != nil || protocol != "" && candidateProtocol != protocol {
+			return "", nil, ErrDirectTransferUnavailable
+		}
+		protocol = candidateProtocol
+		if directTransferCandidateIP(ip, allowPrivateCandidates) {
 			candidates = append(candidates, candidate)
 		}
 	}
-	if len(candidates) == 0 {
-		return nil, ErrDirectTransferUnavailable
+	if protocol == "" || len(candidates) == 0 {
+		return "", nil, ErrDirectTransferUnavailable
 	}
-	return candidates, nil
+	return protocol, candidates, nil
 }
 
-func directTransferCandidateAddress(rawAddress string, allowPrivate bool) (string, bool) {
+func directTransferCandidateAddress(rawAddress string) (string, string, netip.Addr, error) {
 	locator, err := url.Parse(rawAddress)
-	if err != nil || locator.Scheme != "tcp" || locator.Host == "" || locator.User != nil || locator.Path != "" || locator.RawQuery != "" || locator.Fragment != "" {
-		return "", false
+	if err != nil || locator.Scheme != "tcp" && locator.Scheme != "quic" || rawAddress != locator.Scheme+"://"+locator.Host {
+		return "", "", netip.Addr{}, ErrDirectTransferUnavailable
 	}
 
-	host, port, err := net.SplitHostPort(locator.Host)
-	if err != nil {
-		return "", false
-	}
-	portNumber, err := strconv.Atoi(port)
-	if err != nil || portNumber < 1 || portNumber > 65535 {
-		return "", false
+	addrPort, err := netip.ParseAddrPort(locator.Host)
+	if err != nil || !addrPort.Addr().Is4() || addrPort.Port() == 0 {
+		return "", "", netip.Addr{}, ErrDirectTransferUnavailable
 	}
 
-	ip, err := netip.ParseAddr(host)
-	if err != nil || !directTransferCandidateIP(ip, allowPrivate) {
-		return "", false
-	}
-
-	return net.JoinHostPort(ip.String(), port), true
+	return locator.Scheme, addrPort.String(), addrPort.Addr(), nil
 }
 
 func directTransferCandidateIP(ip netip.Addr, allowPrivate bool) bool {
@@ -339,6 +389,75 @@ func directTransferDialTLSCandidates(ctx context.Context, network string, candid
 	return nil, errors.Join(errs...)
 }
 
+func directTransferDialQUICCandidates(ctx context.Context, candidates []string, tlsConfig *tls.Config, quicConfig *quic.Config) (*quic.Conn, error) {
+	if len(candidates) == 0 {
+		return nil, ErrDirectTransferUnavailable
+	}
+
+	connectCtx, cancel := context.WithTimeout(ctx, directTransferConnectTimeout)
+	defer cancel()
+
+	var errs []error
+	for _, candidate := range candidates {
+		if ctxErr := connectCtx.Err(); ctxErr != nil {
+			errs = append(errs, ctxErr)
+			break
+		}
+
+		candidateCtx, cancelCandidate := context.WithTimeout(connectCtx, directTransferPerCandidateTimeout)
+		conn, err := quic.DialAddr(candidateCtx, candidate, tlsConfig.Clone(), quicConfig.Clone())
+		cancelCandidate()
+		if err == nil {
+			return conn, nil
+		}
+		errs = append(errs, fmt.Errorf("%s: %w", candidate, err))
+	}
+
+	return nil, errors.Join(errs...)
+}
+
+type directTransferHTTP3Transport struct {
+	*http3.Transport
+}
+
+func (t *directTransferHTTP3Transport) RoundTrip(request *http.Request) (*http.Response, error) {
+	requestContext, cancel := context.WithCancel(request.Context())
+	var timerMu sync.Mutex
+	var timer *time.Timer
+	roundTripDone := false
+	trace := &httptrace.ClientTrace{WroteRequest: func(httptrace.WroteRequestInfo) {
+		timerMu.Lock()
+		if timer == nil && !roundTripDone {
+			timer = time.AfterFunc(directTransferResponseHeaderTimeout, cancel)
+		}
+		timerMu.Unlock()
+	}}
+	response, err := t.Transport.RoundTrip(request.Clone(httptrace.WithClientTrace(requestContext, trace)))
+	timerMu.Lock()
+	roundTripDone = true
+	if timer != nil {
+		timer.Stop()
+	}
+	timerMu.Unlock()
+	if err != nil {
+		cancel()
+		return response, err
+	}
+	response.Body = &directTransferCancelBody{ReadCloser: response.Body, cancel: cancel}
+	return response, nil
+}
+
+type directTransferCancelBody struct {
+	io.ReadCloser
+	cancel context.CancelFunc
+}
+
+func (b *directTransferCancelBody) Close() error {
+	err := b.ReadCloser.Close()
+	b.cancel()
+	return err
+}
+
 func cloneRequestForDirectTransfer(request *http.Request, rawURL string) (*http.Request, error) {
 	directURL, err := url.Parse(rawURL)
 	if err != nil {
@@ -360,6 +479,7 @@ func DirectTransferRequestHeaders(headers *http.Header) *http.Header {
 	}
 	clearAuthHeaders(&cloned)
 	cloned.Del("Authorization")
+	cloned.Del("Proxy-Authorization")
 	cloned.Del("Cookie")
 	return &cloned
 }
