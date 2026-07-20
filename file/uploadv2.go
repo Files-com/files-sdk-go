@@ -41,8 +41,18 @@ const (
 
 	// AdaptiveTransferS3MaxConcurrency is the SDK default maximum adaptive concurrency for S3 transfers.
 	AdaptiveTransferS3MaxConcurrency = 1024
+	// AdaptiveTransferDirectMaxConcurrency is the SDK default maximum adaptive concurrency for direct transfers.
+	AdaptiveTransferDirectMaxConcurrency = 256
 	// AdaptiveTransferDefaultMaxConcurrency is the SDK default maximum adaptive concurrency for generic transfers.
 	AdaptiveTransferDefaultMaxConcurrency = 32
+	// AdaptiveTransferDirectInitialTarget is the direct transfer starting concurrency.
+	AdaptiveTransferDirectInitialTarget = 32
+	// AdaptiveTransferDirectMinTarget is the direct transfer minimum concurrency.
+	AdaptiveTransferDirectMinTarget = 8
+	// AdaptiveTransferDirectGrowthCeiling is the direct transfer target before throughput-guided probing.
+	AdaptiveTransferDirectGrowthCeiling = 64
+	// AdaptiveTransferDirectGrowthCeilingProbeSuccesses is the completed part count required before probing above the soft target.
+	AdaptiveTransferDirectGrowthCeilingProbeSuccesses = 64
 	// AdaptiveTransferS3InitialTarget is the S3 transfer starting concurrency.
 	AdaptiveTransferS3InitialTarget = AdaptiveTransferHighThroughputInitialTarget
 	// AdaptiveTransferS3MinTarget is the S3 transfer minimum concurrency.
@@ -137,6 +147,17 @@ func normalizeTransferV2TargetClass(target TransferV2TargetClass) TransferV2Targ
 	return target
 }
 
+func adaptiveTransferMaxConcurrency(target TransferV2TargetClass) int {
+	switch normalizeTransferV2TargetClass(target) {
+	case TransferV2TargetS3:
+		return AdaptiveTransferS3MaxConcurrency
+	case TransferV2TargetDirect:
+		return AdaptiveTransferDirectMaxConcurrency
+	default:
+		return AdaptiveTransferDefaultMaxConcurrency
+	}
+}
+
 // AdaptiveTransferDefaults contains the primary transfer concurrency defaults
 // callers usually need when initializing adaptive managers directly.
 type AdaptiveTransferDefaults struct {
@@ -187,6 +208,8 @@ func (d AdaptiveTransferDefaults) AdaptiveConcurrencyConfig(target TransferV2Tar
 type UploadV2Tuning struct {
 	// InitialTarget is the starting adaptive concurrency target for all transfer targets.
 	InitialTarget int
+	// GrowthCeiling is the soft concurrency ceiling before throughput-guided probing.
+	GrowthCeiling int
 	// S3InitialTarget is the starting adaptive concurrency target for S3 uploads.
 	S3InitialTarget int
 	// S3AdaptiveFloor is the lowest adaptive target the S3 controller should shrink toward.
@@ -298,6 +321,9 @@ func UploadWithV2TargetClassifier(classifier UploadV2TargetClassifier) UploadOpt
 func (t UploadV2Tuning) validate() error {
 	if t.InitialTarget < 0 {
 		return errors.New("transfer v2 tuning initial target must be greater than or equal to zero")
+	}
+	if t.GrowthCeiling < 0 {
+		return errors.New("transfer v2 tuning growth ceiling must be greater than or equal to zero")
 	}
 	if t.S3InitialTarget < 0 {
 		return errors.New("upload v2 tuning s3 initial target must be greater than or equal to zero")
@@ -694,12 +720,8 @@ func (u *uploadIO) uploadV2MaxConcurrency() int {
 		}
 	}
 
-	switch classifyUploadV2Target(u.FileUploadPart, u.uploadV2TargetClassifier) {
-	case uploadV2TargetS3:
-		return manager.EffectiveAdaptiveUploadV2ConcurrentFileParts(AdaptiveTransferS3MaxConcurrency)
-	default:
-		return manager.EffectiveAdaptiveUploadV2ConcurrentFileParts(AdaptiveTransferDefaultMaxConcurrency)
-	}
+	target := classifyUploadV2Target(u.FileUploadPart, u.uploadV2TargetClassifier)
+	return manager.EffectiveAdaptiveUploadV2ConcurrentFileParts(adaptiveTransferMaxConcurrency(target))
 }
 
 func (u *uploadIO) uploadV2InitialConcurrency(maxConcurrency int) int {
@@ -758,16 +780,28 @@ func uploadV2AdaptiveConcurrencyConfigWithInitial(plan uploadV2PartPlan, maxConc
 		config.LatencyShrinkPercent = AdaptiveTransferS3LatencyShrinkPercent
 		config.LatencyQueueHigh = AdaptiveTransferS3LatencyQueueHigh
 		config.LatencyGrowthQueueHigh = AdaptiveTransferS3LatencyGrowthQueueHigh
-		applyTransferV2InitialTargetTuning(&config, tuning, maxConcurrency)
-		if plan.target == uploadV2TargetS3 {
-			applyS3UploadV2Tuning(&config, tuning, maxConcurrency, initial)
+		if plan.target == uploadV2TargetDirect {
+			config.MinTarget = min(AdaptiveTransferDirectMinTarget, maxConcurrency)
+			config.ThroughputFloor = config.MinTarget
+			config.ThroughputProbeFloor = min(AdaptiveTransferDirectGrowthCeiling, maxConcurrency)
+			config.ThroughputProbePlateauTarget = min(AdaptiveTransferDirectGrowthCeiling, maxConcurrency)
+			config.GrowthCeiling = min(AdaptiveTransferDirectGrowthCeiling, maxConcurrency)
+			config.GrowthCeilingProbeBytes = 0
+			config.GrowthCeilingProbeSuccesses = AdaptiveTransferDirectGrowthCeilingProbeSuccesses
+			config.LatencyFloor = config.MinTarget
 		}
+	}
+	applyTransferV2Tuning(&config, tuning, maxConcurrency)
+	if plan.target == uploadV2TargetS3 {
+		applyS3UploadV2Tuning(&config, tuning, maxConcurrency, initial)
 	}
 	return config
 }
 
-func applyTransferV2InitialTargetTuning(config *lib.AdaptiveConcurrencyConfig, tuning UploadV2Tuning, maxConcurrency int) {
-	if tuning.InitialTarget > 0 && config.GrowthCeiling > 0 {
+func applyTransferV2Tuning(config *lib.AdaptiveConcurrencyConfig, tuning UploadV2Tuning, maxConcurrency int) {
+	if tuning.GrowthCeiling > 0 {
+		config.GrowthCeiling = min(tuning.GrowthCeiling, maxConcurrency)
+	} else if tuning.InitialTarget > 0 && config.GrowthCeiling > 0 {
 		config.GrowthCeiling = min(tuning.InitialTarget, maxConcurrency)
 	}
 }
@@ -865,7 +899,7 @@ func uploadV2InitialConcurrencyForSharedPlan(plan uploadV2PartPlan, maxConcurren
 		if tuning.InitialTarget > 0 {
 			return min(maxConcurrency, tuning.InitialTarget)
 		}
-		return min(maxConcurrency, 64)
+		return min(maxConcurrency, AdaptiveTransferDirectInitialTarget)
 	default:
 		if tuning.InitialTarget > 0 {
 			return min(maxConcurrency, tuning.InitialTarget)

@@ -31,7 +31,7 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams, opts
 		job = params.Job
 	}
 	job.Config = params.config
-	jobCtx := job.WithContext(parentCtx)
+	jobCtx := job.withDirectTransferClientCache(parentCtx)
 
 	fileInfoLocalPath, statErr := os.Stat(params.LocalPath)
 

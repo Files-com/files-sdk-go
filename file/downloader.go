@@ -29,7 +29,7 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams, opt
 			job.CompletedPaths[p] = struct{}{}
 		}
 	}
-	jobCtx := job.WithContext(ctx)
+	jobCtx := job.withDirectTransferClientCache(ctx)
 	remoteFs, ok := fileSys.(lib.FSWithContext)
 	if ok {
 		fileSys = remoteFs.WithContext(jobCtx)

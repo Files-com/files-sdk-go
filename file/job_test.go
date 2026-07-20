@@ -1,6 +1,7 @@
 package file
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/file/status"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type StatusFile struct {
@@ -81,6 +83,32 @@ func TestJob_TransferRate(t *testing.T) {
 	time.Sleep(1 * time.Second)
 	assert.InDelta(int64(200), job.TransferRate(), 100)
 	assert.False(job.Idle(), "Nothing has happened recently so rate is zero")
+}
+
+func TestJobDirectTransferClientCacheIsSharedAcrossFiles(t *testing.T) {
+	job := (&Job{}).Init()
+	jobContext := job.withDirectTransferClientCache(context.Background())
+	defer job.Finish()
+
+	firstFileContext, closeFirst := files_sdk.WithDirectTransferClientCache(jobContext)
+	defer closeFirst()
+	secondFileContext, closeSecond := files_sdk.WithDirectTransferClientCache(jobContext)
+	defer closeSecond()
+
+	caPEM, _ := testDirectTransferCertificate(t, testDirectCredentialServerName)
+	directInfo := files_sdk.DirectConnectionInfo{
+		Version:    1,
+		ServerName: testDirectCredentialServerName,
+		Addresses:  []string{"tcp://127.0.0.1:4001"},
+		DirectUri:  "https://" + testDirectCredentialServerName + "/uploads",
+		CaPem:      string(caPEM),
+	}
+	config := files_sdk.Config{Environment: files_sdk.Development}.Init()
+	_, firstClient, err := files_sdk.DirectTransferRetryableClient(firstFileContext, config, directInfo)
+	require.NoError(t, err)
+	_, secondClient, err := files_sdk.DirectTransferRetryableClient(secondFileContext, config, directInfo)
+	require.NoError(t, err)
+	require.Same(t, firstClient.HTTPClient, secondClient.HTTPClient)
 }
 
 func TestJob_ETA(t *testing.T) {

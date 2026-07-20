@@ -524,10 +524,7 @@ func downloadV2MaxConcurrency(job *Job, params DownloaderParams, target Transfer
 	if params.Manager != nil && !params.AdaptiveConcurrencyUseSDKDefaultCaps {
 		return max(1, job.Manager.FilePartsManager.Max())
 	}
-	maxConcurrency := AdaptiveTransferDefaultMaxConcurrency
-	if target == downloadV2TargetS3 || target == downloadV2TargetDirect {
-		maxConcurrency = manager.AdaptiveDownloadV2ConcurrentFileParts
-	}
+	maxConcurrency := adaptiveTransferMaxConcurrency(target)
 	return manager.EffectiveAdaptiveDownloadV2ConcurrentFileParts(maxConcurrency)
 }
 
@@ -611,6 +608,9 @@ func downloadV2SharedAdaptiveConcurrencyConfig(target TransferV2TargetClass, max
 }
 
 func classifyDownloadV2Target(ctx context.Context, _ goFs.FileInfo, ranger ReaderRange, classifier DownloadV2TargetClassifier) (TransferV2TargetClass, bool) {
+	if classifier == nil && downloadV2DirectTarget(ranger) {
+		return downloadV2TargetDirect, true
+	}
 	provider, ok := ranger.(downloadV2URIProvider)
 	if !ok {
 		return "", false
@@ -618,9 +618,6 @@ func classifyDownloadV2Target(ctx context.Context, _ goFs.FileInfo, ranger Reade
 	downloadURI, err := provider.downloadV2URI(ctx)
 	if err != nil {
 		return "", false
-	}
-	if classifier == nil && downloadV2DirectTarget(ranger) {
-		return downloadV2TargetDirect, true
 	}
 	return classifyDownloadV2URI(downloadURI, classifier)
 }

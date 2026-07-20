@@ -313,13 +313,13 @@ func classifyUploadV2Target(part files_sdk.FileUploadPart, classifiers ...Upload
 	if len(classifiers) > 0 && classifiers[0] != nil {
 		return normalizeTransferV2TargetClass(classifiers[0](part))
 	}
+	if files_sdk.DirectConnectionInfoPresent(part.DirectConnectionInfo) {
+		return uploadV2TargetDirect
+	}
 
 	parsed, err := url.Parse(part.UploadUri)
 	if err != nil {
 		return uploadV2TargetDefault
-	}
-	if files_sdk.DirectConnectionInfoPresent(part.DirectConnectionInfo) {
-		return uploadV2TargetDirect
 	}
 	host := strings.ToLower(parsed.Hostname())
 

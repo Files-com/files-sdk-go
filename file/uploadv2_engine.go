@@ -274,6 +274,9 @@ func uploadV2HTTPMaxConnsPerHost(plan uploadV2PartPlan, tuning UploadV2Tuning, m
 	if tuning.InitialTarget > 0 {
 		ceiling = tuning.InitialTarget
 	}
+	if tuning.GrowthCeiling > 0 {
+		ceiling = tuning.GrowthCeiling
+	}
 	if tuning.S3GrowthCeiling > 0 {
 		ceiling = tuning.S3GrowthCeiling
 	}

@@ -1044,7 +1044,6 @@ func TestDownloadV2ClassifiesS3AndDefaultDownloadURLs(t *testing.T) {
 func TestDownloadV2ClassifiesDirectTarget(t *testing.T) {
 	sdkFile := files_sdk.File{
 		Path:                 "remote.bin",
-		DownloadUri:          "https://files-agent-proxy.test/downloads/remote.bin",
 		DirectConnectionInfo: testDirectConnectionInfo("/downloads?jwt=direct-token"),
 	}
 	ranger := (&File{File: &sdkFile}).Init()
@@ -1062,11 +1061,14 @@ func TestDownloadV2SharedManagerDoesNotStartAtTinyFilePartCount(t *testing.T) {
 	assert.Equal(t, AdaptiveTransferS3InitialTarget, adaptiveManager.Snapshot().Target)
 }
 
-func TestDownloadV2DirectSharedManagerStartsAtHighThroughputTarget(t *testing.T) {
+func TestDownloadV2DirectSharedManagerUsesDirectProfile(t *testing.T) {
 	registry := downloadV2SharedAdaptiveManagerRegistry{}
-	adaptiveManager := registry.get(downloadV2TargetDirect, manager.AdaptiveDownloadV2ConcurrentFileParts, 1024, 16*1024*1024, UploadV2Tuning{})
+	adaptiveManager := registry.get(downloadV2TargetDirect, AdaptiveTransferDirectMaxConcurrency, 1024, 16*1024*1024, UploadV2Tuning{})
 
-	assert.Equal(t, 64, adaptiveManager.Snapshot().Target)
+	snapshot := adaptiveManager.Snapshot()
+	assert.Equal(t, AdaptiveTransferDirectInitialTarget, snapshot.Target)
+	assert.Equal(t, AdaptiveTransferDirectMaxConcurrency, snapshot.Max)
+	assert.Equal(t, AdaptiveTransferDirectGrowthCeiling, snapshot.GrowthCeiling)
 }
 
 func TestDownloadV2TuningOverridesS3InitialTargetAndProbeTarget(t *testing.T) {

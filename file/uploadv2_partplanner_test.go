@@ -1409,17 +1409,36 @@ func TestUploadV2InitialTargetTuningAppliesToAllTargets(t *testing.T) {
 	}
 }
 
-func TestUploadV2DirectAdaptiveConfigStartsAtHighThroughputTarget(t *testing.T) {
+func TestUploadV2SoftCeilingTuningOverridesInitialTargetCeiling(t *testing.T) {
+	size := int64(1024) * uploadV2MiB
+	plan, ok, reason := newUploadV2PartPlan(uploadV2TargetDirect, &size)
+	require.True(t, ok, reason)
+
+	config := uploadV2SharedAdaptiveConcurrencyConfig(plan, AdaptiveTransferDirectMaxConcurrency, UploadV2Tuning{
+		InitialTarget: 32,
+		GrowthCeiling: 96,
+	})
+
+	assert.Equal(t, 32, config.InitialTarget)
+	assert.Equal(t, 96, config.GrowthCeiling)
+}
+
+func TestUploadV2DirectAdaptiveConfigUsesDirectProfile(t *testing.T) {
 	size := int64(1024) * uploadV2MiB
 	plan, ok, reason := newUploadV2PartPlan(uploadV2TargetDirect, &size)
 	require.True(t, ok, reason)
 
 	config := uploadV2AdaptiveConcurrencyConfig(plan, 200)
 
-	assert.Equal(t, 64, config.InitialTarget)
-	assert.Equal(t, AdaptiveTransferS3ThroughputProbeFloor, config.ThroughputProbeFloor)
-	assert.Equal(t, AdaptiveTransferS3ThroughputProbePlateau, config.ThroughputProbePlateauTarget)
-	assert.Equal(t, AdaptiveTransferS3GrowthCeiling, config.GrowthCeiling)
+	assert.Equal(t, AdaptiveTransferDirectInitialTarget, config.InitialTarget)
+	assert.Equal(t, AdaptiveTransferDirectMinTarget, config.MinTarget)
+	assert.Equal(t, AdaptiveTransferDirectMinTarget, config.ThroughputFloor)
+	assert.Equal(t, AdaptiveTransferDirectGrowthCeiling, config.ThroughputProbeFloor)
+	assert.Equal(t, AdaptiveTransferDirectGrowthCeiling, config.ThroughputProbePlateauTarget)
+	assert.Equal(t, AdaptiveTransferDirectGrowthCeiling, config.GrowthCeiling)
+	assert.Zero(t, config.GrowthCeilingProbeBytes)
+	assert.Equal(t, AdaptiveTransferDirectGrowthCeilingProbeSuccesses, config.GrowthCeilingProbeSuccesses)
+	assert.Equal(t, AdaptiveTransferDirectMinTarget, config.LatencyFloor)
 	assert.Equal(t, float64(AdaptiveTransferS3LatencyGrowthQueueHigh), config.LatencyGrowthQueueHigh)
 }
 

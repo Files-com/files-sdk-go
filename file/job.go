@@ -246,6 +246,18 @@ func (r *Job) WithContext(ctx context.Context) context.Context {
 	return jobCtx
 }
 
+func (r *Job) withDirectTransferClientCache(ctx context.Context) context.Context {
+	jobCtx, closeDirectClients := filesSDK.WithDirectTransferClientCache(r.WithContext(ctx))
+	go func() {
+		select {
+		case <-r.Finished.C:
+		case <-r.Canceled.C:
+		}
+		closeDirectClients()
+	}()
+	return jobCtx
+}
+
 func OnBytesChange(event status.GetStatus) status.GetStatus {
 	return onBytesChange{GetStatus: event}
 }
