@@ -2,13 +2,11 @@ package file
 
 import (
 	"io"
-	"io/fs"
 	"net/http"
 	"net/url"
 	"time"
 
 	"github.com/Files-com/files-sdk-go/v3/downloadurl"
-	"github.com/Files-com/files-sdk-go/v3/file/manager"
 	"github.com/Files-com/files-sdk-go/v3/folder"
 
 	"errors"
@@ -399,35 +397,65 @@ func (r RecursiveItem) Err() error {
 	return r.error
 }
 
-func (c *Client) ListForRecursive(params files_sdk.FolderListForParams, opts ...files_sdk.RequestResponseOption) (files_sdk.TypedIterI[RecursiveItem], error) {
-	if params.ConcurrencyManager == nil {
-		params.ConcurrencyManager = manager.Default().FilePartsManager
+type recursiveIter struct {
+	Iter
+	root    *files_sdk.File
+	current RecursiveItem
+}
+
+func (i *recursiveIter) Next() bool {
+	if i.root != nil {
+		i.current = RecursiveItem{File: *i.root}
+		i.root = nil
+		return true
 	}
-	// Find the path first for recursive operations
-	fsi := (&FS{}).Init(c.Config, true).WithContext(files_sdk.ContextOption(opts)).(*FS)
-	fStat, err := fs.Stat(fsi, params.Path)
+	if !i.Iter.Next() {
+		return false
+	}
+	i.current = RecursiveItem{File: i.Iter.Current().(files_sdk.File)}
+	return true
+}
+
+func (i *recursiveIter) Current() interface{} {
+	return i.current
+}
+
+func (i *recursiveIter) Resource() RecursiveItem {
+	return i.current
+}
+
+func (c *Client) ListForRecursive(params files_sdk.FolderListForParams, opts ...files_sdk.RequestResponseOption) (files_sdk.TypedIterI[RecursiveItem], error) {
+	if params.SortBy != nil || params.Search != "" || params.SearchAll != nil || params.SearchCustomMetadataKey != "" || params.ModifiedAtDatetime != nil {
+		return nil, errors.New("recursive listings do not support sort_by, search, search_all, search_custom_metadata_key, or modified_at_datetime")
+	}
+
+	root := files_sdk.File{Type: "directory"}
+	if params.Path == "." || lib.NormalizeForComparison(params.Path) == "" {
+		params.Path = ""
+	} else {
+		var err error
+		root, err = c.Find(files_sdk.FileFindParams{Path: params.Path}, opts...)
+		if err != nil {
+			return nil, err
+		}
+		if root.Type == "directory" && root.Path != params.Path {
+			params.Path = root.Path
+		}
+	}
+
+	opts = append(opts, files_sdk.RequestOption(func(request *http.Request) error {
+		query := request.URL.Query()
+		query.Set("recursive", "true")
+		request.URL.RawQuery = query.Encode()
+		return nil
+	}))
+	it, err := c.ListFor(params, opts...)
 	if err != nil {
 		return nil, err
 	}
-	// The path is a directory and the literal strings do not match use our returned path
-	if fStat.Sys().(files_sdk.File).Type == "directory" && fStat.Sys().(files_sdk.File).Path != params.Path {
-		params.Path = fStat.Sys().(files_sdk.File).Path
+	recursive := &recursiveIter{Iter: it}
+	if params.Cursor == "" && params.Type != "file" && root.Type == "directory" && root.Path != "" {
+		recursive.root = &root
 	}
-
-	return (&lib.Walk[RecursiveItem]{
-		FS:                 fsi,
-		Root:               lib.UrlJoinNoEscape(params.Path),
-		ConcurrencyManager: params.ConcurrencyManager,
-		ListDirectories:    true,
-		WalkFile: func(d fs.DirEntry, path string, err error) (RecursiveItem, error) {
-			info, infoErr := d.Info()
-			if infoErr == nil {
-				return RecursiveItem{info.Sys().(files_sdk.File), err}, nil
-			} else if err != nil {
-				return RecursiveItem{}, err
-			} else {
-				return RecursiveItem{}, infoErr
-			}
-		},
-	}).Walk(files_sdk.ContextOption(opts)), nil
+	return recursive, nil
 }

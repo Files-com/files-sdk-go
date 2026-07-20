@@ -1,6 +1,8 @@
 package files_sdk
 
 import (
+	"errors"
+
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
@@ -120,26 +122,37 @@ func (i *Iter) ExportParams() (lib.ExportValues, error) {
 }
 
 func (i *Iter) GetPage() bool {
-	if i.GetParams().MaxPages != 0 && i.Page >= i.GetParams().MaxPages {
-		return false
-	}
+	for {
+		if i.GetParams().MaxPages != 0 && i.Page >= i.GetParams().MaxPages {
+			return false
+		}
 
-	i.CurrentIndex = 0
-	i.Page += 1
+		i.CurrentIndex = 0
+		i.Page += 1
 
-	if i.Values != nil && i.Cursor == "" {
-		return false
+		if i.Values != nil && i.Cursor == "" {
+			return false
+		}
+		previousCursor := i.GetParams().Cursor
+		params, _ := i.ExportParams()
+		i.Values, i.Cursor, i.Error = i.Query(params, i.requestResponseOptions...)
+		i.SetCursor(i.Cursor)
+		if i.Error != nil && i.OnPageError != nil {
+			i.Values, i.Error = i.OnPageError(i.Error)
+		}
+		if i.Error == nil && len(*i.Values) == 0 && i.Cursor != "" && i.Cursor == previousCursor {
+			i.Error = errors.New("pagination cursor did not advance after an empty page")
+		}
+		if i.Error != nil || len(*i.Values) != 0 || i.Cursor == "" {
+			return i.Error == nil && len(*i.Values) != 0
+		}
 	}
-	params, _ := i.ExportParams()
-	i.Values, i.Cursor, i.Error = i.Query(params, i.requestResponseOptions...)
-	i.SetCursor(i.Cursor)
-	if i.Error != nil && i.OnPageError != nil {
-		i.Values, i.Error = i.OnPageError(i.Error)
-	}
-	return i.Error == nil && len(*i.Values) != 0
 }
 
 func (i *Iter) EOFPage() bool {
+	if i.Values == nil {
+		return false
+	}
 	return len(*i.Values) == i.CurrentIndex+1
 }
 

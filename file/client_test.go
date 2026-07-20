@@ -1459,108 +1459,158 @@ func TestClient_Uploader_Directories_With_DeleteSource(t *testing.T) {
 }
 
 func TestClient_ListForRecursive(t *testing.T) {
-	client, r, err := CreateClient("TestClient_ListForRecursive")
-	if err != nil {
-		t.Fatal(err)
+	type recursiveRequest struct {
+		path      string
+		recursive string
+		cursor    string
+		fileType  string
 	}
-	defer r.Stop()
-	assert := assert.New(t)
-	buildScenario("TestClient_ListForRecursive", client)
+	requests := make(chan recursiveRequest, 10)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cursor := r.URL.Query().Get("cursor")
+		requests <- recursiveRequest{
+			path:      r.URL.Path,
+			recursive: r.URL.Query().Get("recursive"),
+			cursor:    cursor,
+			fileType:  r.URL.Query().Get("type"),
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path == "/api/rest/v1/file_actions/metadata/reports" {
+			_, _ = w.Write([]byte(`{"path":"Reports","type":"directory"}`))
+			return
+		}
+		if r.URL.Path != "/api/rest/v1/folders/Reports" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		if r.URL.Query().Get("type") == "file" {
+			_, _ = w.Write([]byte(`[{"path":"Reports/first.txt","type":"file"}]`))
+			return
+		}
+		switch cursor {
+		case "":
+			w.Header().Set("X-Files-Cursor", "cursor-1")
+			_, _ = w.Write([]byte(`[{"path":"Reports/first.txt","type":"file"}]`))
+		case "cursor-1":
+			w.Header().Set("X-Files-Cursor", "cursor-2")
+			_, _ = w.Write([]byte(`[]`))
+		case "cursor-2":
+			_, _ = w.Write([]byte(`[{"path":"Reports/nested","type":"directory"},{"path":"Reports/nested/last.txt","type":"file"}]`))
+		default:
+			w.WriteHeader(http.StatusBadRequest)
+		}
+	}))
+	defer server.Close()
 
-	it, _ := client.ListForRecursive(files_sdk.FolderListForParams{Path: "/TestClient_ListForRecursive"})
-	var files []RecursiveItem
+	config := files_sdk.Config{}.Init()
+	config.EndpointOverride = server.URL
+	client := &Client{Config: config}
+	it, err := client.ListForRecursive(files_sdk.FolderListForParams{Path: "reports"})
+	require.NoError(t, err)
+
+	var paths []string
 	for it.Next() {
-		files = append(files, it.Resource())
+		item, ok := it.Current().(RecursiveItem)
+		require.True(t, ok)
+		assert.Equal(t, item, it.Resource())
+		assert.NoError(t, item.Err())
+		paths = append(paths, item.Path)
 	}
 
-	paths := lo.Map[RecursiveItem, string](files, func(item RecursiveItem, index int) string {
-		return item.Path
+	require.NoError(t, it.Err())
+	assert.Equal(t, []string{"Reports", "Reports/first.txt", "Reports/nested", "Reports/nested/last.txt"}, paths)
+
+	resumed, err := client.ListForRecursive(files_sdk.FolderListForParams{
+		Path: "reports",
+		ListParams: files_sdk.ListParams{
+			Cursor: "cursor-2",
+		},
 	})
-	assert.Contains(paths, "TestClient_ListForRecursive")
-	assert.Contains(paths, "TestClient_ListForRecursive/nested_1")
-	assert.Contains(paths, "TestClient_ListForRecursive/nested_1/nested_2")
-	assert.Contains(paths, "TestClient_ListForRecursive/nested_1/nested_2/nested_3")
-	assert.Contains(paths, "TestClient_ListForRecursive/nested_1/nested_2/nested_3/4.text")
-	assert.Contains(paths, "TestClient_ListForRecursive/nested_1/nested_2/3.text")
-}
-
-func TestClient_ListForRecursiveInsensitive(t *testing.T) {
-	client, r, err := CreateClient("TestClient_ListForRecursiveInsensitive")
-	if err != nil {
-		t.Fatal(err)
+	require.NoError(t, err)
+	var resumedPaths []string
+	for resumed.Next() {
+		resumedPaths = append(resumedPaths, resumed.Resource().Path)
 	}
-	defer r.Stop()
-	assert := assert.New(t)
-	buildScenario("TestClient_ListForRecursiveInsensitive", client)
+	require.NoError(t, resumed.Err())
+	assert.Equal(t, []string{"Reports/nested", "Reports/nested/last.txt"}, resumedPaths)
 
-	it, _ := client.ListForRecursive(files_sdk.FolderListForParams{Path: "/TestcLient_listforrecursiveinseNsitive"})
-	var files []RecursiveItem
-	for it.Next() {
-		files = append(files, it.Resource())
+	filesOnly, err := client.ListForRecursive(files_sdk.FolderListForParams{Path: "reports", Type: "file"})
+	require.NoError(t, err)
+	var filePaths []string
+	for filesOnly.Next() {
+		filePaths = append(filePaths, filesOnly.Resource().Path)
 	}
+	require.NoError(t, filesOnly.Err())
+	assert.Equal(t, []string{"Reports/first.txt"}, filePaths)
 
-	require.Equal(t, 6, len(files))
-	paths := lo.Map[RecursiveItem, string](files, func(item RecursiveItem, index int) string {
-		return item.Path
-	})
-	assert.Contains(paths, "TestClient_ListForRecursiveInsensitive")
-	assert.Contains(paths, "TestClient_ListForRecursiveInsensitive/nested_1")
-	assert.Contains(paths, "TestClient_ListForRecursiveInsensitive/nested_1/nested_2")
-	assert.Contains(paths, "TestClient_ListForRecursiveInsensitive/nested_1/nested_2/nested_3")
-	assert.Contains(paths, "TestClient_ListForRecursiveInsensitive/nested_1/nested_2/nested_3/4.text")
-	assert.Contains(paths, "TestClient_ListForRecursiveInsensitive/nested_1/nested_2/3.text")
-}
-
-func TestClient_ListForRecursive_Error(t *testing.T) {
-	client, r, err := CreateClient("TestClient_ListForRecursive_Error")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
-	assert := assert.New(t)
-	it, err := client.ListForRecursive(files_sdk.FolderListForParams{Path: "TestClient_ListForRecursive-Not-Found"})
-	var files []interface{}
-	if err == nil {
-		for it.Next() {
-			files = append(files, it.Current())
+	require.Equal(t, 8, len(requests))
+	for i, expected := range []recursiveRequest{
+		{path: "/api/rest/v1/file_actions/metadata/reports"},
+		{path: "/api/rest/v1/folders/Reports"},
+		{path: "/api/rest/v1/folders/Reports", cursor: "cursor-1"},
+		{path: "/api/rest/v1/folders/Reports", cursor: "cursor-2"},
+		{path: "/api/rest/v1/file_actions/metadata/reports"},
+		{path: "/api/rest/v1/folders/Reports", cursor: "cursor-2"},
+		{path: "/api/rest/v1/file_actions/metadata/reports"},
+		{path: "/api/rest/v1/folders/Reports", fileType: "file"},
+	} {
+		request := <-requests
+		assert.Equal(t, expected.path, request.path, "request %d", i+1)
+		assert.Equal(t, expected.cursor, request.cursor, "request %d", i+1)
+		assert.Equal(t, expected.fileType, request.fileType, "request %d", i+1)
+		if strings.Contains(request.path, "/file_actions/metadata/") {
+			assert.Empty(t, request.recursive, "request %d", i+1)
+		} else {
+			assert.Equal(t, "true", request.recursive, "request %d", i+1)
 		}
 	}
-
-	assert.Equal(len(files), 0)
-	assert.Equal("open TestClient_ListForRecursive-Not-Found: Authentication Required - `Unauthorized. The API key or Session token is either missing or invalid.`", err.Error())
 }
 
-func TestClient_ListForRecursive_Root(t *testing.T) {
-	client, r, err := CreateClient("TestClient_ListForRecursive_Root")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
-	assert := assert.New(t)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	it, _ := client.ListForRecursive(files_sdk.FolderListForParams{Path: ""}, files_sdk.WithContext(ctx))
-	recursiveItems := make([]RecursiveItem, 0)
-	for it.Next() {
-		if it.Err() != nil {
-			assert.NoError(it.Err())
-			continue
+func TestClient_ListForRecursiveRoot(t *testing.T) {
+	requests := make(chan string, 3)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests <- r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Path != "/api/rest/v1/folders/" {
+			w.WriteHeader(http.StatusNotFound)
+			return
 		}
+		_, _ = w.Write([]byte(`[{"path":"first.txt","type":"file"}]`))
+	}))
+	defer server.Close()
 
-		recursiveItems = append(recursiveItems, it.Resource())
-		assert.NotEqual(it.Resource().Path, "")
+	config := files_sdk.Config{}.Init()
+	config.EndpointOverride = server.URL
+	client := &Client{Config: config}
+	for _, path := range []string{"", "/", "."} {
+		it, err := client.ListForRecursive(files_sdk.FolderListForParams{Path: path})
+		require.NoError(t, err)
+		require.True(t, it.Next())
+		assert.Equal(t, "first.txt", it.Resource().Path)
+		assert.False(t, it.Next())
+		require.NoError(t, it.Err())
 	}
-	paths := lo.Map[RecursiveItem, string](recursiveItems, func(item RecursiveItem, index int) string {
-		return item.Path
-	})
-	assert.Len(paths, 4)
-	errs := lo.Map[RecursiveItem, error](recursiveItems, func(item RecursiveItem, index int) error {
-		return item.Err()
-	})
-	errs = lo.Reject[error](errs, func(err error, index int) bool {
-		return err == nil
-	})
-	assert.ElementsMatch([]string{"azure", "aws-sftp"}, []string{errs[0].(*fs2.PathError).Path, errs[1].(*fs2.PathError).Path})
+
+	require.Equal(t, 3, len(requests))
+	assert.Equal(t, "/api/rest/v1/folders/", <-requests)
+	assert.Equal(t, "/api/rest/v1/folders/", <-requests)
+	assert.Equal(t, "/api/rest/v1/folders/", <-requests)
+}
+
+func TestClient_ListForRecursiveRejectsUnsupportedParams(t *testing.T) {
+	modifiedAt := time.Now()
+	for name, params := range map[string]files_sdk.FolderListForParams{
+		"sort_by":                    {SortBy: "size"},
+		"search":                     {Search: "report"},
+		"search_all":                 {SearchAll: lib.Bool(true)},
+		"search_custom_metadata_key": {SearchCustomMetadataKey: "category"},
+		"modified_at_datetime":       {ModifiedAtDatetime: &modifiedAt},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := (&Client{}).ListForRecursive(params)
+			assert.EqualError(t, err, "recursive listings do not support sort_by, search, search_all, search_custom_metadata_key, or modified_at_datetime")
+		})
+	}
 }
 
 func TestClient_UploadFile(t *testing.T) {
