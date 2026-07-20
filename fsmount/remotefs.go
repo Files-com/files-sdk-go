@@ -103,8 +103,9 @@ type RemoteFs struct {
 
 	cacheStore cacheStore
 
-	gatesMu    sync.Mutex
-	readyGates map[string]*cache.ReadyGate
+	gatesMu         sync.Mutex
+	readyGates      map[string]*cache.ReadyGate
+	gatePathMutexes *fssync.PathMutex
 
 	events      events.EventPublisher
 	transferSeq uint64
@@ -272,6 +273,7 @@ func newRemoteFs(params MountParams, vfs *virtualfs, log log.Logger, cs cacheSto
 		events:           params.EventPublisher,
 		cacheStore:       cs,
 		readyGates:       make(map[string]*cache.ReadyGate),
+		gatePathMutexes:  fssync.NewPathMutex(),
 		ops:              limiter,
 		loadDirMutexes:   fssync.NewPathMutex(),
 		bufferPool: fssync.NewPool(func() []byte {
@@ -572,48 +574,108 @@ func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
 		return errc
 	}
 
-	defer node.expireInfo()
-
-	if !node.hasActiveWriteSession() {
-		fs.log.Info("Renaming %v to %v (%v to %v)", oldRemotePath, newRemotePath, oldLocalPath, newLocalPath)
-
-		err := fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
-			action, err := fs.backend.move(files_sdk.FileMoveParams{
-				Path:        oldRemotePath,
-				Destination: newRemotePath,
-				// FUSE Rename only provides old and new paths; it does not tell us
-				// whether the shell already prompted and confirmed a replacement.
-				// Keep overwrite=true so confirmed Explorer/Finder replacement flows
-				// complete instead of failing at the API layer.
-				Overwrite: lib.Ptr(true),
-			})
-			if err != nil {
-				return err
-			}
-			return fs.waitForAction(ctx, action, "move")
-		})
-		if errors.Is(err, lim.ErrNoSlotsAvailable) {
+	// Reserve a committed retained session before releasing its locks for the remote move. Writes and
+	// truncates that were already preparing a local change finish first. No network operation runs
+	// while either mutex is held.
+	node.writeMu.Lock()
+	session := node.writeSession
+	waitForUpload := false
+	if session == nil {
+		node.writeMu.Unlock()
+		defer node.expireInfo()
+	} else {
+		session.mu.Lock()
+		if session.renaming {
+			session.mu.Unlock()
+			node.writeMu.Unlock()
 			return -fuse.EAGAIN
 		}
-		if errc = fs.handleError(oldpath, err); errc != 0 {
+
+		if !session.remoteCommitted && !session.uploadPathFixed {
+			// The first upload has not captured its final destination yet. Update the local path so its
+			// completion callback reads the new destination.
+			fs.rename(oldpath, newpath)
+			session.path = newpath
+			node.expireInfo()
+			session.mu.Unlock()
+			node.writeMu.Unlock()
 			return errc
 		}
 
-		fs.rename(oldpath, newpath)
-		_ = fs.cacheStore.Delete(oldpath)
-		_ = fs.cacheStore.Delete(newpath)
+		// A later upload does not replace the already-committed remote object until it finishes.
+		// Keep its destination at the old path, then move the completed object below so the old path
+		// cannot be left behind as an orphan.
+		waitForUpload = session.uploading || session.finalizing
+		session.renaming = true
+		node.writeMu.Unlock()
+		for session.mutationCount > 0 {
+			session.cond.Wait()
+		}
+		session.mu.Unlock()
+	}
+	if waitForUpload {
+		if err := node.waitForUploadWithProgressTimeout(fsyncTimeout); err != nil {
+			node.expireInfo()
+			_ = node.finishWriteSessionRename(session, newpath, false)
+			if errors.Is(err, context.DeadlineExceeded) {
+				return -fuse.ETIMEDOUT
+			}
+			if errc := fs.handleUploadSessionError(oldpath, err, session); errc != 0 {
+				return errc
+			}
+			return -fuse.EIO
+		}
+	}
+	// With no write session, or with a retained session that has committed an upload, the remote
+	// file already exists at oldRemotePath and must be moved explicitly.
+	fs.log.Info("Renaming %v to %v (%v to %v)", oldRemotePath, newRemotePath, oldLocalPath, newLocalPath)
 
+	err := fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
+		action, err := fs.backend.move(files_sdk.FileMoveParams{
+			Path:        oldRemotePath,
+			Destination: newRemotePath,
+			// FUSE Rename only provides old and new paths; it does not tell us
+			// whether the caller already confirmed a replacement. Keep overwrite=true
+			// so confirmed replacement flows complete instead of failing remotely.
+			Overwrite: lib.Ptr(true),
+		}, files_sdk.WithContext(ctx))
+		if err != nil {
+			return err
+		}
+		return fs.waitForAction(ctx, action, "move")
+	})
+	if errors.Is(err, lim.ErrNoSlotsAvailable) {
+		if session != nil {
+			node.expireInfo()
+			_ = node.finishWriteSessionRename(session, newpath, false)
+		}
+		return -fuse.EAGAIN
+	}
+	if errc = fs.handleError(oldpath, err); errc != 0 {
+		if session != nil {
+			node.expireInfo()
+			_ = node.finishWriteSessionRename(session, newpath, false)
+		}
 		return errc
 	}
 
-	// There must be an active upload for this node. Update local VFS map immediately so listings/
-	// lookups stay consistent. In order to support the pattern of writing a file to a temporary
-	// name, then renaming once the upload is complete, the node, and upload must be updated to
-	// reflect the new path. Before the upload is finalized, there is a callback that inspects the
-	// file node to get the final path and upload ref to complete the upload.
+	// Stop an old source or destination download from republishing stale cache data after the move.
+	// The per-path locks keep replacement downloads out until the VFS and cache reflect the new file.
+	unlockGates := fs.lockGatePaths(oldpath, newpath)
+	for _, readyGate := range fs.takeGatesForPaths(oldpath, newpath) {
+		readyGate.CancelAndWait()
+		readyGate.Cleanup()
+	}
 	fs.rename(oldpath, newpath)
-	node.updateWriteSessionPath(newpath)
-	node.clearDownloadURI()
+	_ = fs.cacheStore.Delete(oldpath)
+	_ = fs.cacheStore.Delete(newpath)
+	unlockGates()
+	if session != nil {
+		node.expireInfo()
+		if err := node.finishWriteSessionRename(session, newpath, true); err != nil {
+			fs.log.Debug("RemoteFs: Rename: failed clearing retained write session for %v: %v", newpath, err)
+		}
+	}
 
 	return errc
 }
@@ -883,11 +945,13 @@ func (fs *RemoteFs) Truncate(path string, size int64, fh uint64) (errc int) {
 	// working copy baseline and preserve data from the wrong version of the file.
 	fs.cacheStore.Delete(path)
 
-	session, _, err := node.ensureWriteSession(path)
+	session, _, err := node.beginWriteSessionMutation(path)
 	if err != nil {
 		fs.log.Error("RemoteFs: Truncate: failed to create write session for %v: %v", path, err)
 		return -fuse.EIO
 	}
+	defer session.endMutation()
+	path = session.snapshot().path
 	session.addHandle(fh)
 	if err := fs.ensureWriteSessionBaseline(path, node, session, size == 0, fh); err != nil {
 		if errc := fs.handleUploadSessionError(path, err, session); errc != 0 {
@@ -1036,12 +1100,14 @@ func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n in
 		return -fuse.EIO
 	}
 
-	session, created, err := node.ensureWriteSession(path)
+	session, created, err := node.beginWriteSessionMutation(path)
 	if err != nil {
 		fs.log.Error("RemoteFs: Write: failed to create write session for %v: %v", path, err)
 		fs.logWriteSessionMilestone(path, "write_session_create_failed", fh, nil, "err=%q", err.Error())
 		return -fuse.EIO
 	}
+	defer session.endMutation()
+	path = session.snapshot().path
 	if created {
 		node.setPendingVisible()
 		fs.logWriteSessionMilestone(path, "working_copy_created", fh, session, "offset=%d bytes=%d", ofst, len(buff))
@@ -1265,6 +1331,10 @@ func (fs *RemoteFs) flushWriteSession(path string, node *fsNode, fh uint64) (err
 	}
 
 	session.mu.Lock()
+	for session.renaming && session.dirty {
+		session.cond.Wait()
+		path = session.path
+	}
 	if session.lastUploadErr != nil {
 		err := session.lastUploadErr
 		session.mu.Unlock()
@@ -1451,7 +1521,7 @@ func (fs *RemoteFs) uploadWorkingCopyWithSDK(ctx context.Context, node *fsNode, 
 }
 
 func (fs *RemoteFs) finalizeUploadPathAndRef(node *fsNode) (string, string) {
-	path, ref := node.pathAndRef()
+	path, ref := node.captureUploadPathAndRef()
 	return fs.remotePath(path), ref
 }
 
@@ -1889,6 +1959,8 @@ func (fs *RemoteFs) downloadFile(src, dst string, eventLocalPath string) error {
 }
 
 func (fs *RemoteFs) findOrCreateGate(path string) (*cache.ReadyGate, bool) {
+	fs.gatePathMutexes.Lock(path)
+	defer fs.gatePathMutexes.Unlock(path)
 	fs.gatesMu.Lock()
 	defer fs.gatesMu.Unlock()
 	if fs.readyGates == nil {
@@ -1900,6 +1972,32 @@ func (fs *RemoteFs) findOrCreateGate(path string) (*cache.ReadyGate, bool) {
 	s := cache.NewReadyGate()
 	fs.readyGates[path] = s
 	return s, false
+}
+
+func (fs *RemoteFs) lockGatePaths(paths ...string) func() {
+	slices.Sort(paths)
+	paths = slices.Compact(paths)
+	for _, path := range paths {
+		fs.gatePathMutexes.Lock(path)
+	}
+	return func() {
+		for i := len(paths) - 1; i >= 0; i-- {
+			fs.gatePathMutexes.Unlock(paths[i])
+		}
+	}
+}
+
+func (fs *RemoteFs) takeGatesForPaths(paths ...string) []*cache.ReadyGate {
+	fs.gatesMu.Lock()
+	defer fs.gatesMu.Unlock()
+	var gates []*cache.ReadyGate
+	for _, path := range paths {
+		if readyGate := fs.readyGates[path]; readyGate != nil {
+			gates = append(gates, readyGate)
+			delete(fs.readyGates, path)
+		}
+	}
+	return gates
 }
 
 func (fs *RemoteFs) removeGate(path string, s *cache.ReadyGate) {
@@ -2015,7 +2113,7 @@ func (fs *RemoteFs) peekGate(path string) (*cache.ReadyGate, bool) {
 }
 
 func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, meta cache.EntryMetadata, readyGate *cache.ReadyGate, fh uint64, cancelOnActiveWrite bool) {
-	_, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(ctx)
 	readyGate.SetTotal(meta.Size)
 	readyGate.SetCancel(cancel)
 	readyGate.SetCleanup(func() {
@@ -2199,7 +2297,7 @@ func (fs *RemoteFs) lock(node *fsNode, fh uint64) (errc int) {
 			Path:                 remotePath,
 			AllowAccessByAnyUser: lib.Ptr(true),
 			Exclusive:            lib.Ptr(true),
-			Recursive:            lib.Ptr(true),
+			Recursive:            lib.Ptr(false),
 			Timeout:              fileLockSeconds,
 		})
 		return err
@@ -2741,7 +2839,7 @@ func (fs *RemoteFs) waitForAction(ctx context.Context, action files_sdk.FileActi
 	err = fs.ops.TryWithLimit(ctx, lim.FuseOpOther, func(ctx context.Context) error {
 		migration, err = fs.backend.wait(action, func(migration files_sdk.FileMigration) {
 			fs.log.Trace("RemoteFs: watchForAction: waiting for migration")
-		})
+		}, files_sdk.WithContext(ctx))
 		return err
 	})
 	if errors.Is(err, lim.ErrNoSlotsAvailable) {

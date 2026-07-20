@@ -493,10 +493,13 @@ func (dc *DiskCache) Delete(path string) bool {
 	}
 
 	fqPath := dc.entryPath(path)
+	// Invalidate completed-version metadata even when an open handle pins the
+	// data file. The pinned bytes remain readable through Read, but cannot seed
+	// a later ReadComplete for a different remote version.
+	_ = dc.deleteMetadata(path)
 	if dc.isPinned(fqPath) {
 		return false
 	}
-	_ = dc.deleteMetadata(path)
 	_, statErr := os.Stat(fqPath)
 	exists := statErr == nil
 	deleted := dc.lru.Remove(fqPath)

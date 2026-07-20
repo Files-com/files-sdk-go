@@ -263,8 +263,8 @@ func (n *fsNode) isLocked() bool {
 	return n.info.lockOwner != ""
 }
 
-func (n *fsNode) pathAndRef() (string, string) {
-	if path, ref, ok := n.writeSessionPathAndRef(); ok {
+func (n *fsNode) captureUploadPathAndRef() (string, string) {
+	if path, ref, ok := n.captureWriteSessionUploadPathAndRef(); ok {
 		return path, ref
 	}
 	return "", ""
@@ -295,45 +295,93 @@ func (n *fsNode) getWriteSession() *writeSession {
 	return n.writeSession
 }
 
-func (n *fsNode) ensureWriteSession(initialPath string) (*writeSession, bool, error) {
-	n.writeMu.Lock()
-	defer n.writeMu.Unlock()
+// beginWriteSessionMutation obtains or creates the session and registers the
+// mutation before Rename can inspect it. If a committed-session move is already
+// reserved, it waits without holding the node mutex.
+func (n *fsNode) beginWriteSessionMutation(initialPath string) (*writeSession, bool, error) {
+	for {
+		n.writeMu.Lock()
+		session := n.writeSession
+		created := false
+		if session == nil {
+			var err error
+			session, err = newWriteSession(initialPath, n.info.modTime)
+			if err != nil {
+				n.writeMu.Unlock()
+				return nil, false, err
+			}
 
-	if n.writeSession != nil {
-		return n.writeSession, false, nil
+			session.baselineSize = n.info.size
+			session.currentSize = n.info.size
+			n.writeSession = session
+			n.downloadUri = ""
+			created = true
+		}
+
+		session.mu.Lock()
+		if !session.renaming {
+			session.mutationCount++
+			session.mu.Unlock()
+			n.writeMu.Unlock()
+			return session, created, nil
+		}
+
+		n.writeMu.Unlock()
+		for session.renaming {
+			session.cond.Wait()
+		}
+		// Rename updates the session path before waking waiters. Preserve it in
+		// case the completed rename also detached this session, then retry under
+		// writeMu rather than registering a mutation on a stale session.
+		initialPath = session.path
+		session.mu.Unlock()
 	}
-
-	session, err := newWriteSession(initialPath, n.info.modTime)
-	if err != nil {
-		return nil, false, err
-	}
-
-	session.baselineSize = n.info.size
-	session.currentSize = n.info.size
-	n.writeSession = session
-	n.downloadUri = ""
-	return session, true, nil
 }
 
 func (n *fsNode) clearWriteSession() error {
 	n.writeMu.Lock()
 	session := n.writeSession
-	n.writeSession = nil
-	n.writeMu.Unlock()
 	if session == nil {
+		n.writeMu.Unlock()
 		return nil
 	}
+
+	session.mu.Lock()
+	if session.renaming {
+		// Release must not wait for a remote move. Keep the session attached so
+		// Rename can finish its path transition, then clean it up afterward.
+		session.clearAfterRename = true
+		session.mu.Unlock()
+		n.writeMu.Unlock()
+		return nil
+	}
+	n.writeSession = nil
+	session.mu.Unlock()
+	n.writeMu.Unlock()
 	return session.closeAndRemoveWorkingCopy()
 }
 
-func (n *fsNode) updateWriteSessionPath(path string) {
+func (n *fsNode) finishWriteSessionRename(session *writeSession, path string, succeeded bool) error {
 	n.writeMu.Lock()
-	if n.writeSession != nil {
-		n.writeSession.mu.Lock()
-		n.writeSession.path = path
-		n.writeSession.mu.Unlock()
+	session.mu.Lock()
+	if succeeded {
+		session.path = path
 	}
+	session.renaming = false
+
+	clearSession := n.writeSession == session && session.clearAfterRename && len(session.handles) == 0
+	session.clearAfterRename = false
+	if clearSession {
+		n.writeSession = nil
+	}
+	session.cond.Broadcast()
+	session.mu.Unlock()
 	n.writeMu.Unlock()
+
+	if clearSession {
+		return session.closeAndRemoveWorkingCopy()
+	}
+	return nil
 }
 
 func (n *fsNode) readFromWriteSession(buff []byte, ofst int64) (int, bool, error) {
@@ -449,7 +497,7 @@ func (n *fsNode) writeSessionWaitForFinalize(stallTimeout time.Duration) error {
 	}
 }
 
-func (n *fsNode) writeSessionPathAndRef() (string, string, bool) {
+func (n *fsNode) captureWriteSessionUploadPathAndRef() (string, string, bool) {
 	n.writeMu.Lock()
 	session := n.writeSession
 	n.writeMu.Unlock()
@@ -459,6 +507,7 @@ func (n *fsNode) writeSessionPathAndRef() (string, string, bool) {
 
 	session.mu.Lock()
 	defer session.mu.Unlock()
+	session.uploadPathFixed = true
 	var ref string
 	if session.upload != nil {
 		ref, _, _ = session.upload.stats()
@@ -505,6 +554,7 @@ func (n *fsNode) writeSessionStartUpload(cancel context.CancelFunc, transfer *tr
 	session.upload = upload
 	session.uploading = true
 	session.finalizing = true
+	session.uploadPathFixed = false
 	session.cond.Broadcast()
 	return upload, true
 }
@@ -522,6 +572,7 @@ func (n *fsNode) writeSessionFinishUpload(size int64, err error) bool {
 	if err == nil {
 		session.currentSize = size
 		session.dirty = false
+		session.remoteCommitted = true
 		session.lastUploadErr = nil
 	} else {
 		session.lastUploadErr = err

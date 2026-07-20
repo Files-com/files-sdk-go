@@ -8,18 +8,23 @@ import (
 )
 
 type writeSession struct {
-	path            string
-	workingCopyPath string
-	workingCopy     *os.File
-	baselineSize    int64
-	currentSize     int64
-	mtime           time.Time
-	mtimeExplicit   bool
-	hydrated        bool
-	dirty           bool
-	uploading       bool
-	finalizing      bool
-	lastUploadErr   error
+	path             string
+	workingCopyPath  string
+	workingCopy      *os.File
+	baselineSize     int64
+	currentSize      int64
+	mtime            time.Time
+	mtimeExplicit    bool
+	hydrated         bool
+	dirty            bool
+	uploading        bool
+	finalizing       bool
+	remoteCommitted  bool
+	uploadPathFixed  bool
+	renaming         bool
+	mutationCount    int
+	clearAfterRename bool
+	lastUploadErr    error
 
 	handles map[uint64]struct{}
 	upload  *activeUpload
@@ -84,6 +89,13 @@ func (s *writeSession) hasHandle(fh uint64) bool {
 	defer s.mu.Unlock()
 	_, ok := s.handles[fh]
 	return ok
+}
+
+func (s *writeSession) endMutation() {
+	s.mu.Lock()
+	s.mutationCount--
+	s.cond.Broadcast()
+	s.mu.Unlock()
 }
 
 func (s *writeSession) snapshot() writeSessionSnapshot {

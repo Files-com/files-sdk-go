@@ -36,6 +36,24 @@ func (timeoutUploadError) Error() string   { return "raw timeout detail" }
 func (timeoutUploadError) Timeout() bool   { return true }
 func (timeoutUploadError) Temporary() bool { return true }
 
+type blockingDeleteCacheStore struct {
+	cacheStore
+	path    string
+	started chan struct{}
+	release chan struct{}
+	once    sync.Once
+}
+
+func (s *blockingDeleteCacheStore) Delete(path string) bool {
+	if path == s.path {
+		s.once.Do(func() {
+			close(s.started)
+		})
+		<-s.release
+	}
+	return s.cacheStore.Delete(path)
+}
+
 func newTestRemoteFs(t *testing.T) (*RemoteFs, *virtualfs, cacheStore) {
 	t.Helper()
 
@@ -54,14 +72,15 @@ func newTestRemoteFs(t *testing.T) (*RemoteFs, *virtualfs, cacheStore) {
 	root.extendTtl()
 
 	fs := &RemoteFs{
-		log:            &log.NoOpLogger{},
-		vfs:            vfs,
-		cacheStore:     cacheStore,
-		disableLocking: true,
-		lockMap:        make(map[string]*lockInfo),
-		readyGates:     map[string]*cache.ReadyGate{},
-		loadDirMutexes: fssync.NewPathMutex(),
-		backend:        &fakeRemoteBackend{},
+		log:             &log.NoOpLogger{},
+		vfs:             vfs,
+		cacheStore:      cacheStore,
+		disableLocking:  true,
+		lockMap:         make(map[string]*lockInfo),
+		readyGates:      map[string]*cache.ReadyGate{},
+		gatePathMutexes: fssync.NewPathMutex(),
+		loadDirMutexes:  fssync.NewPathMutex(),
+		backend:         &fakeRemoteBackend{},
 		ops: lim.NewFuseOpLimiter(map[lim.FuseOpType]int64{
 			lim.FuseOpDownload: downloadOpLimit,
 			lim.FuseOpUpload:   uploadOpLimit,
@@ -264,6 +283,30 @@ type blockingDownloadReader struct {
 	once         sync.Once
 }
 
+type cancelableBlockingDownloadReader struct {
+	payload []byte
+	ctx     context.Context
+	started chan struct{}
+	release chan struct{}
+	once    sync.Once
+	offset  int
+}
+
+func (r *cancelableBlockingDownloadReader) Read(p []byte) (int, error) {
+	if r.offset >= len(r.payload) {
+		return 0, io.EOF
+	}
+	r.once.Do(func() { close(r.started) })
+	select {
+	case <-r.ctx.Done():
+		return 0, r.ctx.Err()
+	case <-r.release:
+		n := copy(p, r.payload[r.offset:])
+		r.offset += n
+		return n, nil
+	}
+}
+
 func newBlockingDownloadReader(payload []byte, firstChunk int) *blockingDownloadReader {
 	return &blockingDownloadReader{
 		payload:      payload,
@@ -389,14 +432,15 @@ func newTestFilescomfs(t *testing.T) (*Filescomfs, *RemoteFs, *LocalFs, *virtual
 	}
 
 	remote := &RemoteFs{
-		log:            &log.NoOpLogger{},
-		vfs:            vfs,
-		cacheStore:     cacheStore,
-		disableLocking: true,
-		lockMap:        make(map[string]*lockInfo),
-		readyGates:     map[string]*cache.ReadyGate{},
-		loadDirMutexes: fssync.NewPathMutex(),
-		backend:        &fakeRemoteBackend{},
+		log:             &log.NoOpLogger{},
+		vfs:             vfs,
+		cacheStore:      cacheStore,
+		disableLocking:  true,
+		lockMap:         make(map[string]*lockInfo),
+		readyGates:      map[string]*cache.ReadyGate{},
+		gatePathMutexes: fssync.NewPathMutex(),
+		loadDirMutexes:  fssync.NewPathMutex(),
+		backend:         &fakeRemoteBackend{},
 		ops: lim.NewFuseOpLimiter(map[lim.FuseOpType]int64{
 			lim.FuseOpDownload: downloadOpLimit,
 			lim.FuseOpUpload:   uploadOpLimit,
@@ -1577,6 +1621,13 @@ func TestRemoteFsFlushAfterActiveRenameUploadsToNewPath(t *testing.T) {
 		uploaded = append([]byte(nil), data...)
 		return testUploadedMetadata(int64(len(data)), mtime), nil
 	}
+	moveCalls := 0
+	fs.backend = &fakeRemoteBackend{
+		moveFunc: func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error) {
+			moveCalls++
+			return files_sdk.FileAction{}, nil
+		},
+	}
 
 	errc, fh := fs.Create(oldPath, fuse.O_RDWR, 0o644)
 	if errc != 0 {
@@ -1590,6 +1641,9 @@ func TestRemoteFsFlushAfterActiveRenameUploadsToNewPath(t *testing.T) {
 
 	if errc := fs.Rename(oldPath, newPath); errc != 0 {
 		t.Fatalf("Rename returned unexpected error: %d", errc)
+	}
+	if moveCalls != 0 {
+		t.Fatalf("backend move calls before upload = %d, want 0", moveCalls)
 	}
 	if errc := fs.Flush(newPath, fh); errc != 0 {
 		t.Fatalf("Flush returned unexpected error: %d", errc)
@@ -1606,6 +1660,1090 @@ func TestRemoteFsFlushAfterActiveRenameUploadsToNewPath(t *testing.T) {
 	}
 	if _, ok := vfs.fetch(newPath); !ok {
 		t.Fatal("expected new path to exist after active rename")
+	}
+}
+
+func TestRemoteFsRenameInProgressUploadUsesSessionDestination(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	temporaryPath := "/document.bin.~tmp"
+	finalPath := "/document.bin"
+	uploadStarted := make(chan string, 1)
+	finishUpload := make(chan struct{})
+	finalizedPath := make(chan string, 1)
+	var finishOnce sync.Once
+	releaseUpload := func() {
+		finishOnce.Do(func() {
+			close(finishUpload)
+		})
+	}
+	defer releaseUpload()
+
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return uploadedFileMetadata{}, err
+		}
+		uploadStarted <- path
+		<-finishUpload
+		path, _ = fs.finalizeUploadPathAndRef(node)
+		finalizedPath <- path
+		return testUploadedMetadata(int64(len(data)), mtime), nil
+	}
+
+	moveCalls := 0
+	fs.backend = &fakeRemoteBackend{
+		moveFunc: func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error) {
+			moveCalls++
+			return files_sdk.FileAction{}, nil
+		},
+	}
+
+	errno, fh := fs.Create(temporaryPath, fuse.O_RDWR, 0o644)
+	if errno != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errno)
+	}
+	payload := []byte("pending-upload")
+	if n := fs.Write(temporaryPath, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+
+	flushResult := make(chan int, 1)
+	go func() {
+		flushResult <- fs.Flush(temporaryPath, fh)
+	}()
+
+	select {
+	case path := <-uploadStarted:
+		if path != temporaryPath {
+			t.Fatalf("upload started at %q, want %q", path, temporaryPath)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for upload to start")
+	}
+
+	if errno := fs.Rename(temporaryPath, finalPath); errno != 0 {
+		t.Fatalf("Rename returned unexpected error: %d", errno)
+	}
+	if moveCalls != 0 {
+		t.Fatalf("backend move calls during upload = %d, want 0", moveCalls)
+	}
+
+	releaseUpload()
+	select {
+	case path := <-finalizedPath:
+		if path != finalPath {
+			t.Fatalf("upload finalized at %q, want %q", path, finalPath)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for upload final path")
+	}
+	select {
+	case errno := <-flushResult:
+		if errno != 0 {
+			t.Fatalf("Flush returned unexpected error: %d", errno)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for Flush")
+	}
+}
+
+func TestRemoteFsRenameAfterFirstUploadDestinationCapturedMovesRemoteFile(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	temporaryPath := "/captured-destination.bin.~tmp"
+	finalPath := "/captured-destination.bin"
+	destinationCaptured := make(chan string, 1)
+	finishUpload := make(chan struct{})
+	var finishOnce sync.Once
+	releaseUpload := func() {
+		finishOnce.Do(func() {
+			close(finishUpload)
+		})
+	}
+	defer releaseUpload()
+
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return uploadedFileMetadata{}, err
+		}
+		path, _ = fs.finalizeUploadPathAndRef(node)
+		destinationCaptured <- path
+		<-finishUpload
+		return testUploadedMetadata(int64(len(data)), mtime), nil
+	}
+
+	moveCalled := make(chan files_sdk.FileMoveParams, 1)
+	fs.backend = &fakeRemoteBackend{
+		moveFunc: func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error) {
+			moveCalled <- params
+			return files_sdk.FileAction{}, nil
+		},
+	}
+
+	errno, fh := fs.Create(temporaryPath, fuse.O_RDWR, 0o644)
+	if errno != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errno)
+	}
+	payload := []byte("first-upload")
+	if n := fs.Write(temporaryPath, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+
+	flushResult := make(chan int, 1)
+	go func() {
+		flushResult <- fs.Flush(temporaryPath, fh)
+	}()
+	select {
+	case path := <-destinationCaptured:
+		if path != temporaryPath {
+			t.Fatalf("upload captured destination %q, want %q", path, temporaryPath)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for upload destination capture")
+	}
+
+	renameResult := make(chan int, 1)
+	go func() {
+		renameResult <- fs.Rename(temporaryPath, finalPath)
+	}()
+	select {
+	case errno := <-renameResult:
+		t.Fatalf("Rename returned %d before the first upload completed", errno)
+	case <-time.After(100 * time.Millisecond):
+	}
+	select {
+	case params := <-moveCalled:
+		t.Fatalf("backend move started before the first upload completed: %+v", params)
+	default:
+	}
+
+	releaseUpload()
+	select {
+	case params := <-moveCalled:
+		if params.Path != temporaryPath || params.Destination != finalPath {
+			t.Fatalf("backend move = %q to %q, want %q to %q", params.Path, params.Destination, temporaryPath, finalPath)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for backend move")
+	}
+	select {
+	case errno := <-flushResult:
+		if errno != 0 {
+			t.Fatalf("Flush returned unexpected error: %d", errno)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for Flush")
+	}
+	select {
+	case errno := <-renameResult:
+		if errno != 0 {
+			t.Fatalf("Rename returned unexpected error: %d", errno)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for Rename")
+	}
+
+	node, ok := vfs.fetch(finalPath)
+	if !ok {
+		t.Fatal("expected destination path after Rename")
+	}
+	session := node.getWriteSession()
+	if session == nil {
+		t.Fatal("expected retained session after Rename")
+	}
+	if path := session.snapshot().path; path != finalPath {
+		t.Fatalf("retained session path = %q, want %q", path, finalPath)
+	}
+}
+
+func TestRemoteFsRenameInProgressReuploadMovesCommittedRemoteFile(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	temporaryPath := "/reupload.bin.~tmp"
+	finalPath := "/reupload.bin"
+	secondUploadStarted := make(chan string, 1)
+	finishSecondUpload := make(chan struct{})
+	secondUploadFinalized := make(chan string, 1)
+	var finishOnce sync.Once
+	releaseSecondUpload := func() {
+		finishOnce.Do(func() {
+			close(finishSecondUpload)
+		})
+	}
+	defer releaseSecondUpload()
+
+	uploadCount := 0
+	var uploadMu sync.Mutex
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return uploadedFileMetadata{}, err
+		}
+		uploadMu.Lock()
+		uploadCount++
+		currentUpload := uploadCount
+		uploadMu.Unlock()
+		if currentUpload == 2 {
+			secondUploadStarted <- path
+			<-finishSecondUpload
+			path, _ = fs.finalizeUploadPathAndRef(node)
+			secondUploadFinalized <- path
+		}
+		return testUploadedMetadata(int64(len(data)), mtime), nil
+	}
+
+	moveCalled := make(chan files_sdk.FileMoveParams, 1)
+	fs.backend = &fakeRemoteBackend{
+		moveFunc: func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error) {
+			moveCalled <- params
+			return files_sdk.FileAction{}, nil
+		},
+	}
+
+	errno, fh := fs.Create(temporaryPath, fuse.O_RDWR, 0o644)
+	if errno != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errno)
+	}
+	initialPayload := []byte("initial")
+	if n := fs.Write(temporaryPath, initialPayload, 0, fh); n != len(initialPayload) {
+		t.Fatalf("initial Write returned %d, want %d", n, len(initialPayload))
+	}
+	if errno := fs.Flush(temporaryPath, fh); errno != 0 {
+		t.Fatalf("initial Flush returned unexpected error: %d", errno)
+	}
+
+	updatedPayload := []byte("updated")
+	if n := fs.Write(temporaryPath, updatedPayload, 0, fh); n != len(updatedPayload) {
+		t.Fatalf("updated Write returned %d, want %d", n, len(updatedPayload))
+	}
+	flushResult := make(chan int, 1)
+	go func() {
+		flushResult <- fs.Flush(temporaryPath, fh)
+	}()
+	select {
+	case path := <-secondUploadStarted:
+		if path != temporaryPath {
+			t.Fatalf("second upload started at %q, want %q", path, temporaryPath)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for second upload to start")
+	}
+
+	renameResult := make(chan int, 1)
+	go func() {
+		renameResult <- fs.Rename(temporaryPath, finalPath)
+	}()
+	select {
+	case errno := <-renameResult:
+		t.Fatalf("Rename returned %d before second upload completed", errno)
+	case <-time.After(100 * time.Millisecond):
+	}
+	select {
+	case params := <-moveCalled:
+		t.Fatalf("backend move started before second upload completed: %+v", params)
+	default:
+	}
+
+	releaseSecondUpload()
+	select {
+	case path := <-secondUploadFinalized:
+		if path != temporaryPath {
+			t.Fatalf("second upload finalized at %q, want %q", path, temporaryPath)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for second upload final path")
+	}
+	select {
+	case errno := <-flushResult:
+		if errno != 0 {
+			t.Fatalf("second Flush returned unexpected error: %d", errno)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for second Flush")
+	}
+	select {
+	case params := <-moveCalled:
+		if params.Path != temporaryPath || params.Destination != finalPath {
+			t.Fatalf("backend move = %q to %q, want %q to %q", params.Path, params.Destination, temporaryPath, finalPath)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for backend move")
+	}
+	select {
+	case errno := <-renameResult:
+		if errno != 0 {
+			t.Fatalf("Rename returned unexpected error: %d", errno)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for Rename")
+	}
+
+	node, ok := vfs.fetch(finalPath)
+	if !ok {
+		t.Fatal("expected destination path after Rename")
+	}
+	session := node.getWriteSession()
+	if session == nil {
+		t.Fatal("expected retained session after Rename")
+	}
+	if path := session.snapshot().path; path != finalPath {
+		t.Fatalf("retained session path = %q, want %q", path, finalPath)
+	}
+}
+
+func TestRemoteFsRenameCompletedUploadWithRetainedHandleMovesRemoteFile(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	temporaryPath := "/image.png.~tmp"
+	finalPath := "/image.png"
+
+	var uploadedPaths []string
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return uploadedFileMetadata{}, err
+		}
+		uploadedPaths = append(uploadedPaths, path)
+		return testUploadedMetadata(int64(len(data)), mtime), nil
+	}
+
+	moveCalls := 0
+	fs.backend = &fakeRemoteBackend{
+		moveFunc: func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error) {
+			moveCalls++
+			if params.Path != temporaryPath {
+				t.Fatalf("move source = %q, want %q", params.Path, temporaryPath)
+			}
+			if params.Destination != finalPath {
+				t.Fatalf("move destination = %q, want %q", params.Destination, finalPath)
+			}
+			return files_sdk.FileAction{}, nil
+		},
+	}
+
+	errno, fh := fs.Create(temporaryPath, fuse.O_RDWR, 0o644)
+	if errno != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errno)
+	}
+
+	payload := []byte("rotated-image")
+	if n := fs.Write(temporaryPath, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+	if errno := fs.Flush(temporaryPath, fh); errno != 0 {
+		t.Fatalf("Flush returned unexpected error: %d", errno)
+	}
+
+	if len(uploadedPaths) != 1 || uploadedPaths[0] != temporaryPath {
+		t.Fatalf("uploaded paths = %q, want [%q]", uploadedPaths, temporaryPath)
+	}
+	node, ok := vfs.fetch(temporaryPath)
+	if !ok {
+		t.Fatal("expected temporary path to exist after upload")
+	}
+	session := node.getWriteSession()
+	if session == nil {
+		t.Fatal("expected completed write session to remain attached while handle is open")
+	}
+	snapshot := session.snapshot()
+	if snapshot.dirty || snapshot.uploading || snapshot.finalizing {
+		t.Fatalf(
+			"write session state after upload = dirty:%t uploading:%t finalizing:%t, want clean and completed",
+			snapshot.dirty,
+			snapshot.uploading,
+			snapshot.finalizing,
+		)
+	}
+	if snapshot.handleCount != 1 {
+		t.Fatalf("write session handle count = %d, want 1", snapshot.handleCount)
+	}
+
+	if errno := fs.Rename(temporaryPath, finalPath); errno != 0 {
+		t.Fatalf("Rename returned unexpected error: %d", errno)
+	}
+	if moveCalls != 1 {
+		t.Fatalf("backend move calls = %d, want 1", moveCalls)
+	}
+
+	updatedPayload := []byte("updated-image")
+	if n := fs.Write(finalPath, updatedPayload, 0, fh); n != len(updatedPayload) {
+		t.Fatalf("Write after rename returned %d, want %d", n, len(updatedPayload))
+	}
+	if errno := fs.Flush(finalPath, fh); errno != 0 {
+		t.Fatalf("Flush after rename returned unexpected error: %d", errno)
+	}
+	if len(uploadedPaths) != 2 || uploadedPaths[1] != finalPath {
+		t.Fatalf("uploaded paths after retained-handle write = %q, want second path %q", uploadedPaths, finalPath)
+	}
+}
+
+func TestRemoteFsRenameSerializesStartingMutationAndNextUpload(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	temporaryPath := "/starting-mutation.bin.~tmp"
+	finalPath := "/starting-mutation.bin"
+	var uploadedPaths []string
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return uploadedFileMetadata{}, err
+		}
+		uploadedPaths = append(uploadedPaths, path)
+		return testUploadedMetadata(int64(len(data)), mtime), nil
+	}
+
+	moveStarted := make(chan struct{})
+	finishMove := make(chan struct{})
+	var finishOnce sync.Once
+	releaseMove := func() {
+		finishOnce.Do(func() {
+			close(finishMove)
+		})
+	}
+	defer releaseMove()
+	fs.backend = &fakeRemoteBackend{
+		moveFunc: func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error) {
+			close(moveStarted)
+			<-finishMove
+			return files_sdk.FileAction{}, nil
+		},
+	}
+
+	errno, fh := fs.Create(temporaryPath, fuse.O_RDWR, 0o644)
+	if errno != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errno)
+	}
+	initialPayload := []byte("initial")
+	if n := fs.Write(temporaryPath, initialPayload, 0, fh); n != len(initialPayload) {
+		t.Fatalf("initial Write returned %d, want %d", n, len(initialPayload))
+	}
+	if errno := fs.Flush(temporaryPath, fh); errno != 0 {
+		t.Fatalf("initial Flush returned unexpected error: %d", errno)
+	}
+
+	node, ok := vfs.fetch(temporaryPath)
+	if !ok {
+		t.Fatal("expected temporary path after upload")
+	}
+	session, created, err := node.beginWriteSessionMutation(temporaryPath)
+	if err != nil {
+		t.Fatalf("beginWriteSessionMutation returned unexpected error: %v", err)
+	}
+	if created {
+		t.Fatal("expected to reuse retained write session")
+	}
+	mutationActive := true
+	defer func() {
+		if mutationActive {
+			session.endMutation()
+		}
+	}()
+
+	renameResult := make(chan int, 1)
+	go func() {
+		renameResult <- fs.Rename(temporaryPath, finalPath)
+	}()
+	select {
+	case <-moveStarted:
+		t.Fatal("backend move started before the existing mutation completed")
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	updatedPayload := []byte("updated")
+	if _, err := fs.writeToWorkingCopy(session, updatedPayload, 0); err != nil {
+		t.Fatalf("writeToWorkingCopy returned unexpected error: %v", err)
+	}
+	session.endMutation()
+	mutationActive = false
+
+	select {
+	case <-moveStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for backend move after mutation completed")
+	}
+
+	flushResult := make(chan int, 1)
+	go func() {
+		flushResult <- fs.Flush(temporaryPath, fh)
+	}()
+	select {
+	case errno := <-flushResult:
+		t.Fatalf("Flush returned %d before backend move completed", errno)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	releaseMove()
+	select {
+	case errno := <-renameResult:
+		if errno != 0 {
+			t.Fatalf("Rename returned unexpected error: %d", errno)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for Rename")
+	}
+	select {
+	case errno := <-flushResult:
+		if errno != 0 {
+			t.Fatalf("Flush returned unexpected error: %d", errno)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for Flush")
+	}
+
+	if len(uploadedPaths) != 2 || uploadedPaths[0] != temporaryPath || uploadedPaths[1] != finalPath {
+		t.Fatalf("uploaded paths = %q, want [%q %q]", uploadedPaths, temporaryPath, finalPath)
+	}
+}
+
+func TestRemoteFsRenameWaiterRetriesAfterRetainedSessionCleared(t *testing.T) {
+	fs, vfs, cacheStore := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	temporaryPath := "/detached-session.bin.~tmp"
+	finalPath := "/detached-session.bin"
+	initialPayload := []byte("initial-data")
+	updatedPayload := []byte("new")
+	expectedPayload := append([]byte(nil), initialPayload...)
+	copy(expectedPayload, updatedPayload)
+	cacheDeleteStarted := make(chan struct{})
+	releaseCacheDelete := make(chan struct{})
+	var releaseCacheOnce sync.Once
+	releaseCache := func() {
+		releaseCacheOnce.Do(func() {
+			close(releaseCacheDelete)
+		})
+	}
+	defer releaseCache()
+	fs.cacheStore = &blockingDeleteCacheStore{
+		cacheStore: cacheStore,
+		path:       finalPath,
+		started:    cacheDeleteStarted,
+		release:    releaseCacheDelete,
+	}
+	var uploadedPaths []string
+	var uploadedPayloads [][]byte
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return uploadedFileMetadata{}, err
+		}
+		uploadedPaths = append(uploadedPaths, path)
+		uploadedPayloads = append(uploadedPayloads, append([]byte(nil), data...))
+		return testUploadedMetadata(int64(len(data)), mtime), nil
+	}
+
+	moveStarted := make(chan struct{})
+	finishMove := make(chan struct{})
+	var finishOnce sync.Once
+	releaseMove := func() {
+		finishOnce.Do(func() {
+			close(finishMove)
+		})
+	}
+	defer releaseMove()
+	var downloadedPaths []string
+	fs.backend = &fakeRemoteBackend{
+		moveFunc: func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error) {
+			close(moveStarted)
+			<-finishMove
+			return files_sdk.FileAction{}, nil
+		},
+		downloadFunc: func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+			downloadedPaths = append(downloadedPaths, params.File.Path)
+			return fakeDownloadResponse(initialPayload, int64(len(initialPayload)))(params, opts...)
+		},
+	}
+
+	errno, waitingFH := fs.Create(temporaryPath, fuse.O_RDWR, 0o644)
+	if errno != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errno)
+	}
+	errno, writerFH := fs.Open(temporaryPath, fuse.O_RDWR)
+	if errno != 0 {
+		t.Fatalf("Open returned unexpected error: %d", errno)
+	}
+	if n := fs.Write(temporaryPath, initialPayload, 0, writerFH); n != len(initialPayload) {
+		t.Fatalf("initial Write returned %d, want %d", n, len(initialPayload))
+	}
+	if errno := fs.Flush(temporaryPath, writerFH); errno != 0 {
+		t.Fatalf("initial Flush returned unexpected error: %d", errno)
+	}
+
+	node, ok := vfs.fetch(temporaryPath)
+	if !ok {
+		t.Fatal("expected temporary path after initial upload")
+	}
+	retainedSession := node.getWriteSession()
+	if retainedSession == nil {
+		t.Fatal("expected retained write session")
+	}
+	if handles := retainedSession.snapshot().handleCount; handles != 1 {
+		t.Fatalf("retained session handle count = %d, want 1", handles)
+	}
+	stalePayload := bytes.Repeat([]byte("x"), len(initialPayload))
+	if _, err := cacheStore.Write(finalPath, stalePayload, 0); err != nil {
+		t.Fatalf("stale destination cache Write failed: %v", err)
+	}
+	if err := cacheStore.Commit(finalPath, cacheEntryMetadata(finalPath, int64(len(stalePayload)), node.info.modTime)); err != nil {
+		t.Fatalf("stale destination cache Commit failed: %v", err)
+	}
+	cacheStore.Pin(finalPath)
+	defer cacheStore.Unpin(finalPath)
+
+	renameResult := make(chan int, 1)
+	go func() {
+		renameResult <- fs.Rename(temporaryPath, finalPath)
+	}()
+	select {
+	case <-moveStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for backend move")
+	}
+
+	writeResult := make(chan int, 1)
+	go func() {
+		writeResult <- fs.Write(temporaryPath, updatedPayload, 0, waitingFH)
+	}()
+	select {
+	case n := <-writeResult:
+		t.Fatalf("waiting Write returned %d before backend move completed", n)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	if errno := fs.Release(temporaryPath, writerFH); errno != 0 {
+		t.Fatalf("Release returned unexpected error: %d", errno)
+	}
+	releaseMove()
+	select {
+	case <-cacheDeleteStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for destination cache invalidation")
+	}
+	select {
+	case n := <-writeResult:
+		t.Fatalf("waiting Write returned %d before destination cache invalidation completed", n)
+	case <-time.After(100 * time.Millisecond):
+	}
+	releaseCache()
+
+	select {
+	case errno := <-renameResult:
+		if errno != 0 {
+			t.Fatalf("Rename returned unexpected error: %d", errno)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for Rename")
+	}
+	select {
+	case n := <-writeResult:
+		if n != len(updatedPayload) {
+			t.Fatalf("waiting Write returned %d, want %d", n, len(updatedPayload))
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for Write")
+	}
+
+	node, ok = vfs.fetch(finalPath)
+	if !ok {
+		t.Fatal("expected destination path after Rename")
+	}
+	newSession := node.getWriteSession()
+	if newSession == nil {
+		t.Fatal("expected waiting Write to attach a replacement session")
+	}
+	if newSession == retainedSession {
+		t.Fatal("waiting Write reused detached retained session")
+	}
+	if path := newSession.snapshot().path; path != finalPath {
+		t.Fatalf("replacement session path = %q, want %q", path, finalPath)
+	}
+	if !newSession.hasHandle(waitingFH) {
+		t.Fatal("replacement session does not contain waiting handle")
+	}
+	if len(downloadedPaths) != 1 || downloadedPaths[0] != finalPath {
+		t.Fatalf("downloaded paths = %q, want [%q]", downloadedPaths, finalPath)
+	}
+
+	if errno := fs.Flush(finalPath, waitingFH); errno != 0 {
+		t.Fatalf("replacement session Flush returned unexpected error: %d", errno)
+	}
+	if len(uploadedPaths) != 2 || uploadedPaths[0] != temporaryPath || uploadedPaths[1] != finalPath {
+		t.Fatalf("uploaded paths = %q, want [%q %q]", uploadedPaths, temporaryPath, finalPath)
+	}
+	if len(uploadedPayloads) != 2 {
+		t.Fatalf("uploaded payload count = %d, want 2", len(uploadedPayloads))
+	}
+	if !bytes.Equal(uploadedPayloads[1], expectedPayload) {
+		t.Fatalf("second uploaded payload = %q, want %q", uploadedPayloads[1], expectedPayload)
+	}
+	if errno := fs.Release(finalPath, waitingFH); errno != 0 {
+		t.Fatalf("waiting handle Release returned unexpected error: %d", errno)
+	}
+}
+
+func TestRemoteFsRenameCancelsInFlightDestinationDownload(t *testing.T) {
+	fs, vfs, cacheStore := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	temporaryPath := "/in-flight-cache.bin.~tmp"
+	finalPath := "/in-flight-cache.bin"
+	newPayload := []byte("new-destination")
+	stalePayload := []byte("old-destination")
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	sourceNode := vfs.getOrCreate(temporaryPath, nodeTypeFile)
+	sourceNode.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeFile,
+		size:         int64(len(newPayload)),
+		modTime:      modTime,
+		creationTime: modTime,
+	})
+	destinationNode := vfs.getOrCreate(finalPath, nodeTypeFile)
+	destinationNode.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeFile,
+		size:         int64(len(stalePayload)),
+		modTime:      modTime,
+		creationTime: modTime,
+	})
+	destinationNode.setDownloadURI("https://example.invalid/old-destination")
+
+	downloadStarted := make(chan struct{})
+	releaseDownload := make(chan struct{})
+	var releaseOnce sync.Once
+	release := func() {
+		releaseOnce.Do(func() { close(releaseDownload) })
+	}
+	defer release()
+	fs.backend = &fakeRemoteBackend{
+		downloadFunc: func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+			reader := &cancelableBlockingDownloadReader{
+				payload: stalePayload,
+				ctx:     files_sdk.ContextOption(opts),
+				started: downloadStarted,
+				release: releaseDownload,
+			}
+			resp := &http.Response{
+				StatusCode:    http.StatusOK,
+				Body:          io.NopCloser(reader),
+				ContentLength: int64(len(stalePayload)),
+			}
+			if _, err := files_sdk.BuildResponse(resp, opts...); err != nil {
+				return files_sdk.File{}, err
+			}
+			return files_sdk.File{Path: params.File.Path, Type: "file", Size: int64(len(stalePayload))}, nil
+		},
+	}
+
+	downloadResult := make(chan error, 1)
+	go func() {
+		downloadResult <- fs.ensureFullyCached(finalPath, destinationNode.downloadUri, int64(len(stalePayload)), 0)
+	}()
+	select {
+	case <-downloadStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for destination download")
+	}
+
+	renameResult := make(chan int, 1)
+	go func() {
+		renameResult <- fs.Rename(temporaryPath, finalPath)
+	}()
+	select {
+	case errno := <-renameResult:
+		if errno != 0 {
+			t.Fatalf("Rename returned unexpected error: %d", errno)
+		}
+	case <-time.After(2 * time.Second):
+		release()
+		t.Fatal("timed out waiting for Rename to cancel the destination download")
+	}
+	release()
+	select {
+	case err := <-downloadResult:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("destination download error = %v, want context.Canceled", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for destination download cancellation")
+	}
+
+	buf := make([]byte, len(stalePayload))
+	if n, err := cacheStore.Read(finalPath, buf, 0); err != nil || n != 0 {
+		t.Fatalf("destination cache after Rename = %d bytes, %v; want empty", n, err)
+	}
+}
+
+func TestRemoteFsRenameCompletedUploadFailureKeepsOriginalPaths(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	temporaryPath := "/report.dat.~tmp"
+	finalPath := "/report.dat"
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return uploadedFileMetadata{}, err
+		}
+		return testUploadedMetadata(int64(len(data)), mtime), nil
+	}
+
+	moveCalls := 0
+	fs.backend = &fakeRemoteBackend{
+		moveFunc: func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error) {
+			moveCalls++
+			return files_sdk.FileAction{}, errors.New("move failed")
+		},
+	}
+
+	errno, fh := fs.Create(temporaryPath, fuse.O_RDWR, 0o644)
+	if errno != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errno)
+	}
+	payload := []byte("completed-upload")
+	if n := fs.Write(temporaryPath, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+	if errno := fs.Flush(temporaryPath, fh); errno != 0 {
+		t.Fatalf("Flush returned unexpected error: %d", errno)
+	}
+
+	if errno := fs.Rename(temporaryPath, finalPath); errno == 0 {
+		t.Fatal("expected Rename to fail when backend move fails")
+	}
+	if moveCalls != 1 {
+		t.Fatalf("backend move calls = %d, want 1", moveCalls)
+	}
+	node, ok := vfs.fetch(temporaryPath)
+	if !ok {
+		t.Fatal("expected original VFS path to remain after failed move")
+	}
+	if _, ok := vfs.fetch(finalPath); ok {
+		t.Fatal("expected destination VFS path to remain absent after failed move")
+	}
+	session := node.getWriteSession()
+	if session == nil {
+		t.Fatal("expected retained write session after failed move")
+	}
+	if path := session.snapshot().path; path != temporaryPath {
+		t.Fatalf("write session path after failed move = %q, want %q", path, temporaryPath)
+	}
+}
+
+func TestRemoteFsRenameCompletedUploadSerializesConcurrentWrite(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	temporaryPath := "/serialized.bin.~tmp"
+	finalPath := "/serialized.bin"
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return uploadedFileMetadata{}, err
+		}
+		return testUploadedMetadata(int64(len(data)), mtime), nil
+	}
+
+	moveStarted := make(chan struct{})
+	finishMove := make(chan struct{})
+	var finishOnce sync.Once
+	releaseMove := func() {
+		finishOnce.Do(func() {
+			close(finishMove)
+		})
+	}
+	defer releaseMove()
+	fs.backend = &fakeRemoteBackend{
+		moveFunc: func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error) {
+			close(moveStarted)
+			<-finishMove
+			return files_sdk.FileAction{}, nil
+		},
+	}
+
+	errno, fh := fs.Create(temporaryPath, fuse.O_RDWR, 0o644)
+	if errno != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errno)
+	}
+	initialPayload := []byte("initial")
+	if n := fs.Write(temporaryPath, initialPayload, 0, fh); n != len(initialPayload) {
+		t.Fatalf("Write returned %d, want %d", n, len(initialPayload))
+	}
+	if errno := fs.Flush(temporaryPath, fh); errno != 0 {
+		t.Fatalf("Flush returned unexpected error: %d", errno)
+	}
+
+	renameResult := make(chan int, 1)
+	go func() {
+		renameResult <- fs.Rename(temporaryPath, finalPath)
+	}()
+	select {
+	case <-moveStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for backend move")
+	}
+
+	node, ok := vfs.fetch(temporaryPath)
+	if !ok {
+		t.Fatal("expected source VFS path while backend move is pending")
+	}
+	hasSessionResult := make(chan bool, 1)
+	go func() {
+		hasSessionResult <- node.hasActiveWriteSession()
+	}()
+	select {
+	case hasSession := <-hasSessionResult:
+		if !hasSession {
+			t.Fatal("expected retained write session while backend move is pending")
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("write-session inspection blocked while backend move was pending")
+	}
+
+	readResult := make(chan int, 1)
+	readBuffer := make([]byte, len(initialPayload))
+	go func() {
+		readResult <- fs.Read(temporaryPath, readBuffer, 0, fh)
+	}()
+	select {
+	case n := <-readResult:
+		if n != len(initialPayload) || !bytes.Equal(readBuffer, initialPayload) {
+			t.Fatalf("Read during backend move returned %d bytes %q, want %d bytes %q", n, readBuffer, len(initialPayload), initialPayload)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("Read blocked while backend move was pending")
+	}
+
+	updatedPayload := []byte("updated")
+	writeResult := make(chan int, 1)
+	go func() {
+		writeResult <- fs.Write(finalPath, updatedPayload, 0, fh)
+	}()
+	select {
+	case n := <-writeResult:
+		t.Fatalf("concurrent Write returned %d before backend move completed", n)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	releaseMove()
+	select {
+	case errno := <-renameResult:
+		if errno != 0 {
+			t.Fatalf("Rename returned unexpected error: %d", errno)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for Rename")
+	}
+	select {
+	case n := <-writeResult:
+		if n != len(updatedPayload) {
+			t.Fatalf("Write after backend move returned %d, want %d", n, len(updatedPayload))
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for concurrent Write")
+	}
+
+	node, ok = vfs.fetch(finalPath)
+	if !ok {
+		t.Fatal("expected destination VFS path after successful move")
+	}
+	session := node.getWriteSession()
+	if session == nil {
+		t.Fatal("expected retained write session after successful move")
+	}
+	if path := session.snapshot().path; path != finalPath {
+		t.Fatalf("write session path after serialized move = %q, want %q", path, finalPath)
+	}
+}
+
+func TestRemoteFsRenameCompletedUploadDoesNotBlockRelease(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	temporaryPath := "/release.bin.~tmp"
+	finalPath := "/release.bin"
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return uploadedFileMetadata{}, err
+		}
+		return testUploadedMetadata(int64(len(data)), mtime), nil
+	}
+
+	moveStarted := make(chan struct{})
+	finishMove := make(chan struct{})
+	var finishOnce sync.Once
+	releaseMove := func() {
+		finishOnce.Do(func() {
+			close(finishMove)
+		})
+	}
+	defer releaseMove()
+	fs.backend = &fakeRemoteBackend{
+		moveFunc: func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error) {
+			close(moveStarted)
+			<-finishMove
+			return files_sdk.FileAction{}, nil
+		},
+	}
+
+	errno, fh := fs.Create(temporaryPath, fuse.O_RDWR, 0o644)
+	if errno != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errno)
+	}
+	payload := []byte("release-during-rename")
+	if n := fs.Write(temporaryPath, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+	if errno := fs.Flush(temporaryPath, fh); errno != 0 {
+		t.Fatalf("Flush returned unexpected error: %d", errno)
+	}
+
+	renameResult := make(chan int, 1)
+	go func() {
+		renameResult <- fs.Rename(temporaryPath, finalPath)
+	}()
+	select {
+	case <-moveStarted:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for backend move")
+	}
+
+	releaseResult := make(chan int, 1)
+	go func() {
+		releaseResult <- fs.Release(temporaryPath, fh)
+	}()
+	select {
+	case errno := <-releaseResult:
+		if errno != 0 {
+			t.Fatalf("Release returned unexpected error: %d", errno)
+		}
+	case <-time.After(2 * time.Second):
+		releaseMove()
+		t.Fatal("Release blocked while backend move was pending")
+	}
+
+	releaseMove()
+	select {
+	case errno := <-renameResult:
+		if errno != 0 {
+			t.Fatalf("Rename returned unexpected error: %d", errno)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for Rename")
+	}
+
+	node, ok := vfs.fetch(finalPath)
+	if !ok {
+		t.Fatal("expected destination VFS path after successful move")
+	}
+	if session := node.getWriteSession(); session != nil {
+		t.Fatal("expected retained write session to be cleared after pending Release")
 	}
 }
 
@@ -3004,6 +4142,9 @@ func TestRemoteFsLockCreatesRemoteLockWhenParentPermissionsUnknown(t *testing.T)
 	fs.backend = &fakeRemoteBackend{
 		createLockFunc: func(params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (files_sdk.Lock, error) {
 			createLockCalled = true
+			if params.Recursive == nil || *params.Recursive {
+				t.Fatalf("lock recursive = %v, want false", params.Recursive)
+			}
 			return files_sdk.Lock{}, nil
 		},
 	}

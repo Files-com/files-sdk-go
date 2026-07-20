@@ -393,6 +393,13 @@ func truncateEntryToSize(ent *entry, size int64) int64 {
 // Delete removes the cached file at the given path from the cache.
 func (mc *MemoryCache) Delete(path string) bool {
 	if mc.isPinned(path) {
+		// Open handles still need the cached bytes, but the completed-version
+		// metadata must not make stale content eligible for a future cache hit.
+		mc.filesMu.Lock()
+		if ent, ok := mc.files[path]; ok {
+			ent.metadata = cache.EntryMetadata{}
+		}
+		mc.filesMu.Unlock()
 		return false
 	}
 

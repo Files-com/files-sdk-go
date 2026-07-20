@@ -17,7 +17,8 @@ type ReadyGate struct {
 	waiters   int
 	cleanup   func()
 	cleanOnce sync.Once
-	Cancel    context.CancelFunc
+	cancel    context.CancelFunc
+	canceled  bool
 }
 
 func NewReadyGate() *ReadyGate {
@@ -64,7 +65,28 @@ func (gate *ReadyGate) SetTotal(total int64) {
 
 func (gate *ReadyGate) SetCancel(cancel context.CancelFunc) {
 	gate.mu.Lock()
-	gate.Cancel = cancel
+	gate.cancel = cancel
+	canceled := gate.canceled
+	gate.mu.Unlock()
+	if canceled {
+		cancel()
+	}
+}
+
+// CancelAndWait stops the producer and waits until it can no longer publish data.
+func (gate *ReadyGate) CancelAndWait() {
+	gate.mu.Lock()
+	gate.canceled = true
+	cancel := gate.cancel
+	gate.mu.Unlock()
+	if cancel != nil {
+		cancel()
+	}
+
+	gate.mu.Lock()
+	for !gate.done {
+		gate.cond.Wait()
+	}
 	gate.mu.Unlock()
 }
 

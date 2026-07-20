@@ -189,6 +189,10 @@ func TestDiskCacheDeletePinnedFileDoesNotRemove(t *testing.T) {
 	if _, err := cache.Write(path, data, 0); err != nil {
 		t.Fatalf("Write failed: %v", err)
 	}
+	meta := fscache.NewEntryMetadata(path, int64(len(data)), time.Now())
+	if err := cache.Commit(path, meta); err != nil {
+		t.Fatalf("Commit failed: %v", err)
+	}
 	cache.Pin(path)
 
 	if deleted := cache.Delete(path); deleted {
@@ -201,6 +205,13 @@ func TestDiskCacheDeletePinnedFileDoesNotRemove(t *testing.T) {
 	}
 	if n != len(data) || string(readBuf[:n]) != string(data) {
 		t.Fatalf("pinned data after Delete = %q, want %q", string(readBuf[:n]), string(data))
+	}
+	n, err = cache.ReadComplete(path, meta, readBuf, 0)
+	if err != nil {
+		t.Fatalf("ReadComplete after pinned Delete failed: %v", err)
+	}
+	if n != 0 {
+		t.Fatalf("ReadComplete after pinned Delete returned %d bytes, want 0", n)
 	}
 
 	cache.Unpin(path)
