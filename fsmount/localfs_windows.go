@@ -28,7 +28,13 @@ func (fs *LocalFs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int)
 		return -fuse.ENOENT
 	}
 
-	stat.Mode = uint32(info.Mode())
+	// Go's FileMode encodes directories in its own high bits; FUSE consumers
+	// dispatch on the POSIX S_IFMT bits, so translate explicitly.
+	if info.IsDir() {
+		stat.Mode = fuse.S_IFDIR | 0755
+	} else {
+		stat.Mode = fuse.S_IFREG | uint32(info.Mode().Perm())
+	}
 	stat.Size = int64(info.Size())
 	node, ok := fs.vfs.fetch(path)
 	if ok && node.info.uid != 0 {

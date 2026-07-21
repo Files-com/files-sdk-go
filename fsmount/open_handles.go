@@ -211,6 +211,13 @@ func (h *OpenHandles) startUploadSweeper() {
 					continue
 				}
 				_, bytesWritten, lastActivity := node.uploadStats()
+				if lastActivity.IsZero() {
+					// A write session exists but its upload has not started
+					// (uploads begin at flush/release). Treating the zero
+					// timestamp as idle time would cancel the live session
+					// and delete its working copy on the first sweep.
+					continue
+				}
 				idle := time.Since(lastActivity)
 				h.log.Debug("Upload sweeper: checking upload for path %s, bytes written: %d, last activity: %v, idle time: %v", node.path, bytesWritten, lastActivity, idle)
 				// Case A: upload opened but never wrote any bytes — allow a long grace period.
