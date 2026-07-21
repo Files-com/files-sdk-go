@@ -28,7 +28,7 @@ func (fs *LocalFs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int)
 		return -fuse.ENOENT
 	}
 
-	stat.Mode = uint32(info.Mode())
+	stat.Mode = platformFileMode(uint32(info.Mode()))
 	stat.Size = int64(info.Size())
 	node, ok := fs.vfs.fetch(path)
 	if ok && node.info.uid != 0 {

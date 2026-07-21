@@ -32,6 +32,27 @@ func TestValidMountPoint(t *testing.T) {
 	}
 }
 
+func TestPlatformFileModeRestrictsAccessToOwner(t *testing.T) {
+	tests := []struct {
+		name string
+		mode uint32
+		want uint32
+	}{
+		{name: "writable file", mode: 0o100644, want: 0o100600},
+		{name: "read-only file", mode: 0o100444, want: 0o100400},
+		{name: "writable directory", mode: 0o040755, want: 0o040700},
+		{name: "read-only directory", mode: 0o040555, want: 0o040500},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := platformFileMode(test.mode); got != test.want {
+				t.Fatalf("platformFileMode(%o) = %o, want %o", test.mode, got, test.want)
+			}
+		})
+	}
+}
+
 func TestOpenLocalFileAllowsRenameWhileOpen(t *testing.T) {
 	dir := t.TempDir()
 	oldPath := filepath.Join(dir, "illustrator.tmp")

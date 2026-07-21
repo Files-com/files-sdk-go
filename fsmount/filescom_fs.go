@@ -542,13 +542,13 @@ func getStat(info fsNodeInfo, stat *fuse.Stat_t, uid uint32, gid uint32) *fuse.S
 		if info.hasKnownRemotePermissions() && !info.isWritable() {
 			mode = 0555
 		}
-		stat.Mode = fuse.S_IFDIR | mode
+		stat.Mode = platformFileMode(fuse.S_IFDIR | mode)
 	} else {
 		mode := uint32(0644)
 		if info.hasKnownRemotePermissions() && !info.isWritable() {
 			mode = 0444
 		}
-		stat.Mode = fuse.S_IFREG | mode
+		stat.Mode = platformFileMode(fuse.S_IFREG | mode)
 	}
 
 	stat.Size = info.size

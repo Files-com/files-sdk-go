@@ -4232,20 +4232,23 @@ func TestRemoteFsAccessUsesKnownRemotePermissions(t *testing.T) {
 func TestGetStatUsesReadOnlyModesForKnownRemotePermissions(t *testing.T) {
 	fileInfo := fsNodeInfo{nodeType: nodeTypeFile, remotePermissions: "lr"}
 	fileStat := getStat(fileInfo, nil, 0, 0)
-	if got := fileStat.Mode & 0o777; got != 0o444 {
-		t.Fatalf("file mode = %o, want %o", got, 0o444)
+	wantFileMode := platformFileMode(0o444) & 0o777
+	if got := fileStat.Mode & 0o777; got != wantFileMode {
+		t.Fatalf("file mode = %o, want %o", got, wantFileMode)
 	}
 
 	dirInfo := fsNodeInfo{nodeType: nodeTypeDir, remotePermissions: "lr"}
 	dirStat := getStat(dirInfo, nil, 0, 0)
-	if got := dirStat.Mode & 0o777; got != 0o555 {
-		t.Fatalf("dir mode = %o, want %o", got, 0o555)
+	wantDirMode := platformFileMode(0o555) & 0o777
+	if got := dirStat.Mode & 0o777; got != wantDirMode {
+		t.Fatalf("dir mode = %o, want %o", got, wantDirMode)
 	}
 
 	writableFileInfo := fsNodeInfo{nodeType: nodeTypeFile, remotePermissions: "lrwd"}
 	writableFileStat := getStat(writableFileInfo, nil, 0, 0)
-	if got := writableFileStat.Mode & 0o777; got != 0o644 {
-		t.Fatalf("writable file mode = %o, want %o", got, 0o644)
+	wantWritableFileMode := platformFileMode(0o644) & 0o777
+	if got := writableFileStat.Mode & 0o777; got != wantWritableFileMode {
+		t.Fatalf("writable file mode = %o, want %o", got, wantWritableFileMode)
 	}
 }
 
