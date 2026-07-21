@@ -14,6 +14,7 @@ type Snapshot struct {
 	Name        string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	UserId      int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	BundleId    int64      `json:"bundle_id,omitempty" path:"bundle_id,omitempty" url:"bundle_id,omitempty"`
+	WorkspaceId int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	Paths       []string   `json:"paths,omitempty" path:"paths,omitempty" url:"paths,omitempty"`
 }
 
@@ -32,9 +33,10 @@ type SnapshotFindParams struct {
 }
 
 type SnapshotCreateParams struct {
-	ExpiresAt *time.Time `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
-	Name      string     `url:"name,omitempty" json:"name,omitempty" path:"name"`
-	Paths     []string   `url:"paths,omitempty" json:"paths,omitempty" path:"paths"`
+	ExpiresAt   *time.Time `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
+	Name        string     `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	Paths       []string   `url:"paths,omitempty" json:"paths,omitempty" path:"paths"`
+	WorkspaceId int64      `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 // Finalize Snapshot
