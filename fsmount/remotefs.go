@@ -581,6 +581,17 @@ func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
 	session := node.writeSession
 	waitForUpload := false
 	if session == nil {
+		if node.isUnmaterialized() {
+			// Create can produce a local node without starting a write session or
+			// creating a remote file. Rename that placeholder locally so callers
+			// do not receive Not Found from a backend move of a nonexistent path.
+			fs.log.Info("Renaming unmaterialized file %v to %v (%v to %v)", oldRemotePath, newRemotePath, oldLocalPath, newLocalPath)
+			fs.rename(oldpath, newpath)
+			_ = fs.cacheStore.Delete(oldpath)
+			_ = fs.cacheStore.Delete(newpath)
+			node.writeMu.Unlock()
+			return 0
+		}
 		node.writeMu.Unlock()
 		defer node.expireInfo()
 	} else {
@@ -749,6 +760,7 @@ func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh ui
 
 	if !exists {
 		node = fs.vfs.getOrCreate(path, nodeTypeFile)
+		node.markUnmaterialized()
 	}
 
 	fh, handle = fs.vfs.handles.Open(nil, fuseFlags)
@@ -1452,6 +1464,7 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 		return
 	}
 	fs.logWriteSessionMilestone(path, "upload_succeeded", fh, session, "size=%d", uploaded.size)
+	node.markMaterialized()
 
 	if err := fs.refreshReadCacheFromWorkingCopy(path, session, uploaded.size, uploaded.modTime); err != nil {
 		// The remote upload has already succeeded, so a cache refresh failure should only
@@ -2810,6 +2823,7 @@ func (fs *RemoteFs) createNode(path string, item files_sdk.File) *fsNode {
 	}
 
 	node := fs.vfs.getOrCreate(path, nt)
+	node.markMaterialized()
 	if nt == nodeTypeFile && node.hasActiveWriteSession() {
 		node.setRemotePermissions(item.Permissions)
 		return node

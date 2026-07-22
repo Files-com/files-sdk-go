@@ -18,6 +18,10 @@ type fsNode struct {
 	info         fsNodeInfo
 	writeSession *writeSession
 
+	// unmaterialized is true when Create added the node locally but no upload or
+	// remote listing has confirmed that the file exists remotely.
+	unmaterialized bool
+
 	// pendingVisible keeps a locally-created file visible in directory listings
 	// until the remote listing confirms its existence or the upload fails.
 	pendingVisible bool
@@ -251,6 +255,24 @@ func (n *fsNode) isPendingVisible() bool {
 	n.statusMu.Lock()
 	defer n.statusMu.Unlock()
 	return n.pendingVisible
+}
+
+func (n *fsNode) markUnmaterialized() {
+	n.statusMu.Lock()
+	defer n.statusMu.Unlock()
+	n.unmaterialized = true
+}
+
+func (n *fsNode) markMaterialized() {
+	n.statusMu.Lock()
+	defer n.statusMu.Unlock()
+	n.unmaterialized = false
+}
+
+func (n *fsNode) isUnmaterialized() bool {
+	n.statusMu.Lock()
+	defer n.statusMu.Unlock()
+	return n.unmaterialized
 }
 
 func (n *fsNode) childPathsExpired() bool {

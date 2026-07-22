@@ -1603,6 +1603,98 @@ func TestRemoteFsPublicRenameMovesActiveWriteSession(t *testing.T) {
 	}
 }
 
+func TestRemoteFsRenameCreateWithoutWriteStaysLocal(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	oldPath := "/export.pdf"
+	newPath := "/export.pdf.bak"
+	moveCalls := 0
+	fs.backend = &fakeRemoteBackend{
+		moveFunc: func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error) {
+			moveCalls++
+			return files_sdk.FileAction{}, nil
+		},
+	}
+
+	errno, fh := fs.Create(oldPath, fuse.O_RDWR|fuse.O_CREAT, 0o644)
+	if errno != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errno)
+	}
+	if errno := fs.Release(oldPath, fh); errno != 0 {
+		t.Fatalf("Release returned unexpected error: %d", errno)
+	}
+
+	if errno := fs.Rename(oldPath, newPath); errno != 0 {
+		t.Fatalf("Rename returned unexpected error: %d", errno)
+	}
+	if moveCalls != 0 {
+		t.Fatalf("backend move calls = %d, want 0", moveCalls)
+	}
+	if _, ok := vfs.fetch(oldPath); ok {
+		t.Fatal("expected old path to be absent after local rename")
+	}
+	node, ok := vfs.fetch(newPath)
+	if !ok {
+		t.Fatal("expected new path to exist after local rename")
+	}
+	if !node.isUnmaterialized() {
+		t.Fatal("expected renamed node to remain unmaterialized")
+	}
+}
+
+func TestRemoteFsRenameAfterReleasedUploadMovesRemoteFile(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	oldPath := "/uploaded.pdf"
+	newPath := "/uploaded-final.pdf"
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return uploadedFileMetadata{}, err
+		}
+		return testUploadedMetadata(int64(len(data)), mtime), nil
+	}
+	moveCalls := 0
+	fs.backend = &fakeRemoteBackend{
+		moveFunc: func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error) {
+			moveCalls++
+			return files_sdk.FileAction{}, nil
+		},
+	}
+
+	errno, fh := fs.Create(oldPath, fuse.O_RDWR|fuse.O_CREAT, 0o644)
+	if errno != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errno)
+	}
+	payload := []byte("uploaded-pdf")
+	if n := fs.Write(oldPath, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+	if errno := fs.Release(oldPath, fh); errno != 0 {
+		t.Fatalf("Release returned unexpected error: %d", errno)
+	}
+
+	node, ok := vfs.fetch(oldPath)
+	if !ok {
+		t.Fatal("expected uploaded node to remain in the VFS")
+	}
+	if node.isUnmaterialized() {
+		t.Fatal("expected successful upload to materialize the node")
+	}
+	if node.getWriteSession() != nil {
+		t.Fatal("expected Release to clear the write session")
+	}
+
+	if errno := fs.Rename(oldPath, newPath); errno != 0 {
+		t.Fatalf("Rename returned unexpected error: %d", errno)
+	}
+	if moveCalls != 1 {
+		t.Fatalf("backend move calls = %d, want 1", moveCalls)
+	}
+}
+
 func TestRemoteFsFlushAfterActiveRenameUploadsToNewPath(t *testing.T) {
 	fs, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()
