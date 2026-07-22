@@ -106,6 +106,27 @@ func TestBuildPath(t *testing.T) {
 				"root/{path}",
 				map[string]interface{}{"path": "a/my-path"}},
 		},
+		{
+			name: "given a map of strings",
+			want: "root/a/my-path",
+			args: args{
+				"root/{path}",
+				map[string]string{"path": "a/my-path"}},
+		},
+		{
+			name: "given a map of strings with escaping",
+			want: "root/a%20file%20name.text",
+			args: args{
+				"root/{path}",
+				map[string]string{"path": "a file name.text"}},
+		},
+		{
+			name: "non-path string placeholder",
+			want: "users/bob%20smith",
+			args: args{
+				"users/{name}",
+				map[string]interface{}{"name": "bob smith"}},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
