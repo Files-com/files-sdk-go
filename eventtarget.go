@@ -40,6 +40,7 @@ func (u EventTargetTargetTypeEnum) Enum() map[string]EventTargetTargetTypeEnum {
 		"teams_webhook": EventTargetTargetTypeEnum("teams_webhook"),
 		"amazon_sns":    EventTargetTargetTypeEnum("amazon_sns"),
 		"google_pubsub": EventTargetTargetTypeEnum("google_pubsub"),
+		"folder":        EventTargetTargetTypeEnum("folder"),
 	}
 }
 
@@ -57,21 +58,20 @@ type EventTargetCreateParams struct {
 	Name                 string                    `url:"name" json:"name" path:"name"`
 	WorkspaceId          int64                     `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	ApplyToAllWorkspaces *bool                     `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
-	TargetType           EventTargetTargetTypeEnum `url:"target_type" json:"target_type" path:"target_type"`
 	Enabled              *bool                     `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
 	Config               interface{}               `url:"config" json:"config" path:"config"`
 	DeliveryPolicy       interface{}               `url:"delivery_policy,omitempty" json:"delivery_policy,omitempty" path:"delivery_policy"`
+	TargetType           EventTargetTargetTypeEnum `url:"target_type" json:"target_type" path:"target_type"`
 }
 
 type EventTargetUpdateParams struct {
-	Id                   int64                     `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	Name                 string                    `url:"name,omitempty" json:"name,omitempty" path:"name"`
-	WorkspaceId          int64                     `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
-	ApplyToAllWorkspaces *bool                     `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
-	TargetType           EventTargetTargetTypeEnum `url:"target_type,omitempty" json:"target_type,omitempty" path:"target_type"`
-	Enabled              *bool                     `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
-	Config               interface{}               `url:"config,omitempty" json:"config,omitempty" path:"config"`
-	DeliveryPolicy       interface{}               `url:"delivery_policy,omitempty" json:"delivery_policy,omitempty" path:"delivery_policy"`
+	Id                   int64       `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Name                 string      `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	WorkspaceId          int64       `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
+	ApplyToAllWorkspaces *bool       `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
+	Enabled              *bool       `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
+	Config               interface{} `url:"config,omitempty" json:"config,omitempty" path:"config"`
+	DeliveryPolicy       interface{} `url:"delivery_policy,omitempty" json:"delivery_policy,omitempty" path:"delivery_policy"`
 }
 
 type EventTargetDeleteParams struct {
