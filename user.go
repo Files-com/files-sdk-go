@@ -73,6 +73,8 @@ type User struct {
 	Active2fa                              *bool      `json:"active_2fa,omitempty" path:"active_2fa,omitempty" url:"active_2fa,omitempty"`
 	RequirePasswordChange                  *bool      `json:"require_password_change,omitempty" path:"require_password_change,omitempty" url:"require_password_change,omitempty"`
 	PasswordExpired                        *bool      `json:"password_expired,omitempty" path:"password_expired,omitempty" url:"password_expired,omitempty"`
+	ResponsibleGroupId                     int64      `json:"responsible_group_id,omitempty" path:"responsible_group_id,omitempty" url:"responsible_group_id,omitempty"`
+	ResponsibleUserId                      int64      `json:"responsible_user_id,omitempty" path:"responsible_user_id,omitempty" url:"responsible_user_id,omitempty"`
 	ReadonlySiteAdmin                      *bool      `json:"readonly_site_admin,omitempty" path:"readonly_site_admin,omitempty" url:"readonly_site_admin,omitempty"`
 	RestapiPermission                      *bool      `json:"restapi_permission,omitempty" path:"restapi_permission,omitempty" url:"restapi_permission,omitempty"`
 	SelfManaged                            *bool      `json:"self_managed,omitempty" path:"self_managed,omitempty" url:"self_managed,omitempty"`
@@ -245,6 +247,8 @@ type UserCreateParams struct {
 	NotifyOnAllExpectationFailures         *bool                        `url:"notify_on_all_expectation_failures,omitempty" json:"notify_on_all_expectation_failures,omitempty" path:"notify_on_all_expectation_failures"`
 	RequireLoginBy                         *time.Time                   `url:"require_login_by,omitempty" json:"require_login_by,omitempty" path:"require_login_by"`
 	RequirePasswordChange                  *bool                        `url:"require_password_change,omitempty" json:"require_password_change,omitempty" path:"require_password_change"`
+	ResponsibleGroupId                     int64                        `url:"responsible_group_id,omitempty" json:"responsible_group_id,omitempty" path:"responsible_group_id"`
+	ResponsibleUserId                      int64                        `url:"responsible_user_id,omitempty" json:"responsible_user_id,omitempty" path:"responsible_user_id"`
 	RestapiPermission                      *bool                        `url:"restapi_permission,omitempty" json:"restapi_permission,omitempty" path:"restapi_permission"`
 	SelfManaged                            *bool                        `url:"self_managed,omitempty" json:"self_managed,omitempty" path:"self_managed"`
 	SftpPermission                         *bool                        `url:"sftp_permission,omitempty" json:"sftp_permission,omitempty" path:"sftp_permission"`
@@ -330,6 +334,8 @@ type UserUpdateParams struct {
 	NotifyOnAllExpectationFailures         *bool                        `url:"notify_on_all_expectation_failures,omitempty" json:"notify_on_all_expectation_failures,omitempty" path:"notify_on_all_expectation_failures"`
 	RequireLoginBy                         *time.Time                   `url:"require_login_by,omitempty" json:"require_login_by,omitempty" path:"require_login_by"`
 	RequirePasswordChange                  *bool                        `url:"require_password_change,omitempty" json:"require_password_change,omitempty" path:"require_password_change"`
+	ResponsibleGroupId                     int64                        `url:"responsible_group_id,omitempty" json:"responsible_group_id,omitempty" path:"responsible_group_id"`
+	ResponsibleUserId                      int64                        `url:"responsible_user_id,omitempty" json:"responsible_user_id,omitempty" path:"responsible_user_id"`
 	RestapiPermission                      *bool                        `url:"restapi_permission,omitempty" json:"restapi_permission,omitempty" path:"restapi_permission"`
 	SelfManaged                            *bool                        `url:"self_managed,omitempty" json:"self_managed,omitempty" path:"self_managed"`
 	SftpPermission                         *bool                        `url:"sftp_permission,omitempty" json:"sftp_permission,omitempty" path:"sftp_permission"`
