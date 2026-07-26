@@ -18,6 +18,9 @@ type Behavior struct {
 	PublicHostingUrl            string      `json:"public_hosting_url,omitempty" path:"public_hosting_url,omitempty" url:"public_hosting_url,omitempty"`
 	DisableParentFolderBehavior *bool       `json:"disable_parent_folder_behavior,omitempty" path:"disable_parent_folder_behavior,omitempty" url:"disable_parent_folder_behavior,omitempty"`
 	Recursive                   *bool       `json:"recursive,omitempty" path:"recursive,omitempty" url:"recursive,omitempty"`
+	Inherited                   *bool       `json:"inherited,omitempty" path:"inherited,omitempty" url:"inherited,omitempty"`
+	Managed                     *bool       `json:"managed,omitempty" path:"managed,omitempty" url:"managed,omitempty"`
+	RootBehaviorSiteAdminOnly   *bool       `json:"root_behavior_site_admin_only,omitempty" path:"root_behavior_site_admin_only,omitempty" url:"root_behavior_site_admin_only,omitempty"`
 	AttachmentFile              io.Reader   `json:"attachment_file,omitempty" path:"attachment_file,omitempty" url:"attachment_file,omitempty"`
 	AttachmentDelete            *bool       `json:"attachment_delete,omitempty" path:"attachment_delete,omitempty" url:"attachment_delete,omitempty"`
 }

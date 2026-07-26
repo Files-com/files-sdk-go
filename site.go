@@ -148,6 +148,8 @@ type Site struct {
 	PreventRootPermissionsForNonSiteAdmins   *bool       `json:"prevent_root_permissions_for_non_site_admins,omitempty" path:"prevent_root_permissions_for_non_site_admins,omitempty" url:"prevent_root_permissions_for_non_site_admins,omitempty"`
 	ProtocolAccessGroupsOnly                 *bool       `json:"protocol_access_groups_only,omitempty" path:"protocol_access_groups_only,omitempty" url:"protocol_access_groups_only,omitempty"`
 	Require2fa                               *bool       `json:"require_2fa,omitempty" path:"require_2fa,omitempty" url:"require_2fa,omitempty"`
+	RestrictRootFolderBehaviorsToSiteAdmins  *bool       `json:"restrict_root_folder_behaviors_to_site_admins,omitempty" path:"restrict_root_folder_behaviors_to_site_admins,omitempty" url:"restrict_root_folder_behaviors_to_site_admins,omitempty"`
+	RootFolderBehaviorsApplyToWorkspaces     *bool       `json:"root_folder_behaviors_apply_to_workspaces,omitempty" path:"root_folder_behaviors_apply_to_workspaces,omitempty" url:"root_folder_behaviors_apply_to_workspaces,omitempty"`
 	Require2faExemptAllSsoUsers              *bool       `json:"require_2fa_exempt_all_sso_users,omitempty" path:"require_2fa_exempt_all_sso_users,omitempty" url:"require_2fa_exempt_all_sso_users,omitempty"`
 	Require2faStopTime                       *time.Time  `json:"require_2fa_stop_time,omitempty" path:"require_2fa_stop_time,omitempty" url:"require_2fa_stop_time,omitempty"`
 	RevokeBundleAccessOnDisableOrDelete      *bool       `json:"revoke_bundle_access_on_disable_or_delete,omitempty" path:"revoke_bundle_access_on_disable_or_delete,omitempty" url:"revoke_bundle_access_on_disable_or_delete,omitempty"`
@@ -297,6 +299,8 @@ type SiteUpdateParams struct {
 	DocumentEditsInBundleAllowed             *bool       `url:"document_edits_in_bundle_allowed,omitempty" json:"document_edits_in_bundle_allowed,omitempty" path:"document_edits_in_bundle_allowed"`
 	PasswordRequirementsApplyToBundles       *bool       `url:"password_requirements_apply_to_bundles,omitempty" json:"password_requirements_apply_to_bundles,omitempty" path:"password_requirements_apply_to_bundles"`
 	PreventRootPermissionsForNonSiteAdmins   *bool       `url:"prevent_root_permissions_for_non_site_admins,omitempty" json:"prevent_root_permissions_for_non_site_admins,omitempty" path:"prevent_root_permissions_for_non_site_admins"`
+	RestrictRootFolderBehaviorsToSiteAdmins  *bool       `url:"restrict_root_folder_behaviors_to_site_admins,omitempty" json:"restrict_root_folder_behaviors_to_site_admins,omitempty" path:"restrict_root_folder_behaviors_to_site_admins"`
+	RootFolderBehaviorsApplyToWorkspaces     *bool       `url:"root_folder_behaviors_apply_to_workspaces,omitempty" json:"root_folder_behaviors_apply_to_workspaces,omitempty" path:"root_folder_behaviors_apply_to_workspaces"`
 	OptOutGlobal                             *bool       `url:"opt_out_global,omitempty" json:"opt_out_global,omitempty" path:"opt_out_global"`
 	UseProvidedModifiedAt                    *bool       `url:"use_provided_modified_at,omitempty" json:"use_provided_modified_at,omitempty" path:"use_provided_modified_at"`
 	CustomNamespace                          *bool       `url:"custom_namespace,omitempty" json:"custom_namespace,omitempty" path:"custom_namespace"`

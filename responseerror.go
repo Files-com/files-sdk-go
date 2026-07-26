@@ -142,6 +142,8 @@ const (
 	ErrReauthenticationNeededAction                                           ResponseErrorType = "not-authorized/reauthentication-needed-action"
 	ErrRecaptchaFailed                                                        ResponseErrorType = "not-authorized/recaptcha-failed"
 	ErrRemoteDesktopDebugLoggingDisabled                                      ResponseErrorType = "not-authorized/remote-desktop-debug-logging-disabled"
+	ErrRootFolderBehaviorSiteAdminRequired                                    ResponseErrorType = "not-authorized/root-folder-behavior-site-admin-required"
+	ErrRootFolderBehaviorSkipSiteAdminRequired                                ResponseErrorType = "not-authorized/root-folder-behavior-skip-site-admin-required"
 	ErrSelfManagedRequired                                                    ResponseErrorType = "not-authorized/self-managed-required"
 	ErrSiteAdminOrPartnerAdminPermissionRequired                              ResponseErrorType = "not-authorized/site-admin-or-partner-admin-permission-required"
 	ErrSiteAdminOrWorkspaceAdminOrFolderAdminPermissionRequired               ResponseErrorType = "not-authorized/site-admin-or-workspace-admin-or-folder-admin-permission-required"

@@ -750,6 +750,8 @@ if err != nil {
 | `not-authorized/reauthentication-needed-action` | `ErrReauthenticationNeededAction` | Reauthentication Needed Action |
 | `not-authorized/recaptcha-failed` | `ErrRecaptchaFailed` | Recaptcha Failed |
 | `not-authorized/remote-desktop-debug-logging-disabled` | `ErrRemoteDesktopDebugLoggingDisabled` | Remote Desktop Debug Logging Disabled |
+| `not-authorized/root-folder-behavior-site-admin-required` | `ErrRootFolderBehaviorSiteAdminRequired` | Root Folder Behavior Site Admin Required |
+| `not-authorized/root-folder-behavior-skip-site-admin-required` | `ErrRootFolderBehaviorSkipSiteAdminRequired` | Root Folder Behavior Skip Site Admin Required |
 | `not-authorized/self-managed-required` | `ErrSelfManagedRequired` | Self Managed Required |
 | `not-authorized/site-admin-or-partner-admin-permission-required` | `ErrSiteAdminOrPartnerAdminPermissionRequired` | Site Admin Or Partner Admin Permission Required |
 | `not-authorized/site-admin-or-workspace-admin-or-folder-admin-permission-required` | `ErrSiteAdminOrWorkspaceAdminOrFolderAdminPermissionRequired` | Site Admin Or Workspace Admin Or Folder Admin Permission Required |
