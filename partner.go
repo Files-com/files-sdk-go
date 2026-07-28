@@ -24,6 +24,7 @@ type Partner struct {
 	ResponsibleGroupId         int64   `json:"responsible_group_id,omitempty" path:"responsible_group_id,omitempty" url:"responsible_group_id,omitempty"`
 	ResponsibleUserId          int64   `json:"responsible_user_id,omitempty" path:"responsible_user_id,omitempty" url:"responsible_user_id,omitempty"`
 	RootFolder                 string  `json:"root_folder,omitempty" path:"root_folder,omitempty" url:"root_folder,omitempty"`
+	ShowPartnerChannelHomePage *bool   `json:"show_partner_channel_home_page,omitempty" path:"show_partner_channel_home_page,omitempty" url:"show_partner_channel_home_page,omitempty"`
 	Tags                       string  `json:"tags,omitempty" path:"tags,omitempty" url:"tags,omitempty"`
 	UserIds                    []int64 `json:"user_ids,omitempty" path:"user_ids,omitempty" url:"user_ids,omitempty"`
 }
@@ -56,6 +57,7 @@ type PartnerCreateParams struct {
 	PartnerChannelTemplateId   int64  `url:"partner_channel_template_id,omitempty" json:"partner_channel_template_id,omitempty" path:"partner_channel_template_id"`
 	ResponsibleGroupId         int64  `url:"responsible_group_id,omitempty" json:"responsible_group_id,omitempty" path:"responsible_group_id"`
 	ResponsibleUserId          int64  `url:"responsible_user_id,omitempty" json:"responsible_user_id,omitempty" path:"responsible_user_id"`
+	ShowPartnerChannelHomePage *bool  `url:"show_partner_channel_home_page,omitempty" json:"show_partner_channel_home_page,omitempty" path:"show_partner_channel_home_page"`
 	Tags                       string `url:"tags,omitempty" json:"tags,omitempty" path:"tags"`
 	Name                       string `url:"name" json:"name" path:"name"`
 	RootFolder                 string `url:"root_folder" json:"root_folder" path:"root_folder"`
@@ -75,6 +77,7 @@ type PartnerUpdateParams struct {
 	PartnerChannelTemplateId   int64  `url:"partner_channel_template_id,omitempty" json:"partner_channel_template_id,omitempty" path:"partner_channel_template_id"`
 	ResponsibleGroupId         int64  `url:"responsible_group_id,omitempty" json:"responsible_group_id,omitempty" path:"responsible_group_id"`
 	ResponsibleUserId          int64  `url:"responsible_user_id,omitempty" json:"responsible_user_id,omitempty" path:"responsible_user_id"`
+	ShowPartnerChannelHomePage *bool  `url:"show_partner_channel_home_page,omitempty" json:"show_partner_channel_home_page,omitempty" path:"show_partner_channel_home_page"`
 	Tags                       string `url:"tags,omitempty" json:"tags,omitempty" path:"tags"`
 	Name                       string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	RootFolder                 string `url:"root_folder,omitempty" json:"root_folder,omitempty" path:"root_folder"`
