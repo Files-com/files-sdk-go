@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"sync"
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
@@ -118,6 +119,7 @@ func UploadWithResume(resume UploadResumable) UploadOption {
 		}
 		params.Parts = resume.Parts
 		params.FileUploadPart = resume.FileUploadPart
+		params.uploadV2ResumeTarget = resume.TargetClass
 		return params, nil
 	}
 }
@@ -275,17 +277,20 @@ func (c *Client) Uploader(params UploaderParams, opts ...files_sdk.RequestRespon
 		params.Job = job
 		job.Params = params
 		params.RemotePath = lib.Path{Path: params.RemotePath}.PruneStartingSlash().String()
-		file := &UploadStatus{file: files_sdk.File{}, remotePath: params.RemotePath, localPath: params.LocalPath, status: status.Queued, job: job}
+		file := &UploadStatus{
+			file:       files_sdk.File{},
+			remotePath: params.RemotePath,
+			localPath:  params.LocalPath,
+			status:     status.Queued,
+			job:        job,
+			Mutex:      &sync.RWMutex{},
+		}
 		expandedPath, err := expand(params.LocalPath)
-		if err != nil {
-			job.Add(file)
-			job.UpdateStatus(status.Errored, file, err)
+		if errorJob(job, *file, err) {
 			return
 		}
 		absolutePath, err := filepath.Abs(expandedPath)
-		if err != nil {
-			job.Add(file)
-			job.UpdateStatus(status.Errored, file, err)
+		if errorJob(job, *file, err) {
 			return
 		}
 		if (lib.Path{Path: params.LocalPath}).EndingSlash() {

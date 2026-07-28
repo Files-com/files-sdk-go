@@ -161,7 +161,7 @@ func (d *DownloadParts) realSizeOverLap() error {
 				}
 			}
 		} else {
-			if cause := context.Cause(d.Context); errors.Is(cause, ErrJobPaused) {
+			if cause := context.Cause(d.Context); cause != nil {
 				return cause
 			}
 			if d.FileInfo.Size() != atomic.LoadInt64(&d.totalWritten) && !d.FileInfo.(UntrustedSize).UntrustedSize() {

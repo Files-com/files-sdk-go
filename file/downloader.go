@@ -168,6 +168,13 @@ func enqueueIndexedDownloads(job *Job, jobCtx context.Context, onComplete chan *
 
 	batcher := newZipBatchDownloader(job, jobCtx, params, onComplete)
 	for !job.EndScanning.Called() || job.Count(status.Indexed) > 0 {
+		if jobCtx.Err() != nil {
+			// The job is canceled or paused: drain the remaining queue in one
+			// batch instead of one EnqueueNext scan per file. Files already
+			// offered to the batcher are finalized by flushEnd below.
+			drainCanceledIndexed(job, onComplete)
+			break
+		}
 		if f, ok := job.EnqueueNext(); ok {
 			downloadStatus := f.(*DownloadStatus)
 			if batcher.offer(downloadStatus) {
@@ -181,6 +188,13 @@ func enqueueIndexedDownloads(job *Job, jobCtx context.Context, onComplete chan *
 
 func enqueueIndexedDownloadsDirect(job *Job, jobCtx context.Context, onComplete chan *DownloadStatus) {
 	for !job.EndScanning.Called() || job.Count(status.Indexed) > 0 {
+		if jobCtx.Err() != nil {
+			// The job is canceled or paused: drain the remaining queue in one
+			// batch instead of one EnqueueNext scan per file. In-flight files
+			// keep their normal cancellation path via enqueueDownload.
+			drainCanceledIndexed(job, onComplete)
+			return
+		}
 		if f, ok := job.EnqueueNext(); ok {
 			enqueueIndexedDownloadDirect(job, jobCtx, f.(*DownloadStatus), onComplete)
 		}

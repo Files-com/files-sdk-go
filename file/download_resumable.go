@@ -15,7 +15,7 @@ type JobDownloadCheckpoint struct {
 }
 
 // DownloadCheckpoint builds a JobDownloadCheckpoint from the job's settled file statuses.
-// Call at terminal time (Canceled or Finished) instead of tracking state incrementally.
+// Call after Wait returns or Finished is signaled; Canceled only indicates that cancellation was requested.
 func (j *Job) DownloadCheckpoint() *JobDownloadCheckpoint {
 	completed := make(map[string]struct{})
 	for p := range j.CompletedPaths {

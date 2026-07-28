@@ -228,6 +228,13 @@ func enqueueIndexedUploads(job *Job, jobCtx context.Context, onComplete chan *Up
 	adaptiveTargets := uploadV2JobAdmissionTargets{job: job}
 	fileAdmissionManager := job.fileAdmissionManager()
 	for !job.EndScanning.Called() || job.Count(status.Indexed) > 0 {
+		if jobCtx.Err() != nil {
+			// The job is canceled or paused: drain the remaining queue in one
+			// batch instead of one EnqueueNext scan per file. In-flight files
+			// keep their normal cancellation path via enqueueUpload.
+			drainCanceledIndexed(job, onComplete)
+			return
+		}
 		if f, ok := job.EnqueueNext(); ok {
 			uploadStatus := f.(*UploadStatus)
 			admitted := !shouldGateAdaptiveUploadAdmission(

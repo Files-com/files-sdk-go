@@ -57,11 +57,21 @@ func newUploadV2PartPlanForUpload(part files_sdk.FileUploadPart, totalSize *int6
 }
 
 func (u *uploadIO) newUploadV2PartPlanForUpload() (uploadV2PartPlan, bool, string) {
-	plan, ok, reason := newUploadV2PartPlanForUpload(u.FileUploadPart, u.Size, u.uploadV2TargetClassifier)
+	if !lib.UnWrapBool(u.FileUploadPart.ParallelParts) {
+		return uploadV2PartPlan{}, false, "parallel_parts_disabled"
+	}
+	plan, ok, reason := newUploadV2PartPlan(u.uploadV2Target(), u.Size)
 	if !ok {
 		return uploadV2PartPlan{}, false, reason
 	}
 	return plan.withTuning(u.uploadV2Tuning)
+}
+
+func (u *uploadIO) uploadV2Target() TransferV2TargetClass {
+	if u.uploadV2ResumeTarget != "" {
+		return normalizeTransferV2TargetClass(u.uploadV2ResumeTarget)
+	}
+	return classifyUploadV2Target(u.FileUploadPart, u.uploadV2TargetClassifier)
 }
 
 func uploadV2PartPlanEligible(part files_sdk.FileUploadPart, size int64, classifier UploadV2TargetClassifier, tuning UploadV2Tuning) bool {

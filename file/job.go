@@ -2,6 +2,7 @@ package file
 
 import (
 	"context"
+	"errors"
 	"io/fs"
 	"strings"
 	"sync"
@@ -219,7 +220,9 @@ func (r *Job) Cancel() {
 	r.Meter.Close(time.Now())
 	r.Canceled.Call()
 	r.cancelMutex.Lock()
-	r.CancelFunc()
+	if r.CancelFunc != nil {
+		r.CancelFunc()
+	}
 	r.cancelMutex.Unlock()
 }
 
@@ -227,10 +230,16 @@ func (r *Job) Reset() {
 	r.Timer = timer.New()
 }
 
+// Wait blocks until a started job's completion accounting is settled.
+// A canceled job that never started has no completion work to await.
 func (r *Job) Wait() {
 	select {
 	case <-r.Finished.C:
+		return
 	case <-r.Canceled.C:
+	}
+	if r.Started.Called() {
+		<-r.Finished.C
 	}
 }
 
@@ -242,6 +251,9 @@ func (r *Job) WithContext(ctx context.Context) context.Context {
 	jobCtx, cancel := context.WithCancel(ctx)
 	r.cancelMutex.Lock()
 	r.CancelFunc = cancel
+	if r.Canceled.Called() {
+		cancel()
+	}
 	r.cancelMutex.Unlock()
 	return jobCtx
 }
@@ -316,7 +328,9 @@ func (r *Job) UpdateStatus(s status.GetStatus, file IFile, err error) {
 	if s == file.Status() && err == nil && file.Err() == nil {
 		return
 	}
-	if err != nil && strings.Contains(err.Error(), "context canceled") {
+	if err != nil && (errors.Is(err, context.Canceled) ||
+		errors.Is(err, ErrJobPaused) ||
+		strings.Contains(err.Error(), "context canceled")) {
 		err = nil
 		s = status.Canceled
 	}
@@ -514,6 +528,25 @@ func (r *Job) EnqueueNext() (f IFile, ok bool) {
 	return
 }
 
+// cancelAllIndexed transitions every Indexed file to Canceled in a single pass
+// under the mutex, returning the files it canceled. Unlike UpdateStatus, it does
+// not fire per-file status callbacks: draining a canceled job one file at a time
+// via EnqueueNext rescans all statuses and fires two callbacks per file, which
+// is quadratic on large jobs.
+func (r *Job) cancelAllIndexed() []IFile {
+	var canceled []IFile
+	r.statusesMutex.Lock()
+	for _, s := range r.Statuses {
+		if s.Status().Any(status.Indexed) {
+			// The status must be changed within the mutex in order that it's not reused.
+			s.SetStatus(status.Canceled, nil)
+			canceled = append(canceled, s)
+		}
+	}
+	r.statusesMutex.Unlock()
+	return canceled
+}
+
 func (r *Job) Sub(t ...status.GetStatus) *Job {
 	var sub []IFile
 	r.statusesMutex.RLock()
@@ -601,6 +634,28 @@ func WaitTellFinished[T any](job *Job, onStatusComplete chan T, beforeCallingFin
 		}
 		job.Finish()
 	}()
+}
+
+// drainCanceledIndexed batch-cancels files that were indexed but never handed to
+// a transfer, once the job context is canceled. Files already in flight keep
+// their normal cancellation path. Each drained file is still pushed onto
+// onComplete so job completion accounting (WaitTellFinished) sees every file
+// exactly once.
+func drainCanceledIndexed[T IFile](job *Job, onComplete chan T) {
+	for {
+		for _, f := range job.cancelAllIndexed() {
+			onComplete <- f.(T)
+		}
+		if job.EndScanning.Called() {
+			if job.Count(status.Indexed) == 0 {
+				return
+			}
+			continue
+		}
+		// Scanning respects the job context, so wait for it to end rather than
+		// polling, then sweep anything indexed in the meantime.
+		<-job.EndScanning.C
+	}
 }
 
 func waitForAndCount[T any, F any](wait chan T, onComplete chan F) int {

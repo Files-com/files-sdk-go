@@ -171,6 +171,23 @@ func TestUploadV2TargetClassifierCanReturnCustomTarget(t *testing.T) {
 	assert.Equal(t, int64(16)*uploadV2MiB, plan.partSize)
 }
 
+func TestUploadV2ResumeUsesPersistedTargetWithoutSignedURL(t *testing.T) {
+	size := int64(64 * uploadV2MiB)
+	u, err := UploadWithResume(UploadResumable{
+		FileUploadPart: files_sdk.FileUploadPart{
+			Ref:           "upload-ref",
+			ParallelParts: lib.Bool(true),
+		},
+		TargetClass: uploadV2TargetS3,
+	})(uploadIO{Size: &size})
+	require.NoError(t, err)
+
+	plan, ok, reason := u.newUploadV2PartPlanForUpload()
+	require.True(t, ok, reason)
+	assert.Equal(t, uploadV2TargetS3, plan.target)
+	assert.Equal(t, AdaptiveTransferS3MaxConcurrency, u.uploadV2MaxConcurrency())
+}
+
 func TestUploadV2ClassifiesDirectTarget(t *testing.T) {
 	part := uploadV2TestPart("https://files-agent-proxy.test/uploads")
 	part.DirectConnectionInfo = testDirectConnectionInfo("/uploads?jwt=direct-token")
@@ -1258,6 +1275,42 @@ func TestUploadV2PartConcurrencyGateReportsFailureSamples(t *testing.T) {
 	assert.Equal(t, 1, snapshot.FailureTotal)
 	assert.Equal(t, 1, snapshot.BackPressureTotal)
 	assert.Equal(t, int64(7), snapshot.BytesTotal)
+}
+
+func TestUploadV2CanceledPartsPreserveSharedTarget(t *testing.T) {
+	for _, test := range []struct {
+		name         string
+		cause        error
+		wantFailures int
+		wantTarget   int
+	}{
+		{name: "pause", cause: ErrJobPaused, wantFailures: 0, wantTarget: 10},
+		{name: "cancel", cause: context.Canceled, wantFailures: 0, wantTarget: 10},
+		{name: "failure", wantFailures: 1, wantTarget: 5},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			manager := lib.NewAdaptiveConcurrencyManagerWithConfig(lib.AdaptiveConcurrencyConfig{
+				MaxConcurrency: 10,
+				InitialTarget:  10,
+			})
+			gate := newUploadV2PartConcurrencyGate(manager.NewSubWorker(), 2)
+			require.True(t, gate.WaitWithContext(context.Background()))
+
+			var ctx context.Context = context.Background()
+			if test.cause != nil {
+				var cancel context.CancelCauseFunc
+				ctx, cancel = context.WithCancelCause(ctx)
+				cancel(test.cause)
+			}
+			(&uploadV2Engine{}).donePart(ctx, gate, lib.AdaptiveConcurrencySample{Success: false})
+			gate.WaitAllDone()
+
+			snapshot := manager.Snapshot()
+			assert.Equal(t, test.wantTarget, snapshot.Target)
+			assert.Equal(t, test.wantFailures, snapshot.FailureTotal)
+			assert.Equal(t, 0, snapshot.Running)
+		})
+	}
 }
 
 type uploadV2GateTestParent struct {

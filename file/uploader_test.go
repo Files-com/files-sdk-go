@@ -1238,8 +1238,57 @@ func TestUploadPauseResume(t *testing.T) {
 		job.Start()
 		job.Wait()
 
+		assert.True(t, job.Finished.Called())
 		require.Len(t, job.Statuses, 1)
 		assert.Equal(t, status.Canceled, job.Statuses[0].Status())
+	})
+
+	t.Run("cancel drains queued files in batch", func(t *testing.T) {
+		job := (&Job{Logger: lib.NullLogger{}}).Init()
+		job.Params = UploaderParams{}
+
+		ctx, cancel := context.WithCancelCause(context.Background())
+		defer cancel(nil)
+		jobCtx := job.WithContext(ctx)
+
+		job.Scan()
+		const fileCount = 10_000
+		for i := range fileCount {
+			localPath := fmt.Sprintf("synthetic/%v.txt", i)
+			uploadStatus := &UploadStatus{
+				job:       job,
+				status:    status.Indexed,
+				localPath: localPath,
+				Mutex:     &sync.RWMutex{},
+				file:      files_sdk.File{Path: localPath, Type: "file", Size: 10},
+			}
+			if i == 0 {
+				// Simulates a file indexed with a partial upload from a prior
+				// checkpoint — the only state that belongs in PendingParts.
+				uploadStatus.UploadResumable = UploadResumable{FileUploadPart: files_sdk.FileUploadPart{Ref: "pending-ref"}}
+			}
+			job.Add(uploadStatus)
+		}
+
+		cancel(ErrJobPaused)
+
+		onComplete := make(chan *UploadStatus)
+		start := time.Now()
+		go enqueueIndexedUploads(job, jobCtx, onComplete)
+		WaitTellFinished(job, onComplete, func() {})
+		job.EndScan()
+		job.Wait()
+		elapsed := time.Since(start)
+
+		t.Logf("drained %v canceled files in %v", fileCount, elapsed)
+		assert.Less(t, elapsed, 5*time.Second, "canceled drain must not rescan all statuses per file")
+		assert.True(t, job.Finished.Called(), "job must reach terminal state")
+		assert.Equal(t, fileCount, job.Count(status.Canceled), "every queued file ends canceled")
+
+		checkpoint := job.UploadCheckpoint()
+		assert.Empty(t, checkpoint.CompletedPaths)
+		require.Len(t, checkpoint.PendingParts, 1, "only genuinely-pending parts belong in the checkpoint")
+		assert.Contains(t, checkpoint.PendingParts, job.Statuses[0].LocalPath())
 	})
 
 	t.Run("does not duplicate caller events reporter when reusing job", func(t *testing.T) {

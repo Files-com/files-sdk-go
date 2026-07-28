@@ -32,6 +32,7 @@ type UploadResumable struct {
 	files_sdk.FileUploadPart
 	Parts
 	files_sdk.File
+	TargetClass TransferV2TargetClass
 }
 
 // JobUploadCheckpoint holds folder-level resume state for a paused upload job.
@@ -41,7 +42,7 @@ type JobUploadCheckpoint struct {
 }
 
 // UploadCheckpoint builds a JobUploadCheckpoint from the job's settled file statuses.
-// Call at terminal time (Canceled or Finished) instead of tracking state incrementally.
+// Call after Wait returns or Finished is signaled; Canceled only indicates that cancellation was requested.
 func (j *Job) UploadCheckpoint() *JobUploadCheckpoint {
 	completed := make(map[string]struct{})
 	for p := range j.CompletedPaths {
@@ -86,6 +87,7 @@ type uploadIO struct {
 	MkdirParents               *bool
 	passedInContext            context.Context
 	uploadV2                   bool
+	uploadV2ResumeTarget       TransferV2TargetClass
 	uploadV2UseSDKDefaultCaps  bool
 	uploadV2TargetClassifier   UploadV2TargetClassifier
 	uploadV2ManagerProvider    uploadV2AdaptiveManagerProvider
@@ -204,7 +206,16 @@ func (u *uploadIO) UploadResumable() UploadResumable {
 	if u.notResumable.Load() {
 		return UploadResumable{File: u.file}
 	}
-	return UploadResumable{Parts: u.Parts, FileUploadPart: u.FileUploadPart, File: u.file}
+	target := u.uploadV2ResumeTarget
+	if target == "" && u.uploadV2Enabled() {
+		target = u.uploadV2Target()
+	}
+	return UploadResumable{
+		Parts:          u.Parts,
+		FileUploadPart: u.FileUploadPart,
+		File:           u.file,
+		TargetClass:    target,
+	}
 }
 
 func (u *uploadIO) rewindSuccessfulParts() {

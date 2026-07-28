@@ -1381,6 +1381,9 @@ func TestDownloadPauseResume(t *testing.T) {
 		cancel(ErrJobPaused)
 		job.Wait()
 
+		assert.True(t, job.Finished.Called())
+		assert.Equal(t, 1, job.Count(status.Canceled))
+		assert.Equal(t, 0, job.Count(status.Errored))
 		tmpPath := existingTmpDownloadPath(filepath.Join(root, "file.txt"), "")
 		assert.NotEmpty(t, tmpPath, "temp file should be preserved on pause")
 	})
@@ -1409,9 +1412,12 @@ func TestDownloadPauseResume(t *testing.T) {
 		case <-downloadStarted:
 		case <-job.Finished.C:
 		}
-		cancel(fmt.Errorf("job canceled"))
+		cancel(context.Canceled)
 		job.Wait()
 
+		assert.True(t, job.Finished.Called())
+		assert.Equal(t, 1, job.Count(status.Canceled))
+		assert.Equal(t, 0, job.Count(status.Errored))
 		tmpPath := existingTmpDownloadPath(filepath.Join(root, "file.txt"), "")
 		assert.Empty(t, tmpPath, "temp file should be removed on normal cancel")
 	})

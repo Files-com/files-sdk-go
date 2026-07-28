@@ -162,6 +162,15 @@ func (g *uploadV2PartConcurrencyGate) DoneWithSample(sample lib.AdaptiveConcurre
 	g.local.Done()
 }
 
+func (g *uploadV2PartConcurrencyGate) DoneNeutral() {
+	if manager, ok := g.parent.(interface{ DoneNeutral() }); ok {
+		manager.DoneNeutral()
+	} else {
+		g.parent.Done()
+	}
+	g.local.Done()
+}
+
 func (g *uploadV2PartConcurrencyGate) WaitAllDone() {
 	g.local.WaitAllDone()
 	g.parent.WaitAllDone()
@@ -813,12 +822,12 @@ func (e *uploadV2Engine) schedulePart(ctx context.Context, wait lib.ConcurrencyM
 	reader, progress, err := e.buildReader(descriptor.offset)
 	if err != nil {
 		results <- uploadV2PartResult{part: &uploadV2Part{uploadV2PartDescriptor: descriptor}, err: err}
-		e.donePart(wait, lib.AdaptiveConcurrencySample{Success: false})
+		e.donePart(ctx, wait, lib.AdaptiveConcurrencySample{Success: false})
 		return false
 	}
 	if reader.Len() == 0 && e.u.Size == nil {
 		reader.Close()
-		e.donePart(wait, lib.AdaptiveConcurrencySample{Success: true})
+		e.donePart(ctx, wait, lib.AdaptiveConcurrencySample{Success: true})
 		return false
 	}
 
@@ -837,7 +846,7 @@ func (e *uploadV2Engine) schedulePart(ctx context.Context, wait lib.ConcurrencyM
 	go func() {
 		result := e.runPart(ctx, part)
 		results <- result
-		e.donePart(wait, result.sample())
+		e.donePart(ctx, wait, result.sample())
 	}()
 	e.stats.recordDirectScheduled()
 
@@ -888,7 +897,7 @@ func (e *uploadV2Engine) dispatchPreparedPart(ctx context.Context, wait lib.Conc
 	go func() {
 		result := e.runPart(ctx, part)
 		results <- result
-		e.donePart(wait, result.sample())
+		e.donePart(ctx, wait, result.sample())
 	}()
 	e.stats.recordDispatchedPrepared()
 	return true
@@ -961,7 +970,7 @@ func (e *uploadV2Engine) waitForPartCapacity(ctx context.Context, wait lib.Concu
 		return true
 	}
 	e.stats.recordGlobalWait(time.Since(start), false)
-	e.done(wait, lib.AdaptiveConcurrencySample{Success: false})
+	e.done(ctx, wait, lib.AdaptiveConcurrencySample{Success: false})
 	return false
 }
 
@@ -1355,7 +1364,16 @@ func uploadV2UsesPartOffsets(target TransferV2TargetClass) bool {
 	return target != uploadV2TargetS3
 }
 
-func (e *uploadV2Engine) done(wait lib.ConcurrencyManager, sample lib.AdaptiveConcurrencySample) {
+func (e *uploadV2Engine) done(ctx context.Context, wait lib.ConcurrencyManager, sample lib.AdaptiveConcurrencySample) {
+	cause := context.Cause(ctx)
+	if !sample.Success && (errors.Is(cause, ErrJobPaused) || errors.Is(cause, context.Canceled)) {
+		if manager, ok := wait.(interface{ DoneNeutral() }); ok {
+			manager.DoneNeutral()
+		} else {
+			wait.Done()
+		}
+		return
+	}
 	if sampler, ok := wait.(lib.AdaptiveConcurrencyManagerWithSample); ok {
 		sampler.DoneWithSample(sample)
 		return
@@ -1363,11 +1381,11 @@ func (e *uploadV2Engine) done(wait lib.ConcurrencyManager, sample lib.AdaptiveCo
 	wait.Done()
 }
 
-func (e *uploadV2Engine) donePart(wait lib.ConcurrencyManager, sample lib.AdaptiveConcurrencySample) {
+func (e *uploadV2Engine) donePart(ctx context.Context, wait lib.ConcurrencyManager, sample lib.AdaptiveConcurrencySample) {
 	if e.globalManager != nil {
 		e.globalManager.Done()
 	}
-	e.done(wait, sample)
+	e.done(ctx, wait, sample)
 }
 
 func (e *uploadV2Engine) applyResult(result uploadV2PartResult) {

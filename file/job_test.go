@@ -2,6 +2,8 @@ package file
 
 import (
 	"context"
+	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -282,4 +284,121 @@ func TestJob_Called(t *testing.T) {
 	job.ClearCalled()
 	assert.False(job.Started.Called())
 	assert.False(job.Finished.Called())
+}
+
+func TestJobWaitsForSettledCancellation(t *testing.T) {
+	job := (&Job{Logger: lib.NullLogger{}}).Init()
+	jobCtx := job.WithContext(context.Background())
+	file := &UploadStatus{
+		file:      files_sdk.File{Path: "file.txt"},
+		status:    status.Uploading,
+		job:       job,
+		localPath: "file.txt",
+		UploadResumable: UploadResumable{
+			FileUploadPart: files_sdk.FileUploadPart{Ref: "pending-ref"},
+		},
+		Mutex: &sync.RWMutex{},
+	}
+	job.Add(file)
+	job.Start(true)
+	job.Scan()
+
+	onComplete := make(chan *UploadStatus)
+	WaitTellFinished(job, onComplete, func() {})
+	job.EndScan()
+	job.Cancel()
+	assert.ErrorIs(t, jobCtx.Err(), context.Canceled)
+
+	waitDone := make(chan struct{})
+	go func() {
+		job.Wait()
+		close(waitDone)
+	}()
+
+	select {
+	case <-waitDone:
+		t.Fatal("Wait returned before completion accounting settled")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	checkpoint := job.UploadCheckpoint()
+	assert.Empty(t, checkpoint.CompletedPaths)
+	assert.Contains(t, checkpoint.PendingParts, "file.txt")
+
+	job.UpdateStatus(status.Complete, file, nil)
+	select {
+	case onComplete <- file:
+	case <-time.After(time.Second):
+		t.Fatal("completion accounting did not accept the final file")
+	}
+	select {
+	case <-waitDone:
+	case <-time.After(time.Second):
+		t.Fatal("Wait did not return after completion accounting settled")
+	}
+
+	assert.True(t, job.Finished.Called())
+	assert.Equal(t, 1, job.Count(status.Complete))
+	checkpoint = job.UploadCheckpoint()
+	assert.Contains(t, checkpoint.CompletedPaths, "file.txt")
+	assert.NotContains(t, checkpoint.PendingParts, "file.txt")
+}
+
+func TestJobCancelBeforeStart(t *testing.T) {
+	job := (&Job{}).Init()
+
+	require.NotPanics(t, job.Cancel)
+	jobCtx := job.WithContext(context.Background())
+	assert.ErrorIs(t, jobCtx.Err(), context.Canceled)
+
+	waitDone := make(chan struct{})
+	go func() {
+		job.Wait()
+		close(waitDone)
+	}()
+	select {
+	case <-waitDone:
+	case <-time.After(time.Second):
+		t.Fatal("Wait blocked for a canceled job that never started")
+	}
+
+	assert.True(t, job.Canceled.Called())
+	assert.False(t, job.Started.Called())
+	assert.False(t, job.Finished.Called())
+}
+
+func TestJobWaitThenCancelBeforeStart(t *testing.T) {
+	job := (&Job{}).Init()
+	waitDone := make(chan struct{})
+	go func() {
+		job.Wait()
+		close(waitDone)
+	}()
+
+	select {
+	case <-waitDone:
+		t.Fatal("Wait returned before cancellation")
+	case <-time.After(50 * time.Millisecond):
+	}
+	job.Cancel()
+
+	select {
+	case <-waitDone:
+	case <-time.After(time.Second):
+		t.Fatal("Wait blocked after an unstarted job was canceled")
+	}
+}
+
+func TestJobStatusFromPausedUploadIsCanceled(t *testing.T) {
+	job := (&Job{Logger: lib.NullLogger{}}).Init()
+	file := &UploadStatus{
+		job:    job,
+		status: status.Uploading,
+		Mutex:  &sync.RWMutex{},
+	}
+
+	job.StatusFromError(file, fmt.Errorf("upload interrupted: %w", ErrJobPaused))
+
+	assert.Equal(t, status.Canceled, file.Status())
+	assert.NoError(t, file.Err())
 }

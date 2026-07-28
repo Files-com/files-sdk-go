@@ -633,6 +633,7 @@ func (u *uploadIO) runUploadV2(ctx context.Context) (UploadResumable, error, boo
 		}
 		u.FileUploadPart = part
 		u.FileUploadPart.Path = u.Path
+		u.uploadV2ResumeTarget = ""
 		plan, ok, reason = u.newUploadV2PartPlanForUpload()
 		if !ok {
 			u.logUploadV2Fallback(reason)
@@ -720,8 +721,7 @@ func (u *uploadIO) uploadV2MaxConcurrency() int {
 		}
 	}
 
-	target := classifyUploadV2Target(u.FileUploadPart, u.uploadV2TargetClassifier)
-	return manager.EffectiveAdaptiveUploadV2ConcurrentFileParts(adaptiveTransferMaxConcurrency(target))
+	return manager.EffectiveAdaptiveUploadV2ConcurrentFileParts(adaptiveTransferMaxConcurrency(u.uploadV2Target()))
 }
 
 func (u *uploadIO) uploadV2InitialConcurrency(maxConcurrency int) int {
