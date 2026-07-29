@@ -83,6 +83,7 @@ type Site struct {
 	DomainHstsHeader                         *bool       `json:"domain_hsts_header,omitempty" path:"domain_hsts_header,omitempty" url:"domain_hsts_header,omitempty"`
 	DomainLetsencryptChain                   string      `json:"domain_letsencrypt_chain,omitempty" path:"domain_letsencrypt_chain,omitempty" url:"domain_letsencrypt_chain,omitempty"`
 	Email                                    string      `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
+	Fedramp                                  *bool       `json:"fedramp,omitempty" path:"fedramp,omitempty" url:"fedramp,omitempty"`
 	FtpEnabled                               *bool       `json:"ftp_enabled,omitempty" path:"ftp_enabled,omitempty" url:"ftp_enabled,omitempty"`
 	ReplyToEmail                             string      `json:"reply_to_email,omitempty" path:"reply_to_email,omitempty" url:"reply_to_email,omitempty"`
 	NonSsoGroupsAllowed                      *bool       `json:"non_sso_groups_allowed,omitempty" path:"non_sso_groups_allowed,omitempty" url:"non_sso_groups_allowed,omitempty"`
@@ -264,6 +265,7 @@ type SiteUpdateParams struct {
 	SftpInsecureCiphers                      *bool       `url:"sftp_insecure_ciphers,omitempty" json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers"`
 	SftpInsecureDiffieHellman                *bool       `url:"sftp_insecure_diffie_hellman,omitempty" json:"sftp_insecure_diffie_hellman,omitempty" path:"sftp_insecure_diffie_hellman"`
 	DisableFilesCertificateGeneration        *bool       `url:"disable_files_certificate_generation,omitempty" json:"disable_files_certificate_generation,omitempty" path:"disable_files_certificate_generation"`
+	Fedramp                                  *bool       `url:"fedramp,omitempty" json:"fedramp,omitempty" path:"fedramp"`
 	UserLockout                              *bool       `url:"user_lockout,omitempty" json:"user_lockout,omitempty" path:"user_lockout"`
 	UserLockoutTries                         int64       `url:"user_lockout_tries,omitempty" json:"user_lockout_tries,omitempty" path:"user_lockout_tries"`
 	UserLockoutWithin                        int64       `url:"user_lockout_within,omitempty" json:"user_lockout_within,omitempty" path:"user_lockout_within"`
