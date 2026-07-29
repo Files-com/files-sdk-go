@@ -1,13 +1,57 @@
 package files_sdk
 
 import (
+	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestBuildRequestJSONBodyIsReplayable(t *testing.T) {
+	expectedBody := `{"path":"reports/daily.csv","size":42}`
+	params := lib.Params{Params: struct {
+		Path string `json:"path"`
+		Size int    `json:"size"`
+	}{
+		Path: "reports/daily.csv",
+		Size: 42,
+	}}
+
+	tests := map[string]context.Context{
+		"without context": nil,
+		"with context":    context.Background(),
+	}
+	for name, requestContext := range tests {
+		t.Run(name, func(t *testing.T) {
+			request, err := buildRequest(&CallParams{
+				Method:  http.MethodPost,
+				Config:  Config{}.Init(),
+				Uri:     "https://app.files.com/api/rest/v1/files/begin_upload",
+				Params:  params,
+				Headers: &http.Header{},
+				Context: requestContext,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, request.GetBody)
+
+			body, err := io.ReadAll(request.Body)
+			require.NoError(t, err)
+			assert.Equal(t, expectedBody, string(body))
+
+			replayedBody, err := request.GetBody()
+			require.NoError(t, err)
+			defer replayedBody.Close()
+			replayedPayload, err := io.ReadAll(replayedBody)
+			require.NoError(t, err)
+			assert.Equal(t, expectedBody, string(replayedPayload))
+		})
+	}
+}
 
 func TestCallRawSetsConfiguredUserAgent(t *testing.T) {
 	var gotUserAgent, gotAPIKey string

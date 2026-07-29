@@ -120,12 +120,22 @@ func buildRequest(opts *CallParams) (*http.Request, error) {
 		opts.Headers = &http.Header{}
 	}
 
-	var req *http.Request
+	paramsInQuery := opts.Method == "GET" || opts.Method == "HEAD" || opts.Method == "DELETE"
+	var requestBody io.Reader
 	var err error
+	if !paramsInQuery && opts.BodyIo == nil {
+		bodyIsJson = true
+		requestBody, err = opts.Params.ToJSON()
+		if err != nil {
+			return &http.Request{}, err
+		}
+	}
+
+	var req *http.Request
 	if opts.Context != nil {
-		req, err = http.NewRequestWithContext(opts.Context, opts.Method, opts.Uri, nil)
+		req, err = http.NewRequestWithContext(opts.Context, opts.Method, opts.Uri, requestBody)
 	} else {
-		req, err = http.NewRequest(opts.Method, opts.Uri, nil)
+		req, err = http.NewRequest(opts.Method, opts.Uri, requestBody)
 	}
 
 	if err != nil {
@@ -137,8 +147,7 @@ func buildRequest(opts *CallParams) (*http.Request, error) {
 		req.ContentLength = c
 	}
 
-	switch opts.Method {
-	case "GET", "HEAD", "DELETE":
+	if paramsInQuery {
 		if opts.Params != nil {
 			values, err := opts.Params.ToValues()
 			if err != nil {
@@ -146,20 +155,10 @@ func buildRequest(opts *CallParams) (*http.Request, error) {
 			}
 			req.URL.RawQuery = values.Encode()
 		}
-	default:
-		if opts.BodyIo == nil {
-			bodyIsJson = true
-			jsonBody, err := opts.Params.ToJSON()
-			if err != nil {
-				return &http.Request{}, err
-			}
-			req.Body = io.NopCloser(jsonBody)
-			req.Header.Add("Content-Type", "application/json")
-		} else {
-			if req.ContentLength != 0 {
-				req.Body = opts.BodyIo
-			}
-		}
+	} else if bodyIsJson {
+		req.Header.Add("Content-Type", "application/json")
+	} else if req.ContentLength != 0 {
+		req.Body = opts.BodyIo
 	}
 
 	if opts.Config.InDebug() {
