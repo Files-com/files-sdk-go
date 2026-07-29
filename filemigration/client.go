@@ -43,7 +43,6 @@ func (c *Client) Wait(fileAction files_sdk.FileAction, status func(files_sdk.Fil
 		case <-ctx.Done():
 			return migration, ctx.Err()
 		case <-time.After(time.Second * 1):
-		default:
 		}
 	}
 }
