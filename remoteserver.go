@@ -72,6 +72,7 @@ type RemoteServer struct {
 	FilesAgentUpToDate                      *bool  `json:"files_agent_up_to_date,omitempty" path:"files_agent_up_to_date,omitempty" url:"files_agent_up_to_date,omitempty"`
 	FilesAgentLatestVersion                 string `json:"files_agent_latest_version,omitempty" path:"files_agent_latest_version,omitempty" url:"files_agent_latest_version,omitempty"`
 	FilesAgentSupportsPushUpdates           *bool  `json:"files_agent_supports_push_updates,omitempty" path:"files_agent_supports_push_updates,omitempty" url:"files_agent_supports_push_updates,omitempty"`
+	DirectTransferAvailable                 *bool  `json:"direct_transfer_available,omitempty" path:"direct_transfer_available,omitempty" url:"direct_transfer_available,omitempty"`
 	OutboundAgentId                         int64  `json:"outbound_agent_id,omitempty" path:"outbound_agent_id,omitempty" url:"outbound_agent_id,omitempty"`
 	FilebaseBucket                          string `json:"filebase_bucket,omitempty" path:"filebase_bucket,omitempty" url:"filebase_bucket,omitempty"`
 	FilebaseAccessKey                       string `json:"filebase_access_key,omitempty" path:"filebase_access_key,omitempty" url:"filebase_access_key,omitempty"`
