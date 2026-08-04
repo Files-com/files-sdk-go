@@ -766,3 +766,94 @@ func TestDiskCacheUnpinEviction(t *testing.T) {
 		t.Errorf("Expected 1 file in cache after eviction, got %d", statsAfter.FileCount.Load())
 	}
 }
+
+func TestDiskCacheClearRemovesUnpinnedAndDefersPinnedEntry(t *testing.T) {
+	cache, err := disk.NewDiskCache(
+		t.TempDir(),
+		disk.WithMaintenanceInterval(10*time.Millisecond),
+	)
+	if err != nil {
+		t.Fatalf("NewDiskCache failed: %v", err)
+	}
+	cache.StartMaintenance()
+	defer cache.StopMaintenance()
+
+	if _, err := cache.Write("/unpinned.txt", []byte("unpinned"), 0); err != nil {
+		t.Fatalf("Write unpinned entry failed: %v", err)
+	}
+	if _, err := cache.Write("/pinned.txt", []byte("pinned"), 0); err != nil {
+		t.Fatalf("Write pinned entry failed: %v", err)
+	}
+	pinnedMetadata := fscache.NewEntryMetadata("/pinned.txt", int64(len("pinned")), time.Now())
+	if err := cache.Commit("/pinned.txt", pinnedMetadata); err != nil {
+		t.Fatalf("Commit pinned entry failed: %v", err)
+	}
+	cache.Pin("/pinned.txt")
+
+	if err := cache.Clear(); err != nil {
+		t.Fatalf("Clear failed: %v", err)
+	}
+	if got := cache.SizeBytes(); got != int64(len("pinned")) {
+		t.Fatalf("SizeBytes after Clear = %d, want %d", got, len("pinned"))
+	}
+	pinnedBuffer := make([]byte, len("pinned"))
+	if n, err := cache.Read("/pinned.txt", pinnedBuffer, 0); err != nil || n != len(pinnedBuffer) || string(pinnedBuffer) != "pinned" {
+		t.Fatalf("Read pinned entry after Clear = %q, %d, %v", pinnedBuffer, n, err)
+	}
+	if n, err := cache.ReadComplete("/pinned.txt", pinnedMetadata, pinnedBuffer, 0); err != nil || n != 0 {
+		t.Fatalf("ReadComplete pinned entry after Clear = %d, %v; want 0, nil", n, err)
+	}
+
+	buffer := make([]byte, len("unpinned"))
+	if n, err := cache.Read("/unpinned.txt", buffer, 0); err != nil || n != 0 {
+		t.Fatalf("Read unpinned entry after Clear = %d, %v; want 0, nil", n, err)
+	}
+
+	cache.Unpin("/pinned.txt")
+	if got := cache.SizeBytes(); got != 0 {
+		t.Fatalf("SizeBytes after Unpin = %d, want 0", got)
+	}
+	if n, err := cache.Read("/pinned.txt", pinnedBuffer, 0); err != nil || n != 0 {
+		t.Fatalf("Read pinned entry after Unpin = %d, %v; want 0, nil", n, err)
+	}
+
+	if _, err := cache.Write("/after-clear.txt", []byte("temporary"), 0); err != nil {
+		t.Fatalf("Write after Clear failed: %v", err)
+	}
+	waitForDiskReadBytes(t, cache, "/after-clear.txt", 0)
+}
+
+func TestDiskCacheMaintenanceRemovesStaleRotatedMetadata(t *testing.T) {
+	root := t.TempDir()
+	cache, err := disk.NewDiskCache(
+		root,
+		disk.WithMaintenanceInterval(10*time.Millisecond),
+	)
+	if err != nil {
+		t.Fatalf("NewDiskCache failed: %v", err)
+	}
+
+	// Simulate a crash between Clear rotating the metadata directory aside
+	// and deleting the rotated tree.
+	staleMetaDir := filepath.Join(root, "state", "metadata.clear-12345")
+	if err := os.MkdirAll(staleMetaDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(staleMetaDir, "orphan.json"), []byte("{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	cache.StartMaintenance()
+	defer cache.StopMaintenance()
+
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		if _, err := os.Stat(staleMetaDir); os.IsNotExist(err) {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("stale rotated metadata directory was not removed by maintenance")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}

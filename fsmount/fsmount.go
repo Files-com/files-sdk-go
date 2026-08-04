@@ -420,6 +420,13 @@ func newCache(params MountParams, log log.Logger) (cacheStore, error) {
 		if err != nil {
 			return nil, err
 		}
+		cachePath, err = canonicalDiskCacheRoot(cachePath)
+		if err != nil {
+			return nil, err
+		}
+		if err := ensureDiskCacheRootAvailable(cachePath); err != nil {
+			return nil, err
+		}
 		opts := []dc.Option{
 			dc.WithLogger(log),
 		}

@@ -139,11 +139,13 @@ type DiskCache struct {
 	// Track pinned files (reference counted) to prevent eviction of files with open handles
 	pinnedFiles   map[string]int
 	pinnedFilesMu sync.Mutex
+	clearPending  map[string]struct{}
 
-	maintMu     sync.Mutex
-	maintActive bool
-	maintCancel context.CancelFunc
-	wg          sync.WaitGroup
+	maintenanceRunMu sync.Mutex
+	maintMu          sync.Mutex
+	maintActive      bool
+	maintCancel      context.CancelFunc
+	maintDone        chan struct{}
 
 	stateDir string
 	dataDir  string
@@ -202,6 +204,7 @@ func NewDiskCache(path string, opts ...Option) (*DiskCache, error) {
 		log:                 nil,
 		lru:                 nil,
 		pinnedFiles:         make(map[string]int),
+		clearPending:        make(map[string]struct{}),
 	}
 
 	// apply options
@@ -260,6 +263,11 @@ func (dc *DiskCache) Read(path string, buff []byte, ofst int64) (n int, err erro
 	// pages), which the early cache check in remotefs.go treats as valid data.
 	dc.writeMu.RLock()
 	defer dc.writeMu.RUnlock()
+	return dc.read(path, buff, ofst)
+}
+
+// read reads a cache entry while the caller holds writeMu for reading.
+func (dc *DiskCache) read(path string, buff []byte, ofst int64) (n int, err error) {
 	dc.stats.ReadCount.Add(1)
 	fqPath := dc.entryPath(path)
 
@@ -311,6 +319,9 @@ func (dc *DiskCache) ReadComplete(path string, meta cache.EntryMetadata, buff []
 	if dc.Disabled {
 		return 0, nil
 	}
+	dc.writeMu.RLock()
+	defer dc.writeMu.RUnlock()
+
 	fqPath := dc.entryPath(path)
 	stored, err := dc.readEntryMetadata(path)
 	if err != nil {
@@ -335,7 +346,7 @@ func (dc *DiskCache) ReadComplete(path string, meta cache.EntryMetadata, buff []
 		_ = dc.Delete(path)
 		return 0, nil
 	}
-	return dc.Read(path, buff, ofst)
+	return dc.read(path, buff, ofst)
 }
 
 func (dc *DiskCache) ReadPartial(path string, buff []byte, ofst int64) (n int, err error) {
@@ -515,21 +526,114 @@ func (dc *DiskCache) DeletePartial(path string) bool {
 	return dc.Delete(dc.partialEntryPath(path))
 }
 
+// Clear removes all unpinned file data from the cache. Pinned entries are
+// invalidated immediately and removed when their final open handle closes.
+func (dc *DiskCache) Clear() error {
+	if dc.Disabled {
+		return nil
+	}
+
+	// Do not let maintenance operate on a stale snapshot while clear removes
+	// entries. Normal reads and writes remain available throughout the walk.
+	dc.maintenanceRunMu.Lock()
+	defer dc.maintenanceRunMu.Unlock()
+
+	var clearErrors []error
+	oldMetaDir, err := dc.rotateMetadataDirectory()
+	if err != nil {
+		clearErrors = append(clearErrors, err)
+		return errors.Join(clearErrors...)
+	}
+
+	var paths []string
+	for _, root := range []string{dc.dataDir, dc.partDir} {
+		err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
+			if errors.Is(walkErr, os.ErrNotExist) {
+				return nil
+			}
+			if walkErr != nil {
+				return walkErr
+			}
+			if entry.IsDir() {
+				return nil
+			}
+			paths = append(paths, path)
+			return nil
+		})
+		if err != nil {
+			clearErrors = append(clearErrors, err)
+		}
+	}
+
+	for _, path := range paths {
+		dc.writeMu.Lock()
+		dc.pinnedFilesMu.Lock()
+		pinned := dc.pinnedFiles[path] > 0
+		if pinned {
+			dc.clearPending[path] = struct{}{}
+		}
+		dc.pinnedFilesMu.Unlock()
+		if pinned {
+			dc.writeMu.Unlock()
+			continue
+		}
+		if err := dc.deleteFile(path); err != nil {
+			clearErrors = append(clearErrors, err)
+		} else {
+			dc.lru.Remove(path)
+		}
+		dc.writeMu.Unlock()
+	}
+
+	if oldMetaDir != "" {
+		if err := os.RemoveAll(oldMetaDir); err != nil {
+			clearErrors = append(clearErrors, err)
+		}
+	}
+	dc.lruDirty.Store(true)
+	return errors.Join(clearErrors...)
+}
+
+// rotateMetadataDirectory invalidates every completed cache entry with one
+// short exclusive operation. The old metadata tree can then be removed without
+// blocking cache reads or writes.
+func (dc *DiskCache) rotateMetadataDirectory() (string, error) {
+	dc.writeMu.Lock()
+	defer dc.writeMu.Unlock()
+
+	oldMetaDir := fmt.Sprintf("%s.clear-%d", dc.metaDir, time.Now().UnixNano())
+	if err := os.Rename(dc.metaDir, oldMetaDir); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return "", os.MkdirAll(dc.metaDir, 0o755)
+		}
+		return "", err
+	}
+	if err := os.MkdirAll(dc.metaDir, 0o755); err != nil {
+		_ = os.Rename(oldMetaDir, dc.metaDir)
+		return "", err
+	}
+	return oldMetaDir, nil
+}
+
+func (dc *DiskCache) SizeBytes() int64 {
+	return dc.stats.SizeBytes.Load()
+}
+
 // StartMaintenance starts the maintenance goroutine if it is not already running.
 func (dc *DiskCache) StartMaintenance() {
 	dc.maintMu.Lock()
+	defer dc.maintMu.Unlock()
 	if dc.maintActive {
-		dc.maintMu.Unlock()
 		return
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
 	dc.maintCancel = cancel
+	dc.maintDone = done
 	dc.maintActive = true
-	dc.maintMu.Unlock()
-	dc.wg.Add(1)
 	go func() {
-		defer dc.wg.Done()
+		defer close(done)
 		dc.maintenanceLoop(ctx)
 	}()
 }
@@ -542,16 +646,15 @@ func (dc *DiskCache) StopMaintenance() {
 		return
 	}
 	cancel := dc.maintCancel
-	dc.maintMu.Unlock()
-	// Trigger shutdown and wait for the goroutine to exit cleanly.
+	done := dc.maintDone
 	if cancel != nil {
 		cancel()
 	}
-	dc.wg.Wait()
-
-	dc.maintMu.Lock()
-	// Clear struct state under the lock so a concurrent Start can proceed.
+	if done != nil {
+		<-done
+	}
 	dc.maintCancel = nil
+	dc.maintDone = nil
 	dc.maintActive = false
 	dc.maintMu.Unlock()
 
@@ -595,6 +698,8 @@ func (dc *DiskCache) Stats() *cache.Stats {
 // Pin increments the reference count for a file, preventing it from being evicted.
 // This should be called when a file handle is opened.
 func (dc *DiskCache) Pin(path string) {
+	dc.writeMu.RLock()
+	defer dc.writeMu.RUnlock()
 	dc.pinnedFilesMu.Lock()
 	defer dc.pinnedFilesMu.Unlock()
 
@@ -624,16 +729,45 @@ func (dc *DiskCache) Unpin(path string) {
 	} else {
 		dc.log.Trace("DiskCache: unpinned %s (fqPath: %s, count: %d)", path, fqPath, dc.pinnedFiles[fqPath])
 	}
+	_, clearPending := dc.clearPending[fqPath]
 
 	dc.pinnedFilesMu.Unlock()
+	if !fullyUnpinned {
+		return
+	}
+	if !clearPending && dc.Capacity == 0 && dc.MaxFileCount == 0 {
+		return
+	}
+
+	dc.writeMu.Lock()
+	defer dc.writeMu.Unlock()
+
+	// A new handle may have pinned the entry while this close waited for the
+	// exclusive lock. Leave a pending clear in place for its eventual close.
+	dc.pinnedFilesMu.Lock()
+	if dc.pinnedFiles[fqPath] > 0 {
+		dc.pinnedFilesMu.Unlock()
+		return
+	}
+	_, clearPending = dc.clearPending[fqPath]
+	if clearPending {
+		delete(dc.clearPending, fqPath)
+	}
+	dc.pinnedFilesMu.Unlock()
+
+	if clearPending {
+		_ = dc.deleteMetadataForEntryPath(fqPath)
+		if err := dc.deleteFile(fqPath); err != nil {
+			dc.log.Trace("DiskCache: error deleting cleared cache file %s: %v", fqPath, err)
+		}
+		dc.lru.Remove(fqPath)
+		return
+	}
 
 	// If this file was fully unpinned and the cache is over capacity, try to trim the cache
 	// back to the configured limit to respect the user's settings. This ensures the
 	// cache doesn't stay bloated after files are closed.
-	if fullyUnpinned && (dc.Capacity > 0 || dc.MaxFileCount > 0) {
-		dc.writeMu.Lock()
-		defer dc.writeMu.Unlock()
-
+	if dc.Capacity > 0 || dc.MaxFileCount > 0 {
 		// First, try to evict the file that was just unpinned since it just became eligible
 		if !dc.hasCapacityDelta(1, false) {
 			dc.lru.Remove(fqPath)
@@ -1044,6 +1178,30 @@ type fileMeta struct {
 func (dc *DiskCache) runMaintenanceOnce(ctx context.Context) {
 	if dc.Disabled {
 		return
+	}
+	// Skip this cycle instead of queueing behind a running Clear. Blocking
+	// here would force StopMaintenance, and therefore unmount, to wait out
+	// the full clear.
+	if !dc.maintenanceRunMu.TryLock() {
+		return
+	}
+	defer dc.maintenanceRunMu.Unlock()
+	select {
+	case <-ctx.Done():
+		return
+	default:
+	}
+
+	// Remove metadata trees that Clear rotated aside but a crash prevented
+	// from being deleted. Clear holds maintenanceRunMu while it removes the
+	// rotated tree, so anything matching here is an orphan.
+	staleMetaDirs, err := filepath.Glob(dc.metaDir + ".clear-*")
+	if err == nil {
+		for _, staleMetaDir := range staleMetaDirs {
+			if err := os.RemoveAll(staleMetaDir); err != nil {
+				dc.log.Debug("DiskCache: maintenance: error removing stale metadata directory %s: %v", staleMetaDir, err)
+			}
+		}
 	}
 
 	var deleteCandidates []fileMeta

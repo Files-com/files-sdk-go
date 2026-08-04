@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	errMountPointInUse = fmt.Errorf("mount point in use")
-	errNilHost         = fmt.Errorf("nil host provided")
+	errMountPointInUse    = fmt.Errorf("mount point in use")
+	errDiskCachePathInUse = fmt.Errorf("disk cache path in use by another active mount")
+	errNilHost            = fmt.Errorf("nil host provided")
 )
 
 // mountRegistry manages a collection of active mount hosts. This allows using a single pprof
