@@ -12,6 +12,7 @@ type SsoStrategy struct {
 	Label                            string `json:"label,omitempty" path:"label,omitempty" url:"label,omitempty"`
 	LogoUrl                          string `json:"logo_url,omitempty" path:"logo_url,omitempty" url:"logo_url,omitempty"`
 	Id                               int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	Enabled                          *bool  `json:"enabled,omitempty" path:"enabled,omitempty" url:"enabled,omitempty"`
 	UserCount                        int64  `json:"user_count,omitempty" path:"user_count,omitempty" url:"user_count,omitempty"`
 	SamlProviderCertFingerprint      string `json:"saml_provider_cert_fingerprint,omitempty" path:"saml_provider_cert_fingerprint,omitempty" url:"saml_provider_cert_fingerprint,omitempty"`
 	SamlProviderIssuerUrl            string `json:"saml_provider_issuer_url,omitempty" path:"saml_provider_issuer_url,omitempty" url:"saml_provider_issuer_url,omitempty"`
@@ -48,7 +49,6 @@ type SsoStrategy struct {
 	ProviderIdentifier               string `json:"provider_identifier,omitempty" path:"provider_identifier,omitempty" url:"provider_identifier,omitempty"`
 	LdapBaseDn                       string `json:"ldap_base_dn,omitempty" path:"ldap_base_dn,omitempty" url:"ldap_base_dn,omitempty"`
 	LdapDomain                       string `json:"ldap_domain,omitempty" path:"ldap_domain,omitempty" url:"ldap_domain,omitempty"`
-	Enabled                          *bool  `json:"enabled,omitempty" path:"enabled,omitempty" url:"enabled,omitempty"`
 	DisplayOnLoginPage               *bool  `json:"display_on_login_page,omitempty" path:"display_on_login_page,omitempty" url:"display_on_login_page,omitempty"`
 	LdapHost                         string `json:"ldap_host,omitempty" path:"ldap_host,omitempty" url:"ldap_host,omitempty"`
 	LdapHost2                        string `json:"ldap_host_2,omitempty" path:"ldap_host_2,omitempty" url:"ldap_host_2,omitempty"`
