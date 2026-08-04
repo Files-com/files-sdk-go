@@ -12,6 +12,7 @@ type RemoteServerConfigurationFile struct {
 	PrivateKey                string `json:"private_key,omitempty" path:"private_key,omitempty" url:"private_key,omitempty"`
 	Subdomain                 string `json:"subdomain,omitempty" path:"subdomain,omitempty" url:"subdomain,omitempty"`
 	Root                      string `json:"root,omitempty" path:"root,omitempty" url:"root,omitempty"`
+	NodeName                  string `json:"node_name,omitempty" path:"node_name,omitempty" url:"node_name,omitempty"`
 	FollowLinks               *bool  `json:"follow_links,omitempty" path:"follow_links,omitempty" url:"follow_links,omitempty"`
 	PreferProtocol            string `json:"prefer_protocol,omitempty" path:"prefer_protocol,omitempty" url:"prefer_protocol,omitempty"`
 	Dns                       string `json:"dns,omitempty" path:"dns,omitempty" url:"dns,omitempty"`

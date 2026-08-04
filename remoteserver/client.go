@@ -56,6 +56,15 @@ func Find(params files_sdk.RemoteServerFindParams, opts ...files_sdk.RequestResp
 	return (&Client{}).Find(params, opts...)
 }
 
+func (c *Client) AgentNodes(params files_sdk.RemoteServerAgentNodesParams, opts ...files_sdk.RequestResponseOption) (agentNode files_sdk.AgentNode, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/remote_servers/{id}/agent_nodes", Params: params, Entity: &agentNode}, opts...)
+	return
+}
+
+func AgentNodes(params files_sdk.RemoteServerAgentNodesParams, opts ...files_sdk.RequestResponseOption) (agentNode files_sdk.AgentNode, err error) {
+	return (&Client{}).AgentNodes(params, opts...)
+}
+
 func (c *Client) FindConfigurationFile(params files_sdk.RemoteServerFindConfigurationFileParams, opts ...files_sdk.RequestResponseOption) (remoteServerConfigurationFile files_sdk.RemoteServerConfigurationFile, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/remote_servers/{id}/configuration_file", Params: params, Entity: &remoteServerConfigurationFile}, opts...)
 	return

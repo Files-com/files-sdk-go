@@ -242,6 +242,11 @@ type RemoteServerFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// List Files.com Agent nodes
+type RemoteServerAgentNodesParams struct {
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+}
+
 type RemoteServerFindConfigurationFileParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
