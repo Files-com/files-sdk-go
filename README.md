@@ -681,6 +681,7 @@ if err != nil {
 | `bad-request/method-not-allowed` | `ErrMethodNotAllowed` | Method Not Allowed |
 | `bad-request/multiple-sort-params-not-allowed` | `ErrMultipleSortParamsNotAllowed` | Multiple Sort Params Not Allowed |
 | `bad-request/no-valid-input-params` | `ErrNoValidInputParams` | No Valid Input Params |
+| `bad-request/offset-upload-not-allowed-with-malware-scanning` | `ErrOffsetUploadNotAllowedWithMalwareScanning` | Offset Upload Not Allowed With Malware Scanning |
 | `bad-request/part-number-too-large` | `ErrPartNumberTooLarge` | Part Number Too Large |
 | `bad-request/path-cannot-have-trailing-whitespace` | `ErrPathCannotHaveTrailingWhitespace` | Path Cannot Have Trailing Whitespace |
 | `bad-request/reauthentication-needed-fields` | `ErrReauthenticationNeededFields` | Reauthentication Needed Fields |

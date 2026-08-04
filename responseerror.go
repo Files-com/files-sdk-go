@@ -73,6 +73,7 @@ const (
 	ErrMethodNotAllowed                                                       ResponseErrorType = "bad-request/method-not-allowed"
 	ErrMultipleSortParamsNotAllowed                                           ResponseErrorType = "bad-request/multiple-sort-params-not-allowed"
 	ErrNoValidInputParams                                                     ResponseErrorType = "bad-request/no-valid-input-params"
+	ErrOffsetUploadNotAllowedWithMalwareScanning                              ResponseErrorType = "bad-request/offset-upload-not-allowed-with-malware-scanning"
 	ErrPartNumberTooLarge                                                     ResponseErrorType = "bad-request/part-number-too-large"
 	ErrPathCannotHaveTrailingWhitespace                                       ResponseErrorType = "bad-request/path-cannot-have-trailing-whitespace"
 	ErrReauthenticationNeededFields                                           ResponseErrorType = "bad-request/reauthentication-needed-fields"
