@@ -152,7 +152,7 @@ type AutomationUpgradeParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// Manually Run Automation. v2 Automations require Site or Workspace Admin permission
+// Manually Run Automation
 type AutomationManualRunParams struct {
 	Id    int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Items []map[string]interface{} `url:"items,omitempty" json:"items,omitempty" path:"items"`

@@ -20,6 +20,7 @@ type As2OutgoingMessage struct {
 	MicSha256                   string      `json:"mic_sha_256,omitempty" path:"mic_sha_256,omitempty" url:"mic_sha_256,omitempty"`
 	As2To                       string      `json:"as2_to,omitempty" path:"as2_to,omitempty" url:"as2_to,omitempty"`
 	As2From                     string      `json:"as2_from,omitempty" path:"as2_from,omitempty" url:"as2_from,omitempty"`
+	As2Subject                  string      `json:"as2_subject,omitempty" path:"as2_subject,omitempty" url:"as2_subject,omitempty"`
 	Date                        string      `json:"date,omitempty" path:"date,omitempty" url:"date,omitempty"`
 	MessageId                   string      `json:"message_id,omitempty" path:"message_id,omitempty" url:"message_id,omitempty"`
 	BodySize                    string      `json:"body_size,omitempty" path:"body_size,omitempty" url:"body_size,omitempty"`
