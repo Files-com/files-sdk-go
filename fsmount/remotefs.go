@@ -531,6 +531,12 @@ func (fs *RemoteFs) Unlink(path string) (errc int) {
 		}
 	}
 
+	if node.isUnmaterialized() && !node.hasActiveWriteSession() {
+		fs.log.Debug("Deleting unmaterialized file locally: %v (%v)", remotePath, localPath)
+		fs.finalizeDelete(path)
+		return 0
+	}
+
 	// If the node is being written to, cancel the upload and delete the file from the remote API.
 	// This is necessary because the file may be in the middle of being written to, and the upload may not have completed yet.
 	if node.hasActiveWriteSession() {
@@ -962,6 +968,10 @@ func (fs *RemoteFs) Truncate(path string, size int64, fh uint64) (errc int) {
 	// Without this, a subsequent write could load stale cached content as the
 	// working copy baseline and preserve data from the wrong version of the file.
 	fs.cacheStore.Delete(path)
+	if size == 0 && node.isUnmaterialized() && !node.hasActiveWriteSession() {
+		node.updateSize(0)
+		return 0
+	}
 
 	session, _, err := node.beginWriteSessionMutation(path)
 	if err != nil {
@@ -1691,9 +1701,9 @@ func (fs *RemoteFs) Readdir(path string,
 		}
 	}
 
-	// include pending-visible nodes so that files being uploaded remain visible
-	// even after the handle is released but before the remote listing catches up
-	for p := range fs.vfs.pendingVisibleChildPaths(path) {
+	// Include locally visible nodes after their handles close: unmaterialized
+	// placeholders and completed uploads not yet returned by the remote listing.
+	for p := range fs.vfs.locallyVisibleChildPaths(path) {
 		if !slices.Contains(entries, p) {
 			entries = append(entries, p)
 		}

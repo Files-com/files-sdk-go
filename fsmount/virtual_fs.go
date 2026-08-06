@@ -232,7 +232,7 @@ func (vfs *virtualfs) fetchLockTarget(path string) (*fsNode, bool) {
 	return nil, false
 }
 
-func (vfs *virtualfs) pendingVisibleChildPaths(dirPath string) map[string]struct{} {
+func (vfs *virtualfs) locallyVisibleChildPaths(dirPath string) map[string]struct{} {
 	vfs.nodesMu.Lock()
 	defer vfs.nodesMu.Unlock()
 
@@ -241,9 +241,11 @@ func (vfs *virtualfs) pendingVisibleChildPaths(dirPath string) map[string]struct
 	if !ok || dirNode.info.nodeType != nodeTypeDir {
 		return pending
 	}
-	// Collect direct children of dirPath that are still waiting for remote confirmation.
+	// Collect direct children that must remain visible locally. Unmaterialized
+	// placeholders have no remote counterpart, while pending-visible files are
+	// waiting for a completed upload to appear in the remote listing.
 	for nodePath, node := range vfs.nodes {
-		if nodePath != dirPath && path_lib.Dir(nodePath) == dirPath && node.isPendingVisible() {
+		if nodePath != dirPath && path_lib.Dir(nodePath) == dirPath && (node.isPendingVisible() || node.isUnmaterialized()) {
 			pending[nodePath] = struct{}{}
 		}
 	}

@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	path_lib "path"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -1379,6 +1380,60 @@ func TestRemoteFsTruncateMissingFileReturnsENOENTAndDoesNotCreateNode(t *testing
 	}
 }
 
+func TestRemoteFsUnlinkAllowsSameUserLockedEmptyCreate(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	deleteCalls := 0
+	fs.backend = &fakeRemoteBackend{
+		deleteFunc: func(params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponseOption) error {
+			deleteCalls++
+			return files_sdk.ResponseError{Type: string(files_sdk.ErrFileNotFound)}
+		},
+	}
+
+	path := "/save-as-placeholder.ai"
+	errc, fh := fs.Create(path, fuse.O_RDWR|fuse.O_CREAT, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errc)
+	}
+
+	node, ok := vfs.fetch(path)
+	if !ok {
+		t.Fatal("expected created path to exist in VFS")
+	}
+	if !node.isUnmaterialized() {
+		t.Fatal("expected empty create to remain unmaterialized")
+	}
+	if node.hasActiveWriteSession() {
+		t.Fatal("expected empty create not to start a write session")
+	}
+	node.setLockOwner("current-user")
+	fs.currentUserId = 123
+	fs.lockMap = map[string]*lockInfo{
+		path: {
+			Fh: fh,
+			Lock: &files_sdk.Lock{
+				UserId:   123,
+				Username: "current-user",
+			},
+		},
+	}
+
+	if errc := fs.Unlink(path); errc != 0 {
+		t.Fatalf("Unlink returned %d, want 0", errc)
+	}
+	if deleteCalls != 0 {
+		t.Fatalf("delete called %d times, want 0", deleteCalls)
+	}
+	if _, ok := vfs.fetch(path); ok {
+		t.Fatal("expected path to be removed from VFS after unlink")
+	}
+	if errc := fs.Release(path, fh); errc != 0 {
+		t.Fatalf("Release returned %d, want 0", errc)
+	}
+}
+
 func TestRemoteFsUnlinkAllowsSameUserLockedDirtyWriteSession(t *testing.T) {
 	fs, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()
@@ -1741,12 +1796,117 @@ func TestRemoteFsPublicRenameMovesActiveWriteSession(t *testing.T) {
 	}
 }
 
-func TestRemoteFsRenameCreateWithoutWriteStaysLocal(t *testing.T) {
+func TestRemoteFsRenameUnmaterializedCreateStaysLocal(t *testing.T) {
+	for _, releaseBeforeRename := range []bool{false, true} {
+		name := "while-open"
+		if releaseBeforeRename {
+			name = "after-release"
+		}
+		t.Run(name, func(t *testing.T) {
+			fs, vfs, _ := newTestRemoteFs(t)
+			defer vfs.destroy()
+
+			oldPath := "/export.pdf"
+			newPath := "/export.pdf.bak"
+			uploadCalls := 0
+			fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+				uploadCalls++
+				return uploadedFileMetadata{}, nil
+			}
+			moveCalls := 0
+			fs.backend = &fakeRemoteBackend{
+				moveFunc: func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error) {
+					moveCalls++
+					return files_sdk.FileAction{}, nil
+				},
+				listForFunc: func(params files_sdk.FolderListForParams, opts ...files_sdk.RequestResponseOption) (remoteFileIter, error) {
+					return &fakeFileIter{}, nil
+				},
+			}
+
+			errno, fh := fs.Create(oldPath, fuse.O_RDWR|fuse.O_CREAT, 0o644)
+			if errno != 0 {
+				t.Fatalf("Create returned unexpected error: %d", errno)
+			}
+			if releaseBeforeRename {
+				if errno := fs.Release(oldPath, fh); errno != 0 {
+					t.Fatalf("Release returned unexpected error: %d", errno)
+				}
+			}
+
+			if errno := fs.Rename(oldPath, newPath); errno != 0 {
+				t.Fatalf("Rename returned unexpected error: %d", errno)
+			}
+			if !releaseBeforeRename {
+				if errno := fs.Release(newPath, fh); errno != 0 {
+					t.Fatalf("Release returned unexpected error: %d", errno)
+				}
+			}
+			if uploadCalls != 0 {
+				t.Fatalf("upload called %d times, want 0", uploadCalls)
+			}
+			if moveCalls != 0 {
+				t.Fatalf("backend move called %d times, want 0", moveCalls)
+			}
+			if _, ok := vfs.fetch(oldPath); ok {
+				t.Fatal("expected old path to be absent after local rename")
+			}
+			node, ok := vfs.fetch(newPath)
+			if !ok {
+				t.Fatal("expected new path to exist after local rename")
+			}
+			if !node.isUnmaterialized() {
+				t.Fatal("expected renamed node to remain unmaterialized")
+			}
+
+			root, ok := vfs.fetch("/")
+			if !ok {
+				t.Fatal("expected root node")
+			}
+			root.expireInfo()
+			var names []string
+			if errc := fs.Readdir("/", func(name string, stat *fuse.Stat_t, ofst int64) bool {
+				if name != "." && name != ".." {
+					names = append(names, name)
+				}
+				return true
+			}, 0, 0); errc != 0 {
+				t.Fatalf("Readdir returned unexpected error: %d", errc)
+			}
+			if !slices.Equal(names, []string{path_lib.Base(newPath)}) {
+				t.Fatalf("Readdir names = %v, want only %q", names, path_lib.Base(newPath))
+			}
+
+			if errc, _ := fs.Create(newPath, fuse.O_RDWR|fuse.O_CREAT, 0o644); errc != -fuse.EEXIST {
+				t.Fatalf("Create at renamed path returned %d, want %d", errc, -fuse.EEXIST)
+			}
+			if errc, reuseFH := fs.Create(oldPath, fuse.O_RDWR|fuse.O_CREAT, 0o644); errc != 0 {
+				t.Fatalf("Create at old path returned %d, want 0", errc)
+			} else if errc := fs.Release(oldPath, reuseFH); errc != 0 {
+				t.Fatalf("Release reused old path returned %d, want 0", errc)
+			}
+		})
+	}
+}
+
+func TestRemoteFsWriteAfterUnmaterializedRenameUploadsNewPath(t *testing.T) {
 	fs, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()
 
-	oldPath := "/export.pdf"
-	newPath := "/export.pdf.bak"
+	oldPath := "/draft.txt"
+	newPath := "/final.txt"
+	payload := []byte("materialize after rename")
+	var uploadedPath string
+	var uploaded []byte
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return uploadedFileMetadata{}, err
+		}
+		uploadedPath = path
+		uploaded = append([]byte(nil), data...)
+		return testUploadedMetadata(int64(len(data)), mtime), nil
+	}
 	moveCalls := 0
 	fs.backend = &fakeRemoteBackend{
 		moveFunc: func(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (files_sdk.FileAction, error) {
@@ -1759,25 +1919,34 @@ func TestRemoteFsRenameCreateWithoutWriteStaysLocal(t *testing.T) {
 	if errno != 0 {
 		t.Fatalf("Create returned unexpected error: %d", errno)
 	}
-	if errno := fs.Release(oldPath, fh); errno != 0 {
-		t.Fatalf("Release returned unexpected error: %d", errno)
-	}
-
 	if errno := fs.Rename(oldPath, newPath); errno != 0 {
 		t.Fatalf("Rename returned unexpected error: %d", errno)
 	}
+	if n := fs.Write(newPath, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+	if errno := fs.Release(newPath, fh); errno != 0 {
+		t.Fatalf("Release returned unexpected error: %d", errno)
+	}
+
+	if uploadedPath != newPath {
+		t.Fatalf("uploaded path = %q, want %q", uploadedPath, newPath)
+	}
+	if !bytes.Equal(uploaded, payload) {
+		t.Fatalf("uploaded payload = %q, want %q", uploaded, payload)
+	}
 	if moveCalls != 0 {
-		t.Fatalf("backend move calls = %d, want 0", moveCalls)
+		t.Fatalf("backend move called %d times, want 0", moveCalls)
 	}
 	if _, ok := vfs.fetch(oldPath); ok {
-		t.Fatal("expected old path to be absent after local rename")
+		t.Fatal("expected old path to remain available after materializing the renamed file")
 	}
 	node, ok := vfs.fetch(newPath)
 	if !ok {
-		t.Fatal("expected new path to exist after local rename")
+		t.Fatal("expected new path to remain in the VFS")
 	}
-	if !node.isUnmaterialized() {
-		t.Fatal("expected renamed node to remain unmaterialized")
+	if node.isUnmaterialized() {
+		t.Fatal("expected successful upload to materialize the renamed file")
 	}
 }
 
@@ -4198,7 +4367,7 @@ func (it *fakeFileIter) Err() error {
 	return nil
 }
 
-func TestPendingVisibleChildPathsReturnsPendingNodes(t *testing.T) {
+func TestLocallyVisibleChildPathsReturnsPendingAndUnmaterializedNodes(t *testing.T) {
 	_, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()
 
@@ -4218,15 +4387,72 @@ func TestPendingVisibleChildPathsReturnsPendingNodes(t *testing.T) {
 	d := vfs.getOrCreate("/other/d.txt", nodeTypeFile)
 	d.setPendingVisible()
 
-	pending := vfs.pendingVisibleChildPaths("/uploads")
-	if len(pending) != 2 {
-		t.Fatalf("expected 2 pending paths, got %d: %v", len(pending), pending)
+	// e is an unmaterialized placeholder in the requested directory
+	e := vfs.getOrCreate("/uploads/e.txt", nodeTypeFile)
+	e.markUnmaterialized()
+
+	pending := vfs.locallyVisibleChildPaths("/uploads")
+	if len(pending) != 3 {
+		t.Fatalf("expected 3 locally visible paths, got %d: %v", len(pending), pending)
 	}
 	if _, ok := pending["/uploads/a.txt"]; !ok {
 		t.Fatal("expected /uploads/a.txt in pending set")
 	}
 	if _, ok := pending["/uploads/b.txt"]; !ok {
 		t.Fatal("expected /uploads/b.txt in pending set")
+	}
+	if _, ok := pending["/uploads/e.txt"]; !ok {
+		t.Fatal("expected /uploads/e.txt in pending set")
+	}
+}
+
+func TestReaddirKeepsUnmaterializedEmptyFileAfterRemoteRefresh(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	path := "/empty.txt"
+	uploadCalls := 0
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		uploadCalls++
+		return uploadedFileMetadata{}, nil
+	}
+	backend := fs.backend.(*fakeRemoteBackend)
+	backend.listForFunc = func(params files_sdk.FolderListForParams, opts ...files_sdk.RequestResponseOption) (remoteFileIter, error) {
+		return &fakeFileIter{}, nil
+	}
+
+	errno, fh := fs.Create(path, fuse.O_RDWR|fuse.O_CREAT, 0o644)
+	if errno != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errno)
+	}
+	if errno := fs.Release(path, fh); errno != 0 {
+		t.Fatalf("Release returned unexpected error: %d", errno)
+	}
+	if uploadCalls != 0 {
+		t.Fatalf("upload called %d times, want 0", uploadCalls)
+	}
+
+	root, ok := vfs.fetch("/")
+	if !ok {
+		t.Fatal("expected root node")
+	}
+	root.expireInfo()
+	var names []string
+	if errc := fs.Readdir("/", func(name string, stat *fuse.Stat_t, ofst int64) bool {
+		if name != "." && name != ".." {
+			names = append(names, name)
+		}
+		return true
+	}, 0, 0); errc != 0 {
+		t.Fatalf("Readdir returned unexpected error: %d", errc)
+	}
+	if !slices.Equal(names, []string{path_lib.Base(path)}) {
+		t.Fatalf("Readdir names = %v, want only %q", names, path_lib.Base(path))
+	}
+
+	node, ok := vfs.fetch(path)
+	if !ok || !node.isUnmaterialized() {
+		t.Fatal("expected empty file to remain tracked as unmaterialized after refresh")
 	}
 }
 
@@ -4300,6 +4526,7 @@ func TestCreateNodeClearsPendingVisible(t *testing.T) {
 
 	node := vfs.getOrCreate("/report.xlsx", nodeTypeFile)
 	node.setPendingVisible()
+	node.markUnmaterialized()
 
 	if !node.isPendingVisible() {
 		t.Fatal("expected pendingVisible to be true after setPendingVisible")
@@ -4314,6 +4541,9 @@ func TestCreateNodeClearsPendingVisible(t *testing.T) {
 
 	if confirmed.isPendingVisible() {
 		t.Fatal("expected pendingVisible to be false after createNode confirms remote existence")
+	}
+	if confirmed.isUnmaterialized() {
+		t.Fatal("expected remote confirmation to materialize the node")
 	}
 }
 
@@ -4585,9 +4815,12 @@ func TestUploadFailureClearsPendingVisible(t *testing.T) {
 	if node.isPendingVisible() {
 		t.Fatal("expected pendingVisible to be false after upload failure")
 	}
+	if !node.isUnmaterialized() {
+		t.Fatal("expected failed upload to remain unmaterialized")
+	}
 }
 
-func TestCreateWithoutWriteDoesNotSetPendingVisible(t *testing.T) {
+func TestCreateWithoutWriteRemainsUnmaterialized(t *testing.T) {
 	fs, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()
 
@@ -4602,13 +4835,19 @@ func TestCreateWithoutWriteDoesNotSetPendingVisible(t *testing.T) {
 		t.Fatal("expected node to exist after Create")
 	}
 	if node.isPendingVisible() {
-		t.Fatal("expected pendingVisible to be false after Create with no Write")
+		t.Fatal("expected empty placeholder not to be marked as an upload in progress")
+	}
+	if !node.isUnmaterialized() {
+		t.Fatal("expected empty placeholder to remain unmaterialized")
+	}
+	if node.hasActiveWriteSession() {
+		t.Fatal("expected empty placeholder not to start a write session")
 	}
 
 	fs.Release(path, fh)
 }
 
-func TestTruncateDoesNotSetPendingVisible(t *testing.T) {
+func TestTruncateEmptyPlaceholderToZeroKeepsItUnmaterialized(t *testing.T) {
 	fs, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()
 
@@ -4628,6 +4867,12 @@ func TestTruncateDoesNotSetPendingVisible(t *testing.T) {
 	}
 
 	if node.isPendingVisible() {
-		t.Fatal("expected pendingVisible to be false after Truncate without Write")
+		t.Fatal("expected zero-byte placeholder not to be marked as an upload in progress")
+	}
+	if !node.isUnmaterialized() {
+		t.Fatal("expected zero-byte placeholder to remain unmaterialized")
+	}
+	if node.hasActiveWriteSession() {
+		t.Fatal("expected zero-byte truncate not to start a write session")
 	}
 }
