@@ -63,6 +63,12 @@ var (
 
 	// webSyncInterval determines how frequently we ask Explorer to refresh any open folders.
 	webSyncInterval = 15 * time.Second
+
+	// Folder deletes are asynchronous in the Files.com API. Rmdir must not return
+	// until the deleted path is actually gone, or a following parent Rmdir can
+	// correctly fail because the child directory still exists remotely.
+	folderDeletePollInterval      = 250 * time.Millisecond
+	folderDeleteCompletionTimeout = fsyncTimeout
 )
 
 const (
@@ -555,7 +561,7 @@ func (fs *RemoteFs) Rmdir(path string) (errc int) {
 	}
 	fs.log.Info("Deleting folder: %v (%v)", remotePath, localPath)
 
-	return fs.delete(path)
+	return fs.deleteFolder(path)
 }
 
 func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
@@ -2537,9 +2543,75 @@ func isResourceLocked(err error) bool {
 }
 
 func (fs *RemoteFs) delete(path string) (errc int) {
-	err := fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
-		return fs.backend.delete(files_sdk.FileDeleteParams{Path: fs.remotePath(path)})
+	return fs.handleDeleteResult(path, fs.deleteRemote(context.Background(), path))
+}
+
+func (fs *RemoteFs) deleteFolder(path string) (errc int) {
+	ctx, cancel := context.WithTimeout(context.Background(), folderDeleteCompletionTimeout)
+	defer cancel()
+
+	err := fs.deleteRemote(ctx, path)
+	if err != nil {
+		return fs.handleDeleteResult(path, err)
+	}
+
+	err = fs.waitForDeleteCompletion(ctx, path)
+	if err != nil {
+		if node, ok := fs.vfs.fetch(path); ok {
+			node.expireInfo()
+		}
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		fs.log.Error("Timed out waiting for folder deletion to complete: %v", fs.remotePath(path))
+		return -fuse.ETIMEDOUT
+	}
+	return fs.handleDeleteResult(path, err)
+}
+
+func (fs *RemoteFs) deleteRemote(ctx context.Context, path string) error {
+	return fs.ops.TryWithLimit(ctx, lim.FuseOpOther, func(ctx context.Context) error {
+		return fs.backend.delete(
+			files_sdk.FileDeleteParams{Path: fs.remotePath(path)},
+			files_sdk.WithContext(ctx),
+		)
 	})
+}
+
+func (fs *RemoteFs) waitForDeleteCompletion(ctx context.Context, path string) error {
+	remotePath := fs.remotePath(path)
+	ticker := time.NewTicker(folderDeletePollInterval)
+	defer ticker.Stop()
+	waitingLogged := false
+
+	for {
+		var err error
+		err = fs.ops.WithLimit(ctx, lim.FuseOpOther, func(ctx context.Context) error {
+			_, err = fs.backend.find(
+				files_sdk.FileFindParams{Path: remotePath},
+				files_sdk.WithContext(ctx),
+			)
+			return err
+		})
+		if files_sdk.IsNotExist(err) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if !waitingLogged {
+			fs.log.Debug("RemoteFs: Rmdir: waiting for folder deletion to complete: %v", remotePath)
+			waitingLogged = true
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+		}
+	}
+}
+
+func (fs *RemoteFs) handleDeleteResult(path string, err error) (errc int) {
 	if errors.Is(err, lim.ErrNoSlotsAvailable) {
 		return -fuse.EAGAIN
 	}

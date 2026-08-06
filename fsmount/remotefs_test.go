@@ -1467,6 +1467,144 @@ func TestRemoteFsMkdirOnExistingFileReturnsEEXISTWithoutChangingNodeType(t *test
 	}
 }
 
+func TestRemoteFsRmdirWaitsForAsynchronousDeleteCompletion(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	originalPollInterval := folderDeletePollInterval
+	originalCompletionTimeout := folderDeleteCompletionTimeout
+	folderDeletePollInterval = time.Nanosecond
+	folderDeleteCompletionTimeout = time.Second
+	defer func() {
+		folderDeletePollInterval = originalPollInterval
+		folderDeleteCompletionTimeout = originalCompletionTimeout
+	}()
+
+	path := "/folder"
+	node := vfs.getOrCreate(path, nodeTypeDir)
+	node.extendTtl()
+
+	deleteCalls := 0
+	findCalls := 0
+	fs.backend = &fakeRemoteBackend{
+		deleteFunc: func(params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponseOption) error {
+			deleteCalls++
+			if params.Path != path {
+				t.Fatalf("delete path = %q, want %q", params.Path, path)
+			}
+			return nil
+		},
+		findFunc: func(params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+			findCalls++
+			if params.Path != path {
+				t.Fatalf("find path = %q, want %q", params.Path, path)
+			}
+			if findCalls < 3 {
+				return files_sdk.File{Path: path, Type: "directory"}, nil
+			}
+			return files_sdk.File{}, files_sdk.ResponseError{Type: string(files_sdk.ErrFileNotFound)}
+		},
+	}
+
+	if errc := fs.Rmdir(path); errc != 0 {
+		t.Fatalf("Rmdir returned %d, want 0", errc)
+	}
+	if deleteCalls != 1 {
+		t.Fatalf("delete called %d times, want 1", deleteCalls)
+	}
+	if findCalls != 3 {
+		t.Fatalf("find called %d times, want 3", findCalls)
+	}
+	if _, ok := vfs.fetch(path); ok {
+		t.Fatal("expected path to be removed from VFS after remote deletion completed")
+	}
+}
+
+func TestRemoteFsRmdirDoesNotRetryFolderNotEmpty(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	path := "/folder"
+	node := vfs.getOrCreate(path, nodeTypeDir)
+	node.extendTtl()
+
+	deleteCalls := 0
+	findCalls := 0
+	fs.backend = &fakeRemoteBackend{
+		deleteFunc: func(params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponseOption) error {
+			deleteCalls++
+			return files_sdk.ResponseError{Type: string(files_sdk.ErrFolderNotEmpty)}
+		},
+		findFunc: func(params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+			findCalls++
+			return files_sdk.File{}, nil
+		},
+	}
+
+	if errc := fs.Rmdir(path); errc != -fuse.ENOTEMPTY {
+		t.Fatalf("Rmdir returned %d, want %d", errc, -fuse.ENOTEMPTY)
+	}
+	if deleteCalls != 1 {
+		t.Fatalf("delete called %d times, want 1", deleteCalls)
+	}
+	if findCalls != 0 {
+		t.Fatalf("find called %d times, want 0", findCalls)
+	}
+	if _, ok := vfs.fetch(path); !ok {
+		t.Fatal("expected path to remain in VFS after failed delete")
+	}
+	if node.infoExpired() {
+		t.Fatal("expected failed delete to leave cached metadata intact")
+	}
+}
+
+func TestRemoteFsRmdirTimesOutWaitingForDeleteCompletion(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	originalPollInterval := folderDeletePollInterval
+	originalCompletionTimeout := folderDeleteCompletionTimeout
+	folderDeletePollInterval = time.Millisecond
+	folderDeleteCompletionTimeout = 5 * time.Millisecond
+	defer func() {
+		folderDeletePollInterval = originalPollInterval
+		folderDeleteCompletionTimeout = originalCompletionTimeout
+	}()
+
+	path := "/folder"
+	node := vfs.getOrCreate(path, nodeTypeDir)
+	node.extendTtl()
+
+	deleteCalls := 0
+	findCalls := 0
+	fs.backend = &fakeRemoteBackend{
+		deleteFunc: func(params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponseOption) error {
+			deleteCalls++
+			return nil
+		},
+		findFunc: func(params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+			findCalls++
+			return files_sdk.File{Path: path, Type: "directory"}, nil
+		},
+	}
+
+	if errc := fs.Rmdir(path); errc != -fuse.ETIMEDOUT {
+		t.Fatalf("Rmdir returned %d, want %d", errc, -fuse.ETIMEDOUT)
+	}
+	if deleteCalls != 1 {
+		t.Fatalf("delete called %d times, want 1", deleteCalls)
+	}
+	if findCalls == 0 {
+		t.Fatal("expected Rmdir to check for remote deletion completion")
+	}
+	if _, ok := vfs.fetch(path); !ok {
+		t.Fatal("expected path to remain in VFS after completion timeout")
+	}
+	if !node.infoExpired() {
+		t.Fatal("expected timed-out path metadata to expire")
+	}
+}
+
 func TestRemoteFsCreateExOpenExistingOnMissingFileReturnsENOENT(t *testing.T) {
 	fs, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()
