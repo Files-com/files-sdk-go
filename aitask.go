@@ -21,6 +21,7 @@ type AiTask struct {
 	TriggerActions        []string   `json:"trigger_actions,omitempty" path:"trigger_actions,omitempty" url:"trigger_actions,omitempty"`
 	Interval              string     `json:"interval,omitempty" path:"interval,omitempty" url:"interval,omitempty"`
 	RecurringDay          int64      `json:"recurring_day,omitempty" path:"recurring_day,omitempty" url:"recurring_day,omitempty"`
+	ScheduleId            int64      `json:"schedule_id,omitempty" path:"schedule_id,omitempty" url:"schedule_id,omitempty"`
 	ScheduleDaysOfWeek    []int64    `json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week,omitempty" url:"schedule_days_of_week,omitempty"`
 	ScheduleTimesOfDay    []string   `json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day,omitempty" url:"schedule_times_of_day,omitempty"`
 	ScheduleTimeZone      string     `json:"schedule_time_zone,omitempty" path:"schedule_time_zone,omitempty" url:"schedule_time_zone,omitempty"`
@@ -86,6 +87,7 @@ type AiTaskCreateParams struct {
 	PermissionSet      AiTaskPermissionSetEnum `url:"permission_set,omitempty" json:"permission_set,omitempty" path:"permission_set"`
 	Prompt             string                  `url:"prompt" json:"prompt" path:"prompt"`
 	RecurringDay       int64                   `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
+	ScheduleId         int64                   `url:"schedule_id,omitempty" json:"schedule_id,omitempty" path:"schedule_id"`
 	ScheduleDaysOfWeek []int64                 `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimeZone   string                  `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
 	ScheduleTimesOfDay []string                `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
@@ -111,6 +113,7 @@ type AiTaskUpdateParams struct {
 	PermissionSet      AiTaskPermissionSetEnum `url:"permission_set,omitempty" json:"permission_set,omitempty" path:"permission_set"`
 	Prompt             string                  `url:"prompt,omitempty" json:"prompt,omitempty" path:"prompt"`
 	RecurringDay       int64                   `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
+	ScheduleId         int64                   `url:"schedule_id,omitempty" json:"schedule_id,omitempty" path:"schedule_id"`
 	ScheduleDaysOfWeek []int64                 `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimeZone   string                  `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
 	ScheduleTimesOfDay []string                `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`

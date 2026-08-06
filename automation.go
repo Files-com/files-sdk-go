@@ -35,6 +35,7 @@ type Automation struct {
 	PathTimeZone                     string                   `json:"path_time_zone,omitempty" path:"path_time_zone,omitempty" url:"path_time_zone,omitempty"`
 	Version                          int64                    `json:"version,omitempty" path:"version,omitempty" url:"version,omitempty"`
 	RecurringDay                     int64                    `json:"recurring_day,omitempty" path:"recurring_day,omitempty" url:"recurring_day,omitempty"`
+	ScheduleId                       int64                    `json:"schedule_id,omitempty" path:"schedule_id,omitempty" url:"schedule_id,omitempty"`
 	RetryOnFailureIntervalInMinutes  int64                    `json:"retry_on_failure_interval_in_minutes,omitempty" path:"retry_on_failure_interval_in_minutes,omitempty" url:"retry_on_failure_interval_in_minutes,omitempty"`
 	RetryOnFailureNumberOfAttempts   int64                    `json:"retry_on_failure_number_of_attempts,omitempty" path:"retry_on_failure_number_of_attempts,omitempty" url:"retry_on_failure_number_of_attempts,omitempty"`
 	Schedule                         interface{}              `json:"schedule,omitempty" path:"schedule,omitempty" url:"schedule,omitempty"`
@@ -121,6 +122,7 @@ type AutomationCreateParams struct {
 	SyncIds                          string                   `url:"sync_ids,omitempty" json:"sync_ids,omitempty" path:"sync_ids"`
 	UserIds                          string                   `url:"user_ids,omitempty" json:"user_ids,omitempty" path:"user_ids"`
 	GroupIds                         string                   `url:"group_ids,omitempty" json:"group_ids,omitempty" path:"group_ids"`
+	ScheduleId                       int64                    `url:"schedule_id,omitempty" json:"schedule_id,omitempty" path:"schedule_id"`
 	ScheduleDaysOfWeek               []int64                  `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimesOfDay               []string                 `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
 	ScheduleTimeZone                 string                   `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
@@ -170,6 +172,7 @@ type AutomationUpdateParams struct {
 	SyncIds                          string                   `url:"sync_ids,omitempty" json:"sync_ids,omitempty" path:"sync_ids"`
 	UserIds                          string                   `url:"user_ids,omitempty" json:"user_ids,omitempty" path:"user_ids"`
 	GroupIds                         string                   `url:"group_ids,omitempty" json:"group_ids,omitempty" path:"group_ids"`
+	ScheduleId                       int64                    `url:"schedule_id,omitempty" json:"schedule_id,omitempty" path:"schedule_id"`
 	ScheduleDaysOfWeek               []int64                  `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimesOfDay               []string                 `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
 	ScheduleTimeZone                 string                   `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
