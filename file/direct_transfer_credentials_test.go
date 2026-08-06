@@ -30,6 +30,7 @@ const testDirectCredentialServerName = "agent-123.agents.files.internal"
 func TestDownloadDirectTransferDoesNotSendSDKCredentials(t *testing.T) {
 	var gotHeaders http.Header
 	var gotRequestURI string
+	var logs bytes.Buffer
 	info := testDirectTransferInfo(t, "/downloads?jwt=direct-token", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotHeaders = r.Header.Clone()
 		gotRequestURI = r.URL.RequestURI()
@@ -46,7 +47,8 @@ func TestDownloadDirectTransferDoesNotSendSDKCredentials(t *testing.T) {
 		EndpointOverride: proxy.URL,
 		WorkspaceId:      9,
 		Environment:      files_sdk.Development,
-		Logger:           log.New(io.Discard, "", 0),
+		Logger:           log.New(&logs, "", 0),
+		Debug:            true,
 		AdditionalHeaders: map[string]string{
 			"Authorization": "Bearer config-token",
 			"Cookie":        "config_session=config-cookie",
@@ -67,6 +69,8 @@ func TestDownloadDirectTransferDoesNotSendSDKCredentials(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "/downloads?jwt=direct-token", gotRequestURI)
 	requireDirectTransferCredentialsStripped(t, gotHeaders)
+	require.NotContains(t, logs.String(), "direct download attempt")
+	require.Contains(t, logs.String(), "direct download success")
 }
 
 func TestDownloadDirectPartialBodyNeverAppendsProxyBody(t *testing.T) {

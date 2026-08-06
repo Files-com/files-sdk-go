@@ -169,6 +169,7 @@ func WrapDirectTransferOptions(config Config, info DirectConnectionInfo, request
 		return nil, err
 	}
 
+	logDirectTransferRequest(config.Logger, directRequest)
 	response, err := httpClient.Do(directRequest)
 	if err != nil {
 		return response, err
@@ -189,6 +190,23 @@ func WrapDirectTransferOptions(config Config, info DirectConnectionInfo, request
 		return response, errors.Join(ErrDirectTransferResponseStarted, err)
 	}
 	return processedResponse, nil
+}
+
+func logDirectTransferRequest(logger lib.Logger, request *http.Request) {
+	if logger == nil || request == nil || request.URL == nil {
+		return
+	}
+
+	logURL := *request.URL
+	logURL.RawQuery = ""
+	logURL.ForceQuery = false
+	logURL.Fragment = ""
+
+	if leveledLogger, ok := logger.(retryablehttp.LeveledLogger); ok {
+		leveledLogger.Debug("performing request", "method", request.Method, "url", logURL.Redacted())
+		return
+	}
+	logger.Printf("[DEBUG] %s %s", request.Method, logURL.Redacted())
 }
 
 func directTransferRetryAfter(value string) time.Duration {

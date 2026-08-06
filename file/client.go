@@ -173,9 +173,6 @@ func (c *Client) Download(params files_sdk.FileDownloadParams, opts ...files_sdk
 		directContext, closeDirectClient := files_sdk.WithDirectTransferClientCache(files_sdk.ContextOption(opts))
 		defer closeDirectClient()
 		directOptions := append(directTransferDownloadFailureOptions(directSuppressor, opts...), files_sdk.WithContext(directContext))
-		if c.Config.InDebug() {
-			c.LogPath(params.Path, map[string]interface{}{"message": "direct download attempt", "direction": "download"})
-		}
 		for attempt := 1; attempt <= downloadV2RetryAttempts; attempt++ {
 			_, err = files_sdk.WrapDirectTransferOptions(
 				c.Config,

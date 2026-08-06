@@ -1,6 +1,7 @@
 package files_sdk
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -11,6 +12,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"io"
+	"log"
 	"math/big"
 	"net"
 	"net/http"
@@ -110,6 +112,40 @@ func TestDirectTransferOptionsDoNotMutateFallbackRequest(t *testing.T) {
 	_, err = BuildRequest(request, addTransferHeader)
 	require.NoError(t, err)
 	require.Equal(t, []string{"1"}, request.Header.Values("X-Transfer-Attempt"))
+}
+
+func TestWrapDirectTransferOptionsLogsDirectRequest(t *testing.T) {
+	info := directTransferTestInfo("/downloads/file.txt?jwt=direct-token")
+	ctx, closeClients := WithDirectTransferClientCache(context.Background())
+	defer closeClients()
+	cache := ctx.Value(directTransferClientCacheContextKey{}).(*directTransferClientCache)
+	cache.key = directTransferClientCacheKey{
+		serverName: info.ServerName,
+		caPEM:      info.CaPem,
+		protocol:   "tcp",
+		candidates: "8.8.8.8:4001",
+	}
+	cache.httpClient = &http.Client{Transport: directTransferRoundTripFunc(func(*http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       io.NopCloser(bytes.NewBufferString("direct")),
+			Header:     http.Header{},
+		}, nil
+	})}
+
+	var logs bytes.Buffer
+	request, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://proxy.example/downloads/file.txt?jwt=proxy-token", nil)
+	require.NoError(t, err)
+	response, err := WrapDirectTransferOptions(
+		Config{Environment: Development, Logger: log.New(&logs, "", 0)},
+		info,
+		request,
+	)
+	require.NoError(t, err)
+	require.NoError(t, response.Body.Close())
+	require.Equal(t, "[DEBUG] GET https://agent-123.agents.files.internal:4001/downloads/file.txt\n", logs.String())
+	require.NotContains(t, logs.String(), "direct-token")
+	require.NotContains(t, logs.String(), "proxy-token")
 }
 
 func TestDirectTransferHTTPClientDialsAddressWithServerName(t *testing.T) {
