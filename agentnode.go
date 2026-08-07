@@ -8,15 +8,15 @@ import (
 )
 
 type AgentNode struct {
-	NodeId                  string     `json:"node_id,omitempty" path:"node_id,omitempty" url:"node_id,omitempty"`
-	Name                    string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
-	Hostname                string     `json:"hostname,omitempty" path:"hostname,omitempty" url:"hostname,omitempty"`
-	AvailabilityRole        string     `json:"availability_role,omitempty" path:"availability_role,omitempty" url:"availability_role,omitempty"`
-	ConnectionStatus        string     `json:"connection_status,omitempty" path:"connection_status,omitempty" url:"connection_status,omitempty"`
-	IsDefault               *bool      `json:"is_default,omitempty" path:"is_default,omitempty" url:"is_default,omitempty"`
-	AgentVersion            string     `json:"agent_version,omitempty" path:"agent_version,omitempty" url:"agent_version,omitempty"`
-	DirectTransferAvailable *bool      `json:"direct_transfer_available,omitempty" path:"direct_transfer_available,omitempty" url:"direct_transfer_available,omitempty"`
-	LastSeenAt              *time.Time `json:"last_seen_at,omitempty" path:"last_seen_at,omitempty" url:"last_seen_at,omitempty"`
+	NodeId                  string              `json:"node_id,omitempty" path:"node_id,omitempty" url:"node_id,omitempty"`
+	Name                    string              `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Hostname                string              `json:"hostname,omitempty" path:"hostname,omitempty" url:"hostname,omitempty"`
+	AvailabilityRole        string              `json:"availability_role,omitempty" path:"availability_role,omitempty" url:"availability_role,omitempty"`
+	Status                  string              `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	IsDefault               *bool               `json:"is_default,omitempty" path:"is_default,omitempty" url:"is_default,omitempty"`
+	DirectTransferAvailable *bool               `json:"direct_transfer_available,omitempty" path:"direct_transfer_available,omitempty" url:"direct_transfer_available,omitempty"`
+	LastSeenAt              *time.Time          `json:"last_seen_at,omitempty" path:"last_seen_at,omitempty" url:"last_seen_at,omitempty"`
+	Instances               []AgentNodeInstance `json:"instances,omitempty" path:"instances,omitempty" url:"instances,omitempty"`
 }
 
 // Identifier no path or id
