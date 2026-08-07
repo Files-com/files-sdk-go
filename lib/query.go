@@ -20,7 +20,8 @@ func PathEscape(path string) (string, error) {
 	}
 	var err error
 	if len(newParts) > 1 {
-		path, err = url.JoinPath(newParts[0], newParts[1:]...)
+		// Use an absolute base so a colon in the first path segment is not parsed as a URL scheme.
+		path, err = url.JoinPath("/"+newParts[0], newParts[1:]...)
 		if err != nil {
 			return path, err
 		}

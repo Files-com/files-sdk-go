@@ -100,6 +100,13 @@ func TestBuildPath(t *testing.T) {
 				UserExample{Path: "a file name.text"}},
 		},
 		{
+			name: "colon in first path segment",
+			want: "/file_actions/begin_upload/A%20Folder:%20Is%20Here/Submission%208/file.csv",
+			args: args{
+				"/file_actions/begin_upload/{path}",
+				UserExample{Path: "A Folder: Is Here/Submission 8/file.csv"}},
+		},
+		{
 			name: "given a map",
 			want: "root/a/my-path",
 			args: args{
