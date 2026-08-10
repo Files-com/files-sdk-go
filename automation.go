@@ -35,6 +35,7 @@ type Automation struct {
 	PathTimeZone                     string                   `json:"path_time_zone,omitempty" path:"path_time_zone,omitempty" url:"path_time_zone,omitempty"`
 	Version                          int64                    `json:"version,omitempty" path:"version,omitempty" url:"version,omitempty"`
 	RecurringDay                     int64                    `json:"recurring_day,omitempty" path:"recurring_day,omitempty" url:"recurring_day,omitempty"`
+	RecurringDays                    []int64                  `json:"recurring_days,omitempty" path:"recurring_days,omitempty" url:"recurring_days,omitempty"`
 	ScheduleId                       int64                    `json:"schedule_id,omitempty" path:"schedule_id,omitempty" url:"schedule_id,omitempty"`
 	RetryOnFailureIntervalInMinutes  int64                    `json:"retry_on_failure_interval_in_minutes,omitempty" path:"retry_on_failure_interval_in_minutes,omitempty" url:"retry_on_failure_interval_in_minutes,omitempty"`
 	RetryOnFailureNumberOfAttempts   int64                    `json:"retry_on_failure_number_of_attempts,omitempty" path:"retry_on_failure_number_of_attempts,omitempty" url:"retry_on_failure_number_of_attempts,omitempty"`
@@ -145,6 +146,7 @@ type AutomationCreateParams struct {
 	TriggerActions                   []string                 `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
 	Value                            interface{}              `url:"value,omitempty" json:"value,omitempty" path:"value"`
 	RecurringDay                     int64                    `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
+	RecurringDays                    []int64                  `url:"recurring_days,omitempty" json:"recurring_days,omitempty" path:"recurring_days"`
 	Automation                       AutomationEnum           `url:"automation" json:"automation" path:"automation"`
 	WorkspaceId                      int64                    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
@@ -195,6 +197,7 @@ type AutomationUpdateParams struct {
 	TriggerActions                   []string                 `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
 	Value                            interface{}              `url:"value,omitempty" json:"value,omitempty" path:"value"`
 	RecurringDay                     int64                    `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
+	RecurringDays                    []int64                  `url:"recurring_days,omitempty" json:"recurring_days,omitempty" path:"recurring_days"`
 	Automation                       AutomationEnum           `url:"automation,omitempty" json:"automation,omitempty" path:"automation"`
 }
 

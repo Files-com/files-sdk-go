@@ -34,6 +34,7 @@ type Sync struct {
 	SyncIntervalMinutes    int64      `json:"sync_interval_minutes,omitempty" path:"sync_interval_minutes,omitempty" url:"sync_interval_minutes,omitempty"`
 	Interval               string     `json:"interval,omitempty" path:"interval,omitempty" url:"interval,omitempty"`
 	RecurringDay           int64      `json:"recurring_day,omitempty" path:"recurring_day,omitempty" url:"recurring_day,omitempty"`
+	RecurringDays          []int64    `json:"recurring_days,omitempty" path:"recurring_days,omitempty" url:"recurring_days,omitempty"`
 	ScheduleId             int64      `json:"schedule_id,omitempty" path:"schedule_id,omitempty" url:"schedule_id,omitempty"`
 	ScheduleDaysOfWeek     []int64    `json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week,omitempty" url:"schedule_days_of_week,omitempty"`
 	ScheduleTimesOfDay     []string   `json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day,omitempty" url:"schedule_times_of_day,omitempty"`
@@ -85,6 +86,7 @@ type SyncCreateParams struct {
 	KeepAfterCopy          *bool           `url:"keep_after_copy,omitempty" json:"keep_after_copy,omitempty" path:"keep_after_copy"`
 	Name                   string          `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	RecurringDay           int64           `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
+	RecurringDays          []int64         `url:"recurring_days,omitempty" json:"recurring_days,omitempty" path:"recurring_days"`
 	ScheduleId             int64           `url:"schedule_id,omitempty" json:"schedule_id,omitempty" path:"schedule_id"`
 	ScheduleDaysOfWeek     []int64         `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimeZone       string          `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
@@ -122,6 +124,7 @@ type SyncUpdateParams struct {
 	KeepAfterCopy          *bool           `url:"keep_after_copy,omitempty" json:"keep_after_copy,omitempty" path:"keep_after_copy"`
 	Name                   string          `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	RecurringDay           int64           `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
+	RecurringDays          []int64         `url:"recurring_days,omitempty" json:"recurring_days,omitempty" path:"recurring_days"`
 	ScheduleId             int64           `url:"schedule_id,omitempty" json:"schedule_id,omitempty" path:"schedule_id"`
 	ScheduleDaysOfWeek     []int64         `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimeZone       string          `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`

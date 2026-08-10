@@ -18,6 +18,7 @@ type ScheduledExport struct {
 	Trigger               string      `json:"trigger,omitempty" path:"trigger,omitempty" url:"trigger,omitempty"`
 	Interval              string      `json:"interval,omitempty" path:"interval,omitempty" url:"interval,omitempty"`
 	RecurringDay          int64       `json:"recurring_day,omitempty" path:"recurring_day,omitempty" url:"recurring_day,omitempty"`
+	RecurringDays         []int64     `json:"recurring_days,omitempty" path:"recurring_days,omitempty" url:"recurring_days,omitempty"`
 	ScheduleId            int64       `json:"schedule_id,omitempty" path:"schedule_id,omitempty" url:"schedule_id,omitempty"`
 	ScheduleDaysOfWeek    []int64     `json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week,omitempty" url:"schedule_days_of_week,omitempty"`
 	ScheduleTimesOfDay    []string    `json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day,omitempty" url:"schedule_times_of_day,omitempty"`
@@ -69,6 +70,7 @@ type ScheduledExportCreateParams struct {
 	Trigger            ScheduledExportTriggerEnum `url:"trigger,omitempty" json:"trigger,omitempty" path:"trigger"`
 	Interval           string                     `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
 	RecurringDay       int64                      `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
+	RecurringDays      []int64                    `url:"recurring_days,omitempty" json:"recurring_days,omitempty" path:"recurring_days"`
 	ScheduleId         int64                      `url:"schedule_id,omitempty" json:"schedule_id,omitempty" path:"schedule_id"`
 	ScheduleDaysOfWeek []int64                    `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimesOfDay []string                   `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
@@ -86,6 +88,7 @@ type ScheduledExportUpdateParams struct {
 	Trigger            ScheduledExportTriggerEnum `url:"trigger,omitempty" json:"trigger,omitempty" path:"trigger"`
 	Interval           string                     `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
 	RecurringDay       int64                      `url:"recurring_day,omitempty" json:"recurring_day,omitempty" path:"recurring_day"`
+	RecurringDays      []int64                    `url:"recurring_days,omitempty" json:"recurring_days,omitempty" path:"recurring_days"`
 	ScheduleId         int64                      `url:"schedule_id,omitempty" json:"schedule_id,omitempty" path:"schedule_id"`
 	ScheduleDaysOfWeek []int64                    `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	ScheduleTimesOfDay []string                   `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
