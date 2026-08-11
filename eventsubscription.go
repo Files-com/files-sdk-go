@@ -13,6 +13,8 @@ type EventSubscription struct {
 	WorkspaceId          int64       `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	ApplyToAllWorkspaces *bool       `json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces,omitempty" url:"apply_to_all_workspaces,omitempty"`
 	Name                 string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Subject              string      `json:"subject,omitempty" path:"subject,omitempty" url:"subject,omitempty"`
+	Message              string      `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
 	Enabled              *bool       `json:"enabled,omitempty" path:"enabled,omitempty" url:"enabled,omitempty"`
 	EventTypes           []string    `json:"event_types,omitempty" path:"event_types,omitempty" url:"event_types,omitempty"`
 	Filter               interface{} `json:"filter,omitempty" path:"filter,omitempty" url:"filter,omitempty"`
@@ -43,6 +45,8 @@ type EventSubscriptionCreateParams struct {
 	WorkspaceId          int64       `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	ApplyToAllWorkspaces *bool       `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
 	Name                 string      `url:"name" json:"name" path:"name"`
+	Subject              string      `url:"subject,omitempty" json:"subject,omitempty" path:"subject"`
+	Message              string      `url:"message,omitempty" json:"message,omitempty" path:"message"`
 	Enabled              *bool       `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
 	EventTypes           []string    `url:"event_types,omitempty" json:"event_types,omitempty" path:"event_types"`
 	Filter               interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -56,6 +60,8 @@ type EventSubscriptionUpdateParams struct {
 	WorkspaceId          int64       `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	ApplyToAllWorkspaces *bool       `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
 	Name                 string      `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	Subject              string      `url:"subject,omitempty" json:"subject,omitempty" path:"subject"`
+	Message              string      `url:"message,omitempty" json:"message,omitempty" path:"message"`
 	Enabled              *bool       `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
 	EventTypes           []string    `url:"event_types,omitempty" json:"event_types,omitempty" path:"event_types"`
 	Filter               interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
