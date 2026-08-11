@@ -1,3 +1,5 @@
+//go:build linux || windows
+
 package fsmount
 
 import (
@@ -58,10 +60,8 @@ func (reg *mountRegistry) remove(mountPoint string) {
 	delete(reg.hosts, mountPoint)
 }
 
-// Host acts as a wrapper around a fuse.FileSystemHost and an fsmount.Filescomfs to allow
-// interception of unmount, and notify calls. This is primarily to facilitate calling Unmount on macOS
-// because the unmount action on macOS does not reliably propagate to the underlying file system
-// implementations, which means they don't reliably have the opportunity to clean up resources.
+// Host wraps a fuse.FileSystemHost and Filescomfs so unmount and notify calls can
+// consistently clean up mount resources.
 type Host struct {
 	fuseHost *fuse.FileSystemHost
 	fs       *Filescomfs

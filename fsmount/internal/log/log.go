@@ -1,3 +1,5 @@
+//go:build linux || windows
+
 // Package log provides logging interfaces and implementations for Files.com FUSE mount.
 package log
 

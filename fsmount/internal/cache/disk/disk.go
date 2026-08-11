@@ -1,3 +1,5 @@
+//go:build linux || windows
+
 // Package disk implements a disk-based cache for file data.
 package disk
 
@@ -83,9 +85,6 @@ const (
 //     e.g. if a read fails, the caller can just read from the source instead of treating it as a
 //     fatal error but a write failure because the cache is at capacity and could not make space is
 //     more serious
-//   - figure out platform specific way to disable indexing of cache files e.g. on macOS
-//     set the com.apple.metadata:com_apple_backup_excludeItem attribute
-//     or use .noindex directory for cache root
 //   - move Stats#MarshalJSON to a separate file to and apply the filescomfs_debug tag
 type DiskCache struct {
 	// CacheRoot is the root directory for the cache.

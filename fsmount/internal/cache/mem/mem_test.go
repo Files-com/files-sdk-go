@@ -1,3 +1,5 @@
+//go:build linux || windows
+
 package mem_test
 
 import (

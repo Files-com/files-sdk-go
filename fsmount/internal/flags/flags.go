@@ -1,3 +1,5 @@
+//go:build linux || windows
+
 // Package flags provides utilities for working with FUSE file open flags.
 package flags
 
@@ -9,21 +11,11 @@ import (
 	"github.com/winfsp/cgofuse/fuse"
 )
 
-const (
-	// O_EVTONLY is a flag used to indicate that the file is opened for event notifications only.
-	O_EVTONLY = 0x8000
-)
-
 type FuseFlags int
 
 // NewFuseFlags initializes a FuseFlags instance with the given integer flag value.
 func NewFuseFlags(flags int) FuseFlags {
 	return FuseFlags(flags)
-}
-
-// IsEventOnly checks if the flag is open for event notifications only.
-func (f FuseFlags) IsEventOnly() bool {
-	return int(f)&O_EVTONLY != 0
 }
 
 // IsReadOnly checks if the flag is set to read-only.
@@ -74,9 +66,6 @@ func (f FuseFlags) Without(remove int) FuseFlags {
 // String returns a string representation of the FuseFlags.
 func (f FuseFlags) String() string {
 	flags := []string{}
-	if f.IsEventOnly() {
-		flags = append(flags, "O_EVTONLY")
-	}
 	if f.IsReadOnly() {
 		flags = append(flags, "O_RDONLY")
 	}
@@ -111,7 +100,7 @@ func (f FuseFlags) String() string {
 //   - Access mode: FUSE follows POSIX semantics where the lower two bits encode
 //     the access mode (O_RDONLY=0, O_WRONLY=1, O_RDWR=2). Masking with 0x3 and
 //     mapping to os.O_RDONLY / os.O_WRONLY / os.O_RDWR allows the os package to turn
-//     these into the correct native flags for Linux, macOS, and Windows.
+//     these into the correct native flags for Linux and Windows.
 //   - Behavior/creation bits: FUSE flags like O_CREAT, O_EXCL, O_TRUNC, and
 //     O_APPEND have direct counterparts in the os package (os.O_CREATE,
 //     os.O_EXCL, os.O_TRUNC, os.O_APPEND). OR-ing these through lets the os
@@ -123,10 +112,7 @@ func (f FuseFlags) String() string {
 //  2. OR in any creation/behavior bits that are present.
 //  3. Return the composite mask, suitable for passing to os.OpenFile.
 //
-// Notes:
-//   - O_EVTONLY (macOS) is intentionally ignored here because it’s about event
-//     notifications rather than the access/creation mode used by os.OpenFile.
-//   - Add additional mappings here if more FUSE flags need to flow through.
+// Add additional mappings here if more FUSE flags need to flow through.
 func (f FuseFlags) AsOsFlags() int {
 	osf := 0
 

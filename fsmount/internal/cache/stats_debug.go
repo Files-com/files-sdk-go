@@ -1,4 +1,5 @@
-//go:build filescomfs_debug
+//go:build (linux || windows) && filescomfs_debug
+// +build linux windows
 // +build filescomfs_debug
 
 package cache

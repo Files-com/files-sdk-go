@@ -1,3 +1,5 @@
+//go:build linux || windows
+
 package fsmount
 
 import (
@@ -304,7 +306,7 @@ func (fs *LocalFs) open(path string, flags int, mode uint32) (errc int, fh uint6
 	fuseFlags := ff.NewFuseFlags(flags)
 	f, err := openLocalFile(path, fuseFlags.AsOsFlags(), os.FileMode(mode))
 	if err != nil {
-		// this is expected in some cases, like .DS_Store files on macOS, so log at Debug level
+		// File browsers can race while creating temporary metadata, so log at Debug level.
 		errc = toErrno(err)
 		fs.log.Debug("LocalFs: open: failed to open file: path=%v, flags=%v, mode=%o, err=%v, errno=%v", path, fuseFlags, mode, err, errc)
 		return errc, ^uint64(0)

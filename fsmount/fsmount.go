@@ -1,3 +1,5 @@
+//go:build linux || windows
+
 // Package fsmount provides functionality to mount a Files.com file system using FUSE.
 package fsmount
 
@@ -62,8 +64,7 @@ type MountParams struct {
 	// followed by a colon (e.g. "Z:"). If not specified, the letter closest to
 	// the end of the Latin alphabet that is not already in use will be chosen.
 	//
-	// Required on MacOS and Linux, this is the path to the directory where mount points
-	// will be located (e.g. "/mnt/files").
+	// Required on Linux, this is the path to the directory to mount (e.g. "/mnt/files").
 	MountPoint string
 
 	// UseDefaultMountPoint enables fallback behavior on Windows. If true and the specified
@@ -71,15 +72,15 @@ type MountParams struct {
 	// an available drive letter from Z: to D:. Defaults to false.
 	UseDefaultMountPoint bool
 
-	// Optional. Path to a temporary directory for storing files that don't belong on Files.com.
-	// e.g. .DS_Store, Thumbs.db, etc... The full list of patterns is available in the ignore package
+	// Optional. Path to a temporary directory for storing OS metadata and other files that
+	// don't belong on Files.com. The full list of patterns is available in the ignore package:
 	// https://github.com/Files-com/files-sdk-go/tree/master/ignore/data
 	//
 	// Defaults to OS-specific temporary directory if not specified.
 	TmpFsPath string
 
-	// Optional. Volume name to display in Finder/Explorer. On Windows, this is also used as the
-	// share name for the UNC path. Defaults to "Files.com".
+	// Optional. Volume name to display in the system file browser. On Windows, this is also
+	// used as the share name for the UNC path. Defaults to "Files.com".
 	VolumeName string
 
 	// Optional. On Windows, disables the volume prefix mount option. If set to true, the --VolumePrefix
@@ -114,10 +115,6 @@ type MountParams struct {
 	// Optional. The path to the fuse debug log. Only used if DebugFuse is set to true.
 	// Defaults to fuse.log [Windows only]
 	DebugFuseLog string
-
-	// Optional. The path to the icon to display in Finder. If not specified, the default icon
-	// for a network drive is used. [MacOS only]
-	IconPath string
 
 	// DiskCacheEnabled determines whether to use a disk-based cache for file data.
 	// If false, an in-memory cache will be used instead.
@@ -520,8 +517,7 @@ func diskCachePath(params MountParams) (string, error) {
 	}
 
 	// the passed in path is empty, so use the OS-specific cache directory
-	// e.g. /Users/username/Library/Caches on MacOS
-	//      /home/username/.cache on Linux
+	// e.g. /home/username/.cache on Linux
 	//      C:\Users\username\AppData\Local on Windows
 	cacheDir, err := os.UserCacheDir()
 	if err != nil {
@@ -530,7 +526,7 @@ func diskCachePath(params MountParams) (string, error) {
 
 	// use a cache directory specific to this mount point
 	// to avoid conflicts with multiple mounts
-	// e.g. /Users/username/Library/Caches/Files.com/v6/A/cache
+	// e.g. /home/username/.cache/Files.com/v6/files/cache
 	var mountBase string
 	switch runtime.GOOS {
 	case "windows":
@@ -538,7 +534,7 @@ func diskCachePath(params MountParams) (string, error) {
 		// so use the drive letter as the directory name
 		mountBase = params.MountPoint[:1]
 	default:
-		// On MacOS and Linux, the mount point is a path like "/mnt/files/A",
+		// On Linux, the mount point is a path like "/mnt/files",
 		// so use the base name of the path as the directory name
 		mountBase = filepath.Base(params.MountPoint)
 	}

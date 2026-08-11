@@ -1,3 +1,5 @@
+//go:build linux || windows
+
 package fsmount
 
 import (
@@ -101,9 +103,9 @@ func shouldLogMountCallback(op string, errc int, duration time.Duration) bool {
 		return false
 	}
 
-	// macOS Finder and Windows Explorer both probe for optional sidecar and
-	// metadata paths during normal browsing. Fast lookup misses are expected
-	// noise; slow misses still log because they can explain visible stalls.
+	// File browsers probe for optional sidecar and metadata paths during normal
+	// browsing. Fast lookup misses are expected noise; slow misses still log
+	// because they can explain visible stalls.
 	if op == "Getattr" && errc == -fuse.ENOENT {
 		return false
 	}

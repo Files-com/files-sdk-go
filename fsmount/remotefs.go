@@ -1,3 +1,5 @@
+//go:build linux || windows
+
 package fsmount
 
 import (
@@ -888,7 +890,7 @@ func (fs *RemoteFs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int
 	// but the handle is still open, meaning the OS is still using the file. This can happen if there
 	// are multiple simultaneous uploads, but they haven't all received a write request in the last
 	// cacheTTL duration. If the Getattr call returns an error, the OS will remove the file from the
-	// Explorer/Finder window until the upload completes, and a subsequent Getattr call succeeds, which
+	// file browser until the upload completes, and a subsequent Getattr call succeeds, which
 	// is a bad user experience.
 	fs.vfs.handles.ExtendOpenHandleTtls()
 	if node, exists := fs.vfs.fetch(path); exists && !node.infoExpired() {
@@ -2830,7 +2832,7 @@ func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, opErr 
 }
 
 // startWebSyncWatcher starts a periodic watcher that notifies all cached directories
-// to catch changes made via the web interface. This triggers Explorer/Finder to refresh.
+// to catch changes made via the web interface. This triggers Windows Explorer to refresh.
 func (fs *RemoteFs) startWebSyncWatcher(interval time.Duration) {
 	if runtime.GOOS != "windows" {
 		return
@@ -3043,12 +3045,8 @@ func (fs *RemoteFs) Flush(path string, fh uint64) int {
 		return 0
 	}
 
-	// On macOS, close(2) returns after Flush completes — not after Release.
-	// Release runs asynchronously, so finalizing the upload there causes
-	// fuse_do_release to block, which triggers a libfuse-t assertion failure
-	// (open_count > 0) when a second release arrives before the first completes.
-	// Finalizing here ensures Release returns quickly and the upload is committed
-	// before the OS reports the copy as done.
+	// Finalize active write sessions here so Release remains non-blocking and the
+	// upload is committed before the OS reports the copy as complete.
 	if session := node.getWriteSession(); session != nil {
 		if !session.hasHandle(fh) {
 			return 0

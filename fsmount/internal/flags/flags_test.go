@@ -1,3 +1,5 @@
+//go:build linux || windows
+
 package flags_test
 
 import (
@@ -184,11 +186,6 @@ func TestFuseFlags_AsOsFlags(t *testing.T) {
 			name:     "AllFlags",
 			flags:    fuse.O_RDWR | fuse.O_CREAT | fuse.O_EXCL | fuse.O_TRUNC | fuse.O_APPEND,
 			expected: 2 | os.O_CREATE | os.O_EXCL | os.O_TRUNC | os.O_APPEND,
-		},
-		{
-			name:     "EventOnlyIgnored",
-			flags:    flags.O_EVTONLY,
-			expected: 0, // O_EVTONLY ignored, so os.O_RDONLY == 0
 		},
 	}
 	for _, tt := range tests {

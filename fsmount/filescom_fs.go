@@ -1,10 +1,11 @@
+//go:build linux || windows
+
 package fsmount
 
 import (
 	"errors"
 	"fmt"
 	"os"
-	"runtime"
 	"sync"
 	"time"
 
@@ -119,16 +120,8 @@ func (fs *Filescomfs) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 }
 
 func remoteCapacityBytes() uint64 {
-	// the remote capacity is functionally unlimited, so return the largest
-	// value that the OS will accept
-	switch runtime.GOOS {
-	case "darwin":
-		// ~8TB - any larger and the drive shows up as zero capacity on macOS
-		return uint64(1 << 43)
-	default:
-		// ~1PB
-		return uint64(1 << 50)
-	}
+	// The remote capacity is functionally unlimited, so report ~1PB.
+	return uint64(1 << 50)
 }
 
 func (fs *Filescomfs) Mkdir(path string, mode uint32) (errc int) {
