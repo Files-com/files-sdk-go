@@ -357,7 +357,11 @@ func runDownloadFolderItem(ctx context.Context, reportStatus *DownloadStatus) {
 			reportStatus.Job().UpdateStatus(status.Errored, reportStatus, downloadV2Err)
 		}
 	} else {
-		writer := openFile(tmpName, reportStatus, startOffset)
+		writer, err := openFile(tmpName, reportStatus, startOffset)
+		if err != nil {
+			reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
+			return
+		}
 		downloadParts := (&DownloadParts{}).Init(
 			reportStatus.fsFile,
 			remoteStat,
@@ -484,22 +488,22 @@ func completeTmpDownload(reportStatus *DownloadStatus, tmpName string, finalSize
 	return nil
 }
 
-func openFile(partName string, reportStatus *DownloadStatus, startOffset int64) lib.ProgressWriter {
+func openFile(partName string, reportStatus *DownloadStatus, startOffset int64) (lib.ProgressWriter, error) {
 	var out *os.File
-	var createErr error
+	var err error
 	if startOffset > 0 {
-		out, createErr = os.OpenFile(partName, os.O_WRONLY|os.O_CREATE, 0644)
+		out, err = os.OpenFile(partName, os.O_WRONLY|os.O_CREATE, 0644)
 	} else {
-		out, createErr = os.Create(partName)
+		out, err = os.Create(partName)
 	}
-	if createErr != nil {
-		reportStatus.Job().UpdateStatus(status.Errored, reportStatus, createErr)
+	if err != nil {
+		return lib.ProgressWriter{}, err
 	}
 	writer := lib.ProgressWriter{WriterAndAt: out}
 	writer.ProgressWatcher = func(incDownloadedBytes int64) {
 		reportStatus.Job().UpdateStatusWithBytes(status.Downloading, reportStatus, incDownloadedBytes)
 	}
-	return writer
+	return writer, nil
 }
 
 func localPath(file files_sdk.File, job Job) string {

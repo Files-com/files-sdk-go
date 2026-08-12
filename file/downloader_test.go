@@ -1480,6 +1480,18 @@ func TestDownloadPauseResume(t *testing.T) {
 	})
 }
 
+func TestOpenFileReturnsCreateError(t *testing.T) {
+	partName := filepath.Join(t.TempDir(), "missing", "file.download")
+
+	writer, err := openFile(partName, &DownloadStatus{}, 0)
+
+	require.Error(t, err)
+	assert.Nil(t, writer.WriterAndAt)
+	var pathError *fs.PathError
+	require.ErrorAs(t, err, &pathError)
+	assert.Equal(t, "open", pathError.Op)
+}
+
 func createCanonicalTmpFile(t *testing.T, localPath string, size int64) string {
 	t.Helper()
 	tmpPath, err := tmpDownloadPath(localPath, "")
