@@ -131,6 +131,7 @@ type AutomationCreateParams struct {
 	AlwaysOverwriteSizeMatchingFiles *bool                    `url:"always_overwrite_size_matching_files,omitempty" json:"always_overwrite_size_matching_files,omitempty" path:"always_overwrite_size_matching_files"`
 	AlwaysSerializeJobs              *bool                    `url:"always_serialize_jobs,omitempty" json:"always_serialize_jobs,omitempty" path:"always_serialize_jobs"`
 	Description                      string                   `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	Definition                       interface{}              `url:"definition,omitempty" json:"definition,omitempty" path:"definition"`
 	Disabled                         *bool                    `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
 	ExcludePattern                   string                   `url:"exclude_pattern,omitempty" json:"exclude_pattern,omitempty" path:"exclude_pattern"`
 	ImportUrls                       []map[string]interface{} `url:"import_urls,omitempty" json:"import_urls,omitempty" path:"import_urls"`
@@ -182,6 +183,7 @@ type AutomationUpdateParams struct {
 	AlwaysOverwriteSizeMatchingFiles *bool                    `url:"always_overwrite_size_matching_files,omitempty" json:"always_overwrite_size_matching_files,omitempty" path:"always_overwrite_size_matching_files"`
 	AlwaysSerializeJobs              *bool                    `url:"always_serialize_jobs,omitempty" json:"always_serialize_jobs,omitempty" path:"always_serialize_jobs"`
 	Description                      string                   `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	Definition                       interface{}              `url:"definition,omitempty" json:"definition,omitempty" path:"definition"`
 	Disabled                         *bool                    `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
 	ExcludePattern                   string                   `url:"exclude_pattern,omitempty" json:"exclude_pattern,omitempty" path:"exclude_pattern"`
 	ImportUrls                       []map[string]interface{} `url:"import_urls,omitempty" json:"import_urls,omitempty" path:"import_urls"`

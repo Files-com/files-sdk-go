@@ -31,12 +31,14 @@ type HolidayCalendarFindParams struct {
 }
 
 type HolidayCalendarCreateParams struct {
-	Name string `url:"name" json:"name" path:"name"`
+	Definition interface{} `url:"definition" json:"definition" path:"definition"`
+	Name       string      `url:"name" json:"name" path:"name"`
 }
 
 type HolidayCalendarUpdateParams struct {
-	Id   int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	Name string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	Id         int64       `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Definition interface{} `url:"definition,omitempty" json:"definition,omitempty" path:"definition"`
+	Name       string      `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
 type HolidayCalendarDeleteParams struct {
