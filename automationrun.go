@@ -11,6 +11,7 @@ type AutomationRun struct {
 	Id                   int64                     `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	AutomationId         int64                     `json:"automation_id,omitempty" path:"automation_id,omitempty" url:"automation_id,omitempty"`
 	AutomationVersionId  int64                     `json:"automation_version_id,omitempty" path:"automation_version_id,omitempty" url:"automation_version_id,omitempty"`
+	Version              int64                     `json:"version,omitempty" path:"version,omitempty" url:"version,omitempty"`
 	WorkspaceId          int64                     `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	CancelRequestedAt    *time.Time                `json:"cancel_requested_at,omitempty" path:"cancel_requested_at,omitempty" url:"cancel_requested_at,omitempty"`
 	CompletedAt          *time.Time                `json:"completed_at,omitempty" path:"completed_at,omitempty" url:"completed_at,omitempty"`
