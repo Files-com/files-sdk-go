@@ -4080,7 +4080,7 @@ func TestRemoteFsHydrationJoinedToPublicReadDownloadDoesNotCancel(t *testing.T) 
 	}
 }
 
-func TestRemoteFsGetattrKeepsStableMtimeDuringWriteSessionAndPublishesOnFlush(t *testing.T) {
+func TestRemoteFsGetattrPublishesWriteMtimeImmediatelyAndKeepsItStableThroughFlush(t *testing.T) {
 	fs, vfs, cacheStore := newTestRemoteFs(t)
 	defer vfs.destroy()
 
@@ -4128,9 +4128,12 @@ func TestRemoteFsGetattrKeepsStableMtimeDuringWriteSessionAndPublishesOnFlush(t 
 		t.Fatalf("Getattr during write session returned unexpected error: %d", errc)
 	}
 
-	gotSessionMtime := stat.Mtim.Time().Round(0)
-	if !gotSessionMtime.Equal(initialMtime) {
-		t.Fatalf("Getattr mtime during write session = %v, want stable %v", gotSessionMtime, initialMtime)
+	gotSessionMtime := stat.Mtim.Time()
+	if !gotSessionMtime.After(initialMtime) {
+		t.Fatalf("Getattr mtime during write session = %v, want after %v", gotSessionMtime, initialMtime)
+	}
+	if gotSessionMtime.Nanosecond() != 0 {
+		t.Fatalf("Getattr mtime during write session = %v, want whole-second precision", gotSessionMtime)
 	}
 
 	if errc := fs.Flush(path, fh); errc != 0 {
@@ -4140,8 +4143,8 @@ func TestRemoteFsGetattrKeepsStableMtimeDuringWriteSessionAndPublishesOnFlush(t 
 	if uploadedMtime.IsZero() {
 		t.Fatal("expected upload to receive a published mtime")
 	}
-	if !uploadedMtime.After(initialMtime) {
-		t.Fatalf("uploaded mtime = %v, want after %v", uploadedMtime, initialMtime)
+	if !uploadedMtime.Equal(gotSessionMtime) {
+		t.Fatalf("uploaded mtime = %v, want published mtime %v", uploadedMtime, gotSessionMtime)
 	}
 
 	if errc := fs.Getattr(path, &stat, fh); errc != 0 {
@@ -4151,6 +4154,129 @@ func TestRemoteFsGetattrKeepsStableMtimeDuringWriteSessionAndPublishesOnFlush(t 
 	gotFlushedMtime := stat.Mtim.Time()
 	if !gotFlushedMtime.Equal(uploadedMtime) {
 		t.Fatalf("Getattr mtime after flush = %v, want %v", gotFlushedMtime, uploadedMtime)
+	}
+}
+
+func TestRemoteFsWriteSessionMtimeFollowsLastMutation(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	path := "/last-mutation-mtime.txt"
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{nodeType: nodeTypeFile, modTime: time.Now().Add(-time.Hour)})
+
+	var uploadedMtimes []time.Time
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		info, err := reader.Stat()
+		if err != nil {
+			return uploadedFileMetadata{}, err
+		}
+		uploadedMtimes = append(uploadedMtimes, mtime)
+		return testUploadedMetadata(info.Size(), mtime), nil
+	}
+
+	errc, fh := fs.Open(path, fuse.O_RDWR)
+	if errc != 0 {
+		t.Fatalf("Open returned unexpected error: %d", errc)
+	}
+	defer fs.Release(path, fh)
+
+	getMtime := func() time.Time {
+		t.Helper()
+		var stat fuse.Stat_t
+		if errc := fs.Getattr(path, &stat, fh); errc != 0 {
+			t.Fatalf("Getattr returned unexpected error: %d", errc)
+		}
+		return stat.Mtim.Time()
+	}
+	flushAndCheckMtime := func(want time.Time) {
+		t.Helper()
+		uploadCount := len(uploadedMtimes)
+		if errc := fs.Flush(path, fh); errc != 0 {
+			t.Fatalf("Flush returned unexpected error: %d", errc)
+		}
+		if len(uploadedMtimes) != uploadCount+1 {
+			t.Fatalf("Flush produced %d uploads, want 1", len(uploadedMtimes)-uploadCount)
+		}
+		got := uploadedMtimes[uploadCount]
+		if !got.Equal(want) {
+			t.Fatalf("uploaded mtime = %v, want published mtime %v", got, want)
+		}
+	}
+
+	if n := fs.Write(path, []byte("X"), 0, fh); n != 1 {
+		t.Fatalf("first Write returned %d, want 1", n)
+	}
+	explicitMtime := time.Date(2025, 1, 2, 3, 4, 5, 987654321, time.FixedZone("explicit", -5*60*60))
+	tmsp := []fuse.Timespec{fuse.NewTimespec(explicitMtime), fuse.NewTimespec(explicitMtime)}
+	if errc := fs.Utimens(path, tmsp); errc != 0 {
+		t.Fatalf("Utimens returned unexpected error: %d", errc)
+	}
+	wantExplicitMtime := fs.normalizeRemoteMtime(explicitMtime)
+	if got := getMtime(); !got.Equal(wantExplicitMtime) {
+		t.Fatalf("Getattr mtime = %v, want explicit mtime %v", got, wantExplicitMtime)
+	}
+	flushAndCheckMtime(wantExplicitMtime)
+
+	if n := fs.Write(path, []byte("Y"), 1, fh); n != 1 {
+		t.Fatalf("second Write returned %d, want 1", n)
+	}
+	wantWriteMtime := getMtime()
+	if !wantWriteMtime.After(wantExplicitMtime) {
+		t.Fatalf("Getattr mtime = %v, want write time after explicit mtime %v", wantWriteMtime, wantExplicitMtime)
+	}
+	flushAndCheckMtime(wantWriteMtime)
+
+	if errc := fs.Utimens(path, tmsp); errc != 0 {
+		t.Fatalf("second Utimens returned unexpected error: %d", errc)
+	}
+	if errc := fs.Truncate(path, 0, fh); errc != 0 {
+		t.Fatalf("Truncate returned unexpected error: %d", errc)
+	}
+	wantTruncateMtime := getMtime()
+	if !wantTruncateMtime.After(wantExplicitMtime) {
+		t.Fatalf("Getattr mtime = %v, want truncate time after explicit mtime %v", wantTruncateMtime, wantExplicitMtime)
+	}
+	if wantTruncateMtime.Nanosecond() != 0 {
+		t.Fatalf("Getattr mtime = %v, want whole-second precision", wantTruncateMtime)
+	}
+	flushAndCheckMtime(wantTruncateMtime)
+}
+
+func TestRemoteFsRecordWriteSessionMutationKeepsMtimeStableWithinDirtyBatch(t *testing.T) {
+	fs := &RemoteFs{}
+	firstMutation := time.Date(2026, 8, 17, 20, 1, 2, 345678901, time.UTC)
+	secondMutation := firstMutation.Add(10 * time.Second)
+	session := &writeSession{}
+
+	fs.recordWriteSessionMutation(session, firstMutation)
+	wantFirstMtime := firstMutation.Truncate(time.Second)
+	if !session.mtime.Equal(wantFirstMtime) {
+		t.Fatalf("first mutation mtime = %v, want %v", session.mtime, wantFirstMtime)
+	}
+
+	fs.recordWriteSessionMutation(session, secondMutation)
+	if !session.mtime.Equal(wantFirstMtime) {
+		t.Fatalf("second mutation mtime = %v, want stable %v", session.mtime, wantFirstMtime)
+	}
+
+	session.mtime = firstMutation
+	session.mtimeExplicit = true
+	fs.recordWriteSessionMutation(session, secondMutation)
+	wantSecondMtime := secondMutation.Truncate(time.Second)
+	if !session.mtime.Equal(wantSecondMtime) {
+		t.Fatalf("mutation after explicit mtime = %v, want %v", session.mtime, wantSecondMtime)
+	}
+	if session.mtimeExplicit {
+		t.Fatal("content mutation should clear explicit mtime")
+	}
+
+	session.dirty = false
+	thirdMutation := secondMutation.Add(10 * time.Second)
+	fs.recordWriteSessionMutation(session, thirdMutation)
+	wantThirdMtime := thirdMutation.Truncate(time.Second)
+	if !session.mtime.Equal(wantThirdMtime) {
+		t.Fatalf("first mutation in next batch = %v, want %v", session.mtime, wantThirdMtime)
 	}
 }
 

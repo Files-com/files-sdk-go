@@ -127,6 +127,27 @@ type RemoteFs struct {
 	wg            sync.WaitGroup
 }
 
+// The Files.com API returns mtimes at whole-second precision. Publish that same
+// precision locally so a completed upload does not appear to change the file again.
+// Direct provider backends keep their native timestamp precision.
+func (fs *RemoteFs) normalizeRemoteMtime(mtime time.Time) time.Time {
+	if fs.providerBackend != nil {
+		return mtime
+	}
+	return mtime.UTC().Truncate(time.Second)
+}
+
+// recordWriteSessionMutation publishes one automatic mtime per dirty save batch.
+// A later explicit mtime is superseded by the next content mutation.
+// The caller must hold session.mu.
+func (fs *RemoteFs) recordWriteSessionMutation(session *writeSession, mtime time.Time) {
+	if !session.dirty || session.mtimeExplicit {
+		session.mtime = fs.normalizeRemoteMtime(mtime)
+		session.mtimeExplicit = false
+	}
+	session.dirty = true
+}
+
 // cacheStore defines the interface for the file system cache used by RemoteFs and allows for alternative
 // implementations. e.g. an in-memory cache implementation vs a disk-based cache implementation.
 type cacheStore interface {
@@ -707,7 +728,7 @@ func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
 
 func (fs *RemoteFs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 	localPath, remotePath := fs.paths(path)
-	modT := tmsp[1].Time()
+	modT := fs.normalizeRemoteMtime(tmsp[1].Time())
 	fs.log.Debug("RemoteFs: Utimens: Updating mtime for: %v (%v) (mtime=%v)", remotePath, localPath, modT)
 
 	node, errc := fs.fetchNodeWithParentRefresh(path)
@@ -1258,11 +1279,13 @@ func (fs *RemoteFs) writeToWorkingCopy(session *writeSession, buff []byte, ofst 
 		return n, err
 	}
 
-	end := ofst + int64(n)
-	if end > session.currentSize {
-		session.currentSize = end
+	if n > 0 {
+		end := ofst + int64(n)
+		if end > session.currentSize {
+			session.currentSize = end
+		}
+		fs.recordWriteSessionMutation(session, time.Now())
 	}
-	session.dirty = true
 	return n, nil
 }
 
@@ -1280,7 +1303,7 @@ func (fs *RemoteFs) truncateWorkingCopy(session *writeSession, size int64) error
 		return err
 	}
 	session.currentSize = size
-	session.dirty = true
+	fs.recordWriteSessionMutation(session, time.Now())
 	return nil
 }
 
@@ -1450,9 +1473,6 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 
 	session.mu.Lock()
 	mtime := session.mtime
-	if session.dirty && !session.mtimeExplicit {
-		mtime = time.Now()
-	}
 	session.mu.Unlock()
 
 	uploaded, err := fs.uploadWorkingCopyWithSDK(ctx, node, path, reader, mtime, fh)

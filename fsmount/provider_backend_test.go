@@ -14,6 +14,7 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/log"
+	"github.com/winfsp/cgofuse/fuse"
 )
 
 type testProviderBackend struct {
@@ -481,6 +482,67 @@ func TestProviderRemoteBackendUpdateUsesOptionalMtimeBackend(t *testing.T) {
 	}
 	if file.Mtime == nil || !file.Mtime.Equal(modTime) {
 		t.Fatalf("file mtime = %v, want %v", file.Mtime, modTime)
+	}
+}
+
+func TestRemoteFsProviderUtimensPreservesSubsecondPrecision(t *testing.T) {
+	_, vfs, cacheStore := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	path := "/mtime.txt"
+	requestedModTime := time.Date(2026, 6, 5, 9, 30, 0, 987654321, time.UTC)
+	var touchedTime time.Time
+	provider := &testMtimeProviderBackend{
+		testProviderBackend: &testProviderBackend{
+			statFunc: func(_ context.Context, providerPath string) (ProviderEntry, error) {
+				return ProviderEntry{
+					Path:    providerPath,
+					Type:    ProviderTypeFile,
+					Size:    4,
+					ModTime: requestedModTime.Add(-time.Hour),
+				}, nil
+			},
+		},
+		mtimeFunc: func(_ context.Context, providerPath string, providerModTime time.Time) (ProviderEntry, error) {
+			touchedTime = providerModTime
+			return ProviderEntry{
+				Path:    providerPath,
+				Type:    ProviderTypeFile,
+				Size:    4,
+				ModTime: providerModTime,
+			}, nil
+		},
+	}
+	fs, err := newRemoteFs(MountParams{
+		Config:          &files_sdk.Config{},
+		ProviderBackend: provider,
+		TmpFsPath:       t.TempDir(),
+	}, vfs, &log.NoOpLogger{}, cacheStore)
+	if err != nil {
+		t.Fatalf("newRemoteFs failed: %v", err)
+	}
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{
+		nodeType: nodeTypeFile,
+		size:     4,
+		modTime:  requestedModTime.Add(-time.Hour),
+	})
+	node.extendTtl()
+	session := &writeSession{}
+	fs.recordWriteSessionMutation(session, requestedModTime)
+	if !session.mtime.Equal(requestedModTime) {
+		t.Fatalf("provider write-session mtime = %v, want %v", session.mtime, requestedModTime)
+	}
+
+	tmsp := []fuse.Timespec{fuse.NewTimespec(requestedModTime), fuse.NewTimespec(requestedModTime)}
+	if errc := fs.Utimens(path, tmsp); errc != 0 {
+		t.Fatalf("Utimens returned unexpected error: %d", errc)
+	}
+	if !touchedTime.Equal(requestedModTime) {
+		t.Fatalf("provider mtime = %v, want %v", touchedTime, requestedModTime)
+	}
+	if touchedTime.Nanosecond() != requestedModTime.Nanosecond() {
+		t.Fatalf("provider mtime nanoseconds = %d, want %d", touchedTime.Nanosecond(), requestedModTime.Nanosecond())
 	}
 }
 
