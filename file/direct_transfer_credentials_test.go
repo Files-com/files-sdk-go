@@ -9,6 +9,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"encoding/pem"
 	"io"
 	"log"
@@ -26,6 +27,80 @@ import (
 )
 
 const testDirectCredentialServerName = "agent-123.agents.files.internal"
+
+func TestDownloadDirectOnlyResponseSucceeds(t *testing.T) {
+	info := testDirectTransferInfo(t, "/downloads?jwt=direct-token", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("direct"))
+	}))
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		require.NoError(t, json.NewEncoder(w).Encode(files_sdk.File{
+			Path:                 "/download.bin",
+			DirectConnectionInfo: info,
+		}))
+	}))
+	t.Cleanup(api.Close)
+	client := &Client{Config: files_sdk.Config{
+		EndpointOverride: api.URL,
+		Environment:      files_sdk.Development,
+		Logger:           log.New(io.Discard, "", 0),
+	}.Init()}
+	var body bytes.Buffer
+
+	_, err := client.Download(
+		files_sdk.FileDownloadParams{Path: "/download.bin"},
+		files_sdk.ResponseBodyOption(func(responseBody io.ReadCloser) error {
+			defer responseBody.Close()
+			_, copyErr := io.Copy(&body, responseBody)
+			return copyErr
+		}),
+	)
+
+	require.NoError(t, err)
+	require.Equal(t, "direct", body.String())
+}
+
+func TestDownloadDirectOnlyResponsePreservesDirectError(t *testing.T) {
+	info := testDirectTransferInfo(t, "/downloads?jwt=direct-token", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		require.NoError(t, json.NewEncoder(w).Encode(files_sdk.File{
+			Path:                 "/download.bin",
+			DirectConnectionInfo: info,
+		}))
+	}))
+	t.Cleanup(api.Close)
+	client := &Client{Config: files_sdk.Config{
+		EndpointOverride: api.URL,
+		Environment:      files_sdk.Development,
+		Logger:           log.New(io.Discard, "", 0),
+	}.Init()}
+
+	_, err := client.Download(files_sdk.FileDownloadParams{Path: "/download.bin"})
+
+	var directErr *files_sdk.DirectTransferResponseError
+	require.ErrorAs(t, err, &directErr)
+	require.Equal(t, http.StatusServiceUnavailable, directErr.StatusCode)
+	require.NotContains(t, err.Error(), "unsupported protocol scheme")
+}
+
+func TestDownloadRejectsResponseWithoutDownloadTarget(t *testing.T) {
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		require.NoError(t, json.NewEncoder(w).Encode(files_sdk.File{Path: "/download.bin"}))
+	}))
+	t.Cleanup(api.Close)
+	client := &Client{Config: files_sdk.Config{
+		EndpointOverride: api.URL,
+		Logger:           log.New(io.Discard, "", 0),
+	}.Init()}
+
+	_, err := client.Download(files_sdk.FileDownloadParams{Path: "/download.bin"})
+
+	require.EqualError(t, err, "download response did not include a usable download URL")
+}
 
 func TestDownloadDirectTransferDoesNotSendSDKCredentials(t *testing.T) {
 	var gotHeaders http.Header

@@ -169,6 +169,9 @@ func (c *Client) Download(params files_sdk.FileDownloadParams, opts ...files_sdk
 	if directAttemptAllowed && directSuppressor != nil {
 		directAttemptAllowed = directSuppressor.directTransferDownloadAttemptAllowed()
 	}
+	if params.File.DownloadUri == "" && !directAttemptAllowed {
+		return params.File, errors.New("download response did not include a usable download URL")
+	}
 	if directAttemptAllowed {
 		directContext, closeDirectClient := files_sdk.WithDirectTransferClientCache(files_sdk.ContextOption(opts))
 		defer closeDirectClient()
@@ -215,6 +218,9 @@ func (c *Client) Download(params files_sdk.FileDownloadParams, opts ...files_sdk
 		}
 		if directSuppressor != nil {
 			directSuppressor.disableDirectTransferDownload("direct_request_failed", err)
+		}
+		if params.File.DownloadUri == "" {
+			return params.File, err
 		}
 		c.LogPath(params.Path, map[string]interface{}{"message": "direct download failed; falling back to proxy URL", "direction": "download", "reason": "direct_request_failed", "error": uploadRetryLogError(err)})
 	}
