@@ -225,6 +225,41 @@ func TestProxyReaderAtSkipsReadDurationWhenDisabled(t *testing.T) {
 	assert.Equal(t, int64(0), reader.ReadDuration().Nanoseconds())
 }
 
+func TestProxyReadCountsDataReturnedWithEOF(t *testing.T) {
+	var progress int64
+	reader := &ProxyRead{
+		Reader: &dataAndEOFReader{data: []byte("payload")},
+		len:    int64(len("payload")),
+		onRead: func(delta int64) { progress += delta },
+	}
+
+	data, err := io.ReadAll(reader)
+
+	assert.NoError(t, err)
+	assert.Equal(t, "payload", string(data))
+	assert.Equal(t, int64(len(data)), reader.BytesRead())
+	assert.Equal(t, int64(len(data)), progress)
+	assert.False(t, reader.Rewind(), "a consumed streaming reader must not be replayed")
+}
+
+func TestProxyReaderAtCountsDataReturnedWithEOF(t *testing.T) {
+	data := []byte("payload")
+	source := &dataAndEOFReaderAt{Reader: bytes.NewReader(data)}
+	var progress int64
+	reader := &ProxyReaderAt{
+		ReaderAt: source,
+		len:      int64(len(data)),
+		onRead:   func(delta int64) { progress += delta },
+	}
+
+	actual, err := io.ReadAll(reader)
+
+	assert.NoError(t, err)
+	assert.Equal(t, data, actual)
+	assert.Equal(t, int64(len(data)), reader.BytesRead())
+	assert.Equal(t, int64(len(data)), progress)
+}
+
 func TestProxySectionReaderTracksProgressDurationAndRewinds(t *testing.T) {
 	var progress int64
 	reader := newProxySectionReader(delayedReaderAt{reader: bytes.NewReader([]byte("section"))}, 0, 7, func(delta int64) {
@@ -253,6 +288,34 @@ func TestProxySectionReaderTracksProgressDurationAndRewinds(t *testing.T) {
 
 type delayedReaderAt struct {
 	reader *bytes.Reader
+}
+
+type dataAndEOFReader struct {
+	data []byte
+}
+
+func (r *dataAndEOFReader) Read(p []byte) (int, error) {
+	if len(r.data) == 0 {
+		return 0, io.EOF
+	}
+	n := copy(p, r.data)
+	r.data = r.data[n:]
+	if len(r.data) == 0 {
+		return n, io.EOF
+	}
+	return n, nil
+}
+
+type dataAndEOFReaderAt struct {
+	*bytes.Reader
+}
+
+func (r *dataAndEOFReaderAt) ReadAt(p []byte, off int64) (int, error) {
+	n, err := r.Reader.ReadAt(p, off)
+	if n > 0 && off+int64(n) == r.Size() {
+		return n, io.EOF
+	}
+	return n, err
 }
 
 func (r delayedReaderAt) ReadAt(p []byte, off int64) (int, error) {

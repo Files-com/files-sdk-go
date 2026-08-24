@@ -159,15 +159,13 @@ func (x *ProxyReaderAt) Read(p []byte) (int, error) {
 		atomic.AddInt64(&x.readDurationNanos, time.Since(start).Nanoseconds())
 	}
 
-	if err != nil {
-		return n, err
+	if n > 0 {
+		atomic.AddInt64(&x.read, int64(n))
+		if x.onRead != nil {
+			x.onRead(int64(n))
+		}
 	}
-
-	atomic.AddInt64(&x.read, int64(n))
-	if x.onRead != nil {
-		x.onRead(int64(n))
-	}
-	return n, nil
+	return n, err
 }
 
 func (x *ProxySectionReader) Read(p []byte) (int, error) {
@@ -215,13 +213,11 @@ func (x *ProxyRead) Read(p []byte) (int, error) {
 		atomic.AddInt64(&x.readDurationNanos, time.Since(start).Nanoseconds())
 	}
 
-	if err != nil {
-		return n, err
-	}
-
-	atomic.AddInt64(&x.read, int64(n))
-	if x.onRead != nil {
-		x.onRead(int64(n))
+	if n > 0 {
+		atomic.AddInt64(&x.read, int64(n))
+		if x.onRead != nil {
+			x.onRead(int64(n))
+		}
 	}
 
 	return n, err
