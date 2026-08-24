@@ -525,8 +525,25 @@ func TestUploadReader(t *testing.T) {
 		assert.ElementsMatch(t, []string{"/upload/reader-no-size.txt?part_number=1", "/upload/reader-no-size.txt?part_number=2"}, server.TrackRequest["/upload/*path"])
 		assert.Equal(t, "reader-no-size.txt", u.File.Path)
 		assert.Equal(t, int64(5), u.Size)
+		assert.Equal(t, int64(5), u.BytesWritten)
 		assert.Len(t, u.Parts, 0, "individual parts are not retryable with nil size")
 		assert.Equal(t, "reader-no-size.txt", u.FileUploadPart.Path)
+	})
+
+	t.Run("reader returning data with EOF", func(t *testing.T) {
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+		server.MockFiles["reader-data-and-eof.txt"] = mockFile{File: files_sdk.File{Size: 7}}
+		client := server.Client()
+		u, err := client.UploadWithResume(
+			UploadWithReader(&dataAndEOFReader{data: []byte("payload")}),
+			UploadWithSize(7),
+			UploadWithDestinationPath("reader-data-and-eof.txt"),
+			UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+		)
+
+		require.NoError(t, err)
+		assert.Equal(t, int64(7), u.BytesWritten)
 	})
 
 	t.Run("reader with size present", func(t *testing.T) {
@@ -549,6 +566,7 @@ func TestUploadReader(t *testing.T) {
 		assert.ElementsMatch(t, []string{"/upload/reader-size.txt?part_number=1", "/upload/reader-size.txt?part_number=2", "/upload/reader-size.txt?part_number=3"}, server.TrackRequest["/upload/*path"])
 		assert.Equal(t, "reader-size.txt", u.File.Path)
 		assert.Equal(t, int64(10), u.Size)
+		assert.Equal(t, int64(10), u.BytesWritten)
 		assert.Len(t, u.Parts, 0, "individual parts are not retryable with nil size")
 		assert.Equal(t, "reader-size.txt", u.FileUploadPart.Path)
 	})
@@ -849,6 +867,7 @@ func TestUploadReader(t *testing.T) {
 			assert.ElementsMatch(t, []string{"/upload/remote_mount-file?part_number=2", "/" + uploadURLPartNumber("remote_mount-file", 3)}, server.TrackRequest["/upload/*path"], "all parts are uploaded")
 			assert.Equal(t, "remote_mount-file", u.File.Path)
 			assert.Equal(t, int64(10), u.Size)
+			assert.Equal(t, int64(10), u.BytesWritten)
 			assert.Len(t, u.Parts, 3)
 			assert.Equal(t, int64(10), u.Parts.SuccessfulBytes())
 			assert.Equal(t, "remote_mount-file", u.FileUploadPart.Path)

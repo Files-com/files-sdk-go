@@ -709,6 +709,7 @@ func TestUploadV2CancelDuringFinalizeReturnsResumableQuickly(t *testing.T) {
 	require.Len(t, resumable.Parts, 1)
 	assert.True(t, resumable.Parts[0].Successful())
 	assert.Equal(t, "v2-cancel-finalize-ref", resumable.FileUploadPart.Ref)
+	assert.Equal(t, int64(1), resumable.BytesWritten)
 
 	blockFinalize.Store(false)
 	resumable, err = client.UploadWithResume(
@@ -722,6 +723,7 @@ func TestUploadV2CancelDuringFinalizeReturnsResumableQuickly(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), resumable.File.Size)
+	assert.Equal(t, int64(1), resumable.BytesWritten)
 	uploadRequests := server.TrackRequest["/upload/*path"]
 	require.Len(t, uploadRequests, 1)
 	assert.Contains(t, uploadRequests[0], "part_offset=0")
@@ -753,6 +755,7 @@ func TestUploadV2FinalizeNotFoundInvalidatesResumeState(t *testing.T) {
 	assert.True(t, files_sdk.IsNotExist(err), err.Error())
 	assert.Empty(t, resumable.Parts)
 	assert.Empty(t, resumable.FileUploadPart.Ref)
+	assert.Equal(t, int64(1), resumable.BytesWritten)
 }
 
 func TestUploadWithV2FallsBackForNonParallelUpload(t *testing.T) {

@@ -33,6 +33,8 @@ type UploadResumable struct {
 	Parts
 	files_sdk.File
 	TargetClass TransferV2TargetClass
+	// BytesWritten is the successful part-byte total accumulated for the upload.
+	BytesWritten int64
 }
 
 // JobUploadCheckpoint holds folder-level resume state for a paused upload job.
@@ -204,7 +206,7 @@ func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
 
 func (u *uploadIO) UploadResumable() UploadResumable {
 	if u.notResumable.Load() {
-		return UploadResumable{File: u.file}
+		return UploadResumable{File: u.file, BytesWritten: u.bytesWritten}
 	}
 	target := u.uploadV2ResumeTarget
 	if target == "" && u.uploadV2Enabled() {
@@ -215,6 +217,7 @@ func (u *uploadIO) UploadResumable() UploadResumable {
 		FileUploadPart: u.FileUploadPart,
 		File:           u.file,
 		TargetClass:    target,
+		BytesWritten:   u.bytesWritten,
 	}
 }
 
