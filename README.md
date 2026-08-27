@@ -779,6 +779,7 @@ if err != nil {
 | `not-found/site-not-found` | `ErrSiteNotFound` | Site Not Found |
 | `not-found/user-not-found` | `ErrUserNotFound` | User Not Found |
 | `processing-failure` | `ErrProcessingFailure` | Processing Failure |
+| `processing-failure/agent-push-update-blocked` | `ErrAgentPushUpdateBlocked` | Agent Push Update Blocked |
 | `processing-failure/agent-unavailable` | `ErrAgentUnavailable` | Agent Unavailable |
 | `processing-failure/ai-task-cannot-be-run-manually` | `ErrAiTaskCannotBeRunManually` | Ai Task Cannot Be Run Manually |
 | `processing-failure/already-completed` | `ErrAlreadyCompleted` | Already Completed |

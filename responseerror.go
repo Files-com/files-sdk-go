@@ -169,6 +169,7 @@ const (
 	ErrPlanNotFound                                                           ResponseErrorType = "not-found/plan-not-found"
 	ErrSiteNotFound                                                           ResponseErrorType = "not-found/site-not-found"
 	ErrUserNotFound                                                           ResponseErrorType = "not-found/user-not-found"
+	ErrAgentPushUpdateBlocked                                                 ResponseErrorType = "processing-failure/agent-push-update-blocked"
 	ErrAgentUnavailable                                                       ResponseErrorType = "processing-failure/agent-unavailable"
 	ErrAiTaskCannotBeRunManually                                              ResponseErrorType = "processing-failure/ai-task-cannot-be-run-manually"
 	ErrAlreadyCompleted                                                       ResponseErrorType = "processing-failure/already-completed"
