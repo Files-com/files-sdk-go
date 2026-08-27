@@ -7,8 +7,10 @@ import (
 )
 
 type SftpHostKey struct {
+	Active            *bool  `json:"active,omitempty" path:"active,omitempty" url:"active,omitempty"`
 	Id                int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name              string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	KeyType           string `json:"key_type,omitempty" path:"key_type,omitempty" url:"key_type,omitempty"`
 	FingerprintMd5    string `json:"fingerprint_md5,omitempty" path:"fingerprint_md5,omitempty" url:"fingerprint_md5,omitempty"`
 	FingerprintSha256 string `json:"fingerprint_sha256,omitempty" path:"fingerprint_sha256,omitempty" url:"fingerprint_sha256,omitempty"`
 	PrivateKey        string `json:"private_key,omitempty" path:"private_key,omitempty" url:"private_key,omitempty"`
@@ -29,12 +31,14 @@ type SftpHostKeyFindParams struct {
 }
 
 type SftpHostKeyCreateParams struct {
+	Active     *bool  `url:"active,omitempty" json:"active,omitempty" path:"active"`
 	Name       string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	PrivateKey string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 }
 
 type SftpHostKeyUpdateParams struct {
 	Id         int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Active     *bool  `url:"active,omitempty" json:"active,omitempty" path:"active"`
 	Name       string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	PrivateKey string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 }

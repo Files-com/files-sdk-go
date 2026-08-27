@@ -162,6 +162,7 @@ type Site struct {
 	SftpFinalizePartialUploads                         *bool       `json:"sftp_finalize_partial_uploads,omitempty" path:"sftp_finalize_partial_uploads,omitempty" url:"sftp_finalize_partial_uploads,omitempty"`
 	SftpHostKeyType                                    string      `json:"sftp_host_key_type,omitempty" path:"sftp_host_key_type,omitempty" url:"sftp_host_key_type,omitempty"`
 	ActiveSftpHostKeyId                                int64       `json:"active_sftp_host_key_id,omitempty" path:"active_sftp_host_key_id,omitempty" url:"active_sftp_host_key_id,omitempty"`
+	ActiveSftpHostKeyIds                               []int64     `json:"active_sftp_host_key_ids,omitempty" path:"active_sftp_host_key_ids,omitempty" url:"active_sftp_host_key_ids,omitempty"`
 	SftpInsecureCiphers                                *bool       `json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers,omitempty" url:"sftp_insecure_ciphers,omitempty"`
 	SftpInsecureDiffieHellman                          *bool       `json:"sftp_insecure_diffie_hellman,omitempty" path:"sftp_insecure_diffie_hellman,omitempty" url:"sftp_insecure_diffie_hellman,omitempty"`
 	SftpUserRootEnabled                                *bool       `json:"sftp_user_root_enabled,omitempty" path:"sftp_user_root_enabled,omitempty" url:"sftp_user_root_enabled,omitempty"`
@@ -323,6 +324,7 @@ type SiteUpdateParams struct {
 	ShowUserNotificationsLogInLink                     *bool       `url:"show_user_notifications_log_in_link,omitempty" json:"show_user_notifications_log_in_link,omitempty" path:"show_user_notifications_log_in_link"`
 	SftpHostKeyType                                    string      `url:"sftp_host_key_type,omitempty" json:"sftp_host_key_type,omitempty" path:"sftp_host_key_type"`
 	ActiveSftpHostKeyId                                int64       `url:"active_sftp_host_key_id,omitempty" json:"active_sftp_host_key_id,omitempty" path:"active_sftp_host_key_id"`
+	ActiveSftpHostKeyIds                               []int64     `url:"active_sftp_host_key_ids,omitempty" json:"active_sftp_host_key_ids,omitempty" path:"active_sftp_host_key_ids"`
 	ProtocolAccessGroupsOnly                           *bool       `url:"protocol_access_groups_only,omitempty" json:"protocol_access_groups_only,omitempty" path:"protocol_access_groups_only"`
 	RevokeBundleAccessOnDisableOrDelete                *bool       `url:"revoke_bundle_access_on_disable_or_delete,omitempty" json:"revoke_bundle_access_on_disable_or_delete,omitempty" path:"revoke_bundle_access_on_disable_or_delete"`
 	BundleWatermarkValue                               interface{} `url:"bundle_watermark_value,omitempty" json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value"`
