@@ -9,6 +9,7 @@ import (
 type PartnerChannel struct {
 	Id                             int64    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId                    int64    `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	Direction                      string   `json:"direction,omitempty" path:"direction,omitempty" url:"direction,omitempty"`
 	PartnerId                      int64    `json:"partner_id,omitempty" path:"partner_id,omitempty" url:"partner_id,omitempty"`
 	PartnerChannelTemplateId       int64    `json:"partner_channel_template_id,omitempty" path:"partner_channel_template_id,omitempty" url:"partner_channel_template_id,omitempty"`
 	Path                           string   `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
@@ -31,6 +32,20 @@ func (p PartnerChannel) Identifier() interface{} {
 
 type PartnerChannelCollection []PartnerChannel
 
+type PartnerChannelDirectionEnum string
+
+func (u PartnerChannelDirectionEnum) String() string {
+	return string(u)
+}
+
+func (u PartnerChannelDirectionEnum) Enum() map[string]PartnerChannelDirectionEnum {
+	return map[string]PartnerChannelDirectionEnum{
+		"two_way":      PartnerChannelDirectionEnum("two_way"),
+		"to_partner":   PartnerChannelDirectionEnum("to_partner"),
+		"from_partner": PartnerChannelDirectionEnum("from_partner"),
+	}
+}
+
 type PartnerChannelListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -42,26 +57,28 @@ type PartnerChannelFindParams struct {
 }
 
 type PartnerChannelCreateParams struct {
-	FromPartnerFolderName         string   `url:"from_partner_folder_name,omitempty" json:"from_partner_folder_name,omitempty" path:"from_partner_folder_name"`
-	FromPartnerManagedFolderPaths []string `url:"from_partner_managed_folder_paths,omitempty" json:"from_partner_managed_folder_paths,omitempty" path:"from_partner_managed_folder_paths"`
-	FromPartnerRoutePath          string   `url:"from_partner_route_path,omitempty" json:"from_partner_route_path,omitempty" path:"from_partner_route_path"`
-	ToPartnerFolderName           string   `url:"to_partner_folder_name,omitempty" json:"to_partner_folder_name,omitempty" path:"to_partner_folder_name"`
-	ToPartnerManagedFolderPaths   []string `url:"to_partner_managed_folder_paths,omitempty" json:"to_partner_managed_folder_paths,omitempty" path:"to_partner_managed_folder_paths"`
-	ToPartnerRoutePath            string   `url:"to_partner_route_path,omitempty" json:"to_partner_route_path,omitempty" path:"to_partner_route_path"`
-	PartnerId                     int64    `url:"partner_id" json:"partner_id" path:"partner_id"`
-	Path                          string   `url:"path" json:"path" path:"path"`
-	WorkspaceId                   int64    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
+	Direction                     PartnerChannelDirectionEnum `url:"direction,omitempty" json:"direction,omitempty" path:"direction"`
+	FromPartnerFolderName         string                      `url:"from_partner_folder_name,omitempty" json:"from_partner_folder_name,omitempty" path:"from_partner_folder_name"`
+	FromPartnerManagedFolderPaths []string                    `url:"from_partner_managed_folder_paths,omitempty" json:"from_partner_managed_folder_paths,omitempty" path:"from_partner_managed_folder_paths"`
+	FromPartnerRoutePath          string                      `url:"from_partner_route_path,omitempty" json:"from_partner_route_path,omitempty" path:"from_partner_route_path"`
+	ToPartnerFolderName           string                      `url:"to_partner_folder_name,omitempty" json:"to_partner_folder_name,omitempty" path:"to_partner_folder_name"`
+	ToPartnerManagedFolderPaths   []string                    `url:"to_partner_managed_folder_paths,omitempty" json:"to_partner_managed_folder_paths,omitempty" path:"to_partner_managed_folder_paths"`
+	ToPartnerRoutePath            string                      `url:"to_partner_route_path,omitempty" json:"to_partner_route_path,omitempty" path:"to_partner_route_path"`
+	PartnerId                     int64                       `url:"partner_id" json:"partner_id" path:"partner_id"`
+	Path                          string                      `url:"path" json:"path" path:"path"`
+	WorkspaceId                   int64                       `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 type PartnerChannelUpdateParams struct {
-	Id                            int64    `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	FromPartnerFolderName         string   `url:"from_partner_folder_name,omitempty" json:"from_partner_folder_name,omitempty" path:"from_partner_folder_name"`
-	FromPartnerManagedFolderPaths []string `url:"from_partner_managed_folder_paths,omitempty" json:"from_partner_managed_folder_paths,omitempty" path:"from_partner_managed_folder_paths"`
-	FromPartnerRoutePath          string   `url:"from_partner_route_path,omitempty" json:"from_partner_route_path,omitempty" path:"from_partner_route_path"`
-	ToPartnerFolderName           string   `url:"to_partner_folder_name,omitempty" json:"to_partner_folder_name,omitempty" path:"to_partner_folder_name"`
-	ToPartnerManagedFolderPaths   []string `url:"to_partner_managed_folder_paths,omitempty" json:"to_partner_managed_folder_paths,omitempty" path:"to_partner_managed_folder_paths"`
-	ToPartnerRoutePath            string   `url:"to_partner_route_path,omitempty" json:"to_partner_route_path,omitempty" path:"to_partner_route_path"`
-	Path                          string   `url:"path,omitempty" json:"path,omitempty" path:"path"`
+	Id                            int64                       `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Direction                     PartnerChannelDirectionEnum `url:"direction,omitempty" json:"direction,omitempty" path:"direction"`
+	FromPartnerFolderName         string                      `url:"from_partner_folder_name,omitempty" json:"from_partner_folder_name,omitempty" path:"from_partner_folder_name"`
+	FromPartnerManagedFolderPaths []string                    `url:"from_partner_managed_folder_paths,omitempty" json:"from_partner_managed_folder_paths,omitempty" path:"from_partner_managed_folder_paths"`
+	FromPartnerRoutePath          string                      `url:"from_partner_route_path,omitempty" json:"from_partner_route_path,omitempty" path:"from_partner_route_path"`
+	ToPartnerFolderName           string                      `url:"to_partner_folder_name,omitempty" json:"to_partner_folder_name,omitempty" path:"to_partner_folder_name"`
+	ToPartnerManagedFolderPaths   []string                    `url:"to_partner_managed_folder_paths,omitempty" json:"to_partner_managed_folder_paths,omitempty" path:"to_partner_managed_folder_paths"`
+	ToPartnerRoutePath            string                      `url:"to_partner_route_path,omitempty" json:"to_partner_route_path,omitempty" path:"to_partner_route_path"`
+	Path                          string                      `url:"path,omitempty" json:"path,omitempty" path:"path"`
 }
 
 type PartnerChannelDeleteParams struct {
