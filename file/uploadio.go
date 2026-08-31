@@ -150,6 +150,10 @@ func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
 	}
 	var err error
 	if u.FileUploadPart.Ref != "" {
+		expiresAt := u.FileUploadPart.ExpiresTime()
+		if len(u.Parts) == 0 && u.FileUploadPart.UploadUri != "" && !expiresAt.IsZero() && time.Now().After(expiresAt) {
+			u.FileUploadPart.UploadUri = ""
+		}
 		// Propagate session info to non-successful restored parts so uploadPart()
 		// can request fresh upload URLs using the existing Ref (without starting a new session).
 		for _, p := range u.Parts {

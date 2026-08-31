@@ -34,6 +34,33 @@ type MockUploader struct {
 	uploadError error
 }
 
+func TestUploadV1RefreshesExpiredFirstPartURL(t *testing.T) {
+	server := (&MockAPIServer{T: t}).Do()
+	defer server.Shutdown()
+	server.MockFiles["v1-expired-first-part.txt"] = mockFile{File: files_sdk.File{Size: 1}}
+
+	client := server.Client()
+	_, err := client.UploadWithResume(
+		UploadWithReaderAt(bytes.NewReader([]byte("a"))),
+		UploadWithDestinationPath("v1-expired-first-part.txt"),
+		UploadWithSize(1),
+		UploadWithResume(UploadResumable{FileUploadPart: files_sdk.FileUploadPart{
+			HttpMethod:    "POST",
+			Path:          "v1-expired-first-part.txt",
+			Ref:           "put-expired-first-part",
+			ParallelParts: lib.Bool(true),
+			PartNumber:    1,
+			UploadUri:     server.Server.URL + "/expired-upload",
+			Expires:       time.Now().Add(-time.Hour).Format(time.RFC3339),
+		}}),
+		UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+	)
+
+	require.NoError(t, err)
+	assert.Len(t, server.TrackRequest["/api/rest/v1/file_actions/begin_upload/*path"], 1)
+	assert.Empty(t, server.TrackRequest["/expired-upload"])
+}
+
 func (m *MockUploader) UploadWithResume(...UploadOption) (UploadResumable, error) {
 	return UploadResumable{}, m.uploadError
 }
