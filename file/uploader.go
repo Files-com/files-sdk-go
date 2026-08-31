@@ -59,6 +59,7 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams, opts
 			job:             job,
 			status:          status.Errored,
 			localPath:       params.LocalPath,
+			remotePath:      params.RemotePath,
 			Sync:            params.Sync,
 			NoOverwrite:     params.NoOverwrite,
 			Uploader:        c,
@@ -127,7 +128,6 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams, opts
 				statusFile.error = err
 				job.Add(&statusFile)
 			} else {
-				statusFile.remotePath = params.RemotePath
 				statusFile.file = files_sdk.File{
 					DisplayName: filepath.Base(path),
 					Type:        "file",

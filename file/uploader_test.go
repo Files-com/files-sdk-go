@@ -1335,6 +1335,7 @@ func TestUploadPauseResume(t *testing.T) {
 
 		require.Len(t, job.Statuses, 1)
 		assert.Equal(t, status.Errored, job.Statuses[0].Status())
+		assert.Equal(t, "missing.txt", job.Statuses[0].RemotePath())
 
 		mu.Lock()
 		assert.Equal(t, 1, reporterCalls)
