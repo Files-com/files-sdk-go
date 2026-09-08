@@ -15,6 +15,7 @@ type EventSubscription struct {
 	Name                 string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Subject              string      `json:"subject,omitempty" path:"subject,omitempty" url:"subject,omitempty"`
 	Message              string      `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
+	MessageOnly          *bool       `json:"message_only,omitempty" path:"message_only,omitempty" url:"message_only,omitempty"`
 	Enabled              *bool       `json:"enabled,omitempty" path:"enabled,omitempty" url:"enabled,omitempty"`
 	EventTypes           []string    `json:"event_types,omitempty" path:"event_types,omitempty" url:"event_types,omitempty"`
 	Filter               interface{} `json:"filter,omitempty" path:"filter,omitempty" url:"filter,omitempty"`
@@ -47,6 +48,7 @@ type EventSubscriptionCreateParams struct {
 	Name                 string      `url:"name" json:"name" path:"name"`
 	Subject              string      `url:"subject,omitempty" json:"subject,omitempty" path:"subject"`
 	Message              string      `url:"message,omitempty" json:"message,omitempty" path:"message"`
+	MessageOnly          *bool       `url:"message_only,omitempty" json:"message_only,omitempty" path:"message_only"`
 	Enabled              *bool       `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
 	EventTypes           []string    `url:"event_types,omitempty" json:"event_types,omitempty" path:"event_types"`
 	Filter               interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -62,6 +64,7 @@ type EventSubscriptionUpdateParams struct {
 	Name                 string      `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	Subject              string      `url:"subject,omitempty" json:"subject,omitempty" path:"subject"`
 	Message              string      `url:"message,omitempty" json:"message,omitempty" path:"message"`
+	MessageOnly          *bool       `url:"message_only,omitempty" json:"message_only,omitempty" path:"message_only"`
 	Enabled              *bool       `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
 	EventTypes           []string    `url:"event_types,omitempty" json:"event_types,omitempty" path:"event_types"`
 	Filter               interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
