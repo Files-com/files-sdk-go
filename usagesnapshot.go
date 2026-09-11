@@ -12,6 +12,7 @@ type UsageSnapshot struct {
 	StartAt                      *time.Time           `json:"start_at,omitempty" path:"start_at,omitempty" url:"start_at,omitempty"`
 	EndAt                        *time.Time           `json:"end_at,omitempty" path:"end_at,omitempty" url:"end_at,omitempty"`
 	HighWaterUserCount           int64                `json:"high_water_user_count,omitempty" path:"high_water_user_count,omitempty" url:"high_water_user_count,omitempty"`
+	TransformationCreditsUsage   int64                `json:"transformation_credits_usage,omitempty" path:"transformation_credits_usage,omitempty" url:"transformation_credits_usage,omitempty"`
 	CurrentStorage               int64                `json:"current_storage,omitempty" path:"current_storage,omitempty" url:"current_storage,omitempty"`
 	HighWaterStorage             int64                `json:"high_water_storage,omitempty" path:"high_water_storage,omitempty" url:"high_water_storage,omitempty"`
 	RootStorage                  int64                `json:"root_storage,omitempty" path:"root_storage,omitempty" url:"root_storage,omitempty"`
