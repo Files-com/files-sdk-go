@@ -183,6 +183,11 @@ func (f *File) Read(b []byte) (n int, err error) {
 
 		if err != nil {
 			readCloser = nil
+		}
+		if err != nil && !downloadSourceChanged(err) {
+			// The download request status explains most failures; after a source
+			// change the typed error is the contract and the old URL's status is
+			// no longer authoritative.
 			status, statusErr := (&Client{Config: f.Config}).DownloadRequestStatus(f.File.DownloadUri, f.downloadRequestId, files_sdk.WithContext(f.Context))
 			if statusErr != nil {
 				err = statusErr
@@ -202,18 +207,9 @@ func (f *File) Read(b []byte) (n int, err error) {
 }
 
 func parseSize(response *http.Response) (size int64, sizeTrust SizeTrust) {
-	var err error
-
 	if response.StatusCode == http.StatusPartialContent {
-		if contentRange := response.Header.Get("Content-Range"); contentRange != "" {
-			rangeParts := strings.SplitN(contentRange, "/", 2)
-			if len(rangeParts) == 2 {
-				size, err = strconv.ParseInt(rangeParts[1], 10, 64)
-				if err == nil {
-					sizeTrust = TrustedSizeValue
-					return
-				}
-			}
+		if contentRange, ok := parseContentRange(response.Header.Get("Content-Range")); ok && contentRange.totalKnown {
+			return contentRange.total, TrustedSizeValue
 		}
 	} else if response.ContentLength > -1 {
 		sizeTrust = TrustedSizeValue
@@ -235,21 +231,30 @@ func parseMaxConnections(response *http.Response) int {
 }
 
 func (f *File) readCloserInit() (readCloser io.ReadCloser, err error) {
-	*f.File, err = (&Client{Config: f.Config}).Download(
+	var size int64
+	var sizeTrust SizeTrust
+	var fileInfo files_sdk.File
+	fileInfo, err = (&Client{Config: f.Config}).Download(
 		files_sdk.FileDownloadParams{File: *f.File},
 		files_sdk.WithContext(f.Context),
 		files_sdk.ResponseOption(func(response *http.Response) error {
 			f.MaxConnections = parseMaxConnections(response)
 			f.downloadRequestId = response.Header.Get("X-Files-Download-Request-Id")
-			f.Size, f.SizeTrust = parseSize(response)
 			if err := lib.ResponseErrors(response, files_sdk.APIError(), lib.NotStatus(http.StatusOK)); err != nil {
 				return &goFs.PathError{Path: f.File.Path, Err: err, Op: "read"}
 			}
-
+			size, sizeTrust = parseSize(response)
 			readCloser = &ReadWrapper{ReadCloser: response.Body}
 			return nil
 		}),
 	)
+	// Download may refresh the download URL from the API, whose metadata can
+	// report a stale size. The size the transfer response reports is the one the
+	// downloaded bytes are validated against, so it must win.
+	*f.File = fileInfo
+	if readCloser != nil {
+		f.Size, f.SizeTrust = size, sizeTrust
+	}
 	return readCloser, err
 }
 
@@ -288,10 +293,10 @@ func (f *File) ReaderRange(off int64, end int64) (r io.ReadCloser, err error) {
 			f.downloadRequestId = response.Header.Get("X-Files-Download-Request-Id")
 			rangerReaderCloser.file.downloadRequestId = response.Header.Get("X-Files-Download-Request-Id")
 			f.MaxConnections = parseMaxConnections(response)
-			f.Size, f.SizeTrust = parseSize(response)
 			if err := lib.ResponseErrors(response, lib.IsStatus(http.StatusForbidden), files_sdk.APIError(), lib.NotStatus(http.StatusPartialContent)); err != nil {
 				return &goFs.PathError{Path: f.File.Path, Err: err, Op: "ReaderRange"}
 			}
+			f.Size, f.SizeTrust = parseSize(response)
 			rangerReaderCloser.ReadCloser = &ReadWrapper{ReadCloser: response.Body}
 			return nil
 		}),
@@ -513,6 +518,20 @@ func (f *File) Close() error {
 	default:
 		return ReaderCloserDownloadStatus{ReadWrapper: &ReadWrapper{ReadCloser: t}, file: f}.Close()
 	}
+}
+
+// restartDownload discards the current download lifecycle: the URL, its
+// request status and any size learned from its responses. The next read obtains
+// a fresh download request, which is required after download_source_changed
+// because every range of the old URL is rejected.
+func (f *File) restartDownload() {
+	f.fileMutex.Lock()
+	defer f.fileMutex.Unlock()
+	f.File.DownloadUri = ""
+	f.downloadRequestId = ""
+	f.serverBytesSent = 0
+	f.SizeTrust = NullSizeTrust
+	f.ReadCloser.Store(nil)
 }
 
 func (f *File) WithContext(ctx context.Context) goFs.File {

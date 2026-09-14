@@ -44,12 +44,14 @@ func (d *DownloadStatus) StartedAt() time.Time {
 }
 
 func (d *DownloadStatus) Size() (size int64) {
+	d.Mutex.RLock()
+	defer d.Mutex.RUnlock()
 	if d.FileInfo != nil {
 		size = d.FileInfo.Size()
 	}
 
 	if size <= 0 {
-		size = d.File().Size
+		size = d.file.Size
 	}
 
 	return
@@ -149,9 +151,13 @@ func (d *DownloadStatus) Job() *Job {
 	return d.job
 }
 
+// SetFinalSize records the completed output size. The listing metadata the
+// status was indexed from can be stale, so the completed output defines the
+// size from here on, including a completed empty file.
 func (d *DownloadStatus) SetFinalSize(written int64) {
 	d.Mutex.Lock()
+	defer d.Mutex.Unlock()
 	d.DownloadedBytes = written
 	d.file.Size = written
-	d.Mutex.Unlock()
+	d.FileInfo = Info{File: d.file, sizeTrust: TrustedSizeValue}
 }

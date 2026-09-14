@@ -107,7 +107,11 @@ func (d *DownloadParts) waitForParts() error {
 	for i := range d.parts {
 		part := <-d.finishedParts
 		if part.Err() != nil && !errors.Is(part.Err(), context.Canceled) {
-			err = part.Err()
+			// A source change rejects the whole download request; keep it as the
+			// reported error so the file restarts from a new request.
+			if err == nil || !downloadSourceChanged(err) {
+				err = part.Err()
+			}
 		}
 		atomic.AddUint32(&d.partsCompleted, 1)
 		d.Config.LogPath(
@@ -365,6 +369,17 @@ func (d *DownloadParts) requeueOnError(part *Part, err error, UnexpectedEOF bool
 			progressWriter, ok := d.WriterAndAt.(lib.ProgressWriter)
 			if ok {
 				progressWriter.ProgressWatcher(-part.bytes)
+			}
+			if downloadSourceChanged(err) {
+				// Every range of this download request is rejected now; stop the
+				// attempt instead of retrying ranges against it.
+				d.Config.LogPath(
+					d.path,
+					map[string]interface{}{"message": "download source changed; abandoning download request", "error": part.Err(), "part": part.number},
+				)
+				d.CancelFunc()
+				d.finishedParts <- part.Done()
+				return true
 			}
 			d.queue <- part.Done() // either timeout or stream error try part again.
 			return true

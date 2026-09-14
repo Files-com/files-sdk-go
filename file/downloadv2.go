@@ -55,15 +55,53 @@ type downloadV2Engine struct {
 	file         *os.File
 	manager      *lib.AdaptiveConcurrencyManager
 	target       TransferV2TargetClass
-	totalSize    int64
 	startOffset  int64
 	partSize     int64
-	parts        []downloadV2Part
+	// planReady is closed once the first range response has established the
+	// transfer size and the remaining ranges have been planned from it.
+	planReady chan struct{}
 
-	mu                     sync.Mutex
+	mu sync.Mutex
+	// totalSize starts as the listing/download-request metadata size, which can
+	// be stale, and becomes the transfer size reported by the first range
+	// response. Every later response must agree with it.
+	totalSize              int64
+	transferSizeKnown      bool
+	parts                  []downloadV2Part
 	completed              map[int64]int64
 	contiguous             int64
 	directTransferDisabled bool
+}
+
+// downloadV2Range describes the bytes a range response covers and the transfer
+// size it reports.
+type downloadV2Range struct {
+	off, end int64
+	total    int64
+	trust    SizeTrust
+}
+
+// downloadV2TerminalError marks a part failure that retrying the same range
+// cannot fix: the response contradicted the plan, the transfer size could not
+// be trusted, or the output file could not be prepared.
+type downloadV2TerminalError struct{ err error }
+
+func (e downloadV2TerminalError) Error() string { return e.err.Error() }
+func (e downloadV2TerminalError) Unwrap() error { return e.err }
+
+var (
+	errDownloadV2UntrustedTransferSize = errors.New("download v2 range response did not report a trusted transfer size")
+	errDownloadSizeConflict            = errors.New("download size conflict")
+)
+
+// downloadV2TerminalPartError reports errors that must fail the attempt instead
+// of being retried per range: a rejected download request (source changed), an
+// unsatisfiable range, or a response that contradicts the plan.
+func downloadV2TerminalPartError(err error) bool {
+	var terminal downloadV2TerminalError
+	return errors.As(err, &terminal) ||
+		downloadSourceChanged(err) ||
+		downloadV2StatusCode(err) == http.StatusRequestedRangeNotSatisfiable
 }
 
 type downloadV2AdaptiveManagerCacheKey struct {
@@ -91,31 +129,71 @@ var (
 	downloadV2SharedAdaptiveManagers downloadV2SharedAdaptiveManagerRegistry
 )
 
-func runDownloadV2IfSupported(ctx context.Context, reportStatus *DownloadStatus, remoteStat goFs.FileInfo, tmpName string, startOffset int64) (bool, int64, error) {
+// runDownloadV2IfSupported runs the adaptive engine when the file qualifies.
+// When it declines (used is false) planStat is the FileInfo the fallback engine
+// must plan from: the metadata stat, or an empty plan when the first range
+// response showed the metadata size cannot be right.
+func runDownloadV2IfSupported(ctx context.Context, reportStatus *DownloadStatus, remoteStat goFs.FileInfo, tmpName string, startOffset int64) (used bool, finalSize int64, planStat goFs.FileInfo, err error) {
 	params, _ := reportStatus.Job().Params.(DownloaderParams)
 	if !params.AdaptiveConcurrency {
-		return false, 0, nil
+		return false, 0, remoteStat, nil
 	}
 	if params.AdaptiveDownloadV2TuningSet {
 		if err := params.AdaptiveDownloadV2Tuning.validate(); err != nil {
-			return true, 0, err
+			return true, 0, remoteStat, err
 		}
 	}
 	target, totalSize, partSize, ok := downloadV2PlanIfSupported(ctx, reportStatus, remoteStat, startOffset)
 	if !ok {
-		return false, 0, nil
+		return false, 0, remoteStat, nil
 	}
 
 	file, err := os.OpenFile(tmpName, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
-		return true, 0, err
+		return true, 0, remoteStat, err
 	}
 	ranger := reportStatus.fsFile.(ReaderRange)
 	engine := newDownloadV2Engine(reportStatus, ranger, file, target, totalSize, startOffset, partSize, params)
-	if err := engine.Run(ctx); err != nil {
-		return true, engine.ContiguousSize(), err
+	err = engine.Run(ctx)
+	if err != nil && engine.ContiguousSize() == startOffset {
+		// Nothing was written, so the fallback engine can take over cleanly.
+		switch {
+		case errors.Is(err, errDownloadV2UntrustedTransferSize):
+			// The transfer does not report its size, so range responses cannot
+			// validate the plan; the fallback engine verifies unknown-size
+			// downloads through the download request status.
+			reportStatus.Job().Config.LogPath(reportStatus.RemotePath(), map[string]interface{}{
+				"message": "download v2 transfer size untrusted; using fallback download",
+				"error":   err,
+			})
+			return false, 0, remoteStat, nil
+		case startOffset == 0 && downloadV2StatusCode(err) == http.StatusRequestedRangeNotSatisfiable:
+			// No byte exists at offset 0, so the transfer is probably empty
+			// despite the metadata size. A full download confirms that against
+			// its Content-Length instead of trusting the 416.
+			reportStatus.Job().Config.LogPath(reportStatus.RemotePath(), map[string]interface{}{
+				"message": "download v2 first range unsatisfiable; confirming transfer size with fallback download",
+				"error":   err,
+			})
+			return false, 0, downloadV2EmptyPlanStat(remoteStat), nil
+		}
 	}
-	return true, engine.FinalSize(), nil
+	if err != nil {
+		return true, engine.ContiguousSize(), remoteStat, err
+	}
+	return true, engine.FinalSize(), remoteStat, nil
+}
+
+// downloadV2EmptyPlanStat plans the fallback as an empty file so it runs as one
+// full download, which validates the body against Content-Length whatever size
+// the transfer turns out to have.
+func downloadV2EmptyPlanStat(remoteStat goFs.FileInfo) goFs.FileInfo {
+	file, _ := remoteStat.Sys().(files_sdk.File)
+	if file.DisplayName == "" {
+		file.DisplayName = remoteStat.Name()
+	}
+	file.Size = 0
+	return Info{File: file, sizeTrust: NullSizeTrust}
 }
 
 func downloadV2PlanIfSupported(ctx context.Context, reportStatus *DownloadStatus, remoteStat goFs.FileInfo, startOffset int64) (TransferV2TargetClass, int64, int64, bool) {
@@ -230,6 +308,7 @@ func newDownloadV2Engine(reportStatus *DownloadStatus, ranger ReaderRange, file 
 		totalSize:    totalSize,
 		startOffset:  startOffset,
 		partSize:     partSize,
+		planReady:    make(chan struct{}),
 		parts:        downloadV2BuildParts(startOffset, totalSize, partSize),
 		completed:    make(map[int64]int64),
 		contiguous:   startOffset,
@@ -247,12 +326,9 @@ func (e *downloadV2Engine) Run(parentCtx context.Context) (err error) {
 		}
 	}()
 
-	if err = downloadV2PreallocateFile(e.file, e.totalSize); err != nil {
-		return err
-	}
 	e.logStart()
-	if e.totalSize == 0 || e.startOffset == e.totalSize {
-		return nil
+	if len(e.parts) == 0 {
+		return downloadV2PreallocateFile(e.file, e.totalSize)
 	}
 
 	ctx, cancel := context.WithCancel(parentCtx)
@@ -269,8 +345,9 @@ func (e *downloadV2Engine) Run(parentCtx context.Context) (err error) {
 			close(results)
 		}()
 		started := false
-		for _, part := range e.parts {
-			if ctx.Err() != nil {
+		for i := 0; ; i++ {
+			part, ok := e.part(i)
+			if !ok || ctx.Err() != nil {
 				return
 			}
 			if !e.manager.WaitWithContext(ctx) {
@@ -287,13 +364,20 @@ func (e *downloadV2Engine) Run(parentCtx context.Context) (err error) {
 				e.manager.DoneWithSample(result.sample())
 				results <- result
 			}(part)
+			// The first range response establishes the transfer size; the
+			// remaining ranges are planned from it, not from listing metadata.
+			if i == 0 && !e.waitForPlan(ctx) {
+				return
+			}
 		}
 	}()
 
 	for result := range results {
 		if result.err != nil {
 			cancel()
-			if err == nil {
+			// A source change rejects the whole download request; report it over
+			// the cancellation errors of the other ranges.
+			if err == nil || (downloadSourceChanged(result.err) && !downloadSourceChanged(err)) {
 				err = result.err
 			}
 			continue
@@ -306,15 +390,78 @@ func (e *downloadV2Engine) Run(parentCtx context.Context) (err error) {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
-	if e.ContiguousSize() != e.totalSize {
-		return fmt.Errorf("download v2 wrote non-contiguous file. expected: %v, actual: %v", e.totalSize, e.ContiguousSize())
+	if e.ContiguousSize() != e.FinalSize() {
+		return fmt.Errorf("download v2 wrote non-contiguous file. expected: %v, actual: %v", e.FinalSize(), e.ContiguousSize())
 	}
 	e.logFinish()
 	return nil
 }
 
+// FinalSize is the transfer size: the size reported by the range responses once
+// the first one has been accepted, otherwise the planned metadata size.
 func (e *downloadV2Engine) FinalSize() int64 {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	return e.totalSize
+}
+
+func (e *downloadV2Engine) part(i int) (downloadV2Part, bool) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	if i < len(e.parts) {
+		return e.parts[i], true
+	}
+	return downloadV2Part{}, false
+}
+
+func (e *downloadV2Engine) waitForPlan(ctx context.Context) bool {
+	select {
+	case <-e.planReady:
+		return true
+	case <-ctx.Done():
+		return false
+	}
+}
+
+// acceptRange validates a range response against the plan and returns the
+// number of bytes the part must copy. The first accepted response establishes
+// the transfer size, because the metadata the plan came from can be stale,
+// re-plans the remaining ranges from it and preallocates the output; later
+// ranges are only admitted once planReady closes, so nothing is written before
+// that. Every later response must report the same size and cover exactly the
+// requested range.
+func (e *downloadV2Engine) acceptRange(part downloadV2Part, response downloadV2Range) (int64, error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	conflict := func(format string, args ...any) (int64, error) {
+		return 0, downloadV2TerminalError{fmt.Errorf("%w: part %v: %s", errDownloadSizeConflict, part.number, fmt.Sprintf(format, args...))}
+	}
+	if response.trust == UntrustedSizeValue {
+		if !e.transferSizeKnown {
+			return 0, downloadV2TerminalError{errDownloadV2UntrustedTransferSize}
+		}
+		return conflict("range response did not report the transfer size %v", e.totalSize)
+	}
+	if e.transferSizeKnown && response.total != e.totalSize {
+		return conflict("response reported total %v, transfer size is %v", response.total, e.totalSize)
+	}
+	expectedEnd := min(part.off+part.len-1, response.total-1)
+	if response.total <= part.off || response.off != part.off || response.end != expectedEnd {
+		return conflict("requested bytes %v-%v of %v, response covered bytes %v-%v", part.off, expectedEnd, response.total, response.off, response.end)
+	}
+	if !e.transferSizeKnown {
+		// planReady admits further ranges only once the output is preallocated.
+		// On failure the scheduler stays parked and the terminal result cancels
+		// the attempt, which releases waitForPlan.
+		if err := downloadV2PreallocateFile(e.file, response.total); err != nil {
+			return 0, downloadV2TerminalError{err}
+		}
+		e.totalSize = response.total
+		e.transferSizeKnown = true
+		e.parts = downloadV2BuildParts(e.startOffset, e.totalSize, e.partSize)
+		close(e.planReady)
+	}
+	return response.end - response.off + 1, nil
 }
 
 func (e *downloadV2Engine) ContiguousSize() int64 {
@@ -370,10 +517,7 @@ func (e *downloadV2Engine) downloadPartWithRetry(ctx context.Context, part downl
 	var result downloadV2PartResult
 	for attempt := 1; attempt <= downloadV2RetryAttempts; attempt++ {
 		result = e.downloadPart(ctx, part)
-		if result.err == nil {
-			return result
-		}
-		if ctx.Err() != nil {
+		if result.err == nil || ctx.Err() != nil || downloadV2TerminalPartError(result.err) {
 			return result
 		}
 		e.reportStatus.Job().Config.LogPath(e.reportStatus.RemotePath(), map[string]interface{}{
@@ -400,7 +544,7 @@ func (e *downloadV2Engine) downloadPart(ctx context.Context, part downloadV2Part
 			result.retryAfter = backpressure.retryAfter
 		}
 	}()
-	reader, err := downloadV2ReaderRange(ctx, e.ranger, part.off, part.off+part.len-1)
+	reader, response, err := downloadV2ReaderRange(ctx, e.ranger, part.off, part.off+part.len-1)
 	if err != nil {
 		result.err = err
 		result.duration = time.Since(start)
@@ -408,11 +552,18 @@ func (e *downloadV2Engine) downloadPart(ctx context.Context, part downloadV2Part
 		result.backPressure = downloadV2BackPressureStatus(result.statusCode)
 		return result
 	}
+	expected, err := e.acceptRange(part, response)
+	if err != nil {
+		_ = reader.Close()
+		result.err = err
+		result.duration = time.Since(start)
+		return result
+	}
 
 	progress := newDownloadV2ProgressBatcher(func(delta int64) {
 		e.reportStatus.Job().UpdateStatusWithBytes(status.Downloading, e.reportStatus, delta)
 	})
-	written, copyErr := downloadV2CopyAt(e.file, part.off, part.len, reader, progress.Add)
+	written, copyErr := downloadV2CopyAt(e.file, part.off, expected, reader, progress.Add)
 	closeErr := reader.Close()
 	progress.Flush()
 	result.bytes = written
@@ -427,9 +578,9 @@ func (e *downloadV2Engine) downloadPart(ctx context.Context, part downloadV2Part
 		result.err = closeErr
 		return result
 	}
-	if written != part.len {
+	if written != expected {
 		progress.Subtract(written)
-		result.err = fmt.Errorf("download v2 part size mismatch for part %v. expected: %v, actual: %v", part.number, part.len, written)
+		result.err = fmt.Errorf("download v2 part size mismatch for part %v. expected: %v, actual: %v", part.number, expected, written)
 		return result
 	}
 	return result
@@ -648,14 +799,49 @@ func classifyDownloadV2URI(downloadURI string, classifiers ...DownloadV2TargetCl
 	return downloadV2TargetDefault, true
 }
 
-func downloadV2ReaderRange(ctx context.Context, ranger ReaderRange, off int64, end int64) (io.ReadCloser, error) {
+func downloadV2ReaderRange(ctx context.Context, ranger ReaderRange, off int64, end int64) (io.ReadCloser, downloadV2Range, error) {
 	if withContext, ok := ranger.(lib.FileWithContext); ok {
 		ranger = withContext.WithContext(ctx).(ReaderRange)
 	}
 	if file, ok := ranger.(*File); ok {
 		return file.downloadV2ReaderRange(ctx, off, end, false)
 	}
-	return ranger.ReaderRange(off, end)
+	reader, err := ranger.ReaderRange(off, end)
+	if err != nil {
+		return nil, downloadV2Range{}, err
+	}
+	return reader, downloadV2RangeFromStat(ranger, off, end), nil
+}
+
+// downloadV2RangeFromStat describes a range served by a generic ReaderRange,
+// whose Stat reports the size it serves (the pattern DownloadParts relies on).
+func downloadV2RangeFromStat(ranger ReaderRange, off int64, end int64) downloadV2Range {
+	response := downloadV2Range{off: off, end: end, trust: TrustedSizeValue}
+	info, err := ranger.Stat()
+	if err != nil || info == nil {
+		response.trust = UntrustedSizeValue
+		return response
+	}
+	response.total = info.Size()
+	if untrusted, ok := info.(UntrustedSize); ok && untrusted.SizeTrust() == UntrustedSizeValue {
+		response.trust = UntrustedSizeValue
+	}
+	response.end = min(end, response.total-1)
+	return response
+}
+
+// downloadV2RangeFromResponse describes the range a 206 response covers. Only a
+// "bytes start-end/total" Content-Range states which bytes the body carries and
+// the transfer size; anything else leaves the response untrusted for the plan.
+func downloadV2RangeFromResponse(response *http.Response, off int64, end int64) downloadV2Range {
+	served := downloadV2Range{off: off, end: end, trust: UntrustedSizeValue}
+	contentRange, ok := parseContentRange(response.Header.Get("Content-Range"))
+	if !ok || !contentRange.totalKnown || contentRange.start < 0 {
+		return served
+	}
+	served.off, served.end = contentRange.start, contentRange.end
+	served.total, served.trust = contentRange.total, TrustedSizeValue
+	return served
 }
 
 func (f *File) downloadV2EnsureURI(ctx context.Context) error {
@@ -704,16 +890,17 @@ func (f *File) downloadV2URI(ctx context.Context) (string, error) {
 	return downloadURI, nil
 }
 
-func (f *File) downloadV2ReaderRange(ctx context.Context, off int64, end int64, refreshed bool) (io.ReadCloser, error) {
+func (f *File) downloadV2ReaderRange(ctx context.Context, off int64, end int64, refreshed bool) (io.ReadCloser, downloadV2Range, error) {
 	downloadURI, err := f.downloadV2URI(ctx)
 	if err != nil {
-		return nil, err
+		return nil, downloadV2Range{}, err
 	}
 	f.fileMutex.Lock()
 	fileCopy := *f.File
 	f.fileMutex.Unlock()
 
 	var body io.ReadCloser
+	var served downloadV2Range
 	headers := &http.Header{}
 	headers.Set("Range", fmt.Sprintf("bytes=%v-%v", off, end))
 	_, err = (&Client{Config: f.Config}).Download(
@@ -721,18 +908,22 @@ func (f *File) downloadV2ReaderRange(ctx context.Context, off int64, end int64, 
 		files_sdk.WithContext(ctx),
 		files_sdk.RequestHeadersOption(headers),
 		files_sdk.ResponseOption(func(response *http.Response) error {
-			size, trust := parseSize(response)
+			if err := lib.ResponseErrors(response, lib.IsStatus(http.StatusForbidden), files_sdk.APIError(), lib.NotStatus(http.StatusPartialContent)); err != nil {
+				return &goFs.PathError{Path: f.File.Path, Err: err, Op: "downloadV2ReaderRange"}
+			}
+			// Only a successful range response may update the size state; an
+			// error body's Content-Length is not a file size.
+			served = downloadV2RangeFromResponse(response, off, end)
 			maxConnections := parseMaxConnections(response)
 			downloadRequestID := response.Header.Get("X-Files-Download-Request-Id")
 			f.fileMutex.Lock()
 			f.MaxConnections = maxConnections
 			f.downloadRequestId = downloadRequestID
-			f.Size = size
-			f.SizeTrust = trust
-			f.fileMutex.Unlock()
-			if err := lib.ResponseErrors(response, lib.IsStatus(http.StatusForbidden), files_sdk.APIError(), lib.NotStatus(http.StatusPartialContent)); err != nil {
-				return &goFs.PathError{Path: f.File.Path, Err: err, Op: "downloadV2ReaderRange"}
+			f.SizeTrust = served.trust
+			if served.trust == TrustedSizeValue {
+				f.Size = served.total
 			}
+			f.fileMutex.Unlock()
 			body = response.Body
 			return nil
 		}),
@@ -747,12 +938,12 @@ func (f *File) downloadV2ReaderRange(ctx context.Context, off int64, end int64, 
 		return f.downloadV2ReaderRange(ctx, off, end, true)
 	}
 	if err != nil {
-		return nil, err
+		return nil, downloadV2Range{}, err
 	}
 	if body == nil {
-		return nil, &goFs.PathError{Path: f.File.Path, Err: errors.New("missing download response body"), Op: "downloadV2ReaderRange"}
+		return nil, downloadV2Range{}, &goFs.PathError{Path: f.File.Path, Err: errors.New("missing download response body"), Op: "downloadV2ReaderRange"}
 	}
-	return body, nil
+	return body, served, nil
 }
 
 func downloadV2StatusCode(err error) int {
@@ -817,6 +1008,7 @@ func (e *downloadV2Engine) logFinish() {
 		"download_v2_adaptive_min_duration_per_byte":                         snapshot.MinDurationPerByte,
 		"download_v2_adaptive_last_duration_per_byte":                        snapshot.LastDurationPerByte,
 		"download_v2_contiguous_size":                                        e.ContiguousSize(),
+		"download_v2_transfer_size":                                          e.FinalSize(),
 	})
 }
 

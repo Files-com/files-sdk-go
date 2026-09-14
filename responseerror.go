@@ -246,6 +246,10 @@ const (
 	ErrUserRequestsEnabledRequired                                            ResponseErrorType = "site-configuration/user-requests-enabled-required"
 	ErrDownloadRequestExpired                                                 ResponseErrorType = "download_request_expired"
 	ErrUploadRequestExpired                                                   ResponseErrorType = "upload_request_expired"
+	// ErrDownloadSourceChanged is returned by download URLs whose source file
+	// changed size after the URL was issued. Partial output from that URL must
+	// be discarded and the download restarted from a new download request.
+	ErrDownloadSourceChanged ResponseErrorType = "download_source_changed"
 )
 
 const (

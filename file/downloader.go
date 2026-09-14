@@ -350,7 +350,7 @@ func runDownloadFolderItem(ctx context.Context, reportStatus *DownloadStatus) {
 		reportStatus.IncrementTransferBytes(startOffset)
 	}
 	var finalSize int64
-	downloadV2Used, downloadV2FinalSize, downloadV2Err := runDownloadV2IfSupported(ctx, reportStatus, remoteStat, tmpName, startOffset)
+	downloadV2Used, downloadV2FinalSize, planStat, downloadV2Err := runDownloadV2IfSupported(ctx, reportStatus, remoteStat, tmpName, startOffset)
 	if downloadV2Used {
 		finalSize = downloadV2FinalSize
 		if downloadV2Err != nil {
@@ -364,7 +364,7 @@ func runDownloadFolderItem(ctx context.Context, reportStatus *DownloadStatus) {
 		}
 		downloadParts := (&DownloadParts{}).Init(
 			reportStatus.fsFile,
-			remoteStat,
+			planStat,
 			reportStatus.Job().Manager.FilePartsManager,
 			writer,
 			reportStatus.Job().Config,
@@ -398,6 +398,13 @@ func runDownloadFolderItem(ctx context.Context, reportStatus *DownloadStatus) {
 			err := removeTmpDownload(tmpName) // Clean up on invalid download
 			if err != nil {
 				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
+			}
+			if downloadSourceChanged(reportStatus.Err()) {
+				// The rejected download request cannot serve any range. A retry
+				// within the file retry budget must start a new lifecycle.
+				if remoteFile, ok := reportStatus.fsFile.(*File); ok {
+					remoteFile.restartDownload()
+				}
 			}
 		}
 	}

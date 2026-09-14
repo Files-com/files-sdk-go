@@ -778,7 +778,7 @@ func TestDownloadV2PreallocatedTempFileWriteAt(t *testing.T) {
 		Manager:             manager.Build(2, 1),
 	}, tmpPath)
 
-	used, finalSize, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	used, finalSize, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
 	require.True(t, used)
 	require.NoError(t, err)
 	assert.Equal(t, size, finalSize)
@@ -877,7 +877,7 @@ func TestDownloadV2RequiresExplicitAdaptiveConcurrency(t *testing.T) {
 		Manager: manager.Build(2, 1),
 	}, tmpPath)
 
-	used, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	used, _, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
 
 	require.NoError(t, err)
 	assert.False(t, used)
@@ -902,7 +902,7 @@ func TestDownloadV2FallsBackForUntrustedSize(t *testing.T) {
 		Manager:             manager.Build(2, 1),
 	}, tmpPath)
 
-	used, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	used, _, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
 	require.NoError(t, err)
 	assert.False(t, used)
 	assert.Empty(t, ranger.Ranges())
@@ -929,7 +929,7 @@ func TestDownloadV2TruncatesFailedPreallocatedTempFileToContiguousPrefix(t *test
 		Manager:             manager.Build(1, 1),
 	}, tmpPath)
 
-	used, finalSize, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	used, finalSize, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
 	require.True(t, used)
 	require.Error(t, err)
 	assert.Equal(t, int64(16*1024*1024), finalSize)
@@ -957,7 +957,7 @@ func TestDownloadV2UsesDefaultTargetForGenericNonS3DownloadURIWithCrc32(t *testi
 		Manager:             manager.Build(2, 1),
 	}, tmpPath)
 
-	used, finalSize, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	used, finalSize, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
 
 	require.NoError(t, err)
 	assert.True(t, used)
@@ -984,7 +984,7 @@ func TestDownloadV2FallsBackForSinglePartS3Download(t *testing.T) {
 		Manager:             manager.Build(2, 1),
 	}, tmpPath)
 
-	used, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	used, _, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
 
 	require.NoError(t, err)
 	assert.False(t, used)
@@ -1010,7 +1010,7 @@ func TestDownloadV2UsesDefaultDownloadURI(t *testing.T) {
 		Manager:             manager.Build(15, 1),
 	}, tmpPath)
 
-	used, finalSize, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	used, finalSize, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
 	require.True(t, used)
 	require.NoError(t, err)
 	assert.Equal(t, size, finalSize)
