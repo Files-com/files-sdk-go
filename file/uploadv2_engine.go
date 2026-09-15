@@ -545,10 +545,16 @@ func (e *uploadV2Engine) run(ctx context.Context) (UploadResumable, error) {
 	var allErrors error
 	for result := range results {
 		e.applyResult(result)
-		if result.err != nil {
-			allErrors = errors.Join(allErrors, result.err)
-			cancelParts(result.err)
+		if result.err == nil {
+			continue
 		}
+		// A real part failure cancels its concurrent siblings. Those secondary
+		// context cancellation errors must not hide the original failure.
+		if allErrors != nil && ctx.Err() == nil && errors.Is(result.err, context.Canceled) {
+			continue
+		}
+		allErrors = errors.Join(allErrors, result.err)
+		cancelParts(result.err)
 	}
 	if allErrors == nil && partCtx.Err() != nil {
 		allErrors = context.Cause(partCtx)

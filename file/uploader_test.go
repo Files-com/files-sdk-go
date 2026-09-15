@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"math"
 	"net/http"
@@ -59,6 +60,79 @@ func TestUploadV1RefreshesExpiredFirstPartURL(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, server.TrackRequest["/api/rest/v1/file_actions/begin_upload/*path"], 1)
 	assert.Empty(t, server.TrackRequest["/expired-upload"])
+}
+
+func TestUploadV2NetworkFailureIsNotCanceled(t *testing.T) {
+	server := (&MockAPIServer{T: t}).Do()
+	defer server.Shutdown()
+
+	filename := "v2-network-failure.txt"
+	size := int64(16*1024*1024 + 1)
+	server.MockFiles[filename] = mockFile{File: files_sdk.File{Size: size}}
+	secondPartStarted := make(chan struct{})
+	var secondPartStartedOnce sync.Once
+	releaseSecondPart := make(chan struct{})
+	defer close(releaseSecondPart)
+	server.GetRouter().POST("/v2-network-failure-upload", func(c *gin.Context) {
+		if _, err := io.Copy(io.Discard, c.Request.Body); err != nil {
+			t.Errorf("reading upload part: %v", err)
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		switch c.Query("part_number") {
+		case "1":
+			<-secondPartStarted
+			c.Status(http.StatusServiceUnavailable)
+		case "2":
+			secondPartStartedOnce.Do(func() { close(secondPartStarted) })
+			select {
+			case <-c.Request.Context().Done():
+			case <-releaseSecondPart:
+			}
+		default:
+			t.Errorf("unexpected upload part %q", c.Query("part_number"))
+			c.Status(http.StatusBadRequest)
+		}
+	})
+	expires := time.Now().Add(time.Hour).Format(time.RFC3339)
+	server.MockRoute("/api/rest/v1/file_actions/begin_upload/"+filename, func(c *gin.Context, model interface{}) bool {
+		params := model.(files_sdk.FileBeginUploadParams)
+		if params.Part == 0 {
+			params.Part = 1
+		}
+		c.JSON(http.StatusOK, files_sdk.FileUploadPartCollection{
+			files_sdk.FileUploadPart{
+				HttpMethod:    "POST",
+				Path:          filename,
+				Ref:           "v2-network-failure-ref",
+				UploadUri:     fmt.Sprintf("%s/v2-network-failure-upload?part_number=%d", server.Server.URL, params.Part),
+				ParallelParts: lib.Bool(true),
+				Expires:       expires,
+				PartNumber:    params.Part,
+			},
+		})
+		return true
+	})
+
+	client := server.Client()
+	client.Config.Client.RetryMax = 0
+	_, err := client.UploadWithResume(
+		UploadWithV2(),
+		UploadWithReaderAt(bytes.NewReader(make([]byte, size))),
+		UploadWithDestinationPath(filename),
+		UploadWithSize(size),
+		UploadWithManager(lib.NewConstrainedWorkGroup(2)),
+	)
+
+	require.Error(t, err)
+	require.ErrorContains(t, err, "status code: 503")
+	require.NotErrorIs(t, err, context.Canceled)
+
+	job := (&Job{Logger: lib.NullLogger{}}).Init()
+	upload := &UploadStatus{status: status.Uploading, Mutex: &sync.RWMutex{}}
+	job.UpdateStatus(status.Errored, upload, err)
+	require.True(t, upload.Status().Is(status.Errored))
+	require.ErrorContains(t, upload.Err(), "status code: 503")
 }
 
 func (m *MockUploader) UploadWithResume(...UploadOption) (UploadResumable, error) {
