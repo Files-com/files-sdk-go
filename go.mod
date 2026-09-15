@@ -1,6 +1,6 @@
 module github.com/Files-com/files-sdk-go/v3
 
-go 1.25.0
+go 1.26.8
 
 require (
 	github.com/appscode/go-querystring v0.0.0-20170504095604-0126cfb3f1dc
@@ -18,9 +18,9 @@ require (
 	github.com/snabb/httpreaderat v1.0.1
 	github.com/stretchr/testify v1.11.1
 	github.com/winfsp/cgofuse v1.6.1-0.20250813110601-7d90b0992471 // includes fixes from https://github.com/winfsp/cgofuse/pull/98, update when the next version is released
-	golang.org/x/sync v0.20.0
-	golang.org/x/sys v0.45.0
-	golang.org/x/text v0.37.0
+	golang.org/x/sync v0.22.0
+	golang.org/x/sys v0.47.0
+	golang.org/x/text v0.41.0
 	moul.io/http2curl/v2 v2.3.0
 )
 
@@ -50,8 +50,8 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	golang.org/x/arch v0.14.0 // indirect
-	golang.org/x/crypto v0.51.0 // indirect
-	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/crypto v0.56.0 // indirect
+	golang.org/x/net v0.57.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
