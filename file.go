@@ -83,6 +83,7 @@ type FileDownloadParams struct {
 type FileCreateParams struct {
 	Path                     string         `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	Action                   string         `url:"action,omitempty" json:"action,omitempty" path:"action"`
+	CustomMetadata           interface{}    `url:"custom_metadata,omitempty" json:"custom_metadata,omitempty" path:"custom_metadata"`
 	EtagsParam               []EtagsParam   `url:"etags,omitempty" json:"etags,omitempty" path:"etags"`
 	Length                   int64          `url:"length,omitempty" json:"length,omitempty" path:"length"`
 	MkdirParents             *bool          `url:"mkdir_parents,omitempty" json:"mkdir_parents,omitempty" path:"mkdir_parents"`
