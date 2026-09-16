@@ -133,7 +133,7 @@ var (
 // When it declines (used is false) planStat is the FileInfo the fallback engine
 // must plan from: the metadata stat, or an empty plan when the first range
 // response showed the metadata size cannot be right.
-func runDownloadV2IfSupported(ctx context.Context, reportStatus *DownloadStatus, remoteStat goFs.FileInfo, tmpName string, startOffset int64) (used bool, finalSize int64, planStat goFs.FileInfo, err error) {
+func runDownloadV2IfSupported(ctx context.Context, reportStatus *DownloadStatus, remoteStat goFs.FileInfo, tmp destinationPath, startOffset int64) (used bool, finalSize int64, planStat goFs.FileInfo, err error) {
 	params, _ := reportStatus.Job().Params.(DownloaderParams)
 	if !params.AdaptiveConcurrency {
 		return false, 0, remoteStat, nil
@@ -148,7 +148,7 @@ func runDownloadV2IfSupported(ctx context.Context, reportStatus *DownloadStatus,
 		return false, 0, remoteStat, nil
 	}
 
-	file, err := os.OpenFile(tmpName, os.O_CREATE|os.O_RDWR, 0644)
+	file, err := tmp.openFile(os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return true, 0, remoteStat, err
 	}
@@ -265,14 +265,11 @@ func downloadV2AdmissionStartOffset(reportStatus *DownloadStatus) int64 {
 	if reportStatus == nil || reportStatus.FileInfo == nil {
 		return 0
 	}
-	tmpName := reportStatus.TmpPath
-	if tmpName == "" {
-		tmpName = existingTmpDownloadPath(reportStatus.LocalPath(), reportStatus.tempPath)
-	}
-	if tmpName == "" {
+	tmp, ok := reportStatus.tmpDownloadToResume()
+	if !ok {
 		return 0
 	}
-	fi, err := os.Stat(tmpName)
+	fi, err := tmp.stat()
 	if err != nil {
 		return 0
 	}

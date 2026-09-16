@@ -2,25 +2,28 @@
 
 package file
 
-import (
-	"os"
-)
+import "context"
 
-func tmpDownloadPathOnNotExist(originalPath, tmpPath string) (string, error) {
-	return tmpPath, nil
+// explicitTmpDownload is a caller-supplied temporary file path, used as given.
+func explicitTmpDownload(path string) destinationPath {
+	return explicitDestination(path)
 }
 
-func finalizeTmpDownload(tmpName string, finalPath string) error {
-	return os.Rename(tmpName, finalPath)
+func tmpDownloadPathOnNotExist(_ destinationPath, tmp destinationPath) (destinationPath, error) {
+	return tmp, nil
 }
 
-func existingTmpDownloadFile(originalPath, tmpPath string) string {
-	if _, err := os.Stat(tmpPath); err == nil {
-		return tmpPath
+func finalizeTmpDownload(ctx context.Context, tmp destinationPath, final destinationPath) error {
+	return tmp.moveTo(ctx, final)
+}
+
+func existingTmpDownloadFile(_ destinationPath, tmp destinationPath) (destinationPath, bool) {
+	if _, err := tmp.stat(); err == nil {
+		return tmp, true
 	}
-	return ""
+	return destinationPath{}, false
 }
 
-func removeTmpDownload(tmpName string) error {
-	return os.Remove(tmpName)
+func removeTmpDownload(tmp destinationPath) error {
+	return tmp.remove()
 }

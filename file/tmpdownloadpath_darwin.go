@@ -3,42 +3,45 @@
 package file
 
 import (
-	"os"
+	"context"
 	"path/filepath"
 )
 
-// tmpDownloadPathOnNotExist create .download folder a common pattern on macOS
-func tmpDownloadPathOnNotExist(originalPath, tmpPath string) (string, error) {
-	if err := os.MkdirAll(tmpPath, 0755); err != nil {
-		return "", err
-	}
-	_, fileName := filepath.Split(originalPath)
-	return filepath.Join(tmpPath, fileName), nil
+// explicitTmpDownload is a caller-supplied temporary file path. On macOS the
+// file lives inside its .download folder, which stays part of the confined
+// name so it is removed with the file.
+func explicitTmpDownload(path string) destinationPath {
+	folder := filepath.Dir(path)
+	return destinationPath{dir: filepath.Dir(folder), name: filepath.Join(filepath.Base(folder), filepath.Base(path))}
 }
 
-func finalizeTmpDownload(tmpName string, finalPath string) error {
-	err := os.Rename(tmpName, finalPath)
-	if err != nil {
+// tmpDownloadPathOnNotExist creates a .download folder, a common pattern on
+// macOS, and returns the temporary file inside it.
+func tmpDownloadPathOnNotExist(final destinationPath, tmp destinationPath) (destinationPath, error) {
+	if err := tmp.mkdirAll(); err != nil {
+		return destinationPath{}, err
+	}
+	return tmp.withName(filepath.Join(tmp.name, final.base())), nil
+}
+
+func finalizeTmpDownload(ctx context.Context, tmp destinationPath, final destinationPath) error {
+	if err := tmp.moveTo(ctx, final); err != nil {
 		return err
 	}
-	downloadPackage, _ := filepath.Split(tmpName)
-	return os.Remove(downloadPackage)
+	return tmp.parent().remove()
 }
 
-func existingTmpDownloadFile(originalPath, tmpPath string) string {
-	_, fileName := filepath.Split(originalPath)
-	filePath := filepath.Join(tmpPath, fileName)
-	if _, err := os.Stat(filePath); err == nil {
-		return filePath
+func existingTmpDownloadFile(final destinationPath, tmp destinationPath) (destinationPath, bool) {
+	file := tmp.withName(filepath.Join(tmp.name, final.base()))
+	if _, err := file.stat(); err == nil {
+		return file, true
 	}
-	return ""
+	return destinationPath{}, false
 }
 
-func removeTmpDownload(tmpName string) error {
-	err := os.Remove(tmpName)
-	if err != nil {
+func removeTmpDownload(tmp destinationPath) error {
+	if err := tmp.remove(); err != nil {
 		return err
 	}
-	downloadPackage, _ := filepath.Split(tmpName)
-	return os.Remove(downloadPackage)
+	return tmp.parent().remove()
 }

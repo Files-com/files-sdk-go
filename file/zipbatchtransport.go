@@ -18,7 +18,6 @@ import (
 	"io/fs"
 	"net/http"
 	"net/url"
-	"os"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -92,6 +91,15 @@ func (b *zipBatchDownloader) run(statuses []*DownloadStatus) []zipBatchFallback 
 	if len(statuses) == 0 {
 		return nil
 	}
+	// Keep one spool completion outstanding until run has attempted cleanup.
+	// Otherwise the last entry can finish the job while its spool/package
+	// still exists, and a CLI caller may exit before cleanup runs.
+	var pendingSpoolStatus *DownloadStatus
+	defer func() {
+		if pendingSpoolStatus != nil {
+			b.signal <- pendingSpoolStatus
+		}
+	}()
 	remaining := statuses
 	var fallback []zipBatchFallback
 	retryCount := 0
@@ -120,26 +128,33 @@ func (b *zipBatchDownloader) run(statuses []*DownloadStatus) []zipBatchFallback 
 		}
 
 		finalized := func(downloadStatus *DownloadStatus) {
-			// Ended statuses are already signaled here; enqueueFallbacks depends on
-			// that invariant to skip them without double-signaling the job.
+			// Every ended status is signaled before run returns, including the
+			// deferred spool status. enqueueFallbacks relies on that invariant.
 			done[downloadStatus] = struct{}{}
 			b.probeZipFinalized(downloadStatus)
-			b.signal <- downloadStatus
+			if b.params.Extraction == ZipBatchExtractionStream {
+				b.signal <- downloadStatus
+			} else {
+				if pendingSpoolStatus != nil {
+					b.signal <- pendingSpoolStatus
+				}
+				pendingSpoolStatus = downloadStatus
+			}
 		}
 		if stats := b.stats(); stats != nil {
 			stats.streamAttempts.Add(1)
 		}
 		b.log("stream-attempt", map[string]interface{}{"attempt": attempt + 1, "files": len(createResult.statuses)})
-		spoolPath := ""
+		var spool destinationPath
 		var missing []*DownloadStatus
 		if b.params.Extraction == ZipBatchExtractionStream {
 			missing, err = b.extractZipStream(createResult.downloadURI, createResult.statuses, finalized)
 		} else {
-			spoolPath, err = b.spoolZip(createResult.downloadURI, createResult.statuses)
+			spool, err = b.spoolZip(createResult.downloadURI, createResult.statuses)
 			if err == nil {
-				missing, err = b.extractZipSpool(spoolPath, createResult.statuses, finalized)
+				missing, err = b.extractZipSpool(spool, createResult.statuses, finalized)
 				if err == nil {
-					_ = os.Remove(spoolPath)
+					_ = removeTmpDownload(spool)
 				}
 			}
 		}
@@ -150,8 +165,8 @@ func (b *zipBatchDownloader) run(statuses []*DownloadStatus) []zipBatchFallback 
 
 		var tripwire zipBatchTripwireError
 		if errors.As(err, &tripwire) {
-			if spoolPath != "" {
-				_ = os.Remove(spoolPath)
+			if spool != (destinationPath{}) {
+				_ = removeTmpDownload(spool)
 			}
 			remaining = zipBatchRemaining(createResult.statuses, done)
 			fallback = append(fallback, zipBatchFallbacks(zipBatchFallbackTripwire, remaining)...)
@@ -173,9 +188,9 @@ func (b *zipBatchDownloader) run(statuses []*DownloadStatus) []zipBatchFallback 
 				"error":   err.Error(),
 			})
 		}
-		if spoolPath != "" {
-			b.salvageZipSpool(spoolPath, createResult.statuses, finalized)
-			_ = os.Remove(spoolPath)
+		if spool != (destinationPath{}) {
+			b.salvageZipSpool(spool, createResult.statuses, finalized)
+			_ = removeTmpDownload(spool)
 		}
 		remaining = zipBatchRemaining(createResult.statuses, done)
 		if attempt == retryCount {
@@ -351,18 +366,18 @@ func (b *zipBatchDownloader) createZipDownloadOnce(statuses []*DownloadStatus) (
 	return createResponse.DownloadURI, nil
 }
 
-func (b *zipBatchDownloader) spoolZip(downloadURI string, statuses []*DownloadStatus) (string, error) {
+func (b *zipBatchDownloader) spoolZip(downloadURI string, statuses []*DownloadStatus) (destinationPath, error) {
 	streamURI, err := zipBatchStreamURI(b.job.Config, downloadURI)
 	if err != nil {
-		return "", err
+		return destinationPath{}, err
 	}
-	spoolPath, err := tmpDownloadPath(zipBatchSpoolBasePath(statuses), statuses[0].tempPath)
+	spool, err := tmpDownloadPath(zipBatchSpoolBasePath(statuses), statuses[0].tempPath)
 	if err != nil {
-		return "", err
+		return destinationPath{}, err
 	}
-	out, err := os.Create(spoolPath)
+	out, err := spool.create()
 	if err != nil {
-		return spoolPath, err
+		return spool, err
 	}
 	writer := lib.ProgressWriter{WriterAndAt: out}
 	writer.ProgressWatcher = func(bytes int64) {
@@ -389,23 +404,32 @@ func (b *zipBatchDownloader) spoolZip(downloadURI string, statuses []*DownloadSt
 		func() error { return downloadParts.Run(b.ctx) },
 		func() error { return downloadParts.CloseError },
 	)
-	return spoolPath, runErr
+	return spool, runErr
 }
 
-func zipBatchSpoolBasePath(statuses []*DownloadStatus) string {
-	return statuses[0].LocalPath() + ".zip-batch"
+func zipBatchSpoolBasePath(statuses []*DownloadStatus) destinationPath {
+	destination := statuses[0].destination
+	return destination.withName(destination.name + ".zip-batch")
 }
 
-func (b *zipBatchDownloader) extractZipSpool(spoolPath string, statuses []*DownloadStatus, finalized func(*DownloadStatus)) ([]*DownloadStatus, error) {
+func (b *zipBatchDownloader) extractZipSpool(spool destinationPath, statuses []*DownloadStatus, finalized func(*DownloadStatus)) ([]*DownloadStatus, error) {
 	expected, err := zipBatchEntryMap(statuses)
 	if err != nil {
 		return nil, err
 	}
-	reader, err := zip.OpenReader(spoolPath)
+	spoolFile, err := spool.open()
 	if err != nil {
 		return nil, zipBatchCorruptArchiveError{error: err}
 	}
-	defer reader.Close()
+	defer spoolFile.Close()
+	spoolInfo, err := spoolFile.Stat()
+	if err != nil {
+		return nil, zipBatchCorruptArchiveError{error: err}
+	}
+	reader, err := zip.NewReader(spoolFile, spoolInfo.Size())
+	if err != nil {
+		return nil, zipBatchCorruptArchiveError{error: err}
+	}
 
 	seen := make(map[*DownloadStatus]struct{}, len(expected))
 	for _, zipFile := range reader.File {
@@ -423,10 +447,10 @@ func (b *zipBatchDownloader) extractZipSpool(spoolPath string, statuses []*Downl
 		if err := extractZipArchiveEntry(b.ctx, zipFile, downloadStatus); err != nil {
 			return nil, err
 		}
-		if !downloadStatus.Status().Is(status.Errored) {
+		if !downloadStatus.Status().Is(status.Ended...) {
 			downloadStatus.Job().UpdateStatus(status.Complete, downloadStatus, nil)
 		}
-		if stats := b.stats(); stats != nil && !downloadStatus.Status().Is(status.Errored) {
+		if stats := b.stats(); stats != nil && downloadStatus.Status().Is(status.Complete) {
 			stats.cleanFinalized.Add(1)
 		}
 		seen[downloadStatus] = struct{}{}
@@ -452,7 +476,7 @@ func (b *zipBatchDownloader) extractZipStream(downloadURI string, statuses []*Do
 		zipFile,
 		expected,
 		func(downloadStatus *DownloadStatus) {
-			if stats := b.stats(); stats != nil && !downloadStatus.Status().Is(status.Errored) {
+			if stats := b.stats(); stats != nil && downloadStatus.Status().Is(status.Complete) {
 				stats.cleanFinalized.Add(1)
 			}
 			finalized(downloadStatus)
@@ -479,19 +503,19 @@ func extractZipArchiveEntry(ctx context.Context, zipFile *zip.File, downloadStat
 	return nil
 }
 
-func (b *zipBatchDownloader) salvageZipSpool(spoolPath string, statuses []*DownloadStatus, finalized func(*DownloadStatus)) {
+func (b *zipBatchDownloader) salvageZipSpool(spool destinationPath, statuses []*DownloadStatus, finalized func(*DownloadStatus)) {
 	expected, err := zipBatchEntryMap(statuses)
 	if err != nil {
 		return
 	}
-	spool, err := os.Open(spoolPath)
+	spoolFile, err := spool.open()
 	if err != nil {
 		return
 	}
-	defer spool.Close()
+	defer spoolFile.Close()
 	recovered := 0
-	_, _ = extractZipBatchStream(b.ctx, spool, expected, func(downloadStatus *DownloadStatus) {
-		if downloadStatus.Status().Is(status.Errored) {
+	_, _ = extractZipBatchStream(b.ctx, spoolFile, expected, func(downloadStatus *DownloadStatus) {
+		if !downloadStatus.Status().Is(status.Complete) {
 			finalized(downloadStatus)
 			return
 		}
@@ -538,7 +562,7 @@ func extractZipBatchStream(ctx context.Context, r io.Reader, expected map[string
 		if err := extractZipStreamEntry(ctx, stream, header, downloadStatus, onBytes); err != nil {
 			return nil, err
 		}
-		if !downloadStatus.Status().Is(status.Errored) {
+		if !downloadStatus.Status().Is(status.Ended...) {
 			downloadStatus.Job().UpdateStatus(status.Complete, downloadStatus, nil)
 		}
 		seen[downloadStatus] = struct{}{}
@@ -547,12 +571,12 @@ func extractZipBatchStream(ctx context.Context, r io.Reader, expected map[string
 }
 
 func extractZipStreamEntry(ctx context.Context, stream *zipStream, header zipStreamEntryHeader, downloadStatus *DownloadStatus, onBytes func(*DownloadStatus, int64)) error {
-	tmpName, err := tmpDownloadPath(downloadStatus.LocalPath(), downloadStatus.tempPath)
+	tmp, err := tmpDownloadPath(downloadStatus.destination, downloadStatus.tempPath)
 	if err != nil {
 		return err
 	}
-	downloadStatus.TmpPath = tmpName
-	out, err := os.Create(tmpName)
+	downloadStatus.TmpPath = tmp.String()
+	out, err := tmp.create()
 	if err != nil {
 		return err
 	}
@@ -563,50 +587,54 @@ func extractZipStreamEntry(ctx context.Context, stream *zipStream, header zipStr
 	})
 	closeErr := out.Close()
 	if extractErr != nil {
-		removeTmpDownload(tmpName)
+		removeTmpDownload(tmp)
 		return extractErr
 	}
 	if closeErr != nil {
-		removeTmpDownload(tmpName)
+		removeTmpDownload(tmp)
 		return closeErr
 	}
 	if int64(result.uncompressedSize) != downloadStatus.Size() {
-		removeTmpDownload(tmpName)
+		removeTmpDownload(tmp)
 		return zipBatchTripwireError{error: fmt.Errorf("zip batch: zip entry %q size %d did not match listed size %d", header.name, result.uncompressedSize, downloadStatus.Size())}
 	}
-	if err := completeTmpDownload(downloadStatus, tmpName, int64(result.uncompressedSize)); err != nil {
-		removeTmpDownload(tmpName)
+	if err := completeTmpDownload(ctx, downloadStatus, tmp, int64(result.uncompressedSize)); err != nil {
+		if !errors.Is(context.Cause(ctx), ErrJobPaused) {
+			removeTmpDownload(tmp)
+		}
 		downloadStatus.Job().UpdateStatus(status.Errored, downloadStatus, err)
 	}
 	return nil
 }
 
 func extractZipEntryReader(ctx context.Context, name string, in io.Reader, downloadStatus *DownloadStatus) error {
-	tmpName, err := tmpDownloadPath(downloadStatus.LocalPath(), downloadStatus.tempPath)
+	tmp, err := tmpDownloadPath(downloadStatus.destination, downloadStatus.tempPath)
 	if err != nil {
 		return err
 	}
-	downloadStatus.TmpPath = tmpName
-	out, err := os.Create(tmpName)
+	downloadStatus.TmpPath = tmp.String()
+	out, err := tmp.create()
 	if err != nil {
 		return err
 	}
 	written, copyErr := copyWithContext(ctx, out, in)
 	closeErr := out.Close()
 	if copyErr != nil {
-		removeTmpDownload(tmpName)
+		removeTmpDownload(tmp)
 		return copyErr
 	}
 	if closeErr != nil {
-		removeTmpDownload(tmpName)
+		removeTmpDownload(tmp)
 		return closeErr
 	}
 	if written != downloadStatus.Size() {
-		removeTmpDownload(tmpName)
+		removeTmpDownload(tmp)
 		return zipBatchTripwireError{error: fmt.Errorf("zip batch: zip entry %q size %d did not match listed size %d", name, written, downloadStatus.Size())}
 	}
-	if err := completeTmpDownload(downloadStatus, tmpName, written); err != nil {
-		removeTmpDownload(tmpName)
+	if err := completeTmpDownload(ctx, downloadStatus, tmp, written); err != nil {
+		if !errors.Is(context.Cause(ctx), ErrJobPaused) {
+			removeTmpDownload(tmp)
+		}
 		downloadStatus.Job().UpdateStatus(status.Errored, downloadStatus, err)
 	}
 	return nil

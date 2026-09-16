@@ -622,10 +622,11 @@ func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {
 		if err != nil {
 			return files, &goFs.PathError{Path: f.Path, Err: err, Op: "readdir"}
 		}
-		parts := strings.Split(fi.Path, "/")
-		dir := strings.Join(parts[0:len(parts)-1], "/")
-		if lib.NormalizeForComparison(dir) == lib.NormalizeForComparison(f.Path) {
-			// There is a bug in the API that it could return a nested file not in the current directory.
+		child, err := listingEntryIsChild(f.Path, fi)
+		if err != nil {
+			return files, &goFs.PathError{Path: f.Path, Err: err, Op: "readdir"}
+		}
+		if child {
 			file := (&File{File: &fi, FS: f.FS}).Init()
 			if f.useCache {
 				f.cache.Store(lib.NormalizeForComparison(fi.Path), file)
@@ -640,6 +641,46 @@ func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {
 		return files, &goFs.PathError{Path: f.Path, Err: it.Err(), Op: "readdir"}
 	}
 	return files, nil
+}
+
+// listingEntryIsChild classifies a listing entry by its server path relative
+// to the listed folder. A direct child is listed. A deeper descendant is
+// skipped: the API can return nested files, and they are listed with their own
+// folder. A path outside the folder or with malformed elements, or a display
+// name that is not a single element, is an error so the bad response is
+// reported instead of being dropped or followed.
+func listingEntryIsChild(folder string, fi files_sdk.File) (bool, error) {
+	folderSegments := remoteSegments(folder)
+	segments := remoteSegments(fi.Path)
+	for _, segment := range segments {
+		if !validRemoteElement(segment) {
+			return false, fmt.Errorf("listing entry %q has a malformed path", fi.Path)
+		}
+	}
+	if len(segments) <= len(folderSegments) {
+		return false, fmt.Errorf("listing entry %q is not below the folder %q", fi.Path, folder)
+	}
+	for i, segment := range folderSegments {
+		if lib.NormalizeForComparison(segment) != lib.NormalizeForComparison(segments[i]) {
+			return false, fmt.Errorf("listing entry %q is not below the folder %q", fi.Path, folder)
+		}
+	}
+	if len(segments) > len(folderSegments)+1 {
+		return false, nil
+	}
+	// fs.WalkDir joins the display name onto the folder path to reach the
+	// entry, so a name with separators or parent references would make the
+	// walk list a folder other than the entry's own.
+	if !validRemoteElement(fi.DisplayName) || strings.Contains(fi.DisplayName, "/") {
+		return false, fmt.Errorf("listing entry %q has an invalid name %q", fi.Path, fi.DisplayName)
+	}
+	return true, nil
+}
+
+// validRemoteElement reports whether a slash-separated remote path element can
+// name a file or folder.
+func validRemoteElement(element string) bool {
+	return element != "" && element != "." && element != ".." && !strings.Contains(element, "\x00")
 }
 
 func (f *FS) MkdirAll(dir string, _ goFs.FileMode) error {

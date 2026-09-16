@@ -778,7 +778,7 @@ func TestDownloadV2PreallocatedTempFileWriteAt(t *testing.T) {
 		Manager:             manager.Build(2, 1),
 	}, tmpPath)
 
-	used, finalSize, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	used, finalSize, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, explicitDestination(tmpPath), 0)
 	require.True(t, used)
 	require.NoError(t, err)
 	assert.Equal(t, size, finalSize)
@@ -877,7 +877,7 @@ func TestDownloadV2RequiresExplicitAdaptiveConcurrency(t *testing.T) {
 		Manager: manager.Build(2, 1),
 	}, tmpPath)
 
-	used, _, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	used, _, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, explicitDestination(tmpPath), 0)
 
 	require.NoError(t, err)
 	assert.False(t, used)
@@ -902,7 +902,7 @@ func TestDownloadV2FallsBackForUntrustedSize(t *testing.T) {
 		Manager:             manager.Build(2, 1),
 	}, tmpPath)
 
-	used, _, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	used, _, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, explicitDestination(tmpPath), 0)
 	require.NoError(t, err)
 	assert.False(t, used)
 	assert.Empty(t, ranger.Ranges())
@@ -929,7 +929,7 @@ func TestDownloadV2TruncatesFailedPreallocatedTempFileToContiguousPrefix(t *test
 		Manager:             manager.Build(1, 1),
 	}, tmpPath)
 
-	used, finalSize, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	used, finalSize, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, explicitDestination(tmpPath), 0)
 	require.True(t, used)
 	require.Error(t, err)
 	assert.Equal(t, int64(16*1024*1024), finalSize)
@@ -957,7 +957,7 @@ func TestDownloadV2UsesDefaultTargetForGenericNonS3DownloadURIWithCrc32(t *testi
 		Manager:             manager.Build(2, 1),
 	}, tmpPath)
 
-	used, finalSize, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	used, finalSize, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, explicitDestination(tmpPath), 0)
 
 	require.NoError(t, err)
 	assert.True(t, used)
@@ -984,7 +984,7 @@ func TestDownloadV2FallsBackForSinglePartS3Download(t *testing.T) {
 		Manager:             manager.Build(2, 1),
 	}, tmpPath)
 
-	used, _, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	used, _, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, explicitDestination(tmpPath), 0)
 
 	require.NoError(t, err)
 	assert.False(t, used)
@@ -1010,7 +1010,7 @@ func TestDownloadV2UsesDefaultDownloadURI(t *testing.T) {
 		Manager:             manager.Build(15, 1),
 	}, tmpPath)
 
-	used, finalSize, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, tmpPath, 0)
+	used, finalSize, _, err := runDownloadV2IfSupported(context.Background(), reportStatus, ranger.info, explicitDestination(tmpPath), 0)
 	require.True(t, used)
 	require.NoError(t, err)
 	assert.Equal(t, size, finalSize)
@@ -1258,16 +1258,18 @@ func downloadV2TestStatus(file fs.File, info Info, params DownloaderParams, tmpP
 		Manager: params.Manager,
 	}).Init()
 	job.SetManager(params.Manager)
+	localPath := filepath.Join(filepath.Dir(tmpPath), info.Name())
 	return &DownloadStatus{
-		fsFile:     file,
-		FileInfo:   info,
-		file:       info.File,
-		job:        job,
-		localPath:  filepath.Join(filepath.Dir(tmpPath), info.Name()),
-		remotePath: info.File.Path,
-		status:     status.Queued,
-		Mutex:      &sync.RWMutex{},
-		TmpPath:    tmpPath,
+		fsFile:      file,
+		FileInfo:    info,
+		file:        info.File,
+		job:         job,
+		localPath:   localPath,
+		destination: explicitDestination(localPath),
+		remotePath:  info.File.Path,
+		status:      status.Queued,
+		Mutex:       &sync.RWMutex{},
+		TmpPath:     tmpPath,
 	}
 }
 
@@ -1384,8 +1386,8 @@ func TestDownloadPauseResume(t *testing.T) {
 		assert.True(t, job.Finished.Called())
 		assert.Equal(t, 1, job.Count(status.Canceled))
 		assert.Equal(t, 0, job.Count(status.Errored))
-		tmpPath := existingTmpDownloadPath(filepath.Join(root, "file.txt"), "")
-		assert.NotEmpty(t, tmpPath, "temp file should be preserved on pause")
+		_, tmpExists := existingTmpDownloadPath(explicitDestination(filepath.Join(root, "file.txt")), "")
+		assert.True(t, tmpExists, "temp file should be preserved on pause")
 	})
 
 	t.Run("cancel removes temp file", func(t *testing.T) {
@@ -1418,8 +1420,8 @@ func TestDownloadPauseResume(t *testing.T) {
 		assert.True(t, job.Finished.Called())
 		assert.Equal(t, 1, job.Count(status.Canceled))
 		assert.Equal(t, 0, job.Count(status.Errored))
-		tmpPath := existingTmpDownloadPath(filepath.Join(root, "file.txt"), "")
-		assert.Empty(t, tmpPath, "temp file should be removed on normal cancel")
+		_, tmpExists := existingTmpDownloadPath(explicitDestination(filepath.Join(root, "file.txt")), "")
+		assert.False(t, tmpExists, "temp file should be removed on normal cancel")
 	})
 
 	t.Run("resume skips completed paths", func(t *testing.T) {
@@ -1483,22 +1485,23 @@ func TestDownloadPauseResume(t *testing.T) {
 func TestOpenFileReturnsCreateError(t *testing.T) {
 	partName := filepath.Join(t.TempDir(), "missing", "file.download")
 
-	writer, err := openFile(partName, &DownloadStatus{}, 0)
+	writer, err := openFile(explicitDestination(partName), &DownloadStatus{}, 0)
 
 	require.Error(t, err)
 	assert.Nil(t, writer.WriterAndAt)
 	var pathError *fs.PathError
 	require.ErrorAs(t, err, &pathError)
-	assert.Equal(t, "open", pathError.Op)
+	require.ErrorIs(t, err, fs.ErrNotExist)
+	assert.Equal(t, filepath.Dir(partName), pathError.Path)
 }
 
 func createCanonicalTmpFile(t *testing.T, localPath string, size int64) string {
 	t.Helper()
-	tmpPath, err := tmpDownloadPath(localPath, "")
+	tmpPath, err := tmpDownloadPath(explicitDestination(localPath), "")
 	require.NoError(t, err)
-	err = os.WriteFile(tmpPath, make([]byte, size), 0644)
+	err = os.WriteFile(tmpPath.String(), make([]byte, size), 0644)
 	require.NoError(t, err)
-	return tmpPath
+	return tmpPath.String()
 }
 
 type CmdRunner struct {

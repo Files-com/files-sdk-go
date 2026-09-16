@@ -144,7 +144,7 @@ func buildDownloadTest(test func(*Job)) {
 			panic(err)
 		}
 		tempFile.Close()
-		job.Add(&DownloadStatus{Mutex: &sync.RWMutex{}, localPath: tempFile.Name(), fsFile: localFile, status: s, job: job, file: files_sdk.File{DisplayName: fmt.Sprintf("%v.txt", i)}})
+		job.Add(&DownloadStatus{Mutex: &sync.RWMutex{}, localPath: tempFile.Name(), destination: explicitDestination(tempFile.Name()), fsFile: localFile, status: s, job: job, file: files_sdk.File{DisplayName: fmt.Sprintf("%v.txt", i)}})
 	}
 
 	test(job)

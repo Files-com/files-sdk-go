@@ -3,6 +3,7 @@ package file
 import (
 	"archive/zip"
 	"bytes"
+	"context"
 	"encoding/binary"
 	"fmt"
 	"hash/crc32"
@@ -165,6 +166,64 @@ func TestZipBatchDownloaderHappyPath(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, stat.ModTime().Equal(mtime.Local()))
 	})
+}
+
+func TestZipBatchDownloaderExternalTempCleanup(t *testing.T) {
+	forEachZipBatchExtractionMode(t, func(t *testing.T, extraction ZipBatchExtractionMode) {
+		root := t.TempDir()
+		temp := t.TempDir()
+		server := newZipBatchMockServer(t, map[string]string{
+			"batch/sub/a.txt": "alpha",
+			"batch/b.txt":     "bravo",
+		}, nil)
+		defer server.Shutdown()
+
+		job := runZipBatchDownloadWithParams(t, server, DownloaderParams{
+			RemotePath: "batch/",
+			LocalPath:  root,
+			TempPath:   temp,
+			ZipBatch:   zipBatchParamsForMode(extraction, ZipBatchParams{MinFiles: 2}),
+		})
+
+		requireZipBatchJobClean(t, job)
+		assert.NotEmpty(t, server.ZipCreateRequests, "the download must use ZIP batching")
+		assert.Equal(t, "alpha", readLocalFile(t, root, "sub", "a.txt"))
+		assert.Equal(t, "bravo", readLocalFile(t, root, "b.txt"))
+		entries, err := os.ReadDir(temp)
+		require.NoError(t, err)
+		assert.Empty(t, entries, "the external temp directory must not retain files or download packages")
+	})
+}
+
+func TestZipBatchDownloaderCanceledSpoolCleanup(t *testing.T) {
+	root := t.TempDir()
+	server := newZipBatchMockServer(t, map[string]string{
+		"batch/a.txt": "alpha",
+		"batch/b.txt": "bravo",
+	}, nil)
+	defer server.Shutdown()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	job := server.Client().Downloader(DownloaderParams{
+		RemotePath: "batch/",
+		LocalPath:  root,
+		ZipBatch:   zipBatchParamsForMode(ZipBatchExtractionSpool, ZipBatchParams{MinFiles: 2}),
+	}, files_sdk.WithContext(ctx))
+	job.RegisterFileEvent(func(file JobFile) {
+		if file.RemotePath == "batch/a.txt" {
+			cancel()
+		}
+	}, status.Complete)
+
+	job.Start()
+	job.Wait()
+
+	assert.NotEmpty(t, server.ZipCreateRequests)
+	assert.Equal(t, status.Complete, statusForPath(job, "batch/a.txt"))
+	assert.Equal(t, status.Canceled, statusForPath(job, "batch/b.txt"))
+	assert.Equal(t, "alpha", readLocalFile(t, root, "a.txt"))
+	assert.NoFileExists(t, filepath.Join(root, "b.txt"))
+	assertNoZipBatchSpoolFiles(t, root)
 }
 
 func TestZipBatchDownloaderDisabledDoesNotCreateZipDownloads(t *testing.T) {
@@ -905,6 +964,10 @@ func runZipBatchDownloadWithParams(t *testing.T, server *MockAPIServer, params D
 	job := client.Downloader(params)
 	job.Start()
 	job.Wait()
+	assertNoZipBatchSpoolFiles(t, params.LocalPath)
+	if params.TempPath != "" {
+		assertNoZipBatchSpoolFiles(t, params.TempPath)
+	}
 	return job
 }
 
@@ -1136,4 +1199,31 @@ func storedDescriptorZip(name string, data []byte) []byte {
 	writeUint32(uint32(centralOffset))
 	writeUint16(0)
 	return out.Bytes()
+}
+
+func TestZipBatchDownloaderDoesNotWriteThroughLinkLeavingDestination(t *testing.T) {
+	forEachZipBatchExtractionMode(t, func(t *testing.T, extraction ZipBatchExtractionMode) {
+		root := t.TempDir()
+		other := t.TempDir()
+		server := newZipBatchMockServer(t, map[string]string{
+			"batch/sub/a.txt": "alpha",
+			"batch/sub/b.txt": "bravo",
+			"batch/c.txt":     "charlie",
+		}, nil)
+		defer server.Shutdown()
+		require.NoError(t, os.MkdirAll(filepath.Join(root, "batch"), 0755))
+		if err := os.Symlink(other, filepath.Join(root, "batch", "sub")); err != nil {
+			t.Skipf("symlinks are not available: %v", err)
+		}
+
+		job := runZipBatchDownload(t, server, "batch", root, zipBatchParamsForMode(extraction, ZipBatchParams{MinFiles: 2}), false, RetryPolicy{})
+
+		entries, err := os.ReadDir(other)
+		require.NoError(t, err)
+		assert.Empty(t, entries, "nothing may be written through the link")
+		assert.Equal(t, status.Errored, statusForPath(job, "batch/sub/a.txt"))
+		assert.Equal(t, status.Errored, statusForPath(job, "batch/sub/b.txt"))
+		assert.Equal(t, "charlie", readLocalFile(t, root, "batch", "c.txt"))
+		assert.True(t, job.All(status.Ended...))
+	})
 }

@@ -14,9 +14,9 @@ import (
 func Test_tmpDownloadPath(t *testing.T) {
 	t.Run("base case", func(t *testing.T) {
 		dir := t.TempDir()
-		path, err := tmpDownloadPath(filepath.Join(dir, "you-wont-find-me"), "")
+		path, err := tmpDownloadPath(explicitDestination(filepath.Join(dir, "you-wont-find-me")), "")
 		require.NoError(t, err)
-		assert.Equal(t, filepath.Join(dir, "you-wont-find-me.download/you-wont-find-me"), path)
+		assert.Equal(t, filepath.Join(dir, "you-wont-find-me.download/you-wont-find-me"), path.String())
 	})
 
 	t.Run("it increments a number", func(t *testing.T) {
@@ -28,31 +28,31 @@ func Test_tmpDownloadPath(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		path, err := tmpDownloadPath(filepath.Join(dir, "find-me"), "")
+		path, err := tmpDownloadPath(explicitDestination(filepath.Join(dir, "find-me")), "")
 		require.NoError(t, err)
-		assert.Equal(t, filepath.Join(dir, "find-me (1).download/find-me"), path, "it increments a number")
+		assert.Equal(t, filepath.Join(dir, "find-me (1).download/find-me"), path.String(), "it increments a number")
 	})
 
 	t.Run("it increments a number lots of times", func(t *testing.T) {
 		dir := t.TempDir()
 		for i := 0; i < 11; i++ {
-			path, err := tmpDownloadPath(filepath.Join(dir, "find-me"), "")
+			path, err := tmpDownloadPath(explicitDestination(filepath.Join(dir, "find-me")), "")
 			require.NoError(t, err)
-			file, err := os.Create(path)
+			file, err := os.Create(path.String())
 			require.NoError(t, err)
 			file.Close()
 		}
 
-		path, err := tmpDownloadPath(filepath.Join(dir, "find-me"), "")
+		path, err := tmpDownloadPath(explicitDestination(filepath.Join(dir, "find-me")), "")
 		require.NoError(t, err)
-		assert.NotEqual(t, filepath.Join(dir, "find-me (11).download/find-me"), path)
+		assert.NotEqual(t, filepath.Join(dir, "find-me (11).download/find-me"), path.String())
 	})
 
 	t.Run("it supports a temp path", func(t *testing.T) {
 		dir := t.TempDir()
 		tempDir := t.TempDir()
-		path, err := tmpDownloadPath(filepath.Join(dir, "find-me"), tempDir)
+		path, err := tmpDownloadPath(explicitDestination(filepath.Join(dir, "find-me")), tempDir)
 		require.NoError(t, err)
-		assert.Equal(t, filepath.Join(tempDir, "find-me.download/find-me"), path)
+		assert.Equal(t, filepath.Join(tempDir, "find-me.download/find-me"), path.String())
 	})
 }

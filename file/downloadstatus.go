@@ -18,6 +18,7 @@ type DownloadStatus struct {
 	job             *Job
 	DownloadedBytes int64
 	localPath       string
+	destination     destinationPath
 	remotePath      string
 	tempPath        string
 	TmpPath         string
@@ -29,7 +30,12 @@ type DownloadStatus struct {
 	PreserveTimes   bool
 	error
 	lastError error
-	dryRun    bool
+	// indexErr records why the file can never be downloaded: its listing or
+	// open failed, or its server path does not resolve inside the destination.
+	// Retrying clears error, so this is checked separately to keep the file
+	// Errored on every retry instead of downloading it.
+	indexErr error
+	dryRun   bool
 	status.Changes
 }
 

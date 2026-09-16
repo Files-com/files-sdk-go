@@ -44,29 +44,30 @@ type sizeFixture struct {
 
 	lifecycles   int      // download URLs issued
 	rejected     []string // path and range of every 409
-	served       int      // transfer responses completed since the last change
+	responses    int      // transfer responses selected since the last change
 	servedRanges []string // Range header of every completed transfer response
 
 	// metadataTracksSource makes the JSON metadata follow the current size;
 	// otherwise it keeps reporting metadataSize.
 	metadataTracksSource bool
-	// changeAfterServed mutates the source (size += changeDelta) once this many
-	// transfer responses completed. With repeatChange it happens again in every
-	// later lifecycle; otherwise only once.
-	changeAfterServed int
-	changeDelta       int64
-	repeatChange      bool
+	// changeAfterResponse mutates the source (size += changeDelta) after this
+	// response snapshots its bytes and headers. Later requests see the new
+	// source even while that response streams. With repeatChange it happens
+	// again in every later lifecycle; otherwise only once.
+	changeAfterResponse int
+	changeDelta         int64
+	repeatChange        bool
 	// changeBeforeFirstTransfer mutates the source before the first transfer
 	// request, so the first URL is rejected before any bytes are served.
 	changeBeforeFirstTransfer bool
 	changes                   int
-	// conflictTotalOnServed makes that successful range response report a
+	// conflictTotalOnResponse makes that selected range response report a
 	// Content-Range total that contradicts the size it serves.
-	conflictTotalOnServed int
-	// unsatisfiedContentRangeOnServed makes that 206 carry "bytes */total", a
+	conflictTotalOnResponse int
+	// unsatisfiedContentRangeOnResponse makes that 206 carry "bytes */total", a
 	// Content-Range that states no byte coverage.
-	unsatisfiedContentRangeOnServed int
-	shortBody                       bool // send half of the promised bytes
+	unsatisfiedContentRangeOnResponse int
+	shortBody                         bool // send half of the promised bytes
 	// rejectAs selects the 409 body: "" for the typed download_source_changed
 	// JSON, "text" for plain text that merely mentions the token, "other" for a
 	// different typed JSON error.
@@ -86,13 +87,10 @@ func sizeFixtureByte(version int, offset int64) byte {
 }
 
 func (f *sizeFixture) serve(w http.ResponseWriter, r *http.Request) {
-	f.mu.Lock()
-	defer f.mu.Unlock()
 	switch {
 	case strings.Contains(r.URL.Path, "/api/rest/v1/file_actions/metadata/"):
 		f.writeMetadata(w, false)
 	case strings.Contains(r.URL.Path, "/api/rest/v1/files/"):
-		f.lifecycles++
 		f.writeMetadata(w, true)
 	case strings.HasPrefix(r.URL.Path, "/transfer/"):
 		f.serveTransfer(w, r)
@@ -104,26 +102,32 @@ func (f *sizeFixture) serve(w http.ResponseWriter, r *http.Request) {
 }
 
 func (f *sizeFixture) writeMetadata(w http.ResponseWriter, withDownloadURI bool) {
+	f.mu.Lock()
 	size := f.metadataSize
 	if f.metadataTracksSource {
 		size = f.size
 	}
 	metadata := map[string]any{"path": "fixture.bin", "display_name": "fixture.bin", "type": "file", "size": size}
 	if withDownloadURI {
+		f.lifecycles++
 		metadata["download_uri"] = fmt.Sprintf("%s/transfer/%d?sz=%d", f.url, f.lifecycles, f.size)
 	}
+	f.mu.Unlock()
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(metadata)
 }
 
 func (f *sizeFixture) serveTransfer(w http.ResponseWriter, r *http.Request) {
+	f.mu.Lock()
 	if f.changeBeforeFirstTransfer && f.changes == 0 {
 		f.changeSource()
 	}
 	pinned, _ := strconv.ParseInt(r.URL.Query().Get("sz"), 10, 64)
 	if pinned != f.size {
 		f.rejected = append(f.rejected, r.URL.Path+" "+r.Header.Get("Range"))
-		switch f.rejectAs {
+		rejectAs := f.rejectAs
+		f.mu.Unlock()
+		switch rejectAs {
 		case "text":
 			w.Header().Set("Content-Type", "text/plain")
 			w.WriteHeader(http.StatusConflict)
@@ -150,38 +154,52 @@ func (f *sizeFixture) serveTransfer(w http.ResponseWriter, r *http.Request) {
 		}
 		if start >= f.size {
 			w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", f.size))
+			f.mu.Unlock()
 			w.WriteHeader(http.StatusRequestedRangeNotSatisfiable)
 			return
 		}
 		end = min(end, f.size-1)
 		code = http.StatusPartialContent
+	}
+	transfer := r.Method != http.MethodHead
+	if transfer {
+		f.responses++
+	}
+	if code == http.StatusPartialContent {
 		total := f.size
-		if f.conflictTotalOnServed > 0 && f.served+1 == f.conflictTotalOnServed {
+		if transfer && f.responses == f.conflictTotalOnResponse {
 			total += sizeFixtureMiB
 		}
-		if f.unsatisfiedContentRangeOnServed > 0 && f.served+1 == f.unsatisfiedContentRangeOnServed {
+		if transfer && f.responses == f.unsatisfiedContentRangeOnResponse {
 			w.Header().Set("Content-Range", fmt.Sprintf("bytes */%d", total))
 		} else {
 			w.Header().Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", start, end, total))
 		}
 	}
 	length := end - start + 1
+	send := length
+	if f.shortBody {
+		send = length / 2
+	}
+	version := f.version
+	if transfer && f.responses == f.changeAfterResponse && (f.changes == 0 || f.repeatChange) {
+		f.changeSource()
+	}
+	f.mu.Unlock()
+	// A blocked response body must not prevent another range from receiving
+	// its headers. Each response keeps the source generation it started with.
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Accept-Ranges", "bytes")
 	w.Header().Set("Content-Length", strconv.FormatInt(length, 10))
 	w.WriteHeader(code)
-	if r.Method == http.MethodHead {
+	if !transfer {
 		return
-	}
-	send := length
-	if f.shortBody {
-		send = length / 2
 	}
 	buf := make([]byte, 64*1024)
 	for written := int64(0); written < send; {
 		n := min(int64(len(buf)), send-written)
 		for i := range buf[:n] {
-			buf[i] = sizeFixtureByte(f.version, start+written+int64(i))
+			buf[i] = sizeFixtureByte(version, start+written+int64(i))
 		}
 		if _, err := w.Write(buf[:n]); err != nil {
 			return
@@ -191,18 +209,16 @@ func (f *sizeFixture) serveTransfer(w http.ResponseWriter, r *http.Request) {
 	if send != length {
 		return // the connection closes short of Content-Length
 	}
-	f.served++
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.servedRanges = append(f.servedRanges, r.Header.Get("Range"))
-	if f.changeAfterServed > 0 && f.served == f.changeAfterServed && (f.changes == 0 || f.repeatChange) {
-		f.changeSource()
-	}
 }
 
 func (f *sizeFixture) changeSource() {
 	f.size += f.changeDelta
 	f.version++
 	f.changes++
-	f.served = 0
+	f.responses = 0
 }
 
 type sizeFixtureRun struct {
@@ -383,7 +399,7 @@ func TestDownloadPartsStaleMetadataConvergesOnRetry(t *testing.T) {
 
 func TestDownloadAdaptiveConflictingRangeTotalsFail(t *testing.T) {
 	fixture := newSizeFixture(t, 21*sizeFixtureMiB, 21*sizeFixtureMiB)
-	fixture.conflictTotalOnServed = 2
+	fixture.conflictTotalOnResponse = 2
 	job, dest := fixture.download(t, sizeFixtureRun{adaptive: true})
 
 	err := job.Statuses[0].Err()
@@ -397,7 +413,7 @@ func TestDownloadAdaptiveRangeWithoutByteCoverage(t *testing.T) {
 	// over; afterwards it contradicts the established plan and fails safely.
 	t.Run("first response declines to the fallback engine", func(t *testing.T) {
 		fixture := newSizeFixture(t, 21*sizeFixtureMiB, 21*sizeFixtureMiB)
-		fixture.unsatisfiedContentRangeOnServed = 1
+		fixture.unsatisfiedContentRangeOnResponse = 1
 		job, dest := fixture.download(t, sizeFixtureRun{adaptive: true})
 
 		require.NoError(t, job.Statuses[0].Err())
@@ -406,7 +422,7 @@ func TestDownloadAdaptiveRangeWithoutByteCoverage(t *testing.T) {
 	})
 	t.Run("later response fails the attempt", func(t *testing.T) {
 		fixture := newSizeFixture(t, 21*sizeFixtureMiB, 21*sizeFixtureMiB)
-		fixture.unsatisfiedContentRangeOnServed = 2
+		fixture.unsatisfiedContentRangeOnResponse = 2
 		job, dest := fixture.download(t, sizeFixtureRun{adaptive: true})
 
 		require.ErrorIs(t, job.Statuses[0].Err(), errDownloadSizeConflict)
@@ -462,7 +478,7 @@ func TestDownloadShortBodiesFail(t *testing.T) {
 func TestDownloadSourceChangedRestartsFromNewDownloadRequest(t *testing.T) {
 	changing := func(t *testing.T) *sizeFixture {
 		fixture := newSizeFixture(t, 21*sizeFixtureMiB, 21*sizeFixtureMiB)
-		fixture.changeAfterServed = 1
+		fixture.changeAfterResponse = 1
 		fixture.changeDelta = sizeFixtureMiB
 		return fixture
 	}
@@ -493,7 +509,7 @@ func TestDownloadSourceChangedRestartsFromNewDownloadRequest(t *testing.T) {
 		assert.Contains(t, fixture.ranges(), adaptivePartBoundary+"23068671", "the adaptive engine planned the retry from the transfer size")
 	})
 
-	t.Run("adaptive source emptied after first range completes empty from a new download request", func(t *testing.T) {
+	t.Run("adaptive source emptied after first response completes empty from a new download request", func(t *testing.T) {
 		fixture := changing(t)
 		fixture.changeDelta = -21 * sizeFixtureMiB
 		job, dest := fixture.download(t, sizeFixtureRun{adaptive: true, retryCount: 1})
@@ -571,7 +587,7 @@ func TestDownloadUntypedConflictsKeepTheDownloadRequest(t *testing.T) {
 	for _, shape := range []string{"text", "other"} {
 		t.Run(shape, func(t *testing.T) {
 			fixture := newSizeFixture(t, 21*sizeFixtureMiB, 21*sizeFixtureMiB)
-			fixture.changeAfterServed = 1
+			fixture.changeAfterResponse = 1
 			fixture.changeDelta = sizeFixtureMiB
 			fixture.rejectAs = shape
 			job, dest := fixture.download(t, sizeFixtureRun{adaptive: true, retryCount: 1})
@@ -649,7 +665,7 @@ func TestDownloadV2CancelWhileWaitingForFirstRange(t *testing.T) {
 
 	done := make(chan error, 1)
 	go func() {
-		_, _, _, err := runDownloadV2IfSupported(ctx, reportStatus, ranger.info, tmpPath, 0)
+		_, _, _, err := runDownloadV2IfSupported(ctx, reportStatus, ranger.info, explicitDestination(tmpPath), 0)
 		done <- err
 	}()
 	select {
