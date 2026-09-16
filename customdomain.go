@@ -15,6 +15,7 @@ type CustomDomain struct {
 	SslCertificateId int64      `json:"ssl_certificate_id,omitempty" path:"ssl_certificate_id,omitempty" url:"ssl_certificate_id,omitempty"`
 	BrickManaged     *bool      `json:"brick_managed,omitempty" path:"brick_managed,omitempty" url:"brick_managed,omitempty"`
 	FolderBehaviorId int64      `json:"folder_behavior_id,omitempty" path:"folder_behavior_id,omitempty" url:"folder_behavior_id,omitempty"`
+	IpAddresses      []string   `json:"ip_addresses,omitempty" path:"ip_addresses,omitempty" url:"ip_addresses,omitempty"`
 	CreatedAt        *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 	UpdatedAt        *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
@@ -47,6 +48,11 @@ type CustomDomainListParams struct {
 
 type CustomDomainFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+}
+
+type CustomDomainCreateAllocateIpParams struct {
+	Id    int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Count int64 `url:"count" json:"count" path:"count"`
 }
 
 type CustomDomainCreateParams struct {

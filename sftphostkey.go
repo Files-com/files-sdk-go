@@ -8,6 +8,7 @@ import (
 
 type SftpHostKey struct {
 	Active            *bool  `json:"active,omitempty" path:"active,omitempty" url:"active,omitempty"`
+	CustomDomainId    int64  `json:"custom_domain_id,omitempty" path:"custom_domain_id,omitempty" url:"custom_domain_id,omitempty"`
 	Id                int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name              string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	KeyType           string `json:"key_type,omitempty" path:"key_type,omitempty" url:"key_type,omitempty"`
@@ -31,16 +32,18 @@ type SftpHostKeyFindParams struct {
 }
 
 type SftpHostKeyCreateParams struct {
-	Active     *bool  `url:"active,omitempty" json:"active,omitempty" path:"active"`
-	Name       string `url:"name,omitempty" json:"name,omitempty" path:"name"`
-	PrivateKey string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
+	Active         *bool  `url:"active,omitempty" json:"active,omitempty" path:"active"`
+	CustomDomainId int64  `url:"custom_domain_id,omitempty" json:"custom_domain_id,omitempty" path:"custom_domain_id"`
+	Name           string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	PrivateKey     string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 }
 
 type SftpHostKeyUpdateParams struct {
-	Id         int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	Active     *bool  `url:"active,omitempty" json:"active,omitempty" path:"active"`
-	Name       string `url:"name,omitempty" json:"name,omitempty" path:"name"`
-	PrivateKey string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
+	Id             int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	Active         *bool  `url:"active,omitempty" json:"active,omitempty" path:"active"`
+	CustomDomainId int64  `url:"custom_domain_id,omitempty" json:"custom_domain_id,omitempty" path:"custom_domain_id"`
+	Name           string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	PrivateKey     string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 }
 
 type SftpHostKeyDeleteParams struct {

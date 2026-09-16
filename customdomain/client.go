@@ -56,6 +56,15 @@ func Find(params files_sdk.CustomDomainFindParams, opts ...files_sdk.RequestResp
 	return (&Client{}).Find(params, opts...)
 }
 
+func (c *Client) CreateAllocateIp(params files_sdk.CustomDomainCreateAllocateIpParams, opts ...files_sdk.RequestResponseOption) (customDomain files_sdk.CustomDomain, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/custom_domains/{id}/allocate_ips", Params: params, Entity: &customDomain}, opts...)
+	return
+}
+
+func CreateAllocateIp(params files_sdk.CustomDomainCreateAllocateIpParams, opts ...files_sdk.RequestResponseOption) (customDomain files_sdk.CustomDomain, err error) {
+	return (&Client{}).CreateAllocateIp(params, opts...)
+}
+
 func (c *Client) Create(params files_sdk.CustomDomainCreateParams, opts ...files_sdk.RequestResponseOption) (customDomain files_sdk.CustomDomain, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/custom_domains", Params: params, Entity: &customDomain}, opts...)
 	return
