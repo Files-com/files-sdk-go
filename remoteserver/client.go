@@ -101,15 +101,6 @@ func AgentPushUpdateWithMap(params map[string]interface{}, opts ...files_sdk.Req
 	return (&Client{}).AgentPushUpdateWithMap(params, opts...)
 }
 
-func (c *Client) ConfigurationFile(params files_sdk.RemoteServerConfigurationFileParams, opts ...files_sdk.RequestResponseOption) (remoteServerConfigurationFile files_sdk.RemoteServerConfigurationFile, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/remote_servers/{id}/configuration_file", Params: params, Entity: &remoteServerConfigurationFile}, opts...)
-	return
-}
-
-func ConfigurationFile(params files_sdk.RemoteServerConfigurationFileParams, opts ...files_sdk.RequestResponseOption) (remoteServerConfigurationFile files_sdk.RemoteServerConfigurationFile, err error) {
-	return (&Client{}).ConfigurationFile(params, opts...)
-}
-
 func (c *Client) Update(params files_sdk.RemoteServerUpdateParams, opts ...files_sdk.RequestResponseOption) (remoteServer files_sdk.RemoteServer, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/remote_servers/{id}", Params: params, Entity: &remoteServer}, opts...)
 	return

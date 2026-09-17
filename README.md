@@ -701,7 +701,6 @@ if err != nil {
 | `not-authenticated/api-key-sessions-not-supported` | `ErrApiKeySessionsNotSupported` | Api Key Sessions Not Supported |
 | `not-authenticated/authentication-required` | `ErrAuthenticationRequired` | Authentication Required |
 | `not-authenticated/bundle-registration-code-failed` | `ErrBundleRegistrationCodeFailed` | Bundle Registration Code Failed |
-| `not-authenticated/files-agent-token-failed` | `ErrFilesAgentTokenFailed` | Files Agent Token Failed |
 | `not-authenticated/inbox-registration-code-failed` | `ErrInboxRegistrationCodeFailed` | Inbox Registration Code Failed |
 | `not-authenticated/invalid-credentials` | `ErrInvalidCredentials` | Invalid Credentials |
 | `not-authenticated/invalid-oauth` | `ErrInvalidOauth` | Invalid Oauth |

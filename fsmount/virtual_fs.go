@@ -141,6 +141,46 @@ func (vfs *virtualfs) fetch(path string) (*fsNode, bool) {
 	return node, ok
 }
 
+func (vfs *virtualfs) childNodes(dirPath string) map[string]*fsNode {
+	vfs.nodesMu.Lock()
+	defer vfs.nodesMu.Unlock()
+
+	children := make(map[string]*fsNode)
+	for path, node := range vfs.nodes {
+		if path != dirPath && path_lib.Dir(path) == dirPath {
+			children[path] = node
+		}
+	}
+	return children
+}
+
+func (vfs *virtualfs) removeMissingChildren(previous map[string]*fsNode, listed map[string]struct{}) []string {
+	openNodes := make(map[*fsNode]bool)
+	for _, handle := range vfs.handles.OpenHandles() {
+		openNodes[handle.node] = true
+	}
+
+	var removed []string
+	for path, node := range previous {
+		if _, exists := listed[path]; exists || openNodes[node] {
+			continue
+		}
+
+		// Rename and write-session creation take writeMu before updating the VFS.
+		node.writeMu.Lock()
+		vfs.nodesMu.Lock()
+		node.statusMu.Lock()
+		if vfs.nodes[path] == node && node.writeSession == nil && !node.unmaterialized && !node.pendingVisible {
+			delete(vfs.nodes, path)
+			removed = append(removed, path)
+		}
+		node.statusMu.Unlock()
+		vfs.nodesMu.Unlock()
+		node.writeMu.Unlock()
+	}
+	return removed
+}
+
 func (vfs *virtualfs) getOrCreate(path string, nt nodeType) (node *fsNode) {
 	vfs.nodesMu.Lock()
 	defer vfs.nodesMu.Unlock()

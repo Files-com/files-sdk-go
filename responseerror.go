@@ -93,7 +93,6 @@ const (
 	ErrApiKeySessionsNotSupported                                             ResponseErrorType = "not-authenticated/api-key-sessions-not-supported"
 	ErrAuthenticationRequired                                                 ResponseErrorType = "not-authenticated/authentication-required"
 	ErrBundleRegistrationCodeFailed                                           ResponseErrorType = "not-authenticated/bundle-registration-code-failed"
-	ErrFilesAgentTokenFailed                                                  ResponseErrorType = "not-authenticated/files-agent-token-failed"
 	ErrInboxRegistrationCodeFailed                                            ResponseErrorType = "not-authenticated/inbox-registration-code-failed"
 	ErrInvalidCredentials                                                     ResponseErrorType = "not-authenticated/invalid-credentials"
 	ErrInvalidOauth                                                           ResponseErrorType = "not-authenticated/invalid-oauth"

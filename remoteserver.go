@@ -67,7 +67,6 @@ type RemoteServer struct {
 	EnableDedicatedIps                      *bool  `json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips,omitempty" url:"enable_dedicated_ips,omitempty"`
 	FilesAgentPermissionSet                 string `json:"files_agent_permission_set,omitempty" path:"files_agent_permission_set,omitempty" url:"files_agent_permission_set,omitempty"`
 	FilesAgentRoot                          string `json:"files_agent_root,omitempty" path:"files_agent_root,omitempty" url:"files_agent_root,omitempty"`
-	FilesAgentApiToken                      string `json:"files_agent_api_token,omitempty" path:"files_agent_api_token,omitempty" url:"files_agent_api_token,omitempty"`
 	FilesAgentVersion                       string `json:"files_agent_version,omitempty" path:"files_agent_version,omitempty" url:"files_agent_version,omitempty"`
 	FilesAgentUpToDate                      *bool  `json:"files_agent_up_to_date,omitempty" path:"files_agent_up_to_date,omitempty" url:"files_agent_up_to_date,omitempty"`
 	FilesAgentLatestVersion                 string `json:"files_agent_latest_version,omitempty" path:"files_agent_latest_version,omitempty" url:"files_agent_latest_version,omitempty"`
@@ -341,22 +340,6 @@ type RemoteServerCreateParams struct {
 // Push update to Files Agent
 type RemoteServerAgentPushUpdateParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
-}
-
-// Post local changes, check in, and download configuration file (used by some Remote Server integrations, such as the Files.com Agent)
-type RemoteServerConfigurationFileParams struct {
-	Id            int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	ApiToken      string `url:"api_token,omitempty" json:"api_token,omitempty" path:"api_token"`
-	PermissionSet string `url:"permission_set,omitempty" json:"permission_set,omitempty" path:"permission_set"`
-	Root          string `url:"root,omitempty" json:"root,omitempty" path:"root"`
-	Hostname      string `url:"hostname,omitempty" json:"hostname,omitempty" path:"hostname"`
-	Port          int64  `url:"port,omitempty" json:"port,omitempty" path:"port"`
-	Status        string `url:"status,omitempty" json:"status,omitempty" path:"status"`
-	ConfigVersion string `url:"config_version,omitempty" json:"config_version,omitempty" path:"config_version"`
-	PrivateKey    string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
-	PublicKey     string `url:"public_key,omitempty" json:"public_key,omitempty" path:"public_key"`
-	ServerHostKey string `url:"server_host_key,omitempty" json:"server_host_key,omitempty" path:"server_host_key"`
-	Subdomain     string `url:"subdomain,omitempty" json:"subdomain,omitempty" path:"subdomain"`
 }
 
 type RemoteServerUpdateParams struct {

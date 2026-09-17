@@ -2796,6 +2796,7 @@ func (fs *RemoteFs) loadDir(node *fsNode) (errc int) {
 
 func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, opErr error) {
 	fs.log.Trace("RemoteFs: listDir: Listing directory: %v", path)
+	previous := fs.vfs.childNodes(path)
 
 	opErr = fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
 		it, err := fs.backend.listFor(files_sdk.FolderListForParams{Path: fs.remotePath(path)})
@@ -2847,6 +2848,14 @@ func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, opErr 
 		}
 		return locks.Err()
 	})
+
+	if opErr == nil {
+		// A complete listing also invalidates names removed by another client.
+		// Limit removal to nodes that existed before the request started.
+		for _, removedPath := range fs.vfs.removeMissingChildren(previous, childPaths) {
+			_ = fs.cacheStore.Delete(removedPath)
+		}
+	}
 
 	return childPaths, opErr
 }
