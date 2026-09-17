@@ -77,6 +77,7 @@ type User struct {
 	ResponsibleUserId                      int64      `json:"responsible_user_id,omitempty" path:"responsible_user_id,omitempty" url:"responsible_user_id,omitempty"`
 	ReadonlySiteAdmin                      *bool      `json:"readonly_site_admin,omitempty" path:"readonly_site_admin,omitempty" url:"readonly_site_admin,omitempty"`
 	RestapiPermission                      *bool      `json:"restapi_permission,omitempty" path:"restapi_permission,omitempty" url:"restapi_permission,omitempty"`
+	S3CompatibleEndpointPermission         *bool      `json:"s3_compatible_endpoint_permission,omitempty" path:"s3_compatible_endpoint_permission,omitempty" url:"s3_compatible_endpoint_permission,omitempty"`
 	SelfManaged                            *bool      `json:"self_managed,omitempty" path:"self_managed,omitempty" url:"self_managed,omitempty"`
 	SftpPermission                         *bool      `json:"sftp_permission,omitempty" path:"sftp_permission,omitempty" url:"sftp_permission,omitempty"`
 	SiteAdmin                              *bool      `json:"site_admin,omitempty" path:"site_admin,omitempty" url:"site_admin,omitempty"`
@@ -250,6 +251,7 @@ type UserCreateParams struct {
 	ResponsibleGroupId                     int64                        `url:"responsible_group_id,omitempty" json:"responsible_group_id,omitempty" path:"responsible_group_id"`
 	ResponsibleUserId                      int64                        `url:"responsible_user_id,omitempty" json:"responsible_user_id,omitempty" path:"responsible_user_id"`
 	RestapiPermission                      *bool                        `url:"restapi_permission,omitempty" json:"restapi_permission,omitempty" path:"restapi_permission"`
+	S3CompatibleEndpointPermission         *bool                        `url:"s3_compatible_endpoint_permission,omitempty" json:"s3_compatible_endpoint_permission,omitempty" path:"s3_compatible_endpoint_permission"`
 	SelfManaged                            *bool                        `url:"self_managed,omitempty" json:"self_managed,omitempty" path:"self_managed"`
 	SftpPermission                         *bool                        `url:"sftp_permission,omitempty" json:"sftp_permission,omitempty" path:"sftp_permission"`
 	SiteAdmin                              *bool                        `url:"site_admin,omitempty" json:"site_admin,omitempty" path:"site_admin"`
@@ -337,6 +339,7 @@ type UserUpdateParams struct {
 	ResponsibleGroupId                     int64                        `url:"responsible_group_id,omitempty" json:"responsible_group_id,omitempty" path:"responsible_group_id"`
 	ResponsibleUserId                      int64                        `url:"responsible_user_id,omitempty" json:"responsible_user_id,omitempty" path:"responsible_user_id"`
 	RestapiPermission                      *bool                        `url:"restapi_permission,omitempty" json:"restapi_permission,omitempty" path:"restapi_permission"`
+	S3CompatibleEndpointPermission         *bool                        `url:"s3_compatible_endpoint_permission,omitempty" json:"s3_compatible_endpoint_permission,omitempty" path:"s3_compatible_endpoint_permission"`
 	SelfManaged                            *bool                        `url:"self_managed,omitempty" json:"self_managed,omitempty" path:"self_managed"`
 	SftpPermission                         *bool                        `url:"sftp_permission,omitempty" json:"sftp_permission,omitempty" path:"sftp_permission"`
 	SiteAdmin                              *bool                        `url:"site_admin,omitempty" json:"site_admin,omitempty" path:"site_admin"`

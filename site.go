@@ -327,7 +327,6 @@ type SiteUpdateParams struct {
 	ActiveSftpHostKeyIds                               []int64     `url:"active_sftp_host_key_ids,omitempty" json:"active_sftp_host_key_ids,omitempty" path:"active_sftp_host_key_ids"`
 	ProtocolAccessGroupsOnly                           *bool       `url:"protocol_access_groups_only,omitempty" json:"protocol_access_groups_only,omitempty" path:"protocol_access_groups_only"`
 	RevokeBundleAccessOnDisableOrDelete                *bool       `url:"revoke_bundle_access_on_disable_or_delete,omitempty" json:"revoke_bundle_access_on_disable_or_delete,omitempty" path:"revoke_bundle_access_on_disable_or_delete"`
-	BundleWatermarkValue                               interface{} `url:"bundle_watermark_value,omitempty" json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value"`
 	GroupAdminsCanAddUsers                             *bool       `url:"group_admins_can_add_users,omitempty" json:"group_admins_can_add_users,omitempty" path:"group_admins_can_add_users"`
 	GroupAdminsCanManageGroupMemberships               *bool       `url:"group_admins_can_manage_group_memberships,omitempty" json:"group_admins_can_manage_group_memberships,omitempty" path:"group_admins_can_manage_group_memberships"`
 	GroupAdminsCanDeleteUsers                          *bool       `url:"group_admins_can_delete_users,omitempty" json:"group_admins_can_delete_users,omitempty" path:"group_admins_can_delete_users"`
@@ -383,6 +382,7 @@ type SiteUpdateParams struct {
 	LdapGroupInclusion                                 string      `url:"ldap_group_inclusion,omitempty" json:"ldap_group_inclusion,omitempty" path:"ldap_group_inclusion"`
 	LdapBaseDn                                         string      `url:"ldap_base_dn,omitempty" json:"ldap_base_dn,omitempty" path:"ldap_base_dn"`
 	UploadsViaEmailAuthentication                      *bool       `url:"uploads_via_email_authentication,omitempty" json:"uploads_via_email_authentication,omitempty" path:"uploads_via_email_authentication"`
+	BundleWatermarkValue                               interface{} `url:"bundle_watermark_value,omitempty" json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value"`
 	Icon16File                                         io.Writer   `url:"icon16_file,omitempty" json:"icon16_file,omitempty" path:"icon16_file"`
 	Icon16Delete                                       *bool       `url:"icon16_delete,omitempty" json:"icon16_delete,omitempty" path:"icon16_delete"`
 	Icon32File                                         io.Writer   `url:"icon32_file,omitempty" json:"icon32_file,omitempty" path:"icon32_file"`
