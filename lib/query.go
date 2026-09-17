@@ -47,6 +47,8 @@ func BuildPath(resourcePath string, values interface{}) (string, error) {
 		var exists bool
 		if m, ok := values.(map[string]interface{}); ok {
 			value, exists = m[placeholder]
+		} else if m, ok := values.(map[string]string); ok {
+			value, exists = m[placeholder]
 		} else if pathValue, err := findTag(values, "path", placeholder); err == nil {
 			exists = true
 			value = pathValue
@@ -75,6 +77,8 @@ func BuildPath(resourcePath string, values interface{}) (string, error) {
 				if err != nil {
 					return "", err
 				}
+			} else {
+				stringValue = url.PathEscape(v)
 			}
 		default:
 			stringValue = fmt.Sprintf("%v", v)
