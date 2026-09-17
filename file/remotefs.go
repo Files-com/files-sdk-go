@@ -184,7 +184,7 @@ func (f *File) Read(b []byte) (n int, err error) {
 		if err != nil {
 			readCloser = nil
 		}
-		if err != nil && !downloadSourceChanged(err) {
+		if err != nil && !downloadSourceChanged(err) && f.File.DownloadUri != "" && f.downloadRequestId != "" {
 			// The download request status explains most failures; after a source
 			// change the typed error is the contract and the old URL's status is
 			// no longer authoritative.

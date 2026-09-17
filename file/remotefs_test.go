@@ -2,14 +2,62 @@ package file
 
 import (
 	"context"
+	"io"
+	"log"
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/stretchr/testify/require"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestFileReadUsesStatusOnlyWithRequestID(t *testing.T) {
+	for _, requestID := range []string{"", "request-id"} {
+		t.Run("request_id="+requestID, func(t *testing.T) {
+			var downloadRequests, statusRequests atomic.Int32
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				switch r.URL.Path {
+				case "/download":
+					downloadRequests.Add(1)
+					w.Header().Set("X-Files-Download-Request-Id", requestID)
+					w.WriteHeader(http.StatusBadRequest)
+					_, _ = io.WriteString(w, `{"error":"original download failure"}`)
+				case "/download/request-id":
+					statusRequests.Add(1)
+					_, _ = io.WriteString(w, `{"error":"detailed status failure","data":{"status":"failed"}}`)
+				default:
+					t.Errorf("unexpected request: %s", r.URL.Path)
+					w.WriteHeader(http.StatusNotFound)
+				}
+			}))
+			t.Cleanup(server.Close)
+			config := files_sdk.Config{Logger: log.New(io.Discard, "", 0)}.Init()
+			f := (&File{
+				File: &files_sdk.File{Path: "/download.bin", DownloadUri: server.URL + "/download"},
+				FS:   (&FS{Context: context.Background()}).Init(config, false),
+			}).Init()
+
+			_, err := f.Read(make([]byte, 1))
+
+			require.Error(t, err)
+			require.EqualValues(t, 1, downloadRequests.Load())
+			if requestID == "" {
+				require.ErrorContains(t, err, "original download failure")
+				require.Zero(t, statusRequests.Load())
+			} else {
+				require.EqualError(t, err, "detailed status failure")
+				require.EqualValues(t, 1, statusRequests.Load())
+			}
+		})
+	}
+}
 
 func TestFS_Open(t *testing.T) {
 	client, r, err := CreateClient("TestFS_Open")

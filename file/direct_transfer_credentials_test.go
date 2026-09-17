@@ -84,6 +84,15 @@ func TestDownloadDirectOnlyResponsePreservesDirectError(t *testing.T) {
 	require.ErrorAs(t, err, &directErr)
 	require.Equal(t, http.StatusServiceUnavailable, directErr.StatusCode)
 	require.NotContains(t, err.Error(), "unsupported protocol scheme")
+
+	f := (&File{
+		File: &files_sdk.File{Path: "/download.bin"},
+		FS:   (&FS{Context: context.Background()}).Init(client.Config, false),
+	}).Init()
+	_, err = f.Read(make([]byte, 1))
+
+	require.ErrorAs(t, err, &directErr)
+	require.Equal(t, http.StatusServiceUnavailable, directErr.StatusCode)
 }
 
 func TestDownloadRejectsResponseWithoutDownloadTarget(t *testing.T) {
@@ -98,6 +107,14 @@ func TestDownloadRejectsResponseWithoutDownloadTarget(t *testing.T) {
 	}.Init()}
 
 	_, err := client.Download(files_sdk.FileDownloadParams{Path: "/download.bin"})
+
+	require.EqualError(t, err, "download response did not include a usable download URL")
+
+	f := (&File{
+		File: &files_sdk.File{Path: "/download.bin"},
+		FS:   (&FS{Context: context.Background()}).Init(client.Config, false),
+	}).Init()
+	_, err = f.Read(make([]byte, 1))
 
 	require.EqualError(t, err, "download response did not include a usable download URL")
 }
