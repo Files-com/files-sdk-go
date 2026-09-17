@@ -11,9 +11,12 @@ type Walk[T any] struct {
 	Queue[string]
 	IterChan[T]
 	ConcurrencyManager ConcurrencyManagerWithSubWorker
-	Root               string
-	WalkFile           func(d fs.DirEntry, path string, err error) (T, error)
-	ListDirectories    bool
+	// Root is the directory to walk. An empty Root walks the contents of the
+	// filesystem root without emitting the root itself; "." or a named Root also
+	// emits the root directory when ListDirectories is set.
+	Root            string
+	WalkFile        func(d fs.DirEntry, path string, err error) (T, error)
+	ListDirectories bool
 }
 
 type DirEntry struct {
@@ -98,7 +101,7 @@ func (w *Walk[T]) walkDir(ctx context.Context, dir string, it *IterChan[T]) erro
 		}
 
 		if NormalizeForComparison(path) == NormalizeForComparison(dir) && d.IsDir() {
-			if NormalizeForComparison(path) == NormalizeForComparison(w.Root) && w.ListDirectories {
+			if w.Root != "" && w.ListDirectories && NormalizeForComparison(path) == NormalizeForComparison(w.Root) {
 				if err := w.send(ctx, d, path, it, nil); err != nil {
 					return err
 				}

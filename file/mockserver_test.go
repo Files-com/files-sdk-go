@@ -547,6 +547,16 @@ func (f *MockAPIServer) Routes() {
 			c.JSON(http.StatusNotFound, nil)
 		}
 	})
+	f.router.POST("/api/rest/v1/folders/*path", func(c *gin.Context) {
+		f.trackRequest(c)
+		path := strings.TrimPrefix(c.Param("path"), "/")
+
+		if f.customResponse(c, nil) {
+			return
+		}
+
+		c.JSON(http.StatusCreated, files_sdk.File{Path: path, DisplayName: filepath.Base(path), Type: "directory"})
+	})
 	f.router.POST("/api/rest/v1/file_actions/begin_upload/*path", func(c *gin.Context) {
 		f.trackRequest(c)
 		path := strings.TrimPrefix(c.Param("path"), "/")

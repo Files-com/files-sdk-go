@@ -29,10 +29,7 @@ func transliterate(r rune, transliterationMap map[rune]string) string {
 
 func NormalizeForComparison(path string) string {
 	// Normalize Algorithm
-	path = strings.ReplaceAll(path, "\x00", "")
-	path = strings.ReplaceAll(path, "\\", "/")
-	path = strings.Trim(path, "/")
-	path = strings.Join(strings.FieldsFunc(path, func(r rune) bool { return r == '/' }), "/")
+	path = NormalizeAPIPath(path)
 
 	// Normalize For Comparison Algorithm
 	path = norm.NFKC.String(path)

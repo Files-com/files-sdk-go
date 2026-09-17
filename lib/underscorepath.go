@@ -5,6 +5,9 @@ import (
 	"strings"
 )
 
+// NormalizeAPIPath applies the Files.com Normalize algorithm to the joined
+// parts: null bytes are removed, backslashes become slashes, and empty, "."
+// and ".." components are dropped without collapsing their neighbors.
 func NormalizeAPIPath(parts ...string) string {
 	cleaned := make([]string, 0, len(parts))
 	for _, part := range parts {

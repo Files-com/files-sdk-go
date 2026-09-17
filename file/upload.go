@@ -204,7 +204,9 @@ type UploaderParams struct {
 	Sync bool
 	// LocalPaths files or directories to upload.
 	LocalPaths []string
-	// LocalPath a file or directory to recursively upload.
+	// LocalPath a file or directory to recursively upload. A directory ending in a
+	// separator or a "." component ("source/", "source/.", ".") uploads its contents
+	// into RemotePath; otherwise the directory itself is uploaded under RemotePath.
 	LocalPath string
 	// RemotePath destination path for files.com, formatted `/` path separator.
 	RemotePath string
@@ -268,6 +270,25 @@ func expand(path string) (string, error) {
 	return filepath.Join(usr.HomeDir, path[1:]), nil
 }
 
+// localPathSelectsContents reports whether a directory source is written the
+// way rsync reads it: a trailing separator ("source/") or an explicit final
+// current-directory component ("source/." or ".") selects the directory's
+// contents, while a plain directory path selects the directory itself. It must
+// inspect the path as given, because tilde expansion and filepath.Abs remove
+// both markers.
+func localPathSelectsContents(path string) bool {
+	if path == "" {
+		return false
+	}
+	if path == "." {
+		return true
+	}
+	if os.IsPathSeparator(path[len(path)-1]) {
+		return true
+	}
+	return len(path) >= 2 && path[len(path)-1] == '.' && os.IsPathSeparator(path[len(path)-2])
+}
+
 func (c *Client) Uploader(params UploaderParams, opts ...files_sdk.RequestResponseOption) *Job {
 	job := (&Job{}).Init()
 	params.config = c.Config
@@ -293,7 +314,7 @@ func (c *Client) Uploader(params UploaderParams, opts ...files_sdk.RequestRespon
 		if errorJob(job, *file, err) {
 			return
 		}
-		if (lib.Path{Path: params.LocalPath}).EndingSlash() {
+		if localPathSelectsContents(params.LocalPath) {
 			params.LocalPath = absolutePath + string(os.PathSeparator)
 		} else {
 			params.LocalPath = absolutePath

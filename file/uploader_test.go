@@ -562,6 +562,107 @@ func Test_excludeFile(t *testing.T) {
 	})
 }
 
+// Directory sources follow rsync semantics: "source/", "source/." and "."
+// upload the contents of source into the destination, while "source" uploads
+// the source directory itself under the destination.
+func TestUploaderDirectorySourceSemantics(t *testing.T) {
+	createSource := func(t *testing.T) string {
+		t.Helper()
+		source := filepath.Join(t.TempDir(), "source")
+		require.NoError(t, os.MkdirAll(filepath.Join(source, "nested"), 0755))
+		require.NoError(t, os.MkdirAll(filepath.Join(source, "empty"), 0755))
+		require.NoError(t, os.WriteFile(filepath.Join(source, "a.txt"), []byte("a"), 0644))
+		require.NoError(t, os.WriteFile(filepath.Join(source, "nested", "b.txt"), []byte("b"), 0644))
+		return source
+	}
+	uploadedRemotePaths := func(t *testing.T, localPath string) []string {
+		t.Helper()
+		server := (&MockAPIServer{T: t}).Do()
+		t.Cleanup(server.Shutdown)
+
+		job := server.Client().Uploader(UploaderParams{LocalPath: localPath, RemotePath: "dest", Manager: uploadManager.Sync()})
+		job.Start()
+		job.Wait()
+
+		var remotePaths []string
+		for _, uploadStatus := range job.Statuses {
+			assert.NoError(t, uploadStatus.Err(), uploadStatus.RemotePath())
+			remotePaths = append(remotePaths, uploadStatus.RemotePath())
+		}
+		return remotePaths
+	}
+	contentsOnly := []string{"dest/a.txt", "dest/empty", "dest/nested", "dest/nested/b.txt"}
+	includingSource := []string{"dest/source", "dest/source/a.txt", "dest/source/empty", "dest/source/nested", "dest/source/nested/b.txt"}
+
+	t.Run("absolute source with trailing separator uploads only its contents", func(t *testing.T) {
+		assert.ElementsMatch(t, contentsOnly, uploadedRemotePaths(t, createSource(t)+string(os.PathSeparator)))
+	})
+
+	t.Run("dot source with trailing separator uploads only its contents", func(t *testing.T) {
+		t.Chdir(createSource(t))
+		assert.ElementsMatch(t, contentsOnly, uploadedRemotePaths(t, "."+string(os.PathSeparator)))
+	})
+
+	t.Run("absolute source with final dot component uploads only its contents", func(t *testing.T) {
+		assert.ElementsMatch(t, contentsOnly, uploadedRemotePaths(t, createSource(t)+string(os.PathSeparator)+"."))
+	})
+
+	t.Run("bare dot source uploads only its contents", func(t *testing.T) {
+		t.Chdir(createSource(t))
+		assert.ElementsMatch(t, contentsOnly, uploadedRemotePaths(t, "."))
+	})
+
+	t.Run("source without trailing separator uploads the source directory itself", func(t *testing.T) {
+		assert.ElementsMatch(t, includingSource, uploadedRemotePaths(t, createSource(t)))
+	})
+}
+
+func TestLocalPathSelectsContents(t *testing.T) {
+	separator := string(os.PathSeparator)
+	testCases := []struct {
+		path     string
+		expected bool
+	}{
+		{"", false},
+		{".", true},
+		{"." + separator, true},
+		{"source" + separator, true},
+		{"source" + separator + ".", true},
+		{"~" + separator, true},
+		{"~" + separator + ".", true},
+		{"source", false},
+		{"~", false},
+		{"..", false},
+		{"source" + separator + "..", false},
+		{"source.", false},
+		{".hidden", false},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("%q", tc.path), func(t *testing.T) {
+			assert.Equal(t, tc.expected, localPathSelectsContents(tc.path))
+		})
+	}
+}
+
+// Callers that select files with LocalPaths leave LocalPath empty; the empty
+// path is not a source selector and must not be treated as a directory source.
+func TestUploaderLocalPathsWithoutLocalPath(t *testing.T) {
+	server := (&MockAPIServer{T: t}).Do()
+	t.Cleanup(server.Shutdown)
+	server.MockFiles["dest"] = mockFile{File: files_sdk.File{Type: "directory"}}
+	localPath := filepath.Join(t.TempDir(), "a.txt")
+	require.NoError(t, os.WriteFile(localPath, []byte("a"), 0644))
+
+	job := server.Client().Uploader(UploaderParams{LocalPaths: []string{localPath}, RemotePath: "dest/"})
+	job.Start()
+	job.Wait()
+
+	require.Len(t, job.Statuses, 1)
+	assert.NoError(t, job.Statuses[0].Err())
+	assert.Equal(t, "dest/a.txt", job.Statuses[0].RemotePath())
+}
+
 func TestUploader(t *testing.T) {
 	mutex := &sync.Mutex{}
 	t.Run("uploader", func(t *testing.T) {

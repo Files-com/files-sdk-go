@@ -389,7 +389,7 @@ func TestClient_UploadFolder_Dot(t *testing.T) {
 			RemotePath: "go-from-dot",
 			EventsReporter: CreateReporter(func(s JobFile) {
 				resultsMapMutex.Lock()
-				require.NoError(t, s.Err)
+				assert.NoError(s.Err)
 
 				results[s.File.Path] = append(results[s.File.Path], s.TransferBytes)
 				resultsMapMutex.Unlock()

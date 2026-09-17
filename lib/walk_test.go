@@ -133,6 +133,78 @@ func TestWalkDeadlineExceededIsQuietShutdown(t *testing.T) {
 	assert.NoError(t, walk.Err())
 }
 
+func TestWalkRootEmission(t *testing.T) {
+	fileSystem := fstest.MapFS{
+		"top.txt":       &fstest.MapFile{Data: []byte("top")},
+		"dir/a.txt":     &fstest.MapFile{Data: []byte("a")},
+		"dir/empty":     &fstest.MapFile{Mode: fs.ModeDir},
+		"dir/sub/b.txt": &fstest.MapFile{Data: []byte("b")},
+	}
+	testCases := []struct {
+		name            string
+		root            string
+		listDirectories bool
+		expected        []string
+	}{
+		{
+			name:            "empty root lists the contents without the root itself",
+			root:            "",
+			listDirectories: true,
+			expected:        []string{"dir", "dir/a.txt", "dir/empty", "dir/sub", "dir/sub/b.txt", "top.txt"},
+		},
+		{
+			name:            "dot root includes the root directory",
+			root:            ".",
+			listDirectories: true,
+			expected:        []string{".", "dir", "dir/a.txt", "dir/empty", "dir/sub", "dir/sub/b.txt", "top.txt"},
+		},
+		{
+			name:            "named root includes the root directory",
+			root:            "dir",
+			listDirectories: true,
+			expected:        []string{"dir", "dir/a.txt", "dir/empty", "dir/sub", "dir/sub/b.txt"},
+		},
+		{
+			name:            "empty root without directories lists only files",
+			root:            "",
+			listDirectories: false,
+			expected:        []string{"dir/a.txt", "dir/sub/b.txt", "top.txt"},
+		},
+		{
+			name:            "dot root without directories lists only files",
+			root:            ".",
+			listDirectories: false,
+			expected:        []string{"dir/a.txt", "dir/sub/b.txt", "top.txt"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			iter := (&Walk[string]{
+				FS:                 fileSystem,
+				Root:               tc.root,
+				ListDirectories:    tc.listDirectories,
+				ConcurrencyManager: NewConstrainedWorkGroup(1),
+				WalkFile: func(_ fs.DirEntry, path string, _ error) (string, error) {
+					return path, nil
+				},
+			}).Walk(context.Background())
+
+			var paths []string
+			for {
+				path, ok := nextWalkString(t, iter)
+				if !ok {
+					break
+				}
+				paths = append(paths, path)
+			}
+
+			assert.NoError(t, iter.Err())
+			assert.ElementsMatch(t, tc.expected, paths)
+		})
+	}
+}
+
 type queueOnFalseManager struct {
 	*ConstrainedWorkGroup
 	queue *Queue[string]
