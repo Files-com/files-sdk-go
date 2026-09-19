@@ -45,6 +45,7 @@ type PartnerSiteRequestRejectParams struct {
 
 type PartnerSiteRequestApproveParams struct {
 	PairingKey string `url:"pairing_key" json:"pairing_key" path:"pairing_key"`
+	PartnerId  int64  `url:"partner_id,omitempty" json:"partner_id,omitempty" path:"partner_id"`
 }
 
 type PartnerSiteRequestDeleteParams struct {

@@ -35,6 +35,20 @@ func (p Partner) Identifier() interface{} {
 
 type PartnerCollection []Partner
 
+type PartnerPartnershipRoleEnum string
+
+func (u PartnerPartnershipRoleEnum) String() string {
+	return string(u)
+}
+
+func (u PartnerPartnershipRoleEnum) Enum() map[string]PartnerPartnershipRoleEnum {
+	return map[string]PartnerPartnershipRoleEnum{
+		"host":           PartnerPartnershipRoleEnum("host"),
+		"guest":          PartnerPartnershipRoleEnum("guest"),
+		"host_and_guest": PartnerPartnershipRoleEnum("host_and_guest"),
+	}
+}
+
 type PartnerListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -65,22 +79,23 @@ type PartnerCreateParams struct {
 }
 
 type PartnerUpdateParams struct {
-	Id                         int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	AiAssistantPersonalityId   int64  `url:"ai_assistant_personality_id,omitempty" json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id"`
-	AllowedIps                 string `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
-	AllowBypassing2faPolicies  *bool  `url:"allow_bypassing_2fa_policies,omitempty" json:"allow_bypassing_2fa_policies,omitempty" path:"allow_bypassing_2fa_policies"`
-	AllowCredentialChanges     *bool  `url:"allow_credential_changes,omitempty" json:"allow_credential_changes,omitempty" path:"allow_credential_changes"`
-	AllowProvidingGpgKeys      *bool  `url:"allow_providing_gpg_keys,omitempty" json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys"`
-	AllowUserCreation          *bool  `url:"allow_user_creation,omitempty" json:"allow_user_creation,omitempty" path:"allow_user_creation"`
-	CcEmailsToResponsibleParty *bool  `url:"cc_emails_to_responsible_party,omitempty" json:"cc_emails_to_responsible_party,omitempty" path:"cc_emails_to_responsible_party"`
-	Notes                      string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
-	PartnerChannelTemplateId   int64  `url:"partner_channel_template_id,omitempty" json:"partner_channel_template_id,omitempty" path:"partner_channel_template_id"`
-	ResponsibleGroupId         int64  `url:"responsible_group_id,omitempty" json:"responsible_group_id,omitempty" path:"responsible_group_id"`
-	ResponsibleUserId          int64  `url:"responsible_user_id,omitempty" json:"responsible_user_id,omitempty" path:"responsible_user_id"`
-	ShowPartnerChannelHomePage *bool  `url:"show_partner_channel_home_page,omitempty" json:"show_partner_channel_home_page,omitempty" path:"show_partner_channel_home_page"`
-	Tags                       string `url:"tags,omitempty" json:"tags,omitempty" path:"tags"`
-	Name                       string `url:"name,omitempty" json:"name,omitempty" path:"name"`
-	RootFolder                 string `url:"root_folder,omitempty" json:"root_folder,omitempty" path:"root_folder"`
+	Id                         int64                      `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	AiAssistantPersonalityId   int64                      `url:"ai_assistant_personality_id,omitempty" json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id"`
+	AllowedIps                 string                     `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
+	AllowBypassing2faPolicies  *bool                      `url:"allow_bypassing_2fa_policies,omitempty" json:"allow_bypassing_2fa_policies,omitempty" path:"allow_bypassing_2fa_policies"`
+	AllowCredentialChanges     *bool                      `url:"allow_credential_changes,omitempty" json:"allow_credential_changes,omitempty" path:"allow_credential_changes"`
+	AllowProvidingGpgKeys      *bool                      `url:"allow_providing_gpg_keys,omitempty" json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys"`
+	AllowUserCreation          *bool                      `url:"allow_user_creation,omitempty" json:"allow_user_creation,omitempty" path:"allow_user_creation"`
+	CcEmailsToResponsibleParty *bool                      `url:"cc_emails_to_responsible_party,omitempty" json:"cc_emails_to_responsible_party,omitempty" path:"cc_emails_to_responsible_party"`
+	Notes                      string                     `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
+	PartnerChannelTemplateId   int64                      `url:"partner_channel_template_id,omitempty" json:"partner_channel_template_id,omitempty" path:"partner_channel_template_id"`
+	ResponsibleGroupId         int64                      `url:"responsible_group_id,omitempty" json:"responsible_group_id,omitempty" path:"responsible_group_id"`
+	ResponsibleUserId          int64                      `url:"responsible_user_id,omitempty" json:"responsible_user_id,omitempty" path:"responsible_user_id"`
+	ShowPartnerChannelHomePage *bool                      `url:"show_partner_channel_home_page,omitempty" json:"show_partner_channel_home_page,omitempty" path:"show_partner_channel_home_page"`
+	Tags                       string                     `url:"tags,omitempty" json:"tags,omitempty" path:"tags"`
+	Name                       string                     `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	PartnershipRole            PartnerPartnershipRoleEnum `url:"partnership_role,omitempty" json:"partnership_role,omitempty" path:"partnership_role"`
+	RootFolder                 string                     `url:"root_folder,omitempty" json:"root_folder,omitempty" path:"root_folder"`
 }
 
 type PartnerDeleteParams struct {
