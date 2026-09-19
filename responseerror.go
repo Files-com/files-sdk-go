@@ -107,6 +107,7 @@ const (
 	ErrApiKeyIsDisabled                                                       ResponseErrorType = "not-authorized/api-key-is-disabled"
 	ErrApiKeyIsPathRestricted                                                 ResponseErrorType = "not-authorized/api-key-is-path-restricted"
 	ErrApiKeyOnlyForDesktopApp                                                ResponseErrorType = "not-authorized/api-key-only-for-desktop-app"
+	ErrApiKeyOnlyForFileOperations                                            ResponseErrorType = "not-authorized/api-key-only-for-file-operations"
 	ErrApiKeyOnlyForMobileApp                                                 ResponseErrorType = "not-authorized/api-key-only-for-mobile-app"
 	ErrApiKeyOnlyForOfficeIntegration                                         ResponseErrorType = "not-authorized/api-key-only-for-office-integration"
 	ErrBillingInformationHidden                                               ResponseErrorType = "not-authorized/billing-information-hidden"
