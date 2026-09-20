@@ -7,26 +7,27 @@ import (
 )
 
 type Partner struct {
-	AllowBypassing2faPolicies  *bool   `json:"allow_bypassing_2fa_policies,omitempty" path:"allow_bypassing_2fa_policies,omitempty" url:"allow_bypassing_2fa_policies,omitempty"`
-	AllowedIps                 string  `json:"allowed_ips,omitempty" path:"allowed_ips,omitempty" url:"allowed_ips,omitempty"`
-	AllowCredentialChanges     *bool   `json:"allow_credential_changes,omitempty" path:"allow_credential_changes,omitempty" url:"allow_credential_changes,omitempty"`
-	AllowProvidingGpgKeys      *bool   `json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys,omitempty" url:"allow_providing_gpg_keys,omitempty"`
-	AllowUserCreation          *bool   `json:"allow_user_creation,omitempty" path:"allow_user_creation,omitempty" url:"allow_user_creation,omitempty"`
-	CcEmailsToResponsibleParty *bool   `json:"cc_emails_to_responsible_party,omitempty" path:"cc_emails_to_responsible_party,omitempty" url:"cc_emails_to_responsible_party,omitempty"`
-	Id                         int64   `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	AiAssistantPersonalityId   int64   `json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id,omitempty" url:"ai_assistant_personality_id,omitempty"`
-	WorkspaceId                int64   `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
-	Name                       string  `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
-	Notes                      string  `json:"notes,omitempty" path:"notes,omitempty" url:"notes,omitempty"`
-	PartnerAdminIds            []int64 `json:"partner_admin_ids,omitempty" path:"partner_admin_ids,omitempty" url:"partner_admin_ids,omitempty"`
-	PartnerChannelTemplateId   int64   `json:"partner_channel_template_id,omitempty" path:"partner_channel_template_id,omitempty" url:"partner_channel_template_id,omitempty"`
-	PartnershipRole            string  `json:"partnership_role,omitempty" path:"partnership_role,omitempty" url:"partnership_role,omitempty"`
-	ResponsibleGroupId         int64   `json:"responsible_group_id,omitempty" path:"responsible_group_id,omitempty" url:"responsible_group_id,omitempty"`
-	ResponsibleUserId          int64   `json:"responsible_user_id,omitempty" path:"responsible_user_id,omitempty" url:"responsible_user_id,omitempty"`
-	RootFolder                 string  `json:"root_folder,omitempty" path:"root_folder,omitempty" url:"root_folder,omitempty"`
-	ShowPartnerChannelHomePage *bool   `json:"show_partner_channel_home_page,omitempty" path:"show_partner_channel_home_page,omitempty" url:"show_partner_channel_home_page,omitempty"`
-	Tags                       string  `json:"tags,omitempty" path:"tags,omitempty" url:"tags,omitempty"`
-	UserIds                    []int64 `json:"user_ids,omitempty" path:"user_ids,omitempty" url:"user_ids,omitempty"`
+	AllowBypassing2faPolicies  *bool               `json:"allow_bypassing_2fa_policies,omitempty" path:"allow_bypassing_2fa_policies,omitempty" url:"allow_bypassing_2fa_policies,omitempty"`
+	AllowedIps                 string              `json:"allowed_ips,omitempty" path:"allowed_ips,omitempty" url:"allowed_ips,omitempty"`
+	AllowCredentialChanges     *bool               `json:"allow_credential_changes,omitempty" path:"allow_credential_changes,omitempty" url:"allow_credential_changes,omitempty"`
+	AllowProvidingGpgKeys      *bool               `json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys,omitempty" url:"allow_providing_gpg_keys,omitempty"`
+	AllowUserCreation          *bool               `json:"allow_user_creation,omitempty" path:"allow_user_creation,omitempty" url:"allow_user_creation,omitempty"`
+	CcEmailsToResponsibleParty *bool               `json:"cc_emails_to_responsible_party,omitempty" path:"cc_emails_to_responsible_party,omitempty" url:"cc_emails_to_responsible_party,omitempty"`
+	Connections                []PartnerConnection `json:"connections,omitempty" path:"connections,omitempty" url:"connections,omitempty"`
+	Id                         int64               `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	AiAssistantPersonalityId   int64               `json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id,omitempty" url:"ai_assistant_personality_id,omitempty"`
+	WorkspaceId                int64               `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	Name                       string              `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	Notes                      string              `json:"notes,omitempty" path:"notes,omitempty" url:"notes,omitempty"`
+	PartnerAdminIds            []int64             `json:"partner_admin_ids,omitempty" path:"partner_admin_ids,omitempty" url:"partner_admin_ids,omitempty"`
+	PartnerChannelTemplateId   int64               `json:"partner_channel_template_id,omitempty" path:"partner_channel_template_id,omitempty" url:"partner_channel_template_id,omitempty"`
+	PartnershipRole            string              `json:"partnership_role,omitempty" path:"partnership_role,omitempty" url:"partnership_role,omitempty"`
+	ResponsibleGroupId         int64               `json:"responsible_group_id,omitempty" path:"responsible_group_id,omitempty" url:"responsible_group_id,omitempty"`
+	ResponsibleUserId          int64               `json:"responsible_user_id,omitempty" path:"responsible_user_id,omitempty" url:"responsible_user_id,omitempty"`
+	RootFolder                 string              `json:"root_folder,omitempty" path:"root_folder,omitempty" url:"root_folder,omitempty"`
+	ShowPartnerChannelHomePage *bool               `json:"show_partner_channel_home_page,omitempty" path:"show_partner_channel_home_page,omitempty" url:"show_partner_channel_home_page,omitempty"`
+	Tags                       string              `json:"tags,omitempty" path:"tags,omitempty" url:"tags,omitempty"`
+	UserIds                    []int64             `json:"user_ids,omitempty" path:"user_ids,omitempty" url:"user_ids,omitempty"`
 }
 
 func (p Partner) Identifier() interface{} {
