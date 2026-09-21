@@ -84,11 +84,14 @@ func TestClient_Downloader_rejectsServerPathOutsideDestination(t *testing.T) {
 			rejected := findStatus(t, job, "reports/../../outside.txt")
 			assert.Equal(t, status.Errored, rejected.Status())
 			require.ErrorContains(t, rejected.Err(), `download: server path "reports/../../outside.txt"`)
-			retries := 0
-			if policy != "no retry" {
-				retries = 2
+			var classified interface {
+				ErrorType() string
+				PublicError() string
 			}
-			assert.Equal(t, retries, rejected.StatusChanges().Count(status.Retrying), "the rejection must survive every retry")
+			require.ErrorAs(t, ToStatusFile(rejected).Err, &classified)
+			assert.Equal(t, "invalid_path", classified.ErrorType())
+			assert.Equal(t, "Cannot download this file because its path is not valid on this computer.", classified.PublicError())
+			assert.Zero(t, rejected.StatusChanges().Count(status.Retrying), "an invalid destination cannot be fixed by retrying")
 			assert.NoFileExists(t, filepath.Join(root, "a", "outside.txt"))
 			assert.Equal(t, status.Complete, findStatus(t, job, "reports/inside.txt").Status())
 			assert.FileExists(t, filepath.Join(destination, "inside.txt"))

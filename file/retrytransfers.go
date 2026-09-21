@@ -2,6 +2,7 @@ package file
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"time"
 
@@ -48,7 +49,7 @@ func RetryByStatus(ctx context.Context, job *Job, signalEvents bool, policy Retr
 		default:
 			panic("invalid direction")
 		}
-		if len(job.Sub(s...).Statuses) > 0 && i+1 != policy.RetryCount {
+		if len(filesToRetry(job, s...)) > 0 && i+1 != policy.RetryCount {
 			job.Logger.Printf("retry (%v): backing off %v sec", i+1, policy.WaitSec(i))
 			select {
 			case <-time.After(policy.WaitSec(i)):
@@ -59,6 +60,18 @@ func RetryByStatus(ctx context.Context, job *Job, signalEvents bool, policy Retr
 			return
 		}
 	}
+}
+
+func filesToRetry(job *Job, s ...status.GetStatus) []IFile {
+	files := job.Sub(s...).Statuses
+	retryable := files[:0]
+	for _, file := range files {
+		var pathErr downloadPathError
+		if !errors.As(file.Err(), &pathErr) {
+			retryable = append(retryable, file)
+		}
+	}
+	return retryable
 }
 
 func retryUpload(ctx context.Context, job *Job, signalEvents bool, s []status.GetStatus) {
@@ -90,7 +103,8 @@ func retryDownload(ctx context.Context, job *Job, signalEvents bool, s []status.
 }
 
 func enqueueByStatus(ctx context.Context, job *Job, signalEvents bool, enqueue func(IFile, context.Context), waitForComplete func(), s ...status.GetStatus) {
-	if job.Count(s...) == 0 {
+	files := filesToRetry(job, s...)
+	if len(files) == 0 {
 		return
 	}
 	jobCtx := job.WithContext(ctx)
@@ -102,8 +116,6 @@ func enqueueByStatus(ctx context.Context, job *Job, signalEvents bool, enqueue f
 		job.Start(false)
 		job.Scan()
 	}
-
-	files := job.Sub(s...).Statuses
 
 	var types []string
 	for _, st := range s {

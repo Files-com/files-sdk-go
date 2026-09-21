@@ -26,6 +26,22 @@ type destinationPath struct {
 	name string // local path below dir; "." is the directory itself
 }
 
+type downloadPathError struct {
+	error
+}
+
+func (e downloadPathError) Unwrap() error {
+	return e.error
+}
+
+func (e downloadPathError) ErrorType() string {
+	return "invalid_path"
+}
+
+func (e downloadPathError) PublicError() string {
+	return "Cannot download this file because its path is not valid on this computer."
+}
+
 // explicitDestination is a path the caller selected in full, such as the
 // output file of a single-file download. Only its last element is resolved
 // inside its directory.
@@ -42,7 +58,7 @@ func downloadDestination(job *Job, file files_sdk.File) (destinationPath, error)
 	}
 	name, err := localNameBelow(job.RemotePath, file.Path)
 	if err != nil {
-		return destinationPath{}, err
+		return destinationPath{}, downloadPathError{err}
 	}
 	return destinationPath{dir: normalizePath(job.LocalPath), name: name}, nil
 }
