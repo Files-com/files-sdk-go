@@ -1469,16 +1469,49 @@ func TestDownloadPauseResume(t *testing.T) {
 		server.MockFiles["file.txt"] = mockFile{SizeTrust: TrustedSizeValue, File: files_sdk.File{Size: fileSize}}
 
 		localPath := filepath.Join(root, "file.txt")
-		createCanonicalTmpFile(t, localPath, fileSize/2)
+		// Recognizable bytes, so keeping them can be told apart from starting
+		// the whole file again, which would also end at the right size.
+		alreadyDownloaded := bytes.Repeat([]byte("P"), int(fileSize/2))
+		writeCanonicalTmpFile(t, localPath, alreadyDownloaded)
 
 		job := client.Downloader(DownloaderParams{RemotePath: "file.txt", LocalPath: localPath})
 		job.Start()
 		job.Wait()
 
 		require.NoError(t, job.Statuses[0].Err())
-		fi, err := os.Stat(localPath)
+		delivered, err := os.ReadFile(localPath)
 		require.NoError(t, err)
-		assert.Equal(t, fileSize, fi.Size())
+		require.Len(t, delivered, int(fileSize))
+		assert.Equal(t, alreadyDownloaded, delivered[:len(alreadyDownloaded)], "the bytes already on disk must be kept")
+		assert.NotEmpty(t, server.DownloadRequests, "the rest of the file must still be fetched")
+	})
+
+	t.Run("a complete temp file finishes without asking for content", func(t *testing.T) {
+		root := t.TempDir()
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+		client := server.Client()
+		alreadyDownloaded := bytes.Repeat([]byte("P"), 1999)
+		server.MockFiles["file.txt"] = mockFile{
+			SizeTrust: TrustedSizeValue,
+			// Different content of the same size: asking for it would show.
+			Data: bytes.Repeat([]byte("S"), len(alreadyDownloaded)),
+			File: files_sdk.File{Size: int64(len(alreadyDownloaded))},
+		}
+
+		localPath := filepath.Join(root, "file.txt")
+		writeCanonicalTmpFile(t, localPath, alreadyDownloaded)
+
+		job := client.Downloader(DownloaderParams{RemotePath: "file.txt", LocalPath: localPath})
+		job.Start()
+		job.Wait()
+
+		require.NoError(t, job.Statuses[0].Err())
+		assert.Equal(t, status.Complete, job.Statuses[0].Status())
+		delivered, err := os.ReadFile(localPath)
+		require.NoError(t, err)
+		assert.Equal(t, alreadyDownloaded, delivered)
+		assert.Empty(t, server.DownloadRequests, "a complete temp file needs no content request")
 	})
 }
 
@@ -1497,10 +1530,16 @@ func TestOpenFileReturnsCreateError(t *testing.T) {
 
 func createCanonicalTmpFile(t *testing.T, localPath string, size int64) string {
 	t.Helper()
+	return writeCanonicalTmpFile(t, localPath, make([]byte, size))
+}
+
+// writeCanonicalTmpFile leaves content where an interrupted download of
+// localPath would have left it.
+func writeCanonicalTmpFile(t *testing.T, localPath string, content []byte) string {
+	t.Helper()
 	tmpPath, err := tmpDownloadPath(explicitDestination(localPath), "")
 	require.NoError(t, err)
-	err = os.WriteFile(tmpPath.String(), make([]byte, size), 0644)
-	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(tmpPath.String(), content, 0644))
 	return tmpPath.String()
 }
 

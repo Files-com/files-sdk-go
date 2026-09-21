@@ -201,12 +201,12 @@ func (p destinationPath) rename(final destinationPath) error {
 // moveTo renames the completed temporary file p to final. Inside one
 // caller-selected directory this is a single confined rename. Across
 // directories (an external TempPath) the file is staged through the top level
-// of both directories: the .download folder on macOS and the server-derived
-// part of final are only ever resolved by os.Root, and the one plain rename
-// between the directories names caller-selected directories plus names this
-// code created. If the destination root is read-only, a confined copy stages
-// the file in its writable parent instead, keeping the original until the
-// destination replacement succeeds.
+// of both directories: the temporary download folder on macOS and the
+// server-derived part of final are only ever resolved by os.Root, and the one
+// plain rename between the directories names caller-selected directories plus
+// names this code created. If the destination root is read-only, a confined
+// copy stages the file in its writable parent instead, keeping the original
+// until the destination replacement succeeds.
 func (p destinationPath) moveTo(ctx context.Context, final destinationPath) (err error) {
 	if filepath.Clean(p.dir) == filepath.Clean(final.dir) {
 		return p.rename(final)
@@ -274,8 +274,10 @@ func (p destinationPath) copyTo(ctx context.Context, final destinationPath) (err
 	defer parent.Close()
 
 	// Keep the staging name independent of the final basename, which may
-	// already occupy the filesystem's entire component length allowance.
-	stage := "." + TempDownloadExtension + "-" + rand.Text()
+	// already occupy the filesystem's entire component length allowance. It
+	// stays in the reserved namespace so a sync running at the same time
+	// leaves it alone.
+	stage := tempDownloadPrefix + rand.Text() + "." + TempDownloadExtension
 	out, err := parent.OpenFile(stage, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
 	if err != nil {
 		return err
@@ -312,9 +314,10 @@ func (p destinationPath) copyTo(ctx context.Context, final destinationPath) (err
 
 // reserveMoveName creates an empty file with a fresh name directly inside dir
 // for a file moving through the directory. The name does not include the final
-// file name, so it fits wherever the ".download" name fit.
+// file name, so it fits wherever the temporary name fit, and it stays in the
+// reserved namespace so a sync running at the same time leaves it alone.
 func reserveMoveName(dir string) (destinationPath, error) {
-	file, err := os.CreateTemp(dir, "."+TempDownloadExtension+"-*")
+	file, err := os.CreateTemp(dir, tempDownloadPrefix+"*."+TempDownloadExtension)
 	if err != nil {
 		return destinationPath{}, err
 	}

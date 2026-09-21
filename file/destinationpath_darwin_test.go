@@ -14,10 +14,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// On macOS an external temporary file lives in a .download folder inside the
-// temp directory. Replacing that folder with a link to another tree between
-// the write and the finalization must not move that tree's file into the
-// destination.
+// On macOS an external temporary file lives in a temporary download folder
+// inside the temp directory. Replacing that folder with a link to another tree
+// between the write and the finalization must not move that tree's file into
+// the destination.
 func TestClient_Downloader_externalTempFolderReplacedByLinkDoesNotMoveOtherTree(t *testing.T) {
 	root := t.TempDir()
 	temp := t.TempDir()
@@ -33,7 +33,7 @@ func TestClient_Downloader_externalTempFolderReplacedByLinkDoesNotMoveOtherTree(
 	var swap sync.Once
 	job.RegisterFileEvent(func(JobFile) {
 		swap.Do(func() {
-			folder := filepath.Join(temp, "file.txt.download")
+			folder := filepath.Join(temp, tmpDownloadElement("file.txt", ""))
 			assert.NoError(t, os.Rename(folder, filepath.Join(temp, "moved-folder")))
 			assert.NoError(t, os.Symlink(other, folder))
 		})

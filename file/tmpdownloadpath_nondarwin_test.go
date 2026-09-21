@@ -3,7 +3,6 @@
 package file
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -16,36 +15,7 @@ func Test_tmpDownloadPath(t *testing.T) {
 		dir := t.TempDir()
 		path, err := tmpDownloadPath(explicitDestination(filepath.Join(dir, "you-wont-find-me")), "")
 		require.NoError(t, err)
-		assert.Equal(t, filepath.Join(dir, "you-wont-find-me.download"), path.String())
-	})
-
-	t.Run("it increments a number", func(t *testing.T) {
-		dir := t.TempDir()
-		file, err := os.Create(filepath.Join(dir, "find-me.download"))
-		_, err = file.Write([]byte("hello"))
-		require.NoError(t, err)
-		err = file.Close()
-		if err != nil {
-			panic(err)
-		}
-		path, err := tmpDownloadPath(explicitDestination(filepath.Join(dir, "find-me")), "")
-		require.NoError(t, err)
-		assert.Equal(t, filepath.Join(dir, "find-me (1).download"), path.String(), "it increments a number")
-	})
-
-	t.Run("it increments a number lots of times", func(t *testing.T) {
-		dir := t.TempDir()
-		for i := 0; i < 11; i++ {
-			path, err := tmpDownloadPath(explicitDestination(filepath.Join(dir, "find-me")), "")
-			require.NoError(t, err)
-			file, err := os.Create(path.String())
-			require.NoError(t, err)
-			file.Close()
-		}
-
-		path, err := tmpDownloadPath(explicitDestination(filepath.Join(dir, "find-me")), "")
-		require.NoError(t, err)
-		assert.NotEqual(t, filepath.Join(dir, "find-me (11).download"), path.String())
+		assert.Equal(t, filepath.Join(dir, ".~files-cli.you-wont-find-me.download"), path.String())
 	})
 
 	t.Run("it supports a temp path", func(t *testing.T) {
@@ -53,6 +23,6 @@ func Test_tmpDownloadPath(t *testing.T) {
 		tempDir := t.TempDir()
 		path, err := tmpDownloadPath(explicitDestination(filepath.Join(dir, "find-me")), tempDir)
 		require.NoError(t, err)
-		assert.Equal(t, filepath.Join(tempDir, "find-me.download"), path.String())
+		assert.Equal(t, filepath.Join(tempDir, ".~files-cli.find-me.download"), path.String())
 	})
 }

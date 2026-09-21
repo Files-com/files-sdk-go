@@ -2,7 +2,7 @@
 
 Adaptive download V2 uses a keep-size temp-file output path for native known-size ranged downloads:
 
-- Create or open the `.download` temp file on the destination volume.
+- Create or open the [temporary download file](temporary-download-files.md) on the destination volume.
 - Preallocate it to the final file size before scheduling range workers.
 - Fill the copy buffer before writing so small HTTP/TLS reads are coalesced into larger `WriteAt` calls.
 - Stream each coalesced range chunk directly into its final byte offset with `WriteAt`.

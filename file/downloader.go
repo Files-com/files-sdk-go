@@ -291,6 +291,15 @@ func enqueueDownload(ctx context.Context, job *Job, downloadStatus *DownloadStat
 }
 
 func ignoreDownloadJob(job *Job, downloadStatus *DownloadStatus) bool {
+	// A temporary download is never transferred, whatever the caller's rules
+	// say. Otherwise a remote file could take over the unfinished download of
+	// the file it is named after and be delivered in its place. The remote path
+	// is checked as well as the local one, because a temporary download folder
+	// selected as the folder to download loses its own name on the way to the
+	// local destination.
+	if isReservedTempDownloadPath(downloadStatus.RemotePath()) || isReservedTempDownloadPath(downloadStatus.LocalPath()) {
+		return true
+	}
 	return ignorePath(downloadStatus.RemotePath(), job.Ignore, job.Include)
 }
 

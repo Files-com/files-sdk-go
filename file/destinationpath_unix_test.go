@@ -32,9 +32,9 @@ func TestDownloadFolder_acceptsBackslashInFileNameOnPosix(t *testing.T) {
 	assert.FileExists(t, filepath.Join(destination, `a\b.txt`))
 }
 
-// A 244-byte file name keeps its ".download" temporary name within the
-// 255-byte component limit, so finalizing it through an external temp
-// directory must not need a longer name.
+// A 244-byte file name is longer than a temporary name can hold as it is, so
+// it is staged under a shortened name. Finalizing it through an external temp
+// directory must still deliver the file under its own name.
 func TestClient_Downloader_externalTempPathFinalizesLongFileName(t *testing.T) {
 	root := t.TempDir()
 	temp := t.TempDir()

@@ -8,15 +8,15 @@ import (
 )
 
 // explicitTmpDownload is a caller-supplied temporary file path. On macOS the
-// file lives inside its .download folder, which stays part of the confined
-// name so it is removed with the file.
+// file lives inside its temporary download folder, which stays part of the
+// confined name so it is removed with the file.
 func explicitTmpDownload(path string) destinationPath {
 	folder := filepath.Dir(path)
 	return destinationPath{dir: filepath.Dir(folder), name: filepath.Join(filepath.Base(folder), filepath.Base(path))}
 }
 
-// tmpDownloadPathOnNotExist creates a .download folder, a common pattern on
-// macOS, and returns the temporary file inside it.
+// tmpDownloadPathOnNotExist creates a temporary download folder, a common
+// pattern on macOS, and returns the file, under its own name, inside it.
 func tmpDownloadPathOnNotExist(final destinationPath, tmp destinationPath) (destinationPath, error) {
 	if err := tmp.mkdirAll(); err != nil {
 		return destinationPath{}, err

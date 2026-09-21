@@ -466,6 +466,16 @@ func excludeFile(uploadStatus *UploadStatus, incrementalUpdates bool) bool {
 		uploadStatus.Job().UpdateStatus(status.Skipped, uploadStatus, nil)
 		return true
 	}
+	// An unfinished download of this client is never uploaded, whatever the
+	// caller's rules say, so it cannot come back as a remote file able to take
+	// over the download of the file it is named after. Both sides are checked:
+	// a temporary download folder selected as the folder to upload loses its
+	// own name on the way to the remote destination, and an upload must not
+	// create a temporary name remotely either.
+	if isReservedTempDownloadPath(uploadStatus.LocalPath()) || isReservedTempDownloadPath(uploadStatus.RemotePath()) {
+		uploadStatus.Job().UpdateStatus(status.Ignored, uploadStatus, nil)
+		return true
+	}
 	if uploadStatus.Job().Ignore.MatchesPath(uploadStatus.LocalPath()) {
 		uploadStatus.Job().UpdateStatus(status.Ignored, uploadStatus, nil)
 		return true
