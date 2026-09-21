@@ -36,6 +36,7 @@ type Bundle struct {
 	Deleted                                      *bool                    `json:"deleted,omitempty" path:"deleted,omitempty" url:"deleted,omitempty"`
 	DeletedAt                                    *time.Time               `json:"deleted_at,omitempty" path:"deleted_at,omitempty" url:"deleted_at,omitempty"`
 	DontSeparateSubmissionsByFolder              *bool                    `json:"dont_separate_submissions_by_folder,omitempty" path:"dont_separate_submissions_by_folder,omitempty" url:"dont_separate_submissions_by_folder,omitempty"`
+	EffectiveExpiresAt                           *time.Time               `json:"effective_expires_at,omitempty" path:"effective_expires_at,omitempty" url:"effective_expires_at,omitempty"`
 	MaxUses                                      int64                    `json:"max_uses,omitempty" path:"max_uses,omitempty" url:"max_uses,omitempty"`
 	InternalName                                 string                   `json:"internal_name,omitempty" path:"internal_name,omitempty" url:"internal_name,omitempty"`
 	Note                                         string                   `json:"note,omitempty" path:"note,omitempty" url:"note,omitempty"`
