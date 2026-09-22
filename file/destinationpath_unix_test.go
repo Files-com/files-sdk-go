@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 	"testing/fstest"
 
@@ -69,6 +70,27 @@ func makeDownloadRootReadOnly(t *testing.T, root string) {
 		t.Skip("directory write permissions are not enforced")
 	}
 	require.ErrorIs(t, err, fs.ErrPermission)
+}
+
+// A fresh download is created the way files are usually created, with 0666
+// before the process umask, so a group-writable destination folder keeps
+// working the way it always has. Umask 0 makes the whole mode observable.
+func TestClient_Downloader_freshFileKeepsTheUsualCreationMode(t *testing.T) {
+	previous := syscall.Umask(0)
+	t.Cleanup(func() { syscall.Umask(previous) })
+	root := t.TempDir()
+	server := (&MockAPIServer{T: t}).Do()
+	defer server.Shutdown()
+	mockFolder(server, "reports", map[string][]byte{"report.csv": []byte("report bytes")})
+
+	job := server.Client().Downloader(DownloaderParams{RemotePath: "reports/report.csv", LocalPath: filepath.Join(root, "report.csv")})
+	job.Start()
+	job.Wait()
+
+	require.NoError(t, job.Statuses[0].Err())
+	info, err := os.Stat(filepath.Join(root, "report.csv"))
+	require.NoError(t, err)
+	assert.Equal(t, fs.FileMode(0666), info.Mode().Perm())
 }
 
 func TestClient_Downloader_writableChildOfReadOnlyRoot(t *testing.T) {
@@ -239,6 +261,8 @@ func TestDownloadItem_interruptReadOnlyRootFinalization(t *testing.T) {
 						tmp, err := tmpDownloadPath(final, temp)
 						require.NoError(t, err)
 						require.NoError(t, os.WriteFile(tmp.String(), data, 0640))
+						// Set the custom mode explicitly, independent of the process umask.
+						require.NoError(t, os.Chmod(tmp.String(), 0640))
 					}
 					runDownloadFolderItem(ctx, s)
 				} else {
@@ -282,7 +306,7 @@ func TestDownloadItem_interruptReadOnlyRootFinalization(t *testing.T) {
 				assert.Equal(t, int64(len(data)), info.Size())
 				originalMode := info.Mode().Perm()
 				if transport == "resumed" {
-					assert.Equal(t, fs.FileMode(0640), originalMode)
+					assert.Equal(t, fs.FileMode(0640), originalMode, "pause preserves the temp file's permissions")
 				}
 				// A completed temp must be reused, even if the remote bytes have
 				// since changed without changing the listed size.

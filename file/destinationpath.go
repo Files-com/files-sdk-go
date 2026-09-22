@@ -188,6 +188,11 @@ func (p destinationPath) remove() error {
 	return p.do(func(root *os.Root) error { return root.Remove(p.name) })
 }
 
+// mkdir creates exactly the path below the directory; it fails if it exists.
+func (p destinationPath) mkdir() error {
+	return p.do(func(root *os.Root) error { return root.Mkdir(p.name, 0755) })
+}
+
 func (p destinationPath) chtimes(t time.Time) error {
 	return p.do(func(root *os.Root) error { return root.Chtimes(p.name, t, t) })
 }
@@ -310,6 +315,88 @@ func (p destinationPath) copyTo(ctx context.Context, final destinationPath) (err
 		return err
 	}
 	return p.remove()
+}
+
+// errTempDownloadReplaced reports that the file at a temporary download path is
+// not the file this download wrote there.
+var errTempDownloadReplaced = errors.New("the temporary download file was replaced by another file")
+
+// claimTmpDownload takes sole possession of the finished temporary download
+// before it is published, and reports where it now is.
+//
+// Publishing cannot rename the temporary path directly: a filesystem can reach
+// one file through more than one name, so another transfer can put its own file
+// at that path while this one is writing, and renaming the path would then
+// publish that file's contents under this file's name. So the file is first
+// moved to a name that is random, and that is already a valid 8.3 name so NTFS
+// generates no second name for it. Nothing else can reach that name, which is
+// what makes comparing the file there with the one this download wrote
+// conclusive rather than a guess that nothing has changed since.
+//
+// The claimed file lives inside a folder in the reserved namespace (see
+// tmpDownloadClaimContainer), so if this process stops between the claim and
+// the publish, what it leaves behind is still never transferred.
+func claimTmpDownload(tmp destinationPath, expected fs.FileInfo) (destinationPath, error) {
+	if expected == nil {
+		return destinationPath{}, fmt.Errorf("download: the identity of the temporary file %v was not recorded", tmp)
+	}
+	container, err := tmpDownloadClaimContainer(tmp)
+	if err != nil {
+		return destinationPath{}, err
+	}
+	claimed := container.withName(filepath.Join(container.name, tmpDownloadClaimName()))
+	if err := tmp.rename(claimed); err != nil {
+		return destinationPath{}, errors.Join(err, removeTmpDownloadClaimContainer(claimed, tmp))
+	}
+	got, err := claimed.lstat()
+	if err != nil {
+		// The file is under the claimed name but cannot be examined. Put it
+		// back so a later run finds it, and report if even that fails.
+		return destinationPath{}, errors.Join(err, restoreTmpDownload(claimed, tmp))
+	}
+	if !os.SameFile(expected, got) {
+		return destinationPath{}, errors.Join(
+			fmt.Errorf("download: %w: %v", errTempDownloadReplaced, tmp),
+			claimed.remove(),
+			removeTmpDownloadClaimContainer(claimed, tmp),
+		)
+	}
+	return claimed, nil
+}
+
+// restoreTmpDownload puts a claimed file back under its temporary name, so a
+// later run continues from it, and removes the claim's folder. A failure to put
+// it back is reported as such: the file then stays inside the reserved folder,
+// never transferred but not found by a later run either.
+func restoreTmpDownload(claimed destinationPath, tmp destinationPath) error {
+	if err := claimed.rename(tmp); err != nil {
+		return fmt.Errorf("download: the completed temporary file could not be put back for a later run: %w", err)
+	}
+	return removeTmpDownloadClaimContainer(claimed, tmp)
+}
+
+// removeTmpDownloadClaimContainer removes the folder a claim was made in, once
+// it no longer holds anything. The folder that holds tmp itself is left alone:
+// on macOS the claim is made inside the temporary download folder, which a
+// resumed download still needs.
+func removeTmpDownloadClaimContainer(claimed destinationPath, tmp destinationPath) error {
+	container := claimed.parent()
+	if filepath.Clean(container.name) == filepath.Clean(tmp.parent().name) {
+		return nil
+	}
+	err := container.remove()
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	return err
+}
+
+// tmpDownloadClaimName is a name nothing else can reach: it is random, and it
+// is already a valid 8.3 name, so NTFS does not derive a second, guessable name
+// for it the way it does for longer names.
+func tmpDownloadClaimName() string {
+	text := rand.Text()
+	return text[:8] + "." + text[8:11]
 }
 
 // reserveMoveName creates an empty file with a fresh name directly inside dir

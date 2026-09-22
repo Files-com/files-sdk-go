@@ -1,12 +1,15 @@
 package file
 
 import (
+	"context"
+	cryptorand "crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/fs"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -131,6 +134,78 @@ func truncateOnRuneBoundary(value string, maxBytes int) string {
 		maxBytes--
 	}
 	return value[:maxBytes]
+}
+
+// localPathReachesTempDownload reports whether a local path is, or is inside, a
+// temporary download, including through another name the filesystem resolves to
+// the same file. It reports an error rather than an answer when a path that
+// exists cannot be resolved, so a transfer is refused instead of being allowed
+// on the strength of a check that did not run.
+func localPathReachesTempDownload(path string) (bool, error) {
+	if isReservedTempDownloadPath(path) {
+		return true, nil
+	}
+	canonical, err := canonicalLocalPath(path)
+	if err != nil {
+		return false, err
+	}
+	return isReservedTempDownloadPath(canonical), nil
+}
+
+// recordTmpDownloadIdentity remembers which file the open temporary download
+// is, so publishing can tell this transfer's file from any other file that
+// reaches the same path while the transfer runs. A resumed transfer has already
+// recorded the file it found; the file it then opened must be that same file,
+// or the bytes it is about to append would go onto another file's content.
+func (d *DownloadStatus) recordTmpDownloadIdentity(file *os.File) error {
+	got, err := file.Stat()
+	if err != nil {
+		return err
+	}
+	if d.tmpIdentity != nil && !os.SameFile(d.tmpIdentity, got) {
+		return fmt.Errorf("download: %w: %v", errTempDownloadReplaced, file.Name())
+	}
+	d.tmpIdentity = got
+	return nil
+}
+
+// tmpDownloadClaimContainer is the folder a finished download is claimed in
+// before it is published. Its name is in the reserved namespace, so whatever is
+// left in it if this process stops is never transferred. When the temporary
+// file already sits in such a folder, as a macOS temporary download does, that
+// folder is used. Otherwise, including for a temporary file the caller named
+// explicitly (a checkpoint's TmpPath), a fresh folder is created beside the
+// temporary file, which is where this transfer has already been writing: the
+// caller-selected directory above it may not be writable. The claim inside it
+// is a random 8.3 name, so NTFS derives no second name for the claimed file.
+func tmpDownloadClaimContainer(tmp destinationPath) (destinationPath, error) {
+	parent := tmp.parent()
+	if isReservedTempDownloadElement(filepath.Base(parent.name)) {
+		return parent, nil
+	}
+	container := parent.withName(filepath.Join(parent.name, tempDownloadEncodedPrefix+cryptorand.Text()+"."+TempDownloadExtension))
+	if err := container.mkdir(); err != nil {
+		return destinationPath{}, err
+	}
+	return container, nil
+}
+
+// finalizeTmpDownload publishes the finished temporary download as final. It
+// first claims the file under a name nothing else can reach and checks that it
+// is the file this transfer wrote (claimTmpDownload), then moves it into place.
+// If the move fails, for example because the job was paused, the file is put
+// back under its temporary name so a later run continues from it; a failure to
+// put it back is reported with the original error, because the download then
+// has to start again.
+func finalizeTmpDownload(ctx context.Context, tmp destinationPath, final destinationPath, expected fs.FileInfo) error {
+	claimed, err := claimTmpDownload(tmp, expected)
+	if err != nil {
+		return err
+	}
+	if err := claimed.moveTo(ctx, final); err != nil {
+		return errors.Join(err, restoreTmpDownload(claimed, tmp))
+	}
+	return errors.Join(removeTmpDownloadClaimContainer(claimed, tmp), removeTmpDownloadFolder(tmp))
 }
 
 // isReservedTempDownloadPath reports whether path is, or is inside, a temporary

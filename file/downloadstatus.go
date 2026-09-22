@@ -22,12 +22,16 @@ type DownloadStatus struct {
 	remotePath      string
 	tempPath        string
 	TmpPath         string
-	Sync            bool
-	NoOverwrite     bool
-	endedAt         time.Time
-	startedAt       time.Time
-	Mutex           *sync.RWMutex
-	PreserveTimes   bool
+	// tmpIdentity is the file the temporary download was when this transfer
+	// created or adopted it. Publishing compares it with the file it is about
+	// to publish, so another transfer's file cannot be delivered instead.
+	tmpIdentity   fs.FileInfo
+	Sync          bool
+	NoOverwrite   bool
+	endedAt       time.Time
+	startedAt     time.Time
+	Mutex         *sync.RWMutex
+	PreserveTimes bool
 	error
 	lastError error
 	// indexErr records why the file can never be downloaded: its listing or

@@ -3,7 +3,8 @@
 package file
 
 import (
-	"context"
+	"errors"
+	"io/fs"
 	"path/filepath"
 )
 
@@ -24,10 +25,9 @@ func tmpDownloadPathOnNotExist(final destinationPath, tmp destinationPath) (dest
 	return tmp.withName(filepath.Join(tmp.name, final.base())), nil
 }
 
-func finalizeTmpDownload(ctx context.Context, tmp destinationPath, final destinationPath) error {
-	if err := tmp.moveTo(ctx, final); err != nil {
-		return err
-	}
+// removeTmpDownloadFolder removes the temporary download folder once the file
+// has been published out of it.
+func removeTmpDownloadFolder(tmp destinationPath) error {
 	return tmp.parent().remove()
 }
 
@@ -39,8 +39,12 @@ func existingTmpDownloadFile(final destinationPath, tmp destinationPath) (destin
 	return destinationPath{}, false
 }
 
+// removeTmpDownload removes a temporary download and its folder. The file may
+// already be gone, for example after a replaced file was refused and removed,
+// and the folder must still be removed then, or a later run would find it
+// occupied and stage under an alternate name from then on.
 func removeTmpDownload(tmp destinationPath) error {
-	if err := tmp.remove(); err != nil {
+	if err := tmp.remove(); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
 	return tmp.parent().remove()

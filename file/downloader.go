@@ -297,7 +297,18 @@ func ignoreDownloadJob(job *Job, downloadStatus *DownloadStatus) bool {
 	// is checked as well as the local one, because a temporary download folder
 	// selected as the folder to download loses its own name on the way to the
 	// local destination.
-	if isReservedTempDownloadPath(downloadStatus.RemotePath()) || isReservedTempDownloadPath(downloadStatus.LocalPath()) {
+	if isReservedTempDownloadPath(downloadStatus.RemotePath()) {
+		return true
+	}
+	// The local path is also checked through the name the filesystem stores, so
+	// a second name for a temporary download does not get past this. A path
+	// that exists but cannot be resolved is refused, not allowed.
+	reaches, err := localPathReachesTempDownload(downloadStatus.LocalPath())
+	if err != nil {
+		job.Logger.Printf("not transferring %v: its local path could not be resolved: %v", downloadStatus.LocalPath(), err)
+		return true
+	}
+	if reaches {
 		return true
 	}
 	return ignorePath(downloadStatus.RemotePath(), job.Ignore, job.Include)
@@ -326,6 +337,9 @@ func runDownloadFolderItem(ctx context.Context, reportStatus *DownloadStatus) {
 	}
 
 	var startOffset int64
+	// Each attempt establishes the temporary file again, so the identity
+	// recorded by an earlier attempt must not be carried over.
+	reportStatus.tmpIdentity = nil
 	tmp, resuming := reportStatus.checkpointedTmpDownload()
 	if !resuming && reportStatus.TmpPath != "" {
 		reportStatus.Job().Logger.Printf("tmp download file not found, starting over: %v", reportStatus.TmpPath)
@@ -345,13 +359,14 @@ func runDownloadFolderItem(ctx context.Context, reportStatus *DownloadStatus) {
 		fi, err := tmp.stat()
 		if err == nil {
 			startOffset = fi.Size()
+			reportStatus.tmpIdentity = fi
 		}
 		if startOffset > remoteStat.Size() {
 			startOffset = 0
 		}
 		if startOffset == remoteStat.Size() {
 			// Temp file is already fully downloaded - skip the network request and finalize directly.
-			if err := finalizeTmpDownload(ctx, tmp, reportStatus.destination); err != nil {
+			if err := finalizeTmpDownload(ctx, tmp, reportStatus.destination, reportStatus.tmpIdentity); err != nil {
 				if !errors.Is(context.Cause(ctx), ErrJobPaused) {
 					removeTmpDownload(tmp)
 				}
@@ -364,6 +379,9 @@ func runDownloadFolderItem(ctx context.Context, reportStatus *DownloadStatus) {
 		}
 	}
 	reportStatus.TmpPath = tmp.String()
+	// Whichever engine opens the temporary file records which file it opened
+	// (recordTmpDownloadIdentity), so publishing can tell this transfer's file
+	// from any other file that reaches the same path while the transfer runs.
 	if startOffset > 0 {
 		reportStatus.IncrementTransferBytes(startOffset)
 	}
@@ -488,7 +506,7 @@ func prepareDownloadFolderItem(reportStatus *DownloadStatus) (fs.FileInfo, bool)
 
 func completeTmpDownload(ctx context.Context, reportStatus *DownloadStatus, tmp destinationPath, finalSize int64) error {
 	reportStatus.SetFinalSize(finalSize)
-	if err := finalizeTmpDownload(ctx, tmp, reportStatus.destination); err != nil {
+	if err := finalizeTmpDownload(ctx, tmp, reportStatus.destination, reportStatus.tmpIdentity); err != nil {
 		return err
 	}
 
@@ -516,6 +534,10 @@ func openFile(tmp destinationPath, reportStatus *DownloadStatus, startOffset int
 		out, err = tmp.create()
 	}
 	if err != nil {
+		return lib.ProgressWriter{}, err
+	}
+	if err := reportStatus.recordTmpDownloadIdentity(out); err != nil {
+		out.Close()
 		return lib.ProgressWriter{}, err
 	}
 	writer := lib.ProgressWriter{WriterAndAt: out}

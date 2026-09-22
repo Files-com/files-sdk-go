@@ -580,6 +580,11 @@ func extractZipStreamEntry(ctx context.Context, stream *zipStream, header zipStr
 	if err != nil {
 		return err
 	}
+	if downloadStatus.tmpIdentity, err = out.Stat(); err != nil {
+		out.Close()
+		removeTmpDownload(tmp)
+		return err
+	}
 	result, extractErr := stream.extractEntry(ctx, header, out, func(bytes int64) {
 		if onBytes != nil {
 			onBytes(downloadStatus, bytes)
@@ -615,6 +620,11 @@ func extractZipEntryReader(ctx context.Context, name string, in io.Reader, downl
 	downloadStatus.TmpPath = tmp.String()
 	out, err := tmp.create()
 	if err != nil {
+		return err
+	}
+	if downloadStatus.tmpIdentity, err = out.Stat(); err != nil {
+		out.Close()
+		removeTmpDownload(tmp)
 		return err
 	}
 	written, copyErr := copyWithContext(ctx, out, in)

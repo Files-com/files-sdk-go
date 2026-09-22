@@ -152,6 +152,10 @@ func runDownloadV2IfSupported(ctx context.Context, reportStatus *DownloadStatus,
 	if err != nil {
 		return true, 0, remoteStat, err
 	}
+	if err := reportStatus.recordTmpDownloadIdentity(file); err != nil {
+		file.Close()
+		return true, 0, remoteStat, err
+	}
 	ranger := reportStatus.fsFile.(ReaderRange)
 	engine := newDownloadV2Engine(reportStatus, ranger, file, target, totalSize, startOffset, partSize, params)
 	err = engine.Run(ctx)

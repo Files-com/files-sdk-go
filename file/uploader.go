@@ -472,7 +472,16 @@ func excludeFile(uploadStatus *UploadStatus, incrementalUpdates bool) bool {
 	// a temporary download folder selected as the folder to upload loses its
 	// own name on the way to the remote destination, and an upload must not
 	// create a temporary name remotely either.
-	if isReservedTempDownloadPath(uploadStatus.LocalPath()) || isReservedTempDownloadPath(uploadStatus.RemotePath()) {
+	// The local path is checked through the name the filesystem stores as well,
+	// so a second name for a temporary download does not get past this. A path
+	// that exists but cannot be resolved is refused, not allowed.
+	reaches, err := localPathReachesTempDownload(uploadStatus.LocalPath())
+	if err != nil {
+		uploadStatus.Job().Logger.Printf("not transferring %v: its local path could not be resolved: %v", uploadStatus.LocalPath(), err)
+		uploadStatus.Job().UpdateStatus(status.Ignored, uploadStatus, nil)
+		return true
+	}
+	if reaches || isReservedTempDownloadPath(uploadStatus.RemotePath()) {
 		uploadStatus.Job().UpdateStatus(status.Ignored, uploadStatus, nil)
 		return true
 	}
