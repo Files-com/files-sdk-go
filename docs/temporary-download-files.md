@@ -6,25 +6,44 @@ temporary file again and continues from the bytes already on disk.
 
 ## Names
 
-Temporary names live in a namespace reserved for this client. Two forms are
-generated, both beside the file they belong to:
+Temporary names live in a namespace reserved for this client. Beside the file
+they belong to, two forms are generated:
 
 | Form | Name | When |
 | --- | --- | --- |
 | plain | `.~files-cli.<name>.download` | the usual case |
-| encoded | `.~files-cli~<n>.<digest>.<shortened name>.download` | the name is too long to fit in a path element, or another temporary download already holds the plain name |
+| encoded | `.~files-cli~<n>.<digest of the name>.<shortened name>.download` | the name is too long to fit in a path element, or another temporary download already holds the plain name |
 
-`<digest>` identifies the file the encoded name belongs to, so the shortened
-name next to it is only there to be read. The character right after
+`<digest of the name>` identifies the file the encoded name belongs to, so the
+shortened name next to it is only there to be read. The character right after
 `.~files-cli` — `.` or `~` — is what tells the two forms apart, and it is not
 part of any file name, so no file name can be spelled to produce another file's
 temporary name.
 
+Inside an external temporary directory (`TempPath`), files from every folder of
+a download, and from every download that shares the directory, are staged side
+by side, so a name alone does not say which file a temporary download belongs
+to. There, a temporary download is always encoded and identified by the file's
+whole local path — its destination directory and the path below it, made
+absolute — instead of by its name:
+
+| Form | Name | When |
+| --- | --- | --- |
+| external | `.~files-cli~<n>.path-<digest of the full path>.<shortened name>.download` | always, inside `TempPath` |
+
+The `path-` marker is not a hexadecimal digit, so an external name is never
+spelled like a name identified by a name digest. Two files that differ anywhere
+in their paths — `a/x.bin` and `b/x.bin` under one destination, or the same
+`a/x.bin` under two destination roots — have two temporary downloads, and one
+file reached through different spellings of its path (an explicit output path,
+a destination root plus the path below it, or a path relative to the working
+directory) has one.
+
 On macOS a temporary download is a folder with that name, holding the file under
 its own name. On Linux and Windows it is a file with that name.
 
-An external temporary directory (`TempPath`) and the short-lived names used while
-moving a finished file between directories are in the same namespace.
+The short-lived names used while moving a finished file between directories are
+in the same namespace.
 
 ## Known limitation: an adaptive download stopped by a process kill
 
@@ -108,3 +127,24 @@ with that name is now an ordinary file:
 
 A temporary path recorded in a job checkpoint (`TmpPath`) is still used as given,
 so an explicitly paused transfer resumes as it did before.
+
+## Upgrading from name-only external temporary downloads
+
+Before external temporary downloads were identified by the file's whole path, a
+temporary download inside `TempPath` carried only the file's name:
+`.~files-cli.<name>.download`, or the encoded form with a digest of the name.
+Such a leftover does not say which of the files named that way it was for —
+`a/x.bin` or `b/x.bin`, or the same path under another destination root — so
+it is not attributed to any of them:
+
+* It is not continued from. An interrupted download through `TempPath` from an
+  earlier version starts again from the beginning, under a new temporary name
+  beside the leftover. This is deliberate: continuing from it is what let one
+  file be delivered with another file's bytes.
+* It is not deleted or written to. It stays in the reserved namespace, so it is
+  never transferred, but it is not cleaned up either. Delete leftovers in
+  `TempPath` when they are no longer wanted.
+
+A temporary path recorded in a job checkpoint (`TmpPath`) names the file
+explicitly and is still used as given, so an explicitly paused transfer through
+`TempPath` resumes as it did before.

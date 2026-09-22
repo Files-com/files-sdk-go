@@ -14,7 +14,14 @@ import (
 // as an interrupted download of that file would have left it.
 func stageWithContent(t *testing.T, dir string, name string, content string) destinationPath {
 	t.Helper()
-	tmp, err := tmpDownloadPath(explicitDestination(filepath.Join(dir, name)), "")
+	return stageWithContentIn(t, explicitDestination(filepath.Join(dir, name)), "", content)
+}
+
+// stageWithContentIn is stageWithContent for any destination, staged beside it
+// or inside the external temp directory tempPath.
+func stageWithContentIn(t *testing.T, final destinationPath, tempPath string, content string) destinationPath {
+	t.Helper()
+	tmp, err := tmpDownloadPath(final, tempPath)
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(tmp.String(), []byte(content), 0600))
 	return tmp
@@ -23,7 +30,14 @@ func stageWithContent(t *testing.T, dir string, name string, content string) des
 // resumedContent is what a later run of a download of name would continue from.
 func resumedContent(t *testing.T, dir string, name string) (string, bool) {
 	t.Helper()
-	tmp, ok := existingTmpDownloadPath(explicitDestination(filepath.Join(dir, name)), "")
+	return resumedContentOf(t, explicitDestination(filepath.Join(dir, name)), "")
+}
+
+// resumedContentOf is resumedContent for any destination, staged beside it or
+// inside the external temp directory tempPath.
+func resumedContentOf(t *testing.T, final destinationPath, tempPath string) (string, bool) {
+	t.Helper()
+	tmp, ok := existingTmpDownloadPath(final, tempPath)
 	if !ok {
 		return "", false
 	}
@@ -67,7 +81,7 @@ func Test_tmpDownloadPath_keepsEachFileNameToItsOwnTemporaryDownload(t *testing.
 		{
 			name:  "a name spelled as the readable part of another file's temporary name",
 			first: longName,
-			other: strings.TrimSuffix(strings.TrimPrefix(tmpDownloadElement(longName, ""), tempDownloadEncodedPrefix), "."+TempDownloadExtension),
+			other: strings.TrimSuffix(strings.TrimPrefix(tmpDownloadElement(longName, "", ""), tempDownloadEncodedPrefix), "."+TempDownloadExtension),
 		},
 	} {
 		t.Run(pair.name, func(t *testing.T) {
@@ -106,8 +120,108 @@ func Test_tmpDownloadPath_returnsAnUnusedPathAndLeavesOtherFilesAlone(t *testing
 	assert.Equal(t, "bytes of the file really named that", content)
 }
 
+// Inside an external temp directory, files from every folder and from every
+// destination that shares the directory are staged side by side. A file's
+// temporary download there belongs to its whole destination path, not to its
+// name: another file with the same name, in another folder or under another
+// destination root, must neither continue from it nor disturb it.
+func Test_tmpDownloadPath_keepsEachDestinationToItsOwnTemporaryDownloadInATempPath(t *testing.T) {
+	temp := t.TempDir()
+	root := t.TempDir()
+	otherRoot := t.TempDir()
+	destinations := []destinationPath{
+		{dir: root, name: filepath.Join("a", "x.bin")},
+		{dir: root, name: filepath.Join("b", "x.bin")},
+		{dir: otherRoot, name: filepath.Join("a", "x.bin")},
+	}
+	for _, final := range destinations {
+		require.NoError(t, os.MkdirAll(filepath.Join(final.dir, filepath.Dir(final.name)), 0755))
+	}
+	stageWithContentIn(t, destinations[0], temp, "bytes of root a")
+
+	for _, final := range destinations[1:] {
+		_, ok := existingTmpDownloadPath(final, temp)
+		assert.Falsef(t, ok, "%v must not continue from another destination's temporary download", final)
+	}
+	for _, final := range destinations[1:] {
+		stageWithContentIn(t, final, temp, "bytes of "+final.String())
+	}
+	content, ok := resumedContentOf(t, destinations[0], temp)
+	require.True(t, ok)
+	assert.Equal(t, "bytes of root a", content, "staging the others must leave the first stage intact")
+	for _, final := range destinations[1:] {
+		content, ok := resumedContentOf(t, final, temp)
+		require.True(t, ok)
+		assert.Equal(t, "bytes of "+final.String(), content)
+	}
+}
+
+// One destination is one file however its path is spelled: as an explicit
+// output path, as a root plus the path below it, or relative to the working
+// directory. Each spelling must continue from the same temporary download.
+func Test_existingTmpDownloadPath_findsTheSameStageForEverySpellingOfADestination(t *testing.T) {
+	temp := t.TempDir()
+	t.Chdir(t.TempDir())
+	// The working directory as the process reports it, so the relative
+	// spellings below and the absolute ones name the same directory.
+	root, err := os.Getwd()
+	require.NoError(t, err)
+	require.NoError(t, os.Mkdir(filepath.Join(root, "a"), 0755))
+	staged := stageWithContentIn(t, destinationPath{dir: root, name: filepath.Join("a", "x.bin")}, temp, "partial")
+
+	for name, final := range map[string]destinationPath{
+		"an explicit output path":             explicitDestination(filepath.Join(root, "a", "x.bin")),
+		"a root with a trailing separator":    {dir: root + string(filepath.Separator), name: filepath.Join("a", "x.bin")},
+		"a path relative to the working dir":  explicitDestination(filepath.Join("a", "x.bin")),
+		"a root relative to the working dir":  {dir: ".", name: filepath.Join("a", "x.bin")},
+		"a path with a redundant '.' element": {dir: root, name: filepath.Join(".", "a", "x.bin")},
+	} {
+		found, ok := existingTmpDownloadPath(final, temp)
+		require.Truef(t, ok, "%v must find the stage", name)
+		assert.Equalf(t, staged.String(), found.String(), "%v must find the same stage", name)
+	}
+}
+
+// An external temporary download from before path identities carries only the
+// file's name, which does not say which of the files named that way it was
+// for. It is not continued from and not touched: the file it was for starts
+// again under a new temporary name beside it.
+func Test_tmpDownloadPath_leavesAnExternalStageNamedByNameAloneUntouched(t *testing.T) {
+	longName := strings.Repeat("x", 244)
+	for _, legacy := range []struct {
+		name    string
+		final   string
+		element string
+	}{
+		{name: "plain", final: "x.bin", element: tempDownloadPrefix + "x.bin." + TempDownloadExtension},
+		{name: "encoded", final: longName, element: tmpDownloadElement(longName, "", "")},
+	} {
+		t.Run(legacy.name, func(t *testing.T) {
+			temp := t.TempDir()
+			root := t.TempDir()
+			require.NoError(t, os.Mkdir(filepath.Join(root, "a"), 0755))
+			final := destinationPath{dir: root, name: filepath.Join("a", legacy.final)}
+			leftover := filepath.Join(temp, legacy.element)
+			writeLegacyExternalStage(t, leftover, final, "bytes from an earlier version")
+
+			_, ok := existingTmpDownloadPath(final, temp)
+			assert.False(t, ok, "a stage identified by name alone must not be continued from")
+
+			staged := stageWithContentIn(t, final, temp, "partial")
+			assert.NotEqual(t, leftover, staged.String())
+			assert.NotEqual(t, leftover, filepath.Dir(staged.String()))
+			assert.True(t, isReservedTempDownloadPath(staged.String()))
+			content, ok := resumedContentOf(t, final, temp)
+			require.True(t, ok)
+			assert.Equal(t, "partial", content)
+			assert.Equal(t, "bytes from an earlier version", readLegacyExternalStage(t, leftover, final))
+		})
+	}
+}
+
 // Long names, including ones whose characters are several bytes each, stay
-// within what the filesystem accepts and still resume.
+// within what the filesystem accepts and still resume, beside the file and
+// inside an external temp directory alike.
 func Test_tmpDownloadPath_staysWithinThePathElementLimit(t *testing.T) {
 	for _, name := range []string{
 		strings.Repeat("a", 234),          // the longest name kept as it is
@@ -117,15 +231,18 @@ func Test_tmpDownloadPath_staysWithinThePathElementLimit(t *testing.T) {
 		strings.Repeat("日", 83) + ".txt",  // three bytes per character, shortened mid-character
 		strings.Repeat("é", 121) + ".txt", // two bytes per character
 	} {
-		dir := t.TempDir()
-		staged := stageWithContent(t, dir, name, "partial "+name)
+		for _, tempPath := range []string{"", t.TempDir()} {
+			dir := t.TempDir()
+			final := explicitDestination(filepath.Join(dir, name))
+			staged := stageWithContentIn(t, final, tempPath, "partial "+name)
 
-		for _, element := range strings.Split(staged.name, string(filepath.Separator)) {
-			assert.LessOrEqualf(t, len(element), maxTempDownloadElementBytes, "%q is too long for a path element", element)
+			for _, element := range strings.Split(staged.name, string(filepath.Separator)) {
+				assert.LessOrEqualf(t, len(element), maxTempDownloadElementBytes, "%q is too long for a path element", element)
+			}
+			content, ok := resumedContentOf(t, final, tempPath)
+			require.True(t, ok)
+			assert.Equal(t, "partial "+name, content)
 		}
-		content, ok := resumedContent(t, dir, name)
-		require.True(t, ok)
-		assert.Equal(t, "partial "+name, content)
 	}
 }
 
@@ -142,6 +259,7 @@ func Test_isReservedTempDownloadPath(t *testing.T) {
 		".~FILE\u017f-CLI.report.csv.DOWNLOAD":               true,
 		".~files-cli~1.0123456789abcdef.report.csv.download": true,
 		"folder/.~files-cli~.0123456789abcdef.x.download":    true,
+		".~files-cli~.path-0123456789abcdef.x.bin.download":  true, // inside an external temp directory
 		"report.csv":                       false,
 		"report.csv.download":              false,
 		".~files-cli-notes.download":       false,

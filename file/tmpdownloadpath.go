@@ -43,25 +43,79 @@ const (
 	// file name that could be written can also be staged.
 	maxTempDownloadElementBytes = 255
 
-	// tempDownloadDigestBytes of the file name's SHA-256 identify it inside an
-	// encoded name. The digest is a fixed width in a fixed position, so two
-	// different names cannot produce one encoded name.
+	// tempDownloadDigestBytes of a SHA-256 identify a file inside an encoded
+	// name. The digest is a fixed width in a fixed position, so two different
+	// inputs cannot produce one encoded name.
 	tempDownloadDigestBytes = 16
+
+	// tempDownloadPathDigestTag marks a digest of a file's whole local path, as
+	// opposed to a digest of its name alone. It begins with a character that is
+	// not a hexadecimal digit, so an encoded name identified by a path is never
+	// spelled like one identified by a name: an external stage from before path
+	// identities were introduced cannot become the canonical stage of any file.
+	tempDownloadPathDigestTag = "path-"
 )
 
-// tmpDownloadBase is the path temporary file names derive from: the final file
-// itself, or the final file's name directly inside an external temp directory.
-func tmpDownloadBase(final destinationPath, tempPath string) destinationPath {
-	if tempPath != "" {
-		return destinationPath{dir: tempPath, name: final.base()}
+// tmpDownloadNaming is what the temporary names of one file are made from.
+type tmpDownloadNaming struct {
+	// base is the path a temporary name is formed beside: the final file
+	// itself, or a stand-in carrying the final file's name directly inside an
+	// external temp directory.
+	base destinationPath
+
+	// pathDigest identifies the final file by its whole local path. It is set
+	// only inside an external temp directory: files from every folder, and
+	// from every destination the directory is shared with, are staged side by
+	// side there, so a name alone does not say which file a temporary download
+	// belongs to. Beside the final file, the directory it is in says that.
+	pathDigest string
+}
+
+// tmpDownloadNamingFor derives the temporary naming of final: beside final
+// itself, or inside the external temp directory tempPath when it is set.
+func tmpDownloadNamingFor(final destinationPath, tempPath string) (tmpDownloadNaming, error) {
+	if tempPath == "" {
+		return tmpDownloadNaming{base: final}, nil
 	}
-	return final
+	digest, err := tmpDownloadPathDigest(final)
+	if err != nil {
+		return tmpDownloadNaming{}, err
+	}
+	return tmpDownloadNaming{base: destinationPath{dir: tempPath, name: final.base()}, pathDigest: digest}, nil
+}
+
+// tmpDownloadPathDigest identifies final by its absolute, cleaned local path,
+// so one file reached through a relative path, a redundant separator, or a
+// different split between directory and name has one temporary download, and
+// two files whose paths differ anywhere have two. It fails only when the
+// working directory a relative path depends on cannot be determined; the
+// temporary download is then not named at all, rather than named in a way
+// another file could share.
+func tmpDownloadPathDigest(final destinationPath) (string, error) {
+	absolute, err := filepath.Abs(final.String())
+	if err != nil {
+		return "", fmt.Errorf("download: unable to identify the temporary file of %v: %w", final, err)
+	}
+	digest := sha256.Sum256([]byte(absolute))
+	return tempDownloadPathDigestTag + hex.EncodeToString(digest[:tempDownloadDigestBytes]), nil
+}
+
+// candidate is the temporary path for one uniqueness token. Only the last
+// element of the name becomes temporary, so a file staged for a folder
+// download stays next to where it is going.
+func (n tmpDownloadNaming) candidate(uniqueness string) destinationPath {
+	dir, name := filepath.Split(n.base.name)
+	return n.base.withName(filepath.Join(dir, tmpDownloadElement(name, n.pathDigest, uniqueness)))
 }
 
 // existingTmpDownloadPath returns the canonical temporary download path for
 // final when it already exists.
 func existingTmpDownloadPath(final destinationPath, tempPath string) (destinationPath, bool) {
-	return existingTmpDownloadFile(final, tmpDownloadCandidate(tmpDownloadBase(final, tempPath), ""))
+	naming, err := tmpDownloadNamingFor(final, tempPath)
+	if err != nil {
+		return destinationPath{}, false
+	}
+	return existingTmpDownloadFile(final, naming.candidate(""))
 }
 
 // tmpDownloadPath generates a unique temporary download path for final inside
@@ -70,12 +124,15 @@ func existingTmpDownloadPath(final destinationPath, tempPath string) (destinatio
 func tmpDownloadPath(final destinationPath, tempPath string) (destinationPath, error) {
 	var index int
 	randGenerator := rand.New(rand.NewSource(time.Now().UnixNano()))
-	base := tmpDownloadBase(final, tempPath)
+	naming, err := tmpDownloadNamingFor(final, tempPath)
+	if err != nil {
+		return destinationPath{}, err
+	}
 
 	for {
 		var uniqueness string
 		if index > 25 {
-			return destinationPath{}, fmt.Errorf("unable to create a unique temporary path after 25 attempts, consider deleting existing %v*.%v files; attempted path: %v", tempDownloadNamespace, TempDownloadExtension, base)
+			return destinationPath{}, fmt.Errorf("unable to create a unique temporary path after 25 attempts, consider deleting existing %v*.%v files; attempted path: %v", tempDownloadNamespace, TempDownloadExtension, naming.base)
 		} else if index > 10 {
 			for i := 0; i < 4; i++ {
 				uniqueness += string(rune(randGenerator.Intn(26) + 'a'))
@@ -83,7 +140,7 @@ func tmpDownloadPath(final destinationPath, tempPath string) (destinationPath, e
 		} else if index > 0 {
 			uniqueness = fmt.Sprintf("%v", index)
 		}
-		candidate := tmpDownloadCandidate(base, uniqueness)
+		candidate := naming.candidate(uniqueness)
 
 		if _, err := candidate.lstat(); errors.Is(err, fs.ErrNotExist) {
 			return tmpDownloadPathOnNotExist(final, candidate)
@@ -92,31 +149,30 @@ func tmpDownloadPath(final destinationPath, tempPath string) (destinationPath, e
 	}
 }
 
-// tmpDownloadCandidate is the temporary path beside base for one uniqueness
-// token. Only the last element of the name becomes temporary, so a file staged
-// for a folder download stays next to where it is going.
-func tmpDownloadCandidate(base destinationPath, uniqueness string) destinationPath {
-	dir, name := filepath.Split(base.name)
-	return base.withName(filepath.Join(dir, tmpDownloadElement(name, uniqueness)))
-}
-
 // tmpDownloadElement names the temporary file or folder of one file name.
 //
-// A name that fits is kept as it is, so an unfinished download is recognizable
-// and the same name always produces the same temporary path. A name that is too
-// long, or that needs a uniqueness token, is encoded after a different prefix
-// character and identified by a digest of the whole name. The shortened name in
-// an encoded element is only there to be read: the digest, not the shortened
-// name, decides which file the element belongs to, so no other file name can
-// take over an encoded temporary path.
-func tmpDownloadElement(name string, uniqueness string) string {
+// Beside the final file, a name that fits is kept as it is, so an unfinished
+// download is recognizable and the same name always produces the same
+// temporary path. A name that is too long, or that needs a uniqueness token,
+// is encoded after a different prefix character and identified by a digest of
+// the whole name. Inside an external temp directory the name is always encoded
+// and identified by pathDigest, the digest of the file's whole local path,
+// because files from every folder are staged side by side there. The shortened
+// name in an encoded element is only there to be read: the digest, not the
+// shortened name, decides which file the element belongs to, so no other file
+// can take over an encoded temporary path.
+func tmpDownloadElement(name string, pathDigest string, uniqueness string) string {
 	plain := tempDownloadPrefix + name + "." + TempDownloadExtension
-	if uniqueness == "" && len(plain) <= maxTempDownloadElementBytes {
+	if pathDigest == "" && uniqueness == "" && len(plain) <= maxTempDownloadElementBytes {
 		return plain
 	}
 
-	digest := sha256.Sum256([]byte(name))
-	encoded := tempDownloadEncodedPrefix + uniqueness + "." + hex.EncodeToString(digest[:tempDownloadDigestBytes]) + "."
+	digest := pathDigest
+	if digest == "" {
+		sum := sha256.Sum256([]byte(name))
+		digest = hex.EncodeToString(sum[:tempDownloadDigestBytes])
+	}
+	encoded := tempDownloadEncodedPrefix + uniqueness + "." + digest + "."
 	shortened := truncateOnRuneBoundary(name, maxTempDownloadElementBytes-len(encoded)-len(TempDownloadExtension)-1)
 	return encoded + shortened + "." + TempDownloadExtension
 }

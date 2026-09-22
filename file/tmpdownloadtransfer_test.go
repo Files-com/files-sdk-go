@@ -317,3 +317,87 @@ func TestClient_Downloader_doesNotFinalizeAPlantedFileAsTheRequestedFile(t *test
 	require.NoError(t, err)
 	assert.Equal(t, planted, leftover)
 }
+
+// An external temp directory (TempPath) is shared by every file a download
+// writes, and often by more than one download. A temporary download left there
+// for one file must not be taken over by another file that merely has the same
+// name: not by a file in another folder, and not by a file under another
+// destination root. Left in place, the same-sized stage would be published as
+// the other file without a single byte being fetched, and a partial stage would
+// supply the other file's first bytes. The file the stage belongs to must still
+// continue from it afterwards.
+func TestClient_Downloader_sharedTempPathKeepsEachDestinationsStage(t *testing.T) {
+	owner := bytes.Repeat([]byte("OWNER BYTES;"), 1000)
+	other := bytes.Repeat([]byte("other bytes;"), 1000)
+	require.Len(t, other, len(owner))
+
+	for _, layout := range []struct {
+		name string
+		// where the other file goes, given the owner's root and a second root
+		otherFinal func(root, secondRoot string) destinationPath
+	}{
+		{
+			name: "same name in another folder",
+			otherFinal: func(root, _ string) destinationPath {
+				return destinationPath{dir: root, name: filepath.Join("b", "x.bin")}
+			},
+		},
+		{
+			name: "same path under another destination root",
+			otherFinal: func(_, secondRoot string) destinationPath {
+				return destinationPath{dir: secondRoot, name: filepath.Join("a", "x.bin")}
+			},
+		},
+	} {
+		for _, stage := range []struct {
+			name   string
+			staged []byte
+		}{
+			// A stage that is the size of the file is published without
+			// fetching anything, so it has to be the right file's stage.
+			{name: "complete-sized stage", staged: owner},
+			// The stage's bytes become the first bytes of whatever continues
+			// from it. They are distinct from the file's real bytes, which is
+			// how the owner is shown to have continued from its stage below.
+			{name: "partial stage", staged: bytes.Repeat([]byte("STAGED;"), 200)},
+		} {
+			t.Run(layout.name+", "+stage.name, func(t *testing.T) {
+				root, secondRoot, temp := t.TempDir(), t.TempDir(), t.TempDir()
+				server := (&MockAPIServer{T: t}).Do()
+				defer server.Shutdown()
+				mockFolder(server, "reports/a", map[string][]byte{"x.bin": owner})
+				mockFolder(server, "reports/b", map[string][]byte{"x.bin": other})
+				ownerFinal := destinationPath{dir: root, name: filepath.Join("a", "x.bin")}
+				otherFinal := layout.otherFinal(root, secondRoot)
+				staged := stageWithContentIn(t, ownerFinal, temp, string(stage.staged))
+
+				download := func(remote string, final destinationPath) []byte {
+					t.Helper()
+					job := server.Client().Downloader(DownloaderParams{RemotePath: remote, LocalPath: final.String(), TempPath: temp})
+					job.Start()
+					job.Wait()
+					require.Len(t, job.Statuses, 1)
+					require.NoError(t, job.Statuses[0].Err())
+					require.Equal(t, status.Complete, job.Statuses[0].Status())
+					delivered, err := os.ReadFile(final.String())
+					require.NoError(t, err)
+					return delivered
+				}
+
+				assert.Equal(t, other, download("reports/b/x.bin", otherFinal), "the other file must be delivered with its own bytes")
+				kept, err := os.ReadFile(staged.String())
+				require.NoError(t, err, "the owner's stage must still be there")
+				assert.Equal(t, stage.staged, kept, "the owner's stage must be left as it was")
+
+				fetched := len(server.DownloadRequests)
+				delivered := download("reports/a/x.bin", ownerFinal)
+				require.Len(t, delivered, len(owner))
+				assert.Equal(t, stage.staged, delivered[:len(stage.staged)], "the owner must continue from its stage")
+				if len(stage.staged) == len(owner) {
+					assert.Equal(t, fetched, len(server.DownloadRequests), "a complete stage is published without fetching")
+				}
+				assert.NoFileExists(t, staged.String(), "a published stage is removed")
+			})
+		}
+	}
+}

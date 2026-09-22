@@ -31,9 +31,14 @@ func TestClient_Downloader_externalTempFolderReplacedByLinkDoesNotMoveOtherTree(
 
 	job := client.Downloader(DownloaderParams{RemotePath: "file.txt", LocalPath: root + string(os.PathSeparator), TempPath: temp})
 	var swap sync.Once
-	job.RegisterFileEvent(func(JobFile) {
+	job.RegisterFileEvent(func(file JobFile) {
 		swap.Do(func() {
-			folder := filepath.Join(temp, tmpDownloadElement("file.txt", ""))
+			// The transfer reports the file it is writing; its folder is the
+			// temporary download folder inside the temp directory.
+			folder := filepath.Dir(file.TmpPath)
+			if !assert.Equal(t, temp, filepath.Dir(folder)) {
+				return
+			}
 			assert.NoError(t, os.Rename(folder, filepath.Join(temp, "moved-folder")))
 			assert.NoError(t, os.Symlink(other, folder))
 		})

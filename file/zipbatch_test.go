@@ -195,6 +195,44 @@ func TestZipBatchDownloaderExternalTempCleanup(t *testing.T) {
 	})
 }
 
+// Inside an external temp directory, ZIP entries that share a name are staged
+// side by side, and a temporary download of one of them, left by an earlier
+// run, may already be there. Every entry must be delivered with its own bytes,
+// and the earlier run's stage must be left as it was.
+func TestZipBatchDownloaderExternalTempKeepsSameNamedEntriesApart(t *testing.T) {
+	forEachZipBatchExtractionMode(t, func(t *testing.T, extraction ZipBatchExtractionMode) {
+		root := t.TempDir()
+		temp := t.TempDir()
+		files := map[string]string{
+			"batch/a/x.txt": strings.Repeat("alpha;", 100),
+			"batch/b/x.txt": strings.Repeat("bravo;", 100),
+			"batch/c/x.txt": strings.Repeat("delta;", 100),
+		}
+		server := newZipBatchMockServer(t, files, nil)
+		defer server.Shutdown()
+		staged := stageWithContentIn(t, destinationPath{dir: root, name: filepath.Join("b", "x.txt")}, temp, strings.Repeat("STAGE;", 100))
+
+		job := runZipBatchDownloadWithParams(t, server, DownloaderParams{
+			RemotePath: "batch/",
+			LocalPath:  root,
+			TempPath:   temp,
+			ZipBatch:   zipBatchParamsForMode(extraction, ZipBatchParams{MinFiles: 2}),
+		})
+
+		requireZipBatchJobClean(t, job)
+		assert.NotEmpty(t, server.ZipCreateRequests, "the download must use ZIP batching")
+		for remote, content := range files {
+			assert.Equal(t, content, readLocalFile(t, root, filepath.FromSlash(strings.TrimPrefix(remote, "batch/"))), remote)
+		}
+		kept, err := os.ReadFile(staged.String())
+		require.NoError(t, err, "the earlier run's stage must still be there")
+		assert.Equal(t, strings.Repeat("STAGE;", 100), string(kept))
+		entries, err := os.ReadDir(temp)
+		require.NoError(t, err)
+		assert.Len(t, entries, 1, "the temp directory must hold nothing but the earlier run's stage")
+	})
+}
+
 func TestZipBatchDownloaderCanceledSpoolCleanup(t *testing.T) {
 	root := t.TempDir()
 	server := newZipBatchMockServer(t, map[string]string{
