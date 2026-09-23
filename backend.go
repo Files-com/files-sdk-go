@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/Files-com/files-sdk-go/v3/lib"
@@ -89,7 +90,17 @@ type CallParams struct {
 	context.Context
 }
 
-func CallRaw(params *CallParams) (*http.Response, error) {
+func CallRaw(params *CallParams) (response *http.Response, err error) {
+	defer func() {
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) {
+			if params.Config.InDebug() {
+				params.Config.Printf("Transfer request failed: %v", err)
+			}
+			// Keep transport error types and cancellation checks without exposing the signed URL.
+			err = &url.Error{Op: urlErr.Op, URL: "[redacted]", Err: urlErr.Err}
+		}
+	}()
 	if params.Headers == nil {
 		params.Headers = &http.Header{}
 	}
@@ -110,6 +121,23 @@ func CallRaw(params *CallParams) (*http.Response, error) {
 	client := params.Config.Client
 	if params.Client != nil {
 		client = params.Client
+	}
+	if !params.Config.InDebug() {
+		// retryablehttp includes complete request URLs in its transport logs.
+		// Keep those logs behind DEBUG without changing the shared client's logger.
+		client = &retryablehttp.Client{
+			HTTPClient:      client.HTTPClient,
+			Logger:          lib.NullLogger{},
+			RetryWaitMin:    client.RetryWaitMin,
+			RetryWaitMax:    client.RetryWaitMax,
+			RetryMax:        client.RetryMax,
+			RequestLogHook:  client.RequestLogHook,
+			ResponseLogHook: client.ResponseLogHook,
+			CheckRetry:      client.CheckRetry,
+			Backoff:         client.Backoff,
+			ErrorHandler:    client.ErrorHandler,
+			PrepareRetry:    client.PrepareRetry,
+		}
 	}
 	return client.Do(retryRequest)
 }
