@@ -9,6 +9,7 @@ import (
 
 type ActionNotificationExport struct {
 	Id                 int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	WorkspaceId        int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	ExportVersion      string     `json:"export_version,omitempty" path:"export_version,omitempty" url:"export_version,omitempty"`
 	StartAt            *time.Time `json:"start_at,omitempty" path:"start_at,omitempty" url:"start_at,omitempty"`
 	EndAt              *time.Time `json:"end_at,omitempty" path:"end_at,omitempty" url:"end_at,omitempty"`
@@ -36,6 +37,7 @@ type ActionNotificationExportFindParams struct {
 
 type ActionNotificationExportCreateParams struct {
 	UserId             int64      `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	WorkspaceId        int64      `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	StartAt            *time.Time `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
 	EndAt              *time.Time `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
 	QueryMessage       string     `url:"query_message,omitempty" json:"query_message,omitempty" path:"query_message"`
