@@ -67,11 +67,40 @@ func TestZipBatchProbeChoosesZip(t *testing.T) {
 	requireZipBatchJobClean(t, job)
 	stats := job.ZipBatchStats()
 	assert.Equal(t, string(zipBatchProbeDecisionCommitted), stats.ProbeDecision)
-	assert.Equal(t, int64(1), stats.ProbeBaselineWindows)
 	assert.Greater(t, stats.ProbeZipRateMilli, stats.ProbePerFileRateMilli)
-	assert.Equal(t, int64(0), stats.Reprobes)
 	assert.Greater(t, stats.BatchesDispatched, int64(1))
 	assert.Equal(t, "file-511", readLocalFile(t, root, "batch", "file-511.txt"))
+}
+
+func TestZipBatchProbeCommitsFirstFasterZipSample(t *testing.T) {
+	withZipBatchProbeTestWindows(t)
+	batcher := &zipBatchDownloader{params: ZipBatchParams{}.withDefaults(), probe: newZipBatchProbe()}
+	batcher.unlock()
+
+	start := time.Unix(1, 0)
+	batcher.probe.perFileFirstCompletion = start
+	for i := 0; i <= 20; i++ {
+		batcher.probe.perFileCompletions = append(batcher.probe.perFileCompletions, start.Add(time.Duration(i)*time.Millisecond))
+	}
+	batcher.maybeAdvanceProbeLocked(false, start.Add(20*time.Millisecond))
+	batcher.applyProbeState(false)
+	require.Equal(t, zipBatchModeProbePhaseB, batcher.mode)
+	require.Equal(t, zipBatchProbeDecisionNone, batcher.currentProbeDecision())
+
+	zipStart := start.Add(time.Second)
+	batcher.probe.zipFirstCompletion = zipStart
+	for i := 0; i <= 200; i++ {
+		batcher.probe.zipCompletions = append(batcher.probe.zipCompletions, zipStart.Add(time.Duration(i)*100*time.Microsecond))
+	}
+	batcher.maybeAdvanceProbeLocked(false, zipStart.Add(20*time.Millisecond))
+	batcher.applyProbeState(false)
+
+	assert.Equal(t, zipBatchProbeDecisionCommitted, batcher.currentProbeDecision())
+	assert.Equal(t, zipBatchModeCommitted, batcher.mode)
+	assert.Equal(t, 1, batcher.currentProbeAttempt())
+	assert.Len(t, batcher.probe.perFileRateWindows, 1)
+	assert.Greater(t, batcher.probe.zipRate, batcher.probe.perFileRate)
+	assert.True(t, batcher.reprobeAfter.IsZero())
 }
 
 func TestZipBatchProbeLargeJobUsesThreeBaselineWindows(t *testing.T) {

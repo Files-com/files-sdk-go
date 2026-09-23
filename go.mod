@@ -20,7 +20,7 @@ require (
 	github.com/winfsp/cgofuse v1.6.1-0.20250813110601-7d90b0992471 // includes fixes from https://github.com/winfsp/cgofuse/pull/98, update when the next version is released
 	golang.org/x/sync v0.22.0
 	golang.org/x/sys v0.47.0
-	golang.org/x/text v0.41.0
+	golang.org/x/text v0.41.0 // indirect
 	moul.io/http2curl/v2 v2.3.0
 )
 

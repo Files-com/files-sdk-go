@@ -317,3 +317,30 @@ func TestClient_Downloader_listsNestedListingEntriesWithTheirOwnFolder(t *testin
 	assert.Equal(t, 1, listed, "the nested file is listed once, with its own folder")
 	assert.FileExists(t, filepath.Join(root, "sub", "deep.txt"))
 }
+
+func TestServerPathComparisonPreservesComponentBoundaries(t *testing.T) {
+	for _, tc := range []struct {
+		folder  string
+		path    string
+		matches bool
+	}{
+		{"q\u0301/カ", "q/か/Original.txt", true},
+		{"Straße", "STRASSE/Original.txt", true},
+		{"folder", "folder /Original.txt", false},
+		{"folder", "folder2/Original.txt", false},
+	} {
+		t.Run(tc.path, func(t *testing.T) {
+			child, listingErr := listingEntryIsChild(tc.folder, files_sdk.File{Path: tc.path, DisplayName: "Original.txt", Type: "file"})
+			name, destinationErr := localNameBelow(tc.folder, tc.path)
+			if tc.matches {
+				require.NoError(t, listingErr)
+				require.True(t, child)
+				require.NoError(t, destinationErr)
+				require.Equal(t, "Original.txt", name)
+			} else {
+				require.Error(t, listingErr)
+				require.Error(t, destinationErr)
+			}
+		})
+	}
+}

@@ -7,7 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"testing/fstest"
+
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/directory"
 	"github.com/Files-com/files-sdk-go/v3/file/manager"
 	"github.com/Files-com/files-sdk-go/v3/file/status"
 	"github.com/Files-com/files-sdk-go/v3/lib"
@@ -401,4 +404,17 @@ func TestJobStatusFromPausedUploadIsCanceled(t *testing.T) {
 
 	assert.Equal(t, status.Canceled, file.Status())
 	assert.NoError(t, file.Err())
+}
+
+func TestJobFindRemoteFileUsesServerUnicodeIdentity(t *testing.T) {
+	job := &Job{Type: directory.Dir, RemoteFs: fstest.MapFS{
+		"q/カ.txt":  mapFile("q/カ.txt", 1),
+		"q/カ.txt ": mapFile("q/カ.txt ", 2),
+	}}
+	for _, pair := range [][2]string{{"q/か.txt", "q/カ.txt"}, {"q/か.txt ", "q/カ.txt "}} {
+		info, found, err := job.FindRemoteFile(StatusFile{file: JobFile{RemotePath: pair[0]}})
+		require.NoError(t, err)
+		require.True(t, found)
+		require.Equal(t, pair[1], info.Path)
+	}
 }

@@ -109,3 +109,24 @@ func TestFS_Open(t *testing.T) {
 	_, err = fs.Open(".")
 	require.NoError(t, err)
 }
+
+func TestFS_OpenUsesServerUnicodeIdentityInCache(t *testing.T) {
+	server := (&MockAPIServer{T: t}).Do()
+	defer server.Shutdown()
+	client := server.Client()
+	for _, name := range []string{"q\u0301/カ.txt", "q/か.txt "} {
+		server.MockFiles[name] = mockFile{File: files_sdk.File{Path: name, DisplayName: filepath.Base(name), Type: "file"}}
+	}
+	fs := (&FS{}).Init(client.Config, true)
+	original, err := fs.Open("q\u0301/カ.txt")
+	require.NoError(t, err)
+	equivalent, err := fs.Open("q/か.txt")
+	require.NoError(t, err)
+	require.Same(t, original, equivalent)
+	distinct, err := fs.Open("q/か.txt ")
+	require.NoError(t, err)
+	require.NotSame(t, original, distinct)
+	info, err := distinct.Stat()
+	require.NoError(t, err)
+	require.Equal(t, "q/か.txt ", info.Sys().(files_sdk.File).Path)
+}

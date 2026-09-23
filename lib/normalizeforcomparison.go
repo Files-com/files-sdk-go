@@ -1,46 +1,49 @@
 package lib
 
 import (
+	_ "embed"
+	"encoding/json"
+	"strconv"
 	"strings"
-	"unicode"
-
-	"golang.org/x/text/unicode/norm"
 )
 
-var transliterationMap map[rune]string
+//go:embed path_comparison.json
+var pathComparisonJSON []byte
+
+var comparisonMap map[rune]string
 
 func init() {
-	transliterationMapString := "ÀA,ÁA,ÂA,ÃA,ÄA,ÅA,ÆAE,ÇC,ÈE,ÉE,ÊE,ËE,ÌI,ÍI,ÎI,ÏI,ÐD,ÑN,ÒO,ÓO,ÔO,ÕO,ÖO,ØO,ÙU,ÚU,ÛU,ÜU,ÝY,ßss,àa,áa,âa,ãa,äa,åa,æae,çc,èe,ée,êe,ëe,ìi,íi,îi,ïi,ðd,ñn,òo,óo,ôo,õo,öo,øo,ùu,úu,ûu,üu,ýy,ÿy,ĀA,āa,ĂA,ăa,ĄA,ąa,ĆC,ćc,ĈC,ĉc,ĊC,ċc,ČC,čc,ĎD,ďd,ĐD,đd,ĒE,ēe,ĔE,ĕe,ĖE,ėe,ĘE,ęe,ĚE,ěe,ĜG,ĝg,ĞG,ğg,ĠG,ġg,ĢG,ģg,ĤH,ĥh,ĦH,ħh,ĨI,ĩi,ĪI,īi,ĬI,ĭi,ĮI,įi,İI,ĲIJ,ĳij,ĴJ,ĵj,ĶK,ķk,ĹL,ĺl,ĻL,ļl,ĽL,ľl,ŁL,łl,ŃN,ńn,ŅN,ņn,ŇN,ňn,ŉ'n,ŌO,ōo,ŎO,ŏo,ŐO,őo,ŒOE,œoe,ŔR,ŕr,ŖR,ŗr,ŘR,řr,ŚS,śs,ŜS,ŝs,ŞS,şs,ŠS,šs,ŢT,ţt,ŤT,ťt,ŨU,ũu,ŪU,ūu,ŬU,ŭu,ŮU,ůu,ŰU,űu,ŲU,ųu,ŴW,ŵw,ŶY,ŷy,ŸY,ŹZ,źz,ŻZ,żz,ŽZ,žz"
-	transliterationMap = make(map[rune]string)
-	pairs := strings.Split(transliterationMapString, ",")
-
-	for _, pair := range pairs {
-		runes := []rune(pair)
-		transliterationMap[runes[0]] = string(runes[1:])
+	var data struct {
+		Mapping map[string]string `json:"mapping"`
 	}
-}
-
-func transliterate(r rune, transliterationMap map[rune]string) string {
-	if result, ok := transliterationMap[r]; ok {
-		return result
+	if err := json.Unmarshal(pathComparisonJSON, &data); err != nil {
+		panic(err)
 	}
-	return string(r)
+	comparisonMap = make(map[rune]string, len(data.Mapping))
+	for hex, replacement := range data.Mapping {
+		scalar, err := strconv.ParseUint(hex, 16, 32)
+		if err != nil {
+			panic(err)
+		}
+		comparisonMap[rune(scalar)] = replacement
+	}
 }
 
 func NormalizeForComparison(path string) string {
-	// Normalize Algorithm
 	path = NormalizeAPIPath(path)
-
-	// Normalize For Comparison Algorithm
-	path = norm.NFKC.String(path)
-
-	var transliteratedPath strings.Builder
-	for _, r := range path {
-		transliteratedPath.WriteString(transliterate(r, transliterationMap))
+	var result strings.Builder
+	result.Grow(len(path))
+	for _, scalar := range path {
+		if scalar >= ' ' && scalar <= '~' {
+			if scalar >= 'A' && scalar <= 'Z' {
+				scalar += 'a' - 'A'
+			}
+			result.WriteByte(byte(scalar))
+		} else if replacement, ok := comparisonMap[scalar]; ok {
+			result.WriteString(replacement)
+		} else {
+			result.WriteRune(scalar)
+		}
 	}
-	path = strings.Map(unicode.ToLower, transliteratedPath.String())
-
-	path = strings.TrimRightFunc(path, unicode.IsSpace)
-
-	return path
+	return result.String()
 }
