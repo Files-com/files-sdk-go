@@ -69,7 +69,15 @@ func (reg *mountRegistry) startPprof() {
 		}
 
 		pprofAddr = fmt.Sprintf("%s:%d", pprofHost, pprofPort)
-		reg.dbgSrv = &http.Server{Addr: pprofAddr, Handler: mux}
+		reg.dbgSrv = &http.Server{
+			Addr:              pprofAddr,
+			Handler:           mux,
+			ReadHeaderTimeout: 5 * time.Second,
+			ReadTimeout:       15 * time.Second,
+			// pprof extends the write deadline by the requested profiling duration.
+			WriteTimeout: 30 * time.Second,
+			IdleTimeout:  60 * time.Second,
+		}
 		go func() {
 			if err := reg.dbgSrv.ListenAndServe(); err != nil {
 				if !errors.Is(err, http.ErrServerClosed) {
