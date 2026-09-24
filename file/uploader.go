@@ -62,6 +62,7 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams, opts
 			remotePath:      params.RemotePath,
 			Sync:            params.Sync,
 			NoOverwrite:     params.NoOverwrite,
+			dryRun:          params.DryRun,
 			Uploader:        c,
 			Mutex:           &sync.RWMutex{},
 			UploadResumable: params.PriorResumable,

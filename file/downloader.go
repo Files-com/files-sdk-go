@@ -448,9 +448,11 @@ func runDownloadFolderItem(ctx context.Context, reportStatus *DownloadStatus) {
 
 func prepareDownloadFolderItem(reportStatus *DownloadStatus) (fs.FileInfo, bool) {
 	destination := reportStatus.destination
-	if err := destination.parent().mkdirAll(); err != nil {
-		reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
-		return nil, false
+	if !reportStatus.dryRun {
+		if err := destination.parent().mkdirAll(); err != nil {
+			reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
+			return nil, false
+		}
 	}
 
 	remoteStat, remoteStatErr := reportStatus.fsFile.Stat()

@@ -15,6 +15,7 @@ func (c *Client) DownloadRetry(job Job, opts ...files_sdk.RequestResponseOption)
 		DownloaderParams{
 			RemotePath:                           newJob.RemotePath,
 			Sync:                                 newJob.Sync,
+			DryRun:                               newJob.Params.(DownloaderParams).DryRun,
 			Manager:                              newJob.Manager,
 			LocalPath:                            newJob.LocalPath,
 			RetryPolicy:                          newJob.RetryPolicy.(RetryPolicy),

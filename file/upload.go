@@ -179,6 +179,7 @@ func (c *Client) UploadRetry(job Job, opts ...files_sdk.RequestResponseOption) *
 	return c.Uploader(
 		UploaderParams{
 			Sync:                                 newJob.Sync,
+			DryRun:                               newJob.Params.(UploaderParams).DryRun,
 			LocalPath:                            newJob.LocalPath,
 			RemotePath:                           newJob.RemotePath,
 			EventsReporter:                       newJob.EventsReporter,
