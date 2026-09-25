@@ -69,7 +69,7 @@ func ToStatusFile(f IFile) JobFile {
 		jf.CheckpointResumable = cr.CheckpointResumable()
 	}
 	if ds, ok := f.(*DownloadStatus); ok {
-		jf.TmpPath = ds.TmpPath
+		jf.TmpPath = ds.tmpDownloadPath()
 	}
 	return jf
 }
@@ -104,11 +104,16 @@ type Job struct {
 	Ignore         *ignore.GitIgnore
 	Include        *ignore.GitIgnore
 	CompletedPaths map[string]struct{}
-	Started        *lib.Signal
-	Finished       *lib.Signal
-	Canceled       *lib.Signal
-	Scanning       *lib.Signal
-	EndScanning    *lib.Signal
+	// pausedListings are the tokenized paused temporary downloads found in each
+	// stage directory this job has looked in, by file digest; see
+	// Job.tokenizedPausedTmpDownload.
+	pausedListings      map[string]map[string][]string
+	pausedListingsMutex sync.Mutex
+	Started             *lib.Signal
+	Finished            *lib.Signal
+	Canceled            *lib.Signal
+	Scanning            *lib.Signal
+	EndScanning         *lib.Signal
 	retryablehttp.Logger
 	RemoteFs fs.FS
 	*lib.Meter

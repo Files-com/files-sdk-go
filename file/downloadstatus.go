@@ -75,6 +75,21 @@ func (d *DownloadStatus) RecentError() error {
 	return d.lastError
 }
 
+// tmpDownloadPath is the temporary file the transfer reports, read under the
+// status lock: the transfer goroutine changes it (a stage is created, resumed,
+// paused) while other goroutines take status snapshots (ToStatusFile).
+func (d *DownloadStatus) tmpDownloadPath() string {
+	d.Mutex.RLock()
+	defer d.Mutex.RUnlock()
+	return d.TmpPath
+}
+
+func (d *DownloadStatus) setTmpDownloadPath(path string) {
+	d.Mutex.Lock()
+	defer d.Mutex.Unlock()
+	d.TmpPath = path
+}
+
 func (d *DownloadStatus) SetStatus(s status.Status, err error) {
 	d.Mutex.Lock()
 	defer d.Mutex.Unlock()

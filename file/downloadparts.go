@@ -64,17 +64,23 @@ func (d *DownloadParts) Init(file fs.File, info fs.FileInfo, globalWait manager.
 	return d
 }
 
-func (d *DownloadParts) Run(ctx context.Context) error {
+func (d *DownloadParts) Run(ctx context.Context) (err error) {
 	ctx, closeDirectClients := files_sdk.WithDirectTransferClientCache(ctx)
 	defer closeDirectClients()
 	d.Context, d.CancelFunc = context.WithCancel(ctx)
 	d.queueContext, d.queueCancel = context.WithCancel(d.Context)
 	defer func() {
 		d.CancelFunc()
-		d.CloseError = d.WriterAndAt.Close()
+		var trimErr error
+		if err != nil && len(d.parts) > 0 {
+			// Only a download split into parts can hold bytes past a gap. The
+			// single-stream path writes in order, so its length already ends
+			// at the last byte received.
+			trimErr = d.trimToContiguous()
+		}
+		d.CloseError = errors.Join(trimErr, d.WriterAndAt.Close())
 		d.fileManager.Release()
 	}()
-	var err error
 	d.fileManager, err = ants.NewPool(lo.Min[int](append([]int{}, DownloadPartLimit, d.globalWait.Max())))
 	if err != nil {
 		return err
@@ -100,6 +106,91 @@ func (d *DownloadParts) downloadFileCutOff() bool {
 
 func (d *DownloadParts) FinalSize() int64 {
 	return atomic.LoadInt64(&d.totalWritten)
+}
+
+// contiguousSize is the length of the prefix of the file that has been received
+// in full: the offset the download continued from plus the leading parts that
+// finished, in order, up to the first gap. Everything past that gap is fetched
+// again on resume: the bytes the unfinished part had written so far, and any
+// parts that finished beyond it. That costs bandwidth after a pause, in
+// exchange for a resume that never has to reason about where an interrupted
+// part stopped. It is read once every part has settled, when no part is
+// written any more.
+func (d *DownloadParts) contiguousSize() int64 {
+	size := d.startOffset
+	for _, part := range d.parts {
+		if part.off != size || !part.Successful() {
+			break
+		}
+		size += part.bytes
+	}
+	return size
+}
+
+// errTmpDownloadNotTrimmed reports that a download that stopped early could not
+// end its temporary file at the bytes it received. Such a file must not be
+// continued from: its length no longer says how much of it is real.
+var errTmpDownloadNotTrimmed = errors.New("the temporary download could not be trimmed to the bytes it received")
+
+// tmpDownloadNotTrimmedError carries the filesystem's refusal. It is reported
+// on its own, apart from the pause or cancellation that stopped the download,
+// because a status error that wraps a cancellation is recorded as a plain
+// cancellation and the caller would then keep the file.
+type tmpDownloadNotTrimmedError struct{ cause error }
+
+func (e tmpDownloadNotTrimmedError) Error() string {
+	return errTmpDownloadNotTrimmed.Error() + ": " + e.cause.Error()
+}
+
+func (e tmpDownloadNotTrimmedError) Unwrap() error { return e.cause }
+
+func (e tmpDownloadNotTrimmedError) Is(target error) bool { return target == errTmpDownloadNotTrimmed }
+
+// tmpDownloadNotTrimmed extracts that report from an engine's error, if it is
+// there.
+func tmpDownloadNotTrimmed(err error) (tmpDownloadNotTrimmedError, bool) {
+	var notTrimmed tmpDownloadNotTrimmedError
+	found := errors.As(err, &notTrimmed)
+	return notTrimmed, found
+}
+
+// truncateTmpDownload shortens a temporary download to size. It is a variable
+// so tests can make the filesystem refuse.
+var truncateTmpDownload = func(file interface{ Truncate(int64) error }, size int64) error {
+	return file.Truncate(size)
+}
+
+// trimToContiguous ends the temporary file where the received prefix ends when
+// the download stops before it is complete. Parts are written at their own
+// offsets as they arrive, so a part can be on disk past a lower range that
+// never arrived, and a paused or interrupted download would otherwise leave a
+// file whose length does not say how much of it is real. A later resume
+// continues from the file's length, so the length must be the received prefix.
+func (d *DownloadParts) trimToContiguous() error {
+	truncater, ok := truncaterOf(d.WriterAndAt)
+	if !ok {
+		return nil
+	}
+	if err := truncateTmpDownload(truncater, d.contiguousSize()); err != nil {
+		return tmpDownloadNotTrimmedError{cause: err}
+	}
+	return nil
+}
+
+// truncaterOf finds the file behind a writer, through the progress wrapper the
+// download engines use.
+func truncaterOf(writer lib.WriterAndAt) (interface{ Truncate(int64) error }, bool) {
+	for writer != nil {
+		if truncater, ok := writer.(interface{ Truncate(int64) error }); ok {
+			return truncater, true
+		}
+		progress, ok := writer.(lib.ProgressWriter)
+		if !ok {
+			return nil, false
+		}
+		writer = progress.WriterAndAt
+	}
+	return nil, false
 }
 
 func (d *DownloadParts) waitForParts() error {

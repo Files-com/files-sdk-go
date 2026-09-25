@@ -5,6 +5,7 @@ package file
 import (
 	"errors"
 	"io/fs"
+	"path/filepath"
 )
 
 // explicitTmpDownload is a caller-supplied temporary file path, used as given.
@@ -20,6 +21,30 @@ func tmpDownloadPathOnNotExist(_ destinationPath, tmp destinationPath) (destinat
 // it has just been published.
 func removeTmpDownloadFolder(_ destinationPath) error {
 	return nil
+}
+
+// tmpDownloadEntry is the reserved entry that carries a temporary download's
+// name: the file itself.
+func tmpDownloadEntry(tmp destinationPath) destinationPath {
+	return tmp
+}
+
+// tmpDownloadInEntry is the temporary download inside entry: the entry itself.
+func tmpDownloadInEntry(entry destinationPath, _ string) destinationPath {
+	return entry
+}
+
+// publishPausedTmpDownload gives the claimed, verified file of tmp its paused
+// name beside tmp and removes the claim's folder.
+func publishPausedTmpDownload(claimed destinationPath, tmp destinationPath, element string) (destinationPath, error) {
+	paused := tmp.withName(filepath.Join(filepath.Dir(tmp.name), element))
+	if err := refuseOccupied(paused); err != nil {
+		return destinationPath{}, err
+	}
+	if err := claimed.rename(paused); err != nil {
+		return destinationPath{}, err
+	}
+	return paused, removeTmpDownloadClaimContainer(claimed, tmp)
 }
 
 func existingTmpDownloadFile(_ destinationPath, tmp destinationPath) (destinationPath, bool) {

@@ -3,6 +3,7 @@ package file
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -340,15 +341,16 @@ func runDownloadFolderItem(ctx context.Context, reportStatus *DownloadStatus) {
 	// Each attempt establishes the temporary file again, so the identity
 	// recorded by an earlier attempt must not be carried over.
 	reportStatus.tmpIdentity = nil
-	tmp, resuming := reportStatus.checkpointedTmpDownload()
-	if !resuming && reportStatus.TmpPath != "" {
-		reportStatus.Job().Logger.Printf("tmp download file not found, starting over: %v", reportStatus.TmpPath)
-		reportStatus.TmpPath = ""
-	}
+	// Only a paused temporary download is continued from: one a run ended at
+	// the bytes it received and then renamed. Whatever else a run left, under
+	// the checkpointed path or the canonical in-flight name, is discarded.
+	tmp, resuming := reportStatus.tmpDownloadToResume()
 	if !resuming {
-		tmp, resuming = existingTmpDownloadPath(reportStatus.destination, reportStatus.tempPath)
-	}
-	if !resuming {
+		if checkpointed := reportStatus.tmpDownloadPath(); checkpointed != "" {
+			reportStatus.Job().Logger.Printf("tmp download file not found or not paused, starting over: %v", checkpointed)
+			reportStatus.discardUnpausedCheckpoint()
+		}
+		reportStatus.setTmpDownloadPath("")
 		var err error
 		tmp, err = tmpDownloadPath(reportStatus.destination, reportStatus.tempPath)
 		if err != nil {
@@ -365,7 +367,10 @@ func runDownloadFolderItem(ctx context.Context, reportStatus *DownloadStatus) {
 			startOffset = 0
 		}
 		if startOffset == remoteStat.Size() {
-			// Temp file is already fully downloaded - skip the network request and finalize directly.
+			// The paused file holds the whole transfer: publish it without a
+			// network request. A publication that fails because of a pause
+			// leaves it paused for the next run, and the status names it.
+			reportStatus.setTmpDownloadPath(tmp.String())
 			if err := finalizeTmpDownload(ctx, tmp, reportStatus.destination, reportStatus.tmpIdentity); err != nil {
 				if !errors.Is(context.Cause(ctx), ErrJobPaused) {
 					removeTmpDownload(tmp)
@@ -377,8 +382,16 @@ func runDownloadFolderItem(ctx context.Context, reportStatus *DownloadStatus) {
 			}
 			return
 		}
+		// The file goes back under an in-flight name before anything is
+		// written to it again: a process that stops before the next pause must
+		// not leave it looking continued from.
+		tmp, err = activateTmpDownload(tmp, reportStatus.destination, reportStatus.tempPath)
+		if err != nil {
+			reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
+			return
+		}
 	}
-	reportStatus.TmpPath = tmp.String()
+	reportStatus.setTmpDownloadPath(tmp.String())
 	// Whichever engine opens the temporary file records which file it opened
 	// (recordTmpDownloadIdentity), so publishing can tell this transfer's file
 	// from any other file that reaches the same path while the transfer runs.
@@ -386,12 +399,14 @@ func runDownloadFolderItem(ctx context.Context, reportStatus *DownloadStatus) {
 		reportStatus.IncrementTransferBytes(startOffset)
 	}
 	var finalSize int64
+	// engineErr is what stopped the engine early, if anything. It is reported
+	// after the temporary file has been dealt with, so the status the caller
+	// sees names the file as it is then.
+	var engineErr error
 	downloadV2Used, downloadV2FinalSize, planStat, downloadV2Err := runDownloadV2IfSupported(ctx, reportStatus, remoteStat, tmp, startOffset)
 	if downloadV2Used {
 		finalSize = downloadV2FinalSize
-		if downloadV2Err != nil {
-			reportStatus.Job().UpdateStatus(status.Errored, reportStatus, downloadV2Err)
-		}
+		engineErr = downloadV2Err
 	} else {
 		writer, err := openFile(tmp, reportStatus, startOffset)
 		if err != nil {
@@ -406,17 +421,45 @@ func runDownloadFolderItem(ctx context.Context, reportStatus *DownloadStatus) {
 			reportStatus.Job().Config,
 			startOffset,
 		)
-
-		lib.AnyError(func(err error) {
-			reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
-		},
-			func() error { return downloadParts.Run(ctx) },
-			func() error { return downloadParts.CloseError },
-		)
+		engineErr = downloadParts.Run(ctx)
+		if engineErr == nil {
+			engineErr = downloadParts.CloseError
+		} else if downloadParts.CloseError != nil {
+			engineErr = errors.Join(engineErr, downloadParts.CloseError)
+		}
 		finalSize = downloadParts.FinalSize()
 	}
 
 	cause := context.Cause(ctx)
+
+	// parked is set once the temporary file has been kept for a resume under
+	// its paused name. That happens only when the engine stopped for the
+	// pause itself and ended the file at its received prefix; a file the
+	// engine could not trim, or one of a transfer the source rejected, is not
+	// kept, pause or not, because a resume would continue from its length.
+	parked := false
+	var parkErr error
+	notTrimmed, stageUntrimmed := tmpDownloadNotTrimmed(engineErr)
+	if engineErr != nil && errors.Is(cause, ErrJobPaused) && !stageUntrimmed && stoppedForPauseOnly(engineErr) {
+		if paused, err := parkTmpDownload(tmp, reportStatus.tmpIdentity); err != nil {
+			parkErr = fmt.Errorf("download: the paused download %v could not be kept for a resume: %w", tmp, err)
+		} else {
+			parked = true
+			// The status reported next names the paused file, which is what a
+			// caller keeps for the resume.
+			reportStatus.setTmpDownloadPath(paused.String())
+		}
+	}
+	// A file that could not be kept is reported instead of the pause, once:
+	// that the resume will start over is what the caller must know.
+	switch {
+	case stageUntrimmed:
+		reportStatus.Job().UpdateStatus(status.Errored, reportStatus, notTrimmed)
+	case parkErr != nil:
+		reportStatus.Job().UpdateStatus(status.Errored, reportStatus, parkErr)
+	case engineErr != nil:
+		reportStatus.Job().UpdateStatus(status.Errored, reportStatus, engineErr)
+	}
 
 	if reportStatus.Status().Is(status.Valid...) {
 		err := completeTmpDownload(ctx, reportStatus, tmp, finalSize)
@@ -430,9 +473,9 @@ func runDownloadFolderItem(ctx context.Context, reportStatus *DownloadStatus) {
 			reportStatus.Job().UpdateStatus(status.Complete, reportStatus, nil)
 		}
 	} else {
-		if !errors.Is(cause, ErrJobPaused) {
+		if !parked {
 			err := removeTmpDownload(tmp) // Clean up on invalid download
-			if err != nil {
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				reportStatus.Job().UpdateStatus(status.Errored, reportStatus, err)
 			}
 			if downloadSourceChanged(reportStatus.Err()) {
@@ -444,6 +487,30 @@ func runDownloadFolderItem(ctx context.Context, reportStatus *DownloadStatus) {
 			}
 		}
 	}
+}
+
+// stoppedForPauseOnly reports whether err is the engine stopping for the
+// cancellation and nothing else: every error in it, however wrapped or joined,
+// ends in the cancellation. A transfer the source rejected, a range response
+// that contradicted the plan, or an unrelated failure such as a write or close
+// error joined with the cancellation says the file's state is not simply
+// "stopped here", and such a file is not continued from.
+func stoppedForPauseOnly(err error) bool {
+	if err == nil {
+		return false
+	}
+	switch unwrapped := err.(type) {
+	case interface{ Unwrap() []error }:
+		for _, joined := range unwrapped.Unwrap() {
+			if !stoppedForPauseOnly(joined) {
+				return false
+			}
+		}
+		return true
+	case interface{ Unwrap() error }:
+		return stoppedForPauseOnly(unwrapped.Unwrap())
+	}
+	return err == ErrJobPaused || err == context.Canceled
 }
 
 func prepareDownloadFolderItem(reportStatus *DownloadStatus) (fs.FileInfo, bool) {
@@ -509,6 +576,13 @@ func prepareDownloadFolderItem(reportStatus *DownloadStatus) (fs.FileInfo, bool)
 func completeTmpDownload(ctx context.Context, reportStatus *DownloadStatus, tmp destinationPath, finalSize int64) error {
 	reportStatus.SetFinalSize(finalSize)
 	if err := finalizeTmpDownload(ctx, tmp, reportStatus.destination, reportStatus.tmpIdentity); err != nil {
+		if errors.Is(context.Cause(ctx), ErrJobPaused) {
+			// finalizeTmpDownload keeps a file it could not publish because
+			// of a pause under its paused name; report that name.
+			if paused, ok := pausedTmpDownloadOf(tmp); ok {
+				reportStatus.setTmpDownloadPath(paused.String())
+			}
+		}
 		return err
 	}
 

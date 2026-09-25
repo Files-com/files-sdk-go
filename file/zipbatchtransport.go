@@ -575,7 +575,7 @@ func extractZipStreamEntry(ctx context.Context, stream *zipStream, header zipStr
 	if err != nil {
 		return err
 	}
-	downloadStatus.TmpPath = tmp.String()
+	downloadStatus.setTmpDownloadPath(tmp.String())
 	out, err := tmp.create()
 	if err != nil {
 		return err
@@ -617,7 +617,7 @@ func extractZipEntryReader(ctx context.Context, name string, in io.Reader, downl
 	if err != nil {
 		return err
 	}
-	downloadStatus.TmpPath = tmp.String()
+	downloadStatus.setTmpDownloadPath(tmp.String())
 	out, err := tmp.create()
 	if err != nil {
 		return err

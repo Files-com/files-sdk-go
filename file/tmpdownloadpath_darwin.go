@@ -31,6 +31,39 @@ func removeTmpDownloadFolder(tmp destinationPath) error {
 	return tmp.parent().remove()
 }
 
+// tmpDownloadEntry is the reserved entry that carries a temporary download's
+// name: on macOS the folder holding the file.
+func tmpDownloadEntry(tmp destinationPath) destinationPath {
+	return tmp.parent()
+}
+
+// tmpDownloadInEntry is the temporary download named base inside entry.
+func tmpDownloadInEntry(entry destinationPath, base string) destinationPath {
+	return entry.withName(filepath.Join(entry.name, base))
+}
+
+// publishPausedTmpDownload gives the claimed, verified file of tmp its paused
+// name. On macOS the claim lives inside the stage folder, so the folder is
+// renamed to the paused element and the file inside it back to its own name;
+// until that second step the paused folder holds nothing under the name a
+// lookup uses.
+func publishPausedTmpDownload(claimed destinationPath, tmp destinationPath, element string) (destinationPath, error) {
+	folder := tmp.parent()
+	target := folder.withName(filepath.Join(filepath.Dir(folder.name), element))
+	if err := refuseOccupied(target); err != nil {
+		return destinationPath{}, err
+	}
+	if err := folder.rename(target); err != nil {
+		return destinationPath{}, err
+	}
+	moved := target.withName(filepath.Join(target.name, claimed.base()))
+	paused := target.withName(filepath.Join(target.name, tmp.base()))
+	if err := moved.rename(paused); err != nil {
+		return destinationPath{}, errors.Join(err, target.rename(folder))
+	}
+	return paused, nil
+}
+
 func existingTmpDownloadFile(final destinationPath, tmp destinationPath) (destinationPath, bool) {
 	file := tmp.withName(filepath.Join(tmp.name, final.base()))
 	if _, err := file.stat(); err == nil {

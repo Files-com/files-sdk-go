@@ -263,6 +263,8 @@ func TestDownloadItem_interruptReadOnlyRootFinalization(t *testing.T) {
 						require.NoError(t, os.WriteFile(tmp.String(), data, 0640))
 						// Set the custom mode explicitly, independent of the process umask.
 						require.NoError(t, os.Chmod(tmp.String(), 0640))
+						// Only a paused temporary download is published without content.
+						parkStage(t, tmp)
 					}
 					runDownloadFolderItem(ctx, s)
 				} else {
@@ -299,7 +301,7 @@ func TestDownloadItem_interruptReadOnlyRootFinalization(t *testing.T) {
 					return
 				}
 
-				tmp, exists := existingTmpDownloadPath(final, temp)
+				tmp, exists := pausedTmpDownloadPath(final, temp)
 				require.True(t, exists, "pause keeps the original completed download")
 				info, err := tmp.stat()
 				require.NoError(t, err)

@@ -18,13 +18,14 @@ func stageWithContent(t *testing.T, dir string, name string, content string) des
 }
 
 // stageWithContentIn is stageWithContent for any destination, staged beside it
-// or inside the external temp directory tempPath.
+// or inside the external temp directory tempPath. The stage is paused, as a
+// download that stopped in an orderly way leaves it.
 func stageWithContentIn(t *testing.T, final destinationPath, tempPath string, content string) destinationPath {
 	t.Helper()
 	tmp, err := tmpDownloadPath(final, tempPath)
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(tmp.String(), []byte(content), 0600))
-	return tmp
+	return parkStage(t, tmp)
 }
 
 // resumedContent is what a later run of a download of name would continue from.
@@ -37,7 +38,7 @@ func resumedContent(t *testing.T, dir string, name string) (string, bool) {
 // inside the external temp directory tempPath.
 func resumedContentOf(t *testing.T, final destinationPath, tempPath string) (string, bool) {
 	t.Helper()
-	tmp, ok := existingTmpDownloadPath(final, tempPath)
+	tmp, ok := pausedTmpDownloadPath(final, tempPath)
 	if !ok {
 		return "", false
 	}
@@ -59,6 +60,8 @@ func Test_existingTmpDownloadPath_doesNotAdoptASiblingNamedLikeATemporaryDownloa
 
 	for _, name := range []string{"flat.csv", "folder.csv"} {
 		_, ok := existingTmpDownloadPath(explicitDestination(filepath.Join(dir, name)), "")
+		assert.Falsef(t, ok, "%v must not resume from a sibling it does not own", name)
+		_, ok = pausedTmpDownloadPath(explicitDestination(filepath.Join(dir, name)), "")
 		assert.Falsef(t, ok, "%v must not resume from a sibling it does not own", name)
 	}
 }
@@ -140,7 +143,7 @@ func Test_tmpDownloadPath_keepsEachDestinationToItsOwnTemporaryDownloadInATempPa
 	stageWithContentIn(t, destinations[0], temp, "bytes of root a")
 
 	for _, final := range destinations[1:] {
-		_, ok := existingTmpDownloadPath(final, temp)
+		_, ok := pausedTmpDownloadPath(final, temp)
 		assert.Falsef(t, ok, "%v must not continue from another destination's temporary download", final)
 	}
 	for _, final := range destinations[1:] {
@@ -159,7 +162,7 @@ func Test_tmpDownloadPath_keepsEachDestinationToItsOwnTemporaryDownloadInATempPa
 // One destination is one file however its path is spelled: as an explicit
 // output path, as a root plus the path below it, or relative to the working
 // directory. Each spelling must continue from the same temporary download.
-func Test_existingTmpDownloadPath_findsTheSameStageForEverySpellingOfADestination(t *testing.T) {
+func Test_pausedTmpDownloadPath_findsTheSameStageForEverySpellingOfADestination(t *testing.T) {
 	temp := t.TempDir()
 	t.Chdir(t.TempDir())
 	// The working directory as the process reports it, so the relative
@@ -176,7 +179,7 @@ func Test_existingTmpDownloadPath_findsTheSameStageForEverySpellingOfADestinatio
 		"a root relative to the working dir":  {dir: ".", name: filepath.Join("a", "x.bin")},
 		"a path with a redundant '.' element": {dir: root, name: filepath.Join(".", "a", "x.bin")},
 	} {
-		found, ok := existingTmpDownloadPath(final, temp)
+		found, ok := pausedTmpDownloadPath(final, temp)
 		require.Truef(t, ok, "%v must find the stage", name)
 		assert.Equalf(t, staged.String(), found.String(), "%v must find the same stage", name)
 	}
@@ -204,7 +207,7 @@ func Test_tmpDownloadPath_leavesAnExternalStageNamedByNameAloneUntouched(t *test
 			leftover := filepath.Join(temp, legacy.element)
 			writeLegacyExternalStage(t, leftover, final, "bytes from an earlier version")
 
-			_, ok := existingTmpDownloadPath(final, temp)
+			_, ok := pausedTmpDownloadPath(final, temp)
 			assert.False(t, ok, "a stage identified by name alone must not be continued from")
 
 			staged := stageWithContentIn(t, final, temp, "partial")

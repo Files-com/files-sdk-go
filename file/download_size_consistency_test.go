@@ -355,7 +355,7 @@ func TestDownloadResumePrefixBeyondEmptyTransferRestarts(t *testing.T) {
 	t.Run("retry budget 0 fails without output", func(t *testing.T) {
 		fixture := newSizeFixture(t, 40*sizeFixtureMiB, 0)
 		dir := t.TempDir()
-		createCanonicalTmpFile(t, filepath.Join(dir, "output.bin"), 5*sizeFixtureMiB)
+		createPausedTmpFile(t, filepath.Join(dir, "output.bin"), 5*sizeFixtureMiB)
 		job, dest := fixture.downloadTo(t, dir, sizeFixtureRun{adaptive: true})
 
 		require.Error(t, job.Statuses[0].Err())
@@ -364,7 +364,7 @@ func TestDownloadResumePrefixBeyondEmptyTransferRestarts(t *testing.T) {
 	t.Run("retry budget 1 completes empty", func(t *testing.T) {
 		fixture := newSizeFixture(t, 40*sizeFixtureMiB, 0)
 		dir := t.TempDir()
-		createCanonicalTmpFile(t, filepath.Join(dir, "output.bin"), 5*sizeFixtureMiB)
+		createPausedTmpFile(t, filepath.Join(dir, "output.bin"), 5*sizeFixtureMiB)
 		job, dest := fixture.downloadTo(t, dir, sizeFixtureRun{adaptive: true, retryCount: 1})
 
 		require.NoError(t, job.Statuses[0].Err())

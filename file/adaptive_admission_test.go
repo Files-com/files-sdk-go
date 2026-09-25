@@ -2,7 +2,6 @@ package file
 
 import (
 	"context"
-	"os"
 	"path/filepath"
 	"sync"
 	"testing"
@@ -304,10 +303,8 @@ func TestDownloadAdmissionDoesNotFetchURI(t *testing.T) {
 
 func TestDownloadAdmissionSkipsNearCompleteResume(t *testing.T) {
 	size := int64(64 * uploadV2MiB)
-	tmpPath := filepath.Join(t.TempDir(), "large.bin.download")
-	if err := os.WriteFile(tmpPath, make([]byte, size-downloadV2SmallFileFallbackSize()), 0644); err != nil {
-		t.Fatal(err)
-	}
+	// A near-complete paused download, as the checkpoint of a paused job names it.
+	tmpPath := writePausedTmpFile(t, filepath.Join(t.TempDir(), "large.bin"), make([]byte, size-downloadV2SmallFileFallbackSize()))
 	ranger := &downloadV2TestRangeFile{
 		data: make([]byte, size),
 		info: Info{File: files_sdk.File{
@@ -321,6 +318,9 @@ func TestDownloadAdmissionSkipsNearCompleteResume(t *testing.T) {
 	reportStatus := downloadV2TestStatus(ranger, ranger.info, DownloaderParams{
 		AdaptiveConcurrency: true,
 	}, tmpPath)
+	// The paused file is staged beside the destination it belongs to.
+	reportStatus.destination = explicitDestination(filepath.Join(filepath.Dir(tmpDownloadEntry(explicitTmpDownload(tmpPath)).String()), "large.bin"))
+	reportStatus.localPath = reportStatus.destination.String()
 
 	if shouldGateAdaptiveDownloadAdmission(reportStatus, true) {
 		t.Fatal("expected near-complete resume fallback to bypass adaptive file admission")

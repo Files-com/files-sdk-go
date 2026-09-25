@@ -225,9 +225,11 @@ func TestClient_Downloader_resumesExplicitTmpPathOutsideDestination(t *testing.T
 	tmpPath, err := tmpDownloadPath(explicitDestination(filepath.Join(elsewhere, "file.txt")), "")
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(tmpPath.String(), partial, 0644))
+	// A checkpoint names the file as the paused run reported it.
+	paused := parkStage(t, tmpPath)
 	localPath := filepath.Join(root, "file.txt")
 
-	job := client.Downloader(DownloaderParams{RemotePath: "file.txt", LocalPath: localPath, ResumeTmpPath: tmpPath.String()})
+	job := client.Downloader(DownloaderParams{RemotePath: "file.txt", LocalPath: localPath, ResumeTmpPath: paused.String()})
 	job.Start()
 	job.Wait()
 

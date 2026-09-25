@@ -319,7 +319,13 @@ func newDownloadV2Engine(reportStatus *DownloadStatus, ranger ReaderRange, file 
 func (e *downloadV2Engine) Run(parentCtx context.Context) (err error) {
 	defer func() {
 		if err != nil {
-			_ = e.file.Truncate(e.ContiguousSize())
+			// The file was preallocated to the transfer size and parts land at
+			// their offsets, so it must end at the received prefix before a
+			// resume can continue from its length. When that fails the caller
+			// is told, so the file is not kept for a resume.
+			if trimErr := truncateTmpDownload(e.file, e.ContiguousSize()); trimErr != nil {
+				err = errors.Join(err, tmpDownloadNotTrimmedError{cause: trimErr})
+			}
 		}
 		closeErr := e.file.Close()
 		if err == nil {

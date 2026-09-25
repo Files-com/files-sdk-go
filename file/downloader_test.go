@@ -1386,7 +1386,7 @@ func TestDownloadPauseResume(t *testing.T) {
 		assert.True(t, job.Finished.Called())
 		assert.Equal(t, 1, job.Count(status.Canceled))
 		assert.Equal(t, 0, job.Count(status.Errored))
-		_, tmpExists := existingTmpDownloadPath(explicitDestination(filepath.Join(root, "file.txt")), "")
+		_, tmpExists := pausedTmpDownloadPath(explicitDestination(filepath.Join(root, "file.txt")), "")
 		assert.True(t, tmpExists, "temp file should be preserved on pause")
 	})
 
@@ -1422,6 +1422,8 @@ func TestDownloadPauseResume(t *testing.T) {
 		assert.Equal(t, 0, job.Count(status.Errored))
 		_, tmpExists := existingTmpDownloadPath(explicitDestination(filepath.Join(root, "file.txt")), "")
 		assert.False(t, tmpExists, "temp file should be removed on normal cancel")
+		_, pausedExists := pausedTmpDownloadPath(explicitDestination(filepath.Join(root, "file.txt")), "")
+		assert.False(t, pausedExists, "nothing is kept for a resume on normal cancel")
 	})
 
 	t.Run("resume skips completed paths", func(t *testing.T) {
@@ -1472,7 +1474,7 @@ func TestDownloadPauseResume(t *testing.T) {
 		// Recognizable bytes, so keeping them can be told apart from starting
 		// the whole file again, which would also end at the right size.
 		alreadyDownloaded := bytes.Repeat([]byte("P"), int(fileSize/2))
-		writeCanonicalTmpFile(t, localPath, alreadyDownloaded)
+		writePausedTmpFile(t, localPath, alreadyDownloaded)
 
 		job := client.Downloader(DownloaderParams{RemotePath: "file.txt", LocalPath: localPath})
 		job.Start()
@@ -1500,7 +1502,7 @@ func TestDownloadPauseResume(t *testing.T) {
 		}
 
 		localPath := filepath.Join(root, "file.txt")
-		writeCanonicalTmpFile(t, localPath, alreadyDownloaded)
+		writePausedTmpFile(t, localPath, alreadyDownloaded)
 
 		job := client.Downloader(DownloaderParams{RemotePath: "file.txt", LocalPath: localPath})
 		job.Start()
@@ -1528,19 +1530,19 @@ func TestOpenFileReturnsCreateError(t *testing.T) {
 	assert.Equal(t, filepath.Dir(partName), pathError.Path)
 }
 
-func createCanonicalTmpFile(t *testing.T, localPath string, size int64) string {
+func createPausedTmpFile(t *testing.T, localPath string, size int64) string {
 	t.Helper()
-	return writeCanonicalTmpFile(t, localPath, make([]byte, size))
+	return writePausedTmpFile(t, localPath, make([]byte, size))
 }
 
-// writeCanonicalTmpFile leaves content where an interrupted download of
-// localPath would have left it.
-func writeCanonicalTmpFile(t *testing.T, localPath string, content []byte) string {
+// writePausedTmpFile leaves content where a paused download of localPath would
+// have left it: under the paused name a later run continues from.
+func writePausedTmpFile(t *testing.T, localPath string, content []byte) string {
 	t.Helper()
 	tmpPath, err := tmpDownloadPath(explicitDestination(localPath), "")
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(tmpPath.String(), content, 0644))
-	return tmpPath.String()
+	return parkStage(t, tmpPath).String()
 }
 
 type CmdRunner struct {
