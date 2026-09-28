@@ -123,6 +123,11 @@ type MountParams struct {
 	// DiskCachePath specifies the file system directory where disk cache data is stored.
 	// The directory must be writable and have sufficient space for the cache.
 	//
+	// The directory itself is left as it is; the cache keeps everything it stores in
+	// subdirectories that only the current user can read. The directory, and the
+	// directories above it, must not be writable by other users, because they could
+	// then replace the cache's private storage.
+	//
 	// Ignored if DiskCacheEnabled is set to false
 	DiskCachePath string
 

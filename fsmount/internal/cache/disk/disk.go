@@ -21,6 +21,7 @@ import (
 
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/log"
+	"github.com/Files-com/files-sdk-go/v3/lib/privatefile"
 
 	lru "github.com/hashicorp/golang-lru/v2"
 )
@@ -159,6 +160,13 @@ type DiskCache struct {
 //
 // If not disabled, it ensures the directory exists and initializes stats by scanning it.
 //
+// The cache root itself belongs to the caller and is left as it is. Everything the cache stores
+// below it (file data, partial data, metadata and LRU state) is readable only by the current user:
+// the data, partial and state directories the cache owns are created private, and an existing
+// cache is made private before any of its state is read, so a cache written by an earlier version
+// that created world-readable entries is protected as well. See lib/privatefile for what private
+// means on each platform. A root that another user could replace entries in is refused.
+//
 // Defaults:
 //   - Disabled: false
 //   - Capacity: DefaultCapacity
@@ -169,22 +177,31 @@ func NewDiskCache(path string, opts ...Option) (*DiskCache, error) {
 	if err := validateCachePath(path); err != nil {
 		return nil, err
 	}
+	if err := privatefile.CheckContainer(path); err != nil {
+		return nil, fmt.Errorf("diskCache: cache root path cannot hold private data: %w", err)
+	}
 
-	// ensure data and state directories exist
+	// ensure the private data and state directories exist
 	dataDir := filepath.Join(path, dataDir)
 	partDir := filepath.Join(path, partialDir)
 	stateDir := filepath.Join(path, stateDir)
 	metaDir := filepath.Join(stateDir, metadataDir)
-	if err := os.MkdirAll(dataDir, 0o755); err != nil {
-		return nil, fmt.Errorf("diskCache: error creating data directory in cache root %s: %w", path, err)
+	for _, dir := range []string{dataDir, partDir, stateDir} {
+		// Every existing entry is checked before the directory's access is
+		// changed: on Windows, changing a directory's access control list
+		// rewrites what its descendants inherit, which would reach a file that
+		// also has a name outside the cache.
+		if err := checkTree(dir); err != nil {
+			return nil, fmt.Errorf("diskCache: existing cache state in %s cannot be made private: %w", path, err)
+		}
+		if err := privatefile.EnsureDir(dir); err != nil {
+			return nil, fmt.Errorf("diskCache: error creating private directory in cache root %s: %w", path, err)
+		}
+		if err := makeTreePrivate(dir); err != nil {
+			return nil, fmt.Errorf("diskCache: error protecting existing cache state in %s: %w", path, err)
+		}
 	}
-	if err := os.MkdirAll(partDir, 0o755); err != nil {
-		return nil, fmt.Errorf("diskCache: error creating partial data directory in cache root %s: %w", path, err)
-	}
-	if err := os.MkdirAll(stateDir, 0o755); err != nil {
-		return nil, fmt.Errorf("diskCache: error creating state directory in cache root %s: %w", path, err)
-	}
-	if err := os.MkdirAll(metaDir, 0o755); err != nil {
+	if err := os.MkdirAll(metaDir, privateDirMode); err != nil {
 		return nil, fmt.Errorf("diskCache: error creating metadata directory in cache root %s: %w", path, err)
 	}
 
@@ -365,7 +382,7 @@ func (dc *DiskCache) Write(path string, buff []byte, ofst int64) (n int, err err
 	dc.stats.WriteCount.Add(1)
 
 	fqPath := dc.entryPath(path)
-	if err := os.MkdirAll(filepath.Dir(fqPath), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(fqPath), privateDirMode); err != nil {
 		return 0, fmt.Errorf("diskCache: error creating directories for cached file %s: %v", fqPath, err)
 	}
 
@@ -417,7 +434,7 @@ func (dc *DiskCache) Write(path string, buff []byte, ofst int64) (n int, err err
 		}
 	}
 
-	file, err := os.OpenFile(fqPath, os.O_CREATE|os.O_WRONLY, 0o644)
+	file, err := os.OpenFile(fqPath, os.O_CREATE|os.O_WRONLY, privateFileMode)
 	if err != nil {
 		return 0, fmt.Errorf("diskCache: error opening cached file %s: %v", fqPath, err)
 	}
@@ -475,11 +492,11 @@ func (dc *DiskCache) Commit(path string, meta cache.EntryMetadata) error {
 	meta.Complete = true
 
 	metaPath := dc.metadataPath(path)
-	if err := os.MkdirAll(filepath.Dir(metaPath), 0o755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(metaPath), privateDirMode); err != nil {
 		return err
 	}
 	tmpPath := metaPath + ".tmp"
-	file, err := os.Create(tmpPath)
+	file, err := os.OpenFile(tmpPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, privateFileMode)
 	if err != nil {
 		return err
 	}
@@ -603,11 +620,11 @@ func (dc *DiskCache) rotateMetadataDirectory() (string, error) {
 	oldMetaDir := fmt.Sprintf("%s.clear-%d", dc.metaDir, time.Now().UnixNano())
 	if err := os.Rename(dc.metaDir, oldMetaDir); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return "", os.MkdirAll(dc.metaDir, 0o755)
+			return "", os.MkdirAll(dc.metaDir, privateDirMode)
 		}
 		return "", err
 	}
-	if err := os.MkdirAll(dc.metaDir, 0o755); err != nil {
+	if err := os.MkdirAll(dc.metaDir, privateDirMode); err != nil {
 		_ = os.Rename(oldMetaDir, dc.metaDir)
 		return "", err
 	}
@@ -929,13 +946,57 @@ func validateCachePath(path string) error {
 	if !info.IsDir() {
 		return fmt.Errorf("diskCache: cache root path is not a directory: %s", path)
 	}
-	testFile := filepath.Join(path, ".cache_write_test")
-	f, err := os.Create(testFile)
+	f, err := os.CreateTemp(path, ".cache_write_test-*")
 	if err != nil {
 		return fmt.Errorf("diskCache: cache root path is not writable: %s", path)
 	}
 	f.Close()
-	return os.Remove(testFile)
+	return os.Remove(f.Name())
+}
+
+// privateDirMode and privateFileMode are the modes for everything the cache creates below its
+// root. They grant access to the owner only; on Windows access comes from the private directories
+// created by NewDiskCache, which hand their access control list down to what is created inside.
+const (
+	privateDirMode  = 0o700
+	privateFileMode = 0o600
+)
+
+// checkTree reports whether every existing entry below dir, which may not exist yet, may be made
+// private: an ordinary file or directory this user owns, with a single name. Links, files with
+// other names, and entries owned by someone else are reported so the cache is not used and
+// nothing they share is changed. Nothing is modified.
+func checkTree(dir string) error {
+	return walkTree(dir, privatefile.CheckEntry)
+}
+
+// makeTreePrivate makes every existing entry below dir, a private directory the cache owns,
+// readable only by the current user. A cache written before entries were created private has
+// world-readable data, partial data, metadata and LRU state; on Windows an entry can also carry
+// its own permissive access control entries that the directory's do not override. Each entry is
+// examined as it is (not through a link) and repaired only when checkTree would accept it.
+func makeTreePrivate(dir string) error {
+	return walkTree(dir, privatefile.EnsureEntryPrivate)
+}
+
+func walkTree(dir string, visit func(path string, info fs.FileInfo) error) error {
+	err := filepath.WalkDir(dir, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if path == dir {
+			return nil
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+		return visit(path, info)
+	})
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	return err
 }
 
 func (dc *DiskCache) validateOpts() error {
@@ -1129,7 +1190,7 @@ func (dc *DiskCache) saveLRUState() error {
 	keys := dc.lru.Keys()
 	state := lruState{Keys: keys}
 	statePath := filepath.Join(dc.stateDir, lruStateFile)
-	f, err := os.Create(statePath)
+	f, err := os.OpenFile(statePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, privateFileMode)
 	if err != nil {
 		return err
 	}
