@@ -33,15 +33,35 @@ func (c *Client) DownloadRetry(job Job, opts ...files_sdk.RequestResponseOption)
 		opts...)
 }
 
-func (c *Client) DownloadToFile(params files_sdk.FileDownloadParams, filePath string, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+// DownloadToFile creates or truncates filePath and writes the downloaded file to
+// it. The file and the response body are closed before it returns; a partially
+// written file is left in place when the download fails.
+func (c *Client) DownloadToFile(params files_sdk.FileDownloadParams, filePath string, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
 	out, err := os.Create(filePath)
 	if err != nil {
 		return files_sdk.File{}, err
 	}
-	return c.Download(params, append(opts, files_sdk.ResponseBodyOption(func(closer io.ReadCloser) error {
-		_, err := io.Copy(out, closer)
+	var body io.ReadCloser
+	defer func() {
+		if body != nil {
+			body.Close()
+		}
+		if closeErr := out.Close(); err == nil {
+			err = closeErr
+		}
+	}()
+	// The body is recorded before the caller's options run because one of
+	// them can fail before the copy is reached.
+	recordBody := files_sdk.ResponseBodyOption(func(responseBody io.ReadCloser) error {
+		body = responseBody
+		return nil
+	})
+	copyBody := files_sdk.ResponseBodyOption(func(responseBody io.ReadCloser) error {
+		_, err := io.Copy(out, responseBody)
 		return err
-	}))...)
+	})
+	options := append(append([]files_sdk.RequestResponseOption{recordBody}, opts...), copyBody)
+	return c.Download(params, options...)
 }
 
 type DownloaderParams struct {
