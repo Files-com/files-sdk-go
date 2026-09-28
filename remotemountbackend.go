@@ -2,6 +2,7 @@ package files_sdk
 
 import (
 	"encoding/json"
+	"net/url"
 
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
@@ -55,19 +56,63 @@ type RemoteMountBackendFindParams struct {
 }
 
 type RemoteMountBackendCreateParams struct {
-	Enabled             *bool                                 `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
-	Fall                int64                                 `url:"fall,omitempty" json:"fall,omitempty" path:"fall"`
-	HealthCheckEnabled  *bool                                 `url:"health_check_enabled,omitempty" json:"health_check_enabled,omitempty" path:"health_check_enabled"`
-	HealthCheckType     RemoteMountBackendHealthCheckTypeEnum `url:"health_check_type,omitempty" json:"health_check_type,omitempty" path:"health_check_type"`
-	Interval            int64                                 `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
-	MinFreeCpu          float64                               `url:"min_free_cpu,omitempty" json:"min_free_cpu,omitempty" path:"min_free_cpu"`
-	MinFreeMem          float64                               `url:"min_free_mem,omitempty" json:"min_free_mem,omitempty" path:"min_free_mem"`
-	Priority            int64                                 `url:"priority,omitempty" json:"priority,omitempty" path:"priority"`
-	RemotePath          string                                `url:"remote_path,omitempty" json:"remote_path,omitempty" path:"remote_path"`
-	Rise                int64                                 `url:"rise,omitempty" json:"rise,omitempty" path:"rise"`
-	CanaryFilePath      string                                `url:"canary_file_path" json:"canary_file_path" path:"canary_file_path"`
-	RemoteServerMountId int64                                 `url:"remote_server_mount_id" json:"remote_server_mount_id" path:"remote_server_mount_id"`
-	RemoteServerId      int64                                 `url:"remote_server_id" json:"remote_server_id" path:"remote_server_id"`
+	Enabled            *bool                                 `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
+	Fall               int64                                 `url:"fall,omitempty" json:"fall,omitempty" path:"fall"`
+	HealthCheckEnabled *bool                                 `url:"health_check_enabled,omitempty" json:"health_check_enabled,omitempty" path:"health_check_enabled"`
+	HealthCheckType    RemoteMountBackendHealthCheckTypeEnum `url:"health_check_type,omitempty" json:"health_check_type,omitempty" path:"health_check_type"`
+	Interval           int64                                 `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
+	MinFreeCpu         float64                               `url:"min_free_cpu,omitempty" json:"min_free_cpu,omitempty" path:"min_free_cpu"`
+	// MinFreeCpuDecimal sends exact decimal text, such as "1.5", as min_free_cpu. Leave MinFreeCpu zero when you set it.
+	MinFreeCpuDecimal *string `json:"-" url:"-" path:"-"`
+	MinFreeMem        float64 `url:"min_free_mem,omitempty" json:"min_free_mem,omitempty" path:"min_free_mem"`
+	// MinFreeMemDecimal sends exact decimal text, such as "1.5", as min_free_mem. Leave MinFreeMem zero when you set it.
+	MinFreeMemDecimal   *string `json:"-" url:"-" path:"-"`
+	Priority            int64   `url:"priority,omitempty" json:"priority,omitempty" path:"priority"`
+	RemotePath          string  `url:"remote_path,omitempty" json:"remote_path,omitempty" path:"remote_path"`
+	Rise                int64   `url:"rise,omitempty" json:"rise,omitempty" path:"rise"`
+	CanaryFilePath      string  `url:"canary_file_path" json:"canary_file_path" path:"canary_file_path"`
+	RemoteServerMountId int64   `url:"remote_server_mount_id" json:"remote_server_mount_id" path:"remote_server_mount_id"`
+	RemoteServerId      int64   `url:"remote_server_id" json:"remote_server_id" path:"remote_server_id"`
+}
+
+func (p *RemoteMountBackendCreateParams) decimalOverrides() []lib.DecimalOverride {
+	return []lib.DecimalOverride{
+		{Key: "min_free_cpu", Field: "MinFreeCpu", Float: &p.MinFreeCpu, Decimal: &p.MinFreeCpuDecimal},
+		{Key: "min_free_mem", Field: "MinFreeMem", Float: &p.MinFreeMem, Decimal: &p.MinFreeMemDecimal},
+	}
+}
+
+// MarshalJSON sends each set MinFreeCpuDecimal or MinFreeMemDecimal as a JSON string.
+func (p RemoteMountBackendCreateParams) MarshalJSON() ([]byte, error) {
+	type remoteMountBackendCreateParams RemoteMountBackendCreateParams
+	return lib.MarshalDecimalOverrides(remoteMountBackendCreateParams(p), p.decimalOverrides()...)
+}
+
+// UnmarshalJSON decodes JSON strings for min_free_cpu and min_free_mem as exact decimal text.
+func (p *RemoteMountBackendCreateParams) UnmarshalJSON(data []byte) error {
+	type fields RemoteMountBackendCreateParams
+	// Each override decodes its key in the same pass as the other fields, so
+	// key matching and repeated keys work as in plain decoding.
+	type remoteMountBackendCreateParams struct {
+		*fields
+		MinFreeCpu lib.DecimalOverride `json:"min_free_cpu"`
+		MinFreeMem lib.DecimalOverride `json:"min_free_mem"`
+	}
+	decoded := *p
+	overrides := decoded.decimalOverrides()
+	target := remoteMountBackendCreateParams{fields: (*fields)(&decoded), MinFreeCpu: overrides[0], MinFreeMem: overrides[1]}
+	// A failed decode leaves p unchanged.
+	if err := json.Unmarshal(data, &target); err != nil {
+		return err
+	}
+	*p = decoded
+	return nil
+}
+
+// ToValues encodes p as query values, sending each set MinFreeCpuDecimal or MinFreeMemDecimal as its text.
+func (p RemoteMountBackendCreateParams) ToValues() (url.Values, error) {
+	type remoteMountBackendCreateParams RemoteMountBackendCreateParams
+	return lib.DecimalOverrideValues(remoteMountBackendCreateParams(p), p.decimalOverrides()...)
 }
 
 // Reset backend status to healthy
@@ -83,12 +128,56 @@ type RemoteMountBackendUpdateParams struct {
 	HealthCheckType    RemoteMountBackendHealthCheckTypeEnum `url:"health_check_type,omitempty" json:"health_check_type,omitempty" path:"health_check_type"`
 	Interval           int64                                 `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
 	MinFreeCpu         float64                               `url:"min_free_cpu,omitempty" json:"min_free_cpu,omitempty" path:"min_free_cpu"`
-	MinFreeMem         float64                               `url:"min_free_mem,omitempty" json:"min_free_mem,omitempty" path:"min_free_mem"`
-	Priority           int64                                 `url:"priority,omitempty" json:"priority,omitempty" path:"priority"`
-	RemotePath         string                                `url:"remote_path,omitempty" json:"remote_path,omitempty" path:"remote_path"`
-	Rise               int64                                 `url:"rise,omitempty" json:"rise,omitempty" path:"rise"`
-	CanaryFilePath     string                                `url:"canary_file_path,omitempty" json:"canary_file_path,omitempty" path:"canary_file_path"`
-	RemoteServerId     int64                                 `url:"remote_server_id,omitempty" json:"remote_server_id,omitempty" path:"remote_server_id"`
+	// MinFreeCpuDecimal sends exact decimal text, such as "1.5", as min_free_cpu. Leave MinFreeCpu zero when you set it.
+	MinFreeCpuDecimal *string `json:"-" url:"-" path:"-"`
+	MinFreeMem        float64 `url:"min_free_mem,omitempty" json:"min_free_mem,omitempty" path:"min_free_mem"`
+	// MinFreeMemDecimal sends exact decimal text, such as "1.5", as min_free_mem. Leave MinFreeMem zero when you set it.
+	MinFreeMemDecimal *string `json:"-" url:"-" path:"-"`
+	Priority          int64   `url:"priority,omitempty" json:"priority,omitempty" path:"priority"`
+	RemotePath        string  `url:"remote_path,omitempty" json:"remote_path,omitempty" path:"remote_path"`
+	Rise              int64   `url:"rise,omitempty" json:"rise,omitempty" path:"rise"`
+	CanaryFilePath    string  `url:"canary_file_path,omitempty" json:"canary_file_path,omitempty" path:"canary_file_path"`
+	RemoteServerId    int64   `url:"remote_server_id,omitempty" json:"remote_server_id,omitempty" path:"remote_server_id"`
+}
+
+func (p *RemoteMountBackendUpdateParams) decimalOverrides() []lib.DecimalOverride {
+	return []lib.DecimalOverride{
+		{Key: "min_free_cpu", Field: "MinFreeCpu", Float: &p.MinFreeCpu, Decimal: &p.MinFreeCpuDecimal},
+		{Key: "min_free_mem", Field: "MinFreeMem", Float: &p.MinFreeMem, Decimal: &p.MinFreeMemDecimal},
+	}
+}
+
+// MarshalJSON sends each set MinFreeCpuDecimal or MinFreeMemDecimal as a JSON string.
+func (p RemoteMountBackendUpdateParams) MarshalJSON() ([]byte, error) {
+	type remoteMountBackendUpdateParams RemoteMountBackendUpdateParams
+	return lib.MarshalDecimalOverrides(remoteMountBackendUpdateParams(p), p.decimalOverrides()...)
+}
+
+// UnmarshalJSON decodes JSON strings for min_free_cpu and min_free_mem as exact decimal text.
+func (p *RemoteMountBackendUpdateParams) UnmarshalJSON(data []byte) error {
+	type fields RemoteMountBackendUpdateParams
+	// Each override decodes its key in the same pass as the other fields, so
+	// key matching and repeated keys work as in plain decoding.
+	type remoteMountBackendUpdateParams struct {
+		*fields
+		MinFreeCpu lib.DecimalOverride `json:"min_free_cpu"`
+		MinFreeMem lib.DecimalOverride `json:"min_free_mem"`
+	}
+	decoded := *p
+	overrides := decoded.decimalOverrides()
+	target := remoteMountBackendUpdateParams{fields: (*fields)(&decoded), MinFreeCpu: overrides[0], MinFreeMem: overrides[1]}
+	// A failed decode leaves p unchanged.
+	if err := json.Unmarshal(data, &target); err != nil {
+		return err
+	}
+	*p = decoded
+	return nil
+}
+
+// ToValues encodes p as query values, sending each set MinFreeCpuDecimal or MinFreeMemDecimal as its text.
+func (p RemoteMountBackendUpdateParams) ToValues() (url.Values, error) {
+	type remoteMountBackendUpdateParams RemoteMountBackendUpdateParams
+	return lib.DecimalOverrideValues(remoteMountBackendUpdateParams(p), p.decimalOverrides()...)
 }
 
 type RemoteMountBackendDeleteParams struct {

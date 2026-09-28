@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"reflect"
 	"time"
 
 	"github.com/appscode/go-querystring/query"
@@ -50,7 +51,7 @@ func (p Params) ToJSON() (io.Reader, error) {
 }
 
 func (p Params) ToValues() (url.Values, error) {
-	v, err := query.Values(p.Params)
+	v, err := p.values()
 	if err != nil {
 		return url.Values{}, err
 	}
@@ -60,6 +61,25 @@ func (p Params) ToValues() (url.Values, error) {
 	}
 
 	return removeDash(v), nil
+}
+
+// valuesEncoder is implemented by request types whose query values need more
+// than their struct tags, such as those with DecimalOverride fields.
+type valuesEncoder interface {
+	ToValues() (url.Values, error)
+}
+
+func (p Params) values() (url.Values, error) {
+	// query.Values only consults encoders on fields, not on the root value.
+	if encoder, ok := p.Params.(valuesEncoder); ok && !isNilPointer(p.Params) {
+		return encoder.ToValues()
+	}
+	return query.Values(p.Params)
+}
+
+func isNilPointer(v interface{}) bool {
+	value := reflect.ValueOf(v)
+	return value.Kind() == reflect.Pointer && value.IsNil()
 }
 
 func sanitizeJSON(b []byte) ([]byte, error) {
