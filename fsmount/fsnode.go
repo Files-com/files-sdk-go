@@ -322,14 +322,14 @@ func (n *fsNode) getWriteSession() *writeSession {
 // beginWriteSessionMutation obtains or creates the session and registers the
 // mutation before Rename can inspect it. If a committed-session move is already
 // reserved, it waits without holding the node mutex.
-func (n *fsNode) beginWriteSessionMutation(initialPath string) (*writeSession, bool, error) {
+func (n *fsNode) beginWriteSessionMutation(initialPath string, workingDir string) (*writeSession, bool, error) {
 	for {
 		n.writeMu.Lock()
 		session := n.writeSession
 		created := false
 		if session == nil {
 			var err error
-			session, err = newWriteSession(initialPath, n.info.modTime)
+			session, err = newWriteSession(workingDir, initialPath, n.info.modTime)
 			if err != nil {
 				n.writeMu.Unlock()
 				return nil, false, err

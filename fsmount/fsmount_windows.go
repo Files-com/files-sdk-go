@@ -100,6 +100,11 @@ func mountOpts(params MountParams) []string {
 	return opts
 }
 
+// WinFSP deletes open files itself and never renames them to hide them.
+func isLibfuseHiddenRename(_, _ string) bool {
+	return false
+}
+
 func additionalIgnorePatterns() []string {
 	return []string{
 		// Microsoft Office lock/owner files (sidecar next to the doc)

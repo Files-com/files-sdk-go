@@ -45,6 +45,7 @@ type Filescomfs struct {
 	mountPoint     string
 	remoteRoot     string
 	localFsRoot    string
+	storage        mountStorage
 	disableLocking bool
 	ignore         *gogitignore.GitIgnore
 	events         events.EventPublisher
@@ -52,6 +53,10 @@ type Filescomfs struct {
 	destroyOnce    sync.Once
 	mountReady     chan struct{}
 	mountReadyOnce sync.Once
+
+	// hiddenPaths maps a libfuse hidden name to the remote path that was
+	// deleted in its place, until libfuse unlinks the hidden name. See Rename.
+	hiddenPaths sync.Map
 }
 
 // Init initializes the Filescomfs file system.
@@ -76,6 +81,9 @@ func (fs *Filescomfs) Destroy() {
 		fs.remote.Destroy()
 		fs.local.Destroy()
 		fs.vfs.destroy()
+		if err := fs.storage.remove(); err != nil {
+			fs.log.Debug("Filescomfs: Destroy: failed to remove the mount's private storage %v: %v", fs.storage.root, err)
+		}
 	})
 }
 
@@ -149,6 +157,10 @@ func (fs *Filescomfs) Unlink(path string) (errc int) {
 	defer func() {
 		fs.logMountCallback("Unlink", path, storage, start, errc, "")
 	}()
+	if _, ok := fs.hiddenPaths.LoadAndDelete(path); ok {
+		fs.log.Trace("Filescomfs: Unlink: forgetting hidden name of a deleted file: path=%v", path)
+		return errc
+	}
 	if storage == "remote" {
 		errc = fs.remote.Unlink(path)
 		fs.log.Trace("Filescomfs: Unlink: deleting file remotely: path=%v, errc=%v", path, errc)
@@ -183,6 +195,22 @@ func (fs *Filescomfs) Rename(oldpath string, newpath string) (errc int) {
 		fs.logMountCallback("Rename", oldpath, "mixed", start, errc, "new_path=%q", newpath)
 	}()
 	fs.log.Trace("Filescomfs: Rename: renaming file: oldpath=%v, newpath=%v", oldpath, newpath)
+
+	// When a file that is still open is deleted, libfuse renames it to a hidden
+	// name and unlinks that name after the last handle closes. The hard_remove
+	// option that turns this off is only settable from libfuse3's init callback,
+	// which cgofuse doesn't expose. Delete the remote file now, as hard_remove
+	// would, instead of moving it to Files.com or downloading it to local
+	// storage. Later reads and writes on the open handle fail, and its Release
+	// is sent to the remote file system under the deleted path.
+	if fs.isStoredRemotely(oldpath) && isLibfuseHiddenRename(oldpath, newpath) {
+		errc = fs.remote.Unlink(oldpath)
+		if errc == 0 {
+			fs.hiddenPaths.Store(newpath, oldpath)
+		}
+		fs.log.Trace("Filescomfs: Rename: deleted open file in place of hiding it: oldpath=%v, newpath=%v, errc=%v", oldpath, newpath, errc)
+		return errc
+	}
 
 	// for renames that stay within the same storage (local to local, remote to remote)
 	// delegate to the appropriate file system's Rename method
@@ -404,6 +432,11 @@ func (fs *Filescomfs) Release(path string, fh uint64) (errc int) {
 	defer func() {
 		fs.logMountCallback("Release", path, storage, start, errc, "fh=%d", fh)
 	}()
+	if deletedPath, ok := fs.hiddenPaths.Load(path); ok {
+		errc = fs.remote.Release(deletedPath.(string), fh)
+		fs.log.Trace("Filescomfs: Release: releasing deleted file remotely: path=%v, deleted_path=%v, fh=%v, errc=%v", path, deletedPath, fh, errc)
+		return errc
+	}
 	if storage == "remote" {
 		errc = fs.remote.Release(path, fh)
 		fs.log.Trace("Filescomfs: Release: releasing file remotely: path=%v, fh=%v, errc=%v", path, fh, errc)

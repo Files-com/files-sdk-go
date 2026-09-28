@@ -6,6 +6,7 @@ package flags
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
 
 	"github.com/winfsp/cgofuse/fuse"
@@ -20,6 +21,9 @@ func NewFuseFlags(flags int) FuseFlags {
 
 // IsReadOnly checks if the flag is set to read-only.
 func (f FuseFlags) IsReadOnly() bool {
+	if runtime.GOOS == "linux" {
+		return int(f)&fuse.O_ACCMODE == fuse.O_RDONLY
+	}
 	return int(f) == 0
 }
 

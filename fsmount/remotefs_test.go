@@ -164,6 +164,7 @@ type fakeRemoteBackend struct {
 	downloadFunc         func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error)
 	deleteFunc           func(params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponseOption) error
 	createLockFunc       func(params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (files_sdk.Lock, error)
+	deleteLockFunc       func(params files_sdk.LockDeleteParams, opts ...files_sdk.RequestResponseOption) error
 }
 
 func (b *fakeRemoteBackend) findCurrent(opts ...files_sdk.RequestResponseOption) (files_sdk.ApiKey, error) {
@@ -238,6 +239,9 @@ func (b *fakeRemoteBackend) createLock(params files_sdk.LockCreateParams, opts .
 }
 
 func (b *fakeRemoteBackend) deleteLock(params files_sdk.LockDeleteParams, opts ...files_sdk.RequestResponseOption) error {
+	if b.deleteLockFunc != nil {
+		return b.deleteLockFunc(params, opts...)
+	}
 	return nil
 }
 
@@ -2533,7 +2537,7 @@ func TestRemoteFsRenameSerializesStartingMutationAndNextUpload(t *testing.T) {
 	if !ok {
 		t.Fatal("expected temporary path after upload")
 	}
-	session, created, err := node.beginWriteSessionMutation(temporaryPath)
+	session, created, err := node.beginWriteSessionMutation(temporaryPath, "")
 	if err != nil {
 		t.Fatalf("beginWriteSessionMutation returned unexpected error: %v", err)
 	}
@@ -4765,6 +4769,35 @@ func TestRemoteFsCreateReturnsEACCESWhenParentDirectoryIsReadOnly(t *testing.T) 
 	}
 	if _, ok := vfs.fetch("/readonly/report.xlsx"); ok {
 		t.Fatal("expected denied create not to add a child node")
+	}
+}
+
+func TestRemoteFsReadOnlyCreateLeavesNoLockAfterRelease(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	fs.disableLocking = false
+	var created, deleted int
+	fs.backend = &fakeRemoteBackend{
+		createLockFunc: func(params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (files_sdk.Lock, error) {
+			created++
+			return files_sdk.Lock{Path: params.Path, Token: "token"}, nil
+		},
+		deleteLockFunc: func(params files_sdk.LockDeleteParams, opts ...files_sdk.RequestResponseOption) error {
+			deleted++
+			return nil
+		},
+	}
+
+	errc, fh := fs.Create("/probe.lock", fuse.O_RDONLY|fuse.O_CREAT, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned %d, want 0", errc)
+	}
+	if errc := fs.Release("/probe.lock", fh); errc != 0 {
+		t.Fatalf("Release returned %d, want 0", errc)
+	}
+	if created != deleted {
+		t.Fatalf("locks created = %d, released = %d; a lock outlived its handle", created, deleted)
 	}
 }
 

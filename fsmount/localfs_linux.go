@@ -14,7 +14,7 @@ import (
 func (fs *LocalFs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
 	fq := fs.fqPath(path)
 	stgo := syscall.Stat_t{}
-	if err := syscall.Lstat(path, &stgo); err != nil {
+	if err := syscall.Lstat(fq, &stgo); err != nil {
 		if !os.IsNotExist(err) {
 			fs.log.Trace("LocalFs: Getattr: failed to lstat file: path=%v, fh=%v, err=%v", fq, fh, err)
 			return -fuse.EIO

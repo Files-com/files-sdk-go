@@ -22,6 +22,7 @@ import (
 
 	"github.com/Files-com/files-sdk-go/v3/ignore"
 	"github.com/Files-com/files-sdk-go/v3/lib"
+	"github.com/Files-com/files-sdk-go/v3/lib/privatefile"
 	"github.com/winfsp/cgofuse/fuse"
 
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/log"
@@ -76,7 +77,11 @@ type MountParams struct {
 	// don't belong on Files.com. The full list of patterns is available in the ignore package:
 	// https://github.com/Files-com/files-sdk-go/tree/master/ignore/data
 	//
-	// Defaults to OS-specific temporary directory if not specified.
+	// The mount stores its files in a private subdirectory it creates inside this directory
+	// (or inside the OS-specific temporary directory if not specified) and removes that
+	// subdirectory when it is unmounted. Only the current user can read the subdirectory;
+	// the directory given here is left as it is. It must not be writable by other users,
+	// because they could then replace the mount's private storage.
 	TmpFsPath string
 
 	// Optional. Volume name to display in the system file browser. On Windows, this is also
@@ -369,7 +374,22 @@ func newFs(params MountParams, logger lib.LeveledLogger) (*Filescomfs, error) {
 	if err != nil {
 		return nil, err
 	}
-	params.TmpFsPath = tmpRoot
+	storage, err := newMountStorage(tmpRoot)
+	if err != nil {
+		return nil, err
+	}
+	// Everything below is torn down with the file system; until it exists, remove the
+	// storage here so a failed mount leaves nothing behind.
+	fs, err := newFsWithStorage(params, storage, logger)
+	if err != nil {
+		storage.remove()
+		return nil, err
+	}
+	return fs, nil
+}
+
+func newFsWithStorage(params MountParams, storage mountStorage, logger lib.LeveledLogger) (*Filescomfs, error) {
+	params.TmpFsPath = storage.local
 
 	// newCache creates either a disk or memory cache based on if the mount parameters
 	// have disk caching enabled or disabled.
@@ -387,14 +407,16 @@ func newFs(params MountParams, logger lib.LeveledLogger) (*Filescomfs, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create remote file system: %w", err)
 	}
+	remotefs.writeSessionDir = storage.write
 
 	localfs := newLocalFs(params, vfs, logger)
 
 	// create the Filescomfs instance
 	fs := &Filescomfs{
-		mountPoint:  mountPoint,
+		mountPoint:  params.MountPoint,
 		remoteRoot:  params.Root,
 		localFsRoot: params.TmpFsPath,
+		storage:     storage,
 		log:         logger,
 		remote:      remotefs,
 		local:       localfs,
@@ -474,33 +496,75 @@ func newCache(params MountParams, log log.Logger) (cacheStore, error) {
 	return cache, nil
 }
 
-// tmpFsPath returns the path to the temporary file system directory.
-// If the provided path is empty, it defaults to an application specific path appended to
-// the OS-specific temporary directory.
+// tmpFsPath returns the directory the mount's private storage is created in.
+// If the provided path is empty, it defaults to the OS-specific temporary directory.
 // If the provided path does not exist, it is created.
 // If the provided path exists but is not a directory, an error is returned.
 func tmpFsPath(path string) (string, error) {
-	if path != "" {
-		st, err := os.Stat(path)
-		if err != nil {
-			if os.IsNotExist(err) {
-				if err := os.MkdirAll(path, 0o700); err != nil {
-					return "", fmt.Errorf("failed to create temporary file system path: %w", err)
-				}
-				return path, nil
-			}
-			return "", fmt.Errorf("failed to access temporary file system path: %w", err)
-		}
-		if !st.IsDir() {
-			return "", fmt.Errorf("temporary file system path is not a directory")
-		}
-		return path, nil
+	if path == "" {
+		return os.TempDir(), nil
 	}
-	path, err := os.MkdirTemp("", "Files.com-v6-*")
+	st, err := os.Stat(path)
 	if err != nil {
-		return "", fmt.Errorf("failed to create temporary local file system: %w", err)
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(path, 0o700); err != nil {
+				return "", fmt.Errorf("failed to create temporary file system path: %w", err)
+			}
+			return path, nil
+		}
+		return "", fmt.Errorf("failed to access temporary file system path: %w", err)
+	}
+	if !st.IsDir() {
+		return "", fmt.Errorf("temporary file system path is not a directory")
 	}
 	return path, nil
+}
+
+// mountStorage is the private on-disk storage of one mount: a directory only the current
+// user can read, created inside the caller-selected TmpFsPath (or the system temporary
+// directory), holding the local file system root and the working copies of files being
+// written. The mount owns it entirely, so it is the only thing removed when the mount ends.
+type mountStorage struct {
+	root  string
+	local string
+	write string
+}
+
+const (
+	mountStorageLocalDir = "local"
+	mountStorageWriteDir = "write"
+)
+
+// newMountStorage creates the mount's private storage inside parent. A parent that other
+// users could modify is refused: they could replace the private directory with their own.
+func newMountStorage(parent string) (mountStorage, error) {
+	if err := privatefile.CheckContainer(parent); err != nil {
+		return mountStorage{}, fmt.Errorf("temporary file system path cannot hold the mount's private storage: %w", err)
+	}
+	root, err := privatefile.MkdirTemp(parent, "Files.com-v6-*")
+	if err != nil {
+		return mountStorage{}, fmt.Errorf("failed to create temporary local file system: %w", err)
+	}
+	storage := mountStorage{
+		root:  root,
+		local: filepath.Join(root, mountStorageLocalDir),
+		write: filepath.Join(root, mountStorageWriteDir),
+	}
+	for _, dir := range []string{storage.local, storage.write} {
+		if err := privatefile.Mkdir(dir); err != nil {
+			storage.remove()
+			return mountStorage{}, fmt.Errorf("failed to create temporary local file system: %w", err)
+		}
+	}
+	return storage, nil
+}
+
+// remove deletes the mount's private storage. Nothing outside it is touched.
+func (s mountStorage) remove() error {
+	if s.root == "" {
+		return nil
+	}
+	return os.RemoveAll(s.root)
 }
 
 // diskCachePath returns the path to the directory for the disk cache.

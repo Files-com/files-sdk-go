@@ -63,22 +63,10 @@ func (fs *LocalFs) Init() {
 	})
 }
 
+// Destroy stops background work. The local file system root lives inside the mount's
+// private storage, which Filescomfs removes as a whole; nothing else is removed here.
 func (fs *LocalFs) Destroy() {
-	root := filepath.Clean(fs.localFsRoot)
-	tmp := filepath.Clean(os.TempDir())
-	fs.log.Debug("LocalFs: Destroy: considering removal of local file system root: %v", root)
-
 	fs.StopMaintenance()
-	// only remove the local file system root if it is under the system temp directory
-	if strings.HasPrefix(root+string(os.PathSeparator), tmp+string(os.PathSeparator)) {
-		if err := os.RemoveAll(root); err != nil {
-			fs.log.Debug("LocalFs: Destroy: failed to remove temporary local file system root: %v, err: %v", root, err)
-			return
-		}
-		fs.log.Debug("LocalFs: Destroy: removed temporary local file system root: %v", root)
-		return
-	}
-	fs.log.Debug("LocalFs: Destroy: refusing to remove non-temp TmpFsPath: %v (TempDir=%v)", root, tmp)
 }
 
 func (fs *LocalFs) Validate() error {
@@ -299,7 +287,7 @@ func (fs *LocalFs) Open(path string, flags int) (errc int, fh uint64) {
 
 func (fs *LocalFs) open(path string, flags int, mode uint32) (errc int, fh uint64) {
 	dpath := filepath.Dir(path)
-	if err := os.MkdirAll(dpath, 0o755); err != nil {
+	if err := os.MkdirAll(dpath, 0o700); err != nil {
 		fs.log.Debug("LocalFs: open: failed to create parent directories: path=%v, flags=%v, mode=%o, err=%v", path, flags, mode, err)
 		return -fuse.EIO, ^uint64(0)
 	}
@@ -448,9 +436,13 @@ func (fs *LocalFs) Releasedir(path string, fh uint64) (errc int) {
 	return errc
 }
 
-// Chmod changes the permission bits of a file.
+// Chmod changes the permission bits of a file. The root of the local file system is the
+// mount's private storage, so a mode set on it never grants access beyond the owner.
 func (fs *LocalFs) Chmod(path string, mode uint32) int {
 	path = fs.fqPath(path)
+	if filepath.Clean(path) == filepath.Clean(fs.localFsRoot) {
+		mode &^= 0o077
+	}
 	fs.log.Trace("LocalFs: Chmod: path=%v, mode=%o", path, mode)
 	if err := os.Chmod(path, os.FileMode(mode)); err != nil {
 		fs.log.Debug("LocalFs: Chmod: failed to change mode for path: path=%v, mode=%o, err=%v", path, mode, err)

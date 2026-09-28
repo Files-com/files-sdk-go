@@ -90,6 +90,7 @@ type RemoteFs struct {
 	config           *files_sdk.Config
 	mountPoint       string
 	localFsRoot      string
+	writeSessionDir  string
 	root             string
 	writeConcurrency int
 	cacheTTL         time.Duration
@@ -778,8 +779,13 @@ func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh ui
 	node, exists := fs.vfs.fetch(path)
 	if exists && node.hasActiveWriteSession() {
 		fh, handle = fs.vfs.handles.Open(nil, fuseFlags)
-		fs.log.Debug("RemoteFs: Create: joining existing write session: %v (%v)", remotePath, localPath)
 		handle.node = node
+		// Release returns before leaving the session for read-only handles,
+		// so only write-capable handles join it.
+		if handle.IsReadOnly() {
+			return errc, fh
+		}
+		fs.log.Debug("RemoteFs: Create: joining existing write session: %v (%v)", remotePath, localPath)
 		session := node.getWriteSession()
 		session.addHandle(fh)
 		fs.logWriteSessionMilestone(path, "create_join_existing_session", fh, session, "flags=%v mode=%o", fuseFlags, mode)
@@ -808,6 +814,13 @@ func (fs *RemoteFs) Create(path string, flags int, mode uint32) (errc int, fh ui
 	// NOT call Release() for failed create operations.
 	if fs.cacheStore != nil {
 		fs.cacheStore.Pin(path)
+	}
+
+	// Release only unlocks write-capable handles, so a create opened read-only
+	// (e.g. O_RDONLY|O_CREAT) must not take a lock it would never give back.
+	if handle.IsReadOnly() {
+		fs.log.Debug("RemoteFs: Create: opened read-only handle for %v (%v), fh=%v", remotePath, localPath, fh)
+		return errc, fh
 	}
 
 	if errc = fs.lock(node, fh); errc != 0 {
@@ -996,7 +1009,7 @@ func (fs *RemoteFs) Truncate(path string, size int64, fh uint64) (errc int) {
 		return 0
 	}
 
-	session, _, err := node.beginWriteSessionMutation(path)
+	session, _, err := node.beginWriteSessionMutation(path, fs.writeSessionDir)
 	if err != nil {
 		fs.log.Error("RemoteFs: Truncate: failed to create write session for %v: %v", path, err)
 		return -fuse.EIO
@@ -1151,7 +1164,7 @@ func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n in
 		return -fuse.EIO
 	}
 
-	session, created, err := node.beginWriteSessionMutation(path)
+	session, created, err := node.beginWriteSessionMutation(path, fs.writeSessionDir)
 	if err != nil {
 		fs.log.Error("RemoteFs: Write: failed to create write session for %v: %v", path, err)
 		fs.logWriteSessionMilestone(path, "write_session_create_failed", fh, nil, "err=%q", err.Error())

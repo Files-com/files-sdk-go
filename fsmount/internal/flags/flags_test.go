@@ -4,6 +4,7 @@ package flags_test
 
 import (
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/flags"
@@ -11,6 +12,11 @@ import (
 )
 
 func TestFuseFlags(t *testing.T) {
+	readOnlyWithFlags := runtime.GOOS == "linux"
+	readOnlyPrefix := ""
+	if readOnlyWithFlags {
+		readOnlyPrefix = "O_RDONLY|"
+	}
 	tests := []struct {
 		name                    string
 		flags                   int
@@ -66,7 +72,7 @@ func TestFuseFlags(t *testing.T) {
 		{
 			name:                    "CreateExclusive",
 			flags:                   fuse.O_CREAT | fuse.O_EXCL,
-			expectedReadOnly:        false,
+			expectedReadOnly:        readOnlyWithFlags,
 			expectedWriteOnly:       false,
 			expectedReadWrite:       false,
 			expectedCreate:          true,
@@ -74,12 +80,12 @@ func TestFuseFlags(t *testing.T) {
 			expectedTruncate:        false,
 			expectedAppend:          false,
 			expectedCreateExclusive: true,
-			expectedString:          "FuseFlags{O_CREAT|O_EXCL}",
+			expectedString:          "FuseFlags{" + readOnlyPrefix + "O_CREAT|O_EXCL}",
 		},
 		{
 			name:                    "TruncateAppend",
 			flags:                   fuse.O_TRUNC | fuse.O_APPEND,
-			expectedReadOnly:        false,
+			expectedReadOnly:        readOnlyWithFlags,
 			expectedWriteOnly:       false,
 			expectedReadWrite:       false,
 			expectedCreate:          false,
@@ -87,7 +93,7 @@ func TestFuseFlags(t *testing.T) {
 			expectedTruncate:        true,
 			expectedAppend:          true,
 			expectedCreateExclusive: false,
-			expectedString:          "FuseFlags{O_TRUNC|O_APPEND}",
+			expectedString:          "FuseFlags{" + readOnlyPrefix + "O_TRUNC|O_APPEND}",
 		},
 	}
 
