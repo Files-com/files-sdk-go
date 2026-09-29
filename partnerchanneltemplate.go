@@ -10,6 +10,7 @@ type PartnerChannelTemplate struct {
 	Id                             int64    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId                    int64    `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	Direction                      string   `json:"direction,omitempty" path:"direction,omitempty" url:"direction,omitempty"`
+	UseChannelRoot                 *bool    `json:"use_channel_root,omitempty" path:"use_channel_root,omitempty" url:"use_channel_root,omitempty"`
 	Name                           string   `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Path                           string   `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	ToPartnerFolderName            string   `json:"to_partner_folder_name,omitempty" path:"to_partner_folder_name,omitempty" url:"to_partner_folder_name,omitempty"`
@@ -54,6 +55,7 @@ type PartnerChannelTemplateFindParams struct {
 
 type PartnerChannelTemplateCreateParams struct {
 	Direction                     PartnerChannelTemplateDirectionEnum `url:"direction,omitempty" json:"direction,omitempty" path:"direction"`
+	UseChannelRoot                *bool                               `url:"use_channel_root,omitempty" json:"use_channel_root,omitempty" path:"use_channel_root"`
 	FromPartnerFolderName         string                              `url:"from_partner_folder_name,omitempty" json:"from_partner_folder_name,omitempty" path:"from_partner_folder_name"`
 	FromPartnerManagedFolderPaths []string                            `url:"from_partner_managed_folder_paths,omitempty" json:"from_partner_managed_folder_paths,omitempty" path:"from_partner_managed_folder_paths"`
 	FromPartnerRoutePathPattern   string                              `url:"from_partner_route_path_pattern,omitempty" json:"from_partner_route_path_pattern,omitempty" path:"from_partner_route_path_pattern"`
@@ -68,6 +70,7 @@ type PartnerChannelTemplateCreateParams struct {
 type PartnerChannelTemplateUpdateParams struct {
 	Id                            int64                               `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Direction                     PartnerChannelTemplateDirectionEnum `url:"direction,omitempty" json:"direction,omitempty" path:"direction"`
+	UseChannelRoot                *bool                               `url:"use_channel_root,omitempty" json:"use_channel_root,omitempty" path:"use_channel_root"`
 	FromPartnerFolderName         string                              `url:"from_partner_folder_name,omitempty" json:"from_partner_folder_name,omitempty" path:"from_partner_folder_name"`
 	FromPartnerManagedFolderPaths []string                            `url:"from_partner_managed_folder_paths,omitempty" json:"from_partner_managed_folder_paths,omitempty" path:"from_partner_managed_folder_paths"`
 	FromPartnerRoutePathPattern   string                              `url:"from_partner_route_path_pattern,omitempty" json:"from_partner_route_path_pattern,omitempty" path:"from_partner_route_path_pattern"`
