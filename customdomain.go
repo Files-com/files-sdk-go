@@ -8,16 +8,19 @@ import (
 )
 
 type CustomDomain struct {
-	Id               int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Domain           string     `json:"domain,omitempty" path:"domain,omitempty" url:"domain,omitempty"`
-	Destination      string     `json:"destination,omitempty" path:"destination,omitempty" url:"destination,omitempty"`
-	DnsStatus        string     `json:"dns_status,omitempty" path:"dns_status,omitempty" url:"dns_status,omitempty"`
-	SslCertificateId int64      `json:"ssl_certificate_id,omitempty" path:"ssl_certificate_id,omitempty" url:"ssl_certificate_id,omitempty"`
-	BrickManaged     *bool      `json:"brick_managed,omitempty" path:"brick_managed,omitempty" url:"brick_managed,omitempty"`
-	FolderBehaviorId int64      `json:"folder_behavior_id,omitempty" path:"folder_behavior_id,omitempty" url:"folder_behavior_id,omitempty"`
-	IpAddresses      []string   `json:"ip_addresses,omitempty" path:"ip_addresses,omitempty" url:"ip_addresses,omitempty"`
-	CreatedAt        *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	UpdatedAt        *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
+	Id                       int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	WorkspaceId              int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	AvailableToAllWorkspaces *bool      `json:"available_to_all_workspaces,omitempty" path:"available_to_all_workspaces,omitempty" url:"available_to_all_workspaces,omitempty"`
+	OutboundIpAddresses      []string   `json:"outbound_ip_addresses,omitempty" path:"outbound_ip_addresses,omitempty" url:"outbound_ip_addresses,omitempty"`
+	Domain                   string     `json:"domain,omitempty" path:"domain,omitempty" url:"domain,omitempty"`
+	Destination              string     `json:"destination,omitempty" path:"destination,omitempty" url:"destination,omitempty"`
+	DnsStatus                string     `json:"dns_status,omitempty" path:"dns_status,omitempty" url:"dns_status,omitempty"`
+	SslCertificateId         int64      `json:"ssl_certificate_id,omitempty" path:"ssl_certificate_id,omitempty" url:"ssl_certificate_id,omitempty"`
+	BrickManaged             *bool      `json:"brick_managed,omitempty" path:"brick_managed,omitempty" url:"brick_managed,omitempty"`
+	FolderBehaviorId         int64      `json:"folder_behavior_id,omitempty" path:"folder_behavior_id,omitempty" url:"folder_behavior_id,omitempty"`
+	IpAddresses              []string   `json:"ip_addresses,omitempty" path:"ip_addresses,omitempty" url:"ip_addresses,omitempty"`
+	CreatedAt                *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	UpdatedAt                *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
 func (c CustomDomain) Identifier() interface{} {
@@ -43,6 +46,7 @@ func (u CustomDomainDestinationEnum) Enum() map[string]CustomDomainDestinationEn
 
 type CustomDomainListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
@@ -56,18 +60,22 @@ type CustomDomainCreateAllocateIpParams struct {
 }
 
 type CustomDomainCreateParams struct {
-	Destination      CustomDomainDestinationEnum `url:"destination,omitempty" json:"destination,omitempty" path:"destination"`
-	FolderBehaviorId int64                       `url:"folder_behavior_id,omitempty" json:"folder_behavior_id,omitempty" path:"folder_behavior_id"`
-	SslCertificateId int64                       `url:"ssl_certificate_id,omitempty" json:"ssl_certificate_id,omitempty" path:"ssl_certificate_id"`
-	Domain           string                      `url:"domain" json:"domain" path:"domain"`
+	AvailableToAllWorkspaces *bool                       `url:"available_to_all_workspaces,omitempty" json:"available_to_all_workspaces,omitempty" path:"available_to_all_workspaces"`
+	WorkspaceId              int64                       `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
+	Destination              CustomDomainDestinationEnum `url:"destination,omitempty" json:"destination,omitempty" path:"destination"`
+	FolderBehaviorId         int64                       `url:"folder_behavior_id,omitempty" json:"folder_behavior_id,omitempty" path:"folder_behavior_id"`
+	SslCertificateId         int64                       `url:"ssl_certificate_id,omitempty" json:"ssl_certificate_id,omitempty" path:"ssl_certificate_id"`
+	Domain                   string                      `url:"domain" json:"domain" path:"domain"`
 }
 
 type CustomDomainUpdateParams struct {
-	Id               int64                       `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	Destination      CustomDomainDestinationEnum `url:"destination,omitempty" json:"destination,omitempty" path:"destination"`
-	FolderBehaviorId int64                       `url:"folder_behavior_id,omitempty" json:"folder_behavior_id,omitempty" path:"folder_behavior_id"`
-	SslCertificateId int64                       `url:"ssl_certificate_id,omitempty" json:"ssl_certificate_id,omitempty" path:"ssl_certificate_id"`
-	Domain           string                      `url:"domain,omitempty" json:"domain,omitempty" path:"domain"`
+	Id                       int64                       `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	AvailableToAllWorkspaces *bool                       `url:"available_to_all_workspaces,omitempty" json:"available_to_all_workspaces,omitempty" path:"available_to_all_workspaces"`
+	WorkspaceId              int64                       `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
+	Destination              CustomDomainDestinationEnum `url:"destination,omitempty" json:"destination,omitempty" path:"destination"`
+	FolderBehaviorId         int64                       `url:"folder_behavior_id,omitempty" json:"folder_behavior_id,omitempty" path:"folder_behavior_id"`
+	SslCertificateId         int64                       `url:"ssl_certificate_id,omitempty" json:"ssl_certificate_id,omitempty" path:"ssl_certificate_id"`
+	Domain                   string                      `url:"domain,omitempty" json:"domain,omitempty" path:"domain"`
 }
 
 type CustomDomainDeleteParams struct {
