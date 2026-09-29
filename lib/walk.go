@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"time"
 )
 
 type Walk[T any] struct {
@@ -131,11 +132,22 @@ func (w *Walk[T]) walkDir(ctx context.Context, dir string, it *IterChan[T]) erro
 	})
 }
 
+// isWalkShutdownError reports whether err only says that the walk is ending: a cancellation, or
+// a deadline error once the walk's context is done or its deadline has passed. A context closes
+// its Done channel before it cancels the contexts derived from it, so a WalkFile watching an
+// ancestor can return DeadlineExceeded while ctx.Err() is still nil.
 func isWalkShutdownError(ctx context.Context, err error) bool {
 	if errors.Is(err, context.Canceled) {
 		return true
 	}
-	return ctx.Err() != nil && errors.Is(err, context.DeadlineExceeded)
+	if !errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+	if ctx.Err() != nil {
+		return true
+	}
+	deadline, ok := ctx.Deadline()
+	return ok && !time.Now().Before(deadline)
 }
 
 func (w *Walk[T]) send(ctx context.Context, d fs.DirEntry, path string, it *IterChan[T], err error) error {

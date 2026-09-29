@@ -117,6 +117,7 @@ type Site struct {
 	LdapHost3                                          string      `json:"ldap_host_3,omitempty" path:"ldap_host_3,omitempty" url:"ldap_host_3,omitempty"`
 	LdapPort                                           int64       `json:"ldap_port,omitempty" path:"ldap_port,omitempty" url:"ldap_port,omitempty"`
 	LdapSecure                                         *bool       `json:"ldap_secure,omitempty" path:"ldap_secure,omitempty" url:"ldap_secure,omitempty"`
+	LdapServerCertificate                              string      `json:"ldap_server_certificate,omitempty" path:"ldap_server_certificate,omitempty" url:"ldap_server_certificate,omitempty"`
 	LdapType                                           string      `json:"ldap_type,omitempty" path:"ldap_type,omitempty" url:"ldap_type,omitempty"`
 	LdapUserAction                                     string      `json:"ldap_user_action,omitempty" path:"ldap_user_action,omitempty" url:"ldap_user_action,omitempty"`
 	LdapUserIncludeGroups                              string      `json:"ldap_user_include_groups,omitempty" path:"ldap_user_include_groups,omitempty" url:"ldap_user_include_groups,omitempty"`
@@ -372,6 +373,7 @@ type SiteUpdateParams struct {
 	LdapHost3                                          string      `url:"ldap_host_3,omitempty" json:"ldap_host_3,omitempty" path:"ldap_host_3"`
 	LdapPort                                           int64       `url:"ldap_port,omitempty" json:"ldap_port,omitempty" path:"ldap_port"`
 	LdapSecure                                         *bool       `url:"ldap_secure,omitempty" json:"ldap_secure,omitempty" path:"ldap_secure"`
+	LdapServerCertificate                              string      `url:"ldap_server_certificate,omitempty" json:"ldap_server_certificate,omitempty" path:"ldap_server_certificate"`
 	LdapUsername                                       string      `url:"ldap_username,omitempty" json:"ldap_username,omitempty" path:"ldap_username"`
 	LdapUsernameField                                  string      `url:"ldap_username_field,omitempty" json:"ldap_username_field,omitempty" path:"ldap_username_field"`
 	LdapDomain                                         string      `url:"ldap_domain,omitempty" json:"ldap_domain,omitempty" path:"ldap_domain"`

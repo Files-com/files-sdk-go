@@ -133,6 +133,35 @@ func TestWalkDeadlineExceededIsQuietShutdown(t *testing.T) {
 	assert.NoError(t, walk.Err())
 }
 
+// An ancestor closes its Done channel before it cancels the walk's context, so WalkFile can
+// return DeadlineExceeded while the walk's context is not yet done. passedDeadlineContext holds
+// that state: its deadline has passed, but it is never canceled.
+func TestWalkDeadlineExceededIsQuietBeforeCancellationReachesWalk(t *testing.T) {
+	parent := passedDeadlineContext{Context: context.Background(), deadline: time.Now()}
+	walk := (&Walk[string]{
+		FS:                 fstest.MapFS{"file.txt": &fstest.MapFile{Data: []byte("fixture")}},
+		ConcurrencyManager: NewConstrainedWorkGroup(1),
+		WalkFile: func(fs.DirEntry, string, error) (string, error) {
+			return "", context.DeadlineExceeded
+		},
+	}).Walk(parent)
+
+	_, ok := nextWalkString(t, walk)
+
+	assert.False(t, ok)
+	assert.NoError(t, walk.Err())
+}
+
+// passedDeadlineContext reports a deadline that has passed but is never canceled.
+type passedDeadlineContext struct {
+	context.Context
+	deadline time.Time
+}
+
+func (c passedDeadlineContext) Deadline() (time.Time, bool) {
+	return c.deadline, true
+}
+
 func TestWalkRootEmission(t *testing.T) {
 	fileSystem := fstest.MapFS{
 		"top.txt":       &fstest.MapFile{Data: []byte("top")},
@@ -238,25 +267,32 @@ func (s *queueOnFalseSubWorker) WaitForADoneWithContext(ctx context.Context) boo
 	return false
 }
 
+// nextWalkString returns the walk's next path and fails the test if the walk reports an error,
+// which none of its callers expect.
 func nextWalkString(t *testing.T, iter *IterChan[string]) (string, bool) {
 	t.Helper()
 	type result struct {
 		path string
 		ok   bool
+		err  error
 	}
 	done := make(chan result, 1)
 	go func() {
 		ok := iter.Next()
-		path := ""
-		if ok {
-			path = iter.Resource()
+		next := result{ok: ok, err: iter.Err()}
+		// Next also returns true for an error, which leaves no current path to read.
+		if next.ok && next.err == nil {
+			next.path = iter.Resource()
 		}
-		done <- result{path: path, ok: ok}
+		done <- next
 	}()
 
 	select {
-	case result := <-done:
-		return result.path, result.ok
+	case next := <-done:
+		if next.err != nil {
+			t.Fatalf("walk reported an error: %v", next.err)
+		}
+		return next.path, next.ok
 	case <-time.After(500 * time.Millisecond):
 		t.Fatal("iterator did not return")
 		return "", false

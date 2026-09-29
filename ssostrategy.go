@@ -56,6 +56,7 @@ type SsoStrategy struct {
 	LdapPort                         int64  `json:"ldap_port,omitempty" path:"ldap_port,omitempty" url:"ldap_port,omitempty"`
 	LdapProvisioningEnabled          *bool  `json:"ldap_provisioning_enabled,omitempty" path:"ldap_provisioning_enabled,omitempty" url:"ldap_provisioning_enabled,omitempty"`
 	LdapSecure                       *bool  `json:"ldap_secure,omitempty" path:"ldap_secure,omitempty" url:"ldap_secure,omitempty"`
+	LdapServerCertificate            string `json:"ldap_server_certificate,omitempty" path:"ldap_server_certificate,omitempty" url:"ldap_server_certificate,omitempty"`
 	LdapType                         string `json:"ldap_type,omitempty" path:"ldap_type,omitempty" url:"ldap_type,omitempty"`
 	LdapUsername                     string `json:"ldap_username,omitempty" path:"ldap_username,omitempty" url:"ldap_username,omitempty"`
 	LdapUsernameField                string `json:"ldap_username_field,omitempty" path:"ldap_username_field,omitempty" url:"ldap_username_field,omitempty"`
