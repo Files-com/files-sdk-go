@@ -2,6 +2,9 @@ package files_sdk
 
 import (
 	"errors"
+	"net/url"
+	"slices"
+	"sync"
 
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
@@ -84,6 +87,32 @@ type Iter struct {
 	Error        error
 	OnPageError
 	requestResponseOptions []RequestResponseOption
+	// listing holds the listing's parameters from before the first page
+	// request. Reload starts from it rather than from parameters that a running
+	// traversal is updating.
+	listing       *reloadParams
+	recordListing sync.Once
+}
+
+// reloadParams are the parameters of a reloaded traversal: the query its
+// listing sent before paging, with this traversal's own paging state.
+type reloadParams struct {
+	ListParams
+	query url.Values // every exported parameter except per_page and cursor
+	err   error      // from exporting the listing's parameters
+}
+
+// values copies the recorded query, so changes to one request's values cannot
+// reach later requests.
+func (p *reloadParams) values() (url.Values, error) {
+	if p.err != nil {
+		return nil, p.err
+	}
+	values := make(url.Values, len(p.query))
+	for key, value := range p.query {
+		values[key] = slices.Clone(value)
+	}
+	return values, nil
 }
 
 // Err returns the error, if any,
@@ -108,8 +137,12 @@ func (i *Iter) ExportParams() (lib.ExportValues, error) {
 	if err != nil {
 		return lib.ExportValues{}, err
 	}
-	listParamValues, err := lib.Params{Params: i.ListParams}.ToValues()
-
+	var listParamValues url.Values
+	if reload, ok := i.ListParams.(*reloadParams); ok {
+		listParamValues, err = reload.values()
+	} else {
+		listParamValues, err = lib.Params{Params: i.ListParams}.ToValues()
+	}
 	if err != nil {
 		return lib.ExportValues{}, err
 	}
@@ -122,6 +155,7 @@ func (i *Iter) ExportParams() (lib.ExportValues, error) {
 }
 
 func (i *Iter) GetPage() bool {
+	i.recordedListing() // before the first request changes the cursor
 	for {
 		if i.GetParams().MaxPages != 0 && i.Page >= i.GetParams().MaxPages {
 			return false
@@ -134,7 +168,11 @@ func (i *Iter) GetPage() bool {
 			return false
 		}
 		previousCursor := i.GetParams().Cursor
-		params, _ := i.ExportParams()
+		params, err := i.ExportParams()
+		if err != nil {
+			i.Error = err
+			return false
+		}
 		i.Values, i.Cursor, i.Error = i.Query(params, i.requestResponseOptions...)
 		i.SetCursor(i.Cursor)
 		if i.Error != nil && i.OnPageError != nil {
@@ -198,10 +236,35 @@ func (i *Iter) NextPage() bool {
 	return i.Cursor != ""
 }
 
-// Reload ignores any id passed in and creates a new reset Iter
+// Reload returns a new iterator for the same listing that starts again from
+// the first page, even if i started from a cursor. It keeps the listing's
+// parameters as they were before i requested its first page, along with its
+// page limits, error handler, and request options. opts run after those
+// options, so WithContext replaces the listing's context; without it, the
+// original context still applies. Reload does not read or change i's
+// traversal state, so it can run while another goroutine is still in i.Next,
+// as when a caller cancels a traversal and reloads it without waiting.
 func (i *Iter) Reload(opts ...RequestResponseOption) IterI {
-	newIter := *i
-	newIter.ListParams = &ListParams{}
-	newIter.requestResponseOptions = opts
-	return &newIter
+	params := *i.recordedListing()
+	return &Iter{
+		Query:                  i.Query,
+		ListParams:             &params,
+		Params:                 i.Params,
+		OnPageError:            i.OnPageError,
+		requestResponseOptions: slices.Concat(i.requestResponseOptions, opts),
+	}
+}
+
+// recordedListing returns the listing's parameters from before the first
+// page request, recording them on first use.
+func (i *Iter) recordedListing() *reloadParams {
+	i.recordListing.Do(func() {
+		exported, err := i.ExportParams()
+		paging := *i.GetParams()
+		paging.Cursor = ""
+		delete(exported.Values, "cursor")
+		delete(exported.Values, "per_page")
+		i.listing = &reloadParams{ListParams: paging, query: exported.Values, err: err}
+	})
+	return i.listing
 }
