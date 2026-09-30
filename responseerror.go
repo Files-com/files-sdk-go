@@ -237,6 +237,7 @@ const (
 	ErrTooManyShares                                                          ResponseErrorType = "rate-limited/too-many-shares"
 	ErrAutomationsUnavailable                                                 ResponseErrorType = "service-unavailable/automations-unavailable"
 	ErrMigrationInProgress                                                    ResponseErrorType = "service-unavailable/migration-in-progress"
+	ErrSearchUnavailable                                                      ResponseErrorType = "service-unavailable/search-unavailable"
 	ErrSiteDisabled                                                           ResponseErrorType = "service-unavailable/site-disabled"
 	ErrUploadsUnavailable                                                     ResponseErrorType = "service-unavailable/uploads-unavailable"
 	ErrAccountAlreadyExists                                                   ResponseErrorType = "site-configuration/account-already-exists"

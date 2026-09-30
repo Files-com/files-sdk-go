@@ -842,6 +842,7 @@ if err != nil {
 | `rate-limited/too-many-shares` | `ErrTooManyShares` | Too Many Shares |
 | `service-unavailable/automations-unavailable` | `ErrAutomationsUnavailable` | Automations Unavailable |
 | `service-unavailable/migration-in-progress` | `ErrMigrationInProgress` | Migration In Progress |
+| `service-unavailable/search-unavailable` | `ErrSearchUnavailable` | Search Unavailable |
 | `service-unavailable/site-disabled` | `ErrSiteDisabled` | Site Disabled |
 | `service-unavailable/uploads-unavailable` | `ErrUploadsUnavailable` | Uploads Unavailable |
 | `site-configuration/account-already-exists` | `ErrAccountAlreadyExists` | Account Already Exists |
