@@ -3,7 +3,12 @@ package lib
 import (
 	"encoding/json"
 	"os"
+	"os/exec"
+	"strconv"
+	"strings"
+	"sync"
 	"testing"
+	"unicode/utf8"
 )
 
 func TestNormalizeForComparison(t *testing.T) {
@@ -86,6 +91,107 @@ func TestNormalizeForComparisonSharedData(t *testing.T) {
 					t.Errorf("comparison is not idempotent for %q: %q", pair[1], actual)
 				}
 			}
+		}
+	}
+}
+
+func TestNormalizeForComparisonAppliesSharedMapping(t *testing.T) {
+	data, err := os.ReadFile("../shared/path_comparison.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var comparison struct {
+		Mapping map[string]string `json:"mapping"`
+	}
+	if err := json.Unmarshal(data, &comparison); err != nil {
+		t.Fatal(err)
+	}
+	mapping := make(map[rune]string, len(comparison.Mapping))
+	for hex, replacement := range comparison.Mapping {
+		scalar, err := strconv.ParseUint(hex, 16, 32)
+		if err != nil {
+			t.Fatal(err)
+		}
+		mapping[rune(scalar)] = replacement
+	}
+
+	// Printable ASCII is lowercased directly. Every other scalar is replaced
+	// by its shared mapping entry, or kept when it has none.
+	for scalar := rune(0); scalar <= utf8.MaxRune; scalar++ {
+		if !utf8.ValidRune(scalar) || (scalar >= ' ' && scalar <= '~') {
+			continue
+		}
+		want, ok := mapping[scalar]
+		if !ok {
+			want = string(scalar)
+		}
+		if actual := NormalizeForComparison(string(scalar)); actual != want {
+			t.Errorf("U+%04X: got %q, want %q", scalar, actual, want)
+		}
+	}
+}
+
+// inFreshProcess reruns the calling test alone in a new process, where the
+// comparison table has not been loaded yet, and fails if that run fails. It
+// returns true inside the new process.
+func inFreshProcess(t *testing.T) bool {
+	t.Helper()
+	const env = "NORMALIZE_FOR_COMPARISON_FRESH_PROCESS"
+	if os.Getenv(env) == t.Name() {
+		return true
+	}
+	cmd := exec.Command(os.Args[0], "-test.run=^"+t.Name()+"$", "-test.count=1", "-test.v")
+	cmd.Env = append(os.Environ(), env+"="+t.Name())
+	out, err := cmd.CombinedOutput()
+	if err != nil || !strings.Contains(string(out), "--- PASS: "+t.Name()) {
+		t.Fatalf("fresh process run failed: %v\n%s", err, out)
+	}
+	return false
+}
+
+func panicValue(f func()) (recovered any) {
+	defer func() { recovered = recover() }()
+	f()
+	return nil
+}
+
+func TestNormalizeForComparisonLoadsMappingOnFirstLookup(t *testing.T) {
+	if !inFreshProcess(t) {
+		return
+	}
+	// Truncating the embedded table after startup is only noticed once a
+	// lookup outside printable ASCII needs it, and then on every lookup.
+	pathComparisonGzip = pathComparisonGzip[:len(pathComparisonGzip)/2]
+
+	if actual := NormalizeForComparison("Folder\\Report.TXT"); actual != "folder/report.txt" {
+		t.Errorf("got %q, want %q", actual, "folder/report.txt")
+	}
+	for range 2 {
+		if panicValue(func() { NormalizeForComparison("Résumé.txt") }) == nil {
+			t.Error("lookup with a corrupt table did not panic")
+		}
+	}
+}
+
+func TestNormalizeForComparisonConcurrentFirstLookups(t *testing.T) {
+	if !inFreshProcess(t) {
+		return
+	}
+	start := make(chan struct{})
+	results := make([]string, 32)
+	var wg sync.WaitGroup
+	for i := range results {
+		wg.Go(func() {
+			<-start
+			results[i] = NormalizeForComparison("FÎŁĘÑÂMÉ.TXT")
+		})
+	}
+	close(start)
+	wg.Wait()
+
+	for i, actual := range results {
+		if actual != "filename.txt" {
+			t.Errorf("caller %d: got %q, want %q", i, actual, "filename.txt")
 		}
 	}
 }
