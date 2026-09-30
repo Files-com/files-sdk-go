@@ -77,7 +77,7 @@ type FileDownloadParams struct {
 	WithPreviews             *bool  `url:"with_previews,omitempty" json:"with_previews,omitempty" path:"with_previews"`
 	WithPriorityColor        *bool  `url:"with_priority_color,omitempty" json:"with_priority_color,omitempty" path:"with_priority_color"`
 	WithDirectConnectionInfo *bool  `url:"with_direct_connection_info,omitempty" json:"with_direct_connection_info,omitempty" path:"with_direct_connection_info"`
-	File                     File   `url:"-,omitempty" required:"false" json:"-,omitempty"`
+	File                     File   `url:"-" required:"false" json:"-"`
 }
 
 type FileCreateParams struct {
