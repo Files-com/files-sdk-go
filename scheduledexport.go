@@ -27,6 +27,7 @@ type ScheduledExport struct {
 	HumanReadableSchedule string      `json:"human_readable_schedule,omitempty" path:"human_readable_schedule,omitempty" url:"human_readable_schedule,omitempty"`
 	LastRunAt             *time.Time  `json:"last_run_at,omitempty" path:"last_run_at,omitempty" url:"last_run_at,omitempty"`
 	LastExportId          int64       `json:"last_export_id,omitempty" path:"last_export_id,omitempty" url:"last_export_id,omitempty"`
+	LastError             string      `json:"last_error,omitempty" path:"last_error,omitempty" url:"last_error,omitempty"`
 	CreatedAt             *time.Time  `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 	UpdatedAt             *time.Time  `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
