@@ -717,6 +717,7 @@ if err != nil {
 | `not-authorized/billing-permission-required` | `ErrBillingPermissionRequired` | Billing Permission Required |
 | `not-authorized/bundle-maximum-uses-reached` | `ErrBundleMaximumUsesReached` | Bundle Maximum Uses Reached |
 | `not-authorized/bundle-permission-required` | `ErrBundlePermissionRequired` | Bundle Permission Required |
+| `not-authorized/cannot-administer-higher-level-user` | `ErrCannotAdministerHigherLevelUser` | Cannot Administer Higher Level User |
 | `not-authorized/cannot-login-while-using-key` | `ErrCannotLoginWhileUsingKey` | Cannot Login While Using Key |
 | `not-authorized/cant-act-for-other-user` | `ErrCantActForOtherUser` | Cant Act For Other User |
 | `not-authorized/contact-admin-for-password-change-help` | `ErrContactAdminForPasswordChangeHelp` | Contact Admin For Password Change Help |
@@ -820,6 +821,7 @@ if err != nil {
 | `processing-failure/multiple-processing-errors` | `ErrMultipleProcessingErrors` | Multiple Processing Errors |
 | `processing-failure/path-too-long` | `ErrPathTooLong` | Path Too Long |
 | `processing-failure/recipient-already-shared` | `ErrRecipientAlreadyShared` | Recipient Already Shared |
+| `processing-failure/remote-entry-read-only` | `ErrRemoteEntryReadOnly` | Remote Entry Read Only |
 | `processing-failure/remote-server-error` | `ErrRemoteServerError` | Remote Server Error |
 | `processing-failure/resource-belongs-to-parent-site` | `ErrResourceBelongsToParentSite` | Resource Belongs To Parent Site |
 | `processing-failure/resource-locked` | `ErrResourceLocked` | Resource Locked |

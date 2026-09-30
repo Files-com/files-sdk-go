@@ -159,6 +159,7 @@ type Site struct {
 	Require2faUserType                                 string      `json:"require_2fa_user_type,omitempty" path:"require_2fa_user_type,omitempty" url:"require_2fa_user_type,omitempty"`
 	RequireLogoutFromBundlesAndInboxes                 *bool       `json:"require_logout_from_bundles_and_inboxes,omitempty" path:"require_logout_from_bundles_and_inboxes,omitempty" url:"require_logout_from_bundles_and_inboxes,omitempty"`
 	Session                                            Session     `json:"session,omitempty" path:"session,omitempty" url:"session,omitempty"`
+	S3CompatibleEndpointEnabled                        *bool       `json:"s3_compatible_endpoint_enabled,omitempty" path:"s3_compatible_endpoint_enabled,omitempty" url:"s3_compatible_endpoint_enabled,omitempty"`
 	SftpEnabled                                        *bool       `json:"sftp_enabled,omitempty" path:"sftp_enabled,omitempty" url:"sftp_enabled,omitempty"`
 	SftpFinalizePartialUploads                         *bool       `json:"sftp_finalize_partial_uploads,omitempty" path:"sftp_finalize_partial_uploads,omitempty" url:"sftp_finalize_partial_uploads,omitempty"`
 	SftpHostKeyType                                    string      `json:"sftp_host_key_type,omitempty" path:"sftp_host_key_type,omitempty" url:"sftp_host_key_type,omitempty"`
@@ -318,6 +319,7 @@ type SiteUpdateParams struct {
 	UserRequestsNotifyAdmins                           *bool       `url:"user_requests_notify_admins,omitempty" json:"user_requests_notify_admins,omitempty" path:"user_requests_notify_admins"`
 	DavEnabled                                         *bool       `url:"dav_enabled,omitempty" json:"dav_enabled,omitempty" path:"dav_enabled"`
 	FtpEnabled                                         *bool       `url:"ftp_enabled,omitempty" json:"ftp_enabled,omitempty" path:"ftp_enabled"`
+	S3CompatibleEndpointEnabled                        *bool       `url:"s3_compatible_endpoint_enabled,omitempty" json:"s3_compatible_endpoint_enabled,omitempty" path:"s3_compatible_endpoint_enabled"`
 	SftpEnabled                                        *bool       `url:"sftp_enabled,omitempty" json:"sftp_enabled,omitempty" path:"sftp_enabled"`
 	SftpFinalizePartialUploads                         *bool       `url:"sftp_finalize_partial_uploads,omitempty" json:"sftp_finalize_partial_uploads,omitempty" path:"sftp_finalize_partial_uploads"`
 	UsersCanCreateApiKeys                              *bool       `url:"users_can_create_api_keys,omitempty" json:"users_can_create_api_keys,omitempty" path:"users_can_create_api_keys"`
