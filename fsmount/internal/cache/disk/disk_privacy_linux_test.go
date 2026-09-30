@@ -92,7 +92,7 @@ func TestNewDiskCacheProtectsLegacyPermissiveState(t *testing.T) {
 // A link planted inside cache-owned storage is refused rather than followed,
 // and the target it points at is not modified.
 func TestNewDiskCacheRefusesLinkInsideOwnedStorage(t *testing.T) {
-	root := filepath.Join(t.TempDir(), "cache")
+	root := filepath.Join(privateTempDir(t), "cache")
 	if err := os.MkdirAll(filepath.Join(root, "data"), 0o700); err != nil {
 		t.Fatal(err)
 	}

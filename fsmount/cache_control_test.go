@@ -13,7 +13,7 @@ import (
 )
 
 func TestDiskCacheSizeAndClearOnlyUseLiveMounts(t *testing.T) {
-	basePath := t.TempDir()
+	basePath := privateTempDir(t)
 	activePath := filepath.Join(basePath, "A", "cache")
 	inactivePath := filepath.Join(basePath, "B", "cache")
 	if err := os.MkdirAll(activePath, 0o755); err != nil {
@@ -79,7 +79,7 @@ func TestDiskCacheSizeAndClearOnlyUseLiveMounts(t *testing.T) {
 }
 
 func TestClearDiskCacheRejectsDuplicateActiveRoot(t *testing.T) {
-	cacheRoot := t.TempDir()
+	cacheRoot := privateTempDir(t)
 	firstCache, err := disk.NewDiskCache(cacheRoot)
 	if err != nil {
 		t.Fatal(err)
@@ -110,7 +110,7 @@ func TestClearDiskCacheRejectsDuplicateActiveRoot(t *testing.T) {
 }
 
 func TestNewCacheRejectsCanonicalDuplicateActiveRoot(t *testing.T) {
-	cacheRoot := t.TempDir()
+	cacheRoot := privateTempDir(t)
 	existingCache, err := disk.NewDiskCache(cacheRoot)
 	if err != nil {
 		t.Fatal(err)
@@ -133,7 +133,7 @@ func TestNewCacheRejectsCanonicalDuplicateActiveRoot(t *testing.T) {
 }
 
 func TestNewCacheRejectsCaseVariantOfActiveRoot(t *testing.T) {
-	parent := t.TempDir()
+	parent := privateTempDir(t)
 	cacheRoot := filepath.Join(parent, "CacheRoot")
 	if err := os.Mkdir(cacheRoot, 0o755); err != nil {
 		t.Fatal(err)

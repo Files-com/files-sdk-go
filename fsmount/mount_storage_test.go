@@ -16,7 +16,7 @@ import (
 // caller-selected TmpFsPath. Unmounting removes exactly that subdirectory: the
 // caller's directory and its other contents stay.
 func TestFilescomfsDestroyRemovesOnlyTheMountsOwnStorage(t *testing.T) {
-	parent := t.TempDir()
+	parent := privateTempDir(t)
 	keep := filepath.Join(parent, "callers-own-file")
 	if err := os.WriteFile(keep, []byte("keep"), 0o600); err != nil {
 		t.Fatal(err)
@@ -66,7 +66,7 @@ func TestFilescomfsDestroyRemovesOnlyTheMountsOwnStorage(t *testing.T) {
 // mount still gets a private directory of its own rather than the shared
 // temporary directory.
 func TestNewWriteSessionKeepsWorkingCopyInPrivateDirectory(t *testing.T) {
-	parent := t.TempDir()
+	parent := privateTempDir(t)
 	storage, err := newMountStorage(parent)
 	if err != nil {
 		t.Fatal(err)
@@ -106,7 +106,7 @@ func TestNewWriteSessionKeepsWorkingCopyInPrivateDirectory(t *testing.T) {
 
 // An application cannot widen the mount's storage root through the mount.
 func TestLocalFsChmodOnRootKeepsStoragePrivate(t *testing.T) {
-	parent := t.TempDir()
+	parent := privateTempDir(t)
 	storage, err := newMountStorage(parent)
 	if err != nil {
 		t.Fatal(err)

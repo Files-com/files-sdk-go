@@ -376,10 +376,24 @@ func (c *notifyingCache) WritePartial(path string, buff []byte, ofst int64) (int
 	return n, err
 }
 
+// privateTempDir returns a new temporary directory that only the current user
+// can modify. The disk cache and the mount's private storage are refused when
+// their directory or any directory above it is writable by other users, and
+// t.TempDir creates its directory with mode 0777 less the umask, which is
+// group-writable under the common 0002 umask.
+func privateTempDir(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	if err := os.Chmod(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	return dir
+}
+
 func newTestDiskCache(t *testing.T) *disk.DiskCache {
 	t.Helper()
 
-	cacheStore, err := disk.NewDiskCache(t.TempDir())
+	cacheStore, err := disk.NewDiskCache(privateTempDir(t))
 	if err != nil {
 		t.Fatalf("NewDiskCache failed: %v", err)
 	}

@@ -13,9 +13,22 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/disk"
 )
 
+// privateTempDir returns a new temporary directory that only the current user
+// can modify. NewDiskCache refuses a cache root when it or any directory above
+// it is writable by other users, and t.TempDir creates its directory with mode
+// 0777 less the umask, which is group-writable under the common 0002 umask.
+func privateTempDir(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	if err := os.Chmod(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	return dir
+}
+
 // TestNewDiskCache verifies that a DiskCache can be created with default settings
 func TestNewDiskCache(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	cache, err := disk.NewDiskCache(tmpDir)
 	if err != nil {
@@ -42,7 +55,7 @@ func TestNewDiskCache(t *testing.T) {
 
 // TestDiskCacheWriteAndRead verifies basic write and read operations
 func TestDiskCacheWriteAndRead(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	cache, err := disk.NewDiskCache(tmpDir)
 	if err != nil {
@@ -77,7 +90,7 @@ func TestDiskCacheWriteAndRead(t *testing.T) {
 
 // TestDiskCacheWriteAtOffset verifies writing at a non-zero offset
 func TestDiskCacheWriteAtOffset(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	cache, err := disk.NewDiskCache(tmpDir)
 	if err != nil {
@@ -125,7 +138,7 @@ func TestDiskCacheWriteAtOffset(t *testing.T) {
 
 // TestDiskCacheReadMiss verifies that reading a non-existent file returns 0 bytes
 func TestDiskCacheReadMiss(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	cache, err := disk.NewDiskCache(tmpDir)
 	if err != nil {
@@ -145,7 +158,7 @@ func TestDiskCacheReadMiss(t *testing.T) {
 
 // TestDiskCacheDelete verifies that deleting a file removes it from the cache
 func TestDiskCacheDelete(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	cache, err := disk.NewDiskCache(tmpDir)
 	if err != nil {
@@ -179,7 +192,7 @@ func TestDiskCacheDelete(t *testing.T) {
 }
 
 func TestDiskCacheDeletePinnedFileDoesNotRemove(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	cache, err := disk.NewDiskCache(tmpDir)
 	if err != nil {
@@ -230,7 +243,7 @@ func TestDiskCacheDeletePinnedFileDoesNotRemove(t *testing.T) {
 }
 
 func TestDiskCacheMaintenanceRemovesUncommittedDataFiles(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	cache, err := disk.NewDiskCache(
 		tmpDir,
@@ -252,7 +265,7 @@ func TestDiskCacheMaintenanceRemovesUncommittedDataFiles(t *testing.T) {
 }
 
 func TestDiskCacheMaintenanceKeepsPinnedUncommittedDataFiles(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	cache, err := disk.NewDiskCache(
 		tmpDir,
@@ -286,7 +299,7 @@ func TestDiskCacheMaintenanceKeepsPinnedUncommittedDataFiles(t *testing.T) {
 }
 
 func TestDiskCacheMaintenanceKeepsCompletedDataFiles(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	cache, err := disk.NewDiskCache(
 		tmpDir,
@@ -321,7 +334,7 @@ func TestDiskCacheMaintenanceKeepsCompletedDataFiles(t *testing.T) {
 }
 
 func TestDiskCacheCommitTruncatesPinnedLargerEntry(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	cache, err := disk.NewDiskCache(tmpDir)
 	if err != nil {
@@ -365,7 +378,7 @@ func TestDiskCacheCommitTruncatesPinnedLargerEntry(t *testing.T) {
 
 // TestDiskCachePinUnpin verifies that pinned files are not evicted
 func TestDiskCachePinUnpin(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	// Create cache with very small capacity to force evictions
 	cache, err := disk.NewDiskCache(tmpDir, disk.WithCapacityBytes(1024))
@@ -442,7 +455,7 @@ func waitForDiskReadBytes(t *testing.T, cache *disk.DiskCache, path string, want
 
 // TestDiskCacheStats verifies that statistics are updated correctly
 func TestDiskCacheStats(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	cache, err := disk.NewDiskCache(tmpDir)
 	if err != nil {
@@ -492,7 +505,7 @@ func TestDiskCacheStats(t *testing.T) {
 
 // TestDiskCacheDisabled verifies that a disabled cache doesn't perform I/O
 func TestDiskCacheDisabled(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	cache, err := disk.NewDiskCache(tmpDir, disk.WithDisabled(true))
 	if err != nil {
@@ -524,7 +537,7 @@ func TestDiskCacheDisabled(t *testing.T) {
 
 // TestDiskCacheMaintenance verifies that maintenance runs without error
 func TestDiskCacheMaintenance(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	// Create cache with short maintenance interval
 	cache, err := disk.NewDiskCache(
@@ -589,7 +602,7 @@ func TestDiskCacheInvalidPath(t *testing.T) {
 
 // TestDiskCacheMultipleFiles verifies that multiple files can coexist in the cache
 func TestDiskCacheMultipleFiles(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	cache, err := disk.NewDiskCache(tmpDir)
 	if err != nil {
@@ -634,7 +647,7 @@ func TestDiskCacheMultipleFiles(t *testing.T) {
 
 // TestDiskCacheCapacityEviction verifies that files are evicted when capacity is exceeded
 func TestDiskCacheCapacityEviction(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	// Create cache with capacity for ~2 files of 512 bytes each
 	cache, err := disk.NewDiskCache(tmpDir, disk.WithCapacityBytes(1024))
@@ -677,7 +690,7 @@ func TestDiskCacheCapacityEviction(t *testing.T) {
 
 // TestDiskCacheWithFileNotInCache verifies entryPath handling
 func TestDiskCacheWithFileNotInCache(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 	cache, err := disk.NewDiskCache(tmpDir)
 	if err != nil {
 		t.Fatalf("NewDiskCache failed: %v", err)
@@ -708,7 +721,7 @@ func TestDiskCacheWithFileNotInCache(t *testing.T) {
 // even when other files in the LRU are pinned. This test ensures the bug fix where unpinned files
 // are prioritized for eviction doesn't regress.
 func TestDiskCacheUnpinEviction(t *testing.T) {
-	tmpDir := t.TempDir()
+	tmpDir := privateTempDir(t)
 
 	// Create cache with capacity for ~2 files
 	cache, err := disk.NewDiskCache(tmpDir, disk.WithCapacityBytes(1200))
@@ -771,7 +784,7 @@ func TestDiskCacheUnpinEviction(t *testing.T) {
 
 func TestDiskCacheClearRemovesUnpinnedAndDefersPinnedEntry(t *testing.T) {
 	cache, err := disk.NewDiskCache(
-		t.TempDir(),
+		privateTempDir(t),
 		disk.WithMaintenanceInterval(10*time.Millisecond),
 	)
 	if err != nil {
@@ -826,7 +839,7 @@ func TestDiskCacheClearRemovesUnpinnedAndDefersPinnedEntry(t *testing.T) {
 }
 
 func TestDiskCacheMaintenanceRemovesStaleRotatedMetadata(t *testing.T) {
-	root := t.TempDir()
+	root := privateTempDir(t)
 	cache, err := disk.NewDiskCache(
 		root,
 		disk.WithMaintenanceInterval(10*time.Millisecond),

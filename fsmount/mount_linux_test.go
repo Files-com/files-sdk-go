@@ -99,7 +99,7 @@ func TestLinuxMountedFileOperations(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			backend := directoryMountBackend{root: t.TempDir()}
 			mount := t.TempDir()
-			host, err := Mount(MountParams{Config: &files_sdk.Config{Logger: lib.NullLogger{}}, ProviderBackend: backend, MountPoint: mount, TmpFsPath: t.TempDir(), DiskCacheEnabled: disk, DiskCachePath: t.TempDir()})
+			host, err := Mount(MountParams{Config: &files_sdk.Config{Logger: lib.NullLogger{}}, ProviderBackend: backend, MountPoint: mount, TmpFsPath: privateTempDir(t), DiskCacheEnabled: disk, DiskCachePath: privateTempDir(t)})
 			require.NoError(t, err)
 			t.Cleanup(func() { require.True(t, host.Unmount()) })
 			require.NoError(t, os.Mkdir(filepath.Join(mount, "documents"), 0700))

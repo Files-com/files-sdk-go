@@ -95,14 +95,15 @@ func TestEnsureEntryPrivateRepairsOwnedEntriesOnly(t *testing.T) {
 }
 
 func TestCheckContainerAcceptsTrustedLocationsAndRejectsReplaceableOnes(t *testing.T) {
-	require.NoError(t, CheckContainer(t.TempDir()), "the test temporary directory is a trusted location")
 	require.NoError(t, CheckContainer(os.TempDir()), "the system temporary directory is sticky and trusted")
 
 	root := t.TempDir()
 	// With no umask, directories are created with the modes named below.
-	// t.TempDir itself creates its directory with 0777, so it is tightened.
+	// t.TempDir itself creates its directory with 0777 less the umask, which
+	// is group-writable under the common 0002 umask, so it is tightened.
 	withUmask(t, 0)
 	require.NoError(t, os.Chmod(root, 0o700))
+	require.NoError(t, CheckContainer(root), "a directory only this user can modify is a trusted location")
 	open := filepath.Join(root, "open")
 	require.NoError(t, os.Mkdir(open, 0o777))
 	err := CheckContainer(open)
