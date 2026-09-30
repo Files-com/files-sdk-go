@@ -92,6 +92,24 @@ func localNameBelow(remoteFolder, remotePath string) (string, error) {
 	return name, nil
 }
 
+// localNameOf is the local name of the last element of a remote path, for a
+// download that takes its local name from the server because the caller gave
+// none. The remote path is normalized the way Files.com normalizes paths, and
+// the name must be valid for the host platform, as in localNameBelow: on
+// Windows a drive or stream colon or a device name is an error. The root
+// folder has no name of its own and becomes ".".
+func localNameOf(remotePath string) (string, error) {
+	normalized := lib.NormalizeAPIPath(remotePath)
+	if normalized == "" {
+		return ".", nil
+	}
+	name, err := filepath.Localize(normalized[strings.LastIndex(normalized, "/")+1:])
+	if err != nil {
+		return "", fmt.Errorf("download: server path %q does not end in a valid local name: %w", remotePath, err)
+	}
+	return name, nil
+}
+
 // remoteSegments splits a slash-separated remote path into its elements. The
 // root folder ("", "." or "/") has no elements.
 func remoteSegments(remotePath string) []string {

@@ -23,6 +23,10 @@ import (
 func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams, opts ...files_sdk.RequestResponseOption) *Job {
 	job := (&Job{}).Init()
 	SetJobParams(job, direction.DownloadType, params, params.config.Logger, fileSys)
+	// localNameErr is why the remote path's name cannot be the local name when
+	// the caller gives none. LocalPath then keeps the caller's value, so a
+	// retry comes to the same answer.
+	var localNameErr error
 	job.Config = params.config
 	if params.PriorJobCheckpoint != nil {
 		job.CompletedPaths = make(map[string]struct{}, len(params.PriorJobCheckpoint.CompletedPaths))
@@ -84,15 +88,20 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams, opt
 			// Propagating this error is difficult, but this error will happen again in CodeStart.
 		}
 		if (!lib.NewUrlPath(params.RemotePath).EndingSlash() && localType == directory.Dir) || remoteType == directory.File && localType == directory.Dir {
-			job.LocalPath = filepath.Join(job.LocalPath, lib.NewUrlPath(job.RemotePath).SwitchPathSeparator(string(os.PathSeparator)).Pop())
+			name, err := localNameOf(job.RemotePath)
+			if err == nil {
+				job.LocalPath = filepath.Join(job.LocalPath, name)
+			} else {
+				localNameErr = err
+			}
 			if remoteType == directory.File {
 				localType = directory.File
 			}
 		}
 
 		// Use relative path
-		if job.LocalPath == "" {
-			job.LocalPath = lib.NewUrlPath(job.RemotePath).SwitchPathSeparator(string(os.PathSeparator)).Pop()
+		if job.LocalPath == "" && localNameErr == nil {
+			job.LocalPath, localNameErr = localNameOf(job.RemotePath)
 		}
 
 		job.Type = localType
@@ -116,6 +125,12 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams, opt
 			job.Include, _ = ignore.New(params.Include...)
 		}
 
+		if localNameErr != nil {
+			addJobError(job, params, downloadPathError{localNameErr}, onComplete)
+			job.EndScan()
+			return
+		}
+
 		it := (&lib.Walk[lib.DirEntry]{
 			FS:                 fileSys,
 			Root:               lib.UrlJoinNoEscape(job.RemotePath),
@@ -134,30 +149,36 @@ func downloader(ctx context.Context, fileSys fs.FS, params DownloaderParams, opt
 		}
 
 		if it.Err() != nil {
-			metaFile := &DownloadStatus{
-				job:         job,
-				status:      status.Errored,
-				localPath:   params.LocalPath,
-				remotePath:  params.RemotePath,
-				tempPath:    params.TempPath,
-				Sync:        params.Sync,
-				NoOverwrite: params.NoOverwrite,
-				Mutex:       &sync.RWMutex{},
-			}
-			metaFile.file = files_sdk.File{
-				DisplayName: filepath.Base(params.LocalPath),
-				Type:        job.Direction.Name(),
-				Path:        params.RemotePath,
-			}
-			job.Add(metaFile)
-			job.UpdateStatus(status.Errored, metaFile, it.Err())
-			onComplete <- metaFile
+			addJobError(job, params, it.Err(), onComplete)
 		}
 
 		job.EndScan()
 	}
 
 	return job
+}
+
+// addJobError reports an error that stops the whole download as one errored
+// status for the requested paths.
+func addJobError(job *Job, params DownloaderParams, err error, onComplete chan *DownloadStatus) {
+	metaFile := &DownloadStatus{
+		job:         job,
+		status:      status.Errored,
+		localPath:   params.LocalPath,
+		remotePath:  params.RemotePath,
+		tempPath:    params.TempPath,
+		Sync:        params.Sync,
+		NoOverwrite: params.NoOverwrite,
+		Mutex:       &sync.RWMutex{},
+	}
+	metaFile.file = files_sdk.File{
+		DisplayName: filepath.Base(params.LocalPath),
+		Type:        job.Direction.Name(),
+		Path:        params.RemotePath,
+	}
+	job.Add(metaFile)
+	job.UpdateStatus(status.Errored, metaFile, err)
+	onComplete <- metaFile
 }
 
 func enqueueIndexedDownloads(job *Job, jobCtx context.Context, onComplete chan *DownloadStatus) {

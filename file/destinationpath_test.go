@@ -99,6 +99,31 @@ func TestClient_Downloader_rejectsServerPathOutsideDestination(t *testing.T) {
 	}
 }
 
+// With no LocalPath, a download is written to the working directory under the
+// last element of the remote path, whether that names a file or a folder.
+func TestClient_Downloader_defaultsLocalPathToRemoteNameInWorkingDirectory(t *testing.T) {
+	for name, c := range map[string]struct{ remotePath, want string }{
+		"file":   {"top/reports/report.csv", "report.csv"},
+		"folder": {"top/reports", filepath.Join("reports", "report.csv")},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Chdir(t.TempDir())
+			server := (&MockAPIServer{T: t}).Do()
+			defer server.Shutdown()
+			mockFolder(server, "top/reports", map[string][]byte{"report.csv": []byte("report bytes")})
+
+			job := server.Client().Downloader(DownloaderParams{RemotePath: c.remotePath})
+			job.Start()
+			job.Wait()
+
+			assert.Zero(t, job.Count(status.Errored))
+			content, err := os.ReadFile(c.want)
+			require.NoError(t, err)
+			assert.Equal(t, "report bytes", string(content))
+		})
+	}
+}
+
 func TestClient_Downloader_keepsFolderListedInDifferentCaseInsideDestination(t *testing.T) {
 	root := t.TempDir()
 	server := (&MockAPIServer{T: t}).Do()
