@@ -16,6 +16,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"testing"
 	"time"
@@ -57,7 +58,7 @@ func (s *blockingDeleteCacheStore) Delete(path string) bool {
 	return s.cacheStore.Delete(path)
 }
 
-func newTestRemoteFs(t *testing.T) (*RemoteFs, *virtualfs, cacheStore) {
+func newTestRemoteFs(t testing.TB) (*RemoteFs, *virtualfs, cacheStore) {
 	t.Helper()
 
 	cacheStore, err := mem.NewMemoryCache()
@@ -75,26 +76,40 @@ func newTestRemoteFs(t *testing.T) (*RemoteFs, *virtualfs, cacheStore) {
 	root.extendTtl()
 
 	fs := &RemoteFs{
-		log:             &log.NoOpLogger{},
-		vfs:             vfs,
-		cacheStore:      cacheStore,
-		disableLocking:  true,
-		lockMap:         make(map[string]*lockInfo),
-		readyGates:      map[string]*cache.ReadyGate{},
-		gatePathMutexes: fssync.NewPathMutex(),
-		loadDirMutexes:  fssync.NewPathMutex(),
-		backend:         &fakeRemoteBackend{},
+		log:              &log.NoOpLogger{},
+		vfs:              vfs,
+		cacheStore:       cacheStore,
+		sparseRangeReads: true,
+		disableLocking:   true,
+		lockMap:          make(map[string]*lockInfo),
+		rangePathMutexes: fssync.NewPathRWMutex(),
+		loadDirMutexes:   fssync.NewPathMutex(),
+		backend:          &fakeRemoteBackend{},
 		ops: lim.NewFuseOpLimiter(map[lim.FuseOpType]int64{
 			lim.FuseOpDownload: downloadOpLimit,
 			lim.FuseOpUpload:   uploadOpLimit,
 			lim.FuseOpOther:    otherOpLimit,
 		}, globalOpLimit),
-		bufferPool: fssync.NewPool(func() []byte {
-			return make([]byte, cacheWriteSize)
-		}),
 	}
 
 	return fs, vfs, cacheStore
+}
+
+func TestSparseRangeReadsEnabled(t *testing.T) {
+	if sparseRangeReadsEnabled(nil) {
+		t.Fatal("nil config enabled sparse range reads")
+	}
+	if sparseRangeReadsEnabled(&files_sdk.Config{}) {
+		t.Fatal("uninitialized config enabled sparse range reads")
+	}
+	config := files_sdk.Config{}.Init()
+	if sparseRangeReadsEnabled(&config) {
+		t.Fatal("default config enabled sparse range reads")
+	}
+	config.FeatureFlags[files_sdk.FeatureFlagSparseRangeReads] = true
+	if !sparseRangeReadsEnabled(&config) {
+		t.Fatal("enabled feature flag did not enable sparse range reads")
+	}
 }
 
 type captureEventPublisher struct {
@@ -137,6 +152,25 @@ func (p *captureEventPublisher) waitForTransferEvents(t *testing.T, count int) [
 	}
 }
 
+func (p *captureEventPublisher) waitForTerminalTransfer(t *testing.T) []events.TransferEvent {
+	t.Helper()
+
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		transfers := p.transferEvents()
+		if len(transfers) > 0 {
+			last := transfers[len(transfers)-1]
+			if last.Status == events.TransferStatusComplete || last.Status == events.TransferStatusCanceled || last.Status == events.TransferStatusErrored {
+				return transfers
+			}
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("timed out waiting for terminal transfer event, got %#v", transfers)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
 func assertStableTransferID(t *testing.T, transfers []events.TransferEvent) {
 	t.Helper()
 	if len(transfers) == 0 {
@@ -162,6 +196,7 @@ type fakeRemoteBackend struct {
 	waitFunc             func(action files_sdk.FileAction, status func(files_sdk.FileMigration), opts ...files_sdk.RequestResponseOption) (files_sdk.FileMigration, error)
 	downloadToFileFunc   func(params files_sdk.FileDownloadParams, filePath string, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error)
 	downloadFunc         func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error)
+	downloadRangeFunc    func(params files_sdk.FileDownloadParams, requested cache.ByteRange, opts ...files_sdk.RequestResponseOption) (remoteRangeResponse, error)
 	deleteFunc           func(params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponseOption) error
 	createLockFunc       func(params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (files_sdk.Lock, error)
 	deleteLockFunc       func(params files_sdk.LockDeleteParams, opts ...files_sdk.RequestResponseOption) error
@@ -231,6 +266,13 @@ func (b *fakeRemoteBackend) download(params files_sdk.FileDownloadParams, opts .
 	return files_sdk.File{}, nil
 }
 
+func (b *fakeRemoteBackend) downloadRange(params files_sdk.FileDownloadParams, requested cache.ByteRange, opts ...files_sdk.RequestResponseOption) (remoteRangeResponse, error) {
+	if b.downloadRangeFunc != nil {
+		return b.downloadRangeFunc(params, requested, opts...)
+	}
+	return remoteRangeResponse{}, errRangeDownloadUnsupported
+}
+
 func (b *fakeRemoteBackend) createLock(params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (files_sdk.Lock, error) {
 	if b.createLockFunc != nil {
 		return b.createLockFunc(params, opts...)
@@ -266,6 +308,7 @@ func (b *fakeRemoteBackend) wait(action files_sdk.FileAction, status func(files_
 func fakeDownloadResponse(payload []byte, reportedSize int64) func(files_sdk.FileDownloadParams, ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
 	return func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
 		resp := &http.Response{
+			Header:        http.Header{"Etag": {`"fixture"`}},
 			StatusCode:    http.StatusOK,
 			Body:          io.NopCloser(bytes.NewReader(payload)),
 			ContentLength: int64(len(payload)),
@@ -341,21 +384,21 @@ func (r *blockingDownloadReader) Read(p []byte) (int, error) {
 	return n, nil
 }
 
-func waitForPartialCacheBytes(t *testing.T, cacheStore cacheStore, path string, want int) []byte {
+func waitForRangeCacheBytes(t *testing.T, cacheStore cacheStore, path string, meta cache.EntryMetadata, ofst int64, want int) []byte {
 	t.Helper()
 
 	deadline := time.Now().Add(2 * time.Second)
 	buf := make([]byte, want)
 	for {
-		n, err := cacheStore.ReadPartial(path, buf, 0)
+		n, err := cacheStore.ReadRange(path, meta, buf, ofst)
 		if err != nil {
-			t.Fatalf("partial cache Read failed: %v", err)
+			t.Fatalf("range cache Read failed: %v", err)
 		}
 		if n >= want {
 			return buf[:n]
 		}
 		if time.Now().After(deadline) {
-			t.Fatalf("timed out waiting for %d partial cached bytes at %s, got %d", want, path, n)
+			t.Fatalf("timed out waiting for %d range cached bytes at %s offset %d, got %d", want, path, ofst, n)
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
@@ -363,17 +406,37 @@ func waitForPartialCacheBytes(t *testing.T, cacheStore cacheStore, path string, 
 
 type notifyingCache struct {
 	cacheStore
-	writePartialPath string
-	wrote            chan struct{}
-	once             sync.Once
+	writeRangePath string
+	wrote          chan struct{}
+	once           sync.Once
 }
 
-func (c *notifyingCache) WritePartial(path string, buff []byte, ofst int64) (int, error) {
-	n, err := c.cacheStore.WritePartial(path, buff, ofst)
-	if path == c.writePartialPath && n > 0 {
+type sparseUnsupportedCache struct {
+	cacheStore
+	rangeWrites atomic.Int64
+}
+
+func (c *sparseUnsupportedCache) WriteRange(_ string, _ cache.EntryMetadata, _ []byte, _ int64) (int, error) {
+	c.rangeWrites.Add(1)
+	return 0, cache.ErrSparseFilesUnsupported
+}
+
+func (c *notifyingCache) WriteRange(path string, meta cache.EntryMetadata, buff []byte, ofst int64) (int, error) {
+	n, err := c.cacheStore.WriteRange(path, meta, buff, ofst)
+	c.notifyWrite(path, n)
+	return n, err
+}
+
+func (c *notifyingCache) WriteCompleteRange(path string, meta cache.EntryMetadata, buff []byte, ofst int64) (int, error) {
+	n, err := c.cacheStore.WriteCompleteRange(path, meta, buff, ofst)
+	c.notifyWrite(path, n)
+	return n, err
+}
+
+func (c *notifyingCache) notifyWrite(path string, n int) {
+	if path == c.writeRangePath && n > 0 {
 		c.once.Do(func() { close(c.wrote) })
 	}
-	return n, err
 }
 
 // privateTempDir returns a new temporary directory that only the current user
@@ -397,11 +460,14 @@ func newTestDiskCache(t *testing.T) *disk.DiskCache {
 	if err != nil {
 		t.Fatalf("NewDiskCache failed: %v", err)
 	}
+	// Windows cannot remove the test directory while a data file is open.
+	t.Cleanup(cacheStore.StopMaintenance)
 	return cacheStore
 }
 
 type captureMountLogger struct {
 	mu           sync.Mutex
+	allLines     []string
 	visibleLines []string
 }
 
@@ -415,9 +481,16 @@ func (l *captureMountLogger) append(level, format string, v ...any) {
 	line := fmt.Sprintf("%s "+format, append([]any{level}, v...)...)
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	l.allLines = append(l.allLines, line)
 	if level != "DEBUG" && level != "TRACE" {
 		l.visibleLines = append(l.visibleLines, line)
 	}
+}
+
+func (l *captureMountLogger) allJoined() string {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return strings.Join(l.allLines, "\n")
 }
 
 func (l *captureMountLogger) visibleJoined() string {
@@ -453,23 +526,20 @@ func newTestFilescomfs(t *testing.T) (*Filescomfs, *RemoteFs, *LocalFs, *virtual
 	}
 
 	remote := &RemoteFs{
-		log:             &log.NoOpLogger{},
-		vfs:             vfs,
-		cacheStore:      cacheStore,
-		disableLocking:  true,
-		lockMap:         make(map[string]*lockInfo),
-		readyGates:      map[string]*cache.ReadyGate{},
-		gatePathMutexes: fssync.NewPathMutex(),
-		loadDirMutexes:  fssync.NewPathMutex(),
-		backend:         &fakeRemoteBackend{},
+		log:              &log.NoOpLogger{},
+		vfs:              vfs,
+		cacheStore:       cacheStore,
+		sparseRangeReads: true,
+		disableLocking:   true,
+		lockMap:          make(map[string]*lockInfo),
+		rangePathMutexes: fssync.NewPathRWMutex(),
+		loadDirMutexes:   fssync.NewPathMutex(),
+		backend:          &fakeRemoteBackend{},
 		ops: lim.NewFuseOpLimiter(map[lim.FuseOpType]int64{
 			lim.FuseOpDownload: downloadOpLimit,
 			lim.FuseOpUpload:   uploadOpLimit,
 			lim.FuseOpOther:    otherOpLimit,
 		}, globalOpLimit),
-		bufferPool: fssync.NewPool(func() []byte {
-			return make([]byte, cacheWriteSize)
-		}),
 	}
 	local := newLocalFs(params, vfs, &log.NoOpLogger{})
 	local.Init()
@@ -551,6 +621,24 @@ func TestTransferReporterRewindsNegativeProgress(t *testing.T) {
 	}
 	if last.TransferredBytes != transferProgressMinBytes {
 		t.Fatalf("complete transferred bytes = %d, want %d", last.TransferredBytes, transferProgressMinBytes)
+	}
+}
+
+func TestTransferReporterCapsTransferredBytesAtSize(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	publisher := &captureEventPublisher{}
+	fs.events = publisher
+	reporter := fs.newTransferReporter(events.TransferDirectionDownload, "/retried.bin", 10)
+	reporter.Queued()
+	reporter.Progress(12)
+	reporter.Complete(transferredBytesUnchanged)
+
+	transfers := publisher.transferEvents()
+	last := transfers[len(transfers)-1]
+	if last.Size != 10 || last.TransferredBytes != 10 {
+		t.Fatalf("size/transferred = %d/%d, want 10/10", last.Size, last.TransferredBytes)
 	}
 }
 
@@ -836,10 +924,12 @@ func TestRemoteFsWriteSessionUploadPublishesErroredTransferEvent(t *testing.T) {
 	}
 }
 
-func TestRemoteFsFillCachePublishesDownloadTransferEvents(t *testing.T) {
+func TestRemoteFsCompleteSparseReadPublishesDownloadTransferEvents(t *testing.T) {
 	fs, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()
 
+	logger := &captureMountLogger{}
+	fs.log = logger
 	publisher := &captureEventPublisher{}
 	fs.events = publisher
 
@@ -853,12 +943,17 @@ func TestRemoteFsFillCachePublishesDownloadTransferEvents(t *testing.T) {
 		modTime:      modTime,
 		creationTime: modTime,
 	})
-	fs.backend = &fakeRemoteBackend{
-		downloadFunc: fakeDownloadResponse(payload, int64(len(payload))),
+	// A small file is one complete download.
+	fs.backend = &fakeRemoteBackend{downloadFunc: fakeDownloadResponse(payload, int64(len(payload)))}
+	errno, fh := fs.Open(path, fuse.O_RDONLY)
+	if errno != 0 {
+		t.Fatalf("Open returned %d", errno)
 	}
-
-	readyGate := cache.NewReadyGate()
-	fs.fillCache(context.Background(), path, "https://example.invalid/download", cacheEntryMetadata(path, int64(len(payload)), modTime), readyGate, 0, false)
+	defer fs.Release(path, fh)
+	buffer := make([]byte, len(payload))
+	if n := fs.Read(path, buffer, 0, fh); n != len(payload) {
+		t.Fatalf("Read returned %d, want %d", n, len(payload))
+	}
 
 	transfers := publisher.waitForTransferEvents(t, 3)
 	assertStableTransferID(t, transfers)
@@ -883,6 +978,67 @@ func TestRemoteFsFillCachePublishesDownloadTransferEvents(t *testing.T) {
 	}
 	if last.Size != int64(len(payload)) || last.TransferredBytes != int64(len(payload)) {
 		t.Fatalf("last size/transferred = %d/%d, want %d", last.Size, last.TransferredBytes, len(payload))
+	}
+
+	logs := logger.allJoined()
+	for _, want := range []string{
+		"RemoteFs: range stream",
+		"status=queued",
+		"status=transferring",
+		"status=complete",
+	} {
+		if !strings.Contains(logs, want) {
+			t.Fatalf("mount diagnostics did not contain %q:\n%s", want, logs)
+		}
+	}
+	if got := strings.Count(logs, "RemoteFs: mount transfer event"); got != 3 {
+		t.Fatalf("mount transfer diagnostic count = %d, want 3:\n%s", got, logs)
+	}
+}
+
+func TestRemoteFsPartialSparseReadPublishesOneDownloadTransfer(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	publisher := &captureEventPublisher{}
+	fs.events = publisher
+
+	const fileSize = int64(32 << 20)
+	const readSize = 4096
+	path := "/partial-stream.mp4"
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeFile,
+		size:         fileSize,
+		modTime:      modTime,
+		creationTime: modTime,
+	})
+	fs.backend = &fakeRemoteBackend{
+		downloadRangeFunc: func(_ files_sdk.FileDownloadParams, requested cache.ByteRange, _ ...files_sdk.RequestResponseOption) (remoteRangeResponse, error) {
+			return zeroRangeResponse(fileSize, requested), nil
+		},
+	}
+	errno, fh := fs.Open(path, fuse.O_RDONLY)
+	if errno != 0 {
+		t.Fatalf("Open returned %d", errno)
+	}
+	defer fs.Release(path, fh)
+
+	offset := fileSize - readSize
+	if n := fs.Read(path, make([]byte, readSize), offset, fh); n != readSize {
+		t.Fatalf("Read returned %d, want %d", n, readSize)
+	}
+	waitFor(t, func() bool { return !fs.rangeDownloads().hasStreams() })
+	transfers := publisher.waitForTransferEvents(t, 3)
+	assertStableTransferID(t, transfers)
+	first := transfers[0]
+	if first.Status != events.TransferStatusQueued || first.Size != fileSize || first.TransferredBytes != 0 {
+		t.Fatalf("first transfer = %#v, want queued 0/%d", first, fileSize)
+	}
+	last := transfers[len(transfers)-1]
+	if last.Status != events.TransferStatusComplete || last.Size != fileSize || last.TransferredBytes != readSize {
+		t.Fatalf("last transfer = %#v, want complete %d/%d", last, readSize, fileSize)
 	}
 }
 
@@ -984,9 +1140,751 @@ func TestRemoteFsPublicWriteReadGetattrUsesWorkingCopy(t *testing.T) {
 	}
 }
 
+func TestRemoteFsReadFetchesTailRange(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	const fileSize = int64(64 * 1024 * 1024)
+	const readSize = 4 * 1024
+	path := "/tail.mp4"
+	offset := fileSize - readSize
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{nodeType: nodeTypeFile, size: fileSize, modTime: modTime, creationTime: modTime})
+
+	requests := make(chan cache.ByteRange, 1)
+	fs.backend = &fakeRemoteBackend{
+		downloadRangeFunc: func(_ files_sdk.FileDownloadParams, requested cache.ByteRange, _ ...files_sdk.RequestResponseOption) (remoteRangeResponse, error) {
+			requests <- requested
+			return zeroRangeResponse(fileSize, requested), nil
+		},
+	}
+	errno, fh := fs.Open(path, fuse.O_RDONLY)
+	if errno != 0 {
+		t.Fatalf("Open returned %d", errno)
+	}
+	defer fs.Release(path, fh)
+
+	buffer := make([]byte, readSize)
+	if n := fs.Read(path, buffer, offset, fh); n != len(buffer) {
+		t.Fatalf("Read returned %d, want %d", n, len(buffer))
+	}
+	want := cache.ByteRange{Start: offset, End: fileSize}
+	select {
+	case got := <-requests:
+		if got != want {
+			t.Fatalf("remote range = %#v, want %#v", got, want)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for tail range")
+	}
+
+	if n := fs.Read(path, buffer, offset, fh); n != len(buffer) {
+		t.Fatalf("cached Read returned %d, want %d", n, len(buffer))
+	}
+	select {
+	case duplicate := <-requests:
+		t.Fatalf("cache hit started duplicate range %#v", duplicate)
+	default:
+	}
+}
+
+func TestRemoteFsSparseReadsDisabledPreservesCompleteFileBytes(t *testing.T) {
+	tests := []struct {
+		name  string
+		cache func(*testing.T) cacheStore
+	}{
+		{
+			name: "memory",
+			cache: func(t *testing.T) cacheStore {
+				cacheStore, err := mem.NewMemoryCache()
+				if err != nil {
+					t.Fatalf("NewMemoryCache failed: %v", err)
+				}
+				return cacheStore
+			},
+		},
+		{name: "disk", cache: func(t *testing.T) cacheStore { return newTestDiskCache(t) }},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			fs, vfs, _ := newTestRemoteFs(t)
+			defer vfs.destroy()
+			fs.cacheStore = test.cache(t)
+			fs.sparseRangeReads = false
+
+			payload := deterministicRangeTestPayload(cacheWriteSize*2 + 257)
+			fileSize := int64(len(payload))
+			path := "/complete-file-integrity-" + test.name + ".bin"
+			modTime := time.Now().Add(-time.Minute).Round(0)
+			node := vfs.getOrCreate(path, nodeTypeFile)
+			node.updateInfo(fsNodeInfo{nodeType: nodeTypeFile, size: fileSize, modTime: modTime, creationTime: modTime})
+
+			var completeDownloads atomic.Int64
+			var rangeDownloads atomic.Int64
+			fs.backend = &fakeRemoteBackend{
+				downloadFunc: func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+					completeDownloads.Add(1)
+					return fakeDownloadResponse(payload, fileSize)(params, opts...)
+				},
+				downloadRangeFunc: func(_ files_sdk.FileDownloadParams, _ cache.ByteRange, _ ...files_sdk.RequestResponseOption) (remoteRangeResponse, error) {
+					rangeDownloads.Add(1)
+					return remoteRangeResponse{}, errors.New("disabled sparse reads used ranged download")
+				},
+			}
+
+			errno, fh := fs.Open(path, fuse.O_RDONLY)
+			if errno != 0 {
+				t.Fatalf("Open returned %d", errno)
+			}
+
+			reads := []struct {
+				offset int64
+				size   int
+			}{
+				{offset: fileSize - 4096, size: 4096},
+				{offset: 0, size: 8191},
+				{offset: int64(cacheWriteSize - 31), size: 257},
+				{offset: fileSize/2 + 73, size: 4093},
+			}
+			for _, read := range reads {
+				buffer := make([]byte, read.size)
+				if n := fs.Read(path, buffer, read.offset, fh); n != len(buffer) {
+					t.Fatalf("Read at %d returned %d, want %d", read.offset, n, len(buffer))
+				}
+				if want := payload[read.offset : read.offset+int64(read.size)]; !bytes.Equal(buffer, want) {
+					t.Fatalf("Read at %d returned bytes that differ from the source", read.offset)
+				}
+			}
+
+			full := make([]byte, len(payload))
+			if n := fs.Read(path, full, 0, fh); n != len(full) {
+				t.Fatalf("full Read returned %d, want %d", n, len(full))
+			}
+			if !bytes.Equal(full, payload) {
+				t.Fatal("full Read returned bytes that differ from the source")
+			}
+			fs.Release(path, fh)
+
+			errno, reopened := fs.Open(path, fuse.O_RDONLY)
+			if errno != 0 {
+				t.Fatalf("reopened file returned %d", errno)
+			}
+			defer fs.Release(path, reopened)
+			reopenedBuffer := make([]byte, 4096)
+			if n := fs.Read(path, reopenedBuffer, fileSize-int64(len(reopenedBuffer)), reopened); n != len(reopenedBuffer) {
+				t.Fatalf("reopened Read returned %d, want %d", n, len(reopenedBuffer))
+			}
+			if !bytes.Equal(reopenedBuffer, payload[len(payload)-len(reopenedBuffer):]) {
+				t.Fatal("reopened Read returned bytes that differ from the source")
+			}
+
+			meta := cacheEntryMetadata(path, fileSize, modTime)
+			meta.ETag = `"fixture"`
+			complete, err := fs.cacheStore.RangeEntryComplete(path, meta)
+			if err != nil || !complete {
+				t.Fatalf("RangeEntryComplete = %t, %v; want true, nil", complete, err)
+			}
+			if completeDownloads.Load() != 1 {
+				t.Fatalf("complete downloads = %d, want 1", completeDownloads.Load())
+			}
+			if rangeDownloads.Load() != 0 {
+				t.Fatalf("range downloads = %d, want 0", rangeDownloads.Load())
+			}
+			waitFor(t, func() bool { return fs.rangeDownloads().diagnosticsSnapshot().ActiveRequests == 0 })
+			diagnostics := fs.rangeDownloads().diagnosticsSnapshot()
+			if diagnostics.RequestsStarted != 1 || diagnostics.RequestsComplete != 1 || diagnostics.RequestsFailed != 0 || diagnostics.RequestsCanceled != 0 {
+				t.Fatalf("range coordinator diagnostics = %#v, want one successful complete download", diagnostics)
+			}
+			if diagnostics.PlannedBytes != fileSize || diagnostics.TransferredBytes != fileSize || diagnostics.PeakActive != 1 {
+				t.Fatalf("range coordinator bytes/peak = %d/%d/%d, want %d/%d/1", diagnostics.PlannedBytes, diagnostics.TransferredBytes, diagnostics.PeakActive, fileSize, fileSize)
+			}
+		})
+	}
+}
+
+func TestRemoteFsSparseReadsDisabledReusesCompleteDiskEntryAfterRestart(t *testing.T) {
+	payload := deterministicRangeTestPayload(cacheWriteSize + 257)
+	fileSize := int64(len(payload))
+	path := "/complete-file-restart.bin"
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	cacheRoot := t.TempDir()
+	var completeDownloads atomic.Int64
+	var rangeDownloads atomic.Int64
+
+	newMount := func(cacheStore cacheStore) (*RemoteFs, *virtualfs, uint64) {
+		fs, vfs, _ := newTestRemoteFs(t)
+		fs.cacheStore = cacheStore
+		fs.sparseRangeReads = false
+		node := vfs.getOrCreate(path, nodeTypeFile)
+		node.updateInfo(fsNodeInfo{nodeType: nodeTypeFile, size: fileSize, modTime: modTime, creationTime: modTime})
+		fs.backend = &fakeRemoteBackend{
+			downloadFunc: func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+				completeDownloads.Add(1)
+				return fakeDownloadResponse(payload, fileSize)(params, opts...)
+			},
+			downloadRangeFunc: func(_ files_sdk.FileDownloadParams, _ cache.ByteRange, _ ...files_sdk.RequestResponseOption) (remoteRangeResponse, error) {
+				rangeDownloads.Add(1)
+				return remoteRangeResponse{}, errors.New("disabled sparse reads used ranged download")
+			},
+		}
+		errno, fh := fs.Open(path, fuse.O_RDONLY)
+		if errno != 0 {
+			t.Fatalf("Open returned %d", errno)
+		}
+		return fs, vfs, fh
+	}
+
+	firstCache, err := disk.NewDiskCache(cacheRoot)
+	if err != nil {
+		t.Fatalf("first NewDiskCache failed: %v", err)
+	}
+	firstFs, firstVfs, firstHandle := newMount(firstCache)
+	tail := make([]byte, 4096)
+	if n := firstFs.Read(path, tail, fileSize-int64(len(tail)), firstHandle); n != len(tail) {
+		t.Fatalf("initial Read returned %d, want %d", n, len(tail))
+	}
+	if !bytes.Equal(tail, payload[len(payload)-len(tail):]) {
+		t.Fatal("initial Read returned bytes that differ from the source")
+	}
+	firstFs.Release(path, firstHandle)
+	firstFs.closeRangeDownloads()
+	firstVfs.destroy()
+
+	reopenedCache, err := disk.NewDiskCache(cacheRoot)
+	if err != nil {
+		t.Fatalf("reopened NewDiskCache failed: %v", err)
+	}
+	secondFs, secondVfs, secondHandle := newMount(reopenedCache)
+	defer secondVfs.destroy()
+	defer secondFs.Release(path, secondHandle)
+	full := make([]byte, len(payload))
+	if n := secondFs.Read(path, full, 0, secondHandle); n != len(full) {
+		t.Fatalf("restarted Read returned %d, want %d", n, len(full))
+	}
+	if !bytes.Equal(full, payload) {
+		t.Fatal("restarted Read returned bytes that differ from the source")
+	}
+	if completeDownloads.Load() != 1 || rangeDownloads.Load() != 0 {
+		t.Fatalf("downloads across restart = complete %d range %d, want 1 and 0", completeDownloads.Load(), rangeDownloads.Load())
+	}
+}
+
+func TestRemoteFsSparseReadsDisabledCoalescesConcurrentReads(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+	fs.sparseRangeReads = false
+
+	payload := deterministicRangeTestPayload(cacheWriteSize*2 + 257)
+	fileSize := int64(len(payload))
+	path := "/complete-file-concurrent.bin"
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{nodeType: nodeTypeFile, size: fileSize, modTime: modTime, creationTime: modTime})
+
+	reader := newBlockingDownloadReader(payload, cacheWriteSize)
+	var completeDownloads atomic.Int64
+	var rangeDownloads atomic.Int64
+	fs.backend = &fakeRemoteBackend{
+		downloadFunc: func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+			if completeDownloads.Add(1) != 1 {
+				return files_sdk.File{}, errors.New("duplicate complete download")
+			}
+			response := &http.Response{
+				Header:        http.Header{"Etag": {`"fixture"`}},
+				StatusCode:    http.StatusOK,
+				Body:          io.NopCloser(reader),
+				ContentLength: fileSize,
+			}
+			if _, err := files_sdk.BuildResponse(response, opts...); err != nil {
+				return files_sdk.File{}, err
+			}
+			return files_sdk.File{Path: params.File.Path, Type: "file", Size: fileSize}, nil
+		},
+		downloadRangeFunc: func(_ files_sdk.FileDownloadParams, _ cache.ByteRange, _ ...files_sdk.RequestResponseOption) (remoteRangeResponse, error) {
+			rangeDownloads.Add(1)
+			return remoteRangeResponse{}, errors.New("disabled sparse reads used ranged download")
+		},
+	}
+
+	errno, fh := fs.Open(path, fuse.O_RDONLY)
+	if errno != 0 {
+		t.Fatalf("Open returned %d", errno)
+	}
+	defer fs.Release(path, fh)
+
+	type readResult struct {
+		offset int64
+		data   []byte
+		n      int
+	}
+	read := func(offset int64, size int, results chan<- readResult) {
+		buffer := make([]byte, size)
+		results <- readResult{offset: offset, data: buffer, n: fs.Read(path, buffer, offset, fh)}
+	}
+	results := make(chan readResult, 4)
+	go read(fileSize-4096, 4096, results)
+	select {
+	case <-reader.firstWritten:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for the complete download to start")
+	}
+
+	go read(int64(cacheWriteSize+17), 4096, results)
+	go read(fileSize-8192, 4096, results)
+	go read(int64(cacheWriteSize+8193), 2048, results)
+	close(reader.release)
+
+	for range 4 {
+		select {
+		case result := <-results:
+			if result.n != len(result.data) {
+				t.Fatalf("concurrent Read at %d returned %d, want %d", result.offset, result.n, len(result.data))
+			}
+			if want := payload[result.offset : result.offset+int64(len(result.data))]; !bytes.Equal(result.data, want) {
+				t.Fatalf("concurrent Read at %d returned bytes that differ from the source", result.offset)
+			}
+		case <-time.After(2 * time.Second):
+			t.Fatal("timed out waiting for concurrent reads")
+		}
+	}
+	if completeDownloads.Load() != 1 || rangeDownloads.Load() != 0 {
+		t.Fatalf("downloads = complete %d range %d, want 1 and 0", completeDownloads.Load(), rangeDownloads.Load())
+	}
+}
+
+func TestRemoteFsSparseReadsDisabledCompletesExistingSparseEntryWithoutRangeRequest(t *testing.T) {
+	fs, vfs, cacheStore := newTestRemoteFs(t)
+	defer vfs.destroy()
+	fs.sparseRangeReads = false
+
+	payload := deterministicRangeTestPayload(cacheWriteSize + 257)
+	fileSize := int64(len(payload))
+	path := "/complete-existing-sparse.bin"
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	meta := cacheEntryMetadata(path, fileSize, modTime)
+	meta.ETag = `"fixture"`
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{nodeType: nodeTypeFile, size: fileSize, modTime: modTime, creationTime: modTime})
+
+	const cachedPrefix = 4096
+	if n, err := cacheStore.WriteRange(path, meta, payload[:cachedPrefix], 0); err != nil || n != cachedPrefix {
+		t.Fatalf("WriteRange = %d, %v; want %d, nil", n, err, cachedPrefix)
+	}
+
+	var completeDownloads atomic.Int64
+	var rangeDownloads atomic.Int64
+	fs.backend = &fakeRemoteBackend{
+		downloadFunc: func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+			completeDownloads.Add(1)
+			return fakeDownloadResponse(payload, fileSize)(params, opts...)
+		},
+		downloadRangeFunc: func(_ files_sdk.FileDownloadParams, _ cache.ByteRange, _ ...files_sdk.RequestResponseOption) (remoteRangeResponse, error) {
+			rangeDownloads.Add(1)
+			return remoteRangeResponse{}, errors.New("disabled sparse reads used ranged download")
+		},
+	}
+
+	errno, fh := fs.Open(path, fuse.O_RDONLY)
+	if errno != 0 {
+		t.Fatalf("Open returned %d", errno)
+	}
+	defer fs.Release(path, fh)
+	prefix := make([]byte, cachedPrefix)
+	if n := fs.Read(path, prefix, 0, fh); n != len(prefix) || !bytes.Equal(prefix, payload[:cachedPrefix]) {
+		t.Fatalf("cached prefix Read returned %d correct=%t, want %d and true", n, bytes.Equal(prefix, payload[:cachedPrefix]), len(prefix))
+	}
+
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		complete, err := cacheStore.RangeEntryComplete(path, meta)
+		if err != nil {
+			t.Fatalf("RangeEntryComplete failed: %v", err)
+		}
+		if complete {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("timed out waiting for ordinary complete download")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	full := make([]byte, len(payload))
+	if n := fs.Read(path, full, 0, fh); n != len(full) || !bytes.Equal(full, payload) {
+		t.Fatalf("completed sparse entry Read returned %d correct=%t, want %d and true", n, bytes.Equal(full, payload), len(full))
+	}
+	if completeDownloads.Load() != 1 || rangeDownloads.Load() != 0 {
+		t.Fatalf("downloads = complete %d range %d, want 1 and 0", completeDownloads.Load(), rangeDownloads.Load())
+	}
+}
+
+func TestRemoteFsSparseReadsDisabledRetriesInterruptedCompleteDownload(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+	defer fs.closeRangeDownloads()
+	fs.sparseRangeReads = false
+	cacheStore := newTestDiskCache(t)
+	fs.cacheStore = cacheStore
+
+	payload := deterministicRangeTestPayload(cacheWriteSize*2 + 257)
+	fileSize := int64(len(payload))
+	path := "/complete-file-retry.bin"
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	meta := cacheEntryMetadata(path, fileSize, modTime)
+	meta.ETag = `"fixture"`
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{nodeType: nodeTypeFile, size: fileSize, modTime: modTime, creationTime: modTime})
+
+	var completeDownloads atomic.Int64
+	var rangeDownloads atomic.Int64
+	fs.backend = &fakeRemoteBackend{
+		downloadFunc: func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+			if completeDownloads.Add(1) == 1 {
+				response := &http.Response{
+					Header:        http.Header{"Etag": {`"fixture"`}},
+					StatusCode:    http.StatusOK,
+					Body:          io.NopCloser(bytes.NewReader(payload[:cacheWriteSize])),
+					ContentLength: fileSize,
+				}
+				if _, err := files_sdk.BuildResponse(response, opts...); err != nil {
+					return files_sdk.File{}, err
+				}
+				return files_sdk.File{Path: params.File.Path, Type: "file", Size: fileSize}, nil
+			}
+			return fakeDownloadResponse(payload, fileSize)(params, opts...)
+		},
+		downloadRangeFunc: func(_ files_sdk.FileDownloadParams, _ cache.ByteRange, _ ...files_sdk.RequestResponseOption) (remoteRangeResponse, error) {
+			rangeDownloads.Add(1)
+			return remoteRangeResponse{}, errors.New("disabled sparse reads used ranged download")
+		},
+	}
+
+	errno, fh := fs.Open(path, fuse.O_RDONLY)
+	if errno != 0 {
+		t.Fatalf("Open returned %d", errno)
+	}
+	defer fs.Release(path, fh)
+	// The interrupted download is retried while the read waits, instead of
+	// failing the read.
+	tail := make([]byte, 4096)
+	if n := fs.Read(path, tail, fileSize-int64(len(tail)), fh); n != len(tail) || !bytes.Equal(tail, payload[fileSize-int64(len(tail)):]) {
+		t.Fatalf("Read across the interruption returned %d, want the tail bytes", n)
+	}
+
+	full := make([]byte, len(payload))
+	if n := fs.Read(path, full, 0, fh); n != len(full) {
+		t.Fatalf("full Read returned %d, want %d", n, len(full))
+	}
+	if !bytes.Equal(full, payload) {
+		t.Fatal("retry Read returned bytes that differ from the source")
+	}
+	if complete, err := fs.cacheStore.RangeEntryComplete(path, meta); err != nil || !complete {
+		t.Fatalf("RangeEntryComplete after retry = %t, %v; want true, nil", complete, err)
+	}
+	if completeDownloads.Load() != 2 || rangeDownloads.Load() != 0 {
+		t.Fatalf("downloads = complete %d range %d, want 2 and 0", completeDownloads.Load(), rangeDownloads.Load())
+	}
+}
+
+type controlledRangeReader struct {
+	mu      sync.Mutex
+	changed *sync.Cond
+	size    int64
+	offset  int64
+	allowed int64
+	closed  bool
+}
+
+func newControlledRangeReader(size int64) *controlledRangeReader {
+	reader := &controlledRangeReader{size: size}
+	reader.changed = sync.NewCond(&reader.mu)
+	return reader
+}
+
+func (r *controlledRangeReader) Read(buffer []byte) (int, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	for r.offset >= r.allowed && r.offset < r.size && !r.closed {
+		r.changed.Wait()
+	}
+	if r.closed {
+		return 0, io.ErrClosedPipe
+	}
+	if r.offset >= r.size {
+		return 0, io.EOF
+	}
+
+	n := int(min(int64(len(buffer)), min(r.allowed-r.offset, r.size-r.offset)))
+	clear(buffer[:n])
+	r.offset += int64(n)
+	return n, nil
+}
+
+func (r *controlledRangeReader) Close() error {
+	r.mu.Lock()
+	r.closed = true
+	r.changed.Broadcast()
+	r.mu.Unlock()
+	return nil
+}
+
+func (r *controlledRangeReader) allowThrough(offset int64) {
+	r.mu.Lock()
+	r.allowed = min(max(r.allowed, offset), r.size)
+	r.changed.Broadcast()
+	r.mu.Unlock()
+}
+
+type controlledRangeRequest struct {
+	byteRange cache.ByteRange
+	body      *controlledRangeReader
+}
+
+// WinFSP reads large files in several concurrent 4 MiB calls. They must share
+// one probe and then one stream instead of fragmenting into many requests.
+func TestRemoteFsSequentialReadsUseAProbeThenOneStream(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+	defer fs.closeRangeDownloads()
+
+	const fileSize = int64(48 * 1024 * 1024)
+	const readSize = int64(4 * 1024 * 1024)
+	path := "/winfsp-sequential.bin"
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{nodeType: nodeTypeFile, size: fileSize, modTime: modTime, creationTime: modTime})
+
+	requests := make(chan controlledRangeRequest, 4)
+	fs.backend = &fakeRemoteBackend{
+		downloadRangeFunc: func(_ files_sdk.FileDownloadParams, requested cache.ByteRange, _ ...files_sdk.RequestResponseOption) (remoteRangeResponse, error) {
+			body := newControlledRangeReader(requested.End - requested.Start)
+			requests <- controlledRangeRequest{byteRange: requested, body: body}
+			return remoteRangeResponse{ETag: `"fixture"`,
+				Returned:  requested,
+				TotalSize: fileSize,
+				Partial:   true,
+				Body:      body,
+			}, nil
+		},
+	}
+	errno, fh := fs.Open(path, fuse.O_RDONLY)
+	if errno != 0 {
+		t.Fatalf("Open returned %d", errno)
+	}
+	defer fs.Release(path, fh)
+
+	readAt := func(offset int64) <-chan int {
+		result := make(chan int, 1)
+		go func() {
+			result <- fs.Read(path, make([]byte, readSize), offset, fh)
+		}()
+		return result
+	}
+	waitForRead := func(offset int64, result <-chan int) {
+		t.Helper()
+		select {
+		case n := <-result:
+			if n != int(readSize) {
+				t.Fatalf("Read at %d returned %d, want %d", offset, n, readSize)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatalf("timed out waiting for Read at %d", offset)
+		}
+	}
+	nextRequest := func() controlledRangeRequest {
+		t.Helper()
+		select {
+		case request := <-requests:
+			return request
+		case <-time.After(5 * time.Second):
+			t.Fatal("timed out waiting for a range request")
+			return controlledRangeRequest{}
+		}
+	}
+	assertNoRequest := func() {
+		t.Helper()
+		select {
+		case request := <-requests:
+			t.Fatalf("sequential read started fragmented request %#v", request.byteRange)
+		case <-time.After(50 * time.Millisecond):
+		}
+	}
+
+	// The probe covers twice the first read.
+	firstRead := readAt(0)
+	probe := nextRequest()
+	if want := (cache.ByteRange{Start: 0, End: 2 * readSize}); probe.byteRange != want {
+		t.Fatalf("probe = %#v, want %#v", probe.byteRange, want)
+	}
+	probe.body.allowThrough(readSize)
+	waitForRead(0, firstRead)
+
+	secondRead := readAt(readSize)
+	assertNoRequest()
+	probe.body.allowThrough(2 * readSize)
+	waitForRead(readSize, secondRead)
+
+	// Reading past the middle of the probe continues on one stream to EOF.
+	stream := nextRequest()
+	if want := (cache.ByteRange{Start: 2 * readSize, End: fileSize}); stream.byteRange != want {
+		t.Fatalf("stream = %#v, want %#v", stream.byteRange, want)
+	}
+	for offset := 2 * readSize; offset < fileSize; offset += readSize {
+		read := readAt(offset)
+		stream.body.allowThrough(offset + readSize - 2*readSize)
+		waitForRead(offset, read)
+	}
+	assertNoRequest()
+}
+
+func TestRemoteFsSparseStorageUnsupportedFallsBackToCompleteDownload(t *testing.T) {
+	fs, vfs, baseCache := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	const readSize = 4096
+	payload := bytes.Repeat([]byte("f"), 4*1024*1024)
+	path := "/dense-fallback.bin"
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{nodeType: nodeTypeFile, size: int64(len(payload)), modTime: modTime, creationTime: modTime})
+	offset := int64(len(payload) - readSize)
+
+	cacheStore := &sparseUnsupportedCache{cacheStore: baseCache}
+	fs.cacheStore = cacheStore
+	publisher := &captureEventPublisher{}
+	fs.events = publisher
+	var completeDownloads atomic.Int64
+	fs.backend = &fakeRemoteBackend{
+		downloadRangeFunc: func(_ files_sdk.FileDownloadParams, requested cache.ByteRange, _ ...files_sdk.RequestResponseOption) (remoteRangeResponse, error) {
+			return remoteRangeResponse{ETag: `"fixture"`,
+				Returned:  requested,
+				TotalSize: int64(len(payload)),
+				Partial:   true,
+				Body:      io.NopCloser(bytes.NewReader(payload[requested.Start:requested.End])),
+			}, nil
+		},
+		downloadFunc: func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+			completeDownloads.Add(1)
+			return fakeDownloadResponse(payload, int64(len(payload)))(params, opts...)
+		},
+	}
+	errno, fh := fs.Open(path, fuse.O_RDONLY)
+	if errno != 0 {
+		t.Fatalf("Open returned %d", errno)
+	}
+	defer fs.Release(path, fh)
+
+	buffer := make([]byte, readSize)
+	if n := fs.Read(path, buffer, offset, fh); n != len(buffer) || !bytes.Equal(buffer, payload[offset:]) {
+		t.Fatalf("Read returned %d bytes, want complete fallback tail", n)
+	}
+	if cacheStore.rangeWrites.Load() != 1 {
+		t.Fatalf("sparse range writes = %d, want 1", cacheStore.rangeWrites.Load())
+	}
+	if completeDownloads.Load() != 1 {
+		t.Fatalf("complete downloads = %d, want 1", completeDownloads.Load())
+	}
+	transfers := publisher.waitForTerminalTransfer(t)
+	assertStableTransferID(t, transfers)
+	last := transfers[len(transfers)-1]
+	if last.Status != events.TransferStatusComplete || last.Size != int64(len(payload)) || last.TransferredBytes != int64(len(payload)) {
+		t.Fatalf("fallback transfer = %#v, want complete size=%d transferred=%d", last, len(payload), len(payload))
+	}
+}
+
+func TestRemoteFsRangeDownloadsStayClosedAfterUnmount(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	downloads := fs.rangeDownloads()
+	if downloads == nil {
+		t.Fatal("rangeDownloads returned nil before unmount")
+	}
+	fs.closeRangeDownloads()
+	if reopened := fs.rangeDownloads(); reopened != nil {
+		t.Fatal("rangeDownloads started again after unmount")
+	}
+	meta := cacheEntryMetadata("/closed.bin", 1, time.Now())
+	if err := downloads.Wait(context.Background(), 1, meta.Path, meta, cache.ByteRange{End: 1}); !errors.Is(err, errRangeStreamsClosed) {
+		t.Fatalf("closed downloads error = %v, want %v", err, errRangeStreamsClosed)
+	}
+}
+
+func TestRemoteFsTailReadUsesDiskRangeCache(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+	defer fs.closeRangeDownloads()
+
+	diskCache := newTestDiskCache(t)
+	fs.cacheStore = diskCache
+	const fileSize = int64(64 * 1024 * 1024)
+	const readSize = 4096
+	path := "/disk-tail.mp4"
+	offset := fileSize - readSize
+	modTime := time.Now().Add(-time.Minute).Round(0)
+	node := vfs.getOrCreate(path, nodeTypeFile)
+	node.updateInfo(fsNodeInfo{nodeType: nodeTypeFile, size: fileSize, modTime: modTime, creationTime: modTime})
+
+	var requests atomic.Int64
+	fs.backend = &fakeRemoteBackend{
+		downloadRangeFunc: func(_ files_sdk.FileDownloadParams, requested cache.ByteRange, _ ...files_sdk.RequestResponseOption) (remoteRangeResponse, error) {
+			requests.Add(1)
+			return zeroRangeResponse(fileSize, requested), nil
+		},
+	}
+	errno, fh := fs.Open(path, fuse.O_RDONLY)
+	if errno != 0 {
+		t.Fatalf("Open returned %d", errno)
+	}
+	defer fs.Release(path, fh)
+
+	buffer := make([]byte, readSize)
+	if n := fs.Read(path, buffer, offset, fh); n != len(buffer) {
+		t.Fatalf("Read returned %d, want %d", n, len(buffer))
+	}
+	if got := diskCache.SizeBytes(); got != readSize {
+		t.Fatalf("disk cache bytes = %d, want %d", got, readSize)
+	}
+	if n := fs.Read(path, buffer, offset, fh); n != len(buffer) {
+		t.Fatalf("cached Read returned %d, want %d", n, len(buffer))
+	}
+	if requests.Load() != 1 {
+		t.Fatalf("remote requests = %d, want 1", requests.Load())
+	}
+}
+
+type zeroReader struct{}
+
+func deterministicRangeTestPayload(size int) []byte {
+	payload := make([]byte, size)
+	for index := range payload {
+		payload[index] = byte((index*31 + index/251) % 251)
+	}
+	return payload
+}
+
+func (zeroReader) Read(buffer []byte) (int, error) {
+	clear(buffer)
+	return len(buffer), nil
+}
+
+func zeroRangeResponse(fileSize int64, requested cache.ByteRange) remoteRangeResponse {
+	return remoteRangeResponse{ETag: `"fixture"`,
+		Returned:  requested,
+		TotalSize: fileSize,
+		Partial:   true,
+		Body:      io.NopCloser(io.LimitReader(zeroReader{}, requested.End-requested.Start)),
+	}
+}
+
 func TestRemoteFsReadIgnoresUncommittedDiskCacheAfterRestart(t *testing.T) {
 	fs, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()
+	// The download keeps writing to the cache after the read returns.
+	defer fs.closeRangeDownloads()
 
 	cacheStore := newTestDiskCache(t)
 	fs.cacheStore = cacheStore
@@ -1041,6 +1939,7 @@ func TestRemoteFsCommitReplacesLargerPinnedEntryWithSmallerContent(t *testing.T)
 
 		fs, vfs, _ := newTestRemoteFs(t)
 		defer vfs.destroy()
+		defer fs.closeRangeDownloads()
 		fs.cacheStore = cacheStore
 
 		path := "/shrink.bin"
@@ -1150,6 +2049,7 @@ func TestRemoteFsReadFailsAndDoesNotCommitShortDownload(t *testing.T) {
 func TestRemoteFsReadDeletesPartialCacheAfterDownloadWaitersDrain(t *testing.T) {
 	fs, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()
+	defer fs.closeRangeDownloads()
 
 	cacheStore := newTestDiskCache(t)
 	fs.cacheStore = cacheStore
@@ -1195,6 +2095,7 @@ func TestRemoteFsReadDeletesPartialCacheAfterDownloadWaitersDrain(t *testing.T) 
 func TestRemoteFsPartialNamespaceDoesNotCollideWithSuffixPath(t *testing.T) {
 	fs, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()
+	defer fs.closeRangeDownloads()
 
 	cacheStore := newTestDiskCache(t)
 	fs.cacheStore = cacheStore
@@ -1245,7 +2146,7 @@ func TestRemoteFsPartialNamespaceDoesNotCollideWithSuffixPath(t *testing.T) {
 	}
 }
 
-func TestRemoteFsReadPinsPartialCacheDuringActiveDownload(t *testing.T) {
+func TestRemoteFsReadPublishesRangeChunksBeforeReadAheadFinishes(t *testing.T) {
 	fs, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()
 
@@ -1254,13 +2155,13 @@ func TestRemoteFsReadPinsPartialCacheDuringActiveDownload(t *testing.T) {
 		t.Fatalf("NewMemoryCache failed: %v", err)
 	}
 
-	path := "/pinned-partial.bin"
+	path := "/streamed-range.bin"
 	payload := bytes.Repeat([]byte("d"), cacheWriteSize+19)
-	firstChunk := cacheWriteSize / 2
+	firstChunk := cacheWriteSize
 	observedCache := &notifyingCache{
-		cacheStore:       cacheStore,
-		writePartialPath: path,
-		wrote:            make(chan struct{}),
+		cacheStore:     cacheStore,
+		writeRangePath: path,
+		wrote:          make(chan struct{}),
 	}
 	fs.cacheStore = observedCache
 	reader := newBlockingDownloadReader(payload, firstChunk)
@@ -1273,10 +2174,13 @@ func TestRemoteFsReadPinsPartialCacheDuringActiveDownload(t *testing.T) {
 		creationTime: modTime,
 	})
 	node.setDownloadURI("https://example.invalid/download")
+	meta := cacheEntryMetadata(path, int64(len(payload)), modTime)
+	meta.ETag = `"fixture"`
 
 	fs.backend = &fakeRemoteBackend{
 		downloadFunc: func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
 			resp := &http.Response{
+				Header:        http.Header{"Etag": {`"fixture"`}},
 				StatusCode:    http.StatusOK,
 				Body:          io.NopCloser(reader),
 				ContentLength: int64(len(payload)),
@@ -1304,17 +2208,11 @@ func TestRemoteFsReadPinsPartialCacheDuringActiveDownload(t *testing.T) {
 	select {
 	case <-observedCache.wrote:
 	case <-time.After(2 * time.Second):
-		t.Fatal("timed out waiting for partial cache write")
+		t.Fatal("timed out waiting for range cache write")
 	}
-	got := waitForPartialCacheBytes(t, cacheStore, path, firstChunk)
+	got := waitForRangeCacheBytes(t, cacheStore, path, meta, 0, firstChunk)
 	if !bytes.Equal(got[:firstChunk], payload[:firstChunk]) {
-		t.Fatalf("partial payload prefix = %q, want %q", string(got[:firstChunk]), string(payload[:firstChunk]))
-	}
-
-	_ = cacheStore.DeletePartial(path)
-	got = waitForPartialCacheBytes(t, cacheStore, path, firstChunk)
-	if !bytes.Equal(got[:firstChunk], payload[:firstChunk]) {
-		t.Fatal("expected pinned active partial cache entry to survive Delete")
+		t.Fatalf("range payload prefix = %q, want %q", string(got[:firstChunk]), string(payload[:firstChunk]))
 	}
 
 	close(reader.release)
@@ -1327,9 +2225,8 @@ func TestRemoteFsReadPinsPartialCacheDuringActiveDownload(t *testing.T) {
 		t.Fatal("timed out waiting for read to finish")
 	}
 
-	partial := make([]byte, len(payload))
-	if n, err := cacheStore.ReadPartial(path, partial, 0); err != nil || n != 0 {
-		t.Fatalf("partial cache Read after read returned n=%d err=%v, want empty partial cache", n, err)
+	if complete, err := cacheStore.RangeEntryComplete(path, meta); err != nil || !complete {
+		t.Fatalf("RangeEntryComplete = %t, %v; want true, nil", complete, err)
 	}
 }
 
@@ -1338,12 +2235,9 @@ func TestRemoteFsEnsureFullyCachedMissingNodeReturnsError(t *testing.T) {
 	defer vfs.destroy()
 
 	path := "/missing-hydration-node.bin"
-	err := fs.ensureFullyCached(path, "https://example.invalid/download", 10, 0)
+	err := fs.ensureFullyCached(path, 10)
 	if err == nil || !strings.Contains(err.Error(), "vfs node missing") {
 		t.Fatalf("ensureFullyCached error = %v, want missing node error", err)
-	}
-	if _, ok := fs.peekGate(path); ok {
-		t.Fatal("ensureFullyCached left a ready gate after missing node error")
 	}
 }
 
@@ -2848,6 +3742,7 @@ func TestRemoteFsRenameCancelsInFlightDestinationDownload(t *testing.T) {
 				release: releaseDownload,
 			}
 			resp := &http.Response{
+				Header:        http.Header{"Etag": {`"fixture"`}},
 				StatusCode:    http.StatusOK,
 				Body:          io.NopCloser(reader),
 				ContentLength: int64(len(stalePayload)),
@@ -2861,7 +3756,7 @@ func TestRemoteFsRenameCancelsInFlightDestinationDownload(t *testing.T) {
 
 	downloadResult := make(chan error, 1)
 	go func() {
-		downloadResult <- fs.ensureFullyCached(finalPath, destinationNode.downloadUri, int64(len(stalePayload)), 0)
+		downloadResult <- fs.ensureFullyCached(finalPath, int64(len(stalePayload)))
 	}()
 	select {
 	case <-downloadStarted:
@@ -2951,6 +3846,72 @@ func TestRemoteFsRenameCompletedUploadFailureKeepsOriginalPaths(t *testing.T) {
 	}
 	if path := session.snapshot().path; path != temporaryPath {
 		t.Fatalf("write session path after failed move = %q, want %q", path, temporaryPath)
+	}
+}
+
+// Renaming a file with a retained write session waits for writes that already
+// registered with the session. A write registers before it takes the range
+// lock, so the rename must not hold that lock while it waits, or both wait for
+// each other forever.
+func TestRemoteFsRenameWaitsForRegisteredWriteWithoutHoldingTheRangeLock(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	oldPath := "/registered.bin"
+	newPath := "/registered-renamed.bin"
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return uploadedFileMetadata{}, err
+		}
+		return testUploadedMetadata(int64(len(data)), mtime), nil
+	}
+	errno, fh := fs.Create(oldPath, fuse.O_RDWR, 0o644)
+	if errno != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errno)
+	}
+	payload := []byte("committed")
+	if n := fs.Write(oldPath, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+	if errno := fs.Flush(oldPath, fh); errno != 0 {
+		t.Fatalf("Flush returned unexpected error: %d", errno)
+	}
+	node, ok := vfs.fetch(oldPath)
+	if !ok {
+		t.Fatal("expected the written file in the VFS")
+	}
+
+	// A second write has registered with the session but not yet taken the
+	// range lock when the rename starts.
+	session, _, err := node.beginWriteSessionMutation(oldPath, fs.writeSessionDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	renameResult := make(chan int, 1)
+	go func() { renameResult <- fs.Rename(oldPath, newPath) }()
+	waitFor(t, func() bool {
+		session.mu.Lock()
+		defer session.mu.Unlock()
+		return session.renaming
+	})
+
+	locked := make(chan func(), 1)
+	go func() { locked <- fs.lockRangeMutation(oldPath) }()
+	select {
+	case unlock := <-locked:
+		unlock()
+	case <-time.After(3 * time.Second):
+		t.Fatal("a write registered before the rename could not take the range lock")
+	}
+	session.endMutation()
+	select {
+	case errno := <-renameResult:
+		if errno != 0 {
+			t.Fatalf("Rename returned unexpected error: %d", errno)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("Rename did not finish after the registered write ended")
 	}
 }
 
@@ -4027,6 +4988,7 @@ func TestRemoteFsHydrationJoinedToPublicReadDownloadDoesNotCancel(t *testing.T) 
 	fs.backend = &fakeRemoteBackend{
 		downloadFunc: func(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
 			resp := &http.Response{
+				Header:        http.Header{"Etag": {`"fixture"`}},
 				StatusCode:    http.StatusOK,
 				Body:          io.NopCloser(reader),
 				ContentLength: int64(len(payload)),

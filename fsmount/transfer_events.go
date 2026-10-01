@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Files-com/files-sdk-go/v3/fsmount/events"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/log"
 )
 
 const (
@@ -21,6 +22,7 @@ const (
 
 type transferReporter struct {
 	publisher events.EventPublisher
+	logger    log.Logger
 
 	id         string
 	direction  events.TransferDirection
@@ -50,6 +52,7 @@ func (fs *RemoteFs) newTransferReporterForPaths(direction events.TransferDirecti
 	startedAt := time.Now()
 	return &transferReporter{
 		publisher:      fs.eventPublisher(),
+		logger:         fs.log,
 		id:             fs.nextTransferID(direction),
 		direction:      direction,
 		localPath:      localPath,
@@ -72,8 +75,15 @@ func (fs *RemoteFs) nextTransferID(direction events.TransferDirection) string {
 	return fmt.Sprintf("fsmount-%s-%d-%d", direction, time.Now().UnixNano(), seq)
 }
 
+// Queued reports the transfer as waiting to start, unless it already has.
 func (r *transferReporter) Queued() {
-	r.publish(events.TransferStatusQueued, 0, time.Time{}, "")
+	r.mu.Lock()
+	started := r.progressEmitted || r.terminalEmitted
+	r.mu.Unlock()
+	if started {
+		return
+	}
+	r.publish(events.TransferStatusQueued, transferredBytesUnchanged, time.Time{}, "")
 }
 
 func (r *transferReporter) Progress(delta int64) {
@@ -106,12 +116,16 @@ func (r *transferReporter) Progress(delta int64) {
 		return
 	}
 
+	firstProgress := !r.progressEmitted
 	r.progressEmitted = true
 	r.lastProgressAt = now
 	r.lastProgressBytes = r.transferredBytes
 	event := r.eventLocked(events.TransferStatusTransferring, time.Time{}, "")
 	r.mu.Unlock()
 
+	if firstProgress {
+		r.logEvent(event)
+	}
 	r.publisher.Publish(event)
 }
 
@@ -148,6 +162,7 @@ func (r *transferReporter) terminal(status events.TransferStatus, transferredByt
 	event := r.eventLocked(status, time.Now(), message)
 	r.mu.Unlock()
 
+	r.logEvent(event)
 	r.publisher.Publish(event)
 }
 
@@ -160,7 +175,23 @@ func (r *transferReporter) publish(status events.TransferStatus, transferredByte
 	event := r.eventLocked(status, endedAt, message)
 	r.mu.Unlock()
 
+	r.logEvent(event)
 	r.publisher.Publish(event)
+}
+
+func (r *transferReporter) logEvent(event events.TransferEvent) {
+	if r.logger == nil {
+		return
+	}
+	r.logger.Debug(
+		"RemoteFs: mount transfer event id=%s direction=%s status=%s path=%s transferred=%d size=%d",
+		event.ID,
+		event.Direction,
+		event.Status,
+		event.RemotePath,
+		event.TransferredBytes,
+		event.Size,
+	)
 }
 
 func (r *transferReporter) eventLocked(status events.TransferStatus, endedAt time.Time, message string) events.TransferEvent {

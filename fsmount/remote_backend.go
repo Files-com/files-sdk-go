@@ -7,6 +7,7 @@ import (
 	api_key "github.com/Files-com/files-sdk-go/v3/apikey"
 	"github.com/Files-com/files-sdk-go/v3/file"
 	file_migration "github.com/Files-com/files-sdk-go/v3/filemigration"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache"
 	"github.com/Files-com/files-sdk-go/v3/lock"
 )
 
@@ -33,6 +34,7 @@ type remoteBackend interface {
 	upload(opts ...file.UploadOption) error
 	downloadToFile(params files_sdk.FileDownloadParams, filePath string, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error)
 	download(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error)
+	downloadRange(params files_sdk.FileDownloadParams, requested cache.ByteRange, opts ...files_sdk.RequestResponseOption) (remoteRangeResponse, error)
 	createLock(params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (files_sdk.Lock, error)
 	deleteLock(params files_sdk.LockDeleteParams, opts ...files_sdk.RequestResponseOption) error
 	listLocksFor(params files_sdk.LockListForParams, opts ...files_sdk.RequestResponseOption) (remoteLockIter, error)

@@ -21,6 +21,7 @@ import (
 
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/log"
+	fssync "github.com/Files-com/files-sdk-go/v3/fsmount/internal/sync"
 	"github.com/Files-com/files-sdk-go/v3/lib/privatefile"
 
 	lru "github.com/hashicorp/golang-lru/v2"
@@ -46,6 +47,11 @@ const (
 	// DefaultLruFlushInterval is the interval at which the LRU state is persisted to disk,
 	// if not provided at cache initialization.
 	DefaultLruFlushInterval = 1 * time.Minute
+
+	// DefaultRangeFlushBytes is how many newly written bytes an entry may hold
+	// before they are synced and recorded as durable. Downloads also flush when
+	// they stop, so this only bounds the progress a crash can lose.
+	DefaultRangeFlushBytes = 256 * (1 << 20)
 
 	// unboundedFileCount is a large number used to represent an unbounded file count in the LRU cache.
 	//
@@ -119,8 +125,17 @@ type DiskCache struct {
 	// LruFlushInterval is the interval at which the LRU state is persisted to disk.
 	LruFlushInterval time.Duration
 
+	// RangeFlushBytes is how many newly written bytes an entry may hold before
+	// they are synced and recorded as durable.
+	RangeFlushBytes int64
+
 	// current cache stats
 	stats cache.Stats
+
+	// accountedBytes stores the valid byte count used by cache capacity and
+	// eviction accounting. Sparse file length cannot be used for this purpose.
+	accountedBytes   map[string]int64
+	accountedBytesMu sync.Mutex
 
 	// protects from concurrent read and write operations.
 	// Write acquires the exclusive lock; Read acquires the shared (read) lock.
@@ -129,6 +144,19 @@ type DiskCache struct {
 
 	// protects from concurrent delete operations
 	delMu sync.Mutex
+
+	// scanDone closes when the startup scan has accounted existing entries.
+	scanDone chan struct{}
+
+	// rangeWrites makes download progress readable immediately while
+	// persistent range metadata advances only after each durable batch.
+	rangeWriteLocks *fssync.PathMutex
+	rangeWritesMu   sync.Mutex
+	rangeWrites     map[string]*rangeWriteState
+
+	// dataFiles holds the data files of entries being downloaded open.
+	dataFilesMu sync.Mutex
+	dataFiles   map[string]*dataFile
 
 	// used to log cache operations
 	log log.Logger
@@ -214,6 +242,7 @@ func NewDiskCache(path string, opts ...Option) (*DiskCache, error) {
 		Capacity:            DefaultCapacity,
 		Disabled:            false,
 		LruFlushInterval:    DefaultLruFlushInterval,
+		RangeFlushBytes:     DefaultRangeFlushBytes,
 		MaintenanceInterval: DefaultMaintenanceInterval,
 		MaxAge:              DefaultMaxAge,
 		MaxFileCount:        DefaultMaxFileCount,
@@ -221,6 +250,10 @@ func NewDiskCache(path string, opts ...Option) (*DiskCache, error) {
 		lru:                 nil,
 		pinnedFiles:         make(map[string]int),
 		clearPending:        make(map[string]struct{}),
+		accountedBytes:      make(map[string]int64),
+		rangeWrites:         make(map[string]*rangeWriteState),
+		rangeWriteLocks:     fssync.NewPathMutex(),
+		dataFiles:           make(map[string]*dataFile),
 	}
 
 	// apply options
@@ -259,9 +292,19 @@ func NewDiskCache(path string, opts ...Option) (*DiskCache, error) {
 	// restore LRU state from disk if present
 	dc.restoreLRUState()
 
-	if err := dc.loadStats(); err != nil {
-		return nil, fmt.Errorf("diskCache: error initializing cache stats: %w", err)
+	if err := dc.removeAbandonedPartials(); err != nil {
+		return nil, fmt.Errorf("diskCache: error removing abandoned partial data: %w", err)
 	}
+	dc.stats.CapacityBytes = dc.Capacity
+	dc.stats.MaxFileCount = dc.MaxFileCount
+	// List entries now, so the background scan only judges data a previous
+	// process left, never files this process creates while it runs.
+	paths, err := dc.listEntries()
+	if err != nil {
+		return nil, fmt.Errorf("diskCache: error listing cached entries: %w", err)
+	}
+	dc.scanDone = make(chan struct{})
+	go dc.loadStats(paths)
 
 	return dc, nil
 }
@@ -293,28 +336,35 @@ func (dc *DiskCache) read(path string, buff []byte, ofst int64) (n int, err erro
 		dc.log.Trace("DiskCache: LRU does not contain path %s", path)
 	}
 
-	file, err := os.Open(fqPath)
-	if err != nil {
-		// this is not really an error - the file isn't cached yet
-		if errors.Is(err, os.ErrNotExist) {
+	var file *os.File
+	if df := dc.sharedDataFile(fqPath); df != nil {
+		// The entry is being downloaded, so it cannot be expired.
+		defer dc.releaseDataFile(df)
+		file = df.file
+	} else {
+		file, err = os.Open(fqPath)
+		if err != nil {
+			// this is not really an error - the file isn't cached yet
+			if errors.Is(err, os.ErrNotExist) {
+				return 0, nil
+			}
+			return 0, fmt.Errorf("diskCache: error opening cached file %s: %v", fqPath, err)
+		}
+		defer file.Close()
+
+		// get the file info and delete if expired
+		info, err := file.Stat()
+		if err != nil {
+			return 0, fmt.Errorf("diskCache: error stating cached file %s: %v", fqPath, err)
+		}
+		deleted, err := dc.deleteIfExpired(fqPath, info)
+		if err != nil {
+			return 0, fmt.Errorf("diskCache: error checking expiration for cached file %s: %v", fqPath, err)
+		}
+		if deleted {
+			// file was expired and deleted
 			return 0, nil
 		}
-		return 0, fmt.Errorf("diskCache: error opening cached file %s: %v", fqPath, err)
-	}
-	defer file.Close()
-
-	// get the file info and delete if expired
-	info, err := file.Stat()
-	if err != nil {
-		return 0, fmt.Errorf("diskCache: error stating cached file %s: %v", fqPath, err)
-	}
-	deleted, err := dc.deleteIfExpired(fqPath, info)
-	if err != nil {
-		return 0, fmt.Errorf("diskCache: error checking expiration for cached file %s: %v", fqPath, err)
-	}
-	if deleted {
-		// file was expired and deleted
-		return 0, nil
 	}
 
 	n, err = file.ReadAt(buff, ofst)
@@ -339,15 +389,11 @@ func (dc *DiskCache) ReadComplete(path string, meta cache.EntryMetadata, buff []
 	defer dc.writeMu.RUnlock()
 
 	fqPath := dc.entryPath(path)
-	stored, err := dc.readEntryMetadata(path)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return 0, nil
-		}
+	stored, found, err := dc.rangeMetadata(path, meta)
+	if err != nil || !found {
 		return 0, err
 	}
-	if !stored.Matches(meta) {
-		_ = dc.Delete(path)
+	if !stored.IsComplete() {
 		return 0, nil
 	}
 	info, err := os.Stat(fqPath)
@@ -379,6 +425,7 @@ func (dc *DiskCache) Write(path string, buff []byte, ofst int64) (n int, err err
 	}
 	dc.writeMu.Lock()
 	defer dc.writeMu.Unlock()
+	dc.deleteRangeWritePath(path)
 	dc.stats.WriteCount.Add(1)
 
 	fqPath := dc.entryPath(path)
@@ -387,13 +434,14 @@ func (dc *DiskCache) Write(path string, buff []byte, ofst int64) (n int, err err
 	}
 
 	st, err := os.Stat(fqPath)
-	newFile := errors.Is(err, os.ErrNotExist)
 	var currSize int64
 	if err == nil && !st.IsDir() {
 		currSize = st.Size()
 	}
 	projected := max(ofst+int64(len(buff)), currSize)
-	delta := projected - currSize
+	accounted, tracked := dc.accountedSize(fqPath, currSize)
+	delta := projected - accounted
+	newFile := !tracked
 
 	// Enforce capacity limits when configured by evicting old unpinned files.
 	// The limits are "soft", so writes should always succeed, but a best effort is made to evict
@@ -447,10 +495,7 @@ func (dc *DiskCache) Write(path string, buff []byte, ofst int64) (n int, err err
 		return n, fmt.Errorf("diskCache: error writing cached file %s at offset %d: %v", fqPath, ofst, err)
 	}
 	dc.stats.WriteBytes.Add(int64(n))
-	if newFile && projected > 0 {
-		dc.stats.FileCount.Add(1)
-	}
-	dc.stats.SizeBytes.Add(delta)
+	dc.setAccountedSize(fqPath, projected)
 
 	// the file exists, but may not have been in the LRU, calling Add will ensure it is in the LRU
 	// and is safe to call if the key was already present
@@ -468,10 +513,30 @@ func (dc *DiskCache) Commit(path string, meta cache.EntryMetadata) error {
 	if dc.Disabled {
 		return nil
 	}
+	meta.Path = path
+	var err error
+	meta, err = meta.WithCompleteRange()
+	if err != nil {
+		return err
+	}
+
+	// The data must be durable before metadata that calls it complete, or a
+	// crash could leave a complete entry whose bytes never reached the disk.
+	// Both syncs run before writeMu, which every cache read also waits on.
+	fqPath := dc.entryPath(path)
+	if err := syncFile(fqPath); err != nil {
+		return err
+	}
+	tmpPath, err := dc.prepareEntryMetadata(meta)
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmpPath)
+
 	dc.writeMu.Lock()
 	defer dc.writeMu.Unlock()
+	dc.deleteRangeWritePath(path)
 
-	fqPath := dc.entryPath(path)
 	info, err := os.Stat(fqPath)
 	if err != nil {
 		return err
@@ -486,31 +551,61 @@ func (dc *DiskCache) Commit(path string, meta cache.EntryMetadata) error {
 		if err := os.Truncate(fqPath, meta.Size); err != nil {
 			return fmt.Errorf("diskCache: truncating cache entry %s to %d failed: %w", path, meta.Size, err)
 		}
-		dc.stats.SizeBytes.Add(meta.Size - info.Size())
 	}
-	meta.Path = path
-	meta.Complete = true
-
-	metaPath := dc.metadataPath(path)
-	if err := os.MkdirAll(filepath.Dir(metaPath), privateDirMode); err != nil {
+	dc.setAccountedSize(fqPath, meta.Size)
+	if err := os.Rename(tmpPath, dc.metadataPath(path)); err != nil {
 		return err
 	}
-	tmpPath := metaPath + ".tmp"
-	file, err := os.OpenFile(tmpPath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, privateFileMode)
+	// A clear that found this entry pinned deletes it on the last Unpin. An
+	// entry committed after the clear replaces that one.
+	dc.pinnedFilesMu.Lock()
+	delete(dc.clearPending, fqPath)
+	dc.pinnedFilesMu.Unlock()
+	return nil
+}
+
+// syncFile flushes a file's written data to disk.
+func syncFile(path string) error {
+	// Windows only flushes a file opened for writing.
+	file, err := os.OpenFile(path, os.O_RDWR, 0)
 	if err != nil {
 		return err
 	}
-	encErr := json.NewEncoder(file).Encode(meta)
+	syncErr := file.Sync()
 	closeErr := file.Close()
-	if encErr != nil {
-		_ = os.Remove(tmpPath)
-		return encErr
+	if syncErr != nil {
+		return syncErr
 	}
-	if closeErr != nil {
-		_ = os.Remove(tmpPath)
-		return closeErr
+	return closeErr
+}
+
+// Prepare a unique metadata file so a retired publication cannot overwrite a
+// replacement's temporary file while its final rename waits for writeMu.
+func (dc *DiskCache) prepareEntryMetadata(meta cache.EntryMetadata) (string, error) {
+	if err := meta.Validate(); err != nil {
+		return "", err
 	}
-	return os.Rename(tmpPath, metaPath)
+	metaPath := dc.metadataPath(meta.Path)
+	if err := os.MkdirAll(filepath.Dir(metaPath), privateDirMode); err != nil {
+		return "", err
+	}
+	file, err := os.CreateTemp(filepath.Dir(metaPath), ".range-metadata-*")
+	if err != nil {
+		return "", err
+	}
+	tmpPath := file.Name()
+	if err = json.NewEncoder(file).Encode(meta); err == nil {
+		err = file.Sync()
+	}
+	closeErr := file.Close()
+	if err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		_ = os.Remove(tmpPath)
+		return "", err
+	}
+	return tmpPath, nil
 }
 
 // Delete removes the cached file from the cache. It returns true if the file was deleted.
@@ -518,6 +613,7 @@ func (dc *DiskCache) Delete(path string) bool {
 	if dc.Disabled {
 		return false
 	}
+	dc.deleteRangeWritePath(path)
 
 	fqPath := dc.entryPath(path)
 	// Invalidate completed-version metadata even when an open handle pins the
@@ -545,22 +641,56 @@ func (dc *DiskCache) DeletePartial(path string) bool {
 // Clear removes all unpinned file data from the cache. Pinned entries are
 // invalidated immediately and removed when their final open handle closes.
 func (dc *DiskCache) Clear() error {
+	invalidated, err := dc.Invalidate()
+	if err != nil {
+		return err
+	}
+	return invalidated.Remove()
+}
+
+// InvalidatedEntries is the data Invalidate made unreadable, which Remove
+// deletes.
+type InvalidatedEntries struct {
+	dc         *DiskCache
+	oldMetaDir string
+}
+
+// Invalidate makes every cached entry unreadable in one short exclusive step:
+// download progress is forgotten and the metadata directory is replaced with
+// an empty one. Reads and writes can continue right away, and Remove then
+// deletes the invalidated data without blocking them.
+func (dc *DiskCache) Invalidate() (*InvalidatedEntries, error) {
 	if dc.Disabled {
+		return &InvalidatedEntries{}, nil
+	}
+	dc.writeMu.Lock()
+	dc.rangeWritesMu.Lock()
+	clear(dc.rangeWrites)
+	dc.rangeWritesMu.Unlock()
+	oldMetaDir, err := dc.rotateMetadataDirectoryLocked()
+	dc.writeMu.Unlock()
+	// Closing waits for the files' current users, so it runs without writeMu.
+	dc.closeAllDataFiles()
+	if err != nil {
+		return nil, err
+	}
+	return &InvalidatedEntries{dc: dc, oldMetaDir: oldMetaDir}, nil
+}
+
+// Remove deletes the data files Invalidate made unreadable. A file with an
+// open handle is deleted when its last handle closes, and a file written
+// since the invalidation is kept.
+func (invalidated *InvalidatedEntries) Remove() error {
+	dc := invalidated.dc
+	if dc == nil {
 		return nil
 	}
-
 	// Do not let maintenance operate on a stale snapshot while clear removes
 	// entries. Normal reads and writes remain available throughout the walk.
 	dc.maintenanceRunMu.Lock()
 	defer dc.maintenanceRunMu.Unlock()
 
 	var clearErrors []error
-	oldMetaDir, err := dc.rotateMetadataDirectory()
-	if err != nil {
-		clearErrors = append(clearErrors, err)
-		return errors.Join(clearErrors...)
-	}
-
 	var paths []string
 	for _, root := range []string{dc.dataDir, dc.partDir} {
 		err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
@@ -583,6 +713,10 @@ func (dc *DiskCache) Clear() error {
 
 	for _, path := range paths {
 		dc.writeMu.Lock()
+		if dc.writtenSinceInvalidationLocked(path) {
+			dc.writeMu.Unlock()
+			continue
+		}
 		dc.pinnedFilesMu.Lock()
 		pinned := dc.pinnedFiles[path] > 0
 		if pinned {
@@ -601,8 +735,8 @@ func (dc *DiskCache) Clear() error {
 		dc.writeMu.Unlock()
 	}
 
-	if oldMetaDir != "" {
-		if err := os.RemoveAll(oldMetaDir); err != nil {
+	if invalidated.oldMetaDir != "" {
+		if err := os.RemoveAll(invalidated.oldMetaDir); err != nil {
 			clearErrors = append(clearErrors, err)
 		}
 	}
@@ -610,13 +744,28 @@ func (dc *DiskCache) Clear() error {
 	return errors.Join(clearErrors...)
 }
 
-// rotateMetadataDirectory invalidates every completed cache entry with one
-// short exclusive operation. The old metadata tree can then be removed without
-// blocking cache reads or writes.
-func (dc *DiskCache) rotateMetadataDirectory() (string, error) {
-	dc.writeMu.Lock()
-	defer dc.writeMu.Unlock()
+// writtenSinceInvalidationLocked reports whether the entry at fqPath has
+// download progress or metadata, which only data written after the
+// invalidation can have. It runs under writeMu.
+func (dc *DiskCache) writtenSinceInvalidationLocked(fqPath string) bool {
+	dc.rangeWritesMu.Lock()
+	_, downloading := dc.rangeWrites[fqPath]
+	dc.rangeWritesMu.Unlock()
+	if downloading {
+		return true
+	}
+	metaPath, ok := dc.metadataPathForEntryPath(fqPath)
+	if !ok {
+		return false
+	}
+	_, err := os.Stat(metaPath)
+	return err == nil
+}
 
+// rotateMetadataDirectoryLocked invalidates every completed cache entry with
+// one short operation under writeMu. The old metadata tree can then be removed
+// without blocking cache reads or writes.
+func (dc *DiskCache) rotateMetadataDirectoryLocked() (string, error) {
 	oldMetaDir := fmt.Sprintf("%s.clear-%d", dc.metaDir, time.Now().UnixNano())
 	if err := os.Rename(dc.metaDir, oldMetaDir); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -631,7 +780,10 @@ func (dc *DiskCache) rotateMetadataDirectory() (string, error) {
 	return oldMetaDir, nil
 }
 
+// SizeBytes returns the cached byte count, once the startup scan has
+// accounted the entries already on disk.
 func (dc *DiskCache) SizeBytes() int64 {
+	dc.waitForScan()
 	return dc.stats.SizeBytes.Load()
 }
 
@@ -654,11 +806,13 @@ func (dc *DiskCache) StartMaintenance() {
 	}()
 }
 
-// StopMaintenance stops the maintenance goroutine if it is running.
+// StopMaintenance stops the maintenance goroutine if it is running, and closes
+// data files kept open for downloads. Files reopen if the cache is used again.
 func (dc *DiskCache) StopMaintenance() {
 	dc.maintMu.Lock()
 	if !dc.maintActive {
 		dc.maintMu.Unlock()
+		dc.closeAllDataFiles()
 		return
 	}
 	cancel := dc.maintCancel
@@ -675,10 +829,13 @@ func (dc *DiskCache) StopMaintenance() {
 	dc.maintMu.Unlock()
 
 	dc.persistLRUState()
+	dc.closeAllDataFiles()
 }
 
-// Stats returns the current cache statistics.
+// Stats returns the current cache statistics, once the startup scan has
+// accounted the entries already on disk.
 func (dc *DiskCache) Stats() *cache.Stats {
+	dc.waitForScan()
 	s := &cache.Stats{
 		CapacityBytes: dc.stats.CapacityBytes,
 		MaxFileCount:  dc.stats.MaxFileCount,
@@ -785,13 +942,13 @@ func (dc *DiskCache) Unpin(path string) {
 	// cache doesn't stay bloated after files are closed.
 	if dc.Capacity > 0 || dc.MaxFileCount > 0 {
 		// First, try to evict the file that was just unpinned since it just became eligible
-		if !dc.hasCapacityDelta(1, false) {
+		if !dc.hasCapacityDelta(0, false) {
 			dc.lru.Remove(fqPath)
 		}
 
 		// Then evict other oldest files until the cache is back under capacity
 		evictionAttempts := 0
-		for !dc.hasCapacityDelta(1, false) {
+		for !dc.hasCapacityDelta(0, false) {
 			oldestKey, _, ok := dc.lru.GetOldest()
 			if !ok {
 				// LRU is empty, nothing more to evict
@@ -858,6 +1015,9 @@ func (dc *DiskCache) deleteFile(path string) error {
 	dc.delMu.Lock()
 	defer dc.delMu.Unlock()
 	fqPath := dc.entryPath(path)
+	// Eviction must discard process-local coverage as well as durable metadata,
+	// including when the data file has already disappeared.
+	dc.deleteRangeWritePath(fqPath)
 	// os.RemoveAll does not return an error if the path does not exist
 	// so stat the file first to avoid updating the stats incorrectly
 	st, err := os.Stat(fqPath)
@@ -872,59 +1032,104 @@ func (dc *DiskCache) deleteFile(path string) error {
 		return nil
 	}
 
+	_ = dc.deleteMetadataForEntryPath(fqPath)
+	dc.closeDataFile(fqPath)
 	if err := os.RemoveAll(fqPath); err != nil {
 		dc.log.Trace("DiskCache: error deleting evicted cached file %s: %v", fqPath, err)
 		return err
 	}
 
-	dc.stats.FileCount.Add(-1)
-	dc.stats.SizeBytes.Add(-st.Size())
+	dc.removeAccountedFile(fqPath)
 	return nil
 }
 
-func (dc *DiskCache) loadStats() error {
-	start := time.Now()
-
-	dc.writeMu.Lock()
-	dc.delMu.Lock()
-	defer func() {
-		dc.writeMu.Unlock()
-		dc.delMu.Unlock()
-	}()
-
-	// initialize stats by scanning files in the cache directory
-	var totalSize int64
-	var fileCount int64
-	for _, root := range []string{dc.dataDir, dc.partDir} {
-		err := filepath.Walk(root, func(p string, info os.FileInfo, err error) error {
-			if err != nil {
-				return err
-			}
-
-			if !info.IsDir() {
-				fileCount++
-				totalSize += info.Size()
-				if !dc.lru.Contains(p) {
-					// TODO: decide what to do in this case - for now just log it
-					dc.log.Trace("DiskCache: loadStats: LRU does not contain %s", p)
-				}
-			}
-			return nil
-		})
+// removeAbandonedPartials deletes partial data left by a previous process.
+// It runs before the cache is returned, while nothing can be writing there.
+func (dc *DiskCache) removeAbandonedPartials() error {
+	return filepath.Walk(dc.partDir, func(p string, info os.FileInfo, err error) error {
 		if err != nil {
-			dc.log.Debug("DiskCache: loadStats: failed to load stats: %v", err)
 			return err
 		}
+		if !info.IsDir() {
+			return os.Remove(p)
+		}
+		return nil
+	})
+}
+
+// listEntries returns the data files currently in the cache.
+func (dc *DiskCache) listEntries() ([]string, error) {
+	var paths []string
+	err := filepath.WalkDir(dc.dataDir, func(p string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !entry.IsDir() {
+			paths = append(paths, p)
+		}
+		return nil
+	})
+	return paths, err
+}
+
+// loadStats accounts the entries a previous process left in the cache and
+// removes data without valid metadata. It runs in the background after the
+// cache opens, because reading every entry's metadata can take a noticeable
+// time with a full cache. Each entry is checked under a short lock, and an
+// entry written before the scan reaches it has already accounted for itself.
+func (dc *DiskCache) loadStats(paths []string) {
+	defer close(dc.scanDone)
+	dc.maintenanceRunMu.Lock()
+	defer dc.maintenanceRunMu.Unlock()
+	start := time.Now()
+	for _, p := range paths {
+		dc.writeMu.Lock()
+		dc.scanEntryLocked(p)
+		dc.writeMu.Unlock()
 	}
-	dc.stats.CapacityBytes = dc.Capacity
-	dc.stats.CapacityBytesRemaining = dc.Capacity - totalSize
-	dc.stats.MaxFileCount = dc.MaxFileCount
-	dc.stats.FileCountRemaining = dc.MaxFileCount - fileCount
-	dc.stats.FileCount.Store(fileCount)
-	dc.stats.SizeBytes.Store(totalSize)
+
+	dc.writeMu.Lock()
 	dc.stats.LoadDuration = time.Since(start)
 	dc.stats.LruCount = len(dc.lru.Keys())
-	return nil
+	dc.writeMu.Unlock()
+}
+
+// scanEntryLocked runs under writeMu.
+func (dc *DiskCache) scanEntryLocked(p string) {
+	if _, tracked := dc.accountedSize(p, 0); tracked {
+		return
+	}
+	info, err := os.Stat(p)
+	if err != nil {
+		return
+	}
+	meta, ok := dc.validMetadataForEntryPath(p, info.Size())
+	if !ok {
+		if dc.isPinned(p) {
+			// An open handle may be about to write this entry.
+			return
+		}
+		_ = dc.deleteMetadataForEntryPath(p)
+		if err := dc.deleteFile(p); err != nil {
+			dc.log.Debug("DiskCache: loadStats: failed to remove abandoned data %s: %v", p, err)
+		}
+		return
+	}
+	size, err := meta.CachedByteCount()
+	if err != nil {
+		return
+	}
+	dc.setAccountedSize(p, size)
+	if !dc.lru.Contains(p) {
+		dc.log.Trace("DiskCache: loadStats: LRU does not contain %s", p)
+	}
+}
+
+// waitForScan blocks until the startup scan has accounted existing entries.
+func (dc *DiskCache) waitForScan() {
+	if dc.scanDone != nil {
+		<-dc.scanDone
+	}
 }
 
 // validateCachePath checks that the provided cache path meets the requirements:
@@ -1017,6 +1222,9 @@ func (dc *DiskCache) validateOpts() error {
 	if dc.LruFlushInterval <= 0 {
 		return fmt.Errorf("diskCache: LRU flush interval cannot be negative: %v", dc.MaxAge)
 	}
+	if dc.RangeFlushBytes <= 0 {
+		return fmt.Errorf("diskCache: range flush size must be positive: %d", dc.RangeFlushBytes)
+	}
 
 	// Ensure logger
 	if dc.log == nil {
@@ -1091,32 +1299,55 @@ func (dc *DiskCache) metadataPathForEntryPath(path string) (string, bool) {
 	return filepath.Join(dc.metaDir, shard, hashRest+".json"), true
 }
 
-func (dc *DiskCache) hasCompletedMetadataForEntryPath(path string, size int64) bool {
+func (dc *DiskCache) validMetadataForEntryPath(path string, size int64) (cache.EntryMetadata, bool) {
+	dc.rangeWritesMu.Lock()
+	state, buffered := dc.rangeWrites[dc.entryPath(path)]
+	dc.rangeWritesMu.Unlock()
 	metaPath, ok := dc.metadataPathForEntryPath(path)
 	if !ok {
-		return false
+		return cache.EntryMetadata{}, false
 	}
-	file, err := os.Open(metaPath)
-	if err != nil {
-		return false
-	}
-	defer file.Close()
-
 	var meta cache.EntryMetadata
-	if err := json.NewDecoder(file).Decode(&meta); err != nil {
-		return false
+	if buffered {
+		meta = state.metadata
+	} else {
+		var err error
+		meta, err = readMetadataFile(metaPath)
+		if err != nil {
+			return cache.EntryMetadata{}, false
+		}
 	}
-	return meta.Complete && meta.Size == size && dc.entryPath(meta.Path) == dc.entryPath(path)
+	if dc.entryPath(meta.Path) != dc.entryPath(path) {
+		return cache.EntryMetadata{}, false
+	}
+	if buffered {
+		// This process wrote those bytes. While a download holds the file
+		// open, Windows can list it with a stale size, so size only checks
+		// stored metadata.
+		return meta, true
+	}
+	for _, r := range meta.Ranges {
+		if r.End > size {
+			return cache.EntryMetadata{}, false
+		}
+	}
+	return meta, true
 }
 
 func (dc *DiskCache) readEntryMetadata(path string) (cache.EntryMetadata, error) {
+	return readMetadataFile(dc.metadataPath(path))
+}
+
+func readMetadataFile(path string) (cache.EntryMetadata, error) {
 	var meta cache.EntryMetadata
-	file, err := os.Open(dc.metadataPath(path))
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return meta, err
 	}
-	defer file.Close()
-	if err := json.NewDecoder(file).Decode(&meta); err != nil {
+	if err := json.Unmarshal(data, &meta); err != nil {
+		return meta, fmt.Errorf("%w: %v", cache.ErrInvalidEntryMetadata, err)
+	}
+	if err := meta.Validate(); err != nil {
 		return meta, err
 	}
 	return meta, nil
@@ -1294,10 +1525,12 @@ func (dc *DiskCache) runMaintenanceOnce(ctx context.Context) {
 
 			filesOnDisk[p] = struct{}{}
 
-			if !dc.hasCompletedMetadataForEntryPath(p, info.Size()) {
+			meta, validMetadata := dc.validMetadataForEntryPath(p, info.Size())
+			if !validMetadata {
 				if dc.isPinned(p) {
+					accounted, _ := dc.accountedSize(p, info.Size())
 					retainedCount++
-					retainedSize += info.Size()
+					retainedSize += accounted
 					if !dc.lru.Contains(p) {
 						notInLru = append(notInLru, p)
 					}
@@ -1306,12 +1539,17 @@ func (dc *DiskCache) runMaintenanceOnce(ctx context.Context) {
 				deleteCandidates = append(deleteCandidates, fileMeta{path: p, size: info.Size(), mod: info.ModTime()})
 				return nil
 			}
+			accounted, metaErr := meta.CachedByteCount()
+			if metaErr != nil {
+				deleteCandidates = append(deleteCandidates, fileMeta{path: p, size: info.Size(), mod: info.ModTime()})
+				return nil
+			}
 
 			expired := dc.MaxAge > 0 && time.Since(info.ModTime()) > dc.MaxAge
 			if expired {
 				if dc.isPinned(p) {
 					retainedCount++
-					retainedSize += info.Size()
+					retainedSize += accounted
 					if !dc.lru.Contains(p) {
 						notInLru = append(notInLru, p)
 					}
@@ -1321,7 +1559,7 @@ func (dc *DiskCache) runMaintenanceOnce(ctx context.Context) {
 				return nil
 			}
 			retainedCount++
-			retainedSize += info.Size()
+			retainedSize += accounted
 
 			if !dc.lru.Contains(p) {
 				// these will be added later outside the lock
@@ -1380,12 +1618,13 @@ func (dc *DiskCache) runMaintenanceOnce(ctx context.Context) {
 	}
 
 	duration := time.Since(start)
-	// commit authoritative stats
+	// Rebuild from the live accounting map. Range writes can finish after the
+	// filesystem snapshot above, so committing the snapshot would lose those
+	// concurrent counter updates.
 	dc.writeMu.Lock()
+	retainedSize, retainedCount = dc.refreshAccountedStats()
 	dc.stats.CapacityBytes = dc.Capacity
 	dc.stats.MaxFileCount = dc.MaxFileCount
-	dc.stats.SizeBytes.Store(retainedSize)
-	dc.stats.FileCount.Store(retainedCount)
 	dc.stats.CapacityBytesRemaining = dc.Capacity - retainedSize
 	dc.stats.FileCountRemaining = dc.MaxFileCount - retainedCount
 	dc.stats.LoadDuration = duration

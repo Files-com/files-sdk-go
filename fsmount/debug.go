@@ -131,6 +131,7 @@ func (reg *mountRegistry) debugMux() *http.ServeMux {
 	mux.HandleFunc("/debug/nodes", reg.handleDebugNodes)
 	mux.HandleFunc("/debug/locks", reg.handleDebugLocks)
 	mux.HandleFunc("/debug/cache", reg.handleDebugCacheStats)
+	mux.HandleFunc("/debug/ranges", reg.handleDebugRangeStats)
 
 	return mux
 }
@@ -344,7 +345,7 @@ func (reg *mountRegistry) handleDebugHandles(w http.ResponseWriter, r *http.Requ
 				Path:      fh.node.path,
 				ReadOnly:  fh.IsReadOnly(),
 				BytesRead: fh.bytesRead.Load(),
-				ReadAt:    fh.readAt,
+				ReadAt:    fh.lastReadAt(),
 			}
 			out = append(out, item)
 		}
@@ -553,6 +554,45 @@ func (reg *mountRegistry) handleDebugCacheStats(w http.ResponseWriter, r *http.R
 	}
 
 	writeJSON(w, statsCache.Stats())
+}
+
+func (reg *mountRegistry) handleDebugRangeStats(w http.ResponseWriter, r *http.Request) {
+	mnt := r.URL.Query().Get("mnt")
+	if mnt == "" {
+		writeJSON(w, map[string]string{"error": "missing 'mnt' query parameter"})
+		return
+	}
+
+	host, ok := reg.get(mnt)
+	if !ok {
+		writeJSON(w, map[string]string{"error": "no such mount point"})
+		return
+	}
+	coordinator := host.fs.remote.rangeDownloads()
+	if coordinator == nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		writeJSON(w, map[string]string{"error": "range coordinator is unavailable"})
+		return
+	}
+	switch r.Method {
+	case http.MethodGet:
+		snapshot := coordinator.diagnosticsSnapshot()
+		snapshot.SparseRangeReadsEnabled = host.fs.remote.sparseRangeReads
+		writeJSON(w, snapshot)
+	case http.MethodPost:
+		snapshot, err := coordinator.resetDiagnostics()
+		if err != nil {
+			w.WriteHeader(http.StatusConflict)
+			writeJSON(w, map[string]string{"error": err.Error()})
+			return
+		}
+		snapshot.SparseRangeReadsEnabled = host.fs.remote.sparseRangeReads
+		writeJSON(w, snapshot)
+	default:
+		w.Header().Set("Allow", "GET, POST")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		writeJSON(w, map[string]string{"error": "method not allowed"})
+	}
 }
 
 // snapshotNodes returns a stable slice of *fsNode without holding the VFS lock.

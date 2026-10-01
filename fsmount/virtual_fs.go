@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache"
 	ff "github.com/Files-com/files-sdk-go/v3/fsmount/internal/flags"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/winfsp/cgofuse/fuse"
@@ -52,7 +53,15 @@ type fileHandle struct {
 	bytesRead atomic.Int64
 
 	// readAt is the time when the file was last read
-	readAt time.Time
+	readAtMu sync.RWMutex
+	readAt   time.Time
+
+	// completeVersion is the file version this handle last found complete in
+	// the cache. With sparse reads disabled, completeness is checked once per
+	// handle instead of on every cached read.
+	completeMu      sync.Mutex
+	completeVersion cache.EntryMetadata
+	completeKnown   bool
 
 	// The flags used when opening the file
 	ff.FuseFlags
@@ -74,7 +83,28 @@ func (fh *fileHandle) isWriteOp() bool {
 // incrementRead increments the number of bytes read from the file
 func (fh *fileHandle) incrementRead(n int64) {
 	fh.bytesRead.Add(n)
+	fh.readAtMu.Lock()
 	fh.readAt = time.Now()
+	fh.readAtMu.Unlock()
+}
+
+func (fh *fileHandle) lastReadAt() time.Time {
+	fh.readAtMu.RLock()
+	defer fh.readAtMu.RUnlock()
+	return fh.readAt
+}
+
+func (fh *fileHandle) knownComplete(meta cache.EntryMetadata) bool {
+	fh.completeMu.Lock()
+	defer fh.completeMu.Unlock()
+	return fh.completeKnown && fh.completeVersion.Matches(meta)
+}
+
+func (fh *fileHandle) markComplete(meta cache.EntryMetadata) {
+	fh.completeMu.Lock()
+	defer fh.completeMu.Unlock()
+	fh.completeVersion = meta
+	fh.completeKnown = true
 }
 
 type virtualfs struct {

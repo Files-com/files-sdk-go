@@ -115,3 +115,39 @@ func TestPathMutex_MultiplePathsNoDeadlock(t *testing.T) {
 		t.Fatal("Test timed out - possible deadlock")
 	}
 }
+
+func TestPathRWMutexSharesReadsAndExcludesMutation(t *testing.T) {
+	locks := NewPathRWMutex()
+	path := "/shared"
+	locks.RLock(path)
+
+	secondRead := make(chan struct{})
+	go func() {
+		locks.RLock(path)
+		close(secondRead)
+		locks.RUnlock(path)
+	}()
+	select {
+	case <-secondRead:
+	case <-time.After(time.Second):
+		t.Fatal("second read lock was blocked")
+	}
+
+	mutation := make(chan struct{})
+	go func() {
+		locks.Lock(path)
+		close(mutation)
+		locks.Unlock(path)
+	}()
+	select {
+	case <-mutation:
+		t.Fatal("mutation lock acquired while a read lock was held")
+	case <-time.After(20 * time.Millisecond):
+	}
+	locks.RUnlock(path)
+	select {
+	case <-mutation:
+	case <-time.After(time.Second):
+		t.Fatal("mutation lock did not acquire after reads finished")
+	}
+}

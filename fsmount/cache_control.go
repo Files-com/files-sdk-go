@@ -39,9 +39,12 @@ func ClearDiskCache() (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	var clearErrors []error
-	for _, cache := range activeCaches {
-		if err := cache.Clear(); err != nil {
+	remotes := registeredDiskCacheRemoteFilesystems()
+	invalidated, clearErrors := invalidateDiskCaches(remotes, activeCaches)
+	// Deleting the invalidated files takes a while with a large cache. Nothing
+	// can read them any more, so the drives are usable again meanwhile.
+	for _, entries := range invalidated {
+		if err := entries.Remove(); err != nil {
 			clearErrors = append(clearErrors, err)
 		}
 	}
@@ -51,6 +54,41 @@ func ClearDiskCache() (int64, error) {
 		remainingBytes += cache.SizeBytes()
 	}
 	return remainingBytes, errors.Join(clearErrors...)
+}
+
+// invalidateDiskCaches makes every entry of caches unreadable while no
+// operation on remotes is in progress. It stops admission and wakes blocked
+// readers before waiting for their locks; a reader holding an old coordinator
+// cannot start work on it after Close. Woken reads and edits wait for the
+// resume and then download again.
+func invalidateDiskCaches(remotes []*RemoteFs, caches []*disk.DiskCache) ([]*disk.InvalidatedEntries, []error) {
+	for _, remote := range remotes {
+		remote.pauseRangeDownloads()
+	}
+	defer func() {
+		for _, remote := range remotes {
+			remote.resumeRangeDownloads()
+		}
+	}()
+	for _, remote := range remotes {
+		remote.rangeOperationsMu.Lock()
+	}
+	defer func() {
+		for index := len(remotes) - 1; index >= 0; index-- {
+			remotes[index].rangeOperationsMu.Unlock()
+		}
+	}()
+	var invalidated []*disk.InvalidatedEntries
+	var errs []error
+	for _, cache := range caches {
+		entries, err := cache.Invalidate()
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		invalidated = append(invalidated, entries)
+	}
+	return invalidated, errs
 }
 
 func snapshotActiveDiskCaches() ([]*disk.DiskCache, error) {
@@ -118,6 +156,33 @@ func registeredDiskCaches() []*disk.DiskCache {
 		caches = append(caches, cache)
 	}
 	return caches
+}
+
+func registeredDiskCacheRemoteFilesystems() []*RemoteFs {
+	if mntRegistry == nil {
+		return nil
+	}
+
+	mntRegistry.hostsMu.Lock()
+	defer mntRegistry.hostsMu.Unlock()
+	var remotes []*RemoteFs
+	seen := make(map[*RemoteFs]struct{})
+	for _, host := range mntRegistry.hosts {
+		if host == nil || host.fs == nil || host.fs.remote == nil {
+			continue
+		}
+		remote := host.fs.remote
+		cache, ok := remote.cacheStore.(*disk.DiskCache)
+		if !ok || cache.Disabled {
+			continue
+		}
+		if _, ok := seen[remote]; ok {
+			continue
+		}
+		seen[remote] = struct{}{}
+		remotes = append(remotes, remote)
+	}
+	return remotes
 }
 
 func canonicalDiskCacheRoot(path string) (string, error) {

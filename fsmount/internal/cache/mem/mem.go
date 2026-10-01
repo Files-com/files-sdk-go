@@ -163,6 +163,19 @@ func (mc *MemoryCache) Write(path string, buff []byte, ofst int64) (int, error) 
 	if len(buff) == 0 {
 		return 0, nil
 	}
+	mc.writeMu.Lock()
+	defer mc.writeMu.Unlock()
+
+	n, err := mc.writeLocked(path, buff, ofst)
+	if err == nil {
+		mc.stats.WriteCount.Add(1)
+		mc.stats.WriteBytes.Add(int64(n))
+	}
+	return n, err
+}
+
+// writeLocked stores bytes while the caller holds writeMu.
+func (mc *MemoryCache) writeLocked(path string, buff []byte, ofst int64) (int, error) {
 
 	// prevent concurrent access to the map of files
 	mc.filesMu.Lock()
@@ -176,10 +189,6 @@ func (mc *MemoryCache) Write(path string, buff []byte, ofst int64) (int, error) 
 
 	// make sure the entry is not toward the end of the LRU before trimming for capacity
 	_, _ = mc.lru.Get(path)
-
-	// lock writes to avoid another goroutine modifying the capacity during this Write
-	mc.writeMu.Lock()
-	defer mc.writeMu.Unlock()
 
 	// Enforce capacity limits when configured by evicting old unpinned files.
 	// The limits are "soft", so writes should always succeed, but a best effort is made to evict
@@ -256,8 +265,6 @@ func (mc *MemoryCache) Write(path string, buff []byte, ofst int64) (int, error) 
 	ent.mod = time.Now()
 	mc.filesMu.Unlock()
 	_ = mc.lru.Add(path, struct{}{})
-	mc.stats.WriteCount.Add(1)
-	mc.stats.WriteBytes.Add(int64(n))
 	return n, nil
 }
 
@@ -318,11 +325,14 @@ func (mc *MemoryCache) ReadComplete(path string, meta cache.EntryMetadata, buff 
 	stored := ent.metadata
 	mc.filesMu.RUnlock()
 
-	if !stored.Complete {
+	if stored.Version == 0 {
 		return 0, nil
 	}
 	if !stored.Matches(meta) {
 		mc.Delete(path)
+		return 0, nil
+	}
+	if !stored.IsComplete() {
 		return 0, nil
 	}
 
@@ -334,6 +344,13 @@ func (mc *MemoryCache) ReadPartial(path string, buff []byte, ofst int64) (n int,
 }
 
 func (mc *MemoryCache) Commit(path string, meta cache.EntryMetadata) error {
+	meta.Path = path
+	var err error
+	meta, err = meta.WithCompleteRange()
+	if err != nil {
+		return err
+	}
+
 	mc.writeMu.Lock()
 	defer mc.writeMu.Unlock()
 
@@ -356,8 +373,6 @@ func (mc *MemoryCache) Commit(path string, meta cache.EntryMetadata) error {
 		freed := truncateEntryToSize(ent, meta.Size)
 		mc.stats.SizeBytes.Add(-freed)
 	}
-	meta.Path = path
-	meta.Complete = true
 	ent.metadata = meta
 	ent.mod = time.Now()
 	mc.filesMu.Unlock()
@@ -394,6 +409,13 @@ func truncateEntryToSize(ent *entry, size int64) int64 {
 
 // Delete removes the cached file at the given path from the cache.
 func (mc *MemoryCache) Delete(path string) bool {
+	mc.writeMu.Lock()
+	defer mc.writeMu.Unlock()
+	return mc.deleteLocked(path)
+}
+
+// deleteLocked removes an entry while the caller holds writeMu.
+func (mc *MemoryCache) deleteLocked(path string) bool {
 	if mc.isPinned(path) {
 		// Open handles still need the cached bytes, but the completed-version
 		// metadata must not make stale content eligible for a future cache hit.
@@ -634,6 +656,9 @@ func (mc *MemoryCache) maintenanceLoop(ctx context.Context) {
 }
 
 func (mc *MemoryCache) runMaintenanceOnce(_ context.Context) {
+	mc.writeMu.Lock()
+	defer mc.writeMu.Unlock()
+
 	mc.log.Debug("MemoryCache: performing maintenance")
 	start := time.Now()
 

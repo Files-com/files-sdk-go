@@ -262,7 +262,7 @@ func (b *providerRemoteBackend) download(params files_sdk.FileDownloadParams, op
 	if err != nil {
 		return files_sdk.File{}, err
 	}
-	resp := &http.Response{StatusCode: http.StatusOK, Body: reader}
+	resp := &http.Response{StatusCode: http.StatusOK, Body: reader, ContentLength: size}
 	if _, err := files_sdk.BuildResponse(resp, opts...); err != nil {
 		return files_sdk.File{}, err
 	}

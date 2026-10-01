@@ -4,6 +4,7 @@ package disk_test
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -314,12 +315,16 @@ func TestDiskCacheMaintenanceKeepsCompletedDataFiles(t *testing.T) {
 	path := "/test/complete-download.bin"
 	data := []byte("complete data")
 	mtime := time.Now().Add(-time.Minute).Round(0)
+	// Maintenance removes data that has no metadata unless it is pinned, so
+	// the entry is pinned until it is committed, as the mount does.
+	cache.Pin(path)
 	if _, err := cache.Write(path, data, 0); err != nil {
 		t.Fatalf("Write failed: %v", err)
 	}
 	if err := cache.Commit(path, fscache.NewEntryMetadata(path, int64(len(data)), mtime)); err != nil {
 		t.Fatalf("Commit failed: %v", err)
 	}
+	cache.Unpin(path)
 
 	time.Sleep(50 * time.Millisecond)
 
@@ -330,6 +335,73 @@ func TestDiskCacheMaintenanceKeepsCompletedDataFiles(t *testing.T) {
 	}
 	if n != len(data) || string(readBuf[:n]) != string(data) {
 		t.Fatalf("completed data after maintenance = %q, want %q", string(readBuf[:n]), string(data))
+	}
+}
+
+func TestDiskCacheRemovesObsoleteAndMalformedMetadata(t *testing.T) {
+	tests := []struct {
+		name     string
+		metadata string
+	}{
+		{
+			name:     "old schema",
+			metadata: `{"path":"/test/metadata.bin","size":4,"mtime":"2026-08-13T12:00:00Z","complete":true}`,
+		},
+		{
+			name:     "previous range schema",
+			metadata: `{"version":1,"path":"/test/metadata.bin","size":4,"mtime":"2026-08-13T12:00:00Z","ranges":[{"start":0,"end":4}]}`,
+		},
+		{
+			name:     "malformed JSON",
+			metadata: `{`,
+		},
+		{
+			name:     "trailing JSON",
+			metadata: `{"version":1,"path":"/test/metadata.bin","size":4,"mtime":"2026-08-13T12:00:00Z","ranges":[{"start":0,"end":4}]} {}`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			root := t.TempDir()
+			cache, err := disk.NewDiskCache(root)
+			if err != nil {
+				t.Fatalf("NewDiskCache failed: %v", err)
+			}
+
+			path := "/test/metadata.bin"
+			data := []byte("data")
+			meta := fscache.NewEntryMetadata(path, int64(len(data)), time.Now().Round(0))
+			if _, err := cache.Write(path, data, 0); err != nil {
+				t.Fatalf("Write failed: %v", err)
+			}
+			if err := cache.Commit(path, meta); err != nil {
+				t.Fatalf("Commit failed: %v", err)
+			}
+
+			metadataFiles, err := filepath.Glob(filepath.Join(root, "state", "metadata", "*", "*.json"))
+			if err != nil {
+				t.Fatalf("Glob metadata failed: %v", err)
+			}
+			if len(metadataFiles) != 1 {
+				t.Fatalf("metadata files = %v, want one", metadataFiles)
+			}
+			metadataPath := metadataFiles[0]
+			if err := os.WriteFile(metadataPath, []byte(tt.metadata), 0o644); err != nil {
+				t.Fatalf("WriteFile metadata failed: %v", err)
+			}
+
+			buffer := make([]byte, len(data))
+			if n, err := cache.ReadComplete(path, meta, buffer, 0); err != nil || n != 0 {
+				t.Fatalf("ReadComplete() = %d, %v; want cache miss", n, err)
+			}
+			if n, err := cache.Read(path, buffer, 0); err != nil || n != 0 {
+				t.Fatalf("Read() after invalidation = %d, %v; want cache miss", n, err)
+			}
+			if _, err := os.Stat(metadataPath); !errors.Is(err, os.ErrNotExist) {
+				t.Fatalf("metadata still exists after invalidation: %v", err)
+			}
+		})
 	}
 }
 
@@ -723,8 +795,9 @@ func TestDiskCacheWithFileNotInCache(t *testing.T) {
 func TestDiskCacheUnpinEviction(t *testing.T) {
 	tmpDir := privateTempDir(t)
 
-	// Create cache with capacity for ~2 files
-	cache, err := disk.NewDiskCache(tmpDir, disk.WithCapacityBytes(1200))
+	// Keep two pinned files one byte over capacity. Unpinning must evict the
+	// newly eligible file without evicting the older pinned file.
+	cache, err := disk.NewDiskCache(tmpDir, disk.WithCapacityBytes(1199))
 	if err != nil {
 		t.Fatalf("NewDiskCache failed: %v", err)
 	}
@@ -747,7 +820,7 @@ func TestDiskCacheUnpinEviction(t *testing.T) {
 	}
 	cache.Pin(path2)
 
-	// Verify cache is at capacity before the unpin eviction logic runs
+	// Verify cache is over capacity before the unpin eviction logic runs
 	statsBefore := cache.Stats()
 	if statsBefore.SizeBytes.Load() != 1200 {
 		t.Fatalf("Cache size before unpin: %d (expected 1200)", statsBefore.SizeBytes.Load())

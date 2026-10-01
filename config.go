@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.3.284"
+var VERSION = "3.3.285"
 var defaultUserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
 
 const (
@@ -238,12 +238,14 @@ func (c Config) FeatureFlag(flag string) bool {
 
 const (
 	FeatureFlagAdaptiveUploadV2        = "adaptive-upload-v2"
+	FeatureFlagSparseRangeReads        = "sparse-range-reads"
 	FeatureFlagUploadV2ChecksumTrailer = "upload-v2-checksum-trailer"
 )
 
 func FeatureFlags() map[string]bool {
 	return map[string]bool{
 		FeatureFlagAdaptiveUploadV2:        false,
+		FeatureFlagSparseRangeReads:        false,
 		FeatureFlagUploadV2ChecksumTrailer: false,
 		"incremental-updates":              false,
 	}

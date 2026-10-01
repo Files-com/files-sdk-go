@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/http"
 	"os"
 	path_lib "path"
 	"path/filepath"
@@ -60,8 +59,10 @@ const (
 
 var (
 	// compile time assertions that the cache implementations satisfy the fsCache interface
-	_ cacheStore = (*disk.DiskCache)(nil)
-	_ cacheStore = (*mem.MemoryCache)(nil)
+	_ cacheStore      = (*disk.DiskCache)(nil)
+	_ cacheStore      = (*mem.MemoryCache)(nil)
+	_ rangeCacheStore = (*disk.DiskCache)(nil)
+	_ rangeCacheStore = (*mem.MemoryCache)(nil)
 
 	// webSyncInterval determines how frequently we ask Explorer to refresh any open folders.
 	webSyncInterval = 15 * time.Second
@@ -112,16 +113,20 @@ type RemoteFs struct {
 
 	cacheStore cacheStore
 
-	gatesMu         sync.Mutex
-	readyGates      map[string]*cache.ReadyGate
-	gatePathMutexes *fssync.PathMutex
+	sparseRangeReads bool
+
+	rangeOperationsMu sync.RWMutex
+	rangePathMutexes  *fssync.PathRWMutex
+	rangesMu          sync.Mutex
+	ranges            *rangeStreams
+	rangesClosed      bool
+	rangesPaused      bool
+	rangesResumed     chan struct{}
 
 	events      events.EventPublisher
 	transferSeq uint64
 
 	ops *lim.FuseOpLimiter
-
-	bufferPool *fssync.Pool[[]byte]
 
 	webSyncTicker *time.Ticker
 	stopCh        chan struct{}
@@ -152,9 +157,16 @@ func (fs *RemoteFs) recordWriteSessionMutation(session *writeSession, mtime time
 // cacheStore defines the interface for the file system cache used by RemoteFs and allows for alternative
 // implementations. e.g. an in-memory cache implementation vs a disk-based cache implementation.
 type cacheStore interface {
+	InvalidateRanges(path string) error
+	RangeMetadata(path string, meta cache.EntryMetadata) (cache.EntryMetadata, bool, error)
 	Read(path string, buff []byte, ofst int64) (n int, err error)
 	ReadComplete(path string, meta cache.EntryMetadata, buff []byte, ofst int64) (n int, err error)
 	ReadPartial(path string, buff []byte, ofst int64) (n int, err error)
+	ReadRange(path string, meta cache.EntryMetadata, buff []byte, ofst int64) (n int, err error)
+	MissingRanges(path string, meta cache.EntryMetadata, requested cache.ByteRange) ([]cache.ByteRange, error)
+	WriteRange(path string, meta cache.EntryMetadata, buff []byte, ofst int64) (n int, err error)
+	WriteCompleteRange(path string, meta cache.EntryMetadata, buff []byte, ofst int64) (n int, err error)
+	RangeEntryComplete(path string, meta cache.EntryMetadata) (bool, error)
 	Write(path string, buff []byte, ofst int64) (n int, err error)
 	WritePartial(path string, buff []byte, ofst int64) (n int, err error)
 	Commit(path string, meta cache.EntryMetadata) error
@@ -302,13 +314,10 @@ func newRemoteFs(params MountParams, vfs *virtualfs, log log.Logger, cs cacheSto
 		debugFuse:        params.DebugFuse,
 		events:           params.EventPublisher,
 		cacheStore:       cs,
-		readyGates:       make(map[string]*cache.ReadyGate),
-		gatePathMutexes:  fssync.NewPathMutex(),
+		sparseRangeReads: sparseRangeReadsEnabled(params.Config),
+		rangePathMutexes: fssync.NewPathRWMutex(),
 		ops:              limiter,
 		loadDirMutexes:   fssync.NewPathMutex(),
-		bufferPool: fssync.NewPool(func() []byte {
-			return make([]byte, cacheWriteSize)
-		}),
 	}
 	if params.ProviderBackend != nil {
 		fs.providerBackend = params.ProviderBackend
@@ -362,6 +371,13 @@ func newRemoteFs(params MountParams, vfs *virtualfs, log log.Logger, cs cacheSto
 	return fs, nil
 }
 
+func sparseRangeReadsEnabled(config *files_sdk.Config) bool {
+	if config == nil {
+		return false
+	}
+	return config.FeatureFlags[files_sdk.FeatureFlagSparseRangeReads]
+}
+
 func (fs *RemoteFs) Init() {
 	// Guard with a sync.Once because validation and cgofuse startup can both initialize the remote file system.
 	fs.initOnce.Do(func() {
@@ -403,6 +419,7 @@ func (fs *RemoteFs) Init() {
 
 func (fs *RemoteFs) Destroy() {
 	fs.log.Debug("RemoteFs: Destroy: removing all file locks")
+	fs.closeRangeDownloads()
 
 	fs.lockMapMutex.Lock()
 	defer fs.lockMapMutex.Unlock()
@@ -609,6 +626,13 @@ func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
 	if errc = fs.denyIfKnownReadOnlyParent(newpath, "Rename"); errc != 0 {
 		return errc
 	}
+	unlockRangeMutation := fs.lockRangeMutation(oldpath, newpath)
+	rangeMutationLocked := true
+	defer func() {
+		if rangeMutationLocked {
+			unlockRangeMutation()
+		}
+	}()
 
 	// Reserve a committed retained session before releasing its locks for the remote move. Writes and
 	// truncates that were already preparing a local change finish first. No network operation runs
@@ -622,6 +646,7 @@ func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
 			// creating a remote file. Rename that placeholder locally so callers
 			// do not receive Not Found from a backend move of a nonexistent path.
 			fs.log.Info("Renaming unmaterialized file %v to %v (%v to %v)", oldRemotePath, newRemotePath, oldLocalPath, newLocalPath)
+			fs.cancelRangeDownloads(oldpath, newpath)
 			fs.rename(oldpath, newpath)
 			_ = fs.cacheStore.Delete(oldpath)
 			_ = fs.cacheStore.Delete(newpath)
@@ -655,10 +680,18 @@ func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
 		waitForUpload = session.uploading || session.finalizing
 		session.renaming = true
 		node.writeMu.Unlock()
+		// A write or truncate that registered before the reservation takes the
+		// range lock next, so the lock is released before waiting for it.
+		unlockRangeMutation()
+		rangeMutationLocked = false
 		for session.mutationCount > 0 {
 			session.cond.Wait()
 		}
 		session.mu.Unlock()
+	}
+	if rangeMutationLocked {
+		unlockRangeMutation()
+		rangeMutationLocked = false
 	}
 	if waitForUpload {
 		if err := node.waitForUploadWithProgressTimeout(fsyncTimeout); err != nil {
@@ -675,6 +708,7 @@ func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
 	}
 	// With no write session, or with a retained session that has committed an upload, the remote
 	// file already exists at oldRemotePath and must be moved explicitly.
+	fs.cancelRangeDownloads(oldpath, newpath)
 	fs.log.Info("Renaming %v to %v (%v to %v)", oldRemotePath, newRemotePath, oldLocalPath, newLocalPath)
 
 	err := fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
@@ -706,17 +740,14 @@ func (fs *RemoteFs) Rename(oldpath string, newpath string) (errc int) {
 		return errc
 	}
 
-	// Stop an old source or destination download from republishing stale cache data after the move.
-	// The per-path locks keep replacement downloads out until the VFS and cache reflect the new file.
-	unlockGates := fs.lockGatePaths(oldpath, newpath)
-	for _, readyGate := range fs.takeGatesForPaths(oldpath, newpath) {
-		readyGate.CancelAndWait()
-		readyGate.Cleanup()
-	}
+	// A read may have started while the remote move was in progress. Stop it
+	// before changing the local path and invalidating both cache entries.
+	unlockRangeMutation = fs.lockRangeMutation(oldpath, newpath)
+	rangeMutationLocked = true
+	fs.cancelRangeDownloads(oldpath, newpath)
 	fs.rename(oldpath, newpath)
 	_ = fs.cacheStore.Delete(oldpath)
 	_ = fs.cacheStore.Delete(newpath)
-	unlockGates()
 	if session != nil {
 		node.expireInfo()
 		if err := node.finishWriteSessionRename(session, newpath, true); err != nil {
@@ -980,7 +1011,11 @@ func (fs *RemoteFs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int
 	return errc
 }
 
-func (fs *RemoteFs) Truncate(path string, size int64, fh uint64) (errc int) {
+func (fs *RemoteFs) Truncate(path string, size int64, fh uint64) int {
+	return fs.retryAfterCacheClear(func() int { return fs.truncate(path, size, fh) })
+}
+
+func (fs *RemoteFs) truncate(path string, size int64, fh uint64) (errc int) {
 	// The word truncate is overloaded here. The intention is to set the size of the
 	// file to the size getting passed in, NOT to truncate the file to zero bytes.
 
@@ -999,16 +1034,19 @@ func (fs *RemoteFs) Truncate(path string, size int64, fh uint64) (errc int) {
 			return errc
 		}
 	}
-
-	// Invalidate any cached content. The size has changed, so cached data is stale.
-	// Without this, a subsequent write could load stale cached content as the
-	// working copy baseline and preserve data from the wrong version of the file.
-	fs.cacheStore.Delete(path)
-	if size == 0 && node.isUnmaterialized() && !node.hasActiveWriteSession() {
-		node.updateSize(0)
-		return 0
+	if size == 0 && node.isUnmaterialized() {
+		unlockRangeMutation := fs.lockRangeMutation(path, node.path)
+		if !node.hasActiveWriteSession() {
+			fs.cancelRangeDownloads(path)
+			fs.cacheStore.Delete(path)
+			node.updateSize(0)
+			unlockRangeMutation()
+			return 0
+		}
+		unlockRangeMutation()
 	}
 
+	requestedPath := path
 	session, _, err := node.beginWriteSessionMutation(path, fs.writeSessionDir)
 	if err != nil {
 		fs.log.Error("RemoteFs: Truncate: failed to create write session for %v: %v", path, err)
@@ -1017,12 +1055,24 @@ func (fs *RemoteFs) Truncate(path string, size int64, fh uint64) (errc int) {
 	defer session.endMutation()
 	path = session.snapshot().path
 	session.addHandle(fh)
+	unlockRangeMutation := fs.lockRangeMutation(requestedPath, path, node.path)
+	defer unlockRangeMutation()
+
+	// Stop read-ahead before materializing the old version into the working copy.
+	// The cache remains available as baseline input until hydration completes.
+	fs.cancelRangeDownloads(requestedPath)
+	fs.cancelRangeDownloads(path)
 	if err := fs.ensureWriteSessionBaseline(path, node, session, size == 0, fh); err != nil {
+		if errors.Is(err, errRangeStreamsClosed) {
+			return errnoRetryAfterCacheClear
+		}
 		if errc := fs.handleUploadSessionError(path, err, session); errc != 0 {
 			return errc
 		}
 		return -fuse.EIO
 	}
+	fs.cancelRangeDownloads(path)
+	fs.cacheStore.Delete(path)
 	if err := fs.truncateWorkingCopy(session, size); err != nil {
 		fs.log.Error("RemoteFs: Truncate: working copy truncate failed for %v: %s", path, uploadLogMessage(err))
 		return -fuse.EIO
@@ -1033,7 +1083,11 @@ func (fs *RemoteFs) Truncate(path string, size int64, fh uint64) (errc int) {
 	return errc
 }
 
-func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
+func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) int {
+	return fs.retryAfterCacheClear(func() int { return fs.read(path, buff, ofst, fh) })
+}
+
+func (fs *RemoteFs) read(path string, buff []byte, ofst int64, fh uint64) (n int) {
 	buffLen := int64(len(buff))
 	// unlikely, but guard against a zero-length read
 	if buffLen == 0 {
@@ -1097,62 +1151,135 @@ func (fs *RemoteFs) Read(path string, buff []byte, ofst int64, fh uint64) (n int
 		}
 	}
 
-	// Attempt to read from the cache only when no download is in progress for this path.
-	// If a download is active, the cache entry is partially written and a Read call may return
-	// fewer bytes than len(buff) (a short read). By skipping the early cache check when a gate is
-	// active, all reads during an active download go through WaitFor, which blocks until the
-	// full requested range is available, guaranteeing a non-short read.
-	if _, isDownloading := fs.peekGate(path); !isDownloading {
-		n, err := fs.cacheStore.ReadComplete(path, cacheEntryMetadata(path, size, node.info.modTime), buff, ofst)
-		if err != nil {
-			fs.log.Debug("RemoteFs: Read: cache.Read error: %v", err)
+	// waited is the version the last successful wait brought into the cache,
+	// and stopped is the error of a wait a change to the file interrupted.
+	var waited *cache.EntryMetadata
+	var stopped error
+	for {
+		unlockRangeRead := fs.lockRangeRead(path)
+		if stopped != nil {
+			// The change has finished once the lock is free. The read goes on
+			// only while the handle's file still has this name; otherwise it
+			// fails, as it did before downloads were stopped this way.
+			if current, ok := fs.vfs.fetch(path); !ok || current != node {
+				unlockRangeRead()
+				if errc := fs.handleError(path, stopped); errc != 0 {
+					return errc
+				}
+				return -fuse.EIO
+			}
+			stopped = nil
 		}
-		if n > 0 {
+		if node.getWriteSession() != nil {
+			unlockRangeRead()
+			if n, sessionOwned, err := node.readFromWriteSession(buff, ofst); sessionOwned {
+				if err != nil {
+					fs.log.Debug("RemoteFs: Read: write session read failed for path=%v: %v", path, err)
+					return -fuse.EIO
+				}
+				if n > 0 {
+					handle.incrementRead(int64(n))
+				}
+				return n
+			}
+			continue
+		}
+		size = node.info.size
+		if size <= 0 || ofst >= size {
+			unlockRangeRead()
+			return 0
+		}
+
+		want := min(buffLen, size-ofst)
+		requested := cache.ByteRange{Start: ofst, End: ofst + want}
+		meta := cacheEntryMetadata(path, size, node.info.modTime)
+		n, err := fs.cacheStore.ReadRange(path, meta, buff[:want], ofst)
+		if err != nil {
+			fs.log.Debug("RemoteFs: Read: cache range read failed for %v: %v", path, err)
+		}
+		if int64(n) == want {
 			handle.incrementRead(int64(n))
-			fs.log.Trace("RemoteFs: Read: readAt: path=%v, ofst=%d, read %d bytes from cache", path, ofst, n)
+			if waited == nil {
+				fs.noteCachedRead(handle, fh, path, meta, requested)
+				fs.log.Trace("RemoteFs: Read: range cache hit path=%v ofst=%d read=%d", path, ofst, n)
+			} else {
+				fs.log.Trace("RemoteFs: Read: ok path=%v ofst=%d read=%d", path, ofst, n)
+			}
+			unlockRangeRead()
 			return n
 		}
-	}
-
-	// At this point, the read request could not be satisfied from the working copy
-	// or the disk cache, so read from the remote API.
-	endOffset := ofst + int64(len(buff))
-	readyGate, exists := fs.findOrCreateGate(path)
-	readyGate.Add()
-	defer fs.releaseGateWaiter(path, readyGate)
-	if !exists {
-		// start the download in a new goroutine, which will populate the disk cache
-		go fs.fillCache(context.Background(), path, node.downloadUri, cacheEntryMetadata(path, size, node.info.modTime), readyGate, fh, true)
-	}
-
-	// wait for the requested range to be available in the cache
-	if err := readyGate.WaitFor(endOffset); err != nil {
-		// adjust on EOF: serve whatever is available
-		if err != io.EOF {
-			if errc := fs.handleError(path, err); errc != 0 {
-				return errc
-			}
+		if waited != nil && waited.Matches(meta) {
+			unlockRangeRead()
+			fs.log.Debug("RemoteFs: Read: requested range unavailable after successful download: path=%v range=[%d, %d) read=%d", path, requested.Start, requested.End, n)
+			return -fuse.EAGAIN
 		}
-		// err is EOF: serve whatever is available
-		avail := readyGate.Available()
-		if avail <= ofst {
-			return 0
-		} // nothing available
-		endOffset = avail
+
+		ranges := fs.rangeDownloads()
+		if ranges == nil {
+			unlockRangeRead()
+			return errnoRetryAfterCacheClear
+		}
+		// The lock covers choosing the download, so a rename, edit, delete or
+		// listing that changes this path cannot be followed by a download of what
+		// it replaced. The wait itself runs unlocked, so those operations do not
+		// wait for the network: they stop the download, and the read looks at the
+		// file again.
+		waitErr := ranges.WaitAfterJoining(context.Background(), fh, path, meta, requested, unlockRangeRead)
+		if waitErr == nil {
+			waited = &meta
+			continue
+		}
+		fs.log.Debug("RemoteFs: Read: range download failed for %v [%d, %d): %v", path, requested.Start, requested.End, waitErr)
+		if errors.Is(waitErr, errRangeStreamsClosed) {
+			return errnoRetryAfterCacheClear
+		}
+		if errors.Is(waitErr, context.Canceled) {
+			// A change to the file stopped its downloads. Read what the path
+			// holds once the change is done.
+			stopped = waitErr
+			waited = nil
+			continue
+		}
+		if errc := fs.handleError(path, waitErr); errc != 0 {
+			return errc
+		}
+		return -fuse.EIO
 	}
-	// now read from cache
-	want := min(endOffset-ofst, int64(len(buff)))
-	n, err := fs.cacheStore.ReadPartial(path, buff[:want], ofst)
-	if err != nil {
-		fs.log.Debug("RemoteFs: Read: diskCache.Read error after WaitFor: %v", err)
-		return -fuse.EAGAIN
-	}
-	fs.log.Trace("RemoteFs: Read: ok path=%v ofst=%d read=%d", path, ofst, n)
-	handle.incrementRead(int64(n))
-	return n
 }
 
-func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
+// noteCachedRead tells the downloads about a read the cache answered, so a
+// stream can keep pace with its reader. With sparse reads disabled, the
+// handle's first hit instead checks that the entry is complete and finishes
+// downloading a partial one.
+func (fs *RemoteFs) noteCachedRead(handle *fileHandle, fh uint64, path string, meta cache.EntryMetadata, read cache.ByteRange) {
+	if fs.sparseRangeReads {
+		if ranges := fs.rangeDownloads(); ranges != nil {
+			ranges.NoteRead(fh, path, meta, read)
+		}
+		return
+	}
+	if handle.knownComplete(meta) {
+		return
+	}
+	complete, err := fs.cacheStore.RangeEntryComplete(path, meta)
+	if err != nil {
+		fs.log.Debug("RemoteFs: complete-file cache check failed for %v: %v", path, err)
+		return
+	}
+	if complete {
+		handle.markComplete(meta)
+		return
+	}
+	if ranges := fs.rangeDownloads(); ranges != nil {
+		ranges.StartComplete(path, meta)
+	}
+}
+
+func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) int {
+	return fs.retryAfterCacheClear(func() int { return fs.write(path, buff, ofst, fh) })
+}
+
+func (fs *RemoteFs) write(path string, buff []byte, ofst int64, fh uint64) (n int) {
 	_, node, ok := fs.vfs.handles.Lookup(fh)
 	if !ok {
 		fs.log.Debug("RemoteFs: Write: file handle %v not found for path %v", fh, path)
@@ -1163,7 +1290,7 @@ func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n in
 		fs.log.Debug("RemoteFs: Write: poisoned write session for path=%v: %s", path, uploadLogMessage(err))
 		return -fuse.EIO
 	}
-
+	requestedPath := path
 	session, created, err := node.beginWriteSessionMutation(path, fs.writeSessionDir)
 	if err != nil {
 		fs.log.Error("RemoteFs: Write: failed to create write session for %v: %v", path, err)
@@ -1177,14 +1304,20 @@ func (fs *RemoteFs) Write(path string, buff []byte, ofst int64, fh uint64) (n in
 		fs.logWriteSessionMilestone(path, "working_copy_created", fh, session, "offset=%d bytes=%d", ofst, len(buff))
 	}
 	session.addHandle(fh)
+	unlockRangeMutation := fs.lockRangeMutation(requestedPath, path, node.path)
+	defer unlockRangeMutation()
 
 	if err := fs.ensureWriteSessionBaseline(path, node, session, false, fh); err != nil {
+		if errors.Is(err, errRangeStreamsClosed) {
+			return errnoRetryAfterCacheClear
+		}
 		fs.logWriteSessionMilestone(path, "baseline_hydration_failed", fh, session, "err=%q", err.Error())
 		if errc := fs.handleUploadSessionError(path, err, session); errc != 0 {
 			return errc
 		}
 		return -fuse.EIO
 	}
+	fs.cancelRangeDownloads(path)
 
 	written, err := fs.writeToWorkingCopy(session, buff, ofst)
 	if err != nil {
@@ -1235,7 +1368,7 @@ func (fs *RemoteFs) ensureWriteSessionBaseline(path string, node *fsNode, sessio
 }
 
 func (fs *RemoteFs) populateWorkingCopyFromRemoteOrCache(path string, node *fsNode, session *writeSession, fh uint64) error {
-	if err := fs.ensureFullyCached(path, node.downloadUri, node.info.size, fh); err != nil {
+	if err := fs.ensureFullyCached(path, node.info.size); err != nil {
 		if files_sdk.IsNotExist(err) {
 			node.markDeleted()
 			session.mu.Lock()
@@ -1247,23 +1380,24 @@ func (fs *RemoteFs) populateWorkingCopyFromRemoteOrCache(path string, node *fsNo
 		return err
 	}
 
+	// Copy through the range-checked read, so a cache entry that lost bytes
+	// after the completeness check fails the edit instead of uploading holes.
+	size := node.info.size
+	meta := cacheEntryMetadata(path, size, node.info.modTime)
 	buf := make([]byte, cacheWriteSize)
-	var ofst int64
-	for {
-		n, err := fs.cacheStore.Read(path, buf, ofst)
+	for ofst := int64(0); ofst < size; {
+		want := min(int64(len(buf)), size-ofst)
+		n, err := fs.cacheStore.ReadRange(path, meta, buf[:want], ofst)
 		if err != nil {
 			return err
 		}
-		if n == 0 {
-			break
+		if int64(n) != want {
+			return fmt.Errorf("edit baseline for %s is missing cached bytes at offset %d", path, ofst)
 		}
 		if _, err := session.workingCopy.WriteAt(buf[:n], ofst); err != nil {
 			return err
 		}
 		ofst += int64(n)
-		if ofst >= node.info.size {
-			break
-		}
 	}
 
 	session.mu.Lock()
@@ -1515,7 +1649,21 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 		return
 	}
 	fs.logWriteSessionMilestone(path, "upload_succeeded", fh, session, "size=%d", uploaded.size)
+	unlockRangeMutation := fs.lockRangeMutation(path, node.path)
+	defer unlockRangeMutation()
 	node.markMaterialized()
+	fs.cancelRangeDownloads(path)
+	// Record the uploaded version before copying it into the cache, which holds
+	// the lock for as long as the copy takes. A listing that arrives meanwhile
+	// then finds the version it reports instead of waiting to invalidate it.
+	node.updateInfo(fsNodeInfo{
+		nodeType:     nodeTypeFile,
+		size:         uploaded.size,
+		modTime:      uploaded.modTime,
+		creationTime: node.info.creationTime,
+		uid:          node.info.uid,
+		gid:          node.info.gid,
+	})
 
 	if err := fs.refreshReadCacheFromWorkingCopy(path, session, uploaded.size, uploaded.modTime); err != nil {
 		// The remote upload has already succeeded, so a cache refresh failure should only
@@ -1525,15 +1673,6 @@ func (fs *RemoteFs) finalizeUploadFromWorkingCopy(path string, node *fsNode, ses
 		fs.logWriteSessionMilestone(path, "upload_cache_refresh_failed", fh, session, "err=%q", err.Error())
 		_ = fs.cacheStore.Delete(path)
 	}
-
-	node.updateInfo(fsNodeInfo{
-		nodeType:     nodeTypeFile,
-		size:         uploaded.size,
-		modTime:      uploaded.modTime,
-		creationTime: node.info.creationTime,
-		uid:          node.info.uid,
-		gid:          node.info.gid,
-	})
 	session.mu.Lock()
 	session.mtime = uploaded.modTime
 	session.mtimeExplicit = false
@@ -1645,6 +1784,9 @@ func (fs *RemoteFs) Release(path string, fh uint64) (errc int) {
 	defer func() {
 		if fs.cacheStore != nil {
 			fs.cacheStore.Unpin(path)
+		}
+		if ranges := fs.activeRangeDownloads(); ranges != nil {
+			ranges.ReleaseReader(path, fh)
 		}
 	}()
 
@@ -2022,63 +2164,6 @@ func (fs *RemoteFs) downloadFile(src, dst string, eventLocalPath string) error {
 	return nil
 }
 
-func (fs *RemoteFs) findOrCreateGate(path string) (*cache.ReadyGate, bool) {
-	fs.gatePathMutexes.Lock(path)
-	defer fs.gatePathMutexes.Unlock(path)
-	fs.gatesMu.Lock()
-	defer fs.gatesMu.Unlock()
-	if fs.readyGates == nil {
-		fs.readyGates = map[string]*cache.ReadyGate{}
-	}
-	if s, ok := fs.readyGates[path]; ok {
-		return s, true
-	}
-	s := cache.NewReadyGate()
-	fs.readyGates[path] = s
-	return s, false
-}
-
-func (fs *RemoteFs) lockGatePaths(paths ...string) func() {
-	slices.Sort(paths)
-	paths = slices.Compact(paths)
-	for _, path := range paths {
-		fs.gatePathMutexes.Lock(path)
-	}
-	return func() {
-		for i := len(paths) - 1; i >= 0; i-- {
-			fs.gatePathMutexes.Unlock(paths[i])
-		}
-	}
-}
-
-func (fs *RemoteFs) takeGatesForPaths(paths ...string) []*cache.ReadyGate {
-	fs.gatesMu.Lock()
-	defer fs.gatesMu.Unlock()
-	var gates []*cache.ReadyGate
-	for _, path := range paths {
-		if readyGate := fs.readyGates[path]; readyGate != nil {
-			gates = append(gates, readyGate)
-			delete(fs.readyGates, path)
-		}
-	}
-	return gates
-}
-
-func (fs *RemoteFs) removeGate(path string, s *cache.ReadyGate) {
-	fs.gatesMu.Lock()
-	if cur, ok := fs.readyGates[path]; ok && cur == s {
-		delete(fs.readyGates, path)
-	}
-	fs.gatesMu.Unlock()
-}
-
-func (fs *RemoteFs) releaseGateWaiter(path string, readyGate *cache.ReadyGate) {
-	if readyGate.Done() {
-		fs.removeGate(path, readyGate)
-		readyGate.Cleanup()
-	}
-}
-
 func (fs *RemoteFs) commitCacheEntryFromPartial(srcPath string, dstPath string, meta cache.EntryMetadata, deleteSource bool) error {
 	_ = fs.cacheStore.Delete(dstPath)
 	fs.cacheStore.Pin(dstPath)
@@ -2127,162 +2212,26 @@ func (fs *RemoteFs) commitCacheEntryFromPartial(srcPath string, dstPath string, 
 	return nil
 }
 
-// ensureFullyCached ensures the remote file at path is fully downloaded to the cache.
-// If a download is already in progress it joins that download; otherwise it starts one.
-// It blocks until all size bytes are available in the cache.
-//
-// A fast-path probe checks whether the last byte of a complete, metadata-matching cache
-// entry is already readable, which means no network round-trip is needed.
-func (fs *RemoteFs) ensureFullyCached(path, uri string, size int64, fh uint64) error {
+// ensureFullyCached blocks until every byte of the current remote version is cached.
+// It joins sparse reads already in progress and downloads only the remaining gaps.
+func (fs *RemoteFs) ensureFullyCached(path string, size int64) error {
 	if size <= 0 {
 		return nil
 	}
-	if node, ok := fs.vfs.fetch(path); ok {
-		meta := cacheEntryMetadata(path, size, node.info.modTime)
-		probe := [1]byte{}
-		if n, _ := fs.cacheStore.ReadComplete(path, meta, probe[:], size-1); n == 1 {
-			return nil
-		}
+	node, ok := fs.vfs.fetch(path)
+	if !ok {
+		return fmt.Errorf("ensureFullyCached: vfs node missing for %s", path)
 	}
-	// Slow path: join or start a download and wait for the full file.
-	readyGate, exists := fs.findOrCreateGate(path)
-	readyGate.Add()
-	defer fs.releaseGateWaiter(path, readyGate)
-	if !exists {
-		node, ok := fs.vfs.fetch(path)
-		if !ok {
-			err := fmt.Errorf("ensureFullyCached: vfs node missing for %s", path)
-			readyGate.Finish(err, 0)
-			fs.removeGate(path, readyGate)
-			return err
-		}
-		go fs.fillCache(context.Background(), path, uri, cacheEntryMetadata(path, size, node.info.modTime), readyGate, fh, false)
-	}
-	if err := readyGate.WaitFor(size); err != nil {
+	meta := cacheEntryMetadata(path, size, node.info.modTime)
+	complete, err := fs.cacheStore.RangeEntryComplete(path, meta)
+	if err != nil || complete {
 		return err
 	}
-	return nil
-}
-
-// peekGate returns the existing ready gate for path if one is present, without creating one.
-// It is used to check whether a download is currently in progress for a given path.
-func (fs *RemoteFs) peekGate(path string) (*cache.ReadyGate, bool) {
-	fs.gatesMu.Lock()
-	defer fs.gatesMu.Unlock()
-	if fs.readyGates == nil {
-		return nil, false
+	ranges := fs.rangeDownloads()
+	if ranges == nil {
+		return errRangeStreamsClosed
 	}
-	s, ok := fs.readyGates[path]
-	return s, ok
-}
-
-func (fs *RemoteFs) fillCache(ctx context.Context, path string, uri string, meta cache.EntryMetadata, readyGate *cache.ReadyGate, fh uint64, cancelOnActiveWrite bool) {
-	ctx, cancel := context.WithCancel(ctx)
-	readyGate.SetTotal(meta.Size)
-	readyGate.SetCancel(cancel)
-	readyGate.SetCleanup(func() {
-		fs.cacheStore.UnpinPartial(path)
-		_ = fs.cacheStore.DeletePartial(path)
-	})
-	defer func() {
-		cancel()
-		fs.removeGate(path, readyGate)
-		if readyGate.Drained() {
-			readyGate.Cleanup()
-		}
-	}()
-	_ = fs.cacheStore.DeletePartial(path)
-	fs.cacheStore.PinPartial(path)
-	transfer := fs.newTransferReporter(events.TransferDirectionDownload, path, meta.Size)
-	transfer.Queued()
-
-	var f files_sdk.File
-	var err error
-	err = fs.ops.WithLimit(ctx, lim.FuseOpDownload, func(ctx context.Context) error {
-		f, err = fs.backend.download(
-			files_sdk.FileDownloadParams{File: files_sdk.File{Path: fs.remotePath(path), DownloadUri: uri}},
-			files_sdk.WithContext(ctx),
-			files_sdk.ResponseOption(func(resp *http.Response) error {
-				if resp.StatusCode != http.StatusPartialContent && resp.StatusCode != http.StatusOK {
-					return files_sdk.APIError()(resp)
-				}
-				defer resp.Body.Close()
-
-				// Get buffer from pool
-				buf := fs.bufferPool.Get()
-				defer fs.bufferPool.Put(buf)
-
-				// while downloading a file from the remote API, write data to the disk cache in chunks and update
-				// the ready gate every cacheWriteSize bytes to signal that data is available for reading.
-				var off int64 = 0
-				for {
-					if cancelOnActiveWrite {
-						if node, ok := fs.vfs.fetch(path); ok && node.hasHydratedWriteSession() {
-							// A public read should not keep serving old remote bytes after
-							// a local write has its baseline. Before hydration completes,
-							// this same download may be supplying that baseline.
-							readyGate.Finish(context.Canceled, off)
-							transfer.Error(context.Canceled, off)
-							return nil
-						}
-					}
-
-					nr, er := resp.Body.Read(buf)
-					if nr > 0 {
-						// TODO: consider altering Write to keep data in memory and periodically flush to disk
-						// to reduce the number of disk writes. This would require more memory usage, but would
-						// improve read and write performance by avoiding constantly opening/closing the file.
-						written, err := fs.cacheStore.WritePartial(path, buf[:nr], off)
-						if err != nil || written != nr {
-							// there was an error writing to the disk cache, or not all bytes that were read from the
-							// remote API were written to the disk cache.
-							cacheErr := fmt.Errorf("error writing to disk cache for %v: %v", path, err)
-							readyGate.Finish(cacheErr, off)
-							transfer.Error(cacheErr, off)
-							return cacheErr
-						}
-						off += int64(written)
-						readyGate.SetAvailable(off)
-						transfer.Progress(int64(written))
-					}
-					if er != nil {
-						if er == io.EOF {
-							if off != meta.Size {
-								err := io.ErrUnexpectedEOF
-								readyGate.Finish(err, off)
-								transfer.Error(err, off)
-								return err
-							}
-							if err := fs.commitCacheEntryFromPartial(path, path, meta, false); err != nil {
-								readyGate.Finish(err, off)
-								transfer.Error(err, off)
-								return err
-							}
-							readyGate.Finish(nil, off)
-							transfer.Complete(off)
-							return nil
-						}
-						readyGate.Finish(er, off)
-						transfer.Error(er, off)
-						return er
-					}
-					// TODO: consider canceling the download if there are no active readers/waiters
-					// after a certain period of time
-				}
-			}),
-		)
-		return err
-	})
-
-	if err != nil {
-		readyGate.Finish(err, -1)
-		transfer.Error(err, transferredBytesUnchanged)
-		return
-	}
-	if f.Size > 0 {
-		localPath, remotePath := fs.paths(path)
-		fs.log.Info("Download complete: %v (%v), size=%v fh=%v", remotePath, localPath, f.Size, fh)
-	}
+	return ranges.EnsureComplete(context.Background(), path, meta)
 }
 
 // rename updates local bookkeeping for a path change.
@@ -2675,6 +2624,9 @@ func (fs *RemoteFs) handleDeleteResult(path string, err error) (errc int) {
 }
 
 func (fs *RemoteFs) finalizeDelete(path string) {
+	unlockRangeMutation := fs.lockRangeMutation(path)
+	defer unlockRangeMutation()
+	fs.cancelRangeDownloads(path)
 	if node, ok := fs.vfs.fetch(path); ok {
 		node.clearPendingVisible()
 		node.markDeleted()
@@ -2866,6 +2818,7 @@ func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, opErr 
 		// A complete listing also invalidates names removed by another client.
 		// Limit removal to nodes that existed before the request started.
 		for _, removedPath := range fs.vfs.removeMissingChildren(previous, childPaths) {
+			fs.cancelRangeDownloads(removedPath)
 			_ = fs.cacheStore.Delete(removedPath)
 		}
 	}
@@ -2943,6 +2896,9 @@ func (fs *RemoteFs) createNode(path string, item files_sdk.File) *fsNode {
 	// best-effort invalidate stale data
 	if prev, ok := fs.vfs.fetch(path); ok && prev.info.nodeType == nodeTypeFile {
 		if prev.info.size != item.Size || !prev.info.modTime.Equal(item.ModTime()) {
+			unlockRangeMutation := fs.lockRangeMutation(path)
+			defer unlockRangeMutation()
+			fs.cancelRangeDownloads(path)
 			_ = fs.cacheStore.Delete(path)
 		}
 		existingCreationTime = prev.info.creationTime

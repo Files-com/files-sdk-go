@@ -53,6 +53,14 @@ func WithLruFlushInterval(d time.Duration) Option {
 	}
 }
 
+// WithRangeFlushBytes sets how many newly written bytes an entry may hold
+// before they are synced and recorded as durable.
+func WithRangeFlushBytes(n int64) Option {
+	return func(dc *DiskCache) {
+		dc.RangeFlushBytes = n
+	}
+}
+
 // WithLogger sets the logger for the cache.
 func WithLogger(logger log.Logger) Option {
 	return func(dc *DiskCache) {

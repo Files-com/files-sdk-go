@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"testing"
 	"time"
@@ -130,7 +131,7 @@ func TestNewDiskCacheRefusesLegacyFileWithOutsideName(t *testing.T) {
 	legacy.StopMaintenance()
 	var payloadFile string
 	err = filepath.WalkDir(filepath.Join(root, "data"), func(p string, d fs.DirEntry, err error) error {
-		if err == nil && !d.IsDir() {
+		if err == nil && !d.IsDir() && strings.HasSuffix(p, "-"+filepath.Base(payloadPath)) {
 			payloadFile = p
 		}
 		return err
@@ -177,6 +178,8 @@ const (
 	payloadPath = "/confidential/payroll.txt"
 	payload     = "cached bytes that only the owner may read"
 	partialPath = "/confidential/in-progress.txt"
+	// downloadedPath is written the way a mounted-drive download writes it.
+	downloadedPath = "/confidential/downloaded.txt"
 )
 
 var payloadMtime = time.Unix(1, 0)
@@ -190,6 +193,11 @@ func populate(t *testing.T, cache *disk.DiskCache) {
 		t.Fatal(err)
 	}
 	if _, err := cache.WritePartial(partialPath, []byte("partial bytes"), 0); err != nil {
+		t.Fatal(err)
+	}
+	downloaded := []byte("downloaded bytes")
+	downloadedMeta := fscache.NewEntryMetadata(downloadedPath, int64(len(downloaded)), payloadMtime)
+	if _, err := cache.WriteCompleteRange(downloadedPath, downloadedMeta, downloaded, 0); err != nil {
 		t.Fatal(err)
 	}
 }

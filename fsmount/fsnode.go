@@ -104,7 +104,7 @@ func (n *fsNode) String() string {
 func (n *fsNode) updateInfo(info fsNodeInfo) {
 	n.statusMu.Lock()
 	defer n.statusMu.Unlock()
-	if n.info.size != info.size {
+	if n.info.size != info.size || !n.info.modTime.Equal(info.modTime) {
 		n.downloadUri = ""
 	}
 	if info.uid == 0 {
@@ -298,19 +298,6 @@ func (n *fsNode) hasActiveWriteSession() bool {
 	n.writeMu.Lock()
 	defer n.writeMu.Unlock()
 	return n.writeSession != nil
-}
-
-func (n *fsNode) hasHydratedWriteSession() bool {
-	n.writeMu.Lock()
-	session := n.writeSession
-	n.writeMu.Unlock()
-	if session == nil {
-		return false
-	}
-
-	session.mu.Lock()
-	defer session.mu.Unlock()
-	return session.hydrated
 }
 
 func (n *fsNode) getWriteSession() *writeSession {
@@ -685,6 +672,12 @@ func (n *fsNode) setDownloadURI(uri string) {
 	n.statusMu.Lock()
 	defer n.statusMu.Unlock()
 	n.downloadUri = uri
+}
+
+func (n *fsNode) getDownloadURI() string {
+	n.statusMu.Lock()
+	defer n.statusMu.Unlock()
+	return n.downloadUri
 }
 
 func (n *fsNode) clearDownloadURI() {

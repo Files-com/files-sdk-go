@@ -5,6 +5,7 @@ package sync
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"golang.org/x/sync/semaphore"
 )
@@ -59,6 +60,17 @@ func NewFuseOpLimiter(perClass map[FuseOpType]int64, global int64) *FuseOpLimite
 // context already holds the class token, it won't acquire again.
 // This method blocks until slots are available.
 func (m *FuseOpLimiter) WithLimit(ctx context.Context, cl FuseOpType, fn func(context.Context) error) error {
+	ctx, release, err := m.Acquire(ctx, cl)
+	if err != nil {
+		return err
+	}
+	defer release()
+	return fn(ctx)
+}
+
+// Acquire holds a slot until release is called. Streaming operations must keep
+// it until their body is closed. The returned release function is idempotent.
+func (m *FuseOpLimiter) Acquire(ctx context.Context, cl FuseOpType) (context.Context, func(), error) {
 	acquire := func(s *semaphore.Weighted, n int64) error {
 		if s == nil || n == 0 {
 			return nil
@@ -68,7 +80,7 @@ func (m *FuseOpLimiter) WithLimit(ctx context.Context, cl FuseOpType, fn func(co
 		}
 		return nil
 	}
-	return m.withLimit(ctx, cl, fn, acquire)
+	return m.acquire(ctx, cl, acquire)
 }
 
 // TryWithLimit applies the class (and global) limit without blocking. Reentrant-safe: if the
@@ -84,14 +96,18 @@ func (m *FuseOpLimiter) TryWithLimit(ctx context.Context, cl FuseOpType, fn func
 		}
 		return nil
 	}
-	return m.withLimit(ctx, cl, fn, acquire)
+	ctx, release, err := m.acquire(ctx, cl, acquire)
+	if err != nil {
+		return err
+	}
+	defer release()
+	return fn(ctx)
 }
 
-// withLimit is the shared implementation for WithLimit and TryWithLimit.
-func (m *FuseOpLimiter) withLimit(ctx context.Context, cl FuseOpType, fn func(context.Context) error, acquire func(*semaphore.Weighted, int64) error) error {
+func (m *FuseOpLimiter) acquire(ctx context.Context, cl FuseOpType, acquire func(*semaphore.Weighted, int64) error) (context.Context, func(), error) {
 	held := getHeld(ctx)
 	if held[cl] {
-		return fn(ctx) // already holds this class; skip acquire
+		return ctx, func() {}, nil // already holds this class; skip acquire
 	}
 
 	// Build the acquisition plan
@@ -108,25 +124,22 @@ func (m *FuseOpLimiter) withLimit(ctx context.Context, cl FuseOpType, fn func(co
 
 	// Always acquire global first to avoid inversion.
 	if err := acquireWithRelease(m.global, 1); err != nil {
-		return err
+		return nil, nil, err
 	}
 	if err := acquireWithRelease(m.class[cl], 1); err != nil {
 		// release global if class acquire fails
 		for i := len(toRelease) - 1; i >= 0; i-- {
 			toRelease[i]()
 		}
-		return err
+		return nil, nil, err
 	}
 
-	// Mark reentrancy and run
-	ctx2 := withHeld(ctx, cl)
-	err := fn(ctx2)
-
-	// Release in LIFO
-	for i := len(toRelease) - 1; i >= 0; i-- {
-		toRelease[i]()
-	}
-	return err
+	release := sync.OnceFunc(func() {
+		for i := len(toRelease) - 1; i >= 0; i-- {
+			toRelease[i]()
+		}
+	})
+	return withHeld(ctx, cl), release, nil
 }
 
 type heldSet map[FuseOpType]bool

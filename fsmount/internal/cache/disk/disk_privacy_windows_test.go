@@ -3,6 +3,7 @@
 package disk_test
 
 import (
+	"errors"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -79,6 +80,10 @@ func TestNewDiskCacheProtectsLegacyStateUnderBroadWindowsACL(t *testing.T) {
 		t.Fatalf("NewDiskCache on legacy state failed: %v", err)
 	}
 	for _, f := range files {
+		if _, err := os.Lstat(f); errors.Is(err, fs.ErrNotExist) {
+			// Opening the cache deletes partial data an earlier process left.
+			continue
+		}
 		if grantsEveryone(t, f) {
 			t.Errorf("%s still grants Everyone access after the cache opened", f)
 		}
