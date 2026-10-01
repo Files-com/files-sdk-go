@@ -179,6 +179,7 @@ type Site struct {
 	SmtpAuthentication                                 string      `json:"smtp_authentication,omitempty" path:"smtp_authentication,omitempty" url:"smtp_authentication,omitempty"`
 	SmtpFrom                                           string      `json:"smtp_from,omitempty" path:"smtp_from,omitempty" url:"smtp_from,omitempty"`
 	SmtpPort                                           int64       `json:"smtp_port,omitempty" path:"smtp_port,omitempty" url:"smtp_port,omitempty"`
+	SmtpSsl                                            string      `json:"smtp_ssl,omitempty" path:"smtp_ssl,omitempty" url:"smtp_ssl,omitempty"`
 	SmtpUsername                                       string      `json:"smtp_username,omitempty" path:"smtp_username,omitempty" url:"smtp_username,omitempty"`
 	SessionExpiryMinutes                               int64       `json:"session_expiry_minutes,omitempty" path:"session_expiry_minutes,omitempty" url:"session_expiry_minutes,omitempty"`
 	SnapshotSharingEnabled                             *bool       `json:"snapshot_sharing_enabled,omitempty" path:"snapshot_sharing_enabled,omitempty" url:"snapshot_sharing_enabled,omitempty"`
@@ -368,6 +369,7 @@ type SiteUpdateParams struct {
 	SmtpFrom                                           string      `url:"smtp_from,omitempty" json:"smtp_from,omitempty" path:"smtp_from"`
 	SmtpUsername                                       string      `url:"smtp_username,omitempty" json:"smtp_username,omitempty" path:"smtp_username"`
 	SmtpPort                                           int64       `url:"smtp_port,omitempty" json:"smtp_port,omitempty" path:"smtp_port"`
+	SmtpSsl                                            string      `url:"smtp_ssl,omitempty" json:"smtp_ssl,omitempty" path:"smtp_ssl"`
 	LdapEnabled                                        *bool       `url:"ldap_enabled,omitempty" json:"ldap_enabled,omitempty" path:"ldap_enabled"`
 	LdapType                                           string      `url:"ldap_type,omitempty" json:"ldap_type,omitempty" path:"ldap_type"`
 	LdapHost                                           string      `url:"ldap_host,omitempty" json:"ldap_host,omitempty" path:"ldap_host"`
