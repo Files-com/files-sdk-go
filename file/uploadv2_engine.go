@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -557,7 +558,13 @@ func (e *uploadV2Engine) run(ctx context.Context) (UploadResumable, error) {
 		cancelParts(result.err)
 	}
 	if allErrors == nil && partCtx.Err() != nil {
-		allErrors = context.Cause(partCtx)
+		// Callers may cancel with their own cause, e.g. io.EOF when the desktop
+		// app disconnects. Keep the context error in the chain so the file ends
+		// as canceled instead of failing with that cause.
+		allErrors = partCtx.Err()
+		if cause := context.Cause(partCtx); !errors.Is(cause, allErrors) {
+			allErrors = fmt.Errorf("%w: %w", allErrors, cause)
+		}
 	}
 
 	if allErrors != nil {

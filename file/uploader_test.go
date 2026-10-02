@@ -135,6 +135,40 @@ func TestUploadV2NetworkFailureIsNotCanceled(t *testing.T) {
 	require.ErrorContains(t, upload.Err(), "status code: 503")
 }
 
+func TestUploadV2CancelWithCauseIsCanceled(t *testing.T) {
+	server := (&MockAPIServer{T: t}).Do()
+	defer server.Shutdown()
+
+	// Callers cancel jobs with their own cause, e.g. io.EOF when the desktop app
+	// closes its helper connection. Resuming skips begin_upload, so the upload
+	// engine is the first to see the canceled context.
+	ctx, cancel := context.WithCancelCause(context.Background())
+	cancel(io.EOF)
+	_, err := server.Client().UploadWithResume(
+		UploadWithV2(),
+		UploadWithContext(ctx),
+		UploadWithReaderAt(bytes.NewReader([]byte("x"))),
+		UploadWithDestinationPath("v2-cancel-cause.txt"),
+		UploadWithSize(1),
+		UploadWithResume(UploadResumable{FileUploadPart: files_sdk.FileUploadPart{
+			HttpMethod:    "POST",
+			Ref:           "v2-cancel-cause-ref",
+			UploadUri:     server.Server.URL + "/upload/v2-cancel-cause.txt?part_number=1",
+			ParallelParts: lib.Bool(true),
+			Expires:       time.Now().Add(time.Hour).Format(time.RFC3339),
+			PartNumber:    1,
+		}}),
+	)
+
+	require.ErrorIs(t, err, context.Canceled)
+
+	job := (&Job{Logger: lib.NullLogger{}}).Init()
+	upload := &UploadStatus{status: status.Uploading, Mutex: &sync.RWMutex{}}
+	job.UpdateStatus(status.Errored, upload, err)
+	require.True(t, upload.Status().Is(status.Canceled))
+	require.NoError(t, upload.Err())
+}
+
 func (m *MockUploader) UploadWithResume(...UploadOption) (UploadResumable, error) {
 	return UploadResumable{}, m.uploadError
 }
