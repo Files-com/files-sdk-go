@@ -8,6 +8,7 @@ import (
 )
 
 type HistoryExport struct {
+	WorkspaceId              int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	Id                       int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	HistoryVersion           string     `json:"history_version,omitempty" path:"history_version,omitempty" url:"history_version,omitempty"`
 	StartAt                  *time.Time `json:"start_at,omitempty" path:"start_at,omitempty" url:"start_at,omitempty"`

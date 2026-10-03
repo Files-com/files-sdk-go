@@ -85,6 +85,7 @@ type Site struct {
 	DomainLetsencryptChain                             string      `json:"domain_letsencrypt_chain,omitempty" path:"domain_letsencrypt_chain,omitempty" url:"domain_letsencrypt_chain,omitempty"`
 	Email                                              string      `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
 	Fedramp                                            *bool       `json:"fedramp,omitempty" path:"fedramp,omitempty" url:"fedramp,omitempty"`
+	FilesComRemoteServerEnabled                        *bool       `json:"files_com_remote_server_enabled,omitempty" path:"files_com_remote_server_enabled,omitempty" url:"files_com_remote_server_enabled,omitempty"`
 	FtpEnabled                                         *bool       `json:"ftp_enabled,omitempty" path:"ftp_enabled,omitempty" url:"ftp_enabled,omitempty"`
 	ReplyToEmail                                       string      `json:"reply_to_email,omitempty" path:"reply_to_email,omitempty" url:"reply_to_email,omitempty"`
 	NonSsoGroupsAllowed                                *bool       `json:"non_sso_groups_allowed,omitempty" path:"non_sso_groups_allowed,omitempty" url:"non_sso_groups_allowed,omitempty"`
@@ -319,6 +320,7 @@ type SiteUpdateParams struct {
 	UserRequestsEnabled                                *bool       `url:"user_requests_enabled,omitempty" json:"user_requests_enabled,omitempty" path:"user_requests_enabled"`
 	UserRequestsNotifyAdmins                           *bool       `url:"user_requests_notify_admins,omitempty" json:"user_requests_notify_admins,omitempty" path:"user_requests_notify_admins"`
 	DavEnabled                                         *bool       `url:"dav_enabled,omitempty" json:"dav_enabled,omitempty" path:"dav_enabled"`
+	FilesComRemoteServerEnabled                        *bool       `url:"files_com_remote_server_enabled,omitempty" json:"files_com_remote_server_enabled,omitempty" path:"files_com_remote_server_enabled"`
 	FtpEnabled                                         *bool       `url:"ftp_enabled,omitempty" json:"ftp_enabled,omitempty" path:"ftp_enabled"`
 	S3CompatibleEndpointEnabled                        *bool       `url:"s3_compatible_endpoint_enabled,omitempty" json:"s3_compatible_endpoint_enabled,omitempty" path:"s3_compatible_endpoint_enabled"`
 	SftpEnabled                                        *bool       `url:"sftp_enabled,omitempty" json:"sftp_enabled,omitempty" path:"sftp_enabled"`
