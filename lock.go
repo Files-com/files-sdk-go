@@ -19,6 +19,7 @@ type Lock struct {
 	AllowAccessByAnyUser *bool  `json:"allow_access_by_any_user,omitempty" path:"allow_access_by_any_user,omitempty" url:"allow_access_by_any_user,omitempty"`
 	UserId               int64  `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	Username             string `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
+	ExpectedToken        string `json:"expected_token,omitempty" path:"expected_token,omitempty" url:"expected_token,omitempty"`
 }
 
 func (l Lock) Identifier() interface{} {
@@ -35,6 +36,8 @@ type LockListForParams struct {
 
 type LockCreateParams struct {
 	Path                 string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	Token                string `url:"token,omitempty" json:"token,omitempty" path:"token"`
+	ExpectedToken        string `url:"expected_token,omitempty" json:"expected_token,omitempty" path:"expected_token"`
 	AllowAccessByAnyUser *bool  `url:"allow_access_by_any_user,omitempty" json:"allow_access_by_any_user,omitempty" path:"allow_access_by_any_user"`
 	Exclusive            *bool  `url:"exclusive,omitempty" json:"exclusive,omitempty" path:"exclusive"`
 	Recursive            *bool  `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
