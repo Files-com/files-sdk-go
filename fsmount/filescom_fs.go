@@ -20,6 +20,12 @@ import (
 const (
 	blockSize = 4096
 
+	// Longest file or folder name the mount reports, in bytes. Files.com only
+	// limits the full path, so this is the usual Linux NAME_MAX. Statfs must
+	// report it: GNOME Files rejects every rename on a filesystem that
+	// reports 0.
+	maxNameLength = 255
+
 	// Maximum time without upload progress before Fsync gives up.
 	// The deadline resets on every transferred chunk, so large but actively
 	// uploading files (e.g. InDesign, Photoshop) never time out prematurely.
@@ -123,6 +129,7 @@ func (fs *Filescomfs) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 	stat.Blocks = totalBytes / blockSize
 	stat.Bfree = freeBytes / blockSize
 	stat.Bavail = freeBytes / blockSize
+	stat.Namemax = maxNameLength
 
 	return errc
 }
