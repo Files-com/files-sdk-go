@@ -863,9 +863,6 @@ func TestDiskCacheClearRemovesUnpinnedAndDefersPinnedEntry(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewDiskCache failed: %v", err)
 	}
-	cache.StartMaintenance()
-	defer cache.StopMaintenance()
-
 	if _, err := cache.Write("/unpinned.txt", []byte("unpinned"), 0); err != nil {
 		t.Fatalf("Write unpinned entry failed: %v", err)
 	}
@@ -877,6 +874,10 @@ func TestDiskCacheClearRemovesUnpinnedAndDefersPinnedEntry(t *testing.T) {
 		t.Fatalf("Commit pinned entry failed: %v", err)
 	}
 	cache.Pin("/pinned.txt")
+
+	// Finish the fixture before maintenance can remove uncommitted entries.
+	cache.StartMaintenance()
+	defer cache.StopMaintenance()
 
 	if err := cache.Clear(); err != nil {
 		t.Fatalf("Clear failed: %v", err)

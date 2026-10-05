@@ -518,6 +518,14 @@ func (d *DownloadParts) downloadFile() error {
 		d.FileInfo = sizeTrustInfo
 	}
 
+	// A full response that states no size, and advertises no download request
+	// status for Close to confirm one, has no size to compare: its body ended
+	// without a read error, and the metadata size may be stale. A resumed range
+	// is still compared, because it asked only for bytes up to the metadata size
+	// and its end is not the end of the source.
+	if d.startOffset == 0 && ok && sizeTrustInfo.SizeTrust() == UntrustedSizeValue {
+		return nil
+	}
 	if d.FileInfo.Size() != atomic.LoadInt64(&d.totalWritten) {
 		return fmt.Errorf("server reported size does not match downloaded file. - expected: %v, actual: %v", d.FileInfo.Size(), atomic.LoadInt64(&d.totalWritten))
 	}

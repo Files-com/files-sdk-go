@@ -218,11 +218,13 @@ func parseSize(response *http.Response) (size int64, sizeTrust SizeTrust) {
 		return
 	}
 
-	// For some remote mounts file size information cannot be trusted and will not be returned.
-	// In order to ensure the total file was received after a download `Client{}.DownloadRequestStatus` should be called.
-	sizeTrust = UntrustedSizeValue
-
-	return
+	// The response states no size, like a chunked stream from a source that
+	// cannot know its length. Its size is -1, as net/http reports an unknown
+	// ContentLength, so it stays distinct from a stated empty size. A full
+	// response is complete when its body ends without an error. A download
+	// request status, when the response advertises one, is checked on Close
+	// and can fail the download or confirm its size; it is not required.
+	return -1, UntrustedSizeValue
 }
 
 func parseMaxConnections(response *http.Response) int {

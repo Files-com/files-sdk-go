@@ -68,6 +68,10 @@ type sizeFixture struct {
 	// Content-Range that states no byte coverage.
 	unsatisfiedContentRangeOnResponse int
 	shortBody                         bool // send half of the promised bytes
+	// unknownLength streams transfer responses chunked, without Content-Length,
+	// a range total or a download request id, like a source that cannot state
+	// its size.
+	unknownLength bool
 	// rejectAs selects the 409 body: "" for the typed download_source_changed
 	// JSON, "text" for plain text that merely mentions the token, "other" for a
 	// different typed JSON error.
@@ -175,6 +179,9 @@ func (f *sizeFixture) serveTransfer(w http.ResponseWriter, r *http.Request) {
 		} else {
 			w.Header().Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", start, end, total))
 		}
+		if f.unknownLength {
+			w.Header().Set("Content-Range", fmt.Sprintf("bytes %d-%d/*", start, end))
+		}
 	}
 	length := end - start + 1
 	send := length
@@ -190,8 +197,15 @@ func (f *sizeFixture) serveTransfer(w http.ResponseWriter, r *http.Request) {
 	// its headers. Each response keeps the source generation it started with.
 	w.Header().Set("Content-Type", "application/octet-stream")
 	w.Header().Set("Accept-Ranges", "bytes")
-	w.Header().Set("Content-Length", strconv.FormatInt(length, 10))
+	if !f.unknownLength {
+		w.Header().Set("Content-Length", strconv.FormatInt(length, 10))
+	}
 	w.WriteHeader(code)
+	if f.unknownLength {
+		// Sending the headers before any byte keeps the server from computing a
+		// Content-Length for a small body.
+		w.(http.Flusher).Flush()
+	}
 	if !transfer {
 		return
 	}
@@ -207,6 +221,11 @@ func (f *sizeFixture) serveTransfer(w http.ResponseWriter, r *http.Request) {
 		written += n
 	}
 	if send != length {
+		if f.unknownLength {
+			// A chunked body ends short only when the connection drops before
+			// the final chunk.
+			panic(http.ErrAbortHandler)
+		}
 		return // the connection closes short of Content-Length
 	}
 	f.mu.Lock()
@@ -231,14 +250,18 @@ func (f *sizeFixture) download(t *testing.T, run sizeFixtureRun) (*Job, string) 
 	return f.downloadTo(t, t.TempDir(), run)
 }
 
-func (f *sizeFixture) downloadTo(t *testing.T, dir string, run sizeFixtureRun) (*Job, string) {
-	dest := filepath.Join(dir, "output.bin")
-	config := files_sdk.Config{
+func (f *sizeFixture) config() files_sdk.Config {
+	return files_sdk.Config{
 		APIKey:                 "fixture-only-not-a-real-key",
 		EndpointOverride:       f.url,
 		DisableDirectTransfers: true,
 		Logger:                 log.New(io.Discard, "", 0),
 	}.Init()
+}
+
+func (f *sizeFixture) downloadTo(t *testing.T, dir string, run sizeFixtureRun) (*Job, string) {
+	dest := filepath.Join(dir, "output.bin")
+	config := f.config()
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 	job := (&Client{Config: config}).Downloader(DownloaderParams{
@@ -344,6 +367,102 @@ func TestDownloadStaleMetadataUsesTransferSize(t *testing.T) {
 			assert.Equal(t, 1, lifecycles, "a stable source needs one download request")
 			assert.Empty(t, rejected)
 			assert.ElementsMatch(t, tc.ranges, fixture.ranges(), "transfer requests must follow the transfer size, not the metadata")
+		})
+	}
+}
+
+func TestDownloadUnknownTransferLength(t *testing.T) {
+	// A transfer that states no size and advertises no download request status
+	// is complete when its HTTP framing ends, whatever size the metadata reports.
+	for _, tc := range []struct {
+		name     string
+		metadata int64
+		run      sizeFixtureRun
+	}{
+		{"metadata matches the transfer", sizeFixtureMiB, sizeFixtureRun{}},
+		{"metadata zero", 0, sizeFixtureRun{}},
+		{"single stream metadata larger than the transfer", 20 * sizeFixtureMiB, sizeFixtureRun{singleStream: true}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			fixture := newSizeFixture(t, tc.metadata, sizeFixtureMiB)
+			fixture.unknownLength = true
+			job, dest := fixture.download(t, tc.run)
+
+			require.NoError(t, job.Statuses[0].Err())
+			assert.Equal(t, status.Complete, job.Statuses[0].Status())
+			fixture.requireExactOutput(t, dest)
+			assert.Equal(t, sizeFixtureMiB, job.Statuses[0].Size(), "reported size must be the received size")
+			assert.Equal(t, sizeFixtureMiB, job.TransferBytes())
+			assert.Equal(t, []string{""}, fixture.ranges())
+		})
+	}
+
+	t.Run("connection dropped before the final chunk fails", func(t *testing.T) {
+		fixture := newSizeFixture(t, sizeFixtureMiB, sizeFixtureMiB)
+		fixture.unknownLength = true
+		fixture.shortBody = true
+		job, dest := fixture.download(t, sizeFixtureRun{})
+
+		require.Error(t, job.Statuses[0].Err())
+		requireNoOutput(t, dest)
+	})
+
+	t.Run("resume restarts instead of ending at the metadata size", func(t *testing.T) {
+		// A resumed range asks only for bytes up to the metadata size, so the end
+		// of its body is not the end of the source.
+		fixture := newSizeFixture(t, sizeFixtureMiB, 2*sizeFixtureMiB)
+		fixture.unknownLength = true
+		dir := t.TempDir()
+		prefix := make([]byte, sizeFixtureMiB/2)
+		for i := range prefix {
+			prefix[i] = sizeFixtureByte(0, int64(i))
+		}
+		writePausedTmpFile(t, filepath.Join(dir, "output.bin"), prefix)
+		job, dest := fixture.downloadTo(t, dir, sizeFixtureRun{retryCount: 1})
+
+		require.NoError(t, job.Statuses[0].Err())
+		fixture.requireExactOutput(t, dest)
+		assert.Equal(t, 2*sizeFixtureMiB, job.Statuses[0].Size())
+		assert.Equal(t, []string{"bytes=524288-1048575", ""}, fixture.ranges())
+	})
+}
+
+func TestFileStatReportsTheTransferSize(t *testing.T) {
+	// After a transfer response, Stat reports the size that response stated, not
+	// the metadata. A response that states none reports -1, untrusted, so it is
+	// never mistaken for a stated empty file.
+	for _, tc := range []struct {
+		name          string
+		size          int64
+		unknownLength bool
+		ranged        bool
+		wantSize      int64
+		wantTrust     SizeTrust
+	}{
+		{"full response with a length", 3000, false, false, 3000, TrustedSizeValue},
+		{"empty full response", 0, false, false, 0, TrustedSizeValue},
+		{"full response without a length", 3000, true, false, -1, UntrustedSizeValue},
+		{"range without a total", 3000, true, true, -1, UntrustedSizeValue},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			fixture := newSizeFixture(t, 5000, tc.size)
+			fixture.unknownLength = tc.unknownLength
+			opened, err := (&FS{Context: context.Background()}).Init(fixture.config(), false).Open("fixture.bin")
+			require.NoError(t, err)
+			remote := opened.(*File)
+			body := io.ReadCloser(remote)
+			if tc.ranged {
+				body, err = remote.ReaderRange(0, 999)
+				require.NoError(t, err)
+			}
+			_, err = io.Copy(io.Discard, body)
+			require.NoError(t, err)
+			require.NoError(t, body.Close())
+
+			info, err := remote.Stat()
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantSize, info.Size())
+			assert.Equal(t, tc.wantTrust, info.(UntrustedSize).SizeTrust())
 		})
 	}
 }

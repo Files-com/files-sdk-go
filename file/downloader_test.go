@@ -420,6 +420,29 @@ expected 4194304 bytes sent 5242880 received`)
 		assert.GreaterOrEqual(t, lo.Count[string](transferBytes, "bytes"), 2, "After error transfer bytes are set to zero")
 	})
 
+	t.Run("small file with no size - when server has failed request status", func(t *testing.T) {
+		// A single stream that states no size completes at the end of its body,
+		// so the advertised request status is what reports the failure.
+		root := t.TempDir()
+		server := (&MockAPIServer{T: t}).Do()
+		defer server.Shutdown()
+		client := server.Client()
+		server.MockFiles["small-file-with-no-size.txt"] = mockFile{
+			SizeTrust:           UntrustedSizeValue,
+			File:                files_sdk.File{Size: 1024 * 1024},
+			ForceRequestStatus:  "failed",
+			ForceRequestMessage: "problem",
+		}
+
+		job := client.Downloader(DownloaderParams{RemotePath: "small-file-with-no-size.txt", LocalPath: root + "/"})
+		job.Start()
+		job.Wait()
+		require.Len(t, job.Statuses, 1)
+		require.EqualError(t, job.Statuses[0].Err(), "problem")
+		_, err := os.Stat(filepath.Join(root, "small-file-with-no-size.txt"))
+		require.ErrorIs(t, err, fs.ErrNotExist)
+	})
+
 	t.Run("large file with bad size info real size is bigger", func(t *testing.T) {
 		root := t.TempDir()
 		server := (&MockAPIServer{T: t}).Do()
