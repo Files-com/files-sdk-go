@@ -924,6 +924,7 @@ if err != nil {
 | `rate-limited/too-many-requests` | `ErrTooManyRequests` | Too Many Requests |
 | `rate-limited/too-many-shares` | `ErrTooManyShares` | Too Many Shares |
 | `service-unavailable/automations-unavailable` | `ErrAutomationsUnavailable` | Automations Unavailable |
+| `service-unavailable/lock-operation-busy` | `ErrLockOperationBusy` | Lock Operation Busy |
 | `service-unavailable/migration-in-progress` | `ErrMigrationInProgress` | Migration In Progress |
 | `service-unavailable/search-unavailable` | `ErrSearchUnavailable` | Search Unavailable |
 | `service-unavailable/site-disabled` | `ErrSiteDisabled` | Site Disabled |

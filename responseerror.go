@@ -236,6 +236,7 @@ const (
 	ErrTooManyRequests                                                        ResponseErrorType = "rate-limited/too-many-requests"
 	ErrTooManyShares                                                          ResponseErrorType = "rate-limited/too-many-shares"
 	ErrAutomationsUnavailable                                                 ResponseErrorType = "service-unavailable/automations-unavailable"
+	ErrLockOperationBusy                                                      ResponseErrorType = "service-unavailable/lock-operation-busy"
 	ErrMigrationInProgress                                                    ResponseErrorType = "service-unavailable/migration-in-progress"
 	ErrSearchUnavailable                                                      ResponseErrorType = "service-unavailable/search-unavailable"
 	ErrSiteDisabled                                                           ResponseErrorType = "service-unavailable/site-disabled"

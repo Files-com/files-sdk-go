@@ -41,6 +41,7 @@ type LockCreateParams struct {
 	AllowAccessByAnyUser *bool  `url:"allow_access_by_any_user,omitempty" json:"allow_access_by_any_user,omitempty" path:"allow_access_by_any_user"`
 	Exclusive            *bool  `url:"exclusive,omitempty" json:"exclusive,omitempty" path:"exclusive"`
 	Recursive            *bool  `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
+	Owner                string `url:"owner,omitempty" json:"owner,omitempty" path:"owner"`
 	Timeout              int64  `url:"timeout,omitempty" json:"timeout,omitempty" path:"timeout"`
 }
 
