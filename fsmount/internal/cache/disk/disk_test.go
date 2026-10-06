@@ -620,9 +620,6 @@ func TestDiskCacheMaintenance(t *testing.T) {
 		t.Fatalf("NewDiskCache failed: %v", err)
 	}
 
-	// Start maintenance
-	cache.StartMaintenance()
-
 	// Write some data
 	path := "/test/file.txt"
 	data := []byte("hello world")
@@ -633,6 +630,9 @@ func TestDiskCacheMaintenance(t *testing.T) {
 	if err := cache.Commit(path, fscache.NewEntryMetadata(path, int64(len(data)), time.Now())); err != nil {
 		t.Fatalf("Commit failed: %v", err)
 	}
+
+	// Start maintenance
+	cache.StartMaintenance()
 
 	// Wait for at least one maintenance cycle
 	time.Sleep(200 * time.Millisecond)

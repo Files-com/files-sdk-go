@@ -149,20 +149,50 @@ func TestRangeStreamsWaitingReadTakesSlotFromReadAhead(t *testing.T) {
 	h := newStreamHarness(t, source, policy)
 	other := h.addFile("/other")
 	third := h.addFile("/third")
+	waitFor := func(what string, done func() bool) {
+		t.Helper()
+		deadline := time.Now().Add(10 * time.Second)
+		for !done() {
+			if time.Now().After(deadline) {
+				t.Fatalf("timed out waiting for %s", what)
+			}
+			time.Sleep(5 * time.Millisecond)
+		}
+	}
 
+	// Each of the two files gets a range stream started by a waiting read, so
+	// it takes a free slot and keeps it as read-ahead once that read is served.
+	// The probe a first read starts has to finish first: a read past its middle
+	// while it still held a slot would follow it with read-ahead, which is
+	// dropped when no slot is free.
+	//
+	// Both range streams start, and so pause and start their pause timers,
+	// after setupStarted. A stream paused for policy.pauseTimeout ends idle and
+	// is counted as canceled too, so the cancellation below shows a preemption
+	// only if it was counted within that long of setupStarted.
+	setupStarted := time.Now()
 	for _, meta := range []cache.EntryMetadata{h.meta, other} {
 		h.mustReadFile(meta, 1, 0, 1<<20)
+		waitFor(meta.Path+"'s probe to finish", func() bool { return h.streams.streamCountFor(meta.Path) == 0 })
 		h.mustReadFile(meta, 1, 1<<20, 1<<20)
+		h.mustReadFile(meta, 1, 2<<20, 1<<20)
 	}
-	source.waitStable(t)
+	waitFor("both files' read-ahead to pause holding a slot", func() bool {
+		return h.streams.holdsPausedReadAhead(h.meta.Path) && h.streams.holdsPausedReadAhead(other.Path)
+	})
+	before := h.streams.diagnosticsSnapshot().RequestsCanceled
 
 	started := time.Now()
 	h.mustReadFile(third, 2, 0, 4096)
 	if elapsed := time.Since(started); elapsed > time.Second {
 		t.Fatalf("waiting read took %v with every slot held by read-ahead", elapsed)
 	}
-	if canceled := h.streams.diagnosticsSnapshot().RequestsCanceled; canceled == 0 {
-		t.Fatal("no read-ahead request was stopped to make room")
+	after := h.streams.diagnosticsSnapshot()
+	if elapsed := time.Since(setupStarted); elapsed >= policy.pauseTimeout {
+		t.Fatalf("setup and the waiting read took %v, not under the %v pause timeout, so a read-ahead request may have ended idle instead of being stopped for the read", elapsed, policy.pauseTimeout)
+	}
+	if after.RequestsCanceled == before {
+		t.Fatalf("no read-ahead request was stopped to make room: %v", after.RecentJobs)
 	}
 }
 
@@ -688,6 +718,32 @@ func (s *rangeStreams) hasActiveStreams() bool {
 	for _, file := range s.files {
 		for _, stream := range file.streams {
 			if stream.active() {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// streamCountFor reports how many streams path has.
+func (s *rangeStreams) streamCountFor(path string) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if file := s.files[path]; file != nil {
+		return len(file.streams)
+	}
+	return 0
+}
+
+// holdsPausedReadAhead reports whether path has a range stream holding a
+// download slot that no read is waiting on, paused ahead of its reader with
+// its request still open.
+func (s *rangeStreams) holdsPausedReadAhead(path string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if file := s.files[path]; file != nil {
+		for _, stream := range file.streams {
+			if stream.kind == streamRange && stream.active() && stream.hasSlot && stream.waiters == 0 && stream.paused {
 				return true
 			}
 		}
