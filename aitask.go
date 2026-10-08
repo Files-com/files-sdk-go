@@ -68,16 +68,19 @@ func (u AiTaskTriggerEnum) Enum() map[string]AiTaskTriggerEnum {
 	}
 }
 
+// AiTaskListParams contains the request parameters for this operation.
 type AiTaskListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// AiTaskFindParams contains the request parameters for this operation.
 type AiTaskFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// AiTaskCreateParams contains the request parameters for this operation.
 type AiTaskCreateParams struct {
 	Description        string                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	Disabled           *bool                   `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
@@ -99,11 +102,14 @@ type AiTaskCreateParams struct {
 	WorkspaceId        int64                   `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// AiTaskManualRunParams contains the request parameters for this operation.
+//
 // Manually Run AI Task
 type AiTaskManualRunParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// AiTaskUpdateParams contains the request parameters for this operation.
 type AiTaskUpdateParams struct {
 	Id                 int64                   `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Description        string                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
@@ -126,6 +132,7 @@ type AiTaskUpdateParams struct {
 	WorkspaceId        int64                   `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// AiTaskDeleteParams contains the request parameters for this operation.
 type AiTaskDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

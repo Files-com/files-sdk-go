@@ -23,6 +23,7 @@ func (b BundleNotification) Identifier() interface{} {
 
 type BundleNotificationCollection []BundleNotification
 
+// BundleNotificationListParams contains the request parameters for this operation.
 type BundleNotificationListParams struct {
 	UserId   int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy   interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -31,10 +32,12 @@ type BundleNotificationListParams struct {
 	ListParams
 }
 
+// BundleNotificationFindParams contains the request parameters for this operation.
 type BundleNotificationFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// BundleNotificationCreateParams contains the request parameters for this operation.
 type BundleNotificationCreateParams struct {
 	UserId               int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	BundleId             int64 `url:"bundle_id" json:"bundle_id" path:"bundle_id"`
@@ -43,12 +46,14 @@ type BundleNotificationCreateParams struct {
 	NotifyOnUpload       *bool `url:"notify_on_upload,omitempty" json:"notify_on_upload,omitempty" path:"notify_on_upload"`
 }
 
+// BundleNotificationUpdateParams contains the request parameters for this operation.
 type BundleNotificationUpdateParams struct {
 	Id                   int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	NotifyOnRegistration *bool `url:"notify_on_registration,omitempty" json:"notify_on_registration,omitempty" path:"notify_on_registration"`
 	NotifyOnUpload       *bool `url:"notify_on_upload,omitempty" json:"notify_on_upload,omitempty" path:"notify_on_upload"`
 }
 
+// BundleNotificationDeleteParams contains the request parameters for this operation.
 type BundleNotificationDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

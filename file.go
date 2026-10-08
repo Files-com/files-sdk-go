@@ -69,6 +69,8 @@ type EtagsParam struct {
 	Part string `url:"part,omitempty" json:"part,omitempty" path:"part"`
 }
 
+// FileDownloadParams contains the request parameters for this operation.
+//
 // Download File
 type FileDownloadParams struct {
 	Path                     string `url:"-,omitempty" json:"-,omitempty" path:"path"`
@@ -80,6 +82,7 @@ type FileDownloadParams struct {
 	File                     File   `url:"-" required:"false" json:"-"`
 }
 
+// FileCreateParams contains the request parameters for this operation.
 type FileCreateParams struct {
 	Path                     string         `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	Action                   string         `url:"action,omitempty" json:"action,omitempty" path:"action"`
@@ -101,6 +104,7 @@ type FileCreateParams struct {
 	ActionAttributes         map[string]any `url:"action_attributes,omitempty" json:"action_attributes,omitempty" path:"action_attributes"`
 }
 
+// FileUpdateParams contains the request parameters for this operation.
 type FileUpdateParams struct {
 	Path           string      `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	CustomMetadata interface{} `url:"custom_metadata,omitempty" json:"custom_metadata,omitempty" path:"custom_metadata"`
@@ -108,11 +112,13 @@ type FileUpdateParams struct {
 	PriorityColor  string      `url:"priority_color,omitempty" json:"priority_color,omitempty" path:"priority_color"`
 }
 
+// FileDeleteParams contains the request parameters for this operation.
 type FileDeleteParams struct {
 	Path      string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	Recursive *bool  `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
 }
 
+// FileFindParams contains the request parameters for this operation.
 type FileFindParams struct {
 	Path              string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	PreviewSize       string `url:"preview_size,omitempty" json:"preview_size,omitempty" path:"preview_size"`
@@ -120,11 +126,15 @@ type FileFindParams struct {
 	WithPriorityColor *bool  `url:"with_priority_color,omitempty" json:"with_priority_color,omitempty" path:"with_priority_color"`
 }
 
+// FileZipListContentsParams contains the request parameters for this operation.
+//
 // List the contents of a ZIP file
 type FileZipListContentsParams struct {
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 }
 
+// FileCopyParams contains the request parameters for this operation.
+//
 // Copy File/Folder
 type FileCopyParams struct {
 	Path          string `url:"-,omitempty" json:"-,omitempty" path:"path"`
@@ -134,6 +144,8 @@ type FileCopyParams struct {
 	Overwrite     *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
+// FileMoveParams contains the request parameters for this operation.
+//
 // Move File/Folder
 type FileMoveParams struct {
 	Path        string `url:"-,omitempty" json:"-,omitempty" path:"path"`
@@ -141,6 +153,8 @@ type FileMoveParams struct {
 	Overwrite   *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
+// FileTransformParams contains the request parameters for this operation.
+//
 // Transform a file and save the output to a destination path
 type FileTransformParams struct {
 	Path          string `url:"-,omitempty" json:"-,omitempty" path:"path"`
@@ -153,6 +167,8 @@ type FileTransformParams struct {
 	Overwrite     *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
+// FileGpgDecryptParams contains the request parameters for this operation.
+//
 // Decrypt a GPG-encrypted file and save it to a destination path
 type FileGpgDecryptParams struct {
 	Path              string  `url:"-,omitempty" json:"-,omitempty" path:"path"`
@@ -164,6 +180,8 @@ type FileGpgDecryptParams struct {
 	Overwrite         *bool   `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
+// FileGpgEncryptParams contains the request parameters for this operation.
+//
 // Encrypt a file with GPG and save it to a destination path
 type FileGpgEncryptParams struct {
 	Path            string  `url:"-,omitempty" json:"-,omitempty" path:"path"`
@@ -175,6 +193,8 @@ type FileGpgEncryptParams struct {
 	Overwrite       *bool   `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
+// FileUnzipParams contains the request parameters for this operation.
+//
 // Extract a ZIP file to a destination folder
 type FileUnzipParams struct {
 	Path        string `url:"path" json:"path" path:"path"`
@@ -183,12 +203,15 @@ type FileUnzipParams struct {
 	Overwrite   *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
+// FileZipParams contains the request parameters for this operation.
 type FileZipParams struct {
 	Paths       []string `url:"paths" json:"paths" path:"paths"`
 	Destination string   `url:"destination" json:"destination" path:"destination"`
 	Overwrite   *bool    `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
+// FileBeginUploadParams contains the request parameters for this operation.
+//
 // Begin File Upload
 type FileBeginUploadParams struct {
 	Path                     string `url:"-,omitempty" json:"-,omitempty" path:"path"`

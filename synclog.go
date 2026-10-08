@@ -28,6 +28,7 @@ func (s SyncLog) Identifier() interface{} {
 
 type SyncLogCollection []SyncLog
 
+// SyncLogListParams contains the request parameters for this operation.
 type SyncLogListParams struct {
 	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt   interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`

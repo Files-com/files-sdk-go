@@ -23,6 +23,7 @@ func (r Request) Identifier() interface{} {
 
 type RequestCollection []Request
 
+// RequestListParams contains the request parameters for this operation.
 type RequestListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Mine   *bool       `url:"mine,omitempty" json:"mine,omitempty" path:"mine"`
@@ -30,6 +31,7 @@ type RequestListParams struct {
 	ListParams
 }
 
+// RequestGetFolderParams contains the request parameters for this operation.
 type RequestGetFolderParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Mine   *bool       `url:"mine,omitempty" json:"mine,omitempty" path:"mine"`
@@ -37,6 +39,7 @@ type RequestGetFolderParams struct {
 	ListParams
 }
 
+// RequestCreateParams contains the request parameters for this operation.
 type RequestCreateParams struct {
 	Path        string `url:"path" json:"path" path:"path"`
 	Destination string `url:"destination" json:"destination" path:"destination"`
@@ -44,6 +47,7 @@ type RequestCreateParams struct {
 	GroupIds    string `url:"group_ids,omitempty" json:"group_ids,omitempty" path:"group_ids"`
 }
 
+// RequestDeleteParams contains the request parameters for this operation.
 type RequestDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

@@ -21,6 +21,7 @@ func (r RemoteBandwidthSnapshot) Identifier() interface{} {
 
 type RemoteBandwidthSnapshotCollection []RemoteBandwidthSnapshot
 
+// RemoteBandwidthSnapshotListParams contains the request parameters for this operation.
 type RemoteBandwidthSnapshotListParams struct {
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`

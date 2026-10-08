@@ -26,6 +26,7 @@ type InboxRegistration struct {
 
 type InboxRegistrationCollection []InboxRegistration
 
+// InboxRegistrationListParams contains the request parameters for this operation.
 type InboxRegistrationListParams struct {
 	FolderBehaviorId int64 `url:"folder_behavior_id,omitempty" json:"folder_behavior_id,omitempty" path:"folder_behavior_id"`
 	ListParams

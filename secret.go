@@ -41,6 +41,7 @@ func (u SecretSecretTypeEnum) Enum() map[string]SecretSecretTypeEnum {
 	}
 }
 
+// SecretListParams contains the request parameters for this operation.
 type SecretListParams struct {
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -48,10 +49,12 @@ type SecretListParams struct {
 	ListParams
 }
 
+// SecretFindParams contains the request parameters for this operation.
 type SecretFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// SecretCreateParams contains the request parameters for this operation.
 type SecretCreateParams struct {
 	Name        string               `url:"name" json:"name" path:"name"`
 	Description string               `url:"description,omitempty" json:"description,omitempty" path:"description"`
@@ -60,6 +63,7 @@ type SecretCreateParams struct {
 	WorkspaceId int64                `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// SecretUpdateParams contains the request parameters for this operation.
 type SecretUpdateParams struct {
 	Id          int64                `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name        string               `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -68,6 +72,7 @@ type SecretUpdateParams struct {
 	Metadata    interface{}          `url:"metadata,omitempty" json:"metadata,omitempty" path:"metadata"`
 }
 
+// SecretDeleteParams contains the request parameters for this operation.
 type SecretDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

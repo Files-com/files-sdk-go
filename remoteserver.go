@@ -231,6 +231,7 @@ func (u RemoteServerSslEnum) Enum() map[string]RemoteServerSslEnum {
 	}
 }
 
+// RemoteServerListParams contains the request parameters for this operation.
 type RemoteServerListParams struct {
 	UserId       int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -239,19 +240,24 @@ type RemoteServerListParams struct {
 	ListParams
 }
 
+// RemoteServerFindParams contains the request parameters for this operation.
 type RemoteServerFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// RemoteServerAgentNodesParams contains the request parameters for this operation.
+//
 // List Files.com Agent nodes
 type RemoteServerAgentNodesParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// RemoteServerFindConfigurationFileParams contains the request parameters for this operation.
 type RemoteServerFindConfigurationFileParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// RemoteServerCreateParams contains the request parameters for this operation.
 type RemoteServerCreateParams struct {
 	UserId                                  int64                                                  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Password                                string                                                 `url:"password,omitempty" json:"password,omitempty" path:"password"`
@@ -340,11 +346,14 @@ type RemoteServerCreateParams struct {
 	WorkspaceId                             int64                                                  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// RemoteServerAgentPushUpdateParams contains the request parameters for this operation.
+//
 // Push update to Files Agent
 type RemoteServerAgentPushUpdateParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// RemoteServerUpdateParams contains the request parameters for this operation.
 type RemoteServerUpdateParams struct {
 	Id                                      int64                                                  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Password                                string                                                 `url:"password,omitempty" json:"password,omitempty" path:"password"`
@@ -432,6 +441,7 @@ type RemoteServerUpdateParams struct {
 	WasabiRegion                            string                                                 `url:"wasabi_region,omitempty" json:"wasabi_region,omitempty" path:"wasabi_region"`
 }
 
+// RemoteServerDeleteParams contains the request parameters for this operation.
 type RemoteServerDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

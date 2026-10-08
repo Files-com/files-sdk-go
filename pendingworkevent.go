@@ -24,6 +24,7 @@ func (p PendingWorkEvent) Identifier() interface{} {
 
 type PendingWorkEventCollection []PendingWorkEvent
 
+// PendingWorkEventListParams contains the request parameters for this operation.
 type PendingWorkEventListParams struct {
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -34,6 +35,7 @@ type PendingWorkEventListParams struct {
 	ListParams
 }
 
+// PendingWorkEventFindParams contains the request parameters for this operation.
 type PendingWorkEventFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

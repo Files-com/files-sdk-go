@@ -36,16 +36,19 @@ func (u KeyLifecycleRuleKeyTypeEnum) Enum() map[string]KeyLifecycleRuleKeyTypeEn
 	}
 }
 
+// KeyLifecycleRuleListParams contains the request parameters for this operation.
 type KeyLifecycleRuleListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// KeyLifecycleRuleFindParams contains the request parameters for this operation.
 type KeyLifecycleRuleFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// KeyLifecycleRuleCreateParams contains the request parameters for this operation.
 type KeyLifecycleRuleCreateParams struct {
 	ApplyToAllWorkspaces *bool                       `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
 	ExpirationDays       int64                       `url:"expiration_days,omitempty" json:"expiration_days,omitempty" path:"expiration_days"`
@@ -55,6 +58,7 @@ type KeyLifecycleRuleCreateParams struct {
 	WorkspaceId          int64                       `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// KeyLifecycleRuleUpdateParams contains the request parameters for this operation.
 type KeyLifecycleRuleUpdateParams struct {
 	Id                   int64                       `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	ApplyToAllWorkspaces *bool                       `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
@@ -65,6 +69,7 @@ type KeyLifecycleRuleUpdateParams struct {
 	WorkspaceId          int64                       `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// KeyLifecycleRuleDeleteParams contains the request parameters for this operation.
 type KeyLifecycleRuleDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

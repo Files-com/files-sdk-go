@@ -27,6 +27,7 @@ func (p PublicHostingRequestLog) Identifier() interface{} {
 
 type PublicHostingRequestLogCollection []PublicHostingRequestLog
 
+// PublicHostingRequestLogListParams contains the request parameters for this operation.
 type PublicHostingRequestLogListParams struct {
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`

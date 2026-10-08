@@ -39,14 +39,17 @@ func (u ChildSiteManagementPolicyPolicyTypeEnum) Enum() map[string]ChildSiteMana
 	}
 }
 
+// ChildSiteManagementPolicyListParams contains the request parameters for this operation.
 type ChildSiteManagementPolicyListParams struct {
 	ListParams
 }
 
+// ChildSiteManagementPolicyFindParams contains the request parameters for this operation.
 type ChildSiteManagementPolicyFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// ChildSiteManagementPolicyCreateParams contains the request parameters for this operation.
 type ChildSiteManagementPolicyCreateParams struct {
 	Value            interface{}                             `url:"value,omitempty" json:"value,omitempty" path:"value"`
 	SkipChildSiteIds []int64                                 `url:"skip_child_site_ids,omitempty" json:"skip_child_site_ids,omitempty" path:"skip_child_site_ids"`
@@ -57,6 +60,7 @@ type ChildSiteManagementPolicyCreateParams struct {
 	Description      string                                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
 }
 
+// ChildSiteManagementPolicyUpdateParams contains the request parameters for this operation.
 type ChildSiteManagementPolicyUpdateParams struct {
 	Id               int64                                   `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Value            interface{}                             `url:"value,omitempty" json:"value,omitempty" path:"value"`
@@ -68,6 +72,7 @@ type ChildSiteManagementPolicyUpdateParams struct {
 	Description      string                                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
 }
 
+// ChildSiteManagementPolicyDeleteParams contains the request parameters for this operation.
 type ChildSiteManagementPolicyDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

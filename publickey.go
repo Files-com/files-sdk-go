@@ -35,6 +35,7 @@ func (p PublicKey) Identifier() interface{} {
 
 type PublicKeyCollection []PublicKey
 
+// PublicKeyListParams contains the request parameters for this operation.
 type PublicKeyListParams struct {
 	UserId     int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -46,10 +47,12 @@ type PublicKeyListParams struct {
 	ListParams
 }
 
+// PublicKeyFindParams contains the request parameters for this operation.
 type PublicKeyFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// PublicKeyCreateParams contains the request parameters for this operation.
 type PublicKeyCreateParams struct {
 	UserId                     int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Title                      string `url:"title" json:"title" path:"title"`
@@ -60,11 +63,13 @@ type PublicKeyCreateParams struct {
 	GenerateLength             int64  `url:"generate_length,omitempty" json:"generate_length,omitempty" path:"generate_length"`
 }
 
+// PublicKeyUpdateParams contains the request parameters for this operation.
 type PublicKeyUpdateParams struct {
 	Id    int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Title string `url:"title" json:"title" path:"title"`
 }
 
+// PublicKeyDeleteParams contains the request parameters for this operation.
 type PublicKeyDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

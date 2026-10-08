@@ -30,6 +30,7 @@ func (s SsoEvent) Identifier() interface{} {
 
 type SsoEventCollection []SsoEvent
 
+// SsoEventListParams contains the request parameters for this operation.
 type SsoEventListParams struct {
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -41,6 +42,7 @@ type SsoEventListParams struct {
 	ListParams
 }
 
+// SsoEventFindParams contains the request parameters for this operation.
 type SsoEventFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

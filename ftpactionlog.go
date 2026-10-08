@@ -36,6 +36,7 @@ func (f FtpActionLog) Identifier() interface{} {
 
 type FtpActionLogCollection []FtpActionLog
 
+// FtpActionLogListParams contains the request parameters for this operation.
 type FtpActionLogListParams struct {
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`

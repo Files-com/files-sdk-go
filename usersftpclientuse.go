@@ -21,6 +21,7 @@ func (u UserSftpClientUse) Identifier() interface{} {
 
 type UserSftpClientUseCollection []UserSftpClientUse
 
+// UserSftpClientUseListParams contains the request parameters for this operation.
 type UserSftpClientUseListParams struct {
 	UserId int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`

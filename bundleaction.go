@@ -29,6 +29,7 @@ func (b BundleAction) Identifier() interface{} {
 
 type BundleActionCollection []BundleAction
 
+// BundleActionListParams contains the request parameters for this operation.
 type BundleActionListParams struct {
 	UserId               int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy               interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`

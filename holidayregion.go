@@ -15,6 +15,7 @@ type HolidayRegion struct {
 
 type HolidayRegionCollection []HolidayRegion
 
+// HolidayRegionGetSupportedParams contains the request parameters for this operation.
 type HolidayRegionGetSupportedParams struct {
 	ListParams
 }

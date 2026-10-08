@@ -31,27 +31,35 @@ func (e ExpectationIncident) Identifier() interface{} {
 
 type ExpectationIncidentCollection []ExpectationIncident
 
+// ExpectationIncidentListParams contains the request parameters for this operation.
 type ExpectationIncidentListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// ExpectationIncidentFindParams contains the request parameters for this operation.
 type ExpectationIncidentFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// ExpectationIncidentResolveParams contains the request parameters for this operation.
+//
 // Resolve an expectation incident
 type ExpectationIncidentResolveParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// ExpectationIncidentSnoozeParams contains the request parameters for this operation.
+//
 // Snooze an expectation incident until a specified time
 type ExpectationIncidentSnoozeParams struct {
 	Id           int64      `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	SnoozedUntil *time.Time `url:"snoozed_until" json:"snoozed_until" path:"snoozed_until"`
 }
 
+// ExpectationIncidentAcknowledgeParams contains the request parameters for this operation.
+//
 // Acknowledge an expectation incident
 type ExpectationIncidentAcknowledgeParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`

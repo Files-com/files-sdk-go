@@ -24,14 +24,17 @@ func (s Snapshot) Identifier() interface{} {
 
 type SnapshotCollection []Snapshot
 
+// SnapshotListParams contains the request parameters for this operation.
 type SnapshotListParams struct {
 	ListParams
 }
 
+// SnapshotFindParams contains the request parameters for this operation.
 type SnapshotFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// SnapshotCreateParams contains the request parameters for this operation.
 type SnapshotCreateParams struct {
 	ExpiresAt   *time.Time `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
 	Name        string     `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -39,11 +42,14 @@ type SnapshotCreateParams struct {
 	WorkspaceId int64      `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// SnapshotFinalizeParams contains the request parameters for this operation.
+//
 // Finalize Snapshot
 type SnapshotFinalizeParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// SnapshotUpdateParams contains the request parameters for this operation.
 type SnapshotUpdateParams struct {
 	Id        int64      `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	ExpiresAt *time.Time `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
@@ -51,6 +57,7 @@ type SnapshotUpdateParams struct {
 	Paths     []string   `url:"paths,omitempty" json:"paths,omitempty" path:"paths"`
 }
 
+// SnapshotDeleteParams contains the request parameters for this operation.
 type SnapshotDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

@@ -63,16 +63,19 @@ func (u SyncTriggerEnum) Enum() map[string]SyncTriggerEnum {
 	}
 }
 
+// SyncListParams contains the request parameters for this operation.
 type SyncListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// SyncFindParams contains the request parameters for this operation.
 type SyncFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// SyncCreateParams contains the request parameters for this operation.
 type SyncCreateParams struct {
 	DeleteEmptyFolders     *bool           `url:"delete_empty_folders,omitempty" json:"delete_empty_folders,omitempty" path:"delete_empty_folders"`
 	Description            string          `url:"description,omitempty" json:"description,omitempty" path:"description"`
@@ -100,16 +103,21 @@ type SyncCreateParams struct {
 	WorkspaceId            int64           `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// SyncDryRunParams contains the request parameters for this operation.
+//
 // Dry Run Sync
 type SyncDryRunParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// SyncManualRunParams contains the request parameters for this operation.
+//
 // Manually Run Sync
 type SyncManualRunParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// SyncUpdateParams contains the request parameters for this operation.
 type SyncUpdateParams struct {
 	Id                     int64           `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	DeleteEmptyFolders     *bool           `url:"delete_empty_folders,omitempty" json:"delete_empty_folders,omitempty" path:"delete_empty_folders"`
@@ -137,6 +145,7 @@ type SyncUpdateParams struct {
 	AlwaysWriteTriggerFile *bool           `url:"always_write_trigger_file,omitempty" json:"always_write_trigger_file,omitempty" path:"always_write_trigger_file"`
 }
 
+// SyncDeleteParams contains the request parameters for this operation.
 type SyncDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

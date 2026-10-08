@@ -39,6 +39,7 @@ func (a AutomationRun) Identifier() interface{} {
 
 type AutomationRunCollection []AutomationRun
 
+// AutomationRunListParams contains the request parameters for this operation.
 type AutomationRunListParams struct {
 	UserId       int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -47,20 +48,26 @@ type AutomationRunListParams struct {
 	ListParams
 }
 
+// AutomationRunFindParams contains the request parameters for this operation.
 type AutomationRunFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// AutomationRunFindNodeParams contains the request parameters for this operation.
 type AutomationRunFindNodeParams struct {
 	Id     int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	NodeId string `url:"node_id" json:"node_id" path:"node_id"`
 }
 
+// AutomationRunCancelParams contains the request parameters for this operation.
+//
 // Cancel Automation Run
 type AutomationRunCancelParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// AutomationRunRerunParams contains the request parameters for this operation.
+//
 // Re-run Automation from Node
 type AutomationRunRerunParams struct {
 	Id     int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`

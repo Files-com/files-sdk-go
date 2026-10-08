@@ -25,15 +25,18 @@ func (f FormFieldSet) Identifier() interface{} {
 
 type FormFieldSetCollection []FormFieldSet
 
+// FormFieldSetListParams contains the request parameters for this operation.
 type FormFieldSetListParams struct {
 	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	ListParams
 }
 
+// FormFieldSetFindParams contains the request parameters for this operation.
 type FormFieldSetFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// FormFieldSetCreateParams contains the request parameters for this operation.
 type FormFieldSetCreateParams struct {
 	UserId      int64                    `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Title       string                   `url:"title,omitempty" json:"title,omitempty" path:"title"`
@@ -44,6 +47,7 @@ type FormFieldSetCreateParams struct {
 	FormFields  []map[string]interface{} `url:"form_fields,omitempty" json:"form_fields,omitempty" path:"form_fields"`
 }
 
+// FormFieldSetUpdateParams contains the request parameters for this operation.
 type FormFieldSetUpdateParams struct {
 	Id          int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Title       string                   `url:"title,omitempty" json:"title,omitempty" path:"title"`
@@ -54,6 +58,7 @@ type FormFieldSetUpdateParams struct {
 	FormFields  []map[string]interface{} `url:"form_fields,omitempty" json:"form_fields,omitempty" path:"form_fields"`
 }
 
+// FormFieldSetDeleteParams contains the request parameters for this operation.
 type FormFieldSetDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

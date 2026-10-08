@@ -53,6 +53,7 @@ func (u ApiKeyPermissionSetEnum) Enum() map[string]ApiKeyPermissionSetEnum {
 	}
 }
 
+// ApiKeyListParams contains the request parameters for this operation.
 type ApiKeyListParams struct {
 	UserId     int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -64,10 +65,12 @@ type ApiKeyListParams struct {
 	ListParams
 }
 
+// ApiKeyFindParams contains the request parameters for this operation.
 type ApiKeyFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// ApiKeyCreateParams contains the request parameters for this operation.
 type ApiKeyCreateParams struct {
 	UserId              int64                   `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Description         string                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
@@ -79,12 +82,14 @@ type ApiKeyCreateParams struct {
 	WorkspaceId         int64                   `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// ApiKeyUpdateCurrentParams contains the request parameters for this operation.
 type ApiKeyUpdateCurrentParams struct {
 	ExpiresAt     *time.Time              `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
 	Name          string                  `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	PermissionSet ApiKeyPermissionSetEnum `url:"permission_set,omitempty" json:"permission_set,omitempty" path:"permission_set"`
 }
 
+// ApiKeyUpdateParams contains the request parameters for this operation.
 type ApiKeyUpdateParams struct {
 	Id          int64      `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Description string     `url:"description,omitempty" json:"description,omitempty" path:"description"`
@@ -92,6 +97,7 @@ type ApiKeyUpdateParams struct {
 	Name        string     `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
+// ApiKeyDeleteParams contains the request parameters for this operation.
 type ApiKeyDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

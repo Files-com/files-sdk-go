@@ -24,30 +24,36 @@ func (p PartnerSiteRequest) Identifier() interface{} {
 
 type PartnerSiteRequestCollection []PartnerSiteRequest
 
+// PartnerSiteRequestListParams contains the request parameters for this operation.
 type PartnerSiteRequestListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// PartnerSiteRequestFindByPairingKeyParams contains the request parameters for this operation.
 type PartnerSiteRequestFindByPairingKeyParams struct {
 	PairingKey string `url:"pairing_key" json:"pairing_key" path:"pairing_key"`
 }
 
+// PartnerSiteRequestCreateParams contains the request parameters for this operation.
 type PartnerSiteRequestCreateParams struct {
 	HostPartnerId int64  `url:"host_partner_id" json:"host_partner_id" path:"host_partner_id"`
 	GuestSiteUrl  string `url:"guest_site_url" json:"guest_site_url" path:"guest_site_url"`
 }
 
+// PartnerSiteRequestRejectParams contains the request parameters for this operation.
 type PartnerSiteRequestRejectParams struct {
 	PairingKey string `url:"pairing_key" json:"pairing_key" path:"pairing_key"`
 }
 
+// PartnerSiteRequestApproveParams contains the request parameters for this operation.
 type PartnerSiteRequestApproveParams struct {
 	PairingKey string `url:"pairing_key" json:"pairing_key" path:"pairing_key"`
 	PartnerId  int64  `url:"partner_id,omitempty" json:"partner_id,omitempty" path:"partner_id"`
 }
 
+// PartnerSiteRequestDeleteParams contains the request parameters for this operation.
 type PartnerSiteRequestDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

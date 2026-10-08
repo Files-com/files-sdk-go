@@ -25,15 +25,18 @@ func (s Schedule) Identifier() interface{} {
 
 type ScheduleCollection []Schedule
 
+// ScheduleListParams contains the request parameters for this operation.
 type ScheduleListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
 
+// ScheduleFindParams contains the request parameters for this operation.
 type ScheduleFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// ScheduleCreateParams contains the request parameters for this operation.
 type ScheduleCreateParams struct {
 	Name               string   `url:"name" json:"name" path:"name"`
 	ScheduleDaysOfWeek []int64  `url:"schedule_days_of_week" json:"schedule_days_of_week" path:"schedule_days_of_week"`
@@ -42,6 +45,7 @@ type ScheduleCreateParams struct {
 	HolidayRegion      string   `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
 }
 
+// ScheduleUpdateParams contains the request parameters for this operation.
 type ScheduleUpdateParams struct {
 	Id                 int64    `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name               string   `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -51,6 +55,7 @@ type ScheduleUpdateParams struct {
 	HolidayRegion      string   `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
 }
 
+// ScheduleDeleteParams contains the request parameters for this operation.
 type ScheduleDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

@@ -31,6 +31,7 @@ func (e EventRecord) Identifier() interface{} {
 
 type EventRecordCollection []EventRecord
 
+// EventRecordListParams contains the request parameters for this operation.
 type EventRecordListParams struct {
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -42,6 +43,7 @@ type EventRecordListParams struct {
 	ListParams
 }
 
+// EventRecordFindParams contains the request parameters for this operation.
 type EventRecordFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

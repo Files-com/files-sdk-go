@@ -60,16 +60,19 @@ func (u ExpectationTriggerEnum) Enum() map[string]ExpectationTriggerEnum {
 	}
 }
 
+// ExpectationListParams contains the request parameters for this operation.
 type ExpectationListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// ExpectationFindParams contains the request parameters for this operation.
 type ExpectationFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// ExpectationCreateParams contains the request parameters for this operation.
 type ExpectationCreateParams struct {
 	Name                   string                 `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	Description            string                 `url:"description,omitempty" json:"description,omitempty" path:"description"`
@@ -94,11 +97,14 @@ type ExpectationCreateParams struct {
 	WorkspaceId            int64                  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// ExpectationTriggerEvaluationParams contains the request parameters for this operation.
+//
 // Manually open an Expectation window
 type ExpectationTriggerEvaluationParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// ExpectationUpdateParams contains the request parameters for this operation.
 type ExpectationUpdateParams struct {
 	Id                     int64                  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name                   string                 `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -124,6 +130,7 @@ type ExpectationUpdateParams struct {
 	WorkspaceId            int64                  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// ExpectationDeleteParams contains the request parameters for this operation.
 type ExpectationDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

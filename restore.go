@@ -51,12 +51,14 @@ func (u RestoreRestorationTypeEnum) Enum() map[string]RestoreRestorationTypeEnum
 	}
 }
 
+// RestoreListParams contains the request parameters for this operation.
 type RestoreListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// RestoreCreateParams contains the request parameters for this operation.
 type RestoreCreateParams struct {
 	EarliestDate              *time.Time                 `url:"earliest_date" json:"earliest_date" path:"earliest_date"`
 	Prefix                    string                     `url:"prefix,omitempty" json:"prefix,omitempty" path:"prefix"`

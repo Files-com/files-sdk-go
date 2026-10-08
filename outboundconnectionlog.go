@@ -33,6 +33,7 @@ func (o OutboundConnectionLog) Identifier() interface{} {
 
 type OutboundConnectionLogCollection []OutboundConnectionLog
 
+// OutboundConnectionLogListParams contains the request parameters for this operation.
 type OutboundConnectionLogListParams struct {
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`

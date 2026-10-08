@@ -24,16 +24,19 @@ func (a AiAssistantPersonality) Identifier() interface{} {
 
 type AiAssistantPersonalityCollection []AiAssistantPersonality
 
+// AiAssistantPersonalityListParams contains the request parameters for this operation.
 type AiAssistantPersonalityListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// AiAssistantPersonalityFindParams contains the request parameters for this operation.
 type AiAssistantPersonalityFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// AiAssistantPersonalityCreateParams contains the request parameters for this operation.
 type AiAssistantPersonalityCreateParams struct {
 	ApplyToAllWorkspaces *bool  `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
 	Name                 string `url:"name" json:"name" path:"name"`
@@ -42,6 +45,7 @@ type AiAssistantPersonalityCreateParams struct {
 	WorkspaceId          int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// AiAssistantPersonalityUpdateParams contains the request parameters for this operation.
 type AiAssistantPersonalityUpdateParams struct {
 	Id                   int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	ApplyToAllWorkspaces *bool  `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
@@ -51,6 +55,7 @@ type AiAssistantPersonalityUpdateParams struct {
 	WorkspaceId          int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// AiAssistantPersonalityDeleteParams contains the request parameters for this operation.
 type AiAssistantPersonalityDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

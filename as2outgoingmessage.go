@@ -48,6 +48,7 @@ func (a As2OutgoingMessage) Identifier() interface{} {
 
 type As2OutgoingMessageCollection []As2OutgoingMessage
 
+// As2OutgoingMessageListParams contains the request parameters for this operation.
 type As2OutgoingMessageListParams struct {
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`

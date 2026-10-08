@@ -21,16 +21,19 @@ func (d DesktopConfigurationProfile) Identifier() interface{} {
 
 type DesktopConfigurationProfileCollection []DesktopConfigurationProfile
 
+// DesktopConfigurationProfileListParams contains the request parameters for this operation.
 type DesktopConfigurationProfileListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// DesktopConfigurationProfileFindParams contains the request parameters for this operation.
 type DesktopConfigurationProfileFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// DesktopConfigurationProfileCreateParams contains the request parameters for this operation.
 type DesktopConfigurationProfileCreateParams struct {
 	Name                 string      `url:"name" json:"name" path:"name"`
 	MountMappings        interface{} `url:"mount_mappings" json:"mount_mappings" path:"mount_mappings"`
@@ -39,6 +42,7 @@ type DesktopConfigurationProfileCreateParams struct {
 	DisableDriveMounting *bool       `url:"disable_drive_mounting,omitempty" json:"disable_drive_mounting,omitempty" path:"disable_drive_mounting"`
 }
 
+// DesktopConfigurationProfileUpdateParams contains the request parameters for this operation.
 type DesktopConfigurationProfileUpdateParams struct {
 	Id                   int64       `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name                 string      `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -48,6 +52,7 @@ type DesktopConfigurationProfileUpdateParams struct {
 	DisableDriveMounting *bool       `url:"disable_drive_mounting,omitempty" json:"disable_drive_mounting,omitempty" path:"disable_drive_mounting"`
 }
 
+// DesktopConfigurationProfileDeleteParams contains the request parameters for this operation.
 type DesktopConfigurationProfileDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

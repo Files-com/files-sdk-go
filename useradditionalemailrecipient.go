@@ -21,6 +21,7 @@ func (u UserAdditionalEmailRecipient) Identifier() interface{} {
 
 type UserAdditionalEmailRecipientCollection []UserAdditionalEmailRecipient
 
+// UserAdditionalEmailRecipientListParams contains the request parameters for this operation.
 type UserAdditionalEmailRecipientListParams struct {
 	UserId       int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -29,20 +30,24 @@ type UserAdditionalEmailRecipientListParams struct {
 	ListParams
 }
 
+// UserAdditionalEmailRecipientFindParams contains the request parameters for this operation.
 type UserAdditionalEmailRecipientFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UserAdditionalEmailRecipientCreateParams contains the request parameters for this operation.
 type UserAdditionalEmailRecipientCreateParams struct {
 	UserId int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Email  string `url:"email" json:"email" path:"email"`
 }
 
+// UserAdditionalEmailRecipientUpdateParams contains the request parameters for this operation.
 type UserAdditionalEmailRecipientUpdateParams struct {
 	Id    int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Email string `url:"email,omitempty" json:"email,omitempty" path:"email"`
 }
 
+// UserAdditionalEmailRecipientDeleteParams contains the request parameters for this operation.
 type UserAdditionalEmailRecipientDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

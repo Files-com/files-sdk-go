@@ -40,6 +40,7 @@ func (s SftpActionLog) Identifier() interface{} {
 
 type SftpActionLogCollection []SftpActionLog
 
+// SftpActionLogListParams contains the request parameters for this operation.
 type SftpActionLogListParams struct {
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`

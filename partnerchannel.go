@@ -47,16 +47,19 @@ func (u PartnerChannelDirectionEnum) Enum() map[string]PartnerChannelDirectionEn
 	}
 }
 
+// PartnerChannelListParams contains the request parameters for this operation.
 type PartnerChannelListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// PartnerChannelFindParams contains the request parameters for this operation.
 type PartnerChannelFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// PartnerChannelCreateParams contains the request parameters for this operation.
 type PartnerChannelCreateParams struct {
 	Direction                     PartnerChannelDirectionEnum `url:"direction,omitempty" json:"direction,omitempty" path:"direction"`
 	UseChannelRoot                *bool                       `url:"use_channel_root,omitempty" json:"use_channel_root,omitempty" path:"use_channel_root"`
@@ -71,6 +74,7 @@ type PartnerChannelCreateParams struct {
 	WorkspaceId                   int64                       `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// PartnerChannelUpdateParams contains the request parameters for this operation.
 type PartnerChannelUpdateParams struct {
 	Id                            int64                       `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Direction                     PartnerChannelDirectionEnum `url:"direction,omitempty" json:"direction,omitempty" path:"direction"`
@@ -84,6 +88,7 @@ type PartnerChannelUpdateParams struct {
 	Path                          string                      `url:"path,omitempty" json:"path,omitempty" path:"path"`
 }
 
+// PartnerChannelDeleteParams contains the request parameters for this operation.
 type PartnerChannelDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

@@ -32,6 +32,7 @@ func (u UsageSnapshot) Identifier() interface{} {
 
 type UsageSnapshotCollection []UsageSnapshot
 
+// UsageSnapshotListParams contains the request parameters for this operation.
 type UsageSnapshotListParams struct {
 	ListParams
 }

@@ -21,6 +21,7 @@ type InboxRecipient struct {
 
 type InboxRecipientCollection []InboxRecipient
 
+// InboxRecipientListParams contains the request parameters for this operation.
 type InboxRecipientListParams struct {
 	SortBy  interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter  interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -28,6 +29,7 @@ type InboxRecipientListParams struct {
 	ListParams
 }
 
+// InboxRecipientCreateParams contains the request parameters for this operation.
 type InboxRecipientCreateParams struct {
 	InboxId          int64  `url:"inbox_id" json:"inbox_id" path:"inbox_id"`
 	Recipient        string `url:"recipient" json:"recipient" path:"recipient"`

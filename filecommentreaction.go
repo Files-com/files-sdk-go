@@ -19,12 +19,14 @@ func (f FileCommentReaction) Identifier() interface{} {
 
 type FileCommentReactionCollection []FileCommentReaction
 
+// FileCommentReactionCreateParams contains the request parameters for this operation.
 type FileCommentReactionCreateParams struct {
 	UserId        int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	FileCommentId int64  `url:"file_comment_id" json:"file_comment_id" path:"file_comment_id"`
 	Emoji         string `url:"emoji" json:"emoji" path:"emoji"`
 }
 
+// FileCommentReactionDeleteParams contains the request parameters for this operation.
 type FileCommentReactionDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

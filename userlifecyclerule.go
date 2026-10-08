@@ -75,16 +75,19 @@ func (u UserLifecycleRuleUserStateEnum) Enum() map[string]UserLifecycleRuleUserS
 	}
 }
 
+// UserLifecycleRuleListParams contains the request parameters for this operation.
 type UserLifecycleRuleListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// UserLifecycleRuleFindParams contains the request parameters for this operation.
 type UserLifecycleRuleFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UserLifecycleRuleCreateParams contains the request parameters for this operation.
 type UserLifecycleRuleCreateParams struct {
 	Action               UserLifecycleRuleActionEnum               `url:"action,omitempty" json:"action,omitempty" path:"action"`
 	ApplyToAllWorkspaces *bool                                     `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
@@ -101,6 +104,7 @@ type UserLifecycleRuleCreateParams struct {
 	WorkspaceId          int64                                     `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// UserLifecycleRuleUpdateParams contains the request parameters for this operation.
 type UserLifecycleRuleUpdateParams struct {
 	Id                   int64                                     `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Action               UserLifecycleRuleActionEnum               `url:"action,omitempty" json:"action,omitempty" path:"action"`
@@ -118,6 +122,7 @@ type UserLifecycleRuleUpdateParams struct {
 	WorkspaceId          int64                                     `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// UserLifecycleRuleDeleteParams contains the request parameters for this operation.
 type UserLifecycleRuleDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

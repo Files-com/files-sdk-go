@@ -43,10 +43,12 @@ func (h HistoryExport) Identifier() interface{} {
 
 type HistoryExportCollection []HistoryExport
 
+// HistoryExportFindParams contains the request parameters for this operation.
 type HistoryExportFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// HistoryExportCreateParams contains the request parameters for this operation.
 type HistoryExportCreateParams struct {
 	UserId                   int64      `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	StartAt                  *time.Time `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`

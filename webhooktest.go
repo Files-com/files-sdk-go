@@ -28,6 +28,7 @@ type WebhookTest struct {
 
 type WebhookTestCollection []WebhookTest
 
+// WebhookTestCreateParams contains the request parameters for this operation.
 type WebhookTestCreateParams struct {
 	Url             string      `url:"url" json:"url" path:"url"`
 	Method          string      `url:"method,omitempty" json:"method,omitempty" path:"method"`

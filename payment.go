@@ -29,10 +29,12 @@ func (p Payment) Identifier() interface{} {
 
 type PaymentCollection []Payment
 
+// PaymentListParams contains the request parameters for this operation.
 type PaymentListParams struct {
 	ListParams
 }
 
+// PaymentFindParams contains the request parameters for this operation.
 type PaymentFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

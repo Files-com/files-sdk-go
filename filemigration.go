@@ -100,6 +100,7 @@ func (l FilesMigrationLogIter) Init() *FilesMigrationLogIter {
 	return &l
 }
 
+// FileMigrationFindParams contains the request parameters for this operation.
 type FileMigrationFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

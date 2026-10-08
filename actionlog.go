@@ -30,6 +30,7 @@ func (a ActionLog) Identifier() interface{} {
 
 type ActionLogCollection []ActionLog
 
+// ActionLogListParams contains the request parameters for this operation.
 type ActionLogListParams struct {
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`

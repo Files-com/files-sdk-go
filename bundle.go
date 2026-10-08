@@ -89,6 +89,7 @@ func (u BundlePermissionsEnum) Enum() map[string]BundlePermissionsEnum {
 	}
 }
 
+// BundleListParams contains the request parameters for this operation.
 type BundleListParams struct {
 	UserId       int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -102,11 +103,13 @@ type BundleListParams struct {
 	ListParams
 }
 
+// BundleFindParams contains the request parameters for this operation.
 type BundleFindParams struct {
 	Id      int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Deleted *bool `url:"deleted,omitempty" json:"deleted,omitempty" path:"deleted"`
 }
 
+// BundleCreateParams contains the request parameters for this operation.
 type BundleCreateParams struct {
 	UserId                                       int64                 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Paths                                        []string              `url:"paths" json:"paths" path:"paths"`
@@ -142,6 +145,8 @@ type BundleCreateParams struct {
 	WatermarkValue                               interface{}           `url:"watermark_value,omitempty" json:"watermark_value,omitempty" path:"watermark_value"`
 }
 
+// BundleShareParams contains the request parameters for this operation.
+//
 // Send email(s) with a link to bundle
 type BundleShareParams struct {
 	Id         int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`
@@ -150,6 +155,7 @@ type BundleShareParams struct {
 	Recipients []map[string]interface{} `url:"recipients,omitempty" json:"recipients,omitempty" path:"recipients"`
 }
 
+// BundleUpdateParams contains the request parameters for this operation.
 type BundleUpdateParams struct {
 	Id                                           int64                 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Paths                                        []string              `url:"paths,omitempty" json:"paths,omitempty" path:"paths"`
@@ -186,6 +192,7 @@ type BundleUpdateParams struct {
 	WorkspaceId                                  int64                 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// BundleDeleteParams contains the request parameters for this operation.
 type BundleDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

@@ -38,6 +38,7 @@ func (u ExternalEventStatusEnum) Enum() map[string]ExternalEventStatusEnum {
 	}
 }
 
+// ExternalEventListParams contains the request parameters for this operation.
 type ExternalEventListParams struct {
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -48,10 +49,12 @@ type ExternalEventListParams struct {
 	ListParams
 }
 
+// ExternalEventFindParams contains the request parameters for this operation.
 type ExternalEventFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// ExternalEventCreateParams contains the request parameters for this operation.
 type ExternalEventCreateParams struct {
 	Status ExternalEventStatusEnum `url:"status" json:"status" path:"status"`
 	Body   string                  `url:"body" json:"body" path:"body"`

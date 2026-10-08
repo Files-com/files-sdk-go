@@ -41,6 +41,7 @@ func (n Notification) Identifier() interface{} {
 
 type NotificationCollection []Notification
 
+// NotificationListParams contains the request parameters for this operation.
 type NotificationListParams struct {
 	SortBy           interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter           interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -51,10 +52,12 @@ type NotificationListParams struct {
 	ListParams
 }
 
+// NotificationFindParams contains the request parameters for this operation.
 type NotificationFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// NotificationCreateParams contains the request parameters for this operation.
 type NotificationCreateParams struct {
 	UserId                   int64    `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	NotifyOnCopy             *bool    `url:"notify_on_copy,omitempty" json:"notify_on_copy,omitempty" path:"notify_on_copy"`
@@ -78,6 +81,7 @@ type NotificationCreateParams struct {
 	Username                 string   `url:"username,omitempty" json:"username,omitempty" path:"username"`
 }
 
+// NotificationUpdateParams contains the request parameters for this operation.
 type NotificationUpdateParams struct {
 	Id                       int64    `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	NotifyOnCopy             *bool    `url:"notify_on_copy,omitempty" json:"notify_on_copy,omitempty" path:"notify_on_copy"`
@@ -97,6 +101,7 @@ type NotificationUpdateParams struct {
 	WorkspaceId              int64    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// NotificationDeleteParams contains the request parameters for this operation.
 type NotificationDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

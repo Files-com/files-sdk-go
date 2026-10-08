@@ -66,15 +66,18 @@ func (u ClickwrapUseWithUsersEnum) Enum() map[string]ClickwrapUseWithUsersEnum {
 	}
 }
 
+// ClickwrapListParams contains the request parameters for this operation.
 type ClickwrapListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
 
+// ClickwrapFindParams contains the request parameters for this operation.
 type ClickwrapFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// ClickwrapCreateParams contains the request parameters for this operation.
 type ClickwrapCreateParams struct {
 	Name           string                      `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	Body           string                      `url:"body,omitempty" json:"body,omitempty" path:"body"`
@@ -83,6 +86,7 @@ type ClickwrapCreateParams struct {
 	UseWithUsers   ClickwrapUseWithUsersEnum   `url:"use_with_users,omitempty" json:"use_with_users,omitempty" path:"use_with_users"`
 }
 
+// ClickwrapUpdateParams contains the request parameters for this operation.
 type ClickwrapUpdateParams struct {
 	Id             int64                       `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name           string                      `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -92,6 +96,7 @@ type ClickwrapUpdateParams struct {
 	UseWithUsers   ClickwrapUseWithUsersEnum   `url:"use_with_users,omitempty" json:"use_with_users,omitempty" path:"use_with_users"`
 }
 
+// ClickwrapDeleteParams contains the request parameters for this operation.
 type ClickwrapDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

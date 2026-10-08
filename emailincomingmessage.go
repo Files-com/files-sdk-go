@@ -25,6 +25,7 @@ func (e EmailIncomingMessage) Identifier() interface{} {
 
 type EmailIncomingMessageCollection []EmailIncomingMessage
 
+// EmailIncomingMessageListParams contains the request parameters for this operation.
 type EmailIncomingMessageListParams struct {
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`

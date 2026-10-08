@@ -23,6 +23,7 @@ type BundleRecipient struct {
 
 type BundleRecipientCollection []BundleRecipient
 
+// BundleRecipientListParams contains the request parameters for this operation.
 type BundleRecipientListParams struct {
 	UserId   int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy   interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -31,6 +32,7 @@ type BundleRecipientListParams struct {
 	ListParams
 }
 
+// BundleRecipientCreateParams contains the request parameters for this operation.
 type BundleRecipientCreateParams struct {
 	UserId           int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	BundleId         int64  `url:"bundle_id" json:"bundle_id" path:"bundle_id"`

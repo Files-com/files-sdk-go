@@ -51,6 +51,7 @@ func (u ScheduledExportTriggerEnum) Enum() map[string]ScheduledExportTriggerEnum
 	}
 }
 
+// ScheduledExportListParams contains the request parameters for this operation.
 type ScheduledExportListParams struct {
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -58,10 +59,12 @@ type ScheduledExportListParams struct {
 	ListParams
 }
 
+// ScheduledExportFindParams contains the request parameters for this operation.
 type ScheduledExportFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// ScheduledExportCreateParams contains the request parameters for this operation.
 type ScheduledExportCreateParams struct {
 	Name               string                     `url:"name" json:"name" path:"name"`
 	ExportType         string                     `url:"export_type" json:"export_type" path:"export_type"`
@@ -79,6 +82,7 @@ type ScheduledExportCreateParams struct {
 	HolidayRegion      string                     `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
 }
 
+// ScheduledExportUpdateParams contains the request parameters for this operation.
 type ScheduledExportUpdateParams struct {
 	Id                 int64                      `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name               string                     `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -97,6 +101,7 @@ type ScheduledExportUpdateParams struct {
 	HolidayRegion      string                     `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
 }
 
+// ScheduledExportDeleteParams contains the request parameters for this operation.
 type ScheduledExportDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

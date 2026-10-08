@@ -27,6 +27,7 @@ func (i InboundS3Log) Identifier() interface{} {
 
 type InboundS3LogCollection []InboundS3Log
 
+// InboundS3LogListParams contains the request parameters for this operation.
 type InboundS3LogListParams struct {
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`

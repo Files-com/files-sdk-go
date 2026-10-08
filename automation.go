@@ -97,6 +97,7 @@ func (u AutomationEnum) Enum() map[string]AutomationEnum {
 	}
 }
 
+// AutomationListParams contains the request parameters for this operation.
 type AutomationListParams struct {
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -107,10 +108,12 @@ type AutomationListParams struct {
 	ListParams
 }
 
+// AutomationFindParams contains the request parameters for this operation.
 type AutomationFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// AutomationCreateParams contains the request parameters for this operation.
 type AutomationCreateParams struct {
 	Source                           string                   `url:"source,omitempty" json:"source,omitempty" path:"source"`
 	Destinations                     []string                 `url:"destinations,omitempty" json:"destinations,omitempty" path:"destinations"`
@@ -150,17 +153,22 @@ type AutomationCreateParams struct {
 	WorkspaceId                      int64                    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// AutomationUpgradeParams contains the request parameters for this operation.
+//
 // Upgrade a legacy Automation to Automation v2
 type AutomationUpgradeParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// AutomationManualRunParams contains the request parameters for this operation.
+//
 // Manually Run Automation
 type AutomationManualRunParams struct {
 	Id    int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Items []map[string]interface{} `url:"items,omitempty" json:"items,omitempty" path:"items"`
 }
 
+// AutomationUpdateParams contains the request parameters for this operation.
 type AutomationUpdateParams struct {
 	Id                               int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Source                           string                   `url:"source,omitempty" json:"source,omitempty" path:"source"`
@@ -200,6 +208,7 @@ type AutomationUpdateParams struct {
 	Automation                       AutomationEnum           `url:"automation,omitempty" json:"automation,omitempty" path:"automation"`
 }
 
+// AutomationDeleteParams contains the request parameters for this operation.
 type AutomationDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

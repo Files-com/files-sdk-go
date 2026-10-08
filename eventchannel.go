@@ -24,16 +24,19 @@ func (e EventChannel) Identifier() interface{} {
 
 type EventChannelCollection []EventChannel
 
+// EventChannelListParams contains the request parameters for this operation.
 type EventChannelListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// EventChannelFindParams contains the request parameters for this operation.
 type EventChannelFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// EventChannelCreateParams contains the request parameters for this operation.
 type EventChannelCreateParams struct {
 	Name           string `url:"name" json:"name" path:"name"`
 	WorkspaceId    int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
@@ -42,6 +45,7 @@ type EventChannelCreateParams struct {
 	DefaultChannel *bool  `url:"default_channel,omitempty" json:"default_channel,omitempty" path:"default_channel"`
 }
 
+// EventChannelUpdateParams contains the request parameters for this operation.
 type EventChannelUpdateParams struct {
 	Id             int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name           string `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -51,6 +55,7 @@ type EventChannelUpdateParams struct {
 	DefaultChannel *bool  `url:"default_channel,omitempty" json:"default_channel,omitempty" path:"default_channel"`
 }
 
+// EventChannelDeleteParams contains the request parameters for this operation.
 type EventChannelDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

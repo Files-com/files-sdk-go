@@ -46,15 +46,18 @@ func (u RemoteMountBackendHealthCheckTypeEnum) Enum() map[string]RemoteMountBack
 	}
 }
 
+// RemoteMountBackendListParams contains the request parameters for this operation.
 type RemoteMountBackendListParams struct {
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// RemoteMountBackendFindParams contains the request parameters for this operation.
 type RemoteMountBackendFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// RemoteMountBackendCreateParams contains the request parameters for this operation.
 type RemoteMountBackendCreateParams struct {
 	Enabled            *bool                                 `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
 	Fall               int64                                 `url:"fall,omitempty" json:"fall,omitempty" path:"fall"`
@@ -115,11 +118,14 @@ func (p RemoteMountBackendCreateParams) ToValues() (url.Values, error) {
 	return lib.DecimalOverrideValues(remoteMountBackendCreateParams(p), p.decimalOverrides()...)
 }
 
+// RemoteMountBackendResetStatusParams contains the request parameters for this operation.
+//
 // Reset backend status to healthy
 type RemoteMountBackendResetStatusParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// RemoteMountBackendUpdateParams contains the request parameters for this operation.
 type RemoteMountBackendUpdateParams struct {
 	Id                 int64                                 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Enabled            *bool                                 `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
@@ -180,6 +186,7 @@ func (p RemoteMountBackendUpdateParams) ToValues() (url.Values, error) {
 	return lib.DecimalOverrideValues(remoteMountBackendUpdateParams(p), p.decimalOverrides()...)
 }
 
+// RemoteMountBackendDeleteParams contains the request parameters for this operation.
 type RemoteMountBackendDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

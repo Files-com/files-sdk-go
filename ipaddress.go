@@ -19,18 +19,22 @@ func (i IpAddress) Identifier() interface{} {
 
 type IpAddressCollection []IpAddress
 
+// IpAddressListParams contains the request parameters for this operation.
 type IpAddressListParams struct {
 	ListParams
 }
 
+// IpAddressGetSmartfileReservedParams contains the request parameters for this operation.
 type IpAddressGetSmartfileReservedParams struct {
 	ListParams
 }
 
+// IpAddressGetExavaultReservedParams contains the request parameters for this operation.
 type IpAddressGetExavaultReservedParams struct {
 	ListParams
 }
 
+// IpAddressGetReservedParams contains the request parameters for this operation.
 type IpAddressGetReservedParams struct {
 	ListParams
 }

@@ -39,6 +39,7 @@ func (s SyncRun) Identifier() interface{} {
 
 type SyncRunCollection []SyncRun
 
+// SyncRunListParams contains the request parameters for this operation.
 type SyncRunListParams struct {
 	UserId     int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -50,6 +51,7 @@ type SyncRunListParams struct {
 	ListParams
 }
 
+// SyncRunFindParams contains the request parameters for this operation.
 type SyncRunFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

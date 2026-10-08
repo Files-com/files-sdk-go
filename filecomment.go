@@ -19,21 +19,25 @@ func (f FileComment) Identifier() interface{} {
 
 type FileCommentCollection []FileComment
 
+// FileCommentListForParams contains the request parameters for this operation.
 type FileCommentListForParams struct {
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	ListParams
 }
 
+// FileCommentCreateParams contains the request parameters for this operation.
 type FileCommentCreateParams struct {
 	Body string `url:"body" json:"body" path:"body"`
 	Path string `url:"path" json:"path" path:"path"`
 }
 
+// FileCommentUpdateParams contains the request parameters for this operation.
 type FileCommentUpdateParams struct {
 	Id   int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Body string `url:"body" json:"body" path:"body"`
 }
 
+// FileCommentDeleteParams contains the request parameters for this operation.
 type FileCommentDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

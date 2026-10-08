@@ -20,15 +20,18 @@ func (s ShareGroup) Identifier() interface{} {
 
 type ShareGroupCollection []ShareGroup
 
+// ShareGroupListParams contains the request parameters for this operation.
 type ShareGroupListParams struct {
 	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	ListParams
 }
 
+// ShareGroupFindParams contains the request parameters for this operation.
 type ShareGroupFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// ShareGroupCreateParams contains the request parameters for this operation.
 type ShareGroupCreateParams struct {
 	UserId  int64                    `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Notes   string                   `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
@@ -36,6 +39,7 @@ type ShareGroupCreateParams struct {
 	Members []map[string]interface{} `url:"members" json:"members" path:"members"`
 }
 
+// ShareGroupUpdateParams contains the request parameters for this operation.
 type ShareGroupUpdateParams struct {
 	Id      int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Notes   string                   `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
@@ -43,6 +47,7 @@ type ShareGroupUpdateParams struct {
 	Members []map[string]interface{} `url:"members,omitempty" json:"members,omitempty" path:"members"`
 }
 
+// ShareGroupDeleteParams contains the request parameters for this operation.
 type ShareGroupDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

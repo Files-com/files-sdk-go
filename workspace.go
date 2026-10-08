@@ -17,6 +17,7 @@ func (w Workspace) Identifier() interface{} {
 
 type WorkspaceCollection []Workspace
 
+// WorkspaceListParams contains the request parameters for this operation.
 type WorkspaceListParams struct {
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -24,19 +25,23 @@ type WorkspaceListParams struct {
 	ListParams
 }
 
+// WorkspaceFindParams contains the request parameters for this operation.
 type WorkspaceFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// WorkspaceCreateParams contains the request parameters for this operation.
 type WorkspaceCreateParams struct {
 	Name string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
+// WorkspaceUpdateParams contains the request parameters for this operation.
 type WorkspaceUpdateParams struct {
 	Id   int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
+// WorkspaceDeleteParams contains the request parameters for this operation.
 type WorkspaceDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

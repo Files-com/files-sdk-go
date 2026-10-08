@@ -179,6 +179,7 @@ func (u UserRequire2faEnum) Enum() map[string]UserRequire2faEnum {
 	}
 }
 
+// UserListParams contains the request parameters for this operation.
 type UserListParams struct {
 	SortBy                 interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter                 interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -193,10 +194,12 @@ type UserListParams struct {
 	ListParams
 }
 
+// UserFindParams contains the request parameters for this operation.
 type UserFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UserCreateParams contains the request parameters for this operation.
 type UserCreateParams struct {
 	AvatarFile                             io.Writer                    `url:"avatar_file,omitempty" json:"avatar_file,omitempty" path:"avatar_file"`
 	AvatarDelete                           *bool                        `url:"avatar_delete,omitempty" json:"avatar_delete,omitempty" path:"avatar_delete"`
@@ -269,21 +272,28 @@ type UserCreateParams struct {
 	WorkspaceId                            int64                        `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// UserUnlockParams contains the request parameters for this operation.
+//
 // Unlock user who has been locked out due to failed logins
 type UserUnlockParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UserResendWelcomeEmailParams contains the request parameters for this operation.
+//
 // Resend user welcome email
 type UserResendWelcomeEmailParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UserUser2faResetParams contains the request parameters for this operation.
+//
 // Trigger 2FA Reset process for user who has lost access to their existing 2FA methods
 type UserUser2faResetParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UserUpdateParams contains the request parameters for this operation.
 type UserUpdateParams struct {
 	Id                                     int64                        `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	AvatarFile                             io.Writer                    `url:"avatar_file,omitempty" json:"avatar_file,omitempty" path:"avatar_file"`
@@ -359,6 +369,7 @@ type UserUpdateParams struct {
 	ConvertToPartnerUser                   *bool                        `url:"convert_to_partner_user,omitempty" json:"convert_to_partner_user,omitempty" path:"convert_to_partner_user"`
 }
 
+// UserDeleteParams contains the request parameters for this operation.
 type UserDeleteParams struct {
 	Id         int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	NewOwnerId int64 `url:"new_owner_id,omitempty" json:"new_owner_id,omitempty" path:"new_owner_id"`

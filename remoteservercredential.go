@@ -85,6 +85,7 @@ func (u RemoteServerCredentialServerTypeEnum) Enum() map[string]RemoteServerCred
 	}
 }
 
+// RemoteServerCredentialListParams contains the request parameters for this operation.
 type RemoteServerCredentialListParams struct {
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -92,10 +93,12 @@ type RemoteServerCredentialListParams struct {
 	ListParams
 }
 
+// RemoteServerCredentialFindParams contains the request parameters for this operation.
 type RemoteServerCredentialFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// RemoteServerCredentialCreateParams contains the request parameters for this operation.
 type RemoteServerCredentialCreateParams struct {
 	Name                                    string                               `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	Description                             string                               `url:"description,omitempty" json:"description,omitempty" path:"description"`
@@ -135,6 +138,7 @@ type RemoteServerCredentialCreateParams struct {
 	CopyValuesFromCredentialId              int64                                `url:"copy_values_from_credential_id,omitempty" json:"copy_values_from_credential_id,omitempty" path:"copy_values_from_credential_id"`
 }
 
+// RemoteServerCredentialUpdateParams contains the request parameters for this operation.
 type RemoteServerCredentialUpdateParams struct {
 	Id                                      int64                                `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name                                    string                               `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -173,6 +177,7 @@ type RemoteServerCredentialUpdateParams struct {
 	WasabiSecretKey                         string                               `url:"wasabi_secret_key,omitempty" json:"wasabi_secret_key,omitempty" path:"wasabi_secret_key"`
 }
 
+// RemoteServerCredentialDeleteParams contains the request parameters for this operation.
 type RemoteServerCredentialDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

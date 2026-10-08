@@ -20,14 +20,17 @@ func (u UserRequest) Identifier() interface{} {
 
 type UserRequestCollection []UserRequest
 
+// UserRequestListParams contains the request parameters for this operation.
 type UserRequestListParams struct {
 	ListParams
 }
 
+// UserRequestFindParams contains the request parameters for this operation.
 type UserRequestFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UserRequestCreateParams contains the request parameters for this operation.
 type UserRequestCreateParams struct {
 	Name    string `url:"name" json:"name" path:"name"`
 	Email   string `url:"email" json:"email" path:"email"`
@@ -35,6 +38,7 @@ type UserRequestCreateParams struct {
 	Company string `url:"company,omitempty" json:"company,omitempty" path:"company"`
 }
 
+// UserRequestDeleteParams contains the request parameters for this operation.
 type UserRequestDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

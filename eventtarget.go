@@ -44,16 +44,19 @@ func (u EventTargetTargetTypeEnum) Enum() map[string]EventTargetTargetTypeEnum {
 	}
 }
 
+// EventTargetListParams contains the request parameters for this operation.
 type EventTargetListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// EventTargetFindParams contains the request parameters for this operation.
 type EventTargetFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// EventTargetCreateParams contains the request parameters for this operation.
 type EventTargetCreateParams struct {
 	Name                 string                    `url:"name" json:"name" path:"name"`
 	WorkspaceId          int64                     `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
@@ -64,6 +67,7 @@ type EventTargetCreateParams struct {
 	TargetType           EventTargetTargetTypeEnum `url:"target_type" json:"target_type" path:"target_type"`
 }
 
+// EventTargetUpdateParams contains the request parameters for this operation.
 type EventTargetUpdateParams struct {
 	Id                   int64       `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name                 string      `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -74,6 +78,7 @@ type EventTargetUpdateParams struct {
 	DeliveryPolicy       interface{} `url:"delivery_policy,omitempty" json:"delivery_policy,omitempty" path:"delivery_policy"`
 }
 
+// EventTargetDeleteParams contains the request parameters for this operation.
 type EventTargetDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

@@ -25,6 +25,7 @@ func (f FileMigrationLog) Identifier() interface{} {
 
 type FileMigrationLogCollection []FileMigrationLog
 
+// FileMigrationLogListParams contains the request parameters for this operation.
 type FileMigrationLogListParams struct {
 	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt   interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`

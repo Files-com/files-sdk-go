@@ -43,16 +43,19 @@ func (u PartnerChannelTemplateDirectionEnum) Enum() map[string]PartnerChannelTem
 	}
 }
 
+// PartnerChannelTemplateListParams contains the request parameters for this operation.
 type PartnerChannelTemplateListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// PartnerChannelTemplateFindParams contains the request parameters for this operation.
 type PartnerChannelTemplateFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// PartnerChannelTemplateCreateParams contains the request parameters for this operation.
 type PartnerChannelTemplateCreateParams struct {
 	Direction                     PartnerChannelTemplateDirectionEnum `url:"direction,omitempty" json:"direction,omitempty" path:"direction"`
 	UseChannelRoot                *bool                               `url:"use_channel_root,omitempty" json:"use_channel_root,omitempty" path:"use_channel_root"`
@@ -67,6 +70,7 @@ type PartnerChannelTemplateCreateParams struct {
 	WorkspaceId                   int64                               `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// PartnerChannelTemplateUpdateParams contains the request parameters for this operation.
 type PartnerChannelTemplateUpdateParams struct {
 	Id                            int64                               `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Direction                     PartnerChannelTemplateDirectionEnum `url:"direction,omitempty" json:"direction,omitempty" path:"direction"`
@@ -81,6 +85,7 @@ type PartnerChannelTemplateUpdateParams struct {
 	Path                          string                              `url:"path,omitempty" json:"path,omitempty" path:"path"`
 }
 
+// PartnerChannelTemplateDeleteParams contains the request parameters for this operation.
 type PartnerChannelTemplateDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

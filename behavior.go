@@ -31,16 +31,19 @@ func (b Behavior) Identifier() interface{} {
 
 type BehaviorCollection []Behavior
 
+// BehaviorListParams contains the request parameters for this operation.
 type BehaviorListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// BehaviorFindParams contains the request parameters for this operation.
 type BehaviorFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// BehaviorListForParams contains the request parameters for this operation.
 type BehaviorListForParams struct {
 	SortBy            interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter            interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -49,6 +52,7 @@ type BehaviorListForParams struct {
 	ListParams
 }
 
+// BehaviorCreateParams contains the request parameters for this operation.
 type BehaviorCreateParams struct {
 	Value                       interface{} `url:"value,omitempty" json:"value,omitempty" path:"value"`
 	AttachmentFile              io.Writer   `url:"attachment_file,omitempty" json:"attachment_file,omitempty" path:"attachment_file"`
@@ -60,6 +64,7 @@ type BehaviorCreateParams struct {
 	Behavior                    string      `url:"behavior" json:"behavior" path:"behavior"`
 }
 
+// BehaviorWebhookTestParams contains the request parameters for this operation.
 type BehaviorWebhookTestParams struct {
 	Url      string      `url:"url" json:"url" path:"url"`
 	Method   string      `url:"method,omitempty" json:"method,omitempty" path:"method"`
@@ -69,6 +74,7 @@ type BehaviorWebhookTestParams struct {
 	Action   string      `url:"action,omitempty" json:"action,omitempty" path:"action"`
 }
 
+// BehaviorUpdateParams contains the request parameters for this operation.
 type BehaviorUpdateParams struct {
 	Id                          int64       `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Value                       interface{} `url:"value,omitempty" json:"value,omitempty" path:"value"`
@@ -80,6 +86,7 @@ type BehaviorUpdateParams struct {
 	AttachmentDelete            *bool       `url:"attachment_delete,omitempty" json:"attachment_delete,omitempty" path:"attachment_delete"`
 }
 
+// BehaviorDeleteParams contains the request parameters for this operation.
 type BehaviorDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

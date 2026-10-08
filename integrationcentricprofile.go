@@ -20,16 +20,19 @@ func (i IntegrationCentricProfile) Identifier() interface{} {
 
 type IntegrationCentricProfileCollection []IntegrationCentricProfile
 
+// IntegrationCentricProfileListParams contains the request parameters for this operation.
 type IntegrationCentricProfileListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// IntegrationCentricProfileFindParams contains the request parameters for this operation.
 type IntegrationCentricProfileFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// IntegrationCentricProfileCreateParams contains the request parameters for this operation.
 type IntegrationCentricProfileCreateParams struct {
 	Name                  string                   `url:"name" json:"name" path:"name"`
 	ExpectedRemoteServers []map[string]interface{} `url:"expected_remote_servers" json:"expected_remote_servers" path:"expected_remote_servers"`
@@ -37,6 +40,7 @@ type IntegrationCentricProfileCreateParams struct {
 	UseForAllUsers        *bool                    `url:"use_for_all_users,omitempty" json:"use_for_all_users,omitempty" path:"use_for_all_users"`
 }
 
+// IntegrationCentricProfileUpdateParams contains the request parameters for this operation.
 type IntegrationCentricProfileUpdateParams struct {
 	Id                    int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name                  string                   `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -45,6 +49,7 @@ type IntegrationCentricProfileUpdateParams struct {
 	UseForAllUsers        *bool                    `url:"use_for_all_users,omitempty" json:"use_for_all_users,omitempty" path:"use_for_all_users"`
 }
 
+// IntegrationCentricProfileDeleteParams contains the request parameters for this operation.
 type IntegrationCentricProfileDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

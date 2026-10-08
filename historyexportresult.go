@@ -41,6 +41,7 @@ func (h HistoryExportResult) Identifier() interface{} {
 
 type HistoryExportResultCollection []HistoryExportResult
 
+// HistoryExportResultListParams contains the request parameters for this operation.
 type HistoryExportResultListParams struct {
 	UserId          int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	HistoryExportId int64 `url:"history_export_id" json:"history_export_id" path:"history_export_id"`

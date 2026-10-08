@@ -19,6 +19,7 @@ func (d DnsRecord) Identifier() interface{} {
 
 type DnsRecordCollection []DnsRecord
 
+// DnsRecordListParams contains the request parameters for this operation.
 type DnsRecordListParams struct {
 	ListParams
 }

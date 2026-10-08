@@ -32,16 +32,19 @@ func (a As2Station) Identifier() interface{} {
 
 type As2StationCollection []As2Station
 
+// As2StationListParams contains the request parameters for this operation.
 type As2StationListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// As2StationFindParams contains the request parameters for this operation.
 type As2StationFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// As2StationCreateParams contains the request parameters for this operation.
 type As2StationCreateParams struct {
 	Name               string `url:"name" json:"name" path:"name"`
 	WorkspaceId        int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
@@ -50,6 +53,7 @@ type As2StationCreateParams struct {
 	PrivateKeyPassword string `url:"private_key_password,omitempty" json:"private_key_password,omitempty" path:"private_key_password"`
 }
 
+// As2StationUpdateParams contains the request parameters for this operation.
 type As2StationUpdateParams struct {
 	Id                 int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name               string `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -58,6 +62,7 @@ type As2StationUpdateParams struct {
 	PrivateKeyPassword string `url:"private_key_password,omitempty" json:"private_key_password,omitempty" path:"private_key_password"`
 }
 
+// As2StationDeleteParams contains the request parameters for this operation.
 type As2StationDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

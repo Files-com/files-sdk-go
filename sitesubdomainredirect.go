@@ -20,15 +20,18 @@ func (s SiteSubdomainRedirect) Identifier() interface{} {
 
 type SiteSubdomainRedirectCollection []SiteSubdomainRedirect
 
+// SiteSubdomainRedirectListParams contains the request parameters for this operation.
 type SiteSubdomainRedirectListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
 
+// SiteSubdomainRedirectFindParams contains the request parameters for this operation.
 type SiteSubdomainRedirectFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// SiteSubdomainRedirectDeleteParams contains the request parameters for this operation.
 type SiteSubdomainRedirectDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

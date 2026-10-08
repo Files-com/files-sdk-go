@@ -21,18 +21,21 @@ func (g GroupUser) Identifier() interface{} {
 
 type GroupUserCollection []GroupUser
 
+// GroupUserListParams contains the request parameters for this operation.
 type GroupUserListParams struct {
 	GroupId int64 `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
 	UserId  int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	ListParams
 }
 
+// GroupUserCreateParams contains the request parameters for this operation.
 type GroupUserCreateParams struct {
 	GroupId int64 `url:"group_id" json:"group_id" path:"group_id"`
 	UserId  int64 `url:"user_id" json:"user_id" path:"user_id"`
 	Admin   *bool `url:"admin,omitempty" json:"admin,omitempty" path:"admin"`
 }
 
+// GroupUserUpdateParams contains the request parameters for this operation.
 type GroupUserUpdateParams struct {
 	Id      int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	GroupId int64 `url:"group_id" json:"group_id" path:"group_id"`
@@ -40,6 +43,7 @@ type GroupUserUpdateParams struct {
 	Admin   *bool `url:"admin,omitempty" json:"admin,omitempty" path:"admin"`
 }
 
+// GroupUserDeleteParams contains the request parameters for this operation.
 type GroupUserDeleteParams struct {
 	Id      int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	GroupId int64 `url:"group_id" json:"group_id" path:"group_id"`

@@ -31,10 +31,12 @@ func (a ActionNotificationExport) Identifier() interface{} {
 
 type ActionNotificationExportCollection []ActionNotificationExport
 
+// ActionNotificationExportFindParams contains the request parameters for this operation.
 type ActionNotificationExportFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// ActionNotificationExportCreateParams contains the request parameters for this operation.
 type ActionNotificationExportCreateParams struct {
 	UserId             int64      `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	WorkspaceId        int64      `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`

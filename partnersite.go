@@ -13,6 +13,7 @@ type PartnerSite struct {
 
 type PartnerSiteCollection []PartnerSite
 
+// PartnerSiteDeleteParams contains the request parameters for this operation.
 type PartnerSiteDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

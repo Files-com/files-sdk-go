@@ -23,14 +23,17 @@ func (s SftpHostKey) Identifier() interface{} {
 
 type SftpHostKeyCollection []SftpHostKey
 
+// SftpHostKeyListParams contains the request parameters for this operation.
 type SftpHostKeyListParams struct {
 	ListParams
 }
 
+// SftpHostKeyFindParams contains the request parameters for this operation.
 type SftpHostKeyFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// SftpHostKeyCreateParams contains the request parameters for this operation.
 type SftpHostKeyCreateParams struct {
 	Active         *bool  `url:"active,omitempty" json:"active,omitempty" path:"active"`
 	CustomDomainId int64  `url:"custom_domain_id,omitempty" json:"custom_domain_id,omitempty" path:"custom_domain_id"`
@@ -38,6 +41,7 @@ type SftpHostKeyCreateParams struct {
 	PrivateKey     string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 }
 
+// SftpHostKeyUpdateParams contains the request parameters for this operation.
 type SftpHostKeyUpdateParams struct {
 	Id             int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Active         *bool  `url:"active,omitempty" json:"active,omitempty" path:"active"`
@@ -46,6 +50,7 @@ type SftpHostKeyUpdateParams struct {
 	PrivateKey     string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 }
 
+// SftpHostKeyDeleteParams contains the request parameters for this operation.
 type SftpHostKeyDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

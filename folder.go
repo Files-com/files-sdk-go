@@ -53,6 +53,7 @@ func (f Folder) Identifier() interface{} {
 
 type FolderCollection []Folder
 
+// FolderListForParams contains the request parameters for this operation.
 type FolderListForParams struct {
 	Path                    string                              `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	PreviewSize             string                              `url:"preview_size,omitempty" json:"preview_size,omitempty" path:"preview_size"`
@@ -68,6 +69,7 @@ type FolderListForParams struct {
 	ListParams
 }
 
+// FolderCreateParams contains the request parameters for this operation.
 type FolderCreateParams struct {
 	Path          string     `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	MkdirParents  *bool      `url:"mkdir_parents,omitempty" json:"mkdir_parents,omitempty" path:"mkdir_parents"`

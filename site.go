@@ -216,6 +216,7 @@ func (s Site) Identifier() interface{} {
 
 type SiteCollection []Site
 
+// SiteUpdateParams contains the request parameters for this operation.
 type SiteUpdateParams struct {
 	Name                                               string      `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	Subdomain                                          string      `url:"subdomain,omitempty" json:"subdomain,omitempty" path:"subdomain"`

@@ -31,16 +31,19 @@ func (e EventSubscription) Identifier() interface{} {
 
 type EventSubscriptionCollection []EventSubscription
 
+// EventSubscriptionListParams contains the request parameters for this operation.
 type EventSubscriptionListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// EventSubscriptionFindParams contains the request parameters for this operation.
 type EventSubscriptionFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// EventSubscriptionCreateParams contains the request parameters for this operation.
 type EventSubscriptionCreateParams struct {
 	EventChannelId       int64       `url:"event_channel_id,omitempty" json:"event_channel_id,omitempty" path:"event_channel_id"`
 	WorkspaceId          int64       `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
@@ -56,6 +59,7 @@ type EventSubscriptionCreateParams struct {
 	EventTargetIds       []int64     `url:"event_target_ids,omitempty" json:"event_target_ids,omitempty" path:"event_target_ids"`
 }
 
+// EventSubscriptionUpdateParams contains the request parameters for this operation.
 type EventSubscriptionUpdateParams struct {
 	Id                   int64       `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	EventChannelId       int64       `url:"event_channel_id,omitempty" json:"event_channel_id,omitempty" path:"event_channel_id"`
@@ -72,6 +76,7 @@ type EventSubscriptionUpdateParams struct {
 	EventTargetIds       []int64     `url:"event_target_ids,omitempty" json:"event_target_ids,omitempty" path:"event_target_ids"`
 }
 
+// EventSubscriptionDeleteParams contains the request parameters for this operation.
 type EventSubscriptionDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

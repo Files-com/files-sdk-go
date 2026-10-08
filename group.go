@@ -32,6 +32,7 @@ func (g Group) Identifier() interface{} {
 
 type GroupCollection []Group
 
+// GroupListParams contains the request parameters for this operation.
 type GroupListParams struct {
 	SortBy                  interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter                  interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -41,10 +42,12 @@ type GroupListParams struct {
 	ListParams
 }
 
+// GroupFindParams contains the request parameters for this operation.
 type GroupFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// GroupCreateParams contains the request parameters for this operation.
 type GroupCreateParams struct {
 	Notes                          string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
 	UserIds                        string `url:"user_ids,omitempty" json:"user_ids,omitempty" path:"user_ids"`
@@ -62,6 +65,7 @@ type GroupCreateParams struct {
 	WorkspaceId                    int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// GroupUpdateParams contains the request parameters for this operation.
 type GroupUpdateParams struct {
 	Id                             int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Notes                          string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
@@ -79,6 +83,7 @@ type GroupUpdateParams struct {
 	Name                           string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
+// GroupDeleteParams contains the request parameters for this operation.
 type GroupDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

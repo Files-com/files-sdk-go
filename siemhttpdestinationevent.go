@@ -24,6 +24,7 @@ func (s SiemHttpDestinationEvent) Identifier() interface{} {
 
 type SiemHttpDestinationEventCollection []SiemHttpDestinationEvent
 
+// SiemHttpDestinationEventListParams contains the request parameters for this operation.
 type SiemHttpDestinationEventListParams struct {
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -34,6 +35,7 @@ type SiemHttpDestinationEventListParams struct {
 	ListParams
 }
 
+// SiemHttpDestinationEventFindParams contains the request parameters for this operation.
 type SiemHttpDestinationEventFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

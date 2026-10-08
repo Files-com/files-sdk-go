@@ -23,6 +23,7 @@ func (s Session) Identifier() interface{} {
 
 type SessionCollection []Session
 
+// SessionCreateParams contains the request parameters for this operation.
 type SessionCreateParams struct {
 	Username         string `url:"username,omitempty" json:"username,omitempty" path:"username"`
 	Password         string `url:"password,omitempty" json:"password,omitempty" path:"password"`

@@ -28,12 +28,14 @@ func (l Lock) Identifier() interface{} {
 
 type LockCollection []Lock
 
+// LockListForParams contains the request parameters for this operation.
 type LockListForParams struct {
 	Path            string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	IncludeChildren *bool  `url:"include_children,omitempty" json:"include_children,omitempty" path:"include_children"`
 	ListParams
 }
 
+// LockCreateParams contains the request parameters for this operation.
 type LockCreateParams struct {
 	Path                 string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	Token                string `url:"token,omitempty" json:"token,omitempty" path:"token"`
@@ -45,6 +47,7 @@ type LockCreateParams struct {
 	Timeout              int64  `url:"timeout,omitempty" json:"timeout,omitempty" path:"timeout"`
 }
 
+// LockDeleteParams contains the request parameters for this operation.
 type LockDeleteParams struct {
 	Path  string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	Token string `url:"token" json:"token" path:"token"`

@@ -29,10 +29,12 @@ func (i Invoice) Identifier() interface{} {
 
 type InvoiceCollection []Invoice
 
+// InvoiceListParams contains the request parameters for this operation.
 type InvoiceListParams struct {
 	ListParams
 }
 
+// InvoiceFindParams contains the request parameters for this operation.
 type InvoiceFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

@@ -35,6 +35,7 @@ func (g GpgKey) Identifier() interface{} {
 
 type GpgKeyCollection []GpgKey
 
+// GpgKeyListParams contains the request parameters for this operation.
 type GpgKeyListParams struct {
 	UserId     int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -46,10 +47,12 @@ type GpgKeyListParams struct {
 	ListParams
 }
 
+// GpgKeyFindParams contains the request parameters for this operation.
 type GpgKeyFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// GpgKeyCreateParams contains the request parameters for this operation.
 type GpgKeyCreateParams struct {
 	UserId             int64      `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	PartnerId          int64      `url:"partner_id,omitempty" json:"partner_id,omitempty" path:"partner_id"`
@@ -64,6 +67,7 @@ type GpgKeyCreateParams struct {
 	GenerateEmail      string     `url:"generate_email,omitempty" json:"generate_email,omitempty" path:"generate_email"`
 }
 
+// GpgKeyUpdateParams contains the request parameters for this operation.
 type GpgKeyUpdateParams struct {
 	Id                 int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	PartnerId          int64  `url:"partner_id,omitempty" json:"partner_id,omitempty" path:"partner_id"`
@@ -73,6 +77,7 @@ type GpgKeyUpdateParams struct {
 	Name               string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
+// GpgKeyDeleteParams contains the request parameters for this operation.
 type GpgKeyDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

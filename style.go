@@ -22,16 +22,19 @@ func (s Style) Identifier() interface{} {
 
 type StyleCollection []Style
 
+// StyleFindParams contains the request parameters for this operation.
 type StyleFindParams struct {
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 }
 
+// StyleUpdateParams contains the request parameters for this operation.
 type StyleUpdateParams struct {
 	Path          string    `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	File          io.Writer `url:"file,omitempty" json:"file,omitempty" path:"file"`
 	LogoClickHref string    `url:"logo_click_href,omitempty" json:"logo_click_href,omitempty" path:"logo_click_href"`
 }
 
+// StyleDeleteParams contains the request parameters for this operation.
 type StyleDeleteParams struct {
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 }

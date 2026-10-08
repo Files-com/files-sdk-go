@@ -19,31 +19,37 @@ func (m MetadataCategory) Identifier() interface{} {
 
 type MetadataCategoryCollection []MetadataCategory
 
+// MetadataCategoryListParams contains the request parameters for this operation.
 type MetadataCategoryListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
 
+// MetadataCategoryFindParams contains the request parameters for this operation.
 type MetadataCategoryFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// MetadataCategoryListForParams contains the request parameters for this operation.
 type MetadataCategoryListForParams struct {
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	ListParams
 }
 
+// MetadataCategoryCreateParams contains the request parameters for this operation.
 type MetadataCategoryCreateParams struct {
 	Name           string   `url:"name" json:"name" path:"name"`
 	DefaultColumns []string `url:"default_columns,omitempty" json:"default_columns,omitempty" path:"default_columns"`
 }
 
+// MetadataCategoryUpdateParams contains the request parameters for this operation.
 type MetadataCategoryUpdateParams struct {
 	Id             int64    `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name           string   `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	DefaultColumns []string `url:"default_columns,omitempty" json:"default_columns,omitempty" path:"default_columns"`
 }
 
+// MetadataCategoryDeleteParams contains the request parameters for this operation.
 type MetadataCategoryDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

@@ -23,11 +23,13 @@ func (s ScimLog) Identifier() interface{} {
 
 type ScimLogCollection []ScimLog
 
+// ScimLogListParams contains the request parameters for this operation.
 type ScimLogListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
 
+// ScimLogFindParams contains the request parameters for this operation.
 type ScimLogFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

@@ -30,6 +30,7 @@ func (h History) Identifier() interface{} {
 
 type HistoryCollection []History
 
+// HistoryListForFileParams contains the request parameters for this operation.
 type HistoryListForFileParams struct {
 	StartAt *time.Time  `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
 	EndAt   *time.Time  `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
@@ -39,6 +40,7 @@ type HistoryListForFileParams struct {
 	ListParams
 }
 
+// HistoryListForFolderParams contains the request parameters for this operation.
 type HistoryListForFolderParams struct {
 	StartAt *time.Time  `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
 	EndAt   *time.Time  `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
@@ -48,6 +50,7 @@ type HistoryListForFolderParams struct {
 	ListParams
 }
 
+// HistoryListForUserParams contains the request parameters for this operation.
 type HistoryListForUserParams struct {
 	StartAt *time.Time  `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
 	EndAt   *time.Time  `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
@@ -57,6 +60,7 @@ type HistoryListForUserParams struct {
 	ListParams
 }
 
+// HistoryListLoginsParams contains the request parameters for this operation.
 type HistoryListLoginsParams struct {
 	StartAt *time.Time  `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
 	EndAt   *time.Time  `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
@@ -65,6 +69,7 @@ type HistoryListLoginsParams struct {
 	ListParams
 }
 
+// HistoryListParams contains the request parameters for this operation.
 type HistoryListParams struct {
 	StartAt      *time.Time  `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
 	EndAt        *time.Time  `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`

@@ -127,14 +127,17 @@ func (u SiemHttpDestinationDestinationTypeEnum) Enum() map[string]SiemHttpDestin
 	}
 }
 
+// SiemHttpDestinationListParams contains the request parameters for this operation.
 type SiemHttpDestinationListParams struct {
 	ListParams
 }
 
+// SiemHttpDestinationFindParams contains the request parameters for this operation.
 type SiemHttpDestinationFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// SiemHttpDestinationCreateParams contains the request parameters for this operation.
 type SiemHttpDestinationCreateParams struct {
 	Name                                    string                                    `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	AdditionalHeaders                       interface{}                               `url:"additional_headers,omitempty" json:"additional_headers,omitempty" path:"additional_headers"`
@@ -171,6 +174,7 @@ type SiemHttpDestinationCreateParams struct {
 	DestinationUrl                          string                                    `url:"destination_url,omitempty" json:"destination_url,omitempty" path:"destination_url"`
 }
 
+// SiemHttpDestinationSendTestEntryParams contains the request parameters for this operation.
 type SiemHttpDestinationSendTestEntryParams struct {
 	SiemHttpDestinationId                   int64                                     `url:"siem_http_destination_id,omitempty" json:"siem_http_destination_id,omitempty" path:"siem_http_destination_id"`
 	DestinationType                         SiemHttpDestinationDestinationTypeEnum    `url:"destination_type,omitempty" json:"destination_type,omitempty" path:"destination_type"`
@@ -208,6 +212,7 @@ type SiemHttpDestinationSendTestEntryParams struct {
 	SettingsChangeSendEnabled               *bool                                     `url:"settings_change_send_enabled,omitempty" json:"settings_change_send_enabled,omitempty" path:"settings_change_send_enabled"`
 }
 
+// SiemHttpDestinationUpdateParams contains the request parameters for this operation.
 type SiemHttpDestinationUpdateParams struct {
 	Id                                      int64                                     `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name                                    string                                    `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -245,6 +250,7 @@ type SiemHttpDestinationUpdateParams struct {
 	DestinationUrl                          string                                    `url:"destination_url,omitempty" json:"destination_url,omitempty" path:"destination_url"`
 }
 
+// SiemHttpDestinationDeleteParams contains the request parameters for this operation.
 type SiemHttpDestinationDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

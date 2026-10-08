@@ -68,15 +68,19 @@ func (s SsoStrategy) Identifier() interface{} {
 
 type SsoStrategyCollection []SsoStrategy
 
+// SsoStrategyListParams contains the request parameters for this operation.
 type SsoStrategyListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
 
+// SsoStrategyFindParams contains the request parameters for this operation.
 type SsoStrategyFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// SsoStrategySyncParams contains the request parameters for this operation.
+//
 // Synchronize provisioning data with the SSO remote server
 type SsoStrategySyncParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`

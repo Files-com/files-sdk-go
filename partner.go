@@ -50,16 +50,19 @@ func (u PartnerPartnershipRoleEnum) Enum() map[string]PartnerPartnershipRoleEnum
 	}
 }
 
+// PartnerListParams contains the request parameters for this operation.
 type PartnerListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// PartnerFindParams contains the request parameters for this operation.
 type PartnerFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// PartnerCreateParams contains the request parameters for this operation.
 type PartnerCreateParams struct {
 	AiAssistantPersonalityId   int64  `url:"ai_assistant_personality_id,omitempty" json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id"`
 	AllowedIps                 string `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
@@ -79,6 +82,7 @@ type PartnerCreateParams struct {
 	WorkspaceId                int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// PartnerUpdateParams contains the request parameters for this operation.
 type PartnerUpdateParams struct {
 	Id                         int64                      `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	AiAssistantPersonalityId   int64                      `url:"ai_assistant_personality_id,omitempty" json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id"`
@@ -99,6 +103,7 @@ type PartnerUpdateParams struct {
 	RootFolder                 string                     `url:"root_folder,omitempty" json:"root_folder,omitempty" path:"root_folder"`
 }
 
+// PartnerDeleteParams contains the request parameters for this operation.
 type PartnerDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

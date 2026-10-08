@@ -21,26 +21,31 @@ func (h HolidayCalendar) Identifier() interface{} {
 
 type HolidayCalendarCollection []HolidayCalendar
 
+// HolidayCalendarListParams contains the request parameters for this operation.
 type HolidayCalendarListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
 
+// HolidayCalendarFindParams contains the request parameters for this operation.
 type HolidayCalendarFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// HolidayCalendarCreateParams contains the request parameters for this operation.
 type HolidayCalendarCreateParams struct {
 	Definition interface{} `url:"definition" json:"definition" path:"definition"`
 	Name       string      `url:"name" json:"name" path:"name"`
 }
 
+// HolidayCalendarUpdateParams contains the request parameters for this operation.
 type HolidayCalendarUpdateParams struct {
 	Id         int64       `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Definition interface{} `url:"definition,omitempty" json:"definition,omitempty" path:"definition"`
 	Name       string      `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
+// HolidayCalendarDeleteParams contains the request parameters for this operation.
 type HolidayCalendarDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

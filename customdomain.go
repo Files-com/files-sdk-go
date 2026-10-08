@@ -44,21 +44,25 @@ func (u CustomDomainDestinationEnum) Enum() map[string]CustomDomainDestinationEn
 	}
 }
 
+// CustomDomainListParams contains the request parameters for this operation.
 type CustomDomainListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// CustomDomainFindParams contains the request parameters for this operation.
 type CustomDomainFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// CustomDomainCreateAllocateIpParams contains the request parameters for this operation.
 type CustomDomainCreateAllocateIpParams struct {
 	Id    int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Count int64 `url:"count" json:"count" path:"count"`
 }
 
+// CustomDomainCreateParams contains the request parameters for this operation.
 type CustomDomainCreateParams struct {
 	AvailableToAllWorkspaces *bool                       `url:"available_to_all_workspaces,omitempty" json:"available_to_all_workspaces,omitempty" path:"available_to_all_workspaces"`
 	WorkspaceId              int64                       `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
@@ -68,6 +72,7 @@ type CustomDomainCreateParams struct {
 	Domain                   string                      `url:"domain" json:"domain" path:"domain"`
 }
 
+// CustomDomainUpdateParams contains the request parameters for this operation.
 type CustomDomainUpdateParams struct {
 	Id                       int64                       `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	AvailableToAllWorkspaces *bool                       `url:"available_to_all_workspaces,omitempty" json:"available_to_all_workspaces,omitempty" path:"available_to_all_workspaces"`
@@ -78,6 +83,7 @@ type CustomDomainUpdateParams struct {
 	Domain                   string                      `url:"domain,omitempty" json:"domain,omitempty" path:"domain"`
 }
 
+// CustomDomainDeleteParams contains the request parameters for this operation.
 type CustomDomainDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

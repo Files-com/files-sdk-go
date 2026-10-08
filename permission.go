@@ -28,6 +28,7 @@ func (p Permission) Identifier() interface{} {
 
 type PermissionCollection []Permission
 
+// PermissionListParams contains the request parameters for this operation.
 type PermissionListParams struct {
 	SortBy        interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter        interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -40,6 +41,7 @@ type PermissionListParams struct {
 	ListParams
 }
 
+// PermissionCreateParams contains the request parameters for this operation.
 type PermissionCreateParams struct {
 	Path       string `url:"path" json:"path" path:"path"`
 	GroupId    int64  `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
@@ -53,6 +55,7 @@ type PermissionCreateParams struct {
 	SiteId     int64  `url:"site_id,omitempty" json:"site_id,omitempty" path:"site_id"`
 }
 
+// PermissionDeleteParams contains the request parameters for this operation.
 type PermissionDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

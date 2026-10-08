@@ -79,16 +79,19 @@ func (u As2PartnerServerCertificateEnum) Enum() map[string]As2PartnerServerCerti
 	}
 }
 
+// As2PartnerListParams contains the request parameters for this operation.
 type As2PartnerListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
+// As2PartnerFindParams contains the request parameters for this operation.
 type As2PartnerFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// As2PartnerCreateParams contains the request parameters for this operation.
 type As2PartnerCreateParams struct {
 	EnableDedicatedIps       *bool                                  `url:"enable_dedicated_ips,omitempty" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
 	HttpAuthUsername         string                                 `url:"http_auth_username,omitempty" json:"http_auth_username,omitempty" path:"http_auth_username"`
@@ -104,6 +107,7 @@ type As2PartnerCreateParams struct {
 	PublicCertificate        string                                 `url:"public_certificate" json:"public_certificate" path:"public_certificate"`
 }
 
+// As2PartnerUpdateParams contains the request parameters for this operation.
 type As2PartnerUpdateParams struct {
 	Id                       int64                                  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	EnableDedicatedIps       *bool                                  `url:"enable_dedicated_ips,omitempty" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
@@ -119,6 +123,7 @@ type As2PartnerUpdateParams struct {
 	PublicCertificate        string                                 `url:"public_certificate,omitempty" json:"public_certificate,omitempty" path:"public_certificate"`
 }
 
+// As2PartnerDeleteParams contains the request parameters for this operation.
 type As2PartnerDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
