@@ -422,8 +422,7 @@ func responseErrorGroupForType(responseType ResponseErrorType) ResponseErrorGrou
 
 func (e ResponseError) MarshalJSON() ([]byte, error) {
 	type re ResponseError
-	var v re
-	v = re(e)
+	v := re(e)
 
 	rawDataJson, err := json.Marshal(v.Data)
 	if err != nil {

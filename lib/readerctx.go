@@ -54,7 +54,7 @@ func (r *readerCtx) Read(p []byte) (n int, err error) {
 	return r.ReadCloser.Read(p)
 }
 
-// NewReader gets a context-aware io.Reader.
+// NewReaderAt gets a context-aware io.ReaderAt.
 func NewReaderAt(ctx context.Context, r io.ReaderAt) io.ReaderAt {
 	return &readerAtCtx{ctx: ctx, r: r}
 }

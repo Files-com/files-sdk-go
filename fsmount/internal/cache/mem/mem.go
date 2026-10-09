@@ -614,9 +614,9 @@ func (mc *MemoryCache) StopMaintenance() {
 	mc.maintMu.Unlock()
 }
 
-func (dc *MemoryCache) hasCapacityDelta(delta int64, newFile bool) bool {
-	bytesOK := dc.Capacity == 0 || dc.stats.SizeBytes.Load()+delta <= dc.Capacity
-	filesOK := dc.MaxFileCount == 0 || !newFile || dc.stats.FileCount.Load() < dc.MaxFileCount
+func (mc *MemoryCache) hasCapacityDelta(delta int64, newFile bool) bool {
+	bytesOK := mc.Capacity == 0 || mc.stats.SizeBytes.Load()+delta <= mc.Capacity
+	filesOK := mc.MaxFileCount == 0 || !newFile || mc.stats.FileCount.Load() < mc.MaxFileCount
 	return bytesOK && filesOK
 }
 
