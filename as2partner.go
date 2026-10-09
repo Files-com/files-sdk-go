@@ -28,6 +28,8 @@ type As2Partner struct {
 	PublicCertificateNotBefore string      `json:"public_certificate_not_before,omitempty" path:"public_certificate_not_before,omitempty" url:"public_certificate_not_before,omitempty"`
 	PublicCertificateNotAfter  string      `json:"public_certificate_not_after,omitempty" path:"public_certificate_not_after,omitempty" url:"public_certificate_not_after,omitempty"`
 	HttpAuthPassword           string      `json:"http_auth_password,omitempty" path:"http_auth_password,omitempty" url:"http_auth_password,omitempty"`
+	Pkcs12                     string      `json:"pkcs12,omitempty" path:"pkcs12,omitempty" url:"pkcs12,omitempty"`
+	Pkcs12Password             string      `json:"pkcs12_password,omitempty" path:"pkcs12_password,omitempty" url:"pkcs12_password,omitempty"`
 }
 
 func (a As2Partner) Identifier() interface{} {
@@ -104,7 +106,9 @@ type As2PartnerCreateParams struct {
 	As2StationId             int64                                  `url:"as2_station_id" json:"as2_station_id" path:"as2_station_id"`
 	Name                     string                                 `url:"name" json:"name" path:"name"`
 	Uri                      string                                 `url:"uri" json:"uri" path:"uri"`
-	PublicCertificate        string                                 `url:"public_certificate" json:"public_certificate" path:"public_certificate"`
+	PublicCertificate        string                                 `url:"public_certificate,omitempty" json:"public_certificate,omitempty" path:"public_certificate"`
+	Pkcs12                   string                                 `url:"pkcs12,omitempty" json:"pkcs12,omitempty" path:"pkcs12"`
+	Pkcs12Password           string                                 `url:"pkcs12_password,omitempty" json:"pkcs12_password,omitempty" path:"pkcs12_password"`
 }
 
 // As2PartnerUpdateParams contains the request parameters for this operation.
@@ -121,6 +125,8 @@ type As2PartnerUpdateParams struct {
 	Name                     string                                 `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	Uri                      string                                 `url:"uri,omitempty" json:"uri,omitempty" path:"uri"`
 	PublicCertificate        string                                 `url:"public_certificate,omitempty" json:"public_certificate,omitempty" path:"public_certificate"`
+	Pkcs12                   string                                 `url:"pkcs12,omitempty" json:"pkcs12,omitempty" path:"pkcs12"`
+	Pkcs12Password           string                                 `url:"pkcs12_password,omitempty" json:"pkcs12_password,omitempty" path:"pkcs12_password"`
 }
 
 // As2PartnerDeleteParams contains the request parameters for this operation.

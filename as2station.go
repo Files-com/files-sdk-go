@@ -24,6 +24,8 @@ type As2Station struct {
 	PrivateKeyPasswordMd5      string `json:"private_key_password_md5,omitempty" path:"private_key_password_md5,omitempty" url:"private_key_password_md5,omitempty"`
 	PrivateKey                 string `json:"private_key,omitempty" path:"private_key,omitempty" url:"private_key,omitempty"`
 	PrivateKeyPassword         string `json:"private_key_password,omitempty" path:"private_key_password,omitempty" url:"private_key_password,omitempty"`
+	Pkcs12                     string `json:"pkcs12,omitempty" path:"pkcs12,omitempty" url:"pkcs12,omitempty"`
+	Pkcs12Password             string `json:"pkcs12_password,omitempty" path:"pkcs12_password,omitempty" url:"pkcs12_password,omitempty"`
 }
 
 func (a As2Station) Identifier() interface{} {
@@ -48,9 +50,11 @@ type As2StationFindParams struct {
 type As2StationCreateParams struct {
 	Name               string `url:"name" json:"name" path:"name"`
 	WorkspaceId        int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
-	PublicCertificate  string `url:"public_certificate" json:"public_certificate" path:"public_certificate"`
-	PrivateKey         string `url:"private_key" json:"private_key" path:"private_key"`
+	PublicCertificate  string `url:"public_certificate,omitempty" json:"public_certificate,omitempty" path:"public_certificate"`
+	PrivateKey         string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 	PrivateKeyPassword string `url:"private_key_password,omitempty" json:"private_key_password,omitempty" path:"private_key_password"`
+	Pkcs12             string `url:"pkcs12,omitempty" json:"pkcs12,omitempty" path:"pkcs12"`
+	Pkcs12Password     string `url:"pkcs12_password,omitempty" json:"pkcs12_password,omitempty" path:"pkcs12_password"`
 }
 
 // As2StationUpdateParams contains the request parameters for this operation.
@@ -60,6 +64,8 @@ type As2StationUpdateParams struct {
 	PublicCertificate  string `url:"public_certificate,omitempty" json:"public_certificate,omitempty" path:"public_certificate"`
 	PrivateKey         string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 	PrivateKeyPassword string `url:"private_key_password,omitempty" json:"private_key_password,omitempty" path:"private_key_password"`
+	Pkcs12             string `url:"pkcs12,omitempty" json:"pkcs12,omitempty" path:"pkcs12"`
+	Pkcs12Password     string `url:"pkcs12_password,omitempty" json:"pkcs12_password,omitempty" path:"pkcs12_password"`
 }
 
 // As2StationDeleteParams contains the request parameters for this operation.
