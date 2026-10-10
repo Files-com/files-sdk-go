@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Folder is a Files.com API resource.
 type Folder struct {
 	Path                               string               `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	CreatedById                        int64                `json:"created_by_id,omitempty" path:"created_by_id,omitempty" url:"created_by_id,omitempty"`
@@ -47,13 +48,15 @@ type Folder struct {
 	MkdirParents                       *bool                `json:"mkdir_parents,omitempty" path:"mkdir_parents,omitempty" url:"mkdir_parents,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (f Folder) Identifier() interface{} {
 	return f.Path
 }
 
+// FolderCollection is a list of Folder resources.
 type FolderCollection []Folder
 
-// FolderListForParams contains the request parameters for this operation.
+// FolderListForParams contains the request parameters for GET /folders/{path}.
 type FolderListForParams struct {
 	Path                    string                              `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	PreviewSize             string                              `url:"preview_size,omitempty" json:"preview_size,omitempty" path:"preview_size"`
@@ -69,13 +72,14 @@ type FolderListForParams struct {
 	ListParams
 }
 
-// FolderCreateParams contains the request parameters for this operation.
+// FolderCreateParams contains the request parameters for POST /folders/{path}.
 type FolderCreateParams struct {
 	Path          string     `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	MkdirParents  *bool      `url:"mkdir_parents,omitempty" json:"mkdir_parents,omitempty" path:"mkdir_parents"`
 	ProvidedMtime *time.Time `url:"provided_mtime,omitempty" json:"provided_mtime,omitempty" path:"provided_mtime"`
 }
 
+// ToFile copies the fields shared with File through their JSON representation.
 func (f *Folder) ToFile() (File, error) {
 	bodyBytes, err := json.Marshal(f)
 	if err != nil {
@@ -86,10 +90,12 @@ func (f *Folder) ToFile() (File, error) {
 	return file, nil
 }
 
+// IsDir reports whether the API resource type is "directory".
 func (f Folder) IsDir() bool {
 	return f.Type == "directory"
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (f *Folder) UnmarshalJSON(data []byte) error {
 	type folder Folder
 	var v folder
@@ -101,6 +107,7 @@ func (f *Folder) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (f *FolderCollection) UnmarshalJSON(data []byte) error {
 	type folders FolderCollection
 	var v folders
@@ -112,6 +119,7 @@ func (f *FolderCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (f *FolderCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*f))
 	for i, v := range *f {

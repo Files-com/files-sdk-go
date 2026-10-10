@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// EventDeliveryAttempt is a Files.com API resource.
 type EventDeliveryAttempt struct {
 	Id                  int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	EventRecordId       int64      `json:"event_record_id,omitempty" path:"event_record_id,omitempty" url:"event_record_id,omitempty"`
@@ -25,24 +26,27 @@ type EventDeliveryAttempt struct {
 	CreatedAt           *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (e EventDeliveryAttempt) Identifier() interface{} {
 	return e.Id
 }
 
+// EventDeliveryAttemptCollection is a list of EventDeliveryAttempt resources.
 type EventDeliveryAttemptCollection []EventDeliveryAttempt
 
-// EventDeliveryAttemptListParams contains the request parameters for this operation.
+// EventDeliveryAttemptListParams contains the request parameters for GET /event_delivery_attempts.
 type EventDeliveryAttemptListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// EventDeliveryAttemptFindParams contains the request parameters for this operation.
+// EventDeliveryAttemptFindParams contains the request parameters for GET /event_delivery_attempts/{id}.
 type EventDeliveryAttemptFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (e *EventDeliveryAttempt) UnmarshalJSON(data []byte) error {
 	type eventDeliveryAttempt EventDeliveryAttempt
 	var v eventDeliveryAttempt
@@ -54,6 +58,7 @@ func (e *EventDeliveryAttempt) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (e *EventDeliveryAttemptCollection) UnmarshalJSON(data []byte) error {
 	type eventDeliveryAttempts EventDeliveryAttemptCollection
 	var v eventDeliveryAttempts
@@ -65,6 +70,7 @@ func (e *EventDeliveryAttemptCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (e *EventDeliveryAttemptCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*e))
 	for i, v := range *e {

@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// PaymentLineItem is a Files.com API resource.
 type PaymentLineItem struct {
 	Amount    string     `json:"amount,omitempty" path:"amount,omitempty" url:"amount,omitempty"`
 	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
@@ -16,8 +17,10 @@ type PaymentLineItem struct {
 
 // Identifier no path or id
 
+// PaymentLineItemCollection is a list of PaymentLineItem resources.
 type PaymentLineItemCollection []PaymentLineItem
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (p *PaymentLineItem) UnmarshalJSON(data []byte) error {
 	type paymentLineItem PaymentLineItem
 	var v paymentLineItem
@@ -29,6 +32,7 @@ func (p *PaymentLineItem) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (p *PaymentLineItemCollection) UnmarshalJSON(data []byte) error {
 	type paymentLineItems PaymentLineItemCollection
 	var v paymentLineItems
@@ -40,6 +44,7 @@ func (p *PaymentLineItemCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (p *PaymentLineItemCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*p))
 	for i, v := range *p {

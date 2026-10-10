@@ -6,17 +6,21 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// BundlePath is a Files.com API resource.
 type BundlePath struct {
 	Recursive *bool  `json:"recursive,omitempty" path:"recursive,omitempty" url:"recursive,omitempty"`
 	Path      string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (b BundlePath) Identifier() interface{} {
 	return b.Path
 }
 
+// BundlePathCollection is a list of BundlePath resources.
 type BundlePathCollection []BundlePath
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (b *BundlePath) UnmarshalJSON(data []byte) error {
 	type bundlePath BundlePath
 	var v bundlePath
@@ -28,6 +32,7 @@ func (b *BundlePath) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (b *BundlePathCollection) UnmarshalJSON(data []byte) error {
 	type bundlePaths BundlePathCollection
 	var v bundlePaths
@@ -39,6 +44,7 @@ func (b *BundlePathCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (b *BundlePathCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*b))
 	for i, v := range *b {

@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// BundleRegistration is a Files.com API resource.
 type BundleRegistration struct {
 	Code              string      `json:"code,omitempty" path:"code,omitempty" url:"code,omitempty"`
 	Name              string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -26,9 +27,10 @@ type BundleRegistration struct {
 
 // Identifier no path or id
 
+// BundleRegistrationCollection is a list of BundleRegistration resources.
 type BundleRegistrationCollection []BundleRegistration
 
-// BundleRegistrationListParams contains the request parameters for this operation.
+// BundleRegistrationListParams contains the request parameters for GET /bundle_registrations.
 type BundleRegistrationListParams struct {
 	UserId   int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy   interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -36,6 +38,7 @@ type BundleRegistrationListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (b *BundleRegistration) UnmarshalJSON(data []byte) error {
 	type bundleRegistration BundleRegistration
 	var v bundleRegistration
@@ -47,6 +50,7 @@ func (b *BundleRegistration) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (b *BundleRegistrationCollection) UnmarshalJSON(data []byte) error {
 	type bundleRegistrations BundleRegistrationCollection
 	var v bundleRegistrations
@@ -58,6 +62,7 @@ func (b *BundleRegistrationCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (b *BundleRegistrationCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*b))
 	for i, v := range *b {

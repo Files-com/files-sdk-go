@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ExavaultApiRequestLog is a Files.com API resource.
 type ExavaultApiRequestLog struct {
 	Timestamp     *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
 	Endpoint      string     `json:"endpoint,omitempty" path:"endpoint,omitempty" url:"endpoint,omitempty"`
@@ -24,9 +25,10 @@ type ExavaultApiRequestLog struct {
 
 // Identifier no path or id
 
+// ExavaultApiRequestLogCollection is a list of ExavaultApiRequestLog resources.
 type ExavaultApiRequestLogCollection []ExavaultApiRequestLog
 
-// ExavaultApiRequestLogListParams contains the request parameters for this operation.
+// ExavaultApiRequestLogListParams contains the request parameters for GET /exavault_api_request_logs.
 type ExavaultApiRequestLogListParams struct {
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -37,6 +39,7 @@ type ExavaultApiRequestLogListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (e *ExavaultApiRequestLog) UnmarshalJSON(data []byte) error {
 	type exavaultApiRequestLog ExavaultApiRequestLog
 	var v exavaultApiRequestLog
@@ -48,6 +51,7 @@ func (e *ExavaultApiRequestLog) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (e *ExavaultApiRequestLogCollection) UnmarshalJSON(data []byte) error {
 	type exavaultApiRequestLogs ExavaultApiRequestLogCollection
 	var v exavaultApiRequestLogs
@@ -59,6 +63,7 @@ func (e *ExavaultApiRequestLogCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (e *ExavaultApiRequestLogCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*e))
 	for i, v := range *e {

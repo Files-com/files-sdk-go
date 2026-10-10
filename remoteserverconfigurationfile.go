@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// RemoteServerConfigurationFile is a Files.com API resource.
 type RemoteServerConfigurationFile struct {
 	Id                        int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	PermissionSet             string `json:"permission_set,omitempty" path:"permission_set,omitempty" url:"permission_set,omitempty"`
@@ -28,12 +29,15 @@ type RemoteServerConfigurationFile struct {
 	AutoUpdatePolicy          string `json:"auto_update_policy,omitempty" path:"auto_update_policy,omitempty" url:"auto_update_policy,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (r RemoteServerConfigurationFile) Identifier() interface{} {
 	return r.Id
 }
 
+// RemoteServerConfigurationFileCollection is a list of RemoteServerConfigurationFile resources.
 type RemoteServerConfigurationFileCollection []RemoteServerConfigurationFile
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (r *RemoteServerConfigurationFile) UnmarshalJSON(data []byte) error {
 	type remoteServerConfigurationFile RemoteServerConfigurationFile
 	var v remoteServerConfigurationFile
@@ -45,6 +49,7 @@ func (r *RemoteServerConfigurationFile) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (r *RemoteServerConfigurationFileCollection) UnmarshalJSON(data []byte) error {
 	type remoteServerConfigurationFiles RemoteServerConfigurationFileCollection
 	var v remoteServerConfigurationFiles
@@ -56,6 +61,7 @@ func (r *RemoteServerConfigurationFileCollection) UnmarshalJSON(data []byte) err
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (r *RemoteServerConfigurationFileCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*r))
 	for i, v := range *r {

@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// App is a Files.com API resource.
 type App struct {
 	AppType                             string      `json:"app_type,omitempty" path:"app_type,omitempty" url:"app_type,omitempty"`
 	DocumentationLinks                  interface{} `json:"documentation_links,omitempty" path:"documentation_links,omitempty" url:"documentation_links,omitempty"`
@@ -32,9 +33,10 @@ type App struct {
 
 // Identifier no path or id
 
+// AppCollection is a list of App resources.
 type AppCollection []App
 
-// AppListParams contains the request parameters for this operation.
+// AppListParams contains the request parameters for GET /apps.
 type AppListParams struct {
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -42,6 +44,7 @@ type AppListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *App) UnmarshalJSON(data []byte) error {
 	type app App
 	var v app
@@ -53,6 +56,7 @@ func (a *App) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *AppCollection) UnmarshalJSON(data []byte) error {
 	type apps AppCollection
 	var v apps
@@ -64,6 +68,7 @@ func (a *AppCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *AppCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

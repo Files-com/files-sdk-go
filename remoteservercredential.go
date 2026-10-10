@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// RemoteServerCredential is a Files.com API resource.
 type RemoteServerCredential struct {
 	Id                                      int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId                             int64  `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
@@ -48,18 +49,24 @@ type RemoteServerCredential struct {
 	CopyValuesFromCredentialId              int64  `json:"copy_values_from_credential_id,omitempty" path:"copy_values_from_credential_id,omitempty" url:"copy_values_from_credential_id,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (r RemoteServerCredential) Identifier() interface{} {
 	return r.Id
 }
 
+// RemoteServerCredentialCollection is a list of RemoteServerCredential resources.
 type RemoteServerCredentialCollection []RemoteServerCredential
 
+// RemoteServerCredentialServerTypeEnum is a string value for server_type.
+// Enum lists the values documented by the API.
 type RemoteServerCredentialServerTypeEnum string
 
+// String returns the API parameter value.
 func (u RemoteServerCredentialServerTypeEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u RemoteServerCredentialServerTypeEnum) Enum() map[string]RemoteServerCredentialServerTypeEnum {
 	return map[string]RemoteServerCredentialServerTypeEnum{
 		"ftp":                  RemoteServerCredentialServerTypeEnum("ftp"),
@@ -85,7 +92,7 @@ func (u RemoteServerCredentialServerTypeEnum) Enum() map[string]RemoteServerCred
 	}
 }
 
-// RemoteServerCredentialListParams contains the request parameters for this operation.
+// RemoteServerCredentialListParams contains the request parameters for GET /remote_server_credentials.
 type RemoteServerCredentialListParams struct {
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -93,12 +100,12 @@ type RemoteServerCredentialListParams struct {
 	ListParams
 }
 
-// RemoteServerCredentialFindParams contains the request parameters for this operation.
+// RemoteServerCredentialFindParams contains the request parameters for GET /remote_server_credentials/{id}.
 type RemoteServerCredentialFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// RemoteServerCredentialCreateParams contains the request parameters for this operation.
+// RemoteServerCredentialCreateParams contains the request parameters for POST /remote_server_credentials.
 type RemoteServerCredentialCreateParams struct {
 	Name                                    string                               `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	Description                             string                               `url:"description,omitempty" json:"description,omitempty" path:"description"`
@@ -138,7 +145,7 @@ type RemoteServerCredentialCreateParams struct {
 	CopyValuesFromCredentialId              int64                                `url:"copy_values_from_credential_id,omitempty" json:"copy_values_from_credential_id,omitempty" path:"copy_values_from_credential_id"`
 }
 
-// RemoteServerCredentialUpdateParams contains the request parameters for this operation.
+// RemoteServerCredentialUpdateParams contains the request parameters for PATCH /remote_server_credentials/{id}.
 type RemoteServerCredentialUpdateParams struct {
 	Id                                      int64                                `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name                                    string                               `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -177,11 +184,12 @@ type RemoteServerCredentialUpdateParams struct {
 	WasabiSecretKey                         string                               `url:"wasabi_secret_key,omitempty" json:"wasabi_secret_key,omitempty" path:"wasabi_secret_key"`
 }
 
-// RemoteServerCredentialDeleteParams contains the request parameters for this operation.
+// RemoteServerCredentialDeleteParams contains the request parameters for DELETE /remote_server_credentials/{id}.
 type RemoteServerCredentialDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (r *RemoteServerCredential) UnmarshalJSON(data []byte) error {
 	type remoteServerCredential RemoteServerCredential
 	var v remoteServerCredential
@@ -193,6 +201,7 @@ func (r *RemoteServerCredential) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (r *RemoteServerCredentialCollection) UnmarshalJSON(data []byte) error {
 	type remoteServerCredentials RemoteServerCredentialCollection
 	var v remoteServerCredentials
@@ -204,6 +213,7 @@ func (r *RemoteServerCredentialCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (r *RemoteServerCredentialCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*r))
 	for i, v := range *r {

@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// CustomDomain is a Files.com API resource.
 type CustomDomain struct {
 	Id                       int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId              int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
@@ -23,18 +24,24 @@ type CustomDomain struct {
 	UpdatedAt                *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (c CustomDomain) Identifier() interface{} {
 	return c.Id
 }
 
+// CustomDomainCollection is a list of CustomDomain resources.
 type CustomDomainCollection []CustomDomain
 
+// CustomDomainDestinationEnum is a string value for destination.
+// Enum lists the values documented by the API.
 type CustomDomainDestinationEnum string
 
+// String returns the API parameter value.
 func (u CustomDomainDestinationEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u CustomDomainDestinationEnum) Enum() map[string]CustomDomainDestinationEnum {
 	return map[string]CustomDomainDestinationEnum{
 		"site_alias":     CustomDomainDestinationEnum("site_alias"),
@@ -44,25 +51,25 @@ func (u CustomDomainDestinationEnum) Enum() map[string]CustomDomainDestinationEn
 	}
 }
 
-// CustomDomainListParams contains the request parameters for this operation.
+// CustomDomainListParams contains the request parameters for GET /custom_domains.
 type CustomDomainListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// CustomDomainFindParams contains the request parameters for this operation.
+// CustomDomainFindParams contains the request parameters for GET /custom_domains/{id}.
 type CustomDomainFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// CustomDomainCreateAllocateIpParams contains the request parameters for this operation.
+// CustomDomainCreateAllocateIpParams contains the request parameters for POST /custom_domains/{id}/allocate_ips.
 type CustomDomainCreateAllocateIpParams struct {
 	Id    int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Count int64 `url:"count" json:"count" path:"count"`
 }
 
-// CustomDomainCreateParams contains the request parameters for this operation.
+// CustomDomainCreateParams contains the request parameters for POST /custom_domains.
 type CustomDomainCreateParams struct {
 	AvailableToAllWorkspaces *bool                       `url:"available_to_all_workspaces,omitempty" json:"available_to_all_workspaces,omitempty" path:"available_to_all_workspaces"`
 	WorkspaceId              int64                       `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
@@ -72,7 +79,7 @@ type CustomDomainCreateParams struct {
 	Domain                   string                      `url:"domain" json:"domain" path:"domain"`
 }
 
-// CustomDomainUpdateParams contains the request parameters for this operation.
+// CustomDomainUpdateParams contains the request parameters for PATCH /custom_domains/{id}.
 type CustomDomainUpdateParams struct {
 	Id                       int64                       `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	AvailableToAllWorkspaces *bool                       `url:"available_to_all_workspaces,omitempty" json:"available_to_all_workspaces,omitempty" path:"available_to_all_workspaces"`
@@ -83,11 +90,12 @@ type CustomDomainUpdateParams struct {
 	Domain                   string                      `url:"domain,omitempty" json:"domain,omitempty" path:"domain"`
 }
 
-// CustomDomainDeleteParams contains the request parameters for this operation.
+// CustomDomainDeleteParams contains the request parameters for DELETE /custom_domains/{id}.
 type CustomDomainDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (c *CustomDomain) UnmarshalJSON(data []byte) error {
 	type customDomain CustomDomain
 	var v customDomain
@@ -99,6 +107,7 @@ func (c *CustomDomain) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (c *CustomDomainCollection) UnmarshalJSON(data []byte) error {
 	type customDomains CustomDomainCollection
 	var v customDomains
@@ -110,6 +119,7 @@ func (c *CustomDomainCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (c *CustomDomainCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*c))
 	for i, v := range *c {

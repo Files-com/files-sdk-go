@@ -50,3 +50,28 @@ func TestUploadV2NetworkErrorHidesSignedURL(t *testing.T) {
 		})
 	}
 }
+
+func TestDownloadNetworkErrorHidesSignedURL(t *testing.T) {
+	for _, cause := range []error{os.ErrDeadlineExceeded, context.Canceled} {
+		t.Run(cause.Error(), func(t *testing.T) {
+			var logs bytes.Buffer
+			config := files_sdk.Config{Logger: log.New(&logs, "", 0)}.Init()
+			config.Client.RetryMax = 0
+			config.Client.HTTPClient = &http.Client{Transport: failingTransferTransport{err: cause}}
+
+			_, err := (&Client{Config: config}).Download(files_sdk.FileDownloadParams{File: files_sdk.File{
+				Path:        "report.csv",
+				DownloadUri: "https://transfer.example.test/private-object?X-Amz-Credential=credential&X-Amz-Signature=signature",
+			}})
+
+			require.ErrorIs(t, err, cause)
+			var urlErr *url.Error
+			require.ErrorAs(t, err, &urlErr)
+			require.Equal(t, cause == os.ErrDeadlineExceeded, urlErr.Timeout())
+			for _, secret := range []string{"transfer.example.test", "private-object", "credential", "signature"} {
+				require.NotContains(t, err.Error(), secret)
+				require.NotContains(t, logs.String(), secret)
+			}
+		})
+	}
+}

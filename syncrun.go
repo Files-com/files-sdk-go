@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// SyncRun is a Files.com API resource.
 type SyncRun struct {
 	Id                   int64                 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Body                 string                `json:"body,omitempty" path:"body,omitempty" url:"body,omitempty"`
@@ -33,13 +34,15 @@ type SyncRun struct {
 	LiveTransfers        []SyncRunLiveTransfer `json:"live_transfers,omitempty" path:"live_transfers,omitempty" url:"live_transfers,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (s SyncRun) Identifier() interface{} {
 	return s.Id
 }
 
+// SyncRunCollection is a list of SyncRun resources.
 type SyncRunCollection []SyncRun
 
-// SyncRunListParams contains the request parameters for this operation.
+// SyncRunListParams contains the request parameters for GET /sync_runs.
 type SyncRunListParams struct {
 	UserId     int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -51,11 +54,12 @@ type SyncRunListParams struct {
 	ListParams
 }
 
-// SyncRunFindParams contains the request parameters for this operation.
+// SyncRunFindParams contains the request parameters for GET /sync_runs/{id}.
 type SyncRunFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *SyncRun) UnmarshalJSON(data []byte) error {
 	type syncRun SyncRun
 	var v syncRun
@@ -67,6 +71,7 @@ func (s *SyncRun) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *SyncRunCollection) UnmarshalJSON(data []byte) error {
 	type syncRuns SyncRunCollection
 	var v syncRuns
@@ -78,6 +83,7 @@ func (s *SyncRunCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *SyncRunCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

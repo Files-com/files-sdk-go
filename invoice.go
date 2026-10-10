@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Invoice is a Files.com API resource.
 type Invoice struct {
 	Id                int64             `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Amount            string            `json:"amount,omitempty" path:"amount,omitempty" url:"amount,omitempty"`
@@ -23,22 +24,25 @@ type Invoice struct {
 	Type              string            `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (i Invoice) Identifier() interface{} {
 	return i.Id
 }
 
+// InvoiceCollection is a list of Invoice resources.
 type InvoiceCollection []Invoice
 
-// InvoiceListParams contains the request parameters for this operation.
+// InvoiceListParams contains the request parameters for GET /invoices.
 type InvoiceListParams struct {
 	ListParams
 }
 
-// InvoiceFindParams contains the request parameters for this operation.
+// InvoiceFindParams contains the request parameters for GET /invoices/{id}.
 type InvoiceFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (i *Invoice) UnmarshalJSON(data []byte) error {
 	type invoice Invoice
 	var v invoice
@@ -50,6 +54,7 @@ func (i *Invoice) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (i *InvoiceCollection) UnmarshalJSON(data []byte) error {
 	type invoices InvoiceCollection
 	var v invoices
@@ -61,6 +66,7 @@ func (i *InvoiceCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (i *InvoiceCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*i))
 	for i, v := range *i {

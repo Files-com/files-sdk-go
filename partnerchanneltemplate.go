@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// PartnerChannelTemplate is a Files.com API resource.
 type PartnerChannelTemplate struct {
 	Id                             int64    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId                    int64    `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
@@ -23,18 +24,24 @@ type PartnerChannelTemplate struct {
 	EffectiveFromPartnerFolderName string   `json:"effective_from_partner_folder_name,omitempty" path:"effective_from_partner_folder_name,omitempty" url:"effective_from_partner_folder_name,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (p PartnerChannelTemplate) Identifier() interface{} {
 	return p.Id
 }
 
+// PartnerChannelTemplateCollection is a list of PartnerChannelTemplate resources.
 type PartnerChannelTemplateCollection []PartnerChannelTemplate
 
+// PartnerChannelTemplateDirectionEnum is a string value for direction.
+// Enum lists the values documented by the API.
 type PartnerChannelTemplateDirectionEnum string
 
+// String returns the API parameter value.
 func (u PartnerChannelTemplateDirectionEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u PartnerChannelTemplateDirectionEnum) Enum() map[string]PartnerChannelTemplateDirectionEnum {
 	return map[string]PartnerChannelTemplateDirectionEnum{
 		"two_way":      PartnerChannelTemplateDirectionEnum("two_way"),
@@ -43,19 +50,19 @@ func (u PartnerChannelTemplateDirectionEnum) Enum() map[string]PartnerChannelTem
 	}
 }
 
-// PartnerChannelTemplateListParams contains the request parameters for this operation.
+// PartnerChannelTemplateListParams contains the request parameters for GET /partner_channel_templates.
 type PartnerChannelTemplateListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// PartnerChannelTemplateFindParams contains the request parameters for this operation.
+// PartnerChannelTemplateFindParams contains the request parameters for GET /partner_channel_templates/{id}.
 type PartnerChannelTemplateFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// PartnerChannelTemplateCreateParams contains the request parameters for this operation.
+// PartnerChannelTemplateCreateParams contains the request parameters for POST /partner_channel_templates.
 type PartnerChannelTemplateCreateParams struct {
 	Direction                     PartnerChannelTemplateDirectionEnum `url:"direction,omitempty" json:"direction,omitempty" path:"direction"`
 	UseChannelRoot                *bool                               `url:"use_channel_root,omitempty" json:"use_channel_root,omitempty" path:"use_channel_root"`
@@ -70,7 +77,7 @@ type PartnerChannelTemplateCreateParams struct {
 	WorkspaceId                   int64                               `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// PartnerChannelTemplateUpdateParams contains the request parameters for this operation.
+// PartnerChannelTemplateUpdateParams contains the request parameters for PATCH /partner_channel_templates/{id}.
 type PartnerChannelTemplateUpdateParams struct {
 	Id                            int64                               `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Direction                     PartnerChannelTemplateDirectionEnum `url:"direction,omitempty" json:"direction,omitempty" path:"direction"`
@@ -85,11 +92,12 @@ type PartnerChannelTemplateUpdateParams struct {
 	Path                          string                              `url:"path,omitempty" json:"path,omitempty" path:"path"`
 }
 
-// PartnerChannelTemplateDeleteParams contains the request parameters for this operation.
+// PartnerChannelTemplateDeleteParams contains the request parameters for DELETE /partner_channel_templates/{id}.
 type PartnerChannelTemplateDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (p *PartnerChannelTemplate) UnmarshalJSON(data []byte) error {
 	type partnerChannelTemplate PartnerChannelTemplate
 	var v partnerChannelTemplate
@@ -101,6 +109,7 @@ func (p *PartnerChannelTemplate) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (p *PartnerChannelTemplateCollection) UnmarshalJSON(data []byte) error {
 	type partnerChannelTemplates PartnerChannelTemplateCollection
 	var v partnerChannelTemplates
@@ -112,6 +121,7 @@ func (p *PartnerChannelTemplateCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (p *PartnerChannelTemplateCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*p))
 	for i, v := range *p {

@@ -1,5 +1,6 @@
 package files_sdk
 
+// Environment selects the Files.com API environment.
 type Environment int64
 
 const (
@@ -8,6 +9,7 @@ const (
 	Development
 )
 
+// NewEnvironment recognizes "staging" and "development". All other values select production.
 func NewEnvironment(env string) Environment {
 	switch env {
 	case "staging":
@@ -19,6 +21,7 @@ func NewEnvironment(env string) Environment {
 	}
 }
 
+// String returns the environment name. Unknown values return "production".
 func (e Environment) String() string {
 	switch e {
 	case Staging:
@@ -36,6 +39,8 @@ const (
 	stagingEndpoint     = "https://{{SUBDOMAIN}}.filesstaging.av"
 )
 
+// Endpoint returns the base URL template for the environment. Config.Endpoint
+// replaces {{SUBDOMAIN}} with the configured site subdomain.
 func (e Environment) Endpoint() string {
 	switch e {
 	case Staging:

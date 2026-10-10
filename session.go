@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Session is a Files.com API resource.
 type Session struct {
 	Id                  string `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Language            string `json:"language,omitempty" path:"language,omitempty" url:"language,omitempty"`
@@ -17,13 +18,15 @@ type Session struct {
 	PartialSessionId    string `json:"partial_session_id,omitempty" path:"partial_session_id,omitempty" url:"partial_session_id,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (s Session) Identifier() interface{} {
 	return s.Id
 }
 
+// SessionCollection is a list of Session resources.
 type SessionCollection []Session
 
-// SessionCreateParams contains the request parameters for this operation.
+// SessionCreateParams contains the request parameters for POST /sessions.
 type SessionCreateParams struct {
 	Username         string `url:"username,omitempty" json:"username,omitempty" path:"username"`
 	Password         string `url:"password,omitempty" json:"password,omitempty" path:"password"`
@@ -31,6 +34,7 @@ type SessionCreateParams struct {
 	PartialSessionId string `url:"partial_session_id,omitempty" json:"partial_session_id,omitempty" path:"partial_session_id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *Session) UnmarshalJSON(data []byte) error {
 	type session Session
 	var v session
@@ -42,6 +46,7 @@ func (s *Session) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *SessionCollection) UnmarshalJSON(data []byte) error {
 	type sessions SessionCollection
 	var v sessions
@@ -53,6 +58,7 @@ func (s *SessionCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *SessionCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

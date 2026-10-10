@@ -533,7 +533,7 @@ func (e *downloadV2Engine) downloadPartWithRetry(ctx context.Context, part downl
 			"part_offset": part.off,
 			"part_size":   part.len,
 			"attempt":     attempt,
-			"error":       result.err,
+			"error":       uploadRetryLogError(result.err),
 		})
 	}
 	return result

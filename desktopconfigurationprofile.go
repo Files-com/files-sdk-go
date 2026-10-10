@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// DesktopConfigurationProfile is a Files.com API resource.
 type DesktopConfigurationProfile struct {
 	Id                   int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name                 string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -15,25 +16,27 @@ type DesktopConfigurationProfile struct {
 	MountMappings        interface{} `json:"mount_mappings,omitempty" path:"mount_mappings,omitempty" url:"mount_mappings,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (d DesktopConfigurationProfile) Identifier() interface{} {
 	return d.Id
 }
 
+// DesktopConfigurationProfileCollection is a list of DesktopConfigurationProfile resources.
 type DesktopConfigurationProfileCollection []DesktopConfigurationProfile
 
-// DesktopConfigurationProfileListParams contains the request parameters for this operation.
+// DesktopConfigurationProfileListParams contains the request parameters for GET /desktop_configuration_profiles.
 type DesktopConfigurationProfileListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// DesktopConfigurationProfileFindParams contains the request parameters for this operation.
+// DesktopConfigurationProfileFindParams contains the request parameters for GET /desktop_configuration_profiles/{id}.
 type DesktopConfigurationProfileFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// DesktopConfigurationProfileCreateParams contains the request parameters for this operation.
+// DesktopConfigurationProfileCreateParams contains the request parameters for POST /desktop_configuration_profiles.
 type DesktopConfigurationProfileCreateParams struct {
 	Name                 string      `url:"name" json:"name" path:"name"`
 	MountMappings        interface{} `url:"mount_mappings" json:"mount_mappings" path:"mount_mappings"`
@@ -42,7 +45,7 @@ type DesktopConfigurationProfileCreateParams struct {
 	DisableDriveMounting *bool       `url:"disable_drive_mounting,omitempty" json:"disable_drive_mounting,omitempty" path:"disable_drive_mounting"`
 }
 
-// DesktopConfigurationProfileUpdateParams contains the request parameters for this operation.
+// DesktopConfigurationProfileUpdateParams contains the request parameters for PATCH /desktop_configuration_profiles/{id}.
 type DesktopConfigurationProfileUpdateParams struct {
 	Id                   int64       `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name                 string      `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -52,11 +55,12 @@ type DesktopConfigurationProfileUpdateParams struct {
 	DisableDriveMounting *bool       `url:"disable_drive_mounting,omitempty" json:"disable_drive_mounting,omitempty" path:"disable_drive_mounting"`
 }
 
-// DesktopConfigurationProfileDeleteParams contains the request parameters for this operation.
+// DesktopConfigurationProfileDeleteParams contains the request parameters for DELETE /desktop_configuration_profiles/{id}.
 type DesktopConfigurationProfileDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (d *DesktopConfigurationProfile) UnmarshalJSON(data []byte) error {
 	type desktopConfigurationProfile DesktopConfigurationProfile
 	var v desktopConfigurationProfile
@@ -68,6 +72,7 @@ func (d *DesktopConfigurationProfile) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (d *DesktopConfigurationProfileCollection) UnmarshalJSON(data []byte) error {
 	type desktopConfigurationProfiles DesktopConfigurationProfileCollection
 	var v desktopConfigurationProfiles
@@ -79,6 +84,7 @@ func (d *DesktopConfigurationProfileCollection) UnmarshalJSON(data []byte) error
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (d *DesktopConfigurationProfileCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*d))
 	for i, v := range *d {

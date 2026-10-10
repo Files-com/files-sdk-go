@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// PublicKey is a Files.com API resource.
 type PublicKey struct {
 	Id                         int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId                int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
@@ -29,13 +30,15 @@ type PublicKey struct {
 	GenerateLength             int64      `json:"generate_length,omitempty" path:"generate_length,omitempty" url:"generate_length,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (p PublicKey) Identifier() interface{} {
 	return p.Id
 }
 
+// PublicKeyCollection is a list of PublicKey resources.
 type PublicKeyCollection []PublicKey
 
-// PublicKeyListParams contains the request parameters for this operation.
+// PublicKeyListParams contains the request parameters for GET /public_keys.
 type PublicKeyListParams struct {
 	UserId     int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -47,12 +50,12 @@ type PublicKeyListParams struct {
 	ListParams
 }
 
-// PublicKeyFindParams contains the request parameters for this operation.
+// PublicKeyFindParams contains the request parameters for GET /public_keys/{id}.
 type PublicKeyFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// PublicKeyCreateParams contains the request parameters for this operation.
+// PublicKeyCreateParams contains the request parameters for POST /public_keys.
 type PublicKeyCreateParams struct {
 	UserId                     int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Title                      string `url:"title" json:"title" path:"title"`
@@ -63,17 +66,18 @@ type PublicKeyCreateParams struct {
 	GenerateLength             int64  `url:"generate_length,omitempty" json:"generate_length,omitempty" path:"generate_length"`
 }
 
-// PublicKeyUpdateParams contains the request parameters for this operation.
+// PublicKeyUpdateParams contains the request parameters for PATCH /public_keys/{id}.
 type PublicKeyUpdateParams struct {
 	Id    int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Title string `url:"title" json:"title" path:"title"`
 }
 
-// PublicKeyDeleteParams contains the request parameters for this operation.
+// PublicKeyDeleteParams contains the request parameters for DELETE /public_keys/{id}.
 type PublicKeyDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (p *PublicKey) UnmarshalJSON(data []byte) error {
 	type publicKey PublicKey
 	var v publicKey
@@ -85,6 +89,7 @@ func (p *PublicKey) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (p *PublicKeyCollection) UnmarshalJSON(data []byte) error {
 	type publicKeys PublicKeyCollection
 	var v publicKeys
@@ -96,6 +101,7 @@ func (p *PublicKeyCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (p *PublicKeyCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*p))
 	for i, v := range *p {

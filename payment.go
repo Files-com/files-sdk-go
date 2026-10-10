@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Payment is a Files.com API resource.
 type Payment struct {
 	Id                int64             `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Amount            string            `json:"amount,omitempty" path:"amount,omitempty" url:"amount,omitempty"`
@@ -23,22 +24,25 @@ type Payment struct {
 	Type              string            `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (p Payment) Identifier() interface{} {
 	return p.Id
 }
 
+// PaymentCollection is a list of Payment resources.
 type PaymentCollection []Payment
 
-// PaymentListParams contains the request parameters for this operation.
+// PaymentListParams contains the request parameters for GET /payments.
 type PaymentListParams struct {
 	ListParams
 }
 
-// PaymentFindParams contains the request parameters for this operation.
+// PaymentFindParams contains the request parameters for GET /payments/{id}.
 type PaymentFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (p *Payment) UnmarshalJSON(data []byte) error {
 	type payment Payment
 	var v payment
@@ -50,6 +54,7 @@ func (p *Payment) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (p *PaymentCollection) UnmarshalJSON(data []byte) error {
 	type payments PaymentCollection
 	var v payments
@@ -61,6 +66,7 @@ func (p *PaymentCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (p *PaymentCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*p))
 	for i, v := range *p {

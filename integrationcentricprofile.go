@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// IntegrationCentricProfile is a Files.com API resource.
 type IntegrationCentricProfile struct {
 	Id                    int64                    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name                  string                   `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -14,25 +15,27 @@ type IntegrationCentricProfile struct {
 	ExpectedRemoteServers []map[string]interface{} `json:"expected_remote_servers,omitempty" path:"expected_remote_servers,omitempty" url:"expected_remote_servers,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (i IntegrationCentricProfile) Identifier() interface{} {
 	return i.Id
 }
 
+// IntegrationCentricProfileCollection is a list of IntegrationCentricProfile resources.
 type IntegrationCentricProfileCollection []IntegrationCentricProfile
 
-// IntegrationCentricProfileListParams contains the request parameters for this operation.
+// IntegrationCentricProfileListParams contains the request parameters for GET /integration_centric_profiles.
 type IntegrationCentricProfileListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// IntegrationCentricProfileFindParams contains the request parameters for this operation.
+// IntegrationCentricProfileFindParams contains the request parameters for GET /integration_centric_profiles/{id}.
 type IntegrationCentricProfileFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// IntegrationCentricProfileCreateParams contains the request parameters for this operation.
+// IntegrationCentricProfileCreateParams contains the request parameters for POST /integration_centric_profiles.
 type IntegrationCentricProfileCreateParams struct {
 	Name                  string                   `url:"name" json:"name" path:"name"`
 	ExpectedRemoteServers []map[string]interface{} `url:"expected_remote_servers" json:"expected_remote_servers" path:"expected_remote_servers"`
@@ -40,7 +43,7 @@ type IntegrationCentricProfileCreateParams struct {
 	UseForAllUsers        *bool                    `url:"use_for_all_users,omitempty" json:"use_for_all_users,omitempty" path:"use_for_all_users"`
 }
 
-// IntegrationCentricProfileUpdateParams contains the request parameters for this operation.
+// IntegrationCentricProfileUpdateParams contains the request parameters for PATCH /integration_centric_profiles/{id}.
 type IntegrationCentricProfileUpdateParams struct {
 	Id                    int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name                  string                   `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -49,11 +52,12 @@ type IntegrationCentricProfileUpdateParams struct {
 	UseForAllUsers        *bool                    `url:"use_for_all_users,omitempty" json:"use_for_all_users,omitempty" path:"use_for_all_users"`
 }
 
-// IntegrationCentricProfileDeleteParams contains the request parameters for this operation.
+// IntegrationCentricProfileDeleteParams contains the request parameters for DELETE /integration_centric_profiles/{id}.
 type IntegrationCentricProfileDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (i *IntegrationCentricProfile) UnmarshalJSON(data []byte) error {
 	type integrationCentricProfile IntegrationCentricProfile
 	var v integrationCentricProfile
@@ -65,6 +69,7 @@ func (i *IntegrationCentricProfile) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (i *IntegrationCentricProfileCollection) UnmarshalJSON(data []byte) error {
 	type integrationCentricProfiles IntegrationCentricProfileCollection
 	var v integrationCentricProfiles
@@ -76,6 +81,7 @@ func (i *IntegrationCentricProfileCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (i *IntegrationCentricProfileCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*i))
 	for i, v := range *i {

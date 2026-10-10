@@ -6,18 +6,21 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Workspace is a Files.com API resource.
 type Workspace struct {
 	Id   int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (w Workspace) Identifier() interface{} {
 	return w.Id
 }
 
+// WorkspaceCollection is a list of Workspace resources.
 type WorkspaceCollection []Workspace
 
-// WorkspaceListParams contains the request parameters for this operation.
+// WorkspaceListParams contains the request parameters for GET /workspaces.
 type WorkspaceListParams struct {
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -25,27 +28,28 @@ type WorkspaceListParams struct {
 	ListParams
 }
 
-// WorkspaceFindParams contains the request parameters for this operation.
+// WorkspaceFindParams contains the request parameters for GET /workspaces/{id}.
 type WorkspaceFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// WorkspaceCreateParams contains the request parameters for this operation.
+// WorkspaceCreateParams contains the request parameters for POST /workspaces.
 type WorkspaceCreateParams struct {
 	Name string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
-// WorkspaceUpdateParams contains the request parameters for this operation.
+// WorkspaceUpdateParams contains the request parameters for PATCH /workspaces/{id}.
 type WorkspaceUpdateParams struct {
 	Id   int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
-// WorkspaceDeleteParams contains the request parameters for this operation.
+// WorkspaceDeleteParams contains the request parameters for DELETE /workspaces/{id}.
 type WorkspaceDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (w *Workspace) UnmarshalJSON(data []byte) error {
 	type workspace Workspace
 	var v workspace
@@ -57,6 +61,7 @@ func (w *Workspace) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (w *WorkspaceCollection) UnmarshalJSON(data []byte) error {
 	type workspaces WorkspaceCollection
 	var v workspaces
@@ -68,6 +73,7 @@ func (w *WorkspaceCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (w *WorkspaceCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*w))
 	for i, v := range *w {

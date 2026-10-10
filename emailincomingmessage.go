@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// EmailIncomingMessage is a Files.com API resource.
 type EmailIncomingMessage struct {
 	Id         int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	InboxId    int64      `json:"inbox_id,omitempty" path:"inbox_id,omitempty" url:"inbox_id,omitempty"`
@@ -19,13 +20,15 @@ type EmailIncomingMessage struct {
 	InboxTitle string     `json:"inbox_title,omitempty" path:"inbox_title,omitempty" url:"inbox_title,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (e EmailIncomingMessage) Identifier() interface{} {
 	return e.Id
 }
 
+// EmailIncomingMessageCollection is a list of EmailIncomingMessage resources.
 type EmailIncomingMessageCollection []EmailIncomingMessage
 
-// EmailIncomingMessageListParams contains the request parameters for this operation.
+// EmailIncomingMessageListParams contains the request parameters for GET /email_incoming_messages.
 type EmailIncomingMessageListParams struct {
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -37,6 +40,7 @@ type EmailIncomingMessageListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (e *EmailIncomingMessage) UnmarshalJSON(data []byte) error {
 	type emailIncomingMessage EmailIncomingMessage
 	var v emailIncomingMessage
@@ -48,6 +52,7 @@ func (e *EmailIncomingMessage) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (e *EmailIncomingMessageCollection) UnmarshalJSON(data []byte) error {
 	type emailIncomingMessages EmailIncomingMessageCollection
 	var v emailIncomingMessages
@@ -59,6 +64,7 @@ func (e *EmailIncomingMessageCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (e *EmailIncomingMessageCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*e))
 	for i, v := range *e {

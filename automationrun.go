@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// AutomationRun is a Files.com API resource.
 type AutomationRun struct {
 	Id                   int64                     `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	AutomationId         int64                     `json:"automation_id,omitempty" path:"automation_id,omitempty" url:"automation_id,omitempty"`
@@ -33,13 +34,15 @@ type AutomationRun struct {
 	StatusMessagesUrl    string                    `json:"status_messages_url,omitempty" path:"status_messages_url,omitempty" url:"status_messages_url,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (a AutomationRun) Identifier() interface{} {
 	return a.Id
 }
 
+// AutomationRunCollection is a list of AutomationRun resources.
 type AutomationRunCollection []AutomationRun
 
-// AutomationRunListParams contains the request parameters for this operation.
+// AutomationRunListParams contains the request parameters for GET /automation_runs.
 type AutomationRunListParams struct {
 	UserId       int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -48,25 +51,25 @@ type AutomationRunListParams struct {
 	ListParams
 }
 
-// AutomationRunFindParams contains the request parameters for this operation.
+// AutomationRunFindParams contains the request parameters for GET /automation_runs/{id}.
 type AutomationRunFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// AutomationRunFindNodeParams contains the request parameters for this operation.
+// AutomationRunFindNodeParams contains the request parameters for GET /automation_runs/{id}/node.
 type AutomationRunFindNodeParams struct {
 	Id     int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	NodeId string `url:"node_id" json:"node_id" path:"node_id"`
 }
 
-// AutomationRunCancelParams contains the request parameters for this operation.
+// AutomationRunCancelParams contains the request parameters for POST /automation_runs/{id}/cancel.
 //
 // Cancel Automation Run
 type AutomationRunCancelParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// AutomationRunRerunParams contains the request parameters for this operation.
+// AutomationRunRerunParams contains the request parameters for POST /automation_runs/{id}/rerun.
 //
 // Re-run Automation from Node
 type AutomationRunRerunParams struct {
@@ -74,6 +77,7 @@ type AutomationRunRerunParams struct {
 	NodeId string `url:"node_id" json:"node_id" path:"node_id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *AutomationRun) UnmarshalJSON(data []byte) error {
 	type automationRun AutomationRun
 	var v automationRun
@@ -85,6 +89,7 @@ func (a *AutomationRun) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *AutomationRunCollection) UnmarshalJSON(data []byte) error {
 	type automationRuns AutomationRunCollection
 	var v automationRuns
@@ -96,6 +101,7 @@ func (a *AutomationRunCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *AutomationRunCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

@@ -422,7 +422,11 @@ func (a *AdaptiveConcurrencyManager) DoneWithSample(sample AdaptiveConcurrencySa
 		a.backPressureTotal++
 		if sample.RetryAfter > 0 {
 			a.retryAfterTotal++
-			a.pauseUntil = time.Now().Add(sample.RetryAfter)
+			// Another worker may already have reported a longer Retry-After; keep the later deadline.
+			pauseUntil := time.Now().Add(sample.RetryAfter)
+			if a.pauseUntil.Before(pauseUntil) {
+				a.pauseUntil = pauseUntil
+			}
 		} else if a.backPressurePause > 0 {
 			pauseUntil := time.Now().Add(a.backPressurePause)
 			if a.pauseUntil.Before(pauseUntil) {

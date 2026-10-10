@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// EmailLog is a Files.com API resource.
 type EmailLog struct {
 	Timestamp      *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
 	Message        string     `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
@@ -22,9 +23,10 @@ type EmailLog struct {
 
 // Identifier no path or id
 
+// EmailLogCollection is a list of EmailLog resources.
 type EmailLogCollection []EmailLog
 
-// EmailLogListParams contains the request parameters for this operation.
+// EmailLogListParams contains the request parameters for GET /email_logs.
 type EmailLogListParams struct {
 	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt   interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -34,6 +36,7 @@ type EmailLogListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (e *EmailLog) UnmarshalJSON(data []byte) error {
 	type emailLog EmailLog
 	var v emailLog
@@ -45,6 +48,7 @@ func (e *EmailLog) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (e *EmailLogCollection) UnmarshalJSON(data []byte) error {
 	type emailLogs EmailLogCollection
 	var v emailLogs
@@ -56,6 +60,7 @@ func (e *EmailLogCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (e *EmailLogCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*e))
 	for i, v := range *e {

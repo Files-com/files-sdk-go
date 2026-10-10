@@ -1117,6 +1117,20 @@ func TestAdaptiveConcurrencyManagerWaitWithContextCancelsDuringRetryAfterPause(t
 	assert.Less(t, time.Since(start), 250*time.Millisecond)
 }
 
+func TestAdaptiveConcurrencyManagerKeepsLongerRetryAfterPause(t *testing.T) {
+	manager := NewAdaptiveConcurrencyManagerWithInitial(2, 2)
+	manager.Wait()
+	manager.Wait()
+	manager.DoneWithSample(AdaptiveConcurrencySample{StatusCode: 429, RetryAfter: time.Hour})
+	// Another worker that was already running reports a shorter Retry-After.
+	manager.DoneWithSample(AdaptiveConcurrencySample{StatusCode: 429, RetryAfter: time.Nanosecond})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Millisecond)
+	defer cancel()
+
+	assert.False(t, manager.WaitWithContext(ctx), "the hour-long pause still holds")
+}
+
 func TestAdaptiveConcurrencyManagerClearsExpiredPauseOnAcquire(t *testing.T) {
 	manager := NewAdaptiveConcurrencyManager(2)
 	manager.pauseUntil = time.Now().Add(-time.Second)

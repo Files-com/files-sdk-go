@@ -3,6 +3,7 @@ package files_sdk
 import (
 	"errors"
 	"fmt"
+	"iter"
 	"net/url"
 	"testing"
 
@@ -234,6 +235,144 @@ func TestIter_ParameterExportErrorStopsBeforeRequest(t *testing.T) {
 		assert.ErrorContains(t, it.Err(), "missing required field")
 	}
 	assert.Empty(t, listing.requests, "nothing is listed without the listing's parameters")
+}
+
+func TestIterAll(t *testing.T) {
+	t.Run("requests pages lazily, in order", func(t *testing.T) {
+		listing := &pagedQuery{pages: map[string]queryPage{
+			"":       {values: []interface{}{"a", "b"}, next: "page-2"},
+			"page-2": {values: []interface{}{"c"}},
+		}}
+		it := &Iter{Query: listing.Query, ListParams: &ListParams{}}
+
+		resources := IterAll[string](it)
+		assert.Empty(t, listing.requests, "creating the iterator requests nothing")
+		values, errs := collectAll(resources)
+
+		assert.Equal(t, []string{"a", "b", "c"}, values)
+		assert.Empty(t, errs)
+		assert.Equal(t, []string{"", "page-2"}, listing.requestedCursors())
+	})
+
+	t.Run("a break requests nothing more, and the next loop continues", func(t *testing.T) {
+		listing := &pagedQuery{pages: map[string]queryPage{
+			"":       {values: []interface{}{"a", "b"}, next: "page-2"},
+			"page-2": {values: []interface{}{"c"}},
+		}}
+		it := &Iter{Query: listing.Query, ListParams: &ListParams{}}
+
+		var first []string
+		for value, err := range IterAll[string](it) {
+			require.NoError(t, err)
+			first = append(first, value)
+			if len(first) == 1 {
+				break
+			}
+		}
+		assert.Equal(t, []string{"a"}, first)
+		assert.Len(t, listing.requests, 1)
+
+		values, errs := collectAll(IterAll[string](it))
+		assert.Equal(t, []string{"b", "c"}, values)
+		assert.Empty(t, errs)
+
+		values, errs = collectAll(IterAll[string](it))
+		assert.Empty(t, values, "an ended listing yields nothing and is not restarted")
+		assert.Empty(t, errs)
+		assert.Len(t, listing.requests, 2)
+	})
+
+	t.Run("continues after Next, and yields nothing once Next reached the end", func(t *testing.T) {
+		listing := &pagedQuery{pages: map[string]queryPage{"": {values: []interface{}{"a", "b", "c"}}}}
+		it := &Iter{Query: listing.Query, ListParams: &ListParams{}}
+		require.True(t, it.Next())
+
+		values, _ := collectAll(IterAll[string](it))
+		assert.Equal(t, []string{"b", "c"}, values)
+
+		ended := &Iter{Query: listing.Query, ListParams: &ListParams{}}
+		for ended.Next() {
+		}
+		values, errs := collectAll(IterAll[string](ended))
+		assert.Empty(t, values)
+		assert.Empty(t, errs)
+	})
+
+	t.Run("yields a page error once and keeps it in Err", func(t *testing.T) {
+		pageErr := fmt.Errorf("page 2: %w", errors.New("service unavailable"))
+		listing := &pagedQuery{pages: map[string]queryPage{
+			"":       {values: []interface{}{"a"}, next: "page-2"},
+			"page-2": {err: pageErr},
+		}}
+		it := &Iter{Query: listing.Query, ListParams: &ListParams{}}
+
+		var values []string
+		var errs []error
+		for value, err := range IterAll[string](it) {
+			if err != nil {
+				assert.Empty(t, value)
+				errs = append(errs, err)
+				continue
+			}
+			values = append(values, value)
+		}
+
+		assert.Equal(t, []string{"a"}, values)
+		require.Len(t, errs, 1)
+		assert.Same(t, pageErr, errs[0])
+		assert.Same(t, pageErr, it.Err())
+		values, errs = collectAll(IterAll[string](it))
+		assert.Empty(t, values)
+		assert.Empty(t, errs, "the error is yielded only by the loop that hit it")
+		assert.Len(t, listing.requests, 2)
+	})
+
+	t.Run("MaxPages and an empty listing end without an extra yield", func(t *testing.T) {
+		listing := &pagedQuery{pages: map[string]queryPage{
+			"":       {values: []interface{}{"a"}, next: "page-2"},
+			"page-2": {values: []interface{}{"b"}},
+		}}
+		limited := &Iter{Query: listing.Query, ListParams: &ListParams{MaxPages: 1}}
+		values, errs := collectAll(IterAll[string](limited))
+		assert.Equal(t, []string{"a"}, values)
+		assert.Empty(t, errs)
+
+		empty := &Iter{Query: (&pagedQuery{pages: map[string]queryPage{"": {}}}).Query, ListParams: &ListParams{}}
+		values, errs = collectAll(IterAll[string](empty))
+		assert.Empty(t, values)
+		assert.Empty(t, errs)
+	})
+
+	t.Run("a resource of another type ends the loop with an error", func(t *testing.T) {
+		listing := &pagedQuery{pages: map[string]queryPage{"": {values: []interface{}{"a", "b"}}}}
+		it := &Iter{Query: listing.Query, ListParams: &ListParams{}}
+
+		values, errs := collectAll(IterAll[int](it))
+		assert.Empty(t, values)
+		require.Len(t, errs, 1)
+		assert.ErrorContains(t, errs[0], "string, not int")
+		typeErr := errs[0]
+		assert.Same(t, typeErr, it.Err())
+
+		values, errs = collectAll(IterAll[int](it))
+		assert.Empty(t, values)
+		assert.Empty(t, errs, "the error is yielded only by the loop that hit it")
+		assert.Same(t, typeErr, it.Err())
+		assert.Len(t, listing.requests, 1)
+	})
+}
+
+// collectAll ranges over resources, collecting the values yielded with a nil
+// error and the errors.
+func collectAll[T any](resources iter.Seq2[T, error]) (values []T, errs []error) {
+	for value, err := range resources {
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		values = append(values, value)
+	}
+	return values, errs
 }
 
 // pagedQuery serves pages by requested cursor and records every request.

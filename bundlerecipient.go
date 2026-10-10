@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// BundleRecipient is a Files.com API resource.
 type BundleRecipient struct {
 	Company          string     `json:"company,omitempty" path:"company,omitempty" url:"company,omitempty"`
 	Name             string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -21,9 +22,10 @@ type BundleRecipient struct {
 
 // Identifier no path or id
 
+// BundleRecipientCollection is a list of BundleRecipient resources.
 type BundleRecipientCollection []BundleRecipient
 
-// BundleRecipientListParams contains the request parameters for this operation.
+// BundleRecipientListParams contains the request parameters for GET /bundle_recipients.
 type BundleRecipientListParams struct {
 	UserId   int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy   interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -32,7 +34,7 @@ type BundleRecipientListParams struct {
 	ListParams
 }
 
-// BundleRecipientCreateParams contains the request parameters for this operation.
+// BundleRecipientCreateParams contains the request parameters for POST /bundle_recipients.
 type BundleRecipientCreateParams struct {
 	UserId           int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	BundleId         int64  `url:"bundle_id" json:"bundle_id" path:"bundle_id"`
@@ -43,6 +45,7 @@ type BundleRecipientCreateParams struct {
 	ShareAfterCreate *bool  `url:"share_after_create,omitempty" json:"share_after_create,omitempty" path:"share_after_create"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (b *BundleRecipient) UnmarshalJSON(data []byte) error {
 	type bundleRecipient BundleRecipient
 	var v bundleRecipient
@@ -54,6 +57,7 @@ func (b *BundleRecipient) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (b *BundleRecipientCollection) UnmarshalJSON(data []byte) error {
 	type bundleRecipients BundleRecipientCollection
 	var v bundleRecipients
@@ -65,6 +69,7 @@ func (b *BundleRecipientCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (b *BundleRecipientCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*b))
 	for i, v := range *b {

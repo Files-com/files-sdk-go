@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// UsageSnapshot is a Files.com API resource.
 type UsageSnapshot struct {
 	Id                           int64                `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	StartAt                      *time.Time           `json:"start_at,omitempty" path:"start_at,omitempty" url:"start_at,omitempty"`
@@ -26,17 +27,20 @@ type UsageSnapshot struct {
 	UsageByTopLevelDir           []UsageByTopLevelDir `json:"usage_by_top_level_dir,omitempty" path:"usage_by_top_level_dir,omitempty" url:"usage_by_top_level_dir,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (u UsageSnapshot) Identifier() interface{} {
 	return u.Id
 }
 
+// UsageSnapshotCollection is a list of UsageSnapshot resources.
 type UsageSnapshotCollection []UsageSnapshot
 
-// UsageSnapshotListParams contains the request parameters for this operation.
+// UsageSnapshotListParams contains the request parameters for GET /usage_snapshots.
 type UsageSnapshotListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (u *UsageSnapshot) UnmarshalJSON(data []byte) error {
 	type usageSnapshot UsageSnapshot
 	var v usageSnapshot
@@ -48,6 +52,7 @@ func (u *UsageSnapshot) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (u *UsageSnapshotCollection) UnmarshalJSON(data []byte) error {
 	type usageSnapshots UsageSnapshotCollection
 	var v usageSnapshots
@@ -59,6 +64,7 @@ func (u *UsageSnapshotCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (u *UsageSnapshotCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*u))
 	for i, v := range *u {

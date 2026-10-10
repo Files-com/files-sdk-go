@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// History is a Files.com API resource.
 type History struct {
 	Id                   int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Path                 string      `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
@@ -24,13 +25,15 @@ type History struct {
 	Interface            string      `json:"interface,omitempty" path:"interface,omitempty" url:"interface,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (h History) Identifier() interface{} {
 	return h.Id
 }
 
+// HistoryCollection is a list of History resources.
 type HistoryCollection []History
 
-// HistoryListForFileParams contains the request parameters for this operation.
+// HistoryListForFileParams contains the request parameters for GET /history/files/{path}.
 type HistoryListForFileParams struct {
 	StartAt *time.Time  `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
 	EndAt   *time.Time  `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
@@ -40,7 +43,7 @@ type HistoryListForFileParams struct {
 	ListParams
 }
 
-// HistoryListForFolderParams contains the request parameters for this operation.
+// HistoryListForFolderParams contains the request parameters for GET /history/folders/{path}.
 type HistoryListForFolderParams struct {
 	StartAt *time.Time  `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
 	EndAt   *time.Time  `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
@@ -50,7 +53,7 @@ type HistoryListForFolderParams struct {
 	ListParams
 }
 
-// HistoryListForUserParams contains the request parameters for this operation.
+// HistoryListForUserParams contains the request parameters for GET /history/users/{user_id}.
 type HistoryListForUserParams struct {
 	StartAt *time.Time  `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
 	EndAt   *time.Time  `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
@@ -60,7 +63,7 @@ type HistoryListForUserParams struct {
 	ListParams
 }
 
-// HistoryListLoginsParams contains the request parameters for this operation.
+// HistoryListLoginsParams contains the request parameters for GET /history/login.
 type HistoryListLoginsParams struct {
 	StartAt *time.Time  `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
 	EndAt   *time.Time  `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
@@ -69,7 +72,7 @@ type HistoryListLoginsParams struct {
 	ListParams
 }
 
-// HistoryListParams contains the request parameters for this operation.
+// HistoryListParams contains the request parameters for GET /history.
 type HistoryListParams struct {
 	StartAt      *time.Time  `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
 	EndAt        *time.Time  `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
@@ -80,6 +83,7 @@ type HistoryListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (h *History) UnmarshalJSON(data []byte) error {
 	type history History
 	var v history
@@ -91,6 +95,7 @@ func (h *History) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (h *HistoryCollection) UnmarshalJSON(data []byte) error {
 	type historys HistoryCollection
 	var v historys
@@ -102,6 +107,7 @@ func (h *HistoryCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (h *HistoryCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*h))
 	for i, v := range *h {

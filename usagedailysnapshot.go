@@ -7,6 +7,7 @@ import (
 	"github.com/lpar/calendar"
 )
 
+// UsageDailySnapshot is a Files.com API resource.
 type UsageDailySnapshot struct {
 	Id                           int64                `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Date                         *calendar.Date       `json:"date,omitempty" path:"date,omitempty" url:"date,omitempty"`
@@ -22,13 +23,15 @@ type UsageDailySnapshot struct {
 	UsageByTopLevelDir           []UsageByTopLevelDir `json:"usage_by_top_level_dir,omitempty" path:"usage_by_top_level_dir,omitempty" url:"usage_by_top_level_dir,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (u UsageDailySnapshot) Identifier() interface{} {
 	return u.Id
 }
 
+// UsageDailySnapshotCollection is a list of UsageDailySnapshot resources.
 type UsageDailySnapshotCollection []UsageDailySnapshot
 
-// UsageDailySnapshotListParams contains the request parameters for this operation.
+// UsageDailySnapshotListParams contains the request parameters for GET /usage_daily_snapshots.
 type UsageDailySnapshotListParams struct {
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -39,6 +42,7 @@ type UsageDailySnapshotListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (u *UsageDailySnapshot) UnmarshalJSON(data []byte) error {
 	type usageDailySnapshot UsageDailySnapshot
 	var v usageDailySnapshot
@@ -50,6 +54,7 @@ func (u *UsageDailySnapshot) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (u *UsageDailySnapshotCollection) UnmarshalJSON(data []byte) error {
 	type usageDailySnapshots UsageDailySnapshotCollection
 	var v usageDailySnapshots
@@ -61,6 +66,7 @@ func (u *UsageDailySnapshotCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (u *UsageDailySnapshotCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*u))
 	for i, v := range *u {

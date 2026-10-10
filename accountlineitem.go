@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// AccountLineItem is a Files.com API resource.
 type AccountLineItem struct {
 	Id                int64             `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Amount            string            `json:"amount,omitempty" path:"amount,omitempty" url:"amount,omitempty"`
@@ -23,12 +24,15 @@ type AccountLineItem struct {
 	Type              string            `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (a AccountLineItem) Identifier() interface{} {
 	return a.Id
 }
 
+// AccountLineItemCollection is a list of AccountLineItem resources.
 type AccountLineItemCollection []AccountLineItem
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *AccountLineItem) UnmarshalJSON(data []byte) error {
 	type accountLineItem AccountLineItem
 	var v accountLineItem
@@ -40,6 +44,7 @@ func (a *AccountLineItem) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *AccountLineItemCollection) UnmarshalJSON(data []byte) error {
 	type accountLineItems AccountLineItemCollection
 	var v accountLineItems
@@ -51,6 +56,7 @@ func (a *AccountLineItemCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *AccountLineItemCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

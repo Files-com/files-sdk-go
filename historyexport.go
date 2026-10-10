@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// HistoryExport is a Files.com API resource.
 type HistoryExport struct {
 	WorkspaceId              int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	Id                       int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
@@ -37,18 +38,20 @@ type HistoryExport struct {
 	UserId                   int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (h HistoryExport) Identifier() interface{} {
 	return h.Id
 }
 
+// HistoryExportCollection is a list of HistoryExport resources.
 type HistoryExportCollection []HistoryExport
 
-// HistoryExportFindParams contains the request parameters for this operation.
+// HistoryExportFindParams contains the request parameters for GET /history_exports/{id}.
 type HistoryExportFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// HistoryExportCreateParams contains the request parameters for this operation.
+// HistoryExportCreateParams contains the request parameters for POST /history_exports.
 type HistoryExportCreateParams struct {
 	UserId                   int64      `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	StartAt                  *time.Time `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
@@ -74,6 +77,7 @@ type HistoryExportCreateParams struct {
 	QueryTargetPermissionSet string     `url:"query_target_permission_set,omitempty" json:"query_target_permission_set,omitempty" path:"query_target_permission_set"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (h *HistoryExport) UnmarshalJSON(data []byte) error {
 	type historyExport HistoryExport
 	var v historyExport
@@ -85,6 +89,7 @@ func (h *HistoryExport) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (h *HistoryExportCollection) UnmarshalJSON(data []byte) error {
 	type historyExports HistoryExportCollection
 	var v historyExports
@@ -96,6 +101,7 @@ func (h *HistoryExportCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (h *HistoryExportCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*h))
 	for i, v := range *h {

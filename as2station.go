@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// As2Station is a Files.com API resource.
 type As2Station struct {
 	Id                         int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId                int64  `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
@@ -28,25 +29,27 @@ type As2Station struct {
 	Pkcs12Password             string `json:"pkcs12_password,omitempty" path:"pkcs12_password,omitempty" url:"pkcs12_password,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (a As2Station) Identifier() interface{} {
 	return a.Id
 }
 
+// As2StationCollection is a list of As2Station resources.
 type As2StationCollection []As2Station
 
-// As2StationListParams contains the request parameters for this operation.
+// As2StationListParams contains the request parameters for GET /as2_stations.
 type As2StationListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// As2StationFindParams contains the request parameters for this operation.
+// As2StationFindParams contains the request parameters for GET /as2_stations/{id}.
 type As2StationFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// As2StationCreateParams contains the request parameters for this operation.
+// As2StationCreateParams contains the request parameters for POST /as2_stations.
 type As2StationCreateParams struct {
 	Name               string `url:"name" json:"name" path:"name"`
 	WorkspaceId        int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
@@ -57,7 +60,7 @@ type As2StationCreateParams struct {
 	Pkcs12Password     string `url:"pkcs12_password,omitempty" json:"pkcs12_password,omitempty" path:"pkcs12_password"`
 }
 
-// As2StationUpdateParams contains the request parameters for this operation.
+// As2StationUpdateParams contains the request parameters for PATCH /as2_stations/{id}.
 type As2StationUpdateParams struct {
 	Id                 int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name               string `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -68,11 +71,12 @@ type As2StationUpdateParams struct {
 	Pkcs12Password     string `url:"pkcs12_password,omitempty" json:"pkcs12_password,omitempty" path:"pkcs12_password"`
 }
 
-// As2StationDeleteParams contains the request parameters for this operation.
+// As2StationDeleteParams contains the request parameters for DELETE /as2_stations/{id}.
 type As2StationDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *As2Station) UnmarshalJSON(data []byte) error {
 	type as2Station As2Station
 	var v as2Station
@@ -84,6 +88,7 @@ func (a *As2Station) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *As2StationCollection) UnmarshalJSON(data []byte) error {
 	type as2Stations As2StationCollection
 	var v as2Stations
@@ -95,6 +100,7 @@ func (a *As2StationCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *As2StationCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

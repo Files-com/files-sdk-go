@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// SiteSubdomainRedirect is a Files.com API resource.
 type SiteSubdomainRedirect struct {
 	Id        int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Subdomain string     `json:"subdomain,omitempty" path:"subdomain,omitempty" url:"subdomain,omitempty"`
@@ -14,28 +15,31 @@ type SiteSubdomainRedirect struct {
 	UpdatedAt *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (s SiteSubdomainRedirect) Identifier() interface{} {
 	return s.Id
 }
 
+// SiteSubdomainRedirectCollection is a list of SiteSubdomainRedirect resources.
 type SiteSubdomainRedirectCollection []SiteSubdomainRedirect
 
-// SiteSubdomainRedirectListParams contains the request parameters for this operation.
+// SiteSubdomainRedirectListParams contains the request parameters for GET /site_subdomain_redirects.
 type SiteSubdomainRedirectListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
 
-// SiteSubdomainRedirectFindParams contains the request parameters for this operation.
+// SiteSubdomainRedirectFindParams contains the request parameters for GET /site_subdomain_redirects/{id}.
 type SiteSubdomainRedirectFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// SiteSubdomainRedirectDeleteParams contains the request parameters for this operation.
+// SiteSubdomainRedirectDeleteParams contains the request parameters for DELETE /site_subdomain_redirects/{id}.
 type SiteSubdomainRedirectDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *SiteSubdomainRedirect) UnmarshalJSON(data []byte) error {
 	type siteSubdomainRedirect SiteSubdomainRedirect
 	var v siteSubdomainRedirect
@@ -47,6 +51,7 @@ func (s *SiteSubdomainRedirect) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *SiteSubdomainRedirectCollection) UnmarshalJSON(data []byte) error {
 	type siteSubdomainRedirects SiteSubdomainRedirectCollection
 	var v siteSubdomainRedirects
@@ -58,6 +63,7 @@ func (s *SiteSubdomainRedirectCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *SiteSubdomainRedirectCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

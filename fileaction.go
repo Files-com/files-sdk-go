@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// FileAction is a Files.com API resource.
 type FileAction struct {
 	Status          string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
 	FileMigrationId int64  `json:"file_migration_id,omitempty" path:"file_migration_id,omitempty" url:"file_migration_id,omitempty"`
@@ -13,8 +14,10 @@ type FileAction struct {
 
 // Identifier no path or id
 
+// FileActionCollection is a list of FileAction resources.
 type FileActionCollection []FileAction
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (f *FileAction) UnmarshalJSON(data []byte) error {
 	type fileAction FileAction
 	var v fileAction
@@ -26,6 +29,7 @@ func (f *FileAction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (f *FileActionCollection) UnmarshalJSON(data []byte) error {
 	type fileActions FileActionCollection
 	var v fileActions
@@ -37,6 +41,7 @@ func (f *FileActionCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (f *FileActionCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*f))
 	for i, v := range *f {

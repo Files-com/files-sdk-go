@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Notification is a Files.com API resource.
 type Notification struct {
 	Id                       int64    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Path                     string   `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
@@ -35,13 +36,15 @@ type Notification struct {
 	SuppressedEmail          *bool    `json:"suppressed_email,omitempty" path:"suppressed_email,omitempty" url:"suppressed_email,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (n Notification) Identifier() interface{} {
 	return n.Id
 }
 
+// NotificationCollection is a list of Notification resources.
 type NotificationCollection []Notification
 
-// NotificationListParams contains the request parameters for this operation.
+// NotificationListParams contains the request parameters for GET /notifications.
 type NotificationListParams struct {
 	SortBy           interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter           interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -52,12 +55,12 @@ type NotificationListParams struct {
 	ListParams
 }
 
-// NotificationFindParams contains the request parameters for this operation.
+// NotificationFindParams contains the request parameters for GET /notifications/{id}.
 type NotificationFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// NotificationCreateParams contains the request parameters for this operation.
+// NotificationCreateParams contains the request parameters for POST /notifications.
 type NotificationCreateParams struct {
 	UserId                   int64    `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	NotifyOnCopy             *bool    `url:"notify_on_copy,omitempty" json:"notify_on_copy,omitempty" path:"notify_on_copy"`
@@ -81,7 +84,7 @@ type NotificationCreateParams struct {
 	Username                 string   `url:"username,omitempty" json:"username,omitempty" path:"username"`
 }
 
-// NotificationUpdateParams contains the request parameters for this operation.
+// NotificationUpdateParams contains the request parameters for PATCH /notifications/{id}.
 type NotificationUpdateParams struct {
 	Id                       int64    `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	NotifyOnCopy             *bool    `url:"notify_on_copy,omitempty" json:"notify_on_copy,omitempty" path:"notify_on_copy"`
@@ -101,11 +104,12 @@ type NotificationUpdateParams struct {
 	WorkspaceId              int64    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// NotificationDeleteParams contains the request parameters for this operation.
+// NotificationDeleteParams contains the request parameters for DELETE /notifications/{id}.
 type NotificationDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (n *Notification) UnmarshalJSON(data []byte) error {
 	type notification Notification
 	var v notification
@@ -117,6 +121,7 @@ func (n *Notification) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (n *NotificationCollection) UnmarshalJSON(data []byte) error {
 	type notifications NotificationCollection
 	var v notifications
@@ -128,6 +133,7 @@ func (n *NotificationCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (n *NotificationCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*n))
 	for i, v := range *n {

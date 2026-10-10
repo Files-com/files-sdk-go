@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// BandwidthSnapshot is a Files.com API resource.
 type BandwidthSnapshot struct {
 	Id                int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	BytesReceived     int64      `json:"bytes_received,omitempty" path:"bytes_received,omitempty" url:"bytes_received,omitempty"`
@@ -19,13 +20,15 @@ type BandwidthSnapshot struct {
 	LoggedAt          *time.Time `json:"logged_at,omitempty" path:"logged_at,omitempty" url:"logged_at,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (b BandwidthSnapshot) Identifier() interface{} {
 	return b.Id
 }
 
+// BandwidthSnapshotCollection is a list of BandwidthSnapshot resources.
 type BandwidthSnapshotCollection []BandwidthSnapshot
 
-// BandwidthSnapshotListParams contains the request parameters for this operation.
+// BandwidthSnapshotListParams contains the request parameters for GET /bandwidth_snapshots.
 type BandwidthSnapshotListParams struct {
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -36,6 +39,7 @@ type BandwidthSnapshotListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (b *BandwidthSnapshot) UnmarshalJSON(data []byte) error {
 	type bandwidthSnapshot BandwidthSnapshot
 	var v bandwidthSnapshot
@@ -47,6 +51,7 @@ func (b *BandwidthSnapshot) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (b *BandwidthSnapshotCollection) UnmarshalJSON(data []byte) error {
 	type bandwidthSnapshots BandwidthSnapshotCollection
 	var v bandwidthSnapshots
@@ -58,6 +63,7 @@ func (b *BandwidthSnapshotCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (b *BandwidthSnapshotCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*b))
 	for i, v := range *b {

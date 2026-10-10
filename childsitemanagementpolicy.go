@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ChildSiteManagementPolicy is a Files.com API resource.
 type ChildSiteManagementPolicy struct {
 	Id                  int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	PolicyType          string      `json:"policy_type,omitempty" path:"policy_type,omitempty" url:"policy_type,omitempty"`
@@ -21,35 +22,41 @@ type ChildSiteManagementPolicy struct {
 	UpdatedAt           *time.Time  `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (c ChildSiteManagementPolicy) Identifier() interface{} {
 	return c.Id
 }
 
+// ChildSiteManagementPolicyCollection is a list of ChildSiteManagementPolicy resources.
 type ChildSiteManagementPolicyCollection []ChildSiteManagementPolicy
 
+// ChildSiteManagementPolicyPolicyTypeEnum is a string value for policy_type.
+// Enum lists the values documented by the API.
 type ChildSiteManagementPolicyPolicyTypeEnum string
 
+// String returns the API parameter value.
 func (u ChildSiteManagementPolicyPolicyTypeEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u ChildSiteManagementPolicyPolicyTypeEnum) Enum() map[string]ChildSiteManagementPolicyPolicyTypeEnum {
 	return map[string]ChildSiteManagementPolicyPolicyTypeEnum{
 		"settings": ChildSiteManagementPolicyPolicyTypeEnum("settings"),
 	}
 }
 
-// ChildSiteManagementPolicyListParams contains the request parameters for this operation.
+// ChildSiteManagementPolicyListParams contains the request parameters for GET /child_site_management_policies.
 type ChildSiteManagementPolicyListParams struct {
 	ListParams
 }
 
-// ChildSiteManagementPolicyFindParams contains the request parameters for this operation.
+// ChildSiteManagementPolicyFindParams contains the request parameters for GET /child_site_management_policies/{id}.
 type ChildSiteManagementPolicyFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// ChildSiteManagementPolicyCreateParams contains the request parameters for this operation.
+// ChildSiteManagementPolicyCreateParams contains the request parameters for POST /child_site_management_policies.
 type ChildSiteManagementPolicyCreateParams struct {
 	Value            interface{}                             `url:"value,omitempty" json:"value,omitempty" path:"value"`
 	SkipChildSiteIds []int64                                 `url:"skip_child_site_ids,omitempty" json:"skip_child_site_ids,omitempty" path:"skip_child_site_ids"`
@@ -60,7 +67,7 @@ type ChildSiteManagementPolicyCreateParams struct {
 	Description      string                                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
 }
 
-// ChildSiteManagementPolicyUpdateParams contains the request parameters for this operation.
+// ChildSiteManagementPolicyUpdateParams contains the request parameters for PATCH /child_site_management_policies/{id}.
 type ChildSiteManagementPolicyUpdateParams struct {
 	Id               int64                                   `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Value            interface{}                             `url:"value,omitempty" json:"value,omitempty" path:"value"`
@@ -72,11 +79,12 @@ type ChildSiteManagementPolicyUpdateParams struct {
 	Description      string                                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
 }
 
-// ChildSiteManagementPolicyDeleteParams contains the request parameters for this operation.
+// ChildSiteManagementPolicyDeleteParams contains the request parameters for DELETE /child_site_management_policies/{id}.
 type ChildSiteManagementPolicyDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (c *ChildSiteManagementPolicy) UnmarshalJSON(data []byte) error {
 	type childSiteManagementPolicy ChildSiteManagementPolicy
 	var v childSiteManagementPolicy
@@ -88,6 +96,7 @@ func (c *ChildSiteManagementPolicy) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (c *ChildSiteManagementPolicyCollection) UnmarshalJSON(data []byte) error {
 	type childSiteManagementPolicys ChildSiteManagementPolicyCollection
 	var v childSiteManagementPolicys
@@ -99,6 +108,7 @@ func (c *ChildSiteManagementPolicyCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (c *ChildSiteManagementPolicyCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*c))
 	for i, v := range *c {

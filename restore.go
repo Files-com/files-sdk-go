@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Restore is a Files.com API resource.
 type Restore struct {
 	EarliestDate                           *time.Time `json:"earliest_date,omitempty" path:"earliest_date,omitempty" url:"earliest_date,omitempty"`
 	Id                                     int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
@@ -32,18 +33,24 @@ type Restore struct {
 	ErrorMessages                          []string   `json:"error_messages,omitempty" path:"error_messages,omitempty" url:"error_messages,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (r Restore) Identifier() interface{} {
 	return r.Id
 }
 
+// RestoreCollection is a list of Restore resources.
 type RestoreCollection []Restore
 
+// RestoreRestorationTypeEnum is a string value for restoration_type.
+// Enum lists the values documented by the API.
 type RestoreRestorationTypeEnum string
 
+// String returns the API parameter value.
 func (u RestoreRestorationTypeEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u RestoreRestorationTypeEnum) Enum() map[string]RestoreRestorationTypeEnum {
 	return map[string]RestoreRestorationTypeEnum{
 		"files": RestoreRestorationTypeEnum("files"),
@@ -51,14 +58,14 @@ func (u RestoreRestorationTypeEnum) Enum() map[string]RestoreRestorationTypeEnum
 	}
 }
 
-// RestoreListParams contains the request parameters for this operation.
+// RestoreListParams contains the request parameters for GET /restores.
 type RestoreListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// RestoreCreateParams contains the request parameters for this operation.
+// RestoreCreateParams contains the request parameters for POST /restores.
 type RestoreCreateParams struct {
 	EarliestDate              *time.Time                 `url:"earliest_date" json:"earliest_date" path:"earliest_date"`
 	Prefix                    string                     `url:"prefix,omitempty" json:"prefix,omitempty" path:"prefix"`
@@ -69,6 +76,7 @@ type RestoreCreateParams struct {
 	WorkspaceId               int64                      `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (r *Restore) UnmarshalJSON(data []byte) error {
 	type restore Restore
 	var v restore
@@ -80,6 +88,7 @@ func (r *Restore) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (r *RestoreCollection) UnmarshalJSON(data []byte) error {
 	type restores RestoreCollection
 	var v restores
@@ -91,6 +100,7 @@ func (r *RestoreCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (r *RestoreCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*r))
 	for i, v := range *r {

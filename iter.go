@@ -2,6 +2,8 @@ package files_sdk
 
 import (
 	"errors"
+	"fmt"
+	"iter"
 	"net/url"
 	"slices"
 	"sync"
@@ -9,29 +11,36 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ListParams controls cursor-based pagination. A zero MaxPages allows all pages;
+// a positive value limits the number of pages requested.
 type ListParams struct {
-	PerPage  int64  `json:"per_page,omitempty" url:"per_page,omitempty" required:"false"`
+	// PerPage requests the number of results per page. Zero uses the API default.
+	PerPage int64 `json:"per_page,omitempty" url:"per_page,omitempty" required:"false"`
+	// Cursor starts the listing at an API cursor. Empty starts at the first page.
 	Cursor   string `json:"cursor,omitempty" url:"cursor,omitempty" required:"false"`
 	MaxPages int64  `json:"-" url:"-"`
 }
 
-// ListParamsContainer is a general interface for which all list parameter
-// structs should comply. They achieve this by embedding a ListParams struct
-// and inheriting its implementation of this interface.
+// ListParamsContainer exposes paging settings. Generated list parameter
+// structs implement it by embedding ListParams.
 type ListParamsContainer interface {
 	GetListParams() *ListParams
 }
 
-// GetListParams returns a ListParams struct (itself). It exists because any
-// structs that embed ListParams will inherit it, and thus implement the
-// ListParamsContainer interface.
+// GetListParams returns p. Structs embedding ListParams inherit this method.
 func (p *ListParams) GetListParams() *ListParams {
 	return p
 }
 
+// OnPageError handles a page-fetch error. It can return replacement results and
+// a nil error to continue iteration, or an error to stop.
 type OnPageError func(error) (*[]interface{}, error)
+
+// Query fetches one page and returns its resources, the next cursor, and any error.
 type Query func(params lib.Values, opts ...RequestResponseOption) (*[]interface{}, string, error)
 
+// IterI traverses resources. Call Current only after Next returns true, and
+// check Err after Next returns false.
 type IterI interface {
 	Next() bool
 	Current() interface{}
@@ -40,6 +49,7 @@ type IterI interface {
 
 var _ IterI = (*Iter)(nil)
 
+// TypedIterI adds typed resource access to an iterator.
 type TypedIterI[T any] interface {
 	Next() bool
 	Current() interface{}
@@ -47,6 +57,7 @@ type TypedIterI[T any] interface {
 	Err() error
 }
 
+// IterPagingI reports whether the current resource is the last one on its page.
 type IterPagingI interface {
 	IterI
 	EOFPage() bool
@@ -54,28 +65,35 @@ type IterPagingI interface {
 
 var _ IterPagingI = (*Iter)(nil)
 
+// ResourceIterator creates a listing for a resource identifier.
 type ResourceIterator interface {
 	Iterate(interface{}, ...RequestResponseOption) (IterI, error)
 }
 
+// ReloadIterator starts a fresh traversal of the same listing.
 type ReloadIterator interface {
 	Reload(opts ...RequestResponseOption) IterI
 }
 
 var _ ReloadIterator = (*Iter)(nil)
 
+// ResourceLoader fetches a resource by its identifier.
 type ResourceLoader interface {
 	LoadResource(interface{}, ...RequestResponseOption) (interface{}, error)
 }
 
+// Identifier exposes an API resource ID or path.
 type Identifier interface {
 	Identifier() interface{}
 }
 
+// Iterable reports whether a resource can be listed for child resources.
 type Iterable interface {
 	Iterable() bool
 }
 
+// Iter traverses API results, fetching additional pages on demand. Use the
+// generated client listing methods to create an iterator.
 type Iter struct {
 	Query
 	ListParams   ListParamsContainer
@@ -92,6 +110,9 @@ type Iter struct {
 	// traversal is updating.
 	listing       *reloadParams
 	recordListing sync.Once
+	// ended records that the last GetPage call ended the traversal, so IterAll
+	// yields nothing more.
+	ended bool
 }
 
 // reloadParams are the parameters of a reloaded traversal: the query its
@@ -115,22 +136,24 @@ func (p *reloadParams) values() (url.Values, error) {
 	return values, nil
 }
 
-// Err returns the error, if any,
-// that caused the Iter to stop.
-// It must be inspected
-// after Next returns false.
+// Err returns the error that stopped iteration, or nil if none occurred.
+// Check it after Next returns false.
 func (i *Iter) Err() error {
 	return i.Error
 }
 
+// Current returns the resource selected by the last successful Next call.
+// Call it only after Next returns true.
 func (i *Iter) Current() interface{} {
 	return (*i.Values)[i.CurrentIndex]
 }
 
+// GetParams returns the paging settings used by the iterator.
 func (i *Iter) GetParams() *ListParams {
 	return i.ListParams.GetListParams()
 }
 
+// ExportParams combines the listing filters and current paging settings as query values.
 func (i *Iter) ExportParams() (lib.ExportValues, error) {
 	p := lib.Params{Params: i.GetParams()}
 	paramValues, err := p.ToValues()
@@ -154,7 +177,16 @@ func (i *Iter) ExportParams() (lib.ExportValues, error) {
 	return lib.ExportValues{Values: listParamValues}, nil
 }
 
+// GetPage fetches the next nonempty page within MaxPages. It returns false when
+// no results remain, the page limit is reached, or an error occurs. Check Err
+// after a false return.
 func (i *Iter) GetPage() bool {
+	more := i.getPage()
+	i.ended = !more
+	return more
+}
+
+func (i *Iter) getPage() bool {
 	i.recordedListing() // before the first request changes the cursor
 	for {
 		if i.GetParams().MaxPages != 0 && i.Page >= i.GetParams().MaxPages {
@@ -187,6 +219,8 @@ func (i *Iter) GetPage() bool {
 	}
 }
 
+// EOFPage reports whether the current resource is the last one on the loaded page.
+// It does not report whether the listing has more pages.
 func (i *Iter) EOFPage() bool {
 	if i.Values == nil {
 		return false
@@ -194,28 +228,32 @@ func (i *Iter) EOFPage() bool {
 	return len(*i.Values) == i.CurrentIndex+1
 }
 
+// Paging reports that this iterator supports pagination.
 func (i *Iter) Paging() bool {
 	return true
 }
 
+// GetCursor returns the cursor that will be sent with the next page request.
 func (i *Iter) GetCursor() string {
 	return i.GetParams().Cursor
 }
 
+// SetCursor sets the cursor for the next page request.
 func (i *Iter) SetCursor(cursor string) {
 	i.GetParams().Cursor = cursor
 	i.Cursor = cursor
 }
 
-// Next iterates the results in i.Current() or i.`ResourceName`().
-// It returns true until there are no results remaining.
-// To adjust the number of results set ListParams.PerPage.
-// To have it auto-paginate set ListParams.MaxPages, default is 1.
-//
-// To iterate over all results use the following pattern.
+// Next advances to the next resource, fetching pages as needed. It returns false
+// when the listing ends, MaxPages is reached, or an error occurs. Check Err
+// after it returns false. PerPage controls page size; MaxPages defaults to zero,
+// which allows all pages.
 //
 //	for i.Next() {
-//	  i.Current()
+//		// Process i.Current().
+//	}
+//	if err := i.Err(); err != nil {
+//		// Handle the listing error.
 //	}
 func (i *Iter) Next() bool {
 	if i.Values == nil {
@@ -232,6 +270,56 @@ func (i *Iter) Next() bool {
 	return false
 }
 
+// IterAll returns an iterator over the resources that later calls to i.Next
+// would return, as values of type T. Generated listing iterators provide it as
+// their All method:
+//
+//	for file, err := range it.All() {
+//		if err != nil {
+//			// Handle the listing error.
+//			return err
+//		}
+//		// Process file.
+//	}
+//
+// Creating the iterator requests nothing. Each page is requested when the loop
+// reaches it, and breaking out of the loop requests nothing more. Each resource
+// is yielded with a nil error. If a page request fails, the loop ends with one
+// final yield of the zero value and the error, which Err also returns. The end
+// of the listing, MaxPages, or an empty listing ends the loop without an extra
+// yield. A resource that is not a T ends the loop the same way, with an error
+// that Err also returns.
+//
+// The iterator shares i's position: after a break or calls to Next, a new loop
+// continues with the next resource. Once the listing has ended or failed, it
+// yields nothing; call the listing method again, or Reload, to start over. Do
+// not call i.Next during the loop.
+func IterAll[T any](i *Iter) iter.Seq2[T, error] {
+	return func(yield func(T, error) bool) {
+		if i.ended {
+			return
+		}
+		var zero T
+		for i.Next() {
+			resource, ok := i.Current().(T)
+			if !ok {
+				i.Error = fmt.Errorf("files_sdk: listing resource is %T, not %T", i.Current(), zero)
+				i.ended = true
+				yield(zero, i.Error)
+				return
+			}
+			if !yield(resource, nil) {
+				return
+			}
+		}
+		if err := i.Err(); err != nil {
+			yield(zero, err)
+		}
+	}
+}
+
+// NextPage reports whether the API supplied a cursor for another page.
+// It does not fetch that page or account for MaxPages.
 func (i *Iter) NextPage() bool {
 	return i.Cursor != ""
 }

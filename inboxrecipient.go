@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// InboxRecipient is a Files.com API resource.
 type InboxRecipient struct {
 	Company          string     `json:"company,omitempty" path:"company,omitempty" url:"company,omitempty"`
 	Name             string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -19,9 +20,10 @@ type InboxRecipient struct {
 
 // Identifier no path or id
 
+// InboxRecipientCollection is a list of InboxRecipient resources.
 type InboxRecipientCollection []InboxRecipient
 
-// InboxRecipientListParams contains the request parameters for this operation.
+// InboxRecipientListParams contains the request parameters for GET /inbox_recipients.
 type InboxRecipientListParams struct {
 	SortBy  interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter  interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -29,7 +31,7 @@ type InboxRecipientListParams struct {
 	ListParams
 }
 
-// InboxRecipientCreateParams contains the request parameters for this operation.
+// InboxRecipientCreateParams contains the request parameters for POST /inbox_recipients.
 type InboxRecipientCreateParams struct {
 	InboxId          int64  `url:"inbox_id" json:"inbox_id" path:"inbox_id"`
 	Recipient        string `url:"recipient" json:"recipient" path:"recipient"`
@@ -39,6 +41,7 @@ type InboxRecipientCreateParams struct {
 	ShareAfterCreate *bool  `url:"share_after_create,omitempty" json:"share_after_create,omitempty" path:"share_after_create"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (i *InboxRecipient) UnmarshalJSON(data []byte) error {
 	type inboxRecipient InboxRecipient
 	var v inboxRecipient
@@ -50,6 +53,7 @@ func (i *InboxRecipient) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (i *InboxRecipientCollection) UnmarshalJSON(data []byte) error {
 	type inboxRecipients InboxRecipientCollection
 	var v inboxRecipients
@@ -61,6 +65,7 @@ func (i *InboxRecipientCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (i *InboxRecipientCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*i))
 	for i, v := range *i {

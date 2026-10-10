@@ -8,6 +8,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Site is a Files.com API resource.
 type Site struct {
 	Id                                                 int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name                                               string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -210,13 +211,15 @@ type Site struct {
 	WindowsModeFtp                                     *bool       `json:"windows_mode_ftp,omitempty" path:"windows_mode_ftp,omitempty" url:"windows_mode_ftp,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (s Site) Identifier() interface{} {
 	return s.Id
 }
 
+// SiteCollection is a list of Site resources.
 type SiteCollection []Site
 
-// SiteUpdateParams contains the request parameters for this operation.
+// SiteUpdateParams contains the request parameters for PATCH /site.
 type SiteUpdateParams struct {
 	Name                                               string      `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	Subdomain                                          string      `url:"subdomain,omitempty" json:"subdomain,omitempty" path:"subdomain"`
@@ -413,6 +416,7 @@ type SiteUpdateParams struct {
 	SmtpPassword                                       string      `url:"smtp_password,omitempty" json:"smtp_password,omitempty" path:"smtp_password"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *Site) UnmarshalJSON(data []byte) error {
 	type site Site
 	var v site
@@ -424,6 +428,7 @@ func (s *Site) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *SiteCollection) UnmarshalJSON(data []byte) error {
 	type sites SiteCollection
 	var v sites
@@ -435,6 +440,7 @@ func (s *SiteCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *SiteCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

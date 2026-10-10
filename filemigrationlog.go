@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// FileMigrationLog is a Files.com API resource.
 type FileMigrationLog struct {
 	Timestamp       *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
 	FileMigrationId int64      `json:"file_migration_id,omitempty" path:"file_migration_id,omitempty" url:"file_migration_id,omitempty"`
@@ -19,13 +20,15 @@ type FileMigrationLog struct {
 	CreatedAt       *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (f FileMigrationLog) Identifier() interface{} {
 	return f.Path
 }
 
+// FileMigrationLogCollection is a list of FileMigrationLog resources.
 type FileMigrationLogCollection []FileMigrationLog
 
-// FileMigrationLogListParams contains the request parameters for this operation.
+// FileMigrationLogListParams contains the request parameters for GET /file_migration_logs.
 type FileMigrationLogListParams struct {
 	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt   interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -35,6 +38,7 @@ type FileMigrationLogListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (f *FileMigrationLog) UnmarshalJSON(data []byte) error {
 	type fileMigrationLog FileMigrationLog
 	var v fileMigrationLog
@@ -46,6 +50,7 @@ func (f *FileMigrationLog) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (f *FileMigrationLogCollection) UnmarshalJSON(data []byte) error {
 	type fileMigrationLogs FileMigrationLogCollection
 	var v fileMigrationLogs
@@ -57,6 +62,7 @@ func (f *FileMigrationLogCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (f *FileMigrationLogCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*f))
 	for i, v := range *f {

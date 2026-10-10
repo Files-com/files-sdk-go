@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// RemoteMountBackend is a Files.com API resource.
 type RemoteMountBackend struct {
 	CanaryFilePath        string                   `json:"canary_file_path,omitempty" path:"canary_file_path,omitempty" url:"canary_file_path,omitempty"`
 	Enabled               *bool                    `json:"enabled,omitempty" path:"enabled,omitempty" url:"enabled,omitempty"`
@@ -27,18 +28,24 @@ type RemoteMountBackend struct {
 	UndergoingMaintenance *bool                    `json:"undergoing_maintenance,omitempty" path:"undergoing_maintenance,omitempty" url:"undergoing_maintenance,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (r RemoteMountBackend) Identifier() interface{} {
 	return r.Id
 }
 
+// RemoteMountBackendCollection is a list of RemoteMountBackend resources.
 type RemoteMountBackendCollection []RemoteMountBackend
 
+// RemoteMountBackendHealthCheckTypeEnum is a string value for health_check_type.
+// Enum lists the values documented by the API.
 type RemoteMountBackendHealthCheckTypeEnum string
 
+// String returns the API parameter value.
 func (u RemoteMountBackendHealthCheckTypeEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u RemoteMountBackendHealthCheckTypeEnum) Enum() map[string]RemoteMountBackendHealthCheckTypeEnum {
 	return map[string]RemoteMountBackendHealthCheckTypeEnum{
 		"active":  RemoteMountBackendHealthCheckTypeEnum("active"),
@@ -46,18 +53,18 @@ func (u RemoteMountBackendHealthCheckTypeEnum) Enum() map[string]RemoteMountBack
 	}
 }
 
-// RemoteMountBackendListParams contains the request parameters for this operation.
+// RemoteMountBackendListParams contains the request parameters for GET /remote_mount_backends.
 type RemoteMountBackendListParams struct {
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// RemoteMountBackendFindParams contains the request parameters for this operation.
+// RemoteMountBackendFindParams contains the request parameters for GET /remote_mount_backends/{id}.
 type RemoteMountBackendFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// RemoteMountBackendCreateParams contains the request parameters for this operation.
+// RemoteMountBackendCreateParams contains the request parameters for POST /remote_mount_backends.
 type RemoteMountBackendCreateParams struct {
 	Enabled            *bool                                 `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
 	Fall               int64                                 `url:"fall,omitempty" json:"fall,omitempty" path:"fall"`
@@ -118,14 +125,14 @@ func (p RemoteMountBackendCreateParams) ToValues() (url.Values, error) {
 	return lib.DecimalOverrideValues(remoteMountBackendCreateParams(p), p.decimalOverrides()...)
 }
 
-// RemoteMountBackendResetStatusParams contains the request parameters for this operation.
+// RemoteMountBackendResetStatusParams contains the request parameters for POST /remote_mount_backends/{id}/reset_status.
 //
 // Reset backend status to healthy
 type RemoteMountBackendResetStatusParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// RemoteMountBackendUpdateParams contains the request parameters for this operation.
+// RemoteMountBackendUpdateParams contains the request parameters for PATCH /remote_mount_backends/{id}.
 type RemoteMountBackendUpdateParams struct {
 	Id                 int64                                 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Enabled            *bool                                 `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
@@ -186,11 +193,12 @@ func (p RemoteMountBackendUpdateParams) ToValues() (url.Values, error) {
 	return lib.DecimalOverrideValues(remoteMountBackendUpdateParams(p), p.decimalOverrides()...)
 }
 
-// RemoteMountBackendDeleteParams contains the request parameters for this operation.
+// RemoteMountBackendDeleteParams contains the request parameters for DELETE /remote_mount_backends/{id}.
 type RemoteMountBackendDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (r *RemoteMountBackend) UnmarshalJSON(data []byte) error {
 	type remoteMountBackend RemoteMountBackend
 	var v remoteMountBackend
@@ -202,6 +210,7 @@ func (r *RemoteMountBackend) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (r *RemoteMountBackendCollection) UnmarshalJSON(data []byte) error {
 	type remoteMountBackends RemoteMountBackendCollection
 	var v remoteMountBackends
@@ -213,6 +222,7 @@ func (r *RemoteMountBackendCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (r *RemoteMountBackendCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*r))
 	for i, v := range *r {

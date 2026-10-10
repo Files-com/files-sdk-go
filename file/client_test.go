@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -159,6 +160,15 @@ func TestClient_DownloadDoesNotSendAuthHeadersAfterOffOriginRedirect(t *testing.
 	assert.Empty(t, redirectedRequestHeaders.Get("X-FilesAPI-Key"))
 	assert.Empty(t, redirectedRequestHeaders.Get("X-FilesAPI-Auth"))
 	assert.Empty(t, redirectedRequestHeaders.Get("X-Files-Reauthentication"))
+}
+
+func TestClient_DownloadReturnsParseErrorForMalformedDownloadUri(t *testing.T) {
+	client := &Client{Config: files_sdk.Config{APIKey: "api-key"}.Init()}
+	_, err := client.Download(files_sdk.FileDownloadParams{File: files_sdk.File{Path: "remote.txt", DownloadUri: "https://storage.example.test/%zz"}})
+
+	var urlErr *url.Error
+	require.ErrorAs(t, err, &urlErr)
+	assert.Equal(t, "parse", urlErr.Op)
 }
 
 func TestClient_DownloadRequestStatusDoesNotSendAuthHeadersToOffOriginStatusURL(t *testing.T) {

@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// FileUploadPart is a Files.com API resource.
 type FileUploadPart struct {
 	Send                 interface{}          `json:"send,omitempty" path:"send,omitempty" url:"send,omitempty"`
 	Action               string               `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
@@ -27,10 +28,12 @@ type FileUploadPart struct {
 	DirectConnectionInfo DirectConnectionInfo `json:"direct_connection_info,omitempty" path:"direct_connection_info,omitempty" url:"direct_connection_info,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (f FileUploadPart) Identifier() interface{} {
 	return f.Path
 }
 
+// FileUploadPartCollection is a list of FileUploadPart resources.
 type FileUploadPartCollection []FileUploadPart
 
 const UploadPartExpires = time.Minute * 15
@@ -48,6 +51,8 @@ func (f FileUploadPart) UploadExpires() time.Time {
 	}
 	return f.ExpiresTime().Add(-(UploadPartExpires)).Add(UploadObjectExpires)
 }
+
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (f *FileUploadPart) UnmarshalJSON(data []byte) error {
 	type fileUploadPart FileUploadPart
 	var v fileUploadPart
@@ -59,6 +64,7 @@ func (f *FileUploadPart) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (f *FileUploadPartCollection) UnmarshalJSON(data []byte) error {
 	type fileUploadParts FileUploadPartCollection
 	var v fileUploadParts
@@ -70,6 +76,7 @@ func (f *FileUploadPartCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (f *FileUploadPartCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*f))
 	for i, v := range *f {

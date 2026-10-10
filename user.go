@@ -8,6 +8,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// User is a Files.com API resource.
 type User struct {
 	Id                                     int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Username                               string     `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
@@ -112,18 +113,24 @@ type User struct {
 	ConvertToPartnerUser                   *bool      `json:"convert_to_partner_user,omitempty" path:"convert_to_partner_user,omitempty" url:"convert_to_partner_user,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (u User) Identifier() interface{} {
 	return u.Id
 }
 
+// UserCollection is a list of User resources.
 type UserCollection []User
 
+// UserAuthenticationMethodEnum is a string value for authentication_method.
+// Enum lists the values documented by the API.
 type UserAuthenticationMethodEnum string
 
+// String returns the API parameter value.
 func (u UserAuthenticationMethodEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u UserAuthenticationMethodEnum) Enum() map[string]UserAuthenticationMethodEnum {
 	return map[string]UserAuthenticationMethodEnum{
 		"password":                    UserAuthenticationMethodEnum("password"),
@@ -135,12 +142,16 @@ func (u UserAuthenticationMethodEnum) Enum() map[string]UserAuthenticationMethod
 	}
 }
 
+// UserFilesystemLayoutEnum is a string value for filesystem_layout.
+// Enum lists the values documented by the API.
 type UserFilesystemLayoutEnum string
 
+// String returns the API parameter value.
 func (u UserFilesystemLayoutEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u UserFilesystemLayoutEnum) Enum() map[string]UserFilesystemLayoutEnum {
 	return map[string]UserFilesystemLayoutEnum{
 		"site_root":           UserFilesystemLayoutEnum("site_root"),
@@ -151,12 +162,16 @@ func (u UserFilesystemLayoutEnum) Enum() map[string]UserFilesystemLayoutEnum {
 	}
 }
 
+// UserSslRequiredEnum is a string value for ssl_required.
+// Enum lists the values documented by the API.
 type UserSslRequiredEnum string
 
+// String returns the API parameter value.
 func (u UserSslRequiredEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u UserSslRequiredEnum) Enum() map[string]UserSslRequiredEnum {
 	return map[string]UserSslRequiredEnum{
 		"use_system_setting": UserSslRequiredEnum("use_system_setting"),
@@ -165,12 +180,16 @@ func (u UserSslRequiredEnum) Enum() map[string]UserSslRequiredEnum {
 	}
 }
 
+// UserRequire2faEnum is a string value for require_2fa.
+// Enum lists the values documented by the API.
 type UserRequire2faEnum string
 
+// String returns the API parameter value.
 func (u UserRequire2faEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u UserRequire2faEnum) Enum() map[string]UserRequire2faEnum {
 	return map[string]UserRequire2faEnum{
 		"use_system_setting": UserRequire2faEnum("use_system_setting"),
@@ -179,7 +198,7 @@ func (u UserRequire2faEnum) Enum() map[string]UserRequire2faEnum {
 	}
 }
 
-// UserListParams contains the request parameters for this operation.
+// UserListParams contains the request parameters for GET /users.
 type UserListParams struct {
 	SortBy                 interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter                 interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -194,12 +213,12 @@ type UserListParams struct {
 	ListParams
 }
 
-// UserFindParams contains the request parameters for this operation.
+// UserFindParams contains the request parameters for GET /users/{id}.
 type UserFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// UserCreateParams contains the request parameters for this operation.
+// UserCreateParams contains the request parameters for POST /users.
 type UserCreateParams struct {
 	AvatarFile                             io.Writer                    `url:"avatar_file,omitempty" json:"avatar_file,omitempty" path:"avatar_file"`
 	AvatarDelete                           *bool                        `url:"avatar_delete,omitempty" json:"avatar_delete,omitempty" path:"avatar_delete"`
@@ -272,28 +291,28 @@ type UserCreateParams struct {
 	WorkspaceId                            int64                        `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// UserUnlockParams contains the request parameters for this operation.
+// UserUnlockParams contains the request parameters for POST /users/{id}/unlock.
 //
 // Unlock user who has been locked out due to failed logins
 type UserUnlockParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// UserResendWelcomeEmailParams contains the request parameters for this operation.
+// UserResendWelcomeEmailParams contains the request parameters for POST /users/{id}/resend_welcome_email.
 //
 // Resend user welcome email
 type UserResendWelcomeEmailParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// UserUser2faResetParams contains the request parameters for this operation.
+// UserUser2faResetParams contains the request parameters for POST /users/{id}/2fa/reset.
 //
 // Trigger 2FA Reset process for user who has lost access to their existing 2FA methods
 type UserUser2faResetParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// UserUpdateParams contains the request parameters for this operation.
+// UserUpdateParams contains the request parameters for PATCH /users/{id}.
 type UserUpdateParams struct {
 	Id                                     int64                        `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	AvatarFile                             io.Writer                    `url:"avatar_file,omitempty" json:"avatar_file,omitempty" path:"avatar_file"`
@@ -369,12 +388,13 @@ type UserUpdateParams struct {
 	ConvertToPartnerUser                   *bool                        `url:"convert_to_partner_user,omitempty" json:"convert_to_partner_user,omitempty" path:"convert_to_partner_user"`
 }
 
-// UserDeleteParams contains the request parameters for this operation.
+// UserDeleteParams contains the request parameters for DELETE /users/{id}.
 type UserDeleteParams struct {
 	Id         int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	NewOwnerId int64 `url:"new_owner_id,omitempty" json:"new_owner_id,omitempty" path:"new_owner_id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (u *User) UnmarshalJSON(data []byte) error {
 	type user User
 	var v user
@@ -386,6 +406,7 @@ func (u *User) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (u *UserCollection) UnmarshalJSON(data []byte) error {
 	type users UserCollection
 	var v users
@@ -397,6 +418,7 @@ func (u *UserCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (u *UserCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*u))
 	for i, v := range *u {

@@ -1,6 +1,7 @@
 package listquery
 
 import (
+	"net/http"
 	"slices"
 	"sync"
 
@@ -36,8 +37,17 @@ func Build(config files_sdk.Config, path string, list List, opts ...files_sdk.Re
 		decoding.Lock()
 		defer decoding.Unlock()
 		if err := list.UnmarshalJSON(*data); err != nil {
-			return &defaultValue, res.Header.Get("X-Files-Cursor"), err
+			return &defaultValue, nextCursor(res.Header), err
 		}
-		return list.ToSlice(), res.Header.Get("X-Files-Cursor"), nil
+		return list.ToSlice(), nextCursor(res.Header), nil
 	}
+}
+
+// nextCursor returns the cursor for the next page: the documented X-Files-Cursor-Next header, or the legacy
+// X-Files-Cursor header when Next is absent or empty.
+func nextCursor(header http.Header) string {
+	if cursor := header.Get("X-Files-Cursor-Next"); cursor != "" {
+		return cursor
+	}
+	return header.Get("X-Files-Cursor")
 }

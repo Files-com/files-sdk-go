@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Sync is a Files.com API resource.
 type Sync struct {
 	Id                     int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name                   string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -43,18 +44,24 @@ type Sync struct {
 	LatestSyncRun          SyncRun    `json:"latest_sync_run,omitempty" path:"latest_sync_run,omitempty" url:"latest_sync_run,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (s Sync) Identifier() interface{} {
 	return s.Id
 }
 
+// SyncCollection is a list of Sync resources.
 type SyncCollection []Sync
 
+// SyncTriggerEnum is a string value for trigger.
+// Enum lists the values documented by the API.
 type SyncTriggerEnum string
 
+// String returns the API parameter value.
 func (u SyncTriggerEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u SyncTriggerEnum) Enum() map[string]SyncTriggerEnum {
 	return map[string]SyncTriggerEnum{
 		"daily":           SyncTriggerEnum("daily"),
@@ -63,19 +70,19 @@ func (u SyncTriggerEnum) Enum() map[string]SyncTriggerEnum {
 	}
 }
 
-// SyncListParams contains the request parameters for this operation.
+// SyncListParams contains the request parameters for GET /syncs.
 type SyncListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// SyncFindParams contains the request parameters for this operation.
+// SyncFindParams contains the request parameters for GET /syncs/{id}.
 type SyncFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// SyncCreateParams contains the request parameters for this operation.
+// SyncCreateParams contains the request parameters for POST /syncs.
 type SyncCreateParams struct {
 	DeleteEmptyFolders     *bool           `url:"delete_empty_folders,omitempty" json:"delete_empty_folders,omitempty" path:"delete_empty_folders"`
 	Description            string          `url:"description,omitempty" json:"description,omitempty" path:"description"`
@@ -103,21 +110,21 @@ type SyncCreateParams struct {
 	WorkspaceId            int64           `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// SyncDryRunParams contains the request parameters for this operation.
+// SyncDryRunParams contains the request parameters for POST /syncs/{id}/dry_run.
 //
 // Dry Run Sync
 type SyncDryRunParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// SyncManualRunParams contains the request parameters for this operation.
+// SyncManualRunParams contains the request parameters for POST /syncs/{id}/manual_run.
 //
 // Manually Run Sync
 type SyncManualRunParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// SyncUpdateParams contains the request parameters for this operation.
+// SyncUpdateParams contains the request parameters for PATCH /syncs/{id}.
 type SyncUpdateParams struct {
 	Id                     int64           `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	DeleteEmptyFolders     *bool           `url:"delete_empty_folders,omitempty" json:"delete_empty_folders,omitempty" path:"delete_empty_folders"`
@@ -145,11 +152,12 @@ type SyncUpdateParams struct {
 	AlwaysWriteTriggerFile *bool           `url:"always_write_trigger_file,omitempty" json:"always_write_trigger_file,omitempty" path:"always_write_trigger_file"`
 }
 
-// SyncDeleteParams contains the request parameters for this operation.
+// SyncDeleteParams contains the request parameters for DELETE /syncs/{id}.
 type SyncDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *Sync) UnmarshalJSON(data []byte) error {
 	type sync Sync
 	var v sync
@@ -161,6 +169,7 @@ func (s *Sync) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *SyncCollection) UnmarshalJSON(data []byte) error {
 	type syncs SyncCollection
 	var v syncs
@@ -172,6 +181,7 @@ func (s *SyncCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *SyncCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

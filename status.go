@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Status is a Files.com API resource.
 type Status struct {
 	Code          int64    `json:"code,omitempty" path:"code,omitempty" url:"code,omitempty"`
 	Message       string   `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
@@ -18,8 +19,10 @@ type Status struct {
 
 // Identifier no path or id
 
+// StatusCollection is a list of Status resources.
 type StatusCollection []Status
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *Status) UnmarshalJSON(data []byte) error {
 	type status Status
 	var v status
@@ -31,6 +34,7 @@ func (s *Status) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *StatusCollection) UnmarshalJSON(data []byte) error {
 	type statuss StatusCollection
 	var v statuss
@@ -42,6 +46,7 @@ func (s *StatusCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *StatusCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Preview is a Files.com API resource.
 type Preview struct {
 	Id          int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Status      string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
@@ -14,12 +15,15 @@ type Preview struct {
 	Size        string `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (p Preview) Identifier() interface{} {
 	return p.Id
 }
 
+// PreviewCollection is a list of Preview resources.
 type PreviewCollection []Preview
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (p *Preview) UnmarshalJSON(data []byte) error {
 	type preview Preview
 	var v preview
@@ -31,6 +35,7 @@ func (p *Preview) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (p *PreviewCollection) UnmarshalJSON(data []byte) error {
 	type previews PreviewCollection
 	var v previews
@@ -42,6 +47,7 @@ func (p *PreviewCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (p *PreviewCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*p))
 	for i, v := range *p {

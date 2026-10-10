@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// SyncRunLiveTransfer is a Files.com API resource.
 type SyncRunLiveTransfer struct {
 	Path        string  `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	Status      string  `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
@@ -16,12 +17,15 @@ type SyncRunLiveTransfer struct {
 	StartedAt   string  `json:"started_at,omitempty" path:"started_at,omitempty" url:"started_at,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (s SyncRunLiveTransfer) Identifier() interface{} {
 	return s.Path
 }
 
+// SyncRunLiveTransferCollection is a list of SyncRunLiveTransfer resources.
 type SyncRunLiveTransferCollection []SyncRunLiveTransfer
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *SyncRunLiveTransfer) UnmarshalJSON(data []byte) error {
 	type syncRunLiveTransfer SyncRunLiveTransfer
 	var v syncRunLiveTransfer
@@ -33,6 +37,7 @@ func (s *SyncRunLiveTransfer) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *SyncRunLiveTransferCollection) UnmarshalJSON(data []byte) error {
 	type syncRunLiveTransfers SyncRunLiveTransferCollection
 	var v syncRunLiveTransfers
@@ -44,6 +49,7 @@ func (s *SyncRunLiveTransferCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *SyncRunLiveTransferCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

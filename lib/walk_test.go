@@ -3,6 +3,7 @@ package lib
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/fs"
 	"sync"
 	"testing"
@@ -160,6 +161,32 @@ type passedDeadlineContext struct {
 
 func (c passedDeadlineContext) Deadline() (time.Time, bool) {
 	return c.deadline, true
+}
+
+func TestWalkReportsErrorsOfDifferentTypes(t *testing.T) {
+	first := errors.New("first")
+	second := fmt.Errorf("second: %w", errors.New("cause"))
+	manager := NewConstrainedWorkGroup(2)
+	iter := (&Walk[string]{
+		FS:                 fstest.MapFS{"a/file": &fstest.MapFile{}, "b/file": &fstest.MapFile{}},
+		ConcurrencyManager: manager,
+		WalkFile: func(_ fs.DirEntry, path string, _ error) (string, error) {
+			if path == "a/file" {
+				return "", first
+			}
+			return "", second
+		},
+	}).Walk(context.Background())
+	defer manager.WaitAllDone()
+	defer iter.Stop()
+
+	// Each error is its own Next event, and Err returns the error the callback returned.
+	var reported []error
+	for iter.Next() {
+		reported = append(reported, iter.Err())
+	}
+
+	assert.ElementsMatch(t, []error{first, second}, reported)
 }
 
 func TestWalkRootEmission(t *testing.T) {

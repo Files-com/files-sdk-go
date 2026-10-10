@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// FileComment is a Files.com API resource.
 type FileComment struct {
 	Id        int64                 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Body      string                `json:"body,omitempty" path:"body,omitempty" url:"body,omitempty"`
@@ -13,35 +14,38 @@ type FileComment struct {
 	Path      string                `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (f FileComment) Identifier() interface{} {
 	return f.Id
 }
 
+// FileCommentCollection is a list of FileComment resources.
 type FileCommentCollection []FileComment
 
-// FileCommentListForParams contains the request parameters for this operation.
+// FileCommentListForParams contains the request parameters for GET /file_comments/files/{path}.
 type FileCommentListForParams struct {
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	ListParams
 }
 
-// FileCommentCreateParams contains the request parameters for this operation.
+// FileCommentCreateParams contains the request parameters for POST /file_comments.
 type FileCommentCreateParams struct {
 	Body string `url:"body" json:"body" path:"body"`
 	Path string `url:"path" json:"path" path:"path"`
 }
 
-// FileCommentUpdateParams contains the request parameters for this operation.
+// FileCommentUpdateParams contains the request parameters for PATCH /file_comments/{id}.
 type FileCommentUpdateParams struct {
 	Id   int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Body string `url:"body" json:"body" path:"body"`
 }
 
-// FileCommentDeleteParams contains the request parameters for this operation.
+// FileCommentDeleteParams contains the request parameters for DELETE /file_comments/{id}.
 type FileCommentDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (f *FileComment) UnmarshalJSON(data []byte) error {
 	type fileComment FileComment
 	var v fileComment
@@ -53,6 +57,7 @@ func (f *FileComment) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (f *FileCommentCollection) UnmarshalJSON(data []byte) error {
 	type fileComments FileCommentCollection
 	var v fileComments
@@ -64,6 +69,7 @@ func (f *FileCommentCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (f *FileCommentCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*f))
 	for i, v := range *f {

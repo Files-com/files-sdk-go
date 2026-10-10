@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// WebDavActionLog is a Files.com API resource.
 type WebDavActionLog struct {
 	Timestamp        *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
 	RemoteIp         string     `json:"remote_ip,omitempty" path:"remote_ip,omitempty" url:"remote_ip,omitempty"`
@@ -28,13 +29,15 @@ type WebDavActionLog struct {
 	CreatedAt        *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (w WebDavActionLog) Identifier() interface{} {
 	return w.Path
 }
 
+// WebDavActionLogCollection is a list of WebDavActionLog resources.
 type WebDavActionLogCollection []WebDavActionLog
 
-// WebDavActionLogListParams contains the request parameters for this operation.
+// WebDavActionLogListParams contains the request parameters for GET /web_dav_action_logs.
 type WebDavActionLogListParams struct {
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -45,6 +48,7 @@ type WebDavActionLogListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (w *WebDavActionLog) UnmarshalJSON(data []byte) error {
 	type webDavActionLog WebDavActionLog
 	var v webDavActionLog
@@ -56,6 +60,7 @@ func (w *WebDavActionLog) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (w *WebDavActionLogCollection) UnmarshalJSON(data []byte) error {
 	type webDavActionLogs WebDavActionLogCollection
 	var v webDavActionLogs
@@ -67,6 +72,7 @@ func (w *WebDavActionLogCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (w *WebDavActionLogCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*w))
 	for i, v := range *w {

@@ -1,1 +1,2 @@
+// Package remote_server_configuration_file provides the Files.com RemoteServerConfigurationFile API client.
 package remote_server_configuration_file

@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// GroupUser is a Files.com API resource.
 type GroupUser struct {
 	GroupName string `json:"group_name,omitempty" path:"group_name,omitempty" url:"group_name,omitempty"`
 	GroupId   int64  `json:"group_id,omitempty" path:"group_id,omitempty" url:"group_id,omitempty"`
@@ -15,27 +16,29 @@ type GroupUser struct {
 	Id        int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (g GroupUser) Identifier() interface{} {
 	return g.Id
 }
 
+// GroupUserCollection is a list of GroupUser resources.
 type GroupUserCollection []GroupUser
 
-// GroupUserListParams contains the request parameters for this operation.
+// GroupUserListParams contains the request parameters for GET /group_users.
 type GroupUserListParams struct {
 	GroupId int64 `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
 	UserId  int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	ListParams
 }
 
-// GroupUserCreateParams contains the request parameters for this operation.
+// GroupUserCreateParams contains the request parameters for POST /group_users.
 type GroupUserCreateParams struct {
 	GroupId int64 `url:"group_id" json:"group_id" path:"group_id"`
 	UserId  int64 `url:"user_id" json:"user_id" path:"user_id"`
 	Admin   *bool `url:"admin,omitempty" json:"admin,omitempty" path:"admin"`
 }
 
-// GroupUserUpdateParams contains the request parameters for this operation.
+// GroupUserUpdateParams contains the request parameters for PATCH /group_users/{id}.
 type GroupUserUpdateParams struct {
 	Id      int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	GroupId int64 `url:"group_id" json:"group_id" path:"group_id"`
@@ -43,13 +46,14 @@ type GroupUserUpdateParams struct {
 	Admin   *bool `url:"admin,omitempty" json:"admin,omitempty" path:"admin"`
 }
 
-// GroupUserDeleteParams contains the request parameters for this operation.
+// GroupUserDeleteParams contains the request parameters for DELETE /group_users/{id}.
 type GroupUserDeleteParams struct {
 	Id      int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	GroupId int64 `url:"group_id" json:"group_id" path:"group_id"`
 	UserId  int64 `url:"user_id" json:"user_id" path:"user_id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (g *GroupUser) UnmarshalJSON(data []byte) error {
 	type groupUser GroupUser
 	var v groupUser
@@ -61,6 +65,7 @@ func (g *GroupUser) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (g *GroupUserCollection) UnmarshalJSON(data []byte) error {
 	type groupUsers GroupUserCollection
 	var v groupUsers
@@ -72,6 +77,7 @@ func (g *GroupUserCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (g *GroupUserCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*g))
 	for i, v := range *g {

@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// InboxRegistration is a Files.com API resource.
 type InboxRegistration struct {
 	Code             string      `json:"code,omitempty" path:"code,omitempty" url:"code,omitempty"`
 	Name             string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -24,14 +25,16 @@ type InboxRegistration struct {
 
 // Identifier no path or id
 
+// InboxRegistrationCollection is a list of InboxRegistration resources.
 type InboxRegistrationCollection []InboxRegistration
 
-// InboxRegistrationListParams contains the request parameters for this operation.
+// InboxRegistrationListParams contains the request parameters for GET /inbox_registrations.
 type InboxRegistrationListParams struct {
 	FolderBehaviorId int64 `url:"folder_behavior_id,omitempty" json:"folder_behavior_id,omitempty" path:"folder_behavior_id"`
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (i *InboxRegistration) UnmarshalJSON(data []byte) error {
 	type inboxRegistration InboxRegistration
 	var v inboxRegistration
@@ -43,6 +46,7 @@ func (i *InboxRegistration) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (i *InboxRegistrationCollection) UnmarshalJSON(data []byte) error {
 	type inboxRegistrations InboxRegistrationCollection
 	var v inboxRegistrations
@@ -54,6 +58,7 @@ func (i *InboxRegistrationCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (i *InboxRegistrationCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*i))
 	for i, v := range *i {

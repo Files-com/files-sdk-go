@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// OutboundConnectionLog is a Files.com API resource.
 type OutboundConnectionLog struct {
 	Timestamp            *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
 	Path                 string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
@@ -27,13 +28,15 @@ type OutboundConnectionLog struct {
 	CreatedAt            *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (o OutboundConnectionLog) Identifier() interface{} {
 	return o.Path
 }
 
+// OutboundConnectionLogCollection is a list of OutboundConnectionLog resources.
 type OutboundConnectionLogCollection []OutboundConnectionLog
 
-// OutboundConnectionLogListParams contains the request parameters for this operation.
+// OutboundConnectionLogListParams contains the request parameters for GET /outbound_connection_logs.
 type OutboundConnectionLogListParams struct {
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -44,6 +47,7 @@ type OutboundConnectionLogListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (o *OutboundConnectionLog) UnmarshalJSON(data []byte) error {
 	type outboundConnectionLog OutboundConnectionLog
 	var v outboundConnectionLog
@@ -55,6 +59,7 @@ func (o *OutboundConnectionLog) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (o *OutboundConnectionLogCollection) UnmarshalJSON(data []byte) error {
 	type outboundConnectionLogs OutboundConnectionLogCollection
 	var v outboundConnectionLogs
@@ -66,6 +71,7 @@ func (o *OutboundConnectionLogCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (o *OutboundConnectionLogCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*o))
 	for i, v := range *o {

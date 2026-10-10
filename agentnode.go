@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// AgentNode is a Files.com API resource.
 type AgentNode struct {
 	NodeId                  string              `json:"node_id,omitempty" path:"node_id,omitempty" url:"node_id,omitempty"`
 	Name                    string              `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -21,8 +22,10 @@ type AgentNode struct {
 
 // Identifier no path or id
 
+// AgentNodeCollection is a list of AgentNode resources.
 type AgentNodeCollection []AgentNode
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *AgentNode) UnmarshalJSON(data []byte) error {
 	type agentNode AgentNode
 	var v agentNode
@@ -34,6 +37,7 @@ func (a *AgentNode) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *AgentNodeCollection) UnmarshalJSON(data []byte) error {
 	type agentNodes AgentNodeCollection
 	var v agentNodes
@@ -45,6 +49,7 @@ func (a *AgentNodeCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *AgentNodeCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// SsoStrategy is a Files.com API resource.
 type SsoStrategy struct {
 	Protocol                         string `json:"protocol,omitempty" path:"protocol,omitempty" url:"protocol,omitempty"`
 	Provider                         string `json:"provider,omitempty" path:"provider,omitempty" url:"provider,omitempty"`
@@ -62,30 +63,33 @@ type SsoStrategy struct {
 	LdapUsernameField                string `json:"ldap_username_field,omitempty" path:"ldap_username_field,omitempty" url:"ldap_username_field,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (s SsoStrategy) Identifier() interface{} {
 	return s.Id
 }
 
+// SsoStrategyCollection is a list of SsoStrategy resources.
 type SsoStrategyCollection []SsoStrategy
 
-// SsoStrategyListParams contains the request parameters for this operation.
+// SsoStrategyListParams contains the request parameters for GET /sso_strategies.
 type SsoStrategyListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
 
-// SsoStrategyFindParams contains the request parameters for this operation.
+// SsoStrategyFindParams contains the request parameters for GET /sso_strategies/{id}.
 type SsoStrategyFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// SsoStrategySyncParams contains the request parameters for this operation.
+// SsoStrategySyncParams contains the request parameters for POST /sso_strategies/{id}/sync.
 //
 // Synchronize provisioning data with the SSO remote server
 type SsoStrategySyncParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *SsoStrategy) UnmarshalJSON(data []byte) error {
 	type ssoStrategy SsoStrategy
 	var v ssoStrategy
@@ -97,6 +101,7 @@ func (s *SsoStrategy) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *SsoStrategyCollection) UnmarshalJSON(data []byte) error {
 	type ssoStrategys SsoStrategyCollection
 	var v ssoStrategys
@@ -108,6 +113,7 @@ func (s *SsoStrategyCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *SsoStrategyCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

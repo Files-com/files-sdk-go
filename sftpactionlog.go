@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// SftpActionLog is a Files.com API resource.
 type SftpActionLog struct {
 	Timestamp               *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
 	RemoteIp                string     `json:"remote_ip,omitempty" path:"remote_ip,omitempty" url:"remote_ip,omitempty"`
@@ -34,13 +35,15 @@ type SftpActionLog struct {
 	CreatedAt               *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (s SftpActionLog) Identifier() interface{} {
 	return s.Path
 }
 
+// SftpActionLogCollection is a list of SftpActionLog resources.
 type SftpActionLogCollection []SftpActionLog
 
-// SftpActionLogListParams contains the request parameters for this operation.
+// SftpActionLogListParams contains the request parameters for GET /sftp_action_logs.
 type SftpActionLogListParams struct {
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -51,6 +54,7 @@ type SftpActionLogListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *SftpActionLog) UnmarshalJSON(data []byte) error {
 	type sftpActionLog SftpActionLog
 	var v sftpActionLog
@@ -62,6 +66,7 @@ func (s *SftpActionLog) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *SftpActionLogCollection) UnmarshalJSON(data []byte) error {
 	type sftpActionLogs SftpActionLogCollection
 	var v sftpActionLogs
@@ -73,6 +78,7 @@ func (s *SftpActionLogCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *SftpActionLogCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

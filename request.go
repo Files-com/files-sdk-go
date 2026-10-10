@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Request is a Files.com API resource.
 type Request struct {
 	Id              int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Path            string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
@@ -17,13 +18,15 @@ type Request struct {
 	GroupIds        string `json:"group_ids,omitempty" path:"group_ids,omitempty" url:"group_ids,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (r Request) Identifier() interface{} {
 	return r.Id
 }
 
+// RequestCollection is a list of Request resources.
 type RequestCollection []Request
 
-// RequestListParams contains the request parameters for this operation.
+// RequestListParams contains the request parameters for GET /requests.
 type RequestListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Mine   *bool       `url:"mine,omitempty" json:"mine,omitempty" path:"mine"`
@@ -31,7 +34,7 @@ type RequestListParams struct {
 	ListParams
 }
 
-// RequestGetFolderParams contains the request parameters for this operation.
+// RequestGetFolderParams contains the request parameters for GET /requests/folders/{path}.
 type RequestGetFolderParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Mine   *bool       `url:"mine,omitempty" json:"mine,omitempty" path:"mine"`
@@ -39,7 +42,7 @@ type RequestGetFolderParams struct {
 	ListParams
 }
 
-// RequestCreateParams contains the request parameters for this operation.
+// RequestCreateParams contains the request parameters for POST /requests.
 type RequestCreateParams struct {
 	Path        string `url:"path" json:"path" path:"path"`
 	Destination string `url:"destination" json:"destination" path:"destination"`
@@ -47,11 +50,12 @@ type RequestCreateParams struct {
 	GroupIds    string `url:"group_ids,omitempty" json:"group_ids,omitempty" path:"group_ids"`
 }
 
-// RequestDeleteParams contains the request parameters for this operation.
+// RequestDeleteParams contains the request parameters for DELETE /requests/{id}.
 type RequestDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (r *Request) UnmarshalJSON(data []byte) error {
 	type request Request
 	var v request
@@ -63,6 +67,7 @@ func (r *Request) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (r *RequestCollection) UnmarshalJSON(data []byte) error {
 	type requests RequestCollection
 	var v requests
@@ -74,6 +79,7 @@ func (r *RequestCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (r *RequestCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*r))
 	for i, v := range *r {

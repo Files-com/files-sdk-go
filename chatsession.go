@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ChatSession is a Files.com API resource.
 type ChatSession struct {
 	Id           string        `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Title        string        `json:"title,omitempty" path:"title,omitempty" url:"title,omitempty"`
@@ -18,24 +19,27 @@ type ChatSession struct {
 	Messages     []ChatMessage `json:"messages,omitempty" path:"messages,omitempty" url:"messages,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (c ChatSession) Identifier() interface{} {
 	return c.Id
 }
 
+// ChatSessionCollection is a list of ChatSession resources.
 type ChatSessionCollection []ChatSession
 
-// ChatSessionListParams contains the request parameters for this operation.
+// ChatSessionListParams contains the request parameters for GET /chat_sessions.
 type ChatSessionListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// ChatSessionFindParams contains the request parameters for this operation.
+// ChatSessionFindParams contains the request parameters for GET /chat_sessions/{id}.
 type ChatSessionFindParams struct {
 	Id string `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (c *ChatSession) UnmarshalJSON(data []byte) error {
 	type chatSession ChatSession
 	var v chatSession
@@ -47,6 +51,7 @@ func (c *ChatSession) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (c *ChatSessionCollection) UnmarshalJSON(data []byte) error {
 	type chatSessions ChatSessionCollection
 	var v chatSessions
@@ -58,6 +63,7 @@ func (c *ChatSessionCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (c *ChatSessionCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*c))
 	for i, v := range *c {

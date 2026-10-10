@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Lock is a Files.com API resource.
 type Lock struct {
 	Path                 string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	Timeout              int64  `json:"timeout,omitempty" path:"timeout,omitempty" url:"timeout,omitempty"`
@@ -22,20 +23,22 @@ type Lock struct {
 	ExpectedToken        string `json:"expected_token,omitempty" path:"expected_token,omitempty" url:"expected_token,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (l Lock) Identifier() interface{} {
 	return l.Path
 }
 
+// LockCollection is a list of Lock resources.
 type LockCollection []Lock
 
-// LockListForParams contains the request parameters for this operation.
+// LockListForParams contains the request parameters for GET /locks/{path}.
 type LockListForParams struct {
 	Path            string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	IncludeChildren *bool  `url:"include_children,omitempty" json:"include_children,omitempty" path:"include_children"`
 	ListParams
 }
 
-// LockCreateParams contains the request parameters for this operation.
+// LockCreateParams contains the request parameters for POST /locks/{path}.
 type LockCreateParams struct {
 	Path                 string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	Token                string `url:"token,omitempty" json:"token,omitempty" path:"token"`
@@ -47,12 +50,13 @@ type LockCreateParams struct {
 	Timeout              int64  `url:"timeout,omitempty" json:"timeout,omitempty" path:"timeout"`
 }
 
-// LockDeleteParams contains the request parameters for this operation.
+// LockDeleteParams contains the request parameters for DELETE /locks/{path}.
 type LockDeleteParams struct {
 	Path  string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	Token string `url:"token" json:"token" path:"token"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (l *Lock) UnmarshalJSON(data []byte) error {
 	type lock Lock
 	var v lock
@@ -64,6 +68,7 @@ func (l *Lock) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (l *LockCollection) UnmarshalJSON(data []byte) error {
 	type locks LockCollection
 	var v locks
@@ -75,6 +80,7 @@ func (l *LockCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (l *LockCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*l))
 	for i, v := range *l {

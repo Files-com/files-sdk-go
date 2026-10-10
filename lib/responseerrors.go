@@ -138,15 +138,14 @@ func errorFromBody(res *http.Response, callbacks []func(error) error) error {
 		return ResponseError{StatusCode: res.StatusCode, err: fmt.Errorf("%s", http.StatusText(res.StatusCode)), Response: res}
 	}
 	var body []byte
-	var err error
 	if res.ContentLength == -1 {
 		body = make([]byte, 512)
 	} else {
 		body = make([]byte, int(math.Min(float64(res.ContentLength), float64(512))))
 	}
-	_, err = io.ReadFull(res.Body, body)
+	n, err := io.ReadFull(res.Body, body)
 	if err == nil || errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
-		err = ResponseError{StatusCode: res.StatusCode, err: fmt.Errorf("%s", strings.ReplaceAll(string(body), "\n", " ")), Response: res}
+		err = ResponseError{StatusCode: res.StatusCode, err: fmt.Errorf("%s", strings.ReplaceAll(string(body[:n]), "\n", " ")), Response: res}
 	} else {
 		err = ResponseError{StatusCode: res.StatusCode, err: fmt.Errorf("%s", http.StatusText(res.StatusCode)), Response: res}
 	}

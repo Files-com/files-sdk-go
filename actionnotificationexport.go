@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ActionNotificationExport is a Files.com API resource.
 type ActionNotificationExport struct {
 	Id                 int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId        int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
@@ -25,18 +26,20 @@ type ActionNotificationExport struct {
 	UserId             int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (a ActionNotificationExport) Identifier() interface{} {
 	return a.Id
 }
 
+// ActionNotificationExportCollection is a list of ActionNotificationExport resources.
 type ActionNotificationExportCollection []ActionNotificationExport
 
-// ActionNotificationExportFindParams contains the request parameters for this operation.
+// ActionNotificationExportFindParams contains the request parameters for GET /action_notification_exports/{id}.
 type ActionNotificationExportFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// ActionNotificationExportCreateParams contains the request parameters for this operation.
+// ActionNotificationExportCreateParams contains the request parameters for POST /action_notification_exports.
 type ActionNotificationExportCreateParams struct {
 	UserId             int64      `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	WorkspaceId        int64      `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
@@ -51,6 +54,7 @@ type ActionNotificationExportCreateParams struct {
 	QueryFolder        string     `url:"query_folder,omitempty" json:"query_folder,omitempty" path:"query_folder"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *ActionNotificationExport) UnmarshalJSON(data []byte) error {
 	type actionNotificationExport ActionNotificationExport
 	var v actionNotificationExport
@@ -62,6 +66,7 @@ func (a *ActionNotificationExport) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *ActionNotificationExportCollection) UnmarshalJSON(data []byte) error {
 	type actionNotificationExports ActionNotificationExportCollection
 	var v actionNotificationExports
@@ -73,6 +78,7 @@ func (a *ActionNotificationExportCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *ActionNotificationExportCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

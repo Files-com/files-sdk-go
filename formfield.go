@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// FormField is a Files.com API resource.
 type FormField struct {
 	Id               int64    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Label            string   `json:"label,omitempty" path:"label,omitempty" url:"label,omitempty"`
@@ -17,12 +18,15 @@ type FormField struct {
 	FormFieldSetId   int64    `json:"form_field_set_id,omitempty" path:"form_field_set_id,omitempty" url:"form_field_set_id,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (f FormField) Identifier() interface{} {
 	return f.Id
 }
 
+// FormFieldCollection is a list of FormField resources.
 type FormFieldCollection []FormField
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (f *FormField) UnmarshalJSON(data []byte) error {
 	type formField FormField
 	var v formField
@@ -34,6 +38,7 @@ func (f *FormField) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (f *FormFieldCollection) UnmarshalJSON(data []byte) error {
 	type formFields FormFieldCollection
 	var v formFields
@@ -45,6 +50,7 @@ func (f *FormFieldCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (f *FormFieldCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*f))
 	for i, v := range *f {

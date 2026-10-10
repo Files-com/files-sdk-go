@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// WebhookTest is a Files.com API resource.
 type WebhookTest struct {
 	Code            int64       `json:"code,omitempty" path:"code,omitempty" url:"code,omitempty"`
 	Message         string      `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
@@ -26,9 +27,10 @@ type WebhookTest struct {
 
 // Identifier no path or id
 
+// WebhookTestCollection is a list of WebhookTest resources.
 type WebhookTestCollection []WebhookTest
 
-// WebhookTestCreateParams contains the request parameters for this operation.
+// WebhookTestCreateParams contains the request parameters for POST /webhook_tests.
 type WebhookTestCreateParams struct {
 	Url             string      `url:"url" json:"url" path:"url"`
 	Method          string      `url:"method,omitempty" json:"method,omitempty" path:"method"`
@@ -42,6 +44,7 @@ type WebhookTestCreateParams struct {
 	UseDedicatedIps *bool       `url:"use_dedicated_ips,omitempty" json:"use_dedicated_ips,omitempty" path:"use_dedicated_ips"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (w *WebhookTest) UnmarshalJSON(data []byte) error {
 	type webhookTest WebhookTest
 	var v webhookTest
@@ -53,6 +56,7 @@ func (w *WebhookTest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (w *WebhookTestCollection) UnmarshalJSON(data []byte) error {
 	type webhookTests WebhookTestCollection
 	var v webhookTests
@@ -64,6 +68,7 @@ func (w *WebhookTestCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (w *WebhookTestCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*w))
 	for i, v := range *w {

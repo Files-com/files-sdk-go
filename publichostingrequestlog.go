@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// PublicHostingRequestLog is a Files.com API resource.
 type PublicHostingRequestLog struct {
 	Timestamp        *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
 	RemoteIp         string     `json:"remote_ip,omitempty" path:"remote_ip,omitempty" url:"remote_ip,omitempty"`
@@ -21,13 +22,15 @@ type PublicHostingRequestLog struct {
 	HttpMethod       string     `json:"http_method,omitempty" path:"http_method,omitempty" url:"http_method,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (p PublicHostingRequestLog) Identifier() interface{} {
 	return p.Path
 }
 
+// PublicHostingRequestLogCollection is a list of PublicHostingRequestLog resources.
 type PublicHostingRequestLogCollection []PublicHostingRequestLog
 
-// PublicHostingRequestLogListParams contains the request parameters for this operation.
+// PublicHostingRequestLogListParams contains the request parameters for GET /public_hosting_request_logs.
 type PublicHostingRequestLogListParams struct {
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -38,6 +41,7 @@ type PublicHostingRequestLogListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (p *PublicHostingRequestLog) UnmarshalJSON(data []byte) error {
 	type publicHostingRequestLog PublicHostingRequestLog
 	var v publicHostingRequestLog
@@ -49,6 +53,7 @@ func (p *PublicHostingRequestLog) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (p *PublicHostingRequestLogCollection) UnmarshalJSON(data []byte) error {
 	type publicHostingRequestLogs PublicHostingRequestLogCollection
 	var v publicHostingRequestLogs
@@ -60,6 +65,7 @@ func (p *PublicHostingRequestLogCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (p *PublicHostingRequestLogCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*p))
 	for i, v := range *p {

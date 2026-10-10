@@ -55,5 +55,5 @@ func (q *Queue[T]) Pop() T {
 func (q *Queue[T]) Clear() {
 	q.Lock()
 	defer q.Unlock()
-	*q = Queue[T]{}
+	q.queue.Clear()
 }

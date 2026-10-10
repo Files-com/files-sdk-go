@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ExpectationIncident is a Files.com API resource.
 type ExpectationIncident struct {
 	Id                     int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId            int64       `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
@@ -25,32 +26,34 @@ type ExpectationIncident struct {
 	UpdatedAt              *time.Time  `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (e ExpectationIncident) Identifier() interface{} {
 	return e.Id
 }
 
+// ExpectationIncidentCollection is a list of ExpectationIncident resources.
 type ExpectationIncidentCollection []ExpectationIncident
 
-// ExpectationIncidentListParams contains the request parameters for this operation.
+// ExpectationIncidentListParams contains the request parameters for GET /expectation_incidents.
 type ExpectationIncidentListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// ExpectationIncidentFindParams contains the request parameters for this operation.
+// ExpectationIncidentFindParams contains the request parameters for GET /expectation_incidents/{id}.
 type ExpectationIncidentFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// ExpectationIncidentResolveParams contains the request parameters for this operation.
+// ExpectationIncidentResolveParams contains the request parameters for POST /expectation_incidents/{id}/resolve.
 //
 // Resolve an expectation incident
 type ExpectationIncidentResolveParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// ExpectationIncidentSnoozeParams contains the request parameters for this operation.
+// ExpectationIncidentSnoozeParams contains the request parameters for POST /expectation_incidents/{id}/snooze.
 //
 // Snooze an expectation incident until a specified time
 type ExpectationIncidentSnoozeParams struct {
@@ -58,13 +61,14 @@ type ExpectationIncidentSnoozeParams struct {
 	SnoozedUntil *time.Time `url:"snoozed_until" json:"snoozed_until" path:"snoozed_until"`
 }
 
-// ExpectationIncidentAcknowledgeParams contains the request parameters for this operation.
+// ExpectationIncidentAcknowledgeParams contains the request parameters for POST /expectation_incidents/{id}/acknowledge.
 //
 // Acknowledge an expectation incident
 type ExpectationIncidentAcknowledgeParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (e *ExpectationIncident) UnmarshalJSON(data []byte) error {
 	type expectationIncident ExpectationIncident
 	var v expectationIncident
@@ -76,6 +80,7 @@ func (e *ExpectationIncident) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (e *ExpectationIncidentCollection) UnmarshalJSON(data []byte) error {
 	type expectationIncidents ExpectationIncidentCollection
 	var v expectationIncidents
@@ -87,6 +92,7 @@ func (e *ExpectationIncidentCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (e *ExpectationIncidentCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*e))
 	for i, v := range *e {

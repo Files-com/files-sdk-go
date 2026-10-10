@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ActionLog is a Files.com API resource.
 type ActionLog struct {
 	Action             string     `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
 	CreatedAt          *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
@@ -24,13 +25,15 @@ type ActionLog struct {
 	Username           string     `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (a ActionLog) Identifier() interface{} {
 	return a.Path
 }
 
+// ActionLogCollection is a list of ActionLog resources.
 type ActionLogCollection []ActionLog
 
-// ActionLogListParams contains the request parameters for this operation.
+// ActionLogListParams contains the request parameters for GET /action_logs.
 type ActionLogListParams struct {
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -41,6 +44,7 @@ type ActionLogListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *ActionLog) UnmarshalJSON(data []byte) error {
 	type actionLog ActionLog
 	var v actionLog
@@ -52,6 +56,7 @@ func (a *ActionLog) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *ActionLogCollection) UnmarshalJSON(data []byte) error {
 	type actionLogs ActionLogCollection
 	var v actionLogs
@@ -63,6 +68,7 @@ func (a *ActionLogCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *ActionLogCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

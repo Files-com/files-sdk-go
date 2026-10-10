@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Style is a Files.com API resource.
 type Style struct {
 	Id            int64     `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Path          string    `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
@@ -16,29 +17,32 @@ type Style struct {
 	File          io.Reader `json:"file,omitempty" path:"file,omitempty" url:"file,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (s Style) Identifier() interface{} {
 	return s.Id
 }
 
+// StyleCollection is a list of Style resources.
 type StyleCollection []Style
 
-// StyleFindParams contains the request parameters for this operation.
+// StyleFindParams contains the request parameters for GET /styles/{path}.
 type StyleFindParams struct {
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 }
 
-// StyleUpdateParams contains the request parameters for this operation.
+// StyleUpdateParams contains the request parameters for PATCH /styles/{path}.
 type StyleUpdateParams struct {
 	Path          string    `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	File          io.Writer `url:"file,omitempty" json:"file,omitempty" path:"file"`
 	LogoClickHref string    `url:"logo_click_href,omitempty" json:"logo_click_href,omitempty" path:"logo_click_href"`
 }
 
-// StyleDeleteParams contains the request parameters for this operation.
+// StyleDeleteParams contains the request parameters for DELETE /styles/{path}.
 type StyleDeleteParams struct {
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *Style) UnmarshalJSON(data []byte) error {
 	type style Style
 	var v style
@@ -50,6 +54,7 @@ func (s *Style) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *StyleCollection) UnmarshalJSON(data []byte) error {
 	type styles StyleCollection
 	var v styles
@@ -61,6 +66,7 @@ func (s *StyleCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *StyleCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

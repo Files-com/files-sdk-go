@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Action is a Files.com API resource.
 type Action struct {
 	Id                   int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Path                 string      `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
@@ -24,12 +25,15 @@ type Action struct {
 	Interface            string      `json:"interface,omitempty" path:"interface,omitempty" url:"interface,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (a Action) Identifier() interface{} {
 	return a.Id
 }
 
+// ActionCollection is a list of Action resources.
 type ActionCollection []Action
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *Action) UnmarshalJSON(data []byte) error {
 	type action Action
 	var v action
@@ -41,6 +45,7 @@ func (a *Action) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *ActionCollection) UnmarshalJSON(data []byte) error {
 	type actions ActionCollection
 	var v actions
@@ -52,6 +57,7 @@ func (a *ActionCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *ActionCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

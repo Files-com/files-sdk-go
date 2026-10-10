@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ActionNotificationExportResult is a Files.com API resource.
 type ActionNotificationExportResult struct {
 	Id             int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	CreatedAt      int64  `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
@@ -19,19 +20,22 @@ type ActionNotificationExportResult struct {
 	Folder         string `json:"folder,omitempty" path:"folder,omitempty" url:"folder,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (a ActionNotificationExportResult) Identifier() interface{} {
 	return a.Id
 }
 
+// ActionNotificationExportResultCollection is a list of ActionNotificationExportResult resources.
 type ActionNotificationExportResultCollection []ActionNotificationExportResult
 
-// ActionNotificationExportResultListParams contains the request parameters for this operation.
+// ActionNotificationExportResultListParams contains the request parameters for GET /action_notification_export_results.
 type ActionNotificationExportResultListParams struct {
 	UserId                     int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	ActionNotificationExportId int64 `url:"action_notification_export_id" json:"action_notification_export_id" path:"action_notification_export_id"`
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *ActionNotificationExportResult) UnmarshalJSON(data []byte) error {
 	type actionNotificationExportResult ActionNotificationExportResult
 	var v actionNotificationExportResult
@@ -43,6 +47,7 @@ func (a *ActionNotificationExportResult) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *ActionNotificationExportResultCollection) UnmarshalJSON(data []byte) error {
 	type actionNotificationExportResults ActionNotificationExportResultCollection
 	var v actionNotificationExportResults
@@ -54,6 +59,7 @@ func (a *ActionNotificationExportResultCollection) UnmarshalJSON(data []byte) er
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *ActionNotificationExportResultCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

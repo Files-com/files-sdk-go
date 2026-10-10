@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// HolidayCalendar is a Files.com API resource.
 type HolidayCalendar struct {
 	Id         int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name       string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -15,41 +16,44 @@ type HolidayCalendar struct {
 	UpdatedAt  *time.Time  `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (h HolidayCalendar) Identifier() interface{} {
 	return h.Id
 }
 
+// HolidayCalendarCollection is a list of HolidayCalendar resources.
 type HolidayCalendarCollection []HolidayCalendar
 
-// HolidayCalendarListParams contains the request parameters for this operation.
+// HolidayCalendarListParams contains the request parameters for GET /holiday_calendars.
 type HolidayCalendarListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
 
-// HolidayCalendarFindParams contains the request parameters for this operation.
+// HolidayCalendarFindParams contains the request parameters for GET /holiday_calendars/{id}.
 type HolidayCalendarFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// HolidayCalendarCreateParams contains the request parameters for this operation.
+// HolidayCalendarCreateParams contains the request parameters for POST /holiday_calendars.
 type HolidayCalendarCreateParams struct {
 	Definition interface{} `url:"definition" json:"definition" path:"definition"`
 	Name       string      `url:"name" json:"name" path:"name"`
 }
 
-// HolidayCalendarUpdateParams contains the request parameters for this operation.
+// HolidayCalendarUpdateParams contains the request parameters for PATCH /holiday_calendars/{id}.
 type HolidayCalendarUpdateParams struct {
 	Id         int64       `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Definition interface{} `url:"definition,omitempty" json:"definition,omitempty" path:"definition"`
 	Name       string      `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
-// HolidayCalendarDeleteParams contains the request parameters for this operation.
+// HolidayCalendarDeleteParams contains the request parameters for DELETE /holiday_calendars/{id}.
 type HolidayCalendarDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (h *HolidayCalendar) UnmarshalJSON(data []byte) error {
 	type holidayCalendar HolidayCalendar
 	var v holidayCalendar
@@ -61,6 +65,7 @@ func (h *HolidayCalendar) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (h *HolidayCalendarCollection) UnmarshalJSON(data []byte) error {
 	type holidayCalendars HolidayCalendarCollection
 	var v holidayCalendars
@@ -72,6 +77,7 @@ func (h *HolidayCalendarCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (h *HolidayCalendarCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*h))
 	for i, v := range *h {

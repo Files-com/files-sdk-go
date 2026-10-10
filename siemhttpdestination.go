@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// SiemHttpDestination is a Files.com API resource.
 type SiemHttpDestination struct {
 	Id                                            int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name                                          string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -71,18 +72,24 @@ type SiemHttpDestination struct {
 	DatadogApiKey                                 string      `json:"datadog_api_key,omitempty" path:"datadog_api_key,omitempty" url:"datadog_api_key,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (s SiemHttpDestination) Identifier() interface{} {
 	return s.Id
 }
 
+// SiemHttpDestinationCollection is a list of SiemHttpDestination resources.
 type SiemHttpDestinationCollection []SiemHttpDestination
 
+// SiemHttpDestinationGenericPayloadTypeEnum is a string value for generic_payload_type.
+// Enum lists the values documented by the API.
 type SiemHttpDestinationGenericPayloadTypeEnum string
 
+// String returns the API parameter value.
 func (u SiemHttpDestinationGenericPayloadTypeEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u SiemHttpDestinationGenericPayloadTypeEnum) Enum() map[string]SiemHttpDestinationGenericPayloadTypeEnum {
 	return map[string]SiemHttpDestinationGenericPayloadTypeEnum{
 		"json_newline": SiemHttpDestinationGenericPayloadTypeEnum("json_newline"),
@@ -90,12 +97,16 @@ func (u SiemHttpDestinationGenericPayloadTypeEnum) Enum() map[string]SiemHttpDes
 	}
 }
 
+// SiemHttpDestinationFileFormatEnum is a string value for file_format.
+// Enum lists the values documented by the API.
 type SiemHttpDestinationFileFormatEnum string
 
+// String returns the API parameter value.
 func (u SiemHttpDestinationFileFormatEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u SiemHttpDestinationFileFormatEnum) Enum() map[string]SiemHttpDestinationFileFormatEnum {
 	return map[string]SiemHttpDestinationFileFormatEnum{
 		"json": SiemHttpDestinationFileFormatEnum("json"),
@@ -103,12 +114,16 @@ func (u SiemHttpDestinationFileFormatEnum) Enum() map[string]SiemHttpDestination
 	}
 }
 
+// SiemHttpDestinationDestinationTypeEnum is a string value for destination_type.
+// Enum lists the values documented by the API.
 type SiemHttpDestinationDestinationTypeEnum string
 
+// String returns the API parameter value.
 func (u SiemHttpDestinationDestinationTypeEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u SiemHttpDestinationDestinationTypeEnum) Enum() map[string]SiemHttpDestinationDestinationTypeEnum {
 	return map[string]SiemHttpDestinationDestinationTypeEnum{
 		"generic":           SiemHttpDestinationDestinationTypeEnum("generic"),
@@ -127,17 +142,17 @@ func (u SiemHttpDestinationDestinationTypeEnum) Enum() map[string]SiemHttpDestin
 	}
 }
 
-// SiemHttpDestinationListParams contains the request parameters for this operation.
+// SiemHttpDestinationListParams contains the request parameters for GET /siem_http_destinations.
 type SiemHttpDestinationListParams struct {
 	ListParams
 }
 
-// SiemHttpDestinationFindParams contains the request parameters for this operation.
+// SiemHttpDestinationFindParams contains the request parameters for GET /siem_http_destinations/{id}.
 type SiemHttpDestinationFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// SiemHttpDestinationCreateParams contains the request parameters for this operation.
+// SiemHttpDestinationCreateParams contains the request parameters for POST /siem_http_destinations.
 type SiemHttpDestinationCreateParams struct {
 	Name                                    string                                    `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	AdditionalHeaders                       interface{}                               `url:"additional_headers,omitempty" json:"additional_headers,omitempty" path:"additional_headers"`
@@ -174,7 +189,7 @@ type SiemHttpDestinationCreateParams struct {
 	DestinationUrl                          string                                    `url:"destination_url,omitempty" json:"destination_url,omitempty" path:"destination_url"`
 }
 
-// SiemHttpDestinationSendTestEntryParams contains the request parameters for this operation.
+// SiemHttpDestinationSendTestEntryParams contains the request parameters for POST /siem_http_destinations/send_test_entry.
 type SiemHttpDestinationSendTestEntryParams struct {
 	SiemHttpDestinationId                   int64                                     `url:"siem_http_destination_id,omitempty" json:"siem_http_destination_id,omitempty" path:"siem_http_destination_id"`
 	DestinationType                         SiemHttpDestinationDestinationTypeEnum    `url:"destination_type,omitempty" json:"destination_type,omitempty" path:"destination_type"`
@@ -212,7 +227,7 @@ type SiemHttpDestinationSendTestEntryParams struct {
 	SettingsChangeSendEnabled               *bool                                     `url:"settings_change_send_enabled,omitempty" json:"settings_change_send_enabled,omitempty" path:"settings_change_send_enabled"`
 }
 
-// SiemHttpDestinationUpdateParams contains the request parameters for this operation.
+// SiemHttpDestinationUpdateParams contains the request parameters for PATCH /siem_http_destinations/{id}.
 type SiemHttpDestinationUpdateParams struct {
 	Id                                      int64                                     `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name                                    string                                    `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -250,11 +265,12 @@ type SiemHttpDestinationUpdateParams struct {
 	DestinationUrl                          string                                    `url:"destination_url,omitempty" json:"destination_url,omitempty" path:"destination_url"`
 }
 
-// SiemHttpDestinationDeleteParams contains the request parameters for this operation.
+// SiemHttpDestinationDeleteParams contains the request parameters for DELETE /siem_http_destinations/{id}.
 type SiemHttpDestinationDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *SiemHttpDestination) UnmarshalJSON(data []byte) error {
 	type siemHttpDestination SiemHttpDestination
 	var v siemHttpDestination
@@ -266,6 +282,7 @@ func (s *SiemHttpDestination) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *SiemHttpDestinationCollection) UnmarshalJSON(data []byte) error {
 	type siemHttpDestinations SiemHttpDestinationCollection
 	var v siemHttpDestinations
@@ -277,6 +294,7 @@ func (s *SiemHttpDestinationCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *SiemHttpDestinationCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

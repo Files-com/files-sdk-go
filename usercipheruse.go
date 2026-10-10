@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// UserCipherUse is a Files.com API resource.
 type UserCipherUse struct {
 	Id             int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	UserId         int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
@@ -18,13 +19,15 @@ type UserCipherUse struct {
 	UpdatedAt      *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (u UserCipherUse) Identifier() interface{} {
 	return u.Id
 }
 
+// UserCipherUseCollection is a list of UserCipherUse resources.
 type UserCipherUseCollection []UserCipherUse
 
-// UserCipherUseListParams contains the request parameters for this operation.
+// UserCipherUseListParams contains the request parameters for GET /user_cipher_uses.
 type UserCipherUseListParams struct {
 	UserId     int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -36,6 +39,7 @@ type UserCipherUseListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (u *UserCipherUse) UnmarshalJSON(data []byte) error {
 	type userCipherUse UserCipherUse
 	var v userCipherUse
@@ -47,6 +51,7 @@ func (u *UserCipherUse) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (u *UserCipherUseCollection) UnmarshalJSON(data []byte) error {
 	type userCipherUses UserCipherUseCollection
 	var v userCipherUses
@@ -58,6 +63,7 @@ func (u *UserCipherUseCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (u *UserCipherUseCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*u))
 	for i, v := range *u {

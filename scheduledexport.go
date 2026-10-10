@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ScheduledExport is a Files.com API resource.
 type ScheduledExport struct {
 	Id                    int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name                  string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -32,18 +33,24 @@ type ScheduledExport struct {
 	UpdatedAt             *time.Time  `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (s ScheduledExport) Identifier() interface{} {
 	return s.Id
 }
 
+// ScheduledExportCollection is a list of ScheduledExport resources.
 type ScheduledExportCollection []ScheduledExport
 
+// ScheduledExportTriggerEnum is a string value for trigger.
+// Enum lists the values documented by the API.
 type ScheduledExportTriggerEnum string
 
+// String returns the API parameter value.
 func (u ScheduledExportTriggerEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u ScheduledExportTriggerEnum) Enum() map[string]ScheduledExportTriggerEnum {
 	return map[string]ScheduledExportTriggerEnum{
 		"daily":           ScheduledExportTriggerEnum("daily"),
@@ -51,7 +58,7 @@ func (u ScheduledExportTriggerEnum) Enum() map[string]ScheduledExportTriggerEnum
 	}
 }
 
-// ScheduledExportListParams contains the request parameters for this operation.
+// ScheduledExportListParams contains the request parameters for GET /scheduled_exports.
 type ScheduledExportListParams struct {
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -59,12 +66,12 @@ type ScheduledExportListParams struct {
 	ListParams
 }
 
-// ScheduledExportFindParams contains the request parameters for this operation.
+// ScheduledExportFindParams contains the request parameters for GET /scheduled_exports/{id}.
 type ScheduledExportFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// ScheduledExportCreateParams contains the request parameters for this operation.
+// ScheduledExportCreateParams contains the request parameters for POST /scheduled_exports.
 type ScheduledExportCreateParams struct {
 	Name               string                     `url:"name" json:"name" path:"name"`
 	ExportType         string                     `url:"export_type" json:"export_type" path:"export_type"`
@@ -82,7 +89,7 @@ type ScheduledExportCreateParams struct {
 	HolidayRegion      string                     `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
 }
 
-// ScheduledExportUpdateParams contains the request parameters for this operation.
+// ScheduledExportUpdateParams contains the request parameters for PATCH /scheduled_exports/{id}.
 type ScheduledExportUpdateParams struct {
 	Id                 int64                      `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name               string                     `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -101,11 +108,12 @@ type ScheduledExportUpdateParams struct {
 	HolidayRegion      string                     `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
 }
 
-// ScheduledExportDeleteParams contains the request parameters for this operation.
+// ScheduledExportDeleteParams contains the request parameters for DELETE /scheduled_exports/{id}.
 type ScheduledExportDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *ScheduledExport) UnmarshalJSON(data []byte) error {
 	type scheduledExport ScheduledExport
 	var v scheduledExport
@@ -117,6 +125,7 @@ func (s *ScheduledExport) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *ScheduledExportCollection) UnmarshalJSON(data []byte) error {
 	type scheduledExports ScheduledExportCollection
 	var v scheduledExports
@@ -128,6 +137,7 @@ func (s *ScheduledExportCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *ScheduledExportCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

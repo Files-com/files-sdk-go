@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// FormFieldSet is a Files.com API resource.
 type FormFieldSet struct {
 	Id          int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Title       string      `json:"title,omitempty" path:"title,omitempty" url:"title,omitempty"`
@@ -19,24 +20,26 @@ type FormFieldSet struct {
 	WorkspaceId int64       `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (f FormFieldSet) Identifier() interface{} {
 	return f.Id
 }
 
+// FormFieldSetCollection is a list of FormFieldSet resources.
 type FormFieldSetCollection []FormFieldSet
 
-// FormFieldSetListParams contains the request parameters for this operation.
+// FormFieldSetListParams contains the request parameters for GET /form_field_sets.
 type FormFieldSetListParams struct {
 	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	ListParams
 }
 
-// FormFieldSetFindParams contains the request parameters for this operation.
+// FormFieldSetFindParams contains the request parameters for GET /form_field_sets/{id}.
 type FormFieldSetFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// FormFieldSetCreateParams contains the request parameters for this operation.
+// FormFieldSetCreateParams contains the request parameters for POST /form_field_sets.
 type FormFieldSetCreateParams struct {
 	UserId      int64                    `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Title       string                   `url:"title,omitempty" json:"title,omitempty" path:"title"`
@@ -47,7 +50,7 @@ type FormFieldSetCreateParams struct {
 	FormFields  []map[string]interface{} `url:"form_fields,omitempty" json:"form_fields,omitempty" path:"form_fields"`
 }
 
-// FormFieldSetUpdateParams contains the request parameters for this operation.
+// FormFieldSetUpdateParams contains the request parameters for PATCH /form_field_sets/{id}.
 type FormFieldSetUpdateParams struct {
 	Id          int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Title       string                   `url:"title,omitempty" json:"title,omitempty" path:"title"`
@@ -58,11 +61,12 @@ type FormFieldSetUpdateParams struct {
 	FormFields  []map[string]interface{} `url:"form_fields,omitempty" json:"form_fields,omitempty" path:"form_fields"`
 }
 
-// FormFieldSetDeleteParams contains the request parameters for this operation.
+// FormFieldSetDeleteParams contains the request parameters for DELETE /form_field_sets/{id}.
 type FormFieldSetDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (f *FormFieldSet) UnmarshalJSON(data []byte) error {
 	type formFieldSet FormFieldSet
 	var v formFieldSet
@@ -74,6 +78,7 @@ func (f *FormFieldSet) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (f *FormFieldSetCollection) UnmarshalJSON(data []byte) error {
 	type formFieldSets FormFieldSetCollection
 	var v formFieldSets
@@ -85,6 +90,7 @@ func (f *FormFieldSetCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (f *FormFieldSetCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*f))
 	for i, v := range *f {

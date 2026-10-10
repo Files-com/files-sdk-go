@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// BundleAction is a Files.com API resource.
 type BundleAction struct {
 	Action                  string             `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
 	BundleRegistration      BundleRegistration `json:"bundle_registration,omitempty" path:"bundle_registration,omitempty" url:"bundle_registration,omitempty"`
@@ -23,13 +24,15 @@ type BundleAction struct {
 	FormFieldData           interface{}        `json:"form_field_data,omitempty" path:"form_field_data,omitempty" url:"form_field_data,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (b BundleAction) Identifier() interface{} {
 	return b.Path
 }
 
+// BundleActionCollection is a list of BundleAction resources.
 type BundleActionCollection []BundleAction
 
-// BundleActionListParams contains the request parameters for this operation.
+// BundleActionListParams contains the request parameters for GET /bundle_actions.
 type BundleActionListParams struct {
 	UserId               int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy               interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -43,6 +46,7 @@ type BundleActionListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (b *BundleAction) UnmarshalJSON(data []byte) error {
 	type bundleAction BundleAction
 	var v bundleAction
@@ -54,6 +58,7 @@ func (b *BundleAction) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (b *BundleActionCollection) UnmarshalJSON(data []byte) error {
 	type bundleActions BundleActionCollection
 	var v bundleActions
@@ -65,6 +70,7 @@ func (b *BundleActionCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (b *BundleActionCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*b))
 	for i, v := range *b {

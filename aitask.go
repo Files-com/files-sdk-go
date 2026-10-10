@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// AiTask is a Files.com API resource.
 type AiTask struct {
 	Id                    int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId           int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
@@ -34,18 +35,24 @@ type AiTask struct {
 	UpdatedAt             *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (a AiTask) Identifier() interface{} {
 	return a.Id
 }
 
+// AiTaskCollection is a list of AiTask resources.
 type AiTaskCollection []AiTask
 
+// AiTaskPermissionSetEnum is a string value for permission_set.
+// Enum lists the values documented by the API.
 type AiTaskPermissionSetEnum string
 
+// String returns the API parameter value.
 func (u AiTaskPermissionSetEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u AiTaskPermissionSetEnum) Enum() map[string]AiTaskPermissionSetEnum {
 	return map[string]AiTaskPermissionSetEnum{
 		"full":       AiTaskPermissionSetEnum("full"),
@@ -53,12 +60,16 @@ func (u AiTaskPermissionSetEnum) Enum() map[string]AiTaskPermissionSetEnum {
 	}
 }
 
+// AiTaskTriggerEnum is a string value for trigger.
+// Enum lists the values documented by the API.
 type AiTaskTriggerEnum string
 
+// String returns the API parameter value.
 func (u AiTaskTriggerEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u AiTaskTriggerEnum) Enum() map[string]AiTaskTriggerEnum {
 	return map[string]AiTaskTriggerEnum{
 		"manual":          AiTaskTriggerEnum("manual"),
@@ -68,19 +79,19 @@ func (u AiTaskTriggerEnum) Enum() map[string]AiTaskTriggerEnum {
 	}
 }
 
-// AiTaskListParams contains the request parameters for this operation.
+// AiTaskListParams contains the request parameters for GET /ai_tasks.
 type AiTaskListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// AiTaskFindParams contains the request parameters for this operation.
+// AiTaskFindParams contains the request parameters for GET /ai_tasks/{id}.
 type AiTaskFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// AiTaskCreateParams contains the request parameters for this operation.
+// AiTaskCreateParams contains the request parameters for POST /ai_tasks.
 type AiTaskCreateParams struct {
 	Description        string                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
 	Disabled           *bool                   `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
@@ -102,14 +113,14 @@ type AiTaskCreateParams struct {
 	WorkspaceId        int64                   `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// AiTaskManualRunParams contains the request parameters for this operation.
+// AiTaskManualRunParams contains the request parameters for POST /ai_tasks/{id}/manual_run.
 //
 // Manually Run AI Task
 type AiTaskManualRunParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// AiTaskUpdateParams contains the request parameters for this operation.
+// AiTaskUpdateParams contains the request parameters for PATCH /ai_tasks/{id}.
 type AiTaskUpdateParams struct {
 	Id                 int64                   `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Description        string                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
@@ -132,11 +143,12 @@ type AiTaskUpdateParams struct {
 	WorkspaceId        int64                   `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// AiTaskDeleteParams contains the request parameters for this operation.
+// AiTaskDeleteParams contains the request parameters for DELETE /ai_tasks/{id}.
 type AiTaskDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *AiTask) UnmarshalJSON(data []byte) error {
 	type aiTask AiTask
 	var v aiTask
@@ -148,6 +160,7 @@ func (a *AiTask) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *AiTaskCollection) UnmarshalJSON(data []byte) error {
 	type aiTasks AiTaskCollection
 	var v aiTasks
@@ -159,6 +172,7 @@ func (a *AiTaskCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *AiTaskCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

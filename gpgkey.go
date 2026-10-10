@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// GpgKey is a Files.com API resource.
 type GpgKey struct {
 	Id                    int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId           int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
@@ -29,13 +30,15 @@ type GpgKey struct {
 	GenerateEmail         string     `json:"generate_email,omitempty" path:"generate_email,omitempty" url:"generate_email,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (g GpgKey) Identifier() interface{} {
 	return g.Id
 }
 
+// GpgKeyCollection is a list of GpgKey resources.
 type GpgKeyCollection []GpgKey
 
-// GpgKeyListParams contains the request parameters for this operation.
+// GpgKeyListParams contains the request parameters for GET /gpg_keys.
 type GpgKeyListParams struct {
 	UserId     int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -47,12 +50,12 @@ type GpgKeyListParams struct {
 	ListParams
 }
 
-// GpgKeyFindParams contains the request parameters for this operation.
+// GpgKeyFindParams contains the request parameters for GET /gpg_keys/{id}.
 type GpgKeyFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// GpgKeyCreateParams contains the request parameters for this operation.
+// GpgKeyCreateParams contains the request parameters for POST /gpg_keys.
 type GpgKeyCreateParams struct {
 	UserId             int64      `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	PartnerId          int64      `url:"partner_id,omitempty" json:"partner_id,omitempty" path:"partner_id"`
@@ -67,7 +70,7 @@ type GpgKeyCreateParams struct {
 	GenerateEmail      string     `url:"generate_email,omitempty" json:"generate_email,omitempty" path:"generate_email"`
 }
 
-// GpgKeyUpdateParams contains the request parameters for this operation.
+// GpgKeyUpdateParams contains the request parameters for PATCH /gpg_keys/{id}.
 type GpgKeyUpdateParams struct {
 	Id                 int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	PartnerId          int64  `url:"partner_id,omitempty" json:"partner_id,omitempty" path:"partner_id"`
@@ -77,11 +80,12 @@ type GpgKeyUpdateParams struct {
 	Name               string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
-// GpgKeyDeleteParams contains the request parameters for this operation.
+// GpgKeyDeleteParams contains the request parameters for DELETE /gpg_keys/{id}.
 type GpgKeyDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (g *GpgKey) UnmarshalJSON(data []byte) error {
 	type gpgKey GpgKey
 	var v gpgKey
@@ -93,6 +97,7 @@ func (g *GpgKey) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (g *GpgKeyCollection) UnmarshalJSON(data []byte) error {
 	type gpgKeys GpgKeyCollection
 	var v gpgKeys
@@ -104,6 +109,7 @@ func (g *GpgKeyCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (g *GpgKeyCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*g))
 	for i, v := range *g {

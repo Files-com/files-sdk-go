@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// SftpHostKey is a Files.com API resource.
 type SftpHostKey struct {
 	Active            *bool  `json:"active,omitempty" path:"active,omitempty" url:"active,omitempty"`
 	CustomDomainId    int64  `json:"custom_domain_id,omitempty" path:"custom_domain_id,omitempty" url:"custom_domain_id,omitempty"`
@@ -17,23 +18,25 @@ type SftpHostKey struct {
 	PrivateKey        string `json:"private_key,omitempty" path:"private_key,omitempty" url:"private_key,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (s SftpHostKey) Identifier() interface{} {
 	return s.Id
 }
 
+// SftpHostKeyCollection is a list of SftpHostKey resources.
 type SftpHostKeyCollection []SftpHostKey
 
-// SftpHostKeyListParams contains the request parameters for this operation.
+// SftpHostKeyListParams contains the request parameters for GET /sftp_host_keys.
 type SftpHostKeyListParams struct {
 	ListParams
 }
 
-// SftpHostKeyFindParams contains the request parameters for this operation.
+// SftpHostKeyFindParams contains the request parameters for GET /sftp_host_keys/{id}.
 type SftpHostKeyFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// SftpHostKeyCreateParams contains the request parameters for this operation.
+// SftpHostKeyCreateParams contains the request parameters for POST /sftp_host_keys.
 type SftpHostKeyCreateParams struct {
 	Active         *bool  `url:"active,omitempty" json:"active,omitempty" path:"active"`
 	CustomDomainId int64  `url:"custom_domain_id,omitempty" json:"custom_domain_id,omitempty" path:"custom_domain_id"`
@@ -41,7 +44,7 @@ type SftpHostKeyCreateParams struct {
 	PrivateKey     string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 }
 
-// SftpHostKeyUpdateParams contains the request parameters for this operation.
+// SftpHostKeyUpdateParams contains the request parameters for PATCH /sftp_host_keys/{id}.
 type SftpHostKeyUpdateParams struct {
 	Id             int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Active         *bool  `url:"active,omitempty" json:"active,omitempty" path:"active"`
@@ -50,11 +53,12 @@ type SftpHostKeyUpdateParams struct {
 	PrivateKey     string `url:"private_key,omitempty" json:"private_key,omitempty" path:"private_key"`
 }
 
-// SftpHostKeyDeleteParams contains the request parameters for this operation.
+// SftpHostKeyDeleteParams contains the request parameters for DELETE /sftp_host_keys/{id}.
 type SftpHostKeyDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *SftpHostKey) UnmarshalJSON(data []byte) error {
 	type sftpHostKey SftpHostKey
 	var v sftpHostKey
@@ -66,6 +70,7 @@ func (s *SftpHostKey) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *SftpHostKeyCollection) UnmarshalJSON(data []byte) error {
 	type sftpHostKeys SftpHostKeyCollection
 	var v sftpHostKeys
@@ -77,6 +82,7 @@ func (s *SftpHostKeyCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *SftpHostKeyCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

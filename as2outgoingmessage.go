@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// As2OutgoingMessage is a Files.com API resource.
 type As2OutgoingMessage struct {
 	Id                          int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId                 int64       `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
@@ -42,13 +43,15 @@ type As2OutgoingMessage struct {
 	MdnResponseUri              string      `json:"mdn_response_uri,omitempty" path:"mdn_response_uri,omitempty" url:"mdn_response_uri,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (a As2OutgoingMessage) Identifier() interface{} {
 	return a.Id
 }
 
+// As2OutgoingMessageCollection is a list of As2OutgoingMessage resources.
 type As2OutgoingMessageCollection []As2OutgoingMessage
 
-// As2OutgoingMessageListParams contains the request parameters for this operation.
+// As2OutgoingMessageListParams contains the request parameters for GET /as2_outgoing_messages.
 type As2OutgoingMessageListParams struct {
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -59,6 +62,7 @@ type As2OutgoingMessageListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *As2OutgoingMessage) UnmarshalJSON(data []byte) error {
 	type as2OutgoingMessage As2OutgoingMessage
 	var v as2OutgoingMessage
@@ -70,6 +74,7 @@ func (a *As2OutgoingMessage) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *As2OutgoingMessageCollection) UnmarshalJSON(data []byte) error {
 	type as2OutgoingMessages As2OutgoingMessageCollection
 	var v as2OutgoingMessages
@@ -81,6 +86,7 @@ func (a *As2OutgoingMessageCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *As2OutgoingMessageCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

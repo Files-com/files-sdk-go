@@ -1,30 +1,27 @@
 # Files.com Go Client
 
-The Files.com Go SDK provides a direct, high performance integration to Files.com from applications written in Go.
+The Files.com Go SDK lets Go applications manage files, folders, users, and other resources through the Files.com API.
 
-Files.com is the cloud-native, next-gen MFT, SFTP, and secure file-sharing platform that replaces brittle legacy servers with one always-on, secure fabric. Automate mission-critical file flows—across any cloud, protocol, or partner—while supporting human collaboration and eliminating manual work.
-
-With universal SFTP, AS2, HTTPS, and 50+ native connectors backed by military-grade encryption, Files.com unifies governance, visibility, and compliance in a single pane of glass.
-
-The content included here should be enough to get started, but please visit our
-[Developer Documentation Website](https://developers.files.com/go/) for the complete documentation.
+Use the examples below to install the SDK, authenticate, and make API requests.
+The [developer documentation](https://developers.files.com/go/) covers the complete API.
 
 ## Introduction
 
-The Files.com Go client library provides convenient access to all aspects of Files.com from applications written in the Go language.
-
-Files.com customers use our Go client library for directly working with files and folders as well as performing management tasks such as adding/removing users, onboarding counterparties, retrieving information about automations and more.
+The Files.com Go SDK lets Go applications manage files, folders, users, automations,
+and other API resources. Resource clients accept configuration and request options and use standard Go
+error handling.
 
 ### Installation
 
-Make sure your project is using Go Modules (it will have a `go.mod` file in its
-root if it already is):
+If your project does not already have a `go.mod` file, create a module. Replace
+`example.com/myapp` with your module path. Then add the SDK dependency:
 
-``` shell
-go mod init
+```shell
+go mod init example.com/myapp
+go get github.com/Files-com/files-sdk-go/v3
 ```
 
-Then, reference files-sdk-go in a Go program with `import`:
+Import the SDK models and the resource clients you need:
 
 ``` go
 import (
@@ -33,14 +30,13 @@ import (
 )
 ```
 
-Run any of the normal `go` commands (`build`/`install`/`test`). The Go
-toolchain will resolve and fetch the files module automatically.
+The examples show imports followed by code to place inside a function, such as
+`main`. Use `go build` to compile your application after adding the SDK dependency.
 
 ### Files.com is Committed to Go
 
-Go is a core language used by the Files.com team for internal development.  This library is directly used by the Files.com CLI app, Files.com Desktop App v6, the official Files.com Terraform integration, and the official Files.com RClone integration.
-
-As such, this library is actively developed and should be expected to be highly performant.
+Files.com uses Go for internal development. The Go SDK also supports the Files.com
+CLI, desktop application, Terraform provider, and Rclone integration.
 
 Explore the [files-sdk-go](https://github.com/Files-com/files-sdk-go) code on GitHub.
 
@@ -61,13 +57,14 @@ the method used in the examples on this site.
 
 To use an API Key, first generate an API key from the [web
 interface](https://www.files.com/docs/sdk-and-apis/api-keys) or [via the API or an
-SDK](/go/resources/developers/api-keys).
+SDK](https://developers.files.com/go/resources/developers/api-keys).
 
-Note that when using a user-specific API key, if the user is an administrator, you will have full
-access to the entire API. If the user is not an administrator, you will only be able to access files
-that user can access, and no access will be granted to site administration functions in the API.
+A user-specific API key uses the user's permissions. [Workspaces](https://developers.files.com/go/overview/workspaces) describes account scope and administrative access.
 
-```go title="Example Request"
+Set `Config.APIKey` and initialize the configuration before passing it to a resource client.
+This configuration applies to that client.
+
+```go title="API Key Authentication"
 import (
     "fmt"
     "errors"
@@ -76,41 +73,70 @@ import (
     "github.com/Files-com/files-sdk-go/v3/folder"
 )
 
-// You can specify an API key in the GlobalConfig, and use that config when creating clients.
-files_sdk.GlobalConfig.APIKey = "YOUR_API_KEY"
-client := folder.Client{Config: files_sdk.GlobalConfig}
-it, err := client.ListFor(files_sdk.FolderListForParams{})
-if err != nil {
-    var respErr files_sdk.ResponseError
-    if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
-    } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
-    }
-}
-
-// Alternatively, you can specify the API key on a per-request basis using the Config struct.
 config := files_sdk.Config{APIKey: "YOUR_API_KEY"}.Init()
 client := folder.Client{Config: config}
 it, err := client.ListFor(files_sdk.FolderListForParams{})
 if err != nil {
     var respErr files_sdk.ResponseError
     if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+        fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
     } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+        fmt.Printf("Request failed: %v\n", err)
     }
+    return
 }
 
-// If the API Key is available in the `FILES_API_KEY` environment variable you do not need to create clients.
+for file, err := range it.All() {
+    if err != nil {
+        var respErr files_sdk.ResponseError
+        if errors.As(err, &respErr) {
+            fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
+        } else {
+            fmt.Printf("Request failed: %v\n", err)
+        }
+        return
+    }
+    fmt.Println(file.Path)
+}
+```
+
+You can reuse `files_sdk.GlobalConfig` by passing it to a client, for example
+`folder.Client{Config: files_sdk.GlobalConfig}`.
+
+To use the `FILES_API_KEY` environment variable, leave `Config.APIKey` empty.
+Package-level resource functions also read this variable:
+
+```go title="API Key From the Environment"
+import (
+    "fmt"
+    "errors"
+
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    "github.com/Files-com/files-sdk-go/v3/folder"
+)
+
 it, err := folder.ListFor(files_sdk.FolderListForParams{})
 if err != nil {
     var respErr files_sdk.ResponseError
     if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+        fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
     } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+        fmt.Printf("Request failed: %v\n", err)
     }
+    return
+}
+
+for file, err := range it.All() {
+    if err != nil {
+        var respErr files_sdk.ResponseError
+        if errors.As(err, &respErr) {
+            fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
+        } else {
+            fmt.Printf("Request failed: %v\n", err)
+        }
+        return
+    }
+    fmt.Println(file.Path)
 }
 ```
 
@@ -118,21 +144,17 @@ Don't forget to replace the placeholder, `YOUR_API_KEY`, with your actual API ke
 
 ### Authenticate with a Session
 
-You can also authenticate by creating a user session using the username and
-password of an active user. If the user is an administrator, the session will have full access to
-all capabilities of Files.com. Sessions created from regular user accounts will only be able to access files that
-user can access, and no access will be granted to site administration functions.
+Create a session with the username and password of an active user. The session uses that user's permissions. [Workspaces](https://developers.files.com/go/overview/workspaces) describes account scope and administrative access.
 
-Sessions use the exact same session timeout settings as web interface sessions. When a
-session times out, simply create a new session and resume where you left off. This process is not
-automatically handled by our SDKs because we do not want to store password information in memory without
-your explicit consent.
+Sessions follow the same timeout settings as web sessions. When a session expires,
+create a new session and update the clients that use it. The SDK does not renew
+sessions automatically.
 
 #### Logging In
 
-To create a session, create a `session Client` object that points to the subdomain of the Files.com site.
-
-The `Create` method on the `session` client can then be used to create a `Session` object which can be used to authenticate SDK method calls.
+Create a `session.Client` with your Files.com subdomain, then call `Create` with
+your username and password. Use the returned session ID as `Config.SessionId`
+when creating resource clients.
 
 ```go title="Example Request"
 import (
@@ -144,34 +166,50 @@ import (
     "github.com/Files-com/files-sdk-go/v3/session"
 )
 
-sessionClient := session.Client{}
+sessionClient := session.Client{Config: files_sdk.Config{Subdomain: "MY-SUBDOMAIN"}.Init()}
 thisSession, err := sessionClient.Create(files_sdk.SessionCreateParams{Username: "USERNAME", Password: "PASSWORD"})
 if err != nil {
     var respErr files_sdk.ResponseError
     if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+        fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
     } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+        fmt.Printf("Request failed: %v\n", err)
     }
+    return
 }
 
-config := files_sdk.Config{SessionId: thisSession.Id}.Init()
+config := files_sdk.Config{Subdomain: "MY-SUBDOMAIN", SessionId: thisSession.Id}.Init()
 folderClient := folder.Client{Config: config}
 
 it, err := folderClient.ListFor(files_sdk.FolderListForParams{})
 if err != nil {
     var respErr files_sdk.ResponseError
     if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+        fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
     } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+        fmt.Printf("Request failed: %v\n", err)
     }
+    return
+}
+
+for file, err := range it.All() {
+    if err != nil {
+        var respErr files_sdk.ResponseError
+        if errors.As(err, &respErr) {
+            fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
+        } else {
+            fmt.Printf("Request failed: %v\n", err)
+        }
+        return
+    }
+    fmt.Println(file.Path)
 }
 ```
 
 #### Using a Session
 
-Once a session has been created, the `Session.Id` can be set in a `Config` object, which can then be used to authenticate `Client` objects.
+Set `Config.SessionId` to the session's `Id` and pass the configuration to each
+resource client that uses the session.
 
 ```go title="Example Request"
 import (
@@ -182,17 +220,31 @@ import (
     "github.com/Files-com/files-sdk-go/v3/folder"
 )
 
-config := files_sdk.Config{SessionId: thisSession.Id}.Init()
+config := files_sdk.Config{Subdomain: "MY-SUBDOMAIN", SessionId: thisSession.Id}.Init()
 folderClient := folder.Client{Config: config}
 
 it, err := folderClient.ListFor(files_sdk.FolderListForParams{})
 if err != nil {
     var respErr files_sdk.ResponseError
     if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+        fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
     } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+        fmt.Printf("Request failed: %v\n", err)
     }
+    return
+}
+
+for file, err := range it.All() {
+    if err != nil {
+        var respErr files_sdk.ResponseError
+        if errors.As(err, &respErr) {
+            fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
+        } else {
+            fmt.Printf("Request failed: %v\n", err)
+        }
+        return
+    }
+    fmt.Println(file.Path)
 }
 ```
 
@@ -214,16 +266,19 @@ err := sessionClient.Delete()
 if err != nil {
     var respErr files_sdk.ResponseError
     if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+        fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
     } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+        fmt.Printf("Request failed: %v\n", err)
     }
+    return
 }
 ```
 
 ## Configuration
 
-Global configuration is performed by providing a `files_sdk.Config` object to the `Client`.
+Initialize a `files_sdk.Config` with `Init()` and pass it to each resource client.
+The configuration controls authentication, the API endpoint, workspace scoping,
+and HTTP behavior for that client.
 
 ### Configuration Options
 
@@ -245,6 +300,19 @@ config := files_sdk.Config{
 }.Init()
 client := file.Client{Config: config}
 ```
+
+#### Diagnostic Logging
+
+Set `Config.Debug` to `true`, or set the `FILES_SDK_DEBUG` environment variable
+to a non-empty value, to enable detailed SDK request and response diagnostics.
+Provide `Config.Logger` to receive the output. The default logger discards it.
+These DEBUG diagnostics can include signed URLs, API keys, session IDs, headers,
+and payloads.
+
+SDK retry entries at INFO, WARN, and ERROR redact request URLs and credentials,
+even when debug mode is enabled. A logger with levels controls which retry DEBUG
+entries it displays. For a logger that only implements `Printf`, debug mode
+controls whether retry DEBUG entries are emitted.
 
 ## Sort and Filter
 
@@ -285,24 +353,24 @@ userIterator, err := client.List(parameters)
 if err != nil {
     var respErr files_sdk.ResponseError
     if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+        fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
     } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+        fmt.Printf("Request failed: %v\n", err)
     }
+    return
 }
 
-for userIterator.Next() {
-  user := userIterator.User()
-  fmt.Println(user.Username)
-}
-err = userIterator.Err()
-if err != nil {
-    var respErr files_sdk.ResponseError
-    if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
-    } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+for user, err := range userIterator.All() {
+    if err != nil {
+        var respErr files_sdk.ResponseError
+        if errors.As(err, &respErr) {
+            fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
+        } else {
+            fmt.Printf("Request failed: %v\n", err)
+        }
+        return
     }
+    fmt.Println(user.Username)
 }
 ```
 
@@ -342,30 +410,30 @@ client := user.Client{Config: files_sdk.GlobalConfig}
 
 // non admin users
 parameters := files_sdk.UserListParams{
-    Filter: map[string]interface{}{"not_site_admin": true}
+    Filter: map[string]interface{}{"not_site_admin": true},
 }
 userIterator, err := client.List(parameters)
 if err != nil {
     var respErr files_sdk.ResponseError
     if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+        fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
     } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+        fmt.Printf("Request failed: %v\n", err)
     }
+    return
 }
 
-for userIterator.Next() {
-  user := userIterator.User()
-  fmt.Println(user.Username)
-}
-err = userIterator.Err()
-if err != nil {
-    var respErr files_sdk.ResponseError
-    if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
-    } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+for user, err := range userIterator.All() {
+    if err != nil {
+        var respErr files_sdk.ResponseError
+        if errors.As(err, &respErr) {
+            fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
+        } else {
+            fmt.Printf("Request failed: %v\n", err)
+        }
+        return
     }
+    fmt.Println(user.Username)
 }
 ```
 
@@ -382,30 +450,30 @@ client := user.Client{Config: files_sdk.GlobalConfig};
 
 // users who haven't logged in since 2024-01-01
 parameters := files_sdk.UserListParams{
-    FilterLt: map[string]interface{}{"last_login_at": "2024-01-01"}
+    FilterLt: map[string]interface{}{"last_login_at": "2024-01-01"},
 }
 userIterator, err := client.List(parameters)
 if err != nil {
     var respErr files_sdk.ResponseError
     if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+        fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
     } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+        fmt.Printf("Request failed: %v\n", err)
     }
+    return
 }
 
-for userIterator.Next() {
-  user := userIterator.User()
-  fmt.Println(user.Username)
-}
-err = userIterator.Err()
-if err != nil {
-    var respErr files_sdk.ResponseError
-    if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
-    } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+for user, err := range userIterator.All() {
+    if err != nil {
+        var respErr files_sdk.ResponseError
+        if errors.As(err, &respErr) {
+            fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
+        } else {
+            fmt.Printf("Request failed: %v\n", err)
+        }
+        return
     }
+    fmt.Println(user.Username)
 }
 ```
 
@@ -422,30 +490,30 @@ client := user.Client{Config: files_sdk.GlobalConfig};
 
 // users whose usernames start with 'test'
 parameters := files_sdk.UserListParams{
-    FilterPrefix: map[string]interface{}{"username": "test"}
+    FilterPrefix: map[string]interface{}{"username": "test"},
 }
 userIterator, err := client.List(parameters)
 if err != nil {
     var respErr files_sdk.ResponseError
     if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+        fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
     } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+        fmt.Printf("Request failed: %v\n", err)
     }
+    return
 }
 
-for userIterator.Next() {
-  user := userIterator.User()
-  fmt.Println(user.Username)
-}
-err = userIterator.Err()
-if err != nil {
-    var respErr files_sdk.ResponseError
-    if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
-    } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+for user, err := range userIterator.All() {
+    if err != nil {
+        var respErr files_sdk.ResponseError
+        if errors.As(err, &respErr) {
+            fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
+        } else {
+            fmt.Printf("Request failed: %v\n", err)
+        }
+        return
     }
+    fmt.Println(user.Username)
 }
 ```
 
@@ -464,30 +532,30 @@ client := user.Client{Config: files_sdk.GlobalConfig};
 parameters := files_sdk.UserListParams{
     FilterPrefix: map[string]interface{}{"username": "test"},
     Filter:       map[string]interface{}{"not_site_admin": true},
-    SortBy:       map[string]interface{}{"username": "asc"}
+    SortBy:       map[string]interface{}{"username": "asc"},
 }
 userIterator, err := client.List(parameters)
 if err != nil {
     var respErr files_sdk.ResponseError
     if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+        fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
     } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+        fmt.Printf("Request failed: %v\n", err)
     }
+    return
 }
 
-for userIterator.Next() {
-  user := userIterator.User()
-  fmt.Println(user.Username)
-}
-err = userIterator.Err()
-if err != nil {
-    var respErr files_sdk.ResponseError
-    if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
-    } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+for user, err := range userIterator.All() {
+    if err != nil {
+        var respErr files_sdk.ResponseError
+        if errors.As(err, &respErr) {
+            fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
+        } else {
+            fmt.Printf("Request failed: %v\n", err)
+        }
+        return
     }
+    fmt.Println(user.Username)
 }
 ```
 
@@ -665,22 +733,21 @@ files_sdk.GlobalConfig.Language = "es";
 
 ## Errors
 
-The Files.com Go SDK will return errors from function/method calls using the standard Go error handling pattern.
+SDK methods return an `error` using the standard Go pattern. Check it before
+using a returned resource. Listing methods fetch pages during iteration. When
+ranging over `All()`, check the loop's error before using the resource. If you use
+`Next()`, check the iterator's `Err()` after the loop.
 
-The returned errors fall into basic categories:
+Errors can come from request preparation, HTTP transport, response decoding, or
+the Files.com API. A structured API error is a `files_sdk.ResponseError`, which
+implements the `error` interface and includes these fields:
 
-1.  `error` - errors that originate in the SDK or standard libraries.
-2.  `ResponseError` - errors that occur due to the response from the Files.com API.
+- `Type`: the API error identifier.
+- `Title`: a short description of the error.
+- `ErrorMessage`: additional error details.
 
-The `error` type are errors that implement the `type error` interface and the error specifics can be accessed with the `Error()` method.
-
-`ResponseError` also implements the `type error` interface but is a custom error with additional data.
-
-The additional data includes:
-
-- `Type` - the type of error returned by the Files.com API
-- `Title` - a description of the error returned by the Files.com API
-- `ErrorMessage` - additional error information
+Use `errors.As` to inspect a `ResponseError`, including one wrapped by another
+error. Use `errors.Is` with the SDK's error constants to match a type or group.
 
 ```go title="Example Error Handling"
 import (
@@ -691,20 +758,22 @@ import (
     "github.com/Files-com/files-sdk-go/v3/session"
 )
 
-thisSession, err := session.Create(files_sdk.SessionCreateParams{ Username: "USERNAME", Password: "BADPASSWORD" })
+_, err := session.Create(files_sdk.SessionCreateParams{Username: "USERNAME", Password: "BADPASSWORD"})
 if err != nil {
     var respErr files_sdk.ResponseError
     if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+        fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
     } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+        fmt.Printf("Request failed: %v\n", err)
     }
+    return
 }
 ```
 
 ### ResponseError Types
 
-ResponseError errors have additional data returned from the Files.com API to help determine the cause of the error.
+Match an exact error type with a `ResponseErrorType` constant, or use a group
+helper such as `IsNotFound`. The table below lists API types and their constants.
 
 ```go title="Example ResponseError Type Matching"
 if err != nil {
@@ -954,12 +1023,19 @@ Helpers are provided for matching error families.
 
 ## Pagination
 
-Certain API operations return lists of objects. When the number of objects in the list is large,
-the API will paginate the results.
+Listing methods return lazy iterators. Use `for resource, err := range listing.All()`
+to read the results. Calling the listing method or `All()` makes no API request.
+The iterator fetches pages during iteration. `All()` does not collect all pages first.
 
-The Files.com Go SDK automatically paginates through lists of objects by default.
+Each resource has a `nil` error. Check the error before using the resource. An
+unhandled request, decoding, or cancellation error is yielded once and ends that traversal.
+An empty listing, normal completion, or a page limit ends the loop without an
+extra resource or error.
 
-```go title="Example Request" hasDataFormatSelector
+Set `ListParams.PerPage` to request a page size. Set `ListParams.MaxPages` to limit
+the number of pages requested. Its default value, `0`, allows all pages.
+
+```go title="Range Over Results" hasDataFormatSelector
 import (
     "fmt"
     "errors"
@@ -968,27 +1044,86 @@ import (
     "github.com/Files-com/files-sdk-go/v3/folder"
 )
 
-fileIterator, err := folder.ListFor(files_sdk.FolderListForParams{Path: "path"})
+listing, err := folder.ListFor(files_sdk.FolderListForParams{Path: "path"})
 if err != nil {
     var respErr files_sdk.ResponseError
     if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+        fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
     } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+        fmt.Printf("Request failed: %v\n", err)
     }
+    return
 }
 
-for fileIterator.Next() {
-    file := fileIterator.file()
+for file, err := range listing.All() {
+    if err != nil {
+        var respErr files_sdk.ResponseError
+        if errors.As(err, &respErr) {
+            fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
+        } else {
+            fmt.Printf("Request failed: %v\n", err)
+        }
+        return
+    }
+    fmt.Println(file.Path)
 }
-err = fileIterator.Err()
+```
+
+### Stop or Resume Iteration
+
+Use `break` or `return` to stop the loop. No further results are yielded or pages
+requested by that traversal.
+
+The listing is single-use. `All()` continues from its current position instead
+of restarting it. After earlier `Next()` calls or an early `break`, another
+`All()` loop or `Next()` call resumes at the next resource. After completion,
+reaching `MaxPages`, or a failure, later `All()` calls yield nothing and make no
+requests. `Err()` retains a failure, including one encountered through `Next()`.
+
+Call the listing method again to restart. `Reload()` also creates a fresh
+iterator, returned as `files_sdk.IterI`. Use a type assertion to the generated
+iterator type if you want to call `All()` on that result.
+
+Both `All()` and `Next()` advance the same iterator. Use one traversal at a time. Do not call `Next()` inside an `All()` loop or use
+one iterator from several goroutines.
+
+### Use Next and Err
+
+Existing `Next()` and `Err()` code remains supported. Read the typed resource,
+such as `File()`, only after `Next()` returns `true`. Check `Err()` after the loop.
+
+```go title="Next and Err"
+import (
+    "fmt"
+    "errors"
+
+    files_sdk "github.com/Files-com/files-sdk-go/v3"
+    "github.com/Files-com/files-sdk-go/v3/folder"
+)
+
+listing, err := folder.ListFor(files_sdk.FolderListForParams{Path: "path"})
 if err != nil {
     var respErr files_sdk.ResponseError
     if errors.As(err, &respErr) {
-        fmt.Println("Response Error Occurred (" + respErr.Type + "): " + respErr.ErrorMessage)
+        fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
     } else {
-        fmt.Printf("Unexpected Error: %s\n", err.Error())
+        fmt.Printf("Request failed: %v\n", err)
     }
+    return
+}
+
+for listing.Next() {
+    fmt.Println(listing.File().Path)
+}
+err = listing.Err()
+if err != nil {
+    var respErr files_sdk.ResponseError
+    if errors.As(err, &respErr) {
+        fmt.Printf("API error (%s): %s\n", respErr.Type, respErr.ErrorMessage)
+    } else {
+        fmt.Printf("Request failed: %v\n", err)
+    }
+    return
 }
 ```
 

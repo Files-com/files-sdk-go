@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// PartnerChannel is a Files.com API resource.
 type PartnerChannel struct {
 	Id                             int64    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId                    int64    `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
@@ -27,18 +28,24 @@ type PartnerChannel struct {
 	FromPartnerFolderPath          string   `json:"from_partner_folder_path,omitempty" path:"from_partner_folder_path,omitempty" url:"from_partner_folder_path,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (p PartnerChannel) Identifier() interface{} {
 	return p.Id
 }
 
+// PartnerChannelCollection is a list of PartnerChannel resources.
 type PartnerChannelCollection []PartnerChannel
 
+// PartnerChannelDirectionEnum is a string value for direction.
+// Enum lists the values documented by the API.
 type PartnerChannelDirectionEnum string
 
+// String returns the API parameter value.
 func (u PartnerChannelDirectionEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u PartnerChannelDirectionEnum) Enum() map[string]PartnerChannelDirectionEnum {
 	return map[string]PartnerChannelDirectionEnum{
 		"two_way":      PartnerChannelDirectionEnum("two_way"),
@@ -47,19 +54,19 @@ func (u PartnerChannelDirectionEnum) Enum() map[string]PartnerChannelDirectionEn
 	}
 }
 
-// PartnerChannelListParams contains the request parameters for this operation.
+// PartnerChannelListParams contains the request parameters for GET /partner_channels.
 type PartnerChannelListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// PartnerChannelFindParams contains the request parameters for this operation.
+// PartnerChannelFindParams contains the request parameters for GET /partner_channels/{id}.
 type PartnerChannelFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// PartnerChannelCreateParams contains the request parameters for this operation.
+// PartnerChannelCreateParams contains the request parameters for POST /partner_channels.
 type PartnerChannelCreateParams struct {
 	Direction                     PartnerChannelDirectionEnum `url:"direction,omitempty" json:"direction,omitempty" path:"direction"`
 	UseChannelRoot                *bool                       `url:"use_channel_root,omitempty" json:"use_channel_root,omitempty" path:"use_channel_root"`
@@ -74,7 +81,7 @@ type PartnerChannelCreateParams struct {
 	WorkspaceId                   int64                       `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// PartnerChannelUpdateParams contains the request parameters for this operation.
+// PartnerChannelUpdateParams contains the request parameters for PATCH /partner_channels/{id}.
 type PartnerChannelUpdateParams struct {
 	Id                            int64                       `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Direction                     PartnerChannelDirectionEnum `url:"direction,omitempty" json:"direction,omitempty" path:"direction"`
@@ -88,11 +95,12 @@ type PartnerChannelUpdateParams struct {
 	Path                          string                      `url:"path,omitempty" json:"path,omitempty" path:"path"`
 }
 
-// PartnerChannelDeleteParams contains the request parameters for this operation.
+// PartnerChannelDeleteParams contains the request parameters for DELETE /partner_channels/{id}.
 type PartnerChannelDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (p *PartnerChannel) UnmarshalJSON(data []byte) error {
 	type partnerChannel PartnerChannel
 	var v partnerChannel
@@ -104,6 +112,7 @@ func (p *PartnerChannel) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (p *PartnerChannelCollection) UnmarshalJSON(data []byte) error {
 	type partnerChannels PartnerChannelCollection
 	var v partnerChannels
@@ -115,6 +124,7 @@ func (p *PartnerChannelCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (p *PartnerChannelCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*p))
 	for i, v := range *p {

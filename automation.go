@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Automation is a Files.com API resource.
 type Automation struct {
 	Id                               int64                    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId                      int64                    `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
@@ -55,18 +56,24 @@ type Automation struct {
 	HolidayRegion                    string                   `json:"holiday_region,omitempty" path:"holiday_region,omitempty" url:"holiday_region,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (a Automation) Identifier() interface{} {
 	return a.Id
 }
 
+// AutomationCollection is a list of Automation resources.
 type AutomationCollection []Automation
 
+// AutomationTriggerEnum is a string value for trigger.
+// Enum lists the values documented by the API.
 type AutomationTriggerEnum string
 
+// String returns the API parameter value.
 func (u AutomationTriggerEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u AutomationTriggerEnum) Enum() map[string]AutomationTriggerEnum {
 	return map[string]AutomationTriggerEnum{
 		"manual":          AutomationTriggerEnum("manual"),
@@ -78,12 +85,16 @@ func (u AutomationTriggerEnum) Enum() map[string]AutomationTriggerEnum {
 	}
 }
 
+// AutomationEnum is a string value for automation.
+// Enum lists the values documented by the API.
 type AutomationEnum string
 
+// String returns the API parameter value.
 func (u AutomationEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u AutomationEnum) Enum() map[string]AutomationEnum {
 	return map[string]AutomationEnum{
 		"create_folder": AutomationEnum("create_folder"),
@@ -97,7 +108,7 @@ func (u AutomationEnum) Enum() map[string]AutomationEnum {
 	}
 }
 
-// AutomationListParams contains the request parameters for this operation.
+// AutomationListParams contains the request parameters for GET /automations.
 type AutomationListParams struct {
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -108,12 +119,12 @@ type AutomationListParams struct {
 	ListParams
 }
 
-// AutomationFindParams contains the request parameters for this operation.
+// AutomationFindParams contains the request parameters for GET /automations/{id}.
 type AutomationFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// AutomationCreateParams contains the request parameters for this operation.
+// AutomationCreateParams contains the request parameters for POST /automations.
 type AutomationCreateParams struct {
 	Source                           string                   `url:"source,omitempty" json:"source,omitempty" path:"source"`
 	Destinations                     []string                 `url:"destinations,omitempty" json:"destinations,omitempty" path:"destinations"`
@@ -153,14 +164,14 @@ type AutomationCreateParams struct {
 	WorkspaceId                      int64                    `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// AutomationUpgradeParams contains the request parameters for this operation.
+// AutomationUpgradeParams contains the request parameters for POST /automations/{id}/upgrade.
 //
 // Upgrade a legacy Automation to Automation v2
 type AutomationUpgradeParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// AutomationManualRunParams contains the request parameters for this operation.
+// AutomationManualRunParams contains the request parameters for POST /automations/{id}/manual_run.
 //
 // Manually Run Automation
 type AutomationManualRunParams struct {
@@ -168,7 +179,7 @@ type AutomationManualRunParams struct {
 	Items []map[string]interface{} `url:"items,omitempty" json:"items,omitempty" path:"items"`
 }
 
-// AutomationUpdateParams contains the request parameters for this operation.
+// AutomationUpdateParams contains the request parameters for PATCH /automations/{id}.
 type AutomationUpdateParams struct {
 	Id                               int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Source                           string                   `url:"source,omitempty" json:"source,omitempty" path:"source"`
@@ -208,11 +219,12 @@ type AutomationUpdateParams struct {
 	Automation                       AutomationEnum           `url:"automation,omitempty" json:"automation,omitempty" path:"automation"`
 }
 
-// AutomationDeleteParams contains the request parameters for this operation.
+// AutomationDeleteParams contains the request parameters for DELETE /automations/{id}.
 type AutomationDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *Automation) UnmarshalJSON(data []byte) error {
 	type automation Automation
 	var v automation
@@ -224,6 +236,7 @@ func (a *Automation) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *AutomationCollection) UnmarshalJSON(data []byte) error {
 	type automations AutomationCollection
 	var v automations
@@ -235,6 +248,7 @@ func (a *AutomationCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *AutomationCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

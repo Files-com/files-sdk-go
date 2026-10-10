@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// InboundS3Log is a Files.com API resource.
 type InboundS3Log struct {
 	Path         string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	ClientIp     string     `json:"client_ip,omitempty" path:"client_ip,omitempty" url:"client_ip,omitempty"`
@@ -21,13 +22,15 @@ type InboundS3Log struct {
 	CreatedAt    *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (i InboundS3Log) Identifier() interface{} {
 	return i.Path
 }
 
+// InboundS3LogCollection is a list of InboundS3Log resources.
 type InboundS3LogCollection []InboundS3Log
 
-// InboundS3LogListParams contains the request parameters for this operation.
+// InboundS3LogListParams contains the request parameters for GET /inbound_s3_logs.
 type InboundS3LogListParams struct {
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -38,6 +41,7 @@ type InboundS3LogListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (i *InboundS3Log) UnmarshalJSON(data []byte) error {
 	type inboundS3Log InboundS3Log
 	var v inboundS3Log
@@ -49,6 +53,7 @@ func (i *InboundS3Log) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (i *InboundS3LogCollection) UnmarshalJSON(data []byte) error {
 	type inboundS3Logs InboundS3LogCollection
 	var v inboundS3Logs
@@ -60,6 +65,7 @@ func (i *InboundS3LogCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (i *InboundS3LogCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*i))
 	for i, v := range *i {

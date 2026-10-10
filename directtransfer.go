@@ -41,18 +41,20 @@ var (
 	ErrDirectTransferResponseStarted = errors.New("direct transfer response processing started")
 )
 
-// DirectTransferResponseError is an unsuccessful response from the Agent's
-// direct endpoint. It retains backpressure details while keeping Agent limits
-// out of the public response body.
+// DirectTransferResponseError describes an unsuccessful response from an Agent's
+// direct endpoint. StatusCode contains the HTTP status; RetryAfter contains the
+// parsed Retry-After delay, or zero when no valid delay is available.
 type DirectTransferResponseError struct {
 	StatusCode int
 	RetryAfter time.Duration
 }
 
+// Error returns a message containing the direct endpoint's HTTP status.
 func (e *DirectTransferResponseError) Error() string {
 	return fmt.Sprintf("direct transfer returned status %d", e.StatusCode)
 }
 
+// Unwrap returns ErrDirectTransferUnavailable for errors.Is matching.
 func (e *DirectTransferResponseError) Unwrap() error {
 	return ErrDirectTransferUnavailable
 }
@@ -72,7 +74,10 @@ type directTransferClientCache struct {
 
 type directTransferClientCacheContextKey struct{}
 
-// WithDirectTransferClientCache scopes direct HTTP clients to one transfer.
+// WithDirectTransferClientCache returns a context that reuses a direct HTTP
+// client within one transfer, and a cleanup function that closes idle connections.
+// Call the cleanup function when the transfer finishes. If ctx already contains
+// a cache, the returned cleanup function does nothing.
 func WithDirectTransferClientCache(ctx context.Context) (context.Context, func()) {
 	if _, ok := ctx.Value(directTransferClientCacheContextKey{}).(*directTransferClientCache); ok {
 		return ctx, func() {}
@@ -131,6 +136,9 @@ var directTransferBlockedIPPrefixes = []netip.Prefix{
 	netip.MustParsePrefix("ff00::/8"),
 }
 
+// DirectConnectionInfoPresent reports whether info has the supported version
+// and the fields required for a direct connection. It does not validate the
+// addresses, certificate, or reachability of the Agent.
 func DirectConnectionInfoPresent(info DirectConnectionInfo) bool {
 	return info.Version == 1 &&
 		info.ServerName != "" &&
@@ -139,6 +147,9 @@ func DirectConnectionInfoPresent(info DirectConnectionInfo) bool {
 		info.CaPem != ""
 }
 
+// DirectTransferRetryableClient returns the direct URL and a retryable HTTP client
+// for info. It returns an error when direct transfers are disabled or info cannot
+// be used to configure a direct connection.
 func DirectTransferRetryableClient(ctx context.Context, config Config, info DirectConnectionInfo) (string, *retryablehttp.Client, error) {
 	directURL, httpClient, err := directTransferHTTPClient(ctx, config, info)
 	if err != nil {
@@ -148,6 +159,10 @@ func DirectTransferRetryableClient(ctx context.Context, config Config, info Dire
 	return directURL, lib.DefaultRetryableHttp(config.Logger, httpClient), nil
 }
 
+// WrapDirectTransferOptions sends a copy of request to the Agent's direct endpoint
+// and applies the supplied request and response options. The caller must close the
+// body of a successful response. An unsuccessful HTTP response is closed here and
+// returned with a DirectTransferResponseError.
 func WrapDirectTransferOptions(config Config, info DirectConnectionInfo, request *http.Request, opts ...RequestResponseOption) (*http.Response, error) {
 	if config.DisableDirectTransfers || !DirectConnectionInfoPresent(info) {
 		return nil, ErrDirectTransferUnavailable
@@ -489,7 +504,9 @@ func cloneRequestForDirectTransfer(request *http.Request, rawURL string) (*http.
 	return cloned, nil
 }
 
-// DirectTransferRequestHeaders returns a header copy safe for direct requests.
+// DirectTransferRequestHeaders copies headers and removes Files.com credential
+// and workspace headers, Authorization, Proxy-Authorization, and Cookie.
+// A nil input returns an empty header map.
 func DirectTransferRequestHeaders(headers *http.Header) *http.Header {
 	cloned := http.Header{}
 	if headers != nil {

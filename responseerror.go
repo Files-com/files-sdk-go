@@ -1,6 +1,7 @@
 package files_sdk
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,6 +14,9 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ResponseError describes an error returned by the Files.com API. Use errors.As
+// to inspect its fields, or errors.Is with a ResponseErrorType or ResponseErrorGroup
+// to classify it.
 type ResponseError struct {
 	Type           string `json:"type,omitempty"`
 	Title          string `json:"title,omitempty"`
@@ -26,13 +30,19 @@ type ResponseError struct {
 	ModelErrorKeys map[string]interface{} `json:"model_error_keys,omitempty"`
 }
 
+// ResponseErrorType identifies an exact API error type and can be used with errors.Is.
 type ResponseErrorType string
+
+// ResponseErrorGroup identifies the portion of an API error type before its first
+// slash. It can be used with errors.Is to match related error types.
 type ResponseErrorGroup string
 
+// Error returns the API error type.
 func (e ResponseErrorType) Error() string {
 	return string(e)
 }
 
+// Error returns the API error group.
 func (e ResponseErrorGroup) Error() string {
 	return string(e)
 }
@@ -267,15 +277,23 @@ const (
 	ErrSiteConfiguration  ResponseErrorGroup = "site-configuration"
 )
 
-// DestinationExists is deprecated; use ErrDestinationExists.
+// DestinationExists is the legacy string form of ErrDestinationExists.
+//
+// Deprecated: Use ErrDestinationExists with errors.Is.
 const DestinationExists = string(ErrDestinationExists)
 
-// DownloadRequestExpired is deprecated; use ErrDownloadRequestExpired.
+// DownloadRequestExpired is the legacy string form of ErrDownloadRequestExpired.
+//
+// Deprecated: Use ErrDownloadRequestExpired with errors.Is.
 const DownloadRequestExpired = string(ErrDownloadRequestExpired)
 
-// UploadRequestExpired is deprecated; use ErrUploadRequestExpired.
+// UploadRequestExpired is the legacy string form of ErrUploadRequestExpired.
+//
+// Deprecated: Use ErrUploadRequestExpired with errors.Is.
 const UploadRequestExpired = string(ErrUploadRequestExpired)
 
+// ResponseErrorTypeOf returns the type of a ResponseError in err, including wrapped
+// value and pointer errors. The boolean is false when no nonempty type is found.
 func ResponseErrorTypeOf(err error) (ResponseErrorType, bool) {
 	var responseError ResponseError
 	if ok := errors.As(err, &responseError); ok && responseError.Type != "" {
@@ -290,11 +308,13 @@ func ResponseErrorTypeOf(err error) (ResponseErrorType, bool) {
 	return "", false
 }
 
+// IsErrorType reports whether err contains a ResponseError with the exact responseType.
 func IsErrorType(err error, responseType ResponseErrorType) bool {
 	errType, ok := ResponseErrorTypeOf(err)
 	return ok && errType == responseType
 }
 
+// IsAnyErrorType reports whether err contains any of the supplied API error types.
 func IsAnyErrorType(err error, responseTypes ...ResponseErrorType) bool {
 	errType, ok := ResponseErrorTypeOf(err)
 	if !ok {
@@ -309,6 +329,7 @@ func IsAnyErrorType(err error, responseTypes ...ResponseErrorType) bool {
 	return false
 }
 
+// IsErrorGroup reports whether err contains a ResponseError in responseGroup.
 func IsErrorGroup(err error, responseGroup ResponseErrorGroup) bool {
 	errType, ok := ResponseErrorTypeOf(err)
 	if !ok {
@@ -317,65 +338,81 @@ func IsErrorGroup(err error, responseGroup ResponseErrorGroup) bool {
 	return responseErrorGroupForType(errType) == responseGroup
 }
 
+// IsExpired reports whether an upload or download request has expired.
 func IsExpired(err error) bool {
 	return IsAnyErrorType(err, ErrDownloadRequestExpired, ErrUploadRequestExpired)
 }
 
+// IsExist reports whether err matches ErrDestinationExists through errors.Is.
 func IsExist(err error) bool {
 	return errors.Is(err, ErrDestinationExists)
 }
 
+// IsNotExist reports whether err belongs to the API not-found error group.
 func IsNotExist(err error) bool {
 	return IsNotFound(err)
 }
 
+// IsNotAuthenticated reports whether err belongs to the API not-authenticated error group.
 func IsNotAuthenticated(err error) bool {
 	return IsAuthenticationError(err)
 }
 
+// IsBadRequest reports whether err belongs to the bad-request API error group.
 func IsBadRequest(err error) bool {
 	return IsErrorGroup(err, ErrBadRequest)
 }
 
+// IsAuthenticationError reports whether err belongs to the not-authenticated API error group.
 func IsAuthenticationError(err error) bool {
 	return IsErrorGroup(err, ErrNotAuthenticated)
 }
 
+// IsAuthorizationError reports whether err belongs to the not-authorized API error group.
 func IsAuthorizationError(err error) bool {
 	return IsErrorGroup(err, ErrNotAuthorized)
 }
 
+// IsNotFound reports whether err belongs to the not-found API error group.
 func IsNotFound(err error) bool {
 	return IsErrorGroup(err, ErrNotFound)
 }
 
+// IsProcessingFailure reports whether err belongs to the processing-failure API error group.
 func IsProcessingFailure(err error) bool {
 	return IsErrorGroup(err, ErrProcessingFailure)
 }
 
+// IsRateLimited reports whether err belongs to the rate-limited API error group.
 func IsRateLimited(err error) bool {
 	return IsErrorGroup(err, ErrRateLimited)
 }
 
+// IsServiceUnavailable reports whether err belongs to the service-unavailable API error group.
 func IsServiceUnavailable(err error) bool {
 	return IsErrorGroup(err, ErrServiceUnavailable)
 }
 
+// IsSiteConfiguration reports whether err belongs to the site-configuration API error group.
 func IsSiteConfiguration(err error) bool {
 	return IsErrorGroup(err, ErrSiteConfiguration)
 }
 
+// SignRequest contains a U2F signing request returned during authentication.
 type SignRequest struct {
 	Version   string `json:"version"`
 	KeyHandle string `json:"keyHandle"`
 }
 
+// U2fSignRequests contains a U2F challenge and signing request.
 type U2fSignRequests struct {
 	AppId       string      `json:"app_id"`
 	Challenge   string      `json:"challenge"`
 	SignRequest SignRequest `json:"sign_request"`
 }
 
+// Data contains structured details accompanying an API error, including
+// authentication challenges and download-request status.
 type Data struct {
 	U2fSIgnRequests               []U2fSignRequests `json:"u2f_sign_requests,omitempty"`
 	PartialSessionId              string            `json:"partial_session_id,omitempty"`
@@ -389,6 +426,7 @@ type Data struct {
 	TouchedAt        *time.Time `json:"touched_at,omitempty"`
 }
 
+// Error returns the error message, prefixed by the title when present.
 func (e ResponseError) Error() string {
 	if e.Title == "" {
 		return e.ErrorMessage
@@ -396,10 +434,13 @@ func (e ResponseError) Error() string {
 	return fmt.Sprintf("%v - `%v`", e.Title, e.ErrorMessage)
 }
 
+// IsNil reports whether ErrorMessage is empty.
 func (e ResponseError) IsNil() bool {
 	return e.ErrorMessage == ""
 }
 
+// Is matches API error types, error groups, and ResponseError targets.
+// A ResponseError target with an empty Type matches any ResponseError.
 func (e ResponseError) Is(err error) bool {
 	switch target := err.(type) {
 	case ResponseErrorType:
@@ -420,6 +461,7 @@ func responseErrorGroupForType(responseType ResponseErrorType) ResponseErrorGrou
 	return ResponseErrorGroup(tokens[0])
 }
 
+// MarshalJSON encodes the error, including the structured fields in Data.
 func (e ResponseError) MarshalJSON() ([]byte, error) {
 	type re ResponseError
 	v := re(e)
@@ -434,6 +476,7 @@ func (e ResponseError) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v)
 }
 
+// UnmarshalJSON decodes an API error and its structured data.
 func (e *ResponseError) UnmarshalJSON(data []byte) error {
 	type re ResponseError
 	var v re
@@ -475,6 +518,9 @@ func (e *ResponseError) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// APIError returns a response handler that recognizes structured API errors and
+// Files.com server error pages. callbacks transform a decoded ResponseError before
+// it is returned. Other response formats require separate status handling.
 func APIError(callbacks ...func(ResponseError) ResponseError) func(res *http.Response) error {
 	return func(res *http.Response) error {
 		if lib.IsNonOkStatus(res) && lib.IsHTML(res) && res.Header.Get("X-Request-Id") != "" && res.Header.Get("Server") == "nginx" {
@@ -484,18 +530,18 @@ func APIError(callbacks ...func(ResponseError) ResponseError) func(res *http.Res
 		if lib.IsNonOkStatus(res) && lib.IsJSON(res) {
 			data, err := io.ReadAll(res.Body)
 			if err != nil {
-				return lib.NonOkError(res)
+				return nonOkErrorFromBody(res, data)
 			}
 
 			re := ResponseError{}
 
 			err = re.UnmarshalJSON(data)
 			if err != nil {
-				return lib.NonOkError(res)
+				return nonOkErrorFromBody(res, data)
 			}
 
 			if re.IsNil() {
-				return lib.NonOkError(res)
+				return nonOkErrorFromBody(res, data)
 			}
 			for _, callback := range callbacks {
 				re = callback(re)
@@ -504,4 +550,14 @@ func APIError(callbacks ...func(ResponseError) ResponseError) func(res *http.Res
 		}
 		return nil
 	}
+}
+
+// nonOkErrorFromBody returns lib.NonOkError for a response whose body APIError has already read into data, so
+// the error reports those bytes. Closing the body still closes the original response body.
+func nonOkErrorFromBody(res *http.Response, data []byte) error {
+	res.Body = struct {
+		io.Reader
+		io.Closer
+	}{bytes.NewReader(data), res.Body}
+	return lib.NonOkError(res)
 }

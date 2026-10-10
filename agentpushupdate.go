@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// AgentPushUpdate is a Files.com API resource.
 type AgentPushUpdate struct {
 	Version        string `json:"version,omitempty" path:"version,omitempty" url:"version,omitempty"`
 	Message        string `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
@@ -17,8 +18,10 @@ type AgentPushUpdate struct {
 
 // Identifier no path or id
 
+// AgentPushUpdateCollection is a list of AgentPushUpdate resources.
 type AgentPushUpdateCollection []AgentPushUpdate
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *AgentPushUpdate) UnmarshalJSON(data []byte) error {
 	type agentPushUpdate AgentPushUpdate
 	var v agentPushUpdate
@@ -30,6 +33,7 @@ func (a *AgentPushUpdate) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *AgentPushUpdateCollection) UnmarshalJSON(data []byte) error {
 	type agentPushUpdates AgentPushUpdateCollection
 	var v agentPushUpdates
@@ -41,6 +45,7 @@ func (a *AgentPushUpdateCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *AgentPushUpdateCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

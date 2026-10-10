@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Schedule is a Files.com API resource.
 type Schedule struct {
 	Id                    int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name                  string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -19,24 +20,26 @@ type Schedule struct {
 	UpdatedAt             *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (s Schedule) Identifier() interface{} {
 	return s.Id
 }
 
+// ScheduleCollection is a list of Schedule resources.
 type ScheduleCollection []Schedule
 
-// ScheduleListParams contains the request parameters for this operation.
+// ScheduleListParams contains the request parameters for GET /schedules.
 type ScheduleListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
 
-// ScheduleFindParams contains the request parameters for this operation.
+// ScheduleFindParams contains the request parameters for GET /schedules/{id}.
 type ScheduleFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// ScheduleCreateParams contains the request parameters for this operation.
+// ScheduleCreateParams contains the request parameters for POST /schedules.
 type ScheduleCreateParams struct {
 	Name               string   `url:"name" json:"name" path:"name"`
 	ScheduleDaysOfWeek []int64  `url:"schedule_days_of_week" json:"schedule_days_of_week" path:"schedule_days_of_week"`
@@ -45,7 +48,7 @@ type ScheduleCreateParams struct {
 	HolidayRegion      string   `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
 }
 
-// ScheduleUpdateParams contains the request parameters for this operation.
+// ScheduleUpdateParams contains the request parameters for PATCH /schedules/{id}.
 type ScheduleUpdateParams struct {
 	Id                 int64    `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name               string   `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -55,11 +58,12 @@ type ScheduleUpdateParams struct {
 	HolidayRegion      string   `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
 }
 
-// ScheduleDeleteParams contains the request parameters for this operation.
+// ScheduleDeleteParams contains the request parameters for DELETE /schedules/{id}.
 type ScheduleDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *Schedule) UnmarshalJSON(data []byte) error {
 	type schedule Schedule
 	var v schedule
@@ -71,6 +75,7 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *ScheduleCollection) UnmarshalJSON(data []byte) error {
 	type schedules ScheduleCollection
 	var v schedules
@@ -82,6 +87,7 @@ func (s *ScheduleCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *ScheduleCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

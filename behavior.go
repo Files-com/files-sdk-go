@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Behavior is a Files.com API resource.
 type Behavior struct {
 	Id                          int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Path                        string      `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
@@ -25,25 +26,27 @@ type Behavior struct {
 	AttachmentDelete            *bool       `json:"attachment_delete,omitempty" path:"attachment_delete,omitempty" url:"attachment_delete,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (b Behavior) Identifier() interface{} {
 	return b.Id
 }
 
+// BehaviorCollection is a list of Behavior resources.
 type BehaviorCollection []Behavior
 
-// BehaviorListParams contains the request parameters for this operation.
+// BehaviorListParams contains the request parameters for GET /behaviors.
 type BehaviorListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// BehaviorFindParams contains the request parameters for this operation.
+// BehaviorFindParams contains the request parameters for GET /behaviors/{id}.
 type BehaviorFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// BehaviorListForParams contains the request parameters for this operation.
+// BehaviorListForParams contains the request parameters for GET /behaviors/folders/{path}.
 type BehaviorListForParams struct {
 	SortBy            interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter            interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -52,7 +55,7 @@ type BehaviorListForParams struct {
 	ListParams
 }
 
-// BehaviorCreateParams contains the request parameters for this operation.
+// BehaviorCreateParams contains the request parameters for POST /behaviors.
 type BehaviorCreateParams struct {
 	Value                       interface{} `url:"value,omitempty" json:"value,omitempty" path:"value"`
 	AttachmentFile              io.Writer   `url:"attachment_file,omitempty" json:"attachment_file,omitempty" path:"attachment_file"`
@@ -64,7 +67,7 @@ type BehaviorCreateParams struct {
 	Behavior                    string      `url:"behavior" json:"behavior" path:"behavior"`
 }
 
-// BehaviorWebhookTestParams contains the request parameters for this operation.
+// BehaviorWebhookTestParams contains the request parameters for POST /behaviors/webhook/test.
 type BehaviorWebhookTestParams struct {
 	Url      string      `url:"url" json:"url" path:"url"`
 	Method   string      `url:"method,omitempty" json:"method,omitempty" path:"method"`
@@ -74,7 +77,7 @@ type BehaviorWebhookTestParams struct {
 	Action   string      `url:"action,omitempty" json:"action,omitempty" path:"action"`
 }
 
-// BehaviorUpdateParams contains the request parameters for this operation.
+// BehaviorUpdateParams contains the request parameters for PATCH /behaviors/{id}.
 type BehaviorUpdateParams struct {
 	Id                          int64       `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Value                       interface{} `url:"value,omitempty" json:"value,omitempty" path:"value"`
@@ -86,11 +89,12 @@ type BehaviorUpdateParams struct {
 	AttachmentDelete            *bool       `url:"attachment_delete,omitempty" json:"attachment_delete,omitempty" path:"attachment_delete"`
 }
 
-// BehaviorDeleteParams contains the request parameters for this operation.
+// BehaviorDeleteParams contains the request parameters for DELETE /behaviors/{id}.
 type BehaviorDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (b *Behavior) UnmarshalJSON(data []byte) error {
 	type behavior Behavior
 	var v behavior
@@ -102,6 +106,7 @@ func (b *Behavior) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (b *BehaviorCollection) UnmarshalJSON(data []byte) error {
 	type behaviors BehaviorCollection
 	var v behaviors
@@ -113,6 +118,7 @@ func (b *BehaviorCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (b *BehaviorCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*b))
 	for i, v := range *b {

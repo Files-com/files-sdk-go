@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// HistoryExportResult is a Files.com API resource.
 type HistoryExportResult struct {
 	Id                     int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	CreatedAt              int64  `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
@@ -35,19 +36,22 @@ type HistoryExportResult struct {
 	TargetUserId           int64  `json:"target_user_id,omitempty" path:"target_user_id,omitempty" url:"target_user_id,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (h HistoryExportResult) Identifier() interface{} {
 	return h.Id
 }
 
+// HistoryExportResultCollection is a list of HistoryExportResult resources.
 type HistoryExportResultCollection []HistoryExportResult
 
-// HistoryExportResultListParams contains the request parameters for this operation.
+// HistoryExportResultListParams contains the request parameters for GET /history_export_results.
 type HistoryExportResultListParams struct {
 	UserId          int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	HistoryExportId int64 `url:"history_export_id" json:"history_export_id" path:"history_export_id"`
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (h *HistoryExportResult) UnmarshalJSON(data []byte) error {
 	type historyExportResult HistoryExportResult
 	var v historyExportResult
@@ -59,6 +63,7 @@ func (h *HistoryExportResult) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (h *HistoryExportResultCollection) UnmarshalJSON(data []byte) error {
 	type historyExportResults HistoryExportResultCollection
 	var v historyExportResults
@@ -70,6 +75,7 @@ func (h *HistoryExportResultCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (h *HistoryExportResultCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*h))
 	for i, v := range *h {

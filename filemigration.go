@@ -9,6 +9,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// FileMigration is a Files.com API resource.
 type FileMigration struct {
 	Id             int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Path           string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
@@ -22,10 +23,12 @@ type FileMigration struct {
 	LogUrl         string `json:"log_url,omitempty" path:"log_url,omitempty" url:"log_url,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (f FileMigration) Identifier() interface{} {
 	return f.Id
 }
 
+// FileMigrationCollection is a list of FileMigration resources.
 type FileMigrationCollection []FileMigration
 
 // this code is merged into the built version of filemigration.go
@@ -100,11 +103,12 @@ func (l FilesMigrationLogIter) Init() *FilesMigrationLogIter {
 	return &l
 }
 
-// FileMigrationFindParams contains the request parameters for this operation.
+// FileMigrationFindParams contains the request parameters for GET /file_migrations/{id}.
 type FileMigrationFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (f *FileMigration) UnmarshalJSON(data []byte) error {
 	type fileMigration FileMigration
 	var v fileMigration
@@ -116,6 +120,7 @@ func (f *FileMigration) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (f *FileMigrationCollection) UnmarshalJSON(data []byte) error {
 	type fileMigrations FileMigrationCollection
 	var v fileMigrations
@@ -127,6 +132,7 @@ func (f *FileMigrationCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (f *FileMigrationCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*f))
 	for i, v := range *f {

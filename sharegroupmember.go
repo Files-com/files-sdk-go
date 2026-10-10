@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ShareGroupMember is a Files.com API resource.
 type ShareGroupMember struct {
 	Name    string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	Company string `json:"company,omitempty" path:"company,omitempty" url:"company,omitempty"`
@@ -14,8 +15,10 @@ type ShareGroupMember struct {
 
 // Identifier no path or id
 
+// ShareGroupMemberCollection is a list of ShareGroupMember resources.
 type ShareGroupMemberCollection []ShareGroupMember
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *ShareGroupMember) UnmarshalJSON(data []byte) error {
 	type shareGroupMember ShareGroupMember
 	var v shareGroupMember
@@ -27,6 +30,7 @@ func (s *ShareGroupMember) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *ShareGroupMemberCollection) UnmarshalJSON(data []byte) error {
 	type shareGroupMembers ShareGroupMemberCollection
 	var v shareGroupMembers
@@ -38,6 +42,7 @@ func (s *ShareGroupMemberCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *ShareGroupMemberCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

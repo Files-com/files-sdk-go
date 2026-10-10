@@ -8,6 +8,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Bundle is a Files.com API resource.
 type Bundle struct {
 	Code                                         string                   `json:"code,omitempty" path:"code,omitempty" url:"code,omitempty"`
 	ColorLeft                                    string                   `json:"color_left,omitempty" path:"color_left,omitempty" url:"color_left,omitempty"`
@@ -66,18 +67,24 @@ type Bundle struct {
 	WatermarkAttachmentDelete                    *bool                    `json:"watermark_attachment_delete,omitempty" path:"watermark_attachment_delete,omitempty" url:"watermark_attachment_delete,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (b Bundle) Identifier() interface{} {
 	return b.Id
 }
 
+// BundleCollection is a list of Bundle resources.
 type BundleCollection []Bundle
 
+// BundlePermissionsEnum is a string value for permissions.
+// Enum lists the values documented by the API.
 type BundlePermissionsEnum string
 
+// String returns the API parameter value.
 func (u BundlePermissionsEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u BundlePermissionsEnum) Enum() map[string]BundlePermissionsEnum {
 	return map[string]BundlePermissionsEnum{
 		"read":         BundlePermissionsEnum("read"),
@@ -89,7 +96,7 @@ func (u BundlePermissionsEnum) Enum() map[string]BundlePermissionsEnum {
 	}
 }
 
-// BundleListParams contains the request parameters for this operation.
+// BundleListParams contains the request parameters for GET /bundles.
 type BundleListParams struct {
 	UserId       int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -103,13 +110,13 @@ type BundleListParams struct {
 	ListParams
 }
 
-// BundleFindParams contains the request parameters for this operation.
+// BundleFindParams contains the request parameters for GET /bundles/{id}.
 type BundleFindParams struct {
 	Id      int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Deleted *bool `url:"deleted,omitempty" json:"deleted,omitempty" path:"deleted"`
 }
 
-// BundleCreateParams contains the request parameters for this operation.
+// BundleCreateParams contains the request parameters for POST /bundles.
 type BundleCreateParams struct {
 	UserId                                       int64                 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Paths                                        []string              `url:"paths" json:"paths" path:"paths"`
@@ -145,7 +152,7 @@ type BundleCreateParams struct {
 	WatermarkValue                               interface{}           `url:"watermark_value,omitempty" json:"watermark_value,omitempty" path:"watermark_value"`
 }
 
-// BundleShareParams contains the request parameters for this operation.
+// BundleShareParams contains the request parameters for POST /bundles/{id}/share.
 //
 // Send email(s) with a link to bundle
 type BundleShareParams struct {
@@ -155,7 +162,7 @@ type BundleShareParams struct {
 	Recipients []map[string]interface{} `url:"recipients,omitempty" json:"recipients,omitempty" path:"recipients"`
 }
 
-// BundleUpdateParams contains the request parameters for this operation.
+// BundleUpdateParams contains the request parameters for PATCH /bundles/{id}.
 type BundleUpdateParams struct {
 	Id                                           int64                 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Paths                                        []string              `url:"paths,omitempty" json:"paths,omitempty" path:"paths"`
@@ -192,11 +199,12 @@ type BundleUpdateParams struct {
 	WorkspaceId                                  int64                 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// BundleDeleteParams contains the request parameters for this operation.
+// BundleDeleteParams contains the request parameters for DELETE /bundles/{id}.
 type BundleDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (b *Bundle) UnmarshalJSON(data []byte) error {
 	type bundle Bundle
 	var v bundle
@@ -208,6 +216,7 @@ func (b *Bundle) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (b *BundleCollection) UnmarshalJSON(data []byte) error {
 	type bundles BundleCollection
 	var v bundles
@@ -219,6 +228,7 @@ func (b *BundleCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (b *BundleCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*b))
 	for i, v := range *b {

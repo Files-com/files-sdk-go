@@ -1,3 +1,4 @@
+// Package file provides the Files.com File API client.
 package file
 
 import (
@@ -15,6 +16,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Client calls the File API using its embedded Config.
 type Client struct {
 	files_sdk.Config
 }
@@ -41,6 +43,7 @@ func Get(Path string, opts ...files_sdk.RequestResponseOption) (files_sdk.File, 
 	return client.Get(Path, opts...)
 }
 
+// FileStats checks for current file size and modification time.
 // File{}.Size and File{}.Mtime are not always up to date. This calls HEAD on File{}.DownloadUri to get the latest info.
 // Some Download URLs won't support HEAD. In this case the size is reported as UntrustedSizeValue. The size can be known post download
 // using Client{}.DownloadRequestStatus. This applies to the remote mount types FTP, SFTP, and WebDAV.
@@ -131,9 +134,9 @@ func (c *Client) DownloadUri(params files_sdk.FileDownloadParams, opts ...files_
 		return params.File, err
 	} else {
 		url, parseErr := downloadurl.New(params.File.DownloadUri)
-		remaining, valid := url.Valid(time.Millisecond * 250)
+		// url is nil when DownloadUri does not parse; Download then returns that parse error from building its request.
 		if parseErr == nil {
-			if !valid {
+			if remaining, valid := url.Valid(time.Millisecond * 250); !valid {
 				err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/files/{path}", Params: params, Entity: &params.File}, opts...)
 				if params.File.DownloadUri == url.URL.String() {
 					c.LogPath(params.Path, map[string]interface{}{"message": "URL was expired. Fetched a new URL but it didn't change", "Remaining": remaining, "Time": url.Time})
@@ -235,128 +238,184 @@ func Download(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResp
 	return client.Download(params, opts...)
 }
 
+// Create calls POST /files/{path}.
+//
+// API operation: Upload File.
 func (c *Client) Create(params files_sdk.FileCreateParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/files/{path}", Params: params, Entity: &file}, opts...)
 	return
 }
 
+// Create calls Client.Create using the default configuration.
 func Create(params files_sdk.FileCreateParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
 	return (&Client{}).Create(params, opts...)
 }
 
+// Update calls PATCH /files/{path}.
+//
+// API operation: Update File/Folder Metadata.
 func (c *Client) Update(params files_sdk.FileUpdateParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/files/{path}", Params: params, Entity: &file}, opts...)
 	return
 }
 
+// Update calls Client.Update using the default configuration.
 func Update(params files_sdk.FileUpdateParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
 	return (&Client{}).Update(params, opts...)
 }
 
+// UpdateWithMap calls PATCH /files/{path} using API parameter names as map keys.
+// Include any path parameters in the map. Unlike optional struct fields, explicit
+// zero values in the map are included in the request.
 func (c *Client) UpdateWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/files/{path}", Params: params, Entity: &file}, opts...)
 	return
 }
 
+// UpdateWithMap calls Client.UpdateWithMap using the default configuration.
 func UpdateWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
 	return (&Client{}).UpdateWithMap(params, opts...)
 }
 
+// Delete calls DELETE /files/{path}.
+//
+// API operation: Delete File/Folder.
 func (c *Client) Delete(params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "DELETE", Path: "/files/{path}", Params: params, Entity: nil}, opts...)
 	return
 }
 
+// Delete calls Client.Delete using the default configuration.
 func Delete(params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
 	return (&Client{}).Delete(params, opts...)
 }
 
+// Find calls GET /file_actions/metadata/{path}.
+//
+// API operation: Find File/Folder by Path.
 func (c *Client) Find(params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/file_actions/metadata/{path}", Params: params, Entity: &file}, opts...)
 	return
 }
 
+// Find calls Client.Find using the default configuration.
 func Find(params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
 	return (&Client{}).Find(params, opts...)
 }
 
+// ZipListContents calls GET /file_actions/zip_list/{path}.
+//
+// API operation: List the contents of a ZIP file.
 func (c *Client) ZipListContents(params files_sdk.FileZipListContentsParams, opts ...files_sdk.RequestResponseOption) (zipListEntryCollection files_sdk.ZipListEntryCollection, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/file_actions/zip_list/{path}", Params: params, Entity: &zipListEntryCollection}, opts...)
 	return
 }
 
+// ZipListContents calls Client.ZipListContents using the default configuration.
 func ZipListContents(params files_sdk.FileZipListContentsParams, opts ...files_sdk.RequestResponseOption) (zipListEntryCollection files_sdk.ZipListEntryCollection, err error) {
 	return (&Client{}).ZipListContents(params, opts...)
 }
 
+// Copy calls POST /file_actions/copy/{path}.
+//
+// API operation: Copy File/Folder.
 func (c *Client) Copy(params files_sdk.FileCopyParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/copy/{path}", Params: params, Entity: &fileAction}, opts...)
 	return
 }
 
+// Copy calls Client.Copy using the default configuration.
 func Copy(params files_sdk.FileCopyParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
 	return (&Client{}).Copy(params, opts...)
 }
 
+// Move calls POST /file_actions/move/{path}.
+//
+// API operation: Move File/Folder.
 func (c *Client) Move(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/move/{path}", Params: params, Entity: &fileAction}, opts...)
 	return
 }
 
+// Move calls Client.Move using the default configuration.
 func Move(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
 	return (&Client{}).Move(params, opts...)
 }
 
+// Transform calls POST /file_actions/transform/{path}.
+//
+// API operation: Transform a file and save the output to a destination path.
 func (c *Client) Transform(params files_sdk.FileTransformParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/transform/{path}", Params: params, Entity: &fileAction}, opts...)
 	return
 }
 
+// Transform calls Client.Transform using the default configuration.
 func Transform(params files_sdk.FileTransformParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
 	return (&Client{}).Transform(params, opts...)
 }
 
+// GpgDecrypt calls POST /file_actions/gpg_decrypt/{path}.
+//
+// API operation: Decrypt a GPG-encrypted file and save it to a destination path.
 func (c *Client) GpgDecrypt(params files_sdk.FileGpgDecryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/gpg_decrypt/{path}", Params: params, Entity: &fileAction}, opts...)
 	return
 }
 
+// GpgDecrypt calls Client.GpgDecrypt using the default configuration.
 func GpgDecrypt(params files_sdk.FileGpgDecryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
 	return (&Client{}).GpgDecrypt(params, opts...)
 }
 
+// GpgEncrypt calls POST /file_actions/gpg_encrypt/{path}.
+//
+// API operation: Encrypt a file with GPG and save it to a destination path.
 func (c *Client) GpgEncrypt(params files_sdk.FileGpgEncryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/gpg_encrypt/{path}", Params: params, Entity: &fileAction}, opts...)
 	return
 }
 
+// GpgEncrypt calls Client.GpgEncrypt using the default configuration.
 func GpgEncrypt(params files_sdk.FileGpgEncryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
 	return (&Client{}).GpgEncrypt(params, opts...)
 }
 
+// Unzip calls POST /file_actions/unzip.
+//
+// API operation: Extract a ZIP file to a destination folder.
 func (c *Client) Unzip(params files_sdk.FileUnzipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/unzip", Params: params, Entity: &fileAction}, opts...)
 	return
 }
 
+// Unzip calls Client.Unzip using the default configuration.
 func Unzip(params files_sdk.FileUnzipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
 	return (&Client{}).Unzip(params, opts...)
 }
 
+// Zip calls POST /file_actions/zip.
+//
+// API operation: Create a ZIP from one or more paths and save it to a destination path.
 func (c *Client) Zip(params files_sdk.FileZipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/zip", Params: params, Entity: &fileAction}, opts...)
 	return
 }
 
+// Zip calls Client.Zip using the default configuration.
 func Zip(params files_sdk.FileZipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
 	return (&Client{}).Zip(params, opts...)
 }
 
+// BeginUpload calls POST /file_actions/begin_upload/{path}.
+//
+// API operation: Begin File Upload.
 func (c *Client) BeginUpload(params files_sdk.FileBeginUploadParams, opts ...files_sdk.RequestResponseOption) (fileUploadPartCollection files_sdk.FileUploadPartCollection, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/begin_upload/{path}", Params: params, Entity: &fileUploadPartCollection}, opts...)
 	return
 }
 
+// BeginUpload calls Client.BeginUpload using the default configuration.
 func BeginUpload(params files_sdk.FileBeginUploadParams, opts ...files_sdk.RequestResponseOption) (fileUploadPartCollection files_sdk.FileUploadPartCollection, err error) {
 	return (&Client{}).BeginUpload(params, opts...)
 }

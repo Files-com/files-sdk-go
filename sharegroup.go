@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ShareGroup is a Files.com API resource.
 type ShareGroup struct {
 	Id      int64              `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name    string             `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -14,24 +15,26 @@ type ShareGroup struct {
 	Members []ShareGroupMember `json:"members,omitempty" path:"members,omitempty" url:"members,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (s ShareGroup) Identifier() interface{} {
 	return s.Id
 }
 
+// ShareGroupCollection is a list of ShareGroup resources.
 type ShareGroupCollection []ShareGroup
 
-// ShareGroupListParams contains the request parameters for this operation.
+// ShareGroupListParams contains the request parameters for GET /share_groups.
 type ShareGroupListParams struct {
 	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	ListParams
 }
 
-// ShareGroupFindParams contains the request parameters for this operation.
+// ShareGroupFindParams contains the request parameters for GET /share_groups/{id}.
 type ShareGroupFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// ShareGroupCreateParams contains the request parameters for this operation.
+// ShareGroupCreateParams contains the request parameters for POST /share_groups.
 type ShareGroupCreateParams struct {
 	UserId  int64                    `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Notes   string                   `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
@@ -39,7 +42,7 @@ type ShareGroupCreateParams struct {
 	Members []map[string]interface{} `url:"members" json:"members" path:"members"`
 }
 
-// ShareGroupUpdateParams contains the request parameters for this operation.
+// ShareGroupUpdateParams contains the request parameters for PATCH /share_groups/{id}.
 type ShareGroupUpdateParams struct {
 	Id      int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Notes   string                   `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
@@ -47,11 +50,12 @@ type ShareGroupUpdateParams struct {
 	Members []map[string]interface{} `url:"members,omitempty" json:"members,omitempty" path:"members"`
 }
 
-// ShareGroupDeleteParams contains the request parameters for this operation.
+// ShareGroupDeleteParams contains the request parameters for DELETE /share_groups/{id}.
 type ShareGroupDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *ShareGroup) UnmarshalJSON(data []byte) error {
 	type shareGroup ShareGroup
 	var v shareGroup
@@ -63,6 +67,7 @@ func (s *ShareGroup) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *ShareGroupCollection) UnmarshalJSON(data []byte) error {
 	type shareGroups ShareGroupCollection
 	var v shareGroups
@@ -74,6 +79,7 @@ func (s *ShareGroupCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *ShareGroupCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

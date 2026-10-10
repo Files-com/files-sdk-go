@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ApiKey is a Files.com API resource.
 type ApiKey struct {
 	Id                  int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	DescriptiveLabel    string     `json:"descriptive_label,omitempty" path:"descriptive_label,omitempty" url:"descriptive_label,omitempty"`
@@ -29,18 +30,24 @@ type ApiKey struct {
 	Path                string     `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (a ApiKey) Identifier() interface{} {
 	return a.Id
 }
 
+// ApiKeyCollection is a list of ApiKey resources.
 type ApiKeyCollection []ApiKey
 
+// ApiKeyPermissionSetEnum is a string value for permission_set.
+// Enum lists the values documented by the API.
 type ApiKeyPermissionSetEnum string
 
+// String returns the API parameter value.
 func (u ApiKeyPermissionSetEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u ApiKeyPermissionSetEnum) Enum() map[string]ApiKeyPermissionSetEnum {
 	return map[string]ApiKeyPermissionSetEnum{
 		"none":               ApiKeyPermissionSetEnum("none"),
@@ -53,7 +60,7 @@ func (u ApiKeyPermissionSetEnum) Enum() map[string]ApiKeyPermissionSetEnum {
 	}
 }
 
-// ApiKeyListParams contains the request parameters for this operation.
+// ApiKeyListParams contains the request parameters for GET /api_keys.
 type ApiKeyListParams struct {
 	UserId     int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -65,12 +72,12 @@ type ApiKeyListParams struct {
 	ListParams
 }
 
-// ApiKeyFindParams contains the request parameters for this operation.
+// ApiKeyFindParams contains the request parameters for GET /api_keys/{id}.
 type ApiKeyFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// ApiKeyCreateParams contains the request parameters for this operation.
+// ApiKeyCreateParams contains the request parameters for POST /api_keys.
 type ApiKeyCreateParams struct {
 	UserId              int64                   `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Description         string                  `url:"description,omitempty" json:"description,omitempty" path:"description"`
@@ -82,14 +89,14 @@ type ApiKeyCreateParams struct {
 	WorkspaceId         int64                   `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// ApiKeyUpdateCurrentParams contains the request parameters for this operation.
+// ApiKeyUpdateCurrentParams contains the request parameters for PATCH /api_key.
 type ApiKeyUpdateCurrentParams struct {
 	ExpiresAt     *time.Time              `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
 	Name          string                  `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	PermissionSet ApiKeyPermissionSetEnum `url:"permission_set,omitempty" json:"permission_set,omitempty" path:"permission_set"`
 }
 
-// ApiKeyUpdateParams contains the request parameters for this operation.
+// ApiKeyUpdateParams contains the request parameters for PATCH /api_keys/{id}.
 type ApiKeyUpdateParams struct {
 	Id          int64      `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Description string     `url:"description,omitempty" json:"description,omitempty" path:"description"`
@@ -97,11 +104,12 @@ type ApiKeyUpdateParams struct {
 	Name        string     `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
-// ApiKeyDeleteParams contains the request parameters for this operation.
+// ApiKeyDeleteParams contains the request parameters for DELETE /api_keys/{id}.
 type ApiKeyDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *ApiKey) UnmarshalJSON(data []byte) error {
 	type apiKey ApiKey
 	var v apiKey
@@ -113,6 +121,7 @@ func (a *ApiKey) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *ApiKeyCollection) UnmarshalJSON(data []byte) error {
 	type apiKeys ApiKeyCollection
 	var v apiKeys
@@ -124,6 +133,7 @@ func (a *ApiKeyCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *ApiKeyCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

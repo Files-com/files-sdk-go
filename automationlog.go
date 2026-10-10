@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// AutomationLog is a Files.com API resource.
 type AutomationLog struct {
 	Timestamp               *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
 	AutomationId            int64      `json:"automation_id,omitempty" path:"automation_id,omitempty" url:"automation_id,omitempty"`
@@ -26,13 +27,15 @@ type AutomationLog struct {
 	CreatedAt               *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (a AutomationLog) Identifier() interface{} {
 	return a.Path
 }
 
+// AutomationLogCollection is a list of AutomationLog resources.
 type AutomationLogCollection []AutomationLog
 
-// AutomationLogListParams contains the request parameters for this operation.
+// AutomationLogListParams contains the request parameters for GET /automation_logs.
 type AutomationLogListParams struct {
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -43,6 +46,7 @@ type AutomationLogListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *AutomationLog) UnmarshalJSON(data []byte) error {
 	type automationLog AutomationLog
 	var v automationLog
@@ -54,6 +58,7 @@ func (a *AutomationLog) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *AutomationLogCollection) UnmarshalJSON(data []byte) error {
 	type automationLogs AutomationLogCollection
 	var v automationLogs
@@ -65,6 +70,7 @@ func (a *AutomationLogCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *AutomationLogCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// UserRequest is a Files.com API resource.
 type UserRequest struct {
 	Id      int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name    string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -14,23 +15,25 @@ type UserRequest struct {
 	Company string `json:"company,omitempty" path:"company,omitempty" url:"company,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (u UserRequest) Identifier() interface{} {
 	return u.Id
 }
 
+// UserRequestCollection is a list of UserRequest resources.
 type UserRequestCollection []UserRequest
 
-// UserRequestListParams contains the request parameters for this operation.
+// UserRequestListParams contains the request parameters for GET /user_requests.
 type UserRequestListParams struct {
 	ListParams
 }
 
-// UserRequestFindParams contains the request parameters for this operation.
+// UserRequestFindParams contains the request parameters for GET /user_requests/{id}.
 type UserRequestFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// UserRequestCreateParams contains the request parameters for this operation.
+// UserRequestCreateParams contains the request parameters for POST /user_requests.
 type UserRequestCreateParams struct {
 	Name    string `url:"name" json:"name" path:"name"`
 	Email   string `url:"email" json:"email" path:"email"`
@@ -38,11 +41,12 @@ type UserRequestCreateParams struct {
 	Company string `url:"company,omitempty" json:"company,omitempty" path:"company"`
 }
 
-// UserRequestDeleteParams contains the request parameters for this operation.
+// UserRequestDeleteParams contains the request parameters for DELETE /user_requests/{id}.
 type UserRequestDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (u *UserRequest) UnmarshalJSON(data []byte) error {
 	type userRequest UserRequest
 	var v userRequest
@@ -54,6 +58,7 @@ func (u *UserRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (u *UserRequestCollection) UnmarshalJSON(data []byte) error {
 	type userRequests UserRequestCollection
 	var v userRequests
@@ -65,6 +70,7 @@ func (u *UserRequestCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (u *UserRequestCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*u))
 	for i, v := range *u {

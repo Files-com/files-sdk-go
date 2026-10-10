@@ -185,7 +185,7 @@ func (b *zipBatchDownloader) run(statuses []*DownloadStatus) []zipBatchFallback 
 			b.log("stream-failed", map[string]interface{}{
 				"attempt": attempt + 1,
 				"class":   zipBatchErrorClass(err),
-				"error":   err.Error(),
+				"error":   uploadRetryLogError(err),
 			})
 		}
 		if spool != (destinationPath{}) {

@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Expectation is a Files.com API resource.
 type Expectation struct {
 	Id                     int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId            int64       `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
@@ -39,18 +40,24 @@ type Expectation struct {
 	UpdatedAt              *time.Time  `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (e Expectation) Identifier() interface{} {
 	return e.Id
 }
 
+// ExpectationCollection is a list of Expectation resources.
 type ExpectationCollection []Expectation
 
+// ExpectationTriggerEnum is a string value for trigger.
+// Enum lists the values documented by the API.
 type ExpectationTriggerEnum string
 
+// String returns the API parameter value.
 func (u ExpectationTriggerEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u ExpectationTriggerEnum) Enum() map[string]ExpectationTriggerEnum {
 	return map[string]ExpectationTriggerEnum{
 		"manual":          ExpectationTriggerEnum("manual"),
@@ -60,19 +67,19 @@ func (u ExpectationTriggerEnum) Enum() map[string]ExpectationTriggerEnum {
 	}
 }
 
-// ExpectationListParams contains the request parameters for this operation.
+// ExpectationListParams contains the request parameters for GET /expectations.
 type ExpectationListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// ExpectationFindParams contains the request parameters for this operation.
+// ExpectationFindParams contains the request parameters for GET /expectations/{id}.
 type ExpectationFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// ExpectationCreateParams contains the request parameters for this operation.
+// ExpectationCreateParams contains the request parameters for POST /expectations.
 type ExpectationCreateParams struct {
 	Name                   string                 `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	Description            string                 `url:"description,omitempty" json:"description,omitempty" path:"description"`
@@ -97,14 +104,14 @@ type ExpectationCreateParams struct {
 	WorkspaceId            int64                  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// ExpectationTriggerEvaluationParams contains the request parameters for this operation.
+// ExpectationTriggerEvaluationParams contains the request parameters for POST /expectations/{id}/trigger_evaluation.
 //
 // Manually open an Expectation window
 type ExpectationTriggerEvaluationParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// ExpectationUpdateParams contains the request parameters for this operation.
+// ExpectationUpdateParams contains the request parameters for PATCH /expectations/{id}.
 type ExpectationUpdateParams struct {
 	Id                     int64                  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name                   string                 `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -130,11 +137,12 @@ type ExpectationUpdateParams struct {
 	WorkspaceId            int64                  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// ExpectationDeleteParams contains the request parameters for this operation.
+// ExpectationDeleteParams contains the request parameters for DELETE /expectations/{id}.
 type ExpectationDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (e *Expectation) UnmarshalJSON(data []byte) error {
 	type expectation Expectation
 	var v expectation
@@ -146,6 +154,7 @@ func (e *Expectation) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (e *ExpectationCollection) UnmarshalJSON(data []byte) error {
 	type expectations ExpectationCollection
 	var v expectations
@@ -157,6 +166,7 @@ func (e *ExpectationCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (e *ExpectationCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*e))
 	for i, v := range *e {

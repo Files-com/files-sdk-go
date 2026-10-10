@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Permission is a Files.com API resource.
 type Permission struct {
 	Id          int64    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Path        string   `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
@@ -22,13 +23,15 @@ type Permission struct {
 	SiteId      int64    `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (p Permission) Identifier() interface{} {
 	return p.Id
 }
 
+// PermissionCollection is a list of Permission resources.
 type PermissionCollection []Permission
 
-// PermissionListParams contains the request parameters for this operation.
+// PermissionListParams contains the request parameters for GET /permissions.
 type PermissionListParams struct {
 	SortBy        interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter        interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -41,7 +44,7 @@ type PermissionListParams struct {
 	ListParams
 }
 
-// PermissionCreateParams contains the request parameters for this operation.
+// PermissionCreateParams contains the request parameters for POST /permissions.
 type PermissionCreateParams struct {
 	Path       string `url:"path" json:"path" path:"path"`
 	GroupId    int64  `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
@@ -55,11 +58,12 @@ type PermissionCreateParams struct {
 	SiteId     int64  `url:"site_id,omitempty" json:"site_id,omitempty" path:"site_id"`
 }
 
-// PermissionDeleteParams contains the request parameters for this operation.
+// PermissionDeleteParams contains the request parameters for DELETE /permissions/{id}.
 type PermissionDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (p *Permission) UnmarshalJSON(data []byte) error {
 	type permission Permission
 	var v permission
@@ -71,6 +75,7 @@ func (p *Permission) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (p *PermissionCollection) UnmarshalJSON(data []byte) error {
 	type permissions PermissionCollection
 	var v permissions
@@ -82,6 +87,7 @@ func (p *PermissionCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (p *PermissionCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*p))
 	for i, v := range *p {

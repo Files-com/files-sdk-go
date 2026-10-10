@@ -3,8 +3,12 @@ package files_sdk
 import (
 	"encoding/json"
 	goerrors "errors"
+	"io"
+	"net/http"
+	"strings"
 	"testing"
 
+	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -300,4 +304,49 @@ func TestLegacyWrapperHelpers(t *testing.T) {
 	assert.True(t, IsExpired(ResponseError{Type: string(ErrDownloadRequestExpired)}))
 	assert.True(t, IsExpired(ResponseError{Type: string(ErrUploadRequestExpired)}))
 	assert.False(t, IsExpired(ResponseError{Type: string(ErrFileNotFound)}))
+}
+
+func TestAPIErrorFallbackReportsTheResponseBody(t *testing.T) {
+	// data.status is a number here, so the typed context does not decode and APIError falls back to
+	// lib.NonOkError, which reports the response body.
+	body := "{\"error\":\"Internal server failure\",\n\"data\":{\"status\":500},\"http-code\":500}"
+	long := "{\"error\":\"" + strings.Repeat("x", 600) + "\",\"data\":{\"status\":500}}"
+	tests := map[string]struct {
+		body          string
+		contentLength int64
+		want          string
+	}{
+		"known length":          {body, int64(len(body)), strings.ReplaceAll(body, "\n", " ")},
+		"unknown length":        {body, -1, strings.ReplaceAll(body, "\n", " ")},
+		"longer than 512 bytes": {long, int64(len(long)), long[:512]},
+	}
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			original := &closeTrackingBody{Reader: strings.NewReader(test.body)}
+			res := &http.Response{
+				StatusCode:    http.StatusInternalServerError,
+				Header:        http.Header{"Content-Type": {"application/json"}},
+				ContentLength: test.contentLength,
+				Body:          original,
+			}
+
+			err := APIError()(res)
+
+			var fallback lib.ResponseError
+			require.True(t, goerrors.As(err, &fallback))
+			assert.Equal(t, http.StatusInternalServerError, fallback.StatusCode)
+			assert.Equal(t, "status code: 500 - "+test.want, err.Error())
+			assert.True(t, original.closed, "the original response body is closed")
+		})
+	}
+}
+
+type closeTrackingBody struct {
+	io.Reader
+	closed bool
+}
+
+func (b *closeTrackingBody) Close() error {
+	b.closed = true
+	return nil
 }

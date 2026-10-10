@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// UsageByTopLevelDir is a Files.com API resource.
 type UsageByTopLevelDir struct {
 	Dir   string `json:"dir,omitempty" path:"dir,omitempty" url:"dir,omitempty"`
 	Size  int64  `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
@@ -14,8 +15,10 @@ type UsageByTopLevelDir struct {
 
 // Identifier no path or id
 
+// UsageByTopLevelDirCollection is a list of UsageByTopLevelDir resources.
 type UsageByTopLevelDirCollection []UsageByTopLevelDir
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (u *UsageByTopLevelDir) UnmarshalJSON(data []byte) error {
 	type usageByTopLevelDir UsageByTopLevelDir
 	var v usageByTopLevelDir
@@ -27,6 +30,7 @@ func (u *UsageByTopLevelDir) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (u *UsageByTopLevelDirCollection) UnmarshalJSON(data []byte) error {
 	type usageByTopLevelDirs UsageByTopLevelDirCollection
 	var v usageByTopLevelDirs
@@ -38,6 +42,7 @@ func (u *UsageByTopLevelDirCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (u *UsageByTopLevelDirCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*u))
 	for i, v := range *u {

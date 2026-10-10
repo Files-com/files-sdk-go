@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Group is a Files.com API resource.
 type Group struct {
 	Id                             int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name                           string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -26,13 +27,15 @@ type Group struct {
 	WorkspaceId                    int64  `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (g Group) Identifier() interface{} {
 	return g.Id
 }
 
+// GroupCollection is a list of Group resources.
 type GroupCollection []Group
 
-// GroupListParams contains the request parameters for this operation.
+// GroupListParams contains the request parameters for GET /groups.
 type GroupListParams struct {
 	SortBy                  interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter                  interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -42,12 +45,12 @@ type GroupListParams struct {
 	ListParams
 }
 
-// GroupFindParams contains the request parameters for this operation.
+// GroupFindParams contains the request parameters for GET /groups/{id}.
 type GroupFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// GroupCreateParams contains the request parameters for this operation.
+// GroupCreateParams contains the request parameters for POST /groups.
 type GroupCreateParams struct {
 	Notes                          string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
 	UserIds                        string `url:"user_ids,omitempty" json:"user_ids,omitempty" path:"user_ids"`
@@ -65,7 +68,7 @@ type GroupCreateParams struct {
 	WorkspaceId                    int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// GroupUpdateParams contains the request parameters for this operation.
+// GroupUpdateParams contains the request parameters for PATCH /groups/{id}.
 type GroupUpdateParams struct {
 	Id                             int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Notes                          string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
@@ -83,11 +86,12 @@ type GroupUpdateParams struct {
 	Name                           string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
-// GroupDeleteParams contains the request parameters for this operation.
+// GroupDeleteParams contains the request parameters for DELETE /groups/{id}.
 type GroupDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (g *Group) UnmarshalJSON(data []byte) error {
 	type group Group
 	var v group
@@ -99,6 +103,7 @@ func (g *Group) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (g *GroupCollection) UnmarshalJSON(data []byte) error {
 	type groups GroupCollection
 	var v groups
@@ -110,6 +115,7 @@ func (g *GroupCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (g *GroupCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*g))
 	for i, v := range *g {

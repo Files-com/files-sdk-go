@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// PublicIpAddress is a Files.com API resource.
 type PublicIpAddress struct {
 	IpAddress   string `json:"ip_address,omitempty" path:"ip_address,omitempty" url:"ip_address,omitempty"`
 	ServerName  string `json:"server_name,omitempty" path:"server_name,omitempty" url:"server_name,omitempty"`
@@ -15,8 +16,10 @@ type PublicIpAddress struct {
 
 // Identifier no path or id
 
+// PublicIpAddressCollection is a list of PublicIpAddress resources.
 type PublicIpAddressCollection []PublicIpAddress
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (p *PublicIpAddress) UnmarshalJSON(data []byte) error {
 	type publicIpAddress PublicIpAddress
 	var v publicIpAddress
@@ -28,6 +31,7 @@ func (p *PublicIpAddress) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (p *PublicIpAddressCollection) UnmarshalJSON(data []byte) error {
 	type publicIpAddresss PublicIpAddressCollection
 	var v publicIpAddresss
@@ -39,6 +43,7 @@ func (p *PublicIpAddressCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (p *PublicIpAddressCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*p))
 	for i, v := range *p {

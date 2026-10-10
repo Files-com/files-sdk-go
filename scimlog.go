@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ScimLog is a Files.com API resource.
 type ScimLog struct {
 	Id               int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	CreatedAt        string `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
@@ -17,23 +18,26 @@ type ScimLog struct {
 	ResponseJson     string `json:"response_json,omitempty" path:"response_json,omitempty" url:"response_json,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (s ScimLog) Identifier() interface{} {
 	return s.Id
 }
 
+// ScimLogCollection is a list of ScimLog resources.
 type ScimLogCollection []ScimLog
 
-// ScimLogListParams contains the request parameters for this operation.
+// ScimLogListParams contains the request parameters for GET /scim_logs.
 type ScimLogListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	ListParams
 }
 
-// ScimLogFindParams contains the request parameters for this operation.
+// ScimLogFindParams contains the request parameters for GET /scim_logs/{id}.
 type ScimLogFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *ScimLog) UnmarshalJSON(data []byte) error {
 	type scimLog ScimLog
 	var v scimLog
@@ -45,6 +49,7 @@ func (s *ScimLog) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *ScimLogCollection) UnmarshalJSON(data []byte) error {
 	type scimLogs ScimLogCollection
 	var v scimLogs
@@ -56,6 +61,7 @@ func (s *ScimLogCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *ScimLogCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

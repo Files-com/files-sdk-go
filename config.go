@@ -2,6 +2,7 @@ package files_sdk
 
 import (
 	"cmp"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -15,7 +16,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.3.300"
+var VERSION = "3.3.301"
 var defaultUserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
 
 const (
@@ -48,7 +49,11 @@ type Config struct {
 	EndpointOverride string `json:"endpoint_override"`
 	*retryablehttp.Client
 	AdditionalHeaders map[string]string `json:"additional_headers"`
+	// Logger receives SDK diagnostics. Init uses a logger that discards output when this is nil.
 	lib.Logger
+	// Debug enables detailed request and response diagnostics, which may contain credentials
+	// and signed URLs. FILES_SDK_DEBUG also enables these diagnostics. SDK retry log entries
+	// at INFO, WARN, and ERROR still redact request URLs and credentials.
 	Debug        bool   `json:"debug"`
 	UserAgent    string `json:"user_agents"`
 	Environment  `json:"environment"`
@@ -57,6 +62,8 @@ type Config struct {
 	DisableDirectTransfers bool `json:"disable_direct_transfers"`
 }
 
+// Init returns a copy of c with defaults for its logger, retry client, feature flags,
+// and user agent. It preserves values already supplied by the caller.
 func (c Config) Init() Config {
 	if c.Logger == nil {
 		c.Logger = lib.NullLogger{}
@@ -87,8 +94,152 @@ func (c Config) Endpoint() string {
 	)
 }
 
+// Do sends req through the configured retry client with redirect handling.
+// The caller must close the returned response body. Outside debug mode, returned
+// URL errors redact the request URL while preserving the operation and cause.
+// Retry log entries above DEBUG redact request URLs and credentials in either mode.
 func (c Config) Do(req *http.Request) (*http.Response, error) {
-	return c.redirectSafeClient().StandardClient().Do(req)
+	client := c.redirectSafeClient()
+	client.Logger = c.retryLogFor(client.Logger, req)
+	if c.InDebug() {
+		return client.StandardClient().Do(req)
+	}
+	// Outside DEBUG, keep request URLs, which can be signed download URLs, out of errors, as CallRaw does. The error
+	// keeps its type, operation and cause, so cancellation and timeout checks still work.
+	response, err := client.StandardClient().Do(req)
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) {
+		err = &url.Error{Op: urlErr.Op, URL: "[redacted]", Err: urlErr.Err}
+	}
+	return response, err
+}
+
+// retryLogFor returns the logger for one request's retry client in place of logger, the client's own. Entries at
+// DEBUG level, such as the request line with its full URL, pass through unchanged. Entries above DEBUG, such as
+// "request failed" or a log hook's own, keep their event and context with the request's URL and credentials
+// removed. A logger without levels gets DEBUG entries only in debug mode, its only level control. The client's own
+// logger is not changed.
+func (c Config) retryLogFor(logger interface{}, req *http.Request) interface{} {
+	redact := c.secretsOf(req)
+	if sdkConfig, ok := logger.(Config); ok {
+		// SDK retry clients log through the Config they were built from, whose Logger may have levels.
+		return printfRetryLog{logger: sdkConfig.Logger, debug: c.InDebug(), redact: redact}
+	}
+	switch v := logger.(type) {
+	case retryablehttp.LeveledLogger:
+		return leveledRetryLog{logger: v, redact: redact}
+	case retryablehttp.Logger:
+		return printfRetryLog{logger: v, debug: c.InDebug(), redact: redact}
+	}
+	return logger
+}
+
+// printfRetryLog takes go-retryablehttp's Printf entries, whose level is the "[DEBUG]" or "[ERR]" prefix of their
+// format. Other entries come from a log hook, which go-retryablehttp logs at Info for a logger with levels.
+type printfRetryLog struct {
+	logger lib.Logger
+	debug  bool
+	redact requestSecrets
+}
+
+func (l printfRetryLog) Printf(format string, args ...interface{}) {
+	leveled, hasLevels := l.logger.(lib.LeveledLogger)
+	if strings.HasPrefix(format, "[DEBUG] ") {
+		if hasLevels {
+			leveled.Debug(strings.TrimPrefix(format, "[DEBUG] "), args...)
+		} else if l.debug {
+			l.logger.Printf(format, args...)
+		}
+		return
+	}
+	entry := l.redact.text(fmt.Sprintf(format, l.redact.values(args)...))
+	switch {
+	case !hasLevels:
+		l.logger.Printf("%s", entry)
+	case strings.HasPrefix(entry, "[ERR] "):
+		leveled.Error("%s", strings.TrimPrefix(entry, "[ERR] "))
+	default:
+		leveled.Info("%s", entry)
+	}
+}
+
+// leveledRetryLog takes go-retryablehttp's structured entries, a message with key/value pairs, for a client logger
+// with levels.
+type leveledRetryLog struct {
+	logger retryablehttp.LeveledLogger
+	redact requestSecrets
+}
+
+func (l leveledRetryLog) Debug(msg string, keysAndValues ...interface{}) {
+	l.logger.Debug(msg, keysAndValues...)
+}
+
+func (l leveledRetryLog) Info(msg string, keysAndValues ...interface{}) {
+	l.logger.Info(l.redact.text(msg), l.redact.values(keysAndValues)...)
+}
+
+func (l leveledRetryLog) Warn(msg string, keysAndValues ...interface{}) {
+	l.logger.Warn(l.redact.text(msg), l.redact.values(keysAndValues)...)
+}
+
+func (l leveledRetryLog) Error(msg string, keysAndValues ...interface{}) {
+	l.logger.Error(l.redact.text(msg), l.redact.values(keysAndValues)...)
+}
+
+// requestSecrets are one request's values that must not appear in log entries above DEBUG: its full URL and query,
+// which can be signed, and the Files.com API key, session ID and reauthentication it carries or is configured with.
+type requestSecrets []string
+
+func (c Config) secretsOf(req *http.Request) requestSecrets {
+	values := []string{c.GetAPIKey(), c.SessionId}
+	if req != nil {
+		values = append([]string{req.Header.Get(apiKeyHeader), req.Header.Get(sessionIdHeader), req.Header.Get(reauthenticationHeader)}, values...)
+		// A request without a URL still reaches net/http, which returns its usual error for it.
+		if req.URL != nil {
+			// The full URL comes first, so it is replaced whole rather than around its query.
+			values = append([]string{req.URL.String(), req.URL.RawQuery}, values...)
+		}
+	}
+	var secrets requestSecrets
+	for _, value := range values {
+		if value != "" {
+			secrets = append(secrets, value)
+		}
+	}
+	return secrets
+}
+
+// text returns text with each secret replaced.
+func (s requestSecrets) text(text string) string {
+	for _, secret := range s {
+		text = strings.ReplaceAll(text, secret, "[redacted]")
+	}
+	return text
+}
+
+// values returns a copy of args for logging: an absolute URL is replaced, an error becomes one with the same text
+// with secrets replaced and, for a *url.Error, its URL redacted, and other strings have secrets replaced. args and
+// the errors in it are not changed.
+func (s requestSecrets) values(args []interface{}) []interface{} {
+	clean := make([]interface{}, len(args))
+	for i, arg := range args {
+		clean[i] = arg
+		switch v := arg.(type) {
+		case error:
+			var urlErr *url.Error
+			if errors.As(v, &urlErr) {
+				v = &url.Error{Op: urlErr.Op, URL: "[redacted]", Err: urlErr.Err}
+			}
+			clean[i] = errors.New(s.text(v.Error()))
+		case string:
+			if parsed, err := url.Parse(v); err == nil && parsed.Scheme != "" && parsed.Host != "" {
+				clean[i] = "[redacted]"
+			} else {
+				clean[i] = s.text(v)
+			}
+		}
+	}
+	return clean
 }
 
 func (c Config) SetCustomClient(client *http.Client) Config {
@@ -96,8 +247,21 @@ func (c Config) SetCustomClient(client *http.Client) Config {
 	return c
 }
 
+// InDebug reports whether Debug is set or FILES_SDK_DEBUG is non-empty.
+// A logger with levels controls which retry DEBUG entries it displays independently
+// of this setting. A Printf-only logger receives retry DEBUG entries only in debug mode.
 func (c Config) InDebug() bool {
 	return c.Debug || (os.Getenv("FILES_SDK_DEBUG") != "")
+}
+
+// debugf logs a DEBUG diagnostic, which may hold full URLs and headers: at Debug level when the Logger has levels,
+// otherwise through Printf as before.
+func (c Config) debugf(format string, args ...any) {
+	if leveled, ok := c.Logger.(lib.LeveledLogger); ok {
+		leveled.Debug(format, args...)
+		return
+	}
+	c.Printf(format, args...)
 }
 
 func (c Config) LogPath(path string, args map[string]interface{}) {
@@ -157,7 +321,12 @@ func (c Config) redirectSafeClient() *retryablehttp.Client {
 		initialized := c.Init()
 		retrySource = initialized.Client
 	}
+	return c.redirectSafeCopy(retrySource)
+}
 
+// redirectSafeCopy returns a copy of retrySource, with the same settings and hooks, whose HTTP client re-applies the
+// URL-aware headers to each redirected request.
+func (c Config) redirectSafeCopy(retrySource *retryablehttp.Client) *retryablehttp.Client {
 	httpClient := http.Client{}
 	if retrySource.HTTPClient != nil {
 		httpClient = *retrySource.HTTPClient
@@ -170,6 +339,11 @@ func (c Config) redirectSafeClient() *retryablehttp.Client {
 		c.SetHeadersForRequest(req)
 		if originalCheckRedirect != nil {
 			return originalCheckRedirect(req, via)
+		}
+		// Keep net/http's default policy for a nil CheckRedirect: stop after 10 consecutive requests, with its error
+		// text, which retryablehttp's default retry policy does not retry.
+		if len(via) >= 10 {
+			return errors.New("stopped after 10 redirects")
 		}
 		return nil
 	}
@@ -216,6 +390,11 @@ func clearAuthHeaders(headers *http.Header) {
 	headers.Del(sessionIdHeader)
 	headers.Del(reauthenticationHeader)
 	headers.Del(workspaceIdHeader)
+}
+
+// hasAuthHeaders reports whether headers carry any of the Files.com headers that clearAuthHeaders removes.
+func hasAuthHeaders(headers http.Header) bool {
+	return headers.Get(apiKeyHeader) != "" || headers.Get(sessionIdHeader) != "" || headers.Get(reauthenticationHeader) != "" || headers.Get(workspaceIdHeader) != ""
 }
 
 func normalizedURLHost(u *url.URL) string {

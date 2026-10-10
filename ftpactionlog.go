@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// FtpActionLog is a Files.com API resource.
 type FtpActionLog struct {
 	Timestamp       *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
 	RemoteIp        string     `json:"remote_ip,omitempty" path:"remote_ip,omitempty" url:"remote_ip,omitempty"`
@@ -30,13 +31,15 @@ type FtpActionLog struct {
 	CreatedAt       *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (f FtpActionLog) Identifier() interface{} {
 	return f.Path
 }
 
+// FtpActionLogCollection is a list of FtpActionLog resources.
 type FtpActionLogCollection []FtpActionLog
 
-// FtpActionLogListParams contains the request parameters for this operation.
+// FtpActionLogListParams contains the request parameters for GET /ftp_action_logs.
 type FtpActionLogListParams struct {
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -47,6 +50,7 @@ type FtpActionLogListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (f *FtpActionLog) UnmarshalJSON(data []byte) error {
 	type ftpActionLog FtpActionLog
 	var v ftpActionLog
@@ -58,6 +62,7 @@ func (f *FtpActionLog) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (f *FtpActionLogCollection) UnmarshalJSON(data []byte) error {
 	type ftpActionLogs FtpActionLogCollection
 	var v ftpActionLogs
@@ -69,6 +74,7 @@ func (f *FtpActionLogCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (f *FtpActionLogCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*f))
 	for i, v := range *f {

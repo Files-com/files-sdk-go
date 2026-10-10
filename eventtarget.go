@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// EventTarget is a Files.com API resource.
 type EventTarget struct {
 	Id                   int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Name                 string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
@@ -20,18 +21,24 @@ type EventTarget struct {
 	UpdatedAt            *time.Time  `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (e EventTarget) Identifier() interface{} {
 	return e.Id
 }
 
+// EventTargetCollection is a list of EventTarget resources.
 type EventTargetCollection []EventTarget
 
+// EventTargetTargetTypeEnum is a string value for target_type.
+// Enum lists the values documented by the API.
 type EventTargetTargetTypeEnum string
 
+// String returns the API parameter value.
 func (u EventTargetTargetTypeEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u EventTargetTargetTypeEnum) Enum() map[string]EventTargetTargetTypeEnum {
 	return map[string]EventTargetTargetTypeEnum{
 		"email":         EventTargetTargetTypeEnum("email"),
@@ -44,19 +51,19 @@ func (u EventTargetTargetTypeEnum) Enum() map[string]EventTargetTargetTypeEnum {
 	}
 }
 
-// EventTargetListParams contains the request parameters for this operation.
+// EventTargetListParams contains the request parameters for GET /event_targets.
 type EventTargetListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// EventTargetFindParams contains the request parameters for this operation.
+// EventTargetFindParams contains the request parameters for GET /event_targets/{id}.
 type EventTargetFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// EventTargetCreateParams contains the request parameters for this operation.
+// EventTargetCreateParams contains the request parameters for POST /event_targets.
 type EventTargetCreateParams struct {
 	Name                 string                    `url:"name" json:"name" path:"name"`
 	WorkspaceId          int64                     `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
@@ -67,7 +74,7 @@ type EventTargetCreateParams struct {
 	TargetType           EventTargetTargetTypeEnum `url:"target_type" json:"target_type" path:"target_type"`
 }
 
-// EventTargetUpdateParams contains the request parameters for this operation.
+// EventTargetUpdateParams contains the request parameters for PATCH /event_targets/{id}.
 type EventTargetUpdateParams struct {
 	Id                   int64       `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Name                 string      `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -78,11 +85,12 @@ type EventTargetUpdateParams struct {
 	DeliveryPolicy       interface{} `url:"delivery_policy,omitempty" json:"delivery_policy,omitempty" path:"delivery_policy"`
 }
 
-// EventTargetDeleteParams contains the request parameters for this operation.
+// EventTargetDeleteParams contains the request parameters for DELETE /event_targets/{id}.
 type EventTargetDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (e *EventTarget) UnmarshalJSON(data []byte) error {
 	type eventTarget EventTarget
 	var v eventTarget
@@ -94,6 +102,7 @@ func (e *EventTarget) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (e *EventTargetCollection) UnmarshalJSON(data []byte) error {
 	type eventTargets EventTargetCollection
 	var v eventTargets
@@ -105,6 +114,7 @@ func (e *EventTargetCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (e *EventTargetCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*e))
 	for i, v := range *e {

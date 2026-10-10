@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// SyncLog is a Files.com API resource.
 type SyncLog struct {
 	Timestamp       *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
 	SyncId          int64      `json:"sync_id,omitempty" path:"sync_id,omitempty" url:"sync_id,omitempty"`
@@ -22,13 +23,15 @@ type SyncLog struct {
 	CreatedAt       *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (s SyncLog) Identifier() interface{} {
 	return s.Path
 }
 
+// SyncLogCollection is a list of SyncLog resources.
 type SyncLogCollection []SyncLog
 
-// SyncLogListParams contains the request parameters for this operation.
+// SyncLogListParams contains the request parameters for GET /sync_logs.
 type SyncLogListParams struct {
 	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt   interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -38,6 +41,7 @@ type SyncLogListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *SyncLog) UnmarshalJSON(data []byte) error {
 	type syncLog SyncLog
 	var v syncLog
@@ -49,6 +53,7 @@ func (s *SyncLog) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *SyncLogCollection) UnmarshalJSON(data []byte) error {
 	type syncLogs SyncLogCollection
 	var v syncLogs
@@ -60,6 +65,7 @@ func (s *SyncLogCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *SyncLogCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

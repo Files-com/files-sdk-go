@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// PartnerConnection is a Files.com API resource.
 type PartnerConnection struct {
 	Id        int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Role      string `json:"role,omitempty" path:"role,omitempty" url:"role,omitempty"`
@@ -14,12 +15,15 @@ type PartnerConnection struct {
 	MountPath string `json:"mount_path,omitempty" path:"mount_path,omitempty" url:"mount_path,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (p PartnerConnection) Identifier() interface{} {
 	return p.Id
 }
 
+// PartnerConnectionCollection is a list of PartnerConnection resources.
 type PartnerConnectionCollection []PartnerConnection
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (p *PartnerConnection) UnmarshalJSON(data []byte) error {
 	type partnerConnection PartnerConnection
 	var v partnerConnection
@@ -31,6 +35,7 @@ func (p *PartnerConnection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (p *PartnerConnectionCollection) UnmarshalJSON(data []byte) error {
 	type partnerConnections PartnerConnectionCollection
 	var v partnerConnections
@@ -42,6 +47,7 @@ func (p *PartnerConnectionCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (p *PartnerConnectionCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*p))
 	for i, v := range *p {

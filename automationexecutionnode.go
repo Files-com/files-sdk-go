@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// AutomationExecutionNode is a Files.com API resource.
 type AutomationExecutionNode struct {
 	NodeId               string                   `json:"node_id,omitempty" path:"node_id,omitempty" url:"node_id,omitempty"`
 	NodeType             string                   `json:"node_type,omitempty" path:"node_type,omitempty" url:"node_type,omitempty"`
@@ -26,8 +27,10 @@ type AutomationExecutionNode struct {
 
 // Identifier no path or id
 
+// AutomationExecutionNodeCollection is a list of AutomationExecutionNode resources.
 type AutomationExecutionNodeCollection []AutomationExecutionNode
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *AutomationExecutionNode) UnmarshalJSON(data []byte) error {
 	type automationExecutionNode AutomationExecutionNode
 	var v automationExecutionNode
@@ -39,6 +42,7 @@ func (a *AutomationExecutionNode) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *AutomationExecutionNodeCollection) UnmarshalJSON(data []byte) error {
 	type automationExecutionNodes AutomationExecutionNodeCollection
 	var v automationExecutionNodes
@@ -50,6 +54,7 @@ func (a *AutomationExecutionNodeCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *AutomationExecutionNodeCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

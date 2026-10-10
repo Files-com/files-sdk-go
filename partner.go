@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Partner is a Files.com API resource.
 type Partner struct {
 	AllowBypassing2faPolicies  *bool               `json:"allow_bypassing_2fa_policies,omitempty" path:"allow_bypassing_2fa_policies,omitempty" url:"allow_bypassing_2fa_policies,omitempty"`
 	AllowedIps                 string              `json:"allowed_ips,omitempty" path:"allowed_ips,omitempty" url:"allowed_ips,omitempty"`
@@ -30,18 +31,24 @@ type Partner struct {
 	UserIds                    []int64             `json:"user_ids,omitempty" path:"user_ids,omitempty" url:"user_ids,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (p Partner) Identifier() interface{} {
 	return p.Id
 }
 
+// PartnerCollection is a list of Partner resources.
 type PartnerCollection []Partner
 
+// PartnerPartnershipRoleEnum is a string value for partnership_role.
+// Enum lists the values documented by the API.
 type PartnerPartnershipRoleEnum string
 
+// String returns the API parameter value.
 func (u PartnerPartnershipRoleEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u PartnerPartnershipRoleEnum) Enum() map[string]PartnerPartnershipRoleEnum {
 	return map[string]PartnerPartnershipRoleEnum{
 		"host":           PartnerPartnershipRoleEnum("host"),
@@ -50,19 +57,19 @@ func (u PartnerPartnershipRoleEnum) Enum() map[string]PartnerPartnershipRoleEnum
 	}
 }
 
-// PartnerListParams contains the request parameters for this operation.
+// PartnerListParams contains the request parameters for GET /partners.
 type PartnerListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// PartnerFindParams contains the request parameters for this operation.
+// PartnerFindParams contains the request parameters for GET /partners/{id}.
 type PartnerFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// PartnerCreateParams contains the request parameters for this operation.
+// PartnerCreateParams contains the request parameters for POST /partners.
 type PartnerCreateParams struct {
 	AiAssistantPersonalityId   int64  `url:"ai_assistant_personality_id,omitempty" json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id"`
 	AllowedIps                 string `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
@@ -82,7 +89,7 @@ type PartnerCreateParams struct {
 	WorkspaceId                int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// PartnerUpdateParams contains the request parameters for this operation.
+// PartnerUpdateParams contains the request parameters for PATCH /partners/{id}.
 type PartnerUpdateParams struct {
 	Id                         int64                      `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	AiAssistantPersonalityId   int64                      `url:"ai_assistant_personality_id,omitempty" json:"ai_assistant_personality_id,omitempty" path:"ai_assistant_personality_id"`
@@ -103,11 +110,12 @@ type PartnerUpdateParams struct {
 	RootFolder                 string                     `url:"root_folder,omitempty" json:"root_folder,omitempty" path:"root_folder"`
 }
 
-// PartnerDeleteParams contains the request parameters for this operation.
+// PartnerDeleteParams contains the request parameters for DELETE /partners/{id}.
 type PartnerDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (p *Partner) UnmarshalJSON(data []byte) error {
 	type partner Partner
 	var v partner
@@ -119,6 +127,7 @@ func (p *Partner) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (p *PartnerCollection) UnmarshalJSON(data []byte) error {
 	type partners PartnerCollection
 	var v partners
@@ -130,6 +139,7 @@ func (p *PartnerCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (p *PartnerCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*p))
 	for i, v := range *p {

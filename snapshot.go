@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// Snapshot is a Files.com API resource.
 type Snapshot struct {
 	Id          int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	ExpiresAt   *time.Time `json:"expires_at,omitempty" path:"expires_at,omitempty" url:"expires_at,omitempty"`
@@ -18,23 +19,25 @@ type Snapshot struct {
 	Paths       []string   `json:"paths,omitempty" path:"paths,omitempty" url:"paths,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (s Snapshot) Identifier() interface{} {
 	return s.Id
 }
 
+// SnapshotCollection is a list of Snapshot resources.
 type SnapshotCollection []Snapshot
 
-// SnapshotListParams contains the request parameters for this operation.
+// SnapshotListParams contains the request parameters for GET /snapshots.
 type SnapshotListParams struct {
 	ListParams
 }
 
-// SnapshotFindParams contains the request parameters for this operation.
+// SnapshotFindParams contains the request parameters for GET /snapshots/{id}.
 type SnapshotFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// SnapshotCreateParams contains the request parameters for this operation.
+// SnapshotCreateParams contains the request parameters for POST /snapshots.
 type SnapshotCreateParams struct {
 	ExpiresAt   *time.Time `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
 	Name        string     `url:"name,omitempty" json:"name,omitempty" path:"name"`
@@ -42,14 +45,14 @@ type SnapshotCreateParams struct {
 	WorkspaceId int64      `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// SnapshotFinalizeParams contains the request parameters for this operation.
+// SnapshotFinalizeParams contains the request parameters for POST /snapshots/{id}/finalize.
 //
 // Finalize Snapshot
 type SnapshotFinalizeParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// SnapshotUpdateParams contains the request parameters for this operation.
+// SnapshotUpdateParams contains the request parameters for PATCH /snapshots/{id}.
 type SnapshotUpdateParams struct {
 	Id        int64      `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	ExpiresAt *time.Time `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
@@ -57,11 +60,12 @@ type SnapshotUpdateParams struct {
 	Paths     []string   `url:"paths,omitempty" json:"paths,omitempty" path:"paths"`
 }
 
-// SnapshotDeleteParams contains the request parameters for this operation.
+// SnapshotDeleteParams contains the request parameters for DELETE /snapshots/{id}.
 type SnapshotDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *Snapshot) UnmarshalJSON(data []byte) error {
 	type snapshot Snapshot
 	var v snapshot
@@ -73,6 +77,7 @@ func (s *Snapshot) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *SnapshotCollection) UnmarshalJSON(data []byte) error {
 	type snapshots SnapshotCollection
 	var v snapshots
@@ -84,6 +89,7 @@ func (s *SnapshotCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *SnapshotCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

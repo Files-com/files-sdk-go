@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ExpectationEvaluation is a Files.com API resource.
 type ExpectationEvaluation struct {
 	Id                     int64                    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId            int64                    `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
@@ -28,24 +29,27 @@ type ExpectationEvaluation struct {
 	UpdatedAt              *time.Time               `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (e ExpectationEvaluation) Identifier() interface{} {
 	return e.Id
 }
 
+// ExpectationEvaluationCollection is a list of ExpectationEvaluation resources.
 type ExpectationEvaluationCollection []ExpectationEvaluation
 
-// ExpectationEvaluationListParams contains the request parameters for this operation.
+// ExpectationEvaluationListParams contains the request parameters for GET /expectation_evaluations.
 type ExpectationEvaluationListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// ExpectationEvaluationFindParams contains the request parameters for this operation.
+// ExpectationEvaluationFindParams contains the request parameters for GET /expectation_evaluations/{id}.
 type ExpectationEvaluationFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (e *ExpectationEvaluation) UnmarshalJSON(data []byte) error {
 	type expectationEvaluation ExpectationEvaluation
 	var v expectationEvaluation
@@ -57,6 +61,7 @@ func (e *ExpectationEvaluation) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (e *ExpectationEvaluationCollection) UnmarshalJSON(data []byte) error {
 	type expectationEvaluations ExpectationEvaluationCollection
 	var v expectationEvaluations
@@ -68,6 +73,7 @@ func (e *ExpectationEvaluationCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (e *ExpectationEvaluationCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*e))
 	for i, v := range *e {

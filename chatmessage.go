@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ChatMessage is a Files.com API resource.
 type ChatMessage struct {
 	Id        int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Role      string     `json:"role,omitempty" path:"role,omitempty" url:"role,omitempty"`
@@ -14,12 +15,15 @@ type ChatMessage struct {
 	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (c ChatMessage) Identifier() interface{} {
 	return c.Id
 }
 
+// ChatMessageCollection is a list of ChatMessage resources.
 type ChatMessageCollection []ChatMessage
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (c *ChatMessage) UnmarshalJSON(data []byte) error {
 	type chatMessage ChatMessage
 	var v chatMessage
@@ -31,6 +35,7 @@ func (c *ChatMessage) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (c *ChatMessageCollection) UnmarshalJSON(data []byte) error {
 	type chatMessages ChatMessageCollection
 	var v chatMessages
@@ -42,6 +47,7 @@ func (c *ChatMessageCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (c *ChatMessageCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*c))
 	for i, v := range *c {

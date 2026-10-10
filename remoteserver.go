@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// RemoteServer is a Files.com API resource.
 type RemoteServer struct {
 	Id                                      int64    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	Disabled                                *bool    `json:"disabled,omitempty" path:"disabled,omitempty" url:"disabled,omitempty"`
@@ -112,18 +113,24 @@ type RemoteServer struct {
 	FilesApiKey                             string   `json:"files_api_key,omitempty" path:"files_api_key,omitempty" url:"files_api_key,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (r RemoteServer) Identifier() interface{} {
 	return r.Id
 }
 
+// RemoteServerCollection is a list of RemoteServer resources.
 type RemoteServerCollection []RemoteServer
 
+// RemoteServerBufferUploadsEnum is a string value for buffer_uploads.
+// Enum lists the values documented by the API.
 type RemoteServerBufferUploadsEnum string
 
+// String returns the API parameter value.
 func (u RemoteServerBufferUploadsEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u RemoteServerBufferUploadsEnum) Enum() map[string]RemoteServerBufferUploadsEnum {
 	return map[string]RemoteServerBufferUploadsEnum{
 		"auto":   RemoteServerBufferUploadsEnum("auto"),
@@ -132,12 +139,16 @@ func (u RemoteServerBufferUploadsEnum) Enum() map[string]RemoteServerBufferUploa
 	}
 }
 
+// RemoteServerFilesAgentPermissionSetEnum is a string value for files_agent_permission_set.
+// Enum lists the values documented by the API.
 type RemoteServerFilesAgentPermissionSetEnum string
 
+// String returns the API parameter value.
 func (u RemoteServerFilesAgentPermissionSetEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u RemoteServerFilesAgentPermissionSetEnum) Enum() map[string]RemoteServerFilesAgentPermissionSetEnum {
 	return map[string]RemoteServerFilesAgentPermissionSetEnum{
 		"read_write": RemoteServerFilesAgentPermissionSetEnum("read_write"),
@@ -146,12 +157,16 @@ func (u RemoteServerFilesAgentPermissionSetEnum) Enum() map[string]RemoteServerF
 	}
 }
 
+// RemoteServerGoogleCloudStorageAuthenticationMethodEnum is a string value for google_cloud_storage_authentication_method.
+// Enum lists the values documented by the API.
 type RemoteServerGoogleCloudStorageAuthenticationMethodEnum string
 
+// String returns the API parameter value.
 func (u RemoteServerGoogleCloudStorageAuthenticationMethodEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u RemoteServerGoogleCloudStorageAuthenticationMethodEnum) Enum() map[string]RemoteServerGoogleCloudStorageAuthenticationMethodEnum {
 	return map[string]RemoteServerGoogleCloudStorageAuthenticationMethodEnum{
 		"json":  RemoteServerGoogleCloudStorageAuthenticationMethodEnum("json"),
@@ -160,12 +175,16 @@ func (u RemoteServerGoogleCloudStorageAuthenticationMethodEnum) Enum() map[strin
 	}
 }
 
+// RemoteServerOneDriveAccountTypeEnum is a string value for one_drive_account_type.
+// Enum lists the values documented by the API.
 type RemoteServerOneDriveAccountTypeEnum string
 
+// String returns the API parameter value.
 func (u RemoteServerOneDriveAccountTypeEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u RemoteServerOneDriveAccountTypeEnum) Enum() map[string]RemoteServerOneDriveAccountTypeEnum {
 	return map[string]RemoteServerOneDriveAccountTypeEnum{
 		"personal":       RemoteServerOneDriveAccountTypeEnum("personal"),
@@ -173,12 +192,16 @@ func (u RemoteServerOneDriveAccountTypeEnum) Enum() map[string]RemoteServerOneDr
 	}
 }
 
+// RemoteServerServerCertificateEnum is a string value for server_certificate.
+// Enum lists the values documented by the API.
 type RemoteServerServerCertificateEnum string
 
+// String returns the API parameter value.
 func (u RemoteServerServerCertificateEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u RemoteServerServerCertificateEnum) Enum() map[string]RemoteServerServerCertificateEnum {
 	return map[string]RemoteServerServerCertificateEnum{
 		"require_match": RemoteServerServerCertificateEnum("require_match"),
@@ -186,12 +209,16 @@ func (u RemoteServerServerCertificateEnum) Enum() map[string]RemoteServerServerC
 	}
 }
 
+// RemoteServerServerTypeEnum is a string value for server_type.
+// Enum lists the values documented by the API.
 type RemoteServerServerTypeEnum string
 
+// String returns the API parameter value.
 func (u RemoteServerServerTypeEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u RemoteServerServerTypeEnum) Enum() map[string]RemoteServerServerTypeEnum {
 	return map[string]RemoteServerServerTypeEnum{
 		"ftp":                  RemoteServerServerTypeEnum("ftp"),
@@ -217,12 +244,16 @@ func (u RemoteServerServerTypeEnum) Enum() map[string]RemoteServerServerTypeEnum
 	}
 }
 
+// RemoteServerSslEnum is a string value for ssl.
+// Enum lists the values documented by the API.
 type RemoteServerSslEnum string
 
+// String returns the API parameter value.
 func (u RemoteServerSslEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u RemoteServerSslEnum) Enum() map[string]RemoteServerSslEnum {
 	return map[string]RemoteServerSslEnum{
 		"if_available":     RemoteServerSslEnum("if_available"),
@@ -232,7 +263,7 @@ func (u RemoteServerSslEnum) Enum() map[string]RemoteServerSslEnum {
 	}
 }
 
-// RemoteServerListParams contains the request parameters for this operation.
+// RemoteServerListParams contains the request parameters for GET /remote_servers.
 type RemoteServerListParams struct {
 	UserId       int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
@@ -241,24 +272,24 @@ type RemoteServerListParams struct {
 	ListParams
 }
 
-// RemoteServerFindParams contains the request parameters for this operation.
+// RemoteServerFindParams contains the request parameters for GET /remote_servers/{id}.
 type RemoteServerFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// RemoteServerAgentNodesParams contains the request parameters for this operation.
+// RemoteServerAgentNodesParams contains the request parameters for GET /remote_servers/{id}/agent_nodes.
 //
 // List Files.com Agent nodes
 type RemoteServerAgentNodesParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// RemoteServerFindConfigurationFileParams contains the request parameters for this operation.
+// RemoteServerFindConfigurationFileParams contains the request parameters for GET /remote_servers/{id}/configuration_file.
 type RemoteServerFindConfigurationFileParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// RemoteServerCreateParams contains the request parameters for this operation.
+// RemoteServerCreateParams contains the request parameters for POST /remote_servers.
 type RemoteServerCreateParams struct {
 	UserId                                  int64                                                  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	Password                                string                                                 `url:"password,omitempty" json:"password,omitempty" path:"password"`
@@ -348,14 +379,14 @@ type RemoteServerCreateParams struct {
 	WorkspaceId                             int64                                                  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// RemoteServerAgentPushUpdateParams contains the request parameters for this operation.
+// RemoteServerAgentPushUpdateParams contains the request parameters for POST /remote_servers/{id}/agent_push_update.
 //
 // Push update to Files Agent
 type RemoteServerAgentPushUpdateParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// RemoteServerUpdateParams contains the request parameters for this operation.
+// RemoteServerUpdateParams contains the request parameters for PATCH /remote_servers/{id}.
 type RemoteServerUpdateParams struct {
 	Id                                      int64                                                  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	Password                                string                                                 `url:"password,omitempty" json:"password,omitempty" path:"password"`
@@ -444,11 +475,12 @@ type RemoteServerUpdateParams struct {
 	WasabiRegion                            string                                                 `url:"wasabi_region,omitempty" json:"wasabi_region,omitempty" path:"wasabi_region"`
 }
 
-// RemoteServerDeleteParams contains the request parameters for this operation.
+// RemoteServerDeleteParams contains the request parameters for DELETE /remote_servers/{id}.
 type RemoteServerDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (r *RemoteServer) UnmarshalJSON(data []byte) error {
 	type remoteServer RemoteServer
 	var v remoteServer
@@ -460,6 +492,7 @@ func (r *RemoteServer) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (r *RemoteServerCollection) UnmarshalJSON(data []byte) error {
 	type remoteServers RemoteServerCollection
 	var v remoteServers
@@ -471,6 +504,7 @@ func (r *RemoteServerCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (r *RemoteServerCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*r))
 	for i, v := range *r {

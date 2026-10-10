@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// EventSubscription is a Files.com API resource.
 type EventSubscription struct {
 	Id                   int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	EventChannelId       int64       `json:"event_channel_id,omitempty" path:"event_channel_id,omitempty" url:"event_channel_id,omitempty"`
@@ -25,25 +26,27 @@ type EventSubscription struct {
 	UpdatedAt            *time.Time  `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (e EventSubscription) Identifier() interface{} {
 	return e.Id
 }
 
+// EventSubscriptionCollection is a list of EventSubscription resources.
 type EventSubscriptionCollection []EventSubscription
 
-// EventSubscriptionListParams contains the request parameters for this operation.
+// EventSubscriptionListParams contains the request parameters for GET /event_subscriptions.
 type EventSubscriptionListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// EventSubscriptionFindParams contains the request parameters for this operation.
+// EventSubscriptionFindParams contains the request parameters for GET /event_subscriptions/{id}.
 type EventSubscriptionFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// EventSubscriptionCreateParams contains the request parameters for this operation.
+// EventSubscriptionCreateParams contains the request parameters for POST /event_subscriptions.
 type EventSubscriptionCreateParams struct {
 	EventChannelId       int64       `url:"event_channel_id,omitempty" json:"event_channel_id,omitempty" path:"event_channel_id"`
 	WorkspaceId          int64       `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
@@ -59,7 +62,7 @@ type EventSubscriptionCreateParams struct {
 	EventTargetIds       []int64     `url:"event_target_ids,omitempty" json:"event_target_ids,omitempty" path:"event_target_ids"`
 }
 
-// EventSubscriptionUpdateParams contains the request parameters for this operation.
+// EventSubscriptionUpdateParams contains the request parameters for PATCH /event_subscriptions/{id}.
 type EventSubscriptionUpdateParams struct {
 	Id                   int64       `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	EventChannelId       int64       `url:"event_channel_id,omitempty" json:"event_channel_id,omitempty" path:"event_channel_id"`
@@ -76,11 +79,12 @@ type EventSubscriptionUpdateParams struct {
 	EventTargetIds       []int64     `url:"event_target_ids,omitempty" json:"event_target_ids,omitempty" path:"event_target_ids"`
 }
 
-// EventSubscriptionDeleteParams contains the request parameters for this operation.
+// EventSubscriptionDeleteParams contains the request parameters for DELETE /event_subscriptions/{id}.
 type EventSubscriptionDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (e *EventSubscription) UnmarshalJSON(data []byte) error {
 	type eventSubscription EventSubscription
 	var v eventSubscription
@@ -92,6 +96,7 @@ func (e *EventSubscription) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (e *EventSubscriptionCollection) UnmarshalJSON(data []byte) error {
 	type eventSubscriptions EventSubscriptionCollection
 	var v eventSubscriptions
@@ -103,6 +108,7 @@ func (e *EventSubscriptionCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (e *EventSubscriptionCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*e))
 	for i, v := range *e {

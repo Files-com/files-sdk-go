@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// SsoEvent is a Files.com API resource.
 type SsoEvent struct {
 	Id            int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	EventType     string     `json:"event_type,omitempty" path:"event_type,omitempty" url:"event_type,omitempty"`
@@ -24,13 +25,15 @@ type SsoEvent struct {
 	Region        string     `json:"region,omitempty" path:"region,omitempty" url:"region,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (s SsoEvent) Identifier() interface{} {
 	return s.Id
 }
 
+// SsoEventCollection is a list of SsoEvent resources.
 type SsoEventCollection []SsoEvent
 
-// SsoEventListParams contains the request parameters for this operation.
+// SsoEventListParams contains the request parameters for GET /sso_events.
 type SsoEventListParams struct {
 	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
@@ -42,11 +45,12 @@ type SsoEventListParams struct {
 	ListParams
 }
 
-// SsoEventFindParams contains the request parameters for this operation.
+// SsoEventFindParams contains the request parameters for GET /sso_events/{id}.
 type SsoEventFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (s *SsoEvent) UnmarshalJSON(data []byte) error {
 	type ssoEvent SsoEvent
 	var v ssoEvent
@@ -58,6 +62,7 @@ func (s *SsoEvent) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (s *SsoEventCollection) UnmarshalJSON(data []byte) error {
 	type ssoEvents SsoEventCollection
 	var v ssoEvents
@@ -69,6 +74,7 @@ func (s *SsoEventCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (s *SsoEventCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*s))
 	for i, v := range *s {

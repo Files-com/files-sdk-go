@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// File is a Files.com API resource.
 type File struct {
 	Path                               string               `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 	CreatedById                        int64                `json:"created_by_id,omitempty" path:"created_by_id,omitempty" url:"created_by_id,omitempty"`
@@ -58,18 +59,21 @@ type File struct {
 	WithDirectConnectionInfo           *bool                `json:"with_direct_connection_info,omitempty" path:"with_direct_connection_info,omitempty" url:"with_direct_connection_info,omitempty"`
 }
 
+// Identifier returns the resource path.
 func (f File) Identifier() interface{} {
 	return f.Path
 }
 
+// FileCollection is a list of File resources.
 type FileCollection []File
 
+// EtagsParam contains the nested request parameters named by its fields.
 type EtagsParam struct {
 	Etag string `url:"etag,omitempty" json:"etag,omitempty" path:"etag"`
 	Part string `url:"part,omitempty" json:"part,omitempty" path:"part"`
 }
 
-// FileDownloadParams contains the request parameters for this operation.
+// FileDownloadParams contains the request parameters for GET /files/{path}.
 //
 // Download File
 type FileDownloadParams struct {
@@ -82,7 +86,7 @@ type FileDownloadParams struct {
 	File                     File   `url:"-" required:"false" json:"-"`
 }
 
-// FileCreateParams contains the request parameters for this operation.
+// FileCreateParams contains the request parameters for POST /files/{path}.
 type FileCreateParams struct {
 	Path                     string         `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	Action                   string         `url:"action,omitempty" json:"action,omitempty" path:"action"`
@@ -104,7 +108,7 @@ type FileCreateParams struct {
 	ActionAttributes         map[string]any `url:"action_attributes,omitempty" json:"action_attributes,omitempty" path:"action_attributes"`
 }
 
-// FileUpdateParams contains the request parameters for this operation.
+// FileUpdateParams contains the request parameters for PATCH /files/{path}.
 type FileUpdateParams struct {
 	Path           string      `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	CustomMetadata interface{} `url:"custom_metadata,omitempty" json:"custom_metadata,omitempty" path:"custom_metadata"`
@@ -112,13 +116,13 @@ type FileUpdateParams struct {
 	PriorityColor  string      `url:"priority_color,omitempty" json:"priority_color,omitempty" path:"priority_color"`
 }
 
-// FileDeleteParams contains the request parameters for this operation.
+// FileDeleteParams contains the request parameters for DELETE /files/{path}.
 type FileDeleteParams struct {
 	Path      string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	Recursive *bool  `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
 }
 
-// FileFindParams contains the request parameters for this operation.
+// FileFindParams contains the request parameters for GET /file_actions/metadata/{path}.
 type FileFindParams struct {
 	Path              string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	PreviewSize       string `url:"preview_size,omitempty" json:"preview_size,omitempty" path:"preview_size"`
@@ -126,14 +130,14 @@ type FileFindParams struct {
 	WithPriorityColor *bool  `url:"with_priority_color,omitempty" json:"with_priority_color,omitempty" path:"with_priority_color"`
 }
 
-// FileZipListContentsParams contains the request parameters for this operation.
+// FileZipListContentsParams contains the request parameters for GET /file_actions/zip_list/{path}.
 //
 // List the contents of a ZIP file
 type FileZipListContentsParams struct {
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 }
 
-// FileCopyParams contains the request parameters for this operation.
+// FileCopyParams contains the request parameters for POST /file_actions/copy/{path}.
 //
 // Copy File/Folder
 type FileCopyParams struct {
@@ -144,7 +148,7 @@ type FileCopyParams struct {
 	Overwrite     *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
-// FileMoveParams contains the request parameters for this operation.
+// FileMoveParams contains the request parameters for POST /file_actions/move/{path}.
 //
 // Move File/Folder
 type FileMoveParams struct {
@@ -153,7 +157,7 @@ type FileMoveParams struct {
 	Overwrite   *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
-// FileTransformParams contains the request parameters for this operation.
+// FileTransformParams contains the request parameters for POST /file_actions/transform/{path}.
 //
 // Transform a file and save the output to a destination path
 type FileTransformParams struct {
@@ -167,7 +171,7 @@ type FileTransformParams struct {
 	Overwrite     *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
-// FileGpgDecryptParams contains the request parameters for this operation.
+// FileGpgDecryptParams contains the request parameters for POST /file_actions/gpg_decrypt/{path}.
 //
 // Decrypt a GPG-encrypted file and save it to a destination path
 type FileGpgDecryptParams struct {
@@ -180,7 +184,7 @@ type FileGpgDecryptParams struct {
 	Overwrite         *bool   `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
-// FileGpgEncryptParams contains the request parameters for this operation.
+// FileGpgEncryptParams contains the request parameters for POST /file_actions/gpg_encrypt/{path}.
 //
 // Encrypt a file with GPG and save it to a destination path
 type FileGpgEncryptParams struct {
@@ -193,7 +197,7 @@ type FileGpgEncryptParams struct {
 	Overwrite       *bool   `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
-// FileUnzipParams contains the request parameters for this operation.
+// FileUnzipParams contains the request parameters for POST /file_actions/unzip.
 //
 // Extract a ZIP file to a destination folder
 type FileUnzipParams struct {
@@ -203,14 +207,14 @@ type FileUnzipParams struct {
 	Overwrite   *bool  `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
-// FileZipParams contains the request parameters for this operation.
+// FileZipParams contains the request parameters for POST /file_actions/zip.
 type FileZipParams struct {
 	Paths       []string `url:"paths" json:"paths" path:"paths"`
 	Destination string   `url:"destination" json:"destination" path:"destination"`
 	Overwrite   *bool    `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
-// FileBeginUploadParams contains the request parameters for this operation.
+// FileBeginUploadParams contains the request parameters for POST /file_actions/begin_upload/{path}.
 //
 // Begin File Upload
 type FileBeginUploadParams struct {
@@ -226,6 +230,8 @@ type FileBeginUploadParams struct {
 	WithDirectConnectionInfo *bool  `url:"with_direct_connection_info,omitempty" json:"with_direct_connection_info,omitempty" path:"with_direct_connection_info"`
 }
 
+// ToFolder copies the fields shared with Folder through their JSON representation.
+// It does not check whether f is a directory.
 func (f File) ToFolder() (Folder, error) {
 	bodyBytes, err := json.Marshal(f)
 	if err != nil {
@@ -236,18 +242,23 @@ func (f File) ToFolder() (Folder, error) {
 	return folder, nil
 }
 
+// String returns the Files.com path.
 func (f File) String() string {
 	return f.Path
 }
 
+// Iterable reports whether f is a directory whose children can be listed.
 func (f File) Iterable() bool {
 	return f.IsDir()
 }
 
+// IsDir reports whether the API resource type is "directory".
 func (f File) IsDir() bool {
 	return f.Type == "directory"
 }
 
+// ModTime returns ProvidedMtime when present, then Mtime, or the zero time
+// when neither timestamp is available.
 func (f File) ModTime() time.Time {
 	if f.ProvidedMtime != nil {
 		return *f.ProvidedMtime
@@ -258,12 +269,15 @@ func (f File) ModTime() time.Time {
 	return time.Time{}
 }
 
+// CreationTime returns CreatedAt, or the zero time when it is unavailable.
 func (f File) CreationTime() time.Time {
 	if f.CreatedAt != nil {
 		return *f.CreatedAt
 	}
 	return time.Time{}
 }
+
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (f *File) UnmarshalJSON(data []byte) error {
 	type file File
 	var v file
@@ -275,6 +289,7 @@ func (f *File) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (f *FileCollection) UnmarshalJSON(data []byte) error {
 	type files FileCollection
 	var v files
@@ -286,6 +301,7 @@ func (f *FileCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (f *FileCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*f))
 	for i, v := range *f {

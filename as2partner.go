@@ -6,6 +6,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// As2Partner is a Files.com API resource.
 type As2Partner struct {
 	Id                         int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	WorkspaceId                int64       `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
@@ -32,18 +33,24 @@ type As2Partner struct {
 	Pkcs12Password             string      `json:"pkcs12_password,omitempty" path:"pkcs12_password,omitempty" url:"pkcs12_password,omitempty"`
 }
 
+// Identifier returns the resource ID.
 func (a As2Partner) Identifier() interface{} {
 	return a.Id
 }
 
+// As2PartnerCollection is a list of As2Partner resources.
 type As2PartnerCollection []As2Partner
 
+// As2PartnerMdnValidationLevelEnum is a string value for mdn_validation_level.
+// Enum lists the values documented by the API.
 type As2PartnerMdnValidationLevelEnum string
 
+// String returns the API parameter value.
 func (u As2PartnerMdnValidationLevelEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u As2PartnerMdnValidationLevelEnum) Enum() map[string]As2PartnerMdnValidationLevelEnum {
 	return map[string]As2PartnerMdnValidationLevelEnum{
 		"none":   As2PartnerMdnValidationLevelEnum("none"),
@@ -54,12 +61,16 @@ func (u As2PartnerMdnValidationLevelEnum) Enum() map[string]As2PartnerMdnValidat
 	}
 }
 
+// As2PartnerSignatureValidationLevelEnum is a string value for signature_validation_level.
+// Enum lists the values documented by the API.
 type As2PartnerSignatureValidationLevelEnum string
 
+// String returns the API parameter value.
 func (u As2PartnerSignatureValidationLevelEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u As2PartnerSignatureValidationLevelEnum) Enum() map[string]As2PartnerSignatureValidationLevelEnum {
 	return map[string]As2PartnerSignatureValidationLevelEnum{
 		"normal": As2PartnerSignatureValidationLevelEnum("normal"),
@@ -68,12 +79,16 @@ func (u As2PartnerSignatureValidationLevelEnum) Enum() map[string]As2PartnerSign
 	}
 }
 
+// As2PartnerServerCertificateEnum is a string value for server_certificate.
+// Enum lists the values documented by the API.
 type As2PartnerServerCertificateEnum string
 
+// String returns the API parameter value.
 func (u As2PartnerServerCertificateEnum) String() string {
 	return string(u)
 }
 
+// Enum returns the documented values keyed by their API strings.
 func (u As2PartnerServerCertificateEnum) Enum() map[string]As2PartnerServerCertificateEnum {
 	return map[string]As2PartnerServerCertificateEnum{
 		"require_match": As2PartnerServerCertificateEnum("require_match"),
@@ -81,19 +96,19 @@ func (u As2PartnerServerCertificateEnum) Enum() map[string]As2PartnerServerCerti
 	}
 }
 
-// As2PartnerListParams contains the request parameters for this operation.
+// As2PartnerListParams contains the request parameters for GET /as2_partners.
 type As2PartnerListParams struct {
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	ListParams
 }
 
-// As2PartnerFindParams contains the request parameters for this operation.
+// As2PartnerFindParams contains the request parameters for GET /as2_partners/{id}.
 type As2PartnerFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// As2PartnerCreateParams contains the request parameters for this operation.
+// As2PartnerCreateParams contains the request parameters for POST /as2_partners.
 type As2PartnerCreateParams struct {
 	EnableDedicatedIps       *bool                                  `url:"enable_dedicated_ips,omitempty" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
 	HttpAuthUsername         string                                 `url:"http_auth_username,omitempty" json:"http_auth_username,omitempty" path:"http_auth_username"`
@@ -111,7 +126,7 @@ type As2PartnerCreateParams struct {
 	Pkcs12Password           string                                 `url:"pkcs12_password,omitempty" json:"pkcs12_password,omitempty" path:"pkcs12_password"`
 }
 
-// As2PartnerUpdateParams contains the request parameters for this operation.
+// As2PartnerUpdateParams contains the request parameters for PATCH /as2_partners/{id}.
 type As2PartnerUpdateParams struct {
 	Id                       int64                                  `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	EnableDedicatedIps       *bool                                  `url:"enable_dedicated_ips,omitempty" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
@@ -129,11 +144,12 @@ type As2PartnerUpdateParams struct {
 	Pkcs12Password           string                                 `url:"pkcs12_password,omitempty" json:"pkcs12_password,omitempty" path:"pkcs12_password"`
 }
 
-// As2PartnerDeleteParams contains the request parameters for this operation.
+// As2PartnerDeleteParams contains the request parameters for DELETE /as2_partners/{id}.
 type As2PartnerDeleteParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *As2Partner) UnmarshalJSON(data []byte) error {
 	type as2Partner As2Partner
 	var v as2Partner
@@ -145,6 +161,7 @@ func (a *As2Partner) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *As2PartnerCollection) UnmarshalJSON(data []byte) error {
 	type as2Partners As2PartnerCollection
 	var v as2Partners
@@ -156,6 +173,7 @@ func (a *As2PartnerCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *As2PartnerCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {

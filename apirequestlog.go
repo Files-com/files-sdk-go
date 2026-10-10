@@ -7,6 +7,7 @@ import (
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
+// ApiRequestLog is a Files.com API resource.
 type ApiRequestLog struct {
 	Timestamp            *time.Time `json:"timestamp,omitempty" path:"timestamp,omitempty" url:"timestamp,omitempty"`
 	ApiKeyId             int64      `json:"api_key_id,omitempty" path:"api_key_id,omitempty" url:"api_key_id,omitempty"`
@@ -33,9 +34,10 @@ type ApiRequestLog struct {
 
 // Identifier no path or id
 
+// ApiRequestLogCollection is a list of ApiRequestLog resources.
 type ApiRequestLogCollection []ApiRequestLog
 
-// ApiRequestLogListParams contains the request parameters for this operation.
+// ApiRequestLogListParams contains the request parameters for GET /api_request_logs.
 type ApiRequestLogListParams struct {
 	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	FilterGt     interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
@@ -46,6 +48,7 @@ type ApiRequestLogListParams struct {
 	ListParams
 }
 
+// UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
 func (a *ApiRequestLog) UnmarshalJSON(data []byte) error {
 	type apiRequestLog ApiRequestLog
 	var v apiRequestLog
@@ -57,6 +60,7 @@ func (a *ApiRequestLog) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// UnmarshalJSON decodes a list of API resources. A decoding error leaves the receiver unchanged.
 func (a *ApiRequestLogCollection) UnmarshalJSON(data []byte) error {
 	type apiRequestLogs ApiRequestLogCollection
 	var v apiRequestLogs
@@ -68,6 +72,7 @@ func (a *ApiRequestLogCollection) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// ToSlice returns a new slice containing the resources as interface values.
 func (a *ApiRequestLogCollection) ToSlice() *[]interface{} {
 	ret := make([]interface{}, len(*a))
 	for i, v := range *a {
