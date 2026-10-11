@@ -137,6 +137,14 @@ type FileZipListContentsParams struct {
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 }
 
+// FileBeginDeleteParams contains the request parameters for POST /file_actions/delete/{path}.
+//
+// Delete File/Folder and return its File Action.  A pending or processing deletion continues in the background after this returns; check its File Migration for completion.  Waiting for the File Migration does not cancel the deletion
+type FileBeginDeleteParams struct {
+	Path      string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	Recursive *bool  `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
+}
+
 // FileCopyParams contains the request parameters for POST /file_actions/copy/{path}.
 //
 // Copy File/Folder

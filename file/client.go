@@ -316,6 +316,19 @@ func ZipListContents(params files_sdk.FileZipListContentsParams, opts ...files_s
 	return (&Client{}).ZipListContents(params, opts...)
 }
 
+// BeginDelete calls POST /file_actions/delete/{path}.
+//
+// API operation: Delete File/Folder and return its File Action.  A pending or processing deletion continues in the background after this returns; check its File Migration for completion.  Waiting for the File Migration does not cancel the deletion.
+func (c *Client) BeginDelete(params files_sdk.FileBeginDeleteParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/delete/{path}", Params: params, Entity: &fileAction}, opts...)
+	return
+}
+
+// BeginDelete calls Client.BeginDelete using the default configuration.
+func BeginDelete(params files_sdk.FileBeginDeleteParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	return (&Client{}).BeginDelete(params, opts...)
+}
+
 // Copy calls POST /file_actions/copy/{path}.
 //
 // API operation: Copy File/Folder.
