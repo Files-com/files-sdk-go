@@ -27,9 +27,13 @@ func mountPoint(mountPoint string, _ bool) (string, error) {
 }
 
 // libfuse3 rejects the hard_remove and volname options from defaultMountOpts,
-// and cgofuse already passes -f.
+// and cgofuse already passes -f. With auto_unmount, fusermount3 3.15 and later
+// removes the mount when the process exits without unmounting, such as after a
+// crash or SIGKILL, instead of leaving a mount point that fails with "Transport
+// endpoint is not connected". Older versions check the mount point as root,
+// which FUSE denies, and leave the mount in place.
 func mountOpts(params MountParams) []string {
-	opts := []string{"-o", "attr_timeout=1", "-o", "fsname=Files.com"}
+	opts := []string{"-o", "attr_timeout=1", "-o", "fsname=Files.com", "-o", "auto_unmount"}
 	if params.DebugFuse {
 		opts = append(opts, "-o", "debug")
 	}

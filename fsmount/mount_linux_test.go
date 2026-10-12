@@ -1,10 +1,14 @@
 package fsmount
 
 import (
+	"bufio"
 	"context"
+	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -133,4 +137,71 @@ func TestLinuxMountedFileOperations(t *testing.T) {
 			require.NoError(t, os.Remove(lock))
 		})
 	}
+}
+
+// TestLinuxMountHelperProcess is the child process of
+// TestLinuxMountIsRemovedWhenProcessIsKilled. It mounts and waits to be killed.
+func TestLinuxMountHelperProcess(t *testing.T) {
+	mountPoint := os.Getenv("FILESCOMFS_TEST_MOUNT_HELPER")
+	if mountPoint == "" {
+		t.Skip("runs only as the child process of TestLinuxMountIsRemovedWhenProcessIsKilled")
+	}
+	backend := directoryMountBackend{root: t.TempDir()}
+	_, err := Mount(MountParams{Config: &files_sdk.Config{Logger: lib.NullLogger{}}, ProviderBackend: backend, MountPoint: mountPoint, TmpFsPath: privateTempDir(t), DiskCachePath: privateTempDir(t)})
+	require.NoError(t, err)
+	time.Sleep(time.Hour)
+}
+
+func TestLinuxMountIsRemovedWhenProcessIsKilled(t *testing.T) {
+	if os.Getenv("FILESCOMFS_TEST_MOUNT") != "1" {
+		t.Skip("set FILESCOMFS_TEST_MOUNT=1 with /dev/fuse available")
+	}
+	skipWithoutAutoUnmount(t)
+	mount := t.TempDir()
+	testBinary, err := os.Executable()
+	require.NoError(t, err)
+	child := exec.Command(testBinary, "-test.run=^TestLinuxMountHelperProcess$")
+	child.Env = append(os.Environ(), "FILESCOMFS_TEST_MOUNT_HELPER="+mount)
+	require.NoError(t, child.Start())
+	t.Cleanup(func() {
+		_ = child.Process.Kill()
+		_ = child.Wait()
+	})
+	require.Eventually(t, func() bool { return isMountPoint(t, mount) }, 10*time.Second, 50*time.Millisecond)
+
+	// SIGKILL gives the process no chance to unmount.
+	require.NoError(t, child.Process.Kill())
+	_ = child.Wait()
+
+	require.Eventually(t, func() bool { return !isMountPoint(t, mount) }, 10*time.Second, 50*time.Millisecond)
+	_, err = os.ReadDir(mount)
+	require.NoError(t, err)
+}
+
+// fusermount3 before 3.15 checks a dead mount point as root, which FUSE denies
+// without allow_root, so auto_unmount leaves the mount in place.
+func skipWithoutAutoUnmount(t *testing.T) {
+	output, err := exec.Command("fusermount3", "--version").CombinedOutput()
+	require.NoError(t, err)
+	var major, minor int
+	_, err = fmt.Sscanf(strings.TrimSpace(string(output)), "fusermount3 version: %d.%d", &major, &minor)
+	require.NoError(t, err)
+	if major == 3 && minor < 15 {
+		t.Skipf("fusermount3 %d.%d leaves the mount of a killed process; auto_unmount needs 3.15 or later", major, minor)
+	}
+}
+
+func isMountPoint(t *testing.T, path string) bool {
+	mountInfo, err := os.Open("/proc/self/mountinfo")
+	require.NoError(t, err)
+	defer mountInfo.Close()
+	scanner := bufio.NewScanner(mountInfo)
+	for scanner.Scan() {
+		// The fifth field is the mount point.
+		if fields := strings.Fields(scanner.Text()); len(fields) > 4 && fields[4] == path {
+			return true
+		}
+	}
+	require.NoError(t, scanner.Err())
+	return false
 }
