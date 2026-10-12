@@ -80,6 +80,7 @@ type Site struct {
 	DisableAllAiFeatures                               *bool       `json:"disable_all_ai_features,omitempty" path:"disable_all_ai_features,omitempty" url:"disable_all_ai_features,omitempty"`
 	DisableFilesCertificateGeneration                  *bool       `json:"disable_files_certificate_generation,omitempty" path:"disable_files_certificate_generation,omitempty" url:"disable_files_certificate_generation,omitempty"`
 	DisableNotifications                               *bool       `json:"disable_notifications,omitempty" path:"disable_notifications,omitempty" url:"disable_notifications,omitempty"`
+	FileActivityEventsEnabled                          *bool       `json:"file_activity_events_enabled,omitempty" path:"file_activity_events_enabled,omitempty" url:"file_activity_events_enabled,omitempty"`
 	DisablePasswordReset                               *bool       `json:"disable_password_reset,omitempty" path:"disable_password_reset,omitempty" url:"disable_password_reset,omitempty"`
 	Domain                                             string      `json:"domain,omitempty" path:"domain,omitempty" url:"domain,omitempty"`
 	DomainHstsHeader                                   *bool       `json:"domain_hsts_header,omitempty" path:"domain_hsts_header,omitempty" url:"domain_hsts_header,omitempty"`
@@ -269,6 +270,7 @@ type SiteUpdateParams struct {
 	LegacyChecksumsMode                                *bool       `url:"legacy_checksums_mode,omitempty" json:"legacy_checksums_mode,omitempty" path:"legacy_checksums_mode"`
 	MigrateRemoteServerSyncToSync                      *bool       `url:"migrate_remote_server_sync_to_sync,omitempty" json:"migrate_remote_server_sync_to_sync,omitempty" path:"migrate_remote_server_sync_to_sync"`
 	As2MessageRetentionDays                            int64       `url:"as2_message_retention_days,omitempty" json:"as2_message_retention_days,omitempty" path:"as2_message_retention_days"`
+	FileActivityEventsEnabled                          *bool       `url:"file_activity_events_enabled,omitempty" json:"file_activity_events_enabled,omitempty" path:"file_activity_events_enabled"`
 	UsernameDisplay                                    string      `url:"username_display,omitempty" json:"username_display,omitempty" path:"username_display"`
 	SessionExpiryMinutes                               int64       `url:"session_expiry_minutes,omitempty" json:"session_expiry_minutes,omitempty" path:"session_expiry_minutes"`
 	SslRequired                                        *bool       `url:"ssl_required,omitempty" json:"ssl_required,omitempty" path:"ssl_required"`
