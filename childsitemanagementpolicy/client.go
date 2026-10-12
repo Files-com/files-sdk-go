@@ -54,6 +54,8 @@ func (i *Iter) LoadResource(identifier interface{}, opts ...files_sdk.RequestRes
 // List returns an iterator for GET /child_site_management_policies.
 // Pages are requested as iteration reaches them: range over Iter.All, or call
 // Next and then check Err.
+//
+// API operation: List Child Site Management Policies. On a Child Site, returns only the policy covering that site. Its value contains managed setting names with null values.
 func (c *Client) List(params files_sdk.ChildSiteManagementPolicyListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
 	path, err := lib.BuildPath("/child_site_management_policies", params)
