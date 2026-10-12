@@ -1,4 +1,4 @@
-// Package remote_bandwidth_snapshot provides the Files.com RemoteBandwidthSnapshot API client.
+// Package remote_bandwidth_snapshot is the Files.com API client package for the files_sdk.RemoteBandwidthSnapshot model.
 package remote_bandwidth_snapshot
 
 import (

@@ -1,4 +1,4 @@
-// Package bundle provides the Files.com Bundle API client.
+// Package bundle is the Files.com API client package for the files_sdk.Bundle model.
 package bundle
 
 import (

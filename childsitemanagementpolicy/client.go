@@ -1,4 +1,4 @@
-// Package child_site_management_policy provides the Files.com ChildSiteManagementPolicy API client.
+// Package child_site_management_policy is the Files.com API client package for the files_sdk.ChildSiteManagementPolicy model.
 package child_site_management_policy
 
 import (

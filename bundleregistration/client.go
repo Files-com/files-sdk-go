@@ -1,4 +1,4 @@
-// Package bundle_registration provides the Files.com BundleRegistration API client.
+// Package bundle_registration is the Files.com API client package for the files_sdk.BundleRegistration model.
 package bundle_registration
 
 import (

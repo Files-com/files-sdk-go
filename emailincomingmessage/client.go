@@ -1,4 +1,4 @@
-// Package email_incoming_message provides the Files.com EmailIncomingMessage API client.
+// Package email_incoming_message is the Files.com API client package for the files_sdk.EmailIncomingMessage model.
 package email_incoming_message
 
 import (

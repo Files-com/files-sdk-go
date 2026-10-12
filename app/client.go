@@ -1,4 +1,4 @@
-// Package app provides the Files.com App API client.
+// Package app is the Files.com API client package for the files_sdk.App model.
 package app
 
 import (

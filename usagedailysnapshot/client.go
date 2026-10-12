@@ -1,4 +1,4 @@
-// Package usage_daily_snapshot provides the Files.com UsageDailySnapshot API client.
+// Package usage_daily_snapshot is the Files.com API client package for the files_sdk.UsageDailySnapshot model.
 package usage_daily_snapshot
 
 import (

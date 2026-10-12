@@ -1,4 +1,4 @@
-// Package custom_domain provides the Files.com CustomDomain API client.
+// Package custom_domain is the Files.com API client package for the files_sdk.CustomDomain model.
 package custom_domain
 
 import (

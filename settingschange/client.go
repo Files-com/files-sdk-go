@@ -1,4 +1,4 @@
-// Package settings_change provides the Files.com SettingsChange API client.
+// Package settings_change is the Files.com API client package for the files_sdk.SettingsChange model.
 package settings_change
 
 import (

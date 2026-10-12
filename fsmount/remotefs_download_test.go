@@ -147,10 +147,14 @@ func TestRemoteFsEvictionDuringBackgroundDownloadKeepsCacheIntact(t *testing.T) 
 	// Relieve pressure before completion so the finished entry can be retained.
 	dc.Delete(other.Path)
 	resume()
+	// The download has finished once its request has ended and its stream has
+	// released the cache pin it holds while running. The request count drops
+	// before the stream releases that pin, so wait for both.
 	deadline := time.Now().Add(3 * time.Second)
-	for fs.rangeDownloads().diagnosticsSnapshot().ActiveRequests != 0 {
+	for fs.rangeDownloads().diagnosticsSnapshot().ActiveRequests != 0 || dc.Stats().PinnedCount != 0 {
 		if time.Now().After(deadline) {
-			t.Fatal("download did not finish")
+			t.Fatalf("download did not finish: active requests=%d pinned=%v",
+				fs.rangeDownloads().diagnosticsSnapshot().ActiveRequests, dc.Stats().PinnedPaths)
 		}
 		time.Sleep(time.Millisecond)
 	}

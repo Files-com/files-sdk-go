@@ -1,4 +1,4 @@
-// Package desktop_configuration_profile provides the Files.com DesktopConfigurationProfile API client.
+// Package desktop_configuration_profile is the Files.com API client package for the files_sdk.DesktopConfigurationProfile model.
 package desktop_configuration_profile
 
 import (

@@ -1,4 +1,4 @@
-// Package usage_snapshot provides the Files.com UsageSnapshot API client.
+// Package usage_snapshot is the Files.com API client package for the files_sdk.UsageSnapshot model.
 package usage_snapshot
 
 import (

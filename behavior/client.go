@@ -1,4 +1,4 @@
-// Package behavior provides the Files.com Behavior API client.
+// Package behavior is the Files.com API client package for the files_sdk.Behavior model.
 package behavior
 
 import (

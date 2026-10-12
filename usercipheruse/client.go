@@ -1,4 +1,4 @@
-// Package user_cipher_use provides the Files.com UserCipherUse API client.
+// Package user_cipher_use is the Files.com API client package for the files_sdk.UserCipherUse model.
 package user_cipher_use
 
 import (

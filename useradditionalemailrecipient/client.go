@@ -1,4 +1,4 @@
-// Package user_additional_email_recipient provides the Files.com UserAdditionalEmailRecipient API client.
+// Package user_additional_email_recipient is the Files.com API client package for the files_sdk.UserAdditionalEmailRecipient model.
 package user_additional_email_recipient
 
 import (

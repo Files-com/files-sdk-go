@@ -1,4 +1,4 @@
-// Package as2_partner provides the Files.com As2Partner API client.
+// Package as2_partner is the Files.com API client package for the files_sdk.As2Partner model.
 package as2_partner
 
 import (

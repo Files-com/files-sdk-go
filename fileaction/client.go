@@ -1,2 +1,2 @@
-// Package file_action provides the Files.com FileAction API client.
+// Package file_action is the Files.com API client package for the files_sdk.FileAction model.
 package file_action

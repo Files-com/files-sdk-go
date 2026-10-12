@@ -1,4 +1,4 @@
-// Package as2_incoming_message provides the Files.com As2IncomingMessage API client.
+// Package as2_incoming_message is the Files.com API client package for the files_sdk.As2IncomingMessage model.
 package as2_incoming_message
 
 import (

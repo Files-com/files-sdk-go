@@ -1,4 +1,4 @@
-// Package expectation_evaluation provides the Files.com ExpectationEvaluation API client.
+// Package expectation_evaluation is the Files.com API client package for the files_sdk.ExpectationEvaluation model.
 package expectation_evaluation
 
 import (

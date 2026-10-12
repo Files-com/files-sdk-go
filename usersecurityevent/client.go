@@ -1,4 +1,4 @@
-// Package user_security_event provides the Files.com UserSecurityEvent API client.
+// Package user_security_event is the Files.com API client package for the files_sdk.UserSecurityEvent model.
 package user_security_event
 
 import (

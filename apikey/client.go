@@ -1,4 +1,4 @@
-// Package api_key provides the Files.com ApiKey API client.
+// Package api_key is the Files.com API client package for the files_sdk.ApiKey model.
 package api_key
 
 import (

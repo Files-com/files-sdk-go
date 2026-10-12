@@ -1,4 +1,4 @@
-// Package pending_work_event provides the Files.com PendingWorkEvent API client.
+// Package pending_work_event is the Files.com API client package for the files_sdk.PendingWorkEvent model.
 package pending_work_event
 
 import (

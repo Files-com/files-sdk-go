@@ -1,4 +1,4 @@
-// Package partner_site_request provides the Files.com PartnerSiteRequest API client.
+// Package partner_site_request is the Files.com API client package for the files_sdk.PartnerSiteRequest model.
 package partner_site_request
 
 import (

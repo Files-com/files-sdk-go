@@ -1,4 +1,4 @@
-// Package siem_http_destination_event provides the Files.com SiemHttpDestinationEvent API client.
+// Package siem_http_destination_event is the Files.com API client package for the files_sdk.SiemHttpDestinationEvent model.
 package siem_http_destination_event
 
 import (

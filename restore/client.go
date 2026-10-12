@@ -1,4 +1,4 @@
-// Package restore provides the Files.com Restore API client.
+// Package restore is the Files.com API client package for the files_sdk.Restore model.
 package restore
 
 import (

@@ -1,4 +1,4 @@
-// Package event_channel provides the Files.com EventChannel API client.
+// Package event_channel is the Files.com API client package for the files_sdk.EventChannel model.
 package event_channel
 
 import (

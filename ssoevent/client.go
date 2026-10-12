@@ -1,4 +1,4 @@
-// Package sso_event provides the Files.com SsoEvent API client.
+// Package sso_event is the Files.com API client package for the files_sdk.SsoEvent model.
 package sso_event
 
 import (

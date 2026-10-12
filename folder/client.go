@@ -1,4 +1,4 @@
-// Package folder provides the Files.com Folder API client.
+// Package folder is the Files.com API client package for the files_sdk.Folder model.
 package folder
 
 import (

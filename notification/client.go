@@ -1,4 +1,4 @@
-// Package notification provides the Files.com Notification API client.
+// Package notification is the Files.com API client package for the files_sdk.Notification model.
 package notification
 
 import (

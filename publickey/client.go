@@ -1,4 +1,4 @@
-// Package public_key provides the Files.com PublicKey API client.
+// Package public_key is the Files.com API client package for the files_sdk.PublicKey model.
 package public_key
 
 import (

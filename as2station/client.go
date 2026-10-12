@@ -1,4 +1,4 @@
-// Package as2_station provides the Files.com As2Station API client.
+// Package as2_station is the Files.com API client package for the files_sdk.As2Station model.
 package as2_station
 
 import (

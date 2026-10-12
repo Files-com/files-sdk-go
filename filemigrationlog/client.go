@@ -1,4 +1,4 @@
-// Package file_migration_log provides the Files.com FileMigrationLog API client.
+// Package file_migration_log is the Files.com API client package for the files_sdk.FileMigrationLog model.
 package file_migration_log
 
 import (

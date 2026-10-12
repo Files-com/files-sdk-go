@@ -1,4 +1,4 @@
-// Package inbox_registration provides the Files.com InboxRegistration API client.
+// Package inbox_registration is the Files.com API client package for the files_sdk.InboxRegistration model.
 package inbox_registration
 
 import (

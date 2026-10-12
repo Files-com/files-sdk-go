@@ -1,4 +1,4 @@
-// Package invoice provides the Files.com Invoice API client.
+// Package invoice is the Files.com API client package for the files_sdk.Invoice model.
 package invoice
 
 import (

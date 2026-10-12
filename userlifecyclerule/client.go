@@ -1,4 +1,4 @@
-// Package user_lifecycle_rule provides the Files.com UserLifecycleRule API client.
+// Package user_lifecycle_rule is the Files.com API client package for the files_sdk.UserLifecycleRule model.
 package user_lifecycle_rule
 
 import (

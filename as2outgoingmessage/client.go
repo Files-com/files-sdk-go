@@ -1,4 +1,4 @@
-// Package as2_outgoing_message provides the Files.com As2OutgoingMessage API client.
+// Package as2_outgoing_message is the Files.com API client package for the files_sdk.As2OutgoingMessage model.
 package as2_outgoing_message
 
 import (

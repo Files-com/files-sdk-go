@@ -1,4 +1,4 @@
-// Package remote_mount_backend provides the Files.com RemoteMountBackend API client.
+// Package remote_mount_backend is the Files.com API client package for the files_sdk.RemoteMountBackend model.
 package remote_mount_backend
 
 import (

@@ -1,4 +1,4 @@
-// Package share_group provides the Files.com ShareGroup API client.
+// Package share_group is the Files.com API client package for the files_sdk.ShareGroup model.
 package share_group
 
 import (

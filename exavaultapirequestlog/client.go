@@ -1,4 +1,4 @@
-// Package exavault_api_request_log provides the Files.com ExavaultApiRequestLog API client.
+// Package exavault_api_request_log is the Files.com API client package for the files_sdk.ExavaultApiRequestLog model.
 package exavault_api_request_log
 
 import (

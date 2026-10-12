@@ -1,4 +1,4 @@
-// Package bundle_recipient provides the Files.com BundleRecipient API client.
+// Package bundle_recipient is the Files.com API client package for the files_sdk.BundleRecipient model.
 package bundle_recipient
 
 import (

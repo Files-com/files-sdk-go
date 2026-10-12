@@ -1,4 +1,4 @@
-// Package file_comment provides the Files.com FileComment API client.
+// Package file_comment is the Files.com API client package for the files_sdk.FileComment model.
 package file_comment
 
 import (

@@ -1,4 +1,4 @@
-// Package file provides the Files.com File API client.
+// Package file is the Files.com API client package for the files_sdk.File model.
 package file
 
 import (

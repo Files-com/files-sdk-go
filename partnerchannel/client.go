@@ -1,4 +1,4 @@
-// Package partner_channel provides the Files.com PartnerChannel API client.
+// Package partner_channel is the Files.com API client package for the files_sdk.PartnerChannel model.
 package partner_channel
 
 import (

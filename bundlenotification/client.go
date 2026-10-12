@@ -1,4 +1,4 @@
-// Package bundle_notification provides the Files.com BundleNotification API client.
+// Package bundle_notification is the Files.com API client package for the files_sdk.BundleNotification model.
 package bundle_notification
 
 import (

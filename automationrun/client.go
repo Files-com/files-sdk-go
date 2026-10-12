@@ -1,4 +1,4 @@
-// Package automation_run provides the Files.com AutomationRun API client.
+// Package automation_run is the Files.com API client package for the files_sdk.AutomationRun model.
 package automation_run
 
 import (

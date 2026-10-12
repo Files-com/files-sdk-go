@@ -1,4 +1,4 @@
-// Package holiday_calendar provides the Files.com HolidayCalendar API client.
+// Package holiday_calendar is the Files.com API client package for the files_sdk.HolidayCalendar model.
 package holiday_calendar
 
 import (

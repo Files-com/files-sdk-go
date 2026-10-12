@@ -1,4 +1,4 @@
-// Package event_subscription provides the Files.com EventSubscription API client.
+// Package event_subscription is the Files.com API client package for the files_sdk.EventSubscription model.
 package event_subscription
 
 import (

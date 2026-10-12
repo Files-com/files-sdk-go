@@ -1,4 +1,4 @@
-// Package inbox_upload provides the Files.com InboxUpload API client.
+// Package inbox_upload is the Files.com API client package for the files_sdk.InboxUpload model.
 package inbox_upload
 
 import (

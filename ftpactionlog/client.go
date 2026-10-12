@@ -1,4 +1,4 @@
-// Package ftp_action_log provides the Files.com FtpActionLog API client.
+// Package ftp_action_log is the Files.com API client package for the files_sdk.FtpActionLog model.
 package ftp_action_log
 
 import (

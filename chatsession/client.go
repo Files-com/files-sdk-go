@@ -1,4 +1,4 @@
-// Package chat_session provides the Files.com ChatSession API client.
+// Package chat_session is the Files.com API client package for the files_sdk.ChatSession model.
 package chat_session
 
 import (

@@ -1,4 +1,4 @@
-// Package automation provides the Files.com Automation API client.
+// Package automation is the Files.com API client package for the files_sdk.Automation model.
 package automation
 
 import (

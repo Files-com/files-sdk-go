@@ -1,4 +1,4 @@
-// Package site provides the Files.com Site API client.
+// Package site is the Files.com API client package for the files_sdk.Site model.
 package site
 
 import (

@@ -1,4 +1,4 @@
-// Package secret provides the Files.com Secret API client.
+// Package secret is the Files.com API client package for the files_sdk.Secret model.
 package secret
 
 import (

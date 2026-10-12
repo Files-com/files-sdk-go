@@ -1,4 +1,4 @@
-// Package user_request provides the Files.com UserRequest API client.
+// Package user_request is the Files.com API client package for the files_sdk.UserRequest model.
 package user_request
 
 import (

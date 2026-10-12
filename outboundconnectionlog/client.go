@@ -1,4 +1,4 @@
-// Package outbound_connection_log provides the Files.com OutboundConnectionLog API client.
+// Package outbound_connection_log is the Files.com API client package for the files_sdk.OutboundConnectionLog model.
 package outbound_connection_log
 
 import (

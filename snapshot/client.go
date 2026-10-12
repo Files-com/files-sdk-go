@@ -1,4 +1,4 @@
-// Package snapshot provides the Files.com Snapshot API client.
+// Package snapshot is the Files.com API client package for the files_sdk.Snapshot model.
 package snapshot
 
 import (

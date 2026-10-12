@@ -1,4 +1,4 @@
-// Package expectation provides the Files.com Expectation API client.
+// Package expectation is the Files.com API client package for the files_sdk.Expectation model.
 package expectation
 
 import (

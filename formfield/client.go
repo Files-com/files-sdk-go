@@ -1,2 +1,2 @@
-// Package form_field provides the Files.com FormField API client.
+// Package form_field is the Files.com API client package for the files_sdk.FormField model.
 package form_field

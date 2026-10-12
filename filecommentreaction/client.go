@@ -1,4 +1,4 @@
-// Package file_comment_reaction provides the Files.com FileCommentReaction API client.
+// Package file_comment_reaction is the Files.com API client package for the files_sdk.FileCommentReaction model.
 package file_comment_reaction
 
 import (

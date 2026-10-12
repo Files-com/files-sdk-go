@@ -1,4 +1,4 @@
-// Package partner_channel_template provides the Files.com PartnerChannelTemplate API client.
+// Package partner_channel_template is the Files.com API client package for the files_sdk.PartnerChannelTemplate model.
 package partner_channel_template
 
 import (

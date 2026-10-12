@@ -1,4 +1,4 @@
-// Package bundle_download provides the Files.com BundleDownload API client.
+// Package bundle_download is the Files.com API client package for the files_sdk.BundleDownload model.
 package bundle_download
 
 import (

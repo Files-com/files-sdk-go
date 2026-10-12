@@ -1,4 +1,4 @@
-// Package bandwidth_snapshot provides the Files.com BandwidthSnapshot API client.
+// Package bandwidth_snapshot is the Files.com API client package for the files_sdk.BandwidthSnapshot model.
 package bandwidth_snapshot
 
 import (

@@ -1,4 +1,4 @@
-// Package gpg_key provides the Files.com GpgKey API client.
+// Package gpg_key is the Files.com API client package for the files_sdk.GpgKey model.
 package gpg_key
 
 import (

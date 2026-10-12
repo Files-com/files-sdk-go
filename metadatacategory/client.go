@@ -1,4 +1,4 @@
-// Package metadata_category provides the Files.com MetadataCategory API client.
+// Package metadata_category is the Files.com API client package for the files_sdk.MetadataCategory model.
 package metadata_category
 
 import (

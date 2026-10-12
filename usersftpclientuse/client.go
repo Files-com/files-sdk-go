@@ -1,4 +1,4 @@
-// Package user_sftp_client_use provides the Files.com UserSftpClientUse API client.
+// Package user_sftp_client_use is the Files.com API client package for the files_sdk.UserSftpClientUse model.
 package user_sftp_client_use
 
 import (

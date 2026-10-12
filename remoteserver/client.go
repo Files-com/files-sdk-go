@@ -1,4 +1,4 @@
-// Package remote_server provides the Files.com RemoteServer API client.
+// Package remote_server is the Files.com API client package for the files_sdk.RemoteServer model.
 package remote_server
 
 import (

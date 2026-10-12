@@ -1,4 +1,4 @@
-// Package ai_task provides the Files.com AiTask API client.
+// Package ai_task is the Files.com API client package for the files_sdk.AiTask model.
 package ai_task
 
 import (

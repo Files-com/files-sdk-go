@@ -1,4 +1,4 @@
-// Package event_delivery_attempt provides the Files.com EventDeliveryAttempt API client.
+// Package event_delivery_attempt is the Files.com API client package for the files_sdk.EventDeliveryAttempt model.
 package event_delivery_attempt
 
 import (

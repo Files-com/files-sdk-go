@@ -1,4 +1,4 @@
-// Package automation_log provides the Files.com AutomationLog API client.
+// Package automation_log is the Files.com API client package for the files_sdk.AutomationLog model.
 package automation_log
 
 import (

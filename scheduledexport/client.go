@@ -1,4 +1,4 @@
-// Package scheduled_export provides the Files.com ScheduledExport API client.
+// Package scheduled_export is the Files.com API client package for the files_sdk.ScheduledExport model.
 package scheduled_export
 
 import (

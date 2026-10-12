@@ -1,4 +1,4 @@
-// Package partner_site provides the Files.com PartnerSite API client.
+// Package partner_site is the Files.com API client package for the files_sdk.PartnerSite model.
 package partner_site
 
 import (

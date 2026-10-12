@@ -1,2 +1,2 @@
-// Package image provides the Files.com Image API client.
+// Package image is the Files.com API client package for the files_sdk.Image model.
 package image

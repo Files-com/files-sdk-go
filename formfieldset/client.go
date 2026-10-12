@@ -1,4 +1,4 @@
-// Package form_field_set provides the Files.com FormFieldSet API client.
+// Package form_field_set is the Files.com API client package for the files_sdk.FormFieldSet model.
 package form_field_set
 
 import (

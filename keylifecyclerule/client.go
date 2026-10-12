@@ -1,4 +1,4 @@
-// Package key_lifecycle_rule provides the Files.com KeyLifecycleRule API client.
+// Package key_lifecycle_rule is the Files.com API client package for the files_sdk.KeyLifecycleRule model.
 package key_lifecycle_rule
 
 import (

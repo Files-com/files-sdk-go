@@ -1,4 +1,4 @@
-// Package holiday_region provides the Files.com HolidayRegion API client.
+// Package holiday_region is the Files.com API client package for the files_sdk.HolidayRegion model.
 package holiday_region
 
 import (

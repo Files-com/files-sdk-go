@@ -1,4 +1,4 @@
-// Package sftp_host_key provides the Files.com SftpHostKey API client.
+// Package sftp_host_key is the Files.com API client package for the files_sdk.SftpHostKey model.
 package sftp_host_key
 
 import (

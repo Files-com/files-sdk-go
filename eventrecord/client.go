@@ -1,4 +1,4 @@
-// Package event_record provides the Files.com EventRecord API client.
+// Package event_record is the Files.com API client package for the files_sdk.EventRecord model.
 package event_record
 
 import (

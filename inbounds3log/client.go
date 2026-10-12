@@ -1,4 +1,4 @@
-// Package inbound_s3_log provides the Files.com InboundS3Log API client.
+// Package inbound_s3_log is the Files.com API client package for the files_sdk.InboundS3Log model.
 package inbound_s3_log
 
 import (

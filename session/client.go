@@ -1,4 +1,4 @@
-// Package session provides the Files.com Session API client.
+// Package session is the Files.com API client package for the files_sdk.Session model.
 package session
 
 import (

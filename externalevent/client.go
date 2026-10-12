@@ -1,4 +1,4 @@
-// Package external_event provides the Files.com ExternalEvent API client.
+// Package external_event is the Files.com API client package for the files_sdk.ExternalEvent model.
 package external_event
 
 import (

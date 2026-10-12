@@ -1,4 +1,4 @@
-// Package email_log provides the Files.com EmailLog API client.
+// Package email_log is the Files.com API client package for the files_sdk.EmailLog model.
 package email_log
 
 import (

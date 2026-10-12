@@ -1,4 +1,4 @@
-// Package request provides the Files.com Request API client.
+// Package request is the Files.com API client package for the files_sdk.Request model.
 package request
 
 import (

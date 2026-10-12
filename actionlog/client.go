@@ -1,4 +1,4 @@
-// Package action_log provides the Files.com ActionLog API client.
+// Package action_log is the Files.com API client package for the files_sdk.ActionLog model.
 package action_log
 
 import (

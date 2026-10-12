@@ -1,4 +1,4 @@
-// Package sync_run provides the Files.com SyncRun API client.
+// Package sync_run is the Files.com API client package for the files_sdk.SyncRun model.
 package sync_run
 
 import (

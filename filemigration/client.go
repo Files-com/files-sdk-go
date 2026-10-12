@@ -1,4 +1,4 @@
-// Package file_migration provides the Files.com FileMigration API client.
+// Package file_migration is the Files.com API client package for the files_sdk.FileMigration model.
 package file_migration
 
 import (

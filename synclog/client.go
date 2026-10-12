@@ -1,4 +1,4 @@
-// Package sync_log provides the Files.com SyncLog API client.
+// Package sync_log is the Files.com API client package for the files_sdk.SyncLog model.
 package sync_log
 
 import (

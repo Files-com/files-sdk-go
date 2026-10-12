@@ -1,4 +1,4 @@
-// Package workspace provides the Files.com Workspace API client.
+// Package workspace is the Files.com API client package for the files_sdk.Workspace model.
 package workspace
 
 import (

@@ -1,4 +1,4 @@
-// Package inbox_recipient provides the Files.com InboxRecipient API client.
+// Package inbox_recipient is the Files.com API client package for the files_sdk.InboxRecipient model.
 package inbox_recipient
 
 import (

@@ -1,4 +1,4 @@
-// Package expectation_incident provides the Files.com ExpectationIncident API client.
+// Package expectation_incident is the Files.com API client package for the files_sdk.ExpectationIncident model.
 package expectation_incident
 
 import (

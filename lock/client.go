@@ -1,4 +1,4 @@
-// Package lock provides the Files.com Lock API client.
+// Package lock is the Files.com API client package for the files_sdk.Lock model.
 package lock
 
 import (

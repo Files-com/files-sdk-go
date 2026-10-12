@@ -1,4 +1,4 @@
-// Package partner provides the Files.com Partner API client.
+// Package partner is the Files.com API client package for the files_sdk.Partner model.
 package partner
 
 import (

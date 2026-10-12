@@ -1,4 +1,4 @@
-// Package remote_server_credential provides the Files.com RemoteServerCredential API client.
+// Package remote_server_credential is the Files.com API client package for the files_sdk.RemoteServerCredential model.
 package remote_server_credential
 
 import (

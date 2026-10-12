@@ -1,4 +1,4 @@
-// Package schedule provides the Files.com Schedule API client.
+// Package schedule is the Files.com API client package for the files_sdk.Schedule model.
 package schedule
 
 import (

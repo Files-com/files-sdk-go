@@ -1,4 +1,4 @@
-// Package api_request_log provides the Files.com ApiRequestLog API client.
+// Package api_request_log is the Files.com API client package for the files_sdk.ApiRequestLog model.
 package api_request_log
 
 import (

@@ -1,4 +1,4 @@
-// Package clickwrap provides the Files.com Clickwrap API client.
+// Package clickwrap is the Files.com API client package for the files_sdk.Clickwrap model.
 package clickwrap
 
 import (

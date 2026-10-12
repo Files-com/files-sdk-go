@@ -1,4 +1,4 @@
-// Package event_target provides the Files.com EventTarget API client.
+// Package event_target is the Files.com API client package for the files_sdk.EventTarget model.
 package event_target
 
 import (

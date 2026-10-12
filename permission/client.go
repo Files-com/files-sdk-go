@@ -1,4 +1,4 @@
-// Package permission provides the Files.com Permission API client.
+// Package permission is the Files.com API client package for the files_sdk.Permission model.
 package permission
 
 import (

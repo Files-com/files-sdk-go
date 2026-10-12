@@ -1,4 +1,4 @@
-// Package site_subdomain_redirect provides the Files.com SiteSubdomainRedirect API client.
+// Package site_subdomain_redirect is the Files.com API client package for the files_sdk.SiteSubdomainRedirect model.
 package site_subdomain_redirect
 
 import (

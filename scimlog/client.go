@@ -1,4 +1,4 @@
-// Package scim_log provides the Files.com ScimLog API client.
+// Package scim_log is the Files.com API client package for the files_sdk.ScimLog model.
 package scim_log
 
 import (

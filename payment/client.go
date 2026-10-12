@@ -1,4 +1,4 @@
-// Package payment provides the Files.com Payment API client.
+// Package payment is the Files.com API client package for the files_sdk.Payment model.
 package payment
 
 import (

@@ -1,4 +1,4 @@
-// Package style provides the Files.com Style API client.
+// Package style is the Files.com API client package for the files_sdk.Style model.
 package style
 
 import (

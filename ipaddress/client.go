@@ -1,4 +1,4 @@
-// Package ip_address provides the Files.com IpAddress API client.
+// Package ip_address is the Files.com API client package for the files_sdk.IpAddress model.
 package ip_address
 
 import (

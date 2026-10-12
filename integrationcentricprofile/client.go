@@ -1,4 +1,4 @@
-// Package integration_centric_profile provides the Files.com IntegrationCentricProfile API client.
+// Package integration_centric_profile is the Files.com API client package for the files_sdk.IntegrationCentricProfile model.
 package integration_centric_profile
 
 import (

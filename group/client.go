@@ -1,4 +1,4 @@
-// Package group provides the Files.com Group API client.
+// Package group is the Files.com API client package for the files_sdk.Group model.
 package group
 
 import (

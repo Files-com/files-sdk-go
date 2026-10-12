@@ -1,4 +1,4 @@
-// Package bundle_action provides the Files.com BundleAction API client.
+// Package bundle_action is the Files.com API client package for the files_sdk.BundleAction model.
 package bundle_action
 
 import (

@@ -1,4 +1,4 @@
-// Package user provides the Files.com User API client.
+// Package user is the Files.com API client package for the files_sdk.User model.
 package user
 
 import (

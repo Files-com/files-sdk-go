@@ -1,4 +1,4 @@
-// Package ai_assistant_personality provides the Files.com AiAssistantPersonality API client.
+// Package ai_assistant_personality is the Files.com API client package for the files_sdk.AiAssistantPersonality model.
 package ai_assistant_personality
 
 import (

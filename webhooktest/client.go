@@ -1,4 +1,4 @@
-// Package webhooktest provides the Files.com WebhookTest API client.
+// Package webhooktest is the Files.com API client package for the files_sdk.WebhookTest model.
 package webhooktest
 
 import (

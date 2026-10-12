@@ -1,4 +1,4 @@
-// Package sso_strategy provides the Files.com SsoStrategy API client.
+// Package sso_strategy is the Files.com API client package for the files_sdk.SsoStrategy model.
 package sso_strategy
 
 import (

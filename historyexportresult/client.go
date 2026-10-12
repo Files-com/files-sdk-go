@@ -1,4 +1,4 @@
-// Package history_export_result provides the Files.com HistoryExportResult API client.
+// Package history_export_result is the Files.com API client package for the files_sdk.HistoryExportResult model.
 package history_export_result
 
 import (

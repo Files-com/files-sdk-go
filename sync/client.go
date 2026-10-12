@@ -1,4 +1,4 @@
-// Package sync provides the Files.com Sync API client.
+// Package sync is the Files.com API client package for the files_sdk.Sync model.
 package sync
 
 import (

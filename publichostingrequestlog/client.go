@@ -1,4 +1,4 @@
-// Package public_hosting_request_log provides the Files.com PublicHostingRequestLog API client.
+// Package public_hosting_request_log is the Files.com API client package for the files_sdk.PublicHostingRequestLog model.
 package public_hosting_request_log
 
 import (

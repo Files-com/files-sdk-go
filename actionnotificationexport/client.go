@@ -1,4 +1,4 @@
-// Package action_notification_export provides the Files.com ActionNotificationExport API client.
+// Package action_notification_export is the Files.com API client package for the files_sdk.ActionNotificationExport model.
 package action_notification_export
 
 import (

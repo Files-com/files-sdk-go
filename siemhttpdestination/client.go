@@ -1,4 +1,4 @@
-// Package siem_http_destination provides the Files.com SiemHttpDestination API client.
+// Package siem_http_destination is the Files.com API client package for the files_sdk.SiemHttpDestination model.
 package siem_http_destination
 
 import (

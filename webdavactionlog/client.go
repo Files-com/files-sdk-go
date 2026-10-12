@@ -1,4 +1,4 @@
-// Package web_dav_action_log provides the Files.com WebDavActionLog API client.
+// Package web_dav_action_log is the Files.com API client package for the files_sdk.WebDavActionLog model.
 package web_dav_action_log
 
 import (

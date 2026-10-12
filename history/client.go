@@ -1,4 +1,4 @@
-// Package history provides the Files.com History API client.
+// Package history is the Files.com API client package for the files_sdk.History model.
 package history
 
 import (

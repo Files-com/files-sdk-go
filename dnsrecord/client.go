@@ -1,4 +1,4 @@
-// Package dns_record provides the Files.com DnsRecord API client.
+// Package dns_record is the Files.com API client package for the files_sdk.DnsRecord model.
 package dns_record
 
 import (

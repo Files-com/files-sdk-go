@@ -1,4 +1,4 @@
-// Package group_user provides the Files.com GroupUser API client.
+// Package group_user is the Files.com API client package for the files_sdk.GroupUser model.
 package group_user
 
 import (
