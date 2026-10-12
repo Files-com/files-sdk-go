@@ -7,11 +7,17 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
+	"maps"
 	"math"
+	mathrand "math/rand/v2"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
+	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -167,6 +173,135 @@ func TestUploadV2CancelWithCauseIsCanceled(t *testing.T) {
 	job.UpdateStatus(status.Errored, upload, err)
 	require.True(t, upload.Status().Is(status.Canceled))
 	require.NoError(t, upload.Err())
+}
+
+// Each attempt of a part sends its exact range, across a connection lost mid-body and an expired upload URL, whether the
+// part was scheduled directly or from the ready runway, and once the upload is complete its source can be deleted, as
+// sync's delete-source action does. On Windows each running part reads the file the uploader opened through a handle of
+// its own, which no part keeps past its result; elsewhere the parts share the file.
+func TestUploaderSendsExactRangesAcrossRetries(t *testing.T) {
+	for _, test := range []struct {
+		name         string
+		params       UploaderParams
+		wantPrepared int
+	}{
+		{name: "scheduled directly", params: UploaderParams{AdaptiveUploadReadyRunwaySet: true}},
+		{name: "ready runway", wantPrepared: 2},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			source, data := writeOwnedHandlesSource(t)
+			server := (&MockAPIServer{T: t}).Do()
+			t.Cleanup(server.Shutdown)
+			server.MockFiles["dest"] = mockFile{File: files_sdk.File{Type: "directory"}}
+			serveOwnedHandlesBeginUpload(server, "dest/source.bin", int64(len(data)))
+			retried := 16 * uploadV2MiB
+			var mu sync.Mutex
+			attempts := map[int64]int{}
+			sent := map[int64][]byte{}
+			server.GetRouter().POST("/owned-handles-upload", func(c *gin.Context) {
+				offset, err := strconv.ParseInt(c.Query("part_offset"), 10, 64)
+				if err != nil || offset+c.Request.ContentLength > int64(len(data)) {
+					t.Errorf("unexpected part %q of %d bytes", c.Query("part_offset"), c.Request.ContentLength)
+					c.Status(http.StatusBadRequest)
+					return
+				}
+				mu.Lock()
+				attempts[offset]++
+				attempt := attempts[offset]
+				mu.Unlock()
+				if offset == retried && attempt == 1 {
+					// The connection is lost halfway through the part's body.
+					_, _ = io.CopyN(io.Discard, c.Request.Body, c.Request.ContentLength/2)
+					if conn, _, err := c.Writer.Hijack(); err == nil {
+						_ = conn.Close()
+					}
+					return
+				}
+				body, err := io.ReadAll(c.Request.Body)
+				if err != nil {
+					c.Status(http.StatusBadRequest)
+					return
+				}
+				if !bytes.Equal(data[offset:offset+c.Request.ContentLength], body) {
+					t.Errorf("attempt %d of the part at %d sent other bytes than its range", attempt, offset)
+				}
+				if offset == retried && attempt == 2 {
+					c.Data(http.StatusForbidden, "application/xml", []byte(`<?xml version="1.0" encoding="UTF-8"?><Error><Code>AccessDenied</Code><Message>Request has expired</Message></Error>`))
+					return
+				}
+				mu.Lock()
+				sent[offset] = body
+				mu.Unlock()
+				c.Header("Etag", fmt.Sprintf("etag-%d", offset))
+				c.Status(http.StatusOK)
+			})
+
+			var logs bytes.Buffer
+			client := server.Client()
+			client.Config.Logger = log.New(&logs, "", 0)
+			params := test.params
+			params.LocalPaths = []string{source}
+			params.RemotePath = "dest/"
+			params.AdaptiveConcurrency = true
+			job := client.Uploader(params)
+			deleted := make(chan error, 1)
+			job.RegisterFileEvent(func(f JobFile) {
+				deleted <- os.Remove(f.LocalPath)
+			}, status.Complete)
+			job.Start()
+			job.Wait()
+
+			require.Len(t, job.Statuses, 1)
+			require.NoError(t, job.Statuses[0].Err())
+			require.Len(t, deleted, 1)
+			assert.NoError(t, <-deleted)
+			mu.Lock()
+			defer mu.Unlock()
+			assert.Equal(t, 3, attempts[retried])
+			var uploaded []byte
+			for _, offset := range slices.Sorted(maps.Keys(sent)) {
+				uploaded = append(uploaded, sent[offset]...)
+			}
+			assert.True(t, bytes.Equal(data, uploaded), "the parts sent other bytes than the file")
+			logText := logs.String()
+			if runtime.GOOS == "windows" {
+				assert.Regexp(t, `scheduler_owned_part_handles: 3(,|\n)`, logText)
+				assert.Regexp(t, `scheduler_owned_part_handle_fallbacks: 0(,|\n)`, logText)
+			}
+			assert.Regexp(t, fmt.Sprintf(`scheduler_dispatched_prepared_parts: %d(,|\n)`, test.wantPrepared), logText)
+		})
+	}
+}
+
+// writeOwnedHandlesSource writes the random bytes of three upload v2 parts: two of 16 MiB and a short one.
+func writeOwnedHandlesSource(t *testing.T) (string, []byte) {
+	t.Helper()
+	data := make([]byte, 2*16*uploadV2MiB+4097)
+	_, _ = mathrand.NewChaCha8([32]byte{1}).Read(data)
+	path := filepath.Join(t.TempDir(), "source.bin")
+	require.NoError(t, os.WriteFile(path, data, 0o600))
+	return path, data
+}
+
+// serveOwnedHandlesBeginUpload serves the upload of remotePath, of size bytes, through /owned-handles-upload, which the
+// test routes.
+func serveOwnedHandlesBeginUpload(server *MockAPIServer, remotePath string, size int64) {
+	server.MockFiles[remotePath] = mockFile{File: files_sdk.File{Size: size}}
+	expires := time.Now().Add(time.Hour).Format(time.RFC3339)
+	server.MockRoute("/api/rest/v1/file_actions/begin_upload/"+remotePath, func(c *gin.Context, model interface{}) bool {
+		params := model.(files_sdk.FileBeginUploadParams)
+		part := max(params.Part, 1)
+		c.JSON(http.StatusOK, files_sdk.FileUploadPartCollection{{
+			HttpMethod:    "POST",
+			Path:          remotePath,
+			Ref:           "owned-handles-ref",
+			UploadUri:     fmt.Sprintf("%s/owned-handles-upload?part_number=%d", server.Server.URL, part),
+			ParallelParts: lib.Bool(true),
+			Expires:       expires,
+			PartNumber:    part,
+		}})
+		return true
+	})
 }
 
 func (m *MockUploader) UploadWithResume(...UploadOption) (UploadResumable, error) {

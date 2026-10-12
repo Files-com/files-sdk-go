@@ -26,6 +26,7 @@ type uploadV2Engine struct {
 	globalManager             lib.ConcurrencyManager
 	etags                     map[int]files_sdk.EtagsParam
 	stats                     uploadV2SchedulerStats
+	ownedFile                 uploadV2OwnedFile // Windows only: the file the SDK opened (newUploadV2OwnedFile)
 	readDuration              time.Duration
 	usePartOffsets            bool
 	httpClientLimits          uploadV2HTTPClientLimits
@@ -52,6 +53,7 @@ type uploadV2PartDescriptor struct {
 type uploadV2Part struct {
 	uploadV2PartDescriptor
 	reader   ProxyReader
+	source   uploadV2PartSource // Windows only: its handle of its own while the part runs (runPart)
 	progress *uploadV2ProgressBatcher
 }
 
@@ -98,7 +100,10 @@ func (b *uploadV2ProgressBatcher) Flush() {
 	b.pending = 0
 }
 
-func (p *uploadV2Part) flushProgress() {
+// endRun ends a part's run (runPart): the part stops reading through a handle of its own, if it had one (on Windows,
+// releaseSource), and reports the progress it has not reported yet.
+func (p *uploadV2Part) endRun() {
+	p.releaseSource()
 	if p != nil && p.progress != nil {
 		p.progress.Flush()
 	}
@@ -230,6 +235,7 @@ func newUploadV2Engine(u *uploadIO, plan uploadV2PartPlan) *uploadV2Engine {
 	}
 	engine.checksumTrailerEnabled, engine.checksumTrailerSkipReason = uploadV2ChecksumTrailerDecision(u, plan)
 	engine.prepareKnownSizeStorage()
+	engine.ownedFile = newUploadV2OwnedFile(u)
 	return engine
 }
 
@@ -832,7 +838,7 @@ func (e *uploadV2Engine) schedulePart(ctx context.Context, wait lib.ConcurrencyM
 		return false
 	}
 
-	reader, progress, err := e.buildReader(descriptor.offset)
+	reader, source, progress, err := e.buildReader(descriptor.offset)
 	if err != nil {
 		results <- uploadV2PartResult{part: &uploadV2Part{uploadV2PartDescriptor: descriptor}, err: err}
 		e.donePart(ctx, wait, lib.AdaptiveConcurrencySample{Success: false})
@@ -847,7 +853,7 @@ func (e *uploadV2Engine) schedulePart(ctx context.Context, wait lib.ConcurrencyM
 	if descriptor.legacy == nil {
 		descriptor.legacy = e.newResumablePart(descriptor, reader)
 	}
-	part := &uploadV2Part{uploadV2PartDescriptor: descriptor, reader: reader, progress: progress}
+	part := &uploadV2Part{uploadV2PartDescriptor: descriptor, reader: reader, source: source, progress: progress}
 	e.u.logUploadV2(map[string]any{
 		"timestamp":   time.Now(),
 		"event":       "upload v2 part scheduled",
@@ -871,7 +877,7 @@ func (e *uploadV2Engine) preparePart(ctx context.Context, results chan<- uploadV
 		return uploadV2PreparedPart{}, false, false
 	}
 
-	reader, progress, err := e.buildReader(descriptor.offset)
+	reader, source, progress, err := e.buildReader(descriptor.offset)
 	if err != nil {
 		results <- uploadV2PartResult{part: &uploadV2Part{uploadV2PartDescriptor: descriptor}, err: err}
 		return uploadV2PreparedPart{}, false, false
@@ -884,7 +890,7 @@ func (e *uploadV2Engine) preparePart(ctx context.Context, results chan<- uploadV
 	if descriptor.legacy == nil {
 		descriptor.legacy = e.newResumablePart(descriptor, reader)
 	}
-	part := &uploadV2Part{uploadV2PartDescriptor: descriptor, reader: reader, progress: progress}
+	part := &uploadV2Part{uploadV2PartDescriptor: descriptor, reader: reader, source: source, progress: progress}
 	prepared := uploadV2PreparedPart{
 		part:        part,
 		memoryBytes: e.readyRunwayMemoryCost(int64(reader.Len())),
@@ -1001,7 +1007,8 @@ func (e *uploadV2Engine) newResumablePart(descriptor uploadV2PartDescriptor, rea
 	return part
 }
 
-func (e *uploadV2Engine) buildReader(offset OffSet) (reader ProxyReader, progress *uploadV2ProgressBatcher, err error) {
+// buildReader returns the reader of a part's range, and the part's source (uploadV2OwnedFile.readerFor).
+func (e *uploadV2Engine) buildReader(offset OffSet) (reader ProxyReader, owned uploadV2PartSource, progress *uploadV2ProgressBatcher, err error) {
 	start := time.Now()
 	defer func() {
 		bytes := offset.len
@@ -1015,7 +1022,8 @@ func (e *uploadV2Engine) buildReader(offset OffSet) (reader ProxyReader, progres
 	readerAt, readerAtOk := e.u.ReaderAt()
 
 	if e.u.Size != nil && readerAtOk {
-		return newProxySectionReader(readerAt, offset.off, offset.len, progress.Add, true), progress, nil
+		readerAt, owned = e.ownedFile.readerFor(readerAt)
+		return newProxySectionReader(readerAt, offset.off, offset.len, progress.Add, true), owned, progress, nil
 	}
 
 	if e.u.Size == nil || lib.UnWrapBool(e.u.FileUploadPart.ParallelParts) {
@@ -1027,10 +1035,10 @@ func (e *uploadV2Engine) buildReader(offset OffSet) (reader ProxyReader, progres
 		buf := new(bytes.Buffer)
 		n, err := io.CopyN(buf, source, offset.len)
 		if err != nil && err != io.EOF {
-			return nil, nil, err
+			return nil, uploadV2PartSource{}, nil, err
 		}
 
-		return newProxySectionReader(bytes.NewReader(buf.Bytes()), 0, n, progress.Add, true), progress, nil
+		return newProxySectionReader(bytes.NewReader(buf.Bytes()), 0, n, progress.Add, true), uploadV2PartSource{}, progress, nil
 	}
 
 	source, _ := e.u.Reader()
@@ -1039,11 +1047,12 @@ func (e *uploadV2Engine) buildReader(offset OffSet) (reader ProxyReader, progres
 		len:               offset.len,
 		onRead:            progress.Add,
 		trackReadDuration: true,
-	}, progress, nil
+	}, uploadV2PartSource{}, progress, nil
 }
 
 func (e *uploadV2Engine) runPart(ctx context.Context, part *uploadV2Part) uploadV2PartResult {
-	defer part.flushProgress()
+	defer part.endRun()
+	e.attachSource(part)
 	result := uploadV2PartResult{part: part}
 	for attempt := 1; attempt <= maxUploadPartAttempts; attempt++ {
 		start := time.Now()

@@ -356,7 +356,7 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 		opts := []UploadOption{
 			UploadWithContext(ctx),
 			UploadWithManager(job.FilePartsManager),
-			UploadWithReaderAt(localFile),
+			uploadWithOwnedFile(localFile),
 			UploadWithSize(uploadStatus.File().Size),
 			UploadWithResume(uploadStatus.UploadResumable),
 			UploadWithProgress(progressFn),

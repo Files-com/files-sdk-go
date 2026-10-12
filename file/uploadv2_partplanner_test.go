@@ -1975,7 +1975,7 @@ func TestUploadV2BufferedReaderPartsAreReplayable(t *testing.T) {
 	engine.u.Size = &size
 	engine.u.reader = bytes.NewBufferString("hello")
 
-	reader, progress, err := engine.buildReader(OffSet{off: 0, len: size})
+	reader, _, progress, err := engine.buildReader(OffSet{off: 0, len: size})
 	require.NoError(t, err)
 	defer reader.Close()
 

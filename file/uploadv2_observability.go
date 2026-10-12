@@ -40,6 +40,7 @@ type uploadV2SchedulerStats struct {
 	directSuccesses          int
 	directFailures           int
 	directDisabled           int
+	ownedParts               uploadV2OwnedPartStats // Windows only (recordOwnedPartHandle)
 	partCompleteCount        int
 	partCompleteErrors       int
 	partCompleteBytes        int64
@@ -233,6 +234,7 @@ func (s *uploadV2SchedulerStats) addLogAttrs(attrs map[string]any) {
 	attrs["scheduler_part_slow_count"] = s.partSlowCount
 	attrs["scheduler_part_slow_duration_ns"] = s.partSlowDuration.Nanoseconds()
 	attrs["scheduler_part_slow_max_duration_ns"] = s.partSlowMaxDuration.Nanoseconds()
+	s.ownedParts.addLogAttrs(attrs)
 }
 
 func (e *uploadV2Engine) logUploadV2SchedulerSummary(err error) {

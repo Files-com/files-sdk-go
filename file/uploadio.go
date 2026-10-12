@@ -99,6 +99,8 @@ type uploadIO struct {
 	uploadV1Stats              uploadV1SchedulerStats
 	directTransferDisabled     atomic.Bool
 
+	// The file the SDK opened for this upload, never one a caller passed in (uploadWithOwnedFile); only Windows keeps it.
+	ownedFile       uploadOwnedFile
 	onComplete      chan *Part
 	partsFinished   chan struct{}
 	transferStarted *atomic.Bool
