@@ -38,6 +38,18 @@ func (m ExportValues) ToJSON() (io.Reader, error) {
 }
 
 func (p Params) ToJSON() (io.Reader, error) {
+	// An attachment's content is read and encoded only by PrepareJSON.
+	if p.HasJSONAttachments() {
+		return nil, fmt.Errorf("request has attachments; send it with files_sdk.Call, which uses PrepareJSON")
+	}
+	b, err := p.encodeJSON()
+	if b == nil {
+		return nil, err
+	}
+	return bytes.NewBuffer(b), err
+}
+
+func (p Params) encodeJSON() ([]byte, error) {
 	_, err := p.ToValues()
 	if err != nil {
 		return nil, err
@@ -46,8 +58,7 @@ func (p Params) ToJSON() (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	b, err = sanitizeJSON(b)
-	return bytes.NewBuffer(b), err
+	return sanitizeJSON(b)
 }
 
 func (p Params) ToValues() (url.Values, error) {

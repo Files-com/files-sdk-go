@@ -32,9 +32,11 @@ type StyleFindParams struct {
 
 // StyleUpdateParams contains the request parameters for PATCH /styles/{path}.
 type StyleUpdateParams struct {
-	Path          string    `url:"-,omitempty" json:"-,omitempty" path:"path"`
-	File          io.Writer `url:"file,omitempty" json:"file,omitempty" path:"file"`
-	LogoClickHref string    `url:"logo_click_href,omitempty" json:"logo_click_href,omitempty" path:"logo_click_href"`
+	Path string    `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	File io.Writer `url:"file,omitempty" json:"file,omitempty" path:"file"`
+	// FileAttachment sends file content as file; see lib.JSONAttachment. Leave File nil when you set it.
+	FileAttachment *lib.JSONAttachment `json:"-" url:"-" path:"-" attachment:"file"`
+	LogoClickHref  string              `url:"logo_click_href,omitempty" json:"logo_click_href,omitempty" path:"logo_click_href"`
 }
 
 // StyleDeleteParams contains the request parameters for DELETE /styles/{path}.

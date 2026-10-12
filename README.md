@@ -1171,3 +1171,46 @@ bundle exec puma
 ## Simulation mode
 FILES_MOCK_MODE=simulation bundle exec puma
 ```
+
+## Sending File Content with a Request
+
+A parameter that takes a file, such as `avatar_file` when you create or update
+a user, has an `io.Writer` field in the params struct, `AvatarFile`. Set it to
+`lib.NewAttachment("avatar.png", "image/png", content)`, a `*bytes.Buffer` or an
+`*os.File`, and the SDK sends the request as `multipart/form-data`, with the
+file as one part.
+
+To send the content inside the JSON request instead, use the field named after
+the parameter with `Attachment` at the end: `AvatarFileAttachment`. Set it with
+`lib.NewJSONAttachment` when you know the content's size, as you do for a file,
+or with `lib.NewJSONAttachmentUpTo` and the most bytes you accept when you
+don't, as for a response body:
+
+```go
+avatar, err := os.Open("avatar.png")
+if err != nil {
+	return err
+}
+defer avatar.Close()
+info, err := avatar.Stat()
+if err != nil {
+	return err
+}
+
+_, err = client.Update(files_sdk.UserUpdateParams{
+	Id:                   123,
+	AvatarFileAttachment: lib.NewJSONAttachment(avatar, info.Size(), "avatar.png", "image/png"),
+}, files_sdk.WithContext(ctx))
+```
+
+The SDK sends the content and the other parameters in one JSON request, with
+the content as a file object: `{"encoded_content": "<base64>", "filename":
+"avatar.png", "type": "image/png"}`. It reads the content before sending
+anything, keeps it encoded in memory or, above 1 MiB, in a temporary file it
+removes when the call returns, and resends that copy if the request is
+retried. If the HTTP transport is still sending the request body when the call
+returns, the file stays open until the transport closes the body; on Windows,
+where an open file cannot be removed, it is removed only then. The request
+fails without sending anything if the content does not have the size you gave,
+has more than your limit, cannot be read, or the context ends while it is being
+read. The SDK does not close your reader, and each attachment can be sent once.

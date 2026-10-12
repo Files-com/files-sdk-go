@@ -398,24 +398,38 @@ type SiteUpdateParams struct {
 	UploadsViaEmailAuthentication                      *bool       `url:"uploads_via_email_authentication,omitempty" json:"uploads_via_email_authentication,omitempty" path:"uploads_via_email_authentication"`
 	BundleWatermarkValue                               interface{} `url:"bundle_watermark_value,omitempty" json:"bundle_watermark_value,omitempty" path:"bundle_watermark_value"`
 	Icon16File                                         io.Writer   `url:"icon16_file,omitempty" json:"icon16_file,omitempty" path:"icon16_file"`
-	Icon16Delete                                       *bool       `url:"icon16_delete,omitempty" json:"icon16_delete,omitempty" path:"icon16_delete"`
-	Icon32File                                         io.Writer   `url:"icon32_file,omitempty" json:"icon32_file,omitempty" path:"icon32_file"`
-	Icon32Delete                                       *bool       `url:"icon32_delete,omitempty" json:"icon32_delete,omitempty" path:"icon32_delete"`
-	Icon48File                                         io.Writer   `url:"icon48_file,omitempty" json:"icon48_file,omitempty" path:"icon48_file"`
-	Icon48Delete                                       *bool       `url:"icon48_delete,omitempty" json:"icon48_delete,omitempty" path:"icon48_delete"`
-	Icon128File                                        io.Writer   `url:"icon128_file,omitempty" json:"icon128_file,omitempty" path:"icon128_file"`
-	Icon128Delete                                      *bool       `url:"icon128_delete,omitempty" json:"icon128_delete,omitempty" path:"icon128_delete"`
-	LogoFile                                           io.Writer   `url:"logo_file,omitempty" json:"logo_file,omitempty" path:"logo_file"`
-	LogoDelete                                         *bool       `url:"logo_delete,omitempty" json:"logo_delete,omitempty" path:"logo_delete"`
-	BundleWatermarkAttachmentFile                      io.Writer   `url:"bundle_watermark_attachment_file,omitempty" json:"bundle_watermark_attachment_file,omitempty" path:"bundle_watermark_attachment_file"`
-	BundleWatermarkAttachmentDelete                    *bool       `url:"bundle_watermark_attachment_delete,omitempty" json:"bundle_watermark_attachment_delete,omitempty" path:"bundle_watermark_attachment_delete"`
-	LoginPageBackgroundImageFile                       io.Writer   `url:"login_page_background_image_file,omitempty" json:"login_page_background_image_file,omitempty" path:"login_page_background_image_file"`
-	LoginPageBackgroundImageDelete                     *bool       `url:"login_page_background_image_delete,omitempty" json:"login_page_background_image_delete,omitempty" path:"login_page_background_image_delete"`
-	Disable2faWithDelay                                *bool       `url:"disable_2fa_with_delay,omitempty" json:"disable_2fa_with_delay,omitempty" path:"disable_2fa_with_delay"`
-	LdapPasswordChange                                 string      `url:"ldap_password_change,omitempty" json:"ldap_password_change,omitempty" path:"ldap_password_change"`
-	LdapPasswordChangeConfirmation                     string      `url:"ldap_password_change_confirmation,omitempty" json:"ldap_password_change_confirmation,omitempty" path:"ldap_password_change_confirmation"`
-	RedirectOldSubdomain                               *bool       `url:"redirect_old_subdomain,omitempty" json:"redirect_old_subdomain,omitempty" path:"redirect_old_subdomain"`
-	SmtpPassword                                       string      `url:"smtp_password,omitempty" json:"smtp_password,omitempty" path:"smtp_password"`
+	// Icon16FileAttachment sends file content as icon16_file; see lib.JSONAttachment. Leave Icon16File nil when you set it.
+	Icon16FileAttachment *lib.JSONAttachment `json:"-" url:"-" path:"-" attachment:"icon16_file"`
+	Icon16Delete         *bool               `url:"icon16_delete,omitempty" json:"icon16_delete,omitempty" path:"icon16_delete"`
+	Icon32File           io.Writer           `url:"icon32_file,omitempty" json:"icon32_file,omitempty" path:"icon32_file"`
+	// Icon32FileAttachment sends file content as icon32_file; see lib.JSONAttachment. Leave Icon32File nil when you set it.
+	Icon32FileAttachment *lib.JSONAttachment `json:"-" url:"-" path:"-" attachment:"icon32_file"`
+	Icon32Delete         *bool               `url:"icon32_delete,omitempty" json:"icon32_delete,omitempty" path:"icon32_delete"`
+	Icon48File           io.Writer           `url:"icon48_file,omitempty" json:"icon48_file,omitempty" path:"icon48_file"`
+	// Icon48FileAttachment sends file content as icon48_file; see lib.JSONAttachment. Leave Icon48File nil when you set it.
+	Icon48FileAttachment *lib.JSONAttachment `json:"-" url:"-" path:"-" attachment:"icon48_file"`
+	Icon48Delete         *bool               `url:"icon48_delete,omitempty" json:"icon48_delete,omitempty" path:"icon48_delete"`
+	Icon128File          io.Writer           `url:"icon128_file,omitempty" json:"icon128_file,omitempty" path:"icon128_file"`
+	// Icon128FileAttachment sends file content as icon128_file; see lib.JSONAttachment. Leave Icon128File nil when you set it.
+	Icon128FileAttachment *lib.JSONAttachment `json:"-" url:"-" path:"-" attachment:"icon128_file"`
+	Icon128Delete         *bool               `url:"icon128_delete,omitempty" json:"icon128_delete,omitempty" path:"icon128_delete"`
+	LogoFile              io.Writer           `url:"logo_file,omitempty" json:"logo_file,omitempty" path:"logo_file"`
+	// LogoFileAttachment sends file content as logo_file; see lib.JSONAttachment. Leave LogoFile nil when you set it.
+	LogoFileAttachment            *lib.JSONAttachment `json:"-" url:"-" path:"-" attachment:"logo_file"`
+	LogoDelete                    *bool               `url:"logo_delete,omitempty" json:"logo_delete,omitempty" path:"logo_delete"`
+	BundleWatermarkAttachmentFile io.Writer           `url:"bundle_watermark_attachment_file,omitempty" json:"bundle_watermark_attachment_file,omitempty" path:"bundle_watermark_attachment_file"`
+	// BundleWatermarkAttachmentFileAttachment sends file content as bundle_watermark_attachment_file; see lib.JSONAttachment. Leave BundleWatermarkAttachmentFile nil when you set it.
+	BundleWatermarkAttachmentFileAttachment *lib.JSONAttachment `json:"-" url:"-" path:"-" attachment:"bundle_watermark_attachment_file"`
+	BundleWatermarkAttachmentDelete         *bool               `url:"bundle_watermark_attachment_delete,omitempty" json:"bundle_watermark_attachment_delete,omitempty" path:"bundle_watermark_attachment_delete"`
+	LoginPageBackgroundImageFile            io.Writer           `url:"login_page_background_image_file,omitempty" json:"login_page_background_image_file,omitempty" path:"login_page_background_image_file"`
+	// LoginPageBackgroundImageFileAttachment sends file content as login_page_background_image_file; see lib.JSONAttachment. Leave LoginPageBackgroundImageFile nil when you set it.
+	LoginPageBackgroundImageFileAttachment *lib.JSONAttachment `json:"-" url:"-" path:"-" attachment:"login_page_background_image_file"`
+	LoginPageBackgroundImageDelete         *bool               `url:"login_page_background_image_delete,omitempty" json:"login_page_background_image_delete,omitempty" path:"login_page_background_image_delete"`
+	Disable2faWithDelay                    *bool               `url:"disable_2fa_with_delay,omitempty" json:"disable_2fa_with_delay,omitempty" path:"disable_2fa_with_delay"`
+	LdapPasswordChange                     string              `url:"ldap_password_change,omitempty" json:"ldap_password_change,omitempty" path:"ldap_password_change"`
+	LdapPasswordChangeConfirmation         string              `url:"ldap_password_change_confirmation,omitempty" json:"ldap_password_change_confirmation,omitempty" path:"ldap_password_change_confirmation"`
+	RedirectOldSubdomain                   *bool               `url:"redirect_old_subdomain,omitempty" json:"redirect_old_subdomain,omitempty" path:"redirect_old_subdomain"`
+	SmtpPassword                           string              `url:"smtp_password,omitempty" json:"smtp_password,omitempty" path:"smtp_password"`
 }
 
 // UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.

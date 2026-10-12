@@ -38,6 +38,9 @@ func Resource(config Config, resource lib.Resource, opt ...RequestResponseOption
 // Call sends an API request and returns its response bytes, HTTP response, and
 // any transport, response-reading, or API error. The caller must close the response body.
 func Call(method string, config Config, resource string, params lib.Values, opts ...RequestResponseOption) (*[]byte, *http.Response, error) {
+	if attachments, ok := params.(attachmentValues); ok && attachments.HasJSONAttachments() {
+		return callWithAttachments(method, config, resource, attachments, opts...)
+	}
 	defaultHeaders := &http.Header{}
 	config.SetHeaders(defaultHeaders)
 	callParams := &CallParams{
@@ -68,6 +71,10 @@ func Call(method string, config Config, resource string, params lib.Values, opts
 	if debug && response != logged {
 		debugLogResponse(response, config)
 	}
+	return parseCallResponse(response, resource)
+}
+
+func parseCallResponse(response *http.Response, resource string) (*[]byte, *http.Response, error) {
 	data, res, err := ParseResponse(response, resource)
 	var responseError ResponseError
 	ok := errors.As(err, &responseError)
@@ -75,6 +82,89 @@ func Call(method string, config Config, resource string, params lib.Values, opts
 		err = responseError
 	}
 	return data, res, err
+}
+
+// attachmentValues is implemented by lib.Params, the Values of generated
+// requests, including those built from a map.
+type attachmentValues interface {
+	lib.Values
+	HasJSONAttachments() bool
+	PrepareJSON(ctx context.Context) (*lib.PreparedJSON, error)
+}
+
+// callWithAttachments is Call for a request with lib.JSONAttachment values. It
+// reads the attachments before sending anything, stopping at the next read
+// after the request context is done, and sends one JSON body whose length is
+// known. Every attempt, including retries and redirects, reads the same
+// prepared bytes from its own reader. A RequestOption can replace or wrap the
+// body, setting Body, GetBody and ContentLength; that body is sent as Call
+// sends any other body, except that its copy for retries is kept as the
+// prepared content is, not in memory. The prepared content and any copy are
+// removed when the call returns, but stay open for a body the HTTP transport
+// is still sending until it closes it (and on Windows, where an open file
+// cannot be removed, are removed only then); a failure to remove them when
+// the call returns is returned only when the call otherwise succeeded.
+func callWithAttachments(method string, config Config, resource string, params attachmentValues, opts ...RequestResponseOption) (data *[]byte, response *http.Response, err error) {
+	if method == http.MethodGet || method == http.MethodHead || method == http.MethodDelete {
+		return nil, &http.Response{}, fmt.Errorf("%s %s cannot send attachments: it has no request body", method, resource)
+	}
+	body, err := params.PrepareJSON(ContextOption(opts))
+	if err != nil {
+		return nil, &http.Response{}, err
+	}
+	defer func() {
+		if closeErr := body.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("removing prepared attachment content: %w", closeErr)
+		}
+	}()
+
+	headers := &http.Header{}
+	config.SetHeaders(headers)
+	request, err := http.NewRequest(method, config.RootPath()+resource, newReplayableBody(body))
+	if err != nil {
+		return nil, &http.Response{}, err
+	}
+	request.Header = *headers
+	request.Header.Add("Content-Type", "application/json")
+	request.ContentLength = body.Len()
+	request.GetBody = func() (io.ReadCloser, error) {
+		return newReplayableBody(body), nil
+	}
+	if config.InDebug() {
+		debugLogWithoutBody(request, config, fmt.Sprintf("JSON body of %d bytes with attachments, not logged", body.Len()))
+	}
+
+	request, err = BuildRequest(request, opts...)
+	if err != nil {
+		return nil, &http.Response{}, err
+	}
+	// Log each response in debug mode as Call does; the sender's client copies these hooks.
+	debug := config.InDebug()
+	var logged *http.Response
+	if debug && config.Client != nil && config.Client.HTTPClient != nil {
+		config.Client = withResponseLogHook(config.Client, func(res *http.Response) {
+			debugLogResponse(res, config)
+			logged = res
+		})
+	}
+	sender := config.newReplayableSender()
+	defer func() {
+		if closeErr := sender.Close(); closeErr != nil && err == nil {
+			err = fmt.Errorf("removing the copy of the request body: %w", closeErr)
+		}
+	}()
+	response, err = sender.Do(request)
+	if err != nil {
+		return nil, response, err
+	}
+	response, err = BuildResponse(response, opts...)
+	if err != nil {
+		return nil, response, err
+	}
+	if debug && response != logged {
+		debugLogResponse(response, config)
+	}
+	return parseCallResponse(response, resource)
 }
 
 // ParseResponse checks res for API errors and reads its body. It does not close
@@ -311,4 +401,17 @@ func (r readResult) Read([]byte) (int, error) {
 		return 0, io.EOF
 	}
 	return 0, r.err
+}
+
+// debugLogWithoutBody logs req as a curl command, describing its body with
+// note instead of including it.
+func debugLogWithoutBody(req *http.Request, config Config, note string) {
+	clonedReq := req.Clone(context.Background())
+	clonedReq.Body = nil
+	command, err := http2curl.GetCurlCommand(clonedReq)
+	if err != nil {
+		config.debugf(" request could not be logged: %v", err)
+		return
+	}
+	config.debugf(" %v # %v", command, note)
 }

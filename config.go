@@ -4,19 +4,21 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	libLog "github.com/Files-com/files-sdk-go/v3/lib/logpath"
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.3.305"
+var VERSION = "3.3.306"
 var defaultUserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
 
 const (
@@ -240,6 +242,183 @@ func (s requestSecrets) values(args []interface{}) []interface{} {
 		}
 	}
 	return clean
+}
+
+// replayableSender sends requests as Do does, but without holding their
+// bodies in memory, where Do copies a body into memory to resend it. An
+// unread replayableBody is read again from the start by each attempt,
+// including each retry and redirect. Any other body, such as one a
+// RequestOption set or wrapped, is read to its end first, as Do does, and
+// copied as attachment content is kept; every retry resends that copy, and a
+// redirect uses the request's GetBody, as with Do. Each attempt's body, and a
+// redirect's replayableBody from GetBody, is opened with
+// lib.PreparedJSON.Open, because the transport can read and close it after the
+// call returns. Close removes the copies; any files such a body still reads
+// stay open until it is closed.
+type replayableSender struct {
+	config Config
+	client *retryablehttp.Client
+	// logger is the client's own logger, which Do wraps for each request as
+	// Config.Do does.
+	logger interface{}
+	mu     sync.Mutex
+	copies []*lib.PreparedJSON
+}
+
+func (c Config) newReplayableSender() *replayableSender {
+	client := c.redirectSafeClient()
+	// http.Client opens a redirect's body with GetBody before it calls
+	// CheckRedirect, which can stop the redirect or change its body. When
+	// CheckRedirect stops the redirect, http.Client closes the request's
+	// body, whatever CheckRedirect set it to, except after
+	// ErrUseLastResponse; it never closes a body CheckRedirect replaced. An
+	// open reader keeps the prepared files open, so the sender takes the
+	// reader it opened for the redirect before CheckRedirect runs and sees
+	// that it is closed once nothing can read it. Closing it again is safe,
+	// and the sender closes no other body itself. redirectSafeClient returns
+	// a new http.Client for each sender.
+	checkRedirect := client.HTTPClient.CheckRedirect
+	client.HTTPClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		opened, _ := req.Body.(*openedBody)
+		err := checkRedirect(req, via)
+		switch {
+		case opened == nil || (err == nil && req.Body == io.ReadCloser(opened)):
+			// The transport sends the sender's reader and closes it.
+		case err != nil || req.Body == nil || req.Body == http.NoBody:
+			// Nothing sends the sender's reader.
+			_ = opened.Close()
+		default:
+			// The redirect sends CheckRedirect's body, which can read the
+			// sender's reader, so that reader is closed with it.
+			req.Body = &substituteBody{ReadCloser: req.Body, opened: opened}
+		}
+		return err
+	}
+	return &replayableSender{config: c, client: client, logger: client.Logger}
+}
+
+// substituteBody is a body CheckRedirect set on a followed redirect in place
+// of the reader the sender opened for it, which it can still read. Closing it
+// closes that reader too.
+type substituteBody struct {
+	io.ReadCloser
+	opened *openedBody
+}
+
+func (b *substituteBody) Close() error {
+	err := b.ReadCloser.Close()
+	return errors.Join(err, b.opened.Close())
+}
+
+// openedBody is a request body the sender opened with lib.PreparedJSON.Open,
+// which lets it tell its own readers from a caller's. Closing it more than
+// once is safe.
+type openedBody struct{ io.ReadCloser }
+
+func openBody(content *lib.PreparedJSON) io.ReadCloser {
+	return &openedBody{ReadCloser: content.Open()}
+}
+
+// Do sends req. Like Config.Do, it keeps the request's URL and credentials out
+// of retry log entries above DEBUG and, outside debug mode, out of a returned
+// *url.Error, which keeps its operation and cause.
+func (s *replayableSender) Do(req *http.Request) (*http.Response, error) {
+	s.client.Logger = s.config.retryLogFor(s.logger, req)
+	response, err := (&http.Client{Transport: s}).Do(req)
+	if s.config.InDebug() {
+		return response, err
+	}
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) {
+		err = &url.Error{Op: urlErr.Op, URL: "[redacted]", Err: urlErr.Err}
+	}
+	return response, err
+}
+
+// Close removes the copies of request bodies; call it once the request is
+// done.
+func (s *replayableSender) Close() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var errs []error
+	for _, copied := range s.copies {
+		errs = append(errs, copied.Close())
+	}
+	s.copies = nil
+	return errors.Join(errs...)
+}
+
+// RoundTrip is retryablehttp.RoundTripper, except for how it keeps the body.
+func (s *replayableSender) RoundTrip(req *http.Request) (*http.Response, error) {
+	retryable := &retryablehttp.Request{Request: req.Clone(req.Context())}
+	if body, ok := req.Body.(*replayableBody); ok && !body.read {
+		err := retryable.SetBody(retryablehttp.ReaderFunc(func() (io.Reader, error) {
+			return openBody(body.content), nil
+		}))
+		if err != nil {
+			return nil, err
+		}
+	} else if req.Body != nil && req.Body != http.NoBody {
+		copied, err := lib.CopyBody(req.Context(), req.Body)
+		_ = req.Body.Close()
+		if err != nil {
+			return nil, err
+		}
+		s.mu.Lock()
+		s.copies = append(s.copies, copied)
+		s.mu.Unlock()
+		newReader := func() io.Reader { return openBody(copied) }
+		if copied.Len() == 0 {
+			newReader = func() io.Reader { return http.NoBody }
+		}
+		err = retryable.SetBody(retryablehttp.ReaderFunc(func() (io.Reader, error) {
+			return newReader(), nil
+		}))
+		if err != nil {
+			return nil, err
+		}
+		retryable.GetBody = req.GetBody
+		if getBody := req.GetBody; getBody != nil {
+			// A redirect sends what GetBody returns through the transport, so
+			// the SDK's own replayableBody is opened as an attempt's body is.
+			retryable.GetBody = func() (io.ReadCloser, error) {
+				body, err := getBody()
+				if replayable, ok := body.(*replayableBody); ok && err == nil && !replayable.read {
+					return openBody(replayable.content), nil
+				}
+				return body, err
+			}
+		}
+	}
+	retryable.ContentLength = req.ContentLength
+	response, err := s.client.Do(retryable)
+	// As retryablehttp.RoundTripper does: http.Client wraps the error in a
+	// *url.Error itself.
+	if _, ok := err.(*url.Error); ok {
+		return response, errors.Unwrap(err)
+	}
+	return response, err
+}
+
+// replayableBody is a request body over prepared content, which each attempt
+// reads again from the start.
+type replayableBody struct {
+	reader  io.Reader
+	content *lib.PreparedJSON
+	read    bool
+}
+
+func newReplayableBody(content *lib.PreparedJSON) *replayableBody {
+	return &replayableBody{reader: content.NewReader(), content: content}
+}
+
+func (b *replayableBody) Read(p []byte) (int, error) {
+	b.read = true
+	return b.reader.Read(p)
+}
+
+func (b *replayableBody) Close() error {
+	return nil
 }
 
 func (c Config) SetCustomClient(client *http.Client) Config {

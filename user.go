@@ -220,7 +220,9 @@ type UserFindParams struct {
 
 // UserCreateParams contains the request parameters for POST /users.
 type UserCreateParams struct {
-	AvatarFile                             io.Writer                    `url:"avatar_file,omitempty" json:"avatar_file,omitempty" path:"avatar_file"`
+	AvatarFile io.Writer `url:"avatar_file,omitempty" json:"avatar_file,omitempty" path:"avatar_file"`
+	// AvatarFileAttachment sends file content as avatar_file; see lib.JSONAttachment. Leave AvatarFile nil when you set it.
+	AvatarFileAttachment                   *lib.JSONAttachment          `json:"-" url:"-" path:"-" attachment:"avatar_file"`
 	AvatarDelete                           *bool                        `url:"avatar_delete,omitempty" json:"avatar_delete,omitempty" path:"avatar_delete"`
 	ChangePassword                         string                       `url:"change_password,omitempty" json:"change_password,omitempty" path:"change_password"`
 	ChangePasswordConfirmation             string                       `url:"change_password_confirmation,omitempty" json:"change_password_confirmation,omitempty" path:"change_password_confirmation"`
@@ -314,8 +316,10 @@ type UserUser2faResetParams struct {
 
 // UserUpdateParams contains the request parameters for PATCH /users/{id}.
 type UserUpdateParams struct {
-	Id                                     int64                        `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	AvatarFile                             io.Writer                    `url:"avatar_file,omitempty" json:"avatar_file,omitempty" path:"avatar_file"`
+	Id         int64     `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	AvatarFile io.Writer `url:"avatar_file,omitempty" json:"avatar_file,omitempty" path:"avatar_file"`
+	// AvatarFileAttachment sends file content as avatar_file; see lib.JSONAttachment. Leave AvatarFile nil when you set it.
+	AvatarFileAttachment                   *lib.JSONAttachment          `json:"-" url:"-" path:"-" attachment:"avatar_file"`
 	AvatarDelete                           *bool                        `url:"avatar_delete,omitempty" json:"avatar_delete,omitempty" path:"avatar_delete"`
 	ChangePassword                         string                       `url:"change_password,omitempty" json:"change_password,omitempty" path:"change_password"`
 	ChangePasswordConfirmation             string                       `url:"change_password_confirmation,omitempty" json:"change_password_confirmation,omitempty" path:"change_password_confirmation"`

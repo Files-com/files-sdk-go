@@ -149,7 +149,9 @@ type BundleCreateParams struct {
 	SnapshotId                                   int64                 `url:"snapshot_id,omitempty" json:"snapshot_id,omitempty" path:"snapshot_id"`
 	WorkspaceId                                  int64                 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 	WatermarkAttachmentFile                      io.Writer             `url:"watermark_attachment_file,omitempty" json:"watermark_attachment_file,omitempty" path:"watermark_attachment_file"`
-	WatermarkValue                               interface{}           `url:"watermark_value,omitempty" json:"watermark_value,omitempty" path:"watermark_value"`
+	// WatermarkAttachmentFileAttachment sends file content as watermark_attachment_file; see lib.JSONAttachment. Leave WatermarkAttachmentFile nil when you set it.
+	WatermarkAttachmentFileAttachment *lib.JSONAttachment `json:"-" url:"-" path:"-" attachment:"watermark_attachment_file"`
+	WatermarkValue                    interface{}         `url:"watermark_value,omitempty" json:"watermark_value,omitempty" path:"watermark_value"`
 }
 
 // BundleShareParams contains the request parameters for POST /bundles/{id}/share.
@@ -195,8 +197,10 @@ type BundleUpdateParams struct {
 	UserId                                       int64                 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	WatermarkAttachmentDelete                    *bool                 `url:"watermark_attachment_delete,omitempty" json:"watermark_attachment_delete,omitempty" path:"watermark_attachment_delete"`
 	WatermarkAttachmentFile                      io.Writer             `url:"watermark_attachment_file,omitempty" json:"watermark_attachment_file,omitempty" path:"watermark_attachment_file"`
-	WatermarkValue                               interface{}           `url:"watermark_value,omitempty" json:"watermark_value,omitempty" path:"watermark_value"`
-	WorkspaceId                                  int64                 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
+	// WatermarkAttachmentFileAttachment sends file content as watermark_attachment_file; see lib.JSONAttachment. Leave WatermarkAttachmentFile nil when you set it.
+	WatermarkAttachmentFileAttachment *lib.JSONAttachment `json:"-" url:"-" path:"-" attachment:"watermark_attachment_file"`
+	WatermarkValue                    interface{}         `url:"watermark_value,omitempty" json:"watermark_value,omitempty" path:"watermark_value"`
+	WorkspaceId                       int64               `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 // BundleDeleteParams contains the request parameters for DELETE /bundles/{id}.
