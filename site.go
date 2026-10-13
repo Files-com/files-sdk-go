@@ -52,6 +52,7 @@ type Site struct {
 	CalculateFileChecksumsMd5                          *bool       `json:"calculate_file_checksums_md5,omitempty" path:"calculate_file_checksums_md5,omitempty" url:"calculate_file_checksums_md5,omitempty"`
 	CalculateFileChecksumsSha1                         *bool       `json:"calculate_file_checksums_sha1,omitempty" path:"calculate_file_checksums_sha1,omitempty" url:"calculate_file_checksums_sha1,omitempty"`
 	CalculateFileChecksumsSha256                       *bool       `json:"calculate_file_checksums_sha256,omitempty" path:"calculate_file_checksums_sha256,omitempty" url:"calculate_file_checksums_sha256,omitempty"`
+	ChildSiteFolderAdminsCanSeeParentSiteDirectory     *bool       `json:"child_site_folder_admins_can_see_parent_site_directory,omitempty" path:"child_site_folder_admins_can_see_parent_site_directory,omitempty" url:"child_site_folder_admins_can_see_parent_site_directory,omitempty"`
 	UploadsViaEmailAuthentication                      *bool       `json:"uploads_via_email_authentication,omitempty" path:"uploads_via_email_authentication,omitempty" url:"uploads_via_email_authentication,omitempty"`
 	Color2Left                                         string      `json:"color2_left,omitempty" path:"color2_left,omitempty" url:"color2_left,omitempty"`
 	Color2Link                                         string      `json:"color2_link,omitempty" path:"color2_link,omitempty" url:"color2_link,omitempty"`
@@ -347,6 +348,7 @@ type SiteUpdateParams struct {
 	GroupAdminsCanBypassUserLifecycleRules             *bool       `url:"group_admins_can_bypass_user_lifecycle_rules,omitempty" json:"group_admins_can_bypass_user_lifecycle_rules,omitempty" path:"group_admins_can_bypass_user_lifecycle_rules"`
 	GroupAdminsCanResetPasswords                       *bool       `url:"group_admins_can_reset_passwords,omitempty" json:"group_admins_can_reset_passwords,omitempty" path:"group_admins_can_reset_passwords"`
 	GroupAdminsCanSetUserPassword                      *bool       `url:"group_admins_can_set_user_password,omitempty" json:"group_admins_can_set_user_password,omitempty" path:"group_admins_can_set_user_password"`
+	ChildSiteFolderAdminsCanSeeParentSiteDirectory     *bool       `url:"child_site_folder_admins_can_see_parent_site_directory,omitempty" json:"child_site_folder_admins_can_see_parent_site_directory,omitempty" path:"child_site_folder_admins_can_see_parent_site_directory"`
 	BundleRecipientBlacklistFreeEmailDomains           *bool       `url:"bundle_recipient_blacklist_free_email_domains,omitempty" json:"bundle_recipient_blacklist_free_email_domains,omitempty" path:"bundle_recipient_blacklist_free_email_domains"`
 	BundleRecipientBlacklistDomains                    []string    `url:"bundle_recipient_blacklist_domains,omitempty" json:"bundle_recipient_blacklist_domains,omitempty" path:"bundle_recipient_blacklist_domains"`
 	AdminsBypassLockedSubfolders                       *bool       `url:"admins_bypass_locked_subfolders,omitempty" json:"admins_bypass_locked_subfolders,omitempty" path:"admins_bypass_locked_subfolders"`
