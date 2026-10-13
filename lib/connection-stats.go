@@ -193,6 +193,66 @@ func CloneHTTPClientWithExactMaxConnsPerHost(client *http.Client, maxConnsPerHos
 	return &cloned, true
 }
 
+// CloneHTTPClientWithMatchingMaxConnsPerHost returns client itself when its transport already allows exactly
+// maxConnsPerHost connections per host, or is a RoundTripper whose connections this package cannot configure. Otherwise
+// it returns a copy of client on a new transport, configured like client's, idle limits and dial callbacks included,
+// that allows exactly maxConnsPerHost. It never writes client or its transport, which other requests may be using. The
+// new transport starts with no connections of its own, and whoever keeps the copy owns them: close its idle
+// connections once its requests are done.
+func CloneHTTPClientWithMatchingMaxConnsPerHost(client *http.Client, maxConnsPerHost int) *http.Client {
+	if client == nil || maxConnsPerHost <= 0 {
+		return client
+	}
+
+	var transport http.RoundTripper
+	switch current := client.Transport.(type) {
+	case *Transport:
+		if current.Transport != nil && current.Transport.MaxConnsPerHost == maxConnsPerHost {
+			return client
+		}
+		transport = current.cloneWithMatchingMaxConnsPerHost(maxConnsPerHost)
+	case *http.Transport:
+		if current.MaxConnsPerHost == maxConnsPerHost {
+			return client
+		}
+		cloned := current.Clone()
+		cloned.MaxConnsPerHost = maxConnsPerHost
+		transport = cloned
+	default:
+		return client
+	}
+	cloned := *client
+	cloned.Transport = transport
+	return &cloned
+}
+
+// cloneWithMatchingMaxConnsPerHost returns a Transport configured like t that allows exactly maxConnsPerHost
+// connections per host, sharing t's dialer and connection counts but none of its connections. Unlike
+// cloneWithExactMaxConnsPerHost, it keeps t's idle limits and dial callback, and its S3 upload transport is made from
+// the same settings and dials through that callback too (through the SDK's own dial when t's transport sets none).
+func (t *Transport) cloneWithMatchingMaxConnsPerHost(maxConnsPerHost int) *Transport {
+	var base *http.Transport
+	if t.Transport != nil {
+		base = t.Transport.Clone()
+	} else if defaultTransport, ok := http.DefaultTransport.(*http.Transport); ok {
+		base = defaultTransport.Clone()
+	} else {
+		base = &http.Transport{}
+	}
+	base.MaxConnsPerHost = maxConnsPerHost
+	cloned := &Transport{
+		Transport: base,
+		Dialer:    t.dialer(),
+		stats:     t.connectionStats(),
+	}
+	dialContext := cloned.DialContext
+	if t.Transport != nil && t.Transport.DialContext != nil {
+		dialContext = base.DialContext
+	}
+	cloned.s3UploadHTTP1 = cloneHTTPTransportForS3UploadHTTP1(base, dialContext)
+	return cloned
+}
+
 func (t *Transport) cloneWithMaxConnsPerHost(maxConnsPerHost int) *Transport {
 	var base *http.Transport
 	if t.Transport != nil {

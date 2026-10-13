@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io/fs"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -273,6 +274,16 @@ func (r *Job) withDirectTransferClientCache(ctx context.Context) context.Context
 		closeDirectClients()
 	}()
 	return jobCtx
+}
+
+// closeIdleConnectionsWhenDone closes client's idle connections once the job has settled (Wait): for a client whose
+// transport only this job uses, so that its connections do not outlive the job whatever its IdleConnTimeout. Requests
+// still running are left to finish.
+func (r *Job) closeIdleConnectionsWhenDone(client *http.Client) {
+	go func() {
+		r.Wait()
+		client.CloseIdleConnections()
+	}()
 }
 
 func OnBytesChange(event status.GetStatus) status.GetStatus {

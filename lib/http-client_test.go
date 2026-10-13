@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -454,6 +455,91 @@ func TestCloneHTTPClientWithExactMaxConnsPerHostSharesConnectionStats(t *testing
 	connectionStats, ok := GetConnectionStatsFromClient(client)
 	require.True(t, ok)
 	require.Equal(t, map[string]int{"s3.amazonaws.com:443": 2}, connectionStats)
+}
+
+func TestCloneHTTPClientWithMatchingMaxConnsPerHostKeepsTheOriginalsSettingsAndDialCallback(t *testing.T) {
+	type received struct{ proto, body, signature string }
+	puts := make(chan received, 1)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPut {
+			body, _ := io.ReadAll(r.Body)
+			puts <- received{proto: r.Proto, body: string(body), signature: r.URL.Query().Get("X-Amz-Signature")}
+		}
+		_, _ = io.WriteString(w, "ok")
+	}))
+	t.Cleanup(server.Close)
+	transport := DefaultPooledTransport()
+	transport.MaxIdleConnsPerHost = 5
+	transport.IdleConnTimeout = 0
+	var callbackDials atomic.Int32
+	sdkDial := transport.Transport.DialContext
+	transport.Transport.DialContext = func(ctx context.Context, network, address string) (net.Conn, error) {
+		callbackDials.Add(1)
+		return sdkDial(ctx, network, address)
+	}
+	client := &http.Client{Transport: transport}
+	t.Cleanup(transport.CloseIdleConnections)
+
+	// A transport already allowing the cap, or one this package cannot configure, is returned as it is.
+	require.Same(t, client, CloneHTTPClientWithMatchingMaxConnsPerHost(client, 75))
+	opaque := &http.Client{Transport: http.NewFileTransport(http.Dir(t.TempDir()))}
+	require.Same(t, opaque, CloneHTTPClientWithMatchingMaxConnsPerHost(opaque, 3))
+
+	plainTransport := &http.Transport{TLSClientConfig: &tls.Config{ServerName: "files.example"}, MaxConnsPerHost: 4}
+	plain := CloneHTTPClientWithMatchingMaxConnsPerHost(&http.Client{Transport: plainTransport}, 2)
+	plainClone, ok := plain.Transport.(*http.Transport)
+	require.True(t, ok)
+	require.NotSame(t, plainTransport, plainClone)
+	require.Equal(t, 4, plainTransport.MaxConnsPerHost)
+	require.Equal(t, 2, plainClone.MaxConnsPerHost)
+	require.Equal(t, "files.example", plainClone.TLSClientConfig.ServerName)
+
+	cloned := CloneHTTPClientWithMatchingMaxConnsPerHost(client, 3)
+
+	require.NotSame(t, client, cloned)
+	clonedTransport, ok := cloned.Transport.(*Transport)
+	require.True(t, ok)
+	require.NotSame(t, transport, clonedTransport)
+	t.Cleanup(clonedTransport.CloseIdleConnections)
+	require.Equal(t, 75, transport.MaxConnsPerHost)
+	require.Equal(t, 3, clonedTransport.MaxConnsPerHost)
+	require.Equal(t, 100, clonedTransport.MaxIdleConns)
+	require.Equal(t, 5, clonedTransport.MaxIdleConnsPerHost)
+	require.Zero(t, clonedTransport.IdleConnTimeout)
+	require.Same(t, transport.connectionStats(), clonedTransport.connectionStats())
+
+	// The clone dials through the original's dial callback, counted in the connections both share.
+	resp, err := cloned.Get(server.URL)
+	require.NoError(t, err)
+	_, err = io.Copy(io.Discard, resp.Body)
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+	require.Equal(t, int32(1), callbackDials.Load())
+	stats, ok := GetConnectionStatsFromClient(client)
+	require.True(t, ok)
+	require.Equal(t, 1, stats[strings.TrimPrefix(server.URL, "http://")])
+
+	// A signed S3 PUT goes over its HTTP/1 S3 upload transport, a connection of its own dialed through the same
+	// callback and counted in the same connections, with the part's bytes as given.
+	part := "part-bytes"
+	put, err := http.NewRequest(http.MethodPut, server.URL+"/bucket/key?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=test&X-Amz-Signature=signed", strings.NewReader(part))
+	require.NoError(t, err)
+	resp, err = cloned.Do(put)
+	require.NoError(t, err)
+	_, err = io.Copy(io.Discard, resp.Body)
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+	require.Equal(t, received{proto: "HTTP/1.1", body: part, signature: "signed"}, <-puts)
+	require.Equal(t, int32(2), callbackDials.Load())
+	stats, ok = GetConnectionStatsFromClient(client)
+	require.True(t, ok)
+	require.Equal(t, 2, stats[strings.TrimPrefix(server.URL, "http://")])
+
+	// Its S3 upload transport is made from its own settings, as the original's is from the original's.
+	s3 := clonedTransport.s3UploadHTTP1Transport()
+	require.Equal(t, 3, s3.MaxConnsPerHost)
+	require.Equal(t, 5, s3.MaxIdleConnsPerHost)
+	require.False(t, s3.ForceAttemptHTTP2)
 }
 
 func TestTransportConnectionStatsLazyInitIsRaceSafe(t *testing.T) {

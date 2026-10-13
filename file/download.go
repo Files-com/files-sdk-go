@@ -3,6 +3,7 @@ package file
 import (
 	"io"
 	"io/fs"
+	"net/http"
 	"os"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
@@ -105,10 +106,19 @@ type DownloaderParams struct {
 
 func (c *Client) Downloader(params DownloaderParams, opts ...files_sdk.RequestResponseOption) *Job {
 	params.config = c.Config
+	// A client on a new transport, made for this job's manager, whose connections only this job uses.
+	var matchedClient *http.Client
 	if params.AdaptiveConcurrency && (params.AdaptiveConcurrencyUseSDKDefaultCaps || params.Manager == nil) {
-		params.config = params.config.SetCustomClient(manager.New(manager.AdaptiveDownloadV2ConcurrentFiles, manager.EffectiveAdaptiveDownloadV2ConcurrentFileParts(), manager.ConcurrentDirectoryList).CreateMatchingClient(params.config.HTTPClient))
+		matched := manager.New(manager.AdaptiveDownloadV2ConcurrentFiles, manager.EffectiveAdaptiveDownloadV2ConcurrentFileParts(), manager.ConcurrentDirectoryList).CreateMatchingClient(params.config.HTTPClient)
+		if matched != params.config.HTTPClient {
+			matchedClient = matched
+		}
+		params.config = params.config.SetCustomClient(matched)
 	}
 	job := downloader(files_sdk.ContextOption(opts), (&FS{}).Init(params.config, true), params, opts...)
+	if matchedClient != nil {
+		job.closeIdleConnectionsWhenDone(matchedClient)
+	}
 	registerSyncAfterActions(job, params.SyncAfterActions, params.DryRun, params.config, opts...)
 	return job
 }

@@ -3,6 +3,10 @@ package file
 import (
 	"context"
 	"fmt"
+	"io"
+	"net"
+	"net/http"
+	"net/http/httptest"
 	"sync"
 	"testing"
 	"time"
@@ -416,5 +420,44 @@ func TestJobFindRemoteFileUsesServerUnicodeIdentity(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, found)
 		require.Equal(t, pair[1], info.Path)
+	}
+}
+
+// The client a job alone uses (the one Downloader matches to the job's manager) has its idle connections closed once
+// the job has finished, however long its transport would keep them.
+func TestJobClosesItsClientsIdleConnectionsWhenDone(t *testing.T) {
+	closed := make(chan struct{}, 1)
+	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, "ok")
+	}))
+	server.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+		if state == http.StateClosed {
+			select {
+			case closed <- struct{}{}:
+			default:
+			}
+		}
+	}
+	server.Start()
+	t.Cleanup(server.Close)
+	transport := lib.DefaultPooledTransport()
+	transport.IdleConnTimeout = 0
+	client := &http.Client{Transport: transport}
+	t.Cleanup(client.CloseIdleConnections)
+	resp, err := client.Get(server.URL)
+	require.NoError(t, err)
+	_, err = io.Copy(io.Discard, resp.Body)
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+
+	job := (&Job{}).Init()
+	job.closeIdleConnectionsWhenDone(client)
+	job.Start()
+	job.Finish()
+
+	select {
+	case <-closed:
+	case <-time.After(10 * time.Second):
+		t.Fatal("the job's idle connection was still open after it finished")
 	}
 }

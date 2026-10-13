@@ -1,7 +1,6 @@
 package manager
 
 import (
-	"fmt"
 	"math"
 	"net/http"
 	"sync"
@@ -161,22 +160,22 @@ func Build(maxConcurrentConnections, maxConcurrentDirectoryLists int, downloadFi
 	}
 }
 
+// CreateMatchingClient returns a client whose transport allows as many connections per host as FilePartsManager
+// allows parts at once. It never changes client or its transport, which other requests may be using: it returns client
+// itself when the transport's cap already matches, or when the transport is a RoundTripper it cannot configure (such as
+// a test recorder); otherwise a copy of client on a new transport configured like client's
+// (lib.CloneHTTPClientWithMatchingMaxConnsPerHost), or, for a client on the standard default transport, on a new SDK
+// pooled transport. A new transport's connections belong to the caller, which should close its idle connections once
+// its transfers are done.
 func (m *Manager) CreateMatchingClient(client *http.Client) *http.Client {
-	if fmt.Sprintf("%T", client.Transport) == "*recorder.Recorder" {
-		// Can't modify VCR in Test mode.
-		return client
+	if client.Transport == nil {
+		transport := lib.DefaultPooledTransport()
+		transport.MaxConnsPerHost = m.FilePartsManager.Max()
+		matched := *client
+		matched.Transport = transport
+		return &matched
 	}
-
-	switch t := client.Transport.(type) {
-	case *lib.Transport:
-		t.MaxConnsPerHost = m.FilePartsManager.Max()
-		return client
-	default:
-		defaultTransport := lib.DefaultPooledTransport()
-		defaultTransport.MaxConnsPerHost = m.FilePartsManager.Max()
-		client.Transport = defaultTransport
-		return client
-	}
+	return lib.CloneHTTPClientWithMatchingMaxConnsPerHost(client, m.FilePartsManager.Max())
 }
 
 // TransferStats returns the transfer worker usage for this manager.
