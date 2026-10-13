@@ -70,6 +70,9 @@ func uploader(parentCtx context.Context, c Uploader, params UploaderParams, opts
 		if errorJob(job, metaFile, statErr) {
 			return
 		}
+		if errorJob(job, metaFile, params.AdaptiveUploadStartup.validate()) {
+			return
+		}
 		var err error
 		if job.Ignore, err = ignore.New(params.Ignore...); errorJob(job, metaFile, err) {
 			return
@@ -228,6 +231,10 @@ func enqueueIndexedUploads(job *Job, jobCtx context.Context, onComplete chan *Up
 	adaptiveAdmission := params.AdaptiveConcurrency && (params.AdaptiveConcurrencyUseSDKDefaultCaps || params.Manager == nil)
 	adaptiveTargets := uploadV2JobAdmissionTargets{job: job}
 	fileAdmissionManager := job.fileAdmissionManager()
+	var supply *adaptiveFileSupply
+	if adaptiveAdmission && params.AdaptiveUploadStartup != UploadStartupAggressive {
+		supply = newAdaptiveFileSupply(fileAdmissionManager)
+	}
 	for !job.EndScanning.Called() || job.Count(status.Indexed) > 0 {
 		if jobCtx.Err() != nil {
 			// The job is canceled or paused: drain the remaining queue in one
@@ -243,7 +250,7 @@ func enqueueIndexedUploads(job *Job, jobCtx context.Context, onComplete chan *Up
 				adaptiveAdmission,
 				params.AdaptiveUploadV2TargetClassifier,
 				params.AdaptiveUploadV2Tuning,
-			) || waitForAdaptiveFileAdmission(jobCtx, fileAdmissionManager, adaptiveTargets, adaptiveFileAdmissionInitialTarget())
+			) || waitForSuppliedFileAdmission(jobCtx, fileAdmissionManager, adaptiveTargets, adaptiveFileAdmissionInitialTarget(), supply)
 			if admitted && fileAdmissionManager.WaitWithContext(jobCtx) {
 				go enqueueUpload(jobCtx, job, uploadStatus, onComplete)
 			} else {
@@ -379,7 +386,12 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 				tuning.S3WorkloadBytes = job.uploadV2WorkloadBytes(uploadStatus.File().Size, tuning)
 			}
 			if useSDKDefaultAdaptiveCaps {
+				opts = append(opts, uploadWithV2AdaptiveManagerProvider(job.uploadV2AdaptiveManager), uploadWithV2ProcessPartBudget())
+			} else if params.AdaptiveConcurrencyShareJobLearning {
 				opts = append(opts, uploadWithV2AdaptiveManagerProvider(job.uploadV2AdaptiveManager))
+			}
+			if params.AdaptiveUploadStartup != "" {
+				opts = append(opts, UploadWithStartup(params.AdaptiveUploadStartup))
 			}
 			opts = append(opts, uploadWithV2HTTPClientProvider(job.uploadV2HTTPClient))
 			if params.AdaptiveUploadReadyRunwaySet {

@@ -96,6 +96,8 @@ type uploadIO struct {
 	uploadV2HTTPClientProvider uploadV2HTTPClientProvider
 	uploadV2ReadyRunway        uploadV2ReadyRunwayConfig
 	uploadV2Tuning             UploadV2Tuning
+	uploadV2Startup            UploadStartup
+	uploadV2ProcessPartBudget  bool
 	uploadV1Stats              uploadV1SchedulerStats
 	directTransferDisabled     atomic.Bool
 

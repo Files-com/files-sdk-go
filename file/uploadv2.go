@@ -3,6 +3,7 @@ package file
 import (
 	"context"
 	"errors"
+	"sync"
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
@@ -412,7 +413,7 @@ func (t UploadV2Tuning) managerTuning() UploadV2Tuning {
 	return t
 }
 
-type uploadV2AdaptiveManagerProvider func(uploadV2PartPlan, int, UploadV2Tuning) *lib.AdaptiveConcurrencyManager
+type uploadV2AdaptiveManagerProvider func(uploadV2PartPlan, int, UploadV2Tuning, UploadStartup) *lib.AdaptiveConcurrencyManager
 
 func uploadWithV2AdaptiveManagerProvider(provider uploadV2AdaptiveManagerProvider) UploadOption {
 	return func(params uploadIO) (uploadIO, error) {
@@ -430,6 +431,15 @@ func uploadWithV2HTTPClientProvider(provider uploadV2HTTPClientProvider) UploadO
 	}
 }
 
+// uploadWithV2ProcessPartBudget makes the upload's part requests also count against the process-wide budget of uploads
+// using SDK default caps (uploadV2ProcessPartBudgetFor).
+func uploadWithV2ProcessPartBudget() UploadOption {
+	return func(params uploadIO) (uploadIO, error) {
+		params.uploadV2ProcessPartBudget = true
+		return params, nil
+	}
+}
+
 type uploadV2HTTPClientCacheKey struct {
 	target              TransferV2TargetClass
 	maxConnsPerHost     int
@@ -440,6 +450,7 @@ type uploadV2AdaptiveManagerCacheKey struct {
 	target         TransferV2TargetClass
 	maxConcurrency int
 	tuning         UploadV2Tuning
+	warmStart      bool
 }
 
 type uploadV2HTTPClientCacheEntry struct {
@@ -463,29 +474,12 @@ func (c uploadV2ReadyRunwayConfig) resolved() uploadV2ReadyRunwayConfig {
 	}
 }
 
-type uploadV2SharedAdaptiveManagerRegistry struct {
-	adaptiveManagerRegistry[uploadV2AdaptiveManagerCacheKey]
-}
-
-var uploadV2SharedAdaptiveManagers uploadV2SharedAdaptiveManagerRegistry
-
-func (s *uploadV2SharedAdaptiveManagerRegistry) get(plan uploadV2PartPlan, maxConcurrency int, tuning UploadV2Tuning) *lib.AdaptiveConcurrencyManager {
-	tuning = tuning.managerTuning()
-	key := uploadV2AdaptiveManagerCacheKey{
-		target:         plan.target,
-		maxConcurrency: maxConcurrency,
-		tuning:         tuning,
-	}
-	return s.managerFor(key, func() *lib.AdaptiveConcurrencyManager {
-		return lib.NewAdaptiveConcurrencyManagerWithConfig(uploadV2SharedAdaptiveConcurrencyConfig(plan, maxConcurrency, tuning))
-	})
-}
-
-func uploadV2AdaptiveManagerKey(plan uploadV2PartPlan, maxConcurrency int, tuning UploadV2Tuning) uploadV2AdaptiveManagerCacheKey {
+func uploadV2AdaptiveManagerKey(plan uploadV2PartPlan, maxConcurrency int, tuning UploadV2Tuning, startup UploadStartup) uploadV2AdaptiveManagerCacheKey {
 	return uploadV2AdaptiveManagerCacheKey{
 		target:         plan.target,
 		maxConcurrency: maxConcurrency,
 		tuning:         tuning.managerTuning(),
+		warmStart:      uploadV2WarmStarts(plan, tuning, startup),
 	}
 }
 
@@ -498,6 +492,13 @@ func (t uploadV2JobAdmissionTargets) admissionTarget() (int, bool) {
 		return 0, false
 	}
 	return t.job.uploadV2AdmissionTarget()
+}
+
+func (t uploadV2JobAdmissionTargets) admissionStartup() (lib.AdaptiveConcurrencyStartupState, bool) {
+	if t.job == nil {
+		return lib.AdaptiveConcurrencyStartupState{}, false
+	}
+	return t.job.uploadV2AdmissionStartup()
 }
 
 func (r *Job) uploadV2AdmissionTarget() (target int, ok bool) {
@@ -513,16 +514,94 @@ func (r *Job) uploadV2AdmissionTarget() (target int, ok bool) {
 	return target, ok
 }
 
-func (r *Job) uploadV2AdaptiveManager(plan uploadV2PartPlan, maxConcurrency int, tuning UploadV2Tuning) *lib.AdaptiveConcurrencyManager {
-	key := uploadV2AdaptiveManagerKey(plan, maxConcurrency, tuning)
-	manager := uploadV2SharedAdaptiveManagers.get(plan, maxConcurrency, key.tuning)
+// uploadV2AdmissionStartup is the lowest target of the job's managers with the warm start of those that have it,
+// each manager's target read with its phase (lib.AdaptiveConcurrencyManager.StartupState), and the attempts waiting
+// for any of them.
+func (r *Job) uploadV2AdmissionStartup() (lib.AdaptiveConcurrencyStartupState, bool) {
 	r.adaptiveUploadV2Mu.Lock()
+	defer r.adaptiveUploadV2Mu.Unlock()
+	var lowest lib.AdaptiveConcurrencyStartupState
+	waiting := 0
+	ok := false
+	for _, manager := range r.adaptiveUploadV2Managers {
+		state := manager.StartupState()
+		waiting += state.Waiting
+		switch {
+		case !ok || state.Target < lowest.Target:
+			lowest = state
+		case state.Target == lowest.Target:
+			lowest.Warming = lowest.Warming || state.Warming
+			lowest.WarmStarted = lowest.WarmStarted || state.WarmStarted
+		}
+		ok = true
+	}
+	lowest.Waiting = waiting
+	return lowest, ok
+}
+
+// uploadV2AdaptiveManager is the adaptive manager a job's uploads share: with SDK default caps, and under the caller's
+// explicit Manager cap when AdaptiveConcurrencyShareJobLearning asks for it. It is keyed by destination class, cap,
+// tuning and whether it warm-starts (UploadStartup), and starts at the shared target rather than one file's part count.
+// It belongs to the job alone: other jobs, including a retry (UploadRetry), and standalone uploads learn on their own,
+// even with the same cap or limiter.
+func (r *Job) uploadV2AdaptiveManager(plan uploadV2PartPlan, maxConcurrency int, tuning UploadV2Tuning, startup UploadStartup) *lib.AdaptiveConcurrencyManager {
+	key := uploadV2AdaptiveManagerKey(plan, maxConcurrency, tuning, startup)
+	r.adaptiveUploadV2Mu.Lock()
+	defer r.adaptiveUploadV2Mu.Unlock()
+	if manager := r.adaptiveUploadV2Managers[key]; manager != nil {
+		return manager
+	}
 	if r.adaptiveUploadV2Managers == nil {
 		r.adaptiveUploadV2Managers = make(map[uploadV2AdaptiveManagerCacheKey]*lib.AdaptiveConcurrencyManager)
 	}
+	config := uploadV2SharedAdaptiveConcurrencyConfig(plan, maxConcurrency, key.tuning)
+	config.WarmStart = key.warmStart
+	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(config)
 	r.adaptiveUploadV2Managers[key] = manager
-	r.adaptiveUploadV2Mu.Unlock()
 	return manager
+}
+
+type uploadV2ProcessPartBudgetKey struct {
+	target         TransferV2TargetClass
+	maxConcurrency int
+}
+
+// uploadV2ProcessPartBudgets bound the part requests of all upload jobs in the process that use SDK default caps, one
+// budget for each destination class and maximum (manager.SetAdaptiveUploadV2ConcurrentFileParts), while each job learns
+// its own target.
+var uploadV2ProcessPartBudgets = struct {
+	mu      sync.Mutex
+	budgets map[uploadV2ProcessPartBudgetKey]*lib.ConstrainedWorkGroup
+}{}
+
+func uploadV2ProcessPartBudgetFor(target TransferV2TargetClass, maxConcurrency int) *lib.ConstrainedWorkGroup {
+	key := uploadV2ProcessPartBudgetKey{target: target, maxConcurrency: maxConcurrency}
+	uploadV2ProcessPartBudgets.mu.Lock()
+	defer uploadV2ProcessPartBudgets.mu.Unlock()
+	if uploadV2ProcessPartBudgets.budgets == nil {
+		uploadV2ProcessPartBudgets.budgets = make(map[uploadV2ProcessPartBudgetKey]*lib.ConstrainedWorkGroup)
+	}
+	budget := uploadV2ProcessPartBudgets.budgets[key]
+	if budget == nil {
+		budget = lib.NewConstrainedWorkGroup(max(1, maxConcurrency))
+		uploadV2ProcessPartBudgets.budgets[key] = budget
+	}
+	return budget
+}
+
+func uploadV2ProcessPartBudgetStats() TransferStats {
+	uploadV2ProcessPartBudgets.mu.Lock()
+	defer uploadV2ProcessPartBudgets.mu.Unlock()
+	var stats TransferStats
+	for _, budget := range uploadV2ProcessPartBudgets.budgets {
+		active := max(budget.RunningCount(), 0)
+		if active == 0 {
+			continue
+		}
+		stats.Active += active
+		stats.Max += max(budget.Max(), 0)
+	}
+	return stats
 }
 
 func (r *Job) uploadV2WorkloadBytes(currentFileSize int64, tuning UploadV2Tuning) int64 {
@@ -645,6 +724,14 @@ func (u *uploadIO) runUploadV2(ctx context.Context) (UploadResumable, error, boo
 	return resumable, err, true
 }
 
+// effectiveUploadStartup is the startup the upload selected, UploadStartupDefault unless set.
+func (u *uploadIO) effectiveUploadStartup() UploadStartup {
+	if u.uploadV2Startup == "" {
+		return UploadStartupDefault
+	}
+	return u.uploadV2Startup
+}
+
 func (u *uploadIO) uploadV2Enabled() bool {
 	return u.uploadV2
 }
@@ -710,6 +797,20 @@ func (u *uploadIO) logUploadV2Complete(err error, bytesWritten int64) {
 		attrs["adaptive_last_queue_estimate"] = snapshot.LastQueueEstimate
 		attrs["adaptive_min_duration_per_byte"] = snapshot.MinDurationPerByte
 		attrs["adaptive_last_duration_per_byte"] = snapshot.LastDurationPerByte
+		attrs["adaptive_warm_start"] = snapshot.WarmStarted
+		if snapshot.WarmStarted {
+			// The shared manager's state when this file completed: its last warm judgment and last withdrawn raise,
+			// with what they were decided on, not every decision since the previous file.
+			attrs["adaptive_warming"] = snapshot.Warming
+			attrs["adaptive_warm_start_phase"] = snapshot.WarmStartPhase
+			attrs["adaptive_warm_start_end"] = snapshot.WarmStartEnd
+			attrs["adaptive_warm_start_raise_total"] = snapshot.WarmStartRaiseTotal
+			attrs["adaptive_warm_start_settle_total"] = snapshot.WarmStartSettleTotal
+			attrs["adaptive_warm_start_unjudged_window_total"] = snapshot.WarmStartUnjudgedWindowTotal
+			attrs["adaptive_warm_start_queue_estimate"] = snapshot.WarmStartQueueEstimate
+			attrs["adaptive_warm_start_last_decision"] = snapshot.WarmStartLastDecision.String()
+			attrs["adaptive_warm_start_last_withdrawal"] = snapshot.WarmStartLastWithdrawal.String()
+		}
 	}
 	u.logUploadV2(attrs)
 }

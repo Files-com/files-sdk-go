@@ -168,6 +168,28 @@ func (g *uploadV2PartConcurrencyGate) DoneWithSample(sample lib.AdaptiveConcurre
 	g.local.Done()
 }
 
+func (g *uploadV2PartConcurrencyGate) WaitForAttemptWithContext(ctx context.Context) (uint64, bool) {
+	if !g.local.WaitWithContext(ctx) {
+		return 0, false
+	}
+	if attempt, ok := uploadV2WaitForAttempt(ctx, g.parent); ok {
+		return attempt, true
+	}
+	g.local.Done()
+	return 0, false
+}
+
+func (g *uploadV2PartConcurrencyGate) AttemptSending(attempt uint64) {
+	if sender, ok := g.parent.(uploadV2AttemptSender); ok {
+		sender.AttemptSending(attempt)
+	}
+}
+
+func (g *uploadV2PartConcurrencyGate) DoneNeutralAttempt(attempt uint64) {
+	uploadV2DoneNeutral(g.parent, attempt)
+	g.local.Done()
+}
+
 func (g *uploadV2PartConcurrencyGate) DoneNeutral() {
 	if manager, ok := g.parent.(interface{ DoneNeutral() }); ok {
 		manager.DoneNeutral()
@@ -201,9 +223,13 @@ func newUploadV2Engine(u *uploadIO, plan uploadV2PartPlan) *uploadV2Engine {
 		u.transferStarted = &atomic.Bool{}
 	}
 	maxConcurrency := u.uploadV2MaxConcurrency()
-	manager := lib.NewAdaptiveConcurrencyManagerWithConfig(uploadV2AdaptiveConcurrencyConfigWithInitial(plan, maxConcurrency, uploadV2InitialConcurrencyForPlan(plan, maxConcurrency, u.uploadV2Tuning), u.uploadV2Tuning))
+	var manager *lib.AdaptiveConcurrencyManager
 	if u.uploadV2ManagerProvider != nil {
-		manager = u.uploadV2ManagerProvider(plan, maxConcurrency, u.uploadV2Tuning)
+		manager = u.uploadV2ManagerProvider(plan, maxConcurrency, u.uploadV2Tuning, u.uploadV2Startup)
+	} else {
+		config := uploadV2AdaptiveConcurrencyConfigWithInitial(plan, maxConcurrency, uploadV2InitialConcurrencyForPlan(plan, maxConcurrency, u.uploadV2Tuning), u.uploadV2Tuning)
+		config.WarmStart = uploadV2WarmStarts(plan, u.uploadV2Tuning, u.uploadV2Startup)
+		manager = lib.NewAdaptiveConcurrencyManagerWithConfig(config)
 	}
 	transportMaxConcurrency := uploadV2HTTPMaxConnsPerHost(plan, u.uploadV2Tuning, manager.Max())
 	idleConnectionCap := uploadV2HTTPIdleConnectionCap(plan, transportMaxConcurrency)
@@ -221,6 +247,8 @@ func newUploadV2Engine(u *uploadIO, plan uploadV2PartPlan) *uploadV2Engine {
 	var globalManager lib.ConcurrencyManager
 	if u.managerSet && !u.uploadV2UseSDKDefaultCaps {
 		globalManager = u.Manager
+	} else if u.uploadV2ProcessPartBudget {
+		globalManager = uploadV2ProcessPartBudgetFor(plan.target, maxConcurrency)
 	}
 	engine := &uploadV2Engine{
 		u:                         u,
@@ -628,6 +656,8 @@ func (e *uploadV2Engine) uploadV2EnabledLogAttrs(readyRunway uploadV2ReadyRunway
 		"offset_upload":               e.usesPartOffsets(),
 		"adaptive_initial_target":     e.manager.Target(),
 		"adaptive_max_target":         e.manager.Max(),
+		"upload_startup":              string(e.u.effectiveUploadStartup()),
+		"adaptive_warm_start":         e.manager.Snapshot().WarmStarted,
 		"adaptive_part_target":        e.partConcurrencyLimit(),
 		"adaptive_planned_parts":      e.plan.estimatedPartCount(),
 		"ready_runway_parts":          readyRunway.parts,
@@ -834,19 +864,20 @@ func (e *uploadV2Engine) schedulePartDescriptors(ctx context.Context, wait lib.C
 }
 
 func (e *uploadV2Engine) schedulePart(ctx context.Context, wait lib.ConcurrencyManager, results chan<- uploadV2PartResult, descriptor uploadV2PartDescriptor) bool {
-	if !e.waitForPartCapacity(ctx, wait) {
+	attempt, ok := e.waitForPartCapacity(ctx, wait)
+	if !ok {
 		return false
 	}
 
 	reader, source, progress, err := e.buildReader(descriptor.offset)
 	if err != nil {
 		results <- uploadV2PartResult{part: &uploadV2Part{uploadV2PartDescriptor: descriptor}, err: err}
-		e.donePart(ctx, wait, lib.AdaptiveConcurrencySample{Success: false})
+		e.donePart(ctx, wait, lib.AdaptiveConcurrencySample{Success: false, Attempt: attempt})
 		return false
 	}
 	if reader.Len() == 0 && e.u.Size == nil {
 		reader.Close()
-		e.donePart(ctx, wait, lib.AdaptiveConcurrencySample{Success: true})
+		e.donePart(ctx, wait, lib.AdaptiveConcurrencySample{Success: true, Attempt: attempt})
 		return false
 	}
 
@@ -865,7 +896,7 @@ func (e *uploadV2Engine) schedulePart(ctx context.Context, wait lib.ConcurrencyM
 	go func() {
 		result := e.runPart(ctx, part)
 		results <- result
-		e.donePart(ctx, wait, result.sample())
+		e.donePart(ctx, wait, result.sampleOf(attempt))
 	}()
 	e.stats.recordDirectScheduled()
 
@@ -900,7 +931,8 @@ func (e *uploadV2Engine) preparePart(ctx context.Context, results chan<- uploadV
 }
 
 func (e *uploadV2Engine) dispatchPreparedPart(ctx context.Context, wait lib.ConcurrencyManager, results chan<- uploadV2PartResult, part *uploadV2Part) bool {
-	if !e.waitForPartCapacity(ctx, wait) {
+	attempt, ok := e.waitForPartCapacity(ctx, wait)
+	if !ok {
 		return false
 	}
 	e.u.logUploadV2(map[string]any{
@@ -916,7 +948,7 @@ func (e *uploadV2Engine) dispatchPreparedPart(ctx context.Context, wait lib.Conc
 	go func() {
 		result := e.runPart(ctx, part)
 		results <- result
-		e.donePart(ctx, wait, result.sample())
+		e.donePart(ctx, wait, result.sampleOf(attempt))
 	}()
 	e.stats.recordDispatchedPrepared()
 	return true
@@ -925,7 +957,12 @@ func (e *uploadV2Engine) dispatchPreparedPart(ctx context.Context, wait lib.Conc
 func (e *uploadV2Engine) readyRunwayConfig() uploadV2ReadyRunwayConfig {
 	config := e.u.uploadV2ReadyRunway.resolved()
 	if !e.u.uploadV2ReadyRunway.configured && (e.plan.target == uploadV2TargetS3 || e.plan.target == uploadV2TargetDirect) && !e.readyRunwayBuffersPartBytes() {
-		parts := max(uploadV2DefaultSeekableS3ReadyRunwayMinParts, e.manager.Target()/uploadV2DefaultSeekableS3ReadyRunwayTargetDivisor)
+		// A warm start's runway is the one its policy's start would have: it can be promoted there at once.
+		target := e.manager.Target()
+		if state := e.manager.StartupState(); state.Warming {
+			target = state.StartTarget
+		}
+		parts := max(uploadV2DefaultSeekableS3ReadyRunwayMinParts, target/uploadV2DefaultSeekableS3ReadyRunwayTargetDivisor)
 		parts = min(parts, uploadV2DefaultSeekableS3ReadyRunwayMaxParts)
 		if partCount := e.plan.estimatedPartCount(); partCount > 0 {
 			parts = min(parts, partCount)
@@ -971,26 +1008,60 @@ func (e *uploadV2Engine) closePreparedParts(parts []uploadV2PreparedPart) {
 	}
 }
 
-func (e *uploadV2Engine) waitForPartCapacity(ctx context.Context, wait lib.ConcurrencyManager) bool {
+// waitForPartCapacity admits a part attempt (wait), then waits for the hard limiter, if any; it returns the number the
+// adaptive manager gave the attempt (0 if it gives none), which the sample that ends the attempt carries.
+func (e *uploadV2Engine) waitForPartCapacity(ctx context.Context, wait lib.ConcurrencyManager) (uint64, bool) {
 	start := time.Now()
-	if !wait.WaitWithContext(ctx) {
+	attempt, ok := uploadV2WaitForAttempt(ctx, wait)
+	if !ok {
 		e.stats.recordAdaptiveWait(time.Since(start), false)
-		return false
+		return 0, false
 	}
 	e.stats.recordAdaptiveWait(time.Since(start), true)
-	if e.globalManager == nil {
-		e.u.markTransferStarted()
-		return true
-	}
-	start = time.Now()
-	if e.globalManager.WaitWithContext(ctx) {
+	if e.globalManager != nil {
+		start = time.Now()
+		if !e.globalManager.WaitWithContext(ctx) {
+			e.stats.recordGlobalWait(time.Since(start), false)
+			e.done(ctx, wait, lib.AdaptiveConcurrencySample{Success: false, Attempt: attempt})
+			return 0, false
+		}
 		e.stats.recordGlobalWait(time.Since(start), true)
-		e.u.markTransferStarted()
-		return true
 	}
-	e.stats.recordGlobalWait(time.Since(start), false)
-	e.done(ctx, wait, lib.AdaptiveConcurrencySample{Success: false})
-	return false
+	if sender, ok := wait.(uploadV2AttemptSender); ok {
+		sender.AttemptSending(attempt)
+	}
+	e.u.markTransferStarted()
+	return attempt, true
+}
+
+// The adaptive manager's numbered attempts (lib.AdaptiveConcurrencyManager.WaitForAttemptWithContext), through the
+// sub-worker or part gate an engine waits on.
+type uploadV2AttemptWaiter interface {
+	WaitForAttemptWithContext(ctx context.Context) (uint64, bool)
+}
+
+type uploadV2AttemptSender interface {
+	AttemptSending(attempt uint64)
+}
+
+func uploadV2WaitForAttempt(ctx context.Context, wait lib.ConcurrencyManager) (uint64, bool) {
+	if waiter, ok := wait.(uploadV2AttemptWaiter); ok {
+		return waiter.WaitForAttemptWithContext(ctx)
+	}
+	return 0, wait.WaitWithContext(ctx)
+}
+
+// uploadV2DoneNeutral releases an attempt without measuring it.
+func uploadV2DoneNeutral(wait lib.ConcurrencyManager, attempt uint64) {
+	if ender, ok := wait.(interface{ DoneNeutralAttempt(uint64) }); ok && attempt > 0 {
+		ender.DoneNeutralAttempt(attempt)
+		return
+	}
+	if manager, ok := wait.(interface{ DoneNeutral() }); ok {
+		manager.DoneNeutral()
+		return
+	}
+	wait.Done()
 }
 
 func (e *uploadV2Engine) newResumablePart(descriptor uploadV2PartDescriptor, reader ProxyReader) *Part {
@@ -1389,11 +1460,7 @@ func uploadV2UsesPartOffsets(target TransferV2TargetClass) bool {
 func (e *uploadV2Engine) done(ctx context.Context, wait lib.ConcurrencyManager, sample lib.AdaptiveConcurrencySample) {
 	cause := context.Cause(ctx)
 	if !sample.Success && (errors.Is(cause, ErrJobPaused) || errors.Is(cause, context.Canceled)) {
-		if manager, ok := wait.(interface{ DoneNeutral() }); ok {
-			manager.DoneNeutral()
-		} else {
-			wait.Done()
-		}
+		uploadV2DoneNeutral(wait, sample.Attempt)
 		return
 	}
 	if sampler, ok := wait.(lib.AdaptiveConcurrencyManagerWithSample); ok {
@@ -1504,6 +1571,13 @@ func (e *uploadV2Engine) etagsForComplete() []files_sdk.EtagsParam {
 		sortedEtags = append(sortedEtags, e.etags[partNumber])
 	}
 	return sortedEtags
+}
+
+// sampleOf is the result's sample for the attempt it ends.
+func (r uploadV2PartResult) sampleOf(attempt uint64) lib.AdaptiveConcurrencySample {
+	sample := r.sample()
+	sample.Attempt = attempt
+	return sample
 }
 
 func (r uploadV2PartResult) sample() lib.AdaptiveConcurrencySample {

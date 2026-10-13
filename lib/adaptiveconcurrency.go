@@ -32,6 +32,8 @@ type AdaptiveConcurrencySample struct {
 	StatusCode   int
 	BackPressure bool
 	RetryAfter   time.Duration
+	// Attempt is the number WaitForAttemptWithContext gave the attempt this sample ends, or 0 if it is not known.
+	Attempt uint64
 }
 
 type AdaptiveConcurrencyManager struct {
@@ -42,9 +44,14 @@ type AdaptiveConcurrencyManager struct {
 	waiters int
 	done    chan struct{}
 	running int
+	// attempts numbers the attempts admitted so far (WaitForAttemptWithContext).
+	attempts uint64
+	// clock is time.Now, except in this package's tests.
+	clock func() time.Time
 
-	// Target bounds and growth controls.
+	// Target bounds and growth controls. startTarget is the configured InitialTarget, where a warm start ends.
 	target                      int
+	startTarget                 int
 	max                         int
 	min                         int
 	growthCeiling               int
@@ -117,8 +124,12 @@ type AdaptiveConcurrencyManager struct {
 	lastDurationPerByte              float64
 	lastQueueEstimate                float64
 
-	// sampleNow returns when a throughput sample completed. Nil means
-	// time.Now; tests set it to own the sampling clock.
+	// The warm start, when configured (AdaptiveConcurrencyConfig.WarmStart).
+	warm adaptiveWarmStart
+
+	// sampleNow returns when a throughput sample completed. Nil means the
+	// manager's clock (time.Now outside this package's tests); tests set it
+	// to own the sampling clock.
 	sampleNow func() time.Time
 }
 
@@ -157,6 +168,26 @@ type AdaptiveConcurrencySnapshot struct {
 	LastQueueEstimate                       float64
 	MinDurationPerByte                      float64
 	LastDurationPerByte                     float64
+	// WarmStarted reports whether the manager began with a warm start (AdaptiveConcurrencyConfig.WarmStart), and
+	// Warming whether it is still under way. WarmStartEnd is how it ended: "fast_link" when a judged window reached
+	// ThroughputProbeFloorRate, "raised" when measured raises reached InitialTarget, or "" while warming or without one.
+	WarmStarted  bool
+	Warming      bool
+	WarmStartEnd string
+	// WarmStartRaiseTotal counts the warm start's raises, and WarmStartSettleTotal the raises it withdrew.
+	WarmStartRaiseTotal  int
+	WarmStartSettleTotal int
+	// WarmStartUnjudgedWindowTotal counts warm windows not judged because fewer attempts than the target were sending
+	// for more than a quarter of the window: waiting for a part to be ready, or for a shared limiter.
+	WarmStartUnjudgedWindowTotal int
+	// WarmStartQueueEstimate is the queue estimate the warm start last judged a window with.
+	WarmStartQueueEstimate float64
+	// WarmStartPhase is where the warm start is ("baseline", "settling", "resting"), or "" when it is not warming.
+	// WarmStartLastDecision is its last judgment, and WarmStartLastWithdrawal the last raise it took back, with what
+	// each was decided on.
+	WarmStartPhase          string
+	WarmStartLastDecision   AdaptiveConcurrencyWarmDecision
+	WarmStartLastWithdrawal AdaptiveConcurrencyWarmDecision
 }
 
 type AdaptiveConcurrencyConfig struct {
@@ -188,6 +219,12 @@ type AdaptiveConcurrencyConfig struct {
 	LatencyShrinkPercent                   int
 	LatencyQueueHigh                       float64
 	LatencyGrowthQueueHigh                 float64
+	// WarmStart starts the manager at one attempt instead of InitialTarget, and raises it only as measured windows,
+	// of at least two answers whatever ThroughputWindow, earn each raise, until a window measures a fast link
+	// (ThroughputProbeFloorRate) or the raises reach InitialTarget; from there the rest of this config applies as it
+	// would from InitialTarget (see adaptivewarmstart.go). It needs InitialTarget above one, ThroughputWindow and ThroughputProbeFloorRate, and
+	// attempts admitted by WaitForAttemptWithContext that report AttemptSending and end with their number.
+	WarmStart bool
 }
 
 // AdaptiveConcurrencyDefaults contains the primary concurrency settings callers
@@ -349,8 +386,10 @@ func NewAdaptiveConcurrencyManagerWithConfig(config AdaptiveConcurrencyConfig) *
 	if latencyGrowthQueueHigh < 0 {
 		latencyGrowthQueueHigh = 0
 	}
-	return &AdaptiveConcurrencyManager{
+	manager := &AdaptiveConcurrencyManager{
+		clock:                           time.Now,
 		target:                          initialTarget,
+		startTarget:                     initialTarget,
 		max:                             maxConcurrency,
 		min:                             minTarget,
 		growthCeiling:                   growthCeiling,
@@ -382,6 +421,17 @@ func NewAdaptiveConcurrencyManagerWithConfig(config AdaptiveConcurrencyConfig) *
 		notify:                          make(chan struct{}),
 		done:                            make(chan struct{}),
 	}
+	if config.WarmStart && initialTarget > adaptiveWarmStartTarget && throughputWindow > 0 && throughputProbeFloorRate > 0 {
+		manager.startWarm()
+	}
+	return manager
+}
+
+func (a *AdaptiveConcurrencyManager) now() time.Time {
+	if a.clock == nil {
+		return time.Now()
+	}
+	return a.clock()
 }
 
 func (a *AdaptiveConcurrencyManager) Wait() {
@@ -389,6 +439,7 @@ func (a *AdaptiveConcurrencyManager) Wait() {
 	defer a.mu.Unlock()
 	if a.waitForCapacityLocked(context.Background()) {
 		a.acquireLocked()
+		a.sendingUnnumberedLocked()
 	}
 }
 
@@ -399,6 +450,7 @@ func (a *AdaptiveConcurrencyManager) WaitWithContext(ctx context.Context) bool {
 		return false
 	}
 	a.acquireLocked()
+	a.sendingUnnumberedLocked()
 	return true
 }
 
@@ -409,12 +461,14 @@ func (a *AdaptiveConcurrencyManager) Done() {
 func (a *AdaptiveConcurrencyManager) DoneNeutral() {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	a.endAttemptLocked(a.now(), 0)
 	a.releaseLocked()
 }
 
 func (a *AdaptiveConcurrencyManager) DoneWithSample(sample AdaptiveConcurrencySample) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	now := a.now()
 	if sample.Duration > 0 {
 		a.durationTotal += sample.Duration
 	}
@@ -427,16 +481,22 @@ func (a *AdaptiveConcurrencyManager) DoneWithSample(sample AdaptiveConcurrencySa
 		if sample.RetryAfter > 0 {
 			a.retryAfterTotal++
 			// Another worker may already have reported a longer Retry-After; keep the later deadline.
-			pauseUntil := time.Now().Add(sample.RetryAfter)
+			pauseUntil := now.Add(sample.RetryAfter)
 			if a.pauseUntil.Before(pauseUntil) {
 				a.pauseUntil = pauseUntil
 			}
 		} else if a.backPressurePause > 0 {
-			pauseUntil := time.Now().Add(a.backPressurePause)
+			pauseUntil := now.Add(a.backPressurePause)
 			if a.pauseUntil.Before(pauseUntil) {
 				a.pauseUntil = pauseUntil
 			}
 		}
+	}
+	if a.warm.warming {
+		a.recordWarmLocked(now, sample, backPressure)
+		a.endAttemptLocked(now, sample.Attempt)
+		a.releaseLocked()
+		return
 	}
 	if sample.Success {
 		a.successTotal++
@@ -482,6 +542,7 @@ func (a *AdaptiveConcurrencyManager) DoneWithSample(sample AdaptiveConcurrencySa
 			a.shrinkTotal++
 		}
 	}
+	a.endAttemptLocked(now, sample.Attempt)
 	a.releaseLocked()
 }
 
@@ -597,7 +658,7 @@ func (a *AdaptiveConcurrencyManager) recordThroughputLocked(sample AdaptiveConcu
 	if a.throughputWindow <= 0 || sample.Bytes <= 0 {
 		return
 	}
-	now := time.Now()
+	now := a.now()
 	if a.sampleNow != nil {
 		now = a.sampleNow()
 	}
@@ -802,7 +863,7 @@ func (a *AdaptiveConcurrencyManager) canAcquireLocked() bool {
 	if a.pauseUntil.IsZero() {
 		return true
 	}
-	if time.Now().Before(a.pauseUntil) {
+	if a.now().Before(a.pauseUntil) {
 		return false
 	}
 	a.pauseUntil = time.Time{}
@@ -814,7 +875,7 @@ func (a *AdaptiveConcurrencyManager) waitForCapacityLocked(ctx context.Context) 
 		notify := a.notifyLocked()
 		wait := time.Duration(0)
 		if !a.pauseUntil.IsZero() && a.running < a.target {
-			if pauseWait := time.Until(a.pauseUntil); pauseWait > 0 {
+			if pauseWait := a.pauseUntil.Sub(a.now()); pauseWait > 0 {
 				wait = pauseWait
 			}
 		}
@@ -852,6 +913,10 @@ func (a *AdaptiveConcurrencyManager) waitForCapacityLocked(ctx context.Context) 
 }
 
 func (a *AdaptiveConcurrencyManager) acquireLocked() {
+	a.attempts++
+	if a.warm.started {
+		a.advanceWarmLocked(a.now())
+	}
 	a.running++
 	if a.running > a.peakRunning {
 		a.peakRunning = a.running
@@ -968,6 +1033,16 @@ func (a *AdaptiveConcurrencyManager) Snapshot() AdaptiveConcurrencySnapshot {
 		LastQueueEstimate:                       a.lastQueueEstimate,
 		MinDurationPerByte:                      a.minDurationPerByte,
 		LastDurationPerByte:                     a.lastDurationPerByte,
+		WarmStarted:                             a.warm.started,
+		Warming:                                 a.warm.warming,
+		WarmStartEnd:                            a.warm.end,
+		WarmStartRaiseTotal:                     a.warm.raiseTotal,
+		WarmStartSettleTotal:                    a.warm.settleTotal,
+		WarmStartUnjudgedWindowTotal:            a.warm.unjudgedTotal,
+		WarmStartQueueEstimate:                  a.warm.queue,
+		WarmStartPhase:                          a.warmPhaseLocked(),
+		WarmStartLastDecision:                   a.warm.lastDecision,
+		WarmStartLastWithdrawal:                 a.warm.lastWithdrawal,
 	}
 }
 

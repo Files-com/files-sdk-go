@@ -190,6 +190,8 @@ func (c *Client) UploadRetry(job Job, opts ...files_sdk.RequestResponseOption) *
 			SyncAfterActions:                     newJob.Params.(UploaderParams).SyncAfterActions,
 			AdaptiveConcurrency:                  newJob.Params.(UploaderParams).AdaptiveConcurrency,
 			AdaptiveConcurrencyUseSDKDefaultCaps: newJob.Params.(UploaderParams).AdaptiveConcurrencyUseSDKDefaultCaps,
+			AdaptiveConcurrencyShareJobLearning:  newJob.Params.(UploaderParams).AdaptiveConcurrencyShareJobLearning,
+			AdaptiveUploadStartup:                newJob.Params.(UploaderParams).AdaptiveUploadStartup,
 			AdaptiveUploadV2TargetClassifier:     newJob.Params.(UploaderParams).AdaptiveUploadV2TargetClassifier,
 		},
 		opts...,
@@ -236,10 +238,28 @@ type UploaderParams struct {
 	// a fixed target.
 	AdaptiveConcurrency bool
 	// AdaptiveConcurrencyUseSDKDefaultCaps keeps SDK V2 concurrency caps and
-	// shared adaptive learning when Manager is present only for job scheduling.
+	// shared adaptive learning when Manager is present only for job scheduling:
+	// the job's uploads share one adaptive part target, which other jobs do not
+	// share, within a part budget shared by every job in the process that uses
+	// SDK default caps (manager.SetAdaptiveUploadV2ConcurrentFileParts).
 	// When false and Manager is provided, V2 treats that Manager as an explicit
-	// isolated cap.
+	// cap, and each upload learns in isolation unless
+	// AdaptiveConcurrencyShareJobLearning is set.
 	AdaptiveConcurrencyUseSDKDefaultCaps bool
+	// AdaptiveConcurrencyShareJobLearning lets this job's uploads share their
+	// adaptive part target under an explicit Manager cap: what one file's parts
+	// teach it, such as failures or throttling lowering it, applies to the job's
+	// other files, and files of one part do not hold it to one. The Manager
+	// stays the hard limit on part requests for everything that uses it, and
+	// other jobs and standalone uploads keep learning on their own. It has no
+	// effect without AdaptiveConcurrency or a Manager, or with
+	// AdaptiveConcurrencyUseSDKDefaultCaps, which shares learning already.
+	AdaptiveConcurrencyShareJobLearning bool
+	// AdaptiveUploadStartup selects how the job's adaptive uploads start their
+	// part requests to S3 (UploadStartup); the zero value is
+	// UploadStartupDefault. An explicit start in AdaptiveUploadV2Tuning takes
+	// precedence. It has no effect without AdaptiveConcurrency.
+	AdaptiveUploadStartup UploadStartup
 	// AdaptiveUploadV2TargetClassifier optionally overrides the SDK's upload V2
 	// target classifier. Custom targets use default SDK transfer behavior but
 	// keep separate adaptive manager cache entries and telemetry target labels.

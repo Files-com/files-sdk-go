@@ -146,7 +146,17 @@ files-cli upload \
   "remote/path/${RUN_ID}/adaptive-default/${DATASET}"
 ```
 
-Diagnostic tuning flags may be used for development-only exploration, but those runs should be labeled separately and should not replace the default adaptive comparison or be reported as the product result.
+Run each dataset under both upload startups and label every row with its startup. The default startup, without the flag or with `--upload-startup default`, begins with one connection and adds connections as measured throughput earns them; a measured fast link takes it to the S3 start of 150 at once. `--upload-startup aggressive` begins at that start, as earlier builds did, and is the control for comparing with them:
+
+```sh
+files-cli upload \
+  --debug \
+  --upload-startup aggressive \
+  "./upload-sources/${DATASET}" \
+  "remote/path/${RUN_ID}/adaptive-aggressive/${DATASET}"
+```
+
+Diagnostic tuning flags may be used for development-only exploration, but those runs should be labeled separately and should not replace the default adaptive comparison or be reported as the product result. `--upload-startup` cannot be combined with `--adaptive-concurrency-initial-target`, which sets the start itself.
 
 For above-ceiling validation, still use the default adaptive command. The workload itself must be large enough to cross the default S3 ceiling-unlock threshold; do not lower the threshold just to make the run shorter unless the row is explicitly labeled as a diagnostic override.
 
@@ -179,7 +189,8 @@ When reporting results, call out which mechanism each row validates. For example
 
 Review the debug log for each adaptive run and confirm:
 
-- `upload v2 enabled` appears for the uploaded files.
+- `upload v2 enabled` appears for the uploaded files, with the row's `upload_startup`; `adaptive_warm_start` is true for default S3 rows and false for aggressive ones.
+- For default rows, completion telemetry reports how the warm start ended (`adaptive_warm_start_end`: `fast_link` once a window measured 96 MiB/s, `raised` once probing reached the start) and its raise, withdrawal and unjudged-window counts.
 - The target class is `s3` for direct-S3 validation.
 - `adaptive_max_target` reflects the V2 adaptive headroom.
 - `adaptive_growth_ceiling` reflects the default S3 soft ceiling.

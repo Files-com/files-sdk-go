@@ -18,6 +18,7 @@ import (
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/directory"
 	"github.com/Files-com/files-sdk-go/v3/downloadurl"
+	"github.com/Files-com/files-sdk-go/v3/file/manager"
 	"github.com/Files-com/files-sdk-go/v3/file/status"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/Files-com/files-sdk-go/v3/lib/uploadchecksum"
@@ -406,7 +407,7 @@ func TestUploadWithV2KeepsStatusQueuedUntilAdaptivePartSlot(t *testing.T) {
 			UploadWithSize(1),
 			UploadWithManager(lib.NewConstrainedWorkGroup(2)),
 			UploadWithProgress(uploadProgress(uploadStatus)),
-			uploadWithV2AdaptiveManagerProvider(func(uploadV2PartPlan, int, UploadV2Tuning) *lib.AdaptiveConcurrencyManager {
+			uploadWithV2AdaptiveManagerProvider(func(uploadV2PartPlan, int, UploadV2Tuning, UploadStartup) *lib.AdaptiveConcurrencyManager {
 				return blockedManager
 			}),
 		)
@@ -912,10 +913,16 @@ func TestUploadV2S3UsesTargetDefaultConcurrencyWithoutExplicitManagerCap(t *test
 	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
 	require.True(t, ok, reason)
 
-	engine := newUploadV2Engine(&uploadIO{FileUploadPart: part}, plan)
+	engine := newUploadV2Engine(&uploadIO{FileUploadPart: part, uploadV2Startup: UploadStartupAggressive}, plan)
 
 	assert.Equal(t, AdaptiveTransferS3MaxConcurrency, engine.manager.Max())
 	assert.Equal(t, 16, engine.manager.Target())
+
+	// The default startup warms from one part toward that start.
+	state := newUploadV2Engine(&uploadIO{FileUploadPart: part}, plan).manager.StartupState()
+	assert.True(t, state.Warming)
+	assert.Equal(t, 1, state.Target)
+	assert.Equal(t, 16, state.StartTarget)
 }
 
 func TestUploadV2RaisesDefaultHTTPTransportCapForSDKClient(t *testing.T) {
@@ -1130,13 +1137,22 @@ func TestUploadV2S3RespectsExplicitManagerCap(t *testing.T) {
 	require.True(t, ok, reason)
 
 	engine := newUploadV2Engine(&uploadIO{
-		FileUploadPart: part,
-		Manager:        lib.NewConstrainedWorkGroup(50),
-		managerSet:     true,
+		FileUploadPart:  part,
+		Manager:         lib.NewConstrainedWorkGroup(50),
+		managerSet:      true,
+		uploadV2Startup: UploadStartupAggressive,
 	}, plan)
 
 	assert.Equal(t, 50, engine.manager.Max())
 	assert.Equal(t, 16, engine.manager.Target())
+
+	cautious := newUploadV2Engine(&uploadIO{
+		FileUploadPart: part,
+		Manager:        lib.NewConstrainedWorkGroup(50),
+		managerSet:     true,
+	}, plan)
+	assert.Equal(t, 50, cautious.manager.Max())
+	assert.Equal(t, lib.AdaptiveConcurrencyStartupState{Target: 1, StartTarget: 16, Warming: true, WarmStarted: true}, cautious.manager.StartupState())
 }
 
 func TestUploadV2S3IgnoresSchedulingOnlyManagerCap(t *testing.T) {
@@ -1811,63 +1827,118 @@ func TestUploadV2ExplicitReadyRunwayIsRespectedForS3(t *testing.T) {
 	assert.Equal(t, int64(7), runway.bytes)
 }
 
+// defaultCapsUploadEngine is an upload of job, with SDK default caps as an upload job runs it: on the job's shared
+// adaptive manager and the process-wide part budget, under the aggressive startup.
+func defaultCapsUploadEngine(job *Job, part files_sdk.FileUploadPart, plan uploadV2PartPlan, tuning UploadV2Tuning) *uploadV2Engine {
+	return newUploadV2Engine(&uploadIO{
+		FileUploadPart:            part,
+		uploadV2UseSDKDefaultCaps: true,
+		uploadV2ProcessPartBudget: true,
+		uploadV2ManagerProvider:   job.uploadV2AdaptiveManager,
+		uploadV2Startup:           UploadStartupAggressive,
+		uploadV2Tuning:            tuning,
+		Progress:                  func(int64) {},
+	}, plan)
+}
+
+// A job's uploads learn one target, whatever their part counts or planner-only tuning: a first file of one part does
+// not set its start, failures one upload's parts meet lower it for the job's other uploads, that file included, while
+// another job and a retry of this one start at their own start.
 func TestUploadV2JobSharesAdaptiveManagerAcrossFiles(t *testing.T) {
 	resetUploadV2SharedAdaptiveManagersForTest()
 	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
-	size := int64(10) * uploadV2GiB
-	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
-	require.True(t, ok, reason)
+	plan := func(size int64) uploadV2PartPlan {
+		plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+		require.True(t, ok, reason)
+		return plan
+	}
+	large := int64(10) * uploadV2GiB
 	job := (&Job{}).Init()
+	tiny := defaultCapsUploadEngine(job, part, plan(1), UploadV2Tuning{})
+	first := defaultCapsUploadEngine(job, part, plan(large), UploadV2Tuning{S3PartSizeMiB: 16, S3WorkloadBytes: large})
+	require.Equal(t, AdaptiveTransferS3InitialTarget, first.manager.Target(), "the job's first file, of one part, does not set its start")
 
-	first := job.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{})
-	first.Wait()
-	first.DoneWithSample(lib.AdaptiveConcurrencySample{Success: true})
-	first.Wait()
-	first.DoneWithSample(lib.AdaptiveConcurrencySample{Success: true})
-	second := job.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{})
+	ctx := t.Context()
+	wait := first.partConcurrencyManager()
+	for range 2 {
+		attempt, ok := first.waitForPartCapacity(ctx, wait)
+		require.True(t, ok)
+		first.donePart(ctx, wait, lib.AdaptiveConcurrencySample{Success: false, Attempt: attempt})
+	}
+	lowered := first.manager.Target()
+	require.Less(t, lowered, AdaptiveTransferS3InitialTarget)
 
-	assert.Same(t, first, second)
-	assert.Equal(t, 50, second.Target())
+	retuned := defaultCapsUploadEngine(job, part, plan(large), UploadV2Tuning{S3PartSizeMiB: 32, S3WorkloadBytes: 200 * 200 * uploadV2MiB})
+	assert.Equal(t, lowered, tiny.manager.Target(), "a file of one part runs at its job's learned target")
+	assert.Equal(t, lowered, retuned.manager.Target(), "planner-only tuning shares it too")
+
+	another := defaultCapsUploadEngine((&Job{}).Init(), part, plan(large), UploadV2Tuning{})
+	retry := job.ClearStatuses()
+	retried := defaultCapsUploadEngine(&retry, part, plan(large), UploadV2Tuning{})
+	assert.Equal(t, AdaptiveTransferS3InitialTarget, another.manager.Target(), "another job learns on its own")
+	assert.Equal(t, AdaptiveTransferS3InitialTarget, retried.manager.Target(), "so does a retry")
 }
 
-func TestUploadV2JobsShareAdaptiveManagerGlobally(t *testing.T) {
+// Uploads with SDK default caps, of every job, draw on one process-wide part budget for each destination class and
+// cap: while one job's parts hold all of it, another job's part waits until one of them ends, and an upload to
+// another destination class has a budget of its own.
+func TestAdaptiveTransferStatsReportsProcessUploadPartBudgets(t *testing.T) {
 	resetUploadV2SharedAdaptiveManagersForTest()
-	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
+	manager.SetAdaptiveUploadV2ConcurrentFileParts(4)
+	t.Cleanup(func() { manager.SetAdaptiveUploadV2ConcurrentFileParts(0) })
+	s3Part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
+	agentPart := uploadV2TestPart("https://files-agent-proxy.test/uploads")
+	agentPart.DirectConnectionInfo = testDirectConnectionInfo("/uploads?jwt=direct-token")
 	size := int64(10) * uploadV2GiB
-	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+	s3Plan, ok, reason := newUploadV2PartPlanForUpload(s3Part, &size)
 	require.True(t, ok, reason)
-	firstJob := (&Job{}).Init()
-	secondJob := (&Job{}).Init()
-
-	first := firstJob.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{})
-	second := secondJob.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{})
-
-	assert.Same(t, first, second)
-}
-
-func TestAdaptiveTransferStatsReportsSharedUploadManagers(t *testing.T) {
-	resetUploadV2SharedAdaptiveManagersForTest()
-	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
-	size := int64(10) * uploadV2GiB
-	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
+	agentPlan, ok, reason := newUploadV2PartPlanForUpload(agentPart, &size)
 	require.True(t, ok, reason)
-	firstJob := (&Job{}).Init()
+	first := defaultCapsUploadEngine((&Job{}).Init(), s3Part, s3Plan, UploadV2Tuning{})
 	secondJob := (&Job{}).Init()
+	second := defaultCapsUploadEngine(secondJob, s3Part, s3Plan, UploadV2Tuning{})
+	agent := defaultCapsUploadEngine(secondJob, agentPart, agentPlan, UploadV2Tuning{})
 
-	first := firstJob.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{})
-	second := secondJob.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{})
-	idle := secondJob.uploadV2AdaptiveManager(plan, 25, UploadV2Tuning{})
-	require.Same(t, first, second)
-	require.NotSame(t, first, idle)
-	first.Wait()
-	t.Cleanup(first.Done)
-
+	ctx := t.Context()
+	wait := first.partConcurrencyManager()
+	var attempts []uint64
+	for range 4 {
+		attempt, ok := first.waitForPartCapacity(ctx, wait)
+		require.True(t, ok)
+		attempts = append(attempts, attempt)
+	}
 	stats := AdaptiveTransferStats()
-
-	assert.Equal(t, 1, stats.Upload.Active)
-	assert.Equal(t, 50, stats.Upload.Max)
+	assert.Equal(t, 4, stats.Upload.Active)
+	assert.Equal(t, 4, stats.Upload.Max)
 	assert.Equal(t, 0, stats.Download.Active)
-	assert.Equal(t, 0, stats.Download.Max)
+
+	admitted := make(chan bool, 1)
+	secondWait := second.partConcurrencyManager()
+	go func() {
+		_, ok := second.waitForPartCapacity(ctx, secondWait)
+		admitted <- ok
+	}()
+	select {
+	case <-admitted:
+		t.Fatal("another job's part started while the budget was in use")
+	case <-time.After(100 * time.Millisecond):
+	}
+	agentWait := agent.partConcurrencyManager()
+	agentAttempt, ok := agent.waitForPartCapacity(ctx, agentWait)
+	require.True(t, ok, "another destination class has its own budget")
+
+	first.donePart(ctx, wait, lib.AdaptiveConcurrencySample{Success: true, Attempt: attempts[0]})
+	select {
+	case ok := <-admitted:
+		assert.True(t, ok)
+	case <-time.After(5 * time.Second):
+		t.Fatal("another job's part did not start once a part ended")
+	}
+	for _, attempt := range attempts[1:] {
+		first.donePart(ctx, wait, lib.AdaptiveConcurrencySample{Success: true, Attempt: attempt})
+	}
+	second.donePart(ctx, secondWait, lib.AdaptiveConcurrencySample{Success: true})
+	agent.donePart(ctx, agentWait, lib.AdaptiveConcurrencySample{Success: true, Attempt: agentAttempt})
 }
 
 func TestUploadV2SharedAdaptiveManagerKeepsExplicitCapsSeparate(t *testing.T) {
@@ -1876,73 +1947,13 @@ func TestUploadV2SharedAdaptiveManagerKeepsExplicitCapsSeparate(t *testing.T) {
 	size := int64(10) * uploadV2GiB
 	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
 	require.True(t, ok, reason)
-	firstJob := (&Job{}).Init()
-	secondJob := (&Job{}).Init()
+	job := (&Job{}).Init()
 
-	limited := firstJob.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{})
-	defaulted := secondJob.uploadV2AdaptiveManager(plan, AdaptiveTransferS3MaxConcurrency, UploadV2Tuning{})
+	limited := job.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{}, UploadStartupAggressive)
+	defaulted := job.uploadV2AdaptiveManager(plan, AdaptiveTransferS3MaxConcurrency, UploadV2Tuning{}, UploadStartupAggressive)
 
-	assert.NotSame(t, limited, defaulted)
 	assert.Equal(t, 50, limited.Max())
 	assert.Equal(t, AdaptiveTransferS3MaxConcurrency, defaulted.Max())
-}
-
-func TestUploadV2JobSharedManagerIgnoresPlannerOnlyTuning(t *testing.T) {
-	resetUploadV2SharedAdaptiveManagersForTest()
-	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
-	size := int64(20) * uploadV2GiB
-	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
-	require.True(t, ok, reason)
-	job := (&Job{}).Init()
-
-	first := job.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{
-		S3PartSizeMiB:   16,
-		S3WorkloadBytes: size,
-	})
-	second := job.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{
-		S3PartSizeMiB:   32,
-		S3WorkloadBytes: int64(200*200) * uploadV2MiB,
-	})
-
-	assert.Same(t, first, second)
-}
-
-func TestUploadV2JobSharedManagerDoesNotStartAtTinyFilePartCount(t *testing.T) {
-	resetUploadV2SharedAdaptiveManagersForTest()
-	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
-	tinySize := int64(1)
-	tinyPlan, ok, reason := newUploadV2PartPlanForUpload(part, &tinySize)
-	require.True(t, ok, reason)
-	largeSize := int64(10) * uploadV2GiB
-	largePlan, ok, reason := newUploadV2PartPlanForUpload(part, &largeSize)
-	require.True(t, ok, reason)
-	job := (&Job{}).Init()
-
-	first := job.uploadV2AdaptiveManager(tinyPlan, 50, UploadV2Tuning{})
-	second := job.uploadV2AdaptiveManager(largePlan, 50, UploadV2Tuning{})
-
-	assert.Same(t, first, second)
-	assert.Equal(t, 50, second.Target())
-}
-
-func TestUploadV2ClearStatusesKeepsSharedAdaptiveManagers(t *testing.T) {
-	resetUploadV2SharedAdaptiveManagersForTest()
-	part := uploadV2TestPart("https://s3.amazonaws.com/bucket/key?partNumber=1")
-	size := int64(10) * uploadV2GiB
-	plan, ok, reason := newUploadV2PartPlanForUpload(part, &size)
-	require.True(t, ok, reason)
-	job := (&Job{}).Init()
-	first := job.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{})
-	first.Wait()
-	first.DoneWithSample(lib.AdaptiveConcurrencySample{Success: true})
-	first.Wait()
-	first.DoneWithSample(lib.AdaptiveConcurrencySample{Success: true})
-
-	retryJob := job.ClearStatuses()
-	second := retryJob.uploadV2AdaptiveManager(plan, 50, UploadV2Tuning{})
-
-	assert.Same(t, first, second)
-	assert.Equal(t, 50, second.Target())
 }
 
 func TestUploadV2NetworkErrorsCountAsBackPressure(t *testing.T) {
@@ -2327,7 +2338,9 @@ func uploadV2TestPart(uploadURI string) files_sdk.FileUploadPart {
 }
 
 func resetUploadV2SharedAdaptiveManagersForTest() {
-	uploadV2SharedAdaptiveManagers.resetForTest()
+	uploadV2ProcessPartBudgets.mu.Lock()
+	defer uploadV2ProcessPartBudgets.mu.Unlock()
+	uploadV2ProcessPartBudgets.budgets = nil
 }
 
 func uploadV2TestQuery(t *testing.T, uploadURI string) url.Values {

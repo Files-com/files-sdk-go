@@ -22,10 +22,11 @@ type adaptiveManagerRegistry[K comparable] struct {
 }
 
 // AdaptiveTransferStats returns transfer worker usage for the process-wide
-// adaptive upload and download managers.
+// adaptive upload part budgets and download managers: the jobs that use SDK
+// default caps.
 func AdaptiveTransferStats() DirectionalTransferStats {
 	return DirectionalTransferStats{
-		Upload:   uploadV2SharedAdaptiveManagers.transferStats(),
+		Upload:   uploadV2ProcessPartBudgetStats(),
 		Download: downloadV2SharedAdaptiveManagers.transferStats(),
 	}
 }

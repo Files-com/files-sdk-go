@@ -132,7 +132,9 @@ Median throughput after high-throughput OS tuning:
 | `200x200MiB` | `128` | 20.622 Gbit/s | 20.635 Gbit/s | 16.3 s | 185.3% | 89.4 MiB | +1.8% |
 | `200x200MiB` | `50` | 19.530 Gbit/s | 20.383 Gbit/s | 17.2 s | 184.2% | 82.7 MiB | -3.6% |
 
-The adaptive part controller reported `adaptive_final_target=150`, `adaptive_peak_target=150`, and `adaptive_peak_running=150` for all runs. That confirms the benchmark isolated file admission while holding the adaptive part target behavior constant.
+The adaptive part controller reported `adaptive_final_target=150`, `adaptive_peak_target=150`, and `adaptive_peak_running=150` for all runs. That confirms the benchmark isolated file admission while holding the adaptive part target behavior constant. These runs started at the S3 start of 150, which `--upload-startup aggressive` now selects; they do not measure the default startup.
+
+Under the default startup, the part target warms up from one connection. While it warms, a job admits one more file each 100 ms when too few parts are ready to fill the target, and when it keeps a raise, as many more at once as fed each part before. The cap above still bounds the files admitted.
 
 ## Interpretation
 

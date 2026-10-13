@@ -3,6 +3,7 @@ package file
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"math"
 	mathrand "math/rand/v2"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -484,6 +486,148 @@ func TestUploaderAdaptiveConcurrencyUseSDKDefaultCapsKeepsJobPartManagerForFallb
 			assert.Equal(t, job.FilePartsManager.Max(), maxer.Max())
 		})
 	}
+}
+
+func TestUploaderJobUnderAnExplicitCapSharesBackoffAcrossItsFilesOnly(t *testing.T) {
+	for _, tt := range []struct {
+		name  string
+		share bool
+		// wantHeld is how many of the first job's parts are sent at once after its first 16 fail.
+		wantHeld int
+	}{
+		// The failures lower the target the job's files share, from the cap, where the aggressive
+		// startup starts it, to the Amazon S3 minimum, although each file has one part.
+		{name: "shared", share: true, wantHeld: AdaptiveTransferS3MinTarget},
+		// Each file learns alone, from its one part, so only the cap limits them.
+		{name: "isolated", share: false, wantHeld: 16},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			storage := &heldS3Parts{failing: "first", failures: 16, held: map[string]int{}, release: make(chan struct{})}
+			server := httptest.NewServer(storage)
+			t.Cleanup(server.Close)
+			t.Cleanup(storage.releaseAll)
+			client := &Client{Config: files_sdk.Config{}.Init()}
+			serverURL, err := url.Parse(server.URL)
+			require.NoError(t, err)
+			client.Config.Logger = lib.NullLogger{}
+			client.Config = client.Config.SetCustomClient(&http.Client{Transport: &CustomTransport{URL: serverURL}})
+			client.Config.Client.RetryMax = 0
+			// Enough files that the cap, not the number of files in progress, limits parts.
+			caller := uploadManager.New(64, 16, 1)
+			start := func(folder string, files int) *Job {
+				local := t.TempDir()
+				for i := range files {
+					// Files of one part each, all of different sizes.
+					require.NoError(t, os.WriteFile(filepath.Join(local, fmt.Sprintf("%02d.bin", i)), bytes.Repeat([]byte("x"), i+1), 0600))
+				}
+				job := client.Uploader(UploaderParams{
+					LocalPath:                           local + string(os.PathSeparator),
+					RemotePath:                          folder,
+					Manager:                             caller,
+					AdaptiveConcurrency:                 true,
+					AdaptiveConcurrencyShareJobLearning: tt.share,
+					AdaptiveUploadStartup:               UploadStartupAggressive,
+				})
+				job.Start()
+				return job
+			}
+
+			first := start("first", 40)
+			storage.requireHeld(t, "first", tt.wantHeld)
+			var second *Job
+			if tt.share {
+				// Another job under the same Manager starts at the cap, not at what the first job
+				// learned, and the Manager still limits both jobs' parts to 16 together.
+				second = start("second", 16)
+				storage.requireHeld(t, "second", 16-tt.wantHeld)
+				assert.Equal(t, tt.wantHeld, storage.Held("first"))
+			}
+			storage.releaseAll()
+
+			first.Wait()
+			assert.Equal(t, 16, first.Count(status.Errored))
+			assert.Equal(t, 24, first.Count(status.Complete))
+			if second != nil {
+				second.Wait()
+				assert.Equal(t, 16, second.Count(status.Complete))
+			}
+		})
+	}
+}
+
+// heldS3Parts is a Files.com API and Amazon S3 bucket for uploads of one part: it
+// refuses the first failures part uploads to the failing remote folder with 503
+// and holds every other part upload until releaseAll.
+type heldS3Parts struct {
+	mu         sync.Mutex
+	failing    string
+	failures   int
+	held       map[string]int
+	release    chan struct{}
+	releaseOne sync.Once
+}
+
+func (s *heldS3Parts) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	const beginUpload, files, bucket = "/api/rest/v1/file_actions/begin_upload/", "/api/rest/v1/files/", "/bucket/"
+	path := r.URL.Path
+	switch {
+	case r.Method == http.MethodPost && strings.HasPrefix(path, beginUpload):
+		remote := strings.TrimPrefix(path, beginUpload)
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(files_sdk.FileUploadPartCollection{{
+			HttpMethod:    http.MethodPut,
+			Path:          remote,
+			Ref:           "ref-" + remote,
+			UploadUri:     "https://s3.amazonaws.com" + bucket + remote + "?partNumber=1",
+			ParallelParts: lib.Bool(true),
+			Expires:       time.Now().Add(time.Hour).Format(time.RFC3339),
+			PartNumber:    1,
+		}})
+	case r.Method == http.MethodPut && strings.HasPrefix(path, bucket):
+		_, _ = io.Copy(io.Discard, r.Body)
+		folder, _, _ := strings.Cut(strings.TrimPrefix(path, bucket), "/")
+		s.mu.Lock()
+		if folder == s.failing && s.failures > 0 {
+			s.failures--
+			s.mu.Unlock()
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		s.held[folder]++
+		s.mu.Unlock()
+		select {
+		case <-s.release:
+		case <-r.Context().Done():
+		}
+		w.Header().Set("Etag", `"etag"`)
+		w.WriteHeader(http.StatusOK)
+	case r.Method == http.MethodPost && strings.HasPrefix(path, files):
+		remote := strings.TrimPrefix(path, files)
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(files_sdk.File{Path: remote, DisplayName: filepath.Base(remote), Type: "file"})
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+// Held is how many part uploads to folder have been held so far.
+func (s *heldS3Parts) Held(folder string) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.held[folder]
+}
+
+// requireHeld waits for want part uploads to folder to be held, and then a little
+// longer, in which no more may arrive.
+func (s *heldS3Parts) requireHeld(t *testing.T, folder string, want int) {
+	t.Helper()
+	require.Eventually(t, func() bool { return s.Held(folder) >= want }, 10*time.Second, 5*time.Millisecond)
+	time.Sleep(300 * time.Millisecond)
+	require.Equal(t, want, s.Held(folder))
+}
+
+func (s *heldS3Parts) releaseAll() {
+	s.releaseOne.Do(func() { close(s.release) })
 }
 
 func Test_excludeFile(t *testing.T) {
