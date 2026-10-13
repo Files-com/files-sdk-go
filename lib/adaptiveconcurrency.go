@@ -116,6 +116,10 @@ type AdaptiveConcurrencyManager struct {
 	minDurationPerByte               float64
 	lastDurationPerByte              float64
 	lastQueueEstimate                float64
+
+	// sampleNow returns when a throughput sample completed. Nil means
+	// time.Now; tests set it to own the sampling clock.
+	sampleNow func() time.Time
 }
 
 type AdaptiveConcurrencyManagerWithSample interface {
@@ -594,6 +598,9 @@ func (a *AdaptiveConcurrencyManager) recordThroughputLocked(sample AdaptiveConcu
 		return
 	}
 	now := time.Now()
+	if a.sampleNow != nil {
+		now = a.sampleNow()
+	}
 	if sample.Duration > 0 {
 		startedAt := now.Add(-sample.Duration)
 		if a.windowStartedAt.IsZero() || startedAt.Before(a.windowStartedAt) {

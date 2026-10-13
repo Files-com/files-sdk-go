@@ -489,6 +489,13 @@ func TestAdaptiveConcurrencyManagerUsesProbeStepGainAbovePlateau(t *testing.T) {
 		ThroughputProbePlateauTarget:           150,
 		ThroughputProbeMinGainPerTargetPercent: 0.15,
 	})
+	// The manager measures each window over the time its samples complete, so
+	// the test owns that clock: each 100 ms sample completes 100 ms after the last.
+	completedAt := time.Unix(0, 0)
+	manager.sampleNow = func() time.Time {
+		completedAt = completedAt.Add(100 * time.Millisecond)
+		return completedAt
+	}
 
 	for i := 0; i < 2; i++ {
 		manager.Wait()
