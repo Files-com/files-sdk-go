@@ -286,6 +286,36 @@ func TestProxySectionReaderTracksProgressDurationAndRewinds(t *testing.T) {
 	assert.Greater(t, reader.ReadDuration().Nanoseconds(), int64(0))
 }
 
+// net/http reads and closes an upload's body on its own goroutine, and can still be doing so when the request has
+// returned and the upload reads the body's counters. Sent again after net/http closed it, the body starts over.
+func TestProxySectionReaderCountersCanBeReadWhileTheBodyIsSent(t *testing.T) {
+	data := bytes.Repeat([]byte("section"), 32)
+	var progress int64
+	reader := newProxySectionReader(delayedReaderAt{reader: bytes.NewReader(data)}, 0, int64(len(data)), func(delta int64) {
+		progress += delta
+	}, true)
+
+	sent := make(chan []byte)
+	go func() {
+		body, _ := io.ReadAll(reader)
+		_ = reader.Close()
+		sent <- body
+	}()
+	observed := reader.BytesRead()
+	assert.GreaterOrEqual(t, observed, int64(0))
+	assert.LessOrEqual(t, observed, int64(len(data)))
+	assert.GreaterOrEqual(t, reader.ReadDuration(), time.Duration(0))
+	assert.Equal(t, data, <-sent)
+	assert.Equal(t, int64(len(data)), progress)
+
+	again, err := io.ReadAll(reader)
+	assert.NoError(t, err)
+	assert.Equal(t, data, again)
+	assert.Equal(t, int64(len(data)), reader.BytesRead())
+	assert.Equal(t, int64(len(data)), progress)
+	assert.Greater(t, reader.ReadDuration(), time.Duration(0))
+}
+
 type delayedReaderAt struct {
 	reader *bytes.Reader
 }

@@ -25,14 +25,17 @@ type ProxyReaderAt struct {
 	closed            atomic.Bool
 }
 
+// ProxySectionReader is the body of an upload request. net/http reads and closes it on its own goroutines, and can
+// still be doing so after the request returns, when the upload reads its counters; so the counters and the closed
+// state are atomic. Only one goroutine at a time reads or rewinds its section.
 type ProxySectionReader struct {
 	section           io.SectionReader
 	len               int64
 	onRead            func(i int64)
-	read              int64
-	readDurationNanos int64
+	read              atomic.Int64
+	readDurationNanos atomic.Int64
 	trackReadDuration bool
-	closed            bool
+	closed            atomic.Bool
 }
 
 type ProxyRead struct {
@@ -71,9 +74,9 @@ func (x *ProxySectionReader) Rewind() bool {
 	if _, err := x.section.Seek(0, io.SeekStart); err != nil {
 		return false
 	}
-	x.read = 0
-	x.readDurationNanos = 0
-	x.closed = false
+	x.read.Store(0)
+	x.readDurationNanos.Store(0)
+	x.closed.Store(false)
 	return true
 }
 
@@ -106,7 +109,7 @@ func (x *ProxyRead) BytesRead() int64 {
 }
 
 func (x *ProxySectionReader) BytesRead() int64 {
-	return x.read
+	return x.read.Load()
 }
 
 func (x *ProxyReaderAt) ReadDuration() time.Duration {
@@ -118,7 +121,7 @@ func (x *ProxyRead) ReadDuration() time.Duration {
 }
 
 func (x *ProxySectionReader) ReadDuration() time.Duration {
-	return time.Duration(x.readDurationNanos)
+	return time.Duration(x.readDurationNanos.Load())
 }
 
 func (x *ProxyReaderAt) Seek(offset int64, whence int) (int64, error) {
@@ -169,16 +172,16 @@ func (x *ProxyReaderAt) Read(p []byte) (int, error) {
 }
 
 func (x *ProxySectionReader) Read(p []byte) (int, error) {
-	if x.closed {
+	if x.closed.Load() {
 		if read := x.BytesRead(); read != 0 && x.onRead != nil {
 			x.onRead(-read) // rewind progress
 		}
 		if _, err := x.section.Seek(0, io.SeekStart); err != nil {
 			return 0, err
 		}
-		x.read = 0
-		x.readDurationNanos = 0
-		x.closed = false
+		x.read.Store(0)
+		x.readDurationNanos.Store(0)
+		x.closed.Store(false)
 	}
 
 	var start time.Time
@@ -187,10 +190,10 @@ func (x *ProxySectionReader) Read(p []byte) (int, error) {
 	}
 	n, err := x.section.Read(p)
 	if x.trackReadDuration {
-		x.readDurationNanos += time.Since(start).Nanoseconds()
+		x.readDurationNanos.Add(time.Since(start).Nanoseconds())
 	}
 	if n > 0 {
-		x.read += int64(n)
+		x.read.Add(int64(n))
 		if x.onRead != nil {
 			x.onRead(int64(n))
 		}
@@ -229,7 +232,7 @@ func (x *ProxyReaderAt) Close() error {
 }
 
 func (x *ProxySectionReader) Close() error {
-	x.closed = true
+	x.closed.Store(true)
 	return nil
 }
 

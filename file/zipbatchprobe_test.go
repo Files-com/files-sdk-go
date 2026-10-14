@@ -207,12 +207,33 @@ func TestZipBatchProbeChoosesPerFile(t *testing.T) {
 func TestZipBatchReprobeCommitsAfterDissolve(t *testing.T) {
 	withZipBatchProbeTestWindows(t)
 	zipBatchTuning.ProbePhaseBMinCompletions = 8
+	// Both probes compare sustained 100ms samples of each route, at rates the
+	// server sets. Until the first ZIP download starts, four per-file
+	// connections wait 10ms per file, while the first probe's two ZIP
+	// streams send 32 bytes every 5ms, a few times slower, so the first
+	// probe dissolves. From then on each per-file request waits 150ms, so no
+	// 100ms window holds more than four per-file files, while later ZIP
+	// streams are not paced; a re-probe commits once its baseline no longer
+	// reaches back to the fast per-file phase. This still depends on the
+	// machine keeping per-file requests well ahead of the paced ZIP stream
+	// at first, and later finishing an unpaced 8-file ZIP batch well within
+	// 100ms.
+	zipBatchTuning.ProbePhaseAMinDuration = 100 * time.Millisecond
+	zipBatchTuning.ProbePhaseAWindow = 100 * time.Millisecond
+	zipBatchTuning.ProbePhaseBWindow = 100 * time.Millisecond
 	root := t.TempDir()
 	server := newZipBatchMockServer(t, zipBatchTestFiles(300), nil)
-	server.DownloadDelay = func(string) time.Duration { return 10 * time.Millisecond }
+	var zipStarted atomic.Bool
+	server.ZipDownloadBefore = func(int, []string) { zipStarted.Store(true) }
+	server.DownloadDelay = func(string) time.Duration {
+		if zipStarted.Load() {
+			return 150 * time.Millisecond
+		}
+		return 10 * time.Millisecond
+	}
 	server.ZipDownloadChunkDelay = func(attempt int, _ []string) time.Duration {
-		if attempt == 1 {
-			return 3 * time.Millisecond
+		if attempt <= 2 {
+			return 5 * time.Millisecond
 		}
 		return 0
 	}
