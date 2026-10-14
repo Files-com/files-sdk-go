@@ -144,8 +144,8 @@ func (fs *RemoteFs) rangeDownloads() *rangeStreams {
 		if fs.log != nil {
 			fs.ranges.logger = fs.log
 		}
-		fs.ranges.newReporter = func(path string, meta cache.EntryMetadata) *transferReporter {
-			return fs.newTransferReporter(events.TransferDirectionDownload, path, meta.Size)
+		fs.ranges.newReporter = func(path string, size int64) *transferReporter {
+			return fs.newTransferReporter(events.TransferDirectionDownload, path, size)
 		}
 	}
 	return fs.ranges

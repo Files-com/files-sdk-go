@@ -293,8 +293,8 @@ func TestRangeStreamsRestartedCompleteDownloadReportsOnlyCachedProgress(t *testi
 			mu.Unlock()
 		}
 	})
-	h.streams.newReporter = func(path string, meta cache.EntryMetadata) *transferReporter {
-		return fs.newTransferReporter(events.TransferDirectionDownload, path, meta.Size)
+	h.streams.newReporter = func(path string, size int64) *transferReporter {
+		return fs.newTransferReporter(events.TransferDirectionDownload, path, size)
 	}
 	h.mustRead(1, streamTestSize-(64<<10), 64<<10)
 	h.streams.ReleaseReader(h.meta.Path, 1)
@@ -336,8 +336,8 @@ func TestRangeStreamsBlockedTransferEventDoesNotStallOtherFiles(t *testing.T) {
 			<-release
 		}
 	})
-	h.streams.newReporter = func(path string, meta cache.EntryMetadata) *transferReporter {
-		return fs.newTransferReporter(events.TransferDirectionDownload, path, meta.Size)
+	h.streams.newReporter = func(path string, size int64) *transferReporter {
+		return fs.newTransferReporter(events.TransferDirectionDownload, path, size)
 	}
 	stalledRead := make(chan error, 1)
 	go func() { stalledRead <- h.readFile(stalled, 1, 0, 4096) }()
@@ -357,6 +357,64 @@ func TestRangeStreamsBlockedTransferEventDoesNotStallOtherFiles(t *testing.T) {
 	releaseEvents()
 	if err := <-stalledRead; err != nil {
 		t.Fatal(err)
+	}
+}
+
+// A peek at a large file reports what it downloads, not the whole file, and
+// reads of the file close together share one transfer row.
+func TestRangeStreamsNearbyPartialReadsShareOneTransferRow(t *testing.T) {
+	policy := testStreamPolicy()
+	policy.sessionLinger = 300 * time.Millisecond
+	h := newStreamHarness(t, newFakeStreamSource(streamTestSize), policy)
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+	publisher := &captureEventPublisher{}
+	fs.events = publisher
+	h.streams.newReporter = func(path string, size int64) *transferReporter {
+		return fs.newTransferReporter(events.TransferDirectionDownload, path, size)
+	}
+
+	h.mustRead(1, 0, 4096)
+	h.waitIdle()
+	h.mustRead(1, 40<<20, 4096)
+	h.streams.ReleaseReader(h.meta.Path, 1)
+	h.waitIdle()
+
+	transfers := publisher.waitForTerminalTransfer(t)
+	assertStableTransferID(t, transfers)
+	fetched := h.source.transferred.Load()
+	last := transfers[len(transfers)-1]
+	if last.Status != events.TransferStatusComplete || last.Size != fetched || last.TransferredBytes != fetched {
+		t.Fatalf("last transfer = %s %d/%d, want complete %d/%d", last.Status, last.TransferredBytes, last.Size, fetched, fetched)
+	}
+	for _, transfer := range transfers {
+		if transfer.Size >= streamTestSize {
+			t.Fatalf("transfer event reported %d bytes of a %d byte file after fetching %d", transfer.Size, int64(streamTestSize), fetched)
+		}
+	}
+}
+
+// Unmounting or clearing the cache completes a row waiting for more reads, so
+// the app doesn't show it downloading forever.
+func TestRangeStreamsCloseCompletesLingeringTransferRow(t *testing.T) {
+	policy := testStreamPolicy()
+	policy.sessionLinger = time.Hour
+	h := newStreamHarness(t, newFakeStreamSource(streamTestSize), policy)
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+	publisher := &captureEventPublisher{}
+	fs.events = publisher
+	h.streams.newReporter = func(path string, size int64) *transferReporter {
+		return fs.newTransferReporter(events.TransferDirectionDownload, path, size)
+	}
+	h.mustRead(1, 0, 4096)
+	h.streams.ReleaseReader(h.meta.Path, 1)
+	h.waitIdle()
+
+	h.streams.Close()
+	transfers := publisher.waitForTerminalTransfer(t)
+	if last := transfers[len(transfers)-1]; last.Status != events.TransferStatusComplete {
+		t.Fatalf("last transfer status = %s, want complete", last.Status)
 	}
 }
 

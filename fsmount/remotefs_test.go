@@ -997,6 +997,7 @@ func TestRemoteFsCompleteSparseReadPublishesDownloadTransferEvents(t *testing.T)
 }
 
 func TestRemoteFsPartialSparseReadPublishesOneDownloadTransfer(t *testing.T) {
+	shortenTransferRowLinger(t)
 	fs, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()
 
@@ -1032,14 +1033,25 @@ func TestRemoteFsPartialSparseReadPublishesOneDownloadTransfer(t *testing.T) {
 	waitFor(t, func() bool { return !fs.rangeDownloads().hasStreams() })
 	transfers := publisher.waitForTransferEvents(t, 3)
 	assertStableTransferID(t, transfers)
+	// The row is the size of what the read downloads, not of the whole file.
 	first := transfers[0]
-	if first.Status != events.TransferStatusQueued || first.Size != fileSize || first.TransferredBytes != 0 {
-		t.Fatalf("first transfer = %#v, want queued 0/%d", first, fileSize)
+	if first.Status != events.TransferStatusQueued || first.Size != readSize || first.TransferredBytes != 0 {
+		t.Fatalf("first transfer = %#v, want queued 0/%d", first, readSize)
 	}
+	transfers = publisher.waitForTerminalTransfer(t)
 	last := transfers[len(transfers)-1]
-	if last.Status != events.TransferStatusComplete || last.Size != fileSize || last.TransferredBytes != readSize {
-		t.Fatalf("last transfer = %#v, want complete %d/%d", last, readSize, fileSize)
+	if last.Status != events.TransferStatusComplete || last.Size != readSize || last.TransferredBytes != readSize {
+		t.Fatalf("last transfer = %#v, want complete %d/%d", last, readSize, readSize)
 	}
+}
+
+// shortenTransferRowLinger makes partial downloads complete their transfer rows
+// soon after they stop, for tests that wait for those rows.
+func shortenTransferRowLinger(t *testing.T) {
+	t.Helper()
+	previous := transferRowLinger
+	transferRowLinger = 20 * time.Millisecond
+	t.Cleanup(func() { transferRowLinger = previous })
 }
 
 func TestRemoteFsDownloadFilePublishesTransferEventsWithStatFallback(t *testing.T) {

@@ -87,6 +87,17 @@ func (r *transferReporter) Queued() {
 }
 
 func (r *transferReporter) Progress(delta int64) {
+	r.progress(delta, 0)
+}
+
+// ProgressResized is Progress for a row whose size changes as it goes, like a
+// download of part of a file that learns how much it fetches along the way.
+// The row grows to size, and never reports less than it has transferred.
+func (r *transferReporter) ProgressResized(delta int64, size int64) {
+	r.progress(delta, size)
+}
+
+func (r *transferReporter) progress(delta int64, size int64) {
 	if delta == 0 {
 		return
 	}
@@ -99,6 +110,9 @@ func (r *transferReporter) Progress(delta int64) {
 	}
 
 	r.transferredBytes += delta
+	if size > 0 {
+		r.size = max(r.size, size, r.transferredBytes)
+	}
 	r.normalizeTransferredLocked()
 	if delta < 0 {
 		if r.lastProgressBytes > r.transferredBytes {
@@ -130,7 +144,13 @@ func (r *transferReporter) Progress(delta int64) {
 }
 
 func (r *transferReporter) Complete(transferredBytes int64) {
-	r.terminal(events.TransferStatusComplete, transferredBytes, "")
+	r.terminal(events.TransferStatusComplete, transferredBytes, "", false)
+}
+
+// CompletePartial finishes a row that fetched only part of a file. The row's
+// size becomes what it fetched, so it doesn't claim the whole file.
+func (r *transferReporter) CompletePartial(transferredBytes int64) {
+	r.terminal(events.TransferStatusComplete, transferredBytes, "", true)
 }
 
 func (r *transferReporter) Error(err error, transferredBytes int64) {
@@ -142,10 +162,10 @@ func (r *transferReporter) Error(err error, transferredBytes int64) {
 	if errors.Is(err, context.Canceled) {
 		status = events.TransferStatusCanceled
 	}
-	r.terminal(status, transferredBytes, err.Error())
+	r.terminal(status, transferredBytes, err.Error(), false)
 }
 
-func (r *transferReporter) terminal(status events.TransferStatus, transferredBytes int64, message string) {
+func (r *transferReporter) terminal(status events.TransferStatus, transferredBytes int64, message string, sizeIsTransferred bool) {
 	r.mu.Lock()
 	if r.terminalEmitted {
 		r.mu.Unlock()
@@ -153,6 +173,9 @@ func (r *transferReporter) terminal(status events.TransferStatus, transferredByt
 	}
 	if transferredBytes >= 0 {
 		r.transferredBytes = transferredBytes
+	}
+	if sizeIsTransferred {
+		r.size = max(r.transferredBytes, 0)
 	}
 	r.normalizeTransferredLocked()
 	if r.size == 0 && r.transferredBytes > 0 {

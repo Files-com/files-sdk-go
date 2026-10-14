@@ -53,13 +53,15 @@ type rangeStreams struct {
 	source           rangeSource
 	policy           streamPolicy
 	logger           log.Logger
-	newReporter      func(path string, meta cache.EntryMetadata) *transferReporter
+	newReporter      func(path string, size int64) *transferReporter
 	versionChanged   func(path string)
 	responseAccepted func(path, uri string)
 
 	mu        sync.Mutex
 	files     map[string]*streamFile
 	wholeOnly map[string]cache.EntryMetadata
+	// lingering holds transfer rows whose downloads stopped recently, by path.
+	lingering map[string]*streamSession
 	running   int
 	slotFreed chan struct{}
 	// demandQueued counts streams with a waiting read that are queued for a
@@ -98,7 +100,14 @@ type streamPolicy struct {
 	aheadSlots       int
 	streamsPerFile   int
 	chunkSize        int
+	// sessionLinger keeps a file's transfer row open after its downloads stop,
+	// so reads of the file close together share one row.
+	sessionLinger time.Duration
 }
+
+// transferRowLinger is how long a file's transfer row stays open after its
+// downloads stop. It is a variable so tests can shorten it.
+var transferRowLinger = 5 * time.Second
 
 func defaultStreamPolicy(sparse bool, cacheCapacity int64) streamPolicy {
 	policy := streamPolicy{
@@ -120,6 +129,7 @@ func defaultStreamPolicy(sparse bool, cacheCapacity int64) streamPolicy {
 		aheadSlots:       downloadOpLimit - 1,
 		streamsPerFile:   3,
 		chunkSize:        cacheWriteSize,
+		sessionLinger:    transferRowLinger,
 	}
 	if cacheCapacity > 0 {
 		policy.maxLead = max(policy.minLead, cacheCapacity/4)
@@ -234,12 +244,16 @@ type streamSample struct {
 	furthest int64
 }
 
-// streamSession reports one burst of downloads for a file as one transfer row.
+// streamSession reports downloads of one file version that are close together
+// as one transfer row.
 type streamSession struct {
 	reporter    *transferReporter
+	meta        cache.EntryMetadata
 	transferred int64
 	wholeFile   bool
 	err         error
+	// linger completes the row once it has had no downloads for sessionLinger.
+	linger *time.Timer
 }
 
 // hydrationReader identifies waits made on behalf of an edit rather than a handle.
@@ -255,6 +269,7 @@ func newRangeStreams(store rangeCacheStore, source rangeSource, policy streamPol
 		logger:      &log.NoOpLogger{},
 		files:       make(map[string]*streamFile),
 		wholeOnly:   make(map[string]cache.EntryMetadata),
+		lingering:   make(map[string]*streamSession),
 		slotFreed:   make(chan struct{}),
 		diagnostics: newRangeStreamDiagnostics(),
 	}
@@ -499,6 +514,7 @@ func (s *rangeStreams) CancelPath(path string) {
 	if file != nil {
 		s.stopFile(file, context.Canceled, stopDiscard)
 	}
+	s.completeLingering(func(lingeringPath string, _ *streamSession) bool { return lingeringPath == path })
 }
 
 // CancelAll stops the downloads active when it is called.
@@ -506,6 +522,7 @@ func (s *rangeStreams) CancelAll() {
 	for _, file := range s.snapshotFiles() {
 		s.stopFile(file, context.Canceled, stopDiscard)
 	}
+	s.completeLingering(func(string, *streamSession) bool { return true })
 }
 
 // Close stops every download, keeps what already arrived, and rejects new work.
@@ -516,6 +533,7 @@ func (s *rangeStreams) Close() {
 	for _, file := range s.snapshotFiles() {
 		s.stopFile(file, errRangeStreamsClosed, stopFlush)
 	}
+	s.completeLingering(func(string, *streamSession) bool { return true })
 }
 
 func (s *rangeStreams) snapshotFiles() []*streamFile {

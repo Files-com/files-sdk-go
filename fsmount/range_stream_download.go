@@ -141,9 +141,10 @@ func (s *rangeStreams) acquireSlot(stream *rangeStream) error {
 			leaveQueue()
 			s.running++
 			stream.hasSlot = true
-			started := s.startSessionLocked(stream)
+			started, replaced := s.startSessionLocked(stream)
 			s.mu.Unlock()
-			// The event goes to the Desktop app, which can be slow to read it.
+			// The events go to the Desktop app, which can be slow to read them.
+			replaced.publish()
 			if started != nil {
 				started.Queued()
 			}
@@ -556,6 +557,7 @@ func (s *rangeStreams) publish(stream *rangeStream, meta cache.EntryMetadata, da
 	}
 	stream.pos = max(stream.pos, offset+written)
 	var reporter *transferReporter
+	var rowSize int64
 	progress := written
 	if session := file.session; session != nil {
 		if whole {
@@ -566,11 +568,12 @@ func (s *rangeStreams) publish(stream *rangeStream, meta cache.EntryMetadata, da
 		}
 		session.transferred += progress
 		reporter = session.reporter
+		rowSize = s.rowSizeLocked(file, session)
 	}
 	s.signalLocked(file)
 	s.mu.Unlock()
 	if reporter != nil && progress > 0 {
-		reporter.Progress(progress)
+		reporter.ProgressResized(progress, rowSize)
 	}
 	return nil
 }
@@ -622,25 +625,40 @@ func (s *rangeStreams) finishStream(stream *rangeStream, err error) {
 	completion.publish()
 }
 
-// startSessionLocked opens a transfer row for the file's first download in a
-// burst. It returns the row's reporter when it created one, so the caller can
-// announce it after releasing s.mu.
-func (s *rangeStreams) startSessionLocked(stream *rangeStream) *transferReporter {
+// startSessionLocked gives the file a transfer row for its downloads: the row
+// still lingering from the same version's last downloads, or a new one. It
+// returns a new row's reporter, so the caller can announce it after releasing
+// s.mu, and a lingering row of another version for the caller to complete.
+func (s *rangeStreams) startSessionLocked(stream *rangeStream) (*transferReporter, streamCompletion) {
 	file := stream.file
 	if file.session != nil {
-		return nil
+		return nil, streamCompletion{}
 	}
-	file.session = &streamSession{wholeFile: stream.kind == streamWhole}
+	var replaced streamCompletion
+	if session := s.lingering[file.path]; session != nil {
+		delete(s.lingering, file.path)
+		session.linger.Stop()
+		if session.meta.Matches(file.meta) {
+			session.wholeFile = session.wholeFile || stream.kind == streamWhole
+			file.session = session
+			return nil, streamCompletion{}
+		}
+		replaced = session.completion(nil)
+	}
+	session := &streamSession{meta: file.meta, wholeFile: stream.kind == streamWhole}
+	file.session = session
 	if s.newReporter == nil {
-		return nil
+		return nil, replaced
 	}
-	reporter := s.newReporter(file.path, file.meta)
-	file.session.reporter = reporter
-	return reporter
+	session.reporter = s.newReporter(file.path, s.rowSizeLocked(file, session))
+	return session.reporter, replaced
 }
 
-// endSessionLocked closes the file's transfer row. err, or an error recorded
-// by a failed stream, reports the row as failed.
+// endSessionLocked closes the file's transfer row once its downloads stop.
+// err, or an error recorded by a failed stream, reports the row as failed. A
+// row for part of the file lingers instead, so the file's next downloads soon
+// after continue it. The completion returned is then for a lingering row of
+// another version that it replaced, if any.
 func (s *rangeStreams) endSessionLocked(file *streamFile, err error) streamCompletion {
 	session := file.session
 	if session == nil {
@@ -650,9 +668,77 @@ func (s *rangeStreams) endSessionLocked(file *streamFile, err error) streamCompl
 	if err == nil {
 		err = session.err
 	}
-	completion := streamCompletion{reporter: session.reporter, transferredBytes: session.transferred, err: err}
+	if err == nil && !session.wholeFile && session.reporter != nil && !s.closed && s.policy.sessionLinger > 0 {
+		return s.lingerLocked(file.path, session)
+	}
+	return session.completion(err)
+}
+
+func (s *rangeStreams) lingerLocked(path string, session *streamSession) streamCompletion {
+	var replaced streamCompletion
+	if previous := s.lingering[path]; previous != nil {
+		previous.linger.Stop()
+		replaced = previous.completion(nil)
+	}
+	s.lingering[path] = session
+	var timer *time.Timer
+	timer = time.AfterFunc(s.policy.sessionLinger, func() {
+		// A timer that fired as the row was reused must not complete it later.
+		s.completeLingering(func(_ string, lingering *streamSession) bool { return lingering == session && session.linger == timer })
+	})
+	session.linger = timer
+	return replaced
+}
+
+// completeLingering completes the lingering rows that match.
+func (s *rangeStreams) completeLingering(match func(path string, session *streamSession) bool) {
+	s.mu.Lock()
+	var completions []streamCompletion
+	for path, session := range s.lingering {
+		if match(path, session) {
+			delete(s.lingering, path)
+			session.linger.Stop()
+			completions = append(completions, session.completion(nil))
+		}
+	}
+	s.mu.Unlock()
+	for _, completion := range completions {
+		completion.publish()
+	}
+}
+
+// rowSizeLocked is the size the file's transfer row reports: the file for a
+// complete download, and otherwise what the row has fetched plus what the
+// file's downloads still plan to fetch. A row for a peek at a large file then
+// shows what the peek downloads, not the whole file.
+func (s *rangeStreams) rowSizeLocked(file *streamFile, session *streamSession) int64 {
+	if session.wholeFile {
+		return session.meta.Size
+	}
+	size := session.transferred
+	for _, stream := range file.streams {
+		if stream.active() {
+			size += s.plannedLocked(stream)
+		}
+	}
+	return size
+}
+
+// plannedLocked is how much more the stream expects to download: the rest of
+// its range, or for a stream that follows a reader, up to the lead where it
+// pauses.
+func (s *rangeStreams) plannedLocked(stream *rangeStream) int64 {
+	end := stream.end
+	if stream.kind == streamRange {
+		end = min(end, max(stream.furthest, stream.start)+s.leadLimitLocked(stream))
+	}
+	return max(0, end-stream.pos)
+}
+
+func (session *streamSession) completion(err error) streamCompletion {
+	completion := streamCompletion{reporter: session.reporter, transferredBytes: session.transferred, partial: !session.wholeFile, err: err}
 	if session.wholeFile && err == nil {
-		completion.transferredBytes = file.meta.Size
+		completion.transferredBytes = session.meta.Size
 	}
 	return completion
 }
@@ -661,7 +747,10 @@ func (s *rangeStreams) endSessionLocked(file *streamFile, err error) streamCompl
 type streamCompletion struct {
 	reporter         *transferReporter
 	transferredBytes int64
-	err              error
+	// partial is set for a row that fetched only part of the file. Its size
+	// becomes what it fetched.
+	partial bool
+	err     error
 }
 
 func (completion streamCompletion) publish() {
@@ -676,6 +765,10 @@ func (completion streamCompletion) publish() {
 	}
 	if err != nil {
 		completion.reporter.Error(err, transferredBytesUnchanged)
+		return
+	}
+	if completion.partial {
+		completion.reporter.CompletePartial(completion.transferredBytes)
 		return
 	}
 	completion.reporter.Complete(completion.transferredBytes)

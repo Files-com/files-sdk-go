@@ -402,6 +402,7 @@ func clearDiskCacheWithin(t *testing.T, fs *RemoteFs, blocked <-chan int) {
 }
 
 func TestClearDiskCacheRestartsBlockedRead(t *testing.T) {
+	shortenTransferRowLinger(t)
 	for _, sparse := range []bool{false, true} {
 		t.Run(fmt.Sprintf("sparse=%t", sparse), func(t *testing.T) {
 			const size = 4 << 20
