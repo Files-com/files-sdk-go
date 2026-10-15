@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -269,13 +268,6 @@ func TestZipBatchReprobeBacksOffRepeatedDissolves(t *testing.T) {
 	server := newZipBatchMockServer(t, zipBatchTestFiles(900), nil)
 	server.DownloadDelay = func(string) time.Duration { return 2 * time.Millisecond }
 	server.ZipDownloadChunkDelay = func(int, []string) time.Duration { return 4 * time.Millisecond }
-	var zipStarts []time.Time
-	var zipStartsMu sync.Mutex
-	server.ZipDownloadBefore = func(int, []string) {
-		zipStartsMu.Lock()
-		zipStarts = append(zipStarts, time.Now())
-		zipStartsMu.Unlock()
-	}
 	defer server.Shutdown()
 
 	job := runZipBatchDownloadWithParams(t, server, DownloaderParams{
@@ -295,11 +287,46 @@ func TestZipBatchReprobeBacksOffRepeatedDissolves(t *testing.T) {
 	stats := job.ZipBatchStats()
 	assert.Equal(t, string(zipBatchProbeDecisionDissolved), stats.ProbeDecision)
 	assert.GreaterOrEqual(t, stats.Reprobes, int64(2))
-	zipStartsMu.Lock()
-	starts := append([]time.Time(nil), zipStarts...)
-	zipStartsMu.Unlock()
-	require.GreaterOrEqual(t, len(starts), 3)
-	assert.GreaterOrEqual(t, starts[2].Sub(starts[1]), starts[1].Sub(starts[0]))
+}
+
+// Each dissolved verdict schedules the next re-probe: the first after ReprobeInterval, each later one after twice the
+// previous wait, up to MaxReprobeInterval. The re-probe starts exactly at that deadline when a per-file completion
+// from the cooldown gives it a baseline.
+func TestZipBatchReprobeCooldownDoublesToCapAndOpensAtDeadline(t *testing.T) {
+	withZipBatchProbeTestWindows(t)
+	zipBatchTuning.DefaultReprobeInterval = 10 * time.Millisecond
+	zipBatchTuning.MaxReprobeInterval = 40 * time.Millisecond
+	batcher := &zipBatchDownloader{params: ZipBatchParams{}.withDefaults(), probe: newZipBatchProbe()}
+	batcher.unlock()
+
+	for i, wait := range []time.Duration{10 * time.Millisecond, 20 * time.Millisecond, 40 * time.Millisecond, 40 * time.Millisecond} {
+		attempt := i + 1
+		batcher.probe.mu.Lock()
+		batcher.probe.decision = zipBatchProbeDecisionDissolved
+		batcher.probe.mu.Unlock()
+
+		before := time.Now()
+		batcher.applyProbeState(false)
+		after := time.Now()
+		require.Equal(t, zipBatchModeDissolved, batcher.mode)
+		deadline := batcher.reprobeAfter
+		require.GreaterOrEqual(t, deadline.Sub(before), wait, "attempt %d cooldown", attempt)
+		require.LessOrEqual(t, deadline.Sub(after), wait, "attempt %d cooldown", attempt)
+
+		batcher.probe.mu.Lock()
+		batcher.probe.perFileCompletions = []time.Time{deadline.Add(-time.Millisecond)}
+		batcher.probe.mu.Unlock()
+
+		require.False(t, batcher.startReprobeIfDue(deadline.Add(-time.Nanosecond)), "attempt %d", attempt)
+		require.Equal(t, attempt, batcher.currentProbeAttempt())
+		require.Equal(t, zipBatchModeDissolved, batcher.mode)
+
+		require.True(t, batcher.startReprobeIfDue(deadline), "attempt %d", attempt)
+		require.Equal(t, attempt+1, batcher.currentProbeAttempt())
+		require.Equal(t, zipBatchModeProbePhaseB, batcher.mode)
+		require.Equal(t, zipBatchProbePhaseB, batcher.currentProbePhase())
+		require.True(t, batcher.reprobeAfter.IsZero())
+	}
 }
 
 func TestZipBatchReprobeNegativeIntervalDisablesReprobe(t *testing.T) {
