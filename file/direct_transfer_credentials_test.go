@@ -11,13 +11,16 @@ import (
 	"crypto/x509/pkix"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"io"
 	"log"
 	"math/big"
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -166,46 +169,55 @@ func TestDownloadDirectTransferDoesNotSendSDKCredentials(t *testing.T) {
 }
 
 func TestDownloadDirectPartialBodyNeverAppendsProxyBody(t *testing.T) {
-	info := testDirectTransferInfo(t, "/downloads?jwt=direct-token", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Length", "12")
-		_, _ = w.Write([]byte("prefix"))
-	}))
-	proxyRequests := atomic.Int32{}
-	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		proxyRequests.Add(1)
-		_, _ = w.Write([]byte("complete"))
-	}))
-	t.Cleanup(proxy.Close)
-	destination, err := os.CreateTemp(t.TempDir(), "direct-download-*")
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = destination.Close() })
+	for name, callbackErr := range map[string]func(copyErr error) error{
+		"copy error": func(copyErr error) error { return copyErr },
+		// A response option's own error may also identify as unavailable;
+		// that must not turn consumed bytes into a fallback request.
+		"error wrapping unavailable": func(copyErr error) error {
+			return fmt.Errorf("%w: %w", files_sdk.ErrDirectTransferUnavailable, copyErr)
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			info := testDirectTransferInfo(t, "/downloads?jwt=direct-token", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Content-Length", "12")
+				_, _ = w.Write([]byte("prefix"))
+			}))
+			proxyRequests := atomic.Int32{}
+			proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				proxyRequests.Add(1)
+				_, _ = w.Write([]byte("complete"))
+			}))
+			t.Cleanup(proxy.Close)
+			destination, err := os.CreateTemp(t.TempDir(), "direct-download-*")
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = destination.Close() })
 
-	client := &Client{Config: files_sdk.Config{
-		Environment: files_sdk.Development,
-		Logger:      log.New(io.Discard, "", 0),
-	}.Init()}
-	_, downloadErr := client.Download(
-		files_sdk.FileDownloadParams{File: files_sdk.File{
-			Path:                 "/download.bin",
-			DownloadUri:          proxy.URL + "/download.bin?jwt=proxy-token",
-			DirectConnectionInfo: info,
-		}},
-		files_sdk.ResponseBodyOption(func(body io.ReadCloser) error {
-			defer body.Close()
-			_, copyErr := io.Copy(destination, body)
-			return copyErr
-		}),
-	)
-	require.NoError(t, destination.Sync())
-	contents, err := os.ReadFile(destination.Name())
-	require.NoError(t, err)
+			client := &Client{Config: files_sdk.Config{
+				Environment: files_sdk.Development,
+				Logger:      log.New(io.Discard, "", 0),
+			}.Init()}
+			_, downloadErr := client.Download(
+				files_sdk.FileDownloadParams{File: files_sdk.File{
+					Path:                 "/download.bin",
+					DownloadUri:          proxy.URL + "/download.bin?jwt=proxy-token",
+					DirectConnectionInfo: info,
+				}},
+				files_sdk.ResponseBodyOption(func(body io.ReadCloser) error {
+					defer body.Close()
+					_, copyErr := io.Copy(destination, body)
+					return callbackErr(copyErr)
+				}),
+			)
+			require.NoError(t, destination.Sync())
+			contents, err := os.ReadFile(destination.Name())
+			require.NoError(t, err)
 
-	if downloadErr == nil {
-		require.Equal(t, "complete", string(contents))
-	} else {
-		require.Zero(t, proxyRequests.Load())
+			require.ErrorIs(t, downloadErr, files_sdk.ErrDirectTransferResponseStarted)
+			require.ErrorIs(t, downloadErr, io.ErrUnexpectedEOF)
+			require.Zero(t, proxyRequests.Load())
+			require.Equal(t, "prefix", string(contents))
+		})
 	}
-	require.NotEqual(t, "prefixcomplete", string(contents))
 }
 
 func TestDownloadDirectRedirectFallsBackWithoutContactingTarget(t *testing.T) {
@@ -226,10 +238,20 @@ func TestDownloadDirectRedirectFallsBackWithoutContactingTarget(t *testing.T) {
 	}))
 	t.Cleanup(proxy.Close)
 
+	// The proxy request keeps the caller's own client; the direct request never
+	// goes through it.
+	var callerClientHosts []string
+	var callerClientMu sync.Mutex
+	callerClient := &http.Client{Transport: uploadV2RoundTripFunc(func(request *http.Request) (*http.Response, error) {
+		callerClientMu.Lock()
+		callerClientHosts = append(callerClientHosts, request.URL.Host)
+		callerClientMu.Unlock()
+		return http.DefaultTransport.RoundTrip(request)
+	})}
 	client := &Client{Config: files_sdk.Config{
 		Environment: files_sdk.Development,
 		Logger:      log.New(io.Discard, "", 0),
-	}.Init()}
+	}.Init().SetCustomClient(callerClient)}
 	var body bytes.Buffer
 	_, err := client.Download(
 		files_sdk.FileDownloadParams{File: files_sdk.File{
@@ -248,44 +270,91 @@ func TestDownloadDirectRedirectFallsBackWithoutContactingTarget(t *testing.T) {
 	require.Equal(t, "proxy", body.String())
 	require.Equal(t, int32(1), proxyRequests.Load())
 	require.Zero(t, targetRequests.Load())
+	proxyURL, err := url.Parse(proxy.URL)
+	require.NoError(t, err)
+	require.Equal(t, []string{proxyURL.Host}, callerClientHosts)
 }
 
 func TestDownloadDirect429RetriesThenFallsBackToProxy(t *testing.T) {
-	directRequests := atomic.Int32{}
-	info := testDirectTransferInfo(t, "/downloads?jwt=direct-token", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		directRequests.Add(1)
-		w.Header().Set("Retry-After", "0")
-		w.WriteHeader(http.StatusTooManyRequests)
-	}))
-	proxyRequests := atomic.Int32{}
-	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		proxyRequests.Add(1)
-		_, _ = w.Write([]byte("proxy"))
-	}))
-	t.Cleanup(proxy.Close)
+	// download sends one direct-capable Download whose direct endpoint answers
+	// 429 with retryAfter until request number directSucceedsOn, if any.
+	download := func(t *testing.T, ctx context.Context, retryAfter string, directSucceedsOn int32, firstDirect chan<- struct{}) (body string, direct, proxy int32, err error) {
+		directRequests := atomic.Int32{}
+		info := testDirectTransferInfo(t, "/downloads?jwt=direct-token", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			request := directRequests.Add(1)
+			if request == directSucceedsOn {
+				_, _ = w.Write([]byte("direct"))
+				return
+			}
+			w.Header().Set("Retry-After", retryAfter)
+			w.WriteHeader(http.StatusTooManyRequests)
+			if request == 1 && firstDirect != nil {
+				close(firstDirect)
+			}
+		}))
+		proxyRequests := atomic.Int32{}
+		proxyServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			proxyRequests.Add(1)
+			_, _ = w.Write([]byte("proxy"))
+		}))
+		t.Cleanup(proxyServer.Close)
 
-	var body bytes.Buffer
-	client := &Client{Config: files_sdk.Config{
-		Environment: files_sdk.Development,
-		Logger:      log.New(io.Discard, "", 0),
-	}.Init()}
-	_, err := client.Download(
-		files_sdk.FileDownloadParams{File: files_sdk.File{
-			Path:                 "/download.bin",
-			DownloadUri:          proxy.URL + "/download.bin?jwt=proxy-token",
-			DirectConnectionInfo: info,
-		}},
-		files_sdk.ResponseBodyOption(func(responseBody io.ReadCloser) error {
-			defer responseBody.Close()
-			_, copyErr := io.Copy(&body, responseBody)
-			return copyErr
-		}),
-	)
+		var output bytes.Buffer
+		client := &Client{Config: files_sdk.Config{
+			Environment: files_sdk.Development,
+			Logger:      log.New(io.Discard, "", 0),
+		}.Init()}
+		_, err = client.Download(
+			files_sdk.FileDownloadParams{File: files_sdk.File{
+				Path:                 "/download.bin",
+				DownloadUri:          proxyServer.URL + "/download.bin?jwt=proxy-token",
+				DirectConnectionInfo: info,
+			}},
+			files_sdk.WithContext(ctx),
+			files_sdk.ResponseBodyOption(func(responseBody io.ReadCloser) error {
+				defer responseBody.Close()
+				_, copyErr := io.Copy(&output, responseBody)
+				return copyErr
+			}),
+		)
+		return output.String(), directRequests.Load(), proxyRequests.Load(), err
+	}
 
-	require.NoError(t, err)
-	require.Equal(t, int32(downloadV2RetryAttempts), directRequests.Load())
-	require.Equal(t, int32(1), proxyRequests.Load())
-	require.Equal(t, "proxy", body.String())
+	t.Run("falls back after the last attempt", func(t *testing.T) {
+		body, direct, proxy, err := download(t, context.Background(), "0", 0, nil)
+
+		require.NoError(t, err)
+		require.Equal(t, int32(downloadV2RetryAttempts), direct)
+		require.Equal(t, int32(1), proxy)
+		require.Equal(t, "proxy", body)
+	})
+
+	t.Run("sends directly again after Retry-After", func(t *testing.T) {
+		started := time.Now()
+		body, direct, proxy, err := download(t, context.Background(), "1", 2, nil)
+
+		require.NoError(t, err)
+		require.GreaterOrEqual(t, time.Since(started), time.Second)
+		require.Equal(t, int32(2), direct)
+		require.Zero(t, proxy)
+		require.Equal(t, "direct", body)
+	})
+
+	t.Run("cancellation ends the Retry-After wait", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		firstDirect := make(chan struct{})
+		go func() {
+			<-firstDirect
+			cancel()
+		}()
+		started := time.Now()
+		_, direct, proxy, err := download(t, ctx, "60", 0, firstDirect)
+
+		require.ErrorIs(t, err, context.Canceled)
+		require.Less(t, time.Since(started), 10*time.Second)
+		require.Equal(t, int32(1), direct)
+		require.Zero(t, proxy)
+	})
 }
 
 func TestUploadDirectTransferDoesNotSendSDKCredentials(t *testing.T) {

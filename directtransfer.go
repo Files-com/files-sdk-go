@@ -174,12 +174,30 @@ func WrapDirectTransferOptions(config Config, info DirectConnectionInfo, request
 		return nil, err
 	}
 
-	directURL, httpClient, err := directTransferHTTPClient(modifiedRequest.Context(), config, info)
+	response, err := sendDirectTransferRequest(config, info, nil, nil, modifiedRequest)
+	if err != nil {
+		return response, err
+	}
+
+	processedResponse, err := BuildResponse(response, opts...)
+	if err != nil {
+		lib.CloseBody(response)
+		return response, errors.Join(ErrDirectTransferResponseStarted, err)
+	}
+	return processedResponse, nil
+}
+
+// sendDirectTransferRequest sends a credential-free copy of request to info's
+// direct endpoint, using cache when the request context carries none. An
+// unsuccessful HTTP response is closed and returned with a
+// DirectTransferResponseError.
+func sendDirectTransferRequest(config Config, info DirectConnectionInfo, cache *directTransferClientCache, wrapTransport func(http.RoundTripper) http.RoundTripper, request *http.Request) (*http.Response, error) {
+	directURL, httpClient, err := directTransferHTTPClientWithCache(request.Context(), config, info, cache, wrapTransport)
 	if err != nil {
 		return nil, err
 	}
 
-	directRequest, err := cloneRequestForDirectTransfer(modifiedRequest, directURL)
+	directRequest, err := cloneRequestForDirectTransfer(request, directURL)
 	if err != nil {
 		return nil, err
 	}
@@ -187,6 +205,7 @@ func WrapDirectTransferOptions(config Config, info DirectConnectionInfo, request
 	logDirectTransferRequest(config.Logger, directRequest)
 	response, err := httpClient.Do(directRequest)
 	if err != nil {
+		redactDirectTransferURLErrors(err)
 		return response, err
 	}
 
@@ -198,13 +217,7 @@ func WrapDirectTransferOptions(config Config, info DirectConnectionInfo, request
 		lib.CloseBody(response)
 		return response, directErr
 	}
-
-	processedResponse, err := BuildResponse(response, opts...)
-	if err != nil {
-		lib.CloseBody(response)
-		return response, errors.Join(ErrDirectTransferResponseStarted, err)
-	}
-	return processedResponse, nil
+	return response, nil
 }
 
 func logDirectTransferRequest(logger lib.Logger, request *http.Request) {
@@ -212,16 +225,40 @@ func logDirectTransferRequest(logger lib.Logger, request *http.Request) {
 		return
 	}
 
-	logURL := *request.URL
-	logURL.RawQuery = ""
-	logURL.ForceQuery = false
-	logURL.Fragment = ""
-
+	logURL := redactedDirectTransferURL(*request.URL)
 	if leveledLogger, ok := logger.(retryablehttp.LeveledLogger); ok {
-		leveledLogger.Debug("performing request", "method", request.Method, "url", logURL.Redacted())
+		leveledLogger.Debug("performing request", "method", request.Method, "url", logURL)
 		return
 	}
-	logger.Printf("[DEBUG] %s %s", request.Method, logURL.Redacted())
+	logger.Printf("[DEBUG] %s %s", request.Method, logURL)
+}
+
+// redactedDirectTransferURL returns directURL without the query, which
+// carries the transfer's token, and without user information.
+func redactedDirectTransferURL(directURL url.URL) string {
+	directURL.User = nil
+	directURL.RawQuery = ""
+	directURL.ForceQuery = false
+	directURL.Fragment = ""
+	return directURL.String()
+}
+
+// redactDirectTransferURLErrors removes the token from the URL of every
+// *url.Error in err's chain, so the error can be logged. The SDK's client
+// reports one, and a WrapTransport round tripper that sends through its own
+// http.Client reports another inside it.
+func redactDirectTransferURLErrors(err error) {
+	for ; err != nil; err = errors.Unwrap(err) {
+		urlErr, ok := err.(*url.Error)
+		if !ok {
+			continue
+		}
+		if parsed, parseErr := url.Parse(urlErr.URL); parseErr == nil {
+			urlErr.URL = redactedDirectTransferURL(*parsed)
+		} else {
+			urlErr.URL = ""
+		}
+	}
 }
 
 func directTransferRetryAfter(value string) time.Duration {
@@ -235,6 +272,14 @@ func directTransferRetryAfter(value string) time.Duration {
 }
 
 func directTransferHTTPClient(ctx context.Context, config Config, info DirectConnectionInfo) (string, *http.Client, error) {
+	return directTransferHTTPClientWithCache(ctx, config, info, nil, nil)
+}
+
+// directTransferHTTPClientWithCache builds the direct client for info, reusing
+// the cache carried by ctx, or else cache when it is not nil. A client whose
+// transport wrapTransport wraps is built only for cache, never shared through
+// ctx, because other users of a context cache may wrap it differently.
+func directTransferHTTPClientWithCache(ctx context.Context, config Config, info DirectConnectionInfo, cache *directTransferClientCache, wrapTransport func(http.RoundTripper) http.RoundTripper) (string, *http.Client, error) {
 	if config.DisableDirectTransfers || !DirectConnectionInfoPresent(info) {
 		return "", nil, ErrDirectTransferUnavailable
 	}
@@ -283,6 +328,13 @@ func directTransferHTTPClient(ctx context.Context, config Config, info DirectCon
 		default:
 			return nil, ErrDirectTransferUnavailable
 		}
+		if wrapTransport != nil {
+			wrapped := wrapTransport(transport)
+			if wrapped == nil {
+				return nil, fmt.Errorf("%w: WrapTransport returned no round tripper", ErrDirectTransferUnavailable)
+			}
+			transport = directTransferWrappedTransport{RoundTripper: wrapped, sdk: transport}
+		}
 
 		return &http.Client{
 			Transport: transport,
@@ -292,7 +344,10 @@ func directTransferHTTPClient(ctx context.Context, config Config, info DirectCon
 		}, nil
 	}
 
-	if cache, ok := ctx.Value(directTransferClientCacheContextKey{}).(*directTransferClientCache); ok {
+	if contextCache, ok := ctx.Value(directTransferClientCacheContextKey{}).(*directTransferClientCache); ok && wrapTransport == nil {
+		cache = contextCache
+	}
+	if cache != nil {
 		client, err := cache.client(directTransferClientCacheKey{
 			serverName: info.ServerName,
 			caPEM:      info.CaPem,
@@ -313,7 +368,8 @@ func directTransferDirectURL(info DirectConnectionInfo) (string, error) {
 
 	transferURL, err := url.Parse(info.DirectUri)
 	if err != nil {
-		return "", err
+		// The parse error repeats direct_uri, token included.
+		return "", fmt.Errorf("%w: invalid direct_uri", ErrDirectTransferUnavailable)
 	}
 	if transferURL.Scheme != "https" {
 		return "", fmt.Errorf("%w: direct_uri must use https scheme", ErrDirectTransferUnavailable)
@@ -489,6 +545,21 @@ func (b *directTransferCancelBody) Close() error {
 	err := b.ReadCloser.Close()
 	b.cancel()
 	return err
+}
+
+// directTransferWrappedTransport sends through a caller's wrapper while keeping
+// the SDK transport's idle connections closable with the client.
+type directTransferWrappedTransport struct {
+	http.RoundTripper
+	sdk http.RoundTripper
+}
+
+func (t directTransferWrappedTransport) CloseIdleConnections() {
+	for _, transport := range []http.RoundTripper{t.RoundTripper, t.sdk} {
+		if closer, ok := transport.(interface{ CloseIdleConnections() }); ok {
+			closer.CloseIdleConnections()
+		}
+	}
 }
 
 func cloneRequestForDirectTransfer(request *http.Request, rawURL string) (*http.Request, error) {

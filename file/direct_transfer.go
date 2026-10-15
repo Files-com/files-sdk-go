@@ -2,21 +2,16 @@ package file
 
 import (
 	"context"
-	"io"
 	"net/http"
-	"sync"
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
-type directTransferDownloadSuppressor interface {
-	directTransferDownloadAttemptAllowed() bool
-	disableDirectTransferDownload(reason string, err error)
-}
-
-type directTransferDownloadSuppressorContextKey struct{}
+// directTransferSessionContextKey carries the DirectTransferSession that
+// Download uses for the requests of one Download V2 transfer.
+type directTransferSessionContextKey struct{}
 
 type directTransferBackpressure struct {
 	retryAfter time.Duration
@@ -43,61 +38,31 @@ func (b *directTransferBackpressure) record(retryAfter time.Duration) {
 	}
 }
 
-func directTransferDownloadSuppressorFromContext(ctx context.Context) directTransferDownloadSuppressor {
+func directDownloadSessionFromContext(ctx context.Context) *files_sdk.DirectTransferSession {
 	if ctx == nil {
 		return nil
 	}
-	suppressor, _ := ctx.Value(directTransferDownloadSuppressorContextKey{}).(directTransferDownloadSuppressor)
-	return suppressor
+	session, _ := ctx.Value(directTransferSessionContextKey{}).(*files_sdk.DirectTransferSession)
+	return session
 }
 
-func directTransferDownloadFailureOptions(suppressor directTransferDownloadSuppressor, opts ...files_sdk.RequestResponseOption) []files_sdk.RequestResponseOption {
-	if suppressor == nil {
-		return opts
-	}
-
-	wrapped := make([]files_sdk.RequestResponseOption, 0, len(opts)+1)
-	wrapped = append(wrapped, files_sdk.ResponseOption(func(response *http.Response) error {
-		if response != nil && response.Body != nil {
-			response.Body = &directTransferDownloadFailureBody{
-				ReadCloser: response.Body,
-				suppressor: suppressor,
-			}
-		}
-		return nil
-	}))
-	return append(wrapped, opts...)
-}
-
-type directTransferDownloadFailureBody struct {
-	io.ReadCloser
-	suppressor directTransferDownloadSuppressor
-	disable    sync.Once
-}
-
-func (b *directTransferDownloadFailureBody) Read(p []byte) (int, error) {
-	n, err := b.ReadCloser.Read(p)
-	if err != nil && err != io.EOF {
-		b.disableDirectTransferDownload("direct_body_read_failed", err)
-	}
-	return n, err
-}
-
-func (b *directTransferDownloadFailureBody) Close() error {
-	err := b.ReadCloser.Close()
-	if err != nil {
-		b.disableDirectTransferDownload("direct_body_close_failed", err)
-	}
-	return err
-}
-
-func (b *directTransferDownloadFailureBody) disableDirectTransferDownload(reason string, err error) {
-	if b.suppressor == nil || err == nil {
-		return
-	}
-	b.disable.Do(func() {
-		b.suppressor.disableDirectTransferDownload(reason, err)
+// newDirectDownloadSession returns a session for direct download requests. A
+// direct 429 is sent again after its Retry-After, up to downloadV2RetryAttempts
+// requests, and recorded as back pressure for the Download V2 range that
+// received it.
+func newDirectDownloadSession(onDisable func(reason string, err error)) *files_sdk.DirectTransferSession {
+	return files_sdk.NewDirectTransferSession(files_sdk.DirectTransferSessionOptions{
+		RetryResponse: retryDirectDownloadBackpressure,
+		OnDisable:     onDisable,
 	})
+}
+
+func retryDirectDownloadBackpressure(request *http.Request, attempt int, err *files_sdk.DirectTransferResponseError) (time.Duration, bool) {
+	if err.StatusCode != http.StatusTooManyRequests {
+		return 0, false
+	}
+	directTransferBackpressureFromContext(request.Context()).record(err.RetryAfter)
+	return err.RetryAfter, attempt < downloadV2RetryAttempts
 }
 
 type directTransferUploadStats interface {

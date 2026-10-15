@@ -65,12 +65,11 @@ type downloadV2Engine struct {
 	// totalSize starts as the listing/download-request metadata size, which can
 	// be stale, and becomes the transfer size reported by the first range
 	// response. Every later response must agree with it.
-	totalSize              int64
-	transferSizeKnown      bool
-	parts                  []downloadV2Part
-	completed              map[int64]int64
-	contiguous             int64
-	directTransferDisabled bool
+	totalSize         int64
+	transferSizeKnown bool
+	parts             []downloadV2Part
+	completed         map[int64]int64
+	contiguous        int64
 }
 
 // downloadV2Range describes the bytes a range response covers and the transfer
@@ -340,9 +339,9 @@ func (e *downloadV2Engine) Run(parentCtx context.Context) (err error) {
 
 	ctx, cancel := context.WithCancel(parentCtx)
 	defer cancel()
-	ctx, closeDirectClients := files_sdk.WithDirectTransferClientCache(ctx)
-	defer closeDirectClients()
-	ctx = context.WithValue(ctx, directTransferDownloadSuppressorContextKey{}, e)
+	directSession := newDirectDownloadSession(e.logDirectTransferDisabled)
+	defer directSession.Close()
+	ctx = context.WithValue(ctx, directTransferSessionContextKey{}, directSession)
 
 	results := make(chan downloadV2PartResult, max(1, e.manager.Max()))
 	var wg sync.WaitGroup
@@ -491,21 +490,7 @@ func (e *downloadV2Engine) markComplete(part downloadV2Part, bytes int64) {
 	}
 }
 
-func (e *downloadV2Engine) directTransferDownloadAttemptAllowed() bool {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	return !e.directTransferDisabled
-}
-
-func (e *downloadV2Engine) disableDirectTransferDownload(reason string, err error) {
-	e.mu.Lock()
-	if e.directTransferDisabled {
-		e.mu.Unlock()
-		return
-	}
-	e.directTransferDisabled = true
-	e.mu.Unlock()
-
+func (e *downloadV2Engine) logDirectTransferDisabled(reason string, err error) {
 	if e.reportStatus == nil || e.reportStatus.Job() == nil {
 		return
 	}

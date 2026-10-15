@@ -167,65 +167,34 @@ func (c *Client) Download(params files_sdk.FileDownloadParams, opts ...files_sdk
 
 	c.SetHeadersForRequest(request)
 
-	directSuppressor := directTransferDownloadSuppressorFromContext(files_sdk.ContextOption(opts))
 	directAttemptAllowed := !c.Config.DisableDirectTransfers && files_sdk.DirectConnectionInfoPresent(params.File.DirectConnectionInfo)
-	if directAttemptAllowed && directSuppressor != nil {
-		directAttemptAllowed = directSuppressor.directTransferDownloadAttemptAllowed()
-	}
 	if params.File.DownloadUri == "" && !directAttemptAllowed {
 		return params.File, errors.New("download response did not include a usable download URL")
 	}
 	if directAttemptAllowed {
-		directContext, closeDirectClient := files_sdk.WithDirectTransferClientCache(files_sdk.ContextOption(opts))
-		defer closeDirectClient()
-		directOptions := append(directTransferDownloadFailureOptions(directSuppressor, opts...), files_sdk.WithContext(directContext))
-		for attempt := 1; attempt <= downloadV2RetryAttempts; attempt++ {
-			_, err = files_sdk.WrapDirectTransferOptions(
-				c.Config,
-				params.File.DirectConnectionInfo,
-				request,
-				directOptions...,
-			)
-			var responseErr *files_sdk.DirectTransferResponseError
-			if !errors.As(err, &responseErr) || responseErr.StatusCode != http.StatusTooManyRequests || attempt == downloadV2RetryAttempts {
-				break
-			}
-			if backpressure := directTransferBackpressureFromContext(directContext); backpressure != nil {
-				backpressure.record(responseErr.RetryAfter)
-			}
-			if responseErr.RetryAfter > 0 {
-				select {
-				case <-directContext.Done():
-					err = directContext.Err()
-				case <-time.After(responseErr.RetryAfter):
-				}
-				if err != nil {
-					break
-				}
-			}
+		// A Download V2 transfer shares one session across its ranges and logs
+		// when direct transfer is disabled; a lone request gets its own.
+		directSession := directDownloadSessionFromContext(files_sdk.ContextOption(opts))
+		transferSession := directSession != nil
+		if !transferSession {
+			directSession = newDirectDownloadSession(nil)
+			defer directSession.Close()
 		}
-		var responseErr *files_sdk.DirectTransferResponseError
-		if errors.As(err, &responseErr) && responseErr.StatusCode == http.StatusTooManyRequests {
-			if backpressure := directTransferBackpressureFromContext(directContext); backpressure != nil {
-				backpressure.record(responseErr.RetryAfter)
-			}
-		}
+		_, err = directSession.Send(c.Config, params.File.DirectConnectionInfo, request, opts...)
 		if err == nil {
 			if c.Config.InDebug() {
 				c.LogPath(params.Path, map[string]interface{}{"message": "direct download success", "direction": "download"})
 			}
 			return params.File, nil
 		}
-		if errors.Is(err, files_sdk.ErrDirectTransferResponseStarted) {
+		// Bytes already reached the response options, so the request must not
+		// be sent again, whatever else the error wraps.
+		if errors.Is(err, files_sdk.ErrDirectTransferResponseStarted) || !errors.Is(err, files_sdk.ErrDirectTransferUnavailable) || params.File.DownloadUri == "" {
 			return params.File, err
 		}
-		if directSuppressor != nil {
-			directSuppressor.disableDirectTransferDownload("direct_request_failed", err)
+		if !transferSession {
+			c.LogPath(params.Path, map[string]interface{}{"message": "direct download failed; falling back to proxy URL", "direction": "download", "reason": directSession.Stats().DisabledReason, "error": uploadRetryLogError(err)})
 		}
-		if params.File.DownloadUri == "" {
-			return params.File, err
-		}
-		c.LogPath(params.Path, map[string]interface{}{"message": "direct download failed; falling back to proxy URL", "direction": "download", "reason": "direct_request_failed", "error": uploadRetryLogError(err)})
 	}
 
 	_, err = files_sdk.WrapRequestOptions(c.Config, request, opts...)

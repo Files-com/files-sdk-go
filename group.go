@@ -37,11 +37,12 @@ type GroupCollection []Group
 
 // GroupListParams contains the request parameters for GET /groups.
 type GroupListParams struct {
-	SortBy                  interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter                  interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
-	FilterPrefix            interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
-	Ids                     string      `url:"ids,omitempty" json:"ids,omitempty" path:"ids"`
-	IncludeParentSiteGroups *bool       `url:"include_parent_site_groups,omitempty" json:"include_parent_site_groups,omitempty" path:"include_parent_site_groups"`
+	SortBy                        interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	Filter                        interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	FilterPrefix                  interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	Ids                           string      `url:"ids,omitempty" json:"ids,omitempty" path:"ids"`
+	IncludeParentSiteGroups       *bool       `url:"include_parent_site_groups,omitempty" json:"include_parent_site_groups,omitempty" path:"include_parent_site_groups"`
+	IncludeDefaultWorkspaceGroups *bool       `url:"include_default_workspace_groups,omitempty" json:"include_default_workspace_groups,omitempty" path:"include_default_workspace_groups"`
 	ListParams
 }
 
