@@ -2,6 +2,7 @@ package files_sdk
 
 import (
 	"cmp"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -18,7 +19,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.3.318"
+var VERSION = "3.3.319"
 var defaultUserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
 
 const (
@@ -103,17 +104,106 @@ func (c Config) Endpoint() string {
 func (c Config) Do(req *http.Request) (*http.Response, error) {
 	client := c.redirectSafeClient()
 	client.Logger = c.retryLogFor(client.Logger, req)
+	guardRetryableResponses(client, true)
+	response, err := (&http.Client{Transport: &retryableRoundTripper{client: client}}).Do(req)
 	if c.InDebug() {
-		return client.StandardClient().Do(req)
+		return response, err
 	}
 	// Outside DEBUG, keep request URLs, which can be signed download URLs, out of errors, as CallRaw does. The error
 	// keeps its type, operation and cause, so cancellation and timeout checks still work.
-	response, err := client.StandardClient().Do(req)
 	var urlErr *url.Error
 	if errors.As(err, &urlErr) {
 		err = &url.Error{Op: urlErr.Op, URL: "[redacted]", Err: urlErr.Err}
 	}
 	return response, err
+}
+
+type retryableRoundTripper struct{ client *retryablehttp.Client }
+
+func (r *retryableRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	retryable, err := retryablehttp.FromRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	response, err := r.client.Do(retryable)
+	return finishRetryableRoundTrip(response, err)
+}
+
+func finishRetryableRoundTrip(response *http.Response, err error) (*http.Response, error) {
+	if err != nil {
+		// The guarded error handler has released the supplied final body.
+		// net/http cannot consume a response returned with a RoundTrip error.
+		response = nil
+	}
+	// Match retryablehttp.RoundTripper: net/http adds its own URL error.
+	if _, ok := err.(*url.Error); ok {
+		return response, errors.Unwrap(err)
+	}
+	return response, err
+}
+
+func guardRetryableResponses(client *retryablehttp.Client, closeOnError bool) {
+	checkRetry := client.CheckRetry
+	if checkRetry != nil {
+		client.CheckRetry = func(ctx context.Context, response *http.Response, doErr error) (bool, error) {
+			retry, policyErr := checkRetry(ctx, response, doErr)
+			if retry || policyErr != nil || doErr != nil {
+				// Install before the dependency drains a retry response. It may
+				// return that response if PrepareRetry or the next body fails.
+				_, redirectError := doErr.(*url.Error)
+				guardRetryableBody(response, redirectError)
+			}
+			return retry, policyErr
+		}
+	}
+	if !closeOnError {
+		return
+	}
+	handler := client.ErrorHandler
+	if handler == nil {
+		return // retryablehttp's default handler already closes and discards.
+	}
+	client.ErrorHandler = func(response *http.Response, err error, attempts int) (*http.Response, error) {
+		body := guardRetryableBody(response, false)
+		processed, err := handler(response, err, attempts)
+		if err != nil && body != nil {
+			_ = body.Close()
+		}
+		// A handler replacing the response or its body owns that replacement's
+		// cleanup contract. Only closes of the supplied body can be observed here.
+		return processed, err
+	}
+}
+
+func guardRetryableBody(response *http.Response, closed bool) *retryableErrorBody {
+	if response == nil || response.Body == nil {
+		return nil
+	}
+	if body, ok := response.Body.(*retryableErrorBody); ok {
+		return body
+	}
+	body := &retryableErrorBody{ReadCloser: response.Body, closed: closed}
+	response.Body = body
+	return body
+}
+
+// This guard exists only on retry and error responses. The dependency or its
+// ErrorHandler can close the body or hand it back to its caller.
+type retryableErrorBody struct {
+	io.ReadCloser
+	closed bool
+}
+
+func (b *retryableErrorBody) Close() error {
+	if b.closed {
+		return nil
+	}
+	b.closed = true
+	return b.ReadCloser.Close()
+}
+
+func (b *retryableErrorBody) WriteTo(w io.Writer) (int64, error) {
+	return io.Copy(w, b.ReadCloser)
 }
 
 // retryLogFor returns the logger for one request's retry client in place of logger, the client's own. Entries at
@@ -267,6 +357,7 @@ type replayableSender struct {
 
 func (c Config) newReplayableSender() *replayableSender {
 	client := c.redirectSafeClient()
+	guardRetryableResponses(client, true)
 	// http.Client opens a redirect's body with GetBody before it calls
 	// CheckRedirect, which can stop the redirect or change its body. When
 	// CheckRedirect stops the redirect, http.Client closes the request's
@@ -392,12 +483,7 @@ func (s *replayableSender) RoundTrip(req *http.Request) (*http.Response, error) 
 	}
 	retryable.ContentLength = req.ContentLength
 	response, err := s.client.Do(retryable)
-	// As retryablehttp.RoundTripper does: http.Client wraps the error in a
-	// *url.Error itself.
-	if _, ok := err.(*url.Error); ok {
-		return response, errors.Unwrap(err)
-	}
-	return response, err
+	return finishRetryableRoundTrip(response, err)
 }
 
 // replayableBody is a request body over prepared content, which each attempt

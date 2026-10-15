@@ -46,6 +46,165 @@ func CreateClient(fixture string) (client *Client, r *recorder.Recorder, err err
 	return client, r, err
 }
 
+func TestBoundedResponsesCloseOnceAndPreserveErrors(t *testing.T) {
+	closeErr := errors.New("closing response failed")
+	readErr := errors.New("reading response failed")
+	for _, tc := range []struct {
+		name, operation            string
+		status                     int
+		readErr, closeErr, wantErr error
+	}{
+		{name: "stats unsupported HEAD", operation: "stats", status: 422, closeErr: closeErr},
+		{name: "stats close error", operation: "stats", status: 200, closeErr: closeErr, wantErr: closeErr},
+		{name: "stats status error", operation: "stats", status: 503},
+		{name: "read-at ignores close error", operation: "read", status: 206, closeErr: closeErr},
+		{name: "read-at read error", operation: "read", status: 206, readErr: readErr, wantErr: readErr},
+		{name: "read-at status error", operation: "read", status: 503},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			body := &ownedHTTPResponseBody{Reader: strings.NewReader("abc"), readErr: tc.readErr, closeErr: tc.closeErr}
+			config := ownedResponseConfig(body, tc.status, http.Header{"Content-Type": []string{"text/plain"}})
+			remote := files_sdk.File{Path: "file", DownloadUri: "https://download.test/file"}
+			var err error
+			if tc.operation == "stats" {
+				_, err = (&Client{Config: config}).FileStats(remote)
+			} else {
+				fs := (&FS{Context: context.Background()}).Init(config, false)
+				reader := (&File{File: &remote, FS: fs}).Init()
+				_, err = reader.ReadAt(make([]byte, 3), 0)
+			}
+			if tc.status == 503 {
+				var responseErr lib.ResponseError
+				require.ErrorAs(t, err, &responseErr)
+				assert.Equal(t, 503, responseErr.StatusCode)
+				assert.Equal(t, "503 Service Unavailable", responseErr.Response.Status)
+				assert.Equal(t, "text/plain", responseErr.Response.Header.Get("Content-Type"))
+				assert.Contains(t, responseErr.Error(), "abc")
+			} else if tc.wantErr != nil {
+				require.ErrorIs(t, err, tc.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, 1, body.closes)
+		})
+	}
+}
+
+func TestUploadV1ClosesErrorResponsesOnce(t *testing.T) {
+	for _, tc := range []struct{ name, payload, contentType string }{
+		{name: "nginx", payload: "denied", contentType: "text/html"},
+		{name: "structured API", payload: `{"error":"denied","type":"permission-denied","http-code":"403"}`, contentType: "application/json"},
+		{name: "API fallback", payload: "{broken", contentType: "application/json"},
+		{name: "S3 XML", payload: `<Error><Code>AccessDenied</Code><Message>denied</Message></Error>`, contentType: "application/xml"},
+		{name: "other status error", payload: "denied", contentType: "text/plain"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			body := &ownedHTTPResponseBody{Reader: strings.NewReader(tc.payload)}
+			header := http.Header{"Content-Type": []string{tc.contentType}}
+			if tc.name == "nginx" {
+				header.Set("Server", "nginx")
+				header.Set("X-Request-Id", "probe")
+			}
+			config := ownedResponseConfig(body, 403, header)
+			err := (&Client{Config: config}).Upload(UploadWithReader(strings.NewReader("a")), UploadWithSize(1), UploadWithDestinationPath("file"), UploadWithResume(UploadResumable{FileUploadPart: files_sdk.FileUploadPart{Ref: "ref", Path: "file", PartNumber: 1, UploadUri: "https://upload.test/file", HttpMethod: "PUT", ParallelParts: lib.Bool(false)}}))
+			require.Error(t, err)
+			assert.Equal(t, 1, body.closes)
+			if tc.name == "API fallback" || tc.name == "other status error" {
+				var responseErr lib.ResponseError
+				require.ErrorAs(t, err, &responseErr)
+				assert.Equal(t, 403, responseErr.StatusCode)
+				assert.Equal(t, "403 Forbidden", responseErr.Response.Status)
+				assert.Contains(t, responseErr.Error(), tc.payload)
+			}
+		})
+	}
+}
+
+func TestGetClosesOwnedResponsesOnceAndKeepsErrorDiagnostics(t *testing.T) {
+	readErr := errors.New("get response interrupted")
+	for _, tc := range []struct {
+		name, payload, contentType string
+		server, requestID          string
+		status                     int
+		readErr                    error
+	}{
+		{name: "success", status: 200, payload: `{"path":"file"}`, contentType: "application/json"},
+		{name: "read failure", status: 200, payload: `{"path":"file"}`, contentType: "application/json", readErr: readErr},
+		{name: "structured API", status: 403, payload: `{"error":"denied","type":"permission-denied","http-code":"403"}`, contentType: "application/json"},
+		{name: "nginx", status: 403, payload: "denied", contentType: "text/html", server: "nginx", requestID: "probe"},
+		{name: "versioned nginx", status: 403, payload: "denied", contentType: "text/html", server: "nginx/1.27", requestID: "probe"},
+		{name: "Files gateway", status: 403, payload: "denied", contentType: "text/html", server: "files.com", requestID: "probe"},
+		{name: "headerless gateway", status: 403, payload: "denied", contentType: "text/html"},
+		{name: "API fallback", status: 403, payload: "{broken", contentType: "application/json"},
+		{name: "generic status", status: 403, payload: "denied", contentType: "text/plain"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			body := &ownedHTTPResponseBody{Reader: strings.NewReader(tc.payload), readErr: tc.readErr}
+			header := http.Header{"Content-Type": []string{tc.contentType}}
+			if tc.server != "" {
+				header.Set("Server", tc.server)
+			}
+			if tc.requestID != "" {
+				header.Set("X-Request-Id", tc.requestID)
+			}
+			value, err := (&Client{Config: ownedResponseConfig(body, tc.status, header)}).Get("file")
+			if tc.name == "success" {
+				require.NoError(t, err)
+				assert.Equal(t, "file", value.Path)
+			} else if tc.readErr != nil {
+				require.ErrorIs(t, err, tc.readErr)
+			} else {
+				require.Error(t, err)
+				if tc.name == "nginx" {
+					assert.EqualError(t, err, "files.com Server error - request id: probe")
+				} else if tc.contentType == "text/html" {
+					assert.NotContains(t, err.Error(), "files.com Server error")
+				}
+				if tc.name == "API fallback" {
+					var responseErr lib.ResponseError
+					require.ErrorAs(t, err, &responseErr)
+					assert.Equal(t, "403 Forbidden", responseErr.Response.Status)
+					assert.Contains(t, responseErr.Error(), tc.payload)
+				} else if tc.name == "generic status" {
+					assert.Contains(t, err.Error(), tc.payload)
+				}
+			}
+			assert.Equal(t, 1, body.closes)
+		})
+	}
+}
+
+type ownedHTTPResponseBody struct {
+	*strings.Reader
+	readErr, closeErr error
+	closes            int
+}
+
+func (b *ownedHTTPResponseBody) Read(p []byte) (int, error) {
+	if b.readErr != nil {
+		return 0, b.readErr
+	}
+	return b.Reader.Read(p)
+}
+func (b *ownedHTTPResponseBody) Close() error { b.closes++; return b.closeErr }
+
+type ownedHTTPResponseTransport func(*http.Request) (*http.Response, error)
+
+func (f ownedHTTPResponseTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+func ownedResponseConfig(body *ownedHTTPResponseBody, status int, header http.Header) files_sdk.Config {
+	config := files_sdk.Config{DisableDirectTransfers: true}.Init().SetCustomClient(&http.Client{Transport: ownedHTTPResponseTransport(func(req *http.Request) (*http.Response, error) {
+		if req.Body != nil {
+			_, _ = io.Copy(io.Discard, req.Body)
+			_ = req.Body.Close()
+		}
+		return &http.Response{StatusCode: status, Status: fmt.Sprintf("%d %s", status, http.StatusText(status)), Header: header, Body: body, ContentLength: int64(body.Len()), Request: req}, nil
+	})})
+	config.RetryMax = 0
+	return config
+}
+
 func TestClient_DownloadUriRequestsDirectConnectionInfoByDefault(t *testing.T) {
 	server := (&MockAPIServer{T: t}).Do()
 	defer server.Shutdown()
@@ -1690,4 +1849,122 @@ func TestClient_ListFor(t *testing.T) {
 	}, paths)
 
 	r.Stop()
+}
+
+func TestUploadsCloseErroredResponsesOnce(t *testing.T) {
+	for _, version := range []string{"v1", "v2"} {
+		for _, mode := range []string{"redirect-rejected", "cancel-after-response", "plain-status-error"} {
+			t.Run(version+"/"+mode, func(t *testing.T) {
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				var bodies []*ownedHTTPResponseBody
+				config := files_sdk.Config{DisableDirectTransfers: true}.Init().SetCustomClient(&http.Client{
+					Transport: ownedHTTPResponseTransport(func(req *http.Request) (*http.Response, error) {
+						if req.Body != nil {
+							_, _ = io.Copy(io.Discard, req.Body)
+							_ = req.Body.Close()
+						}
+						body := &ownedHTTPResponseBody{Reader: strings.NewReader("response")}
+						bodies = append(bodies, body)
+						status := http.StatusOK
+						header := http.Header{}
+						if mode == "redirect-rejected" {
+							status = http.StatusTemporaryRedirect
+							header.Set("Location", "https://upload.test/again")
+						} else if mode == "cancel-after-response" {
+							cancel()
+						} else {
+							status = http.StatusForbidden
+							header.Set("Content-Type", "text/plain")
+						}
+						return &http.Response{StatusCode: status, Status: fmt.Sprintf("%d %s", status, http.StatusText(status)), Header: header, Body: body, ContentLength: int64(body.Len()), Request: req}, nil
+					}),
+					CheckRedirect: func(*http.Request, []*http.Request) error { return errors.New("stopped after 10 redirects") },
+				})
+				config.RetryMax = 0
+				config.FeatureFlags[files_sdk.FeatureFlagUploadV2ChecksumTrailer] = false
+				upload := files_sdk.FileUploadPart{PartNumber: 1, Path: "file", UploadUri: "https://upload.test/file", HttpMethod: "PUT"}
+				reader := &ProxyReaderAt{ReaderAt: strings.NewReader("a"), len: 1}
+				u := &uploadIO{Client: &Client{Config: config}}
+				var err error
+				if version == "v1" {
+					_, err = u.uploadPart(ctx, &Part{FileUploadPart: upload, ProxyReader: reader})
+				} else {
+					e := &uploadV2Engine{u: u}
+					_, _, _, _, err = e.uploadPart(ctx, &uploadV2Part{uploadV2PartDescriptor: uploadV2PartDescriptor{number: 1, upload: upload}, reader: reader})
+				}
+				require.Error(t, err)
+				require.Len(t, bodies, 1)
+				if mode == "cancel-after-response" {
+					require.ErrorIs(t, err, context.Canceled)
+				}
+				assert.Equal(t, 1, bodies[0].closes)
+			})
+		}
+	}
+}
+
+func TestDownloadErrorsCloseResponseOnce(t *testing.T) {
+	for _, operation := range []string{"stream", "range", "v2-range"} {
+		for _, status := range []int{http.StatusNotFound, http.StatusServiceUnavailable} {
+			t.Run(fmt.Sprintf("%s/%d", operation, status), func(t *testing.T) {
+				body := &ownedHTTPResponseBody{Reader: strings.NewReader("response")}
+				config := ownedResponseConfig(body, status, http.Header{"Content-Type": []string{"text/plain"}})
+				remote := files_sdk.File{Path: "file", DownloadUri: "https://download.test/file"}
+				reader := (&File{File: &remote, FS: (&FS{Context: context.Background()}).Init(config, false)}).Init()
+				var err error
+				switch operation {
+				case "stream":
+					_, err = reader.readCloserInit()
+				case "range":
+					_, err = reader.ReaderRange(0, 2)
+				case "v2-range":
+					_, _, err = reader.downloadV2ReaderRange(context.Background(), 0, 2, false)
+				}
+				require.Error(t, err)
+				var responseErr lib.ResponseError
+				require.ErrorAs(t, err, &responseErr)
+				require.Equal(t, status, responseErr.StatusCode)
+				assert.Equal(t, 1, body.closes)
+			})
+		}
+	}
+}
+
+func TestGetReleasesFinalResponseWhenPolicyObservesCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	body := &ownedHTTPResponseBody{Reader: strings.NewReader(`{"error":"unavailable","type":"internal_server_error","http-code":"500"}`)}
+	config := files_sdk.Config{DisableDirectTransfers: true}.Init().SetCustomClient(&http.Client{Transport: ownedHTTPResponseTransport(func(req *http.Request) (*http.Response, error) {
+		if req.Body != nil {
+			_, _ = io.Copy(io.Discard, req.Body)
+			_ = req.Body.Close()
+		}
+		cancel()
+		return &http.Response{StatusCode: 500, Status: "500 Internal Server Error", Header: http.Header{"Content-Type": []string{"application/json"}}, Body: body, ContentLength: int64(body.Len()), Request: req}, nil
+	})})
+	config.RetryMax = 0
+	_, err := (&Client{Config: config}).Get("file", files_sdk.WithContext(ctx))
+	require.ErrorIs(t, err, context.Canceled)
+	assert.Equal(t, 1, body.closes)
+}
+
+func TestZipMetadataReleasesFinalResponseOnPolicyCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	body := &ownedHTTPResponseBody{Reader: strings.NewReader("response")}
+	config := files_sdk.Config{EndpointOverride: "https://files.test"}.Init().SetCustomClient(&http.Client{Transport: ownedHTTPResponseTransport(func(req *http.Request) (*http.Response, error) {
+		if req.Body != nil {
+			_, _ = io.Copy(io.Discard, req.Body)
+			_ = req.Body.Close()
+		}
+		cancel()
+		return &http.Response{StatusCode: http.StatusInternalServerError, Header: http.Header{}, Body: body, Request: req}, nil
+	})})
+	config.RetryMax = 0
+	batch := &zipBatchDownloader{ctx: ctx, job: &Job{Config: config}}
+	uri, err := batch.createZipDownloadOnce(nil)
+	require.ErrorIs(t, err, context.Canceled)
+	assert.Empty(t, uri)
+	assert.Equal(t, 1, body.closes)
 }

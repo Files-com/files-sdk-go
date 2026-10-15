@@ -2,7 +2,9 @@ package files_sdk
 
 import (
 	"context"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -232,3 +234,55 @@ func TestBuildResponse_Error(t *testing.T) {
 	_, err := BuildResponse(resp, opts...)
 	assert.Error(t, err)
 }
+
+func TestResponseOptionsReleaseRejectedBodyAndKeepSuccessfulStream(t *testing.T) {
+	for _, reject := range []bool{false, true} {
+		t.Run(map[bool]string{false: "successful stream", true: "rejected stream"}[reject], func(t *testing.T) {
+			body := &optionResponseBody{Reader: strings.NewReader("response content")}
+			config := Config{}.Init().SetCustomClient(&http.Client{Transport: responseOptionTransport(func(req *http.Request) (*http.Response, error) {
+				return &http.Response{StatusCode: http.StatusOK, Body: body, Header: make(http.Header), Request: req}, nil
+			})})
+			request, err := http.NewRequest(http.MethodGet, "https://example.com/file", nil)
+			require.NoError(t, err)
+			response, err := WrapRequestOptions(config, request, ResponseOption(func(response *http.Response) error {
+				if reject {
+					return assert.AnError
+				}
+				return nil
+			}))
+			if reject {
+				require.ErrorIs(t, err, assert.AnError)
+				require.Nil(t, response)
+				assert.Equal(t, 1, body.closes)
+				assert.Zero(t, body.readBytes, "rejected responses should close without an unbounded drain")
+				return
+			}
+			require.NoError(t, err)
+			assert.Zero(t, body.closes)
+			content, err := io.ReadAll(response.Body)
+			require.NoError(t, err)
+			assert.Equal(t, "response content", string(content))
+			require.NoError(t, response.Body.Close())
+			assert.Equal(t, 1, body.closes)
+		})
+	}
+}
+
+type optionResponseBody struct {
+	io.Reader
+	closes    int
+	readBytes int
+	closeErr  error
+}
+
+func (b *optionResponseBody) Read(p []byte) (int, error) {
+	n, err := b.Reader.Read(p)
+	b.readBytes += n
+	return n, err
+}
+
+func (b *optionResponseBody) Close() error { b.closes++; return b.closeErr }
+
+type responseOptionTransport func(*http.Request) (*http.Response, error)
+
+func (f responseOptionTransport) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }

@@ -339,10 +339,10 @@ func (b *zipBatchDownloader) createZipDownloadOnce(statuses []*DownloadStatus) (
 			return params.ToJSON()
 		},
 	})
+	defer lib.CloseBody(response)
 	if err != nil {
 		return "", err
 	}
-	defer lib.CloseBody(response)
 
 	if response.StatusCode == http.StatusUnprocessableEntity {
 		body, readErr := io.ReadAll(response.Body)

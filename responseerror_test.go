@@ -337,6 +337,14 @@ func TestAPIErrorFallbackReportsTheResponseBody(t *testing.T) {
 			assert.Equal(t, http.StatusInternalServerError, fallback.StatusCode)
 			assert.Equal(t, "status code: 500 - "+test.want, err.Error())
 			assert.True(t, original.closed, "the original response body is closed")
+			assert.Same(t, res, fallback.Response)
+			var remaining strings.Builder
+			_, readErr := io.Copy(&remaining, res.Body)
+			require.NoError(t, readErr)
+			assert.Equal(t, test.body[min(len(test.body), 512):], remaining.String())
+			require.NoError(t, res.Body.Close())
+			lib.CloseBody(res)
+			assert.Equal(t, 1, original.closes)
 		})
 	}
 }
@@ -344,9 +352,11 @@ func TestAPIErrorFallbackReportsTheResponseBody(t *testing.T) {
 type closeTrackingBody struct {
 	io.Reader
 	closed bool
+	closes int
 }
 
 func (b *closeTrackingBody) Close() error {
 	b.closed = true
+	b.closes++
 	return nil
 }

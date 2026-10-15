@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
 type requestResponseOption struct {
@@ -32,7 +34,10 @@ func RequestOption(call func(req *http.Request) error) RequestResponseOption {
 }
 
 // ResponseOption calls call with the HTTP response before the SDK processes it.
-// An error from call stops response processing.
+// An error from call stops response processing and closes the discarded body.
+// A callback that closes or replaces a body owns that handoff; after closing it,
+// set res.Body to an appropriate replacement, such as http.NoBody, when later
+// cleanup must not close the original again.
 func ResponseOption(call func(req *http.Response) error) RequestResponseOption {
 	return func(opt *requestResponseOption) error {
 		if opt.Response != nil {
@@ -88,6 +93,8 @@ func WithContext(ctx context.Context) RequestResponseOption {
 
 // ResponseBodyOption calls opt with the response body before the SDK processes it.
 // Reading the body consumes those bytes for subsequent response processing.
+// If opt returns an error, the SDK closes the discarded body. Use ResponseOption
+// when closing or replacing a body requires handing off a replacement.
 func ResponseBodyOption(opt func(io.ReadCloser) error) RequestResponseOption {
 	return ResponseOption(func(res *http.Response) error {
 		return opt(res.Body)
@@ -140,12 +147,13 @@ func BuildRequest(request *http.Request, opts ...RequestResponseOption) (*http.R
 }
 
 // BuildResponse applies opts in order and returns the resulting response.
-// It stops at the first option error.
+// It stops at the first option error, closes the discarded body, and returns nil.
 func BuildResponse(response *http.Response, opts ...RequestResponseOption) (*http.Response, error) {
 	optionRequestResponse := &requestResponseOption{Response: response}
 
 	for _, opt := range opts {
 		if err := opt(optionRequestResponse); err != nil {
+			lib.CloseBody(optionRequestResponse.Response)
 			return nil, err
 		}
 	}

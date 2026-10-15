@@ -3,6 +3,7 @@ package files_sdk
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"time"
 
@@ -52,6 +53,7 @@ type FilesMigrationLogIter struct {
 	more func() bool
 	error
 	current interface{}
+	body    io.ReadCloser
 }
 
 func (l *FilesMigrationLogIter) Err() error {
@@ -64,6 +66,18 @@ func (l *FilesMigrationLogIter) Current() interface{} {
 
 func (l *FilesMigrationLogIter) Next() bool {
 	return l.next()
+}
+
+// Close releases the log response and stops iteration. Call it when stopping
+// before Next returns false; exhaustion and decoding failures close automatically.
+func (l *FilesMigrationLogIter) Close() error {
+	if l.body == nil {
+		return nil
+	}
+	body := l.body
+	l.body = nil
+	l.next = func() bool { return false }
+	return body.Close()
 }
 
 func (l FilesMigrationLogIter) Init() *FilesMigrationLogIter {
@@ -82,6 +96,7 @@ func (l FilesMigrationLogIter) Init() *FilesMigrationLogIter {
 			return &l
 		}
 		decoder := json.NewDecoder(resp.Body)
+		l.body = resp.Body
 		l.more = decoder.More
 		l.next = func() bool {
 			if l.error != nil {
@@ -91,11 +106,13 @@ func (l FilesMigrationLogIter) Init() *FilesMigrationLogIter {
 				var log FilesMigrationLog
 				if err := decoder.Decode(&log); err != nil {
 					l.error = err
+					l.Close()
 					return false
 				}
 				l.current = log
 				return true
 			}
+			l.error = l.Close()
 			return false
 		}
 	}

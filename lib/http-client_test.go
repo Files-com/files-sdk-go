@@ -3,6 +3,7 @@ package lib
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"io"
 	"net"
 	"net/http"
@@ -144,6 +145,35 @@ func TestUploadRetryableHttpClosesOriginalBodyAfterPeek(t *testing.T) {
 	require.NoError(t, closeErr)
 	require.True(t, bodyCloser.closed)
 }
+
+func TestUploadRetryableHttpPreservesFailedDiagnosticRead(t *testing.T) {
+	prefix := "<Error><Code>AccessDenied</Code>"
+	readErr := errors.New("storage response interrupted")
+	body := &failedDiagnosticBody{Reader: io.MultiReader(strings.NewReader(prefix), diagnosticReadFailure{err: readErr})}
+	request, err := http.NewRequest(http.MethodPut, "https://bucket.s3.amazonaws.com/file", nil)
+	require.NoError(t, err)
+	response := &http.Response{StatusCode: http.StatusForbidden, Header: http.Header{"Content-Type": []string{"application/xml"}}, Body: body, Request: request}
+	client := UploadRetryableHttp(DefaultRetryableHttp(nil), func() bool { return true })
+	retry, err := client.CheckRetry(context.Background(), response, nil)
+	require.NoError(t, err)
+	require.False(t, retry, "an unreadable diagnostic must not invent a retryable S3 error")
+	got, err := io.ReadAll(response.Body)
+	require.ErrorIs(t, err, readErr)
+	require.Equal(t, prefix, string(got))
+	require.NoError(t, response.Body.Close())
+	require.True(t, body.closed)
+}
+
+type failedDiagnosticBody struct {
+	io.Reader
+	closed bool
+}
+
+func (b *failedDiagnosticBody) Close() error { b.closed = true; return nil }
+
+type diagnosticReadFailure struct{ err error }
+
+func (r diagnosticReadFailure) Read([]byte) (int, error) { return 0, r.err }
 
 func TestUploadRetryableHttpDoesNotRetryWhenBodyCannotReplay(t *testing.T) {
 	body := `<?xml version="1.0" encoding="UTF-8"?><Error><Code>RequestTimeout</Code><Message>provider message</Message></Error>`

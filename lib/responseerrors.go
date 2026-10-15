@@ -92,7 +92,7 @@ func IsXML(res *http.Response) bool {
 
 func S3XMLError(res *http.Response) error {
 	if IsNonOkStatus(res) && IsXML(res) {
-		defer CloseBody(res)
+		defer closeErrorBody(res)
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			return err
@@ -127,13 +127,31 @@ func CloseBody(res *http.Response) {
 	}
 }
 
+// Error parsers own their response bodies. Keep their remaining diagnostic bytes
+// readable while making cleanup by a subsequent response owner harmless.
+func closeErrorBody(res *http.Response) {
+	if res != nil && res.Body != nil {
+		body := res.Body
+		_ = body.Close()
+		res.Body = closedResponseBody{ReadCloser: body}
+	}
+}
+
+type closedResponseBody struct{ io.ReadCloser }
+
+func (closedResponseBody) Close() error { return nil }
+
+func (b closedResponseBody) WriteTo(w io.Writer) (int64, error) {
+	return io.Copy(w, b.ReadCloser)
+}
+
 func errorFromBodyDefault(res *http.Response) error {
 	var callbacks []func(error) error
 	return errorFromBody(res, callbacks)
 }
 
 func errorFromBody(res *http.Response, callbacks []func(error) error) error {
-	defer CloseBody(res)
+	defer closeErrorBody(res)
 	if IsHTML(res) {
 		return ResponseError{StatusCode: res.StatusCode, err: fmt.Errorf("%s", http.StatusText(res.StatusCode)), Response: res}
 	}

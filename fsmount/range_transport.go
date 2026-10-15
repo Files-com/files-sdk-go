@@ -85,16 +85,13 @@ func captureRangeResponse(result *remoteRangeResponse, knownSize int64, requeste
 	case http.StatusPartialContent:
 		returned, totalSize, err := parseContentRange(response.Header.Get("Content-Range"))
 		if err != nil {
-			lib.CloseBody(response)
 			return err
 		}
 		if returned != requested {
-			lib.CloseBody(response)
 			return fmt.Errorf("%w: returned range [%d, %d), requested [%d, %d)", errMalformedRangeResponse, returned.Start, returned.End, requested.Start, requested.End)
 		}
 		expected := returned.End - returned.Start
 		if response.ContentLength >= 0 && response.ContentLength != expected {
-			lib.CloseBody(response)
 			return fmt.Errorf("%w: content length %d, expected %d", errMalformedRangeResponse, response.ContentLength, expected)
 		}
 		result.Returned = returned
@@ -108,7 +105,6 @@ func captureRangeResponse(result *remoteRangeResponse, knownSize int64, requeste
 			totalSize = knownSize
 		}
 		if totalSize < 0 {
-			lib.CloseBody(response)
 			return fmt.Errorf("%w: complete response did not identify its length", errMalformedRangeResponse)
 		}
 		result.Returned = cache.ByteRange{Start: 0, End: totalSize}
@@ -117,10 +113,8 @@ func captureRangeResponse(result *remoteRangeResponse, knownSize int64, requeste
 		result.Body = newExactLengthReadCloser(response.Body, totalSize)
 		return nil
 	case http.StatusPreconditionFailed:
-		lib.CloseBody(response)
 		return errRangeVersionChanged
 	case http.StatusRequestedRangeNotSatisfiable:
-		lib.CloseBody(response)
 		return fmt.Errorf("%w: %s", errRangeNotSatisfiable, response.Header.Get("Content-Range"))
 	default:
 		if err := files_sdk.APIError()(response); err != nil {
@@ -129,7 +123,6 @@ func captureRangeResponse(result *remoteRangeResponse, knownSize int64, requeste
 		if err := lib.NonOkError(response); err != nil {
 			return err
 		}
-		lib.CloseBody(response)
 		return fmt.Errorf("%w: unexpected HTTP status %d", errMalformedRangeResponse, response.StatusCode)
 	}
 }

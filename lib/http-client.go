@@ -144,14 +144,21 @@ func peekS3XMLClass(resp *http.Response) S3ErrorClassification {
 func readAndRestoreResponseBody(resp *http.Response, limit int64) ([]byte, error) {
 	originalBody := resp.Body
 	peek, err := io.ReadAll(io.LimitReader(resp.Body, limit))
+	var remainder io.Reader = originalBody
 	if err != nil {
-		return nil, err
+		remainder = responseReadError{err: err}
 	}
 	resp.Body = replayReadCloser{
-		Reader: io.MultiReader(bytes.NewReader(peek), originalBody),
+		Reader: io.MultiReader(bytes.NewReader(peek), remainder),
 		Closer: originalBody,
 	}
-	return peek, nil
+	return peek, err
+}
+
+type responseReadError struct{ err error }
+
+func (r responseReadError) Read([]byte) (int, error) {
+	return 0, r.err
 }
 
 type replayReadCloser struct {

@@ -51,17 +51,14 @@ func (c *Client) DownloadToFile(params files_sdk.FileDownloadParams, filePath st
 			err = closeErr
 		}
 	}()
-	// The body is recorded before the caller's options run because one of
-	// them can fail before the copy is reached.
-	recordBody := files_sdk.ResponseBodyOption(func(responseBody io.ReadCloser) error {
-		body = responseBody
-		return nil
-	})
 	copyBody := files_sdk.ResponseBodyOption(func(responseBody io.ReadCloser) error {
 		_, err := io.Copy(out, responseBody)
+		if err == nil {
+			body = responseBody
+		}
 		return err
 	})
-	options := append(append([]files_sdk.RequestResponseOption{recordBody}, opts...), copyBody)
+	options := append(append([]files_sdk.RequestResponseOption(nil), opts...), copyBody)
 	return c.Download(params, options...)
 }
 

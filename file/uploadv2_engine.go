@@ -1263,6 +1263,7 @@ func (e *uploadV2Engine) uploadPart(ctx context.Context, part *uploadV2Part) (fi
 	res, callErr := e.callUploadV2Part(ctx, part, params, canReplay, observer)
 	callDuration := time.Since(callStart)
 	if callErr != nil {
+		lib.CloseBody(res)
 		e.stats.recordHTTPCall(callDuration, int64(part.reader.Len()), callErr)
 		return files_sdk.EtagsParam{}, 0, backPressureSeen, retryAfterSeen, callErr
 	}
@@ -1272,7 +1273,7 @@ func (e *uploadV2Engine) uploadPart(ctx context.Context, part *uploadV2Part) (fi
 		statusCode = res.StatusCode
 		retryAfter = parseUploadV2RetryAfter(res.Header.Get("Retry-After"))
 		if res.Body != nil {
-			defer res.Body.Close()
+			defer lib.CloseBody(res)
 		}
 		if uploadV2BackPressureStatus(statusCode) {
 			backPressureSeen = true

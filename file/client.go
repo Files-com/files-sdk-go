@@ -27,7 +27,12 @@ func (c *Client) Get(Path string, opts ...files_sdk.RequestResponseOption) (file
 	if err != nil {
 		return file, err
 	}
-	data, _, err := files_sdk.Call("GET", c.Config, path, lib.Params{}, opts...)
+	data, response, err := files_sdk.Call("GET", c.Config, path, lib.Params{}, opts...)
+	// Call returns nil data before response processing. Any response accompanying
+	// that transport error is a rejected redirect, already closed by net/http.
+	if data != nil || err == nil {
+		defer lib.CloseBody(response)
+	}
 	if err != nil {
 		return file, err
 	}
@@ -62,6 +67,8 @@ func (c *Client) FileStats(file files_sdk.File, opts ...files_sdk.RequestRespons
 			files_sdk.ResponseOption(func(response *http.Response) error {
 				if response.StatusCode == 422 {
 					size = int64(UntrustedSizeValue)
+					lib.CloseBody(response)
+					response.Body = http.NoBody
 					return nil
 				}
 				if err := lib.ResponseErrors(response, lib.NonOkError); err != nil {
@@ -74,7 +81,9 @@ func (c *Client) FileStats(file files_sdk.File, opts ...files_sdk.RequestRespons
 						file.Mtime = &mtime
 					}
 				}
-				return response.Body.Close()
+				err := response.Body.Close()
+				response.Body = http.NoBody
+				return err
 			}),
 		)...,
 	)
@@ -101,6 +110,7 @@ func (c *Client) DownloadRequestStatus(fileDownloadUrl string, downloadRequestId
 	c.SetHeadersForRequest(request)
 
 	resp, err := files_sdk.WrapRequestOptions(c.Config, request, opts...)
+	defer lib.CloseBody(resp)
 	if err != nil {
 		return re, err
 	}

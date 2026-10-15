@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -261,6 +262,29 @@ func TestProviderRemoteBackendDownloadToFile(t *testing.T) {
 		t.Fatalf("downloaded content = %q, want %q", string(data), content)
 	}
 }
+
+func TestProviderRemoteBackendReleasesRejectedDownload(t *testing.T) {
+	body := &providerDownloadBody{Reader: strings.NewReader("provider content")}
+	provider := &testProviderBackend{readFunc: func(context.Context, string) (io.ReadCloser, int64, error) {
+		return body, 16, nil
+	}}
+	backend := &providerRemoteBackend{provider: provider}
+	optionErr := errors.New("download response rejected")
+	_, err := backend.download(files_sdk.FileDownloadParams{Path: "file"}, files_sdk.ResponseOption(func(*http.Response) error { return optionErr }))
+	if !errors.Is(err, optionErr) {
+		t.Fatalf("download error = %v, want %v", err, optionErr)
+	}
+	if !body.closed {
+		t.Fatal("rejected provider reader remained open")
+	}
+}
+
+type providerDownloadBody struct {
+	io.Reader
+	closed bool
+}
+
+func (b *providerDownloadBody) Close() error { b.closed = true; return nil }
 
 func TestProviderRemoteBackendMapsNotFoundErrors(t *testing.T) {
 	backend := &providerRemoteBackend{

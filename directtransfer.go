@@ -181,7 +181,6 @@ func WrapDirectTransferOptions(config Config, info DirectConnectionInfo, request
 
 	processedResponse, err := BuildResponse(response, opts...)
 	if err != nil {
-		lib.CloseBody(response)
 		return response, errors.Join(ErrDirectTransferResponseStarted, err)
 	}
 	return processedResponse, nil

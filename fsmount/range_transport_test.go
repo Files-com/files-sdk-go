@@ -140,16 +140,19 @@ func TestRemoteFsRangeSourceCompleteDownloadOmitsRangeHeader(t *testing.T) {
 
 func TestSDKRemoteBackendDownloadRangeRejectsInvalidResponses(t *testing.T) {
 	tests := []struct {
-		name         string
-		status       int
-		contentRange string
-		contentLen   string
-		wantErr      error
+		name          string
+		status        int
+		contentRange  string
+		contentLen    string
+		wantErr       error
+		unknownLength bool
 	}{
 		{name: "missing content range", status: http.StatusPartialContent, contentLen: "10", wantErr: errMalformedRangeResponse},
 		{name: "wrong returned range", status: http.StatusPartialContent, contentRange: "bytes 11-20/100", contentLen: "10", wantErr: errMalformedRangeResponse},
 		{name: "wrong content length", status: http.StatusPartialContent, contentRange: "bytes 10-19/100", contentLen: "9", wantErr: errMalformedRangeResponse},
 		{name: "unexpected success status", status: http.StatusNoContent, wantErr: errMalformedRangeResponse},
+		{name: "complete response without length", status: http.StatusOK, unknownLength: true, wantErr: errMalformedRangeResponse},
+		{name: "precondition failed", status: http.StatusPreconditionFailed, wantErr: errRangeVersionChanged},
 	}
 
 	for _, test := range tests {
@@ -162,17 +165,27 @@ func TestSDKRemoteBackendDownloadRangeRejectsInvalidResponses(t *testing.T) {
 					response.Header().Set("Content-Length", test.contentLen)
 				}
 				response.WriteHeader(test.status)
+				if test.unknownLength {
+					response.(http.Flusher).Flush()
+				}
 			}))
 			defer server.Close()
 
-			backend := newRangeTestSDKBackend(files_sdk.Config{DisableDirectTransfers: true})
+			transport := &rangeCloseTransport{RoundTripper: http.DefaultTransport.(*http.Transport).Clone()}
+			t.Cleanup(transport.RoundTripper.(*http.Transport).CloseIdleConnections)
+			backend := newRangeTestSDKBackend(files_sdk.Config{DisableDirectTransfers: true}.Init().SetCustomClient(&http.Client{Transport: transport}))
+			knownSize := int64(100)
+			if test.unknownLength {
+				knownSize = -1
+			}
 			_, err := backend.downloadRange(
-				files_sdk.FileDownloadParams{File: files_sdk.File{Path: "remote.bin", Size: 100, DownloadUri: server.URL}},
+				files_sdk.FileDownloadParams{File: files_sdk.File{Path: "remote.bin", Size: knownSize, DownloadUri: server.URL}},
 				cache.ByteRange{Start: 10, End: 20},
 			)
 			if !errors.Is(err, test.wantErr) {
 				t.Fatalf("downloadRange error = %v, want %v", err, test.wantErr)
 			}
+			transport.assertClosedOnce(t)
 		})
 	}
 }
@@ -298,7 +311,9 @@ func TestSDKRemoteBackendDownloadRangeRefreshesMetadataAfter416(t *testing.T) {
 	}))
 	defer server.Close()
 
-	backend := newRangeTestSDKBackend(files_sdk.Config{DisableDirectTransfers: true, EndpointOverride: server.URL})
+	transport := &rangeCloseTransport{RoundTripper: http.DefaultTransport.(*http.Transport).Clone()}
+	t.Cleanup(transport.RoundTripper.(*http.Transport).CloseIdleConnections)
+	backend := newRangeTestSDKBackend(files_sdk.Config{DisableDirectTransfers: true, EndpointOverride: server.URL}.Init().SetCustomClient(&http.Client{Transport: transport}))
 	result, err := backend.downloadRange(
 		files_sdk.FileDownloadParams{File: files_sdk.File{Path: "remote.bin", Size: 100, DownloadUri: server.URL + "/stale"}},
 		cache.ByteRange{Start: 5, End: 10},
@@ -311,6 +326,7 @@ func TestSDKRemoteBackendDownloadRangeRefreshesMetadataAfter416(t *testing.T) {
 	if readErr != nil || string(data) != "fresh" {
 		t.Fatalf("refreshed body = %q, %v; want fresh, nil", data, readErr)
 	}
+	transport.assertClosedOnce(t)
 	if staleCalls.Load() != 1 || metadataCalls.Load() != 1 || freshCalls.Load() != 1 {
 		t.Fatalf("calls = stale %d metadata %d fresh %d; want 1 each", staleCalls.Load(), metadataCalls.Load(), freshCalls.Load())
 	}
@@ -389,3 +405,37 @@ func newRangeTestSDKBackend(config files_sdk.Config) *sdkRemoteBackend {
 	config = config.Init()
 	return &sdkRemoteBackend{fileClient: &file.Client{Config: config}}
 }
+
+// Observe the real HTTP bodies while leaving request and response processing to the SDK.
+type rangeCloseTransport struct {
+	http.RoundTripper
+	bodies []*rangeCloseBody
+}
+
+func (r *rangeCloseTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	response, err := r.RoundTripper.RoundTrip(req)
+	if err == nil {
+		body := &rangeCloseBody{ReadCloser: response.Body}
+		response.Body = body
+		r.bodies = append(r.bodies, body)
+	}
+	return response, err
+}
+func (r *rangeCloseTransport) assertClosedOnce(t *testing.T) {
+	t.Helper()
+	if len(r.bodies) == 0 {
+		t.Fatal("no response reached the range callback")
+	}
+	for _, body := range r.bodies {
+		if got := body.closes.Load(); got != 1 {
+			t.Errorf("raw response close calls = %d, want1", got)
+		}
+	}
+}
+
+type rangeCloseBody struct {
+	io.ReadCloser
+	closes atomic.Int32
+}
+
+func (b *rangeCloseBody) Close() error { b.closes.Add(1); return b.ReadCloser.Close() }

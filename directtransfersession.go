@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"sync/atomic"
 	"time"
-
-	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
 const (
@@ -126,7 +124,6 @@ func (s *DirectTransferSession) Send(config Config, info DirectConnectionInfo, r
 			response.Body = &directTransferSessionBody{ReadCloser: response.Body, session: s, ctx: ctx}
 			processedResponse, err := BuildResponse(response, opts...)
 			if err != nil {
-				lib.CloseBody(response)
 				return nil, errors.Join(ErrDirectTransferResponseStarted, err)
 			}
 			return processedResponse, nil

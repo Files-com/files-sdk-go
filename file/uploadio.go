@@ -679,12 +679,14 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 	callStart := time.Now()
 	res, err := u.callUploadPart(ctx, part, params, canReplay)
 	if err != nil {
+		lib.CloseBody(res)
 		u.uploadV1Stats.recordHTTPCall(time.Since(callStart), int64(part.ProxyReader.Len()), err)
 		return files_sdk.EtagsParam{}, err
 	}
-	if err := lib.ResponseErrors(res, files_sdk.APIError(), lib.S3XMLError, lib.NonOkError); err != nil {
-		u.uploadV1Stats.recordHTTPCall(time.Since(callStart), int64(part.ProxyReader.Len()), err)
-		return files_sdk.EtagsParam{}, err
+	if responseErr := lib.ResponseErrors(res, files_sdk.APIError(), lib.S3XMLError, lib.NonOkError); responseErr != nil {
+		lib.CloseBody(res)
+		u.uploadV1Stats.recordHTTPCall(time.Since(callStart), int64(part.ProxyReader.Len()), responseErr)
+		return files_sdk.EtagsParam{}, responseErr
 	}
 	u.uploadV1Stats.recordHTTPCall(time.Since(callStart), int64(part.ProxyReader.Len()), nil)
 	etag := strings.Trim(res.Header.Get("Etag"), "\"")

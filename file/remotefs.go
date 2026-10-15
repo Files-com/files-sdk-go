@@ -476,6 +476,8 @@ func (f *File) ReadAt(p []byte, off int64) (n int, err error) {
 			if int64(len(p)) >= response.ContentLength && int64(n) != response.ContentLength {
 				return &goFs.PathError{Path: f.File.Path, Err: fmt.Errorf("content-length did not match body"), Op: "ReadAt"}
 			}
+			lib.CloseBody(response)
+			response.Body = http.NoBody
 			return nil
 		}),
 	)

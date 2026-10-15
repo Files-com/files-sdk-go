@@ -11,10 +11,12 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync/atomic"
 	"testing"
+	"testing/iotest"
 
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/hashicorp/go-retryablehttp"
@@ -501,4 +503,248 @@ func TestSetHeadersOmitsWorkspaceIdWhenUnset(t *testing.T) {
 	config.SetHeaders(&headers)
 
 	assert.Empty(t, headers.Get(workspaceIdHeader))
+}
+
+func TestCallKeepsSuccessfulResponsesAndReleasesDiscardedErrorResponses(t *testing.T) {
+	for _, attachments := range []bool{false, true} {
+		for _, outcome := range []string{"success", "read failure", "policy cancellation", "redirect rejected"} {
+			t.Run(fmt.Sprintf("attachments=%v/%s", attachments, outcome), func(t *testing.T) {
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				readErr := errors.New("response read interrupted")
+				var source io.Reader = strings.NewReader(`{}`)
+				if outcome == "read failure" {
+					source = io.MultiReader(source, iotest.ErrReader(readErr))
+				}
+				body := &optionResponseBody{Reader: source}
+				var sentResponse *http.Response
+				config := Config{EndpointOverride: "https://files.test"}.Init().SetCustomClient(&http.Client{
+					Transport: responseOptionTransport(func(req *http.Request) (*http.Response, error) {
+						if req.Body != nil {
+							_, _ = io.Copy(io.Discard, req.Body)
+							_ = req.Body.Close()
+						}
+						status := http.StatusOK
+						header := http.Header{"Content-Type": []string{"application/json"}}
+						if outcome == "policy cancellation" {
+							status = http.StatusInternalServerError
+							cancel()
+						}
+						if outcome == "redirect rejected" {
+							status = http.StatusTemporaryRedirect
+							header.Set("Location", "https://files.test/redirected")
+						}
+						sentResponse = &http.Response{StatusCode: status, Body: body, ContentLength: 2, Header: header, Request: req}
+						return sentResponse, nil
+					}),
+					CheckRedirect: func(*http.Request, []*http.Request) error { return errors.New("stopped after 10 redirects") },
+				})
+				config.RetryMax = 0
+				params := lib.Params{}
+				if attachments {
+					params.Params = map[string]interface{}{"avatar_file": lib.NewJSONAttachment(strings.NewReader("a"), 1, "avatar.png", "image/png")}
+				}
+				data, response, err := Call(http.MethodPost, config, "/ownership", params, WithContext(ctx))
+				switch outcome {
+				case "success", "read failure":
+					if outcome == "success" {
+						require.NoError(t, err)
+					} else {
+						require.ErrorIs(t, err, readErr)
+					}
+					require.Same(t, sentResponse, response)
+					require.NotNil(t, data)
+					assert.Equal(t, `{}`, string(*data))
+					assert.Zero(t, body.closes)
+					require.NoError(t, response.Body.Close())
+				case "policy cancellation":
+					require.ErrorIs(t, err, context.Canceled)
+					require.Nil(t, response)
+					require.Nil(t, data)
+				default:
+					require.ErrorContains(t, err, "stopped after 10 redirects")
+					require.Nil(t, response)
+					require.Nil(t, data)
+				}
+				assert.Equal(t, 1, body.closes)
+			})
+		}
+	}
+}
+
+func TestCallRawLeavesFinalResponseForItsCaller(t *testing.T) {
+	for _, canceled := range []bool{false, true} {
+		t.Run(map[bool]string{false: "retry exhaustion without transport error", true: "policy cancellation"}[canceled], func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			body := &optionResponseBody{Reader: strings.NewReader("response")}
+			config := Config{}.Init().SetCustomClient(&http.Client{Transport: responseOptionTransport(func(req *http.Request) (*http.Response, error) {
+				if canceled {
+					cancel()
+				}
+				return &http.Response{StatusCode: http.StatusInternalServerError, Header: http.Header{}, Body: body, Request: req}, nil
+			})})
+			config.RetryMax = 0
+			response, err := CallRaw(&CallParams{Method: http.MethodGet, Config: config, Uri: "https://upload.test/file", Context: ctx})
+			if canceled {
+				require.ErrorIs(t, err, context.Canceled)
+			} else {
+				require.NoError(t, err)
+			}
+			require.NotNil(t, response)
+			assert.Zero(t, body.closes)
+			require.NoError(t, response.Body.Close())
+			assert.Equal(t, 1, body.closes)
+		})
+	}
+}
+
+func TestCustomErrorHandlersKeepBodyOwnershipAndReplacementDiagnostics(t *testing.T) {
+	for _, sender := range []string{"standard", "attachments", "raw"} {
+		for _, owner := range []string{"caller", "handler", "replacement"} {
+			t.Run(sender+"/"+owner, func(t *testing.T) {
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				handlerErr := errors.New("custom handler rejected response")
+				closeErr := errors.New("original close error")
+				original := &optionResponseBody{Reader: strings.NewReader("original"), closeErr: closeErr}
+				replacementBody := &optionResponseBody{Reader: strings.NewReader("replacement diagnostics")}
+				replacement := &http.Response{StatusCode: http.StatusBadGateway, Header: http.Header{"X-Diagnostic": []string{"retained"}}, Body: replacementBody}
+				config := Config{EndpointOverride: "https://files.test"}.Init().SetCustomClient(&http.Client{Transport: responseOptionTransport(func(req *http.Request) (*http.Response, error) {
+					if req.Body != nil {
+						_, _ = io.Copy(io.Discard, req.Body)
+						_ = req.Body.Close()
+					}
+					cancel()
+					return &http.Response{StatusCode: http.StatusInternalServerError, Body: original, Header: http.Header{}, Request: req}, nil
+				})})
+				config.RetryMax = 0
+				config.Client.ErrorHandler = func(response *http.Response, err error, _ int) (*http.Response, error) {
+					require.ErrorIs(t, err, context.Canceled)
+					if owner != "caller" {
+						require.ErrorIs(t, response.Body.Close(), closeErr)
+					}
+					if owner == "replacement" {
+						require.NoError(t, replacementBody.Close())
+						return replacement, handlerErr
+					}
+					return response, handlerErr
+				}
+				var response *http.Response
+				var err error
+				if sender == "raw" {
+					response, err = CallRaw(&CallParams{Method: http.MethodGet, Config: config, Uri: "https://files.test/file", Context: ctx})
+					require.Same(t, handlerErr, err)
+					require.NotNil(t, response)
+					if owner == "replacement" {
+						require.Same(t, replacement, response)
+						require.Same(t, replacementBody, response.Body)
+						assert.Equal(t, "retained", response.Header.Get("X-Diagnostic"))
+						data, readErr := io.ReadAll(response.Body)
+						require.NoError(t, readErr)
+						assert.Equal(t, "replacement diagnostics", string(data))
+					} else if owner == "caller" {
+						assert.Zero(t, original.closes)
+						require.ErrorIs(t, response.Body.Close(), closeErr)
+					} else {
+						require.NoError(t, response.Body.Close())
+					}
+				} else {
+					params := lib.Params{}
+					if sender == "attachments" {
+						params.Params = map[string]interface{}{"avatar_file": lib.NewJSONAttachment(strings.NewReader("a"), 1, "avatar.png", "image/png")}
+					}
+					_, response, err = Call(http.MethodPost, config, "/ownership", params, WithContext(ctx))
+					require.ErrorIs(t, err, handlerErr)
+					require.Nil(t, response)
+				}
+				assert.Equal(t, 1, original.closes)
+				if owner == "replacement" {
+					assert.Equal(t, 1, replacementBody.closes)
+				}
+			})
+		}
+	}
+}
+
+func TestCallRawKeepsAlreadyDrainedResponseWhenRetryPreparationFails(t *testing.T) {
+	for _, failure := range []string{"next body", "prepare retry"} {
+		t.Run(failure, func(t *testing.T) {
+			retryErr := errors.New("cannot prepare another upload attempt")
+			body := &optionResponseBody{Reader: strings.NewReader("failed response")}
+			requests, handlerCalls := 0, 0
+			var sentResponse *http.Response
+			config := Config{}.Init().SetCustomClient(&http.Client{Transport: responseOptionTransport(func(req *http.Request) (*http.Response, error) {
+				if req.Body != nil {
+					_, _ = io.Copy(io.Discard, req.Body)
+					_ = req.Body.Close()
+				}
+				requests++
+				sentResponse = &http.Response{StatusCode: http.StatusInternalServerError, Header: http.Header{}, Body: body, Request: req}
+				return sentResponse, nil
+			})})
+			config.RetryMax = 1
+			config.Client.ErrorHandler = func(response *http.Response, err error, attempts int) (*http.Response, error) {
+				handlerCalls++
+				return retryablehttp.PassthroughErrorHandler(response, err, attempts)
+			}
+			if failure == "prepare retry" {
+				config.Client.PrepareRetry = func(*http.Request) error { return retryErr }
+			}
+			response, err := CallRaw(&CallParams{Method: http.MethodPut, Config: config, Uri: "https://upload.test/file", Params: lib.Params{}, RetryableBody: retryablehttp.ReaderFunc(func() (io.Reader, error) {
+				if failure == "next body" && requests > 0 {
+					return nil, retryErr
+				}
+				return strings.NewReader("a"), nil
+			})})
+			require.ErrorIs(t, err, retryErr)
+			require.Same(t, sentResponse, response)
+			require.Equal(t, 1, requests)
+			assert.Equal(t, 1, body.closes, "the retry dependency already closed the previous response")
+			if failure == "next body" {
+				assert.Zero(t, handlerCalls)
+			} else {
+				assert.Equal(t, 1, handlerCalls)
+			}
+			require.NoError(t, response.Body.Close())
+			assert.Equal(t, 1, body.closes)
+		})
+	}
+}
+
+func TestPolicyURLErrorDoesNotMarkAnOpenResponseAsClosed(t *testing.T) {
+	for _, sender := range []string{"standard", "attachments", "raw"} {
+		t.Run(sender, func(t *testing.T) {
+			policyCause := errors.New("policy rejected response")
+			body := &optionResponseBody{Reader: strings.NewReader("response")}
+			config := Config{EndpointOverride: "https://files.test"}.Init().SetCustomClient(&http.Client{Transport: responseOptionTransport(func(req *http.Request) (*http.Response, error) {
+				if req.Body != nil {
+					_, _ = io.Copy(io.Discard, req.Body)
+					_ = req.Body.Close()
+				}
+				return &http.Response{StatusCode: http.StatusOK, Header: http.Header{}, Body: body, Request: req}, nil
+			})})
+			config.Client.CheckRetry = func(_ context.Context, _ *http.Response, doErr error) (bool, error) {
+				require.NoError(t, doErr)
+				return false, &url.Error{Op: "policy", URL: "https://files.test/file", Err: policyCause}
+			}
+			var response *http.Response
+			var err error
+			if sender == "raw" {
+				response, err = CallRaw(&CallParams{Method: http.MethodGet, Config: config, Uri: "https://files.test/file"})
+				require.NotNil(t, response)
+				assert.Zero(t, body.closes)
+				require.NoError(t, response.Body.Close())
+			} else {
+				params := lib.Params{}
+				if sender == "attachments" {
+					params.Params = map[string]interface{}{"avatar_file": lib.NewJSONAttachment(strings.NewReader("a"), 1, "avatar.png", "image/png")}
+				}
+				_, response, err = Call(http.MethodPost, config, "/ownership", params)
+				require.Nil(t, response)
+			}
+			require.ErrorIs(t, err, policyCause)
+			assert.Equal(t, 1, body.closes)
+		})
+	}
 }

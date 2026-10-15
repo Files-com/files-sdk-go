@@ -79,6 +79,11 @@ func TestClient_DownloadToFileClosesDestinationAndResponseBody(t *testing.T) {
 			require.ErrorIs(t, err, tt.wantErr)
 			assert.Empty(t, openDescriptorsFor(t, destination), "destination is still open")
 			assert.Zero(t, transport.unclosedBodies(), "response body is still open")
+			transport.mu.Lock()
+			for _, body := range transport.bodies {
+				assert.Equal(t, int32(1), body.closes.Load(), "response was closed more than once")
+			}
+			transport.mu.Unlock()
 			contents, err := os.ReadFile(destination)
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantBytes, contents)
@@ -144,9 +149,11 @@ func (t *closeRecordingTransport) unclosedBodies() (unclosed int) {
 type closeRecordingBody struct {
 	io.ReadCloser
 	closed atomic.Bool
+	closes atomic.Int32
 }
 
 func (b *closeRecordingBody) Close() error {
 	b.closed.Store(true)
+	b.closes.Add(1)
 	return b.ReadCloser.Close()
 }

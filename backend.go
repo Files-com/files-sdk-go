@@ -258,6 +258,7 @@ func CallRaw(params *CallParams) (response *http.Response, err error) {
 		ErrorHandler:    client.ErrorHandler,
 		PrepareRetry:    client.PrepareRetry,
 	}
+	guardRetryableResponses(client, false)
 	return client.Do(retryRequest)
 }
 

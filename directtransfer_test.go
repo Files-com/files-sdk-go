@@ -495,37 +495,44 @@ func TestWithDirectTransferClientCacheDoesNotReplaceOuterTransferCache(t *testin
 	require.Nil(t, outerCache.httpClient)
 }
 
-func TestWrapDirectTransferOptionsClosesBodyAfterResponseProcessingStarts(t *testing.T) {
-	info := directTransferTestInfo("/downloads")
-	ctx, closeClients := WithDirectTransferClientCache(context.Background())
-	defer closeClients()
-	cache := ctx.Value(directTransferClientCacheContextKey{}).(*directTransferClientCache)
-	body := &directTransferTrackingBody{}
-	cache.key = directTransferClientCacheKey{
-		serverName: info.ServerName,
-		caPEM:      info.CaPem,
-		protocol:   "tcp",
-		candidates: "8.8.8.8:4001",
+func TestDirectTransferOptionsCloseBodyOnceAfterResponseProcessingStarts(t *testing.T) {
+	for _, useSession := range []bool{false, true} {
+		t.Run(map[bool]string{false: "wrapper", true: "session"}[useSession], func(t *testing.T) {
+			info := directTransferTestInfo("/downloads")
+			ctx, closeClients := WithDirectTransferClientCache(context.Background())
+			defer closeClients()
+			cache := ctx.Value(directTransferClientCacheContextKey{}).(*directTransferClientCache)
+			body := &directTransferTrackingBody{}
+			cache.key = directTransferClientCacheKey{
+				serverName: info.ServerName,
+				caPEM:      info.CaPem,
+				protocol:   "tcp",
+				candidates: "8.8.8.8:4001",
+			}
+			cache.httpClient = &http.Client{Transport: directTransferRoundTripFunc(func(*http.Request) (*http.Response, error) {
+				return &http.Response{StatusCode: http.StatusOK, Body: body, Header: http.Header{}}, nil
+			})}
+			request, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://proxy.example/downloads", nil)
+			require.NoError(t, err)
+
+			responseOption := ResponseBodyOption(func(responseBody io.ReadCloser) error {
+				_, readErr := responseBody.Read(make([]byte, 16))
+				return readErr
+			})
+			if useSession {
+				session := NewDirectTransferSession(DirectTransferSessionOptions{})
+				defer session.Close()
+				_, err = session.Send(Config{Environment: Development}, info, request, responseOption)
+			} else {
+				_, err = WrapDirectTransferOptions(Config{Environment: Development}, info, request, responseOption)
+			}
+
+			require.ErrorIs(t, err, ErrDirectTransferResponseStarted)
+			require.ErrorIs(t, err, io.ErrUnexpectedEOF)
+			require.True(t, body.closed.Load())
+			require.Equal(t, int32(1), body.closes.Load())
+		})
 	}
-	cache.httpClient = &http.Client{Transport: directTransferRoundTripFunc(func(*http.Request) (*http.Response, error) {
-		return &http.Response{StatusCode: http.StatusOK, Body: body, Header: http.Header{}}, nil
-	})}
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://proxy.example/downloads", nil)
-	require.NoError(t, err)
-
-	_, err = WrapDirectTransferOptions(
-		Config{Environment: Development},
-		info,
-		request,
-		ResponseBodyOption(func(responseBody io.ReadCloser) error {
-			_, readErr := responseBody.Read(make([]byte, 16))
-			return readErr
-		}),
-	)
-
-	require.ErrorIs(t, err, ErrDirectTransferResponseStarted)
-	require.ErrorIs(t, err, io.ErrUnexpectedEOF)
-	require.True(t, body.closed.Load())
 }
 
 type directTransferRoundTripFunc func(*http.Request) (*http.Response, error)
@@ -537,6 +544,7 @@ func (f directTransferRoundTripFunc) RoundTrip(request *http.Request) (*http.Res
 type directTransferTrackingBody struct {
 	read   atomic.Bool
 	closed atomic.Bool
+	closes atomic.Int32
 }
 
 func (b *directTransferTrackingBody) Read(p []byte) (int, error) {
@@ -548,6 +556,7 @@ func (b *directTransferTrackingBody) Read(p []byte) (int, error) {
 
 func (b *directTransferTrackingBody) Close() error {
 	b.closed.Store(true)
+	b.closes.Add(1)
 	return nil
 }
 
