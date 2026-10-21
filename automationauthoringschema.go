@@ -8,10 +8,14 @@ import (
 
 // AutomationAuthoringSchema is a Files.com API resource.
 type AutomationAuthoringSchema struct {
-	DefinitionSchema interface{}              `json:"definition_schema,omitempty" path:"definition_schema,omitempty" url:"definition_schema,omitempty"`
-	ErrorFamilies    []map[string]interface{} `json:"error_families,omitempty" path:"error_families,omitempty" url:"error_families,omitempty"`
-	Nodes            []map[string]interface{} `json:"nodes,omitempty" path:"nodes,omitempty" url:"nodes,omitempty"`
-	SchemaUrl        string                   `json:"schema_url,omitempty" path:"schema_url,omitempty" url:"schema_url,omitempty"`
+	// JSON Schema for active Automation v2 graph definitions.
+	DefinitionSchema interface{} `json:"definition_schema,omitempty" path:"definition_schema,omitempty" url:"definition_schema,omitempty"`
+	// Typed error families accepted by Automation v2 on_error rules.
+	ErrorFamilies []map[string]interface{} `json:"error_families,omitempty" path:"error_families,omitempty" url:"error_families,omitempty"`
+	// Active Automation v2 node authoring metadata.
+	Nodes []map[string]interface{} `json:"nodes,omitempty" path:"nodes,omitempty" url:"nodes,omitempty"`
+	// Stable public URL for the Automation v2 graph definition JSON Schema.
+	SchemaUrl string `json:"schema_url,omitempty" path:"schema_url,omitempty" url:"schema_url,omitempty"`
 }
 
 // Identifier no path or id

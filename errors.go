@@ -8,7 +8,9 @@ import (
 
 // Errors is a Files.com API resource.
 type Errors struct {
-	Fields   []string `json:"fields,omitempty" path:"fields,omitempty" url:"fields,omitempty"`
+	// A list of fields where errors occur.
+	Fields []string `json:"fields,omitempty" path:"fields,omitempty" url:"fields,omitempty"`
+	// A list of error messages.
 	Messages []string `json:"messages,omitempty" path:"messages,omitempty" url:"messages,omitempty"`
 }
 

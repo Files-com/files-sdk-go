@@ -8,29 +8,52 @@ import (
 
 // As2Partner is a Files.com API resource.
 type As2Partner struct {
-	Id                         int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	WorkspaceId                int64       `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
-	As2StationId               int64       `json:"as2_station_id,omitempty" path:"as2_station_id,omitempty" url:"as2_station_id,omitempty"`
-	Name                       string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
-	Uri                        string      `json:"uri,omitempty" path:"uri,omitempty" url:"uri,omitempty"`
-	ServerCertificate          string      `json:"server_certificate,omitempty" path:"server_certificate,omitempty" url:"server_certificate,omitempty"`
-	HttpAuthUsername           string      `json:"http_auth_username,omitempty" path:"http_auth_username,omitempty" url:"http_auth_username,omitempty"`
-	AdditionalHttpHeaders      interface{} `json:"additional_http_headers,omitempty" path:"additional_http_headers,omitempty" url:"additional_http_headers,omitempty"`
-	DefaultMimeType            string      `json:"default_mime_type,omitempty" path:"default_mime_type,omitempty" url:"default_mime_type,omitempty"`
-	MdnValidationLevel         string      `json:"mdn_validation_level,omitempty" path:"mdn_validation_level,omitempty" url:"mdn_validation_level,omitempty"`
-	SignatureValidationLevel   string      `json:"signature_validation_level,omitempty" path:"signature_validation_level,omitempty" url:"signature_validation_level,omitempty"`
-	EnableDedicatedIps         *bool       `json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips,omitempty" url:"enable_dedicated_ips,omitempty"`
-	HexPublicCertificateSerial string      `json:"hex_public_certificate_serial,omitempty" path:"hex_public_certificate_serial,omitempty" url:"hex_public_certificate_serial,omitempty"`
-	PublicCertificate          string      `json:"public_certificate,omitempty" path:"public_certificate,omitempty" url:"public_certificate,omitempty"`
-	PublicCertificateMd5       string      `json:"public_certificate_md5,omitempty" path:"public_certificate_md5,omitempty" url:"public_certificate_md5,omitempty"`
-	PublicCertificateSubject   string      `json:"public_certificate_subject,omitempty" path:"public_certificate_subject,omitempty" url:"public_certificate_subject,omitempty"`
-	PublicCertificateIssuer    string      `json:"public_certificate_issuer,omitempty" path:"public_certificate_issuer,omitempty" url:"public_certificate_issuer,omitempty"`
-	PublicCertificateSerial    string      `json:"public_certificate_serial,omitempty" path:"public_certificate_serial,omitempty" url:"public_certificate_serial,omitempty"`
-	PublicCertificateNotBefore string      `json:"public_certificate_not_before,omitempty" path:"public_certificate_not_before,omitempty" url:"public_certificate_not_before,omitempty"`
-	PublicCertificateNotAfter  string      `json:"public_certificate_not_after,omitempty" path:"public_certificate_not_after,omitempty" url:"public_certificate_not_after,omitempty"`
-	HttpAuthPassword           string      `json:"http_auth_password,omitempty" path:"http_auth_password,omitempty" url:"http_auth_password,omitempty"`
-	Pkcs12                     string      `json:"pkcs12,omitempty" path:"pkcs12,omitempty" url:"pkcs12,omitempty"`
-	Pkcs12Password             string      `json:"pkcs12_password,omitempty" path:"pkcs12_password,omitempty" url:"pkcs12_password,omitempty"`
+	// ID of the AS2 Partner.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// ID of the Workspace associated with this AS2 Partner.
+	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	// ID of the AS2 Station associated with this partner.
+	As2StationId int64 `json:"as2_station_id,omitempty" path:"as2_station_id,omitempty" url:"as2_station_id,omitempty"`
+	// The partner's formal AS2 name.
+	Name string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	// Public URI where we will send the AS2 messages (via HTTP/HTTPS).
+	Uri string `json:"uri,omitempty" path:"uri,omitempty" url:"uri,omitempty"`
+	// Should we require that the remote HTTP server have a valid SSL Certificate for HTTPS? (This only applies to Outgoing AS2 message from Files.com to a Partner.).
+	ServerCertificate string `json:"server_certificate,omitempty" path:"server_certificate,omitempty" url:"server_certificate,omitempty"`
+	// Username to send to server for HTTP Authentication.
+	HttpAuthUsername string `json:"http_auth_username,omitempty" path:"http_auth_username,omitempty" url:"http_auth_username,omitempty"`
+	// Additional HTTP Headers for outgoing message sent to this partner.
+	AdditionalHttpHeaders interface{} `json:"additional_http_headers,omitempty" path:"additional_http_headers,omitempty" url:"additional_http_headers,omitempty"`
+	// Default mime type of the file attached to the encrypted message.
+	DefaultMimeType string `json:"default_mime_type,omitempty" path:"default_mime_type,omitempty" url:"default_mime_type,omitempty"`
+	// How should Files.com evaluate message transfer success based on a partner's MDN response? This setting does not affect MDN storage; all MDNs received from a partner are always stored. `none`: MDN is stored for informational purposes only, a successful HTTPS transfer is a successful AS2 transfer. `weak`: Inspect the MDN for MIC and Disposition only. `normal`: `weak` plus validate MDN signature matches body, `strict`: `normal` but do not allow signatures from self-signed or incorrectly purposed certificates. `auto`: Automatically set the correct value for this setting based on next mdn received.
+	MdnValidationLevel string `json:"mdn_validation_level,omitempty" path:"mdn_validation_level,omitempty" url:"mdn_validation_level,omitempty"`
+	// Should Files.com require signatures on incoming AS2 messages? `normal`: require that incoming messages are signed with a valid matching signature. `none`: Unsigned incoming messages are allowed. `auto`: A one-time starting state. The next message received is always accepted and switches this to `normal` if it carries a valid signature, or `none` if it does not.
+	SignatureValidationLevel string `json:"signature_validation_level,omitempty" path:"signature_validation_level,omitempty" url:"signature_validation_level,omitempty"`
+	// If `true`, we will use your site's dedicated IPs for all outbound connections to this AS2 Partner.
+	EnableDedicatedIps *bool `json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips,omitempty" url:"enable_dedicated_ips,omitempty"`
+	// Serial of public certificate used for message security in hex format.
+	HexPublicCertificateSerial string `json:"hex_public_certificate_serial,omitempty" path:"hex_public_certificate_serial,omitempty" url:"hex_public_certificate_serial,omitempty"`
+	// Public certificate used for message security.
+	PublicCertificate string `json:"public_certificate,omitempty" path:"public_certificate,omitempty" url:"public_certificate,omitempty"`
+	// MD5 hash of public certificate used for message security.
+	PublicCertificateMd5 string `json:"public_certificate_md5,omitempty" path:"public_certificate_md5,omitempty" url:"public_certificate_md5,omitempty"`
+	// Subject of public certificate used for message security.
+	PublicCertificateSubject string `json:"public_certificate_subject,omitempty" path:"public_certificate_subject,omitempty" url:"public_certificate_subject,omitempty"`
+	// Issuer of public certificate used for message security.
+	PublicCertificateIssuer string `json:"public_certificate_issuer,omitempty" path:"public_certificate_issuer,omitempty" url:"public_certificate_issuer,omitempty"`
+	// Serial of public certificate used for message security.
+	PublicCertificateSerial string `json:"public_certificate_serial,omitempty" path:"public_certificate_serial,omitempty" url:"public_certificate_serial,omitempty"`
+	// Not before value of public certificate used for message security.
+	PublicCertificateNotBefore string `json:"public_certificate_not_before,omitempty" path:"public_certificate_not_before,omitempty" url:"public_certificate_not_before,omitempty"`
+	// Not after value of public certificate used for message security.
+	PublicCertificateNotAfter string `json:"public_certificate_not_after,omitempty" path:"public_certificate_not_after,omitempty" url:"public_certificate_not_after,omitempty"`
+	// Password to send to server for HTTP Authentication.
+	HttpAuthPassword string `json:"http_auth_password,omitempty" path:"http_auth_password,omitempty" url:"http_auth_password,omitempty"`
+	// Base64-encoded PKCS#12 (.pfx or .p12) file containing the partner's public certificate. Provide this instead of public_certificate. Any private key in the file is discarded. A public-only file must contain exactly one certificate.
+	Pkcs12 string `json:"pkcs12,omitempty" path:"pkcs12,omitempty" url:"pkcs12,omitempty"`
+	// Password for pkcs12. The file and password are used only for import; the extracted public certificate is stored as PEM.
+	Pkcs12Password string `json:"pkcs12_password,omitempty" path:"pkcs12_password,omitempty" url:"pkcs12_password,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -98,54 +121,87 @@ func (u As2PartnerServerCertificateEnum) Enum() map[string]As2PartnerServerCerti
 
 // As2PartnerListParams contains the request parameters for GET /as2_partners.
 type As2PartnerListParams struct {
+	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `workspace_id`, `as2_station_id` or `name`.
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	// If set, return records where the specified field is equal to the supplied value. Valid fields are `as2_station_id` and `workspace_id`. Valid field combinations are `[ workspace_id, as2_station_id ]`.
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 
 // As2PartnerFindParams contains the request parameters for GET /as2_partners/{id}.
 type As2PartnerFindParams struct {
+	// As2 Partner ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // As2PartnerCreateParams contains the request parameters for POST /as2_partners.
 type As2PartnerCreateParams struct {
-	EnableDedicatedIps       *bool                                  `url:"enable_dedicated_ips,omitempty" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
-	HttpAuthUsername         string                                 `url:"http_auth_username,omitempty" json:"http_auth_username,omitempty" path:"http_auth_username"`
-	HttpAuthPassword         string                                 `url:"http_auth_password,omitempty" json:"http_auth_password,omitempty" path:"http_auth_password"`
-	MdnValidationLevel       As2PartnerMdnValidationLevelEnum       `url:"mdn_validation_level,omitempty" json:"mdn_validation_level,omitempty" path:"mdn_validation_level"`
+	// If `true`, we will use your site's dedicated IPs for all outbound connections to this AS2 Partner.
+	EnableDedicatedIps *bool `url:"enable_dedicated_ips,omitempty" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
+	// Username to send to server for HTTP Authentication.
+	HttpAuthUsername string `url:"http_auth_username,omitempty" json:"http_auth_username,omitempty" path:"http_auth_username"`
+	// Password to send to server for HTTP Authentication.
+	HttpAuthPassword string `url:"http_auth_password,omitempty" json:"http_auth_password,omitempty" path:"http_auth_password"`
+	// How should Files.com evaluate message transfer success based on a partner's MDN response? This setting does not affect MDN storage; all MDNs received from a partner are always stored. `none`: MDN is stored for informational purposes only, a successful HTTPS transfer is a successful AS2 transfer. `weak`: Inspect the MDN for MIC and Disposition only. `normal`: `weak` plus validate MDN signature matches body, `strict`: `normal` but do not allow signatures from self-signed or incorrectly purposed certificates. `auto`: Automatically set the correct value for this setting based on next mdn received. Values: none, weak, normal, strict, auto.
+	MdnValidationLevel As2PartnerMdnValidationLevelEnum `url:"mdn_validation_level,omitempty" json:"mdn_validation_level,omitempty" path:"mdn_validation_level"`
+	// Should Files.com require signatures on incoming AS2 messages? `normal`: require that incoming messages are signed with a valid matching signature. `none`: Unsigned incoming messages are allowed. `auto`: A one-time starting state. The next message received is always accepted and switches this to `normal` if it carries a valid signature, or `none` if it does not. Values: normal, none, auto.
 	SignatureValidationLevel As2PartnerSignatureValidationLevelEnum `url:"signature_validation_level,omitempty" json:"signature_validation_level,omitempty" path:"signature_validation_level"`
-	ServerCertificate        As2PartnerServerCertificateEnum        `url:"server_certificate,omitempty" json:"server_certificate,omitempty" path:"server_certificate"`
-	DefaultMimeType          string                                 `url:"default_mime_type,omitempty" json:"default_mime_type,omitempty" path:"default_mime_type"`
-	AdditionalHttpHeaders    interface{}                            `url:"additional_http_headers,omitempty" json:"additional_http_headers,omitempty" path:"additional_http_headers"`
-	As2StationId             int64                                  `url:"as2_station_id" json:"as2_station_id" path:"as2_station_id"`
-	Name                     string                                 `url:"name" json:"name" path:"name"`
-	Uri                      string                                 `url:"uri" json:"uri" path:"uri"`
-	PublicCertificate        string                                 `url:"public_certificate,omitempty" json:"public_certificate,omitempty" path:"public_certificate"`
-	Pkcs12                   string                                 `url:"pkcs12,omitempty" json:"pkcs12,omitempty" path:"pkcs12"`
-	Pkcs12Password           string                                 `url:"pkcs12_password,omitempty" json:"pkcs12_password,omitempty" path:"pkcs12_password"`
+	// Should we require that the remote HTTP server have a valid SSL Certificate for HTTPS? (This only applies to Outgoing AS2 message from Files.com to a Partner.). Values: require_match, allow_any.
+	ServerCertificate As2PartnerServerCertificateEnum `url:"server_certificate,omitempty" json:"server_certificate,omitempty" path:"server_certificate"`
+	// Default mime type of the file attached to the encrypted message.
+	DefaultMimeType string `url:"default_mime_type,omitempty" json:"default_mime_type,omitempty" path:"default_mime_type"`
+	// Additional HTTP Headers for outgoing message sent to this partner.
+	AdditionalHttpHeaders interface{} `url:"additional_http_headers,omitempty" json:"additional_http_headers,omitempty" path:"additional_http_headers"`
+	// ID of the AS2 Station associated with this partner. Required.
+	As2StationId int64 `url:"as2_station_id" json:"as2_station_id" path:"as2_station_id"`
+	// The partner's formal AS2 name. Required.
+	Name string `url:"name" json:"name" path:"name"`
+	// Public URI where we will send the AS2 messages (via HTTP/HTTPS). Required.
+	Uri string `url:"uri" json:"uri" path:"uri"`
+	// Public certificate for AS2 Partner. Note: This is the certificate for AS2 message security, not a certificate used for HTTPS authentication.
+	PublicCertificate string `url:"public_certificate,omitempty" json:"public_certificate,omitempty" path:"public_certificate"`
+	// Base64-encoded PKCS#12 (.pfx or .p12) file containing the partner's public certificate. Provide this instead of public_certificate. Any private key in the file is discarded. A public-only file must contain exactly one certificate.
+	Pkcs12 string `url:"pkcs12,omitempty" json:"pkcs12,omitempty" path:"pkcs12"`
+	// Password for pkcs12. The file and password are used only for import; the extracted public certificate is stored as PEM.
+	Pkcs12Password string `url:"pkcs12_password,omitempty" json:"pkcs12_password,omitempty" path:"pkcs12_password"`
 }
 
 // As2PartnerUpdateParams contains the request parameters for PATCH /as2_partners/{id}.
 type As2PartnerUpdateParams struct {
-	Id                       int64                                  `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	EnableDedicatedIps       *bool                                  `url:"enable_dedicated_ips,omitempty" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
-	HttpAuthUsername         string                                 `url:"http_auth_username,omitempty" json:"http_auth_username,omitempty" path:"http_auth_username"`
-	HttpAuthPassword         string                                 `url:"http_auth_password,omitempty" json:"http_auth_password,omitempty" path:"http_auth_password"`
-	MdnValidationLevel       As2PartnerMdnValidationLevelEnum       `url:"mdn_validation_level,omitempty" json:"mdn_validation_level,omitempty" path:"mdn_validation_level"`
+	// As2 Partner ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// If `true`, we will use your site's dedicated IPs for all outbound connections to this AS2 Partner.
+	EnableDedicatedIps *bool `url:"enable_dedicated_ips,omitempty" json:"enable_dedicated_ips,omitempty" path:"enable_dedicated_ips"`
+	// Username to send to server for HTTP Authentication.
+	HttpAuthUsername string `url:"http_auth_username,omitempty" json:"http_auth_username,omitempty" path:"http_auth_username"`
+	// Password to send to server for HTTP Authentication.
+	HttpAuthPassword string `url:"http_auth_password,omitempty" json:"http_auth_password,omitempty" path:"http_auth_password"`
+	// How should Files.com evaluate message transfer success based on a partner's MDN response? This setting does not affect MDN storage; all MDNs received from a partner are always stored. `none`: MDN is stored for informational purposes only, a successful HTTPS transfer is a successful AS2 transfer. `weak`: Inspect the MDN for MIC and Disposition only. `normal`: `weak` plus validate MDN signature matches body, `strict`: `normal` but do not allow signatures from self-signed or incorrectly purposed certificates. `auto`: Automatically set the correct value for this setting based on next mdn received. Values: none, weak, normal, strict, auto.
+	MdnValidationLevel As2PartnerMdnValidationLevelEnum `url:"mdn_validation_level,omitempty" json:"mdn_validation_level,omitempty" path:"mdn_validation_level"`
+	// Should Files.com require signatures on incoming AS2 messages? `normal`: require that incoming messages are signed with a valid matching signature. `none`: Unsigned incoming messages are allowed. `auto`: A one-time starting state. The next message received is always accepted and switches this to `normal` if it carries a valid signature, or `none` if it does not. Values: normal, none, auto.
 	SignatureValidationLevel As2PartnerSignatureValidationLevelEnum `url:"signature_validation_level,omitempty" json:"signature_validation_level,omitempty" path:"signature_validation_level"`
-	ServerCertificate        As2PartnerServerCertificateEnum        `url:"server_certificate,omitempty" json:"server_certificate,omitempty" path:"server_certificate"`
-	DefaultMimeType          string                                 `url:"default_mime_type,omitempty" json:"default_mime_type,omitempty" path:"default_mime_type"`
-	AdditionalHttpHeaders    interface{}                            `url:"additional_http_headers,omitempty" json:"additional_http_headers,omitempty" path:"additional_http_headers"`
-	Name                     string                                 `url:"name,omitempty" json:"name,omitempty" path:"name"`
-	Uri                      string                                 `url:"uri,omitempty" json:"uri,omitempty" path:"uri"`
-	PublicCertificate        string                                 `url:"public_certificate,omitempty" json:"public_certificate,omitempty" path:"public_certificate"`
-	Pkcs12                   string                                 `url:"pkcs12,omitempty" json:"pkcs12,omitempty" path:"pkcs12"`
-	Pkcs12Password           string                                 `url:"pkcs12_password,omitempty" json:"pkcs12_password,omitempty" path:"pkcs12_password"`
+	// Should we require that the remote HTTP server have a valid SSL Certificate for HTTPS? (This only applies to Outgoing AS2 message from Files.com to a Partner.). Values: require_match, allow_any.
+	ServerCertificate As2PartnerServerCertificateEnum `url:"server_certificate,omitempty" json:"server_certificate,omitempty" path:"server_certificate"`
+	// Default mime type of the file attached to the encrypted message.
+	DefaultMimeType string `url:"default_mime_type,omitempty" json:"default_mime_type,omitempty" path:"default_mime_type"`
+	// Additional HTTP Headers for outgoing message sent to this partner.
+	AdditionalHttpHeaders interface{} `url:"additional_http_headers,omitempty" json:"additional_http_headers,omitempty" path:"additional_http_headers"`
+	// The partner's formal AS2 name.
+	Name string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	// Public URI where we will send the AS2 messages (via HTTP/HTTPS).
+	Uri string `url:"uri,omitempty" json:"uri,omitempty" path:"uri"`
+	// Public certificate for AS2 Partner. Note: This is the certificate for AS2 message security, not a certificate used for HTTPS authentication.
+	PublicCertificate string `url:"public_certificate,omitempty" json:"public_certificate,omitempty" path:"public_certificate"`
+	// Base64-encoded PKCS#12 (.pfx or .p12) file containing the partner's public certificate. Provide this instead of public_certificate. Any private key in the file is discarded. A public-only file must contain exactly one certificate.
+	Pkcs12 string `url:"pkcs12,omitempty" json:"pkcs12,omitempty" path:"pkcs12"`
+	// Password for pkcs12. The file and password are used only for import; the extracted public certificate is stored as PEM.
+	Pkcs12Password string `url:"pkcs12_password,omitempty" json:"pkcs12_password,omitempty" path:"pkcs12_password"`
 }
 
 // As2PartnerDeleteParams contains the request parameters for DELETE /as2_partners/{id}.
 type As2PartnerDeleteParams struct {
+	// As2 Partner ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 

@@ -9,11 +9,16 @@ import (
 
 // UserAdditionalEmailRecipient is a Files.com API resource.
 type UserAdditionalEmailRecipient struct {
-	Id          int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	UserId      int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
-	WorkspaceId int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
-	Email       string     `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
-	CreatedAt   *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	// User additional email recipient ID.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// User ID.
+	UserId int64 `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	// Workspace ID (0 for default workspace).
+	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	// Additional email recipient address.
+	Email string `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
+	// Created at date/time.
+	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -26,32 +31,43 @@ type UserAdditionalEmailRecipientCollection []UserAdditionalEmailRecipient
 
 // UserAdditionalEmailRecipientListParams contains the request parameters for GET /user_additional_email_recipients.
 type UserAdditionalEmailRecipientListParams struct {
-	UserId       int64       `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
-	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	// User ID. Provide a value of `0` to operate the current session's user.
+	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `email`, `user_id` or `workspace_id`.
+	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	// If set, return records where the specified field is equal to the supplied value. Valid fields are `email`, `workspace_id` or `user_id`. Valid field combinations are `[ workspace_id, email ]`, `[ user_id, email ]`, `[ workspace_id, user_id ]` or `[ workspace_id, user_id, email ]`.
+	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	// If set, return records where the specified field is prefixed by the supplied value. Valid fields are `email`.
 	FilterPrefix interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 
 // UserAdditionalEmailRecipientFindParams contains the request parameters for GET /user_additional_email_recipients/{id}.
 type UserAdditionalEmailRecipientFindParams struct {
+	// User Additional Email Recipient ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // UserAdditionalEmailRecipientCreateParams contains the request parameters for POST /user_additional_email_recipients.
 type UserAdditionalEmailRecipientCreateParams struct {
-	UserId int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
-	Email  string `url:"email" json:"email" path:"email"`
+	// User ID. Provide a value of `0` to operate the current session's user.
+	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	// Additional email recipient address. Required.
+	Email string `url:"email" json:"email" path:"email"`
 }
 
 // UserAdditionalEmailRecipientUpdateParams contains the request parameters for PATCH /user_additional_email_recipients/{id}.
 type UserAdditionalEmailRecipientUpdateParams struct {
-	Id    int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// User Additional Email Recipient ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// Additional email recipient address.
 	Email string `url:"email,omitempty" json:"email,omitempty" path:"email"`
 }
 
 // UserAdditionalEmailRecipientDeleteParams contains the request parameters for DELETE /user_additional_email_recipients/{id}.
 type UserAdditionalEmailRecipientDeleteParams struct {
+	// User Additional Email Recipient ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 

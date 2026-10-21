@@ -8,11 +8,17 @@ import (
 
 // Clickwrap is a Files.com API resource.
 type Clickwrap struct {
-	Id             int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Name           string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
-	Body           string `json:"body,omitempty" path:"body,omitempty" url:"body,omitempty"`
-	UseWithUsers   string `json:"use_with_users,omitempty" path:"use_with_users,omitempty" url:"use_with_users,omitempty"`
+	// Clickwrap ID.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Name of the Clickwrap agreement (used when selecting from multiple Clickwrap agreements.).
+	Name string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	// Body text of Clickwrap (supports Markdown formatting).
+	Body string `json:"body,omitempty" path:"body,omitempty" url:"body,omitempty"`
+	// Use this Clickwrap for Users? Values: `none`, `require` (new user signup via email invitation only), `require_all_users_once` (show to all users at their next web login; once accepted, not shown again), `require_all_users_always` (show to all users on every web login).
+	UseWithUsers string `json:"use_with_users,omitempty" path:"use_with_users,omitempty" url:"use_with_users,omitempty"`
+	// Use this Clickwrap for Bundles?
 	UseWithBundles string `json:"use_with_bundles,omitempty" path:"use_with_bundles,omitempty" url:"use_with_bundles,omitempty"`
+	// Use this Clickwrap for Inboxes?
 	UseWithInboxes string `json:"use_with_inboxes,omitempty" path:"use_with_inboxes,omitempty" url:"use_with_inboxes,omitempty"`
 }
 
@@ -83,36 +89,51 @@ func (u ClickwrapUseWithUsersEnum) Enum() map[string]ClickwrapUseWithUsersEnum {
 
 // ClickwrapListParams contains the request parameters for GET /clickwraps.
 type ClickwrapListParams struct {
+	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are .
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 
 // ClickwrapFindParams contains the request parameters for GET /clickwraps/{id}.
 type ClickwrapFindParams struct {
+	// Clickwrap ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // ClickwrapCreateParams contains the request parameters for POST /clickwraps.
 type ClickwrapCreateParams struct {
-	Name           string                      `url:"name,omitempty" json:"name,omitempty" path:"name"`
-	Body           string                      `url:"body,omitempty" json:"body,omitempty" path:"body"`
+	// Name of the Clickwrap agreement (used when selecting from multiple Clickwrap agreements.).
+	Name string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	// Body text of Clickwrap (supports Markdown formatting).
+	Body string `url:"body,omitempty" json:"body,omitempty" path:"body"`
+	// Use this Clickwrap for Bundles? Values: none, available, require, available_to_all_users.
 	UseWithBundles ClickwrapUseWithBundlesEnum `url:"use_with_bundles,omitempty" json:"use_with_bundles,omitempty" path:"use_with_bundles"`
+	// Use this Clickwrap for Inboxes? Values: none, available, require, available_to_all_users.
 	UseWithInboxes ClickwrapUseWithInboxesEnum `url:"use_with_inboxes,omitempty" json:"use_with_inboxes,omitempty" path:"use_with_inboxes"`
-	UseWithUsers   ClickwrapUseWithUsersEnum   `url:"use_with_users,omitempty" json:"use_with_users,omitempty" path:"use_with_users"`
+	// Use this Clickwrap for Users? Values: `none`, `require` (new user signup via email invitation only), `require_all_users_once` (show to all users at their next web login; once accepted, not shown again), `require_all_users_always` (show to all users on every web login). Values: none, require, require_all_users_once, require_all_users_always.
+	UseWithUsers ClickwrapUseWithUsersEnum `url:"use_with_users,omitempty" json:"use_with_users,omitempty" path:"use_with_users"`
 }
 
 // ClickwrapUpdateParams contains the request parameters for PATCH /clickwraps/{id}.
 type ClickwrapUpdateParams struct {
-	Id             int64                       `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	Name           string                      `url:"name,omitempty" json:"name,omitempty" path:"name"`
-	Body           string                      `url:"body,omitempty" json:"body,omitempty" path:"body"`
+	// Clickwrap ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// Name of the Clickwrap agreement (used when selecting from multiple Clickwrap agreements.).
+	Name string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	// Body text of Clickwrap (supports Markdown formatting).
+	Body string `url:"body,omitempty" json:"body,omitempty" path:"body"`
+	// Use this Clickwrap for Bundles? Values: none, available, require, available_to_all_users.
 	UseWithBundles ClickwrapUseWithBundlesEnum `url:"use_with_bundles,omitempty" json:"use_with_bundles,omitempty" path:"use_with_bundles"`
+	// Use this Clickwrap for Inboxes? Values: none, available, require, available_to_all_users.
 	UseWithInboxes ClickwrapUseWithInboxesEnum `url:"use_with_inboxes,omitempty" json:"use_with_inboxes,omitempty" path:"use_with_inboxes"`
-	UseWithUsers   ClickwrapUseWithUsersEnum   `url:"use_with_users,omitempty" json:"use_with_users,omitempty" path:"use_with_users"`
+	// Use this Clickwrap for Users? Values: `none`, `require` (new user signup via email invitation only), `require_all_users_once` (show to all users at their next web login; once accepted, not shown again), `require_all_users_always` (show to all users on every web login). Values: none, require, require_all_users_once, require_all_users_always.
+	UseWithUsers ClickwrapUseWithUsersEnum `url:"use_with_users,omitempty" json:"use_with_users,omitempty" path:"use_with_users"`
 }
 
 // ClickwrapDeleteParams contains the request parameters for DELETE /clickwraps/{id}.
 type ClickwrapDeleteParams struct {
+	// Clickwrap ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 

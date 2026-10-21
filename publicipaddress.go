@@ -8,7 +8,9 @@ import (
 
 // PublicIpAddress is a Files.com API resource.
 type PublicIpAddress struct {
-	IpAddress   string `json:"ip_address,omitempty" path:"ip_address,omitempty" url:"ip_address,omitempty"`
+	// The public IP address.
+	IpAddress string `json:"ip_address,omitempty" path:"ip_address,omitempty" url:"ip_address,omitempty"`
+	// The name of the frontend server.
 	ServerName  string `json:"server_name,omitempty" path:"server_name,omitempty" url:"server_name,omitempty"`
 	FtpEnabled  *bool  `json:"ftp_enabled,omitempty" path:"ftp_enabled,omitempty" url:"ftp_enabled,omitempty"`
 	SftpEnabled *bool  `json:"sftp_enabled,omitempty" path:"sftp_enabled,omitempty" url:"sftp_enabled,omitempty"`

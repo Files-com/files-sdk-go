@@ -9,21 +9,36 @@ import (
 
 // ExpectationIncident is a Files.com API resource.
 type ExpectationIncident struct {
-	Id                     int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	WorkspaceId            int64       `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
-	ExpectationId          int64       `json:"expectation_id,omitempty" path:"expectation_id,omitempty" url:"expectation_id,omitempty"`
-	Status                 string      `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
-	OpenedAt               *time.Time  `json:"opened_at,omitempty" path:"opened_at,omitempty" url:"opened_at,omitempty"`
-	LastFailedAt           *time.Time  `json:"last_failed_at,omitempty" path:"last_failed_at,omitempty" url:"last_failed_at,omitempty"`
-	AcknowledgedAt         *time.Time  `json:"acknowledged_at,omitempty" path:"acknowledged_at,omitempty" url:"acknowledged_at,omitempty"`
-	SnoozedUntil           *time.Time  `json:"snoozed_until,omitempty" path:"snoozed_until,omitempty" url:"snoozed_until,omitempty"`
-	ResolvedAt             *time.Time  `json:"resolved_at,omitempty" path:"resolved_at,omitempty" url:"resolved_at,omitempty"`
-	OpenedByEvaluationId   int64       `json:"opened_by_evaluation_id,omitempty" path:"opened_by_evaluation_id,omitempty" url:"opened_by_evaluation_id,omitempty"`
-	LastEvaluationId       int64       `json:"last_evaluation_id,omitempty" path:"last_evaluation_id,omitempty" url:"last_evaluation_id,omitempty"`
-	ResolvedByEvaluationId int64       `json:"resolved_by_evaluation_id,omitempty" path:"resolved_by_evaluation_id,omitempty" url:"resolved_by_evaluation_id,omitempty"`
-	Summary                interface{} `json:"summary,omitempty" path:"summary,omitempty" url:"summary,omitempty"`
-	CreatedAt              *time.Time  `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	UpdatedAt              *time.Time  `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
+	// Expectation Incident ID.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Workspace ID. `0` means the default workspace.
+	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	// Expectation ID.
+	ExpectationId int64 `json:"expectation_id,omitempty" path:"expectation_id,omitempty" url:"expectation_id,omitempty"`
+	// Incident status.
+	Status string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	// When the incident was opened.
+	OpenedAt *time.Time `json:"opened_at,omitempty" path:"opened_at,omitempty" url:"opened_at,omitempty"`
+	// When the most recent failing evaluation contributing to the incident occurred.
+	LastFailedAt *time.Time `json:"last_failed_at,omitempty" path:"last_failed_at,omitempty" url:"last_failed_at,omitempty"`
+	// When the incident was acknowledged.
+	AcknowledgedAt *time.Time `json:"acknowledged_at,omitempty" path:"acknowledged_at,omitempty" url:"acknowledged_at,omitempty"`
+	// When the current snooze expires.
+	SnoozedUntil *time.Time `json:"snoozed_until,omitempty" path:"snoozed_until,omitempty" url:"snoozed_until,omitempty"`
+	// When the incident was resolved.
+	ResolvedAt *time.Time `json:"resolved_at,omitempty" path:"resolved_at,omitempty" url:"resolved_at,omitempty"`
+	// Evaluation that first opened the incident.
+	OpenedByEvaluationId int64 `json:"opened_by_evaluation_id,omitempty" path:"opened_by_evaluation_id,omitempty" url:"opened_by_evaluation_id,omitempty"`
+	// Most recent evaluation linked to the incident.
+	LastEvaluationId int64 `json:"last_evaluation_id,omitempty" path:"last_evaluation_id,omitempty" url:"last_evaluation_id,omitempty"`
+	// Evaluation that resolved the incident.
+	ResolvedByEvaluationId int64 `json:"resolved_by_evaluation_id,omitempty" path:"resolved_by_evaluation_id,omitempty" url:"resolved_by_evaluation_id,omitempty"`
+	// Compact incident summary payload.
+	Summary interface{} `json:"summary,omitempty" path:"summary,omitempty" url:"summary,omitempty"`
+	// Creation time.
+	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	// Last update time.
+	UpdatedAt *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -36,13 +51,17 @@ type ExpectationIncidentCollection []ExpectationIncident
 
 // ExpectationIncidentListParams contains the request parameters for GET /expectation_incidents.
 type ExpectationIncidentListParams struct {
+	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `workspace_id`, `created_at` or `expectation_id`.
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	// If set, return records where the specified field is equal to the supplied value. Valid fields are `expectation_id` and `workspace_id`. Valid field combinations are `[ workspace_id, expectation_id ]`.
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 
 // ExpectationIncidentFindParams contains the request parameters for GET /expectation_incidents/{id}.
 type ExpectationIncidentFindParams struct {
+	// Expectation Incident ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
@@ -50,6 +69,7 @@ type ExpectationIncidentFindParams struct {
 //
 // Resolve an expectation incident
 type ExpectationIncidentResolveParams struct {
+	// Expectation Incident ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
@@ -57,7 +77,9 @@ type ExpectationIncidentResolveParams struct {
 //
 // Snooze an expectation incident until a specified time
 type ExpectationIncidentSnoozeParams struct {
-	Id           int64      `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// Expectation Incident ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// Time until which the incident should remain snoozed. Required.
 	SnoozedUntil *time.Time `url:"snoozed_until" json:"snoozed_until" path:"snoozed_until"`
 }
 
@@ -65,6 +87,7 @@ type ExpectationIncidentSnoozeParams struct {
 //
 // Acknowledge an expectation incident
 type ExpectationIncidentAcknowledgeParams struct {
+	// Expectation Incident ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 

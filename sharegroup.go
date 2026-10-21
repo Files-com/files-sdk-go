@@ -8,10 +8,15 @@ import (
 
 // ShareGroup is a Files.com API resource.
 type ShareGroup struct {
-	Id      int64              `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Name    string             `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
-	Notes   string             `json:"notes,omitempty" path:"notes,omitempty" url:"notes,omitempty"`
-	UserId  int64              `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	// Share Group ID.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Name of the share group.
+	Name string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	// Additional notes of the share group.
+	Notes string `json:"notes,omitempty" path:"notes,omitempty" url:"notes,omitempty"`
+	// Owner User ID.
+	UserId int64 `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	// A list of share group members.
 	Members []ShareGroupMember `json:"members,omitempty" path:"members,omitempty" url:"members,omitempty"`
 }
 
@@ -25,33 +30,45 @@ type ShareGroupCollection []ShareGroup
 
 // ShareGroupListParams contains the request parameters for GET /share_groups.
 type ShareGroupListParams struct {
+	// User ID. Provide a value of `0` to operate the current session's user.
 	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 
 // ShareGroupFindParams contains the request parameters for GET /share_groups/{id}.
 type ShareGroupFindParams struct {
+	// Share Group ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // ShareGroupCreateParams contains the request parameters for POST /share_groups.
 type ShareGroupCreateParams struct {
-	UserId  int64                    `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
-	Notes   string                   `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
-	Name    string                   `url:"name" json:"name" path:"name"`
+	// User ID. Provide a value of `0` to operate the current session's user.
+	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	// Additional notes of the share group.
+	Notes string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
+	// Name of the share group. Required.
+	Name string `url:"name" json:"name" path:"name"`
+	// A list of share group members. Required.
 	Members []map[string]interface{} `url:"members" json:"members" path:"members"`
 }
 
 // ShareGroupUpdateParams contains the request parameters for PATCH /share_groups/{id}.
 type ShareGroupUpdateParams struct {
-	Id      int64                    `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	Notes   string                   `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
-	Name    string                   `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	// Share Group ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// Additional notes of the share group.
+	Notes string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
+	// Name of the share group.
+	Name string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	// A list of share group members.
 	Members []map[string]interface{} `url:"members,omitempty" json:"members,omitempty" path:"members"`
 }
 
 // ShareGroupDeleteParams contains the request parameters for DELETE /share_groups/{id}.
 type ShareGroupDeleteParams struct {
+	// Share Group ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 

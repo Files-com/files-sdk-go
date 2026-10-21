@@ -9,23 +9,40 @@ import (
 
 // RemoteMountBackend is a Files.com API resource.
 type RemoteMountBackend struct {
-	CanaryFilePath        string                   `json:"canary_file_path,omitempty" path:"canary_file_path,omitempty" url:"canary_file_path,omitempty"`
-	Enabled               *bool                    `json:"enabled,omitempty" path:"enabled,omitempty" url:"enabled,omitempty"`
-	Fall                  int64                    `json:"fall,omitempty" path:"fall,omitempty" url:"fall,omitempty"`
-	HealthCheckEnabled    *bool                    `json:"health_check_enabled,omitempty" path:"health_check_enabled,omitempty" url:"health_check_enabled,omitempty"`
-	HealthCheckResults    []map[string]interface{} `json:"health_check_results,omitempty" path:"health_check_results,omitempty" url:"health_check_results,omitempty"`
-	HealthCheckType       string                   `json:"health_check_type,omitempty" path:"health_check_type,omitempty" url:"health_check_type,omitempty"`
-	Id                    int64                    `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Interval              int64                    `json:"interval,omitempty" path:"interval,omitempty" url:"interval,omitempty"`
-	MinFreeCpu            string                   `json:"min_free_cpu,omitempty" path:"min_free_cpu,omitempty" url:"min_free_cpu,omitempty"`
-	MinFreeMem            string                   `json:"min_free_mem,omitempty" path:"min_free_mem,omitempty" url:"min_free_mem,omitempty"`
-	Priority              int64                    `json:"priority,omitempty" path:"priority,omitempty" url:"priority,omitempty"`
-	RemotePath            string                   `json:"remote_path,omitempty" path:"remote_path,omitempty" url:"remote_path,omitempty"`
-	RemoteServerId        int64                    `json:"remote_server_id,omitempty" path:"remote_server_id,omitempty" url:"remote_server_id,omitempty"`
-	RemoteServerMountId   int64                    `json:"remote_server_mount_id,omitempty" path:"remote_server_mount_id,omitempty" url:"remote_server_mount_id,omitempty"`
-	Rise                  int64                    `json:"rise,omitempty" path:"rise,omitempty" url:"rise,omitempty"`
-	Status                string                   `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
-	UndergoingMaintenance *bool                    `json:"undergoing_maintenance,omitempty" path:"undergoing_maintenance,omitempty" url:"undergoing_maintenance,omitempty"`
+	// Path to the canary file used for health checks.
+	CanaryFilePath string `json:"canary_file_path,omitempty" path:"canary_file_path,omitempty" url:"canary_file_path,omitempty"`
+	// True if this backend is enabled.
+	Enabled *bool `json:"enabled,omitempty" path:"enabled,omitempty" url:"enabled,omitempty"`
+	// Number of consecutive failures before considering the backend unhealthy.
+	Fall int64 `json:"fall,omitempty" path:"fall,omitempty" url:"fall,omitempty"`
+	// True if health checks are enabled for this backend.
+	HealthCheckEnabled *bool `json:"health_check_enabled,omitempty" path:"health_check_enabled,omitempty" url:"health_check_enabled,omitempty"`
+	// Array of recent health check results.
+	HealthCheckResults []map[string]interface{} `json:"health_check_results,omitempty" path:"health_check_results,omitempty" url:"health_check_results,omitempty"`
+	// Type of health check to perform.
+	HealthCheckType string `json:"health_check_type,omitempty" path:"health_check_type,omitempty" url:"health_check_type,omitempty"`
+	// Unique identifier for this backend.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Interval in seconds between health checks.
+	Interval int64 `json:"interval,omitempty" path:"interval,omitempty" url:"interval,omitempty"`
+	// Minimum free CPU percentage required for this backend to be considered healthy.
+	MinFreeCpu string `json:"min_free_cpu,omitempty" path:"min_free_cpu,omitempty" url:"min_free_cpu,omitempty"`
+	// Minimum free memory percentage required for this backend to be considered healthy.
+	MinFreeMem string `json:"min_free_mem,omitempty" path:"min_free_mem,omitempty" url:"min_free_mem,omitempty"`
+	// Priority of this backend.
+	Priority int64 `json:"priority,omitempty" path:"priority,omitempty" url:"priority,omitempty"`
+	// Path on the remote server to treat as the root of this mount.
+	RemotePath string `json:"remote_path,omitempty" path:"remote_path,omitempty" url:"remote_path,omitempty"`
+	// The remote server that this backend is associated with.
+	RemoteServerId int64 `json:"remote_server_id,omitempty" path:"remote_server_id,omitempty" url:"remote_server_id,omitempty"`
+	// The mount ID of the Remote Server Mount that this backend is associated with.
+	RemoteServerMountId int64 `json:"remote_server_mount_id,omitempty" path:"remote_server_mount_id,omitempty" url:"remote_server_mount_id,omitempty"`
+	// Number of consecutive successes before considering the backend healthy.
+	Rise int64 `json:"rise,omitempty" path:"rise,omitempty" url:"rise,omitempty"`
+	// Status of this backend.
+	Status string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	// True if this backend is undergoing maintenance.
+	UndergoingMaintenance *bool `json:"undergoing_maintenance,omitempty" path:"undergoing_maintenance,omitempty" url:"undergoing_maintenance,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -55,34 +72,50 @@ func (u RemoteMountBackendHealthCheckTypeEnum) Enum() map[string]RemoteMountBack
 
 // RemoteMountBackendListParams contains the request parameters for GET /remote_mount_backends.
 type RemoteMountBackendListParams struct {
+	// If set, return records where the specified field is equal to the supplied value. Valid fields are `remote_server_mount_id`.
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 
 // RemoteMountBackendFindParams contains the request parameters for GET /remote_mount_backends/{id}.
 type RemoteMountBackendFindParams struct {
+	// Remote Mount Backend ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // RemoteMountBackendCreateParams contains the request parameters for POST /remote_mount_backends.
 type RemoteMountBackendCreateParams struct {
-	Enabled            *bool                                 `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
-	Fall               int64                                 `url:"fall,omitempty" json:"fall,omitempty" path:"fall"`
-	HealthCheckEnabled *bool                                 `url:"health_check_enabled,omitempty" json:"health_check_enabled,omitempty" path:"health_check_enabled"`
-	HealthCheckType    RemoteMountBackendHealthCheckTypeEnum `url:"health_check_type,omitempty" json:"health_check_type,omitempty" path:"health_check_type"`
-	Interval           int64                                 `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
-	MinFreeCpu         float64                               `url:"min_free_cpu,omitempty" json:"min_free_cpu,omitempty" path:"min_free_cpu"`
+	// True if this backend is enabled.
+	Enabled *bool `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
+	// Number of consecutive failures before considering the backend unhealthy.
+	Fall int64 `url:"fall,omitempty" json:"fall,omitempty" path:"fall"`
+	// True if health checks are enabled for this backend.
+	HealthCheckEnabled *bool `url:"health_check_enabled,omitempty" json:"health_check_enabled,omitempty" path:"health_check_enabled"`
+	// Type of health check to perform. Values: active, passive.
+	HealthCheckType RemoteMountBackendHealthCheckTypeEnum `url:"health_check_type,omitempty" json:"health_check_type,omitempty" path:"health_check_type"`
+	// Interval in seconds between health checks.
+	Interval int64 `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
+	// Minimum free CPU percentage required for this backend to be considered healthy.
+	MinFreeCpu float64 `url:"min_free_cpu,omitempty" json:"min_free_cpu,omitempty" path:"min_free_cpu"`
 	// MinFreeCpuDecimal sends exact decimal text, such as "1.5", as min_free_cpu. Leave MinFreeCpu zero when you set it.
 	MinFreeCpuDecimal *string `json:"-" url:"-" path:"-"`
-	MinFreeMem        float64 `url:"min_free_mem,omitempty" json:"min_free_mem,omitempty" path:"min_free_mem"`
+	// Minimum free memory percentage required for this backend to be considered healthy.
+	MinFreeMem float64 `url:"min_free_mem,omitempty" json:"min_free_mem,omitempty" path:"min_free_mem"`
 	// MinFreeMemDecimal sends exact decimal text, such as "1.5", as min_free_mem. Leave MinFreeMem zero when you set it.
-	MinFreeMemDecimal   *string `json:"-" url:"-" path:"-"`
-	Priority            int64   `url:"priority,omitempty" json:"priority,omitempty" path:"priority"`
-	RemotePath          string  `url:"remote_path,omitempty" json:"remote_path,omitempty" path:"remote_path"`
-	Rise                int64   `url:"rise,omitempty" json:"rise,omitempty" path:"rise"`
-	CanaryFilePath      string  `url:"canary_file_path" json:"canary_file_path" path:"canary_file_path"`
-	RemoteServerMountId int64   `url:"remote_server_mount_id" json:"remote_server_mount_id" path:"remote_server_mount_id"`
-	RemoteServerId      int64   `url:"remote_server_id" json:"remote_server_id" path:"remote_server_id"`
+	MinFreeMemDecimal *string `json:"-" url:"-" path:"-"`
+	// Priority of this backend.
+	Priority int64 `url:"priority,omitempty" json:"priority,omitempty" path:"priority"`
+	// Path on the remote server to treat as the root of this mount.
+	RemotePath string `url:"remote_path,omitempty" json:"remote_path,omitempty" path:"remote_path"`
+	// Number of consecutive successes before considering the backend healthy.
+	Rise int64 `url:"rise,omitempty" json:"rise,omitempty" path:"rise"`
+	// Path to the canary file used for health checks. Required.
+	CanaryFilePath string `url:"canary_file_path" json:"canary_file_path" path:"canary_file_path"`
+	// The mount ID of the Remote Server Mount that this backend is associated with. Required.
+	RemoteServerMountId int64 `url:"remote_server_mount_id" json:"remote_server_mount_id" path:"remote_server_mount_id"`
+	// The remote server that this backend is associated with. Required.
+	RemoteServerId int64 `url:"remote_server_id" json:"remote_server_id" path:"remote_server_id"`
 }
 
 func (p *RemoteMountBackendCreateParams) decimalOverrides() []lib.DecimalOverride {
@@ -129,28 +162,42 @@ func (p RemoteMountBackendCreateParams) ToValues() (url.Values, error) {
 //
 // Reset backend status to healthy
 type RemoteMountBackendResetStatusParams struct {
+	// Remote Mount Backend ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // RemoteMountBackendUpdateParams contains the request parameters for PATCH /remote_mount_backends/{id}.
 type RemoteMountBackendUpdateParams struct {
-	Id                 int64                                 `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	Enabled            *bool                                 `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
-	Fall               int64                                 `url:"fall,omitempty" json:"fall,omitempty" path:"fall"`
-	HealthCheckEnabled *bool                                 `url:"health_check_enabled,omitempty" json:"health_check_enabled,omitempty" path:"health_check_enabled"`
-	HealthCheckType    RemoteMountBackendHealthCheckTypeEnum `url:"health_check_type,omitempty" json:"health_check_type,omitempty" path:"health_check_type"`
-	Interval           int64                                 `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
-	MinFreeCpu         float64                               `url:"min_free_cpu,omitempty" json:"min_free_cpu,omitempty" path:"min_free_cpu"`
+	// Remote Mount Backend ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// True if this backend is enabled.
+	Enabled *bool `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
+	// Number of consecutive failures before considering the backend unhealthy.
+	Fall int64 `url:"fall,omitempty" json:"fall,omitempty" path:"fall"`
+	// True if health checks are enabled for this backend.
+	HealthCheckEnabled *bool `url:"health_check_enabled,omitempty" json:"health_check_enabled,omitempty" path:"health_check_enabled"`
+	// Type of health check to perform. Values: active, passive.
+	HealthCheckType RemoteMountBackendHealthCheckTypeEnum `url:"health_check_type,omitempty" json:"health_check_type,omitempty" path:"health_check_type"`
+	// Interval in seconds between health checks.
+	Interval int64 `url:"interval,omitempty" json:"interval,omitempty" path:"interval"`
+	// Minimum free CPU percentage required for this backend to be considered healthy.
+	MinFreeCpu float64 `url:"min_free_cpu,omitempty" json:"min_free_cpu,omitempty" path:"min_free_cpu"`
 	// MinFreeCpuDecimal sends exact decimal text, such as "1.5", as min_free_cpu. Leave MinFreeCpu zero when you set it.
 	MinFreeCpuDecimal *string `json:"-" url:"-" path:"-"`
-	MinFreeMem        float64 `url:"min_free_mem,omitempty" json:"min_free_mem,omitempty" path:"min_free_mem"`
+	// Minimum free memory percentage required for this backend to be considered healthy.
+	MinFreeMem float64 `url:"min_free_mem,omitempty" json:"min_free_mem,omitempty" path:"min_free_mem"`
 	// MinFreeMemDecimal sends exact decimal text, such as "1.5", as min_free_mem. Leave MinFreeMem zero when you set it.
 	MinFreeMemDecimal *string `json:"-" url:"-" path:"-"`
-	Priority          int64   `url:"priority,omitempty" json:"priority,omitempty" path:"priority"`
-	RemotePath        string  `url:"remote_path,omitempty" json:"remote_path,omitempty" path:"remote_path"`
-	Rise              int64   `url:"rise,omitempty" json:"rise,omitempty" path:"rise"`
-	CanaryFilePath    string  `url:"canary_file_path,omitempty" json:"canary_file_path,omitempty" path:"canary_file_path"`
-	RemoteServerId    int64   `url:"remote_server_id,omitempty" json:"remote_server_id,omitempty" path:"remote_server_id"`
+	// Priority of this backend.
+	Priority int64 `url:"priority,omitempty" json:"priority,omitempty" path:"priority"`
+	// Path on the remote server to treat as the root of this mount.
+	RemotePath string `url:"remote_path,omitempty" json:"remote_path,omitempty" path:"remote_path"`
+	// Number of consecutive successes before considering the backend healthy.
+	Rise int64 `url:"rise,omitempty" json:"rise,omitempty" path:"rise"`
+	// Path to the canary file used for health checks.
+	CanaryFilePath string `url:"canary_file_path,omitempty" json:"canary_file_path,omitempty" path:"canary_file_path"`
+	// The remote server that this backend is associated with.
+	RemoteServerId int64 `url:"remote_server_id,omitempty" json:"remote_server_id,omitempty" path:"remote_server_id"`
 }
 
 func (p *RemoteMountBackendUpdateParams) decimalOverrides() []lib.DecimalOverride {
@@ -195,6 +242,7 @@ func (p RemoteMountBackendUpdateParams) ToValues() (url.Values, error) {
 
 // RemoteMountBackendDeleteParams contains the request parameters for DELETE /remote_mount_backends/{id}.
 type RemoteMountBackendDeleteParams struct {
+	// Remote Mount Backend ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 

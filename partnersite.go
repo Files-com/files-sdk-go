@@ -17,6 +17,7 @@ type PartnerSiteCollection []PartnerSite
 
 // PartnerSiteDeleteParams contains the request parameters for DELETE /partner_sites/{id}.
 type PartnerSiteDeleteParams struct {
+	// Partner Site ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 

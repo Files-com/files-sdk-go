@@ -9,18 +9,30 @@ import (
 
 // InboxRegistration is a Files.com API resource.
 type InboxRegistration struct {
-	Code             string      `json:"code,omitempty" path:"code,omitempty" url:"code,omitempty"`
-	Name             string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
-	Company          string      `json:"company,omitempty" path:"company,omitempty" url:"company,omitempty"`
-	Email            string      `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
-	Ip               string      `json:"ip,omitempty" path:"ip,omitempty" url:"ip,omitempty"`
-	ClickwrapBody    string      `json:"clickwrap_body,omitempty" path:"clickwrap_body,omitempty" url:"clickwrap_body,omitempty"`
-	FormFieldSetId   int64       `json:"form_field_set_id,omitempty" path:"form_field_set_id,omitempty" url:"form_field_set_id,omitempty"`
-	FormFieldData    interface{} `json:"form_field_data,omitempty" path:"form_field_data,omitempty" url:"form_field_data,omitempty"`
-	InboxId          int64       `json:"inbox_id,omitempty" path:"inbox_id,omitempty" url:"inbox_id,omitempty"`
-	InboxRecipientId int64       `json:"inbox_recipient_id,omitempty" path:"inbox_recipient_id,omitempty" url:"inbox_recipient_id,omitempty"`
-	InboxTitle       string      `json:"inbox_title,omitempty" path:"inbox_title,omitempty" url:"inbox_title,omitempty"`
-	CreatedAt        *time.Time  `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	// Registration cookie code.
+	Code string `json:"code,omitempty" path:"code,omitempty" url:"code,omitempty"`
+	// Registrant name.
+	Name string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	// Registrant company name.
+	Company string `json:"company,omitempty" path:"company,omitempty" url:"company,omitempty"`
+	// Registrant email address.
+	Email string `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
+	// Registrant IP Address.
+	Ip string `json:"ip,omitempty" path:"ip,omitempty" url:"ip,omitempty"`
+	// Clickwrap text that was shown to the registrant.
+	ClickwrapBody string `json:"clickwrap_body,omitempty" path:"clickwrap_body,omitempty" url:"clickwrap_body,omitempty"`
+	// Id of associated form field set.
+	FormFieldSetId int64 `json:"form_field_set_id,omitempty" path:"form_field_set_id,omitempty" url:"form_field_set_id,omitempty"`
+	// Data for form field set with form field ids as keys and user data as values.
+	FormFieldData interface{} `json:"form_field_data,omitempty" path:"form_field_data,omitempty" url:"form_field_data,omitempty"`
+	// Id of associated inbox.
+	InboxId int64 `json:"inbox_id,omitempty" path:"inbox_id,omitempty" url:"inbox_id,omitempty"`
+	// Id of associated inbox recipient.
+	InboxRecipientId int64 `json:"inbox_recipient_id,omitempty" path:"inbox_recipient_id,omitempty" url:"inbox_recipient_id,omitempty"`
+	// Title of associated inbox.
+	InboxTitle string `json:"inbox_title,omitempty" path:"inbox_title,omitempty" url:"inbox_title,omitempty"`
+	// Registration creation date/time.
+	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
 // Identifier no path or id
@@ -30,7 +42,9 @@ type InboxRegistrationCollection []InboxRegistration
 
 // InboxRegistrationListParams contains the request parameters for GET /inbox_registrations.
 type InboxRegistrationListParams struct {
+	// ID of the associated Inbox. This is required if the user is not a site admin.
 	FolderBehaviorId int64 `url:"folder_behavior_id,omitempty" json:"folder_behavior_id,omitempty" path:"folder_behavior_id"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 

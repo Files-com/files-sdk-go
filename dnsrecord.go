@@ -8,10 +8,14 @@ import (
 
 // DnsRecord is a Files.com API resource.
 type DnsRecord struct {
-	Id     string `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Unique label for DNS record; used by Zapier and other integrations.
+	Id string `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// DNS record domain name.
 	Domain string `json:"domain,omitempty" path:"domain,omitempty" url:"domain,omitempty"`
+	// DNS record type.
 	Rrtype string `json:"rrtype,omitempty" path:"rrtype,omitempty" url:"rrtype,omitempty"`
-	Value  string `json:"value,omitempty" path:"value,omitempty" url:"value,omitempty"`
+	// DNS record value.
+	Value string `json:"value,omitempty" path:"value,omitempty" url:"value,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -24,6 +28,7 @@ type DnsRecordCollection []DnsRecord
 
 // DnsRecordListParams contains the request parameters for GET /dns_records.
 type DnsRecordListParams struct {
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 

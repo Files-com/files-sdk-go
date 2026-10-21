@@ -9,16 +9,26 @@ import (
 
 // EventTarget is a Files.com API resource.
 type EventTarget struct {
-	Id                   int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Name                 string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
-	TargetType           string      `json:"target_type,omitempty" path:"target_type,omitempty" url:"target_type,omitempty"`
-	WorkspaceId          int64       `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
-	ApplyToAllWorkspaces *bool       `json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces,omitempty" url:"apply_to_all_workspaces,omitempty"`
-	Enabled              *bool       `json:"enabled,omitempty" path:"enabled,omitempty" url:"enabled,omitempty"`
-	Config               interface{} `json:"config,omitempty" path:"config,omitempty" url:"config,omitempty"`
-	DeliveryPolicy       interface{} `json:"delivery_policy,omitempty" path:"delivery_policy,omitempty" url:"delivery_policy,omitempty"`
-	CreatedAt            *time.Time  `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	UpdatedAt            *time.Time  `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
+	// Event Target ID.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Event Target name.
+	Name string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	// Event Target type.
+	TargetType string `json:"target_type,omitempty" path:"target_type,omitempty" url:"target_type,omitempty"`
+	// Workspace ID. 0 means the default workspace or site-wide.
+	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	// If true, this default-workspace target can receive events from all workspaces.
+	ApplyToAllWorkspaces *bool `json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces,omitempty" url:"apply_to_all_workspaces,omitempty"`
+	// Whether this Event Target can receive events.
+	Enabled *bool `json:"enabled,omitempty" path:"enabled,omitempty" url:"enabled,omitempty"`
+	// Event Target configuration. Folder targets accept path and format (json or csv).
+	Config interface{} `json:"config,omitempty" path:"config,omitempty" url:"config,omitempty"`
+	// Event Target delivery policy. Email and folder targets support batch_interval in seconds, between 600 and 86400. Slack and Teams support delivery_mode (immediate or subfolder_summary), summary_path (empty string means root), and summary_delay (15–300 seconds, default 60). The summary applies to matching file activity under summary_path; other matching events retain immediate delivery.
+	DeliveryPolicy interface{} `json:"delivery_policy,omitempty" path:"delivery_policy,omitempty" url:"delivery_policy,omitempty"`
+	// Event Target create date/time.
+	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	// Event Target update date/time.
+	UpdatedAt *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -53,40 +63,59 @@ func (u EventTargetTargetTypeEnum) Enum() map[string]EventTargetTargetTypeEnum {
 
 // EventTargetListParams contains the request parameters for GET /event_targets.
 type EventTargetListParams struct {
+	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `name`, `enabled` or `workspace_id`.
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	// If set, return records where the specified field is equal to the supplied value. Valid fields are `enabled`, `target_type` or `workspace_id`. Valid field combinations are `[ enabled, target_type ]`, `[ workspace_id, enabled ]` or `[ workspace_id, enabled, target_type ]`.
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 
 // EventTargetFindParams contains the request parameters for GET /event_targets/{id}.
 type EventTargetFindParams struct {
+	// Event Target ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // EventTargetCreateParams contains the request parameters for POST /event_targets.
 type EventTargetCreateParams struct {
-	Name                 string                    `url:"name" json:"name" path:"name"`
-	WorkspaceId          int64                     `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
-	ApplyToAllWorkspaces *bool                     `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
-	Enabled              *bool                     `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
-	Config               interface{}               `url:"config" json:"config" path:"config"`
-	DeliveryPolicy       interface{}               `url:"delivery_policy,omitempty" json:"delivery_policy,omitempty" path:"delivery_policy"`
-	TargetType           EventTargetTargetTypeEnum `url:"target_type" json:"target_type" path:"target_type"`
+	// Event Target name. Required.
+	Name string `url:"name" json:"name" path:"name"`
+	// Workspace ID. 0 means the default workspace or site-wide.
+	WorkspaceId int64 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
+	// If true, this default-workspace target can receive events from all workspaces.
+	ApplyToAllWorkspaces *bool `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
+	// Whether this Event Target can receive events.
+	Enabled *bool `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
+	// Event Target configuration. Folder targets accept path and format (json or csv). Required.
+	Config interface{} `url:"config" json:"config" path:"config"`
+	// Event Target delivery policy. Email and folder targets support batch_interval in seconds, between 600 and 86400. Slack and Teams support delivery_mode (immediate or subfolder_summary), summary_path (empty string means root), and summary_delay (15–300 seconds, default 60). The summary applies to matching file activity under summary_path; other matching events retain immediate delivery.
+	DeliveryPolicy interface{} `url:"delivery_policy,omitempty" json:"delivery_policy,omitempty" path:"delivery_policy"`
+	// Event Target type. Values: email, webhook, slack_webhook, teams_webhook, amazon_sns, google_pubsub, folder. Required.
+	TargetType EventTargetTargetTypeEnum `url:"target_type" json:"target_type" path:"target_type"`
 }
 
 // EventTargetUpdateParams contains the request parameters for PATCH /event_targets/{id}.
 type EventTargetUpdateParams struct {
-	Id                   int64       `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	Name                 string      `url:"name,omitempty" json:"name,omitempty" path:"name"`
-	WorkspaceId          int64       `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
-	ApplyToAllWorkspaces *bool       `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
-	Enabled              *bool       `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
-	Config               interface{} `url:"config,omitempty" json:"config,omitempty" path:"config"`
-	DeliveryPolicy       interface{} `url:"delivery_policy,omitempty" json:"delivery_policy,omitempty" path:"delivery_policy"`
+	// Event Target ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// Event Target name.
+	Name string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	// Workspace ID. 0 means the default workspace or site-wide.
+	WorkspaceId int64 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
+	// If true, this default-workspace target can receive events from all workspaces.
+	ApplyToAllWorkspaces *bool `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
+	// Whether this Event Target can receive events.
+	Enabled *bool `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
+	// Event Target configuration. Folder targets accept path and format (json or csv).
+	Config interface{} `url:"config,omitempty" json:"config,omitempty" path:"config"`
+	// Event Target delivery policy. Email and folder targets support batch_interval in seconds, between 600 and 86400. Slack and Teams support delivery_mode (immediate or subfolder_summary), summary_path (empty string means root), and summary_delay (15–300 seconds, default 60). The summary applies to matching file activity under summary_path; other matching events retain immediate delivery.
+	DeliveryPolicy interface{} `url:"delivery_policy,omitempty" json:"delivery_policy,omitempty" path:"delivery_policy"`
 }
 
 // EventTargetDeleteParams contains the request parameters for DELETE /event_targets/{id}.
 type EventTargetDeleteParams struct {
+	// Event Target ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 

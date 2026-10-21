@@ -9,15 +9,24 @@ import (
 
 // BandwidthSnapshot is a Files.com API resource.
 type BandwidthSnapshot struct {
-	Id                int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	BytesReceived     int64      `json:"bytes_received,omitempty" path:"bytes_received,omitempty" url:"bytes_received,omitempty"`
-	BytesSent         int64      `json:"bytes_sent,omitempty" path:"bytes_sent,omitempty" url:"bytes_sent,omitempty"`
-	SyncBytesReceived int64      `json:"sync_bytes_received,omitempty" path:"sync_bytes_received,omitempty" url:"sync_bytes_received,omitempty"`
-	SyncBytesSent     int64      `json:"sync_bytes_sent,omitempty" path:"sync_bytes_sent,omitempty" url:"sync_bytes_sent,omitempty"`
-	RequestsGet       int64      `json:"requests_get,omitempty" path:"requests_get,omitempty" url:"requests_get,omitempty"`
-	RequestsPut       int64      `json:"requests_put,omitempty" path:"requests_put,omitempty" url:"requests_put,omitempty"`
-	RequestsOther     int64      `json:"requests_other,omitempty" path:"requests_other,omitempty" url:"requests_other,omitempty"`
-	LoggedAt          *time.Time `json:"logged_at,omitempty" path:"logged_at,omitempty" url:"logged_at,omitempty"`
+	// Site bandwidth ID.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Site bandwidth report bytes received.
+	BytesReceived int64 `json:"bytes_received,omitempty" path:"bytes_received,omitempty" url:"bytes_received,omitempty"`
+	// Site bandwidth report bytes sent.
+	BytesSent int64 `json:"bytes_sent,omitempty" path:"bytes_sent,omitempty" url:"bytes_sent,omitempty"`
+	// Site sync bandwidth report bytes received.
+	SyncBytesReceived int64 `json:"sync_bytes_received,omitempty" path:"sync_bytes_received,omitempty" url:"sync_bytes_received,omitempty"`
+	// Site sync bandwidth report bytes sent.
+	SyncBytesSent int64 `json:"sync_bytes_sent,omitempty" path:"sync_bytes_sent,omitempty" url:"sync_bytes_sent,omitempty"`
+	// Site bandwidth report get requests.
+	RequestsGet int64 `json:"requests_get,omitempty" path:"requests_get,omitempty" url:"requests_get,omitempty"`
+	// Site bandwidth report put requests.
+	RequestsPut int64 `json:"requests_put,omitempty" path:"requests_put,omitempty" url:"requests_put,omitempty"`
+	// Site bandwidth report other requests.
+	RequestsOther int64 `json:"requests_other,omitempty" path:"requests_other,omitempty" url:"requests_other,omitempty"`
+	// Time the site bandwidth report was logged.
+	LoggedAt *time.Time `json:"logged_at,omitempty" path:"logged_at,omitempty" url:"logged_at,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -30,12 +39,19 @@ type BandwidthSnapshotCollection []BandwidthSnapshot
 
 // BandwidthSnapshotListParams contains the request parameters for GET /bandwidth_snapshots.
 type BandwidthSnapshotListParams struct {
-	SortBy     interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter     interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
-	FilterGt   interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `logged_at`.
+	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	// If set, return records where the specified field is equal to the supplied value. Valid fields are `logged_at`.
+	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	// If set, return records where the specified field is greater than the supplied value. Valid fields are `logged_at`.
+	FilterGt interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	// If set, return records where the specified field is greater than or equal the supplied value. Valid fields are `logged_at`.
 	FilterGteq interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterLt   interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	// If set, return records where the specified field is less than the supplied value. Valid fields are `logged_at`.
+	FilterLt interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	// If set, return records where the specified field is less than or equal the supplied value. Valid fields are `logged_at`.
 	FilterLteq interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 

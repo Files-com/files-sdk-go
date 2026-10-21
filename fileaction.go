@@ -8,8 +8,10 @@ import (
 
 // FileAction is a Files.com API resource.
 type FileAction struct {
-	Status          string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
-	FileMigrationId int64  `json:"file_migration_id,omitempty" path:"file_migration_id,omitempty" url:"file_migration_id,omitempty"`
+	// Status of file operation.
+	Status string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	// If status is pending, this is the id of the File Migration to check for status updates. Delete actions include it whenever the deletion runs as a File Migration, including while it is processing.
+	FileMigrationId int64 `json:"file_migration_id,omitempty" path:"file_migration_id,omitempty" url:"file_migration_id,omitempty"`
 }
 
 // Identifier no path or id

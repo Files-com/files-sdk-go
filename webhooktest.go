@@ -8,21 +8,36 @@ import (
 
 // WebhookTest is a Files.com API resource.
 type WebhookTest struct {
-	Code            int64       `json:"code,omitempty" path:"code,omitempty" url:"code,omitempty"`
-	Message         string      `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
-	Status          string      `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
-	Data            Auto        `json:"data,omitempty" path:"data,omitempty" url:"data,omitempty"`
-	Success         *bool       `json:"success,omitempty" path:"success,omitempty" url:"success,omitempty"`
-	Url             string      `json:"url,omitempty" path:"url,omitempty" url:"url,omitempty"`
-	Method          string      `json:"method,omitempty" path:"method,omitempty" url:"method,omitempty"`
-	Encoding        string      `json:"encoding,omitempty" path:"encoding,omitempty" url:"encoding,omitempty"`
-	Headers         interface{} `json:"headers,omitempty" path:"headers,omitempty" url:"headers,omitempty"`
-	Body            interface{} `json:"body,omitempty" path:"body,omitempty" url:"body,omitempty"`
-	RawBody         string      `json:"raw_body,omitempty" path:"raw_body,omitempty" url:"raw_body,omitempty"`
-	FileAsBody      *bool       `json:"file_as_body,omitempty" path:"file_as_body,omitempty" url:"file_as_body,omitempty"`
-	FileFormField   string      `json:"file_form_field,omitempty" path:"file_form_field,omitempty" url:"file_form_field,omitempty"`
-	Action          string      `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
-	UseDedicatedIps *bool       `json:"use_dedicated_ips,omitempty" path:"use_dedicated_ips,omitempty" url:"use_dedicated_ips,omitempty"`
+	// Status HTTP code.
+	Code int64 `json:"code,omitempty" path:"code,omitempty" url:"code,omitempty"`
+	// Error message.
+	Message string `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
+	// Status message.
+	Status string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	// Additional data.
+	Data Auto `json:"data,omitempty" path:"data,omitempty" url:"data,omitempty"`
+	// The success status of the webhook test.
+	Success *bool `json:"success,omitempty" path:"success,omitempty" url:"success,omitempty"`
+	// URL for testing the webhook.
+	Url string `json:"url,omitempty" path:"url,omitempty" url:"url,omitempty"`
+	// HTTP method(GET or POST).
+	Method string `json:"method,omitempty" path:"method,omitempty" url:"method,omitempty"`
+	// HTTP encoding method. Can be JSON, XML, or RAW (form data).
+	Encoding string `json:"encoding,omitempty" path:"encoding,omitempty" url:"encoding,omitempty"`
+	// Additional request headers.
+	Headers interface{} `json:"headers,omitempty" path:"headers,omitempty" url:"headers,omitempty"`
+	// Additional body parameters.
+	Body interface{} `json:"body,omitempty" path:"body,omitempty" url:"body,omitempty"`
+	// raw body text.
+	RawBody string `json:"raw_body,omitempty" path:"raw_body,omitempty" url:"raw_body,omitempty"`
+	// Send the file data as the request body?
+	FileAsBody *bool `json:"file_as_body,omitempty" path:"file_as_body,omitempty" url:"file_as_body,omitempty"`
+	// Send the file data as a named parameter in the request POST body.
+	FileFormField string `json:"file_form_field,omitempty" path:"file_form_field,omitempty" url:"file_form_field,omitempty"`
+	// action for test body.
+	Action string `json:"action,omitempty" path:"action,omitempty" url:"action,omitempty"`
+	// Use dedicated IPs for sending the webhook?
+	UseDedicatedIps *bool `json:"use_dedicated_ips,omitempty" path:"use_dedicated_ips,omitempty" url:"use_dedicated_ips,omitempty"`
 }
 
 // Identifier no path or id
@@ -32,16 +47,26 @@ type WebhookTestCollection []WebhookTest
 
 // WebhookTestCreateParams contains the request parameters for POST /webhook_tests.
 type WebhookTestCreateParams struct {
-	Url             string      `url:"url" json:"url" path:"url"`
-	Method          string      `url:"method,omitempty" json:"method,omitempty" path:"method"`
-	Encoding        string      `url:"encoding,omitempty" json:"encoding,omitempty" path:"encoding"`
-	Headers         interface{} `url:"headers,omitempty" json:"headers,omitempty" path:"headers"`
-	Body            interface{} `url:"body,omitempty" json:"body,omitempty" path:"body"`
-	RawBody         string      `url:"raw_body,omitempty" json:"raw_body,omitempty" path:"raw_body"`
-	FileAsBody      *bool       `url:"file_as_body,omitempty" json:"file_as_body,omitempty" path:"file_as_body"`
-	FileFormField   string      `url:"file_form_field,omitempty" json:"file_form_field,omitempty" path:"file_form_field"`
-	Action          string      `url:"action,omitempty" json:"action,omitempty" path:"action"`
-	UseDedicatedIps *bool       `url:"use_dedicated_ips,omitempty" json:"use_dedicated_ips,omitempty" path:"use_dedicated_ips"`
+	// URL for testing the webhook. Required.
+	Url string `url:"url" json:"url" path:"url"`
+	// HTTP method(GET or POST).
+	Method string `url:"method,omitempty" json:"method,omitempty" path:"method"`
+	// HTTP encoding method. Can be JSON, XML, or RAW (form data).
+	Encoding string `url:"encoding,omitempty" json:"encoding,omitempty" path:"encoding"`
+	// Additional request headers.
+	Headers interface{} `url:"headers,omitempty" json:"headers,omitempty" path:"headers"`
+	// Additional body parameters.
+	Body interface{} `url:"body,omitempty" json:"body,omitempty" path:"body"`
+	// raw body text.
+	RawBody string `url:"raw_body,omitempty" json:"raw_body,omitempty" path:"raw_body"`
+	// Send the file data as the request body?
+	FileAsBody *bool `url:"file_as_body,omitempty" json:"file_as_body,omitempty" path:"file_as_body"`
+	// Send the file data as a named parameter in the request POST body.
+	FileFormField string `url:"file_form_field,omitempty" json:"file_form_field,omitempty" path:"file_form_field"`
+	// action for test body.
+	Action string `url:"action,omitempty" json:"action,omitempty" path:"action"`
+	// Use dedicated IPs for sending the webhook?
+	UseDedicatedIps *bool `url:"use_dedicated_ips,omitempty" json:"use_dedicated_ips,omitempty" path:"use_dedicated_ips"`
 }
 
 // UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.

@@ -8,9 +8,12 @@ import (
 
 // UsageByTopLevelDir is a Files.com API resource.
 type UsageByTopLevelDir struct {
-	Dir   string `json:"dir,omitempty" path:"dir,omitempty" url:"dir,omitempty"`
-	Size  int64  `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
-	Count int64  `json:"count,omitempty" path:"count,omitempty" url:"count,omitempty"`
+	// Directory name.
+	Dir string `json:"dir,omitempty" path:"dir,omitempty" url:"dir,omitempty"`
+	// Usage.
+	Size int64 `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
+	// File count.
+	Count int64 `json:"count,omitempty" path:"count,omitempty" url:"count,omitempty"`
 }
 
 // Identifier no path or id

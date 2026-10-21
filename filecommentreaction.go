@@ -8,10 +8,14 @@ import (
 
 // FileCommentReaction is a Files.com API resource.
 type FileCommentReaction struct {
-	Id            int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Emoji         string `json:"emoji,omitempty" path:"emoji,omitempty" url:"emoji,omitempty"`
-	UserId        int64  `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
-	FileCommentId int64  `json:"file_comment_id,omitempty" path:"file_comment_id,omitempty" url:"file_comment_id,omitempty"`
+	// Reaction ID.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Emoji used in the reaction.
+	Emoji string `json:"emoji,omitempty" path:"emoji,omitempty" url:"emoji,omitempty"`
+	// User ID. Provide a value of `0` to operate the current session's user.
+	UserId int64 `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	// ID of file comment to attach reaction to.
+	FileCommentId int64 `json:"file_comment_id,omitempty" path:"file_comment_id,omitempty" url:"file_comment_id,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -24,13 +28,17 @@ type FileCommentReactionCollection []FileCommentReaction
 
 // FileCommentReactionCreateParams contains the request parameters for POST /file_comment_reactions.
 type FileCommentReactionCreateParams struct {
-	UserId        int64  `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
-	FileCommentId int64  `url:"file_comment_id" json:"file_comment_id" path:"file_comment_id"`
-	Emoji         string `url:"emoji" json:"emoji" path:"emoji"`
+	// User ID. Provide a value of `0` to operate the current session's user.
+	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	// ID of file comment to attach reaction to. Required.
+	FileCommentId int64 `url:"file_comment_id" json:"file_comment_id" path:"file_comment_id"`
+	// Emoji to react with. Required.
+	Emoji string `url:"emoji" json:"emoji" path:"emoji"`
 }
 
 // FileCommentReactionDeleteParams contains the request parameters for DELETE /file_comment_reactions/{id}.
 type FileCommentReactionDeleteParams struct {
+	// File Comment Reaction ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 

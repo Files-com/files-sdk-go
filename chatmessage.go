@@ -9,9 +9,13 @@ import (
 
 // ChatMessage is a Files.com API resource.
 type ChatMessage struct {
-	Id        int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Role      string     `json:"role,omitempty" path:"role,omitempty" url:"role,omitempty"`
-	Content   string     `json:"content,omitempty" path:"content,omitempty" url:"content,omitempty"`
+	// Chat Message ID.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Message role.
+	Role string `json:"role,omitempty" path:"role,omitempty" url:"role,omitempty"`
+	// Message content.
+	Content string `json:"content,omitempty" path:"content,omitempty" url:"content,omitempty"`
+	// Message creation date/time.
 	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 

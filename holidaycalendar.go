@@ -9,11 +9,16 @@ import (
 
 // HolidayCalendar is a Files.com API resource.
 type HolidayCalendar struct {
-	Id         int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Name       string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	// Holiday Calendar ID. Set a scheduled resource's `holiday_region` to `custom_` followed by this ID to make it skip the days in this calendar.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Holiday Calendar name.
+	Name string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	// Holiday rules for the calendar.
 	Definition interface{} `json:"definition,omitempty" path:"definition,omitempty" url:"definition,omitempty"`
-	CreatedAt  *time.Time  `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	UpdatedAt  *time.Time  `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
+	// Creation time.
+	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	// Last update time.
+	UpdatedAt *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -26,30 +31,39 @@ type HolidayCalendarCollection []HolidayCalendar
 
 // HolidayCalendarListParams contains the request parameters for GET /holiday_calendars.
 type HolidayCalendarListParams struct {
+	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are .
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 
 // HolidayCalendarFindParams contains the request parameters for GET /holiday_calendars/{id}.
 type HolidayCalendarFindParams struct {
+	// Holiday Calendar ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // HolidayCalendarCreateParams contains the request parameters for POST /holiday_calendars.
 type HolidayCalendarCreateParams struct {
+	// Holiday rules for the calendar. Required.
 	Definition interface{} `url:"definition" json:"definition" path:"definition"`
-	Name       string      `url:"name" json:"name" path:"name"`
+	// Holiday Calendar name. Required.
+	Name string `url:"name" json:"name" path:"name"`
 }
 
 // HolidayCalendarUpdateParams contains the request parameters for PATCH /holiday_calendars/{id}.
 type HolidayCalendarUpdateParams struct {
-	Id         int64       `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// Holiday Calendar ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// Holiday rules for the calendar.
 	Definition interface{} `url:"definition,omitempty" json:"definition,omitempty" path:"definition"`
-	Name       string      `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	// Holiday Calendar name.
+	Name string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 }
 
 // HolidayCalendarDeleteParams contains the request parameters for DELETE /holiday_calendars/{id}.
 type HolidayCalendarDeleteParams struct {
+	// Holiday Calendar ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 

@@ -9,21 +9,36 @@ import (
 
 // ActionNotificationExport is a Files.com API resource.
 type ActionNotificationExport struct {
-	Id                 int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	WorkspaceId        int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
-	ExportVersion      string     `json:"export_version,omitempty" path:"export_version,omitempty" url:"export_version,omitempty"`
-	StartAt            *time.Time `json:"start_at,omitempty" path:"start_at,omitempty" url:"start_at,omitempty"`
-	EndAt              *time.Time `json:"end_at,omitempty" path:"end_at,omitempty" url:"end_at,omitempty"`
-	Status             string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
-	QueryPath          string     `json:"query_path,omitempty" path:"query_path,omitempty" url:"query_path,omitempty"`
-	QueryFolder        string     `json:"query_folder,omitempty" path:"query_folder,omitempty" url:"query_folder,omitempty"`
-	QueryMessage       string     `json:"query_message,omitempty" path:"query_message,omitempty" url:"query_message,omitempty"`
-	QueryRequestMethod string     `json:"query_request_method,omitempty" path:"query_request_method,omitempty" url:"query_request_method,omitempty"`
-	QueryRequestUrl    string     `json:"query_request_url,omitempty" path:"query_request_url,omitempty" url:"query_request_url,omitempty"`
-	QueryStatus        string     `json:"query_status,omitempty" path:"query_status,omitempty" url:"query_status,omitempty"`
-	QuerySuccess       *bool      `json:"query_success,omitempty" path:"query_success,omitempty" url:"query_success,omitempty"`
-	ResultsUrl         string     `json:"results_url,omitempty" path:"results_url,omitempty" url:"results_url,omitempty"`
-	UserId             int64      `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	// History Export ID.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Workspace whose logs are exported. Set to `0` for the default workspace. A null value means a site-wide export.
+	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	// Version of the underlying records for the export.
+	ExportVersion string `json:"export_version,omitempty" path:"export_version,omitempty" url:"export_version,omitempty"`
+	// Start date/time of export range.
+	StartAt *time.Time `json:"start_at,omitempty" path:"start_at,omitempty" url:"start_at,omitempty"`
+	// End date/time of export range.
+	EndAt *time.Time `json:"end_at,omitempty" path:"end_at,omitempty" url:"end_at,omitempty"`
+	// Status of export. Valid values: `building`, `ready`, or `failed`.
+	Status string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	// Return notifications that were triggered by actions on this specific path.
+	QueryPath string `json:"query_path,omitempty" path:"query_path,omitempty" url:"query_path,omitempty"`
+	// Return notifications that were triggered by actions in this folder.
+	QueryFolder string `json:"query_folder,omitempty" path:"query_folder,omitempty" url:"query_folder,omitempty"`
+	// Error message associated with the request, if any.
+	QueryMessage string `json:"query_message,omitempty" path:"query_message,omitempty" url:"query_message,omitempty"`
+	// The HTTP request method used by the webhook.
+	QueryRequestMethod string `json:"query_request_method,omitempty" path:"query_request_method,omitempty" url:"query_request_method,omitempty"`
+	// The target webhook URL.
+	QueryRequestUrl string `json:"query_request_url,omitempty" path:"query_request_url,omitempty" url:"query_request_url,omitempty"`
+	// The HTTP status returned from the server in response to the webhook request.
+	QueryStatus string `json:"query_status,omitempty" path:"query_status,omitempty" url:"query_status,omitempty"`
+	// true if the webhook request succeeded (i.e. returned a 200 or 204 response status). false otherwise.
+	QuerySuccess *bool `json:"query_success,omitempty" path:"query_success,omitempty" url:"query_success,omitempty"`
+	// If `status` is `ready`, this will be a URL where all the results can be downloaded at once as a CSV.
+	ResultsUrl string `json:"results_url,omitempty" path:"results_url,omitempty" url:"results_url,omitempty"`
+	// User ID. Provide a value of `0` to operate the current session's user.
+	UserId int64 `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -36,22 +51,34 @@ type ActionNotificationExportCollection []ActionNotificationExport
 
 // ActionNotificationExportFindParams contains the request parameters for GET /action_notification_exports/{id}.
 type ActionNotificationExportFindParams struct {
+	// Action Notification Export ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // ActionNotificationExportCreateParams contains the request parameters for POST /action_notification_exports.
 type ActionNotificationExportCreateParams struct {
-	UserId             int64      `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
-	WorkspaceId        int64      `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
-	StartAt            *time.Time `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
-	EndAt              *time.Time `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
-	QueryMessage       string     `url:"query_message,omitempty" json:"query_message,omitempty" path:"query_message"`
-	QueryRequestMethod string     `url:"query_request_method,omitempty" json:"query_request_method,omitempty" path:"query_request_method"`
-	QueryRequestUrl    string     `url:"query_request_url,omitempty" json:"query_request_url,omitempty" path:"query_request_url"`
-	QueryStatus        string     `url:"query_status,omitempty" json:"query_status,omitempty" path:"query_status"`
-	QuerySuccess       *bool      `url:"query_success,omitempty" json:"query_success,omitempty" path:"query_success"`
-	QueryPath          string     `url:"query_path,omitempty" json:"query_path,omitempty" path:"query_path"`
-	QueryFolder        string     `url:"query_folder,omitempty" json:"query_folder,omitempty" path:"query_folder"`
+	// User ID. Provide a value of `0` to operate the current session's user.
+	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
+	// Workspace whose logs are exported. Set to `0` for the default workspace. A null value means a site-wide export.
+	WorkspaceId int64 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
+	// Start date/time of export range.
+	StartAt *time.Time `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
+	// End date/time of export range.
+	EndAt *time.Time `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
+	// Error message associated with the request, if any.
+	QueryMessage string `url:"query_message,omitempty" json:"query_message,omitempty" path:"query_message"`
+	// The HTTP request method used by the webhook.
+	QueryRequestMethod string `url:"query_request_method,omitempty" json:"query_request_method,omitempty" path:"query_request_method"`
+	// The target webhook URL.
+	QueryRequestUrl string `url:"query_request_url,omitempty" json:"query_request_url,omitempty" path:"query_request_url"`
+	// The HTTP status returned from the server in response to the webhook request.
+	QueryStatus string `url:"query_status,omitempty" json:"query_status,omitempty" path:"query_status"`
+	// true if the webhook request succeeded (i.e. returned a 200 or 204 response status). false otherwise.
+	QuerySuccess *bool `url:"query_success,omitempty" json:"query_success,omitempty" path:"query_success"`
+	// Return notifications that were triggered by actions on this specific path.
+	QueryPath string `url:"query_path,omitempty" json:"query_path,omitempty" path:"query_path"`
+	// Return notifications that were triggered by actions in this folder.
+	QueryFolder string `url:"query_folder,omitempty" json:"query_folder,omitempty" path:"query_folder"`
 }
 
 // UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.

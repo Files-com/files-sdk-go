@@ -8,7 +8,9 @@ import (
 
 // HolidayRegion is a Files.com API resource.
 type HolidayRegion struct {
+	// The code representing a region.
 	Code string `json:"code,omitempty" path:"code,omitempty" url:"code,omitempty"`
+	// The name of the region.
 	Name string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 }
 
@@ -19,6 +21,7 @@ type HolidayRegionCollection []HolidayRegion
 
 // HolidayRegionGetSupportedParams contains the request parameters for GET /holiday_regions/supported.
 type HolidayRegionGetSupportedParams struct {
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 

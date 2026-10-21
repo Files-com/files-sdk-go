@@ -9,8 +9,11 @@ import (
 
 // AgentNodeConnection is a Files.com API resource.
 type AgentNodeConnection struct {
-	Mode       string     `json:"mode,omitempty" path:"mode,omitempty" url:"mode,omitempty"`
-	Status     string     `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	// How the Agent process uses this proxy connection.
+	Mode string `json:"mode,omitempty" path:"mode,omitempty" url:"mode,omitempty"`
+	// Whether this connection was observed recently and has not disconnected.
+	Status string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	// Most recent successful observation for this connection.
 	LastSeenAt *time.Time `json:"last_seen_at,omitempty" path:"last_seen_at,omitempty" url:"last_seen_at,omitempty"`
 }
 

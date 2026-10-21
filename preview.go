@@ -8,11 +8,16 @@ import (
 
 // Preview is a Files.com API resource.
 type Preview struct {
-	Id          int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Status      string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	// Preview ID.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Preview status. Can be invalid, not_generated, generating, complete, or file_too_large.
+	Status string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	// Link to download preview.
 	DownloadUri string `json:"download_uri,omitempty" path:"download_uri,omitempty" url:"download_uri,omitempty"`
-	Type        string `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
-	Size        string `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
+	// Preview type. Can be image, pdf, pdf_native, video, audio, or text.
+	Type string `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
+	// Preview size.
+	Size string `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
 }
 
 // Identifier returns the resource ID.

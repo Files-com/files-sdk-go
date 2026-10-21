@@ -8,8 +8,10 @@ import (
 
 // BundlePath is a Files.com API resource.
 type BundlePath struct {
-	Recursive *bool  `json:"recursive,omitempty" path:"recursive,omitempty" url:"recursive,omitempty"`
-	Path      string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	// Allow access to subfolders content?
+	Recursive *bool `json:"recursive,omitempty" path:"recursive,omitempty" url:"recursive,omitempty"`
+	// The path to the resource relative to filesystem. This must be slash-delimited, but it must neither start nor end with a slash. Maximum of 5000 characters.
+	Path string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 }
 
 // Identifier returns the resource path.

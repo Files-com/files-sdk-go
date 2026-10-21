@@ -8,8 +8,10 @@ import (
 
 // Image is a Files.com API resource.
 type Image struct {
+	// Image name.
 	Name string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
-	Uri  string `json:"uri,omitempty" path:"uri,omitempty" url:"uri,omitempty"`
+	// Image URI.
+	Uri string `json:"uri,omitempty" path:"uri,omitempty" url:"uri,omitempty"`
 }
 
 // Identifier no path or id

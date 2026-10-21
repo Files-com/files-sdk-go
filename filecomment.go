@@ -8,10 +8,14 @@ import (
 
 // FileComment is a Files.com API resource.
 type FileComment struct {
-	Id        int64                 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Body      string                `json:"body,omitempty" path:"body,omitempty" url:"body,omitempty"`
+	// File Comment ID.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Comment body.
+	Body string `json:"body,omitempty" path:"body,omitempty" url:"body,omitempty"`
+	// Reactions to this comment.
 	Reactions []FileCommentReaction `json:"reactions,omitempty" path:"reactions,omitempty" url:"reactions,omitempty"`
-	Path      string                `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	// File path.
+	Path string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -24,24 +28,31 @@ type FileCommentCollection []FileComment
 
 // FileCommentListForParams contains the request parameters for GET /file_comments/files/{path}.
 type FileCommentListForParams struct {
+	// Path to operate on. Required; sent in the request path.
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 
 // FileCommentCreateParams contains the request parameters for POST /file_comments.
 type FileCommentCreateParams struct {
+	// Comment body. Required.
 	Body string `url:"body" json:"body" path:"body"`
+	// File path. Required.
 	Path string `url:"path" json:"path" path:"path"`
 }
 
 // FileCommentUpdateParams contains the request parameters for PATCH /file_comments/{id}.
 type FileCommentUpdateParams struct {
-	Id   int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// File Comment ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// Comment body. Required.
 	Body string `url:"body" json:"body" path:"body"`
 }
 
 // FileCommentDeleteParams contains the request parameters for DELETE /file_comments/{id}.
 type FileCommentDeleteParams struct {
+	// File Comment ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 

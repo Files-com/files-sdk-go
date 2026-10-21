@@ -9,19 +9,32 @@ import (
 
 // InvoiceLineItem is a Files.com API resource.
 type InvoiceLineItem struct {
-	Id                    int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Amount                string     `json:"amount,omitempty" path:"amount,omitempty" url:"amount,omitempty"`
-	CreatedAt             *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	Description           string     `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
-	Type                  string     `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
-	ServiceEndAt          *time.Time `json:"service_end_at,omitempty" path:"service_end_at,omitempty" url:"service_end_at,omitempty"`
-	ServiceStartAt        *time.Time `json:"service_start_at,omitempty" path:"service_start_at,omitempty" url:"service_start_at,omitempty"`
-	Plan                  string     `json:"plan,omitempty" path:"plan,omitempty" url:"plan,omitempty"`
-	Site                  string     `json:"site,omitempty" path:"site,omitempty" url:"site,omitempty"`
-	PrepaidBytes          int64      `json:"prepaid_bytes,omitempty" path:"prepaid_bytes,omitempty" url:"prepaid_bytes,omitempty"`
-	PrepaidBytesExpireAt  *time.Time `json:"prepaid_bytes_expire_at,omitempty" path:"prepaid_bytes_expire_at,omitempty" url:"prepaid_bytes_expire_at,omitempty"`
-	PrepaidBytesUsed      int64      `json:"prepaid_bytes_used,omitempty" path:"prepaid_bytes_used,omitempty" url:"prepaid_bytes_used,omitempty"`
-	PrepaidBytesAvailable int64      `json:"prepaid_bytes_available,omitempty" path:"prepaid_bytes_available,omitempty" url:"prepaid_bytes_available,omitempty"`
+	// Invoice Line item Id.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Invoice line item amount.
+	Amount string `json:"amount,omitempty" path:"amount,omitempty" url:"amount,omitempty"`
+	// Invoice line item created at date/time.
+	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	// Invoice line item description.
+	Description string `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
+	// Invoice line item type.
+	Type string `json:"type,omitempty" path:"type,omitempty" url:"type,omitempty"`
+	// Invoice line item service end date/time.
+	ServiceEndAt *time.Time `json:"service_end_at,omitempty" path:"service_end_at,omitempty" url:"service_end_at,omitempty"`
+	// Invoice line item service start date/time.
+	ServiceStartAt *time.Time `json:"service_start_at,omitempty" path:"service_start_at,omitempty" url:"service_start_at,omitempty"`
+	// Plan name.
+	Plan string `json:"plan,omitempty" path:"plan,omitempty" url:"plan,omitempty"`
+	// Site name.
+	Site string `json:"site,omitempty" path:"site,omitempty" url:"site,omitempty"`
+	// Prepaid bytes purchased for this invoice line item.
+	PrepaidBytes int64 `json:"prepaid_bytes,omitempty" path:"prepaid_bytes,omitempty" url:"prepaid_bytes,omitempty"`
+	// When the prepaid bytes expire.
+	PrepaidBytesExpireAt *time.Time `json:"prepaid_bytes_expire_at,omitempty" path:"prepaid_bytes_expire_at,omitempty" url:"prepaid_bytes_expire_at,omitempty"`
+	// Total prepaid bytes used for this invoice line item.
+	PrepaidBytesUsed int64 `json:"prepaid_bytes_used,omitempty" path:"prepaid_bytes_used,omitempty" url:"prepaid_bytes_used,omitempty"`
+	// Available prepaid bytes for this invoice line item.
+	PrepaidBytesAvailable int64 `json:"prepaid_bytes_available,omitempty" path:"prepaid_bytes_available,omitempty" url:"prepaid_bytes_available,omitempty"`
 }
 
 // Identifier returns the resource ID.

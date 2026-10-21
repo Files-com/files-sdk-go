@@ -9,9 +9,13 @@ import (
 
 // SiteSubdomainRedirect is a Files.com API resource.
 type SiteSubdomainRedirect struct {
-	Id        int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Subdomain string     `json:"subdomain,omitempty" path:"subdomain,omitempty" url:"subdomain,omitempty"`
+	// Site subdomain redirect ID.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Files.com subdomain that continues to route to the current site subdomain.
+	Subdomain string `json:"subdomain,omitempty" path:"subdomain,omitempty" url:"subdomain,omitempty"`
+	// When this redirect was created.
 	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	// When this redirect was last updated.
 	UpdatedAt *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
@@ -25,17 +29,21 @@ type SiteSubdomainRedirectCollection []SiteSubdomainRedirect
 
 // SiteSubdomainRedirectListParams contains the request parameters for GET /site_subdomain_redirects.
 type SiteSubdomainRedirectListParams struct {
+	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `id`.
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 
 // SiteSubdomainRedirectFindParams contains the request parameters for GET /site_subdomain_redirects/{id}.
 type SiteSubdomainRedirectFindParams struct {
+	// Site Subdomain Redirect ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // SiteSubdomainRedirectDeleteParams contains the request parameters for DELETE /site_subdomain_redirects/{id}.
 type SiteSubdomainRedirectDeleteParams struct {
+	// Site Subdomain Redirect ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 

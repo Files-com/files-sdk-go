@@ -12,16 +12,25 @@ import (
 
 // FileMigration is a Files.com API resource.
 type FileMigration struct {
-	Id             int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Path           string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
-	DestPath       string `json:"dest_path,omitempty" path:"dest_path,omitempty" url:"dest_path,omitempty"`
+	// File migration ID.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Source path. This must be slash-delimited, but it must neither start nor end with a slash. Maximum of 5000 characters.
+	Path string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	// Destination path.
+	DestPath string `json:"dest_path,omitempty" path:"dest_path,omitempty" url:"dest_path,omitempty"`
+	// Reason for the failure, if applicable.
 	FailureMessage string `json:"failure_message,omitempty" path:"failure_message,omitempty" url:"failure_message,omitempty"`
-	FilesMoved     int64  `json:"files_moved,omitempty" path:"files_moved,omitempty" url:"files_moved,omitempty"`
-	FilesTotal     int64  `json:"files_total,omitempty" path:"files_total,omitempty" url:"files_total,omitempty"`
-	Operation      string `json:"operation,omitempty" path:"operation,omitempty" url:"operation,omitempty"`
-	Region         string `json:"region,omitempty" path:"region,omitempty" url:"region,omitempty"`
-	Status         string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
-	LogUrl         string `json:"log_url,omitempty" path:"log_url,omitempty" url:"log_url,omitempty"`
+	// Number of files processed.
+	FilesMoved int64 `json:"files_moved,omitempty" path:"files_moved,omitempty" url:"files_moved,omitempty"`
+	FilesTotal int64 `json:"files_total,omitempty" path:"files_total,omitempty" url:"files_total,omitempty"`
+	// The type of operation.
+	Operation string `json:"operation,omitempty" path:"operation,omitempty" url:"operation,omitempty"`
+	// Region.
+	Region string `json:"region,omitempty" path:"region,omitempty" url:"region,omitempty"`
+	// Status.
+	Status string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	// Link to download the log file for this migration.
+	LogUrl string `json:"log_url,omitempty" path:"log_url,omitempty" url:"log_url,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -122,6 +131,7 @@ func (l FilesMigrationLogIter) Init() *FilesMigrationLogIter {
 
 // FileMigrationFindParams contains the request parameters for GET /file_migrations/{id}.
 type FileMigrationFindParams struct {
+	// File Migration ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 

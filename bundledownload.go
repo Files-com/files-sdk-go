@@ -10,10 +10,14 @@ import (
 // BundleDownload is a Files.com API resource.
 type BundleDownload struct {
 	BundleRegistration BundleRegistration `json:"bundle_registration,omitempty" path:"bundle_registration,omitempty" url:"bundle_registration,omitempty"`
-	DownloadMethod     string             `json:"download_method,omitempty" path:"download_method,omitempty" url:"download_method,omitempty"`
-	Path               string             `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
-	WorkspaceId        int64              `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
-	CreatedAt          *time.Time         `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	// Download method (file or full_zip).
+	DownloadMethod string `json:"download_method,omitempty" path:"download_method,omitempty" url:"download_method,omitempty"`
+	// Download path. This must be slash-delimited, but it must neither start nor end with a slash. Maximum of 5000 characters.
+	Path string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	// Workspace ID. `0` means the default workspace.
+	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	// Download date/time.
+	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 }
 
 // Identifier returns the resource path.
@@ -26,14 +30,23 @@ type BundleDownloadCollection []BundleDownload
 
 // BundleDownloadListParams contains the request parameters for GET /bundle_downloads.
 type BundleDownloadListParams struct {
-	SortBy               interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter               interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
-	FilterGt             interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
-	FilterGteq           interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
-	FilterLt             interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
-	FilterLteq           interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
-	BundleId             int64       `url:"bundle_id,omitempty" json:"bundle_id,omitempty" path:"bundle_id"`
-	BundleRegistrationId int64       `url:"bundle_registration_id,omitempty" json:"bundle_registration_id,omitempty" path:"bundle_registration_id"`
+	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `workspace_id` and `created_at`.
+	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	// If set, return records where the specified field is equal to the supplied value. Valid fields are `created_at`.
+	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	// If set, return records where the specified field is greater than the supplied value. Valid fields are `created_at`.
+	FilterGt interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
+	// If set, return records where the specified field is greater than or equal the supplied value. Valid fields are `created_at`.
+	FilterGteq interface{} `url:"filter_gteq,omitempty" json:"filter_gteq,omitempty" path:"filter_gteq"`
+	// If set, return records where the specified field is less than the supplied value. Valid fields are `created_at`.
+	FilterLt interface{} `url:"filter_lt,omitempty" json:"filter_lt,omitempty" path:"filter_lt"`
+	// If set, return records where the specified field is less than or equal the supplied value. Valid fields are `created_at`.
+	FilterLteq interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
+	// Bundle ID.
+	BundleId int64 `url:"bundle_id,omitempty" json:"bundle_id,omitempty" path:"bundle_id"`
+	// BundleRegistration ID.
+	BundleRegistrationId int64 `url:"bundle_registration_id,omitempty" json:"bundle_registration_id,omitempty" path:"bundle_registration_id"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 

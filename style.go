@@ -9,12 +9,18 @@ import (
 
 // Style is a Files.com API resource.
 type Style struct {
-	Id            int64     `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Path          string    `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
-	Logo          Image     `json:"logo,omitempty" path:"logo,omitempty" url:"logo,omitempty"`
-	LogoClickHref string    `json:"logo_click_href,omitempty" path:"logo_click_href,omitempty" url:"logo_click_href,omitempty"`
-	Thumbnail     Image     `json:"thumbnail,omitempty" path:"thumbnail,omitempty" url:"thumbnail,omitempty"`
-	File          io.Reader `json:"file,omitempty" path:"file,omitempty" url:"file,omitempty"`
+	// Style ID.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Folder path. This must be slash-delimited, but it must neither start nor end with a slash. Maximum of 5000 characters.
+	Path string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
+	// Logo.
+	Logo Image `json:"logo,omitempty" path:"logo,omitempty" url:"logo,omitempty"`
+	// URL to open when a public visitor clicks the logo.
+	LogoClickHref string `json:"logo_click_href,omitempty" path:"logo_click_href,omitempty" url:"logo_click_href,omitempty"`
+	// Logo thumbnail.
+	Thumbnail Image `json:"thumbnail,omitempty" path:"thumbnail,omitempty" url:"thumbnail,omitempty"`
+	// Logo for custom branding. Required when creating a new style.
+	File io.Reader `json:"file,omitempty" path:"file,omitempty" url:"file,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -27,20 +33,25 @@ type StyleCollection []Style
 
 // StyleFindParams contains the request parameters for GET /styles/{path}.
 type StyleFindParams struct {
+	// Style path. Required; sent in the request path.
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 }
 
 // StyleUpdateParams contains the request parameters for PATCH /styles/{path}.
 type StyleUpdateParams struct {
-	Path string    `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	// Style path. Required; sent in the request path.
+	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	// Logo for custom branding. Required when creating a new style.
 	File io.Writer `url:"file,omitempty" json:"file,omitempty" path:"file"`
 	// FileAttachment sends file content as file; see lib.JSONAttachment. Leave File nil when you set it.
 	FileAttachment *lib.JSONAttachment `json:"-" url:"-" path:"-" attachment:"file"`
-	LogoClickHref  string              `url:"logo_click_href,omitempty" json:"logo_click_href,omitempty" path:"logo_click_href"`
+	// URL to open when a public visitor clicks the logo.
+	LogoClickHref string `url:"logo_click_href,omitempty" json:"logo_click_href,omitempty" path:"logo_click_href"`
 }
 
 // StyleDeleteParams contains the request parameters for DELETE /styles/{path}.
 type StyleDeleteParams struct {
+	// Style path. Required; sent in the request path.
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 }
 

@@ -9,14 +9,22 @@ import (
 
 // EventChannel is a Files.com API resource.
 type EventChannel struct {
-	Id             int64      `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Name           string     `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
-	WorkspaceId    int64      `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
-	Description    string     `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
-	Enabled        *bool      `json:"enabled,omitempty" path:"enabled,omitempty" url:"enabled,omitempty"`
-	DefaultChannel *bool      `json:"default_channel,omitempty" path:"default_channel,omitempty" url:"default_channel,omitempty"`
-	CreatedAt      *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	UpdatedAt      *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
+	// Event Channel ID.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Event Channel name.
+	Name string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	// Workspace ID. 0 means the default workspace.
+	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	// Event Channel description.
+	Description string `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
+	// Whether this Event Channel can dispatch events.
+	Enabled *bool `json:"enabled,omitempty" path:"enabled,omitempty" url:"enabled,omitempty"`
+	// Whether this Event Channel is the default destination for newly published events.
+	DefaultChannel *bool `json:"default_channel,omitempty" path:"default_channel,omitempty" url:"default_channel,omitempty"`
+	// Event Channel create date/time.
+	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	// Event Channel update date/time.
+	UpdatedAt *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -29,37 +37,53 @@ type EventChannelCollection []EventChannel
 
 // EventChannelListParams contains the request parameters for GET /event_channels.
 type EventChannelListParams struct {
+	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `name`, `enabled`, `default_channel` or `workspace_id`.
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	// If set, return records where the specified field is equal to the supplied value. Valid fields are `enabled`, `default_channel` or `workspace_id`. Valid field combinations are `[ workspace_id, enabled ]` and `[ workspace_id, default_channel ]`.
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 
 // EventChannelFindParams contains the request parameters for GET /event_channels/{id}.
 type EventChannelFindParams struct {
+	// Event Channel ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // EventChannelCreateParams contains the request parameters for POST /event_channels.
 type EventChannelCreateParams struct {
-	Name           string `url:"name" json:"name" path:"name"`
-	WorkspaceId    int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
-	Description    string `url:"description,omitempty" json:"description,omitempty" path:"description"`
-	Enabled        *bool  `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
-	DefaultChannel *bool  `url:"default_channel,omitempty" json:"default_channel,omitempty" path:"default_channel"`
+	// Event Channel name. Required.
+	Name string `url:"name" json:"name" path:"name"`
+	// Workspace ID. 0 means the default workspace.
+	WorkspaceId int64 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
+	// Event Channel description.
+	Description string `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	// Whether this Event Channel can dispatch events.
+	Enabled *bool `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
+	// Whether this Event Channel is the default destination for newly published events.
+	DefaultChannel *bool `url:"default_channel,omitempty" json:"default_channel,omitempty" path:"default_channel"`
 }
 
 // EventChannelUpdateParams contains the request parameters for PATCH /event_channels/{id}.
 type EventChannelUpdateParams struct {
-	Id             int64  `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	Name           string `url:"name,omitempty" json:"name,omitempty" path:"name"`
-	WorkspaceId    int64  `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
-	Description    string `url:"description,omitempty" json:"description,omitempty" path:"description"`
-	Enabled        *bool  `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
-	DefaultChannel *bool  `url:"default_channel,omitempty" json:"default_channel,omitempty" path:"default_channel"`
+	// Event Channel ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// Event Channel name.
+	Name string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	// Workspace ID. 0 means the default workspace.
+	WorkspaceId int64 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
+	// Event Channel description.
+	Description string `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	// Whether this Event Channel can dispatch events.
+	Enabled *bool `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
+	// Whether this Event Channel is the default destination for newly published events.
+	DefaultChannel *bool `url:"default_channel,omitempty" json:"default_channel,omitempty" path:"default_channel"`
 }
 
 // EventChannelDeleteParams contains the request parameters for DELETE /event_channels/{id}.
 type EventChannelDeleteParams struct {
+	// Event Channel ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 

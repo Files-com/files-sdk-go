@@ -9,15 +9,24 @@ import (
 
 // AgentNode is a Files.com API resource.
 type AgentNode struct {
-	NodeId                  string              `json:"node_id,omitempty" path:"node_id,omitempty" url:"node_id,omitempty"`
-	Name                    string              `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
-	Hostname                string              `json:"hostname,omitempty" path:"hostname,omitempty" url:"hostname,omitempty"`
-	AvailabilityRole        string              `json:"availability_role,omitempty" path:"availability_role,omitempty" url:"availability_role,omitempty"`
-	Status                  string              `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
-	IsDefault               *bool               `json:"is_default,omitempty" path:"is_default,omitempty" url:"is_default,omitempty"`
-	DirectTransferAvailable *bool               `json:"direct_transfer_available,omitempty" path:"direct_transfer_available,omitempty" url:"direct_transfer_available,omitempty"`
-	LastSeenAt              *time.Time          `json:"last_seen_at,omitempty" path:"last_seen_at,omitempty" url:"last_seen_at,omitempty"`
-	Instances               []AgentNodeInstance `json:"instances,omitempty" path:"instances,omitempty" url:"instances,omitempty"`
+	// Stable Agent installation ID.
+	NodeId string `json:"node_id,omitempty" path:"node_id,omitempty" url:"node_id,omitempty"`
+	// Customer-configured Agent node name.
+	Name string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	// Hostname reported by the Agent.
+	Hostname string `json:"hostname,omitempty" path:"hostname,omitempty" url:"hostname,omitempty"`
+	// Configured traffic preference.
+	AvailabilityRole string `json:"availability_role,omitempty" path:"availability_role,omitempty" url:"availability_role,omitempty"`
+	// Whether this node currently has an available Agent instance.
+	Status string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	// Whether this node is the current default route for new unscoped work.
+	IsDefault *bool `json:"is_default,omitempty" path:"is_default,omitempty" url:"is_default,omitempty"`
+	// Whether the proxy recently validated a direct connection to this Agent node. False means direct transfers are enabled but not currently available; null means disabled or unsupported.
+	DirectTransferAvailable *bool `json:"direct_transfer_available,omitempty" path:"direct_transfer_available,omitempty" url:"direct_transfer_available,omitempty"`
+	// Most recent successful node observation.
+	LastSeenAt *time.Time `json:"last_seen_at,omitempty" path:"last_seen_at,omitempty" url:"last_seen_at,omitempty"`
+	// Current Agent processes for this node.
+	Instances []AgentNodeInstance `json:"instances,omitempty" path:"instances,omitempty" url:"instances,omitempty"`
 }
 
 // Identifier no path or id

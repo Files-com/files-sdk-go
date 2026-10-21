@@ -9,13 +9,20 @@ import (
 
 // AgentNodeInstance is a Files.com API resource.
 type AgentNodeInstance struct {
-	InstanceId   string                `json:"instance_id,omitempty" path:"instance_id,omitempty" url:"instance_id,omitempty"`
-	ProcessState string                `json:"process_state,omitempty" path:"process_state,omitempty" url:"process_state,omitempty"`
-	Status       string                `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
-	IsDefault    *bool                 `json:"is_default,omitempty" path:"is_default,omitempty" url:"is_default,omitempty"`
-	AgentVersion string                `json:"agent_version,omitempty" path:"agent_version,omitempty" url:"agent_version,omitempty"`
-	LastSeenAt   *time.Time            `json:"last_seen_at,omitempty" path:"last_seen_at,omitempty" url:"last_seen_at,omitempty"`
-	Connections  []AgentNodeConnection `json:"connections,omitempty" path:"connections,omitempty" url:"connections,omitempty"`
+	// Ephemeral ID for this running Agent process.
+	InstanceId string `json:"instance_id,omitempty" path:"instance_id,omitempty" url:"instance_id,omitempty"`
+	// Role of this process during an Agent update.
+	ProcessState string `json:"process_state,omitempty" path:"process_state,omitempty" url:"process_state,omitempty"`
+	// Whether this process has an available proxy connection.
+	Status string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
+	// Whether this process receives new unscoped work for its node.
+	IsDefault *bool `json:"is_default,omitempty" path:"is_default,omitempty" url:"is_default,omitempty"`
+	// Agent version reported by this process.
+	AgentVersion string `json:"agent_version,omitempty" path:"agent_version,omitempty" url:"agent_version,omitempty"`
+	// Most recent successful observation for this process.
+	LastSeenAt *time.Time `json:"last_seen_at,omitempty" path:"last_seen_at,omitempty" url:"last_seen_at,omitempty"`
+	// Proxy connections observed for this process.
+	Connections []AgentNodeConnection `json:"connections,omitempty" path:"connections,omitempty" url:"connections,omitempty"`
 }
 
 // Identifier no path or id

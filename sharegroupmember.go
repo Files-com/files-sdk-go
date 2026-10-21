@@ -8,9 +8,12 @@ import (
 
 // ShareGroupMember is a Files.com API resource.
 type ShareGroupMember struct {
-	Name    string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	// Name of the share group member.
+	Name string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	// Company of the share group member.
 	Company string `json:"company,omitempty" path:"company,omitempty" url:"company,omitempty"`
-	Email   string `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
+	// Email of the share group member.
+	Email string `json:"email,omitempty" path:"email,omitempty" url:"email,omitempty"`
 }
 
 // Identifier no path or id

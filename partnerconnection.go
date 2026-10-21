@@ -8,10 +8,15 @@ import (
 
 // PartnerConnection is a Files.com API resource.
 type PartnerConnection struct {
-	Id        int64  `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Role      string `json:"role,omitempty" path:"role,omitempty" url:"role,omitempty"`
-	SiteId    int64  `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
-	SiteName  string `json:"site_name,omitempty" path:"site_name,omitempty" url:"site_name,omitempty"`
+	// Relationship ID used with DELETE /partner_sites/:id to disconnect.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// This Partner's role in this connection. A host shares local files with the connected site; a guest accesses files shared by the connected site.
+	Role string `json:"role,omitempty" path:"role,omitempty" url:"role,omitempty"`
+	// ID of the connected site.
+	SiteId int64 `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
+	// Name of the connected site.
+	SiteName string `json:"site_name,omitempty" path:"site_name,omitempty" url:"site_name,omitempty"`
+	// File API path to the connected Host's mount on this site when role is guest. Null when role is host. File access remains subject to the caller's permissions and the Host Partner's grants.
 	MountPath string `json:"mount_path,omitempty" path:"mount_path,omitempty" url:"mount_path,omitempty"`
 }
 

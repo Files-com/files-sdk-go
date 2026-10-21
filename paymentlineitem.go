@@ -9,10 +9,14 @@ import (
 
 // PaymentLineItem is a Files.com API resource.
 type PaymentLineItem struct {
-	Amount    string     `json:"amount,omitempty" path:"amount,omitempty" url:"amount,omitempty"`
+	// Payment line item amount.
+	Amount string `json:"amount,omitempty" path:"amount,omitempty" url:"amount,omitempty"`
+	// Payment line item created at date/time.
 	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	InvoiceId int64      `json:"invoice_id,omitempty" path:"invoice_id,omitempty" url:"invoice_id,omitempty"`
-	PaymentId int64      `json:"payment_id,omitempty" path:"payment_id,omitempty" url:"payment_id,omitempty"`
+	// Invoice ID.
+	InvoiceId int64 `json:"invoice_id,omitempty" path:"invoice_id,omitempty" url:"invoice_id,omitempty"`
+	// Payment ID.
+	PaymentId int64 `json:"payment_id,omitempty" path:"payment_id,omitempty" url:"payment_id,omitempty"`
 }
 
 // Identifier no path or id

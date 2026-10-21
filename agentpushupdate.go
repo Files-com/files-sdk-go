@@ -8,12 +8,18 @@ import (
 
 // AgentPushUpdate is a Files.com API resource.
 type AgentPushUpdate struct {
-	Version        string `json:"version,omitempty" path:"version,omitempty" url:"version,omitempty"`
-	Message        string `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
+	// Pushed agent version.
+	Version string `json:"version,omitempty" path:"version,omitempty" url:"version,omitempty"`
+	// Update accepted or reason.
+	Message string `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
+	// Installed agent version.
 	CurrentVersion string `json:"current_version,omitempty" path:"current_version,omitempty" url:"current_version,omitempty"`
+	// Pending agent version or null.
 	PendingVersion string `json:"pending_version,omitempty" path:"pending_version,omitempty" url:"pending_version,omitempty"`
-	LastError      string `json:"last_error,omitempty" path:"last_error,omitempty" url:"last_error,omitempty"`
-	Error          string `json:"error,omitempty" path:"error,omitempty" url:"error,omitempty"`
+	// Last error message or null.
+	LastError string `json:"last_error,omitempty" path:"last_error,omitempty" url:"last_error,omitempty"`
+	// Error code.
+	Error string `json:"error,omitempty" path:"error,omitempty" url:"error,omitempty"`
 }
 
 // Identifier no path or id

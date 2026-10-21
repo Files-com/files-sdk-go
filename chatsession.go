@@ -9,14 +9,22 @@ import (
 
 // ChatSession is a Files.com API resource.
 type ChatSession struct {
-	Id           string        `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Title        string        `json:"title,omitempty" path:"title,omitempty" url:"title,omitempty"`
-	UserId       int64         `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
-	AiTaskId     int64         `json:"ai_task_id,omitempty" path:"ai_task_id,omitempty" url:"ai_task_id,omitempty"`
-	WorkspaceId  int64         `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
-	LastActiveAt *time.Time    `json:"last_active_at,omitempty" path:"last_active_at,omitempty" url:"last_active_at,omitempty"`
-	CreatedAt    *time.Time    `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	Messages     []ChatMessage `json:"messages,omitempty" path:"messages,omitempty" url:"messages,omitempty"`
+	// Chat Session ID.
+	Id string `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Short AI-generated chat title.
+	Title string `json:"title,omitempty" path:"title,omitempty" url:"title,omitempty"`
+	// User ID.
+	UserId int64 `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
+	// AI Task ID. Present when the conversation was started by an AI Task.
+	AiTaskId int64 `json:"ai_task_id,omitempty" path:"ai_task_id,omitempty" url:"ai_task_id,omitempty"`
+	// Workspace ID. `0` means the default workspace.
+	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	// Most recent chat activity date/time.
+	LastActiveAt *time.Time `json:"last_active_at,omitempty" path:"last_active_at,omitempty" url:"last_active_at,omitempty"`
+	// Chat session creation date/time.
+	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	// Visible conversation messages in this chat session. For performance reasons, this is not provided when listing chat sessions.
+	Messages []ChatMessage `json:"messages,omitempty" path:"messages,omitempty" url:"messages,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -29,13 +37,17 @@ type ChatSessionCollection []ChatSession
 
 // ChatSessionListParams contains the request parameters for GET /chat_sessions.
 type ChatSessionListParams struct {
+	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `id`.
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	// If set, return records where the specified field is equal to the supplied value. Valid fields are `ai_task_id`, `user_id` or `workspace_id`.
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 
 // ChatSessionFindParams contains the request parameters for GET /chat_sessions/{id}.
 type ChatSessionFindParams struct {
+	// Chat Session ID. Required; sent in the request path.
 	Id string `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 

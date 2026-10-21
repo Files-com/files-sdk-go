@@ -8,11 +8,16 @@ import (
 
 // DirectConnectionInfo is a Files.com API resource.
 type DirectConnectionInfo struct {
-	Version    int64    `json:"version,omitempty" path:"version,omitempty" url:"version,omitempty"`
-	ServerName string   `json:"server_name,omitempty" path:"server_name,omitempty" url:"server_name,omitempty"`
-	Addresses  []string `json:"addresses,omitempty" path:"addresses,omitempty" url:"addresses,omitempty"`
-	DirectUri  string   `json:"direct_uri,omitempty" path:"direct_uri,omitempty" url:"direct_uri,omitempty"`
-	CaPem      string   `json:"ca_pem,omitempty" path:"ca_pem,omitempty" url:"ca_pem,omitempty"`
+	// Direct connection information schema version.
+	Version int64 `json:"version,omitempty" path:"version,omitempty" url:"version,omitempty"`
+	// TLS server name (SNI and Host header) for the Agent's direct transfer listener.
+	ServerName string `json:"server_name,omitempty" path:"server_name,omitempty" url:"server_name,omitempty"`
+	// Validated ip:port candidates that may be dialed over TCP+TLS for this transfer.
+	Addresses []string `json:"addresses,omitempty" path:"addresses,omitempty" url:"addresses,omitempty"`
+	// Signed HTTPS URI for direct Agent transfer traffic.
+	DirectUri string `json:"direct_uri,omitempty" path:"direct_uri,omitempty" url:"direct_uri,omitempty"`
+	// PEM-encoded CA certificate used to verify the Agent's direct transfer TLS certificate.
+	CaPem string `json:"ca_pem,omitempty" path:"ca_pem,omitempty" url:"ca_pem,omitempty"`
 }
 
 // Identifier no path or id

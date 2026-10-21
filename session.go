@@ -8,14 +8,22 @@ import (
 
 // Session is a Files.com API resource.
 type Session struct {
-	Id                  string `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	Language            string `json:"language,omitempty" path:"language,omitempty" url:"language,omitempty"`
-	ReadOnly            *bool  `json:"read_only,omitempty" path:"read_only,omitempty" url:"read_only,omitempty"`
-	SftpInsecureCiphers *bool  `json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers,omitempty" url:"sftp_insecure_ciphers,omitempty"`
-	Username            string `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
-	Password            string `json:"password,omitempty" path:"password,omitempty" url:"password,omitempty"`
-	Otp                 string `json:"otp,omitempty" path:"otp,omitempty" url:"otp,omitempty"`
-	PartialSessionId    string `json:"partial_session_id,omitempty" path:"partial_session_id,omitempty" url:"partial_session_id,omitempty"`
+	// Session ID.
+	Id string `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Session language.
+	Language string `json:"language,omitempty" path:"language,omitempty" url:"language,omitempty"`
+	// Is this session read only?
+	ReadOnly *bool `json:"read_only,omitempty" path:"read_only,omitempty" url:"read_only,omitempty"`
+	// Are insecure SFTP ciphers allowed for this user? (If this is set to true, the site administrator has signaled that it is ok to use less secure SSH ciphers for this user.).
+	SftpInsecureCiphers *bool `json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers,omitempty" url:"sftp_insecure_ciphers,omitempty"`
+	// Username to sign in as.
+	Username string `json:"username,omitempty" path:"username,omitempty" url:"username,omitempty"`
+	// Password for sign in.
+	Password string `json:"password,omitempty" path:"password,omitempty" url:"password,omitempty"`
+	// If this user has a 2FA device, provide its OTP or code here.
+	Otp string `json:"otp,omitempty" path:"otp,omitempty" url:"otp,omitempty"`
+	// Identifier for a partially-completed login.
+	PartialSessionId string `json:"partial_session_id,omitempty" path:"partial_session_id,omitempty" url:"partial_session_id,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -28,9 +36,13 @@ type SessionCollection []Session
 
 // SessionCreateParams contains the request parameters for POST /sessions.
 type SessionCreateParams struct {
-	Username         string `url:"username,omitempty" json:"username,omitempty" path:"username"`
-	Password         string `url:"password,omitempty" json:"password,omitempty" path:"password"`
-	Otp              string `url:"otp,omitempty" json:"otp,omitempty" path:"otp"`
+	// Username to sign in as.
+	Username string `url:"username,omitempty" json:"username,omitempty" path:"username"`
+	// Password for sign in.
+	Password string `url:"password,omitempty" json:"password,omitempty" path:"password"`
+	// If this user has a 2FA device, provide its OTP or code here.
+	Otp string `url:"otp,omitempty" json:"otp,omitempty" path:"otp"`
+	// Identifier for a partially-completed login.
 	PartialSessionId string `url:"partial_session_id,omitempty" json:"partial_session_id,omitempty" path:"partial_session_id"`
 }
 

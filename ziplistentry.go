@@ -8,8 +8,10 @@ import (
 
 // ZipListEntry is a Files.com API resource.
 type ZipListEntry struct {
+	// Entry path inside the ZIP. This must be slash-delimited, but it must neither start nor end with a slash. Maximum of 5000 characters.
 	Path string `json:"path,omitempty" path:"path,omitempty" url:"path,omitempty"`
-	Size int64  `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
+	// Uncompressed size in bytes.
+	Size int64 `json:"size,omitempty" path:"size,omitempty" url:"size,omitempty"`
 }
 
 // Identifier returns the resource path.

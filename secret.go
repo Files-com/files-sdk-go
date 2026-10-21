@@ -9,15 +9,24 @@ import (
 
 // Secret is a Files.com API resource.
 type Secret struct {
-	Id              int64       `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
-	WorkspaceId     int64       `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
-	Name            string      `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
-	Description     string      `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
-	SecretType      string      `json:"secret_type,omitempty" path:"secret_type,omitempty" url:"secret_type,omitempty"`
-	Metadata        interface{} `json:"metadata,omitempty" path:"metadata,omitempty" url:"metadata,omitempty"`
-	ValueFieldNames []string    `json:"value_field_names,omitempty" path:"value_field_names,omitempty" url:"value_field_names,omitempty"`
-	CreatedAt       *time.Time  `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
-	UpdatedAt       *time.Time  `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
+	// Secret ID.
+	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Workspace ID. 0 means the default workspace.
+	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	// Secret name.
+	Name string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	// Internal description for your reference.
+	Description string `json:"description,omitempty" path:"description,omitempty" url:"description,omitempty"`
+	// Secret type.
+	SecretType string `json:"secret_type,omitempty" path:"secret_type,omitempty" url:"secret_type,omitempty"`
+	// Non-secret metadata for the Secret type.
+	Metadata interface{} `json:"metadata,omitempty" path:"metadata,omitempty" url:"metadata,omitempty"`
+	// Names of configured secret value fields. Secret values are never returned.
+	ValueFieldNames []string `json:"value_field_names,omitempty" path:"value_field_names,omitempty" url:"value_field_names,omitempty"`
+	// Secret create date/time.
+	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	// Secret update date/time.
+	UpdatedAt *time.Time `json:"updated_at,omitempty" path:"updated_at,omitempty" url:"updated_at,omitempty"`
 }
 
 // Identifier returns the resource ID.
@@ -50,37 +59,53 @@ func (u SecretSecretTypeEnum) Enum() map[string]SecretSecretTypeEnum {
 
 // SecretListParams contains the request parameters for GET /secrets.
 type SecretListParams struct {
-	SortBy       interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	Filter       interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `workspace_id`, `name` or `secret_type`.
+	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	// If set, return records where the specified field is equal to the supplied value. Valid fields are `workspace_id`, `name` or `secret_type`. Valid field combinations are `[ workspace_id, name ]`, `[ workspace_id, secret_type ]`, `[ secret_type, name ]` or `[ workspace_id, secret_type, name ]`.
+	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	// If set, return records where the specified field is prefixed by the supplied value. Valid fields are `name`.
 	FilterPrefix interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
 
 // SecretFindParams contains the request parameters for GET /secrets/{id}.
 type SecretFindParams struct {
+	// Secret ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // SecretCreateParams contains the request parameters for POST /secrets.
 type SecretCreateParams struct {
-	Name        string               `url:"name" json:"name" path:"name"`
-	Description string               `url:"description,omitempty" json:"description,omitempty" path:"description"`
-	SecretType  SecretSecretTypeEnum `url:"secret_type" json:"secret_type" path:"secret_type"`
-	Metadata    interface{}          `url:"metadata,omitempty" json:"metadata,omitempty" path:"metadata"`
-	WorkspaceId int64                `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
+	// Secret name. Required.
+	Name string `url:"name" json:"name" path:"name"`
+	// Internal description for your reference.
+	Description string `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	// Secret type. Values: basic, token, headers, certificate, key_value. Required.
+	SecretType SecretSecretTypeEnum `url:"secret_type" json:"secret_type" path:"secret_type"`
+	// Non-secret metadata for the Secret type.
+	Metadata interface{} `url:"metadata,omitempty" json:"metadata,omitempty" path:"metadata"`
+	// Workspace ID. 0 means the default workspace.
+	WorkspaceId int64 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
 // SecretUpdateParams contains the request parameters for PATCH /secrets/{id}.
 type SecretUpdateParams struct {
-	Id          int64                `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	Name        string               `url:"name,omitempty" json:"name,omitempty" path:"name"`
-	Description string               `url:"description,omitempty" json:"description,omitempty" path:"description"`
-	SecretType  SecretSecretTypeEnum `url:"secret_type,omitempty" json:"secret_type,omitempty" path:"secret_type"`
-	Metadata    interface{}          `url:"metadata,omitempty" json:"metadata,omitempty" path:"metadata"`
+	// Secret ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// Secret name.
+	Name string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	// Internal description for your reference.
+	Description string `url:"description,omitempty" json:"description,omitempty" path:"description"`
+	// Secret type. Values: basic, token, headers, certificate, key_value.
+	SecretType SecretSecretTypeEnum `url:"secret_type,omitempty" json:"secret_type,omitempty" path:"secret_type"`
+	// Non-secret metadata for the Secret type.
+	Metadata interface{} `url:"metadata,omitempty" json:"metadata,omitempty" path:"metadata"`
 }
 
 // SecretDeleteParams contains the request parameters for DELETE /secrets/{id}.
 type SecretDeleteParams struct {
+	// Secret ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
