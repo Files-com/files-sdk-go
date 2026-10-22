@@ -7,6 +7,8 @@ The [developer documentation](https://developers.files.com/go/) covers the compl
 
 ## Introduction
 
+For integration choices and credential scope, start with [SDKs & APIs](https://www.files.com/docs/clients-and-protocols/sdks-and-apis). [Scripts, APIs & Application Workflows](https://www.files.com/docs/automated-workflows/scripts-apis-and-application-workflows) explains how to coordinate Files.com operations with the work your application owns.
+
 The Files.com Go SDK lets Go applications manage files, folders, users, automations,
 and other API resources. Resource clients accept configuration and request options and use standard Go
 error handling.
@@ -44,7 +46,7 @@ Explore the [files-sdk-go](https://github.com/Files-com/files-sdk-go) code on Gi
 
 The Files.com Support team provides official support for all of our official Files.com integration tools.
 
-To initiate a support conversation, you can send an [Authenticated Support Request](https://www.files.com/docs/overview/requesting-support) or simply send an E-Mail to support@files.com.
+To initiate a support conversation, you can send an [Authenticated Support Request](https://www.files.com/docs/support-and-services/requesting-support) or simply send an E-Mail to support@files.com.
 
 ## Authentication
 
@@ -56,10 +58,10 @@ Authenticating with an API key is the recommended authentication method for most
 the method used in the examples on this site.
 
 To use an API Key, first generate an API key from the [web
-interface](https://www.files.com/docs/sdk-and-apis/api-keys) or [via the API or an
+interface](https://www.files.com/docs/security/authentication-and-credentials/api-keys) or [via the API or an
 SDK](https://developers.files.com/go/resources/developers/api-keys).
 
-A user-specific API key uses the user's permissions. [Workspaces](https://developers.files.com/go/overview/workspaces) describes account scope and administrative access.
+A user key follows its account's permissions, narrowed by the key's permission scope, Workspace, and any path restriction on file operations. It can perform administrative operations only when both the account and key permit them. [API Keys](https://www.files.com/docs/security/authentication-and-credentials/api-keys) explains credential scope and lifecycle; [Workspaces](https://developers.files.com/go/overview/workspaces) explains request context and delegated administration.
 
 Set `Config.APIKey` and initialize the configuration before passing it to a resource client.
 This configuration applies to that client.
@@ -144,7 +146,7 @@ Don't forget to replace the placeholder, `YOUR_API_KEY`, with your actual API ke
 
 ### Authenticate with a Session
 
-Create a session with the username and password of an active user. The session uses that user's permissions. [Workspaces](https://developers.files.com/go/overview/workspaces) describes account scope and administrative access.
+Create a session with the username and password of an active user. The session uses that user's permissions, including any delegated administrative access. [Workspaces](https://developers.files.com/go/overview/workspaces) describes account scope and administrative access.
 
 Sessions follow the same timeout settings as web sessions. When a session expires,
 create a new session and update the clients that use it. The SDK does not renew
@@ -581,7 +583,7 @@ This behavior applies across:
 - Folder and file lookup operations
 - Automations and workflows
 
-See also: [Case Sensitivity Documentation](https://www.files.com/docs/files-and-folders/case-sensitivity/)
+See also: [Case Sensitivity Documentation](https://www.files.com/docs/files-and-folders/file-system-semantics/case-sensitivity)
 
 ### Slashes
 
