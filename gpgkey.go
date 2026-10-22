@@ -63,7 +63,7 @@ type GpgKeyListParams struct {
 	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
 	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `workspace_id`, `name` or `expires_at`.
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	// If set, return records where the specified field is equal to the supplied value. Valid fields are `workspace_id`, `partner_id` or `expires_at`. Valid field combinations are `[ workspace_id, expires_at ]`.
+	// If set, return records where the specified field is equal to the supplied value. Valid fields are `workspace_id`, `partner_id` or `expires_at`. Valid field combinations are `[ workspace_id, partner_id ]`, `[ workspace_id, expires_at ]`, `[ partner_id, expires_at ]` or `[ workspace_id, partner_id, expires_at ]`.
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	// If set, return records where the specified field is greater than the supplied value. Valid fields are `expires_at`.
 	FilterGt interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`
