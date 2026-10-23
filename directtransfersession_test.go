@@ -60,7 +60,10 @@ func TestDirectTransferSessionFallsBackAfterBodyFailureButNotCancellation(t *tes
 			<-r.Context().Done()
 		case 2:
 			// Send the headers and a first chunk, then hold the body until the
-			// caller cancels.
+			// caller cancels. Content-Length declares 8 bytes that are never
+			// sent, so the body stays unfinished even once the cancellation
+			// lets this handler return: it cannot end as a complete body.
+			w.Header().Set("Content-Length", "10")
 			_, _ = io.WriteString(w, "ok")
 			w.(http.Flusher).Flush()
 			<-r.Context().Done()
@@ -113,6 +116,9 @@ func TestDirectTransferSessionFallsBackAfterBodyFailureButNotCancellation(t *tes
 
 func TestDirectTransferSessionCancelCauseReportsBodyFailure(t *testing.T) {
 	info := directTransferSessionTestInfo(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Content-Length declares 8 bytes that are never sent, so the body
+		// stays unfinished even once the cancellation lets this handler return.
+		w.Header().Set("Content-Length", "10")
 		_, _ = io.WriteString(w, "ok")
 		w.(http.Flusher).Flush()
 		<-r.Context().Done()
