@@ -170,7 +170,6 @@ Parameters, `files_sdk.UserCreateParams`:
 | `SkipWelcomeScreen` | `*bool` | `skip_welcome_screen` | no | Skip Welcome page in the UI? |
 | `SslRequired` | `files_sdk.UserSslRequiredEnum` | `ssl_required` | no | SSL required setting Values: `use_system_setting`, `always_require`, `never_require`. |
 | `SsoStrategyId` | `int64` | `sso_strategy_id` | no | SSO (Single Sign On) strategy ID for the user, if applicable. |
-| `SubscribeToNewsletter` | `*bool` | `subscribe_to_newsletter` | no | Is the user subscribed to the newsletter? |
 | `Require2fa` | `files_sdk.UserRequire2faEnum` | `require_2fa` | no | 2FA required setting. `use_system_setting` uses the site-wide setting, including SSO exemptions. `always_require` and `never_require` override the site-wide setting when user-level overrides are allowed. Values: `use_system_setting`, `always_require`, `never_require`. |
 | `Tags` | `string` | `tags` | no | Comma-separated list of Tags for this user. Tags are used for other features, such as UserLifecycleRules, which can target specific tags. Tags must only contain lowercase letters, numbers, and hyphens. |
 | `TimeZone` | `string` | `time_zone` | no | User time zone |
@@ -358,7 +357,6 @@ Parameters, `files_sdk.UserUpdateParams`:
 | `SkipWelcomeScreen` | `*bool` | `skip_welcome_screen` | no | Skip Welcome page in the UI? |
 | `SslRequired` | `files_sdk.UserSslRequiredEnum` | `ssl_required` | no | SSL required setting Values: `use_system_setting`, `always_require`, `never_require`. |
 | `SsoStrategyId` | `int64` | `sso_strategy_id` | no | SSO (Single Sign On) strategy ID for the user, if applicable. |
-| `SubscribeToNewsletter` | `*bool` | `subscribe_to_newsletter` | no | Is the user subscribed to the newsletter? |
 | `Require2fa` | `files_sdk.UserRequire2faEnum` | `require_2fa` | no | 2FA required setting. `use_system_setting` uses the site-wide setting, including SSO exemptions. `always_require` and `never_require` override the site-wide setting when user-level overrides are allowed. Values: `use_system_setting`, `always_require`, `never_require`. |
 | `Tags` | `string` | `tags` | no | Comma-separated list of Tags for this user. Tags are used for other features, such as UserLifecycleRules, which can target specific tags. Tags must only contain lowercase letters, numbers, and hyphens. |
 | `TimeZone` | `string` | `time_zone` | no | User time zone |
@@ -508,7 +506,6 @@ if err != nil {
 | `SkipWelcomeScreen` | `*bool` | `skip_welcome_screen` | Skip Welcome page in the UI? |
 | `SslRequired` | `string` | `ssl_required` | SSL required setting |
 | `SsoStrategyId` | `int64` | `sso_strategy_id` | SSO (Single Sign On) strategy ID for the user, if applicable. |
-| `SubscribeToNewsletter` | `*bool` | `subscribe_to_newsletter` | Is the user subscribed to the newsletter? |
 | `ExternallyManaged` | `*bool` | `externally_managed` | Is this user managed by a SsoStrategy? |
 | `Tags` | `string` | `tags` | Comma-separated list of Tags for this user. Tags are used for other features, such as UserLifecycleRules, which can target specific tags. Tags must only contain lowercase letters, numbers, and hyphens. |
 | `TimeZone` | `string` | `time_zone` | User time zone |

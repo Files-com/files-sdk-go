@@ -168,8 +168,6 @@ type User struct {
 	SslRequired string `json:"ssl_required,omitempty" path:"ssl_required,omitempty" url:"ssl_required,omitempty"`
 	// SSO (Single Sign On) strategy ID for the user, if applicable.
 	SsoStrategyId int64 `json:"sso_strategy_id,omitempty" path:"sso_strategy_id,omitempty" url:"sso_strategy_id,omitempty"`
-	// Is the user subscribed to the newsletter?
-	SubscribeToNewsletter *bool `json:"subscribe_to_newsletter,omitempty" path:"subscribe_to_newsletter,omitempty" url:"subscribe_to_newsletter,omitempty"`
 	// Is this user managed by a SsoStrategy?
 	ExternallyManaged *bool `json:"externally_managed,omitempty" path:"externally_managed,omitempty" url:"externally_managed,omitempty"`
 	// Comma-separated list of Tags for this user. Tags are used for other features, such as UserLifecycleRules, which can target specific tags. Tags must only contain lowercase letters, numbers, and hyphens.
@@ -457,8 +455,6 @@ type UserCreateParams struct {
 	SslRequired UserSslRequiredEnum `url:"ssl_required,omitempty" json:"ssl_required,omitempty" path:"ssl_required"`
 	// SSO (Single Sign On) strategy ID for the user, if applicable.
 	SsoStrategyId int64 `url:"sso_strategy_id,omitempty" json:"sso_strategy_id,omitempty" path:"sso_strategy_id"`
-	// Is the user subscribed to the newsletter?
-	SubscribeToNewsletter *bool `url:"subscribe_to_newsletter,omitempty" json:"subscribe_to_newsletter,omitempty" path:"subscribe_to_newsletter"`
 	// 2FA required setting. `use_system_setting` uses the site-wide setting, including SSO exemptions. `always_require` and `never_require` override the site-wide setting when user-level overrides are allowed. Values: use_system_setting, always_require, never_require.
 	Require2fa UserRequire2faEnum `url:"require_2fa,omitempty" json:"require_2fa,omitempty" path:"require_2fa"`
 	// Comma-separated list of Tags for this user. Tags are used for other features, such as UserLifecycleRules, which can target specific tags. Tags must only contain lowercase letters, numbers, and hyphens.
@@ -627,8 +623,6 @@ type UserUpdateParams struct {
 	SslRequired UserSslRequiredEnum `url:"ssl_required,omitempty" json:"ssl_required,omitempty" path:"ssl_required"`
 	// SSO (Single Sign On) strategy ID for the user, if applicable.
 	SsoStrategyId int64 `url:"sso_strategy_id,omitempty" json:"sso_strategy_id,omitempty" path:"sso_strategy_id"`
-	// Is the user subscribed to the newsletter?
-	SubscribeToNewsletter *bool `url:"subscribe_to_newsletter,omitempty" json:"subscribe_to_newsletter,omitempty" path:"subscribe_to_newsletter"`
 	// 2FA required setting. `use_system_setting` uses the site-wide setting, including SSO exemptions. `always_require` and `never_require` override the site-wide setting when user-level overrides are allowed. Values: use_system_setting, always_require, never_require.
 	Require2fa UserRequire2faEnum `url:"require_2fa,omitempty" json:"require_2fa,omitempty" path:"require_2fa"`
 	// Comma-separated list of Tags for this user. Tags are used for other features, such as UserLifecycleRules, which can target specific tags. Tags must only contain lowercase letters, numbers, and hyphens.
