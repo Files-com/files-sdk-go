@@ -146,6 +146,7 @@ Parameters, `files_sdk.SiteUpdateParams`:
 | `AllowUserLevel2faOverride` | `*bool` | `allow_user_level_2fa_override` | no | Allow the site-wide two-factor authentication requirement to be overriden on a per-user-basis? |
 | `AllowUserLevelAllowedIpOverride` | `*bool` | `allow_user_level_allowed_ip_override` | no | Allow the site-wide allowed IP restriction to be overriden on a per-user-basis? |
 | `AllowUserLevelSslOverride` | `*bool` | `allow_user_level_ssl_override` | no | Allow the site-wide FTP SSL requirement to be overriden on a per-user-basis? |
+| `EnforceParentSiteUserIpRestrictions` | `*bool` | `enforce_parent_site_user_ip_restrictions` | no | Require Parent Site users entering this Child Site to match its allowed IP addresses in addition to their existing IP restrictions. Applies to all Workspaces. Defaults to false. |
 | `DisallowedCountries` | `string` | `disallowed_countries` | no | Comma separated list of disallowed Country codes |
 | `DaysToRetainBackups` | `int64` | `days_to_retain_backups` | no | Number of days to keep deleted files |
 | `MaxPriorPasswords` | `int64` | `max_prior_passwords` | no | Number of prior passwords to disallow |
@@ -329,6 +330,7 @@ fmt.Println(result)
 | `AllowUserLevelSslOverride` | `*bool` | `allow_user_level_ssl_override` | Allow the site-wide FTP SSL requirement to be overriden on a per-user-basis? |
 | `AllowedCountries` | `string` | `allowed_countries` | Comma separated list of allowed Country codes |
 | `AllowedIps` | `string` | `allowed_ips` | List of allowed IP addresses |
+| `EnforceParentSiteUserIpRestrictions` | `*bool` | `enforce_parent_site_user_ip_restrictions` | Require Parent Site users entering this Child Site to match its allowed IP addresses in addition to their existing IP restrictions. Applies to all Workspaces. Defaults to false. |
 | `AlwaysMkdirParents` | `*bool` | `always_mkdir_parents` | Create parent directories if they do not exist during uploads? This is primarily used to work around broken upload clients that assume servers will perform this step. |
 | `As2MessageRetentionDays` | `int64` | `as2_message_retention_days` | Number of days to retain AS2 messages (incoming and outgoing). |
 | `AskAboutOverwrites` | `*bool` | `ask_about_overwrites` | If false, rename conflicting files instead of asking for overwrite confirmation. Only applies to web interface. |

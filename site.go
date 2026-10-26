@@ -48,6 +48,8 @@ type Site struct {
 	AllowedCountries string `json:"allowed_countries,omitempty" path:"allowed_countries,omitempty" url:"allowed_countries,omitempty"`
 	// List of allowed IP addresses.
 	AllowedIps string `json:"allowed_ips,omitempty" path:"allowed_ips,omitempty" url:"allowed_ips,omitempty"`
+	// Require Parent Site users entering this Child Site to match its allowed IP addresses in addition to their existing IP restrictions. Applies to all Workspaces. Defaults to false.
+	EnforceParentSiteUserIpRestrictions *bool `json:"enforce_parent_site_user_ip_restrictions,omitempty" path:"enforce_parent_site_user_ip_restrictions,omitempty" url:"enforce_parent_site_user_ip_restrictions,omitempty"`
 	// Create parent directories if they do not exist during uploads? This is primarily used to work around broken upload clients that assume servers will perform this step.
 	AlwaysMkdirParents *bool `json:"always_mkdir_parents,omitempty" path:"always_mkdir_parents,omitempty" url:"always_mkdir_parents,omitempty"`
 	// Number of days to retain AS2 messages (incoming and outgoing).
@@ -558,6 +560,8 @@ type SiteUpdateParams struct {
 	AllowUserLevelAllowedIpOverride *bool `url:"allow_user_level_allowed_ip_override,omitempty" json:"allow_user_level_allowed_ip_override,omitempty" path:"allow_user_level_allowed_ip_override"`
 	// Allow the site-wide FTP SSL requirement to be overriden on a per-user-basis?
 	AllowUserLevelSslOverride *bool `url:"allow_user_level_ssl_override,omitempty" json:"allow_user_level_ssl_override,omitempty" path:"allow_user_level_ssl_override"`
+	// Require Parent Site users entering this Child Site to match its allowed IP addresses in addition to their existing IP restrictions. Applies to all Workspaces. Defaults to false.
+	EnforceParentSiteUserIpRestrictions *bool `url:"enforce_parent_site_user_ip_restrictions,omitempty" json:"enforce_parent_site_user_ip_restrictions,omitempty" path:"enforce_parent_site_user_ip_restrictions"`
 	// Comma separated list of disallowed Country codes.
 	DisallowedCountries string `url:"disallowed_countries,omitempty" json:"disallowed_countries,omitempty" path:"disallowed_countries"`
 	// Number of days to keep deleted files.
