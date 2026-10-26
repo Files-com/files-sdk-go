@@ -41,6 +41,16 @@ func (i *Iter) As2IncomingMessage() files_sdk.As2IncomingMessage {
 	return i.Current().(files_sdk.As2IncomingMessage)
 }
 
+// LoadResource fetches a resource by its ID. identifier must have type
+// int64.
+func (i *Iter) LoadResource(identifier interface{}, opts ...files_sdk.RequestResponseOption) (interface{}, error) {
+	params := files_sdk.As2IncomingMessageFindParams{}
+	if id, ok := identifier.(int64); ok {
+		params.Id = id
+	}
+	return i.Client.Find(params, opts...)
+}
+
 // List returns an iterator for GET /as2_incoming_messages.
 // Pages are requested as iteration reaches them: range over Iter.All, or call
 // Next and then check Err.
@@ -60,6 +70,17 @@ func (c *Client) List(params files_sdk.As2IncomingMessageListParams, opts ...fil
 // See Client.List for the operation and paging behavior.
 func List(params files_sdk.As2IncomingMessageListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	return (&Client{}).List(params, opts...)
+}
+
+// Find calls GET /as2_incoming_messages/{id}.
+func (c *Client) Find(params files_sdk.As2IncomingMessageFindParams, opts ...files_sdk.RequestResponseOption) (as2IncomingMessage files_sdk.As2IncomingMessage, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/as2_incoming_messages/{id}", Params: params, Entity: &as2IncomingMessage}, opts...)
+	return
+}
+
+// Find calls Client.Find using the default configuration.
+func Find(params files_sdk.As2IncomingMessageFindParams, opts ...files_sdk.RequestResponseOption) (as2IncomingMessage files_sdk.As2IncomingMessage, err error) {
+	return (&Client{}).Find(params, opts...)
 }
 
 // Replay calls POST /as2_incoming_messages/{id}/replay.

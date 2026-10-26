@@ -36,7 +36,7 @@ Parameters, `files_sdk.As2IncomingMessageListParams`:
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
 | `SortBy` | `interface{}` | `sort_by` | no | If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `workspace_id`, `created_at` or `as2_partner_id`. |
-| `Filter` | `interface{}` | `filter` | no | If set, return records where the specified field is equal to the supplied value. Valid fields are `created_at`, `as2_station_id`, `workspace_id` or `as2_partner_id`. Valid field combinations are `[ as2_station_id, created_at ]`, `[ workspace_id, created_at ]`, `[ as2_partner_id, created_at ]`, `[ workspace_id, as2_station_id ]`, `[ workspace_id, as2_partner_id ]`, `[ workspace_id, as2_station_id, created_at ]` or `[ workspace_id, as2_partner_id, created_at ]`. |
+| `Filter` | `interface{}` | `filter` | no | If set, return records where the specified field is equal to the supplied value. Valid fields are `created_at`, `as2_station_id`, `workspace_id`, `replayed_from_message_id` or `as2_partner_id`. Valid field combinations are `[ as2_station_id, created_at ]`, `[ workspace_id, created_at ]`, `[ replayed_from_message_id, created_at ]`, `[ as2_partner_id, created_at ]`, `[ workspace_id, as2_station_id ]`, `[ workspace_id, replayed_from_message_id ]`, `[ workspace_id, as2_partner_id ]`, `[ workspace_id, as2_station_id, created_at ]`, `[ workspace_id, replayed_from_message_id, created_at ]` or `[ workspace_id, as2_partner_id, created_at ]`. |
 | `FilterGt` | `interface{}` | `filter_gt` | no | If set, return records where the specified field is greater than the supplied value. Valid fields are `created_at`. |
 | `FilterGteq` | `interface{}` | `filter_gteq` | no | If set, return records where the specified field is greater than or equal the supplied value. Valid fields are `created_at`. |
 | `FilterLt` | `interface{}` | `filter_lt` | no | If set, return records where the specified field is less than the supplied value. Valid fields are `created_at`. |
@@ -58,6 +58,35 @@ for item, err := range it.All() {
 	}
 	fmt.Println(item)
 }
+```
+
+### Find
+
+`GET /as2_incoming_messages/{id}`
+
+Show AS2 Incoming Message
+
+```go
+func (c *Client) Find(params files_sdk.As2IncomingMessageFindParams, opts ...files_sdk.RequestResponseOption) (as2IncomingMessage files_sdk.As2IncomingMessage, err error)
+func Find(params files_sdk.As2IncomingMessageFindParams, opts ...files_sdk.RequestResponseOption) (as2IncomingMessage files_sdk.As2IncomingMessage, err error)
+```
+
+Parameters, `files_sdk.As2IncomingMessageFindParams`:
+
+| Field | Go type | API name | Required | Description |
+| --- | --- | --- | --- | --- |
+| `Id` | `int64` | `id`, in the path | yes | As2 Incoming Message ID. |
+
+Example:
+
+```go
+result, err := as2_incoming_message.Find(files_sdk.As2IncomingMessageFindParams{
+	Id: 1,
+})
+if err != nil {
+	return err
+}
+fmt.Println(result)
 ```
 
 ### Replay
