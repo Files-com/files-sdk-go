@@ -61,3 +61,16 @@ func (c *Client) List(params files_sdk.As2IncomingMessageListParams, opts ...fil
 func List(params files_sdk.As2IncomingMessageListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	return (&Client{}).List(params, opts...)
 }
+
+// Replay calls POST /as2_incoming_messages/{id}/replay.
+//
+// API operation: Replay AS2 Incoming Message.
+func (c *Client) Replay(params files_sdk.As2IncomingMessageReplayParams, opts ...files_sdk.RequestResponseOption) (as2IncomingMessage files_sdk.As2IncomingMessage, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/as2_incoming_messages/{id}/replay", Params: params, Entity: &as2IncomingMessage}, opts...)
+	return
+}
+
+// Replay calls Client.Replay using the default configuration.
+func Replay(params files_sdk.As2IncomingMessageReplayParams, opts ...files_sdk.RequestResponseOption) (as2IncomingMessage files_sdk.As2IncomingMessage, err error) {
+	return (&Client{}).Replay(params, opts...)
+}

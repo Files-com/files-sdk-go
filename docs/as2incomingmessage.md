@@ -60,13 +60,43 @@ for item, err := range it.All() {
 }
 ```
 
+### Replay
+
+`POST /as2_incoming_messages/{id}/replay`
+
+Replay AS2 Incoming Message
+
+```go
+func (c *Client) Replay(params files_sdk.As2IncomingMessageReplayParams, opts ...files_sdk.RequestResponseOption) (as2IncomingMessage files_sdk.As2IncomingMessage, err error)
+func Replay(params files_sdk.As2IncomingMessageReplayParams, opts ...files_sdk.RequestResponseOption) (as2IncomingMessage files_sdk.As2IncomingMessage, err error)
+```
+
+Parameters, `files_sdk.As2IncomingMessageReplayParams`:
+
+| Field | Go type | API name | Required | Description |
+| --- | --- | --- | --- | --- |
+| `Id` | `int64` | `id`, in the path | yes | As2 Incoming Message ID. |
+
+Example:
+
+```go
+result, err := as2_incoming_message.Replay(files_sdk.As2IncomingMessageReplayParams{
+	Id: 1,
+})
+if err != nil {
+	return err
+}
+fmt.Println(result)
+```
+
 ## Model
 
 `files_sdk.As2IncomingMessage` has these fields from the API schema:
 
 | Field | Go type | JSON key | Description |
 | --- | --- | --- | --- |
-| `Id` | `int64` | `id` | Id of the AS2 Partner. |
+| `Id` | `int64` | `id` | ID of this AS2 incoming message record. |
+| `ReplayedFromMessageId` | `int64` | `replayed_from_message_id` | ID of the incoming message record this message was replayed from. Empty for messages received directly from a trading partner. |
 | `WorkspaceId` | `int64` | `workspace_id` | ID of the Workspace associated with this AS2 Incoming Message. |
 | `As2PartnerId` | `int64` | `as2_partner_id` | Id of the AS2 Partner associated with this message. |
 | `As2StationId` | `int64` | `as2_station_id` | Id of the AS2 Station associated with this message. |

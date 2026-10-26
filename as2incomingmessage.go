@@ -9,8 +9,10 @@ import (
 
 // As2IncomingMessage is a Files.com API resource.
 type As2IncomingMessage struct {
-	// Id of the AS2 Partner.
+	// ID of this AS2 incoming message record.
 	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// ID of the incoming message record this message was replayed from. Empty for messages received directly from a trading partner.
+	ReplayedFromMessageId int64 `json:"replayed_from_message_id,omitempty" path:"replayed_from_message_id,omitempty" url:"replayed_from_message_id,omitempty"`
 	// ID of the Workspace associated with this AS2 Incoming Message.
 	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	// Id of the AS2 Partner associated with this message.
@@ -105,6 +107,14 @@ type As2IncomingMessageListParams struct {
 	FilterLteq interface{} `url:"filter_lteq,omitempty" json:"filter_lteq,omitempty" path:"filter_lteq"`
 	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
+}
+
+// As2IncomingMessageReplayParams contains the request parameters for POST /as2_incoming_messages/{id}/replay.
+//
+// Replay AS2 Incoming Message
+type As2IncomingMessageReplayParams struct {
+	// As2 Incoming Message ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.
