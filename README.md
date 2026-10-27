@@ -1258,3 +1258,58 @@ where an open file cannot be removed, it is removed only then. The request
 fails without sending anything if the content does not have the size you gave,
 has more than your limit, cannot be read, or the context ends while it is being
 read. The SDK does not close your reader, and each attachment can be sent once.
+
+## Writing Files Through `file.FS`
+
+`file.FS` reads remote files through Go's `io/fs` interfaces. Its `Create`
+returns an `io.WriteCloser` for a remote file under the `FS`'s `Root`, where
+`Open` finds it. The writer keeps what you write in a temporary file in
+`os.TempDir()`, so writing a file takes that much free disk space rather than
+memory, and it sends nothing until `Close`. `Close` uploads the temporary file
+as `Client.Upload` does, with its parts and retries, then removes it. A `nil`
+from `Close` means the upload, its finalization and removing the temporary
+file all succeeded, as the client saw them. An error does not mean nothing was
+written: the remote file may already have been created or replaced, as when
+only removing the temporary file failed, or the outcome may be unknown, as
+when the request that finalizes the upload gets no answer. Always call `Close`,
+even after a write or copy fails or the context has ended, because only
+`Close` removes the temporary file, and check its error:
+
+```go
+ctx, cancel := context.WithCancel(ctx)
+defer cancel()
+writer, err := remote.WithContext(ctx).(*file.FS).Create("reports/today.csv")
+if err != nil {
+	return err
+}
+if _, err := io.Copy(writer, report); err != nil {
+	cancel() // so that Close uploads nothing
+	writer.Close()
+	return err
+}
+return writer.Close()
+```
+
+`Create` fails if it cannot create the temporary file. If a write fails,
+`Close` uploads nothing and returns that error. `Close` uploads at most once:
+calling it again returns the same result, and `Write` after `Close` fails with
+`fs.ErrClosed`. `Close` also reports a temporary file it could not remove.
+
+The writer uses the `FS`'s context, set with `WithContext`, or
+`context.Background()` when there is none. If that context has ended before
+`Close`, as above, nothing is uploaded. If it ends during the upload, the parts
+still being sent stop, but once every part has been sent the upload is
+completed anyway, so cancelling does not guarantee that nothing was written.
+
+`WithContext` keeps `Root`. After `Close` attempts an upload, the files and
+listings cached by the `FS`, and by every `FS` made from it with
+`WithContext`, are dropped, so the next `Open` asks the API again. Reads
+running at the same time as `Close`, and other clients' writes, are not
+coordinated with that cache.
+
+`Create` used to return a `WritableFile`, which kept the whole file in memory.
+`WritableFile` is now deprecated and unchanged; a type assertion to it on
+`Create`'s result fails, so use the result as an `io.WriteCloser`. There is no
+append, seek, `WriteAt`, `OpenFile` or exclusive create. The other methods of
+`FS`, such as `ReadDir`, `MkdirAll` and `Remove`, are unchanged and use the
+paths they are given without `Root`.

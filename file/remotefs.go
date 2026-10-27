@@ -11,6 +11,7 @@ import (
 	"math"
 	"math/rand"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -49,7 +50,7 @@ func (f *FS) Init(config files_sdk.Config, cache bool) *FS {
 }
 
 func (f *FS) WithContext(ctx context.Context) interface{} {
-	return &FS{Context: ctx, Config: f.Config, cache: f.cache, useCache: f.useCache, cacheDir: f.cacheDir, cacheMutex: f.cacheMutex}
+	return &FS{Context: ctx, Config: f.Config, Root: f.Root, cache: f.cache, useCache: f.useCache, cacheDir: f.cacheDir, cacheMutex: f.cacheMutex}
 }
 
 func (f *FS) ClearCache() {
@@ -727,6 +728,10 @@ func (f *FS) MkdirTemp(dir, pattern string) (string, error) {
 	return path, f.MkdirAll(path, 0750)
 }
 
+// WritableFile holds everything written to it in memory, and Close uploads it to path.
+//
+// Deprecated: FS.Create no longer returns a WritableFile; the writer it returns keeps what is written in a temporary
+// file on disk instead. WritableFile is unchanged for code that still uses it.
 type WritableFile struct {
 	*Client
 	*FS
@@ -752,9 +757,114 @@ func (w WritableFile) Close() (err error) {
 	)
 }
 
-// Create Not for performant use cases.
+// Create returns a writer for the file at path under Root, where Open finds it. The writer is an io.WriteCloser, no
+// longer a WritableFile. It keeps what is written in a temporary file in os.TempDir, using disk space rather than memory,
+// and sends nothing until Close uploads that file, as Client.Upload does, and removes it. A nil Close means the
+// upload, its finalization and removing the temporary file all succeeded, as the client saw them. An error does
+// not mean nothing was written: the remote file may already have been created or replaced, as when only removing
+// the temporary file failed, or the outcome may be unknown, as when the request that finalizes the upload gets no
+// answer. If a write fails, Close uploads nothing and returns that error; Close uploads at most once, and a later
+// Close returns the same result. The writer uses the FS's context, or context.Background when it has none: if that
+// context has ended before Close, Close uploads nothing. Always call Close, even after a write or copy fails or the
+// context has ended: only Close removes the temporary file. Create fails if it cannot create the temporary file.
 func (f *FS) Create(path string) (io.WriteCloser, error) {
-	return WritableFile{FS: f, Client: &Client{Config: f.Config}, path: path}.init(), nil
+	path = lib.UrlJoinNoEscape(f.Root, path)
+	staging, err := os.CreateTemp("", "files-sdk-create-*")
+	if err != nil {
+		return nil, &goFs.PathError{Op: "create", Path: path, Err: err}
+	}
+	ctx := f.Context
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return &stagedRemoteFile{fs: f, client: &Client{Config: f.Config}, ctx: ctx, path: path, staging: staging}, nil
+}
+
+// stagedRemoteFile is the writer Create returns. Only it opens its temporary file, which holds what was written. A write
+// that fails, or writes only part of what it was given, fails the file: Close then uploads nothing.
+type stagedRemoteFile struct {
+	fs      *FS
+	client  *Client
+	ctx     context.Context
+	path    string
+	staging *os.File
+
+	mutex    sync.Mutex
+	size     int64
+	writeErr error
+	closed   bool
+
+	closeOnce sync.Once
+	closeErr  error
+}
+
+// Write adds p to the temporary file. After Close, or once a write has failed, it adds nothing and returns an error:
+// fs.ErrClosed, or the failed write's.
+func (s *stagedRemoteFile) Write(p []byte) (int, error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	if s.closed {
+		return 0, &goFs.PathError{Op: "write", Path: s.path, Err: goFs.ErrClosed}
+	}
+	if s.writeErr != nil {
+		return 0, s.writeErr
+	}
+	n, err := s.staging.Write(p)
+	s.size += int64(n)
+	if err != nil {
+		s.writeErr = err
+	}
+	return n, err
+}
+
+// Close uploads the temporary file, unless a write failed or the context has ended, then removes it. Ending the context
+// during the upload stops the parts still being sent; once every part has been sent, the upload is completed regardless.
+// After an upload is attempted, the files and listings cached by the FS, which every FS WithContext made from it shares,
+// are dropped, so the next Open or ReadDir asks the API again; reads running alongside Close, and other clients' writes,
+// can still leave them stale. Close runs once, and a later Close returns its error without uploading again. The error is
+// the failed write's, the context's or the upload's, joined with any failure to close or remove the temporary file.
+func (s *stagedRemoteFile) Close() error {
+	s.closeOnce.Do(func() { s.closeErr = s.upload() })
+	return s.closeErr
+}
+
+func (s *stagedRemoteFile) upload() error {
+	s.mutex.Lock()
+	s.closed = true
+	err, size := s.writeErr, s.size
+	s.mutex.Unlock()
+
+	if err == nil {
+		err = s.ctx.Err()
+	}
+	if err == nil {
+		err = s.client.Upload(
+			UploadWithContext(s.ctx),
+			UploadWithReaderAt(s.staging),
+			UploadWithDestinationPath(s.path),
+			UploadWithSize(size),
+		)
+		s.fs.dropCaches()
+	}
+
+	// net/http can still be finishing a read of a part's body when that part's request has ended (see
+	// ProxySectionReader). Where an open file cannot be removed, as on Windows, such a read can make the removal fail;
+	// Close reports that failure.
+	if cleanupErr := errors.Join(s.staging.Close(), os.Remove(s.staging.Name())); cleanupErr != nil {
+		return errors.Join(err, cleanupErr)
+	}
+	return err
+}
+
+// dropCaches empties, in place, the caches this FS shares with every FS WithContext made from it, so none of them finds
+// a file or listing it cached before.
+func (f *FS) dropCaches() {
+	if f.cache != nil {
+		f.cache.Clear()
+	}
+	if f.cacheDir != nil {
+		f.cacheDir.Clear()
+	}
 }
 
 func (f *FS) RemoveAll(path string) error {
