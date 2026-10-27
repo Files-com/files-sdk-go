@@ -103,7 +103,7 @@ Parameters, `files_sdk.ScheduledExportCreateParams`:
 | --- | --- | --- | --- | --- |
 | `Name` | `string` | `name` | yes | Name for this scheduled export. |
 | `ExportType` | `string` | `export_type` | yes | Export report type. Valid values: folder_size_audit, group_membership_audit, permission_audit, share_link_audit |
-| `ExportOptions` | `interface{}` | `export_options` | no | Report-specific options. `permission_audit` supports `group_by` with `user` or `path`. |
+| `ExportOptions` | `interface{}` | `export_options` | no | Options for the report selected by export_type. |
 | `UserId` | `int64` | `user_id` | no | Site Admin user who receives the completed export e-mail. |
 | `Disabled` | `*bool` | `disabled` | no | If true, this scheduled export will not run. |
 | `Trigger` | `files_sdk.ScheduledExportTriggerEnum` | `trigger` | no | Schedule trigger type: `daily` or `custom_schedule`. Values: `daily`, `custom_schedule`. |
@@ -152,7 +152,7 @@ Parameters, `files_sdk.ScheduledExportUpdateParams`:
 | `Id` | `int64` | `id`, in the path | yes | Scheduled Export ID. |
 | `Name` | `string` | `name` | no | Name for this scheduled export. |
 | `ExportType` | `string` | `export_type` | no | Export report type. Valid values: folder_size_audit, group_membership_audit, permission_audit, share_link_audit |
-| `ExportOptions` | `interface{}` | `export_options` | no | Report-specific options. `permission_audit` supports `group_by` with `user` or `path`. |
+| `ExportOptions` | `interface{}` | `export_options` | no | Options for the report selected by export_type. |
 | `UserId` | `int64` | `user_id` | no | Site Admin user who receives the completed export e-mail. |
 | `Disabled` | `*bool` | `disabled` | no | If true, this scheduled export will not run. |
 | `Trigger` | `files_sdk.ScheduledExportTriggerEnum` | `trigger` | no | Schedule trigger type: `daily` or `custom_schedule`. Values: `daily`, `custom_schedule`. |
@@ -227,7 +227,7 @@ if err != nil {
 | `Name` | `string` | `name` | Name for this scheduled export. |
 | `ExportType` | `string` | `export_type` | Export report type. Valid values: folder_size_audit, group_membership_audit, permission_audit, share_link_audit |
 | `ReportName` | `string` | `report_name` | Human-readable report name. |
-| `ExportOptions` | `interface{}` | `export_options` | Report-specific options. `permission_audit` supports `group_by` with `user` or `path`. |
+| `ExportOptions` | `interface{}` | `export_options` | Options for the report selected by export_type. |
 | `UserId` | `int64` | `user_id` | Site Admin user who receives the completed export e-mail. |
 | `Disabled` | `*bool` | `disabled` | If true, this scheduled export will not run. |
 | `Trigger` | `string` | `trigger` | Schedule trigger type: `daily` or `custom_schedule`. |

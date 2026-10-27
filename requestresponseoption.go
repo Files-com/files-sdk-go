@@ -104,19 +104,31 @@ func ResponseBodyOption(opt func(io.ReadCloser) error) RequestResponseOption {
 // WrapRequestOptions applies request options, sends the request with config,
 // and applies response options. The caller must close a returned response body.
 func WrapRequestOptions(config Config, request *http.Request, opts ...RequestResponseOption) (*http.Response, error) {
+	response, _, err := wrapRequestOptions(config, request, nil, opts...)
+	return response, err
+}
+
+// wrapRequestOptions is WrapRequestOptions with beforeSend, when not nil, given the request once the request options
+// have changed it, just before it is sent; the request it returns is the one sent. answered reports whether the
+// request was sent and answered, so that an error with answered set is a response option's.
+func wrapRequestOptions(config Config, request *http.Request, beforeSend func(*http.Request) *http.Request, opts ...RequestResponseOption) (response *http.Response, answered bool, err error) {
 	// Apply request options
 	modifiedRequest, err := BuildRequest(request, opts...)
 	if err != nil {
-		return &http.Response{}, err
+		return &http.Response{}, false, err
+	}
+	if beforeSend != nil {
+		modifiedRequest = beforeSend(modifiedRequest)
 	}
 
 	// Execute the request
-	response, err := config.Do(modifiedRequest)
+	response, err = config.Do(modifiedRequest)
 	if err != nil {
-		return response, err
+		return response, false, err
 	}
 
-	return BuildResponse(response, opts...)
+	response, err = BuildResponse(response, opts...)
+	return response, true, err
 }
 
 // ContextOption extracts the context from opts, or returns context.Background

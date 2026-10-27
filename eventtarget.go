@@ -21,7 +21,7 @@ type EventTarget struct {
 	ApplyToAllWorkspaces *bool `json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces,omitempty" url:"apply_to_all_workspaces,omitempty"`
 	// Whether this Event Target can receive events.
 	Enabled *bool `json:"enabled,omitempty" path:"enabled,omitempty" url:"enabled,omitempty"`
-	// Event Target configuration. Folder targets accept path and format (json or csv).
+	// Event Target configuration. Fields depend on target_type.
 	Config interface{} `json:"config,omitempty" path:"config,omitempty" url:"config,omitempty"`
 	// Event Target delivery policy. Email and folder targets support batch_interval in seconds, between 600 and 86400. Slack and Teams support delivery_mode (immediate or subfolder_summary), summary_path (empty string means root), and summary_delay (15–300 seconds, default 60). The summary applies to matching file activity under summary_path; other matching events retain immediate delivery.
 	DeliveryPolicy interface{} `json:"delivery_policy,omitempty" path:"delivery_policy,omitempty" url:"delivery_policy,omitempty"`
@@ -87,7 +87,7 @@ type EventTargetCreateParams struct {
 	ApplyToAllWorkspaces *bool `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
 	// Whether this Event Target can receive events.
 	Enabled *bool `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
-	// Event Target configuration. Folder targets accept path and format (json or csv). Required.
+	// Event Target configuration. Fields depend on target_type. Required.
 	Config interface{} `url:"config" json:"config" path:"config"`
 	// Event Target delivery policy. Email and folder targets support batch_interval in seconds, between 600 and 86400. Slack and Teams support delivery_mode (immediate or subfolder_summary), summary_path (empty string means root), and summary_delay (15–300 seconds, default 60). The summary applies to matching file activity under summary_path; other matching events retain immediate delivery.
 	DeliveryPolicy interface{} `url:"delivery_policy,omitempty" json:"delivery_policy,omitempty" path:"delivery_policy"`
@@ -107,7 +107,7 @@ type EventTargetUpdateParams struct {
 	ApplyToAllWorkspaces *bool `url:"apply_to_all_workspaces,omitempty" json:"apply_to_all_workspaces,omitempty" path:"apply_to_all_workspaces"`
 	// Whether this Event Target can receive events.
 	Enabled *bool `url:"enabled,omitempty" json:"enabled,omitempty" path:"enabled"`
-	// Event Target configuration. Folder targets accept path and format (json or csv).
+	// Event Target configuration. Fields depend on target_type.
 	Config interface{} `url:"config,omitempty" json:"config,omitempty" path:"config"`
 	// Event Target delivery policy. Email and folder targets support batch_interval in seconds, between 600 and 86400. Slack and Teams support delivery_mode (immediate or subfolder_summary), summary_path (empty string means root), and summary_delay (15–300 seconds, default 60). The summary applies to matching file activity under summary_path; other matching events retain immediate delivery.
 	DeliveryPolicy interface{} `url:"delivery_policy,omitempty" json:"delivery_policy,omitempty" path:"delivery_policy"`

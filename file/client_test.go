@@ -1963,8 +1963,354 @@ func TestZipMetadataReleasesFinalResponseOnPolicyCancellation(t *testing.T) {
 	})})
 	config.RetryMax = 0
 	batch := &zipBatchDownloader{ctx: ctx, job: &Job{Config: config}}
-	uri, err := batch.createZipDownloadOnce(nil)
+	download, err := batch.createZipDownloadOnce(nil)
 	require.ErrorIs(t, err, context.Canceled)
-	assert.Empty(t, uri)
+	assert.Empty(t, download.uri)
 	assert.Equal(t, 1, body.closes)
+}
+
+// zipRegionMismatch is the API's typed lockout region mismatch naming eu.files.com.
+const zipRegionMismatch = `{"type":"not-authenticated/lockout-region-mismatch","http-code":403,"error":"Lockout region mismatch","data":{"host":"eu.files.com"}}`
+
+// zipRegionSent is one request a zipRegionSites transport received, with the headers it carried.
+type zipRegionSent struct {
+	host, method, path              string
+	key, session, reauth, workspace string
+	custom                          string
+	body                            string
+}
+
+func zipRegionSentOf(req *http.Request, body []byte) zipRegionSent {
+	return zipRegionSent{
+		host:      req.URL.Host,
+		method:    req.Method,
+		path:      req.URL.Path,
+		key:       req.Header.Get("X-FilesAPI-Key"),
+		session:   req.Header.Get("X-FilesAPI-Auth"),
+		reauth:    req.Header.Get("X-Files-Reauthentication"),
+		workspace: req.Header.Get("X-Files-Workspace-Id"),
+		custom:    req.Header.Get("X-Custom"),
+		body:      string(body),
+	}
+}
+
+// zipRegionSites answers each request with the handler for its host, as separate sites would, without changing the
+// request the SDK sent, and records each request.
+type zipRegionSites struct {
+	mu       sync.Mutex
+	handlers map[string]func(*http.Request) *http.Response
+	sent     []zipRegionSent
+}
+
+func (s *zipRegionSites) RoundTrip(req *http.Request) (*http.Response, error) {
+	var body []byte
+	if req.Body != nil {
+		body, _ = io.ReadAll(req.Body)
+		_ = req.Body.Close()
+	}
+	s.mu.Lock()
+	s.sent = append(s.sent, zipRegionSentOf(req, body))
+	handler, ok := s.handlers[req.URL.Host]
+	s.mu.Unlock()
+	if !ok {
+		return nil, fmt.Errorf("no site at %s", req.URL.Host)
+	}
+	return handler(req), nil
+}
+
+func (s *zipRegionSites) sentTo(host, method string) []zipRegionSent {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var sent []zipRegionSent
+	for _, request := range s.sent {
+		if request.host == host && request.method == method {
+			sent = append(sent, request)
+		}
+	}
+	return sent
+}
+
+// zipRegionAnswer answers with status, contentType (none when empty), payload and header.
+func zipRegionAnswer(status int, contentType, payload string, header http.Header) func(*http.Request) *http.Response {
+	return func(req *http.Request) *http.Response {
+		answer := http.Header{}
+		for name, values := range header {
+			answer[name] = append([]string(nil), values...)
+		}
+		if contentType != "" {
+			answer.Set("Content-Type", contentType)
+		}
+		return &http.Response{StatusCode: status, Status: fmt.Sprintf("%d %s", status, http.StatusText(status)), Header: answer, Body: io.NopCloser(strings.NewReader(payload)), ContentLength: int64(len(payload)), Request: req}
+	}
+}
+
+// An upload part is a request to storage: a typed lockout region mismatch, even
+// with a retry budget left, never sends it to the host it names.
+func TestUploadPartsAreNeverMovedByARegionMismatch(t *testing.T) {
+	for _, version := range []string{"v1", "v2"} {
+		t.Run(version, func(t *testing.T) {
+			var bodies []*ownedHTTPResponseBody
+			var hosts []string
+			config := files_sdk.Config{DisableDirectTransfers: true}.Init().SetCustomClient(&http.Client{Transport: ownedHTTPResponseTransport(func(req *http.Request) (*http.Response, error) {
+				if req.Body != nil {
+					_, _ = io.Copy(io.Discard, req.Body)
+					_ = req.Body.Close()
+				}
+				hosts = append(hosts, req.URL.Host)
+				body := &ownedHTTPResponseBody{Reader: strings.NewReader(zipRegionMismatch)}
+				bodies = append(bodies, body)
+				header := http.Header{"Content-Type": []string{"application/json"}, "X-Files-Host": []string{"eu.files.com"}}
+				return &http.Response{StatusCode: http.StatusForbidden, Status: "403 Forbidden", Header: header, Body: body, ContentLength: int64(body.Len()), Request: req}, nil
+			})})
+			// A retry is left, so that only the kind of request keeps it from moving.
+			config.RetryMax = 2
+			config.FeatureFlags[files_sdk.FeatureFlagUploadV2ChecksumTrailer] = false
+			upload := files_sdk.FileUploadPart{PartNumber: 1, Path: "file", UploadUri: "https://us.files.com/upload/file", HttpMethod: "PUT"}
+			reader := &ProxyReaderAt{ReaderAt: strings.NewReader("a"), len: 1}
+			u := &uploadIO{Client: &Client{Config: config}}
+			var err error
+			if version == "v1" {
+				_, err = u.uploadPart(context.Background(), &Part{FileUploadPart: upload, ProxyReader: reader})
+			} else {
+				e := &uploadV2Engine{u: u}
+				_, _, _, _, err = e.uploadPart(context.Background(), &uploadV2Part{uploadV2PartDescriptor: uploadV2PartDescriptor{number: 1, upload: upload}, reader: reader})
+			}
+			require.Error(t, err)
+			require.NotEmpty(t, hosts)
+			assert.NotContains(t, hosts, "eu.files.com", "an upload part is never sent to the host a mismatch names")
+			var mismatch *files_sdk.RegionMismatchError
+			assert.False(t, errors.As(err, &mismatch), "an upload part is not routed as an API request")
+			var responseErr files_sdk.ResponseError
+			require.ErrorAs(t, err, &responseErr)
+			assert.Equal(t, "not-authenticated/lockout-region-mismatch", responseErr.Type)
+			for _, body := range bodies {
+				assert.Equal(t, 1, body.closes)
+			}
+		})
+	}
+}
+
+// The ZIP create request is an API request: a lockout region mismatch moves it,
+// with the same body and credentials, and its result keeps the answer's origin.
+func TestZipCreateFollowsARegionMismatchAndKeepsItsAnswer(t *testing.T) {
+	sites := &zipRegionSites{handlers: map[string]func(*http.Request) *http.Response{
+		"us.files.com": zipRegionAnswer(http.StatusForbidden, "application/json", zipRegionMismatch, nil),
+		"eu.files.com": zipRegionAnswer(http.StatusOK, "application/json", `{"download_uri":"/zip/download?z=1"}`, nil),
+	}}
+	config := files_sdk.Config{APIKey: "zip-key", EndpointOverride: "https://us.files.com"}.Init().SetCustomClient(&http.Client{Transport: sites})
+	batch := &zipBatchDownloader{ctx: context.Background(), job: &Job{Config: config}}
+
+	download, err := batch.createZipDownloadOnce([]*DownloadStatus{{remotePath: "batch/a.txt"}})
+
+	require.NoError(t, err)
+	assert.Equal(t, "/zip/download?z=1", download.uri)
+	assert.True(t, download.api.Relocated())
+	assert.Equal(t, "https://eu.files.com", download.api.Origin())
+	require.Len(t, sites.sent, 2)
+	assert.Equal(t, "us.files.com", sites.sent[0].host)
+	assert.Equal(t, "eu.files.com", sites.sent[1].host)
+	for _, sent := range sites.sent {
+		assert.Equal(t, http.MethodPost, sent.method)
+		assert.Equal(t, "/api/rest/v1/zip_downloads", sent.path)
+		assert.Equal(t, "zip-key", sent.key)
+		assert.JSONEq(t, `{"paths":[],"encoded_paths":["batch%2Fa.txt"]}`, sent.body)
+	}
+	assert.Equal(t, "https://us.files.com", batch.job.Config.Endpoint(), "the job's configuration is not changed")
+}
+
+// A ZIP create mismatch that is not followed, here for want of a retry, is
+// returned with the API's error reachable, and the response is closed once.
+func TestZipCreateRegionMismatchThatIsNotFollowedReturnsItWithTheAPIError(t *testing.T) {
+	body := &ownedHTTPResponseBody{Reader: strings.NewReader(zipRegionMismatch)}
+	var hosts []string
+	config := files_sdk.Config{APIKey: "zip-key", EndpointOverride: "https://us.files.com"}.Init().SetCustomClient(&http.Client{Transport: ownedHTTPResponseTransport(func(req *http.Request) (*http.Response, error) {
+		if req.Body != nil {
+			_, _ = io.Copy(io.Discard, req.Body)
+			_ = req.Body.Close()
+		}
+		hosts = append(hosts, req.URL.Host)
+		return &http.Response{StatusCode: http.StatusForbidden, Status: "403 Forbidden", Header: http.Header{"Content-Type": []string{"application/json"}}, Body: body, Request: req}, nil
+	})})
+	config.RetryMax = 0
+	batch := &zipBatchDownloader{ctx: context.Background(), job: &Job{Config: config}}
+
+	download, err := batch.createZipDownloadOnce(nil)
+
+	var mismatch *files_sdk.RegionMismatchError
+	require.ErrorAs(t, err, &mismatch)
+	assert.Equal(t, files_sdk.RegionMismatchRetryBudget, mismatch.Reason)
+	assert.Equal(t, "https://eu.files.com", mismatch.Origin)
+	assert.Equal(t, "https://us.files.com", mismatch.From)
+	var responseErr files_sdk.ResponseError
+	require.ErrorAs(t, err, &responseErr)
+	assert.Equal(t, "eu.files.com", responseErr.Data.Host)
+	assert.Empty(t, download.uri)
+	assert.False(t, download.api.Relocated())
+	assert.Equal(t, []string{"us.files.com"}, hosts)
+	assert.Equal(t, 1, body.closes)
+}
+
+// A relative ZIP download URI from a moved create request is fetched with the
+// Files.com authentication the moved request sent, including none, whatever the
+// environment or the configuration says by then.
+func TestZipRelativeStreamSendsTheAuthenticationTheMovedCreateSent(t *testing.T) {
+	for name, test := range map[string]struct {
+		config   files_sdk.Config
+		env      string
+		laterEnv string
+		later    func(files_sdk.Config) files_sdk.Config
+		want     zipRegionSent
+	}{
+		"an API key from the environment": {env: "create-key", laterEnv: "stream-key", want: zipRegionSent{key: "create-key"}},
+		"a session, a workspace and additional headers": {
+			config:   files_sdk.Config{SessionId: "create-session", WorkspaceId: 12, AdditionalHeaders: map[string]string{"X-Files-Reauthentication": "password:create", "X-Custom": "kept"}},
+			laterEnv: "stream-key",
+			later: func(config files_sdk.Config) files_sdk.Config {
+				config.SessionId = "later-session"
+				config.WorkspaceId = 34
+				config.AdditionalHeaders = map[string]string{"X-Files-Reauthentication": "password:later", "X-Custom": "kept"}
+				return config
+			},
+			want: zipRegionSent{session: "create-session", workspace: "12", reauth: "password:create", custom: "kept"},
+		},
+		"no authentication": {laterEnv: "late-key", want: zipRegionSent{}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Setenv("FILES_API_KEY", test.env)
+			sites := &zipRegionSites{handlers: map[string]func(*http.Request) *http.Response{
+				"us.files.com": zipRegionAnswer(http.StatusForbidden, "application/json", zipRegionMismatch, nil),
+				"eu.files.com": func(req *http.Request) *http.Response {
+					if req.Method == http.MethodPost {
+						return zipRegionAnswer(http.StatusOK, "application/json", `{"download_uri":"/zip/download?z=1"}`, nil)(req)
+					}
+					return zipRegionAnswer(http.StatusOK, "application/zip", "zip-bytes", nil)(req)
+				},
+			}}
+			config := test.config
+			config.EndpointOverride = "https://us.files.com"
+			config = config.Init().SetCustomClient(&http.Client{Transport: sites})
+			batch := &zipBatchDownloader{ctx: context.Background(), job: &Job{Config: config}}
+			download, err := batch.createZipDownloadOnce(nil)
+			require.NoError(t, err)
+
+			// The environment and the configuration change before the archive is fetched.
+			t.Setenv("FILES_API_KEY", test.laterEnv)
+			later := config
+			if test.later != nil {
+				later = test.later(config)
+			}
+			streamURI, streamConfig, err := zipBatchStreamTarget(later, download)
+			require.NoError(t, err)
+			assert.Equal(t, "https://eu.files.com/zip/download?z=1", streamURI)
+			zipFile := newZipBatchFile(streamConfig, context.Background(), streamURI)
+			data, err := io.ReadAll(zipFile)
+			require.NoError(t, err)
+			require.NoError(t, zipFile.Close())
+			assert.Equal(t, "zip-bytes", string(data))
+
+			creates := sites.sentTo("eu.files.com", http.MethodPost)
+			streams := sites.sentTo("eu.files.com", http.MethodGet)
+			require.Len(t, creates, 1)
+			require.Len(t, streams, 1)
+			for _, sent := range []zipRegionSent{creates[0], streams[0]} {
+				assert.Equal(t, test.want.key, sent.key)
+				assert.Equal(t, test.want.session, sent.session)
+				assert.Equal(t, test.want.workspace, sent.workspace)
+				assert.Equal(t, test.want.reauth, sent.reauth)
+				assert.Equal(t, test.want.custom, sent.custom)
+			}
+			assert.Equal(t, "https://us.files.com", config.Endpoint(), "the job's configuration is not changed")
+		})
+	}
+}
+
+// A moved ZIP create's relocated context belongs to the answer the call returned: the ErrorHandler's replacement for the
+// moved request's own answer keeps it, and its relative download URI is fetched from that origin with the
+// authentication the moved create sent; an unrelated response the handler selected, or the moved answer once its
+// request leads elsewhere, has none, and its relative URI is fetched as an unmoved answer's is, with the configuration.
+func TestZipCreateRelocatedContextBelongsToTheSelectedAnswer(t *testing.T) {
+	for name, test := range map[string]struct {
+		selected  func(answer *http.Response) *http.Response
+		relocated bool
+		stream    string
+		host      string
+		key       string
+	}{
+		"a replacement for the moved answer": {
+			selected: func(answer *http.Response) *http.Response {
+				return zipRegionAnswer(http.StatusOK, "application/json", `{"download_uri":"/zip/download?z=b"}`, nil)(answer.Request)
+			},
+			relocated: true,
+			stream:    "https://eu.files.com/zip/download?z=b",
+			host:      "eu.files.com",
+			key:       "create-key",
+		},
+		"an unrelated response": {
+			selected: func(*http.Response) *http.Response {
+				return zipRegionAnswer(http.StatusOK, "application/json", `{"download_uri":"/zip/download?z=c"}`, nil)(nil)
+			},
+			stream: "https://us.files.com/zip/download?z=c",
+			host:   "us.files.com",
+			key:    "later-key",
+		},
+		"the moved answer once its request leads elsewhere": {
+			selected: func(answer *http.Response) *http.Response {
+				answer.Request.URL.Host = "c.example.com"
+				return zipRegionAnswer(http.StatusOK, "application/json", `{"download_uri":"/zip/download?z=c"}`, nil)(answer.Request)
+			},
+			stream: "https://us.files.com/zip/download?z=c",
+			host:   "us.files.com",
+			key:    "later-key",
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			archive := zipRegionAnswer(http.StatusOK, "application/zip", "zip-bytes", nil)
+			sites := &zipRegionSites{handlers: map[string]func(*http.Request) *http.Response{
+				"us.files.com": func(req *http.Request) *http.Response {
+					if req.Method == http.MethodPost {
+						return zipRegionAnswer(http.StatusForbidden, "application/json", zipRegionMismatch, nil)(req)
+					}
+					return archive(req)
+				},
+				"eu.files.com": func(req *http.Request) *http.Response {
+					if req.Method == http.MethodPost {
+						return zipRegionAnswer(http.StatusServiceUnavailable, "application/json", `{"error":"unavailable","http-code":503,"type":"service-unavailable"}`, nil)(req)
+					}
+					return archive(req)
+				},
+			}}
+			config := files_sdk.Config{APIKey: "create-key", EndpointOverride: "https://us.files.com"}.Init().SetCustomClient(&http.Client{Transport: sites})
+			// The move takes the one retry, so the moved create's 503 reaches the ErrorHandler.
+			config.RetryMax = 1
+			config.Client.ErrorHandler = func(answer *http.Response, _ error, _ int) (*http.Response, error) {
+				if err := answer.Body.Close(); err != nil {
+					return nil, err
+				}
+				return test.selected(answer), nil
+			}
+			batch := &zipBatchDownloader{ctx: context.Background(), job: &Job{Config: config}}
+
+			download, err := batch.createZipDownloadOnce(nil)
+
+			require.NoError(t, err)
+			assert.Equal(t, test.relocated, download.api.Relocated())
+			require.Len(t, sites.sentTo("us.files.com", http.MethodPost), 1)
+			require.Len(t, sites.sentTo("eu.files.com", http.MethodPost), 1)
+
+			// The configuration's key changes before the archive is fetched.
+			later := config
+			later.APIKey = "later-key"
+			streamURI, streamConfig, err := zipBatchStreamTarget(later, download)
+			require.NoError(t, err)
+			assert.Equal(t, test.stream, streamURI)
+			zipFile := newZipBatchFile(streamConfig, context.Background(), streamURI)
+			data, err := io.ReadAll(zipFile)
+			require.NoError(t, err)
+			require.NoError(t, zipFile.Close())
+			assert.Equal(t, "zip-bytes", string(data))
+			streams := sites.sentTo(test.host, http.MethodGet)
+			require.Len(t, streams, 1)
+			assert.Equal(t, test.key, streams[0].key)
+		})
+	}
 }

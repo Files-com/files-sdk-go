@@ -413,6 +413,128 @@ func TestRequestOptionCanChangeTheBodyOfARequestWithAnAttachment(t *testing.T) {
 	}
 }
 
+// attachmentRegionMismatch is the API's typed lockout region mismatch naming eu.files.com.
+const attachmentRegionMismatch = `{"type":"not-authenticated/lockout-region-mismatch","http-code":403,"error":"Lockout region mismatch","data":{"host":"eu.files.com"}}`
+
+// A lockout region mismatch moves a request with an attachment to the host the API
+// names. The relocated request sends the same bytes, with their real length, from
+// the copy the SDK keeps, including a body a RequestOption replaced, and the
+// copies are removed once the call returns.
+func TestAttachmentRegionMismatchResendsTheSameBodyToTheNamedHost(t *testing.T) {
+	avatar := bytes.Repeat([]byte("avatar "), 200_000) // kept in a temporary file
+	for name, rename := range map[string]bool{"the prepared body": false, "a body a RequestOption replaced": true} {
+		t.Run(name, func(t *testing.T) {
+			tempDir := isolateTempDir(t)
+			type sent struct {
+				host, method, path, key string
+				body                    []byte
+				declared                int64
+				stagedFiles             int
+			}
+			var requests []sent
+			config := files_sdk.Config{APIKey: "attachment-test", EndpointOverride: "https://us.files.com"}.Init()
+			config = config.SetCustomClient(&http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				body, err := io.ReadAll(req.Body)
+				if closeErr := req.Body.Close(); err == nil {
+					err = closeErr
+				}
+				if err != nil {
+					return nil, err
+				}
+				staged, err := os.ReadDir(tempDir)
+				if err != nil {
+					return nil, err
+				}
+				requests = append(requests, sent{host: req.URL.Host, method: req.Method, path: req.URL.Path, key: req.Header.Get("X-FilesAPI-Key"), body: body, declared: req.ContentLength, stagedFiles: len(staged)})
+				if req.URL.Host == "us.files.com" {
+					return &http.Response{StatusCode: http.StatusForbidden, Header: http.Header{"Content-Type": {"application/json"}}, Body: io.NopCloser(strings.NewReader(attachmentRegionMismatch)), Request: req}, nil
+				}
+				return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": {"application/json"}}, Body: io.NopCloser(strings.NewReader(`{}`)), Request: req}, nil
+			})})
+			var opts []files_sdk.RequestResponseOption
+			if rename {
+				opts = append(opts, files_sdk.RequestOption(func(req *http.Request) error {
+					body, err := io.ReadAll(req.Body)
+					if err != nil {
+						return err
+					}
+					body = bytes.Replace(body, []byte(`"name":"Before"`), []byte(`"name":"Edited"`), 1)
+					req.Body = io.NopCloser(bytes.NewReader(body))
+					req.GetBody = func() (io.ReadCloser, error) {
+						return io.NopCloser(bytes.NewReader(body)), nil
+					}
+					req.ContentLength = int64(len(body))
+					return nil
+				}))
+			}
+			source := newCallerReader(avatar)
+
+			_, err := (&user.Client{Config: config}).Update(files_sdk.UserUpdateParams{
+				Id:                   7,
+				Name:                 "Before",
+				AvatarFileAttachment: lib.NewJSONAttachment(source, int64(len(avatar)), "avatar.png", "image/png"),
+			}, opts...)
+			require.NoError(t, err)
+
+			require.Len(t, requests, 2, "the mismatch was followed once")
+			assert.Equal(t, "us.files.com", requests[0].host)
+			assert.Equal(t, "eu.files.com", requests[1].host)
+			for _, request := range requests {
+				assert.Equal(t, http.MethodPatch, request.method)
+				assert.Equal(t, "/api/rest/v1/users/7", request.path)
+				assert.Equal(t, "attachment-test", request.key, "the relocated request keeps its credentials")
+				assert.Equal(t, int64(len(request.body)), request.declared, "the request declares its real length")
+				assert.NotZero(t, request.stagedFiles, "the SDK kept its copy until the call returned")
+			}
+			assert.True(t, bytes.Equal(requests[0].body, requests[1].body), "the relocated request sent the same bytes")
+			members := jsonMembers(t, requests[1].body)
+			var sentName string
+			require.NoError(t, json.Unmarshal(members["name"], &sentName))
+			wantName := "Before"
+			if rename {
+				wantName = "Edited"
+			}
+			assert.Equal(t, wantName, sentName)
+			assert.True(t, bytes.Equal(avatar, decodeFileObject(t, members["avatar_file"]).content))
+			assert.False(t, source.closed, "the SDK does not close the caller's reader")
+			assertNoFiles(t, tempDir)
+		})
+	}
+}
+
+// A lockout region mismatch that is not followed, here for want of a retry,
+// fails a request with an attachment with the mismatch described and the API's
+// error still reachable, and removes the prepared copy.
+func TestAttachmentRegionMismatchThatIsNotFollowedKeepsItsErrorAndRemovesTheCopy(t *testing.T) {
+	tempDir := isolateTempDir(t)
+	server := newAttachmentServer(t, tempDir, http.StatusForbidden)
+	server.errorBody = attachmentRegionMismatch
+	config := server.config()
+	config.RetryMax = 0
+	avatar := bytes.Repeat([]byte("avatar "), 200_000) // kept in a temporary file
+
+	_, err := (&user.Client{Config: config}).Update(files_sdk.UserUpdateParams{
+		Id:                   7,
+		AvatarFileAttachment: lib.NewJSONAttachment(bytes.NewReader(avatar), int64(len(avatar)), "avatar.png", "image/png"),
+	})
+
+	var mismatch *files_sdk.RegionMismatchError
+	require.ErrorAs(t, err, &mismatch)
+	assert.Equal(t, files_sdk.RegionMismatchRetryBudget, mismatch.Reason)
+	assert.Equal(t, "eu.files.com", mismatch.Host)
+	assert.Equal(t, "https://eu.files.com", mismatch.Origin)
+	assert.Equal(t, server.URL, mismatch.From)
+	assert.True(t, mismatch.Approved)
+	var responseError files_sdk.ResponseError
+	require.ErrorAs(t, err, &responseError)
+	assert.Equal(t, "not-authenticated/lockout-region-mismatch", responseError.Type)
+	assert.Equal(t, responseError.Error(), err.Error(), "the call's own error message is kept")
+	requests := server.recorded()
+	require.Len(t, requests, 1, "nothing is sent to the named host")
+	assert.Equal(t, 1, requests[0].stagedFiles)
+	assertNoFiles(t, tempDir)
+}
+
 // zeroReader is a finite source of zeros that allocates nothing to read.
 type zeroReader struct{ left int64 }
 

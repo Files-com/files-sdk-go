@@ -1313,3 +1313,74 @@ coordinated with that cache.
 append, seek, `WriteAt`, `OpenFile` or exclusive create. The other methods of
 `FS`, such as `ReadDir`, `MkdirAll` and `Remove`, are unchanged and use the
 paths they are given without `Root`.
+
+## Lockout Region Mismatch
+
+A site pinned to a region can answer an API request that reached the wrong
+edge with a lockout region mismatch: the typed
+`not-authenticated/lockout-region-mismatch` 403 error, or the legacy plain-text
+403 that begins `You have connected to a URL` and names the host in an
+`X-Files-Host` header. When an API request gets one, the SDK sends the same
+request again to the host the mismatch names, the error's `data.host` or else
+its one `X-Files-Host` header: the same method, path, query, body and context,
+with the Files.com authentication headers the answered request actually sent,
+after your hooks had run. This applies to the API requests of `Call`, of the
+generated clients and of `CallRawAPI`, which the SDK's ZIP downloads use to
+create their archives. Requests to storage, such as upload parts, downloads and
+other signed URLs, and requests sent with `CallRaw` or `Config.Do`, are never
+moved.
+
+- Only an answer from the origin the request was sent to counts. A mismatch
+  that answers a request after it, or one of its redirects, left that origin
+  moves nothing, and a redirect away from it carries no Files.com
+  authentication headers, even after your `CheckRedirect` has changed it.
+- The request moves only to an HTTPS origin that is `files.com` or one of its
+  subdomains on the default port, or one for which
+  `Config.TrustRegionOrigin(origin, from)` returns true, such as a custom
+  domain, an IP address or another port. An HTTP origin is never trusted.
+- Moving the request is a retry within the retry client's `RetryMax`, shared
+  with every other retry, so successive moves stop when that budget does, and
+  with `RetryMax` 0 nothing moves. Your `CheckRetry` sees the real 403 with a
+  `*files_sdk.RegionMismatch` as its error and can refuse the move by returning
+  false or an error; `Backoff`, `PrepareRetry`, which sees the relocated URL,
+  and your log hooks run as for any retry.
+- The SDK's default `Backoff` is unchanged: it waits only as long as a
+  `Retry-After` header asks. The 100, 200 and 400 ms default delays for API
+  retries in the SDK retry guidelines are not applied yet; a custom `Backoff`
+  is used as it is.
+- A `CallRawAPI` request with a body and no `RetryableBody` is not moved, since
+  its body cannot be sent again.
+- The move applies to that one call; the next starts at the configured endpoint
+  again.
+
+`Config.DisableRegionRelocation` stops the SDK from following mismatches but
+still recognizes them. A mismatch that ends a call, because it was not followed
+or no retry was left, fails it with a `*files_sdk.RegionMismatchError`: `Host`,
+`Origin`, `From`, `Approved` and `Reason` describe the mismatch, `Error`
+returns the call's own error message, and `errors.As` and `errors.Is` reach
+both the call's own error and the API's error for the mismatch: a
+`files_sdk.ResponseError` for the typed JSON mismatch, and the SDK's usual
+non-OK error, a `lib.ResponseError`, for the legacy plain-text one. A type
+assertion such as `err.(files_sdk.ResponseError)` does not match this error.
+
+`Approved` describes only the destination: whether its origin may receive the
+request. It can be true while `Reason` refuses the mismatch for another reason,
+such as `crossed-origin` for an answer from another origin than the one the
+request was sent to. An integration that handles mismatches itself can save an
+approved origin as its endpoint when the origin its request was sent to
+answered and only the opt-out kept the SDK from following it:
+
+```go
+config := files_sdk.Config{APIKey: apiKey, DisableRegionRelocation: true}.Init()
+_, err := (&user.Client{Config: config}).Find(files_sdk.UserFindParams{Id: 1})
+var mismatch *files_sdk.RegionMismatchError
+if errors.As(err, &mismatch) && mismatch.Approved && mismatch.Reason == files_sdk.RegionMismatchDisabled {
+	config.EndpointOverride = mismatch.Origin
+}
+```
+
+When a mismatch moved the request that created a ZIP download, a relative
+download URI is fetched from the origin that answered, keeping the endpoint's
+path, with the Files.com authentication headers the moved request sent rather
+than the configuration's or the environment's. An absolute download URI is
+used as it is, as before.

@@ -17,7 +17,7 @@ type ScheduledExport struct {
 	ExportType string `json:"export_type,omitempty" path:"export_type,omitempty" url:"export_type,omitempty"`
 	// Human-readable report name.
 	ReportName string `json:"report_name,omitempty" path:"report_name,omitempty" url:"report_name,omitempty"`
-	// Report-specific options. `permission_audit` supports `group_by` with `user` or `path`.
+	// Options for the report selected by export_type.
 	ExportOptions interface{} `json:"export_options,omitempty" path:"export_options,omitempty" url:"export_options,omitempty"`
 	// Site Admin user who receives the completed export e-mail.
 	UserId int64 `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
@@ -104,7 +104,7 @@ type ScheduledExportCreateParams struct {
 	Name string `url:"name" json:"name" path:"name"`
 	// Export report type. Valid values: folder_size_audit, group_membership_audit, permission_audit, share_link_audit. Required.
 	ExportType string `url:"export_type" json:"export_type" path:"export_type"`
-	// Report-specific options. `permission_audit` supports `group_by` with `user` or `path`.
+	// Options for the report selected by export_type.
 	ExportOptions interface{} `url:"export_options,omitempty" json:"export_options,omitempty" path:"export_options"`
 	// Site Admin user who receives the completed export e-mail.
 	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`
@@ -138,7 +138,7 @@ type ScheduledExportUpdateParams struct {
 	Name string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	// Export report type. Valid values: folder_size_audit, group_membership_audit, permission_audit, share_link_audit.
 	ExportType string `url:"export_type,omitempty" json:"export_type,omitempty" path:"export_type"`
-	// Report-specific options. `permission_audit` supports `group_by` with `user` or `path`.
+	// Options for the report selected by export_type.
 	ExportOptions interface{} `url:"export_options,omitempty" json:"export_options,omitempty" path:"export_options"`
 	// Site Admin user who receives the completed export e-mail.
 	UserId int64 `url:"user_id,omitempty" json:"user_id,omitempty" path:"user_id"`

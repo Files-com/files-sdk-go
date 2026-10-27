@@ -55,9 +55,16 @@ type zipDownloadCreateResponse struct {
 }
 
 type zipBatchCreateResult struct {
-	downloadURI string
-	statuses    []*DownloadStatus
-	fallback    []*DownloadStatus
+	download zipBatchDownload
+	statuses []*DownloadStatus
+	fallback []*DownloadStatus
+}
+
+// zipBatchDownload is a created ZIP download: its download_uri, and the context of the API answer that gave it, in
+// which a relative download_uri is fetched when a lockout region mismatch moved the create request.
+type zipBatchDownload struct {
+	uri string
+	api files_sdk.RelocatedAPIContext
 }
 
 type zipBatchCorruptArchiveError struct {
@@ -148,9 +155,9 @@ func (b *zipBatchDownloader) run(statuses []*DownloadStatus) []zipBatchFallback 
 		var spool destinationPath
 		var missing []*DownloadStatus
 		if b.params.Extraction == ZipBatchExtractionStream {
-			missing, err = b.extractZipStream(createResult.downloadURI, createResult.statuses, finalized)
+			missing, err = b.extractZipStream(createResult.download, createResult.statuses, finalized)
 		} else {
-			spool, err = b.spoolZip(createResult.downloadURI, createResult.statuses)
+			spool, err = b.spoolZip(createResult.download, createResult.statuses)
 			if err == nil {
 				missing, err = b.extractZipSpool(spool, createResult.statuses, finalized)
 				if err == nil {
@@ -293,9 +300,9 @@ func (b *zipBatchDownloader) createZipDownload(statuses []*DownloadStatus) (zipB
 		return zipBatchCreateResult{statuses: statuses}, zipBatchTripwireError{error: err}
 	}
 
-	downloadURI, err := b.createZipDownloadOnce(sortedStatuses)
+	download, err := b.createZipDownloadOnce(sortedStatuses)
 	if err == nil {
-		return zipBatchCreateResult{downloadURI: downloadURI, statuses: sortedStatuses}, nil
+		return zipBatchCreateResult{download: download, statuses: sortedStatuses}, nil
 	}
 
 	var pathErr zipBatchPathError
@@ -308,14 +315,16 @@ func (b *zipBatchDownloader) createZipDownload(statuses []*DownloadStatus) (zipB
 		return zipBatchCreateResult{fallback: fallback}, nil
 	}
 
-	downloadURI, err = b.createZipDownloadOnce(remainder)
+	download, err = b.createZipDownloadOnce(remainder)
 	if err != nil {
 		return zipBatchCreateResult{statuses: append(fallback, remainder...)}, err
 	}
-	return zipBatchCreateResult{downloadURI: downloadURI, statuses: remainder, fallback: fallback}, nil
+	return zipBatchCreateResult{download: download, statuses: remainder, fallback: fallback}, nil
 }
 
-func (b *zipBatchDownloader) createZipDownloadOnce(statuses []*DownloadStatus) (string, error) {
+// createZipDownloadOnce asks the API for one ZIP download of statuses. The request is an API request: a lockout region
+// mismatch can move it, and the result keeps the context of the answer that gave its download_uri.
+func (b *zipBatchDownloader) createZipDownloadOnce(statuses []*DownloadStatus) (zipBatchDownload, error) {
 	if stats := b.stats(); stats != nil {
 		stats.createRequests.Add(1)
 	}
@@ -328,7 +337,7 @@ func (b *zipBatchDownloader) createZipDownloadOnce(statuses []*DownloadStatus) (
 
 	headers := &http.Header{}
 	b.job.Config.SetHeaders(headers)
-	response, err := files_sdk.CallRaw(&files_sdk.CallParams{
+	call := &files_sdk.CallParams{
 		Method:  http.MethodPost,
 		Config:  b.job.Config,
 		Uri:     b.job.Config.RootPath() + "/zip_downloads",
@@ -338,36 +347,37 @@ func (b *zipBatchDownloader) createZipDownloadOnce(statuses []*DownloadStatus) (
 		RetryableBody: func() (io.Reader, error) {
 			return params.ToJSON()
 		},
-	})
+	}
+	response, err := files_sdk.CallRawAPI(call)
 	defer lib.CloseBody(response)
 	if err != nil {
-		return "", err
+		return zipBatchDownload{}, err
 	}
 
 	if response.StatusCode == http.StatusUnprocessableEntity {
 		body, readErr := io.ReadAll(response.Body)
 		if readErr != nil {
-			return "", readErr
+			return zipBatchDownload{}, readErr
 		}
-		return "", zipBatchPathError{paths: zipBatchParse422Paths(body), body: string(body)}
+		return zipBatchDownload{}, zipBatchPathError{paths: zipBatchParse422Paths(body), body: string(body)}
 	}
 
 	data, _, err := files_sdk.ParseResponse(response, "/zip_downloads")
 	if err != nil {
-		return "", err
+		return zipBatchDownload{}, err
 	}
 	var createResponse zipDownloadCreateResponse
 	if err := json.Unmarshal(*data, &createResponse); err != nil {
-		return "", err
+		return zipBatchDownload{}, err
 	}
 	if createResponse.DownloadURI == "" {
-		return "", fmt.Errorf("zip batch: zip_downloads response missing download_uri")
+		return zipBatchDownload{}, fmt.Errorf("zip batch: zip_downloads response missing download_uri")
 	}
-	return createResponse.DownloadURI, nil
+	return zipBatchDownload{uri: createResponse.DownloadURI, api: call.RelocatedAPIContext()}, nil
 }
 
-func (b *zipBatchDownloader) spoolZip(downloadURI string, statuses []*DownloadStatus) (destinationPath, error) {
-	streamURI, err := zipBatchStreamURI(b.job.Config, downloadURI)
+func (b *zipBatchDownloader) spoolZip(download zipBatchDownload, statuses []*DownloadStatus) (destinationPath, error) {
+	streamURI, streamConfig, err := zipBatchStreamTarget(b.job.Config, download)
 	if err != nil {
 		return destinationPath{}, err
 	}
@@ -385,7 +395,7 @@ func (b *zipBatchDownloader) spoolZip(downloadURI string, statuses []*DownloadSt
 			b.job.Meter.Record(time.Now(), uint64(bytes))
 		}
 	}
-	zipFile := newZipBatchFile(b.job.Config, b.ctx, streamURI)
+	zipFile := newZipBatchFile(streamConfig, b.ctx, streamURI)
 	defer zipFile.Close()
 	zipInfo, _ := zipFile.Stat()
 	downloadParts := (&DownloadParts{}).Init(
@@ -460,8 +470,8 @@ func (b *zipBatchDownloader) extractZipSpool(spool destinationPath, statuses []*
 	return zipBatchMissing(expected, seen), nil
 }
 
-func (b *zipBatchDownloader) extractZipStream(downloadURI string, statuses []*DownloadStatus, finalized func(*DownloadStatus)) ([]*DownloadStatus, error) {
-	streamURI, err := zipBatchStreamURI(b.job.Config, downloadURI)
+func (b *zipBatchDownloader) extractZipStream(download zipBatchDownload, statuses []*DownloadStatus, finalized func(*DownloadStatus)) ([]*DownloadStatus, error) {
+	streamURI, streamConfig, err := zipBatchStreamTarget(b.job.Config, download)
 	if err != nil {
 		return nil, err
 	}
@@ -469,7 +479,7 @@ func (b *zipBatchDownloader) extractZipStream(downloadURI string, statuses []*Do
 	if err != nil {
 		return nil, zipBatchTripwireError{error: err}
 	}
-	zipFile := newZipBatchFile(b.job.Config, b.ctx, streamURI)
+	zipFile := newZipBatchFile(streamConfig, b.ctx, streamURI)
 	defer zipFile.Close()
 	return extractZipBatchStream(
 		b.ctx,
@@ -690,6 +700,18 @@ func zipBatchStreamURI(config files_sdk.Config, downloadURI string) (string, err
 		return "", err
 	}
 	return base.ResolveReference(parsed).String(), nil
+}
+
+// zipBatchStreamTarget returns the URI a created ZIP download is fetched from, and the Config that fetches it. Unless a
+// lockout region mismatch moved the create request, it is zipBatchStreamURI's URI with config. After a move, a relative
+// download_uri is resolved at the origin that answered, keeping the endpoint's path, and fetched with a copy of config
+// that sends the authentication the moved request sent; an absolute one is used as it is, with config.
+func zipBatchStreamTarget(config files_sdk.Config, download zipBatchDownload) (string, files_sdk.Config, error) {
+	if !download.api.Relocated() {
+		streamURI, err := zipBatchStreamURI(config, download.uri)
+		return streamURI, config, err
+	}
+	return download.api.ResolveReference(config, download.uri)
 }
 
 type zipBatchFile struct {

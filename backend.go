@@ -64,14 +64,24 @@ func Call(method string, config Config, resource string, params lib.Values, opts
 			logged = res
 		})
 	}
-	response, err := WrapRequestOptions(config, request, opts...)
+	// The request is enrolled for lockout region mismatch routing once the request options have changed it, just
+	// before it is sent.
+	var region *regionOperation
+	response, answered, err := wrapRequestOptions(config, request, func(req *http.Request) *http.Request {
+		req, region = config.enrollRegionOperation(req, true)
+		return req
+	}, opts...)
 	if err != nil {
+		if !answered {
+			err = region.terminalError(nil, err)
+		}
 		return nil, response, err
 	}
 	if debug && response != logged {
 		debugLogResponse(response, config)
 	}
-	return parseCallResponse(response, resource)
+	data, res, err := parseCallResponse(response, resource)
+	return data, res, region.terminalError(response, err)
 }
 
 func parseCallResponse(response *http.Response, resource string) (*[]byte, *http.Response, error) {
@@ -138,6 +148,8 @@ func callWithAttachments(method string, config Config, resource string, params a
 	if err != nil {
 		return nil, &http.Response{}, err
 	}
+	// Enrolled for lockout region mismatch routing as Call's requests are; the sender's copies replay the body.
+	request, region := config.enrollRegionOperation(request, true)
 	// Log each response in debug mode as Call does; the sender's client copies these hooks.
 	debug := config.InDebug()
 	var logged *http.Response
@@ -155,7 +167,7 @@ func callWithAttachments(method string, config Config, resource string, params a
 	}()
 	response, err = sender.Do(request)
 	if err != nil {
-		return nil, response, err
+		return nil, response, region.terminalError(nil, err)
 	}
 	response, err = BuildResponse(response, opts...)
 	if err != nil {
@@ -164,7 +176,8 @@ func callWithAttachments(method string, config Config, resource string, params a
 	if debug && response != logged {
 		debugLogResponse(response, config)
 	}
-	return parseCallResponse(response, resource)
+	data, response, err = parseCallResponse(response, resource)
+	return data, response, region.terminalError(response, err)
 }
 
 // ParseResponse checks res for API errors and reads its body. It does not close
@@ -200,13 +213,34 @@ type CallParams struct {
 	Client  *retryablehttp.Client
 	Headers *http.Header
 	context.Context
+	// region is the operation CallRawAPI last sent these params as; see RelocatedAPIContext.
+	region *regionOperation
 }
 
 // CallRaw sends a request without decoding the response. Client, when provided,
 // overrides the configured retry client. The caller must close the response body.
 // Returned URL errors redact the request URL in either debug mode; DEBUG diagnostics
 // may contain the full URL. Retry entries above DEBUG redact URLs and credentials.
-func CallRaw(params *CallParams) (response *http.Response, err error) {
+func CallRaw(params *CallParams) (*http.Response, error) {
+	return callRaw(params, false)
+}
+
+// CallRawAPI sends params, a request to the Files.com API, as CallRaw does, except that a lockout region mismatch the
+// API answers it with is recognized and, when allowed, followed to the host it names, as Call's requests are. The
+// request's body is sent again only from RetryableBody, so a request with a body and no RetryableBody is not moved. A
+// recognized mismatch that ends the call is returned as a *RegionMismatchError, beside the response when there is one,
+// which the caller must still close. Afterwards, params.RelocatedAPIContext describes the answer the call returned when
+// it came from a host the request was moved to.
+func CallRawAPI(params *CallParams) (*http.Response, error) {
+	response, err := callRaw(params, true)
+	params.region.settle(response)
+	return response, params.region.rawTerminal(response, err)
+}
+
+// callRaw is CallRaw, and CallRawAPI when api is set.
+func callRaw(params *CallParams, api bool) (response *http.Response, err error) {
+	// Nothing an earlier call with these params learned describes this one, even one that fails before it is sent.
+	params.region = nil
 	defer func() {
 		var urlErr *url.Error
 		if errors.As(err, &urlErr) {
@@ -226,9 +260,25 @@ func CallRaw(params *CallParams) (response *http.Response, err error) {
 	if err != nil {
 		return &http.Response{}, err
 	}
+	retryableBody := params.RetryableBody
+	if api {
+		// Without RetryableBody, only a request that has no body can be sent again.
+		replayable := retryableBody != nil || request.Body == nil || request.Body == http.NoBody
+		// A raw request's redirects got the configuration's headers other than Files.com authentication again only when
+		// it carried Files.com authentication, and still do.
+		configHeaders := hasAuthHeaders(request.Header)
+		request, params.region = params.Config.enrollRegionOperation(request, replayable)
+		params.region.setConfigHeaders(configHeaders)
+		if region, factory := params.region, retryableBody; region != nil && factory != nil {
+			retryableBody = func() (io.Reader, error) {
+				region.enter(regionPhaseOpening)
+				return factory()
+			}
+		}
+	}
 	retryRequest := &retryablehttp.Request{Request: request}
-	if params.RetryableBody != nil {
-		if err := retryRequest.SetBody(params.RetryableBody); err != nil {
+	if retryableBody != nil {
+		if err := retryRequest.SetBody(retryableBody); err != nil {
 			return &http.Response{}, err
 		}
 	} else {
@@ -238,7 +288,8 @@ func CallRaw(params *CallParams) (response *http.Response, err error) {
 	if params.Client != nil {
 		client = params.Client
 	}
-	if hasAuthHeaders(request.Header) {
+	// An API request's redirects are scoped to its operation, whatever headers it carries.
+	if api || hasAuthHeaders(request.Header) {
 		// Go copies custom headers to redirect targets, including other origins. Re-scope Files auth on each
 		// redirect, as Config.Do does.
 		client = params.Config.redirectSafeCopy(client)
@@ -259,6 +310,7 @@ func CallRaw(params *CallParams) (response *http.Response, err error) {
 		PrepareRetry:    client.PrepareRetry,
 	}
 	guardRetryableResponses(client, false)
+	composeRegionClient(client, params.region)
 	return client.Do(retryRequest)
 }
 

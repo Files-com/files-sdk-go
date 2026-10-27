@@ -19,7 +19,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.3.329"
+var VERSION = "3.3.330"
 var defaultUserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
 
 const (
@@ -63,6 +63,16 @@ type Config struct {
 	FeatureFlags map[string]bool `json:"feature_flags"`
 	// DisableDirectTransfers forces upload and download requests to use proxied transfer paths.
 	DisableDirectTransfers bool `json:"disable_direct_transfers"`
+	// DisableRegionRelocation stops API requests from following a lockout region mismatch to the host it names. The
+	// mismatch is still recognized: the call fails with a *RegionMismatchError that describes it.
+	DisableRegionRelocation bool `json:"disable_region_relocation"`
+	// TrustRegionOrigin decides whether a lockout region mismatch may move an API request, with its credentials, to
+	// an HTTPS origin other than files.com or one of its subdomains on the default port. It receives the origin the
+	// API named and the origin the request was sent to. HTTP origins are never trusted.
+	TrustRegionOrigin func(origin, from string) bool `json:"-"`
+	// regionAuth, when set, is the Files.com authentication this Config sends in place of its own and the
+	// environment's: that of an API request a lockout region mismatch moved, for a request that follows its answer.
+	regionAuth *regionAuthSnapshot
 }
 
 // Init returns a copy of c with defaults for its logger, retry client, feature flags,
@@ -105,6 +115,10 @@ func (c Config) Do(req *http.Request) (*http.Response, error) {
 	client := c.redirectSafeClient()
 	client.Logger = c.retryLogFor(client.Logger, req)
 	guardRetryableResponses(client, true)
+	// Only a request Call enrolled for lockout region mismatch routing has an operation; others are sent as before.
+	if req != nil {
+		composeRegionClient(client, regionOperationOf(req.Context()))
+	}
 	response, err := (&http.Client{Transport: &retryableRoundTripper{client: client}}).Do(req)
 	if c.InDebug() {
 		return response, err
@@ -212,7 +226,14 @@ func (b *retryableErrorBody) WriteTo(w io.Writer) (int64, error) {
 // removed. A logger without levels gets DEBUG entries only in debug mode, its only level control. The client's own
 // logger is not changed.
 func (c Config) retryLogFor(logger interface{}, req *http.Request) interface{} {
-	redact := c.secretsOf(req)
+	var redact retryRedactor = c.secretsOf(req)
+	if req != nil {
+		// An API request's operation also leaves out the URLs a lockout region mismatch moved it to and the
+		// credentials its attempts sent.
+		if op := regionOperationOf(req.Context()); op != nil {
+			redact = regionSecrets{base: c.secretsOf(req), op: op}
+		}
+	}
 	if sdkConfig, ok := logger.(Config); ok {
 		// SDK retry clients log through the Config they were built from, whose Logger may have levels.
 		return printfRetryLog{logger: sdkConfig.Logger, debug: c.InDebug(), redact: redact}
@@ -231,7 +252,13 @@ func (c Config) retryLogFor(logger interface{}, req *http.Request) interface{} {
 type printfRetryLog struct {
 	logger lib.Logger
 	debug  bool
-	redact requestSecrets
+	redact retryRedactor
+}
+
+// retryRedactor removes a request's secrets from retry log entries above DEBUG.
+type retryRedactor interface {
+	text(text string) string
+	values(args []interface{}) []interface{}
 }
 
 func (l printfRetryLog) Printf(format string, args ...interface{}) {
@@ -259,7 +286,7 @@ func (l printfRetryLog) Printf(format string, args ...interface{}) {
 // with levels.
 type leveledRetryLog struct {
 	logger retryablehttp.LeveledLogger
-	redact requestSecrets
+	redact retryRedactor
 }
 
 func (l leveledRetryLog) Debug(msg string, keysAndValues ...interface{}) {
@@ -353,6 +380,8 @@ type replayableSender struct {
 	logger interface{}
 	mu     sync.Mutex
 	copies []*lib.PreparedJSON
+	// region is the operation of the enrolled request Do sends, whose hooks the client composes once.
+	region *regionOperation
 }
 
 func (c Config) newReplayableSender() *replayableSender {
@@ -415,6 +444,10 @@ func openBody(content *lib.PreparedJSON) io.ReadCloser {
 // *url.Error, which keeps its operation and cause.
 func (s *replayableSender) Do(req *http.Request) (*http.Response, error) {
 	s.client.Logger = s.config.retryLogFor(s.logger, req)
+	if op := regionOperationOf(req.Context()); op != nil && s.region == nil {
+		s.region = op
+		composeRegionClient(s.client, op)
+	}
 	response, err := (&http.Client{Transport: s}).Do(req)
 	if s.config.InDebug() {
 		return response, err
@@ -442,8 +475,11 @@ func (s *replayableSender) Close() error {
 // RoundTrip is retryablehttp.RoundTripper, except for how it keeps the body.
 func (s *replayableSender) RoundTrip(req *http.Request) (*http.Response, error) {
 	retryable := &retryablehttp.Request{Request: req.Clone(req.Context())}
+	// An enrolled request's operation begins an attempt's body phase as each copy is opened.
+	region := regionOperationOf(req.Context())
 	if body, ok := req.Body.(*replayableBody); ok && !body.read {
 		err := retryable.SetBody(retryablehttp.ReaderFunc(func() (io.Reader, error) {
+			region.enter(regionPhaseOpening)
 			return openBody(body.content), nil
 		}))
 		if err != nil {
@@ -463,6 +499,7 @@ func (s *replayableSender) RoundTrip(req *http.Request) (*http.Response, error) 
 			newReader = func() io.Reader { return http.NoBody }
 		}
 		err = retryable.SetBody(retryablehttp.ReaderFunc(func() (io.Reader, error) {
+			region.enter(regionPhaseOpening)
 			return newReader(), nil
 		}))
 		if err != nil {
@@ -560,23 +597,47 @@ func (c Config) SetHeadersForRequest(req *http.Request) {
 
 func (c Config) setHeadersForURL(headers *http.Header, rawURL string) {
 	headers.Set("User-Agent", cmp.Or(c.UserAgent, defaultUserAgent))
-	apiKey := c.GetAPIKey()
-	if apiKey != "" {
-		headers.Set(apiKeyHeader, apiKey)
-	} else if c.SessionId != "" {
-		headers.Set(sessionIdHeader, c.SessionId)
+	if c.regionAuth == nil {
+		apiKey := c.GetAPIKey()
+		if apiKey != "" {
+			headers.Set(apiKeyHeader, apiKey)
+		} else if c.SessionId != "" {
+			headers.Set(sessionIdHeader, c.SessionId)
+		}
 	}
 	if c.Language != "" {
 		headers.Set("Accept-Language", c.Language)
 	}
-	if c.WorkspaceId != 0 {
+	if c.regionAuth == nil && c.WorkspaceId != 0 {
 		headers.Set(workspaceIdHeader, strconv.FormatInt(c.WorkspaceId, 10))
 	}
 	for key, value := range c.AdditionalHeaders {
+		// A Config scoped to a moved API request's answer sends that request's Files.com authentication instead.
+		if c.regionAuth != nil && regionAuthIndex(key) >= 0 {
+			continue
+		}
 		headers.Set(key, value)
+	}
+	if c.regionAuth != nil {
+		c.regionAuth.apply(*headers)
 	}
 	if !c.shouldSendAuthHeaders(rawURL) {
 		clearAuthHeaders(headers)
+	}
+}
+
+// setOtherHeaders sets the configured headers other than Files.com authentication in headers, as setHeadersForURL
+// does: the User-Agent, the Accept-Language and each additional header that is not one of the Files.com
+// authentication headers, which it leaves as they are.
+func (c Config) setOtherHeaders(headers http.Header) {
+	headers.Set("User-Agent", cmp.Or(c.UserAgent, defaultUserAgent))
+	if c.Language != "" {
+		headers.Set("Accept-Language", c.Language)
+	}
+	for key, value := range c.AdditionalHeaders {
+		if regionAuthIndex(key) < 0 {
+			headers.Set(key, value)
+		}
 	}
 }
 
@@ -601,16 +662,35 @@ func (c Config) redirectSafeCopy(retrySource *retryablehttp.Client) *retryableht
 	// Re-apply URL-aware headers to each redirected request so Files auth is
 	// stripped if a same-origin download URL redirects to a storage provider.
 	httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		c.SetHeadersForRequest(req)
+		// An enrolled API request's redirect gets the configured headers other than Files.com authentication again
+		// where its sender set them before it was enrolled, and its operation's own Files.com authentication: what its
+		// attempt sent at its origin, never the configuration's or the environment's again, and none elsewhere.
+		region := regionOperationOf(req.Context())
+		if region == nil {
+			c.SetHeadersForRequest(req)
+		} else {
+			if region.reappliesConfigHeaders() {
+				if req.Header == nil {
+					req.Header = http.Header{}
+				}
+				c.setOtherHeaders(req.Header)
+			}
+			region.scopeRedirect(req)
+		}
+		var err error
 		if originalCheckRedirect != nil {
-			return originalCheckRedirect(req, via)
+			err = originalCheckRedirect(req, via)
+		} else if len(via) >= 10 {
+			// Keep net/http's default policy for a nil CheckRedirect: stop after 10 consecutive requests, with its
+			// error text, which retryablehttp's default retry policy does not retry.
+			err = errors.New("stopped after 10 redirects")
 		}
-		// Keep net/http's default policy for a nil CheckRedirect: stop after 10 consecutive requests, with its error
-		// text, which retryablehttp's default retry policy does not retry.
-		if len(via) >= 10 {
-			return errors.New("stopped after 10 redirects")
+		if err == nil {
+			// The redirect is sent as the caller's CheckRedirect left it, without Files.com authentication if it
+			// now leads away from the operation's origin.
+			region.guardRedirect(req)
 		}
-		return nil
+		return err
 	}
 
 	return &retryablehttp.Client{

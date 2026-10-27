@@ -7,7 +7,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash/crc32"
+	"io"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -1264,4 +1266,252 @@ func TestZipBatchDownloaderDoesNotWriteThroughLinkLeavingDestination(t *testing.
 		assert.Equal(t, "charlie", readLocalFile(t, root, "batch", "c.txt"))
 		assert.True(t, job.All(status.Ended...))
 	})
+}
+
+// zipRegionRouter serves each request with the mock server's router, as the host the request names would, without
+// changing the request the SDK sent, unlike the mock client's transport; answer, when it returns a response, answers
+// instead.
+type zipRegionRouter struct {
+	server *MockAPIServer
+	answer func(*http.Request) *http.Response
+	mu     sync.Mutex
+	sent   []zipRegionSent
+}
+
+func (r *zipRegionRouter) RoundTrip(req *http.Request) (*http.Response, error) {
+	r.mu.Lock()
+	r.sent = append(r.sent, zipRegionSentOf(req, nil))
+	r.mu.Unlock()
+	if r.answer != nil {
+		if response := r.answer(req); response != nil {
+			if req.Body != nil {
+				_, _ = io.Copy(io.Discard, req.Body)
+				_ = req.Body.Close()
+			}
+			return response, nil
+		}
+	}
+	routed := req.Clone(req.Context())
+	routed.RequestURI = req.URL.RequestURI()
+	recorder := httptest.NewRecorder()
+	r.server.GetRouter().ServeHTTP(recorder, routed)
+	if req.Body != nil {
+		_ = req.Body.Close()
+	}
+	response := recorder.Result()
+	response.Request = req
+	return response, nil
+}
+
+func (r *zipRegionRouter) sentWith(method, path string) []zipRegionSent {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	var sent []zipRegionSent
+	for _, request := range r.sent {
+		if request.method == method && request.path == path {
+			sent = append(sent, request)
+		}
+	}
+	return sent
+}
+
+func (r *zipRegionRouter) allSent() []zipRegionSent {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return append([]zipRegionSent(nil), r.sent...)
+}
+
+// zipRegionClient is a Client for https://us.files.com whose requests go to router.
+func zipRegionClient(router *zipRegionRouter) *Client {
+	client := &Client{Config: files_sdk.Config{EndpointOverride: "https://us.files.com"}.Init()}
+	client.Config = client.Config.SetCustomClient(&http.Client{Transport: router})
+	return client
+}
+
+// A ZIP batch whose create request a lockout region mismatch moves fetches its
+// relative archive from the host that answered, with the authentication the moved
+// create sent, in both extraction modes, and delivers every file.
+func TestZipBatchDownloaderFollowsACreateRegionMismatch(t *testing.T) {
+	for name, mismatch := range map[string]func(*http.Request) *http.Response{
+		"typed":  zipRegionAnswer(http.StatusForbidden, "application/json", zipRegionMismatch, nil),
+		"legacy": zipRegionAnswer(http.StatusForbidden, "", "You have connected to a URL that does not serve this site.", http.Header{"X-Files-Host": []string{"eu.files.com"}}),
+	} {
+		t.Run(name, func(t *testing.T) {
+			forEachZipBatchExtractionMode(t, func(t *testing.T, extraction ZipBatchExtractionMode) {
+				t.Setenv("FILES_API_KEY", "create-key")
+				root := t.TempDir()
+				server := newZipBatchMockServer(t, map[string]string{
+					"batch/a.txt": "alpha",
+					"batch/b.txt": "bravo",
+				}, nil)
+				defer server.Shutdown()
+				router := &zipRegionRouter{server: server}
+				router.answer = func(req *http.Request) *http.Response {
+					if req.Method != http.MethodPost || req.URL.Path != "/api/rest/v1/zip_downloads" {
+						return nil
+					}
+					if req.URL.Host == "us.files.com" {
+						return mismatch(req)
+					}
+					// The environment's key changes once the moved create request has been sent.
+					_ = os.Setenv("FILES_API_KEY", "stream-key")
+					return nil
+				}
+
+				job := zipRegionClient(router).Downloader(DownloaderParams{
+					RemotePath:  "batch",
+					LocalPath:   root + string(os.PathSeparator),
+					RetryPolicy: RetryPolicy{},
+					ZipBatch:    zipBatchParamsForMode(extraction, ZipBatchParams{MinFiles: 2}),
+				})
+				job.Start()
+				job.Wait()
+
+				requireZipBatchJobClean(t, job)
+				assertZipBatchStats(t, job, ZipBatchStatsSnapshot{
+					BatchesDispatched: 1,
+					BatchFiles:        2,
+					CreateRequests:    1,
+					StreamAttempts:    1,
+					CleanFinalized:    2,
+				})
+				assert.Equal(t, [][]string{{"batch/a.txt", "batch/b.txt"}}, server.ZipCreateRequests, "only the moved create reached the API")
+				assert.Equal(t, "alpha", readLocalFile(t, root, "batch", "a.txt"))
+				assert.Equal(t, "bravo", readLocalFile(t, root, "batch", "b.txt"))
+				creates := router.sentWith(http.MethodPost, "/api/rest/v1/zip_downloads")
+				require.Len(t, creates, 2)
+				assert.Equal(t, "us.files.com", creates[0].host)
+				assert.Equal(t, "eu.files.com", creates[1].host)
+				for _, create := range creates {
+					assert.Equal(t, "create-key", create.key)
+				}
+				streams := router.sentWith(http.MethodGet, "/zip/download")
+				require.Len(t, streams, 1)
+				assert.Equal(t, "eu.files.com", streams[0].host)
+				assert.Equal(t, "create-key", streams[0].key, "the archive is fetched with the moved request's key, not the environment's new one")
+				assertNoZipBatchSpoolFiles(t, root)
+			})
+		})
+	}
+}
+
+// After a move, a relative download URI is resolved at the origin that answered,
+// keeping the endpoint's base, and fetched with the moved request's
+// authentication; an absolute URI, and any URI without a move, resolve as before.
+func TestZipBatchStreamTargetKeepsTheEndpointBase(t *testing.T) {
+	for name, test := range map[string]struct {
+		endpoint, reference string
+		relocate            bool
+		want, wantEndpoint  string
+	}{
+		"absolute signed URI after a move": {endpoint: "https://us.files.com", reference: "https://storage.example.com/zip?X-Amz-Signature=abc", relocate: true, want: "https://storage.example.com/zip?X-Amz-Signature=abc", wantEndpoint: "https://us.files.com"},
+		"absolute signed URI":              {endpoint: "https://us.files.com", reference: "https://storage.example.com/zip?X-Amz-Signature=abc", want: "https://storage.example.com/zip?X-Amz-Signature=abc", wantEndpoint: "https://us.files.com"},
+		"root-relative URI after a move":   {endpoint: "https://us.files.com/base/", reference: "/zip/download?z=1", relocate: true, want: "https://eu.files.com/zip/download?z=1", wantEndpoint: "https://eu.files.com/base/"},
+		"root-relative URI":                {endpoint: "https://us.files.com/base/", reference: "/zip/download?z=1", want: "https://us.files.com/zip/download?z=1", wantEndpoint: "https://us.files.com/base/"},
+		"path-relative URI after a move":   {endpoint: "https://us.files.com/base/", reference: "zip/download?z=1", relocate: true, want: "https://eu.files.com/base/zip/download?z=1", wantEndpoint: "https://eu.files.com/base/"},
+		"path-relative URI":                {endpoint: "https://us.files.com/base/", reference: "zip/download?z=1", want: "https://us.files.com/base/zip/download?z=1", wantEndpoint: "https://us.files.com/base/"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			created := zipRegionAnswer(http.StatusOK, "application/json", fmt.Sprintf(`{"download_uri":%q}`, test.reference), nil)
+			sites := &zipRegionSites{handlers: map[string]func(*http.Request) *http.Response{
+				"us.files.com": created,
+				"eu.files.com": created,
+			}}
+			if test.relocate {
+				sites.handlers["us.files.com"] = zipRegionAnswer(http.StatusForbidden, "application/json", zipRegionMismatch, nil)
+			}
+			config := files_sdk.Config{APIKey: "zip-key", EndpointOverride: test.endpoint}.Init().SetCustomClient(&http.Client{Transport: sites})
+			batch := &zipBatchDownloader{ctx: context.Background(), job: &Job{Config: config}}
+			download, err := batch.createZipDownloadOnce(nil)
+			require.NoError(t, err)
+			assert.Equal(t, test.relocate, download.api.Relocated())
+
+			streamURI, streamConfig, err := zipBatchStreamTarget(config, download)
+
+			require.NoError(t, err)
+			assert.Equal(t, test.want, streamURI)
+			assert.Equal(t, test.wantEndpoint, streamConfig.Endpoint())
+			if !test.relocate {
+				before, err := zipBatchStreamURI(config, test.reference)
+				require.NoError(t, err)
+				assert.Equal(t, before, streamURI, "without a move the URI resolves exactly as before")
+			}
+			// Only a relative URI after a move is fetched with the moved request's
+			// authentication rather than the configuration's own.
+			streamConfig.APIKey = "changed-key"
+			headers := http.Header{}
+			streamConfig.SetHeaders(&headers)
+			if test.relocate && !strings.HasPrefix(test.reference, "https://") {
+				assert.Equal(t, "zip-key", headers.Get("X-FilesAPI-Key"))
+			} else {
+				assert.Equal(t, "changed-key", headers.Get("X-FilesAPI-Key"))
+			}
+		})
+	}
+}
+
+// The archive of a moved ZIP batch is a request to storage: a redirect away from
+// the answering origin carries none of the SDK's Files.com headers, and a lockout
+// region mismatch on it moves nothing, the batch falling back to per-file
+// downloads.
+func TestZipBatchStreamIsNotRoutedAndDropsAuthenticationOffOrigin(t *testing.T) {
+	for _, stream := range []string{"redirected to storage", "answered with a mismatch"} {
+		t.Run(stream, func(t *testing.T) {
+			root := t.TempDir()
+			server := newZipBatchMockServer(t, map[string]string{
+				"batch/a.txt": "alpha",
+				"batch/b.txt": "bravo",
+			}, nil)
+			defer server.Shutdown()
+			router := &zipRegionRouter{server: server}
+			router.answer = func(req *http.Request) *http.Response {
+				switch {
+				case req.Method == http.MethodPost && req.URL.Path == "/api/rest/v1/zip_downloads" && req.URL.Host == "us.files.com":
+					return zipRegionAnswer(http.StatusForbidden, "application/json", zipRegionMismatch, nil)(req)
+				case req.Method == http.MethodGet && req.URL.Path == "/zip/download" && req.URL.Host == "eu.files.com":
+					if stream == "redirected to storage" {
+						return zipRegionAnswer(http.StatusFound, "", "", http.Header{"Location": []string{"https://storage.example.com" + req.URL.RequestURI()}})(req)
+					}
+					return zipRegionAnswer(http.StatusForbidden, "application/json", strings.Replace(zipRegionMismatch, "eu.files.com", "ap.files.com", 1), nil)(req)
+				}
+				return nil
+			}
+			client := zipRegionClient(router)
+			client.Config.APIKey = "zip-key"
+			client.Config.WorkspaceId = 5
+
+			job := client.Downloader(DownloaderParams{
+				RemotePath:  "batch",
+				LocalPath:   root + string(os.PathSeparator),
+				RetryPolicy: RetryPolicy{},
+				ZipBatch:    ZipBatchParams{Extraction: ZipBatchExtractionStream, MinFiles: 2, MinAdvantage: -1},
+			})
+			job.Start()
+			job.Wait()
+
+			requireZipBatchJobClean(t, job)
+			assert.Equal(t, "alpha", readLocalFile(t, root, "batch", "a.txt"))
+			assert.Equal(t, "bravo", readLocalFile(t, root, "batch", "b.txt"))
+			streams := router.sentWith(http.MethodGet, "/zip/download")
+			require.NotEmpty(t, streams)
+			assert.Equal(t, "eu.files.com", streams[0].host)
+			assert.Equal(t, "zip-key", streams[0].key)
+			assert.Equal(t, "5", streams[0].workspace)
+			for _, sent := range router.allSent() {
+				assert.NotEqual(t, "ap.files.com", sent.host, "a mismatch on the archive moves nothing")
+			}
+			if stream == "redirected to storage" {
+				require.Len(t, streams, 2)
+				storage := streams[1]
+				assert.Equal(t, "storage.example.com", storage.host)
+				assert.Empty(t, storage.key)
+				assert.Empty(t, storage.session)
+				assert.Empty(t, storage.reauth)
+				assert.Empty(t, storage.workspace)
+			} else {
+				assert.Len(t, streams, 1, "the archive is not requested again elsewhere")
+				assert.NotEmpty(t, server.TrackRequest["/download/:download_id"], "the batch fell back to per-file downloads")
+			}
+		})
+	}
 }

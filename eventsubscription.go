@@ -31,7 +31,7 @@ type EventSubscription struct {
 	EventTypes []string `json:"event_types,omitempty" path:"event_types,omitempty" url:"event_types,omitempty"`
 	// Conditions on event fields that an event must meet to be delivered, keyed by dot-notation field path. All conditions must match.
 	Filter interface{} `json:"filter,omitempty" path:"filter,omitempty" url:"filter,omitempty"`
-	// Event Subscription delivery policy.
+	// Event Subscription delivery policy. Overrides retry settings from each Event Target's delivery policy.
 	DeliveryPolicy interface{} `json:"delivery_policy,omitempty" path:"delivery_policy,omitempty" url:"delivery_policy,omitempty"`
 	// Event Target IDs this subscription sends to.
 	EventTargetIds []int64 `json:"event_target_ids,omitempty" path:"event_target_ids,omitempty" url:"event_target_ids,omitempty"`
@@ -87,7 +87,7 @@ type EventSubscriptionCreateParams struct {
 	EventTypes []string `url:"event_types,omitempty" json:"event_types,omitempty" path:"event_types"`
 	// Conditions on event fields that an event must meet to be delivered, keyed by dot-notation field path. All conditions must match.
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
-	// Event Subscription delivery policy.
+	// Event Subscription delivery policy. Overrides retry settings from each Event Target's delivery policy.
 	DeliveryPolicy interface{} `url:"delivery_policy,omitempty" json:"delivery_policy,omitempty" path:"delivery_policy"`
 	// Event Target IDs this subscription sends to.
 	EventTargetIds []int64 `url:"event_target_ids,omitempty" json:"event_target_ids,omitempty" path:"event_target_ids"`
@@ -117,7 +117,7 @@ type EventSubscriptionUpdateParams struct {
 	EventTypes []string `url:"event_types,omitempty" json:"event_types,omitempty" path:"event_types"`
 	// Conditions on event fields that an event must meet to be delivered, keyed by dot-notation field path. All conditions must match.
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
-	// Event Subscription delivery policy.
+	// Event Subscription delivery policy. Overrides retry settings from each Event Target's delivery policy.
 	DeliveryPolicy interface{} `url:"delivery_policy,omitempty" json:"delivery_policy,omitempty" path:"delivery_policy"`
 	// Event Target IDs this subscription sends to.
 	EventTargetIds []int64 `url:"event_target_ids,omitempty" json:"event_target_ids,omitempty" path:"event_target_ids"`
