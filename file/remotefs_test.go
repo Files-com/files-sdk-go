@@ -3,13 +3,16 @@ package file
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -337,19 +340,107 @@ func TestFileReadUsesStatusOnlyWithRequestID(t *testing.T) {
 	}
 }
 
-func TestFS_Open(t *testing.T) {
-	client, r, err := CreateClient("TestFS_Open")
-	if err != nil {
-		t.Fatal(err)
+// The variables targets/mock-server/with-scenario.rb gives a test it runs against a simulator it started: the
+// simulator's origin, schema and instance, and the synthetic API key to send it.
+var remoteFSSimulatorVariables = []string{
+	"FILES_MOCK_SERVER_URL",
+	"FILES_MOCK_SERVER_HOST",
+	"FILES_MOCK_SERVER_PORT",
+	"FILES_MOCK_SCHEMA_SHA256",
+	"FILES_MOCK_INSTANCE",
+	"FILES_MOCK_API_KEY",
+}
+
+// remoteFSSimulatorClient returns a client whose requests go only to the Files.com mock server's simulator that
+// targets/mock-server/with-scenario.rb started for this test, with the synthetic API key it gave, and whose transfers
+// go through the API as they always have for TestFS_Open. It checks that the launcher's variables name that simulator
+// on a loopback address and that its readiness report shows it ready, in simulation, at contract 3, with the
+// launcher's schema and instance, and still as the launcher's reset left it: at epoch 1, under the api_scenarios
+// profile of the api-scenarios-canonical preset, whose root listing the test reads. So it never resets the simulator.
+// Without the launcher the test is skipped, unless FILES_API_SCENARIOS is "required"; a missing or invalid variable
+// fails it. It never falls back to recorded responses, Files.com or another API key.
+func remoteFSSimulatorClient(t *testing.T) *Client {
+	t.Helper()
+	launcher := map[string]string{}
+	var missing []string
+	for _, name := range remoteFSSimulatorVariables {
+		launcher[name] = strings.TrimSpace(os.Getenv(name))
+		if launcher[name] == "" {
+			missing = append(missing, name)
+		}
 	}
-	defer r.Stop()
+	// FILES_MOCK_SERVER_HOST and FILES_MOCK_SERVER_PORT alone may name another mock server, so only the variables
+	// with-scenario.rb alone sets show that it launched this test.
+	launched := launcher["FILES_MOCK_SERVER_URL"] != "" || launcher["FILES_MOCK_SCHEMA_SHA256"] != "" ||
+		launcher["FILES_MOCK_INSTANCE"] != "" || launcher["FILES_MOCK_API_KEY"] != ""
+	if !launched {
+		why := "Run this test through targets/mock-server/with-scenario.rb with the api-scenarios-canonical preset, which starts the Files.com mock server's simulator for it; it never uses Files.com."
+		if os.Getenv("FILES_API_SCENARIOS") == "required" {
+			t.Fatalf("FILES_API_SCENARIOS is required, so this test may not be skipped: %s", why)
+		}
+		t.Skip(why)
+	}
+	if len(missing) > 0 {
+		t.Fatalf("with-scenario.rb sets %s, but %s is missing.", strings.Join(remoteFSSimulatorVariables, ", "), strings.Join(missing, ", "))
+	}
+	host, port := launcher["FILES_MOCK_SERVER_HOST"], launcher["FILES_MOCK_SERVER_PORT"]
+	if !slices.Contains([]string{"127.0.0.1", "::1", "localhost"}, host) {
+		t.Fatalf("FILES_MOCK_SERVER_HOST must be a loopback address (127.0.0.1, ::1, localhost), not %q.", host)
+	}
+	if number, err := strconv.Atoi(port); err != nil || len(port) > 5 || number < 1 || number > 65535 {
+		t.Fatalf("FILES_MOCK_SERVER_PORT must be a port number, not %q.", port)
+	}
+	origin := "http://" + net.JoinHostPort(host, port)
+	if launcher["FILES_MOCK_SERVER_URL"] != origin {
+		t.Fatalf("FILES_MOCK_SERVER_URL is %q, not %s, the simulator FILES_MOCK_SERVER_HOST and FILES_MOCK_SERVER_PORT name.", launcher["FILES_MOCK_SERVER_URL"], origin)
+	}
+
+	// with-scenario.rb runs the test only once the simulator has answered its readiness, so one request is enough.
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	t.Cleanup(transport.CloseIdleConnections)
+	control := &http.Client{Transport: transport, Timeout: 10 * time.Second}
+	response, err := control.Get(origin + "/__files_mock/v1/ready")
+	if err != nil {
+		t.Fatalf("Nothing answered at %s for its readiness report: %v", origin, err)
+	}
+	body, err := io.ReadAll(io.LimitReader(response.Body, 1<<20))
+	response.Body.Close()
+	if err != nil || response.StatusCode != http.StatusOK {
+		t.Fatalf("%s answered %d for its readiness report, so it is not the simulator (%v).", origin, response.StatusCode, err)
+	}
+	var reported struct {
+		Status          string `json:"status"`
+		Mode            string `json:"mode"`
+		ContractVersion int    `json:"contract_version"`
+		SchemaSHA256    string `json:"schema_sha256"`
+		Instance        string `json:"instance"`
+		Epoch           int    `json:"epoch"`
+		Profile         struct {
+			APIScenarios map[string]any `json:"api_scenarios"`
+		} `json:"profile"`
+	}
+	if err := json.Unmarshal(body, &reported); err != nil {
+		t.Fatalf("%s answered its readiness report with something other than the simulator's JSON: %v", origin, err)
+	}
+	if reported.Status != "ready" || reported.Mode != "simulation" || reported.ContractVersion != 3 ||
+		reported.SchemaSHA256 != launcher["FILES_MOCK_SCHEMA_SHA256"] || reported.Instance != launcher["FILES_MOCK_INSTANCE"] {
+		t.Fatalf("%s is not the simulator with-scenario.rb started: it reports %+v, not ready, simulation, contract 3, schema %s and instance %s.", origin, reported, launcher["FILES_MOCK_SCHEMA_SHA256"], launcher["FILES_MOCK_INSTANCE"])
+	}
+	if reported.Epoch != 1 || reported.Profile.APIScenarios == nil {
+		t.Fatalf("The simulator at %s is at epoch %d with the api_scenarios profile %v, not as the launcher's api-scenarios-canonical reset left it: at epoch 1, under an api_scenarios profile, whose root listing this test reads.", origin, reported.Epoch, reported.Profile.APIScenarios)
+	}
+	return &Client{Config: files_sdk.Config{APIKey: launcher["FILES_MOCK_API_KEY"], EndpointOverride: origin, DisableDirectTransfers: true}.Init()}
+}
+
+func TestFS_Open(t *testing.T) {
+	client := remoteFSSimulatorClient(t)
 
 	assert := assert.New(t)
-	client.Upload(
+	require.NoError(t, client.Upload(
 		UploadWithReader(strings.NewReader("testing 3")),
 		UploadWithSize(9),
 		UploadWithDestinationPath(filepath.Join("remotefs_test", "1.text")),
-	)
+	))
 
 	fs := (&FS{}).Init(client.Config, true)
 	fs = fs.WithContext(context.TODO()).(*FS)
@@ -367,14 +458,14 @@ func TestFS_Open(t *testing.T) {
 	fsFile, ok := entry[0].(*File)
 	assert.True(ok)
 	buf := make([]byte, 8)
-	_, err = fsFile.Read(buf)
+	_, err = io.ReadFull(fsFile, buf)
 	assert.NoError(err)
 	err = fsFile.Close()
 	assert.NoError(err)
 	assert.Equal("testing ", string(buf))
 
 	buf = make([]byte, 9)
-	_, err = fsFile.Read(buf)
+	_, err = io.ReadFull(fsFile, buf)
 	assert.NoError(err)
 	err = fsFile.Close()
 	assert.NoError(err)

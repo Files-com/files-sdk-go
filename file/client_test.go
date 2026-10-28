@@ -1783,15 +1783,13 @@ func TestClient_ListForRecursiveRejectsUnsupportedParams(t *testing.T) {
 }
 
 func TestClient_UploadFile(t *testing.T) {
-	client, r, err := CreateClient("TestClient_UploadFile")
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := remoteFSSimulatorClient(t)
 	fileName := filepath.Join(t.TempDir(), "anything")
 	file, err := os.Create(fileName)
 	require.NoError(t, err)
-	file.Write([]byte("anything"))
-	file.Close()
+	_, err = file.Write([]byte("anything"))
+	require.NoError(t, err)
+	require.NoError(t, file.Close())
 
 	err = client.UploadFile(fileName, "test/anything")
 	require.NoError(t, err)
@@ -1802,10 +1800,10 @@ func TestClient_UploadFile(t *testing.T) {
 	fs := (&FS{}).Init(client.Config, false).WithContext(context.Background()).(fs2.FS)
 	fsFile, err := fs.Open("test/anything")
 	require.NoError(t, err)
+	defer fsFile.Close()
 	fileBytes, err := io.ReadAll(fsFile)
 	require.NoError(t, err)
 	require.Equal(t, "anything", string(fileBytes))
-	r.Stop()
 }
 
 func TestClient_ListFor(t *testing.T) {
