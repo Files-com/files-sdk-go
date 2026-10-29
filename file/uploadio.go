@@ -613,40 +613,38 @@ func (u *uploadIO) completeUpload(ctx context.Context, providedMtime *time.Time,
 func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsParam, error) {
 	var err error
 	// Stub for test fixtures being expired
-	if part.PartNumber != 1 || part.UploadUri == "" {
-		if time.Now().After(part.ExpiresTime()) {
-			if !part.ExpiresTime().IsZero() {
-				u.LogPath(u.Path, map[string]any{
-					"timestamp":           time.Now(),
-					"part":                part.PartNumber,
-					"event":               "uploadPart",
-					"previous_upload_uri": part.UploadUri != "",
-					"expired":             time.Now().After(part.ExpiresTime()),
-				})
-			}
-			params := files_sdk.FileBeginUploadParams{
-				Path:         part.Path,
-				Ref:          part.Ref,
-				Part:         part.PartNumber,
-				MkdirParents: lib.Bool(true),
-			}
+	if part.UploadUri == "" || (part.PartNumber != 1 && time.Now().After(part.ExpiresTime())) {
+		if !part.ExpiresTime().IsZero() {
+			u.LogPath(u.Path, map[string]any{
+				"timestamp":           time.Now(),
+				"part":                part.PartNumber,
+				"event":               "uploadPart",
+				"previous_upload_uri": part.UploadUri != "",
+				"expired":             time.Now().After(part.ExpiresTime()),
+			})
+		}
+		params := files_sdk.FileBeginUploadParams{
+			Path:         part.Path,
+			Ref:          part.Ref,
+			Part:         part.PartNumber,
+			MkdirParents: lib.Bool(true),
+		}
 
-			start := time.Now()
+		start := time.Now()
+		part.FileUploadPart, err = u.startUpload(ctx, params)
+		u.uploadV1Stats.recordUploadURLRefresh(time.Since(start), err)
+		if err != nil && files_sdk.IsNotExist(err) && params.Ref != "" {
+			// Stale upload session (server cleaned it up) — retry without the ref
+			// to start a fresh session instead of failing the part.
+			params.Ref = ""
+			start = time.Now()
 			part.FileUploadPart, err = u.startUpload(ctx, params)
 			u.uploadV1Stats.recordUploadURLRefresh(time.Since(start), err)
-			if err != nil && files_sdk.IsNotExist(err) && params.Ref != "" {
-				// Stale upload session (server cleaned it up) — retry without the ref
-				// to start a fresh session instead of failing the part.
-				params.Ref = ""
-				start = time.Now()
-				part.FileUploadPart, err = u.startUpload(ctx, params)
-				u.uploadV1Stats.recordUploadURLRefresh(time.Since(start), err)
-			}
-			part.FileUploadPart.PartNumber = int64(part.number) // Ensure it didn't change PartNumber
+		}
+		part.FileUploadPart.PartNumber = int64(part.number) // Ensure it didn't change PartNumber
 
-			if err != nil {
-				return files_sdk.EtagsParam{}, err
-			}
+		if err != nil {
+			return files_sdk.EtagsParam{}, err
 		}
 	}
 	headers := http.Header{}

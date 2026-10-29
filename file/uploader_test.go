@@ -70,6 +70,67 @@ func TestUploadV1RefreshesExpiredFirstPartURL(t *testing.T) {
 	assert.Empty(t, server.TrackRequest["/expired-upload"])
 }
 
+// A checkpoint saved before any part was sent has a ref and an expiry but no upload URL. Resuming it asks begin_upload
+// for a URL with that ref instead of sending part 1 to an empty URL.
+func TestUploadResumeWithRefOnlyFetchesUploadURL(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		opts []UploadOption
+	}{
+		{name: "v1"},
+		{name: "v2", opts: []UploadOption{UploadWithV2()}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			server := (&MockAPIServer{T: t}).Do()
+			defer server.Shutdown()
+
+			filename := "resume-ref-only.txt"
+			server.MockFiles[filename] = mockFile{File: files_sdk.File{Size: 1}}
+			var mu sync.Mutex
+			var beginUploadRefs []string
+			server.MockRoute("/api/rest/v1/file_actions/begin_upload/"+filename, func(c *gin.Context, model interface{}) bool {
+				params := model.(files_sdk.FileBeginUploadParams)
+				mu.Lock()
+				beginUploadRefs = append(beginUploadRefs, params.Ref)
+				mu.Unlock()
+				c.JSON(http.StatusOK, files_sdk.FileUploadPartCollection{{
+					HttpMethod:    "PUT",
+					Path:          filename,
+					Ref:           params.Ref,
+					UploadUri:     server.Server.URL + "/resume-ref-only-upload",
+					ParallelParts: lib.Bool(true),
+					Expires:       time.Now().Add(time.Hour).Format(time.RFC3339),
+					PartNumber:    params.Part,
+				}})
+				return true
+			})
+			server.GetRouter().PUT("/resume-ref-only-upload", func(c *gin.Context) {
+				_, _ = io.Copy(io.Discard, c.Request.Body)
+				c.Header("Etag", "etag-1")
+				c.Status(http.StatusOK)
+			})
+
+			_, err := server.Client().UploadWithResume(append(test.opts,
+				UploadWithReaderAt(bytes.NewReader([]byte("a"))),
+				UploadWithDestinationPath(filename),
+				UploadWithSize(1),
+				UploadWithResume(UploadResumable{FileUploadPart: files_sdk.FileUploadPart{
+					HttpMethod:    "PUT",
+					Ref:           "resume-ref-only-ref",
+					ParallelParts: lib.Bool(true),
+					Expires:       time.Now().Add(time.Hour).Format(time.RFC3339),
+				}}),
+				UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+			)...)
+
+			require.NoError(t, err)
+			mu.Lock()
+			defer mu.Unlock()
+			assert.Equal(t, []string{"resume-ref-only-ref"}, beginUploadRefs)
+		})
+	}
+}
+
 func TestUploadV2NetworkFailureIsNotCanceled(t *testing.T) {
 	server := (&MockAPIServer{T: t}).Do()
 	defer server.Shutdown()

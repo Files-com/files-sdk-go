@@ -1153,44 +1153,42 @@ func (e *uploadV2Engine) runPart(ctx context.Context, part *uploadV2Part) upload
 }
 
 func (e *uploadV2Engine) uploadPart(ctx context.Context, part *uploadV2Part) (files_sdk.EtagsParam, int, bool, time.Duration, error) {
-	if part.upload.PartNumber != 1 || part.upload.UploadUri == "" {
-		if time.Now().After(part.upload.ExpiresTime()) {
-			if !part.upload.ExpiresTime().IsZero() {
-				e.u.LogPath(e.u.Path, map[string]any{
-					"timestamp":           time.Now(),
-					"part":                part.upload.PartNumber,
-					"part_offset":         part.offset.off,
-					"event":               "upload v2 part",
-					"previous_upload_uri": part.upload.UploadUri != "",
-					"expired":             time.Now().After(part.upload.ExpiresTime()),
-				})
-			}
-			params := files_sdk.FileBeginUploadParams{
-				Path:         part.upload.Path,
-				Ref:          part.upload.Ref,
-				Part:         part.upload.PartNumber,
-				MkdirParents: lib.Bool(true),
-			}
-
-			start := time.Now()
-			upload, err := e.u.startUpload(ctx, params)
-			e.stats.recordUploadURLRefresh(time.Since(start), err)
-			if err != nil && files_sdk.IsNotExist(err) && params.Ref != "" {
-				params.Ref = ""
-				start = time.Now()
-				upload, err = e.u.startUpload(ctx, params)
-				e.stats.recordUploadURLRefresh(time.Since(start), err)
-			}
-			if err != nil {
-				return files_sdk.EtagsParam{}, 0, false, 0, err
-			}
-			part.upload = upload
-			part.upload.PartNumber = int64(part.number)
-			if e.usePartOffsets {
-				decorateUploadURLWithPartOffset(&part.upload, part.number, part.offset.off)
-			}
-			part.legacy.FileUploadPart = part.upload
+	if part.upload.UploadUri == "" || (part.upload.PartNumber != 1 && time.Now().After(part.upload.ExpiresTime())) {
+		if !part.upload.ExpiresTime().IsZero() {
+			e.u.LogPath(e.u.Path, map[string]any{
+				"timestamp":           time.Now(),
+				"part":                part.upload.PartNumber,
+				"part_offset":         part.offset.off,
+				"event":               "upload v2 part",
+				"previous_upload_uri": part.upload.UploadUri != "",
+				"expired":             time.Now().After(part.upload.ExpiresTime()),
+			})
 		}
+		params := files_sdk.FileBeginUploadParams{
+			Path:         part.upload.Path,
+			Ref:          part.upload.Ref,
+			Part:         part.upload.PartNumber,
+			MkdirParents: lib.Bool(true),
+		}
+
+		start := time.Now()
+		upload, err := e.u.startUpload(ctx, params)
+		e.stats.recordUploadURLRefresh(time.Since(start), err)
+		if err != nil && files_sdk.IsNotExist(err) && params.Ref != "" {
+			params.Ref = ""
+			start = time.Now()
+			upload, err = e.u.startUpload(ctx, params)
+			e.stats.recordUploadURLRefresh(time.Since(start), err)
+		}
+		if err != nil {
+			return files_sdk.EtagsParam{}, 0, false, 0, err
+		}
+		part.upload = upload
+		part.upload.PartNumber = int64(part.number)
+		if e.usePartOffsets {
+			decorateUploadURLWithPartOffset(&part.upload, part.number, part.offset.off)
+		}
+		part.legacy.FileUploadPart = part.upload
 	}
 
 	headers := http.Header{}
