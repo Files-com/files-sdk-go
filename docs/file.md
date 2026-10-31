@@ -134,7 +134,7 @@ Parameters, `files_sdk.FileUpdateParams`:
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
 | `Path` | `string` | `path`, in the path | yes | Path to operate on. |
-| `CustomMetadata` | `interface{}` | `custom_metadata` | no | Custom metadata map of keys and values. Limited to 32 keys, 256 characters per key and 1024 characters per value. |
+| `CustomMetadata` | `interface{}` | `custom_metadata` | no | Custom metadata map. Replaces existing metadata; an empty map clears it. Requires Full or Admin permission. Uploaders with Write permission can supply custom metadata when completing an upload instead. |
 | `ProvidedMtime` | `*time.Time` | `provided_mtime` | no | Modified time of file. |
 | `PriorityColor` | `string` | `priority_color` | no | Priority/Bookmark color of file. |
 

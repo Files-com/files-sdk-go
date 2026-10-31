@@ -187,7 +187,7 @@ type FileCreateParams struct {
 type FileUpdateParams struct {
 	// Path to operate on. Required; sent in the request path.
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
-	// Custom metadata map of keys and values. Limited to 32 keys, 256 characters per key and 1024 characters per value.
+	// Custom metadata map. Replaces existing metadata; an empty map clears it. Requires Full or Admin permission. Uploaders with Write permission can supply custom metadata when completing an upload instead.
 	CustomMetadata interface{} `url:"custom_metadata,omitempty" json:"custom_metadata,omitempty" path:"custom_metadata"`
 	// Modified time of file.
 	ProvidedMtime *time.Time `url:"provided_mtime,omitempty" json:"provided_mtime,omitempty" path:"provided_mtime"`
