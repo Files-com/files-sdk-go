@@ -58,6 +58,12 @@ type RemoteServer struct {
 	ServerHostKey string `json:"server_host_key,omitempty" path:"server_host_key,omitempty" url:"server_host_key,omitempty"`
 	// Remote server type.
 	ServerType string `json:"server_type,omitempty" path:"server_type,omitempty" url:"server_type,omitempty"`
+	// Owner's preference for administrator access to this user-owned Remote Server. Null uses the Site policy's default. Only the owner may change it when the Site policy allows user choice.
+	SiteAdminAccess *bool `json:"site_admin_access,omitempty" path:"site_admin_access,omitempty" url:"site_admin_access,omitempty"`
+	// Whether Site and Workspace Administrators can access this Remote Server under the current Site policy.
+	EffectiveSiteAdminAccess *bool `json:"effective_site_admin_access,omitempty" path:"effective_site_admin_access,omitempty" url:"effective_site_admin_access,omitempty"`
+	// ID of the user who owns this Remote Server, if any.
+	UserId int64 `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	// Workspace ID (0 for default workspace).
 	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	// Should we require SSL?
@@ -168,8 +174,6 @@ type RemoteServer struct {
 	LinodeRegion string `json:"linode_region,omitempty" path:"linode_region,omitempty" url:"linode_region,omitempty"`
 	// If true, this remote server supports file versioning. This value is determined automatically by Files.com.
 	SupportsVersioning *bool `json:"supports_versioning,omitempty" path:"supports_versioning,omitempty" url:"supports_versioning,omitempty"`
-	// User ID. Provide a value of `0` to operate the current session's user.
-	UserId int64 `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	// Password, if needed.
 	Password string `json:"password,omitempty" path:"password,omitempty" url:"password,omitempty"`
 	// Private key, if needed.
@@ -556,6 +560,8 @@ type RemoteServerCreateParams struct {
 	ServerHostKey string `url:"server_host_key,omitempty" json:"server_host_key,omitempty" path:"server_host_key"`
 	// Remote server type. Values: ftp, sftp, s3, google_cloud_storage, webdav, wasabi, backblaze_b2, one_drive, box, dropbox, google_drive, azure, sharepoint, s3_compatible, azure_files, files_agent, filebase, cloudflare, linode, files_com.
 	ServerType RemoteServerServerTypeEnum `url:"server_type,omitempty" json:"server_type,omitempty" path:"server_type"`
+	// Owner's preference for administrator access to this user-owned Remote Server. Null uses the Site policy's default. Only the owner may change it when the Site policy allows user choice.
+	SiteAdminAccess *bool `url:"site_admin_access,omitempty" json:"site_admin_access,omitempty" path:"site_admin_access"`
 	// SharePoint: Microsoft Entra application client ID for app-only authentication.
 	SharepointClientId string `url:"sharepoint_client_id,omitempty" json:"sharepoint_client_id,omitempty" path:"sharepoint_client_id"`
 	// SharePoint: Site URL to scope app-only authentication to a single site. Leave blank to browse all sites.
@@ -740,6 +746,8 @@ type RemoteServerUpdateParams struct {
 	ServerHostKey string `url:"server_host_key,omitempty" json:"server_host_key,omitempty" path:"server_host_key"`
 	// Remote server type. Values: ftp, sftp, s3, google_cloud_storage, webdav, wasabi, backblaze_b2, one_drive, box, dropbox, google_drive, azure, sharepoint, s3_compatible, azure_files, files_agent, filebase, cloudflare, linode, files_com.
 	ServerType RemoteServerServerTypeEnum `url:"server_type,omitempty" json:"server_type,omitempty" path:"server_type"`
+	// Owner's preference for administrator access to this user-owned Remote Server. Null uses the Site policy's default. Only the owner may change it when the Site policy allows user choice.
+	SiteAdminAccess *bool `url:"site_admin_access,omitempty" json:"site_admin_access,omitempty" path:"site_admin_access"`
 	// SharePoint: Microsoft Entra application client ID for app-only authentication.
 	SharepointClientId string `url:"sharepoint_client_id,omitempty" json:"sharepoint_client_id,omitempty" path:"sharepoint_client_id"`
 	// SharePoint: Site URL to scope app-only authentication to a single site. Leave blank to browse all sites.

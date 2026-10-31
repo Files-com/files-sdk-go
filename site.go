@@ -210,6 +210,8 @@ type Site struct {
 	Icon48 Image `json:"icon48,omitempty" path:"icon48,omitempty" url:"icon48,omitempty"`
 	// Can files be modified?
 	ImmutableFilesSetAt *time.Time `json:"immutable_files_set_at,omitempty" path:"immutable_files_set_at,omitempty" url:"immutable_files_set_at,omitempty"`
+	// Administrator access to user-owned Remote Servers in every Workspace: always_visible (default), never_visible, user_choice_default_visible, or user_choice_default_personal. Forced modes override owner preferences; choice modes use the preference or their default.
+	IntegrationCentricRemoteServerAdminAccess string `json:"integration_centric_remote_server_admin_access,omitempty" path:"integration_centric_remote_server_admin_access,omitempty" url:"integration_centric_remote_server_admin_access,omitempty"`
 	// Include password in emails to new users?
 	IncludePasswordInWelcomeEmail *bool `json:"include_password_in_welcome_email,omitempty" path:"include_password_in_welcome_email,omitempty" url:"include_password_in_welcome_email,omitempty"`
 	// Site default language.
@@ -528,6 +530,8 @@ type SiteUpdateParams struct {
 	FileActivityEventsEnabled *bool `url:"file_activity_events_enabled,omitempty" json:"file_activity_events_enabled,omitempty" path:"file_activity_events_enabled"`
 	// How usernames are displayed in the web UI. Can be `username_only`, `full_name_only`, `full_name_username`, `full_name_company`, or `full_name_username_company`.
 	UsernameDisplay string `url:"username_display,omitempty" json:"username_display,omitempty" path:"username_display"`
+	// Administrator access to user-owned Remote Servers in every Workspace: always_visible (default), never_visible, user_choice_default_visible, or user_choice_default_personal. Forced modes override owner preferences; choice modes use the preference or their default.
+	IntegrationCentricRemoteServerAdminAccess string `url:"integration_centric_remote_server_admin_access,omitempty" json:"integration_centric_remote_server_admin_access,omitempty" path:"integration_centric_remote_server_admin_access"`
 	// Session expiry in minutes.
 	SessionExpiryMinutes int64 `url:"session_expiry_minutes,omitempty" json:"session_expiry_minutes,omitempty" path:"session_expiry_minutes"`
 	// Is SSL required? Disabling this is insecure.

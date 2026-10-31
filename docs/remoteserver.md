@@ -237,6 +237,7 @@ Parameters, `files_sdk.RemoteServerCreateParams`:
 | `ServerCertificate` | `files_sdk.RemoteServerServerCertificateEnum` | `server_certificate` | no | Remote server certificate Values: `require_match`, `allow_any`. |
 | `ServerHostKey` | `string` | `server_host_key` | no | Pinned SSH host key or OpenSSH host certificate for SFTP. If omitted, Files.com detects and stores a host key, preferring plain keys over certificates. With `server_certificate=require_match` (the default), the server must present the exact pinned key or certificate and prove it holds the matching private key. A pinned certificate is compared in full, so renewal can require updating `server_host_key` even when its underlying key is unchanged. Files.com does not check certificate CA signatures, principals, or validity periods. Certificate expiration alone does not end the pin. Update `server_host_key` to replace the pin. |
 | `ServerType` | `files_sdk.RemoteServerServerTypeEnum` | `server_type` | no | Remote server type. Values: `ftp`, `sftp`, `s3`, `google_cloud_storage`, `webdav`, `wasabi`, `backblaze_b2`, `one_drive`, `box`, `dropbox`, `google_drive`, `azure`, `sharepoint`, `s3_compatible`, `azure_files`, `files_agent`, `filebase`, `cloudflare`, `linode`, `files_com`. |
+| `SiteAdminAccess` | `*bool` | `site_admin_access` | no | Owner's preference for administrator access to this user-owned Remote Server. Null uses the Site policy's default. Only the owner may change it when the Site policy allows user choice. |
 | `SharepointClientId` | `string` | `sharepoint_client_id` | no | SharePoint: Microsoft Entra application client ID for app-only authentication. |
 | `SharepointSiteUrl` | `string` | `sharepoint_site_url` | no | SharePoint: Site URL to scope app-only authentication to a single site. Leave blank to browse all sites. |
 | `SharepointTenantId` | `string` | `sharepoint_tenant_id` | no | SharePoint: Microsoft Entra tenant ID for app-only authentication. |
@@ -400,6 +401,7 @@ Parameters, `files_sdk.RemoteServerUpdateParams`:
 | `ServerCertificate` | `files_sdk.RemoteServerServerCertificateEnum` | `server_certificate` | no | Remote server certificate Values: `require_match`, `allow_any`. |
 | `ServerHostKey` | `string` | `server_host_key` | no | Pinned SSH host key or OpenSSH host certificate for SFTP. If omitted, Files.com detects and stores a host key, preferring plain keys over certificates. With `server_certificate=require_match` (the default), the server must present the exact pinned key or certificate and prove it holds the matching private key. A pinned certificate is compared in full, so renewal can require updating `server_host_key` even when its underlying key is unchanged. Files.com does not check certificate CA signatures, principals, or validity periods. Certificate expiration alone does not end the pin. Update `server_host_key` to replace the pin. |
 | `ServerType` | `files_sdk.RemoteServerServerTypeEnum` | `server_type` | no | Remote server type. Values: `ftp`, `sftp`, `s3`, `google_cloud_storage`, `webdav`, `wasabi`, `backblaze_b2`, `one_drive`, `box`, `dropbox`, `google_drive`, `azure`, `sharepoint`, `s3_compatible`, `azure_files`, `files_agent`, `filebase`, `cloudflare`, `linode`, `files_com`. |
+| `SiteAdminAccess` | `*bool` | `site_admin_access` | no | Owner's preference for administrator access to this user-owned Remote Server. Null uses the Site policy's default. Only the owner may change it when the Site policy allows user choice. |
 | `SharepointClientId` | `string` | `sharepoint_client_id` | no | SharePoint: Microsoft Entra application client ID for app-only authentication. |
 | `SharepointSiteUrl` | `string` | `sharepoint_site_url` | no | SharePoint: Site URL to scope app-only authentication to a single site. Leave blank to browse all sites. |
 | `SharepointTenantId` | `string` | `sharepoint_tenant_id` | no | SharePoint: Microsoft Entra tenant ID for app-only authentication. |
@@ -492,6 +494,9 @@ if err != nil {
 | `ServerCertificate` | `string` | `server_certificate` | Remote server certificate |
 | `ServerHostKey` | `string` | `server_host_key` | Pinned SSH host key or OpenSSH host certificate for SFTP. If omitted, Files.com detects and stores a host key, preferring plain keys over certificates. With `server_certificate=require_match` (the default), the server must present the exact pinned key or certificate and prove it holds the matching private key. A pinned certificate is compared in full, so renewal can require updating `server_host_key` even when its underlying key is unchanged. Files.com does not check certificate CA signatures, principals, or validity periods. Certificate expiration alone does not end the pin. Update `server_host_key` to replace the pin. |
 | `ServerType` | `string` | `server_type` | Remote server type. |
+| `SiteAdminAccess` | `*bool` | `site_admin_access` | Owner's preference for administrator access to this user-owned Remote Server. Null uses the Site policy's default. Only the owner may change it when the Site policy allows user choice. |
+| `EffectiveSiteAdminAccess` | `*bool` | `effective_site_admin_access` | Whether Site and Workspace Administrators can access this Remote Server under the current Site policy. |
+| `UserId` | `int64` | `user_id` | ID of the user who owns this Remote Server, if any. |
 | `WorkspaceId` | `int64` | `workspace_id` | Workspace ID (0 for default workspace) |
 | `Ssl` | `string` | `ssl` | Should we require SSL? |
 | `Username` | `string` | `username` | Remote server username. |
@@ -547,7 +552,6 @@ if err != nil {
 | `LinodeAccessKey` | `string` | `linode_access_key` | Linode: Access Key |
 | `LinodeRegion` | `string` | `linode_region` | Linode: region |
 | `SupportsVersioning` | `*bool` | `supports_versioning` | If true, this remote server supports file versioning. This value is determined automatically by Files.com. |
-| `UserId` | `int64` | `user_id` | User ID. Provide a value of `0` to operate the current session's user. |
 | `Password` | `string` | `password` | Password, if needed. |
 | `PrivateKey` | `string` | `private_key` | Private key, if needed. |
 | `PrivateKeyPassphrase` | `string` | `private_key_passphrase` | Passphrase for private key if needed. |

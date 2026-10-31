@@ -130,6 +130,7 @@ Parameters, `files_sdk.SiteUpdateParams`:
 | `As2MessageRetentionDays` | `int64` | `as2_message_retention_days` | no | Number of days to retain AS2 messages (incoming and outgoing). |
 | `FileActivityEventsEnabled` | `*bool` | `file_activity_events_enabled` | no | If true, file operations produce file_action.activity.v1 EventChannel events in all workspaces. Defaults to false; subscription filters and workspace access still control delivery. |
 | `UsernameDisplay` | `string` | `username_display` | no | How usernames are displayed in the web UI. Can be `username_only`, `full_name_only`, `full_name_username`, `full_name_company`, or `full_name_username_company`. |
+| `IntegrationCentricRemoteServerAdminAccess` | `string` | `integration_centric_remote_server_admin_access` | no | Administrator access to user-owned Remote Servers in every Workspace: always_visible (default), never_visible, user_choice_default_visible, or user_choice_default_personal. Forced modes override owner preferences; choice modes use the preference or their default. |
 | `SessionExpiryMinutes` | `int64` | `session_expiry_minutes` | no | Session expiry in minutes |
 | `SslRequired` | `*bool` | `ssl_required` | no | Is SSL required? Disabling this is insecure. |
 | `SftpInsecureCiphers` | `*bool` | `sftp_insecure_ciphers` | no | If true, we will allow weak and known insecure ciphers to be used for SFTP connections. Enabling this setting severely weakens the security of your site and it is not recommend, except as a last resort for compatibility. |
@@ -411,6 +412,7 @@ fmt.Println(result)
 | `Icon32` | `files_sdk.Image` | `icon32` | Branded icon 32x32 |
 | `Icon48` | `files_sdk.Image` | `icon48` | Branded icon 48x48 |
 | `ImmutableFilesSetAt` | `*time.Time` | `immutable_files_set_at` | Can files be modified? |
+| `IntegrationCentricRemoteServerAdminAccess` | `string` | `integration_centric_remote_server_admin_access` | Administrator access to user-owned Remote Servers in every Workspace: always_visible (default), never_visible, user_choice_default_visible, or user_choice_default_personal. Forced modes override owner preferences; choice modes use the preference or their default. |
 | `IncludePasswordInWelcomeEmail` | `*bool` | `include_password_in_welcome_email` | Include password in emails to new users? |
 | `Language` | `string` | `language` | Site default language |
 | `LdapBaseDn` | `string` | `ldap_base_dn` | Base DN for looking up users in LDAP server |
