@@ -100,7 +100,7 @@ Parameters, `files_sdk.As2StationCreateParams`:
 
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
-| `Name` | `string` | `name` | yes | The station's formal AS2 name. |
+| `Name` | `string` | `name` | yes | The station's formal AS2 name, unique across all Workspaces on the Site. |
 | `WorkspaceId` | `int64` | `workspace_id` | no | ID of the Workspace associated with this AS2 Station. |
 | `PublicCertificate` | `string` | `public_certificate` | no | Public certificate used for message security. |
 | `PrivateKey` | `string` | `private_key` | no | PEM-encoded private key matching public_certificate. |
@@ -141,7 +141,7 @@ Parameters, `files_sdk.As2StationUpdateParams`:
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
 | `Id` | `int64` | `id`, in the path | yes | As2 Station ID. |
-| `Name` | `string` | `name` | no | The station's formal AS2 name. |
+| `Name` | `string` | `name` | no | The station's formal AS2 name, unique across all Workspaces on the Site. |
 | `PublicCertificate` | `string` | `public_certificate` | no | Public certificate used for message security. |
 | `PrivateKey` | `string` | `private_key` | no | PEM-encoded private key matching public_certificate. |
 | `PrivateKeyPassword` | `string` | `private_key_password` | no | Password for the PEM-encoded private key. |
@@ -208,7 +208,7 @@ if err != nil {
 | --- | --- | --- | --- |
 | `Id` | `int64` | `id` | Id of the AS2 Station. |
 | `WorkspaceId` | `int64` | `workspace_id` | ID of the Workspace associated with this AS2 Station. |
-| `Name` | `string` | `name` | The station's formal AS2 name. |
+| `Name` | `string` | `name` | The station's formal AS2 name, unique across all Workspaces on the Site. |
 | `Uri` | `string` | `uri` | Public URI for sending AS2 message to. |
 | `Domain` | `string` | `domain` | The station's AS2 domain name. |
 | `HexPublicCertificateSerial` | `string` | `hex_public_certificate_serial` | Serial of public certificate used for message security in hex format. |

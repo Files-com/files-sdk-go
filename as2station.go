@@ -12,7 +12,7 @@ type As2Station struct {
 	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	// ID of the Workspace associated with this AS2 Station.
 	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
-	// The station's formal AS2 name.
+	// The station's formal AS2 name, unique across all Workspaces on the Site.
 	Name string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
 	// Public URI for sending AS2 message to.
 	Uri string `json:"uri,omitempty" path:"uri,omitempty" url:"uri,omitempty"`
@@ -74,7 +74,7 @@ type As2StationFindParams struct {
 
 // As2StationCreateParams contains the request parameters for POST /as2_stations.
 type As2StationCreateParams struct {
-	// The station's formal AS2 name. Required.
+	// The station's formal AS2 name, unique across all Workspaces on the Site. Required.
 	Name string `url:"name" json:"name" path:"name"`
 	// ID of the Workspace associated with this AS2 Station.
 	WorkspaceId int64 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
@@ -94,7 +94,7 @@ type As2StationCreateParams struct {
 type As2StationUpdateParams struct {
 	// As2 Station ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	// The station's formal AS2 name.
+	// The station's formal AS2 name, unique across all Workspaces on the Site.
 	Name string `url:"name,omitempty" json:"name,omitempty" path:"name"`
 	// Public certificate used for message security.
 	PublicCertificate string `url:"public_certificate,omitempty" json:"public_certificate,omitempty" path:"public_certificate"`
