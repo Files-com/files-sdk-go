@@ -241,23 +241,6 @@ Parameters, `files_sdk.SiteUpdateParams`:
 | `SmtpUsername` | `string` | `smtp_username` | no | SMTP server username |
 | `SmtpPort` | `int64` | `smtp_port` | no | SMTP server port |
 | `SmtpSsl` | `string` | `smtp_ssl` | no | Custom SMTP encryption mode: if_available (default) uses STARTTLS when offered and otherwise sends credentials and messages unencrypted. A certificate-verified STARTTLS connection automatically changes if_available to require unless smtp_ssl is managed by a parent policy. require requires STARTTLS before authentication; require_implicit uses TLS from connection start; never disables TLS. TLS verifies the server certificate against smtp_address. Encryption is never automatically downgraded. |
-| `LdapEnabled` | `*bool` | `ldap_enabled` | no | Main LDAP setting: is LDAP enabled? |
-| `LdapType` | `string` | `ldap_type` | no | LDAP type |
-| `LdapHost` | `string` | `ldap_host` | no | LDAP host |
-| `LdapHost2` | `string` | `ldap_host_2` | no | LDAP backup host |
-| `LdapHost3` | `string` | `ldap_host_3` | no | LDAP backup host |
-| `LdapPort` | `int64` | `ldap_port` | no | LDAP port |
-| `LdapSecure` | `*bool` | `ldap_secure` | no | Use secure LDAP? |
-| `LdapServerCertificate` | `string` | `ldap_server_certificate` | no | How to validate the LDAP server certificate. `require_match` validates the certificate chain and hostname; `allow_any` disables certificate validation. |
-| `LdapUsername` | `string` | `ldap_username` | no | Username for signing in to LDAP server. |
-| `LdapUsernameField` | `string` | `ldap_username_field` | no | LDAP username field |
-| `LdapDomain` | `string` | `ldap_domain` | no | Domain name that will be appended to usernames |
-| `LdapUserAction` | `string` | `ldap_user_action` | no | Should we sync users from LDAP server? |
-| `LdapGroupAction` | `string` | `ldap_group_action` | no | Should we sync groups from LDAP server? |
-| `LdapUserIncludeGroups` | `string` | `ldap_user_include_groups` | no | Comma or newline separated list of group names (with optional wildcards) - if provided, only users in these groups will be added or synced. |
-| `LdapGroupExclusion` | `string` | `ldap_group_exclusion` | no | Comma or newline separated list of group names (with optional wildcards) to exclude when syncing. |
-| `LdapGroupInclusion` | `string` | `ldap_group_inclusion` | no | Comma or newline separated list of group names (with optional wildcards) to include when syncing. |
-| `LdapBaseDn` | `string` | `ldap_base_dn` | no | Base DN for looking up users in LDAP server |
 | `UploadsViaEmailAuthentication` | `*bool` | `uploads_via_email_authentication` | no | Require email authentication, virus, and spam checks for incoming emails to Inboxes and Incoming Email Automations in every Workspace on this site? |
 | `BundleWatermarkValue` | `interface{}` | `bundle_watermark_value` | no | Preview watermark settings applied to all bundle items. Uses the same keys as Behavior.value |
 | `Icon16File` | `io.Writer` | `icon16_file` | no |  |
@@ -282,8 +265,6 @@ Parameters, `files_sdk.SiteUpdateParams`:
 | `LoginPageBackgroundImageFileAttachment` | `*lib.JSONAttachment` | `login_page_background_image_file` | no | Sends file content as login_page_background_image_file; see lib.JSONAttachment. Leave LoginPageBackgroundImageFile nil when you set it. |
 | `LoginPageBackgroundImageDelete` | `*bool` | `login_page_background_image_delete` | no | If true, will delete the file stored in login_page_background_image |
 | `Disable2faWithDelay` | `*bool` | `disable_2fa_with_delay` | no | If set to true, we will begin the process of disabling 2FA on this site. |
-| `LdapPasswordChange` | `string` | `ldap_password_change` | no | New LDAP password. |
-| `LdapPasswordChangeConfirmation` | `string` | `ldap_password_change_confirmation` | no | Confirm new LDAP password. |
 | `RedirectOldSubdomain` | `*bool` | `redirect_old_subdomain` | no | If true, and if changing the site subdomain, then create a redirect from the previous Files.com subdomain to the new Files.com subdomain. |
 | `SmtpPassword` | `string` | `smtp_password` | no | Password for SMTP server. |
 
@@ -418,23 +399,6 @@ fmt.Println(result)
 | `IntegrationCentricRemoteServerAdminAccess` | `string` | `integration_centric_remote_server_admin_access` | Administrator access to user-owned Remote Servers in every Workspace: always_visible (default), never_visible, user_choice_default_visible, or user_choice_default_personal. Forced modes override owner preferences; choice modes use the preference or their default. |
 | `IncludePasswordInWelcomeEmail` | `*bool` | `include_password_in_welcome_email` | Include password in emails to new users? |
 | `Language` | `string` | `language` | Site default language |
-| `LdapBaseDn` | `string` | `ldap_base_dn` | Base DN for looking up users in LDAP server |
-| `LdapDomain` | `string` | `ldap_domain` | Domain name that will be appended to usernames |
-| `LdapEnabled` | `*bool` | `ldap_enabled` | Main LDAP setting: is LDAP enabled? |
-| `LdapGroupAction` | `string` | `ldap_group_action` | Should we sync groups from LDAP server? |
-| `LdapGroupExclusion` | `string` | `ldap_group_exclusion` | Comma or newline separated list of group names (with optional wildcards) to exclude when syncing. |
-| `LdapGroupInclusion` | `string` | `ldap_group_inclusion` | Comma or newline separated list of group names (with optional wildcards) to include when syncing. |
-| `LdapHost` | `string` | `ldap_host` | LDAP host |
-| `LdapHost2` | `string` | `ldap_host_2` | LDAP backup host |
-| `LdapHost3` | `string` | `ldap_host_3` | LDAP backup host |
-| `LdapPort` | `int64` | `ldap_port` | LDAP port |
-| `LdapSecure` | `*bool` | `ldap_secure` | Use secure LDAP? |
-| `LdapServerCertificate` | `string` | `ldap_server_certificate` | How to validate the LDAP server certificate. `require_match` validates the certificate chain and hostname; `allow_any` disables certificate validation. |
-| `LdapType` | `string` | `ldap_type` | LDAP type |
-| `LdapUserAction` | `string` | `ldap_user_action` | Should we sync users from LDAP server? |
-| `LdapUserIncludeGroups` | `string` | `ldap_user_include_groups` | Comma or newline separated list of group names (with optional wildcards) - if provided, only users in these groups will be added or synced. |
-| `LdapUsername` | `string` | `ldap_username` | Username for signing in to LDAP server. |
-| `LdapUsernameField` | `string` | `ldap_username_field` | LDAP username field |
 | `LoginHelpText` | `string` | `login_help_text` | Login help text |
 | `Logo` | `files_sdk.Image` | `logo` | Branded logo |
 | `LoginPageBackgroundImage` | `files_sdk.Image` | `login_page_background_image` | Branded login page background |

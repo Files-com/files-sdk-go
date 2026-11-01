@@ -220,40 +220,6 @@ type Site struct {
 	IncludePasswordInWelcomeEmail *bool `json:"include_password_in_welcome_email,omitempty" path:"include_password_in_welcome_email,omitempty" url:"include_password_in_welcome_email,omitempty"`
 	// Site default language.
 	Language string `json:"language,omitempty" path:"language,omitempty" url:"language,omitempty"`
-	// Base DN for looking up users in LDAP server.
-	LdapBaseDn string `json:"ldap_base_dn,omitempty" path:"ldap_base_dn,omitempty" url:"ldap_base_dn,omitempty"`
-	// Domain name that will be appended to usernames.
-	LdapDomain string `json:"ldap_domain,omitempty" path:"ldap_domain,omitempty" url:"ldap_domain,omitempty"`
-	// Main LDAP setting: is LDAP enabled?
-	LdapEnabled *bool `json:"ldap_enabled,omitempty" path:"ldap_enabled,omitempty" url:"ldap_enabled,omitempty"`
-	// Should we sync groups from LDAP server?
-	LdapGroupAction string `json:"ldap_group_action,omitempty" path:"ldap_group_action,omitempty" url:"ldap_group_action,omitempty"`
-	// Comma or newline separated list of group names (with optional wildcards) to exclude when syncing.
-	LdapGroupExclusion string `json:"ldap_group_exclusion,omitempty" path:"ldap_group_exclusion,omitempty" url:"ldap_group_exclusion,omitempty"`
-	// Comma or newline separated list of group names (with optional wildcards) to include when syncing.
-	LdapGroupInclusion string `json:"ldap_group_inclusion,omitempty" path:"ldap_group_inclusion,omitempty" url:"ldap_group_inclusion,omitempty"`
-	// LDAP host.
-	LdapHost string `json:"ldap_host,omitempty" path:"ldap_host,omitempty" url:"ldap_host,omitempty"`
-	// LDAP backup host.
-	LdapHost2 string `json:"ldap_host_2,omitempty" path:"ldap_host_2,omitempty" url:"ldap_host_2,omitempty"`
-	// LDAP backup host.
-	LdapHost3 string `json:"ldap_host_3,omitempty" path:"ldap_host_3,omitempty" url:"ldap_host_3,omitempty"`
-	// LDAP port.
-	LdapPort int64 `json:"ldap_port,omitempty" path:"ldap_port,omitempty" url:"ldap_port,omitempty"`
-	// Use secure LDAP?
-	LdapSecure *bool `json:"ldap_secure,omitempty" path:"ldap_secure,omitempty" url:"ldap_secure,omitempty"`
-	// How to validate the LDAP server certificate. `require_match` validates the certificate chain and hostname; `allow_any` disables certificate validation.
-	LdapServerCertificate string `json:"ldap_server_certificate,omitempty" path:"ldap_server_certificate,omitempty" url:"ldap_server_certificate,omitempty"`
-	// LDAP type.
-	LdapType string `json:"ldap_type,omitempty" path:"ldap_type,omitempty" url:"ldap_type,omitempty"`
-	// Should we sync users from LDAP server?
-	LdapUserAction string `json:"ldap_user_action,omitempty" path:"ldap_user_action,omitempty" url:"ldap_user_action,omitempty"`
-	// Comma or newline separated list of group names (with optional wildcards) - if provided, only users in these groups will be added or synced.
-	LdapUserIncludeGroups string `json:"ldap_user_include_groups,omitempty" path:"ldap_user_include_groups,omitempty" url:"ldap_user_include_groups,omitempty"`
-	// Username for signing in to LDAP server.
-	LdapUsername string `json:"ldap_username,omitempty" path:"ldap_username,omitempty" url:"ldap_username,omitempty"`
-	// LDAP username field.
-	LdapUsernameField string `json:"ldap_username_field,omitempty" path:"ldap_username_field,omitempty" url:"ldap_username_field,omitempty"`
 	// Login help text.
 	LoginHelpText string `json:"login_help_text,omitempty" path:"login_help_text,omitempty" url:"login_help_text,omitempty"`
 	// Branded logo.
@@ -756,40 +722,6 @@ type SiteUpdateParams struct {
 	SmtpPort int64 `url:"smtp_port,omitempty" json:"smtp_port,omitempty" path:"smtp_port"`
 	// Custom SMTP encryption mode: if_available (default) uses STARTTLS when offered and otherwise sends credentials and messages unencrypted. A certificate-verified STARTTLS connection automatically changes if_available to require unless smtp_ssl is managed by a parent policy. require requires STARTTLS before authentication; require_implicit uses TLS from connection start; never disables TLS. TLS verifies the server certificate against smtp_address. Encryption is never automatically downgraded.
 	SmtpSsl string `url:"smtp_ssl,omitempty" json:"smtp_ssl,omitempty" path:"smtp_ssl"`
-	// Main LDAP setting: is LDAP enabled?
-	LdapEnabled *bool `url:"ldap_enabled,omitempty" json:"ldap_enabled,omitempty" path:"ldap_enabled"`
-	// LDAP type.
-	LdapType string `url:"ldap_type,omitempty" json:"ldap_type,omitempty" path:"ldap_type"`
-	// LDAP host.
-	LdapHost string `url:"ldap_host,omitempty" json:"ldap_host,omitempty" path:"ldap_host"`
-	// LDAP backup host.
-	LdapHost2 string `url:"ldap_host_2,omitempty" json:"ldap_host_2,omitempty" path:"ldap_host_2"`
-	// LDAP backup host.
-	LdapHost3 string `url:"ldap_host_3,omitempty" json:"ldap_host_3,omitempty" path:"ldap_host_3"`
-	// LDAP port.
-	LdapPort int64 `url:"ldap_port,omitempty" json:"ldap_port,omitempty" path:"ldap_port"`
-	// Use secure LDAP?
-	LdapSecure *bool `url:"ldap_secure,omitempty" json:"ldap_secure,omitempty" path:"ldap_secure"`
-	// How to validate the LDAP server certificate. `require_match` validates the certificate chain and hostname; `allow_any` disables certificate validation.
-	LdapServerCertificate string `url:"ldap_server_certificate,omitempty" json:"ldap_server_certificate,omitempty" path:"ldap_server_certificate"`
-	// Username for signing in to LDAP server.
-	LdapUsername string `url:"ldap_username,omitempty" json:"ldap_username,omitempty" path:"ldap_username"`
-	// LDAP username field.
-	LdapUsernameField string `url:"ldap_username_field,omitempty" json:"ldap_username_field,omitempty" path:"ldap_username_field"`
-	// Domain name that will be appended to usernames.
-	LdapDomain string `url:"ldap_domain,omitempty" json:"ldap_domain,omitempty" path:"ldap_domain"`
-	// Should we sync users from LDAP server?
-	LdapUserAction string `url:"ldap_user_action,omitempty" json:"ldap_user_action,omitempty" path:"ldap_user_action"`
-	// Should we sync groups from LDAP server?
-	LdapGroupAction string `url:"ldap_group_action,omitempty" json:"ldap_group_action,omitempty" path:"ldap_group_action"`
-	// Comma or newline separated list of group names (with optional wildcards) - if provided, only users in these groups will be added or synced.
-	LdapUserIncludeGroups string `url:"ldap_user_include_groups,omitempty" json:"ldap_user_include_groups,omitempty" path:"ldap_user_include_groups"`
-	// Comma or newline separated list of group names (with optional wildcards) to exclude when syncing.
-	LdapGroupExclusion string `url:"ldap_group_exclusion,omitempty" json:"ldap_group_exclusion,omitempty" path:"ldap_group_exclusion"`
-	// Comma or newline separated list of group names (with optional wildcards) to include when syncing.
-	LdapGroupInclusion string `url:"ldap_group_inclusion,omitempty" json:"ldap_group_inclusion,omitempty" path:"ldap_group_inclusion"`
-	// Base DN for looking up users in LDAP server.
-	LdapBaseDn string `url:"ldap_base_dn,omitempty" json:"ldap_base_dn,omitempty" path:"ldap_base_dn"`
 	// Require email authentication, virus, and spam checks for incoming emails to Inboxes and Incoming Email Automations in every Workspace on this site?
 	UploadsViaEmailAuthentication *bool `url:"uploads_via_email_authentication,omitempty" json:"uploads_via_email_authentication,omitempty" path:"uploads_via_email_authentication"`
 	// Preview watermark settings applied to all bundle items. Uses the same keys as Behavior.value.
@@ -831,10 +763,6 @@ type SiteUpdateParams struct {
 	LoginPageBackgroundImageDelete *bool `url:"login_page_background_image_delete,omitempty" json:"login_page_background_image_delete,omitempty" path:"login_page_background_image_delete"`
 	// If set to true, we will begin the process of disabling 2FA on this site.
 	Disable2faWithDelay *bool `url:"disable_2fa_with_delay,omitempty" json:"disable_2fa_with_delay,omitempty" path:"disable_2fa_with_delay"`
-	// New LDAP password.
-	LdapPasswordChange string `url:"ldap_password_change,omitempty" json:"ldap_password_change,omitempty" path:"ldap_password_change"`
-	// Confirm new LDAP password.
-	LdapPasswordChangeConfirmation string `url:"ldap_password_change_confirmation,omitempty" json:"ldap_password_change_confirmation,omitempty" path:"ldap_password_change_confirmation"`
 	// If true, and if changing the site subdomain, then create a redirect from the previous Files.com subdomain to the new Files.com subdomain.
 	RedirectOldSubdomain *bool `url:"redirect_old_subdomain,omitempty" json:"redirect_old_subdomain,omitempty" path:"redirect_old_subdomain"`
 	// Password for SMTP server.
