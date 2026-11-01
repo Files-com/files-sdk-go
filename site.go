@@ -138,6 +138,10 @@ type Site struct {
 	DesktopAppSessionLifetime int64 `json:"desktop_app_session_lifetime,omitempty" path:"desktop_app_session_lifetime,omitempty" url:"desktop_app_session_lifetime,omitempty"`
 	// Use legacy checksums mode?
 	LegacyChecksumsMode *bool `json:"legacy_checksums_mode,omitempty" path:"legacy_checksums_mode,omitempty" url:"legacy_checksums_mode,omitempty"`
+	// Allow legacy app pairing in all workspaces? Disabled for new sites; existing sites remain enabled until changed. Disabling blocks new pairing exchanges without revoking existing app credentials or affecting OAuth sign-in. Site administrators can re-enable it.
+	LegacyPairingEnabled *bool `json:"legacy_pairing_enabled,omitempty" path:"legacy_pairing_enabled,omitempty" url:"legacy_pairing_enabled,omitempty"`
+	// Time of the last completed legacy app pairing across all workspaces. Failed or incomplete attempts do not count. Read-only; empty until a pairing completes after tracking begins.
+	LastPairingAt *time.Time `json:"last_pairing_at,omitempty" path:"last_pairing_at,omitempty" url:"last_pairing_at,omitempty"`
 	// If true, we will migrate all remote server syncs to the new Sync model.
 	MigrateRemoteServerSyncToSync *bool `json:"migrate_remote_server_sync_to_sync,omitempty" path:"migrate_remote_server_sync_to_sync,omitempty" url:"migrate_remote_server_sync_to_sync,omitempty"`
 	// Is OAuth DCR (dynamic client registration) for MCP enabled?
@@ -534,6 +538,8 @@ type SiteUpdateParams struct {
 	IntegrationCentricRemoteServerAdminAccess string `url:"integration_centric_remote_server_admin_access,omitempty" json:"integration_centric_remote_server_admin_access,omitempty" path:"integration_centric_remote_server_admin_access"`
 	// Session expiry in minutes.
 	SessionExpiryMinutes int64 `url:"session_expiry_minutes,omitempty" json:"session_expiry_minutes,omitempty" path:"session_expiry_minutes"`
+	// Allow legacy app pairing in all workspaces? Disabled for new sites; existing sites remain enabled until changed. Disabling blocks new pairing exchanges without revoking existing app credentials or affecting OAuth sign-in. Site administrators can re-enable it.
+	LegacyPairingEnabled *bool `url:"legacy_pairing_enabled,omitempty" json:"legacy_pairing_enabled,omitempty" path:"legacy_pairing_enabled"`
 	// Is SSL required? Disabling this is insecure.
 	SslRequired *bool `url:"ssl_required,omitempty" json:"ssl_required,omitempty" path:"ssl_required"`
 	// If true, we will allow weak and known insecure ciphers to be used for SFTP connections. Enabling this setting severely weakens the security of your site and it is not recommend, except as a last resort for compatibility.

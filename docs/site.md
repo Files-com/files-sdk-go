@@ -132,6 +132,7 @@ Parameters, `files_sdk.SiteUpdateParams`:
 | `UsernameDisplay` | `string` | `username_display` | no | How usernames are displayed in the web UI. Can be `username_only`, `full_name_only`, `full_name_username`, `full_name_company`, or `full_name_username_company`. |
 | `IntegrationCentricRemoteServerAdminAccess` | `string` | `integration_centric_remote_server_admin_access` | no | Administrator access to user-owned Remote Servers in every Workspace: always_visible (default), never_visible, user_choice_default_visible, or user_choice_default_personal. Forced modes override owner preferences; choice modes use the preference or their default. |
 | `SessionExpiryMinutes` | `int64` | `session_expiry_minutes` | no | Session expiry in minutes |
+| `LegacyPairingEnabled` | `*bool` | `legacy_pairing_enabled` | no | Allow legacy app pairing in all workspaces? Disabled for new sites; existing sites remain enabled until changed. Disabling blocks new pairing exchanges without revoking existing app credentials or affecting OAuth sign-in. Site administrators can re-enable it. |
 | `SslRequired` | `*bool` | `ssl_required` | no | Is SSL required? Disabling this is insecure. |
 | `SftpInsecureCiphers` | `*bool` | `sftp_insecure_ciphers` | no | If true, we will allow weak and known insecure ciphers to be used for SFTP connections. Enabling this setting severely weakens the security of your site and it is not recommend, except as a last resort for compatibility. |
 | `SftpInsecureDiffieHellman` | `*bool` | `sftp_insecure_diffie_hellman` | no | If true, we will allow weak Diffie Hellman parameters to be used within ciphers for SFTP that are otherwise on our secure list. This has the effect of making the cipher weaker than our normal threshold for security, but is required to support certain legacy or broken SSH and MFT clients. Enabling this weakens security, but not nearly as much as enabling the full `sftp_insecure_ciphers` option. |
@@ -376,6 +377,8 @@ fmt.Println(result)
 | `DesktopAppSessionIpPinning` | `*bool` | `desktop_app_session_ip_pinning` | Is desktop app session IP pinning enabled? |
 | `DesktopAppSessionLifetime` | `int64` | `desktop_app_session_lifetime` | Desktop app session lifetime (in hours) |
 | `LegacyChecksumsMode` | `*bool` | `legacy_checksums_mode` | Use legacy checksums mode? |
+| `LegacyPairingEnabled` | `*bool` | `legacy_pairing_enabled` | Allow legacy app pairing in all workspaces? Disabled for new sites; existing sites remain enabled until changed. Disabling blocks new pairing exchanges without revoking existing app credentials or affecting OAuth sign-in. Site administrators can re-enable it. |
+| `LastPairingAt` | `*time.Time` | `last_pairing_at` | Time of the last completed legacy app pairing across all workspaces. Failed or incomplete attempts do not count. Read-only; empty until a pairing completes after tracking begins. |
 | `MigrateRemoteServerSyncToSync` | `*bool` | `migrate_remote_server_sync_to_sync` | If true, we will migrate all remote server syncs to the new Sync model. |
 | `McpDcrEnabled` | `*bool` | `mcp_dcr_enabled` | Is OAuth DCR (dynamic client registration) for MCP enabled? |
 | `MobileApp` | `*bool` | `mobile_app` | Is the mobile app enabled? |
