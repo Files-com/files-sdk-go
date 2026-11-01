@@ -496,7 +496,7 @@ if err != nil {
 | `ServerType` | `string` | `server_type` | Remote server type. |
 | `SiteAdminAccess` | `*bool` | `site_admin_access` | Owner's preference for administrator access to this user-owned Remote Server. Null uses the Site policy's default. Only the owner may change it when the Site policy allows user choice. |
 | `EffectiveSiteAdminAccess` | `*bool` | `effective_site_admin_access` | Whether Site and Workspace Administrators can access this Remote Server under the current Site policy. |
-| `UserId` | `int64` | `user_id` | ID of the user who owns this Remote Server, if any. |
+| `UserId` | `int64` | `user_id` | ID of the Integration-Centric user who owns this personal Remote Server, if any. Connections created by Site and Workspace Administrators have no owner. |
 | `WorkspaceId` | `int64` | `workspace_id` | Workspace ID (0 for default workspace) |
 | `Ssl` | `string` | `ssl` | Should we require SSL? |
 | `Username` | `string` | `username` | Remote server username. |

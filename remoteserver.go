@@ -62,7 +62,7 @@ type RemoteServer struct {
 	SiteAdminAccess *bool `json:"site_admin_access,omitempty" path:"site_admin_access,omitempty" url:"site_admin_access,omitempty"`
 	// Whether Site and Workspace Administrators can access this Remote Server under the current Site policy.
 	EffectiveSiteAdminAccess *bool `json:"effective_site_admin_access,omitempty" path:"effective_site_admin_access,omitempty" url:"effective_site_admin_access,omitempty"`
-	// ID of the user who owns this Remote Server, if any.
+	// ID of the Integration-Centric user who owns this personal Remote Server, if any. Connections created by Site and Workspace Administrators have no owner.
 	UserId int64 `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`
 	// Workspace ID (0 for default workspace).
 	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
