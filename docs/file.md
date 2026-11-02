@@ -509,6 +509,7 @@ Parameters, `files_sdk.FileZipParams`:
 | --- | --- | --- | --- | --- |
 | `Paths` | `[]string` | `paths` | yes | Paths to include in the ZIP. |
 | `Destination` | `string` | `destination` | yes | Destination file path for the ZIP. |
+| `ArchiveFormat` | `files_sdk.FileArchiveFormatEnum` | `archive_format` | no | Archive format to create. Values: `zip`, `tar`, `tar.gz`, `tgz`. |
 | `Overwrite` | `*bool` | `overwrite` | no | Overwrite existing file in the destination? |
 
 Example:

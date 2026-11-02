@@ -122,6 +122,25 @@ type EtagsParam struct {
 	Part string `url:"part,omitempty" json:"part,omitempty" path:"part"`
 }
 
+// FileArchiveFormatEnum is a string value for archive_format.
+// Enum lists the values documented by the API.
+type FileArchiveFormatEnum string
+
+// String returns the API parameter value.
+func (u FileArchiveFormatEnum) String() string {
+	return string(u)
+}
+
+// Enum returns the documented values keyed by their API strings.
+func (u FileArchiveFormatEnum) Enum() map[string]FileArchiveFormatEnum {
+	return map[string]FileArchiveFormatEnum{
+		"zip":    FileArchiveFormatEnum("zip"),
+		"tar":    FileArchiveFormatEnum("tar"),
+		"tar.gz": FileArchiveFormatEnum("tar.gz"),
+		"tgz":    FileArchiveFormatEnum("tgz"),
+	}
+}
+
 // FileDownloadParams contains the request parameters for GET /files/{path}.
 //
 // Download File
@@ -343,6 +362,8 @@ type FileZipParams struct {
 	Paths []string `url:"paths" json:"paths" path:"paths"`
 	// Destination file path for the ZIP. Required.
 	Destination string `url:"destination" json:"destination" path:"destination"`
+	// Archive format to create. Values: zip, tar, tar.gz, tgz.
+	ArchiveFormat FileArchiveFormatEnum `url:"archive_format,omitempty" json:"archive_format,omitempty" path:"archive_format"`
 	// Overwrite existing file in the destination?
 	Overwrite *bool `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
