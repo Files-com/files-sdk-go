@@ -92,10 +92,10 @@ func mountOpts(params MountParams) []string {
 	opts = append(opts, "-o", "uid=-1")
 	opts = append(opts, "-o", "gid=-1")
 	if params.VolumeName != "" && !params.DisableMountVolumePrefix {
-		opts = append(opts, "--VolumePrefix=\\Files\\"+params.VolumeName)
+		opts = append(opts, "--VolumePrefix=\\"+params.uncServerName()+"\\"+params.VolumeName)
 	}
 
-	opts = append(opts, "-o", "FileSystemName=Files.com")
+	opts = append(opts, "-o", "FileSystemName="+params.fileSystemName())
 	opts = append(opts, "-o", "DirInfoTimeout=1")
 	return opts
 }

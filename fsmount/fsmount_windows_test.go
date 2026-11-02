@@ -5,6 +5,7 @@ package fsmount
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 )
 
@@ -30,6 +31,28 @@ func TestValidMountPoint(t *testing.T) {
 		err := validateMountPoint(test.mountPoint)
 		if (err == nil) != test.valid {
 			t.Errorf("validateMountPoint(%q) = %v; want valid=%v", test.mountPoint, err, test.valid)
+		}
+	}
+}
+
+func TestMountOptionsNameTheFileSystemAndUNCPath(t *testing.T) {
+	tests := []struct {
+		params MountParams
+		want   []string
+	}{
+		{MountParams{VolumeName: "Acme"}, []string{`--VolumePrefix=\Files\Acme`, "FileSystemName=Files.com"}},
+		{
+			MountParams{VolumeName: "Photos", FileSystemName: "ExpanDrive", UNCServerName: "ExpanDrive"},
+			[]string{`--VolumePrefix=\ExpanDrive\Photos`, "FileSystemName=ExpanDrive"},
+		},
+	}
+
+	for _, test := range tests {
+		opts := mountOpts(test.params)
+		for _, want := range test.want {
+			if !slices.Contains(opts, want) {
+				t.Errorf("mountOpts(%+v) = %v; want it to contain %q", test.params, opts, want)
+			}
 		}
 	}
 }

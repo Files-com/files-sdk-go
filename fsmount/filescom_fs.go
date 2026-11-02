@@ -74,7 +74,7 @@ func (fs *Filescomfs) Init() {
 		fs.remote.Init()
 		fs.local.Init()
 
-		fs.log.Info("Files.com file system initialized successfully.")
+		fs.log.Info("File system initialized successfully.")
 		fs.log.Debug("Mount point: %s, Remote file system root: %s, Local file system root: %s", fs.mountPoint, fs.remote.root, fs.local.localFsRoot)
 	})
 	fs.signalMountReady()
@@ -83,7 +83,7 @@ func (fs *Filescomfs) Init() {
 func (fs *Filescomfs) Destroy() {
 	defer logPanics(fs.log)
 	fs.destroyOnce.Do(func() {
-		fs.log.Info("Shutting down Files.com file system mounted at: %s", fs.mountPoint)
+		fs.log.Info("Shutting down file system mounted at: %s", fs.mountPoint)
 		fs.remote.Destroy()
 		fs.local.Destroy()
 		fs.vfs.destroy()

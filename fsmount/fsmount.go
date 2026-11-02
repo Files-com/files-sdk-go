@@ -39,6 +39,12 @@ const (
 	// DefaultVolumeName is the default volume name for the file system.
 	DefaultVolumeName = "Files.com"
 
+	// DefaultFileSystemName is the default name of the file system.
+	DefaultFileSystemName = "Files.com"
+
+	// DefaultUNCServerName is the default server name of the UNC path. [Windows only]
+	DefaultUNCServerName = "Files"
+
 	// DefaultDebugFuseLog is the default path to the fuse debug log. [Windows only]
 	DefaultDebugFuseLog = "fuse.log"
 
@@ -87,6 +93,15 @@ type MountParams struct {
 	// Optional. Volume name to display in the system file browser. On Windows, this is also
 	// used as the share name for the UNC path. Defaults to "Files.com".
 	VolumeName string
+
+	// Optional. Name of the file system. It is the file system type on Windows and the
+	// mount source on Linux, and it names the mount's temporary folder and log messages.
+	// Defaults to "Files.com".
+	FileSystemName string
+
+	// Optional. On Windows, the server name of the UNC path, as in \\<UNCServerName>\<VolumeName>.
+	// Defaults to "Files".
+	UNCServerName string
 
 	// Optional. On Windows, disables the volume prefix mount option. If set to true, the --VolumePrefix
 	// option will not be used when starting the mount.
@@ -374,7 +389,7 @@ func newFs(params MountParams, logger lib.LeveledLogger) (*Filescomfs, error) {
 	if err != nil {
 		return nil, err
 	}
-	storage, err := newMountStorage(tmpRoot)
+	storage, err := newMountStorage(tmpRoot, params.fileSystemName())
 	if err != nil {
 		return nil, err
 	}
@@ -434,7 +449,7 @@ func newFsWithStorage(params MountParams, storage mountStorage, logger lib.Level
 	}
 	fs.ignore = ig
 
-	logger.Info("Mounting Files.com file system at %s", params.MountPoint)
+	logger.Info("Mounting %s file system at %s", params.fileSystemName(), params.MountPoint)
 	return fs, nil
 }
 
@@ -535,13 +550,14 @@ const (
 	mountStorageWriteDir = "write"
 )
 
-// newMountStorage creates the mount's private storage inside parent. A parent that other
-// users could modify is refused: they could replace the private directory with their own.
-func newMountStorage(parent string) (mountStorage, error) {
+// newMountStorage creates the mount's private storage inside parent, in a folder named
+// after the file system. A parent that other users could modify is refused: they could
+// replace the private directory with their own.
+func newMountStorage(parent string, name string) (mountStorage, error) {
 	if err := privatefile.CheckContainer(parent); err != nil {
 		return mountStorage{}, fmt.Errorf("temporary file system path cannot hold the mount's private storage: %w", err)
 	}
-	root, err := privatefile.MkdirTemp(parent, "Files.com-v6-*")
+	root, err := privatefile.MkdirTemp(parent, name+"-*")
 	if err != nil {
 		return mountStorage{}, fmt.Errorf("failed to create temporary local file system: %w", err)
 	}
@@ -641,6 +657,20 @@ func ignoreFromPatterns(patterns []string) (*gogitignore.GitIgnore, error) {
 		// use provided override patterns
 		return ignore.New(patterns...)
 	}
+}
+
+func (params MountParams) fileSystemName() string {
+	if params.FileSystemName != "" {
+		return params.FileSystemName
+	}
+	return DefaultFileSystemName
+}
+
+func (params MountParams) uncServerName() string {
+	if params.UNCServerName != "" {
+		return params.UNCServerName
+	}
+	return DefaultUNCServerName
 }
 
 // Default mount options for all fuse implementations

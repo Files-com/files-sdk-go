@@ -33,7 +33,7 @@ func mountPoint(mountPoint string, _ bool) (string, error) {
 // endpoint is not connected". Older versions check the mount point as root,
 // which FUSE denies, and leave the mount in place.
 func mountOpts(params MountParams) []string {
-	opts := []string{"-o", "attr_timeout=1", "-o", "fsname=Files.com", "-o", "auto_unmount"}
+	opts := []string{"-o", "attr_timeout=1", "-o", "fsname=" + params.fileSystemName(), "-o", "auto_unmount"}
 	if params.DebugFuse {
 		opts = append(opts, "-o", "debug")
 	}

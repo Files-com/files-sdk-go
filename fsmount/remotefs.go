@@ -323,32 +323,7 @@ func newRemoteFs(params MountParams, vfs *virtualfs, log log.Logger, cs cacheSto
 		fs.providerBackend = params.ProviderBackend
 		fs.disableLocking = true
 		fs.backend = &providerRemoteBackend{provider: params.ProviderBackend}
-		fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
-			fileInfo, err := reader.Stat()
-			if err != nil {
-				return uploadedFileMetadata{}, err
-			}
-			remotePath := fs.remotePath(path)
-			writeReader := io.Reader(reader)
-			if node != nil {
-				writeReader = &progressReader{
-					reader:   reader,
-					progress: fs.uploadProgressFunc(node),
-				}
-			}
-			entry, err := params.ProviderBackend.Write(ctx, remotePath, writeReader, fileInfo.Size(), mtime)
-			if err != nil {
-				return uploadedFileMetadata{}, err
-			}
-			uploadedModTime := entry.ModTime
-			if uploadedModTime.IsZero() {
-				uploadedModTime = mtime
-			}
-			return uploadedFileMetadata{
-				size:    fs.providerUploadedSize(remotePath, entry, fileInfo.Size()),
-				modTime: uploadedModTime,
-			}, nil
-		}
+		fs.uploadWorkingCopy = fs.uploadWorkingCopyToProvider
 	}
 
 	// ensure write concurrency and cache TTL are positive
@@ -1721,6 +1696,40 @@ func (fs *RemoteFs) uploadWorkingCopyWithSDK(ctx context.Context, node *fsNode, 
 		return uploadedFileMetadata{}, err
 	}
 	return fs.uploadedFileMetadata(path, u.File, fileInfo.Size(), mtime), nil
+}
+
+// uploadWorkingCopyToProvider writes a working copy through the provider backend. It
+// captures the destination before writing, as the Files.com upload does when it
+// finalizes: a rename that arrives first changes the destination, and a later rename
+// waits for the write and then moves the written file.
+func (fs *RemoteFs) uploadWorkingCopyToProvider(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, _ uint64) (uploadedFileMetadata, error) {
+	fileInfo, err := reader.Stat()
+	if err != nil {
+		return uploadedFileMetadata{}, err
+	}
+	writeReader := io.Reader(reader)
+	if node != nil {
+		if captured, _ := node.captureUploadPathAndRef(); captured != "" {
+			path = captured
+		}
+		writeReader = &progressReader{
+			reader:   reader,
+			progress: fs.uploadProgressFunc(node),
+		}
+	}
+	remotePath := fs.remotePath(path)
+	entry, err := fs.providerBackend.Write(ctx, remotePath, writeReader, fileInfo.Size(), mtime)
+	if err != nil {
+		return uploadedFileMetadata{}, err
+	}
+	uploadedModTime := entry.ModTime
+	if uploadedModTime.IsZero() {
+		uploadedModTime = mtime
+	}
+	return uploadedFileMetadata{
+		size:    fs.providerUploadedSize(remotePath, entry, fileInfo.Size()),
+		modTime: uploadedModTime,
+	}, nil
 }
 
 func (fs *RemoteFs) finalizeUploadPathAndRef(node *fsNode) (string, string) {

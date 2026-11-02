@@ -3185,6 +3185,88 @@ func TestRemoteFsRenameAfterFirstUploadDestinationCapturedMovesRemoteFile(t *tes
 	}
 }
 
+// Provider mounts write the working copy themselves. A rename that arrives while that write
+// is running must wait for it and move the written file, or the file keeps its old name.
+func TestRemoteFsProviderRenameDuringFirstUploadMovesWrittenFile(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	temporaryPath := "/provider-save.txt.~tmp"
+	finalPath := "/provider-save.txt"
+	writeStarted := make(chan string, 1)
+	finishWrite := make(chan struct{})
+	var finishOnce sync.Once
+	releaseWrite := func() { finishOnce.Do(func() { close(finishWrite) }) }
+	defer releaseWrite()
+	renamed := make(chan [2]string, 1)
+	provider := &testProviderBackend{
+		writeFunc: func(_ context.Context, path string, reader io.Reader, _ int64, modTime time.Time) (ProviderEntry, error) {
+			n, err := io.Copy(io.Discard, reader)
+			if err != nil {
+				return ProviderEntry{}, err
+			}
+			writeStarted <- path
+			<-finishWrite
+			return ProviderEntry{Path: path, Type: ProviderTypeFile, Size: n, ModTime: modTime}, nil
+		},
+		renameFunc: func(_ context.Context, source string, destination string) error {
+			renamed <- [2]string{source, destination}
+			return nil
+		},
+	}
+	fs.providerBackend = provider
+	fs.backend = &providerRemoteBackend{provider: provider}
+	fs.uploadWorkingCopy = fs.uploadWorkingCopyToProvider
+
+	errno, fh := fs.Create(temporaryPath, fuse.O_RDWR, 0o644)
+	if errno != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errno)
+	}
+	payload := []byte("saved")
+	if n := fs.Write(temporaryPath, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+	flushResult := make(chan int, 1)
+	go func() { flushResult <- fs.Flush(temporaryPath, fh) }()
+	select {
+	case path := <-writeStarted:
+		if path != temporaryPath {
+			t.Fatalf("provider write path = %q, want %q", path, temporaryPath)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for the provider write")
+	}
+
+	renameResult := make(chan int, 1)
+	go func() { renameResult <- fs.Rename(temporaryPath, finalPath) }()
+	select {
+	case errno := <-renameResult:
+		t.Fatalf("Rename returned %d before the provider write finished", errno)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	releaseWrite()
+	select {
+	case paths := <-renamed:
+		if paths != [2]string{temporaryPath, finalPath} {
+			t.Fatalf("provider rename = %q, want %q to %q", paths, temporaryPath, finalPath)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for the provider rename")
+	}
+	for name, result := range map[string]chan int{"Flush": flushResult, "Rename": renameResult} {
+		select {
+		case errno := <-result:
+			if errno != 0 {
+				t.Fatalf("%s returned unexpected error: %d", name, errno)
+			}
+		case <-time.After(2 * time.Second):
+			t.Fatalf("timed out waiting for %s", name)
+		}
+	}
+	fs.Release(finalPath, fh)
+}
+
 func TestRemoteFsRenameInProgressReuploadMovesCommittedRemoteFile(t *testing.T) {
 	fs, vfs, _ := newTestRemoteFs(t)
 	defer vfs.destroy()

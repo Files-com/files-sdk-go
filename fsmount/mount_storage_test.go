@@ -21,7 +21,7 @@ func TestFilescomfsDestroyRemovesOnlyTheMountsOwnStorage(t *testing.T) {
 	if err := os.WriteFile(keep, []byte("keep"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	storage, err := newMountStorage(parent)
+	storage, err := newMountStorage(parent, DefaultFileSystemName)
 	if err != nil {
 		t.Fatalf("newMountStorage failed: %v", err)
 	}
@@ -67,7 +67,7 @@ func TestFilescomfsDestroyRemovesOnlyTheMountsOwnStorage(t *testing.T) {
 // temporary directory.
 func TestNewWriteSessionKeepsWorkingCopyInPrivateDirectory(t *testing.T) {
 	parent := privateTempDir(t)
-	storage, err := newMountStorage(parent)
+	storage, err := newMountStorage(parent, DefaultFileSystemName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -107,7 +107,7 @@ func TestNewWriteSessionKeepsWorkingCopyInPrivateDirectory(t *testing.T) {
 // An application cannot widen the mount's storage root through the mount.
 func TestLocalFsChmodOnRootKeepsStoragePrivate(t *testing.T) {
 	parent := privateTempDir(t)
-	storage, err := newMountStorage(parent)
+	storage, err := newMountStorage(parent, DefaultFileSystemName)
 	if err != nil {
 		t.Fatal(err)
 	}
