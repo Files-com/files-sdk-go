@@ -398,6 +398,12 @@ func (s Site) Identifier() interface{} {
 // SiteCollection is a list of Site resources.
 type SiteCollection []Site
 
+// SiteExtendAutomationMigrationWindowParams contains the request parameters for POST /site/extend_automation_migration_window.
+type SiteExtendAutomationMigrationWindowParams struct {
+	// New conversion-window end date in YYYY-MM-DD format, in Eastern Time (EST/EDT). Must be a Tuesday, Wednesday, or Thursday. Can only extend the current end date, within six weeks of the originally announced end date. Required.
+	EndDate string `url:"end_date" json:"end_date" path:"end_date"`
+}
+
 // SiteUpdateParams contains the request parameters for PATCH /site.
 type SiteUpdateParams struct {
 	// Site name.

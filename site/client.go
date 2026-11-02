@@ -35,6 +35,19 @@ func GetUsage(opts ...files_sdk.RequestResponseOption) (usageSnapshot files_sdk.
 	return (&Client{}).GetUsage(opts...)
 }
 
+// ExtendAutomationMigrationWindow calls POST /site/extend_automation_migration_window.
+//
+// API operation: Extend the Automations conversion window by up to six weeks beyond its originally announced end date.
+func (c *Client) ExtendAutomationMigrationWindow(params files_sdk.SiteExtendAutomationMigrationWindowParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/site/extend_automation_migration_window", Params: params, Entity: nil}, opts...)
+	return
+}
+
+// ExtendAutomationMigrationWindow calls Client.ExtendAutomationMigrationWindow using the default configuration.
+func ExtendAutomationMigrationWindow(params files_sdk.SiteExtendAutomationMigrationWindowParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	return (&Client{}).ExtendAutomationMigrationWindow(params, opts...)
+}
+
 // Update calls PATCH /site.
 func (c *Client) Update(params files_sdk.SiteUpdateParams, opts ...files_sdk.RequestResponseOption) (site files_sdk.Site, err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/site", Params: params, Entity: &site}, opts...)

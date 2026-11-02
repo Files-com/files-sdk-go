@@ -60,6 +60,34 @@ if err != nil {
 fmt.Println(result)
 ```
 
+### ExtendAutomationMigrationWindow
+
+`POST /site/extend_automation_migration_window`
+
+Extend the Automations conversion window by up to six weeks beyond its originally announced end date
+
+```go
+func (c *Client) ExtendAutomationMigrationWindow(params files_sdk.SiteExtendAutomationMigrationWindowParams, opts ...files_sdk.RequestResponseOption) (err error)
+func ExtendAutomationMigrationWindow(params files_sdk.SiteExtendAutomationMigrationWindowParams, opts ...files_sdk.RequestResponseOption) (err error)
+```
+
+Parameters, `files_sdk.SiteExtendAutomationMigrationWindowParams`:
+
+| Field | Go type | API name | Required | Description |
+| --- | --- | --- | --- | --- |
+| `EndDate` | `string` | `end_date` | yes | New conversion-window end date in YYYY-MM-DD format, in Eastern Time (EST/EDT). Must be a Tuesday, Wednesday, or Thursday. Can only extend the current end date, within six weeks of the originally announced end date. |
+
+Example:
+
+```go
+err := site.ExtendAutomationMigrationWindow(files_sdk.SiteExtendAutomationMigrationWindowParams{
+	EndDate: "end_date",
+})
+if err != nil {
+	return err
+}
+```
+
 ### Update
 
 `PATCH /site`

@@ -19,6 +19,8 @@ type Automation struct {
 	AlwaysOverwriteSizeMatchingFiles *bool `json:"always_overwrite_size_matching_files,omitempty" path:"always_overwrite_size_matching_files,omitempty" url:"always_overwrite_size_matching_files,omitempty"`
 	// Automation type.
 	Automation string `json:"automation,omitempty" path:"automation,omitempty" url:"automation,omitempty"`
+	// ID of this v1 Automation's converted v2 copy, when present.
+	ConvertedAutomationId int64 `json:"converted_automation_id,omitempty" path:"converted_automation_id,omitempty" url:"converted_automation_id,omitempty"`
 	// Indicates if the automation has been deleted.
 	Deleted *bool `json:"deleted,omitempty" path:"deleted,omitempty" url:"deleted,omitempty"`
 	// Description for the this Automation.
@@ -53,6 +55,8 @@ type Automation struct {
 	LegacyFolderMatching *bool `json:"legacy_folder_matching,omitempty" path:"legacy_folder_matching,omitempty" url:"legacy_folder_matching,omitempty"`
 	// Name for this automation.
 	Name string `json:"name,omitempty" path:"name,omitempty" url:"name,omitempty"`
+	// ID of the retained v1 Automation for a converted Automation. Re-enable that v1 Automation to pause this copy and revert the conversion.
+	OriginalAutomationId int64 `json:"original_automation_id,omitempty" path:"original_automation_id,omitempty" url:"original_automation_id,omitempty"`
 	// If true, existing files will be overwritten with new files on Move/Copy automations. Note: by default files will not be overwritten on Copy automations if they appear to be the same file size as the newly incoming file. Use the `always_overwrite_size_matching_files` option in conjunction with `overwrite_files` to override this behavior and overwrite files no matter what.
 	OverwriteFiles *bool `json:"overwrite_files,omitempty" path:"overwrite_files,omitempty" url:"overwrite_files,omitempty"`
 	// Path on which this Automation runs. Supports globs, except on remote mounts. This must be slash-delimited, but it must neither start nor end with a slash. Maximum of 5000 characters.
