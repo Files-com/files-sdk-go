@@ -55,6 +55,24 @@ func DefaultRetryableHttp(logger Logger, client ...*http.Client) *retryablehttp.
 	return retryClient
 }
 
+// apiRetryWaitBase is DefaultAPIBackoff's wait before the first retry without a valid Retry-After header, doubled for
+// each later retry.
+const apiRetryWaitBase = 100 * time.Millisecond
+
+// DefaultAPIBackoff is a retryablehttp.Backoff for a caller to set as Config.APIBackoff; the SDK never sets it. It
+// waits as long as a valid Retry-After header asks, read as the SDK's default Backoff reads it and not limited by max.
+// Otherwise it waits 100 ms, doubled for each later retry and at most max: 100, 200 and 400 ms for the SDK's three
+// retries with its 30 s RetryWaitMax. It does not use its first argument, the retry client's RetryWaitMin, which it
+// leaves as it is.
+func DefaultAPIBackoff(_, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
+	if resp != nil {
+		if sleep, ok := retryAfterDuration(resp.Header.Get("Retry-After"), time.Now()); ok {
+			return sleep
+		}
+	}
+	return retryablehttp.DefaultBackoff(apiRetryWaitBase, max, attemptNum, nil)
+}
+
 func UploadRetryableHttp(base *retryablehttp.Client, canReplay func() bool) *retryablehttp.Client {
 	return UploadRetryableHttpWithObserver(base, canReplay, nil)
 }

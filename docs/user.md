@@ -169,6 +169,7 @@ Parameters, `files_sdk.UserCreateParams`:
 | `SiteAdmin` | `*bool` | `site_admin` | no | Is the user an administrator for this site? |
 | `SkipWelcomeScreen` | `*bool` | `skip_welcome_screen` | no | Skip Welcome page in the UI? |
 | `SslRequired` | `files_sdk.UserSslRequiredEnum` | `ssl_required` | no | SSL required setting Values: `use_system_setting`, `always_require`, `never_require`. |
+| `FtpTlsSessionReuseRequired` | `files_sdk.UserFtpTlsSessionReuseRequiredEnum` | `ftp_tls_session_reuse_required` | no | FTP TLS session reuse requirement: use_system_setting, always_require, or never_require Values: `use_system_setting`, `always_require`, `never_require`. |
 | `SsoStrategyId` | `int64` | `sso_strategy_id` | no | SSO (Single Sign On) strategy ID for the user, if applicable. |
 | `Require2fa` | `files_sdk.UserRequire2faEnum` | `require_2fa` | no | 2FA required setting. `use_system_setting` uses the site-wide setting, including SSO exemptions. `always_require` and `never_require` override the site-wide setting when user-level overrides are allowed. Values: `use_system_setting`, `always_require`, `never_require`. |
 | `Tags` | `string` | `tags` | no | Comma-separated list of Tags for this user. Tags are used for other features, such as UserLifecycleRules, which can target specific tags. Tags must only contain lowercase letters, numbers, and hyphens. |
@@ -356,6 +357,7 @@ Parameters, `files_sdk.UserUpdateParams`:
 | `SiteAdmin` | `*bool` | `site_admin` | no | Is the user an administrator for this site? |
 | `SkipWelcomeScreen` | `*bool` | `skip_welcome_screen` | no | Skip Welcome page in the UI? |
 | `SslRequired` | `files_sdk.UserSslRequiredEnum` | `ssl_required` | no | SSL required setting Values: `use_system_setting`, `always_require`, `never_require`. |
+| `FtpTlsSessionReuseRequired` | `files_sdk.UserFtpTlsSessionReuseRequiredEnum` | `ftp_tls_session_reuse_required` | no | FTP TLS session reuse requirement: use_system_setting, always_require, or never_require Values: `use_system_setting`, `always_require`, `never_require`. |
 | `SsoStrategyId` | `int64` | `sso_strategy_id` | no | SSO (Single Sign On) strategy ID for the user, if applicable. |
 | `Require2fa` | `files_sdk.UserRequire2faEnum` | `require_2fa` | no | 2FA required setting. `use_system_setting` uses the site-wide setting, including SSO exemptions. `always_require` and `never_require` override the site-wide setting when user-level overrides are allowed. Values: `use_system_setting`, `always_require`, `never_require`. |
 | `Tags` | `string` | `tags` | no | Comma-separated list of Tags for this user. Tags are used for other features, such as UserLifecycleRules, which can target specific tags. Tags must only contain lowercase letters, numbers, and hyphens. |
@@ -504,6 +506,7 @@ if err != nil {
 | `WorkspaceId` | `int64` | `workspace_id` | ID of the Workspace the user belongs to. 0 is the Default Workspace. |
 | `DefaultWorkspaceId` | `int64` | `default_workspace_id` | Workspace ID the user should land in by default when more than one Workspace is available. |
 | `SkipWelcomeScreen` | `*bool` | `skip_welcome_screen` | Skip Welcome page in the UI? |
+| `FtpTlsSessionReuseRequired` | `string` | `ftp_tls_session_reuse_required` | FTP TLS session reuse requirement: use_system_setting, always_require, or never_require |
 | `SslRequired` | `string` | `ssl_required` | SSL required setting |
 | `SsoStrategyId` | `int64` | `sso_strategy_id` | SSO (Single Sign On) strategy ID for the user, if applicable. |
 | `ExternallyManaged` | `*bool` | `externally_managed` | Is this user managed by a SsoStrategy? |

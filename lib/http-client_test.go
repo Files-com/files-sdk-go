@@ -37,6 +37,13 @@ func TestDefaultRetryableHttpBackoffHonorsRetryAfterForRetryableStatuses(t *test
 			}
 		})
 	}
+
+	// Without a valid Retry-After header it still retries at once: Config.APIBackoff is opt-in.
+	for _, resp := range []*http.Response{nil, {StatusCode: http.StatusServiceUnavailable, Header: http.Header{"Retry-After": []string{"soon"}}}} {
+		if got := client.Backoff(time.Second, 30*time.Second, 2, resp); got != 0 {
+			t.Fatalf("Backoff() = %v, want 0", got)
+		}
+	}
 }
 
 func TestRetryAfterDurationParsesHTTPDate(t *testing.T) {
@@ -50,6 +57,44 @@ func TestRetryAfterDurationParsesHTTPDate(t *testing.T) {
 	if got != 9*time.Second {
 		t.Fatalf("retryAfterDuration() = %v, want 9s", got)
 	}
+}
+
+// DefaultAPIBackoff waits as long as a valid Retry-After header asks, beyond max too, and otherwise 100 ms doubled for
+// each later retry, at most max, whatever min is.
+func TestDefaultAPIBackoffWaitsForRetryAfterOrDoublesFrom100msWithinMax(t *testing.T) {
+	withRetryAfter := func(value string) *http.Response {
+		return &http.Response{StatusCode: http.StatusServiceUnavailable, Header: http.Header{"Retry-After": []string{value}}}
+	}
+	ms := time.Millisecond
+	for _, test := range []struct {
+		name     string
+		max      time.Duration
+		resp     *http.Response
+		attempts []int
+		want     []time.Duration
+	}{
+		{"the default three retries after transport failures", 30 * time.Second, nil, []int{0, 1, 2}, []time.Duration{100 * ms, 200 * ms, 400 * ms}},
+		{"a response without Retry-After", 30 * time.Second, &http.Response{StatusCode: http.StatusInternalServerError, Header: http.Header{}}, []int{0, 1, 2}, []time.Duration{100 * ms, 200 * ms, 400 * ms}},
+		{"a smaller max", 150 * ms, nil, []int{0, 1, 2}, []time.Duration{100 * ms, 150 * ms, 150 * ms}},
+		{"an attempt whose doubling overflows", 30 * time.Second, nil, []int{62}, []time.Duration{30 * time.Second}},
+		{"Retry-After seconds", 30 * time.Second, withRetryAfter("7"), []int{0, 2}, []time.Duration{7 * time.Second, 7 * time.Second}},
+		{"Retry-After beyond max", 150 * ms, withRetryAfter("45"), []int{0}, []time.Duration{45 * time.Second}},
+		{"Retry-After zero", 30 * time.Second, withRetryAfter("0"), []int{2}, []time.Duration{0}},
+		{"a past Retry-After date", 30 * time.Second, withRetryAfter("Fri, 31 Dec 1999 23:59:59 GMT"), []int{1}, []time.Duration{0}},
+		{"an invalid Retry-After", 30 * time.Second, withRetryAfter("soon"), []int{1}, []time.Duration{200 * ms}},
+		{"a negative Retry-After", 30 * time.Second, withRetryAfter("-1"), []int{0}, []time.Duration{100 * ms}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			for i, attempt := range test.attempts {
+				// min is the client's RetryWaitMin, 1 s by default, which DefaultAPIBackoff does not use.
+				require.Equal(t, test.want[i], DefaultAPIBackoff(time.Second, test.max, attempt, test.resp), "attempt %d", attempt)
+			}
+		})
+	}
+
+	future := DefaultAPIBackoff(time.Second, 150*ms, 0, withRetryAfter(time.Now().Add(9*time.Second).UTC().Format(http.TimeFormat)))
+	require.Greater(t, future, 7*time.Second, "a future Retry-After date is waited for, beyond max")
+	require.LessOrEqual(t, future, 9*time.Second)
 }
 
 func TestUploadRetryableHttpRetriesS3XMLRetryableCodes(t *testing.T) {

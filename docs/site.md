@@ -162,6 +162,7 @@ Parameters, `files_sdk.SiteUpdateParams`:
 | `SessionExpiryMinutes` | `int64` | `session_expiry_minutes` | no | Session expiry in minutes |
 | `LegacyPairingEnabled` | `*bool` | `legacy_pairing_enabled` | no | Allow legacy app pairing in all workspaces? Disabled for new sites; existing sites remain enabled until changed. Disabling blocks new pairing exchanges without revoking existing app credentials or affecting OAuth sign-in. Site administrators can re-enable it. |
 | `SslRequired` | `*bool` | `ssl_required` | no | Is SSL required? Disabling this is insecure. |
+| `FtpTlsSessionReuseRequired` | `*bool` | `ftp_tls_session_reuse_required` | no | Require TLS-protected FTP data connections to reuse the control connection TLS session? Applies to all workspaces. |
 | `SftpInsecureCiphers` | `*bool` | `sftp_insecure_ciphers` | no | If true, we will allow weak and known insecure ciphers to be used for SFTP connections. Enabling this setting severely weakens the security of your site and it is not recommend, except as a last resort for compatibility. |
 | `SftpInsecureDiffieHellman` | `*bool` | `sftp_insecure_diffie_hellman` | no | If true, we will allow weak Diffie Hellman parameters to be used within ciphers for SFTP that are otherwise on our secure list. This has the effect of making the cipher weaker than our normal threshold for security, but is required to support certain legacy or broken SSH and MFT clients. Enabling this weakens security, but not nearly as much as enabling the full `sftp_insecure_ciphers` option. |
 | `DisableFilesCertificateGeneration` | `*bool` | `disable_files_certificate_generation` | no | If set, Files.com will not set the CAA records required to generate future SSL certificates for this domain. |
@@ -176,6 +177,7 @@ Parameters, `files_sdk.SiteUpdateParams`:
 | `AllowUserLevel2faOverride` | `*bool` | `allow_user_level_2fa_override` | no | Allow the site-wide two-factor authentication requirement to be overriden on a per-user-basis? |
 | `AllowUserLevelAllowedIpOverride` | `*bool` | `allow_user_level_allowed_ip_override` | no | Allow the site-wide allowed IP restriction to be overriden on a per-user-basis? |
 | `AllowUserLevelSslOverride` | `*bool` | `allow_user_level_ssl_override` | no | Allow the site-wide FTP SSL requirement to be overriden on a per-user-basis? |
+| `AllowUserLevelFtpTlsSessionReuseOverride` | `*bool` | `allow_user_level_ftp_tls_session_reuse_override` | no | Allow per-user overrides of the FTP TLS session reuse requirement? |
 | `EnforceParentSiteUserIpRestrictions` | `*bool` | `enforce_parent_site_user_ip_restrictions` | no | Require Parent Site users entering this Child Site to match its allowed IP addresses in addition to their existing IP restrictions. Applies to all Workspaces. Defaults to false. |
 | `DisallowedCountries` | `string` | `disallowed_countries` | no | Comma separated list of disallowed Country codes |
 | `DaysToRetainBackups` | `int64` | `days_to_retain_backups` | no | Number of days to keep deleted files |
@@ -338,6 +340,7 @@ fmt.Println(result)
 | `AllowBundleNames` | `*bool` | `allow_bundle_names` | Are manual Bundle names allowed? |
 | `AllowUserLevel2faOverride` | `*bool` | `allow_user_level_2fa_override` | Allow the site-wide two-factor authentication requirement to be overriden on a per-user-basis? |
 | `AllowUserLevelAllowedIpOverride` | `*bool` | `allow_user_level_allowed_ip_override` | Allow the site-wide allowed IP restriction to be overriden on a per-user-basis? |
+| `AllowUserLevelFtpTlsSessionReuseOverride` | `*bool` | `allow_user_level_ftp_tls_session_reuse_override` | Allow per-user overrides of the FTP TLS session reuse requirement? |
 | `AllowUserLevelSslOverride` | `*bool` | `allow_user_level_ssl_override` | Allow the site-wide FTP SSL requirement to be overriden on a per-user-basis? |
 | `AllowedCountries` | `string` | `allowed_countries` | Comma separated list of allowed Country codes |
 | `AllowedIps` | `string` | `allowed_ips` | List of allowed IP addresses |
@@ -487,6 +490,7 @@ fmt.Println(result)
 | `SmtpUsername` | `string` | `smtp_username` | SMTP server username |
 | `SessionExpiryMinutes` | `int64` | `session_expiry_minutes` | Session expiry in minutes |
 | `SnapshotSharingEnabled` | `*bool` | `snapshot_sharing_enabled` | Allow snapshot share links creation |
+| `FtpTlsSessionReuseRequired` | `*bool` | `ftp_tls_session_reuse_required` | Require TLS-protected FTP data connections to reuse the control connection TLS session? Applies to all workspaces. |
 | `SslRequired` | `*bool` | `ssl_required` | Is SSL required? Disabling this is insecure. |
 | `Subdomain` | `string` | `subdomain` | Site subdomain |
 | `SwitchToPlanDate` | `*time.Time` | `switch_to_plan_date` | If switching plans, when does the new plan take effect? |

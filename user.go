@@ -164,6 +164,8 @@ type User struct {
 	DefaultWorkspaceId int64 `json:"default_workspace_id,omitempty" path:"default_workspace_id,omitempty" url:"default_workspace_id,omitempty"`
 	// Skip Welcome page in the UI?
 	SkipWelcomeScreen *bool `json:"skip_welcome_screen,omitempty" path:"skip_welcome_screen,omitempty" url:"skip_welcome_screen,omitempty"`
+	// FTP TLS session reuse requirement: use_system_setting, always_require, or never_require.
+	FtpTlsSessionReuseRequired string `json:"ftp_tls_session_reuse_required,omitempty" path:"ftp_tls_session_reuse_required,omitempty" url:"ftp_tls_session_reuse_required,omitempty"`
 	// SSL required setting.
 	SslRequired string `json:"ssl_required,omitempty" path:"ssl_required,omitempty" url:"ssl_required,omitempty"`
 	// SSO (Single Sign On) strategy ID for the user, if applicable.
@@ -276,6 +278,24 @@ func (u UserSslRequiredEnum) Enum() map[string]UserSslRequiredEnum {
 		"use_system_setting": UserSslRequiredEnum("use_system_setting"),
 		"always_require":     UserSslRequiredEnum("always_require"),
 		"never_require":      UserSslRequiredEnum("never_require"),
+	}
+}
+
+// UserFtpTlsSessionReuseRequiredEnum is a string value for ftp_tls_session_reuse_required.
+// Enum lists the values documented by the API.
+type UserFtpTlsSessionReuseRequiredEnum string
+
+// String returns the API parameter value.
+func (u UserFtpTlsSessionReuseRequiredEnum) String() string {
+	return string(u)
+}
+
+// Enum returns the documented values keyed by their API strings.
+func (u UserFtpTlsSessionReuseRequiredEnum) Enum() map[string]UserFtpTlsSessionReuseRequiredEnum {
+	return map[string]UserFtpTlsSessionReuseRequiredEnum{
+		"use_system_setting": UserFtpTlsSessionReuseRequiredEnum("use_system_setting"),
+		"always_require":     UserFtpTlsSessionReuseRequiredEnum("always_require"),
+		"never_require":      UserFtpTlsSessionReuseRequiredEnum("never_require"),
 	}
 }
 
@@ -453,6 +473,8 @@ type UserCreateParams struct {
 	SkipWelcomeScreen *bool `url:"skip_welcome_screen,omitempty" json:"skip_welcome_screen,omitempty" path:"skip_welcome_screen"`
 	// SSL required setting. Values: use_system_setting, always_require, never_require.
 	SslRequired UserSslRequiredEnum `url:"ssl_required,omitempty" json:"ssl_required,omitempty" path:"ssl_required"`
+	// FTP TLS session reuse requirement: use_system_setting, always_require, or never_require. Values: use_system_setting, always_require, never_require.
+	FtpTlsSessionReuseRequired UserFtpTlsSessionReuseRequiredEnum `url:"ftp_tls_session_reuse_required,omitempty" json:"ftp_tls_session_reuse_required,omitempty" path:"ftp_tls_session_reuse_required"`
 	// SSO (Single Sign On) strategy ID for the user, if applicable.
 	SsoStrategyId int64 `url:"sso_strategy_id,omitempty" json:"sso_strategy_id,omitempty" path:"sso_strategy_id"`
 	// 2FA required setting. `use_system_setting` uses the site-wide setting, including SSO exemptions. `always_require` and `never_require` override the site-wide setting when user-level overrides are allowed. Values: use_system_setting, always_require, never_require.
@@ -621,6 +643,8 @@ type UserUpdateParams struct {
 	SkipWelcomeScreen *bool `url:"skip_welcome_screen,omitempty" json:"skip_welcome_screen,omitempty" path:"skip_welcome_screen"`
 	// SSL required setting. Values: use_system_setting, always_require, never_require.
 	SslRequired UserSslRequiredEnum `url:"ssl_required,omitempty" json:"ssl_required,omitempty" path:"ssl_required"`
+	// FTP TLS session reuse requirement: use_system_setting, always_require, or never_require. Values: use_system_setting, always_require, never_require.
+	FtpTlsSessionReuseRequired UserFtpTlsSessionReuseRequiredEnum `url:"ftp_tls_session_reuse_required,omitempty" json:"ftp_tls_session_reuse_required,omitempty" path:"ftp_tls_session_reuse_required"`
 	// SSO (Single Sign On) strategy ID for the user, if applicable.
 	SsoStrategyId int64 `url:"sso_strategy_id,omitempty" json:"sso_strategy_id,omitempty" path:"sso_strategy_id"`
 	// 2FA required setting. `use_system_setting` uses the site-wide setting, including SSO exemptions. `always_require` and `never_require` override the site-wide setting when user-level overrides are allowed. Values: use_system_setting, always_require, never_require.

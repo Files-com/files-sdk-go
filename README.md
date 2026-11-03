@@ -1345,10 +1345,12 @@ moved.
   `*files_sdk.RegionMismatch` as its error and can refuse the move by returning
   false or an error; `Backoff`, `PrepareRetry`, which sees the relocated URL,
   and your log hooks run as for any retry.
-- The SDK's default `Backoff` is unchanged: it waits only as long as a
-  `Retry-After` header asks. The 100, 200 and 400 ms default delays for API
-  retries in the SDK retry guidelines are not applied yet; a custom `Backoff`
-  is used as it is.
+- The SDK's default `Backoff` waits only as long as a valid `Retry-After`
+  header asks and otherwise retries at once. The 100, 200 and 400 ms default
+  delays for API retries in the SDK retry guidelines are not the default yet;
+  `Config.APIBackoff` applies them when you set it (see [API Retry
+  Waits](#api-retry-waits)). A custom `Backoff`, or `Config.APIBackoff` in its
+  place, is used as it is.
 - A `CallRawAPI` request with a body and no `RetryableBody` is not moved, since
   its body cannot be sent again.
 - The move applies to that one call; the next starts at the configured endpoint
@@ -1385,3 +1387,39 @@ download URI is fetched from the origin that answered, keeping the endpoint's
 path, with the Files.com authentication headers the moved request sent rather
 than the configuration's or the environment's. An absolute download URI is
 used as it is, as before.
+
+## API Retry Waits
+
+The SDK retries a failed API request as many times as the retry client's
+`RetryMax` allows, three by default. Its default `Backoff` waits only as long
+as a valid `Retry-After` header asks and otherwise retries at once. That
+default is unchanged: the 100, 200 and 400 ms delays for API retries in the SDK
+retry guidelines are not yet the SDK's default, and nothing changes unless you
+opt in.
+
+To use them, set `Config.APIBackoff`, which the SDK never sets itself:
+
+```go
+config := files_sdk.Config{APIKey: apiKey}.Init()
+config.APIBackoff = lib.DefaultAPIBackoff
+```
+
+`lib.DefaultAPIBackoff` waits as long as a valid `Retry-After` header asks,
+even beyond `RetryWaitMax`, and otherwise 100 ms, doubled for each later retry
+and at most `RetryWaitMax`: 100, 200 and 400 ms with the default 30 s maximum.
+It does not use `RetryWaitMin`. Any function with the `Backoff` signature can
+be set instead; whatever it returns, zero included, is waited as it is.
+
+When set, `Config.APIBackoff` takes the place of the retry client's `Backoff`
+for API requests: those of `Call` and of the generated clients, including the
+API requests that begin and end uploads, and those of `CallRawAPI`, also with
+`DisableRegionRelocation`. It is called with the arguments `Backoff` would be:
+the client's `RetryWaitMin` and `RetryWaitMax`, the attempt number and the
+response, or nil after a transport failure. Following a lockout region mismatch
+is one of these retries. Left nil, API requests use `Backoff` as before, so a
+custom `Backoff` still decides their waits.
+
+Requests you send with `CallRaw` or `Config.Do`, upload parts, downloads and
+other transfer requests, and a `CallRawAPI` request with its own
+`CallParams.Client`, even `Config.Client` itself, keep using that client's
+`Backoff`. Each request reads `Config.APIBackoff` when it starts.

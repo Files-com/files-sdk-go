@@ -42,6 +42,8 @@ type Site struct {
 	AllowUserLevel2faOverride *bool `json:"allow_user_level_2fa_override,omitempty" path:"allow_user_level_2fa_override,omitempty" url:"allow_user_level_2fa_override,omitempty"`
 	// Allow the site-wide allowed IP restriction to be overriden on a per-user-basis?
 	AllowUserLevelAllowedIpOverride *bool `json:"allow_user_level_allowed_ip_override,omitempty" path:"allow_user_level_allowed_ip_override,omitempty" url:"allow_user_level_allowed_ip_override,omitempty"`
+	// Allow per-user overrides of the FTP TLS session reuse requirement?
+	AllowUserLevelFtpTlsSessionReuseOverride *bool `json:"allow_user_level_ftp_tls_session_reuse_override,omitempty" path:"allow_user_level_ftp_tls_session_reuse_override,omitempty" url:"allow_user_level_ftp_tls_session_reuse_override,omitempty"`
 	// Allow the site-wide FTP SSL requirement to be overriden on a per-user-basis?
 	AllowUserLevelSslOverride *bool `json:"allow_user_level_ssl_override,omitempty" path:"allow_user_level_ssl_override,omitempty" url:"allow_user_level_ssl_override,omitempty"`
 	// Comma separated list of allowed Country codes.
@@ -340,6 +342,8 @@ type Site struct {
 	SessionExpiryMinutes int64 `json:"session_expiry_minutes,omitempty" path:"session_expiry_minutes,omitempty" url:"session_expiry_minutes,omitempty"`
 	// Allow snapshot share links creation.
 	SnapshotSharingEnabled *bool `json:"snapshot_sharing_enabled,omitempty" path:"snapshot_sharing_enabled,omitempty" url:"snapshot_sharing_enabled,omitempty"`
+	// Require TLS-protected FTP data connections to reuse the control connection TLS session? Applies to all workspaces.
+	FtpTlsSessionReuseRequired *bool `json:"ftp_tls_session_reuse_required,omitempty" path:"ftp_tls_session_reuse_required,omitempty" url:"ftp_tls_session_reuse_required,omitempty"`
 	// Is SSL required? Disabling this is insecure.
 	SslRequired *bool `json:"ssl_required,omitempty" path:"ssl_required,omitempty" url:"ssl_required,omitempty"`
 	// Site subdomain.
@@ -514,6 +518,8 @@ type SiteUpdateParams struct {
 	LegacyPairingEnabled *bool `url:"legacy_pairing_enabled,omitempty" json:"legacy_pairing_enabled,omitempty" path:"legacy_pairing_enabled"`
 	// Is SSL required? Disabling this is insecure.
 	SslRequired *bool `url:"ssl_required,omitempty" json:"ssl_required,omitempty" path:"ssl_required"`
+	// Require TLS-protected FTP data connections to reuse the control connection TLS session? Applies to all workspaces.
+	FtpTlsSessionReuseRequired *bool `url:"ftp_tls_session_reuse_required,omitempty" json:"ftp_tls_session_reuse_required,omitempty" path:"ftp_tls_session_reuse_required"`
 	// If true, we will allow weak and known insecure ciphers to be used for SFTP connections. Enabling this setting severely weakens the security of your site and it is not recommend, except as a last resort for compatibility.
 	SftpInsecureCiphers *bool `url:"sftp_insecure_ciphers,omitempty" json:"sftp_insecure_ciphers,omitempty" path:"sftp_insecure_ciphers"`
 	// If true, we will allow weak Diffie Hellman parameters to be used within ciphers for SFTP that are otherwise on our secure list. This has the effect of making the cipher weaker than our normal threshold for security, but is required to support certain legacy or broken SSH and MFT clients. Enabling this weakens security, but not nearly as much as enabling the full `sftp_insecure_ciphers` option.
@@ -542,6 +548,8 @@ type SiteUpdateParams struct {
 	AllowUserLevelAllowedIpOverride *bool `url:"allow_user_level_allowed_ip_override,omitempty" json:"allow_user_level_allowed_ip_override,omitempty" path:"allow_user_level_allowed_ip_override"`
 	// Allow the site-wide FTP SSL requirement to be overriden on a per-user-basis?
 	AllowUserLevelSslOverride *bool `url:"allow_user_level_ssl_override,omitempty" json:"allow_user_level_ssl_override,omitempty" path:"allow_user_level_ssl_override"`
+	// Allow per-user overrides of the FTP TLS session reuse requirement?
+	AllowUserLevelFtpTlsSessionReuseOverride *bool `url:"allow_user_level_ftp_tls_session_reuse_override,omitempty" json:"allow_user_level_ftp_tls_session_reuse_override,omitempty" path:"allow_user_level_ftp_tls_session_reuse_override"`
 	// Require Parent Site users entering this Child Site to match its allowed IP addresses in addition to their existing IP restrictions. Applies to all Workspaces. Defaults to false.
 	EnforceParentSiteUserIpRestrictions *bool `url:"enforce_parent_site_user_ip_restrictions,omitempty" json:"enforce_parent_site_user_ip_restrictions,omitempty" path:"enforce_parent_site_user_ip_restrictions"`
 	// Comma separated list of disallowed Country codes.

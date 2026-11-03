@@ -20,7 +20,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.3.346"
+var VERSION = "3.3.347"
 var defaultUserAgent = userAgentWithMetadata(fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION)), runtime.GOOS, runtime.Version())
 
 const (
@@ -71,6 +71,16 @@ type Config struct {
 	// an HTTPS origin other than files.com or one of its subdomains on the default port. It receives the origin the
 	// API named and the origin the request was sent to. HTTP origins are never trusted.
 	TrustRegionOrigin func(origin, from string) bool `json:"-"`
+	// APIBackoff, when set, decides the wait before each retry of a Files.com API request: a request of Call or of the
+	// generated clients, or of CallRawAPI without its own CallParams.Client, also when DisableRegionRelocation is set.
+	// For those requests it takes the place of Client.Backoff and is called as Client.Backoff would be: with the retry
+	// client's RetryWaitMin and RetryWaitMax, the attempt, and the response or, after a transport failure, nil. What it
+	// returns, zero included, is waited as it is. It is opt-in: Init, SetCustomClient and GlobalConfig leave it nil,
+	// and then those requests use Client.Backoff as before, whose SDK default waits only as long as a valid Retry-After
+	// header asks and otherwise retries at once. Set it to lib.DefaultAPIBackoff for the 100, 200 and 400 ms waits of
+	// the SDK retry guidelines. Requests sent with CallRaw or Config.Do, upload parts, downloads and other transfer
+	// requests, and a CallParams.Client, even Config.Client itself, keep their own client's Backoff.
+	APIBackoff retryablehttp.Backoff `json:"-"`
 	// regionAuth, when set, is the Files.com authentication this Config sends in place of its own and the
 	// environment's: that of an API request a lockout region mismatch moved, for a request that follows its answer.
 	regionAuth *regionAuthSnapshot
@@ -118,7 +128,13 @@ func (c Config) Do(req *http.Request) (*http.Response, error) {
 	guardRetryableResponses(client, true)
 	// Only a request Call enrolled for lockout region mismatch routing has an operation; others are sent as before.
 	if req != nil {
-		composeRegionClient(client, regionOperationOf(req.Context()))
+		op := regionOperationOf(req.Context())
+		// An API request's operation takes APIBackoff, when set, in place of the client's Backoff, before its hooks
+		// compose around it.
+		if op != nil && c.APIBackoff != nil {
+			client.Backoff = c.APIBackoff
+		}
+		composeRegionClient(client, op)
 	}
 	response, err := (&http.Client{Transport: &retryableRoundTripper{client: client}}).Do(req)
 	if c.InDebug() {
@@ -447,6 +463,11 @@ func (s *replayableSender) Do(req *http.Request) (*http.Response, error) {
 	s.client.Logger = s.config.retryLogFor(s.logger, req)
 	if op := regionOperationOf(req.Context()); op != nil && s.region == nil {
 		s.region = op
+		// The API request's operation takes APIBackoff, when set, in place of the client's Backoff, as in Config.Do,
+		// before its hooks compose around it.
+		if s.config.APIBackoff != nil {
+			s.client.Backoff = s.config.APIBackoff
+		}
 		composeRegionClient(s.client, op)
 	}
 	response, err := (&http.Client{Transport: s}).Do(req)

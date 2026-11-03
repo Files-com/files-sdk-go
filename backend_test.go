@@ -3,6 +3,7 @@ package files_sdk
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -20,6 +21,7 @@ import (
 	"sync/atomic"
 	"testing"
 	"testing/iotest"
+	"time"
 
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/hashicorp/go-retryablehttp"
@@ -2027,4 +2029,312 @@ func TestRegionMismatchMovesShareTheRetryBudget(t *testing.T) {
 		require.NoError(t, response.Body.Close())
 		assert.Equal(t, []string{"us.files.com"}, sites.hosts())
 	})
+}
+
+// apiBackoffTestCall is one wait a retry client asked a Backoff for: the arguments it gave, with the status of the
+// response, or 0 when there was none.
+type apiBackoffTestCall struct {
+	min, max time.Duration
+	attempt  int
+	status   int
+}
+
+func apiBackoffTestCallOf(min, max time.Duration, attempt int, resp *http.Response) apiBackoffTestCall {
+	call := apiBackoffTestCall{min: min, max: max, attempt: attempt}
+	if resp != nil {
+		call.status = resp.StatusCode
+	}
+	return call
+}
+
+// apiBackoffTestRecorder returns a Backoff that records each wait it is asked for in calls and plans wait.
+func apiBackoffTestRecorder(calls *[]apiBackoffTestCall, wait time.Duration) retryablehttp.Backoff {
+	return func(min, max time.Duration, attempt int, resp *http.Response) time.Duration {
+		*calls = append(*calls, apiBackoffTestCallOf(min, max, attempt, resp))
+		return wait
+	}
+}
+
+// apiBackoffTestUnavailable answers 503 without a Retry-After header, which the default retry policy retries.
+var apiBackoffTestUnavailable = regionTestAnswer(http.StatusServiceUnavailable, "application/json", `{"error":"unavailable","http-code":503,"type":"service-unavailable"}`, nil)
+
+// apiBackoffTestFirstUnavailable answers the first request for each path with apiBackoffTestUnavailable and later ones
+// with regionTestOK.
+func apiBackoffTestFirstUnavailable() func(*http.Request) (*http.Response, error) {
+	answered := map[string]bool{}
+	return func(req *http.Request) (*http.Response, error) {
+		if answered[req.URL.Path] {
+			return regionTestOK(req)
+		}
+		answered[req.URL.Path] = true
+		return apiBackoffTestUnavailable(req)
+	}
+}
+
+// Config.APIBackoff, when set, takes the place of the retry client's Backoff for each kind of API request, also with
+// region relocation disabled, and is asked once for each retry with the client's own arguments: its RetryWaitMin and
+// RetryWaitMax, the attempt and the response, or nil after a transport failure. A policy planning no wait is used as it
+// is. Left nil, as Init leaves it, the client's Backoff, set before or after Init, is asked in the same way instead,
+// and the SDK's default still plans no wait without a valid Retry-After header.
+func TestAPIBackoffTakesTheClientBackoffsPlaceForAPIRequestsOnlyWhenSet(t *testing.T) {
+	for _, sender := range []string{"standard GET", "standard POST", "attachments", "raw API", "raw API with a body factory"} {
+		for _, policy := range []string{"SDK default Backoff", "client Backoff set before Init", "client Backoff set after Init", "APIBackoff", "APIBackoff with relocation disabled"} {
+			t.Run(sender+"/"+policy, func(t *testing.T) {
+				answers := 0
+				sites := &regionTestSites{handlers: map[string]func(*http.Request) (*http.Response, error){
+					"us.files.com": func(req *http.Request) (*http.Response, error) {
+						answers++
+						switch answers {
+						case 1:
+							return nil, errors.New("connection reset before an answer")
+						case 2:
+							return apiBackoffTestUnavailable(req)
+						}
+						return regionTestOK(req)
+					},
+				}}
+				config := regionTestConfig(sites)
+				var clientCalls, apiCalls []apiBackoffTestCall
+				var planned []time.Duration
+				switch policy {
+				case "SDK default Backoff":
+					sdkDefault := config.Client.Backoff
+					config.Client.Backoff = func(min, max time.Duration, attempt int, resp *http.Response) time.Duration {
+						wait := sdkDefault(min, max, attempt, resp)
+						clientCalls = append(clientCalls, apiBackoffTestCallOf(min, max, attempt, resp))
+						planned = append(planned, wait)
+						return wait
+					}
+				case "client Backoff set before Init":
+					client := config.Client
+					client.Backoff = apiBackoffTestRecorder(&clientCalls, 0)
+					config = Config{APIKey: "region-key", EndpointOverride: "https://us.files.com", Client: client}.Init()
+				default:
+					config.Client.Backoff = apiBackoffTestRecorder(&clientCalls, 0)
+				}
+				apiPolicy := strings.HasPrefix(policy, "APIBackoff")
+				if apiPolicy {
+					// A policy that deliberately plans no wait.
+					config.APIBackoff = apiBackoffTestRecorder(&apiCalls, 0)
+					config.DisableRegionRelocation = policy == "APIBackoff with relocation disabled"
+				}
+
+				var response *http.Response
+				var err error
+				switch sender {
+				case "standard GET":
+					_, response, err = Call(http.MethodGet, config, "/files/report.csv", nil)
+				case "standard POST":
+					_, response, err = Call(http.MethodPost, config, "/folders", lib.Params{Params: map[string]interface{}{"path": "Reports"}})
+				case "attachments":
+					_, response, err = Call(http.MethodPost, config, "/users/7", lib.Params{Params: map[string]interface{}{
+						"name":        "Reports",
+						"avatar_file": lib.NewJSONAttachment(strings.NewReader("avatar"), 6, "avatar.png", "image/png"),
+					}})
+				default:
+					headers := &http.Header{}
+					config.SetHeaders(headers)
+					params := &CallParams{Method: http.MethodGet, Config: config, Uri: config.RootPath() + "/files/report.csv", Headers: headers}
+					if sender == "raw API with a body factory" {
+						body := lib.Params{Params: map[string]interface{}{"paths": []string{}}}
+						params.Method, params.Uri, params.Params = http.MethodPost, config.RootPath()+"/zip_downloads", body
+						params.RetryableBody = func() (io.Reader, error) { return body.ToJSON() }
+					}
+					response, err = CallRawAPI(params)
+				}
+
+				require.NoError(t, err)
+				require.NoError(t, response.Body.Close())
+				assert.Equal(t, []string{"us.files.com", "us.files.com", "us.files.com"}, sites.hosts())
+				want := []apiBackoffTestCall{
+					{min: time.Second, max: 30 * time.Second, attempt: 0},
+					{min: time.Second, max: 30 * time.Second, attempt: 1, status: http.StatusServiceUnavailable},
+				}
+				if apiPolicy {
+					assert.Equal(t, want, apiCalls)
+					assert.Empty(t, clientCalls, "the client's Backoff is not asked")
+				} else {
+					assert.Equal(t, want, clientCalls)
+					assert.Empty(t, apiCalls)
+				}
+				if policy == "SDK default Backoff" {
+					assert.Equal(t, []time.Duration{0, 0}, planned, "no wait without a valid Retry-After header")
+				}
+			})
+		}
+	}
+}
+
+// With Config.APIBackoff set, requests that are not the SDK's API requests, and a CallRawAPI request with its own
+// Client, even Config.Client itself, keep that client's Backoff, and an API request sent before them leaves the shared
+// client's Backoff as it was.
+func TestAPIBackoffLeavesOtherRequestsOnTheirClientsBackoff(t *testing.T) {
+	for _, request := range []string{"CallRaw", "Config.Do", "CallRawAPI with its own Client", "CallRawAPI with Config.Client as its Client"} {
+		t.Run(request, func(t *testing.T) {
+			sites := &regionTestSites{handlers: map[string]func(*http.Request) (*http.Response, error){
+				"us.files.com":        apiBackoffTestFirstUnavailable(),
+				"storage.example.com": apiBackoffTestFirstUnavailable(),
+			}}
+			config := regionTestConfig(sites)
+			var clientCalls, ownCalls, apiCalls []apiBackoffTestCall
+			config.Client.Backoff = apiBackoffTestRecorder(&clientCalls, 0)
+			config.APIBackoff = apiBackoffTestRecorder(&apiCalls, 0)
+			own := lib.DefaultRetryableHttp(config, &http.Client{Transport: sites})
+			own.Backoff = apiBackoffTestRecorder(&ownCalls, 0)
+
+			// An API request first, which takes APIBackoff in place of the shared client's Backoff.
+			_, response, err := Call(http.MethodGet, config, "/files/report.csv", nil)
+			require.NoError(t, err)
+			require.NoError(t, response.Body.Close())
+
+			switch request {
+			case "CallRaw":
+				response, err = CallRaw(&CallParams{Method: http.MethodGet, Config: config, Uri: "https://storage.example.com/part", Headers: &http.Header{}})
+			case "Config.Do":
+				req, reqErr := http.NewRequest(http.MethodGet, "https://storage.example.com/object", nil)
+				require.NoError(t, reqErr)
+				response, err = config.Do(req)
+			default:
+				headers := &http.Header{}
+				config.SetHeaders(headers)
+				params := &CallParams{Method: http.MethodGet, Config: config, Uri: config.RootPath() + "/folders", Headers: headers, Client: own}
+				if request == "CallRawAPI with Config.Client as its Client" {
+					params.Client = config.Client
+				}
+				response, err = CallRawAPI(params)
+			}
+			require.NoError(t, err)
+			require.NoError(t, response.Body.Close())
+
+			want := []apiBackoffTestCall{{min: time.Second, max: 30 * time.Second, attempt: 0, status: http.StatusServiceUnavailable}}
+			assert.Equal(t, want, apiCalls, "only the first request is an API request without its own Client")
+			if request == "CallRawAPI with its own Client" {
+				assert.Equal(t, want, ownCalls)
+				assert.Empty(t, clientCalls)
+			} else {
+				assert.Equal(t, want, clientCalls, "the shared client's Backoff is still its own")
+				assert.Empty(t, ownCalls)
+			}
+			assert.Len(t, sites.sent, 4)
+		})
+	}
+}
+
+// With lib.DefaultAPIBackoff opted in, an API request's default three retries plan 100, 200 and 400 ms from the
+// client's own RetryWaitMin and RetryWaitMax, a lockout region mismatch's move taking one of them with its real 403,
+// and four attempts are sent in all. With RetryMax 0 one attempt is sent and no wait is asked for.
+func TestAPIBackoffHelperPlansTheRetriesOfTheRetryBudget(t *testing.T) {
+	t.Run("default budget", func(t *testing.T) {
+		usAnswers := 0
+		sites := &regionTestSites{handlers: map[string]func(*http.Request) (*http.Response, error){
+			"us.files.com": func(req *http.Request) (*http.Response, error) {
+				usAnswers++
+				if usAnswers <= 2 {
+					return apiBackoffTestUnavailable(req)
+				}
+				return regionTestMismatch("eu.files.com")(req)
+			},
+			"eu.files.com": apiBackoffTestUnavailable,
+		}}
+		config := regionTestConfig(sites)
+		var calls []apiBackoffTestCall
+		var planned []time.Duration
+		config.APIBackoff = func(min, max time.Duration, attempt int, resp *http.Response) time.Duration {
+			wait := lib.DefaultAPIBackoff(min, max, attempt, resp)
+			calls = append(calls, apiBackoffTestCallOf(min, max, attempt, resp))
+			planned = append(planned, wait)
+			return wait
+		}
+
+		_, response, err := Call(http.MethodGet, config, "/files/report.csv", nil)
+
+		require.Error(t, err, "the moved request's 503 ends the call once no retry is left")
+		if response != nil && response.Body != nil {
+			require.NoError(t, response.Body.Close())
+		}
+		assert.Equal(t, []string{"us.files.com", "us.files.com", "us.files.com", "eu.files.com"}, sites.hosts(), "four attempts in all")
+		assert.Equal(t, []apiBackoffTestCall{
+			{min: time.Second, max: 30 * time.Second, attempt: 0, status: http.StatusServiceUnavailable},
+			{min: time.Second, max: 30 * time.Second, attempt: 1, status: http.StatusServiceUnavailable},
+			{min: time.Second, max: 30 * time.Second, attempt: 2, status: http.StatusForbidden},
+		}, calls)
+		assert.Equal(t, []time.Duration{100 * time.Millisecond, 200 * time.Millisecond, 400 * time.Millisecond}, planned)
+	})
+	t.Run("RetryMax 0", func(t *testing.T) {
+		sites := &regionTestSites{handlers: map[string]func(*http.Request) (*http.Response, error){
+			"us.files.com": apiBackoffTestUnavailable,
+		}}
+		config := regionTestConfig(sites)
+		config.RetryMax = 0
+		var calls []apiBackoffTestCall
+		config.APIBackoff = apiBackoffTestRecorder(&calls, 0)
+
+		_, response, err := Call(http.MethodGet, config, "/files/report.csv", nil)
+
+		require.Error(t, err)
+		if response != nil && response.Body != nil {
+			require.NoError(t, response.Body.Close())
+		}
+		assert.Equal(t, []string{"us.files.com"}, sites.hosts())
+		assert.Empty(t, calls, "no wait is asked for without a retry")
+	})
+}
+
+// A wait the opt-in policy plans, longer than any test, ends when the request's context is cancelled during it, before
+// another attempt is sent, for Call and CallRawAPI requests alike.
+func TestAPIBackoffWaitEndsWithTheRequestContext(t *testing.T) {
+	for _, sender := range []string{"standard", "raw API"} {
+		t.Run(sender, func(t *testing.T) {
+			sites := &regionTestSites{handlers: map[string]func(*http.Request) (*http.Response, error){
+				"us.files.com": apiBackoffTestUnavailable,
+			}}
+			config := regionTestConfig(sites)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			var clientCalls, apiCalls []apiBackoffTestCall
+			config.Client.Backoff = apiBackoffTestRecorder(&clientCalls, 0)
+			config.APIBackoff = func(min, max time.Duration, attempt int, resp *http.Response) time.Duration {
+				apiCalls = append(apiCalls, apiBackoffTestCallOf(min, max, attempt, resp))
+				cancel()
+				return time.Hour
+			}
+
+			var response *http.Response
+			var err error
+			if sender == "standard" {
+				_, response, err = Call(http.MethodGet, config, "/files/report.csv", nil, WithContext(ctx))
+			} else {
+				headers := &http.Header{}
+				config.SetHeaders(headers)
+				response, err = CallRawAPI(&CallParams{Method: http.MethodGet, Config: config, Uri: config.RootPath() + "/files/report.csv", Headers: headers, Context: ctx})
+			}
+
+			require.ErrorIs(t, err, context.Canceled)
+			assert.Nil(t, response)
+			assert.Equal(t, []string{"us.files.com"}, sites.hosts(), "nothing is sent after the cancelled wait")
+			assert.Equal(t, []apiBackoffTestCall{{min: time.Second, max: 30 * time.Second, attempt: 0, status: http.StatusServiceUnavailable}}, apiCalls)
+			assert.Empty(t, clientCalls)
+		})
+	}
+}
+
+// APIBackoff set before Init and SetCustomClient is kept by the Config they return, and a Config with it set still
+// marshals as JSON, without it.
+func TestAPIBackoffIsKeptThroughInitAndLeftOutOfJSON(t *testing.T) {
+	var calls []apiBackoffTestCall
+	sites := &regionTestSites{handlers: map[string]func(*http.Request) (*http.Response, error){
+		"us.files.com": apiBackoffTestFirstUnavailable(),
+	}}
+	config := Config{APIKey: "region-key", EndpointOverride: "https://us.files.com", APIBackoff: apiBackoffTestRecorder(&calls, 0)}.Init().SetCustomClient(&http.Client{Transport: sites})
+
+	_, response, err := Call(http.MethodGet, config, "/files/report.csv", nil)
+
+	require.NoError(t, err)
+	require.NoError(t, response.Body.Close())
+	assert.Equal(t, []apiBackoffTestCall{{min: time.Second, max: 30 * time.Second, attempt: 0, status: http.StatusServiceUnavailable}}, calls)
+
+	data, err := json.Marshal(Config{APIKey: "json-key", APIBackoff: lib.DefaultAPIBackoff})
+	require.NoError(t, err)
+	assert.Contains(t, string(data), `"api_key":"json-key"`)
+	assert.NotContains(t, string(data), "APIBackoff")
 }

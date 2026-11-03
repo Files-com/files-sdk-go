@@ -209,7 +209,8 @@ type CallParams struct {
 	// Leave nil unless this request needs retryable streaming body support.
 	RetryableBody retryablehttp.ReaderFunc
 	// Client overrides the HTTP client for this raw request.
-	// Leave nil to use the configured SDK client.
+	// Leave nil to use the configured SDK client. A Client given here keeps its
+	// own Backoff for CallRawAPI too, even when Config.APIBackoff is set.
 	Client  *retryablehttp.Client
 	Headers *http.Header
 	context.Context
@@ -310,6 +311,12 @@ func callRaw(params *CallParams, api bool) (response *http.Response, err error) 
 		PrepareRetry:    client.PrepareRetry,
 	}
 	guardRetryableResponses(client, false)
+	// A CallRawAPI request without its own Client takes Config.APIBackoff, when set, in place of the configured
+	// client's Backoff, before its operation's hooks compose around it. A Client the params give keeps its own Backoff,
+	// even Config.Client itself.
+	if api && params.Client == nil && params.Config.APIBackoff != nil {
+		client.Backoff = params.Config.APIBackoff
+	}
 	composeRegionClient(client, params.region)
 	return client.Do(retryRequest)
 }
