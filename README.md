@@ -988,6 +988,7 @@ if err != nil {
 | `processing-failure/two-factor-authentication-unsubscribed-recipient` | `ErrTwoFactorAuthenticationUnsubscribedRecipient` | Two Factor Authentication Unsubscribed Recipient |
 | `processing-failure/updates-not-allowed-for-remotes` | `ErrUpdatesNotAllowedForRemotes` | Updates Not Allowed For Remotes |
 | `rate-limited/duplicate-share-recipient` | `ErrDuplicateShareRecipient` | Duplicate Share Recipient |
+| `rate-limited/files-native-storage-overloaded` | `ErrFilesNativeStorageOverloaded` | Files Native Storage Overloaded |
 | `rate-limited/reauthentication-rate-limited` | `ErrReauthenticationRateLimited` | Reauthentication Rate Limited |
 | `rate-limited/too-many-concurrent-logins` | `ErrTooManyConcurrentLogins` | Too Many Concurrent Logins |
 | `rate-limited/too-many-concurrent-requests` | `ErrTooManyConcurrentRequests` | Too Many Concurrent Requests |

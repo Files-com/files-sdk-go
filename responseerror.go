@@ -239,6 +239,7 @@ const (
 	ErrTwoFactorAuthenticationUnsubscribedRecipient                           ResponseErrorType = "processing-failure/two-factor-authentication-unsubscribed-recipient"
 	ErrUpdatesNotAllowedForRemotes                                            ResponseErrorType = "processing-failure/updates-not-allowed-for-remotes"
 	ErrDuplicateShareRecipient                                                ResponseErrorType = "rate-limited/duplicate-share-recipient"
+	ErrFilesNativeStorageOverloaded                                           ResponseErrorType = "rate-limited/files-native-storage-overloaded"
 	ErrReauthenticationRateLimited                                            ResponseErrorType = "rate-limited/reauthentication-rate-limited"
 	ErrTooManyConcurrentLogins                                                ResponseErrorType = "rate-limited/too-many-concurrent-logins"
 	ErrTooManyConcurrentRequests                                              ResponseErrorType = "rate-limited/too-many-concurrent-requests"
