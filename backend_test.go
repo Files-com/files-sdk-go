@@ -12,8 +12,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"testing/iotest"
@@ -245,6 +248,92 @@ func TestCallRawPreservesExplicitUserAgentHeader(t *testing.T) {
 	defer res.Body.Close()
 
 	assert.Equal(t, "Custom Transfer Client", gotUserAgent)
+}
+
+// requireDefaultUserAgent checks that userAgent is the SDK's default: its name and VERSION, then one comment naming this
+// process's coarse operating system family and its Go release, within 190 bytes in all and 128 for the comment.
+func requireDefaultUserAgent(t *testing.T, userAgent string) {
+	t.Helper()
+	metadata, found := strings.CutPrefix(userAgent, UserAgent+" "+strings.TrimSpace(VERSION))
+	require.True(t, found, "%q does not start with the SDK's name and VERSION", userAgent)
+	parts := regexp.MustCompile(`^ \(files-sdk-meta/1; os=([a-z][a-z0-9-]{0,15}); runtime=go(?:/([0-9][A-Za-z0-9.+_-]{0,47}))?\)$`).FindStringSubmatch(metadata)
+	require.NotNil(t, parts, "%q does not end with the SDK's metadata comment", userAgent)
+	assert.LessOrEqual(t, len(userAgent), 190)
+	assert.LessOrEqual(t, len(metadata), 128)
+	if family, known := map[string]string{"darwin": "macos", "linux": "linux", "windows": "windows"}[runtime.GOOS]; known {
+		assert.Equal(t, family, parts[1])
+	}
+	if release := regexp.MustCompile(`^go([0-9][A-Za-z0-9.+_-]{0,47})$`).FindStringSubmatch(runtime.Version()); release != nil {
+		assert.Equal(t, release[1], parts[2], "the Go release this process runs")
+	}
+}
+
+// A Config's own User-Agent, the SDK's name and VERSION with a comment naming this process's operating system family
+// and Go release, goes on its API requests and its transfer requests alike, and a transfer request to another origin
+// carries no API key. A User-Agent in AdditionalHeaders still replaces it on API requests exactly as given, even one
+// shaped like the SDK's own.
+func TestCallAndCallRawSendTheDefaultUserAgent(t *testing.T) {
+	type received struct{ userAgent, apiKey string }
+	var mu sync.Mutex
+	var requests []received
+	record := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		requests = append(requests, received{r.UserAgent(), r.Header.Get(apiKeyHeader)})
+		mu.Unlock()
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[]`))
+	})
+	api := httptest.NewServer(record)
+	defer api.Close()
+	storage := httptest.NewServer(record)
+	defer storage.Close()
+
+	config := Config{APIKey: "api-key", EndpointOverride: api.URL}.Init()
+	_, res, err := Call(http.MethodGet, config, "/bundles", nil)
+	require.NoError(t, err)
+	_ = res.Body.Close()
+	res, err = CallRaw(&CallParams{Method: http.MethodGet, Config: config, Uri: storage.URL + "/part", Headers: &http.Header{}})
+	require.NoError(t, err)
+	_ = res.Body.Close()
+	sdkShaped := "Files.com Go SDK 0.0.1 (files-sdk-meta/1; os=other; runtime=go)"
+	config.AdditionalHeaders = map[string]string{"User-Agent": sdkShaped}
+	_, res, err = Call(http.MethodGet, config, "/bundles", nil)
+	require.NoError(t, err)
+	_ = res.Body.Close()
+
+	mu.Lock()
+	defer mu.Unlock()
+	require.Len(t, requests, 3)
+	requireDefaultUserAgent(t, requests[0].userAgent)
+	assert.Equal(t, "api-key", requests[0].apiKey)
+	assert.Equal(t, requests[0].userAgent, requests[1].userAgent)
+	assert.Empty(t, requests[1].apiKey)
+	assert.Equal(t, sdkShaped, requests[2].userAgent)
+}
+
+// The default User-Agent's comment names a coarse operating system family and the Go release without inventing one: a
+// development build's version, or any it cannot carry as it is, is left out. When the whole User-Agent would be longer
+// than 190 bytes the version goes first and then the comment, and the SDK's identity is never shortened.
+func TestUserAgentMetadataKeepsTheIdentityWithinItsBounds(t *testing.T) {
+	identity := "Files.com Go SDK 1.2.3"
+	// identity, padded to size bytes.
+	padded := func(size int) string { return identity + strings.Repeat("0", size-len(identity)) }
+	for _, test := range []struct{ name, identity, goos, goVersion, want string }{
+		{"a release on Linux", identity, "linux", "go1.24.4", identity + " (files-sdk-meta/1; os=linux; runtime=go/1.24.4)"},
+		{"a prerelease on macOS", identity, "darwin", "go1.25rc1", identity + " (files-sdk-meta/1; os=macos; runtime=go/1.25rc1)"},
+		{"a development build on Windows", identity, "windows", "devel go1.26-0123abc Tue Oct 21 12:00:00 2026 +0000", identity + " (files-sdk-meta/1; os=windows; runtime=go)"},
+		{"a release with an experiment", identity, "freebsd", "go1.24.4 X:boringcrypto", identity + " (files-sdk-meta/1; os=freebsd; runtime=go)"},
+		{"another operating system", identity, "plan9", "go1.24.4", identity + " (files-sdk-meta/1; os=other; runtime=go/1.24.4)"},
+		{"no operating system", identity, "", "go1.24.4", identity + " (files-sdk-meta/1; os=unknown; runtime=go/1.24.4)"},
+		{"room for the version", padded(142), "linux", "go1.24.4", padded(142) + " (files-sdk-meta/1; os=linux; runtime=go/1.24.4)"},
+		{"room without the version", padded(143), "linux", "go1.24.4", padded(143) + " (files-sdk-meta/1; os=linux; runtime=go)"},
+		{"no room for the comment", padded(150), "linux", "go1.24.4", padded(150)},
+		{"an identity that is not printable ASCII", identity + " café", "linux", "go1.24.4", identity + " café"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.want, userAgentWithMetadata(test.identity, test.goos, test.goVersion))
+		})
+	}
 }
 
 func TestCallRawDoesNotSendAuthHeadersAfterOffOriginRedirect(t *testing.T) {

@@ -1196,47 +1196,64 @@ func TestUploadReader(t *testing.T) {
 		assert.Equal(t, "reader-at-size.txt", u.FileUploadPart.Path)
 	})
 
-	t.Run("configured user agent is sent on part uploads", func(t *testing.T) {
-		server := (&MockAPIServer{T: t}).Do()
-		defer server.Shutdown()
+	// A Config that Init gives the SDK's own User-Agent, and one with a User-Agent of its own, send theirs on each part
+	// upload exactly as they are, and no part upload carries the API key.
+	for _, test := range []struct{ name, configured string }{
+		{"the SDK's default user agent is sent on part uploads", ""},
+		{"configured user agent is sent on part uploads", "Files.com custom client test"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			server := (&MockAPIServer{T: t}).Do()
+			defer server.Shutdown()
 
-		filename := "user-agent.txt"
-		server.MockFiles[filename] = mockFile{File: files_sdk.File{Size: 10}}
-		client := server.Client()
-		client.Config.UserAgent = "Files.com custom client test"
-		client.Config.APIKey = "secret-api-key"
+			filename := "user-agent.txt"
+			server.MockFiles[filename] = mockFile{File: files_sdk.File{Size: 10}}
+			client := server.Client()
+			client.Config.UserAgent = test.configured
+			want := test.configured
+			if want == "" {
+				// Init fills in the SDK's default for a Config without a User-Agent of its own, as for any new Config: its
+				// name and VERSION, then one comment naming the coarse operating system family and the Go runtime.
+				client.Config = client.Config.Init()
+				want = files_sdk.Config{}.Init().UserAgent
+				require.True(t, strings.HasPrefix(want, files_sdk.UserAgent+" "+strings.TrimSpace(files_sdk.VERSION)+" (files-sdk-meta/1; os="), want)
+				require.True(t, strings.HasSuffix(want, ")") && strings.Contains(want, "; runtime=go"), want)
+				require.LessOrEqual(t, len(want), 190)
+			}
+			client.Config.APIKey = "secret-api-key"
 
-		var mu sync.Mutex
-		var userAgents []string
-		var apiKeys []string
-		server.MockRoute("/upload/"+filename, func(c *gin.Context, _ interface{}) bool {
-			mu.Lock()
-			defer mu.Unlock()
-			userAgents = append(userAgents, c.Request.UserAgent())
-			apiKeys = append(apiKeys, c.Request.Header.Get("X-FilesAPI-Key"))
-			return false
+			var mu sync.Mutex
+			var userAgents []string
+			var apiKeys []string
+			server.MockRoute("/upload/"+filename, func(c *gin.Context, _ interface{}) bool {
+				mu.Lock()
+				defer mu.Unlock()
+				userAgents = append(userAgents, c.Request.UserAgent())
+				apiKeys = append(apiKeys, c.Request.Header.Get("X-FilesAPI-Key"))
+				return false
+			})
+
+			_, err := client.UploadWithResume(
+				func(io uploadIO) (uploadIO, error) {
+					io.PartSizes = []int64{2, 4, 8, 16, 32}
+					return io, nil
+				},
+				UploadWithReaderAt(bytes.NewReader(bytes.NewBufferString("0123456789").Bytes())),
+				UploadWithDestinationPath(filename),
+				UploadWithSize(10),
+				UploadWithManager(lib.NewConstrainedWorkGroup(2)),
+			)
+
+			require.NoError(t, err)
+			require.NotEmpty(t, userAgents)
+			for _, userAgent := range userAgents {
+				assert.Equal(t, want, userAgent)
+			}
+			for _, apiKey := range apiKeys {
+				assert.Empty(t, apiKey, "raw upload requests must not receive API auth headers")
+			}
 		})
-
-		_, err := client.UploadWithResume(
-			func(io uploadIO) (uploadIO, error) {
-				io.PartSizes = []int64{2, 4, 8, 16, 32}
-				return io, nil
-			},
-			UploadWithReaderAt(bytes.NewReader(bytes.NewBufferString("0123456789").Bytes())),
-			UploadWithDestinationPath(filename),
-			UploadWithSize(10),
-			UploadWithManager(lib.NewConstrainedWorkGroup(2)),
-		)
-
-		require.NoError(t, err)
-		require.NotEmpty(t, userAgents)
-		for _, userAgent := range userAgents {
-			assert.Equal(t, "Files.com custom client test", userAgent)
-		}
-		for _, apiKey := range apiKeys {
-			assert.Empty(t, apiKey, "raw upload requests must not receive API auth headers")
-		}
-	})
+	}
 
 	t.Run("zero-size upload part uses empty request body", func(t *testing.T) {
 		server := (&MockAPIServer{T: t}).Do()

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -19,8 +20,8 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.3.345"
-var defaultUserAgent = fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION))
+var VERSION = "3.3.346"
+var defaultUserAgent = userAgentWithMetadata(fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION)), runtime.GOOS, runtime.Version())
 
 const (
 	UserAgent   = "Files.com Go SDK"
@@ -585,6 +586,80 @@ func (c Config) SetUserAgentHeader(headers *http.Header) {
 	if headers.Get("User-Agent") == "" {
 		headers.Set("User-Agent", cmp.Or(c.UserAgent, defaultUserAgent))
 	}
+}
+
+// The comment the SDK's default User-Agent ends with, and the most bytes that comment and the whole User-Agent may take.
+const (
+	userAgentMetadataMarker   = "files-sdk-meta/1"
+	maxUserAgentBytes         = 190
+	maxUserAgentMetadataBytes = 128
+)
+
+// userAgentWithMetadata returns identity, the SDK's name and VERSION, followed by one comment naming the coarse family
+// of the operating system goos (runtime.GOOS) names and the Go runtime, with the release goVersion (runtime.Version())
+// names, such as "Files.com Go SDK 1.0 (files-sdk-meta/1; os=linux; runtime=go/1.24.4)". The comment carries nothing
+// else: no host or user name, path, architecture or build. A version it cannot carry as it is, such as a development
+// build's, is left out rather than changed. When the whole User-Agent would be longer than 190 bytes, the version is
+// left out first and then the whole comment, so identity is always sent as it is; an identity that is not printable
+// ASCII gets no comment. Only the SDK's default carries the comment: a Config.UserAgent, a User-Agent in
+// AdditionalHeaders or a request's own User-Agent is sent exactly as given.
+func userAgentWithMetadata(identity string, goos string, goVersion string) string {
+	if !printableASCII(identity) {
+		return identity
+	}
+	runtimes := []string{"go"}
+	if version, release := strings.CutPrefix(goVersion, "go"); release && representableRuntimeVersion(version) {
+		runtimes = []string{"go/" + version, "go"}
+	}
+	for _, runtimeName := range runtimes {
+		metadata := fmt.Sprintf(" (%v; os=%v; runtime=%v)", userAgentMetadataMarker, userAgentOS(goos), runtimeName)
+		if len(metadata) <= maxUserAgentMetadataBytes && len(identity)+len(metadata) <= maxUserAgentBytes {
+			return identity + metadata
+		}
+	}
+	return identity
+}
+
+// userAgentOS returns the coarse family of the operating system goos names: "unknown" for none, and "other" for one
+// the User-Agent's comment does not name.
+func userAgentOS(goos string) string {
+	switch goos {
+	case "windows", "linux", "android", "ios", "freebsd":
+		return goos
+	case "darwin":
+		return "macos"
+	case "":
+		return "unknown"
+	}
+	return "other"
+}
+
+// representableRuntimeVersion reports whether version can be carried as it is: 1 to 48 ASCII letters, digits, dots,
+// plus signs, underscores and hyphens, starting with a digit.
+func representableRuntimeVersion(version string) bool {
+	if version == "" || len(version) > 48 || version[0] < '0' || version[0] > '9' {
+		return false
+	}
+	for _, char := range []byte(version) {
+		letterOrDigit := (char >= '0' && char <= '9') || (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z')
+		if !letterOrDigit && strings.IndexByte(".+_-", char) < 0 {
+			return false
+		}
+	}
+	return true
+}
+
+// printableASCII reports whether text holds at least one character, and only printable ASCII ones.
+func printableASCII(text string) bool {
+	if text == "" {
+		return false
+	}
+	for _, char := range []byte(text) {
+		if char < 0x20 || char > 0x7e {
+			return false
+		}
+	}
+	return true
 }
 
 func (c Config) SetHeaders(headers *http.Header) {
