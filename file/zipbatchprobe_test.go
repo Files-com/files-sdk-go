@@ -169,13 +169,18 @@ func TestZipBatchProbeLargeJobUsesThreeBaselineWindows(t *testing.T) {
 
 func TestZipBatchProbeChoosesPerFile(t *testing.T) {
 	withZipBatchProbeTestWindows(t)
-	// Measure sustained rates instead of a few completions in a 10 ms scheduling burst.
+	// The server's pacing, not this machine's speed, decides the probe. One ZIP
+	// stream sends 32 bytes every 30ms, a file about every 66ms, so at most 2 of
+	// them land in any 100ms window; a slower machine only lowers that. Sixteen
+	// per-file connections waiting 20ms each allow about 800 files a second, so
+	// per-file wins unless this machine is dozens of times too slow to reach
+	// that. Both rates are measured over 100ms windows, which Phase A covers.
 	zipBatchTuning.ProbePhaseAMinDuration = 100 * time.Millisecond
 	zipBatchTuning.ProbePhaseAWindow = 100 * time.Millisecond
 	zipBatchTuning.ProbePhaseBWindow = 100 * time.Millisecond
 	root := t.TempDir()
 	server := newZipBatchMockServer(t, zipBatchTestFiles(512), nil)
-	server.DownloadDelay = func(string) time.Duration { return time.Millisecond }
+	server.DownloadDelay = func(string) time.Duration { return 20 * time.Millisecond }
 	server.ZipDownloadChunkDelay = func(int, []string) time.Duration { return 30 * time.Millisecond }
 	defer server.Shutdown()
 
@@ -188,8 +193,9 @@ func TestZipBatchProbeChoosesPerFile(t *testing.T) {
 			MinFiles:          32,
 			MaxFiles:          8,
 			BatchSize:         8,
-			ConcurrentBatches: 8,
-			// This test covers the initial choice; later attempts have their own tests.
+			ConcurrentBatches: 1,
+			// A re-probe would hold the ZIP slot for another paced stream; the
+			// re-probe tests cover that path.
 			ReprobeInterval: -1,
 		},
 	})
