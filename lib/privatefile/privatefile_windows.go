@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/user"
 	"path/filepath"
+	"slices"
+	"strings"
 	"sync"
 	"unsafe"
 
@@ -322,10 +325,7 @@ func checkLinkComponent(path string) error {
 	if err != nil {
 		return err
 	}
-	if !t.isTrustedOwner(sec.owner) {
-		return &fs.PathError{Op: "checkcontainer", Path: path, Err: fmt.Errorf("link on the way to the storage location is owned by %s, not by this user or the system", sec.owner)}
-	}
-	return nil
+	return t.checkContainerOwner(path, sec.owner)
 }
 
 // fileDeleteChild is the directory right to delete or rename any entry, which
@@ -340,8 +340,8 @@ const fileDeleteChild = 0x40
 // it, and the standard drive root grants Authenticated Users exactly that.
 const containerModifyRights = fileDeleteChild | windows.DELETE | windows.WRITE_DAC | windows.WRITE_OWNER | windows.GENERIC_ALL
 
-// checkContainerComponent refuses a directory that an account other than this
-// user or the system owns or may modify entries in.
+// checkContainerComponent refuses a directory an untrusted account owns or
+// can replace entries in. Verified local administrators are trusted.
 func checkContainerComponent(path string) error {
 	handle, err := openForSecurity(path, windows.READ_CONTROL)
 	if err != nil {
@@ -356,22 +356,122 @@ func checkContainerComponent(path string) error {
 	if err != nil {
 		return err
 	}
-	if !t.isTrustedOwner(sec.owner) {
-		return &fs.PathError{Op: "checkcontainer", Path: path, Err: fmt.Errorf("directory is owned by %s, not by this user or the system; private storage below it could be replaced by that account", sec.owner)}
+	if err := t.checkContainerOwner(path, sec.owner); err != nil {
+		return err
 	}
 	if sec.dacl == nil {
-		return &fs.PathError{Op: "checkcontainer", Path: path, Err: errors.New("directory has no DACL and is writable by every account; private storage below it could be replaced by another account")}
+		return t.containerError(path, errors.New("folder has no access restrictions; any account could replace private storage below it"))
 	}
+	checked := make(map[string]bool)
 	for _, ace := range sec.entries() {
-		if ace.header.AceType != windows.ACCESS_ALLOWED_ACE_TYPE || ace.header.AceFlags&windows.INHERIT_ONLY_ACE != 0 {
+		if ace.header.AceFlags&windows.INHERIT_ONLY_ACE != 0 {
+			continue
+		}
+		if ace.header.AceType != windows.ACCESS_ALLOWED_ACE_TYPE && ace.header.AceType != windows.ACCESS_DENIED_ACE_TYPE {
+			if uint32(ace.mask)&containerModifyRights != 0 {
+				return t.containerError(path, fmt.Errorf("cannot verify Windows permissions: unsupported access entry type %d", ace.header.AceType))
+			}
+			continue
+		}
+		if ace.header.AceType != windows.ACCESS_ALLOWED_ACE_TYPE {
 			continue
 		}
 		if uint32(ace.mask)&containerModifyRights == 0 || t.mayModifyContainer(ace.sid) {
 			continue
 		}
-		return &fs.PathError{Op: "checkcontainer", Path: path, Err: fmt.Errorf("directory lets %s modify its entries; private storage below it could be replaced by that account", ace.sid)}
+		if checked[ace.sid.String()] {
+			continue
+		}
+		checked[ace.sid.String()] = true
+		// Deny entries are evaluated before the account is looked up, so they
+		// also apply to an account whose name cannot be resolved.
+		rights, err := containerAccess(sec, ace.sid)
+		if err != nil {
+			return t.containerError(path, fmt.Errorf("cannot verify Windows permissions for %s: %w", ace.sid, err))
+		}
+		if rights&containerModifyRights == 0 {
+			continue
+		}
+		account, administrator, err := t.containerAccount(ace.sid)
+		if err != nil {
+			return t.containerError(path, fmt.Errorf("cannot verify Windows permissions for %s: %w", account, err))
+		}
+		if administrator {
+			continue
+		}
+		return t.containerError(path, fmt.Errorf("folder lets %s %s; private storage below it could be replaced by that account", account, containerRightsNames(rights)))
 	}
 	return nil
+}
+
+// containerAccount trusts individual local administrators on the same basis
+// as the Administrators group. A failed lookup never establishes trust.
+func (t trustedSIDs) containerAccount(sid *windows.SID) (string, bool, error) {
+	account, domain, kind, err := sid.LookupAccount("")
+	if err != nil {
+		return sid.String(), false, fmt.Errorf("cannot resolve the account name: %w", err)
+	}
+	name := accountLabel(sid, account, domain)
+	if kind != windows.SidTypeUser {
+		return name, false, nil
+	}
+	accountUser, err := user.LookupId(sid.String())
+	if err != nil {
+		return name, false, fmt.Errorf("cannot look up the Windows account: %w", err)
+	}
+	groups, err := accountUser.GroupIds()
+	if err != nil {
+		return name, false, fmt.Errorf("cannot verify local administrator membership: %w", err)
+	}
+	return name, slices.Contains(groups, t.administrators.String()), nil
+}
+
+func (t trustedSIDs) checkContainerOwner(path string, owner *windows.SID) error {
+	if t.isTrustedOwner(owner) {
+		return nil
+	}
+	account, administrator, err := t.containerAccount(owner)
+	if err != nil {
+		return t.containerError(path, fmt.Errorf("cannot verify the folder owner %s: %w", account, err))
+	}
+	if administrator {
+		return nil
+	}
+	return t.containerError(path, fmt.Errorf("folder is owned by %s; that account could replace private storage below it", account))
+}
+
+func (t trustedSIDs) containerError(path string, err error) error {
+	account, domain, _, lookupErr := t.user.LookupAccount("")
+	appAccount := t.user.String()
+	if lookupErr == nil {
+		appAccount = accountLabel(t.user, account, domain)
+	}
+	return &fs.PathError{Op: "checkcontainer", Path: path, Err: fmt.Errorf("%w; the app is running as %s; ask your IT administrator to verify these accounts and remove any unintended access from this folder or its parent folders", err, appAccount)}
+}
+
+func accountLabel(sid *windows.SID, account string, domain string) string {
+	if domain != "" {
+		account = domain + `\` + account
+	}
+	return fmt.Sprintf("%s (%s)", account, sid)
+}
+
+func containerRightsNames(rights uint32) string {
+	var names []string
+	for _, right := range []struct {
+		mask uint32
+		name string
+	}{
+		{fileDeleteChild, "delete files or subfolders"},
+		{windows.DELETE, "delete or rename the folder"},
+		{windows.WRITE_DAC, "change folder permissions"},
+		{windows.WRITE_OWNER, "change the folder owner"},
+	} {
+		if rights&right.mask != 0 {
+			names = append(names, right.name)
+		}
+	}
+	return strings.Join(names, ", ")
 }
 
 // OpenFile opens name inside root as a file only the current user can read.

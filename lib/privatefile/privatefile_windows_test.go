@@ -3,6 +3,7 @@
 package privatefile
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -193,11 +194,112 @@ func TestCheckContainerRejectsDirectoriesOtherAccountsCanModify(t *testing.T) {
 	grant(windows.FILE_GENERIC_READ | fileDeleteChild)
 	err = CheckContainer(dir)
 	require.Error(t, err, "a directory whose entries Users may delete is refused")
-	assert.ErrorContains(t, err, "modify its entries")
+	assert.ErrorContains(t, err, "delete files or subfolders")
+	assert.ErrorContains(t, err, "ask your IT administrator")
 
 	child := filepath.Join(dir, "child")
 	require.NoError(t, Mkdir(child))
 	require.Error(t, CheckContainer(child), "a private directory below a modifiable one is still replaceable")
+}
+
+func TestCheckContainerAcceptsAnIndividualLocalAdministrator(t *testing.T) {
+	administrator := localAccountSID(t, 500)
+	dir := t.TempDir()
+	require.NoError(t, EnsureDir(dir))
+	acl, err := windows.ACLFromEntries([]windows.EXPLICIT_ACCESS{{
+		AccessPermissions: fileDeleteChild | windows.DELETE,
+		AccessMode:        windows.GRANT_ACCESS,
+		Trustee:           windows.TRUSTEE{TrusteeForm: windows.TRUSTEE_IS_SID, TrusteeValue: windows.TrusteeValueFromSID(administrator)},
+	}}, privateACLForTest(t))
+	require.NoError(t, err)
+	require.NoError(t, windows.SetNamedSecurityInfo(dir, windows.SE_FILE_OBJECT, windows.DACL_SECURITY_INFORMATION|windows.PROTECTED_DACL_SECURITY_INFORMATION, nil, nil, acl, nil))
+	require.NoError(t, CheckContainer(dir), "an explicit grant to a verified administrator is as trusted as a grant to Administrators")
+}
+
+func TestCheckContainerRejectsAnotherUsersModificationRights(t *testing.T) {
+	guest := localAccountSID(t, 501)
+	account, domain, _, err := guest.LookupAccount("")
+	require.NoError(t, err)
+	dir := t.TempDir()
+	require.NoError(t, EnsureDir(dir))
+	acl, err := windows.ACLFromEntries([]windows.EXPLICIT_ACCESS{{
+		AccessPermissions: fileDeleteChild,
+		AccessMode:        windows.GRANT_ACCESS,
+		Trustee:           windows.TRUSTEE{TrusteeForm: windows.TRUSTEE_IS_SID, TrusteeValue: windows.TrusteeValueFromSID(guest)},
+	}}, privateACLForTest(t))
+	require.NoError(t, err)
+	require.NoError(t, windows.SetNamedSecurityInfo(dir, windows.SE_FILE_OBJECT, windows.DACL_SECURITY_INFORMATION|windows.PROTECTED_DACL_SECURITY_INFORMATION, nil, nil, acl, nil))
+	err = CheckContainer(dir)
+	require.ErrorContains(t, err, domain+`\`+account)
+	assert.ErrorContains(t, err, "delete files or subfolders")
+	assert.ErrorContains(t, err, "ask your IT administrator")
+}
+
+func localAccountSID(t *testing.T, rid uint32) *windows.SID {
+	t.Helper()
+	// The account database is named after the NetBIOS computer name, which
+	// differs from the host name when that is longer than 15 characters.
+	computer, err := windows.ComputerName()
+	require.NoError(t, err)
+	machine, _, kind, err := windows.LookupSID("", computer)
+	require.NoError(t, err)
+	require.Equal(t, uint32(windows.SidTypeDomain), kind)
+	sid, err := windows.StringToSid(fmt.Sprintf("%s-%d", machine, rid))
+	require.NoError(t, err)
+	return sid
+}
+
+func TestCheckContainerHonorsDenyEntriesWithoutIgnoringRemainingAccess(t *testing.T) {
+	trust, err := loadTrusted()
+	require.NoError(t, err)
+	for _, tc := range []struct {
+		name    string
+		entries string
+		wantErr string
+	}{
+		{"denied delete-child access", "(D;;0x40;;;BU)(A;;0x40;;;BU)", ""},
+		{"delete-folder access remains", "(D;;0x40;;;BU)(A;;0x10040;;;BU)", "delete or rename the folder"},
+		{"deny to another group", "(D;;0x40;;;BA)(A;;0x40;;;BU)", "delete files or subfolders"},
+		{"explicit allow before inherited deny", "(A;;0x40;;;BU)(D;ID;0x40;;;BU)", "delete files or subfolders"},
+		{"denied account that cannot be looked up", "(D;;0x40;;;S-1-5-21-1-2-3-999999)(A;;0x40;;;S-1-5-21-1-2-3-999999)", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			require.NoError(t, EnsureDir(dir))
+			// Keep the allow and deny entries in their actual on-disk order.
+			sd, err := windows.SecurityDescriptorFromString(fmt.Sprintf("D:P%s(A;;FA;;;%s)(A;;FA;;;SY)(A;;FA;;;BA)", tc.entries, trust.user))
+			require.NoError(t, err)
+			acl, _, err := sd.DACL()
+			require.NoError(t, err)
+			require.NoError(t, windows.SetNamedSecurityInfo(dir, windows.SE_FILE_OBJECT, windows.DACL_SECURITY_INFORMATION|windows.PROTECTED_DACL_SECURITY_INFORMATION, nil, nil, acl, nil))
+			err = CheckContainer(dir)
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestCheckContainerRejectsAnUnresolvedAccountWithActionableError(t *testing.T) {
+	sid, err := windows.StringToSid("S-1-5-21-1-2-3-999999")
+	require.NoError(t, err)
+	dir := t.TempDir()
+	require.NoError(t, EnsureDir(dir))
+	acl, err := windows.ACLFromEntries([]windows.EXPLICIT_ACCESS{{
+		AccessPermissions: fileDeleteChild,
+		AccessMode:        windows.GRANT_ACCESS,
+		Trustee:           windows.TRUSTEE{TrusteeForm: windows.TRUSTEE_IS_SID, TrusteeValue: windows.TrusteeValueFromSID(sid)},
+	}}, privateACLForTest(t))
+	require.NoError(t, err)
+	require.NoError(t, windows.SetNamedSecurityInfo(dir, windows.SE_FILE_OBJECT, windows.DACL_SECURITY_INFORMATION|windows.PROTECTED_DACL_SECURITY_INFORMATION, nil, nil, acl, nil))
+	err = CheckContainer(dir)
+	require.ErrorContains(t, err, "cannot verify Windows permissions")
+	assert.ErrorContains(t, err, sid.String())
+	assert.ErrorContains(t, err, dir)
+	assert.ErrorContains(t, err, "the app is running as")
+	assert.ErrorContains(t, err, "ask your IT administrator")
 }
 
 func privateACLForTest(t *testing.T) *windows.ACL {
