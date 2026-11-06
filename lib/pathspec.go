@@ -2,6 +2,7 @@ package lib
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"io/fs"
 	"os"
@@ -41,15 +42,23 @@ func BuildPathSpecTest(t *testing.T, mutex *sync.Mutex, tt PathSpecTest, sourceF
 
 	sourceTmpDir := sourceFs.PathJoin(sourceFs.TempDir(), strings.ReplaceAll(t.Name(), "/", "-"))
 	err := sourceFs.MkdirAll(sourceTmpDir, 0750)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	sourceRoot, err := sourceFs.MkdirTemp(sourceTmpDir, "src-root")
-	assert.NoError(t, err)
+	if errors.Is(err, errors.ErrUnsupported) {
+		sourceRoot = sourceFs.PathJoin(sourceTmpDir, "src-root")
+		err = sourceFs.MkdirAll(sourceRoot, 0750)
+	}
+	require.NoError(t, err)
 
 	destTmpDir := destinationFs.PathJoin(destinationFs.TempDir(), strings.ReplaceAll(t.Name(), "/", "-"))
 	err = destinationFs.MkdirAll(destTmpDir, 0750)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	destRoot, err := destinationFs.MkdirTemp(destTmpDir, "dest-root")
-	assert.NoError(t, err)
+	if errors.Is(err, errors.ErrUnsupported) {
+		destRoot = destinationFs.PathJoin(destTmpDir, "dest-root")
+		err = destinationFs.MkdirAll(destRoot, 0750)
+	}
+	require.NoError(t, err)
 
 	for _, e := range tt.Src {
 		if e.Dir {

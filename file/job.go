@@ -71,6 +71,7 @@ func ToStatusFile(f IFile) JobFile {
 	}
 	if ds, ok := f.(*DownloadStatus); ok {
 		jf.TmpPath = ds.tmpDownloadPath()
+		jf.DownloadBinding = ds.downloadBinding()
 	}
 	return jf
 }
@@ -344,7 +345,9 @@ func (r *Job) UpdateStatus(s status.GetStatus, file IFile, err error) {
 	if s == file.Status() && err == nil && file.Err() == nil {
 		return
 	}
-	if err != nil && (errors.Is(err, context.Canceled) ||
+	// A response-close failure or rejected source is independent of cancellation,
+	// even when its cause wraps context.Canceled. Preserve it for results and reporters.
+	if err != nil && !errors.Is(err, errDownloadRangeClose) && !errors.Is(err, errDownloadPauseProof) && !downloadSourceChanged(err) && (errors.Is(err, context.Canceled) ||
 		errors.Is(err, ErrJobPaused) ||
 		strings.Contains(err.Error(), "context canceled")) {
 		err = nil

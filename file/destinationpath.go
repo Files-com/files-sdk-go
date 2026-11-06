@@ -387,10 +387,13 @@ func claimTmpDownload(tmp destinationPath, expected fs.FileInfo) (destinationPat
 // it back is reported as such: the file then stays inside the reserved folder,
 // never transferred but not found by a later run either.
 func restoreTmpDownload(claimed destinationPath, tmp destinationPath) error {
-	if err := claimed.rename(tmp); err != nil {
-		return fmt.Errorf("download: the completed temporary file could not be put back for a later run: %w", err)
+	if err := refuseOccupied(tmp); err != nil {
+		return pauseProofError(fmt.Errorf("download: the original temporary name became occupied; the owned claim was kept: %w", err))
 	}
-	return removeTmpDownloadClaimContainer(claimed, tmp)
+	if err := claimed.rename(tmp); err != nil {
+		return pauseProofError(fmt.Errorf("download: the completed temporary file could not be put back for a later run: %w", err))
+	}
+	return pauseProofError(removeTmpDownloadClaimContainer(claimed, tmp))
 }
 
 // removeTmpDownloadClaimContainer removes the folder a claim was made in, once

@@ -4,7 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
+	goFs "io/fs"
 	"log"
 	"net"
 	"net/http"
@@ -498,4 +501,228 @@ func TestFS_OpenUsesServerUnicodeIdentityInCache(t *testing.T) {
 	info, err := distinct.Stat()
 	require.NoError(t, err)
 	require.Equal(t, "q/か.txt ", info.Sys().(files_sdk.File).Path)
+}
+
+func TestFS_ReadDirContinuesAcrossCalls(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		counts  []int
+		entries [][]string
+	}{
+		{name: "bounded batches", counts: []int{1, 1, 1}, entries: [][]string{{"a"}, {"b"}, {"c"}}},
+		{name: "all remaining", counts: []int{1, -1}, entries: [][]string{{"a"}, {"b", "c"}}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var requests atomic.Int32
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requests.Add(1)
+				w.Header().Set("Content-Type", "application/json")
+				if r.URL.Query().Get("cursor") == "" {
+					w.Header().Set("X-Files-Cursor-Next", "second")
+					_, _ = io.WriteString(w, `[{"path":"a","display_name":"a","type":"file"},{"path":"nested/skipped","display_name":"skipped","type":"file"}]`)
+					return
+				}
+				_, _ = io.WriteString(w, `[{"path":"b","display_name":"b","type":"file"},{"path":"c","display_name":"c","type":"directory"}]`)
+			}))
+			t.Cleanup(server.Close)
+			fs := (&FS{}).Init(files_sdk.Config{EndpointOverride: server.URL}.Init(), true)
+			opened, err := fs.Open(".")
+			require.NoError(t, err)
+			directory := opened.(goFs.ReadDirFile)
+
+			for i, count := range test.counts {
+				entries, err := directory.ReadDir(count)
+				require.NoError(t, err)
+				var names []string
+				for _, entry := range entries {
+					names = append(names, entry.Name())
+				}
+				require.Equal(t, test.entries[i], names)
+				if i == 0 {
+					require.EqualValues(t, 1, requests.Load(), "the first batch must not request the next page")
+					other, err := fs.Open(".")
+					require.NoError(t, err)
+					first, err := other.(goFs.ReadDirFile).ReadDir(1)
+					require.NoError(t, err)
+					require.Len(t, first, 1)
+					require.Equal(t, "a", first[0].Name(), "a separate open has its own directory cursor")
+				}
+			}
+			for _, count := range []int{1, 2, 0, -1} {
+				entries, err := directory.ReadDir(count)
+				if count > 0 {
+					require.ErrorIs(t, err, io.EOF)
+				} else {
+					require.NoError(t, err)
+				}
+				require.NotNil(t, entries)
+				require.Empty(t, entries)
+			}
+			require.EqualValues(t, 3, requests.Load(), "exhausted reads do not restart a listing")
+		})
+	}
+}
+
+func TestFS_ReadDirReturnsEntriesBeforeALaterPageFails(t *testing.T) {
+	var requests atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		if r.URL.Query().Get("cursor") == "" {
+			w.Header().Set("X-Files-Cursor-Next", "second")
+			_, _ = io.WriteString(w, `[{"path":"a","display_name":"a","type":"file"}]`)
+			return
+		}
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = io.WriteString(w, `{"type":"permission-denied","error":"listing denied","http-code":403}`)
+	}))
+	t.Cleanup(server.Close)
+	config := files_sdk.Config{EndpointOverride: server.URL}.Init()
+	config.RetryMax = 0
+	opened, err := (&FS{}).Init(config, false).Open(".")
+	require.NoError(t, err)
+	directory := opened.(goFs.ReadDirFile)
+
+	entries, err := directory.ReadDir(2)
+	require.Len(t, entries, 1)
+	require.Equal(t, "a", entries[0].Name())
+	var pathErr *goFs.PathError
+	require.ErrorAs(t, err, &pathErr)
+	require.Equal(t, "readdir", pathErr.Op)
+	require.True(t, files_sdk.IsErrorType(err, files_sdk.ResponseErrorType("permission-denied")))
+	entries, laterErr := directory.ReadDir(1)
+	require.Empty(t, entries)
+	require.Equal(t, err, laterErr)
+	require.EqualValues(t, 2, requests.Load())
+}
+
+func TestFS_MkdirAllPreservesCreationErrors(t *testing.T) {
+	transportErr := errors.New("transport failed")
+	permissionErr := files_sdk.ResponseError{Type: "permission-denied", ErrorMessage: "creation denied"}
+	for _, test := range []struct {
+		name string
+		err  error
+	}{
+		{name: "transport", err: transportErr},
+		{name: "cancellation", err: context.Canceled},
+		{name: "wrapped API error", err: fmt.Errorf("wrapped: %w", permissionErr)},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var paths []string
+			config := files_sdk.Config{}.Init().SetCustomClient(&http.Client{Transport: ownedHTTPResponseTransport(func(request *http.Request) (*http.Response, error) {
+				paths = append(paths, request.URL.Path)
+				if len(paths) > 1 {
+					return nil, test.err
+				}
+				return &http.Response{
+					StatusCode: http.StatusUnprocessableEntity,
+					Header:     http.Header{"Content-Type": []string{"application/json"}},
+					Body:       io.NopCloser(strings.NewReader(`{"type":"processing-failure/destination-exists","error":"exists","http-code":422}`)),
+					Request:    request,
+				}, nil
+			})})
+			config.RetryMax = 0
+
+			err := (&FS{}).Init(config, false).MkdirAll("existing/failed/not-submitted", 0750)
+
+			require.ErrorIs(t, err, test.err)
+			require.Equal(t, []string{"/api/rest/v1/folders/existing", "/api/rest/v1/folders/existing/failed"}, paths)
+		})
+	}
+}
+
+func TestFS_MkdirAllAcceptsWrappedDestinationExists(t *testing.T) {
+	var paths []string
+	config := files_sdk.Config{}.Init().SetCustomClient(&http.Client{Transport: ownedHTTPResponseTransport(func(request *http.Request) (*http.Response, error) {
+		paths = append(paths, request.URL.Path)
+		if len(paths) == 1 {
+			return nil, fmt.Errorf("wrapped: %w", files_sdk.ResponseError{Type: string(files_sdk.ErrDestinationExists)})
+		}
+		return &http.Response{
+			StatusCode: http.StatusCreated,
+			Header:     http.Header{"Content-Type": []string{"application/json"}},
+			Body:       io.NopCloser(strings.NewReader(`{"path":"existing/child","type":"directory"}`)),
+			Request:    request,
+		}, nil
+	})})
+	config.RetryMax = 0
+
+	require.NoError(t, (&FS{}).Init(config, false).MkdirAll("existing/child", 0750))
+	require.Equal(t, []string{"/api/rest/v1/folders/existing", "/api/rest/v1/folders/existing/child"}, paths)
+}
+
+func TestFileMetadataReportsDirectoryType(t *testing.T) {
+	for _, kind := range []string{"directory", "file"} {
+		t.Run(kind, func(t *testing.T) {
+			file := (&File{File: &files_sdk.File{Type: kind}}).Init()
+			info, err := file.Stat()
+			require.NoError(t, err)
+			require.Equal(t, kind == "directory", file.Type().IsDir())
+			require.Equal(t, info.IsDir(), info.Mode().IsDir())
+			require.Equal(t, info.Mode().Type(), file.Type())
+			require.Zero(t, file.Type()&goFs.ModePerm, "DirEntry.Type contains type bits only")
+		})
+	}
+}
+
+func TestFS_MkdirTempReportsUnsupportedWithoutRequests(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		dir  string
+		path string
+	}{
+		{name: "default directory", path: "job-*"},
+		{name: "explicit directory", dir: "parent", path: "parent/job-*"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var requests atomic.Int32
+			config := files_sdk.Config{}.Init().SetCustomClient(&http.Client{Transport: ownedHTTPResponseTransport(func(*http.Request) (*http.Response, error) {
+				requests.Add(1)
+				return nil, errors.New("unexpected API request")
+			})})
+			remote := (&FS{Root: "root"}).Init(config, false)
+
+			path, err := remote.MkdirTemp(test.dir, "job-*")
+
+			require.Empty(t, path)
+			require.ErrorIs(t, err, errors.ErrUnsupported)
+			var pathErr *goFs.PathError
+			require.ErrorAs(t, err, &pathErr)
+			require.Equal(t, "mkdirtemp", pathErr.Op)
+			require.Equal(t, test.path, pathErr.Path)
+			require.ErrorContains(t, err, "atomic exclusive remote directory allocation is unavailable")
+			require.Zero(t, requests.Load())
+		})
+	}
+}
+
+func TestReadDirFileValuesShareTheirOpenDirectoryCursor(t *testing.T) {
+	var requests atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		requests.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `[{"path":"a","display_name":"a","type":"file"},{"path":"b","display_name":"b","type":"file"}]`)
+	}))
+	t.Cleanup(server.Close)
+	fs := (&FS{}).Init(files_sdk.Config{EndpointOverride: server.URL}.Init(), false)
+	file := (&File{File: &files_sdk.File{Type: "directory"}, FS: fs}).Init()
+	value := ReadDirFile{File: file}
+	copyOfValue := value
+	var directory goFs.ReadDirFile = value
+	var copiedDirectory goFs.ReadDirFile = copyOfValue
+
+	first, err := directory.ReadDir(1)
+	require.NoError(t, err)
+	require.Len(t, first, 1)
+	require.Equal(t, "a", first[0].Name())
+	second, err := copiedDirectory.ReadDir(1)
+	require.NoError(t, err)
+	require.Len(t, second, 1)
+	require.Equal(t, "b", second[0].Name())
+	for _, handle := range []goFs.ReadDirFile{directory, copiedDirectory} {
+		entries, err := handle.ReadDir(1)
+		require.ErrorIs(t, err, io.EOF)
+		require.Empty(t, entries)
+	}
+	require.EqualValues(t, 1, requests.Load(), "copies continue one directory traversal")
 }

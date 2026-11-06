@@ -100,6 +100,7 @@ func downloadV2TerminalPartError(err error) bool {
 	var terminal downloadV2TerminalError
 	return errors.As(err, &terminal) ||
 		downloadSourceChanged(err) ||
+		errors.Is(err, errDownloadFrontend) ||
 		downloadV2StatusCode(err) == http.StatusRequestedRangeNotSatisfiable
 }
 
@@ -136,6 +137,12 @@ func runDownloadV2IfSupported(ctx context.Context, reportStatus *DownloadStatus,
 	params, _ := reportStatus.Job().Params.(DownloaderParams)
 	if !params.AdaptiveConcurrency {
 		return false, 0, remoteStat, nil
+	}
+	if file, ok := reportStatus.fsFile.(*File); ok {
+		_, _, whole := file.representation.snapshot()
+		if whole {
+			return false, 0, remoteStat, nil
+		}
 	}
 	if params.AdaptiveDownloadV2TuningSet {
 		if err := params.AdaptiveDownloadV2Tuning.validate(); err != nil {
@@ -326,10 +333,7 @@ func (e *downloadV2Engine) Run(parentCtx context.Context) (err error) {
 				err = errors.Join(err, tmpDownloadNotTrimmedError{cause: trimErr})
 			}
 		}
-		closeErr := e.file.Close()
-		if err == nil {
-			err = closeErr
-		}
+		err = errors.Join(err, e.file.Close())
 	}()
 
 	e.logStart()
@@ -380,10 +384,17 @@ func (e *downloadV2Engine) Run(parentCtx context.Context) (err error) {
 
 	for result := range results {
 		if result.err != nil {
+			if errors.Is(context.Cause(parentCtx), ErrJobPaused) && stoppedForPauseOnly(result.err) {
+				if _, httpFile := e.ranger.(*File); httpFile {
+					e.markComplete(result.part, result.bytes)
+				}
+			}
 			cancel()
 			// A source change rejects the whole download request; report it over
 			// the cancellation errors of the other ranges.
-			if err == nil || (downloadSourceChanged(result.err) && !downloadSourceChanged(err)) {
+			if errors.Is(result.err, errDownloadRangeClose) || errors.Is(err, errDownloadRangeClose) && downloadSourceChanged(result.err) {
+				err = errors.Join(err, result.err)
+			} else if err == nil || (downloadSourceChanged(result.err) && !downloadSourceChanged(err)) {
 				err = result.err
 			}
 			continue
@@ -506,6 +517,9 @@ func (e *downloadV2Engine) logDirectTransferDisabled(reason string, err error) {
 }
 
 func (e *downloadV2Engine) downloadPartWithRetry(ctx context.Context, part downloadV2Part) downloadV2PartResult {
+	if _, ok := e.ranger.(*File); ok {
+		return e.downloadPart(ctx, part)
+	}
 	var result downloadV2PartResult
 	for attempt := 1; attempt <= downloadV2RetryAttempts; attempt++ {
 		result = e.downloadPart(ctx, part)
@@ -561,12 +575,16 @@ func (e *downloadV2Engine) downloadPart(ctx context.Context, part downloadV2Part
 	result.bytes = written
 	result.duration = time.Since(start)
 	if copyErr != nil {
-		progress.Subtract(written)
-		result.err = copyErr
+		result.err = errors.Join(copyErr, closeErr)
+		if !errors.Is(context.Cause(ctx), ErrJobPaused) || !stoppedForPauseOnly(result.err) {
+			progress.Subtract(written)
+		}
 		return result
 	}
 	if closeErr != nil {
-		progress.Subtract(written)
+		if !errors.Is(context.Cause(ctx), ErrJobPaused) || !stoppedForPauseOnly(closeErr) {
+			progress.Subtract(written)
+		}
 		result.err = closeErr
 		return result
 	}
@@ -796,7 +814,7 @@ func downloadV2ReaderRange(ctx context.Context, ranger ReaderRange, off int64, e
 		ranger = withContext.WithContext(ctx).(ReaderRange)
 	}
 	if file, ok := ranger.(*File); ok {
-		return file.downloadV2ReaderRange(ctx, off, end, false)
+		return file.openDownloadRange(ctx, off, end, downloadV2RetryAttempts)
 	}
 	reader, err := ranger.ReaderRange(off, end)
 	if err != nil {
@@ -820,20 +838,6 @@ func downloadV2RangeFromStat(ranger ReaderRange, off int64, end int64) downloadV
 	}
 	response.end = min(end, response.total-1)
 	return response
-}
-
-// downloadV2RangeFromResponse describes the range a 206 response covers. Only a
-// "bytes start-end/total" Content-Range states which bytes the body carries and
-// the transfer size; anything else leaves the response untrusted for the plan.
-func downloadV2RangeFromResponse(response *http.Response, off int64, end int64) downloadV2Range {
-	served := downloadV2Range{off: off, end: end, trust: UntrustedSizeValue}
-	contentRange, ok := parseContentRange(response.Header.Get("Content-Range"))
-	if !ok || !contentRange.totalKnown || contentRange.start < 0 {
-		return served
-	}
-	served.off, served.end = contentRange.start, contentRange.end
-	served.total, served.trust = contentRange.total, TrustedSizeValue
-	return served
 }
 
 func (f *File) downloadV2EnsureURI(ctx context.Context) error {
@@ -880,62 +884,6 @@ func (f *File) downloadV2URI(ctx context.Context) (string, error) {
 	downloadURI := f.File.DownloadUri
 	f.fileMutex.Unlock()
 	return downloadURI, nil
-}
-
-func (f *File) downloadV2ReaderRange(ctx context.Context, off int64, end int64, refreshed bool) (io.ReadCloser, downloadV2Range, error) {
-	downloadURI, err := f.downloadV2URI(ctx)
-	if err != nil {
-		return nil, downloadV2Range{}, err
-	}
-	f.fileMutex.Lock()
-	fileCopy := *f.File
-	f.fileMutex.Unlock()
-
-	var body io.ReadCloser
-	var served downloadV2Range
-	headers := &http.Header{}
-	headers.Set("Range", fmt.Sprintf("bytes=%v-%v", off, end))
-	_, err = (&Client{Config: f.Config}).Download(
-		files_sdk.FileDownloadParams{File: fileCopy},
-		files_sdk.WithContext(ctx),
-		files_sdk.RequestHeadersOption(headers),
-		files_sdk.ResponseOption(func(response *http.Response) error {
-			if err := lib.ResponseErrors(response, lib.IsStatus(http.StatusForbidden), files_sdk.APIError(), lib.NotStatus(http.StatusPartialContent)); err != nil {
-				return &goFs.PathError{Path: f.File.Path, Err: err, Op: "downloadV2ReaderRange"}
-			}
-			// Only a successful range response may update the size state; an
-			// error body's Content-Length is not a file size.
-			served = downloadV2RangeFromResponse(response, off, end)
-			maxConnections := parseMaxConnections(response)
-			downloadRequestID := response.Header.Get("X-Files-Download-Request-Id")
-			f.fileMutex.Lock()
-			f.MaxConnections = maxConnections
-			f.downloadRequestId = downloadRequestID
-			f.SizeTrust = served.trust
-			if served.trust == TrustedSizeValue {
-				f.Size = served.total
-			}
-			f.fileMutex.Unlock()
-			body = response.Body
-			return nil
-		}),
-	)
-	if downloadRequestExpired(err) && !refreshed {
-		f.Config.LogPath(f.File.Path, map[string]interface{}{"message": "downloadV2DownloadRequestExpired", "error": err})
-		f.fileMutex.Lock()
-		if f.File.DownloadUri == downloadURI {
-			f.File.DownloadUri = ""
-		}
-		f.fileMutex.Unlock()
-		return f.downloadV2ReaderRange(ctx, off, end, true)
-	}
-	if err != nil {
-		return nil, downloadV2Range{}, err
-	}
-	if body == nil {
-		return nil, downloadV2Range{}, &goFs.PathError{Path: f.File.Path, Err: errors.New("missing download response body"), Op: "downloadV2ReaderRange"}
-	}
-	return body, served, nil
 }
 
 func downloadV2StatusCode(err error) int {

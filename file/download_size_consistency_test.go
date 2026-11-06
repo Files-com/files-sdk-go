@@ -147,6 +147,11 @@ func (f *sizeFixture) serveTransfer(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	if match := r.Header.Get("If-Match"); match != "" && match != fmt.Sprintf("\"generation-%d\"", f.version) {
+		f.mu.Unlock()
+		w.WriteHeader(http.StatusPreconditionFailed)
+		return
+	}
 	start, end := int64(0), f.size-1
 	code := http.StatusOK
 	if rangeHeader := r.Header.Get("Range"); rangeHeader != "" {
@@ -196,6 +201,7 @@ func (f *sizeFixture) serveTransfer(w http.ResponseWriter, r *http.Request) {
 	// A blocked response body must not prevent another range from receiving
 	// its headers. Each response keeps the source generation it started with.
 	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("ETag", fmt.Sprintf("\"generation-%d\"", version))
 	w.Header().Set("Accept-Ranges", "bytes")
 	if !f.unknownLength {
 		w.Header().Set("Content-Length", strconv.FormatInt(length, 10))
@@ -244,6 +250,7 @@ type sizeFixtureRun struct {
 	adaptive     bool
 	singleStream bool
 	retryCount   int
+	checkpoint   *JobDownloadCheckpoint
 }
 
 func (f *sizeFixture) download(t *testing.T, run sizeFixtureRun) (*Job, string) {
@@ -270,6 +277,7 @@ func (f *sizeFixture) downloadTo(t *testing.T, dir string, run sizeFixtureRun) (
 		Manager:             manager.Build(2, 1, run.singleStream),
 		AdaptiveConcurrency: run.adaptive,
 		RetryPolicy:         RetryPolicy{Type: RetryUnfinished, RetryCount: run.retryCount, Backoff: -1},
+		PriorJobCheckpoint:  run.checkpoint,
 	}, files_sdk.WithContext(ctx))
 	job.Start()
 	job.Wait()
@@ -408,8 +416,8 @@ func TestDownloadUnknownTransferLength(t *testing.T) {
 	})
 
 	t.Run("resume restarts instead of ending at the metadata size", func(t *testing.T) {
-		// A resumed range asks only for bytes up to the metadata size, so the end
-		// of its body is not the end of the source.
+		// This old checkpoint has no representation binding. Its prefix cannot
+		// be combined with another response, so it restarts the whole download.
 		fixture := newSizeFixture(t, sizeFixtureMiB, 2*sizeFixtureMiB)
 		fixture.unknownLength = true
 		dir := t.TempDir()
@@ -423,7 +431,7 @@ func TestDownloadUnknownTransferLength(t *testing.T) {
 		require.NoError(t, job.Statuses[0].Err())
 		fixture.requireExactOutput(t, dest)
 		assert.Equal(t, 2*sizeFixtureMiB, job.Statuses[0].Size())
-		assert.Equal(t, []string{"bytes=524288-1048575", ""}, fixture.ranges())
+		assert.Equal(t, []string{""}, fixture.ranges())
 	})
 }
 
@@ -468,23 +476,32 @@ func TestFileStatReportsTheTransferSize(t *testing.T) {
 }
 
 func TestDownloadResumePrefixBeyondEmptyTransferRestarts(t *testing.T) {
-	// A temp file left by an earlier attempt can be longer than the source is
-	// now. Its bytes cannot be validated against the current source, so the
-	// attempt fails and the retry starts over from offset 0.
+	// A version-bound checkpoint from the earlier nonempty representation is
+	// rejected by the now-empty source. A retry must start a fresh lifecycle.
+	oldCheckpoint := func(t *testing.T, fixture *sizeFixture, dir string) *JobDownloadCheckpoint {
+		prefix := make([]byte, 5*sizeFixtureMiB)
+		for i := range prefix {
+			prefix[i] = sizeFixtureByte(0, int64(i))
+		}
+		local := filepath.Join(dir, "output.bin")
+		tmp := writePausedTmpFile(t, local, prefix)
+		fixture.version = 1
+		return boundStageCheckpoint(fixture.config(), "fixture.bin", local, tmp, `"generation-0"`, 40*sizeFixtureMiB, int64(len(prefix)))
+	}
 	t.Run("retry budget 0 fails without output", func(t *testing.T) {
 		fixture := newSizeFixture(t, 40*sizeFixtureMiB, 0)
 		dir := t.TempDir()
-		createPausedTmpFile(t, filepath.Join(dir, "output.bin"), 5*sizeFixtureMiB)
-		job, dest := fixture.downloadTo(t, dir, sizeFixtureRun{adaptive: true})
+		checkpoint := oldCheckpoint(t, fixture, dir)
+		job, dest := fixture.downloadTo(t, dir, sizeFixtureRun{adaptive: true, checkpoint: checkpoint})
 
-		require.Error(t, job.Statuses[0].Err())
+		require.ErrorIs(t, job.Statuses[0].Err(), files_sdk.ErrDownloadSourceChanged)
 		requireNoOutput(t, dest)
 	})
 	t.Run("retry budget 1 completes empty", func(t *testing.T) {
 		fixture := newSizeFixture(t, 40*sizeFixtureMiB, 0)
 		dir := t.TempDir()
-		createPausedTmpFile(t, filepath.Join(dir, "output.bin"), 5*sizeFixtureMiB)
-		job, dest := fixture.downloadTo(t, dir, sizeFixtureRun{adaptive: true, retryCount: 1})
+		checkpoint := oldCheckpoint(t, fixture, dir)
+		job, dest := fixture.downloadTo(t, dir, sizeFixtureRun{adaptive: true, retryCount: 1, checkpoint: checkpoint})
 
 		require.NoError(t, job.Statuses[0].Err())
 		fixture.requireExactOutput(t, dest)
@@ -547,31 +564,6 @@ func TestDownloadAdaptiveRangeWithoutByteCoverage(t *testing.T) {
 		require.ErrorIs(t, job.Statuses[0].Err(), errDownloadSizeConflict)
 		requireNoOutput(t, dest)
 	})
-}
-
-func TestDownloadV2RangeFromResponse(t *testing.T) {
-	response := func(contentRange string) *http.Response {
-		header := http.Header{}
-		if contentRange != "" {
-			header.Set("Content-Range", contentRange)
-		}
-		return &http.Response{StatusCode: http.StatusPartialContent, Header: header, ContentLength: 1000}
-	}
-	trusted := downloadV2Range{off: 0, end: 999, total: 64000, trust: TrustedSizeValue}
-	untrusted := downloadV2Range{off: 0, end: 999, trust: UntrustedSizeValue}
-	for _, tc := range []struct {
-		contentRange string
-		want         downloadV2Range
-	}{
-		{"bytes 0-999/64000", trusted},
-		{"0-999/64000", trusted},
-		{"bytes */64000", untrusted},
-		{"bytes 0-999/*", untrusted},
-		{"items 0-999/64000", untrusted},
-		{"", untrusted},
-	} {
-		assert.Equal(t, tc.want, downloadV2RangeFromResponse(response(tc.contentRange), 0, 999), tc.contentRange)
-	}
 }
 
 func TestDownloadShortBodiesFail(t *testing.T) {

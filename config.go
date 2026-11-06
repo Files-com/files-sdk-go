@@ -20,7 +20,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.3.349"
+var VERSION = "3.3.350"
 var defaultUserAgent = userAgentWithMetadata(fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION)), runtime.GOOS, runtime.Version())
 
 const (
@@ -53,11 +53,12 @@ type Config struct {
 	EndpointOverride string `json:"endpoint_override"`
 	*retryablehttp.Client
 	AdditionalHeaders map[string]string `json:"additional_headers"`
-	// Logger receives SDK diagnostics. Init uses a logger that discards output when this is nil.
+	// Logger receives SDK diagnostics. Use lib.NewSlogLogger for standard Go log levels and routing.
+	// Init uses a logger that discards output when this is nil.
 	lib.Logger
 	// Debug enables detailed request and response diagnostics, which may contain credentials
-	// and signed URLs. FILES_SDK_DEBUG also enables these diagnostics. SDK retry log entries
-	// at INFO, WARN, and ERROR still redact request URLs and credentials.
+	// and signed URLs. FILES_SDK_DEBUG or a lib.SlogLogger with Debug enabled also enables them.
+	// SDK retry log entries at INFO, WARN, and ERROR still redact request URLs and credentials.
 	Debug        bool   `json:"debug"`
 	UserAgent    string `json:"user_agents"`
 	Environment  `json:"environment"`
@@ -256,6 +257,9 @@ func (c Config) retryLogFor(logger interface{}, req *http.Request) interface{} {
 		return printfRetryLog{logger: sdkConfig.Logger, debug: c.InDebug(), redact: redact}
 	}
 	switch v := logger.(type) {
+	case *lib.SlogLogger:
+		// The SDK adapter takes printf arguments; the dependency's native slog logger takes key/value pairs.
+		return printfRetryLog{logger: v, debug: c.InDebug(), redact: redact}
 	case retryablehttp.LeveledLogger:
 		return leveledRetryLog{logger: v, redact: redact}
 	case retryablehttp.Logger:
@@ -571,11 +575,15 @@ func (c Config) SetCustomClient(client *http.Client) Config {
 	return c
 }
 
-// InDebug reports whether Debug is set or FILES_SDK_DEBUG is non-empty.
-// A logger with levels controls which retry DEBUG entries it displays independently
-// of this setting. A Printf-only logger receives retry DEBUG entries only in debug mode.
+// InDebug reports whether Debug is set, FILES_SDK_DEBUG is non-empty, or Logger's
+// optional DebugEnabled method enables detailed diagnostics. A selected log handler
+// still controls which records it emits. Printf-only loggers keep the flag/environment behavior.
 func (c Config) InDebug() bool {
-	return c.Debug || (os.Getenv("FILES_SDK_DEBUG") != "")
+	if c.Debug || os.Getenv("FILES_SDK_DEBUG") != "" {
+		return true
+	}
+	logger, ok := c.Logger.(interface{ DebugEnabled() bool })
+	return ok && logger.DebugEnabled()
 }
 
 // debugf logs a DEBUG diagnostic, which may hold full URLs and headers: at Debug level when the Logger has levels,
@@ -589,7 +597,7 @@ func (c Config) debugf(format string, args ...any) {
 }
 
 func (c Config) LogPath(path string, args map[string]interface{}) {
-	c.Logger.Printf(libLog.New(path, args))
+	c.Logger.Printf("%s", libLog.New(path, args))
 }
 
 func (c Config) RootPath() string {

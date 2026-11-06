@@ -686,22 +686,30 @@ func TestDownloadPauseResume_besideAnotherAttemptsStage(t *testing.T) {
 // A pause that arrives while the source has rejected the transfer's download
 // request must not turn the bytes of that request into a checkpoint.
 func TestDownloadPause_rejectedTransferIsNotKept(t *testing.T) {
-	const part int64 = 10 * 1024 * 1024
-	c := heldRangeCase(part, basicParams)
-	c.remote.holdErr = files_sdk.ErrDownloadSourceChanged
-	local := filepath.Join(t.TempDir(), "big.bin")
+	for name, rejection := range map[string]error{
+		"source changed":            files_sdk.ErrDownloadSourceChanged,
+		"source changed beside EOF": errors.Join(files_sdk.ErrDownloadSourceChanged, io.EOF),
+	} {
+		t.Run(name, func(t *testing.T) {
+			const part int64 = 10 * 1024 * 1024
+			c := heldRangeCase(part, basicParams)
+			c.remote.holdErr = rejection
+			local := filepath.Join(t.TempDir(), "big.bin")
 
-	paused, tmpPath := c.pause(t, local)
-	require.Equal(t, 0, paused.Count(status.Complete))
-	requireNothingStaged(t, local, "")
-	if tmpPath != "" {
-		_, err := os.Stat(tmpPath)
-		assert.ErrorIs(t, err, fs.ErrNotExist, "nothing named by the ended event is kept")
+			paused, tmpPath := c.pause(t, local)
+			require.Equal(t, 0, paused.Count(status.Complete))
+			require.ErrorIs(t, paused.Statuses[0].Err(), files_sdk.ErrDownloadSourceChanged)
+			requireNothingStaged(t, local, "")
+			if tmpPath != "" {
+				_, err := os.Stat(tmpPath)
+				assert.ErrorIs(t, err, fs.ErrNotExist, "nothing named by the ended event is kept")
+			}
+
+			resumed := c.resume(t, local, tmpPath)
+			require.NotEmpty(t, resumed.requestedOffsets())
+			assert.Equal(t, int64(0), resumed.requestedOffsets()[0], "the next attempt starts over")
+		})
 	}
-
-	resumed := c.resume(t, local, tmpPath)
-	require.NotEmpty(t, resumed.requestedOffsets())
-	assert.Equal(t, int64(0), resumed.requestedOffsets()[0], "the next attempt starts over")
 }
 
 // Only a stop caused by the cancellation alone lets a paused file be kept.

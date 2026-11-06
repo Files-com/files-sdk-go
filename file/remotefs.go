@@ -9,10 +9,8 @@ import (
 	"io"
 	goFs "io/fs"
 	"math"
-	"math/rand"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -68,13 +66,22 @@ type File struct {
 	MaxConnections    int
 	stat              bool
 	fileMutex         *sync.Mutex
+	readDirState      *readDirState
 	SizeTrust
 	serverBytesSent int64
+	representation  *downloadRepresentation
 }
 
 type ReadDirFile struct {
 	*File
-	count int
+	state *readDirState
+}
+
+type readDirState struct {
+	mutex    sync.Mutex
+	iterator *folder.Iter
+	done     bool
+	err      error
 }
 
 func (f *File) safeFile() files_sdk.File {
@@ -85,7 +92,9 @@ func (f *File) safeFile() files_sdk.File {
 
 func (f *File) Init() *File {
 	f.fileMutex = &sync.Mutex{}
+	f.readDirState = &readDirState{}
 	f.SizeTrust = NullSizeTrust
+	f.representation = &downloadRepresentation{}
 	return f
 }
 
@@ -98,7 +107,10 @@ func (f *File) IsDir() bool {
 }
 
 func (f *File) Type() goFs.FileMode {
-	return goFs.ModePerm
+	if f.IsDir() {
+		return goFs.ModeDir
+	}
+	return 0
 }
 
 func (f *File) Info() (goFs.FileInfo, error) {
@@ -141,7 +153,11 @@ func (i Info) PossibleSize() int64 {
 }
 
 func (i Info) Mode() goFs.FileMode {
-	return goFs.ModePerm
+	mode := goFs.ModePerm
+	if i.IsDir() {
+		mode |= goFs.ModeDir
+	}
+	return mode
 }
 
 func (i Info) IsDir() bool {
@@ -172,13 +188,14 @@ func (f *File) Read(b []byte) (n int, err error) {
 		defer f.fileMutex.Unlock()
 
 		var readCloser io.ReadCloser
-		readCloser, err = f.readCloserInit()
-		if downloadRequestExpired(err) {
+		ctx, budget := withDownloadBudget(f.Context)
+		readCloser, err = f.readCloserInitContext(ctx)
+		if downloadRequestExpired(err) && budget.renew() {
 			f.Config.LogPath(f.File.Path, map[string]interface{}{"message": "downloadRequestExpired", "error": err})
 			f.File.DownloadUri = "" // force a new query
-			*f.File, err = (&Client{Config: f.Config}).DownloadUri(files_sdk.FileDownloadParams{File: *f.File}, files_sdk.WithContext(f.Context))
+			*f.File, err = (&Client{Config: f.Config}).DownloadUri(files_sdk.FileDownloadParams{File: *f.File}, files_sdk.WithContext(ctx))
 			if err == nil {
-				readCloser, err = f.readCloserInit()
+				readCloser, err = f.readCloserInitContext(ctx)
 			}
 		}
 
@@ -234,12 +251,16 @@ func parseMaxConnections(response *http.Response) int {
 }
 
 func (f *File) readCloserInit() (readCloser io.ReadCloser, err error) {
+	return f.readCloserInitContext(f.Context)
+}
+
+func (f *File) readCloserInitContext(ctx context.Context) (readCloser io.ReadCloser, err error) {
 	var size int64
 	var sizeTrust SizeTrust
 	var fileInfo files_sdk.File
 	fileInfo, err = (&Client{Config: f.Config}).Download(
 		files_sdk.FileDownloadParams{File: *f.File},
-		files_sdk.WithContext(f.Context),
+		files_sdk.WithContext(ctx),
 		files_sdk.ResponseOption(func(response *http.Response) error {
 			f.MaxConnections = parseMaxConnections(response)
 			f.downloadRequestId = response.Header.Get("X-Files-Download-Request-Id")
@@ -247,6 +268,19 @@ func (f *File) readCloserInit() (readCloser io.ReadCloser, err error) {
 				return &goFs.PathError{Path: f.File.Path, Err: err, Op: "read"}
 			}
 			size, sizeTrust = parseSize(response)
+			etag := strongDownloadETag(response.Header.Get("ETag"))
+			f.representation.mu.Lock()
+			bound, total := f.representation.etag, f.representation.total
+			if bound != "" && (bound != etag || total != size || sizeTrust != TrustedSizeValue) {
+				f.representation.mu.Unlock()
+				return downloadVersionChanged("whole response representation changed")
+			}
+			if etag != "" && sizeTrust == TrustedSizeValue {
+				f.representation.etag, f.representation.total, f.representation.whole = etag, size, false
+			} else {
+				f.representation.whole = true
+			}
+			f.representation.mu.Unlock()
 			readCloser = &ReadWrapper{ReadCloser: response.Body}
 			return nil
 		}),
@@ -280,42 +314,16 @@ func (f ReadAtLeastWrapper) Read(b []byte) (n int, err error) {
 }
 
 func (f *File) ReaderRange(off int64, end int64) (r io.ReadCloser, err error) {
-	if err = f.downloadURI(); err != nil {
-		return
+	ctx, _ := withDownloadBudget(f.Context)
+	attempts := f.Config.Init().RetryMax + 1
+	if attempts < 1 {
+		attempts = 1
 	}
-	f.fileMutex.Lock()
-	rangerReaderCloser := ReaderCloserDownloadStatus{file: f, expectedSize: (end + 1) - off, rangeRequest: true, ReadWrapper: &ReadWrapper{}}
-
-	headers := &http.Header{}
-	headers.Set("Range", fmt.Sprintf("bytes=%v-%v", off, end))
-	_, err = (&Client{Config: f.Config}).Download(
-		files_sdk.FileDownloadParams{File: *f.File},
-		files_sdk.WithContext(f.Context),
-		files_sdk.RequestHeadersOption(headers),
-		files_sdk.ResponseOption(func(response *http.Response) error {
-			f.downloadRequestId = response.Header.Get("X-Files-Download-Request-Id")
-			rangerReaderCloser.file.downloadRequestId = response.Header.Get("X-Files-Download-Request-Id")
-			f.MaxConnections = parseMaxConnections(response)
-			if err := lib.ResponseErrors(response, lib.IsStatus(http.StatusForbidden), files_sdk.APIError(), lib.NotStatus(http.StatusPartialContent)); err != nil {
-				return &goFs.PathError{Path: f.File.Path, Err: err, Op: "ReaderRange"}
-			}
-			f.Size, f.SizeTrust = parseSize(response)
-			rangerReaderCloser.ReadCloser = &ReadWrapper{ReadCloser: response.Body}
-			return nil
-		}),
-	)
-	f.fileMutex.Unlock()
-	if downloadRequestExpired(err) {
-		f.Config.LogPath(f.File.Path, map[string]interface{}{"message": "downloadRequestExpired", "error": err})
-		f.File.DownloadUri = "" // force a new query
-		err = f.downloadURI()
-		if err != nil {
-			return r, err
-		}
-
-		return f.ReaderRange(off, end)
+	r, _, err = f.openRange(ctx, off, end, attempts, false)
+	if err != nil {
+		return nil, &goFs.PathError{Path: f.safeFile().Path, Op: "ReaderRange", Err: err}
 	}
-	return rangerReaderCloser, err
+	return r, nil
 }
 
 type ReadWrapper struct {
@@ -438,7 +446,7 @@ func (r ReaderCloserDownloadStatus) Close() error {
 			if r.file.SizeTrust == UntrustedSizeValue {
 				r.file.serverBytesSent += status.Data.BytesTransferred
 			}
-		} else {
+		} else if status.Data.Status != "started" {
 			r.file.SizeTrust = TrustedSizeValue
 			r.file.Size = status.Data.BytesTransferred
 		}
@@ -454,55 +462,30 @@ func (r ReaderCloserDownloadStatus) Close() error {
 }
 
 func (f *File) ReadAt(p []byte, off int64) (n int, err error) {
-	err = f.downloadURI()
+	if len(p) == 0 {
+		return 0, nil
+	}
+	reader, err := f.ReaderRange(off, off+int64(len(p))-1)
 	if err != nil {
-		return
+		return 0, err
 	}
-	headers := &http.Header{}
-	headers.Set("Range", fmt.Sprintf("bytes=%v-%v", off, int64(len(p))+off-1))
-	_, err = (&Client{Config: f.Config}).Download(
-		files_sdk.FileDownloadParams{
-			File: *f.File,
-		},
-		files_sdk.WithContext(f.Context),
-		files_sdk.RequestHeadersOption(headers),
-		files_sdk.ResponseOption(func(response *http.Response) error {
-			if err := lib.ResponseErrors(response, lib.IsStatus(http.StatusForbidden), lib.NotStatus(http.StatusPartialContent), files_sdk.APIError()); err != nil {
-				return &goFs.PathError{Path: f.File.Path, Err: err, Op: "ReadAt"}
-			}
-			n, err = io.ReadFull(response.Body, p)
-			if err != nil && err != io.EOF {
-				return err
-			}
-			if int64(len(p)) >= response.ContentLength && int64(n) != response.ContentLength {
-				return &goFs.PathError{Path: f.File.Path, Err: fmt.Errorf("content-length did not match body"), Op: "ReadAt"}
-			}
-			lib.CloseBody(response)
-			response.Body = http.NoBody
-			return nil
-		}),
-	)
-
-	if downloadRequestExpired(err) {
-		f.Config.LogPath(f.File.Path, map[string]interface{}{"message": "downloadRequestExpired", "error": err})
-		f.File.DownloadUri = "" // force a new query
-		err = f.downloadURI()
-		if err != nil {
-			return n, err
-		}
-
-		return f.ReadAt(p, off)
-	}
-
-	return n, err
+	n, err = io.ReadFull(reader, p)
+	return n, errors.Join(err, reader.Close())
 }
 
 func downloadRequestExpired(err error) bool {
 	if err == nil {
 		return false
 	}
+	if files_sdk.IsExpired(err) {
+		return true
+	}
+	var directErr *files_sdk.DirectTransferResponseError
+	if errors.As(err, &directErr) && directErr.StatusCode == http.StatusForbidden {
+		return true
+	}
 	var responseErr lib.ResponseError
-	ok := errors.As(errors.Unwrap(err), &responseErr)
+	ok := errors.As(err, &responseErr)
 	return ok && responseErr.StatusCode == http.StatusForbidden
 }
 
@@ -514,15 +497,27 @@ func (f *File) downloadURI() (err error) {
 }
 
 func (f *File) Close() error {
+	return f.closeRead(true)
+}
+
+// closeRead closes the current reader and retains legacy read-after-Close behavior.
+// Completion checks apply to legacy Close and EOF-confirmed native reads.
+func (f *File) closeRead(verifyCompletion bool) error {
 	f.fileMutex.Lock()
 	f.fileMutex.Unlock()
 	defer func() { f.ReadCloser.Store(nil) }()
-	switch t := f.ReadCloser.Load().(type) {
-	case *ReadWrapper:
-		return ReaderCloserDownloadStatus{ReadWrapper: t, file: f}.Close()
-	default:
-		return ReaderCloserDownloadStatus{ReadWrapper: &ReadWrapper{ReadCloser: t}, file: f}.Close()
+	closer := f.ReadCloser.Load()
+	if closer == nil {
+		return nil
 	}
+	if !verifyCompletion {
+		return closer.Close()
+	}
+	reader, ok := closer.(*ReadWrapper)
+	if !ok {
+		reader = &ReadWrapper{ReadCloser: closer}
+	}
+	return ReaderCloserDownloadStatus{ReadWrapper: reader, file: f}.Close()
 }
 
 // restartDownload discards the current download lifecycle: the URL, its
@@ -537,10 +532,15 @@ func (f *File) restartDownload() {
 	f.serverBytesSent = 0
 	f.SizeTrust = NullSizeTrust
 	f.ReadCloser.Store(nil)
+	// Context copies can still own the old representation. A retry starts a
+	// new generation instead of changing the proof beneath those readers.
+	f.representation = &downloadRepresentation{}
 }
 
 func (f *File) WithContext(ctx context.Context) goFs.File {
+	f.fileMutex.Lock()
 	newF := *f
+	f.fileMutex.Unlock()
 	fs := *newF.FS
 	newF.FS = fs.WithContext(ctx).(*FS)
 	return &newF
@@ -554,31 +554,37 @@ func (f *FS) Open(name string) (goFs.File, error) {
 	if ok {
 		file := result.(*File)
 		if file.IsDir() {
-			return &ReadDirFile{File: file}, nil
+			return &ReadDirFile{File: file, state: &readDirState{}}, nil
 		}
 		return file, nil
 	}
 	path := lib.UrlJoinNoEscape(f.Root, name)
-	var err error
-	var fileInfo files_sdk.File
-	if path == "" { // skip call on root path
-		fileInfo = files_sdk.File{Type: "directory"}
-	} else {
-		fileInfo, err = (&Client{Config: f.Config}).Find(files_sdk.FileFindParams{Path: path}, files_sdk.WithContext(f.Context))
-		if err != nil {
-			return &File{}, &goFs.PathError{Path: path, Err: err, Op: "open"}
-		}
+	file, err := f.openRemoteFile(path)
+	if err != nil {
+		return &File{}, &goFs.PathError{Path: path, Err: err, Op: "open"}
 	}
-
-	file := (&File{File: &fileInfo, FS: f}).Init()
 	if f.useCache {
 		f.cache.Store(lib.NormalizeForComparison(path), file)
 	}
-	if fileInfo.Type == "directory" {
-		return &ReadDirFile{File: file}, nil
+	if file.IsDir() {
+		return &ReadDirFile{File: file, state: &readDirState{}}, nil
 	} else {
 		return file, nil
 	}
+}
+
+// openRemoteFile initializes a fresh handle for an already resolved API path.
+// Callers own Root resolution, caching and directory wrapping.
+func (f *FS) openRemoteFile(path string) (*File, error) {
+	fileInfo := files_sdk.File{Type: "directory"}
+	if path != "" {
+		var err error
+		fileInfo, err = (&Client{Config: f.Config}).Find(files_sdk.FileFindParams{Path: path}, files_sdk.WithContext(f.Context))
+		if err != nil {
+			return nil, err
+		}
+	}
+	return (&File{File: &fileInfo, FS: f}).Init(), nil
 }
 
 type DirEntryError struct {
@@ -602,7 +608,7 @@ func (f *FS) ReadDir(name string) ([]goFs.DirEntry, error) {
 		}
 	}
 
-	dirs, err := ReadDirFile{File: (&File{File: &files_sdk.File{Path: name}, FS: f}).Init()}.ReadDir(0)
+	dirs, err := (&ReadDirFile{File: (&File{File: &files_sdk.File{Path: name}, FS: f}).Init()}).ReadDir(0)
 	if f.useCache && (err == nil || errors.Is(err, files_sdk.ResponseError{})) {
 		f.cacheDir.Store(cacheName, DirEntryError{dirs, err})
 	}
@@ -610,26 +616,53 @@ func (f *FS) ReadDir(name string) ([]goFs.DirEntry, error) {
 }
 
 func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {
-	var files []goFs.DirEntry
+	state := f.state
+	if state == nil {
+		state = f.File.readDirState
+	}
+	state.mutex.Lock()
+	defer state.mutex.Unlock()
+	files := make([]goFs.DirEntry, 0)
+	if state.done {
+		if state.err != nil {
+			return files, state.err
+		}
+		if n > 0 {
+			return files, io.EOF
+		}
+		return files, nil
+	}
 	if f.Context != nil && f.Context.Err() != nil {
 		return files, &goFs.PathError{Path: f.Path, Err: f.Context.Err(), Op: "readdir"}
 	}
-	folderClient := folder.Client{Config: f.Config}
-	it, err := folderClient.ListFor(files_sdk.FolderListForParams{Path: f.Path}, files_sdk.WithContext(f.Context))
-	if err != nil {
-		return files, &goFs.PathError{Path: f.Path, Err: err, Op: "readdir"}
-	}
-	if f.count > 0 {
-		return files, io.EOF
-	}
-	for it.Next() && (n <= 0 || n > 0 && n >= f.count) {
-		fi := it.File()
+	if state.iterator == nil {
+		var err error
+		folderClient := folder.Client{Config: f.Config}
+		state.iterator, err = folderClient.ListFor(files_sdk.FolderListForParams{Path: f.Path}, files_sdk.WithContext(f.Context))
 		if err != nil {
-			return files, &goFs.PathError{Path: f.Path, Err: err, Op: "readdir"}
+			state.done = true
+			state.err = &goFs.PathError{Path: f.Path, Err: err, Op: "readdir"}
+			return files, state.err
 		}
+	}
+	for n <= 0 || len(files) < n {
+		if !state.iterator.Next() {
+			state.done = true
+			if err := state.iterator.Err(); err != nil {
+				state.err = &goFs.PathError{Path: f.Path, Err: err, Op: "readdir"}
+				return files, state.err
+			}
+			if n > 0 && len(files) == 0 {
+				return files, io.EOF
+			}
+			return files, nil
+		}
+		fi := state.iterator.File()
 		child, err := listingEntryIsChild(f.Path, fi)
 		if err != nil {
-			return files, &goFs.PathError{Path: f.Path, Err: err, Op: "readdir"}
+			state.done = true
+			state.err = &goFs.PathError{Path: f.Path, Err: err, Op: "readdir"}
+			return files, state.err
 		}
 		if child {
 			file := (&File{File: &fi, FS: f.FS}).Init()
@@ -638,12 +671,6 @@ func (f ReadDirFile) ReadDir(n int) ([]goFs.DirEntry, error) {
 			}
 			files = append(files, file)
 		}
-
-		f.count += 1
-	}
-
-	if it.Err() != nil {
-		return files, &goFs.PathError{Path: f.Path, Err: it.Err(), Op: "readdir"}
 	}
 	return files, nil
 }
@@ -696,8 +723,7 @@ func (f *FS) MkdirAll(dir string, _ goFs.FileMode) error {
 		}
 		folderClient := folder.Client{Config: f.Config}
 		_, err := folderClient.Create(files_sdk.FolderCreateParams{Path: lib.UrlJoinNoEscape(parentPath, dirPath)}, files_sdk.WithContext(f.Context))
-		rErr, ok := err.(files_sdk.ResponseError)
-		if err != nil && ok && rErr.Type != "processing-failure/destination-exists" {
+		if err != nil && !errors.Is(err, files_sdk.ErrDestinationExists) {
 			return err
 		}
 
@@ -710,22 +736,14 @@ func (f *FS) PathSeparator() string {
 	return "/"
 }
 
-var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-func randSeq(n int) string {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
-}
-
+// MkdirTemp is unsupported because the API cannot guarantee an exclusively new remote directory.
+// It returns errors.ErrUnsupported in a PathError without creating anything or sending a request.
 func (f *FS) MkdirTemp(dir, pattern string) (string, error) {
-	if dir == "" {
-		dir = filepath.Join(f.TempDir(), randSeq(10))
+	return "", &goFs.PathError{
+		Op:   "mkdirtemp",
+		Path: f.PathJoin(dir, pattern),
+		Err:  fmt.Errorf("atomic exclusive remote directory allocation is unavailable: %w", errors.ErrUnsupported),
 	}
-	path := f.PathJoin(dir, pattern)
-	return path, f.MkdirAll(path, 0750)
 }
 
 // WritableFile holds everything written to it in memory, and Close uploads it to path.

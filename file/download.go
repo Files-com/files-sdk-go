@@ -11,6 +11,10 @@ import (
 )
 
 func (c *Client) DownloadRetry(job Job, opts ...files_sdk.RequestResponseOption) *Job {
+	checkpoint := job.DownloadCheckpoint()
+	// Retain paused representations without changing which completed files
+	// this helper has historically retried.
+	checkpoint.CompletedPaths = nil
 	newJob := job.ClearStatuses()
 	return c.Downloader(
 		DownloaderParams{
@@ -19,6 +23,8 @@ func (c *Client) DownloadRetry(job Job, opts ...files_sdk.RequestResponseOption)
 			DryRun:                               newJob.Params.(DownloaderParams).DryRun,
 			Manager:                              newJob.Manager,
 			LocalPath:                            newJob.LocalPath,
+			TempPath:                             newJob.Params.(DownloaderParams).TempPath,
+			PriorJobCheckpoint:                   checkpoint,
 			RetryPolicy:                          newJob.RetryPolicy.(RetryPolicy),
 			EventsReporter:                       newJob.EventsReporter,
 			Ignore:                               newJob.Params.(DownloaderParams).Ignore,

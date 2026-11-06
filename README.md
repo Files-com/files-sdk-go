@@ -1217,6 +1217,37 @@ bundle exec puma
 FILES_MOCK_MODE=simulation bundle exec puma
 ```
 
+## Logging
+
+The SDK discards logs by default. To use Go's standard `log/slog` levels and
+route SDK logs with your application's logs, set `Config.Logger` with
+`lib.NewSlogLogger` before `Init`. Reuse your application's slog logger or
+create a handler:
+
+```go
+level := new(slog.LevelVar) // Info by default
+logger := slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: level}))
+config := files_sdk.Config{
+	APIKey: apiKey,
+	Logger: lib.NewSlogLogger(logger),
+}.Init()
+
+// Enable detailed diagnostics for subsequent SDK calls.
+level.Set(slog.LevelDebug)
+```
+
+The handler controls filtering and output routing. Changing a shared
+`slog.LevelVar` takes effect without replacing the configuration or retry
+client. Debug enables detailed API request and response diagnostics, which
+can include authentication headers, request and response bodies, and signed
+URLs. Unclassified `Printf` messages log at Info; the existing Trace level
+maps to standard slog Debug.
+
+Existing `Printf` loggers, `Config.Debug` and a nonempty `FILES_SDK_DEBUG`
+continue to work. Those switches enable diagnostics; a selected slog handler
+still filters the records it emits. If you also supply `Client.Logger`, its
+retry messages keep that separate sink.
+
 ## Sending File Content with a Request
 
 A parameter that takes a file, such as `avatar_file` when you create or update
@@ -1262,8 +1293,9 @@ read. The SDK does not close your reader, and each attachment can be sent once.
 
 ## Writing Files Through `file.FS`
 
-`file.FS` reads remote files through Go's `io/fs` interfaces. Its `Create`
-returns an `io.WriteCloser` for a remote file under the `FS`'s `Root`, where
+`file.FS` provides remote reads and directory listings through Go's `io/fs`
+interfaces, plus `Create`, `MkdirAll`, `Remove`, `RemoveAll` and `Chtimes`.
+`Create` returns an `io.WriteCloser` for a remote file under the `FS`'s `Root`, where
 `Open` finds it. The writer keeps what you write in a temporary file in
 `os.TempDir()`, so writing a file takes that much free disk space rather than
 memory, and it sends nothing until `Close`. `Close` uploads the temporary file
@@ -1311,9 +1343,56 @@ coordinated with that cache.
 `Create` used to return a `WritableFile`, which kept the whole file in memory.
 `WritableFile` is now deprecated and unchanged; a type assertion to it on
 `Create`'s result fails, so use the result as an `io.WriteCloser`. There is no
-append, seek, `WriteAt`, `OpenFile` or exclusive create. The other methods of
-`FS`, such as `ReadDir`, `MkdirAll` and `Remove`, are unchanged and use the
-paths they are given without `Root`.
+append, seek, `WriteAt`, `OpenFile` or exclusive create. `ReadDir`, `MkdirAll`,
+`Remove`, `RemoveAll` and `Chtimes` use the paths they are given without `Root`.
+
+`MkdirTemp` returns a `*fs.PathError` that satisfies
+`errors.Is(err, errors.ErrUnsupported)` before sending any request. The API
+cannot guarantee exclusive allocation of a new remote directory. Earlier
+versions treated the pattern as a literal path and accepted existing
+directories; the method now reports that unsupported allocation contract.
+
+## Native Filesystem Adapter
+
+Use `remote.Native()` for independent `io/fs` handles and a consistent relative
+path namespace. Its `Open`, `ReadDir`, `Create`, `MkdirAll`, `Remove`,
+`RemoveAll` and `Chtimes` apply the source `FS.Root` once. Names must satisfy
+`fs.ValidPath`; `.` names that root. Invalid names fail before requests or
+local staging. `WithContext(ctx)` returns an `fs.FS` read view using that
+context, including when SDK discovery binds its job context. To retain the
+mutation methods with a context, use
+`remote.WithContext(ctx).(*file.FS).Native()`.
+
+Each `Open` initializes its own reader and directory cursor without consulting
+the legacy handle caches. Closing a handle is terminal: later `Read`,
+`ReadDir`, `Stat` and `Close` return errors matching `fs.ErrClosed`.
+Operations on one handle serialize; `Close` marks the handle closed and
+cancels an in-flight request before settling and closing its body. The parent
+context still controls request cancellation. `NativeFS.ReadDir` sorts
+entries by name, while an opened directory's `ReadDir` retains server order
+and advances its cursor across calls. Copies of one handle share that cursor.
+
+`Create` uses the same disk-staged upload-on-`Close` writer described above,
+including its finalization and cleanup limits. `MkdirAll` creates only the
+requested relative suffix below `Root`, using the create result or a lookup
+to confirm directory type, and does not model Unix permission bits. `Root`
+selects API paths; the service controls remote path resolution and
+authorization. `Remove` and `RemoveAll` reject `.` before sending a delete.
+`RemoveAll` accepts a missing path only when the API identifies it as not found.
+`Chtimes` accepts a zero access time, leaving access time unchanged; a nonzero
+access time returns an error matching `errors.ErrUnsupported` before mutation.
+A zero modification time leaves it unchanged. When both times are zero,
+`Chtimes` verifies the path without updating metadata. `MkdirTemp` remains
+unsupported and sends no request.
+
+Closing a read handle before EOF closes its owned response without requiring
+full consumption of the remote file; actual body-close failures are retained.
+After EOF, the existing download-completion status verification still applies.
+
+The existing `FS` APIs retain their documented cached-handle, read-after-close
+and raw-path behavior. Calling `Native()` selects the adapter explicitly.
+The adapter exposes the interfaces and operations above; append, `Seek`,
+`WriteAt`, `OpenFile`, exclusive create and rename are not exposed.
 
 ## Lockout Region Mismatch
 

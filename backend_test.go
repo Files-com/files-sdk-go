@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -137,13 +138,19 @@ func TestCallLogsDebugResponseAndKeepsItsBody(t *testing.T) {
 		contentLength string
 		readErr       error
 		retried       bool
+		environment   bool
 	}{
 		"complete body":                        {},
 		"body shorter than its Content-Length": {contentLength: strconv.Itoa(len(body) + 10), readErr: io.ErrUnexpectedEOF},
 		"503 retried, then 200":                {retried: true},
+		"enabled by environment":               {environment: true},
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
+			t.Setenv("FILES_SDK_DEBUG", "")
+			if test.environment {
+				t.Setenv("FILES_SDK_DEBUG", "1")
+			}
 			var requests atomic.Int32
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if test.retried && requests.Add(1) == 1 {
@@ -165,7 +172,7 @@ func TestCallLogsDebugResponseAndKeepsItsBody(t *testing.T) {
 			var logged bytes.Buffer
 			config := Config{
 				APIKey:           "debug-log-fixture",
-				Debug:            true,
+				Debug:            !test.environment,
 				Logger:           log.New(&logged, "", 0),
 				EndpointOverride: server.URL,
 			}.Init()
@@ -199,6 +206,99 @@ func TestCallLogsDebugResponseAndKeepsItsBody(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCallUsesDynamicSlogLevelsAndKeepsCallerRetryLogger(t *testing.T) {
+	for _, retryLogger := range []string{"SDK default", "native slog", "SDK slog adapter"} {
+		t.Run(retryLogger, func(t *testing.T) {
+			t.Setenv("FILES_SDK_DEBUG", "")
+			var sdkLogs, retryLogs bytes.Buffer
+			var level slog.LevelVar
+			logger := slog.New(slog.NewJSONHandler(&sdkLogs, &slog.HandlerOptions{Level: &level})).With("sink", "sdk")
+			attempts := 0
+			const responseBody = `{"description":"slog-response-marker"}`
+			sites := &regionTestSites{handlers: map[string]func(*http.Request) (*http.Response, error){
+				"us.files.com": func(req *http.Request) (*http.Response, error) {
+					attempts++
+					if attempts%2 == 1 {
+						return regionTestAnswer(http.StatusServiceUnavailable, "application/json", `{"error":"slog-retried-response-marker"}`, nil)(req)
+					}
+					return regionTestAnswer(http.StatusOK, "application/json", responseBody, nil)(req)
+				},
+			}}
+			config := Config{
+				Logger:           lib.NewSlogLogger(logger),
+				EndpointOverride: "https://us.files.com",
+			}.Init().SetCustomClient(&http.Client{Transport: sites})
+			if retryLogger != "SDK default" {
+				native := slog.New(slog.NewJSONHandler(&retryLogs, &slog.HandlerOptions{Level: &level})).With("sink", "caller")
+				config.Client.Logger = native
+				if retryLogger == "SDK slog adapter" {
+					config.Client.Logger = lib.NewSlogLogger(native)
+				}
+			}
+			configuredClient, configuredLogger := config.Client, config.Client.Logger
+			for _, threshold := range []slog.Level{slog.LevelInfo, slog.LevelDebug, slog.LevelError} {
+				level.Set(threshold)
+				sdkLogs.Reset()
+				retryLogs.Reset()
+				data, response, err := Call(http.MethodPost, config, "/folders", lib.Params{Params: map[string]any{"path": "slog-request-marker"}})
+				require.NoError(t, err)
+				require.NoError(t, response.Body.Close())
+				assert.Equal(t, responseBody, string(*data), "logging preserves the API response")
+				for _, marker := range []string{"slog-request-marker", "slog-retried-response-marker", "slog-response-marker"} {
+					if threshold == slog.LevelDebug {
+						assert.Contains(t, sdkLogs.String(), marker, "the handler's Debug level enables full API diagnostics")
+					} else {
+						assert.NotContains(t, sdkLogs.String(), marker, "higher thresholds suppress Debug diagnostics")
+					}
+					assert.NotContains(t, retryLogs.String(), marker, "the caller's retry logger remains a separate sink")
+				}
+				assert.NotContains(t, sdkLogs.String()+retryLogs.String(), "%!")
+				assert.NotContains(t, sdkLogs.String()+retryLogs.String(), "!BADKEY")
+				assert.Same(t, configuredClient, config.Client)
+				if retryLogger != "SDK default" {
+					assert.Same(t, configuredLogger, config.Client.Logger)
+				}
+			}
+
+			sdkLogs.Reset()
+			retryLogs.Reset()
+			cause := errors.New("slog retry transport failure")
+			var failedAttempts atomic.Int32
+			config.Client.HTTPClient = &http.Client{Transport: retryLogTestTransport{attempts: &failedAttempts, err: cause}}
+			_, _, err := Call(http.MethodGet, config, "/folders", nil)
+			require.ErrorIs(t, err, cause)
+			assert.Equal(t, int32(4), failedAttempts.Load(), "the existing three retries are preserved")
+			failureLogs := &sdkLogs
+			if retryLogger != "SDK default" {
+				failureLogs = &retryLogs
+				assert.Empty(t, sdkLogs.String())
+				assert.Same(t, configuredLogger, config.Client.Logger)
+			}
+			assert.Contains(t, failureLogs.String(), `"level":"ERROR"`)
+			assert.Contains(t, failureLogs.String(), cause.Error())
+			assert.NotContains(t, failureLogs.String(), "%!")
+			assert.NotContains(t, failureLogs.String(), "!BADKEY")
+			config.Debug = true
+			assert.True(t, config.InDebug(), "the legacy Debug flag still enables diagnostics above the handler threshold")
+		})
+	}
+}
+
+func TestLogPathPreservesPercentCharactersAsData(t *testing.T) {
+	var output bytes.Buffer
+	config := Config{Logger: lib.NewSlogLogger(slog.New(slog.NewJSONHandler(&output, nil)))}.Init()
+	const path = "reports/100% complete/%s.csv"
+	const status = "50% remaining (%d parts)"
+	config.LogPath(path, map[string]interface{}{"status": status})
+
+	var record map[string]any
+	require.NoError(t, json.Unmarshal(output.Bytes(), &record))
+	assert.Equal(t, "INFO", record["level"])
+	assert.Contains(t, record["msg"], path)
+	assert.Contains(t, record["msg"], status)
+	assert.NotContains(t, record["msg"], "%!")
 }
 
 func TestCallRawSetsConfiguredUserAgent(t *testing.T) {

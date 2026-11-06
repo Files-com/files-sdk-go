@@ -60,20 +60,21 @@ type MockAPIServer struct {
 	router *gin.Engine
 	Addr   string
 	*httptest.Server
-	downloads             *lib.Map[download]
-	MockFiles             map[string]mockFile
-	customResponses       map[string]func(ctx *gin.Context, model interface{}) bool
-	ZipCreateRequests     [][]string
-	DownloadRequests      []string
-	ZipOmitPaths          map[string]bool
-	ZipCreateResponse     func(paths []string) (int, any, bool)
-	ZipDownloadMutator    func(attempt int, paths []string, body []byte) []byte
-	ZipDownloadBefore     func(attempt int, paths []string)
-	ZipDownloadDelay      func(attempt int, paths []string) time.Duration
-	ZipDownloadChunkDelay func(attempt int, paths []string) time.Duration
-	DownloadDelay         func(path string) time.Duration
-	zipDownloads          map[string][]string
-	zipDownloadCount      int
+	downloads              *lib.Map[download]
+	MockFiles              map[string]mockFile
+	customResponses        map[string]func(ctx *gin.Context, model interface{}) bool
+	ZipCreateRequests      [][]string
+	DownloadRequests       []string
+	DownloadRequestHeaders []http.Header
+	ZipOmitPaths           map[string]bool
+	ZipCreateResponse      func(paths []string) (int, any, bool)
+	ZipDownloadMutator     func(attempt int, paths []string, body []byte) []byte
+	ZipDownloadBefore      func(attempt int, paths []string)
+	ZipDownloadDelay       func(attempt int, paths []string) time.Duration
+	ZipDownloadChunkDelay  func(attempt int, paths []string) time.Duration
+	DownloadDelay          func(path string) time.Duration
+	zipDownloads           map[string][]string
+	zipDownloadCount       int
 	*testing.T
 	TrackRequest map[string][]string
 	traceMutex   *sync.Mutex
@@ -93,6 +94,7 @@ func (d download) init() download {
 type mockFile struct {
 	files_sdk.File
 	Data     []byte
+	ETag     string
 	RealSize *int64
 	SizeTrust
 	ForceRequestStatus  string
@@ -291,7 +293,16 @@ func (f *MockAPIServer) Routes() {
 		}
 		f.traceMutex.Lock()
 		f.DownloadRequests = append(f.DownloadRequests, downloadJob.File.Path)
+		f.DownloadRequestHeaders = append(f.DownloadRequestHeaders, c.Request.Header.Clone())
 		f.traceMutex.Unlock()
+
+		if downloadJob.ETag != "" {
+			c.Header("ETag", downloadJob.ETag)
+			if match := c.Request.Header.Get("If-Match"); match != "" && match != downloadJob.ETag {
+				c.Status(http.StatusPreconditionFailed)
+				return
+			}
+		}
 
 		if downloadJob.mockFile.MaxConnectionsMutex != nil {
 			downloadJob.mockFile.MaxConnectionsMutex.Lock()
@@ -307,6 +318,8 @@ func (f *MockAPIServer) Routes() {
 		if okRange {
 			if realSize < int64(start) {
 				reader = &randomReader{0}
+			} else if downloadJob.Data != nil {
+				reader = bytes.NewReader(downloadJob.Data[start:min(int64(end)+1, realSize)])
 			} else {
 				reader = &randomReader{(lo.Min[int]([]int{int(realSize - 1), end}) - start) + 1}
 			}

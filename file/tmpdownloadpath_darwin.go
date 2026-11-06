@@ -16,6 +16,13 @@ func explicitTmpDownload(path string) destinationPath {
 	return destinationPath{dir: filepath.Dir(folder), name: filepath.Join(filepath.Base(folder), filepath.Base(path))}
 }
 
+func preparePausedProofLegacy(entry destinationPath, base string) (destinationPath, error) {
+	if err := entry.mkdir(); err != nil {
+		return destinationPath{}, err
+	}
+	return entry.withName(filepath.Join(entry.name, base)), nil
+}
+
 // tmpDownloadPathOnNotExist creates a temporary download folder, a common
 // pattern on macOS, and returns the file, under its own name, inside it.
 func tmpDownloadPathOnNotExist(final destinationPath, tmp destinationPath) (destinationPath, error) {
@@ -39,6 +46,9 @@ func tmpDownloadEntry(tmp destinationPath) destinationPath {
 
 // tmpDownloadInEntry is the temporary download named base inside entry.
 func tmpDownloadInEntry(entry destinationPath, base string) destinationPath {
+	if isBoundPausedDownloadElement(entry.base()) {
+		return boundPausedDataIn(entry)
+	}
 	return entry.withName(filepath.Join(entry.name, base))
 }
 
@@ -65,6 +75,9 @@ func publishPausedTmpDownload(claimed destinationPath, tmp destinationPath, elem
 }
 
 func existingTmpDownloadFile(final destinationPath, tmp destinationPath) (destinationPath, bool) {
+	if isBoundPausedDownloadElement(tmp.base()) {
+		return existingBoundPausedData(tmp)
+	}
 	file := tmp.withName(filepath.Join(tmp.name, final.base()))
 	if _, err := file.stat(); err == nil {
 		return file, true
@@ -77,6 +90,9 @@ func existingTmpDownloadFile(final destinationPath, tmp destinationPath) (destin
 // and the folder must still be removed then, or a later run would find it
 // occupied and stage under an alternate name from then on.
 func removeTmpDownload(tmp destinationPath) error {
+	if _, bound := boundPausedDownloadContainer(tmp); bound {
+		return removeBoundTmpDownload(tmp)
+	}
 	if err := tmp.remove(); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}

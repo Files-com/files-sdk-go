@@ -2,6 +2,7 @@ package file
 
 import (
 	"bytes"
+	"fmt"
 	"io/fs"
 	"net/http"
 	"os"
@@ -241,20 +242,30 @@ func TestClient_Downloader_rejectsListingNameThatRedirectsWalk(t *testing.T) {
 func TestClient_Downloader_resumesExplicitTmpPathOutsideDestination(t *testing.T) {
 	root := t.TempDir()
 	elsewhere := t.TempDir()
-	server := (&MockAPIServer{T: t}).Do()
-	defer server.Shutdown()
-	client := server.Client()
+	server := newVersionDownloadFixture(t)
+	client := server.client()
 	fileSize := int64(19999999)
-	server.MockFiles["file.txt"] = mockFile{SizeTrust: TrustedSizeValue, File: files_sdk.File{Size: fileSize}}
 	partial := bytes.Repeat([]byte("x"), int(fileSize/2))
+	server.data = bytes.Repeat([]byte("y"), int(fileSize))
+	copy(server.data, partial)
 	tmpPath, err := tmpDownloadPath(explicitDestination(filepath.Join(elsewhere, "file.txt")), "")
 	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(tmpPath.String(), partial, 0644))
-	// A checkpoint names the file as the paused run reported it.
+	// A checkpoint names the file as the paused run reported it and retains
+	// the response version that makes its prefix safe to continue.
 	paused := parkStage(t, tmpPath)
 	localPath := filepath.Join(root, "file.txt")
+	checkpoint := &JobDownloadCheckpoint{Bindings: []DownloadBinding{{
+		Source:     downloadSource(&File{FS: &FS{Config: client.Config}}),
+		RemotePath: "remote.bin",
+		LocalPath:  checkpointLocalPath(localPath),
+		TmpPath:    checkpointLocalPath(paused.String()),
+		ETag:       `"original"`,
+		Total:      fileSize,
+		Prefix:     int64(len(partial)),
+	}}}
 
-	job := client.Downloader(DownloaderParams{RemotePath: "file.txt", LocalPath: localPath, ResumeTmpPath: paused.String()})
+	job := client.Downloader(DownloaderParams{RemotePath: "remote.bin", LocalPath: localPath, ResumeTmpPath: paused.String(), PriorJobCheckpoint: checkpoint})
 	job.Start()
 	job.Wait()
 
@@ -263,7 +274,22 @@ func TestClient_Downloader_resumesExplicitTmpPathOutsideDestination(t *testing.T
 	written, err := os.ReadFile(localPath)
 	require.NoError(t, err)
 	require.Len(t, written, int(fileSize))
-	assert.Equal(t, partial, written[:len(partial)], "the partial data in the explicit temp file must be kept")
+	assert.True(t, bytes.Equal(partial, written[:len(partial)]), "the partial data in the explicit temp file must be kept")
+	assert.True(t, bytes.Equal(server.data, written), "the complete file must match the version-bound source")
+	server.mu.Lock()
+	requests := append([]versionDownloadRequest(nil), server.requests...)
+	server.mu.Unlock()
+	require.NotEmpty(t, requests)
+	for index, request := range requests {
+		var start, end int64
+		_, err := fmt.Sscanf(request.ranges, "bytes=%d-%d", &start, &end)
+		require.NoError(t, err, "resume must request only the missing range")
+		if index == 0 {
+			assert.Equal(t, int64(len(partial)), start, "the first request must start immediately after the settled prefix")
+		}
+		assert.GreaterOrEqual(t, start, int64(len(partial)), "completed prefix bytes must not be downloaded again")
+		assert.Equal(t, `"original"`, request.match)
+	}
 	entries, err := os.ReadDir(elsewhere)
 	require.NoError(t, err)
 	assert.Empty(t, entries, "the explicit temp file must be cleaned up after finalization")

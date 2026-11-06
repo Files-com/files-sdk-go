@@ -31,6 +31,7 @@ func TestDownloadV2DirectFailureMovesRemainingRangesToProxy(t *testing.T) {
 	proxyRequests := atomic.Int32{}
 	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		proxyRequests.Add(1)
+		w.Header().Set("ETag", `"download-v1"`)
 		http.ServeContent(w, r, "download.bin", time.Time{}, bytes.NewReader(source))
 	}))
 	t.Cleanup(proxy.Close)

@@ -1,0 +1,452 @@
+package file
+
+import (
+	"bytes"
+	"context"
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"testing"
+	"time"
+
+	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/file/manager"
+	"github.com/Files-com/files-sdk-go/v3/file/status"
+	"github.com/stretchr/testify/require"
+)
+
+type versionDownloadRequest struct{ uri, ranges, match string }
+
+// boundStageCheckpoint is fixture data from a settled response: the stage's
+// bytes belong to this exact source version and destination.
+func boundStageCheckpoint(config files_sdk.Config, remote, local, tmp, etag string, total, prefix int64) *JobDownloadCheckpoint {
+	return &JobDownloadCheckpoint{Bindings: []DownloadBinding{{
+		Source:     downloadSource(&File{FS: &FS{Config: config}}),
+		RemotePath: remote,
+		LocalPath:  checkpointLocalPath(local),
+		TmpPath:    checkpointLocalPath(tmp),
+		ETag:       etag,
+		Total:      total,
+		Prefix:     prefix,
+	}}}
+}
+
+func waitForDownloadTestJob(t *testing.T, ctx context.Context, job *Job) {
+	t.Helper()
+	settled := make(chan struct{})
+	go func() { job.Wait(); close(settled) }()
+	select {
+	case <-settled:
+		require.NoError(t, ctx.Err(), "download test exceeded its deadline")
+	case <-ctx.Done():
+		job.Cancel()
+		select {
+		case <-settled:
+		case <-time.After(5 * time.Second):
+			t.Fatal("canceled download test did not settle within five seconds")
+		}
+		t.Fatalf("download test deadline exceeded: %v", ctx.Err())
+	}
+}
+
+type versionDownloadFixture struct {
+	mu                                            sync.Mutex
+	url                                           string
+	data                                          []byte
+	requests                                      []versionDownloadRequest
+	failed, expire, expired, changed, noValidator bool
+	alwaysShort                                   bool
+	ignoresRange                                  bool
+}
+
+func newVersionDownloadFixture(t *testing.T) *versionDownloadFixture {
+	f := &versionDownloadFixture{data: bytes.Repeat([]byte("a varied download payload\x00\xff"), (34<<20)/26+1)}
+	server := httptest.NewServer(http.HandlerFunc(f.serve))
+	t.Cleanup(server.Close)
+	f.url = server.URL
+	return f
+}
+
+func (f *versionDownloadFixture) serve(w http.ResponseWriter, req *http.Request) {
+	f.mu.Lock()
+	if strings.HasPrefix(req.URL.Path, "/api/") {
+		uri := f.url + "/transfer"
+		if f.expired {
+			uri = f.url + "/fresh"
+		}
+		f.mu.Unlock()
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"path": "remote.bin", "display_name": "remote.bin", "type": "file", "size": len(f.data), "download_uri": uri})
+		return
+	}
+	ranges := req.Header.Get("Range")
+	f.requests = append(f.requests, versionDownloadRequest{uri: req.URL.Path, ranges: ranges, match: req.Header.Get("If-Match")})
+	if f.ignoresRange {
+		ranges = ""
+	}
+	if f.expired && req.URL.Path != "/fresh" {
+		f.mu.Unlock()
+		w.WriteHeader(403)
+		return
+	}
+	start, end := int64(0), int64(len(f.data)-1)
+	if ranges != "" {
+		_, _ = fmt.Sscanf(ranges, "bytes=%d-%d", &start, &end)
+		end = min(end, int64(len(f.data)-1))
+	}
+	drop := ranges != "" && !f.noValidator && (f.alwaysShort || start == 0 && !f.failed)
+	if drop {
+		f.failed = true
+		f.expired = f.expire
+	}
+	etag := `"original"`
+	if f.changed && start > 0 {
+		etag = `"replacement"`
+	}
+	noValidator := f.noValidator
+	f.mu.Unlock()
+	if !noValidator {
+		w.Header().Set("ETag", etag)
+	}
+	w.Header().Set("Content-Length", strconv.FormatInt(end-start+1, 10))
+	if ranges != "" {
+		w.Header().Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", start, end, len(f.data)))
+		w.WriteHeader(206)
+	}
+	if drop {
+		end = start + (1 << 20) - 1
+	}
+	_, _ = w.Write(f.data[start : end+1])
+}
+
+func (f *versionDownloadFixture) client() *Client {
+	return &Client{Config: files_sdk.Config{EndpointOverride: f.url, DisableDirectTransfers: true}.Init()}
+}
+
+func (f *versionDownloadFixture) run(t *testing.T, adaptive bool) (*Job, string) {
+	dest := filepath.Join(t.TempDir(), "out.bin")
+	job := f.client().Downloader(DownloaderParams{RemotePath: "remote.bin", LocalPath: dest, Manager: manager.Build(2, 1, false), AdaptiveConcurrency: adaptive})
+	job.Start()
+	job.Wait()
+	require.Len(t, job.Statuses, 1)
+	return job, dest
+}
+
+func TestDownloaderResumesTheFirstUnreceivedByteWithItsVersion(t *testing.T) {
+	for _, adaptive := range []bool{false, true} {
+		for _, renew := range []bool{false, true} {
+			t.Run(fmt.Sprintf("adaptive=%v/renew=%v", adaptive, renew), func(t *testing.T) {
+				f := newVersionDownloadFixture(t)
+				f.expire = renew
+				job, dest := f.run(t, adaptive)
+				require.NoError(t, job.Statuses[0].Err())
+				out, err := os.ReadFile(dest)
+				require.NoError(t, err)
+				require.Equal(t, sha256.Sum256(f.data), sha256.Sum256(out))
+				f.mu.Lock()
+				requests := append([]versionDownloadRequest(nil), f.requests...)
+				f.mu.Unlock()
+				resumed := false
+				for _, req := range requests {
+					if strings.HasPrefix(req.ranges, "bytes=1048576-") && req.match == `"original"` && (!renew || req.uri == "/fresh") {
+						resumed = true
+					}
+				}
+				require.True(t, resumed, "requests: %v", requests)
+			})
+		}
+	}
+}
+
+func TestDownloaderRejectsSameSizeRangeReplacement(t *testing.T) {
+	for _, adaptive := range []bool{false, true} {
+		t.Run(fmt.Sprint(adaptive), func(t *testing.T) {
+			f := newVersionDownloadFixture(t)
+			f.changed = true
+			job, dest := f.run(t, adaptive)
+			require.ErrorIs(t, job.Statuses[0].Err(), files_sdk.ErrDownloadSourceChanged)
+			_, err := os.Stat(dest)
+			require.True(t, os.IsNotExist(err))
+		})
+	}
+}
+
+func TestVersionBoundRangeContinuationUsesOneFiniteAttemptAllowance(t *testing.T) {
+	for _, attempts := range []int{downloadV2RetryAttempts, legacyDownloadRangeAttempts} {
+		t.Run(fmt.Sprint(attempts), func(t *testing.T) {
+			f := newVersionDownloadFixture(t)
+			f.alwaysShort = true
+			remote := (&File{File: &files_sdk.File{Path: "remote.bin", DownloadUri: f.url + "/transfer"}, FS: (&FS{Context: context.Background()}).Init(f.client().Config, false)}).Init()
+			reader, _, err := remote.openDownloadRange(context.Background(), 0, (6<<20)-1, attempts)
+			require.NoError(t, err)
+			_, err = io.Copy(io.Discard, reader)
+			require.ErrorIs(t, err, io.ErrUnexpectedEOF)
+			_ = reader.Close()
+			f.mu.Lock()
+			defer f.mu.Unlock()
+			require.Len(t, f.requests, attempts)
+			for index, request := range f.requests {
+				require.Equal(t, fmt.Sprintf("bytes=%d-%d", index*(1<<20), (6<<20)-1), request.ranges)
+			}
+		})
+	}
+}
+
+func TestDownloaderUsesAWholeResponseWithoutAVersionProof(t *testing.T) {
+	f := newVersionDownloadFixture(t)
+	f.noValidator = true
+	job, dest := f.run(t, true)
+	require.NoError(t, job.Statuses[0].Err())
+	out, err := os.ReadFile(dest)
+	require.NoError(t, err)
+	require.Equal(t, sha256.Sum256(f.data), sha256.Sum256(out))
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	require.Len(t, f.requests, 2)
+	require.NotEmpty(t, f.requests[0].ranges)
+	require.Empty(t, f.requests[1].ranges)
+}
+
+func TestDownloadRejectsFrontendBeforeRetryRedirectAndBodyCallbacks(t *testing.T) {
+	for _, code := range []int{200, 302, 503} {
+		t.Run(fmt.Sprint(code), func(t *testing.T) {
+			body := &ownedHTTPResponseBody{Reader: strings.NewReader("frontend page")}
+			config := ownedResponseConfig(body, code, http.Header{"X-Files-Frontend-App": nil, "Location": []string{"https://download.test/other"}})
+			var callbacks, requests int
+			original := config.Client.HTTPClient.Transport
+			config.Client.HTTPClient.Transport = ownedHTTPResponseTransport(func(req *http.Request) (*http.Response, error) { requests++; return original.RoundTrip(req) })
+			config.Client.CheckRetry = func(_ context.Context, res *http.Response, _ error) (bool, error) {
+				if res != nil {
+					_, _ = io.ReadAll(res.Body)
+				}
+				return true, nil
+			}
+			config.Client.ErrorHandler = func(_ *http.Response, _ error, _ int) (*http.Response, error) {
+				return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader("masked"))}, nil
+			}
+			_, err := (&Client{Config: config}).Download(files_sdk.FileDownloadParams{File: files_sdk.File{Path: "file", DownloadUri: "https://download.test/file"}}, files_sdk.ResponseBodyOption(func(io.ReadCloser) error { callbacks++; return nil }))
+			require.ErrorIs(t, err, errDownloadFrontend)
+			require.Equal(t, 0, callbacks)
+			require.Equal(t, 1, requests)
+			require.Equal(t, 1, body.closes)
+		})
+	}
+}
+
+func TestDownloadRenewsWhenRetryAfterCrossesExpiry(t *testing.T) {
+	var stale, fresh, metadata, prepare atomic.Int64
+	var url string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasPrefix(r.URL.Path, "/api/"):
+			metadata.Add(1)
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{"path": "file", "download_uri": url + "/fresh"})
+		case r.URL.Path == "/stale":
+			stale.Add(1)
+			w.Header().Set("Retry-After", "3")
+			w.WriteHeader(503)
+		default:
+			fresh.Add(1)
+			_, _ = io.WriteString(w, "file bytes")
+		}
+	}))
+	defer server.Close()
+	url = server.URL
+	config := files_sdk.Config{EndpointOverride: url, DisableDirectTransfers: true}.Init().SetCustomClient(server.Client())
+	config.PrepareRetry = func(*http.Request) error { prepare.Add(1); return nil }
+	client, transport := config.Client, config.HTTPClient.Transport
+	expires := time.Now().Add(2 * time.Second).UTC().Format("20060102T150405Z")
+	var output []byte
+	_, err := (&Client{Config: config}).Download(files_sdk.FileDownloadParams{File: files_sdk.File{Path: "file", DownloadUri: url + "/stale?X-Files-Date=" + expires}}, files_sdk.ResponseBodyOption(func(body io.ReadCloser) error {
+		defer body.Close()
+		var err error
+		output, err = io.ReadAll(body)
+		return err
+	}))
+	require.NoError(t, err)
+	require.Equal(t, "file bytes", string(output))
+	require.EqualValues(t, 1, stale.Load())
+	require.EqualValues(t, 1, fresh.Load())
+	require.EqualValues(t, 1, metadata.Load())
+	require.EqualValues(t, 1, prepare.Load())
+	require.Same(t, client, config.Client)
+	require.Equal(t, transport, config.HTTPClient.Transport)
+}
+
+func TestDownloadFrontendDirectResponseDoesNotFallBackToProxy(t *testing.T) {
+	// An empty header must still be carried over HTTP.
+	info := testDirectTransferInfo(t, "/download", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("X-Files-Frontend-App", "")
+		_, _ = io.WriteString(w, "frontend")
+	}))
+	var proxyCalls, callbacks int
+	proxy := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { proxyCalls++; _, _ = io.WriteString(w, "proxy") }))
+	defer proxy.Close()
+	client := &Client{Config: files_sdk.Config{EndpointOverride: proxy.URL, Environment: files_sdk.Development}.Init()}
+	_, err := client.Download(files_sdk.FileDownloadParams{File: files_sdk.File{Path: "file", DownloadUri: proxy.URL + "/download", DirectConnectionInfo: info}}, files_sdk.ResponseBodyOption(func(io.ReadCloser) error { callbacks++; return nil }))
+	require.ErrorIs(t, err, errDownloadFrontend)
+	require.Zero(t, proxyCalls)
+	require.Zero(t, callbacks)
+}
+
+func TestFileReadRenewalStopsAfterOneForbiddenResponseRefresh(t *testing.T) {
+	for _, operation := range []string{"range", "read-at"} {
+		t.Run(operation, func(t *testing.T) {
+			var transfers, metadata int
+			config := files_sdk.Config{EndpointOverride: "https://api.test", DisableDirectTransfers: true}.Init().SetCustomClient(&http.Client{Transport: ownedHTTPResponseTransport(func(req *http.Request) (*http.Response, error) {
+				code, payload, contentType := 403, "forbidden", "text/plain"
+				if req.URL.Host == "api.test" {
+					metadata++
+					code, payload, contentType = 200, `{"path":"file","download_uri":"https://download.test/fresh"}`, "application/json"
+				} else {
+					transfers++
+				}
+				return &http.Response{StatusCode: code, Header: http.Header{"Content-Type": []string{contentType}}, Body: io.NopCloser(strings.NewReader(payload)), ContentLength: int64(len(payload)), Request: req}, nil
+			})})
+			file := (&File{File: &files_sdk.File{Path: "file", DownloadUri: "https://download.test/stale"}, FS: (&FS{Context: context.Background()}).Init(config, false)}).Init()
+			var err error
+			if operation == "range" {
+				_, err = file.ReaderRange(0, 2)
+			} else {
+				_, err = file.ReadAt(make([]byte, 3), 0)
+			}
+			require.Error(t, err)
+			require.Equal(t, 2, transfers)
+			require.Equal(t, 1, metadata)
+		})
+	}
+}
+
+func TestDownloadNeverSendsAnUnchangedExpiredRenewal(t *testing.T) {
+	uri := "https://download.test/file?X-Files-Date=20000101T000000Z"
+	var metadata, transfers, callbacks int
+	config := files_sdk.Config{EndpointOverride: "https://api.test", DisableDirectTransfers: true}.Init().SetCustomClient(&http.Client{Transport: ownedHTTPResponseTransport(func(req *http.Request) (*http.Response, error) {
+		if req.URL.Host != "api.test" {
+			transfers++
+		}
+		metadata++
+		payload, _ := json.Marshal(map[string]any{"path": "file", "download_uri": uri})
+		return &http.Response{StatusCode: 200, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(bytes.NewReader(payload)), ContentLength: int64(len(payload)), Request: req}, nil
+	})})
+	_, err := (&Client{Config: config}).Download(files_sdk.FileDownloadParams{File: files_sdk.File{Path: "file", DownloadUri: uri}}, files_sdk.ResponseBodyOption(func(io.ReadCloser) error { callbacks++; return nil }))
+	require.ErrorIs(t, err, errDownloadURLExpired)
+	require.Equal(t, 1, metadata)
+	require.Zero(t, transfers)
+	require.Zero(t, callbacks)
+}
+
+func TestOldCompleteHTTPCheckpointRestartsFromZero(t *testing.T) {
+	f := newVersionDownloadFixture(t)
+	f.data = bytes.Repeat([]byte("new"), 1<<18)
+	dest := explicitDestination(filepath.Join(t.TempDir(), "out.bin"))
+	tmp, err := tmpDownloadPath(dest, "")
+	require.NoError(t, err)
+	file, err := tmp.create()
+	require.NoError(t, err)
+	_, err = file.Write(bytes.Repeat([]byte("old"), 1<<18))
+	require.NoError(t, err)
+	identity, err := file.Stat()
+	require.NoError(t, err)
+	require.NoError(t, file.Close())
+	paused, err := parkTmpDownload(tmp, identity)
+	require.NoError(t, err)
+	job := f.client().Downloader(DownloaderParams{RemotePath: "remote.bin", LocalPath: dest.String(), ResumeTmpPath: paused.String(), PriorJobCheckpoint: &JobDownloadCheckpoint{}, Manager: manager.Build(1, 1, true)})
+	job.Start()
+	job.Wait()
+	require.NoError(t, job.Statuses[0].Err())
+	out, err := os.ReadFile(dest.String())
+	require.NoError(t, err)
+	require.Equal(t, f.data, out)
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	require.Len(t, f.requests, 1)
+	require.Empty(t, f.requests[0].ranges)
+}
+
+func TestHTTPPauseCheckpointRetainsItsVersion(t *testing.T) {
+	const size, prefix = 4 << 20, (1 << 20) + 12345
+	data := bytes.Repeat([]byte("x"), size)
+	holding := make(chan struct{})
+	var once sync.Once
+	var mu sync.Mutex
+	var requests []versionDownloadRequest
+	var url string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/api/") {
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{"path": "remote.bin", "display_name": "remote.bin", "type": "file", "size": size, "download_uri": url + "/transfer"})
+			return
+		}
+		mu.Lock()
+		requests = append(requests, versionDownloadRequest{ranges: r.Header.Get("Range"), match: r.Header.Get("If-Match")})
+		hold := len(requests) == 1
+		mu.Unlock()
+		start := int64(0)
+		end := int64(size - 1)
+		if r.Header.Get("Range") != "" {
+			_, _ = fmt.Sscanf(r.Header.Get("Range"), "bytes=%d-%d", &start, &end)
+			w.Header().Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", start, end, size))
+		}
+		w.Header().Set("ETag", `"paused"`)
+		w.Header().Set("Content-Length", strconv.FormatInt(end-start+1, 10))
+		if r.Header.Get("Range") != "" {
+			w.WriteHeader(206)
+			_, _ = w.Write(data[start : end+1])
+			return
+		}
+		if !hold {
+			_, _ = w.Write(data)
+			return
+		}
+		_, _ = w.Write(data[:prefix])
+		w.(http.Flusher).Flush()
+		once.Do(func() { close(holding) })
+		<-r.Context().Done()
+	}))
+	defer server.Close()
+	url = server.URL
+	client := &Client{Config: files_sdk.Config{EndpointOverride: url, DisableDirectTransfers: true}.Init()}
+	dest := filepath.Join(t.TempDir(), "out.bin")
+	testCtx, stopTest := context.WithTimeout(context.Background(), 30*time.Second)
+	defer stopTest()
+	ctx, cancel := context.WithCancelCause(testCtx)
+	defer cancel(nil)
+	params := DownloaderParams{RemotePath: "remote.bin", LocalPath: dest, Manager: manager.Build(1, 1, true)}
+	job := client.Downloader(params, files_sdk.WithContext(ctx))
+	job.Start()
+	select {
+	case <-holding:
+	case <-time.After(5 * time.Second):
+		t.Fatal("download did not reach the pause boundary")
+	}
+	require.Eventually(t, func() bool { return job.TransferBytes() == prefix }, 5*time.Second, time.Millisecond)
+	cancel(ErrJobPaused)
+	waitForDownloadTestJob(t, testCtx, job)
+	checkpoint := job.DownloadCheckpoint()
+	require.Len(t, checkpoint.Bindings, 1)
+	require.EqualValues(t, prefix, checkpoint.Bindings[0].Prefix)
+	params.PriorJobCheckpoint = checkpoint
+	require.NotNil(t, ToStatusFile(job.Statuses[0]).DownloadBinding)
+	resumed := client.Downloader(params, files_sdk.WithContext(testCtx))
+	resumed.Start()
+	waitForDownloadTestJob(t, testCtx, resumed)
+	require.Equal(t, 1, resumed.Count(status.Complete))
+	out, err := os.ReadFile(dest)
+	require.NoError(t, err)
+	require.Equal(t, data, out)
+	mu.Lock()
+	defer mu.Unlock()
+	require.Len(t, requests, 2)
+	require.Equal(t, fmt.Sprintf("bytes=%d-%d", prefix, size-1), requests[1].ranges)
+	require.Equal(t, `"paused"`, requests[1].match)
+}

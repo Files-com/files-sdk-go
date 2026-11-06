@@ -2,6 +2,7 @@ package file
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -356,10 +357,9 @@ func TestClient_Downloader_sharedTempPathKeepsEachDestinationsStage(t *testing.T
 			// A stage that is the size of the file is published without
 			// fetching anything, so it has to be the right file's stage.
 			{name: "complete-sized stage", staged: owner},
-			// The stage's bytes become the first bytes of whatever continues
-			// from it. They are distinct from the file's real bytes, which is
-			// how the owner is shown to have continued from its stage below.
-			{name: "partial stage", staged: bytes.Repeat([]byte("STAGED;"), 200)},
+			// A bound prefix holds the owner's bytes. The request position and
+			// validator below distinguish continuing it from a whole restart.
+			{name: "partial stage", staged: owner[:7*200]},
 		} {
 			t.Run(layout.name+", "+stage.name, func(t *testing.T) {
 				root, secondRoot, temp := t.TempDir(), t.TempDir(), t.TempDir()
@@ -367,13 +367,21 @@ func TestClient_Downloader_sharedTempPathKeepsEachDestinationsStage(t *testing.T
 				defer server.Shutdown()
 				mockFolder(server, "reports/a", map[string][]byte{"x.bin": owner})
 				mockFolder(server, "reports/b", map[string][]byte{"x.bin": other})
+				ownerFile := server.MockFiles["reports/a/x.bin"]
+				ownerFile.ETag = `"owner"`
+				server.MockFiles["reports/a/x.bin"] = ownerFile
 				ownerFinal := destinationPath{dir: root, name: filepath.Join("a", "x.bin")}
 				otherFinal := layout.otherFinal(root, secondRoot)
 				staged := stageWithContentIn(t, ownerFinal, temp, string(stage.staged))
 
 				download := func(remote string, final destinationPath) []byte {
 					t.Helper()
-					job := server.Client().Downloader(DownloaderParams{RemotePath: remote, LocalPath: final.String(), TempPath: temp})
+					client := server.Client()
+					var checkpoint *JobDownloadCheckpoint
+					if remote == "reports/a/x.bin" {
+						checkpoint = boundStageCheckpoint(client.Config, remote, final.String(), staged.String(), `"owner"`, int64(len(owner)), int64(len(stage.staged)))
+					}
+					job := client.Downloader(DownloaderParams{RemotePath: remote, LocalPath: final.String(), TempPath: temp, PriorJobCheckpoint: checkpoint})
 					job.Start()
 					job.Wait()
 					require.Len(t, job.Statuses, 1)
@@ -384,17 +392,26 @@ func TestClient_Downloader_sharedTempPathKeepsEachDestinationsStage(t *testing.T
 					return delivered
 				}
 
-				assert.Equal(t, other, download("reports/b/x.bin", otherFinal), "the other file must be delivered with its own bytes")
+				assert.True(t, bytes.Equal(other, download("reports/b/x.bin", otherFinal)), "the other file must be delivered with its own bytes")
 				kept, err := os.ReadFile(staged.String())
 				require.NoError(t, err, "the owner's stage must still be there")
-				assert.Equal(t, stage.staged, kept, "the owner's stage must be left as it was")
+				assert.True(t, bytes.Equal(stage.staged, kept), "the owner's stage must be left as it was")
 
 				fetched := len(server.DownloadRequests)
 				delivered := download("reports/a/x.bin", ownerFinal)
 				require.Len(t, delivered, len(owner))
-				assert.Equal(t, stage.staged, delivered[:len(stage.staged)], "the owner must continue from its stage")
+				assert.True(t, bytes.Equal(stage.staged, delivered[:len(stage.staged)]), "the owner must continue from its stage")
+				assert.True(t, bytes.Equal(owner, delivered), "the complete owner file must retain its exact bytes")
 				if len(stage.staged) == len(owner) {
 					assert.Equal(t, fetched, len(server.DownloadRequests), "a complete stage is published without fetching")
+				} else {
+					require.Greater(t, len(server.DownloadRequestHeaders), fetched)
+					header := server.DownloadRequestHeaders[fetched]
+					var start, end int64
+					_, err := fmt.Sscanf(header.Get("Range"), "bytes=%d-%d", &start, &end)
+					require.NoError(t, err)
+					assert.Equal(t, int64(len(stage.staged)), start, "the owner resumes at the first unreceived byte")
+					assert.Equal(t, `"owner"`, header.Get("If-Match"))
 				}
 				assert.NoFileExists(t, staged.String(), "a published stage is removed")
 			})

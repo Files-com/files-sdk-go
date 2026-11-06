@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
@@ -305,10 +306,12 @@ func TestClient_Downloader(t *testing.T) {
 		defer server.Shutdown()
 		client := server.Client()
 		serverBytesSent := int64((1024 * 1024 * 5) + 256)
+		realSize := int64(5 * 1024 * 1024)
 		server.MockFiles["large-file-with-no-size.txt"] = mockFile{
 			SizeTrust:       UntrustedSizeValue,
 			File:            files_sdk.File{Size: 1024 * 1024 * 15},
 			ServerBytesSent: &serverBytesSent,
+			RealSize:        &realSize,
 		}
 
 		job := client.Downloader(DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
@@ -327,10 +330,12 @@ expected 5243136 bytes sent 5242880 received`)
 		defer server.Shutdown()
 		client := server.Client()
 		serverBytesSent := int64(1024 * 1024 * 4)
+		realSize := int64(5 * 1024 * 1024)
 		server.MockFiles["large-file-with-no-size.txt"] = mockFile{
 			SizeTrust:       UntrustedSizeValue,
 			File:            files_sdk.File{Size: 1024 * 1024 * 15},
 			ServerBytesSent: &serverBytesSent,
+			RealSize:        &realSize,
 		}
 
 		job := client.Downloader(DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/"})
@@ -388,26 +393,6 @@ expected 4194304 bytes sent 5242880 received`)
 		)
 
 		job := client.Downloader(DownloaderParams{RemotePath: "large-file-with-no-size.txt", LocalPath: root + "/", EventsReporter: eventReporter})
-		transferBytes := []string{"zero"}
-		wait := make(chan bool)
-		go func() {
-			for {
-				select {
-				case <-job.Finished.C:
-					wait <- true
-					return
-				default:
-					bytes := job.TransferBytes()
-					if bytes > 0 && transferBytes[len(transferBytes)-1] == "zero" {
-						transferBytes = append(transferBytes, "bytes")
-					}
-					if bytes == 0 && transferBytes[len(transferBytes)-1] != "zero" {
-						transferBytes = append(transferBytes, "zero")
-					}
-				}
-			}
-		}()
-
 		job.Start()
 		job.Wait()
 		assert.Len(t, job.Statuses, 1)
@@ -415,9 +400,16 @@ expected 4194304 bytes sent 5242880 received`)
 expected 4194304 bytes sent 5242880 received`)
 		assert.Equal(t, []int64{0, 32768, 0}, lo.Map[JobFile, int64](events, func(item JobFile, index int) int64 { return item.TransferBytes }))
 		assert.Equal(t, []string{"queued", "downloading", "errored"}, lo.Map[JobFile, string](events, func(item JobFile, index int) string { return item.StatusName }))
-		<-wait
-		assert.GreaterOrEqual(t, lo.Count[string](transferBytes, "zero"), 2, "After error transfer bytes are set to zero")
-		assert.GreaterOrEqual(t, lo.Count[string](transferBytes, "bytes"), 2, "After error transfer bytes are set to zero")
+		assert.Zero(t, job.TransferBytes(), "a failed whole response rolls back its transferred bytes")
+		server.traceMutex.Lock()
+		headers := append([]http.Header(nil), server.DownloadRequestHeaders...)
+		requests := append([]string(nil), server.DownloadRequests...)
+		server.traceMutex.Unlock()
+		require.Len(t, headers, 2, "one rejected range probe is followed by one whole response")
+		assert.NotEmpty(t, headers[0].Get("Range"))
+		assert.Empty(t, headers[1].Get("Range"), "the failed whole response is not replayed")
+		assert.Equal(t, []string{"large-file-with-no-size.txt", "large-file-with-no-size.txt"}, requests)
+		assert.NoFileExists(t, filepath.Join(root, "large-file-with-no-size.txt"))
 	})
 
 	t.Run("small file with no size - when server has failed request status", func(t *testing.T) {
@@ -1491,15 +1483,18 @@ func TestDownloadPauseResume(t *testing.T) {
 		defer server.Shutdown()
 		client := server.Client()
 		fileSize := int64(19999999)
-		server.MockFiles["file.txt"] = mockFile{SizeTrust: TrustedSizeValue, File: files_sdk.File{Size: fileSize}}
 
 		localPath := filepath.Join(root, "file.txt")
 		// Recognizable bytes, so keeping them can be told apart from starting
 		// the whole file again, which would also end at the right size.
 		alreadyDownloaded := bytes.Repeat([]byte("P"), int(fileSize/2))
-		writePausedTmpFile(t, localPath, alreadyDownloaded)
+		data := bytes.Repeat([]byte("S"), int(fileSize))
+		copy(data, alreadyDownloaded)
+		server.MockFiles["file.txt"] = mockFile{SizeTrust: TrustedSizeValue, Data: data, ETag: `"paused"`, File: files_sdk.File{Size: fileSize}}
+		paused := writePausedTmpFile(t, localPath, alreadyDownloaded)
+		checkpoint := boundStageCheckpoint(client.Config, "file.txt", localPath, paused, `"paused"`, fileSize, int64(len(alreadyDownloaded)))
 
-		job := client.Downloader(DownloaderParams{RemotePath: "file.txt", LocalPath: localPath})
+		job := client.Downloader(DownloaderParams{RemotePath: "file.txt", LocalPath: localPath, PriorJobCheckpoint: checkpoint})
 		job.Start()
 		job.Wait()
 
@@ -1507,8 +1502,15 @@ func TestDownloadPauseResume(t *testing.T) {
 		delivered, err := os.ReadFile(localPath)
 		require.NoError(t, err)
 		require.Len(t, delivered, int(fileSize))
-		assert.Equal(t, alreadyDownloaded, delivered[:len(alreadyDownloaded)], "the bytes already on disk must be kept")
+		assert.True(t, bytes.Equal(alreadyDownloaded, delivered[:len(alreadyDownloaded)]), "the bytes already on disk must be kept")
+		assert.True(t, bytes.Equal(data, delivered), "the complete file must match the version-bound source")
 		assert.NotEmpty(t, server.DownloadRequests, "the rest of the file must still be fetched")
+		require.NotEmpty(t, server.DownloadRequestHeaders)
+		var start, end int64
+		_, err = fmt.Sscanf(server.DownloadRequestHeaders[0].Get("Range"), "bytes=%d-%d", &start, &end)
+		require.NoError(t, err)
+		assert.Equal(t, int64(len(alreadyDownloaded)), start, "the first request starts at the first unreceived byte")
+		assert.Equal(t, `"paused"`, server.DownloadRequestHeaders[0].Get("If-Match"))
 	})
 
 	t.Run("a complete temp file finishes without asking for content", func(t *testing.T) {
@@ -1521,13 +1523,15 @@ func TestDownloadPauseResume(t *testing.T) {
 			SizeTrust: TrustedSizeValue,
 			// Different content of the same size: asking for it would show.
 			Data: bytes.Repeat([]byte("S"), len(alreadyDownloaded)),
+			ETag: `"replacement"`,
 			File: files_sdk.File{Size: int64(len(alreadyDownloaded))},
 		}
 
 		localPath := filepath.Join(root, "file.txt")
-		writePausedTmpFile(t, localPath, alreadyDownloaded)
+		paused := writePausedTmpFile(t, localPath, alreadyDownloaded)
+		checkpoint := boundStageCheckpoint(client.Config, "file.txt", localPath, paused, `"paused"`, int64(len(alreadyDownloaded)), int64(len(alreadyDownloaded)))
 
-		job := client.Downloader(DownloaderParams{RemotePath: "file.txt", LocalPath: localPath})
+		job := client.Downloader(DownloaderParams{RemotePath: "file.txt", LocalPath: localPath, PriorJobCheckpoint: checkpoint})
 		job.Start()
 		job.Wait()
 
@@ -1535,7 +1539,7 @@ func TestDownloadPauseResume(t *testing.T) {
 		assert.Equal(t, status.Complete, job.Statuses[0].Status())
 		delivered, err := os.ReadFile(localPath)
 		require.NoError(t, err)
-		assert.Equal(t, alreadyDownloaded, delivered)
+		assert.True(t, bytes.Equal(alreadyDownloaded, delivered), "the known complete version must be published unchanged")
 		assert.Empty(t, server.DownloadRequests, "a complete temp file needs no content request")
 	})
 }

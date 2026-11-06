@@ -25,6 +25,8 @@ func init() {
 const (
 	DownloadPartChunkSize = int64(1024 * 1024 * 5)
 	DownloadPartLimit     = 15
+	// The legacy queue permits the initial attempt and three retries.
+	legacyDownloadRangeAttempts = 4
 )
 
 type DownloadParts struct {
@@ -96,6 +98,12 @@ func (d *DownloadParts) Run(ctx context.Context) (err error) {
 }
 
 func (d *DownloadParts) downloadFileCutOff() bool {
+	if file, ok := d.File.(*File); ok {
+		_, _, whole := file.representation.snapshot()
+		if whole {
+			return true
+		}
+	}
 	// Don't break up file if running part serially.
 	if d.fileManager.Cap() == 1 || d.globalWait.DownloadFilesAsSingleStream {
 		return true
@@ -119,6 +127,10 @@ func (d *DownloadParts) FinalSize() int64 {
 func (d *DownloadParts) contiguousSize() int64 {
 	size := d.startOffset
 	for _, part := range d.parts {
+		if _, httpFile := d.File.(*File); httpFile && part.off == size && errors.Is(context.Cause(d.Context), ErrJobPaused) && stoppedForPauseOnly(part.Err()) {
+			size += part.bytes
+			break
+		}
 		if part.off != size || !part.Successful() {
 			break
 		}
@@ -197,10 +209,12 @@ func (d *DownloadParts) waitForParts() error {
 	var err error
 	for i := range d.parts {
 		part := <-d.finishedParts
-		if part.Err() != nil && !errors.Is(part.Err(), context.Canceled) {
+		if part.Err() != nil && (!errors.Is(part.Err(), context.Canceled) || errors.Is(part.Err(), errDownloadRangeClose) || downloadSourceChanged(part.Err())) {
 			// A source change rejects the whole download request; keep it as the
 			// reported error so the file restarts from a new request.
-			if err == nil || !downloadSourceChanged(err) {
+			if errors.Is(err, errDownloadRangeClose) || errors.Is(part.Err(), errDownloadRangeClose) {
+				err = errors.Join(err, part.Err())
+			} else if err == nil || !downloadSourceChanged(err) {
 				err = part.Err()
 			}
 		}
@@ -388,7 +402,13 @@ func (d *DownloadParts) processRanger(part *Part, ranger ReaderRange, Unexpected
 		defer partCancel()
 		ranger = withContext.WithContext(partCtx).(ReaderRange)
 	}
-	r, err := ranger.ReaderRange(part.off, part.len+part.off-1)
+	var r io.ReadCloser
+	var err error
+	if file, ok := ranger.(*File); ok {
+		r, _, err = file.openDownloadRange(file.Context, part.off, part.len+part.off-1, legacyDownloadRangeAttempts)
+	} else {
+		r, err = ranger.ReaderRange(part.off, part.len+part.off-1)
+	}
 	if d.requeueOnError(part, err, UnexpectedEOF) {
 		return
 	}
@@ -406,7 +426,7 @@ func (d *DownloadParts) processRanger(part *Part, ranger ReaderRange, Unexpected
 		d.RWMutex.Unlock()
 	}
 
-	wn, err := lib.CopyAt(d.WriterAndAt, part.off, r)
+	wn, copyErr := lib.CopyAt(d.WriterAndAt, part.off, r)
 	part.bytes = wn
 
 	part.SetError(r.Close())
@@ -414,7 +434,7 @@ func (d *DownloadParts) processRanger(part *Part, ranger ReaderRange, Unexpected
 		d.verifySizeAndUpdateParts(part)
 	}
 
-	if d.requeueOnError(part, err, UnexpectedEOF) {
+	if d.requeueOnError(part, errors.Join(copyErr, part.Err()), UnexpectedEOF) {
 		return
 	}
 
@@ -443,7 +463,15 @@ func (d *DownloadParts) verifySizeAndUpdateParts(part *Part) {
 
 func (d *DownloadParts) requeueOnError(part *Part, err error, UnexpectedEOF bool) bool {
 	for _, err := range []error{err, part.Err()} {
-		if err != nil && !errors.Is(err, io.EOF) {
+		if err != nil && (!errors.Is(err, io.EOF) || errors.Is(err, errDownloadRangeClose) || downloadSourceChanged(err)) {
+			if _, httpFile := d.File.(*File); httpFile || errors.Is(err, errDownloadRangeClose) || downloadSourceChanged(err) {
+				part.SetError(err)
+				if downloadSourceChanged(err) || errors.Is(err, errDownloadWholeResponse) || errors.Is(err, errDownloadFrontend) || errors.Is(err, errDownloadRangeClose) {
+					d.CancelFunc()
+				}
+				d.finishedParts <- part.Done()
+				return true
+			}
 			if strings.Contains(err.Error(), "stream error") {
 				return false
 			}
@@ -487,29 +515,45 @@ func (d *DownloadParts) downloadFile() error {
 	}
 	var n int64
 	var err error
+	var closeErr error
 	if d.startOffset > 0 {
 		ranger, ok := d.File.(ReaderRange)
 		if !ok {
 			return fmt.Errorf("file does not support range requests for resume")
 		}
-		r, rangeErr := ranger.ReaderRange(d.startOffset, d.FileInfo.Size()-1)
+		var r io.ReadCloser
+		var rangeErr error
+		if file, ok := ranger.(*File); ok {
+			_, total, _ := file.representation.snapshot()
+			r, _, rangeErr = file.openDownloadRange(d.Context, d.startOffset, total-1, legacyDownloadRangeAttempts)
+		} else {
+			r, rangeErr = ranger.ReaderRange(d.startOffset, d.FileInfo.Size()-1)
+		}
 		if rangeErr != nil {
 			return rangeErr
 		}
 		n, err = lib.CopyAt(d.WriterAndAt, d.startOffset, r)
+		closeErr = r.Close()
 	} else {
 		n, err = io.Copy(d.WriterAndAt, d.File)
+		closeErr = d.File.Close()
 		if n == 0 {
 			d.WriterAndAt.Write([]byte{})
 		}
 	}
 	atomic.AddInt64(&d.totalWritten, n)
-	if err != nil {
-		return err
+	// Independent failures discard this attempt's bytes. A pure pause or
+	// cancellation keeps its established progress semantics.
+	if failure := errors.Join(err, closeErr); failure != nil && !stoppedForPauseOnly(failure) {
+		if writer, ok := d.WriterAndAt.(lib.ProgressWriter); ok && n > 0 {
+			writer.ProgressWatcher(-n)
+		}
 	}
-	err = d.File.Close()
 	if err != nil {
-		return err
+		return errors.Join(err, closeErr)
+	}
+	if closeErr != nil {
+		return closeErr
 	}
 
 	info, _ := d.File.Stat()

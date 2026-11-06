@@ -1,8 +1,8 @@
 # Temporary download files
 
 A folder download writes each file to a temporary path first and renames it into
-place once it is complete. If a transfer is interrupted, a later run finds that
-temporary file again and continues from the bytes already on disk.
+place once it is complete. A paused transfer can continue its verified prefix;
+an interrupted whole-response transfer restarts from byte zero.
 
 ## Names
 
@@ -45,18 +45,51 @@ its own name. On Linux and Windows it is a file with that name.
 The short-lived names used while moving a finished file between directories are
 in the same namespace.
 
-## Known limitation: an adaptive download stopped by a process kill
+## Pause and resume
 
-A later run continues a temporary download from the bytes already in it, and
-finishes one that is already the size of the file without asking the server
-for content. An ordinary download appends in order, so its temporary file is
-always a valid prefix. An adaptive download preallocates the whole file and
-writes ranges at their final offsets; it cuts the file back to the valid prefix
-when it is interrupted cleanly, but a process that is killed cannot. The
-full-size file it leaves is then judged by its size like any other, so a later
-run may finish it without fetching the ranges that were never written. This
-behavior predates the reserved naming and is unchanged by it. Delete the
-temporary file of a killed adaptive download before running it again.
+Only a stage parked under its paused name is eligible for continuation. An
+in-flight stage left by a process kill is discarded. Parallel downloads trim a
+paused stage to its contiguous received prefix after all writers close.
+
+HTTP downloads with a strong response validator and known total keep their proof
+automatically when a genuine pause has settled every worker, trim and close.
+The paused artifact is one reserved `.~files-cli~b1-...download` directory on
+every platform. It contains the unchanged received prefix in `DATA.BIN` and one
+lossless, versioned `BINDING` record. The entire record is limited to 1,048,576
+bytes, checked by both producer and reader. No signed URL or credential is
+stored. The complete directory is published only after both files have synced
+and closed successfully.
+
+A fresh client using the same source/workspace, remote path and destination
+recovers matching proof automatically, including when the prefix is complete.
+Callers can still call `job.DownloadCheckpoint()` after `Wait` returns and retain
+its optional `Bindings`, then pass them as `DownloaderParams.PriorJobCheckpoint`.
+A single-file caller may also set `ResumeTmpPath` to the payload `TmpPath`
+reported by `ToStatusFile`.
+
+Each `DownloadBinding` retains the strong ETag, total and settled prefix length,
+API origin/workspace, remote path, destination and exact paused stage path. It
+contains no signed URL or credentials. Continuation uses HTTP `Range` and
+`If-Match`, including after obtaining a fresh signed URL. A source-version
+change rejects the attempt; any permitted file retry starts a new lifecycle.
+
+Older raw-prefix stages/checkpoints without a binding and sources without a
+usable validator use a whole response from byte zero. A stage whose length
+equals metadata size still needs proof before it can be published. A new-format
+container with malformed, missing or mismatched proof is left untouched and
+cannot validate a prefix. Independent proof read/close errors remain errors.
+Custom filesystem implementations keep their existing pause/resume behavior.
+
+Oversized proof or a proof write/sync/close failure is reported independently of
+the pause. Otherwise-settled, verified bytes can be kept under a fresh legacy
+paused name; their next automatic use restarts from byte zero. Uncertain claims
+stay reserved and undiscoverable. Cleanup removes only verified payload/proof
+identities and empty owned directories; it never removes foreign children.
+
+Older SDKs ignore the disjoint `b1-` paused token and safely start fresh. Their
+existing reserved-path rules already exclude its contents from transfers. They
+do not automatically resume this new format; explicit new-format `TmpPath`
+handoff to an older SDK is not a supported restore path.
 
 ## Publishing
 
@@ -125,8 +158,8 @@ with that name is now an ordinary file:
   it will be uploaded or downloaded like any other file. Delete leftovers when
   they are no longer wanted.
 
-A temporary path recorded in a job checkpoint (`TmpPath`) is still used as given,
-so an explicitly paused transfer resumes as it did before.
+A temporary path recorded in a job checkpoint (`TmpPath`) is still resolved as
+given, subject to the HTTP version-proof requirements above.
 
 ## Upgrading from name-only external temporary downloads
 
@@ -146,5 +179,5 @@ it is not attributed to any of them:
   `TempPath` when they are no longer wanted.
 
 A temporary path recorded in a job checkpoint (`TmpPath`) names the file
-explicitly and is still used as given, so an explicitly paused transfer through
-`TempPath` resumes as it did before.
+explicitly and is still resolved as given, subject to the HTTP version-proof
+requirements above.

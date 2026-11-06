@@ -90,6 +90,15 @@ func TestDownloadUrl_NewFromURL(t *testing.T) {
 	assert.Equal(t, expiresAt, d.Time)
 }
 
+func TestDownloadURLStandardAzureSASPreservesItsSignedQuery(t *testing.T) {
+	uri := "https://storage.test/object?sp=r&se=2026-11-04T12%3A34%3A56.123Z&sig=unchanged%2Bsignature"
+	parsed, err := New(uri)
+	assert.NoError(t, err)
+	assert.Equal(t, Azure, parsed.Type)
+	assert.Equal(t, time.Date(2026, 11, 4, 12, 34, 56, 123000000, time.UTC), parsed.Time)
+	assert.Equal(t, uri, parsed.URL.String())
+}
+
 func TestDownloadUrl_Init(t *testing.T) {
 	expiresAt := time.Now().Add(time.Minute * 3).UTC().Truncate(time.Second)
 	parsedURL, err := url.ParseRequestURI(fmt.Sprintf("https://example.com?%v=%v", filesDate.date, expiresAt.Format(timeDateFormat)))

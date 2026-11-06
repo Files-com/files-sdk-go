@@ -66,6 +66,15 @@ var Dates = []expire{amazonS3, filesDate, googleDate, azureBlob}
 
 func (d *URL) parseTime() (err error) {
 	for _, parser := range Dates {
+		// Azure SAS uses a top-level RFC3339 se. Keep the older nested
+		// sp=se=<compact date> format accepted below for existing URLs.
+		if parser.urlType == Azure && d.URL.Query().Get("se") != "" {
+			d.Time, err = time.Parse(time.RFC3339Nano, d.URL.Query().Get("se"))
+			if err == nil {
+				d.Type = Azure
+				return nil
+			}
+		}
 		date := d.URL.Query().Get(parser.date)
 		if parser.expireDate != "" {
 			query := (&url.URL{RawQuery: date}).Query()

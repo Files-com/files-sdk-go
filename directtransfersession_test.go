@@ -58,6 +58,9 @@ func TestDirectTransferSessionFallsBackAfterBodyFailureButNotCancellation(t *tes
 			// Hold the response until the caller cancels before its headers.
 			close(firstRequestStarted)
 			<-r.Context().Done()
+			// Returning normally sends an implicit 200 response, which can
+			// race the client's cancellation. Abort without sending headers.
+			panic(http.ErrAbortHandler)
 		case 2:
 			// Send the headers and a first chunk, then hold the body until the
 			// caller cancels. Content-Length declares 8 bytes that are never
@@ -298,6 +301,43 @@ func TestDirectTransferSessionFailureDiagnosticsOmitTransferToken(t *testing.T) 
 			require.NotContains(t, err.Error(), "direct-token")
 		})
 	}
+}
+
+func TestCallerWrappedDirectSessionStaysIsolatedFromTheJobCache(t *testing.T) {
+	var mu sync.Mutex
+	var peers []string
+	info := directTransferSessionTestInfo(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		peers = append(peers, r.RemoteAddr)
+		mu.Unlock()
+		_, _ = io.WriteString(w, "ok")
+	}), nil)
+	ctx, closeClients := WithDirectTransferClientCache(context.Background())
+	defer closeClients()
+	plain := NewDirectTransferSession(DirectTransferSessionOptions{})
+	defer plain.Close()
+	var wraps atomic.Int32
+	custom := NewDirectTransferSession(DirectTransferSessionOptions{WrapTransport: func(base http.RoundTripper) http.RoundTripper {
+		wraps.Add(1)
+		return directTransferRoundTripFunc(base.RoundTrip)
+	}})
+	defer custom.Close()
+	for _, session := range []*DirectTransferSession{plain, custom, plain} {
+		request, err := http.NewRequestWithContext(ctx, "GET", "https://proxy.test/file", nil)
+		require.NoError(t, err)
+		response, err := session.Send(Config{Environment: Development}.Init(), info, request)
+		require.NoError(t, err)
+		data, err := io.ReadAll(response.Body)
+		require.NoError(t, err)
+		require.NoError(t, response.Body.Close())
+		require.Equal(t, "ok", string(data))
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	require.Len(t, peers, 3)
+	require.Equal(t, peers[0], peers[2])
+	require.NotEqual(t, peers[0], peers[1])
+	require.EqualValues(t, 1, wraps.Load())
 }
 
 func directTransferSessionTestInfo(t *testing.T, handler http.Handler, connState func(net.Conn, http.ConnState)) DirectConnectionInfo {

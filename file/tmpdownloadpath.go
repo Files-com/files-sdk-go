@@ -36,6 +36,8 @@ const TempDownloadExtension = "download"
 // process that stopped mid-write, or by an earlier version of this client, and
 // its length says nothing about how much of it was received. Such a file is
 // discarded and the download starts over.
+// Bound HTTP pauses instead publish one disjoint b1- reserved container with
+// raw DATA.BIN and a closed versioned BINDING; legacy discovery ignores it.
 const (
 	tempDownloadNamespace = ".~files-cli"
 
@@ -150,7 +152,7 @@ func pausedTmpDownloadPath(final destinationPath, tempPath string) (destinationP
 	return existingTmpDownloadFile(final, naming.candidate(tempDownloadPausedToken))
 }
 
-// tokenizedPausedTmpDownload finds a paused temporary download of final that a
+// tokenizedPausedTmpDownload finds a legacy paused temporary download of final that a
 // transfer left under a tokenized paused name. The stage directory is listed
 // once per job and directory, on the first file that needs it, and the
 // listing is kept for the job (pausedListings): a folder download of many
@@ -173,6 +175,9 @@ func (r *Job) tokenizedPausedTmpDownload(final destinationPath, tempPath string)
 	var found destinationPath
 	var foundAt time.Time
 	for _, name := range r.pausedListing(dir)[digest] {
+		if isBoundPausedDownloadElement(name) {
+			continue // a binding-aware owner validates these separately
+		}
 		candidate := dir.withName(filepath.Join(dir.name, name))
 		file, ok := existingTmpDownloadFile(final, candidate)
 		if !ok {
@@ -205,7 +210,7 @@ func (r *Job) pausedListing(dir destinationPath) map[string][]string {
 	if err == nil {
 		for _, entry := range entries {
 			token, digest, _, ok := encodedTmpDownloadParts(entry.Name())
-			if ok && strings.HasPrefix(token, tempDownloadPausedToken) && token != tempDownloadPausedToken {
+			if ok && (strings.HasPrefix(token, tempDownloadPausedToken) && token != tempDownloadPausedToken || strings.HasPrefix(token, boundPausedDownloadToken)) {
 				listing[digest] = append(listing[digest], entry.Name())
 			}
 		}
@@ -257,7 +262,8 @@ func encodedTmpDownloadElement(token string, digest string, shortened string) st
 
 // tmpDownloadToken returns the uniqueness token of a temporary download's
 // reserved element: "" for the plain form, otherwise what its encoded name
-// carries, which for a paused file starts with tempDownloadPausedToken.
+// carries. Legacy pauses start with tempDownloadPausedToken; bound containers
+// use boundPausedDownloadToken.
 func tmpDownloadToken(element string) (string, bool) {
 	if _, ok := plainTmpDownloadName(element); ok {
 		return "", true
@@ -282,7 +288,7 @@ func tmpDownloadElementWithToken(element string, token string) (string, bool) {
 
 func isPausedTmpDownloadElement(element string) bool {
 	token, ok := tmpDownloadToken(element)
-	return ok && strings.HasPrefix(token, tempDownloadPausedToken)
+	return ok && (strings.HasPrefix(token, tempDownloadPausedToken) || strings.HasPrefix(token, boundPausedDownloadToken))
 }
 
 // pausedTmpDownloadElement is the paused name of a temporary download's
@@ -296,7 +302,7 @@ func pausedTmpDownloadElement(element string) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	if strings.HasPrefix(token, tempDownloadPausedToken) {
+	if strings.HasPrefix(token, tempDownloadPausedToken) || strings.HasPrefix(token, boundPausedDownloadToken) {
 		return element, true
 	}
 	return tmpDownloadElementWithToken(element, tempDownloadPausedToken+token)
@@ -368,6 +374,9 @@ func refuseOccupied(target destinationPath) error {
 // its file is left alone. A checkpointed file elsewhere goes back to its own
 // in-flight name only.
 func activateTmpDownload(paused destinationPath, final destinationPath, tempPath string) (destinationPath, error) {
+	if _, bound := boundPausedDownloadContainer(paused); bound {
+		return activateBoundTmpDownload(paused, final, nil)
+	}
 	entry := tmpDownloadEntry(paused)
 	token, ok := tmpDownloadToken(entry.base())
 	if !ok || !strings.HasPrefix(token, tempDownloadPausedToken) {
@@ -597,14 +606,34 @@ func tmpDownloadClaimContainer(tmp destinationPath) (destinationPath, error) {
 // back under its temporary name so a later run continues from it; a failure to
 // put it back is reported with the original error, because the download then
 // has to start again.
-func finalizeTmpDownload(ctx context.Context, tmp destinationPath, final destinationPath, expected fs.FileInfo) error {
+func finalizeTmpDownload(ctx context.Context, tmp destinationPath, final destinationPath, expected fs.FileInfo, bindings ...*DownloadBinding) error {
+	if _, bound := boundPausedDownloadContainer(tmp); bound {
+		return finalizeBoundTmpDownload(ctx, tmp, final, expected)
+	}
 	claimed, err := claimTmpDownload(tmp, expected)
 	if err != nil {
 		return err
 	}
-	if err := claimed.moveTo(ctx, final); err != nil {
+	moveErr := context.Cause(ctx)
+	if moveErr == nil {
+		moveErr = claimed.moveTo(ctx, final)
+	}
+	if err := moveErr; err != nil {
+		if errors.Is(context.Cause(ctx), ErrJobPaused) && stoppedForPauseOnly(err) && len(bindings) > 0 && bindings[0] != nil {
+			container := claimed.parent()
+			containerInfo, infoErr := container.lstat()
+			if infoErr != nil {
+				return pauseProofError(errors.Join(err, infoErr))
+			}
+			paused, proofErr := publishPausedBoundClaim(&boundPausedDownload{data: claimed, container: container, binding: *bindings[0], dataIdentity: expected, containerIdentity: containerInfo}, tmp)
+			joined := errors.Join(err, proofErr)
+			if paused.name != "" {
+				return pausedDownloadPathError{error: joined, path: paused}
+			}
+			return joined
+		}
 		restoreErr := restoreTmpDownload(claimed, tmp)
-		if restoreErr == nil && errors.Is(context.Cause(ctx), ErrJobPaused) {
+		if restoreErr == nil && errors.Is(context.Cause(ctx), ErrJobPaused) && stoppedForPauseOnly(err) {
 			// The file is complete and verified; a later run may publish it
 			// without asking for content, so it is kept under its paused name.
 			_, restoreErr = parkTmpDownload(tmp, expected)
@@ -720,6 +749,9 @@ func (d *DownloadStatus) checkpointedTmpDownload() (destinationPath, bool) {
 	tmp, ok := d.checkpointedTmpDownloadPath()
 	if !ok {
 		return destinationPath{}, false
+	}
+	if _, bound := boundPausedDownloadContainer(tmp); bound {
+		return destinationPath{}, false // the binding-aware selector owns this
 	}
 	paused, ok := pausedTmpDownloadOf(tmp)
 	if !ok {

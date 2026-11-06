@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Files-com/files-sdk-go/v3/internal/transferguard"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/hashicorp/go-retryablehttp"
 	quic "github.com/quic-go/quic-go"
@@ -225,6 +226,10 @@ func logDirectTransferRequest(logger lib.Logger, request *http.Request) {
 	}
 
 	logURL := redactedDirectTransferURL(*request.URL)
+	if leveledLogger, ok := logger.(lib.LeveledLogger); ok {
+		leveledLogger.Debug("performing request method=%s url=%s", request.Method, logURL)
+		return
+	}
 	if leveledLogger, ok := logger.(retryablehttp.LeveledLogger); ok {
 		leveledLogger.Debug("performing request", "method", request.Method, "url", logURL)
 		return
@@ -327,13 +332,19 @@ func directTransferHTTPClientWithCache(ctx context.Context, config Config, info 
 		default:
 			return nil, ErrDirectTransferUnavailable
 		}
+		// This SDK-owned adapter is stateless: request guard state comes from
+		// context, so it does not change cache identity or pool ownership. Put
+		// it below caller wrappers so rejected bytes never reach their observers.
+		sdkTransport := transport
+		transport = transferguard.Wrap(transport)
 		if wrapTransport != nil {
 			wrapped := wrapTransport(transport)
 			if wrapped == nil {
 				return nil, fmt.Errorf("%w: WrapTransport returned no round tripper", ErrDirectTransferUnavailable)
 			}
-			transport = directTransferWrappedTransport{RoundTripper: wrapped, sdk: transport}
+			transport = wrapped
 		}
+		transport = directTransferWrappedTransport{RoundTripper: transport, sdk: sdkTransport}
 
 		return &http.Client{
 			Transport: transport,

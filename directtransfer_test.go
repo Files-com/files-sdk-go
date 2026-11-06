@@ -9,10 +9,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"io"
 	"log"
+	"log/slog"
 	"math/big"
 	"net"
 	"net/http"
@@ -22,6 +24,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Files-com/files-sdk-go/v3/lib"
 	quic "github.com/quic-go/quic-go"
 	"github.com/quic-go/quic-go/http3"
 	"github.com/stretchr/testify/require"
@@ -115,37 +118,53 @@ func TestDirectTransferOptionsDoNotMutateFallbackRequest(t *testing.T) {
 }
 
 func TestWrapDirectTransferOptionsLogsDirectRequest(t *testing.T) {
-	info := directTransferTestInfo("/downloads/file.txt?jwt=direct-token")
-	ctx, closeClients := WithDirectTransferClientCache(context.Background())
-	defer closeClients()
-	cache := ctx.Value(directTransferClientCacheContextKey{}).(*directTransferClientCache)
-	cache.key = directTransferClientCacheKey{
-		serverName: info.ServerName,
-		caPEM:      info.CaPem,
-		protocol:   "tcp",
-		candidates: "8.8.8.8:4001",
-	}
-	cache.httpClient = &http.Client{Transport: directTransferRoundTripFunc(func(*http.Request) (*http.Response, error) {
-		return &http.Response{
-			StatusCode: http.StatusOK,
-			Body:       io.NopCloser(bytes.NewBufferString("direct")),
-			Header:     http.Header{},
-		}, nil
-	})}
+	for _, style := range []string{"printf", "slog"} {
+		t.Run(style, func(t *testing.T) {
+			info := directTransferTestInfo("/downloads/file.txt?jwt=direct-token")
+			ctx, closeClients := WithDirectTransferClientCache(context.Background())
+			defer closeClients()
+			cache := ctx.Value(directTransferClientCacheContextKey{}).(*directTransferClientCache)
+			cache.key = directTransferClientCacheKey{
+				serverName: info.ServerName,
+				caPEM:      info.CaPem,
+				protocol:   "tcp",
+				candidates: "8.8.8.8:4001",
+			}
+			cache.httpClient = &http.Client{Transport: directTransferRoundTripFunc(func(*http.Request) (*http.Response, error) {
+				return &http.Response{
+					StatusCode: http.StatusOK,
+					Body:       io.NopCloser(bytes.NewBufferString("direct")),
+					Header:     http.Header{},
+				}, nil
+			})}
 
-	var logs bytes.Buffer
-	request, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://proxy.example/downloads/file.txt?jwt=proxy-token", nil)
-	require.NoError(t, err)
-	response, err := WrapDirectTransferOptions(
-		Config{Environment: Development, Logger: log.New(&logs, "", 0)},
-		info,
-		request,
-	)
-	require.NoError(t, err)
-	require.NoError(t, response.Body.Close())
-	require.Equal(t, "[DEBUG] GET https://agent-123.agents.files.internal:4001/downloads/file.txt\n", logs.String())
-	require.NotContains(t, logs.String(), "direct-token")
-	require.NotContains(t, logs.String(), "proxy-token")
+			var logs bytes.Buffer
+			var logger lib.Logger = log.New(&logs, "", 0)
+			if style == "slog" {
+				logger = lib.NewSlogLogger(slog.New(slog.NewJSONHandler(&logs, &slog.HandlerOptions{Level: slog.LevelDebug})))
+			}
+			request, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://proxy.example/downloads/file.txt?jwt=proxy-token", nil)
+			require.NoError(t, err)
+			response, err := WrapDirectTransferOptions(
+				Config{Environment: Development, Logger: logger},
+				info,
+				request,
+			)
+			require.NoError(t, err)
+			require.NoError(t, response.Body.Close())
+			if style == "slog" {
+				var record map[string]any
+				require.NoError(t, json.Unmarshal(logs.Bytes(), &record))
+				require.Equal(t, "DEBUG", record["level"])
+				require.Equal(t, "performing request method=GET url=https://agent-123.agents.files.internal:4001/downloads/file.txt", record["msg"])
+				require.NotContains(t, record, "!BADKEY")
+			} else {
+				require.Equal(t, "[DEBUG] GET https://agent-123.agents.files.internal:4001/downloads/file.txt\n", logs.String())
+			}
+			require.NotContains(t, logs.String(), "direct-token")
+			require.NotContains(t, logs.String(), "proxy-token")
+		})
+	}
 }
 
 func TestDirectTransferHTTPClientDialsAddressWithServerName(t *testing.T) {
@@ -473,7 +492,9 @@ func TestDirectTransferClientPolicyAndCache(t *testing.T) {
 	require.NoError(t, err)
 	require.Same(t, first, second)
 
-	transport, ok := first.Transport.(*http.Transport)
+	owned, ok := first.Transport.(directTransferWrappedTransport)
+	require.True(t, ok)
+	transport, ok := owned.sdk.(*http.Transport)
 	require.True(t, ok)
 	require.Equal(t, directTransferResponseHeaderTimeout, transport.ResponseHeaderTimeout)
 	require.Equal(t, 30*time.Second, transport.IdleConnTimeout)

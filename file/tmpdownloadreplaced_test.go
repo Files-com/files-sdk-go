@@ -82,12 +82,15 @@ func TestClient_Downloader_doesNotPublishAStageReplacedMidTransfer(t *testing.T)
 	var once sync.Once
 	var swapErr error
 	swapped := false
-	job.RegisterFileEvent(func(JobFile) {
+	job.RegisterFileEvent(func(file JobFile) {
+		if file.TransferBytes <= 0 {
+			return
+		}
 		once.Do(func() {
 			swapErr = replaceStage(explicitDestination(local), planted)
 			swapped = swapErr == nil
 		})
-	}, status.Downloading)
+	}, OnBytesChange(status.Downloading))
 	job.Start()
 	job.Wait()
 

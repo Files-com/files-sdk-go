@@ -13,6 +13,7 @@ import (
 	"errors"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/internal/transferguard"
 	lib "github.com/Files-com/files-sdk-go/v3/lib"
 )
 
@@ -141,12 +142,19 @@ func (c *Client) DownloadUri(params files_sdk.FileDownloadParams, opts ...files_
 
 	if params.File.DownloadUri == "" {
 		err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/files/{path}", Params: params, Entity: &params.File}, opts...)
+		if err == nil && knownDownloadExpired(params.File.DownloadUri, 0) {
+			return params.File, errDownloadURLExpired
+		}
 		return params.File, err
 	} else {
 		url, parseErr := downloadurl.New(params.File.DownloadUri)
 		// url is nil when DownloadUri does not parse; Download then returns that parse error from building its request.
 		if parseErr == nil {
 			if remaining, valid := url.Valid(time.Millisecond * 250); !valid {
+				_, budget := withDownloadBudget(files_sdk.ContextOption(opts))
+				if !budget.renew() {
+					return params.File, errDownloadURLExpired
+				}
 				err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/files/{path}", Params: params, Entity: &params.File}, opts...)
 				if params.File.DownloadUri == url.URL.String() {
 					c.LogPath(params.Path, map[string]interface{}{"message": "URL was expired. Fetched a new URL but it didn't change", "Remaining": remaining, "Time": url.Time})
@@ -157,10 +165,30 @@ func (c *Client) DownloadUri(params files_sdk.FileDownloadParams, opts ...files_
 		}
 	}
 
+	if err == nil && knownDownloadExpired(params.File.DownloadUri, 0) {
+		return params.File, errDownloadURLExpired
+	}
 	return params.File, err
 }
 
 func (c *Client) Download(params files_sdk.FileDownloadParams, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
+	ctx, budget := withDownloadBudget(files_sdk.ContextOption(opts))
+	options := append(append([]files_sdk.RequestResponseOption(nil), opts...), files_sdk.WithContext(ctx))
+	for {
+		if !budget.takeAttempt() {
+			return params.File, errDownloadAttemptLimit
+		}
+		state := &downloadRequestState{}
+		file, err := c.downloadOnce(params, state, options...)
+		if state.hasStartedResponse() || errors.Is(err, files_sdk.ErrDirectTransferResponseStarted) || !errors.Is(err, errDownloadURLExpired) || !budget.renew() {
+			return file, err
+		}
+		params.File = file
+		params.File.DownloadUri = ""
+	}
+}
+
+func (c *Client) downloadOnce(params files_sdk.FileDownloadParams, requestState *downloadRequestState, opts ...files_sdk.RequestResponseOption) (files_sdk.File, error) {
 	if params.Path == "" {
 		params.Path = params.File.Path
 	}
@@ -170,6 +198,14 @@ func (c *Client) Download(params files_sdk.FileDownloadParams, opts ...files_sdk
 	if err != nil {
 		return params.File, err
 	}
+	requestState.source = params.File.DownloadUri
+	ctx := transferguard.WithContext(files_sdk.ContextOption(opts), requestState)
+	options := append([]files_sdk.RequestResponseOption{files_sdk.ResponseOption(func(response *http.Response) error {
+		requestState.startResponse()
+		return downloadResponseGuard(response)
+	})}, opts...)
+	opts = append(options, files_sdk.WithContext(ctx))
+	transferConfig := downloadTransferConfig(c.Config, requestState)
 	request, err := http.NewRequest("GET", params.File.DownloadUri, nil)
 	if err != nil {
 		return params.File, err
@@ -190,12 +226,18 @@ func (c *Client) Download(params files_sdk.FileDownloadParams, opts ...files_sdk
 			directSession = newDirectDownloadSession(nil)
 			defer directSession.Close()
 		}
-		_, err = directSession.Send(c.Config, params.File.DirectConnectionInfo, request, opts...)
+		_, err = directSession.Send(transferConfig, params.File.DirectConnectionInfo, request, opts...)
 		if err == nil {
 			if c.Config.InDebug() {
 				c.LogPath(params.Path, map[string]interface{}{"message": "direct download success", "direction": "download"})
 			}
 			return params.File, nil
+		}
+		if requestState.wasFrontend() {
+			return params.File, errDownloadFrontend
+		}
+		if requestState.wasExpired() {
+			return params.File, errors.Join(errDownloadURLExpired, err)
 		}
 		// Bytes already reached the response options, so the request must not
 		// be sent again, whatever else the error wraps.
@@ -207,7 +249,13 @@ func (c *Client) Download(params files_sdk.FileDownloadParams, opts ...files_sdk
 		}
 	}
 
-	_, err = files_sdk.WrapRequestOptions(c.Config, request, opts...)
+	_, err = files_sdk.WrapRequestOptions(transferConfig, request, opts...)
+	if requestState.wasFrontend() {
+		return params.File, errDownloadFrontend
+	}
+	if requestState.wasExpired() {
+		err = errors.Join(errDownloadURLExpired, err)
+	}
 
 	return params.File, err
 }

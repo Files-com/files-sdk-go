@@ -57,13 +57,14 @@ func TestBoundedResponsesCloseOnceAndPreserveErrors(t *testing.T) {
 		{name: "stats unsupported HEAD", operation: "stats", status: 422, closeErr: closeErr},
 		{name: "stats close error", operation: "stats", status: 200, closeErr: closeErr, wantErr: closeErr},
 		{name: "stats status error", operation: "stats", status: 503},
-		{name: "read-at ignores close error", operation: "read", status: 206, closeErr: closeErr},
+		{name: "read-at close error", operation: "read", status: 206, closeErr: closeErr, wantErr: closeErr},
 		{name: "read-at read error", operation: "read", status: 206, readErr: readErr, wantErr: readErr},
+		{name: "read-at read and close errors", operation: "read", status: 206, readErr: readErr, closeErr: closeErr, wantErr: readErr},
 		{name: "read-at status error", operation: "read", status: 503},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			body := &ownedHTTPResponseBody{Reader: strings.NewReader("abc"), readErr: tc.readErr, closeErr: tc.closeErr}
-			config := ownedResponseConfig(body, tc.status, http.Header{"Content-Type": []string{"text/plain"}})
+			config := ownedResponseConfig(body, tc.status, http.Header{"Content-Type": []string{"text/plain"}, "Content-Range": []string{"bytes 0-2/3"}})
 			remote := files_sdk.File{Path: "file", DownloadUri: "https://download.test/file"}
 			var err error
 			if tc.operation == "stats" {
@@ -82,6 +83,9 @@ func TestBoundedResponsesCloseOnceAndPreserveErrors(t *testing.T) {
 				assert.Contains(t, responseErr.Error(), "abc")
 			} else if tc.wantErr != nil {
 				require.ErrorIs(t, err, tc.wantErr)
+				if tc.readErr != nil && tc.closeErr != nil {
+					require.ErrorIs(t, err, tc.closeErr)
+				}
 			} else {
 				require.NoError(t, err)
 			}
@@ -1299,20 +1303,39 @@ func TestClient_Downloader_Move_Source_Missing_Dir(t *testing.T) {
 	buildScenario("TestClient_Downloader_Move_Source_Missing_Dir", client)
 	os.MkdirAll(filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir"), 0755)
 
-	logChan := make(chan status.Log)
-	errChan := make(chan error)
+	// Let completion callbacks finish with the job before the test drains them.
+	// Missing callbacks must fail assertions rather than wait for the suite timer.
+	logChan := make(chan status.Log, 2)
+	errChan := make(chan error, 2)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	job := client.Downloader(
 		DownloaderParams{
 			RemotePath: "TestClient_Downloader_Move_Source_Missing_Dir",
 			LocalPath:  filepath.Join(tmpDir, "TestClient_Downloader_Move_Source_Missing_Dir") + string(os.PathSeparator),
 		},
+		files_sdk.WithContext(ctx),
 	)
 	job.RegisterFileEvent(func(f JobFile) {
 		moveLog, err := MoveSource{Config: client.Config, Direction: job.Direction, Path: "TestClient_Downloader_Move_Source_Missing_Dir-moved"}.Call(f)
-		logChan <- moveLog
-		errChan <- err
+		select {
+		case logChan <- moveLog:
+		case <-ctx.Done():
+			return
+		}
+		select {
+		case errChan <- err:
+		case <-ctx.Done():
+			return
+		}
 	}, status.Complete)
 	job.Start()
+	waitForDownloadTestJob(t, ctx, job)
+	for _, file := range job.Sub(status.Errored, status.Canceled).Statuses {
+		t.Logf("%s: %v", file.RemotePath(), file.Err())
+	}
+	require.Len(t, logChan, 2, "the two expected files must report completed moves")
+	require.Len(t, errChan, 2, "both completed moves must report their result")
 
 	fileValues := []string{
 		"TestClient_Downloader_Move_Source_Missing_Dir-moved/nested_1/nested_2/3.text",
@@ -1917,7 +1940,7 @@ func TestDownloadErrorsCloseResponseOnce(t *testing.T) {
 				case "range":
 					_, err = reader.ReaderRange(0, 2)
 				case "v2-range":
-					_, _, err = reader.downloadV2ReaderRange(context.Background(), 0, 2, false)
+					_, _, err = reader.openDownloadRange(context.Background(), 0, 2, 1)
 				}
 				require.Error(t, err)
 				var responseErr lib.ResponseError

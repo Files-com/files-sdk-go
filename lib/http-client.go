@@ -24,6 +24,10 @@ func init() {
 func DefaultRetryableHttp(logger Logger, client ...*http.Client) *retryablehttp.Client {
 	retryClient := retryablehttp.NewClient()
 	retryClient.Logger = logger
+	if adapted, ok := logger.(*SlogLogger); ok {
+		// The dependency emits structured key/value pairs, not the SDK adapter's printf arguments.
+		retryClient.Logger = adapted.logger
+	}
 	if len(client) == 1 {
 		retryClient.HTTPClient = client[0]
 	} else {

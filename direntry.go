@@ -10,7 +10,7 @@ type DirEntry struct {
 }
 
 func (f DirEntry) Mode() fs.FileMode {
-	return fs.ModePerm
+	return fs.ModePerm | f.Type()
 }
 
 func (f DirEntry) ModTime() time.Time {
@@ -25,7 +25,10 @@ func (f DirEntry) Sys() any {
 }
 
 func (f DirEntry) Type() fs.FileMode {
-	return fs.ModePerm
+	if f.File.Type == "directory" {
+		return fs.ModeDir
+	}
+	return 0
 }
 
 func (f DirEntry) Name() string {
