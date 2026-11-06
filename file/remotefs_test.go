@@ -359,7 +359,8 @@ var remoteFSSimulatorVariables = []string{
 // go through the API as they always have for TestFS_Open. It checks that the launcher's variables name that simulator
 // on a loopback address and that its readiness report shows it ready, in simulation, at contract 3, with the
 // launcher's schema and instance, and still as the launcher's reset left it: at epoch 1, under the api_scenarios
-// profile of the api-scenarios-canonical preset, whose root listing the test reads. So it never resets the simulator.
+// profile of the api-scenarios-canonical preset, whose root listing TestFS_Open reads. So it never resets the
+// simulator, and every file test that uses it can share one launcher run: each works under remote paths of its own.
 // Without the launcher the test is skipped, unless FILES_API_SCENARIOS is "required"; a missing or invalid variable
 // fails it. It never falls back to recorded responses, Files.com or another API key.
 func remoteFSSimulatorClient(t *testing.T) *Client {
@@ -433,6 +434,68 @@ func remoteFSSimulatorClient(t *testing.T) *Client {
 		t.Fatalf("The simulator at %s is at epoch %d with the api_scenarios profile %v, not as the launcher's api-scenarios-canonical reset left it: at epoch 1, under an api_scenarios profile, whose root listing this test reads.", origin, reported.Epoch, reported.Profile.APIScenarios)
 	}
 	return &Client{Config: files_sdk.Config{APIKey: launcher["FILES_MOCK_API_KEY"], EndpointOverride: origin, DisableDirectTransfers: true}.Init()}
+}
+
+// failSimulatorRequests makes the simulator that client's requests go to answer each of the next count requests that
+// match rule with the Files.com error rule describes, by adding a fault rule at the simulator's control endpoint, out
+// of band from the SDK under test. The rule selects every matching request until count have failed, so it changes
+// nothing for any request after them. It returns a check, to call once the test's requests have been made, that
+// requires exactly count matching requests to have arrived and each to have failed.
+func failSimulatorRequests(t *testing.T, client *Client, count int, rule map[string]any) func() {
+	t.Helper()
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	t.Cleanup(transport.CloseIdleConnections)
+	control := &http.Client{Transport: transport, Timeout: 10 * time.Second}
+	origin := client.Config.EndpointOverride
+	var keys []string
+	for key := range rule["match"].(map[string]any) {
+		keys = append(keys, key)
+	}
+	slices.Sort(keys)
+	spec := map[string]any{"random": map[string]any{"seed": t.Name(), "rate": 1, "key": keys, "max_faults": count}}
+	for field, value := range rule {
+		spec[field] = value
+	}
+	encoded, err := json.Marshal(spec)
+	require.NoError(t, err)
+	response, err := control.Post(origin+"/__files_mock/v1/faults", "application/json", bytes.NewReader(encoded))
+	require.NoError(t, err)
+	answer, err := io.ReadAll(io.LimitReader(response.Body, 1<<20))
+	response.Body.Close()
+	require.NoError(t, err)
+	require.Equal(t, http.StatusCreated, response.StatusCode, "the simulator refused the fault rule: %s", answer)
+	var added struct {
+		ID int `json:"id"`
+	}
+	require.NoError(t, json.Unmarshal(answer, &added))
+	require.Positive(t, added.ID, "the simulator answered the fault rule without its ID: %s", answer)
+
+	return func() {
+		t.Helper()
+		response, err := control.Get(origin + "/__files_mock/v1/faults")
+		require.NoError(t, err)
+		answer, err := io.ReadAll(io.LimitReader(response.Body, 1<<20))
+		response.Body.Close()
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, response.StatusCode, "the simulator did not list its fault rules: %s", answer)
+		var listed struct {
+			Faults []struct {
+				ID     int `json:"id"`
+				Random struct {
+					Outcomes map[string]int `json:"outcomes"`
+				} `json:"random"`
+			} `json:"faults"`
+		}
+		require.NoError(t, json.Unmarshal(answer, &listed))
+		for _, fault := range listed.Faults {
+			if fault.ID == added.ID {
+				want := map[string]int{"fault": count, "pass": 0, "overridden": 0, "unavailable": 0, "budget-exhausted": 0}
+				require.Equal(t, want, fault.Random.Outcomes, "the requests fault rule %d matched", added.ID)
+				return
+			}
+		}
+		t.Fatalf("The simulator no longer lists fault rule %d: %s", added.ID, answer)
+	}
 }
 
 func TestFS_Open(t *testing.T) {

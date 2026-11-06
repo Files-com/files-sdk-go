@@ -1044,10 +1044,7 @@ func TestUploader(t *testing.T) {
 		destinationFs := &FS{Context: context.Background()}
 		for _, tt := range lib.PathSpec(t, sourceFs.PathSeparator(), destinationFs.PathSeparator()) {
 			t.Run(tt.Name, func(t *testing.T) {
-				client, r, err := CreateClient(t.Name())
-				if err != nil {
-					t.Fatal(err)
-				}
+				client := remoteFSSimulatorClient(t)
 				config := client.Config
 				destinationFs = (&FS{Context: context.Background()}).Init(config, true)
 				lib.BuildPathSpecTest(t, mutex, tt, sourceFs, destinationFs, func(args lib.PathSpecArgs) lib.Cmd {
@@ -1058,7 +1055,6 @@ func TestUploader(t *testing.T) {
 						args: []string{args.Src, args.Dest, "--times", fmt.Sprintf("%v", args.PreserveTimes)},
 					}
 				})
-				r.Stop()
 			})
 		}
 	})

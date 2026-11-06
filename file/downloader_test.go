@@ -1295,10 +1295,7 @@ func TestDownload(t *testing.T) {
 		destinationFs := lib.ReadWriteFs(lib.LocalFileSystem{})
 		for _, tt := range lib.PathSpec(t, sourceFs.PathSeparator(), destinationFs.PathSeparator()) {
 			t.Run(tt.Name, func(t *testing.T) {
-				client, r, err := CreateClient(t.Name())
-				if err != nil {
-					t.Fatal(err)
-				}
+				client := remoteFSSimulatorClient(t)
 				config := client.Config
 				sourceFs := (&FS{Context: context.Background()}).Init(config, false)
 				lib.BuildPathSpecTest(t, mutex, tt, sourceFs, destinationFs, func(args lib.PathSpecArgs) lib.Cmd {
@@ -1309,7 +1306,6 @@ func TestDownload(t *testing.T) {
 						args: []string{args.Src, args.Dest, "--times", fmt.Sprintf("%v", args.PreserveTimes)},
 					}
 				})
-				r.Stop()
 			})
 		}
 	})

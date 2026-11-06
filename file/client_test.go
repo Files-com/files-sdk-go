@@ -23,8 +23,6 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/folder"
 	"github.com/Files-com/files-sdk-go/v3/ignore"
 	"github.com/Files-com/files-sdk-go/v3/lib"
-	"github.com/Files-com/files-sdk-go/v3/lib/test"
-	recorder "github.com/dnaeon/go-vcr/recorder"
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,15 +33,6 @@ type FileStatus struct {
 	status string
 	size   int
 	dir    bool
-}
-
-func CreateClient(fixture string) (client *Client, r *recorder.Recorder, err error) {
-	client = &Client{}
-	client.Config, r, err = test.CreateConfig(fixture)
-	// Recorded fixtures predate direct connection info; focused tests cover the default-on behavior.
-	client.Config.DisableDirectTransfers = true
-
-	return client, r, err
 }
 
 func TestBoundedResponsesCloseOnceAndPreserveErrors(t *testing.T) {
@@ -461,11 +450,7 @@ func CreateReporter(callback Reporter) EventsReporter {
 }
 
 func TestClient_UploadFolder(t *testing.T) {
-	client, r, err := CreateClient("TestClient_UploadFolder")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 
 	assert := assert.New(t)
 	resultsMapMutex := sync.RWMutex{}
@@ -504,22 +489,14 @@ func TestClient_UploadFolder(t *testing.T) {
 			continue
 		}
 		lastStatus := lastStatuses[len(lastStatuses)-1]
-		if lastStatus.Err != nil && strings.Contains(lastStatus.Err.Error(), "Requested interaction not found") {
-			assert.Equal(status.Errored, lastStatus.Status)
-		} else {
-			assert.Equal(status.Complete, lastStatus.Status)
-			assert.NoError(lastStatus.Err)
-		}
+		assert.Equal(status.Complete, lastStatus.Status)
+		assert.NoError(lastStatus.Err)
 	}
 	deletePath(client, "golib")
 }
 
 func TestClient_UploadFolder_Dot(t *testing.T) {
-	client, r, err := CreateClient("TestClient_UploadFolder_Dot")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 
 	assert := assert.New(t)
 	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
@@ -581,11 +558,7 @@ func TestClient_UploadFolder_Dot(t *testing.T) {
 }
 
 func TestClient_UploadFolder_Relative(t *testing.T) {
-	client, r, err := CreateClient("TestClient_UploadFolder_Relative")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 
 	assert := assert.New(t)
 	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
@@ -641,11 +614,7 @@ func TestClient_UploadFolder_Relative(t *testing.T) {
 }
 
 func TestClient_Uploader(t *testing.T) {
-	client, r, err := CreateClient("TestClient_Uploader")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 
 	uploadPath := ".." + string(os.PathSeparator) + "LICENSE"
@@ -690,11 +659,7 @@ func TestClient_Uploader(t *testing.T) {
 }
 
 func TestClient_UploadFile_To_Existing_Dir(t *testing.T) {
-	client, r, err := CreateClient("TestClient_UploadFile_To_Existing_Dir")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 
 	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
@@ -734,11 +699,7 @@ func TestClient_UploadFile_To_Existing_Dir(t *testing.T) {
 }
 
 func TestClient_UploadFile_To_NonExistingPath(t *testing.T) {
-	client, r, err := CreateClient("TestClient_UploadFile_To_NonExistingPath")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 
 	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
@@ -774,11 +735,7 @@ func TestClient_UploadFile_To_NonExistingPath(t *testing.T) {
 }
 
 func TestClient_UploadFile_To_NonExistingPath_WithSlash(t *testing.T) {
-	client, r, err := CreateClient("TestClient_UploadFile_To_NonExistingPath_WithSlash")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 
 	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
@@ -817,11 +774,7 @@ func TestClient_UploadFile_To_NonExistingPath_WithSlash(t *testing.T) {
 }
 
 func TestClient_UploadFolder_as_file2(t *testing.T) {
-	client, r, err := CreateClient("TestClient_UploadFolder_as_file2")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
@@ -859,11 +812,7 @@ func TestClient_UploadFolder_as_file2(t *testing.T) {
 }
 
 func TestClient_UploadFolder_RemotePathWithStartingSlash(t *testing.T) {
-	client, r, err := CreateClient("TestClient_UploadFolder_RemotePathWithStartingSlash")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
 		log.Fatal(err)
@@ -894,11 +843,7 @@ func TestClient_UploadFolder_RemotePathWithStartingSlash(t *testing.T) {
 }
 
 func TestClient_UploadFolder_ZeroByteFile(t *testing.T) {
-	client, r, err := CreateClient("TestClient_UploadFolder_ZeroByteFile")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
 		log.Fatal(err)
@@ -928,11 +873,7 @@ func TestClient_UploadFolder_ZeroByteFile(t *testing.T) {
 }
 
 func TestClient_DownloadFolder(t *testing.T) {
-	client, r, err := CreateClient("TestClient_DownloadFolder")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 
 	buildScenario("TestClient_DownloadFolder", client)
 
@@ -959,11 +900,7 @@ func TestClient_DownloadFolder(t *testing.T) {
 }
 
 func TestClient_DownloadFolder_Smart(t *testing.T) {
-	client, r, err := CreateClient("TestClient_DownloadFolder_Smart")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	defer os.RemoveAll("download")
 
 	buildScenario("TestClient_DownloadFolder_Smart", client)
@@ -980,8 +917,6 @@ func TestClient_DownloadFolder_Smart(t *testing.T) {
 
 	results2 := runDownloadScenario(lib.UrlJoinNoEscape("TestClient_DownloadFolder_Smart", "nested_1", "nested_2")+"/", "download", client)
 
-	assert.NoError(t, err)
-
 	path, err := os.Getwd()
 	assert.NoError(t, err)
 
@@ -997,11 +932,7 @@ func TestClient_DownloadFolder_Smart(t *testing.T) {
 }
 
 func TestClient_DownloadFolder_file_to_file(t *testing.T) {
-	client, r, err := CreateClient("TestClient_DownloadFolder_file_to_file")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 
 	buildScenario("TestClient_DownloadFolder_file_to_file", client)
 	assert := assert.New(t)
@@ -1023,16 +954,11 @@ func TestClient_DownloadFolder_file_to_file(t *testing.T) {
 }
 
 func TestClient_DownloadFolder_file_to_implicit(t *testing.T) {
-	client, r, err := CreateClient("TestClient_DownloadFolder_file_to_implicit")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 
 	buildScenario("file_to_implicit", client)
 	assert := assert.New(t)
 	results := runDownloadScenario(lib.UrlJoinNoEscape("file_to_implicit", "nested_1", "nested_2", "3.text"), "", client)
-	assert.NoError(err)
 	for _, result := range results {
 		for _, f := range result {
 			require.NoError(t, f.Err)
@@ -1043,13 +969,9 @@ func TestClient_DownloadFolder_file_to_implicit(t *testing.T) {
 }
 
 func TestClient_DownloadFolder_file_only(t *testing.T) {
-	client, r, err := CreateClient("TestClient_DownloadFolder_file_only")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 
-	err = client.Upload(
+	err := client.Upload(
 		UploadWithSize(5),
 		UploadWithDestinationPath("i am at the root.text"),
 		UploadWithProvidedMtime(time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC)),
@@ -1072,18 +994,14 @@ func TestClient_DownloadFolder_file_only(t *testing.T) {
 }
 
 func TestClient_Downloader_Delete_Source(t *testing.T) {
-	client, r, err := CreateClient("TestClient_Downloader_Delete_Source")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 
 	folderClient := folder.Client{Config: client.Config}
 
 	folderClient.Create(files_sdk.FolderCreateParams{Path: "test-delete-source"})
 
-	err = client.Upload(
+	err := client.Upload(
 		UploadWithSize(9),
 		UploadWithDestinationPath(lib.UrlJoinNoEscape("test-delete-source", "test.text")),
 		UploadWithProvidedMtime(time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC)),
@@ -1111,23 +1029,19 @@ func TestClient_Downloader_Delete_Source(t *testing.T) {
 
 	_, err = client.Find(files_sdk.FileFindParams{Path: lib.UrlJoinNoEscape("test-delete-source", "test.text")})
 	require.NotNil(t, err)
-	assert.Equal("Not Found - `Not Found`", err.Error())
+	assert.Equal("Not Found - `Not Found.  This may be related to your permissions.`", err.Error())
 	os.RemoveAll("test.text")
 }
 
 func TestClient_Downloader_Delete_Source_Folder(t *testing.T) {
-	client, r, err := CreateClient("TestClient_Downloader_Delete_Source_Folder")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 
 	folderClient := folder.Client{Config: client.Config}
 
 	folderClient.Create(files_sdk.FolderCreateParams{Path: "test-delete-source-folder"})
 
-	err = client.Upload(
+	err := client.Upload(
 		UploadWithSize(9),
 		UploadWithDestinationPath(lib.UrlJoinNoEscape("test-delete-source-folder", "test.text")),
 		UploadWithProvidedMtime(time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC)),
@@ -1155,25 +1069,21 @@ func TestClient_Downloader_Delete_Source_Folder(t *testing.T) {
 	assert.NoError(err)
 	assert.Equal(filepath.Dir(fi.RemotePath), log.Path)
 
-	_, err = client.Find(files_sdk.FileFindParams{Path: lib.UrlJoinNoEscape("test-delete-source", "test.text")})
+	_, err = client.Find(files_sdk.FileFindParams{Path: lib.UrlJoinNoEscape("test-delete-source-folder", "test.text")})
 	require.NotNil(t, err)
 	assert.Equal("Not Found - `Not Found.  This may be related to your permissions.`", err.Error())
 	os.RemoveAll("test.text")
 }
 
 func TestClient_Downloader_Move_Source(t *testing.T) {
-	client, r, err := CreateClient("TestClient_Downloader_Move_Source")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 
 	folderClient := folder.Client{Config: client.Config}
 
 	folderClient.Create(files_sdk.FolderCreateParams{Path: "test-move-source"})
 
-	err = client.Upload(
+	err := client.Upload(
 		UploadWithSize(9),
 		UploadWithDestinationPath(lib.UrlJoinNoEscape("test-move-source", "test.text")),
 		UploadWithProvidedMtime(time.Date(2010, 11, 17, 20, 34, 58, 651387237, time.UTC)),
@@ -1197,18 +1107,14 @@ func TestClient_Downloader_Move_Source(t *testing.T) {
 	assert.Equal(filepath.Join("test-moved-source", "test.text"), log.Path)
 
 	_, err = client.Find(files_sdk.FileFindParams{Path: lib.UrlJoinNoEscape("test-move-source", "test.text")})
-	assert.Equal("Not Found - `Not Found`", err.Error())
+	assert.Equal("Not Found - `Not Found.  This may be related to your permissions.`", err.Error())
 	_, err = client.Find(files_sdk.FileFindParams{Path: lib.UrlJoinNoEscape("test-moved-source", "test.text")})
 	assert.NoError(err)
 	os.RemoveAll("test.text")
 }
 
 func TestClient_UploadFolder_Move_Source(t *testing.T) {
-	client, r, err := CreateClient("TestClient_UploadFolder_Move_Source")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
@@ -1243,11 +1149,7 @@ func TestClient_UploadFolder_Move_Source(t *testing.T) {
 }
 
 func TestClient_UploadFolder_Move_Source_Missing_Dir(t *testing.T) {
-	client, r, err := CreateClient("TestClient_UploadFolder_Move_Source_Missing_Dir")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 
 	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
@@ -1287,11 +1189,7 @@ func TestClient_UploadFolder_Move_Source_Missing_Dir(t *testing.T) {
 }
 
 func TestClient_Downloader_Move_Source_Missing_Dir(t *testing.T) {
-	client, r, err := CreateClient("TestClient_Downloader_Move_Source_Missing_Dir")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 
 	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
@@ -1366,11 +1264,7 @@ func TestClient_Downloader_Move_Source_Missing_Dir(t *testing.T) {
 }
 
 func TestClient_UploadFile_Delete_Source(t *testing.T) {
-	client, r, err := CreateClient("TestClient_UploadFile_Delete_Source")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 	tmpDir, err := os.MkdirTemp(os.TempDir(), "client_test")
 	if err != nil {
@@ -1400,11 +1294,7 @@ func TestClient_UploadFile_Delete_Source(t *testing.T) {
 }
 
 func TestClient_Uploader_Files(t *testing.T) {
-	client, r, err := CreateClient("TestClient_Uploader_Files")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 	tmpDir := t.TempDir()
 
@@ -1430,11 +1320,7 @@ func TestClient_Uploader_Files(t *testing.T) {
 }
 
 func TestClient_Uploader_File_Remote_Folder(t *testing.T) {
-	client, r, err := CreateClient("TestClient_Uploader_File_Remote_Folder")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 	tmpDir := t.TempDir()
 
@@ -1442,7 +1328,8 @@ func TestClient_Uploader_File_Remote_Folder(t *testing.T) {
 	dirName := "remote-folder"
 
 	folderClient := folder.Client{Config: client.Config}
-	_, err = folderClient.Create(files_sdk.FolderCreateParams{Path: dirName})
+	_, err := folderClient.Create(files_sdk.FolderCreateParams{Path: dirName})
+	ignoreSomeErrors(err)
 	defer deletePath(client, dirName)
 
 	filesAndStatus := []FileStatus{{name: fileName, status: "complete", size: 24}}
@@ -1459,11 +1346,7 @@ func TestClient_Uploader_File_Remote_Folder(t *testing.T) {
 }
 
 func TestClient_Uploader_File_Remote_Path_Error(t *testing.T) {
-	client, r, err := CreateClient("TestClient_Uploader_File_Remote_Path_Error")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 	tmpDir := t.TempDir()
 
@@ -1473,6 +1356,14 @@ func TestClient_Uploader_File_Remote_Path_Error(t *testing.T) {
 	filesAndStatus := []FileStatus{{name: fileName, status: "complete", size: 24}}
 	createFileStructure(t, tmpDir, filesAndStatus)
 
+	// The first attempt and each of the policy's two retries look up the remote path, and the API refuses each lookup.
+	lookupsRefused := failSimulatorRequests(t, client, 3, map[string]any{
+		"operation": "files.metadata",
+		"match":     map[string]any{"path": dirName},
+		"status":    401,
+		"type":      "not-authenticated/invalid-credentials",
+		"message":   "The API key or Session token provided could not be used to validate this request.",
+	})
 	job := client.Uploader(UploaderParams{
 		LocalPath:   filepath.Join(tmpDir, fileName),
 		RemotePath:  dirName,
@@ -1484,14 +1375,11 @@ func TestClient_Uploader_File_Remote_Path_Error(t *testing.T) {
 	assert.Len(job.Statuses, 1)
 	assert.Equal(status.Errored, job.Statuses[0].Status())
 	assert.ErrorContains(job.Statuses[0].Err(), "token provided could not")
+	lookupsRefused()
 }
 
 func TestClient_Uploader_Directories(t *testing.T) {
-	client, r, err := CreateClient("TestClient_Uploader_Directories")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 	tmpDir := t.TempDir()
 
@@ -1544,11 +1432,7 @@ func TestClient_Uploader_Directories(t *testing.T) {
 }
 
 func TestClient_Uploader_Empty_Directory(t *testing.T) {
-	client, r, err := CreateClient("TestClient_Uploader_Empty_Directory")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 	tmpDir := t.TempDir()
 
@@ -1585,12 +1469,7 @@ func TestClient_Uploader_Empty_Directory(t *testing.T) {
 // A and B should be completely removed because there was a file uploaded from those hierarchies
 // empty_dir/ does get removed because there were no files in that directory and it's part of the source path.
 func TestClient_Uploader_Directories_With_DeleteSource(t *testing.T) {
-	client, r, err := CreateClient("TestClient_Uploader_Directories_With_DeleteSource")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	defer r.Stop()
+	client := remoteFSSimulatorClient(t)
 	assert := assert.New(t)
 	tmpDir := t.TempDir()
 
@@ -1830,10 +1709,7 @@ func TestClient_UploadFile(t *testing.T) {
 }
 
 func TestClient_ListFor(t *testing.T) {
-	client, r, err := CreateClient("TestClient_ListFor")
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := remoteFSSimulatorClient(t)
 
 	buildScenario("TestClient_DownloadFolder", client)
 
@@ -1863,13 +1739,12 @@ func TestClient_ListFor(t *testing.T) {
 	paths := lo.Map[files_sdk.File, string](files, func(item files_sdk.File, index int) string {
 		return item.Path
 	})
+	// In the order the folder lists them, in path order, with each folder's entries before the folder itself.
 	assert.Equal([]string{
+		"TestClient_DownloadFolder/nested_1/nested_2/3.text",
 		"TestClient_DownloadFolder/nested_1/nested_2/nested_3/4.text",
 		"TestClient_DownloadFolder/nested_1/nested_2/nested_3",
-		"TestClient_DownloadFolder/nested_1/nested_2/3.text",
 	}, paths)
-
-	r.Stop()
 }
 
 func TestUploadsCloseErroredResponsesOnce(t *testing.T) {
