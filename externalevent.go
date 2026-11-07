@@ -55,9 +55,9 @@ func (u ExternalEventStatusEnum) Enum() map[string]ExternalEventStatusEnum {
 
 // ExternalEventListParams contains the request parameters for GET /external_events.
 type ExternalEventListParams struct {
-	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `created_at`, `status`, `event_type` or `workspace_id`.
+	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `created_at`, `status` or `event_type`.
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	// If set, return records where the specified field is equal to the supplied value. Valid fields are `created_at`, `status` or `workspace_id`. Valid field combinations are `[ status, created_at ]`.
+	// If set, return records where the specified field is equal to the supplied value. Valid fields are `created_at`, `status` or `workspace_id`. Valid field combinations are `[ status, created_at ]`, `[ workspace_id, created_at ]`, `[ workspace_id, status ]` or `[ workspace_id, status, created_at ]`.
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	// If set, return records where the specified field is greater than the supplied value. Valid fields are `created_at`.
 	FilterGt interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`

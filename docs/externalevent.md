@@ -35,8 +35,8 @@ Parameters, `files_sdk.ExternalEventListParams`:
 
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
-| `SortBy` | `interface{}` | `sort_by` | no | If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `created_at`, `status`, `event_type` or `workspace_id`. |
-| `Filter` | `interface{}` | `filter` | no | If set, return records where the specified field is equal to the supplied value. Valid fields are `created_at`, `status` or `workspace_id`. Valid field combinations are `[ status, created_at ]`. |
+| `SortBy` | `interface{}` | `sort_by` | no | If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `created_at`, `status` or `event_type`. |
+| `Filter` | `interface{}` | `filter` | no | If set, return records where the specified field is equal to the supplied value. Valid fields are `created_at`, `status` or `workspace_id`. Valid field combinations are `[ status, created_at ]`, `[ workspace_id, created_at ]`, `[ workspace_id, status ]` or `[ workspace_id, status, created_at ]`. |
 | `FilterGt` | `interface{}` | `filter_gt` | no | If set, return records where the specified field is greater than the supplied value. Valid fields are `created_at`. |
 | `FilterGteq` | `interface{}` | `filter_gteq` | no | If set, return records where the specified field is greater than or equal the supplied value. Valid fields are `created_at`. |
 | `FilterLt` | `interface{}` | `filter_lt` | no | If set, return records where the specified field is less than the supplied value. Valid fields are `created_at`. |
