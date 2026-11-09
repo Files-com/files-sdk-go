@@ -59,18 +59,18 @@ type PartnerSiteRequestCreateParams struct {
 	GuestSiteUrl string `url:"guest_site_url" json:"guest_site_url" path:"guest_site_url"`
 }
 
-// PartnerSiteRequestRejectParams contains the request parameters for POST /partner_site_requests/reject.
-type PartnerSiteRequestRejectParams struct {
-	// Pairing key for the partner site request. Required.
-	PairingKey string `url:"pairing_key" json:"pairing_key" path:"pairing_key"`
-}
-
 // PartnerSiteRequestApproveParams contains the request parameters for POST /partner_site_requests/approve.
 type PartnerSiteRequestApproveParams struct {
 	// Pairing key for the partner site request. Required.
 	PairingKey string `url:"pairing_key" json:"pairing_key" path:"pairing_key"`
 	// ID of an existing Partner on this site, with the host role, that represents the requesting organization. The connection binds to that Partner and makes it host_and_guest. When omitted, a guest Partner named after the host site is created.
 	PartnerId int64 `url:"partner_id,omitempty" json:"partner_id,omitempty" path:"partner_id"`
+}
+
+// PartnerSiteRequestRejectParams contains the request parameters for POST /partner_site_requests/reject.
+type PartnerSiteRequestRejectParams struct {
+	// Pairing key for the partner site request. Required.
+	PairingKey string `url:"pairing_key" json:"pairing_key" path:"pairing_key"`
 }
 
 // PartnerSiteRequestDeleteParams contains the request parameters for DELETE /partner_site_requests/{id}.

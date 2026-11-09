@@ -93,14 +93,6 @@ type AutomationRunFindNodeParams struct {
 	NodeId string `url:"node_id" json:"node_id" path:"node_id"`
 }
 
-// AutomationRunCancelParams contains the request parameters for POST /automation_runs/{id}/cancel.
-//
-// Cancel Automation Run
-type AutomationRunCancelParams struct {
-	// Automation Run ID. Required; sent in the request path.
-	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
-}
-
 // AutomationRunRerunParams contains the request parameters for POST /automation_runs/{id}/rerun.
 //
 // Re-run Automation from Node
@@ -109,6 +101,14 @@ type AutomationRunRerunParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 	// Node ID at which execution should resume. Required.
 	NodeId string `url:"node_id" json:"node_id" path:"node_id"`
+}
+
+// AutomationRunCancelParams contains the request parameters for POST /automation_runs/{id}/cancel.
+//
+// Cancel Automation Run
+type AutomationRunCancelParams struct {
+	// Automation Run ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // UnmarshalJSON decodes an API resource. A decoding error leaves the receiver unchanged.

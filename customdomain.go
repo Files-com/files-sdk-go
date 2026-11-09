@@ -80,14 +80,6 @@ type CustomDomainFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// CustomDomainCreateAllocateIpParams contains the request parameters for POST /custom_domains/{id}/allocate_ips.
-type CustomDomainCreateAllocateIpParams struct {
-	// Custom Domain ID. Required; sent in the request path.
-	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
-	// Number of dedicated IP addresses to allocate. Values: 1, 2. Required.
-	Count int64 `url:"count" json:"count" path:"count"`
-}
-
 // CustomDomainCreateParams contains the request parameters for POST /custom_domains.
 type CustomDomainCreateParams struct {
 	// Allow all workspaces to use this default-workspace Custom Domain.
@@ -102,6 +94,14 @@ type CustomDomainCreateParams struct {
 	SslCertificateId int64 `url:"ssl_certificate_id,omitempty" json:"ssl_certificate_id,omitempty" path:"ssl_certificate_id"`
 	// Customer-owned domain name. Required.
 	Domain string `url:"domain" json:"domain" path:"domain"`
+}
+
+// CustomDomainCreateAllocateIpParams contains the request parameters for POST /custom_domains/{id}/allocate_ips.
+type CustomDomainCreateAllocateIpParams struct {
+	// Custom Domain ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// Number of dedicated IP addresses to allocate. Values: 1, 2. Required.
+	Count int64 `url:"count" json:"count" path:"count"`
 }
 
 // CustomDomainUpdateParams contains the request parameters for PATCH /custom_domains/{id}.

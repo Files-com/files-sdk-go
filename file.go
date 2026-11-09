@@ -222,6 +222,14 @@ type FileDeleteParams struct {
 	Recursive *bool `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
 }
 
+// FileZipListContentsParams contains the request parameters for GET /file_actions/zip_list/{path}.
+//
+// List the contents of a ZIP file
+type FileZipListContentsParams struct {
+	// Path to operate on. Required; sent in the request path.
+	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+}
+
 // FileFindParams contains the request parameters for GET /file_actions/metadata/{path}.
 type FileFindParams struct {
 	// Path to operate on. Required; sent in the request path.
@@ -234,49 +242,69 @@ type FileFindParams struct {
 	WithPriorityColor *bool `url:"with_priority_color,omitempty" json:"with_priority_color,omitempty" path:"with_priority_color"`
 }
 
-// FileZipListContentsParams contains the request parameters for GET /file_actions/zip_list/{path}.
-//
-// List the contents of a ZIP file
-type FileZipListContentsParams struct {
-	// Path to operate on. Required; sent in the request path.
-	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
-}
-
-// FileBeginDeleteParams contains the request parameters for POST /file_actions/delete/{path}.
-//
-// Delete File/Folder and return its File Action.  A pending or processing deletion continues in the background after this returns; check its File Migration for completion.  Waiting for the File Migration does not cancel the deletion
-type FileBeginDeleteParams struct {
-	// Path to operate on. Required; sent in the request path.
-	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
-	// If true, will recursively delete folders. Otherwise, will error on non-empty folders.
-	Recursive *bool `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
-}
-
-// FileCopyParams contains the request parameters for POST /file_actions/copy/{path}.
-//
-// Copy File/Folder
-type FileCopyParams struct {
-	// Path to operate on. Required; sent in the request path.
-	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
-	// Copy destination path. Required.
+// FileZipParams contains the request parameters for POST /file_actions/zip.
+type FileZipParams struct {
+	// Paths to include in the ZIP. Required.
+	Paths []string `url:"paths" json:"paths" path:"paths"`
+	// Destination file path for the ZIP. Required.
 	Destination string `url:"destination" json:"destination" path:"destination"`
-	// If copying a folder, also copy supported behaviors, email notification subscriptions, and per-folder branding to the destination folder tree?
-	CopyBehaviors *bool `url:"copy_behaviors,omitempty" json:"copy_behaviors,omitempty" path:"copy_behaviors"`
-	// Copy structure only?
-	Structure *bool `url:"structure,omitempty" json:"structure,omitempty" path:"structure"`
-	// Overwrite existing file(s) in the destination?
+	// Archive format to create. Values: zip, tar, tar.gz, tgz.
+	ArchiveFormat FileArchiveFormatEnum `url:"archive_format,omitempty" json:"archive_format,omitempty" path:"archive_format"`
+	// Overwrite existing file in the destination?
 	Overwrite *bool `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
-// FileMoveParams contains the request parameters for POST /file_actions/move/{path}.
+// FileUnzipParams contains the request parameters for POST /file_actions/unzip.
 //
-// Move File/Folder
-type FileMoveParams struct {
+// Extract a ZIP file to a destination folder
+type FileUnzipParams struct {
+	// ZIP file path to extract. Required.
+	Path string `url:"path" json:"path" path:"path"`
+	// Destination folder path for extracted files. Required.
+	Destination string `url:"destination" json:"destination" path:"destination"`
+	// Optional single entry filename to extract.
+	Filename string `url:"filename,omitempty" json:"filename,omitempty" path:"filename"`
+	// Overwrite existing files in the destination?
+	Overwrite *bool `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
+}
+
+// FileGpgEncryptParams contains the request parameters for POST /file_actions/gpg_encrypt/{path}.
+//
+// Encrypt a file with GPG and save it to a destination path
+type FileGpgEncryptParams struct {
 	// Path to operate on. Required; sent in the request path.
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
-	// Move destination path. Required.
+	// Destination file path for the encrypted file. Required.
 	Destination string `url:"destination" json:"destination" path:"destination"`
-	// Overwrite existing file(s) in the destination?
+	// GPG Key IDs to encrypt with.
+	GpgKeyIds []int64 `url:"gpg_key_ids,omitempty" json:"gpg_key_ids,omitempty" path:"gpg_key_ids"`
+	// Partner ID whose GPG keys should be used for encryption.
+	GpgKeyPartnerId int64 `url:"gpg_key_partner_id,omitempty" json:"gpg_key_partner_id,omitempty" path:"gpg_key_partner_id"`
+	// Optional GPG Key ID to sign with.
+	SigningKeyId int64 `url:"signing_key_id,omitempty" json:"signing_key_id,omitempty" path:"signing_key_id"`
+	// Output ASCII-armored encrypted data.
+	Armor *bool `url:"armor,omitempty" json:"armor,omitempty" path:"armor"`
+	// Overwrite existing file in the destination?
+	Overwrite *bool `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
+}
+
+// FileGpgDecryptParams contains the request parameters for POST /file_actions/gpg_decrypt/{path}.
+//
+// Decrypt a GPG-encrypted file and save it to a destination path
+type FileGpgDecryptParams struct {
+	// Path to operate on. Required; sent in the request path.
+	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	// Destination file path for the decrypted file. Required.
+	Destination string `url:"destination" json:"destination" path:"destination"`
+	// GPG Key IDs to decrypt with. If omitted, every accessible private GPG key in the source workspace is used.
+	GpgKeyIds []int64 `url:"gpg_key_ids,omitempty" json:"gpg_key_ids,omitempty" path:"gpg_key_ids"`
+	// Partner ID whose GPG keys should be used for decryption.
+	GpgKeyPartnerId int64 `url:"gpg_key_partner_id,omitempty" json:"gpg_key_partner_id,omitempty" path:"gpg_key_partner_id"`
+	// Use every accessible private GPG key in the source workspace for decryption.
+	UseAllPrivateKeys *bool `url:"use_all_private_keys,omitempty" json:"use_all_private_keys,omitempty" path:"use_all_private_keys"`
+	// Ignore errors from the MDC (modification detection code) check.
+	IgnoreMdcError *bool `url:"ignore_mdc_error,omitempty" json:"ignore_mdc_error,omitempty" path:"ignore_mdc_error"`
+	// Overwrite existing file in the destination?
 	Overwrite *bool `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
@@ -302,70 +330,42 @@ type FileTransformParams struct {
 	Overwrite *bool `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
-// FileGpgDecryptParams contains the request parameters for POST /file_actions/gpg_decrypt/{path}.
+// FileMoveParams contains the request parameters for POST /file_actions/move/{path}.
 //
-// Decrypt a GPG-encrypted file and save it to a destination path
-type FileGpgDecryptParams struct {
+// Move File/Folder
+type FileMoveParams struct {
 	// Path to operate on. Required; sent in the request path.
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
-	// Destination file path for the decrypted file. Required.
+	// Move destination path. Required.
 	Destination string `url:"destination" json:"destination" path:"destination"`
-	// GPG Key IDs to decrypt with. If omitted, every accessible private GPG key in the source workspace is used.
-	GpgKeyIds []int64 `url:"gpg_key_ids,omitempty" json:"gpg_key_ids,omitempty" path:"gpg_key_ids"`
-	// Partner ID whose GPG keys should be used for decryption.
-	GpgKeyPartnerId int64 `url:"gpg_key_partner_id,omitempty" json:"gpg_key_partner_id,omitempty" path:"gpg_key_partner_id"`
-	// Use every accessible private GPG key in the source workspace for decryption.
-	UseAllPrivateKeys *bool `url:"use_all_private_keys,omitempty" json:"use_all_private_keys,omitempty" path:"use_all_private_keys"`
-	// Ignore errors from the MDC (modification detection code) check.
-	IgnoreMdcError *bool `url:"ignore_mdc_error,omitempty" json:"ignore_mdc_error,omitempty" path:"ignore_mdc_error"`
-	// Overwrite existing file in the destination?
+	// Overwrite existing file(s) in the destination?
 	Overwrite *bool `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
-// FileGpgEncryptParams contains the request parameters for POST /file_actions/gpg_encrypt/{path}.
+// FileCopyParams contains the request parameters for POST /file_actions/copy/{path}.
 //
-// Encrypt a file with GPG and save it to a destination path
-type FileGpgEncryptParams struct {
+// Copy File/Folder
+type FileCopyParams struct {
 	// Path to operate on. Required; sent in the request path.
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
-	// Destination file path for the encrypted file. Required.
+	// Copy destination path. Required.
 	Destination string `url:"destination" json:"destination" path:"destination"`
-	// GPG Key IDs to encrypt with.
-	GpgKeyIds []int64 `url:"gpg_key_ids,omitempty" json:"gpg_key_ids,omitempty" path:"gpg_key_ids"`
-	// Partner ID whose GPG keys should be used for encryption.
-	GpgKeyPartnerId int64 `url:"gpg_key_partner_id,omitempty" json:"gpg_key_partner_id,omitempty" path:"gpg_key_partner_id"`
-	// Optional GPG Key ID to sign with.
-	SigningKeyId int64 `url:"signing_key_id,omitempty" json:"signing_key_id,omitempty" path:"signing_key_id"`
-	// Output ASCII-armored encrypted data.
-	Armor *bool `url:"armor,omitempty" json:"armor,omitempty" path:"armor"`
-	// Overwrite existing file in the destination?
+	// If copying a folder, also copy supported behaviors, email notification subscriptions, and per-folder branding to the destination folder tree?
+	CopyBehaviors *bool `url:"copy_behaviors,omitempty" json:"copy_behaviors,omitempty" path:"copy_behaviors"`
+	// Copy structure only?
+	Structure *bool `url:"structure,omitempty" json:"structure,omitempty" path:"structure"`
+	// Overwrite existing file(s) in the destination?
 	Overwrite *bool `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
 }
 
-// FileUnzipParams contains the request parameters for POST /file_actions/unzip.
+// FileBeginDeleteParams contains the request parameters for POST /file_actions/delete/{path}.
 //
-// Extract a ZIP file to a destination folder
-type FileUnzipParams struct {
-	// ZIP file path to extract. Required.
-	Path string `url:"path" json:"path" path:"path"`
-	// Destination folder path for extracted files. Required.
-	Destination string `url:"destination" json:"destination" path:"destination"`
-	// Optional single entry filename to extract.
-	Filename string `url:"filename,omitempty" json:"filename,omitempty" path:"filename"`
-	// Overwrite existing files in the destination?
-	Overwrite *bool `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
-}
-
-// FileZipParams contains the request parameters for POST /file_actions/zip.
-type FileZipParams struct {
-	// Paths to include in the ZIP. Required.
-	Paths []string `url:"paths" json:"paths" path:"paths"`
-	// Destination file path for the ZIP. Required.
-	Destination string `url:"destination" json:"destination" path:"destination"`
-	// Archive format to create. Values: zip, tar, tar.gz, tgz.
-	ArchiveFormat FileArchiveFormatEnum `url:"archive_format,omitempty" json:"archive_format,omitempty" path:"archive_format"`
-	// Overwrite existing file in the destination?
-	Overwrite *bool `url:"overwrite,omitempty" json:"overwrite,omitempty" path:"overwrite"`
+// Delete File/Folder and return its File Action.  A pending or processing deletion continues in the background after this returns; check its File Migration for completion.  Waiting for the File Migration does not cancel the deletion
+type FileBeginDeleteParams struct {
+	// Path to operate on. Required; sent in the request path.
+	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	// If true, will recursively delete folders. Otherwise, will error on non-empty folders.
+	Recursive *bool `url:"recursive,omitempty" json:"recursive,omitempty" path:"recursive"`
 }
 
 // FileBeginUploadParams contains the request parameters for POST /file_actions/begin_upload/{path}.

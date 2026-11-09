@@ -83,17 +83,17 @@ func Find(params files_sdk.ExpectationIncidentFindParams, opts ...files_sdk.Requ
 	return (&Client{}).Find(params, opts...)
 }
 
-// Resolve calls POST /expectation_incidents/{id}/resolve.
+// Acknowledge calls POST /expectation_incidents/{id}/acknowledge.
 //
-// API operation: Resolve an expectation incident.
-func (c *Client) Resolve(params files_sdk.ExpectationIncidentResolveParams, opts ...files_sdk.RequestResponseOption) (expectationIncident files_sdk.ExpectationIncident, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/expectation_incidents/{id}/resolve", Params: params, Entity: &expectationIncident}, opts...)
+// API operation: Acknowledge an expectation incident.
+func (c *Client) Acknowledge(params files_sdk.ExpectationIncidentAcknowledgeParams, opts ...files_sdk.RequestResponseOption) (expectationIncident files_sdk.ExpectationIncident, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/expectation_incidents/{id}/acknowledge", Params: params, Entity: &expectationIncident}, opts...)
 	return
 }
 
-// Resolve calls Client.Resolve using the default configuration.
-func Resolve(params files_sdk.ExpectationIncidentResolveParams, opts ...files_sdk.RequestResponseOption) (expectationIncident files_sdk.ExpectationIncident, err error) {
-	return (&Client{}).Resolve(params, opts...)
+// Acknowledge calls Client.Acknowledge using the default configuration.
+func Acknowledge(params files_sdk.ExpectationIncidentAcknowledgeParams, opts ...files_sdk.RequestResponseOption) (expectationIncident files_sdk.ExpectationIncident, err error) {
+	return (&Client{}).Acknowledge(params, opts...)
 }
 
 // Snooze calls POST /expectation_incidents/{id}/snooze.
@@ -109,15 +109,15 @@ func Snooze(params files_sdk.ExpectationIncidentSnoozeParams, opts ...files_sdk.
 	return (&Client{}).Snooze(params, opts...)
 }
 
-// Acknowledge calls POST /expectation_incidents/{id}/acknowledge.
+// Resolve calls POST /expectation_incidents/{id}/resolve.
 //
-// API operation: Acknowledge an expectation incident.
-func (c *Client) Acknowledge(params files_sdk.ExpectationIncidentAcknowledgeParams, opts ...files_sdk.RequestResponseOption) (expectationIncident files_sdk.ExpectationIncident, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/expectation_incidents/{id}/acknowledge", Params: params, Entity: &expectationIncident}, opts...)
+// API operation: Resolve an expectation incident.
+func (c *Client) Resolve(params files_sdk.ExpectationIncidentResolveParams, opts ...files_sdk.RequestResponseOption) (expectationIncident files_sdk.ExpectationIncident, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/expectation_incidents/{id}/resolve", Params: params, Entity: &expectationIncident}, opts...)
 	return
 }
 
-// Acknowledge calls Client.Acknowledge using the default configuration.
-func Acknowledge(params files_sdk.ExpectationIncidentAcknowledgeParams, opts ...files_sdk.RequestResponseOption) (expectationIncident files_sdk.ExpectationIncident, err error) {
-	return (&Client{}).Acknowledge(params, opts...)
+// Resolve calls Client.Resolve using the default configuration.
+func Resolve(params files_sdk.ExpectationIncidentResolveParams, opts ...files_sdk.RequestResponseOption) (expectationIncident files_sdk.ExpectationIncident, err error) {
+	return (&Client{}).Resolve(params, opts...)
 }

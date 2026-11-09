@@ -94,17 +94,17 @@ func Create(params files_sdk.UserCreateParams, opts ...files_sdk.RequestResponse
 	return (&Client{}).Create(params, opts...)
 }
 
-// Unlock calls POST /users/{id}/unlock.
+// User2faReset calls POST /users/{id}/2fa/reset.
 //
-// API operation: Unlock user who has been locked out due to failed logins.
-func (c *Client) Unlock(params files_sdk.UserUnlockParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/users/{id}/unlock", Params: params, Entity: nil}, opts...)
+// API operation: Trigger 2FA Reset process for user who has lost access to their existing 2FA methods.
+func (c *Client) User2faReset(params files_sdk.UserUser2faResetParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/users/{id}/2fa/reset", Params: params, Entity: nil}, opts...)
 	return
 }
 
-// Unlock calls Client.Unlock using the default configuration.
-func Unlock(params files_sdk.UserUnlockParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	return (&Client{}).Unlock(params, opts...)
+// User2faReset calls Client.User2faReset using the default configuration.
+func User2faReset(params files_sdk.UserUser2faResetParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	return (&Client{}).User2faReset(params, opts...)
 }
 
 // ResendWelcomeEmail calls POST /users/{id}/resend_welcome_email.
@@ -120,17 +120,17 @@ func ResendWelcomeEmail(params files_sdk.UserResendWelcomeEmailParams, opts ...f
 	return (&Client{}).ResendWelcomeEmail(params, opts...)
 }
 
-// User2faReset calls POST /users/{id}/2fa/reset.
+// Unlock calls POST /users/{id}/unlock.
 //
-// API operation: Trigger 2FA Reset process for user who has lost access to their existing 2FA methods.
-func (c *Client) User2faReset(params files_sdk.UserUser2faResetParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/users/{id}/2fa/reset", Params: params, Entity: nil}, opts...)
+// API operation: Unlock user who has been locked out due to failed logins.
+func (c *Client) Unlock(params files_sdk.UserUnlockParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/users/{id}/unlock", Params: params, Entity: nil}, opts...)
 	return
 }
 
-// User2faReset calls Client.User2faReset using the default configuration.
-func User2faReset(params files_sdk.UserUser2faResetParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	return (&Client{}).User2faReset(params, opts...)
+// Unlock calls Client.Unlock using the default configuration.
+func Unlock(params files_sdk.UserUnlockParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	return (&Client{}).Unlock(params, opts...)
 }
 
 // Update calls PATCH /users/{id}.

@@ -48,12 +48,12 @@ type RequestListParams struct {
 
 // RequestGetFolderParams contains the request parameters for GET /requests/folders/{path}.
 type RequestGetFolderParams struct {
+	// Path to show requests for. If omitted, shows all paths. Send `/` to represent the root directory. Required; sent in the request path.
+	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are .
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	// Only show requests of the current user? (Defaults to true if current user is not a site admin.).
 	Mine *bool `url:"mine,omitempty" json:"mine,omitempty" path:"mine"`
-	// Path to show requests for. If omitted, shows all paths. Send `/` to represent the root directory. Required; sent in the request path.
-	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }

@@ -47,8 +47,8 @@ func (h History) Identifier() interface{} {
 // HistoryCollection is a list of History resources.
 type HistoryCollection []History
 
-// HistoryListForFileParams contains the request parameters for GET /history/files/{path}.
-type HistoryListForFileParams struct {
+// HistoryListParams contains the request parameters for GET /history.
+type HistoryListParams struct {
 	// Leave blank or set to a date/time to filter earlier entries.
 	StartAt *time.Time `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
 	// Leave blank or set to a date/time to filter later entries.
@@ -57,40 +57,10 @@ type HistoryListForFileParams struct {
 	Display string `url:"display,omitempty" json:"display,omitempty" path:"display"`
 	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `created_at`.
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	// Path to operate on. Required; sent in the request path.
-	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
-	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
-	ListParams
-}
-
-// HistoryListForFolderParams contains the request parameters for GET /history/folders/{path}.
-type HistoryListForFolderParams struct {
-	// Leave blank or set to a date/time to filter earlier entries.
-	StartAt *time.Time `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
-	// Leave blank or set to a date/time to filter later entries.
-	EndAt *time.Time `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
-	// Display format. Leave blank or set to `full` or `parent`.
-	Display string `url:"display,omitempty" json:"display,omitempty" path:"display"`
-	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `created_at`.
-	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	// Path to operate on. Required; sent in the request path.
-	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
-	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
-	ListParams
-}
-
-// HistoryListForUserParams contains the request parameters for GET /history/users/{user_id}.
-type HistoryListForUserParams struct {
-	// Leave blank or set to a date/time to filter earlier entries.
-	StartAt *time.Time `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
-	// Leave blank or set to a date/time to filter later entries.
-	EndAt *time.Time `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
-	// Display format. Leave blank or set to `full` or `parent`.
-	Display string `url:"display,omitempty" json:"display,omitempty" path:"display"`
-	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `created_at`.
-	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	// User ID. Required; sent in the request path.
-	UserId int64 `url:"-,omitempty" json:"-,omitempty" path:"user_id"`
+	// If set, return records where the specified field is equal to the supplied value. Valid fields are `user_id`, `folder` or `path`. Valid field combinations are `[ ]`, `[ path ]`, `[ path ]` or `[ path ]`.
+	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
+	// If set, return records where the specified field is prefixed by the supplied value. Valid fields are `path`.
+	FilterPrefix interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
 	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
@@ -109,8 +79,10 @@ type HistoryListLoginsParams struct {
 	ListParams
 }
 
-// HistoryListParams contains the request parameters for GET /history.
-type HistoryListParams struct {
+// HistoryListForUserParams contains the request parameters for GET /history/users/{user_id}.
+type HistoryListForUserParams struct {
+	// User ID. Required; sent in the request path.
+	UserId int64 `url:"-,omitempty" json:"-,omitempty" path:"user_id"`
 	// Leave blank or set to a date/time to filter earlier entries.
 	StartAt *time.Time `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
 	// Leave blank or set to a date/time to filter later entries.
@@ -119,10 +91,38 @@ type HistoryListParams struct {
 	Display string `url:"display,omitempty" json:"display,omitempty" path:"display"`
 	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `created_at`.
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	// If set, return records where the specified field is equal to the supplied value. Valid fields are `user_id`, `folder` or `path`. Valid field combinations are `[ ]`, `[ path ]`, `[ path ]` or `[ path ]`.
-	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
-	// If set, return records where the specified field is prefixed by the supplied value. Valid fields are `path`.
-	FilterPrefix interface{} `url:"filter_prefix,omitempty" json:"filter_prefix,omitempty" path:"filter_prefix"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
+	ListParams
+}
+
+// HistoryListForFolderParams contains the request parameters for GET /history/folders/{path}.
+type HistoryListForFolderParams struct {
+	// Path to operate on. Required; sent in the request path.
+	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	// Leave blank or set to a date/time to filter earlier entries.
+	StartAt *time.Time `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
+	// Leave blank or set to a date/time to filter later entries.
+	EndAt *time.Time `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
+	// Display format. Leave blank or set to `full` or `parent`.
+	Display string `url:"display,omitempty" json:"display,omitempty" path:"display"`
+	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `created_at`.
+	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
+	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
+	ListParams
+}
+
+// HistoryListForFileParams contains the request parameters for GET /history/files/{path}.
+type HistoryListForFileParams struct {
+	// Path to operate on. Required; sent in the request path.
+	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	// Leave blank or set to a date/time to filter earlier entries.
+	StartAt *time.Time `url:"start_at,omitempty" json:"start_at,omitempty" path:"start_at"`
+	// Leave blank or set to a date/time to filter later entries.
+	EndAt *time.Time `url:"end_at,omitempty" json:"end_at,omitempty" path:"end_at"`
+	// Display format. Leave blank or set to `full` or `parent`.
+	Display string `url:"display,omitempty" json:"display,omitempty" path:"display"`
+	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `created_at`.
+	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }

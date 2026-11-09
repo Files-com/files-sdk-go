@@ -32,8 +32,8 @@ type IpAddressListParams struct {
 	ListParams
 }
 
-// IpAddressGetSmartfileReservedParams contains the request parameters for GET /ip_addresses/smartfile-reserved.
-type IpAddressGetSmartfileReservedParams struct {
+// IpAddressGetReservedParams contains the request parameters for GET /ip_addresses/reserved.
+type IpAddressGetReservedParams struct {
 	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }
@@ -44,8 +44,8 @@ type IpAddressGetExavaultReservedParams struct {
 	ListParams
 }
 
-// IpAddressGetReservedParams contains the request parameters for GET /ip_addresses/reserved.
-type IpAddressGetReservedParams struct {
+// IpAddressGetSmartfileReservedParams contains the request parameters for GET /ip_addresses/smartfile-reserved.
+type IpAddressGetSmartfileReservedParams struct {
 	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
 }

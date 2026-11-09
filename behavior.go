@@ -59,24 +59,24 @@ type BehaviorListParams struct {
 	ListParams
 }
 
-// BehaviorFindParams contains the request parameters for GET /behaviors/{id}.
-type BehaviorFindParams struct {
-	// Behavior ID. Required; sent in the request path.
-	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
-}
-
 // BehaviorListForParams contains the request parameters for GET /behaviors/folders/{path}.
 type BehaviorListForParams struct {
+	// Path to operate on. Required; sent in the request path.
+	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `behavior`.
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
 	// If set, return records where the specified field is equal to the supplied value. Valid fields are `impacts_ui` and `behavior`. Valid field combinations are `[ impacts_ui, behavior ]`.
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
-	// Path to operate on. Required; sent in the request path.
-	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	// If `true`, behaviors above this path are shown.
 	AncestorBehaviors *bool `url:"ancestor_behaviors,omitempty" json:"ancestor_behaviors,omitempty" path:"ancestor_behaviors"`
 	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
+}
+
+// BehaviorFindParams contains the request parameters for GET /behaviors/{id}.
+type BehaviorFindParams struct {
+	// Behavior ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // BehaviorCreateParams contains the request parameters for POST /behaviors.

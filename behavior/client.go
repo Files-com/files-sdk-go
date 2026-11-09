@@ -72,17 +72,6 @@ func List(params files_sdk.BehaviorListParams, opts ...files_sdk.RequestResponse
 	return (&Client{}).List(params, opts...)
 }
 
-// Find calls GET /behaviors/{id}.
-func (c *Client) Find(params files_sdk.BehaviorFindParams, opts ...files_sdk.RequestResponseOption) (behavior files_sdk.Behavior, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/behaviors/{id}", Params: params, Entity: &behavior}, opts...)
-	return
-}
-
-// Find calls Client.Find using the default configuration.
-func Find(params files_sdk.BehaviorFindParams, opts ...files_sdk.RequestResponseOption) (behavior files_sdk.Behavior, err error) {
-	return (&Client{}).Find(params, opts...)
-}
-
 // ListFor returns an iterator for GET /behaviors/folders/{path}.
 // Pages are requested as iteration reaches them: range over Iter.All, or call
 // Next and then check Err.
@@ -104,6 +93,17 @@ func (c *Client) ListFor(params files_sdk.BehaviorListForParams, opts ...files_s
 // See Client.ListFor for the operation and paging behavior.
 func ListFor(params files_sdk.BehaviorListForParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	return (&Client{}).ListFor(params, opts...)
+}
+
+// Find calls GET /behaviors/{id}.
+func (c *Client) Find(params files_sdk.BehaviorFindParams, opts ...files_sdk.RequestResponseOption) (behavior files_sdk.Behavior, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/behaviors/{id}", Params: params, Entity: &behavior}, opts...)
+	return
+}
+
+// Find calls Client.Find using the default configuration.
+func Find(params files_sdk.BehaviorFindParams, opts ...files_sdk.RequestResponseOption) (behavior files_sdk.Behavior, err error) {
+	return (&Client{}).Find(params, opts...)
 }
 
 // Create calls POST /behaviors.

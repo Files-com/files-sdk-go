@@ -120,35 +120,6 @@ if err != nil {
 fmt.Println(result)
 ```
 
-### Cancel
-
-`POST /automation_runs/{id}/cancel`
-
-Cancel Automation Run
-
-```go
-func (c *Client) Cancel(params files_sdk.AutomationRunCancelParams, opts ...files_sdk.RequestResponseOption) (automationRun files_sdk.AutomationRun, err error)
-func Cancel(params files_sdk.AutomationRunCancelParams, opts ...files_sdk.RequestResponseOption) (automationRun files_sdk.AutomationRun, err error)
-```
-
-Parameters, `files_sdk.AutomationRunCancelParams`:
-
-| Field | Go type | API name | Required | Description |
-| --- | --- | --- | --- | --- |
-| `Id` | `int64` | `id`, in the path | yes | Automation Run ID. |
-
-Example:
-
-```go
-result, err := automation_run.Cancel(files_sdk.AutomationRunCancelParams{
-	Id: 1,
-})
-if err != nil {
-	return err
-}
-fmt.Println(result)
-```
-
 ### Rerun
 
 `POST /automation_runs/{id}/rerun`
@@ -173,6 +144,35 @@ Example:
 result, err := automation_run.Rerun(files_sdk.AutomationRunRerunParams{
 	Id:     1,
 	NodeId: "node_id",
+})
+if err != nil {
+	return err
+}
+fmt.Println(result)
+```
+
+### Cancel
+
+`POST /automation_runs/{id}/cancel`
+
+Cancel Automation Run
+
+```go
+func (c *Client) Cancel(params files_sdk.AutomationRunCancelParams, opts ...files_sdk.RequestResponseOption) (automationRun files_sdk.AutomationRun, err error)
+func Cancel(params files_sdk.AutomationRunCancelParams, opts ...files_sdk.RequestResponseOption) (automationRun files_sdk.AutomationRun, err error)
+```
+
+Parameters, `files_sdk.AutomationRunCancelParams`:
+
+| Field | Go type | API name | Required | Description |
+| --- | --- | --- | --- | --- |
+| `Id` | `int64` | `id`, in the path | yes | Automation Run ID. |
+
+Example:
+
+```go
+result, err := automation_run.Cancel(files_sdk.AutomationRunCancelParams{
+	Id: 1,
 })
 if err != nil {
 	return err

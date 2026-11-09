@@ -35,7 +35,7 @@ func (i *Iter) Reload(opts ...files_sdk.RequestResponseOption) files_sdk.IterI {
 //
 // This package's listings return different types, so All yields each resource
 // unchanged, as an any value; use a type assertion or type switch to read it.
-// List yields files_sdk.IpAddress values, and GetSmartfileReserved, GetExavaultReserved, and GetReserved yield files_sdk.PublicIpAddress values.
+// List yields files_sdk.IpAddress values, and GetReserved, GetExavaultReserved, and GetSmartfileReserved yield files_sdk.PublicIpAddress values.
 func (i *Iter) All() iter.Seq2[any, error] {
 	return files_sdk.IterAll[any](i.Iter)
 }
@@ -74,15 +74,15 @@ func (i *Iter) PublicIpAddress() files_sdk.PublicIpAddress {
 	return i.Current().(files_sdk.PublicIpAddress)
 }
 
-// GetSmartfileReserved returns an iterator for GET /ip_addresses/smartfile-reserved.
+// GetReserved returns an iterator for GET /ip_addresses/reserved.
 // Pages are requested as iteration reaches them: range over Iter.All, or call
 // Next and then check Err.
 // Iter.All yields this listing's resources as files_sdk.PublicIpAddress values.
 //
-// API operation: List all possible public SmartFile IP addresses.
-func (c *Client) GetSmartfileReserved(params files_sdk.IpAddressGetSmartfileReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+// API operation: List all possible public IP addresses.
+func (c *Client) GetReserved(params files_sdk.IpAddressGetReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
-	path, err := lib.BuildPath("/ip_addresses/smartfile-reserved", params)
+	path, err := lib.BuildPath("/ip_addresses/reserved", params)
 	if err != nil {
 		return i, err
 	}
@@ -92,10 +92,10 @@ func (c *Client) GetSmartfileReserved(params files_sdk.IpAddressGetSmartfileRese
 	return i, nil
 }
 
-// GetSmartfileReserved returns a listing iterator using the default configuration.
-// See Client.GetSmartfileReserved for the operation and paging behavior.
-func GetSmartfileReserved(params files_sdk.IpAddressGetSmartfileReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	return (&Client{}).GetSmartfileReserved(params, opts...)
+// GetReserved returns a listing iterator using the default configuration.
+// See Client.GetReserved for the operation and paging behavior.
+func GetReserved(params files_sdk.IpAddressGetReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).GetReserved(params, opts...)
 }
 
 // GetExavaultReserved returns an iterator for GET /ip_addresses/exavault-reserved.
@@ -122,15 +122,15 @@ func GetExavaultReserved(params files_sdk.IpAddressGetExavaultReservedParams, op
 	return (&Client{}).GetExavaultReserved(params, opts...)
 }
 
-// GetReserved returns an iterator for GET /ip_addresses/reserved.
+// GetSmartfileReserved returns an iterator for GET /ip_addresses/smartfile-reserved.
 // Pages are requested as iteration reaches them: range over Iter.All, or call
 // Next and then check Err.
 // Iter.All yields this listing's resources as files_sdk.PublicIpAddress values.
 //
-// API operation: List all possible public IP addresses.
-func (c *Client) GetReserved(params files_sdk.IpAddressGetReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+// API operation: List all possible public SmartFile IP addresses.
+func (c *Client) GetSmartfileReserved(params files_sdk.IpAddressGetSmartfileReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
-	path, err := lib.BuildPath("/ip_addresses/reserved", params)
+	path, err := lib.BuildPath("/ip_addresses/smartfile-reserved", params)
 	if err != nil {
 		return i, err
 	}
@@ -140,8 +140,8 @@ func (c *Client) GetReserved(params files_sdk.IpAddressGetReservedParams, opts .
 	return i, nil
 }
 
-// GetReserved returns a listing iterator using the default configuration.
-// See Client.GetReserved for the operation and paging behavior.
-func GetReserved(params files_sdk.IpAddressGetReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	return (&Client{}).GetReserved(params, opts...)
+// GetSmartfileReserved returns a listing iterator using the default configuration.
+// See Client.GetSmartfileReserved for the operation and paging behavior.
+func GetSmartfileReserved(params files_sdk.IpAddressGetSmartfileReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).GetSmartfileReserved(params, opts...)
 }

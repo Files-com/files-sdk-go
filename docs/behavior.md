@@ -56,6 +56,48 @@ for item, err := range it.All() {
 }
 ```
 
+### ListFor
+
+`GET /behaviors/folders/{path}`
+
+List Behaviors by Path
+
+```go
+func (c *Client) ListFor(params files_sdk.BehaviorListForParams, opts ...files_sdk.RequestResponseOption) (*Iter, error)
+func ListFor(params files_sdk.BehaviorListForParams, opts ...files_sdk.RequestResponseOption) (*Iter, error)
+```
+
+Returns this package's `*Iter`, which requests pages as iteration reaches them. `Iter.All()` yields `files_sdk.Behavior` values, each with a nil error, followed by the error that stops the listing, if any.
+
+Parameters, `files_sdk.BehaviorListForParams`:
+
+| Field | Go type | API name | Required | Description |
+| --- | --- | --- | --- | --- |
+| `Path` | `string` | `path`, in the path | yes | Path to operate on. |
+| `SortBy` | `interface{}` | `sort_by` | no | If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `behavior`. |
+| `Filter` | `interface{}` | `filter` | no | If set, return records where the specified field is equal to the supplied value. Valid fields are `impacts_ui` and `behavior`. Valid field combinations are `[ impacts_ui, behavior ]`. |
+| `AncestorBehaviors` | `*bool` | `ancestor_behaviors` | no | If `true`, behaviors above this path are shown. |
+| `PerPage` | `int64` | `per_page` | no | From the embedded `files_sdk.ListParams`: requests the number of results per page. Zero uses the API default. |
+| `Cursor` | `string` | `cursor` | no | From the embedded `files_sdk.ListParams`: starts the listing at an API cursor. Empty starts at the first page. |
+| `MaxPages` | `int64` | not sent | no | From the embedded `files_sdk.ListParams`. Its tags send nothing to the API. |
+
+Example:
+
+```go
+it, err := behavior.ListFor(files_sdk.BehaviorListForParams{
+	Path: "path",
+})
+if err != nil {
+	return err
+}
+for item, err := range it.All() {
+	if err != nil {
+		return err
+	}
+	fmt.Println(item)
+}
+```
+
 ### Find
 
 `GET /behaviors/{id}`
@@ -83,48 +125,6 @@ if err != nil {
 	return err
 }
 fmt.Println(result)
-```
-
-### ListFor
-
-`GET /behaviors/folders/{path}`
-
-List Behaviors by Path
-
-```go
-func (c *Client) ListFor(params files_sdk.BehaviorListForParams, opts ...files_sdk.RequestResponseOption) (*Iter, error)
-func ListFor(params files_sdk.BehaviorListForParams, opts ...files_sdk.RequestResponseOption) (*Iter, error)
-```
-
-Returns this package's `*Iter`, which requests pages as iteration reaches them. `Iter.All()` yields `files_sdk.Behavior` values, each with a nil error, followed by the error that stops the listing, if any.
-
-Parameters, `files_sdk.BehaviorListForParams`:
-
-| Field | Go type | API name | Required | Description |
-| --- | --- | --- | --- | --- |
-| `SortBy` | `interface{}` | `sort_by` | no | If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `behavior`. |
-| `Filter` | `interface{}` | `filter` | no | If set, return records where the specified field is equal to the supplied value. Valid fields are `impacts_ui` and `behavior`. Valid field combinations are `[ impacts_ui, behavior ]`. |
-| `Path` | `string` | `path`, in the path | yes | Path to operate on. |
-| `AncestorBehaviors` | `*bool` | `ancestor_behaviors` | no | If `true`, behaviors above this path are shown. |
-| `PerPage` | `int64` | `per_page` | no | From the embedded `files_sdk.ListParams`: requests the number of results per page. Zero uses the API default. |
-| `Cursor` | `string` | `cursor` | no | From the embedded `files_sdk.ListParams`: starts the listing at an API cursor. Empty starts at the first page. |
-| `MaxPages` | `int64` | not sent | no | From the embedded `files_sdk.ListParams`. Its tags send nothing to the API. |
-
-Example:
-
-```go
-it, err := behavior.ListFor(files_sdk.BehaviorListForParams{
-	Path: "path",
-})
-if err != nil {
-	return err
-}
-for item, err := range it.All() {
-	if err != nil {
-		return err
-	}
-	fmt.Println(item)
-}
 ```
 
 ### Create

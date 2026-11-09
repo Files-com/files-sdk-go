@@ -94,19 +94,6 @@ func Create(params files_sdk.SyncCreateParams, opts ...files_sdk.RequestResponse
 	return (&Client{}).Create(params, opts...)
 }
 
-// DryRun calls POST /syncs/{id}/dry_run.
-//
-// API operation: Dry Run Sync.
-func (c *Client) DryRun(params files_sdk.SyncDryRunParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/syncs/{id}/dry_run", Params: params, Entity: nil}, opts...)
-	return
-}
-
-// DryRun calls Client.DryRun using the default configuration.
-func DryRun(params files_sdk.SyncDryRunParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	return (&Client{}).DryRun(params, opts...)
-}
-
 // ManualRun calls POST /syncs/{id}/manual_run.
 //
 // API operation: Manually Run Sync.
@@ -118,6 +105,19 @@ func (c *Client) ManualRun(params files_sdk.SyncManualRunParams, opts ...files_s
 // ManualRun calls Client.ManualRun using the default configuration.
 func ManualRun(params files_sdk.SyncManualRunParams, opts ...files_sdk.RequestResponseOption) (err error) {
 	return (&Client{}).ManualRun(params, opts...)
+}
+
+// DryRun calls POST /syncs/{id}/dry_run.
+//
+// API operation: Dry Run Sync.
+func (c *Client) DryRun(params files_sdk.SyncDryRunParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/syncs/{id}/dry_run", Params: params, Entity: nil}, opts...)
+	return
+}
+
+// DryRun calls Client.DryRun using the default configuration.
+func DryRun(params files_sdk.SyncDryRunParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	return (&Client{}).DryRun(params, opts...)
 }
 
 // Update calls PATCH /syncs/{id}.

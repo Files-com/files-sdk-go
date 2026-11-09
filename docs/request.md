@@ -74,9 +74,9 @@ Parameters, `files_sdk.RequestGetFolderParams`:
 
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
+| `Path` | `string` | `path`, in the path | yes | Path to show requests for. If omitted, shows all paths. Send `/` to represent the root directory. |
 | `SortBy` | `interface{}` | `sort_by` | no | If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are . |
 | `Mine` | `*bool` | `mine` | no | Only show requests of the current user? (Defaults to true if current user is not a site admin.) |
-| `Path` | `string` | `path`, in the path | yes | Path to show requests for. If omitted, shows all paths. Send `/` to represent the root directory. |
 | `PerPage` | `int64` | `per_page` | no | From the embedded `files_sdk.ListParams`: requests the number of results per page. Zero uses the API default. |
 | `Cursor` | `string` | `cursor` | no | From the embedded `files_sdk.ListParams`: starts the listing at an API cursor. Empty starts at the first page. |
 | `MaxPages` | `int64` | not sent | no | From the embedded `files_sdk.ListParams`. Its tags send nothing to the API. |

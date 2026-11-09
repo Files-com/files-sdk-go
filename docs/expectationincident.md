@@ -86,18 +86,18 @@ if err != nil {
 fmt.Println(result)
 ```
 
-### Resolve
+### Acknowledge
 
-`POST /expectation_incidents/{id}/resolve`
+`POST /expectation_incidents/{id}/acknowledge`
 
-Resolve an expectation incident
+Acknowledge an expectation incident
 
 ```go
-func (c *Client) Resolve(params files_sdk.ExpectationIncidentResolveParams, opts ...files_sdk.RequestResponseOption) (expectationIncident files_sdk.ExpectationIncident, err error)
-func Resolve(params files_sdk.ExpectationIncidentResolveParams, opts ...files_sdk.RequestResponseOption) (expectationIncident files_sdk.ExpectationIncident, err error)
+func (c *Client) Acknowledge(params files_sdk.ExpectationIncidentAcknowledgeParams, opts ...files_sdk.RequestResponseOption) (expectationIncident files_sdk.ExpectationIncident, err error)
+func Acknowledge(params files_sdk.ExpectationIncidentAcknowledgeParams, opts ...files_sdk.RequestResponseOption) (expectationIncident files_sdk.ExpectationIncident, err error)
 ```
 
-Parameters, `files_sdk.ExpectationIncidentResolveParams`:
+Parameters, `files_sdk.ExpectationIncidentAcknowledgeParams`:
 
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
@@ -106,7 +106,7 @@ Parameters, `files_sdk.ExpectationIncidentResolveParams`:
 Example:
 
 ```go
-result, err := expectation_incident.Resolve(files_sdk.ExpectationIncidentResolveParams{
+result, err := expectation_incident.Acknowledge(files_sdk.ExpectationIncidentAcknowledgeParams{
 	Id: 1,
 })
 if err != nil {
@@ -148,18 +148,18 @@ if err != nil {
 fmt.Println(result)
 ```
 
-### Acknowledge
+### Resolve
 
-`POST /expectation_incidents/{id}/acknowledge`
+`POST /expectation_incidents/{id}/resolve`
 
-Acknowledge an expectation incident
+Resolve an expectation incident
 
 ```go
-func (c *Client) Acknowledge(params files_sdk.ExpectationIncidentAcknowledgeParams, opts ...files_sdk.RequestResponseOption) (expectationIncident files_sdk.ExpectationIncident, err error)
-func Acknowledge(params files_sdk.ExpectationIncidentAcknowledgeParams, opts ...files_sdk.RequestResponseOption) (expectationIncident files_sdk.ExpectationIncident, err error)
+func (c *Client) Resolve(params files_sdk.ExpectationIncidentResolveParams, opts ...files_sdk.RequestResponseOption) (expectationIncident files_sdk.ExpectationIncident, err error)
+func Resolve(params files_sdk.ExpectationIncidentResolveParams, opts ...files_sdk.RequestResponseOption) (expectationIncident files_sdk.ExpectationIncident, err error)
 ```
 
-Parameters, `files_sdk.ExpectationIncidentAcknowledgeParams`:
+Parameters, `files_sdk.ExpectationIncidentResolveParams`:
 
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
@@ -168,7 +168,7 @@ Parameters, `files_sdk.ExpectationIncidentAcknowledgeParams`:
 Example:
 
 ```go
-result, err := expectation_incident.Acknowledge(files_sdk.ExpectationIncidentAcknowledgeParams{
+result, err := expectation_incident.Resolve(files_sdk.ExpectationIncidentResolveParams{
 	Id: 1,
 })
 if err != nil {

@@ -41,14 +41,14 @@ func (i *Iter) Action() files_sdk.Action {
 	return i.Current().(files_sdk.Action)
 }
 
-// ListForFile returns an iterator for GET /history/files/{path}.
+// List returns an iterator for GET /history.
 // Pages are requested as iteration reaches them: range over Iter.All, or call
 // Next and then check Err.
 //
-// API operation: List history for specific file.
-func (c *Client) ListForFile(params files_sdk.HistoryListForFileParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+// API operation: List site full action history.
+func (c *Client) List(params files_sdk.HistoryListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
-	path, err := lib.BuildPath("/history/files/{path}", params)
+	path, err := lib.BuildPath("/history", params)
 	if err != nil {
 		return i, err
 	}
@@ -58,56 +58,10 @@ func (c *Client) ListForFile(params files_sdk.HistoryListForFileParams, opts ...
 	return i, nil
 }
 
-// ListForFile returns a listing iterator using the default configuration.
-// See Client.ListForFile for the operation and paging behavior.
-func ListForFile(params files_sdk.HistoryListForFileParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	return (&Client{}).ListForFile(params, opts...)
-}
-
-// ListForFolder returns an iterator for GET /history/folders/{path}.
-// Pages are requested as iteration reaches them: range over Iter.All, or call
-// Next and then check Err.
-//
-// API operation: List history for specific folder.
-func (c *Client) ListForFolder(params files_sdk.HistoryListForFolderParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
-	path, err := lib.BuildPath("/history/folders/{path}", params)
-	if err != nil {
-		return i, err
-	}
-	i.ListParams = &params
-	list := files_sdk.ActionCollection{}
-	i.Query = listquery.Build(c.Config, path, &list, opts...)
-	return i, nil
-}
-
-// ListForFolder returns a listing iterator using the default configuration.
-// See Client.ListForFolder for the operation and paging behavior.
-func ListForFolder(params files_sdk.HistoryListForFolderParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	return (&Client{}).ListForFolder(params, opts...)
-}
-
-// ListForUser returns an iterator for GET /history/users/{user_id}.
-// Pages are requested as iteration reaches them: range over Iter.All, or call
-// Next and then check Err.
-//
-// API operation: List history for specific user.
-func (c *Client) ListForUser(params files_sdk.HistoryListForUserParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
-	path, err := lib.BuildPath("/history/users/{user_id}", params)
-	if err != nil {
-		return i, err
-	}
-	i.ListParams = &params
-	list := files_sdk.ActionCollection{}
-	i.Query = listquery.Build(c.Config, path, &list, opts...)
-	return i, nil
-}
-
-// ListForUser returns a listing iterator using the default configuration.
-// See Client.ListForUser for the operation and paging behavior.
-func ListForUser(params files_sdk.HistoryListForUserParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	return (&Client{}).ListForUser(params, opts...)
+// List returns a listing iterator using the default configuration.
+// See Client.List for the operation and paging behavior.
+func List(params files_sdk.HistoryListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).List(params, opts...)
 }
 
 // ListLogins returns an iterator for GET /history/login.
@@ -133,14 +87,14 @@ func ListLogins(params files_sdk.HistoryListLoginsParams, opts ...files_sdk.Requ
 	return (&Client{}).ListLogins(params, opts...)
 }
 
-// List returns an iterator for GET /history.
+// ListForUser returns an iterator for GET /history/users/{user_id}.
 // Pages are requested as iteration reaches them: range over Iter.All, or call
 // Next and then check Err.
 //
-// API operation: List site full action history.
-func (c *Client) List(params files_sdk.HistoryListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+// API operation: List history for specific user.
+func (c *Client) ListForUser(params files_sdk.HistoryListForUserParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
 	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
-	path, err := lib.BuildPath("/history", params)
+	path, err := lib.BuildPath("/history/users/{user_id}", params)
 	if err != nil {
 		return i, err
 	}
@@ -150,8 +104,54 @@ func (c *Client) List(params files_sdk.HistoryListParams, opts ...files_sdk.Requ
 	return i, nil
 }
 
-// List returns a listing iterator using the default configuration.
-// See Client.List for the operation and paging behavior.
-func List(params files_sdk.HistoryListParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
-	return (&Client{}).List(params, opts...)
+// ListForUser returns a listing iterator using the default configuration.
+// See Client.ListForUser for the operation and paging behavior.
+func ListForUser(params files_sdk.HistoryListForUserParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).ListForUser(params, opts...)
+}
+
+// ListForFolder returns an iterator for GET /history/folders/{path}.
+// Pages are requested as iteration reaches them: range over Iter.All, or call
+// Next and then check Err.
+//
+// API operation: List history for specific folder.
+func (c *Client) ListForFolder(params files_sdk.HistoryListForFolderParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
+	path, err := lib.BuildPath("/history/folders/{path}", params)
+	if err != nil {
+		return i, err
+	}
+	i.ListParams = &params
+	list := files_sdk.ActionCollection{}
+	i.Query = listquery.Build(c.Config, path, &list, opts...)
+	return i, nil
+}
+
+// ListForFolder returns a listing iterator using the default configuration.
+// See Client.ListForFolder for the operation and paging behavior.
+func ListForFolder(params files_sdk.HistoryListForFolderParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).ListForFolder(params, opts...)
+}
+
+// ListForFile returns an iterator for GET /history/files/{path}.
+// Pages are requested as iteration reaches them: range over Iter.All, or call
+// Next and then check Err.
+//
+// API operation: List history for specific file.
+func (c *Client) ListForFile(params files_sdk.HistoryListForFileParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	i := &Iter{Iter: &files_sdk.Iter{}, Client: c}
+	path, err := lib.BuildPath("/history/files/{path}", params)
+	if err != nil {
+		return i, err
+	}
+	i.ListParams = &params
+	list := files_sdk.ActionCollection{}
+	i.Query = listquery.Build(c.Config, path, &list, opts...)
+	return i, nil
+}
+
+// ListForFile returns a listing iterator using the default configuration.
+// See Client.ListForFile for the operation and paging behavior.
+func ListForFile(params files_sdk.HistoryListForFileParams, opts ...files_sdk.RequestResponseOption) (*Iter, error) {
+	return (&Client{}).ListForFile(params, opts...)
 }

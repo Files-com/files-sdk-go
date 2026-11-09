@@ -171,18 +171,18 @@ type SyncCreateParams struct {
 	WorkspaceId int64 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// SyncDryRunParams contains the request parameters for POST /syncs/{id}/dry_run.
-//
-// Dry Run Sync
-type SyncDryRunParams struct {
-	// Sync ID. Required; sent in the request path.
-	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
-}
-
 // SyncManualRunParams contains the request parameters for POST /syncs/{id}/manual_run.
 //
 // Manually Run Sync
 type SyncManualRunParams struct {
+	// Sync ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+}
+
+// SyncDryRunParams contains the request parameters for POST /syncs/{id}/dry_run.
+//
+// Dry Run Sync
+type SyncDryRunParams struct {
 	// Sync ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

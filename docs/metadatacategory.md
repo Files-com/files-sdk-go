@@ -55,35 +55,6 @@ for item, err := range it.All() {
 }
 ```
 
-### Find
-
-`GET /metadata_categories/{id}`
-
-Show Metadata Category
-
-```go
-func (c *Client) Find(params files_sdk.MetadataCategoryFindParams, opts ...files_sdk.RequestResponseOption) (metadataCategory files_sdk.MetadataCategory, err error)
-func Find(params files_sdk.MetadataCategoryFindParams, opts ...files_sdk.RequestResponseOption) (metadataCategory files_sdk.MetadataCategory, err error)
-```
-
-Parameters, `files_sdk.MetadataCategoryFindParams`:
-
-| Field | Go type | API name | Required | Description |
-| --- | --- | --- | --- | --- |
-| `Id` | `int64` | `id`, in the path | yes | Metadata Category ID. |
-
-Example:
-
-```go
-result, err := metadata_category.Find(files_sdk.MetadataCategoryFindParams{
-	Id: 1,
-})
-if err != nil {
-	return err
-}
-fmt.Println(result)
-```
-
 ### ListFor
 
 `GET /metadata_categories/list_by_path/{path}`
@@ -121,6 +92,35 @@ for item, err := range it.All() {
 	}
 	fmt.Println(item)
 }
+```
+
+### Find
+
+`GET /metadata_categories/{id}`
+
+Show Metadata Category
+
+```go
+func (c *Client) Find(params files_sdk.MetadataCategoryFindParams, opts ...files_sdk.RequestResponseOption) (metadataCategory files_sdk.MetadataCategory, err error)
+func Find(params files_sdk.MetadataCategoryFindParams, opts ...files_sdk.RequestResponseOption) (metadataCategory files_sdk.MetadataCategory, err error)
+```
+
+Parameters, `files_sdk.MetadataCategoryFindParams`:
+
+| Field | Go type | API name | Required | Description |
+| --- | --- | --- | --- | --- |
+| `Id` | `int64` | `id`, in the path | yes | Metadata Category ID. |
+
+Example:
+
+```go
+result, err := metadata_category.Find(files_sdk.MetadataCategoryFindParams{
+	Id: 1,
+})
+if err != nil {
+	return err
+}
+fmt.Println(result)
 ```
 
 ### Create

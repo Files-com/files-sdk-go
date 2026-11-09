@@ -83,6 +83,17 @@ func Find(params files_sdk.CustomDomainFindParams, opts ...files_sdk.RequestResp
 	return (&Client{}).Find(params, opts...)
 }
 
+// Create calls POST /custom_domains.
+func (c *Client) Create(params files_sdk.CustomDomainCreateParams, opts ...files_sdk.RequestResponseOption) (customDomain files_sdk.CustomDomain, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/custom_domains", Params: params, Entity: &customDomain}, opts...)
+	return
+}
+
+// Create calls Client.Create using the default configuration.
+func Create(params files_sdk.CustomDomainCreateParams, opts ...files_sdk.RequestResponseOption) (customDomain files_sdk.CustomDomain, err error) {
+	return (&Client{}).Create(params, opts...)
+}
+
 // CreateAllocateIp calls POST /custom_domains/{id}/allocate_ips.
 //
 // API operation: Allocate dedicated IP addresses to this Custom Domain.
@@ -94,17 +105,6 @@ func (c *Client) CreateAllocateIp(params files_sdk.CustomDomainCreateAllocateIpP
 // CreateAllocateIp calls Client.CreateAllocateIp using the default configuration.
 func CreateAllocateIp(params files_sdk.CustomDomainCreateAllocateIpParams, opts ...files_sdk.RequestResponseOption) (customDomain files_sdk.CustomDomain, err error) {
 	return (&Client{}).CreateAllocateIp(params, opts...)
-}
-
-// Create calls POST /custom_domains.
-func (c *Client) Create(params files_sdk.CustomDomainCreateParams, opts ...files_sdk.RequestResponseOption) (customDomain files_sdk.CustomDomain, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/custom_domains", Params: params, Entity: &customDomain}, opts...)
-	return
-}
-
-// Create calls Client.Create using the default configuration.
-func Create(params files_sdk.CustomDomainCreateParams, opts ...files_sdk.RequestResponseOption) (customDomain files_sdk.CustomDomain, err error) {
-	return (&Client{}).Create(params, opts...)
 }
 
 // Update calls PATCH /custom_domains/{id}.

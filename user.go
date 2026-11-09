@@ -495,10 +495,10 @@ type UserCreateParams struct {
 	WorkspaceId int64 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
 }
 
-// UserUnlockParams contains the request parameters for POST /users/{id}/unlock.
+// UserUser2faResetParams contains the request parameters for POST /users/{id}/2fa/reset.
 //
-// Unlock user who has been locked out due to failed logins
-type UserUnlockParams struct {
+// Trigger 2FA Reset process for user who has lost access to their existing 2FA methods
+type UserUser2faResetParams struct {
 	// User ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
@@ -511,10 +511,10 @@ type UserResendWelcomeEmailParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// UserUser2faResetParams contains the request parameters for POST /users/{id}/2fa/reset.
+// UserUnlockParams contains the request parameters for POST /users/{id}/unlock.
 //
-// Trigger 2FA Reset process for user who has lost access to their existing 2FA methods
-type UserUser2faResetParams struct {
+// Unlock user who has been locked out due to failed logins
+type UserUnlockParams struct {
 	// User ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }

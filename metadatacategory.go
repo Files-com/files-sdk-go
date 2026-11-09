@@ -34,18 +34,18 @@ type MetadataCategoryListParams struct {
 	ListParams
 }
 
-// MetadataCategoryFindParams contains the request parameters for GET /metadata_categories/{id}.
-type MetadataCategoryFindParams struct {
-	// Metadata Category ID. Required; sent in the request path.
-	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
-}
-
 // MetadataCategoryListForParams contains the request parameters for GET /metadata_categories/list_by_path/{path}.
 type MetadataCategoryListForParams struct {
 	// Path to operate on. Required; sent in the request path.
 	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
 	// ListParams controls cursor-based pagination: PerPage and Cursor are sent to the API, and MaxPages, which is not sent, limits the number of pages requested when positive; zero allows all pages.
 	ListParams
+}
+
+// MetadataCategoryFindParams contains the request parameters for GET /metadata_categories/{id}.
+type MetadataCategoryFindParams struct {
+	// Metadata Category ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
 // MetadataCategoryCreateParams contains the request parameters for POST /metadata_categories.

@@ -94,19 +94,6 @@ func FindNode(params files_sdk.AutomationRunFindNodeParams, opts ...files_sdk.Re
 	return (&Client{}).FindNode(params, opts...)
 }
 
-// Cancel calls POST /automation_runs/{id}/cancel.
-//
-// API operation: Cancel Automation Run.
-func (c *Client) Cancel(params files_sdk.AutomationRunCancelParams, opts ...files_sdk.RequestResponseOption) (automationRun files_sdk.AutomationRun, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/automation_runs/{id}/cancel", Params: params, Entity: &automationRun}, opts...)
-	return
-}
-
-// Cancel calls Client.Cancel using the default configuration.
-func Cancel(params files_sdk.AutomationRunCancelParams, opts ...files_sdk.RequestResponseOption) (automationRun files_sdk.AutomationRun, err error) {
-	return (&Client{}).Cancel(params, opts...)
-}
-
 // Rerun calls POST /automation_runs/{id}/rerun.
 //
 // API operation: Re-run Automation from Node.
@@ -118,4 +105,17 @@ func (c *Client) Rerun(params files_sdk.AutomationRunRerunParams, opts ...files_
 // Rerun calls Client.Rerun using the default configuration.
 func Rerun(params files_sdk.AutomationRunRerunParams, opts ...files_sdk.RequestResponseOption) (automationRun files_sdk.AutomationRun, err error) {
 	return (&Client{}).Rerun(params, opts...)
+}
+
+// Cancel calls POST /automation_runs/{id}/cancel.
+//
+// API operation: Cancel Automation Run.
+func (c *Client) Cancel(params files_sdk.AutomationRunCancelParams, opts ...files_sdk.RequestResponseOption) (automationRun files_sdk.AutomationRun, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/automation_runs/{id}/cancel", Params: params, Entity: &automationRun}, opts...)
+	return
+}
+
+// Cancel calls Client.Cancel using the default configuration.
+func Cancel(params files_sdk.AutomationRunCancelParams, opts ...files_sdk.RequestResponseOption) (automationRun files_sdk.AutomationRun, err error) {
+	return (&Client{}).Cancel(params, opts...)
 }

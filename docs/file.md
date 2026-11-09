@@ -191,6 +191,35 @@ if err != nil {
 }
 ```
 
+### ZipListContents
+
+`GET /file_actions/zip_list/{path}`
+
+List the contents of a ZIP file
+
+```go
+func (c *Client) ZipListContents(params files_sdk.FileZipListContentsParams, opts ...files_sdk.RequestResponseOption) (zipListEntryCollection files_sdk.ZipListEntryCollection, err error)
+func ZipListContents(params files_sdk.FileZipListContentsParams, opts ...files_sdk.RequestResponseOption) (zipListEntryCollection files_sdk.ZipListEntryCollection, err error)
+```
+
+Parameters, `files_sdk.FileZipListContentsParams`:
+
+| Field | Go type | API name | Required | Description |
+| --- | --- | --- | --- | --- |
+| `Path` | `string` | `path`, in the path | yes | Path to operate on. |
+
+Example:
+
+```go
+result, err := file.ZipListContents(files_sdk.FileZipListContentsParams{
+	Path: "path",
+})
+if err != nil {
+	return err
+}
+fmt.Println(result)
+```
+
 ### Find
 
 `GET /file_actions/metadata/{path}`
@@ -223,28 +252,34 @@ if err != nil {
 fmt.Println(result)
 ```
 
-### ZipListContents
+### Zip
 
-`GET /file_actions/zip_list/{path}`
+`POST /file_actions/zip`
 
-List the contents of a ZIP file
+Create a ZIP from one or more paths and save it to a destination path
 
 ```go
-func (c *Client) ZipListContents(params files_sdk.FileZipListContentsParams, opts ...files_sdk.RequestResponseOption) (zipListEntryCollection files_sdk.ZipListEntryCollection, err error)
-func ZipListContents(params files_sdk.FileZipListContentsParams, opts ...files_sdk.RequestResponseOption) (zipListEntryCollection files_sdk.ZipListEntryCollection, err error)
+func (c *Client) Zip(params files_sdk.FileZipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
+func Zip(params files_sdk.FileZipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
 ```
 
-Parameters, `files_sdk.FileZipListContentsParams`:
+Parameters, `files_sdk.FileZipParams`:
 
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
-| `Path` | `string` | `path`, in the path | yes | Path to operate on. |
+| `Paths` | `[]string` | `paths` | yes | Paths to include in the ZIP. |
+| `Destination` | `string` | `destination` | yes | Destination file path for the ZIP. |
+| `ArchiveFormat` | `files_sdk.FileArchiveFormatEnum` | `archive_format` | no | Archive format to create. Values: `zip`, `tar`, `tar.gz`, `tgz`. |
+| `Overwrite` | `*bool` | `overwrite` | no | Overwrite existing file in the destination? |
 
 Example:
 
 ```go
-result, err := file.ZipListContents(files_sdk.FileZipListContentsParams{
-	Path: "path",
+// Set this required value before the call.
+var paths []string
+result, err := file.Zip(files_sdk.FileZipParams{
+	Paths:       paths,
+	Destination: "destination",
 })
 if err != nil {
 	return err
@@ -252,61 +287,30 @@ if err != nil {
 fmt.Println(result)
 ```
 
-### BeginDelete
+### Unzip
 
-`POST /file_actions/delete/{path}`
+`POST /file_actions/unzip`
 
-Delete File/Folder and return its File Action. A pending or processing deletion continues in the background after this returns; check its File Migration for completion. Waiting for the File Migration does not cancel the deletion
+Extract a ZIP file to a destination folder
 
 ```go
-func (c *Client) BeginDelete(params files_sdk.FileBeginDeleteParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
-func BeginDelete(params files_sdk.FileBeginDeleteParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
+func (c *Client) Unzip(params files_sdk.FileUnzipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
+func Unzip(params files_sdk.FileUnzipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
 ```
 
-Parameters, `files_sdk.FileBeginDeleteParams`:
+Parameters, `files_sdk.FileUnzipParams`:
 
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
-| `Path` | `string` | `path`, in the path | yes | Path to operate on. |
-| `Recursive` | `*bool` | `recursive` | no | If true, will recursively delete folders. Otherwise, will error on non-empty folders. |
+| `Path` | `string` | `path` | yes | ZIP file path to extract. |
+| `Destination` | `string` | `destination` | yes | Destination folder path for extracted files. |
+| `Filename` | `string` | `filename` | no | Optional single entry filename to extract. |
+| `Overwrite` | `*bool` | `overwrite` | no | Overwrite existing files in the destination? |
 
 Example:
 
 ```go
-result, err := file.BeginDelete(files_sdk.FileBeginDeleteParams{
-	Path: "path",
-})
-if err != nil {
-	return err
-}
-fmt.Println(result)
-```
-
-### Copy
-
-`POST /file_actions/copy/{path}`
-
-Copy File/Folder
-
-```go
-func (c *Client) Copy(params files_sdk.FileCopyParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
-func Copy(params files_sdk.FileCopyParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
-```
-
-Parameters, `files_sdk.FileCopyParams`:
-
-| Field | Go type | API name | Required | Description |
-| --- | --- | --- | --- | --- |
-| `Path` | `string` | `path`, in the path | yes | Path to operate on. |
-| `Destination` | `string` | `destination` | yes | Copy destination path. |
-| `CopyBehaviors` | `*bool` | `copy_behaviors` | no | If copying a folder, also copy supported behaviors, email notification subscriptions, and per-folder branding to the destination folder tree? |
-| `Structure` | `*bool` | `structure` | no | Copy structure only? |
-| `Overwrite` | `*bool` | `overwrite` | no | Overwrite existing file(s) in the destination? |
-
-Example:
-
-```go
-result, err := file.Copy(files_sdk.FileCopyParams{
+result, err := file.Unzip(files_sdk.FileUnzipParams{
 	Path:        "path",
 	Destination: "destination",
 })
@@ -316,29 +320,69 @@ if err != nil {
 fmt.Println(result)
 ```
 
-### Move
+### GpgEncrypt
 
-`POST /file_actions/move/{path}`
+`POST /file_actions/gpg_encrypt/{path}`
 
-Move File/Folder
+Encrypt a file with GPG and save it to a destination path
 
 ```go
-func (c *Client) Move(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
-func Move(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
+func (c *Client) GpgEncrypt(params files_sdk.FileGpgEncryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
+func GpgEncrypt(params files_sdk.FileGpgEncryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
 ```
 
-Parameters, `files_sdk.FileMoveParams`:
+Parameters, `files_sdk.FileGpgEncryptParams`:
 
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
 | `Path` | `string` | `path`, in the path | yes | Path to operate on. |
-| `Destination` | `string` | `destination` | yes | Move destination path. |
-| `Overwrite` | `*bool` | `overwrite` | no | Overwrite existing file(s) in the destination? |
+| `Destination` | `string` | `destination` | yes | Destination file path for the encrypted file. |
+| `GpgKeyIds` | `[]int64` | `gpg_key_ids` | no | GPG Key IDs to encrypt with. |
+| `GpgKeyPartnerId` | `int64` | `gpg_key_partner_id` | no | Partner ID whose GPG keys should be used for encryption. |
+| `SigningKeyId` | `int64` | `signing_key_id` | no | Optional GPG Key ID to sign with. |
+| `Armor` | `*bool` | `armor` | no | Output ASCII-armored encrypted data. |
+| `Overwrite` | `*bool` | `overwrite` | no | Overwrite existing file in the destination? |
 
 Example:
 
 ```go
-result, err := file.Move(files_sdk.FileMoveParams{
+result, err := file.GpgEncrypt(files_sdk.FileGpgEncryptParams{
+	Path:        "path",
+	Destination: "destination",
+})
+if err != nil {
+	return err
+}
+fmt.Println(result)
+```
+
+### GpgDecrypt
+
+`POST /file_actions/gpg_decrypt/{path}`
+
+Decrypt a GPG-encrypted file and save it to a destination path
+
+```go
+func (c *Client) GpgDecrypt(params files_sdk.FileGpgDecryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
+func GpgDecrypt(params files_sdk.FileGpgDecryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
+```
+
+Parameters, `files_sdk.FileGpgDecryptParams`:
+
+| Field | Go type | API name | Required | Description |
+| --- | --- | --- | --- | --- |
+| `Path` | `string` | `path`, in the path | yes | Path to operate on. |
+| `Destination` | `string` | `destination` | yes | Destination file path for the decrypted file. |
+| `GpgKeyIds` | `[]int64` | `gpg_key_ids` | no | GPG Key IDs to decrypt with. If omitted, every accessible private GPG key in the source workspace is used. |
+| `GpgKeyPartnerId` | `int64` | `gpg_key_partner_id` | no | Partner ID whose GPG keys should be used for decryption. |
+| `UseAllPrivateKeys` | `*bool` | `use_all_private_keys` | no | Use every accessible private GPG key in the source workspace for decryption. |
+| `IgnoreMdcError` | `*bool` | `ignore_mdc_error` | no | Ignore errors from the MDC (modification detection code) check. |
+| `Overwrite` | `*bool` | `overwrite` | no | Overwrite existing file in the destination? |
+
+Example:
+
+```go
+result, err := file.GpgDecrypt(files_sdk.FileGpgDecryptParams{
 	Path:        "path",
 	Destination: "destination",
 })
@@ -387,33 +431,29 @@ if err != nil {
 fmt.Println(result)
 ```
 
-### GpgDecrypt
+### Move
 
-`POST /file_actions/gpg_decrypt/{path}`
+`POST /file_actions/move/{path}`
 
-Decrypt a GPG-encrypted file and save it to a destination path
+Move File/Folder
 
 ```go
-func (c *Client) GpgDecrypt(params files_sdk.FileGpgDecryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
-func GpgDecrypt(params files_sdk.FileGpgDecryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
+func (c *Client) Move(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
+func Move(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
 ```
 
-Parameters, `files_sdk.FileGpgDecryptParams`:
+Parameters, `files_sdk.FileMoveParams`:
 
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
 | `Path` | `string` | `path`, in the path | yes | Path to operate on. |
-| `Destination` | `string` | `destination` | yes | Destination file path for the decrypted file. |
-| `GpgKeyIds` | `[]int64` | `gpg_key_ids` | no | GPG Key IDs to decrypt with. If omitted, every accessible private GPG key in the source workspace is used. |
-| `GpgKeyPartnerId` | `int64` | `gpg_key_partner_id` | no | Partner ID whose GPG keys should be used for decryption. |
-| `UseAllPrivateKeys` | `*bool` | `use_all_private_keys` | no | Use every accessible private GPG key in the source workspace for decryption. |
-| `IgnoreMdcError` | `*bool` | `ignore_mdc_error` | no | Ignore errors from the MDC (modification detection code) check. |
-| `Overwrite` | `*bool` | `overwrite` | no | Overwrite existing file in the destination? |
+| `Destination` | `string` | `destination` | yes | Move destination path. |
+| `Overwrite` | `*bool` | `overwrite` | no | Overwrite existing file(s) in the destination? |
 
 Example:
 
 ```go
-result, err := file.GpgDecrypt(files_sdk.FileGpgDecryptParams{
+result, err := file.Move(files_sdk.FileMoveParams{
 	Path:        "path",
 	Destination: "destination",
 })
@@ -423,33 +463,31 @@ if err != nil {
 fmt.Println(result)
 ```
 
-### GpgEncrypt
+### Copy
 
-`POST /file_actions/gpg_encrypt/{path}`
+`POST /file_actions/copy/{path}`
 
-Encrypt a file with GPG and save it to a destination path
+Copy File/Folder
 
 ```go
-func (c *Client) GpgEncrypt(params files_sdk.FileGpgEncryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
-func GpgEncrypt(params files_sdk.FileGpgEncryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
+func (c *Client) Copy(params files_sdk.FileCopyParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
+func Copy(params files_sdk.FileCopyParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
 ```
 
-Parameters, `files_sdk.FileGpgEncryptParams`:
+Parameters, `files_sdk.FileCopyParams`:
 
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
 | `Path` | `string` | `path`, in the path | yes | Path to operate on. |
-| `Destination` | `string` | `destination` | yes | Destination file path for the encrypted file. |
-| `GpgKeyIds` | `[]int64` | `gpg_key_ids` | no | GPG Key IDs to encrypt with. |
-| `GpgKeyPartnerId` | `int64` | `gpg_key_partner_id` | no | Partner ID whose GPG keys should be used for encryption. |
-| `SigningKeyId` | `int64` | `signing_key_id` | no | Optional GPG Key ID to sign with. |
-| `Armor` | `*bool` | `armor` | no | Output ASCII-armored encrypted data. |
-| `Overwrite` | `*bool` | `overwrite` | no | Overwrite existing file in the destination? |
+| `Destination` | `string` | `destination` | yes | Copy destination path. |
+| `CopyBehaviors` | `*bool` | `copy_behaviors` | no | If copying a folder, also copy supported behaviors, email notification subscriptions, and per-folder branding to the destination folder tree? |
+| `Structure` | `*bool` | `structure` | no | Copy structure only? |
+| `Overwrite` | `*bool` | `overwrite` | no | Overwrite existing file(s) in the destination? |
 
 Example:
 
 ```go
-result, err := file.GpgEncrypt(files_sdk.FileGpgEncryptParams{
+result, err := file.Copy(files_sdk.FileCopyParams{
 	Path:        "path",
 	Destination: "destination",
 })
@@ -459,67 +497,29 @@ if err != nil {
 fmt.Println(result)
 ```
 
-### Unzip
+### BeginDelete
 
-`POST /file_actions/unzip`
+`POST /file_actions/delete/{path}`
 
-Extract a ZIP file to a destination folder
+Delete File/Folder and return its File Action. A pending or processing deletion continues in the background after this returns; check its File Migration for completion. Waiting for the File Migration does not cancel the deletion
 
 ```go
-func (c *Client) Unzip(params files_sdk.FileUnzipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
-func Unzip(params files_sdk.FileUnzipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
+func (c *Client) BeginDelete(params files_sdk.FileBeginDeleteParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
+func BeginDelete(params files_sdk.FileBeginDeleteParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
 ```
 
-Parameters, `files_sdk.FileUnzipParams`:
+Parameters, `files_sdk.FileBeginDeleteParams`:
 
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
-| `Path` | `string` | `path` | yes | ZIP file path to extract. |
-| `Destination` | `string` | `destination` | yes | Destination folder path for extracted files. |
-| `Filename` | `string` | `filename` | no | Optional single entry filename to extract. |
-| `Overwrite` | `*bool` | `overwrite` | no | Overwrite existing files in the destination? |
+| `Path` | `string` | `path`, in the path | yes | Path to operate on. |
+| `Recursive` | `*bool` | `recursive` | no | If true, will recursively delete folders. Otherwise, will error on non-empty folders. |
 
 Example:
 
 ```go
-result, err := file.Unzip(files_sdk.FileUnzipParams{
-	Path:        "path",
-	Destination: "destination",
-})
-if err != nil {
-	return err
-}
-fmt.Println(result)
-```
-
-### Zip
-
-`POST /file_actions/zip`
-
-Create a ZIP from one or more paths and save it to a destination path
-
-```go
-func (c *Client) Zip(params files_sdk.FileZipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
-func Zip(params files_sdk.FileZipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error)
-```
-
-Parameters, `files_sdk.FileZipParams`:
-
-| Field | Go type | API name | Required | Description |
-| --- | --- | --- | --- | --- |
-| `Paths` | `[]string` | `paths` | yes | Paths to include in the ZIP. |
-| `Destination` | `string` | `destination` | yes | Destination file path for the ZIP. |
-| `ArchiveFormat` | `files_sdk.FileArchiveFormatEnum` | `archive_format` | no | Archive format to create. Values: `zip`, `tar`, `tar.gz`, `tgz`. |
-| `Overwrite` | `*bool` | `overwrite` | no | Overwrite existing file in the destination? |
-
-Example:
-
-```go
-// Set this required value before the call.
-var paths []string
-result, err := file.Zip(files_sdk.FileZipParams{
-	Paths:       paths,
-	Destination: "destination",
+result, err := file.BeginDelete(files_sdk.FileBeginDeleteParams{
+	Path: "path",
 })
 if err != nil {
 	return err

@@ -135,34 +135,6 @@ if err != nil {
 fmt.Println(result)
 ```
 
-### DryRun
-
-`POST /syncs/{id}/dry_run`
-
-Dry Run Sync
-
-```go
-func (c *Client) DryRun(params files_sdk.SyncDryRunParams, opts ...files_sdk.RequestResponseOption) (err error)
-func DryRun(params files_sdk.SyncDryRunParams, opts ...files_sdk.RequestResponseOption) (err error)
-```
-
-Parameters, `files_sdk.SyncDryRunParams`:
-
-| Field | Go type | API name | Required | Description |
-| --- | --- | --- | --- | --- |
-| `Id` | `int64` | `id`, in the path | yes | Sync ID. |
-
-Example:
-
-```go
-err := sync.DryRun(files_sdk.SyncDryRunParams{
-	Id: 1,
-})
-if err != nil {
-	return err
-}
-```
-
 ### ManualRun
 
 `POST /syncs/{id}/manual_run`
@@ -184,6 +156,34 @@ Example:
 
 ```go
 err := sync.ManualRun(files_sdk.SyncManualRunParams{
+	Id: 1,
+})
+if err != nil {
+	return err
+}
+```
+
+### DryRun
+
+`POST /syncs/{id}/dry_run`
+
+Dry Run Sync
+
+```go
+func (c *Client) DryRun(params files_sdk.SyncDryRunParams, opts ...files_sdk.RequestResponseOption) (err error)
+func DryRun(params files_sdk.SyncDryRunParams, opts ...files_sdk.RequestResponseOption) (err error)
+```
+
+Parameters, `files_sdk.SyncDryRunParams`:
+
+| Field | Go type | API name | Required | Description |
+| --- | --- | --- | --- | --- |
+| `Id` | `int64` | `id`, in the path | yes | Sync ID. |
+
+Example:
+
+```go
+err := sync.DryRun(files_sdk.SyncDryRunParams{
 	Id: 1,
 })
 if err != nil {

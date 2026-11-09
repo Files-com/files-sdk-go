@@ -85,37 +85,6 @@ if err != nil {
 fmt.Println(result)
 ```
 
-### CreateAllocateIp
-
-`POST /custom_domains/{id}/allocate_ips`
-
-Allocate dedicated IP addresses to this Custom Domain
-
-```go
-func (c *Client) CreateAllocateIp(params files_sdk.CustomDomainCreateAllocateIpParams, opts ...files_sdk.RequestResponseOption) (customDomain files_sdk.CustomDomain, err error)
-func CreateAllocateIp(params files_sdk.CustomDomainCreateAllocateIpParams, opts ...files_sdk.RequestResponseOption) (customDomain files_sdk.CustomDomain, err error)
-```
-
-Parameters, `files_sdk.CustomDomainCreateAllocateIpParams`:
-
-| Field | Go type | API name | Required | Description |
-| --- | --- | --- | --- | --- |
-| `Id` | `int64` | `id`, in the path | yes | Custom Domain ID. |
-| `Count` | `int64` | `count` | yes | Number of dedicated IP addresses to allocate. Values: `1`, `2`. |
-
-Example:
-
-```go
-result, err := custom_domain.CreateAllocateIp(files_sdk.CustomDomainCreateAllocateIpParams{
-	Id:    1,
-	Count: 1,
-})
-if err != nil {
-	return err
-}
-fmt.Println(result)
-```
-
 ### Create
 
 `POST /custom_domains`
@@ -143,6 +112,37 @@ Example:
 ```go
 result, err := custom_domain.Create(files_sdk.CustomDomainCreateParams{
 	Domain: "files.example.com",
+})
+if err != nil {
+	return err
+}
+fmt.Println(result)
+```
+
+### CreateAllocateIp
+
+`POST /custom_domains/{id}/allocate_ips`
+
+Allocate dedicated IP addresses to this Custom Domain
+
+```go
+func (c *Client) CreateAllocateIp(params files_sdk.CustomDomainCreateAllocateIpParams, opts ...files_sdk.RequestResponseOption) (customDomain files_sdk.CustomDomain, err error)
+func CreateAllocateIp(params files_sdk.CustomDomainCreateAllocateIpParams, opts ...files_sdk.RequestResponseOption) (customDomain files_sdk.CustomDomain, err error)
+```
+
+Parameters, `files_sdk.CustomDomainCreateAllocateIpParams`:
+
+| Field | Go type | API name | Required | Description |
+| --- | --- | --- | --- | --- |
+| `Id` | `int64` | `id`, in the path | yes | Custom Domain ID. |
+| `Count` | `int64` | `count` | yes | Number of dedicated IP addresses to allocate. Values: `1`, `2`. |
+
+Example:
+
+```go
+result, err := custom_domain.CreateAllocateIp(files_sdk.CustomDomainCreateAllocateIpParams{
+	Id:    1,
+	Count: 1,
 })
 if err != nil {
 	return err

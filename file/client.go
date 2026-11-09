@@ -317,19 +317,6 @@ func Delete(params files_sdk.FileDeleteParams, opts ...files_sdk.RequestResponse
 	return (&Client{}).Delete(params, opts...)
 }
 
-// Find calls GET /file_actions/metadata/{path}.
-//
-// API operation: Find File/Folder by Path.
-func (c *Client) Find(params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/file_actions/metadata/{path}", Params: params, Entity: &file}, opts...)
-	return
-}
-
-// Find calls Client.Find using the default configuration.
-func Find(params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
-	return (&Client{}).Find(params, opts...)
-}
-
 // ZipListContents calls GET /file_actions/zip_list/{path}.
 //
 // API operation: List the contents of a ZIP file.
@@ -343,82 +330,30 @@ func ZipListContents(params files_sdk.FileZipListContentsParams, opts ...files_s
 	return (&Client{}).ZipListContents(params, opts...)
 }
 
-// BeginDelete calls POST /file_actions/delete/{path}.
+// Find calls GET /file_actions/metadata/{path}.
 //
-// API operation: Delete File/Folder and return its File Action.  A pending or processing deletion continues in the background after this returns; check its File Migration for completion.  Waiting for the File Migration does not cancel the deletion.
-func (c *Client) BeginDelete(params files_sdk.FileBeginDeleteParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/delete/{path}", Params: params, Entity: &fileAction}, opts...)
+// API operation: Find File/Folder by Path.
+func (c *Client) Find(params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/file_actions/metadata/{path}", Params: params, Entity: &file}, opts...)
 	return
 }
 
-// BeginDelete calls Client.BeginDelete using the default configuration.
-func BeginDelete(params files_sdk.FileBeginDeleteParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	return (&Client{}).BeginDelete(params, opts...)
+// Find calls Client.Find using the default configuration.
+func Find(params files_sdk.FileFindParams, opts ...files_sdk.RequestResponseOption) (file files_sdk.File, err error) {
+	return (&Client{}).Find(params, opts...)
 }
 
-// Copy calls POST /file_actions/copy/{path}.
+// Zip calls POST /file_actions/zip.
 //
-// API operation: Copy File/Folder.
-func (c *Client) Copy(params files_sdk.FileCopyParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/copy/{path}", Params: params, Entity: &fileAction}, opts...)
+// API operation: Create a ZIP from one or more paths and save it to a destination path.
+func (c *Client) Zip(params files_sdk.FileZipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/zip", Params: params, Entity: &fileAction}, opts...)
 	return
 }
 
-// Copy calls Client.Copy using the default configuration.
-func Copy(params files_sdk.FileCopyParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	return (&Client{}).Copy(params, opts...)
-}
-
-// Move calls POST /file_actions/move/{path}.
-//
-// API operation: Move File/Folder.
-func (c *Client) Move(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/move/{path}", Params: params, Entity: &fileAction}, opts...)
-	return
-}
-
-// Move calls Client.Move using the default configuration.
-func Move(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	return (&Client{}).Move(params, opts...)
-}
-
-// Transform calls POST /file_actions/transform/{path}.
-//
-// API operation: Transform a file and save the output to a destination path.
-func (c *Client) Transform(params files_sdk.FileTransformParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/transform/{path}", Params: params, Entity: &fileAction}, opts...)
-	return
-}
-
-// Transform calls Client.Transform using the default configuration.
-func Transform(params files_sdk.FileTransformParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	return (&Client{}).Transform(params, opts...)
-}
-
-// GpgDecrypt calls POST /file_actions/gpg_decrypt/{path}.
-//
-// API operation: Decrypt a GPG-encrypted file and save it to a destination path.
-func (c *Client) GpgDecrypt(params files_sdk.FileGpgDecryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/gpg_decrypt/{path}", Params: params, Entity: &fileAction}, opts...)
-	return
-}
-
-// GpgDecrypt calls Client.GpgDecrypt using the default configuration.
-func GpgDecrypt(params files_sdk.FileGpgDecryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	return (&Client{}).GpgDecrypt(params, opts...)
-}
-
-// GpgEncrypt calls POST /file_actions/gpg_encrypt/{path}.
-//
-// API operation: Encrypt a file with GPG and save it to a destination path.
-func (c *Client) GpgEncrypt(params files_sdk.FileGpgEncryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/gpg_encrypt/{path}", Params: params, Entity: &fileAction}, opts...)
-	return
-}
-
-// GpgEncrypt calls Client.GpgEncrypt using the default configuration.
-func GpgEncrypt(params files_sdk.FileGpgEncryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	return (&Client{}).GpgEncrypt(params, opts...)
+// Zip calls Client.Zip using the default configuration.
+func Zip(params files_sdk.FileZipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	return (&Client{}).Zip(params, opts...)
 }
 
 // Unzip calls POST /file_actions/unzip.
@@ -434,17 +369,82 @@ func Unzip(params files_sdk.FileUnzipParams, opts ...files_sdk.RequestResponseOp
 	return (&Client{}).Unzip(params, opts...)
 }
 
-// Zip calls POST /file_actions/zip.
+// GpgEncrypt calls POST /file_actions/gpg_encrypt/{path}.
 //
-// API operation: Create a ZIP from one or more paths and save it to a destination path.
-func (c *Client) Zip(params files_sdk.FileZipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/zip", Params: params, Entity: &fileAction}, opts...)
+// API operation: Encrypt a file with GPG and save it to a destination path.
+func (c *Client) GpgEncrypt(params files_sdk.FileGpgEncryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/gpg_encrypt/{path}", Params: params, Entity: &fileAction}, opts...)
 	return
 }
 
-// Zip calls Client.Zip using the default configuration.
-func Zip(params files_sdk.FileZipParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
-	return (&Client{}).Zip(params, opts...)
+// GpgEncrypt calls Client.GpgEncrypt using the default configuration.
+func GpgEncrypt(params files_sdk.FileGpgEncryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	return (&Client{}).GpgEncrypt(params, opts...)
+}
+
+// GpgDecrypt calls POST /file_actions/gpg_decrypt/{path}.
+//
+// API operation: Decrypt a GPG-encrypted file and save it to a destination path.
+func (c *Client) GpgDecrypt(params files_sdk.FileGpgDecryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/gpg_decrypt/{path}", Params: params, Entity: &fileAction}, opts...)
+	return
+}
+
+// GpgDecrypt calls Client.GpgDecrypt using the default configuration.
+func GpgDecrypt(params files_sdk.FileGpgDecryptParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	return (&Client{}).GpgDecrypt(params, opts...)
+}
+
+// Transform calls POST /file_actions/transform/{path}.
+//
+// API operation: Transform a file and save the output to a destination path.
+func (c *Client) Transform(params files_sdk.FileTransformParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/transform/{path}", Params: params, Entity: &fileAction}, opts...)
+	return
+}
+
+// Transform calls Client.Transform using the default configuration.
+func Transform(params files_sdk.FileTransformParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	return (&Client{}).Transform(params, opts...)
+}
+
+// Move calls POST /file_actions/move/{path}.
+//
+// API operation: Move File/Folder.
+func (c *Client) Move(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/move/{path}", Params: params, Entity: &fileAction}, opts...)
+	return
+}
+
+// Move calls Client.Move using the default configuration.
+func Move(params files_sdk.FileMoveParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	return (&Client{}).Move(params, opts...)
+}
+
+// Copy calls POST /file_actions/copy/{path}.
+//
+// API operation: Copy File/Folder.
+func (c *Client) Copy(params files_sdk.FileCopyParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/copy/{path}", Params: params, Entity: &fileAction}, opts...)
+	return
+}
+
+// Copy calls Client.Copy using the default configuration.
+func Copy(params files_sdk.FileCopyParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	return (&Client{}).Copy(params, opts...)
+}
+
+// BeginDelete calls POST /file_actions/delete/{path}.
+//
+// API operation: Delete File/Folder and return its File Action.  A pending or processing deletion continues in the background after this returns; check its File Migration for completion.  Waiting for the File Migration does not cancel the deletion.
+func (c *Client) BeginDelete(params files_sdk.FileBeginDeleteParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/file_actions/delete/{path}", Params: params, Entity: &fileAction}, opts...)
+	return
+}
+
+// BeginDelete calls Client.BeginDelete using the default configuration.
+func BeginDelete(params files_sdk.FileBeginDeleteParams, opts ...files_sdk.RequestResponseOption) (fileAction files_sdk.FileAction, err error) {
+	return (&Client{}).BeginDelete(params, opts...)
 }
 
 // BeginUpload calls POST /file_actions/begin_upload/{path}.

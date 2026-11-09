@@ -54,20 +54,20 @@ for item, err := range it.All() {
 }
 ```
 
-### GetSmartfileReserved
+### GetReserved
 
-`GET /ip_addresses/smartfile-reserved`
+`GET /ip_addresses/reserved`
 
-List all possible public SmartFile IP addresses
+List all possible public IP addresses
 
 ```go
-func (c *Client) GetSmartfileReserved(params files_sdk.IpAddressGetSmartfileReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error)
-func GetSmartfileReserved(params files_sdk.IpAddressGetSmartfileReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error)
+func (c *Client) GetReserved(params files_sdk.IpAddressGetReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error)
+func GetReserved(params files_sdk.IpAddressGetReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error)
 ```
 
 Returns this package's `*Iter`, which requests pages as iteration reaches them. `Iter.All()` yields each of this listing's `files_sdk.PublicIpAddress` values as an `any` value, each with a nil error, followed by the error that stops the listing, if any.
 
-Parameters, `files_sdk.IpAddressGetSmartfileReservedParams`:
+Parameters, `files_sdk.IpAddressGetReservedParams`:
 
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
@@ -78,7 +78,7 @@ Parameters, `files_sdk.IpAddressGetSmartfileReservedParams`:
 Example:
 
 ```go
-it, err := ip_address.GetSmartfileReserved(files_sdk.IpAddressGetSmartfileReservedParams{})
+it, err := ip_address.GetReserved(files_sdk.IpAddressGetReservedParams{})
 if err != nil {
 	return err
 }
@@ -126,20 +126,20 @@ for item, err := range it.All() {
 }
 ```
 
-### GetReserved
+### GetSmartfileReserved
 
-`GET /ip_addresses/reserved`
+`GET /ip_addresses/smartfile-reserved`
 
-List all possible public IP addresses
+List all possible public SmartFile IP addresses
 
 ```go
-func (c *Client) GetReserved(params files_sdk.IpAddressGetReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error)
-func GetReserved(params files_sdk.IpAddressGetReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error)
+func (c *Client) GetSmartfileReserved(params files_sdk.IpAddressGetSmartfileReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error)
+func GetSmartfileReserved(params files_sdk.IpAddressGetSmartfileReservedParams, opts ...files_sdk.RequestResponseOption) (*Iter, error)
 ```
 
 Returns this package's `*Iter`, which requests pages as iteration reaches them. `Iter.All()` yields each of this listing's `files_sdk.PublicIpAddress` values as an `any` value, each with a nil error, followed by the error that stops the listing, if any.
 
-Parameters, `files_sdk.IpAddressGetReservedParams`:
+Parameters, `files_sdk.IpAddressGetSmartfileReservedParams`:
 
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
@@ -150,7 +150,7 @@ Parameters, `files_sdk.IpAddressGetReservedParams`:
 Example:
 
 ```go
-it, err := ip_address.GetReserved(files_sdk.IpAddressGetReservedParams{})
+it, err := ip_address.GetSmartfileReserved(files_sdk.IpAddressGetSmartfileReservedParams{})
 if err != nil {
 	return err
 }

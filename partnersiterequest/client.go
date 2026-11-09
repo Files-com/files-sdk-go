@@ -86,19 +86,6 @@ func Create(params files_sdk.PartnerSiteRequestCreateParams, opts ...files_sdk.R
 	return (&Client{}).Create(params, opts...)
 }
 
-// Reject calls POST /partner_site_requests/reject.
-//
-// API operation: Reject partner site request.
-func (c *Client) Reject(params files_sdk.PartnerSiteRequestRejectParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/partner_site_requests/reject", Params: params, Entity: nil}, opts...)
-	return
-}
-
-// Reject calls Client.Reject using the default configuration.
-func Reject(params files_sdk.PartnerSiteRequestRejectParams, opts ...files_sdk.RequestResponseOption) (err error) {
-	return (&Client{}).Reject(params, opts...)
-}
-
 // Approve calls POST /partner_site_requests/approve.
 //
 // API operation: Approve partner site request.
@@ -110,6 +97,19 @@ func (c *Client) Approve(params files_sdk.PartnerSiteRequestApproveParams, opts 
 // Approve calls Client.Approve using the default configuration.
 func Approve(params files_sdk.PartnerSiteRequestApproveParams, opts ...files_sdk.RequestResponseOption) (err error) {
 	return (&Client{}).Approve(params, opts...)
+}
+
+// Reject calls POST /partner_site_requests/reject.
+//
+// API operation: Reject partner site request.
+func (c *Client) Reject(params files_sdk.PartnerSiteRequestRejectParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "POST", Path: "/partner_site_requests/reject", Params: params, Entity: nil}, opts...)
+	return
+}
+
+// Reject calls Client.Reject using the default configuration.
+func Reject(params files_sdk.PartnerSiteRequestRejectParams, opts ...files_sdk.RequestResponseOption) (err error) {
+	return (&Client{}).Reject(params, opts...)
 }
 
 // Delete calls DELETE /partner_site_requests/{id}.

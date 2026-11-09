@@ -115,34 +115,6 @@ if err != nil {
 fmt.Println(result)
 ```
 
-### Reject
-
-`POST /partner_site_requests/reject`
-
-Reject partner site request
-
-```go
-func (c *Client) Reject(params files_sdk.PartnerSiteRequestRejectParams, opts ...files_sdk.RequestResponseOption) (err error)
-func Reject(params files_sdk.PartnerSiteRequestRejectParams, opts ...files_sdk.RequestResponseOption) (err error)
-```
-
-Parameters, `files_sdk.PartnerSiteRequestRejectParams`:
-
-| Field | Go type | API name | Required | Description |
-| --- | --- | --- | --- | --- |
-| `PairingKey` | `string` | `pairing_key` | yes | Pairing key for the partner site request |
-
-Example:
-
-```go
-err := partner_site_request.Reject(files_sdk.PartnerSiteRequestRejectParams{
-	PairingKey: "pairing_key",
-})
-if err != nil {
-	return err
-}
-```
-
 ### Approve
 
 `POST /partner_site_requests/approve`
@@ -165,6 +137,34 @@ Example:
 
 ```go
 err := partner_site_request.Approve(files_sdk.PartnerSiteRequestApproveParams{
+	PairingKey: "pairing_key",
+})
+if err != nil {
+	return err
+}
+```
+
+### Reject
+
+`POST /partner_site_requests/reject`
+
+Reject partner site request
+
+```go
+func (c *Client) Reject(params files_sdk.PartnerSiteRequestRejectParams, opts ...files_sdk.RequestResponseOption) (err error)
+func Reject(params files_sdk.PartnerSiteRequestRejectParams, opts ...files_sdk.RequestResponseOption) (err error)
+```
+
+Parameters, `files_sdk.PartnerSiteRequestRejectParams`:
+
+| Field | Go type | API name | Required | Description |
+| --- | --- | --- | --- | --- |
+| `PairingKey` | `string` | `pairing_key` | yes | Pairing key for the partner site request |
+
+Example:
+
+```go
+err := partner_site_request.Reject(files_sdk.PartnerSiteRequestRejectParams{
 	PairingKey: "pairing_key",
 })
 if err != nil {

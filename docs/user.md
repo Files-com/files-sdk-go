@@ -192,18 +192,18 @@ if err != nil {
 fmt.Println(result)
 ```
 
-### Unlock
+### User2faReset
 
-`POST /users/{id}/unlock`
+`POST /users/{id}/2fa/reset`
 
-Unlock user who has been locked out due to failed logins
+Trigger 2FA Reset process for user who has lost access to their existing 2FA methods
 
 ```go
-func (c *Client) Unlock(params files_sdk.UserUnlockParams, opts ...files_sdk.RequestResponseOption) (err error)
-func Unlock(params files_sdk.UserUnlockParams, opts ...files_sdk.RequestResponseOption) (err error)
+func (c *Client) User2faReset(params files_sdk.UserUser2faResetParams, opts ...files_sdk.RequestResponseOption) (err error)
+func User2faReset(params files_sdk.UserUser2faResetParams, opts ...files_sdk.RequestResponseOption) (err error)
 ```
 
-Parameters, `files_sdk.UserUnlockParams`:
+Parameters, `files_sdk.UserUser2faResetParams`:
 
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
@@ -212,7 +212,7 @@ Parameters, `files_sdk.UserUnlockParams`:
 Example:
 
 ```go
-err := user.Unlock(files_sdk.UserUnlockParams{
+err := user.User2faReset(files_sdk.UserUser2faResetParams{
 	Id: 1,
 })
 if err != nil {
@@ -248,18 +248,18 @@ if err != nil {
 }
 ```
 
-### User2faReset
+### Unlock
 
-`POST /users/{id}/2fa/reset`
+`POST /users/{id}/unlock`
 
-Trigger 2FA Reset process for user who has lost access to their existing 2FA methods
+Unlock user who has been locked out due to failed logins
 
 ```go
-func (c *Client) User2faReset(params files_sdk.UserUser2faResetParams, opts ...files_sdk.RequestResponseOption) (err error)
-func User2faReset(params files_sdk.UserUser2faResetParams, opts ...files_sdk.RequestResponseOption) (err error)
+func (c *Client) Unlock(params files_sdk.UserUnlockParams, opts ...files_sdk.RequestResponseOption) (err error)
+func Unlock(params files_sdk.UserUnlockParams, opts ...files_sdk.RequestResponseOption) (err error)
 ```
 
-Parameters, `files_sdk.UserUser2faResetParams`:
+Parameters, `files_sdk.UserUnlockParams`:
 
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
@@ -268,7 +268,7 @@ Parameters, `files_sdk.UserUser2faResetParams`:
 Example:
 
 ```go
-err := user.User2faReset(files_sdk.UserUser2faResetParams{
+err := user.Unlock(files_sdk.UserUnlockParams{
 	Id: 1,
 })
 if err != nil {

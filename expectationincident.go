@@ -65,10 +65,10 @@ type ExpectationIncidentFindParams struct {
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
 
-// ExpectationIncidentResolveParams contains the request parameters for POST /expectation_incidents/{id}/resolve.
+// ExpectationIncidentAcknowledgeParams contains the request parameters for POST /expectation_incidents/{id}/acknowledge.
 //
-// Resolve an expectation incident
-type ExpectationIncidentResolveParams struct {
+// Acknowledge an expectation incident
+type ExpectationIncidentAcknowledgeParams struct {
 	// Expectation Incident ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
@@ -83,10 +83,10 @@ type ExpectationIncidentSnoozeParams struct {
 	SnoozedUntil *time.Time `url:"snoozed_until" json:"snoozed_until" path:"snoozed_until"`
 }
 
-// ExpectationIncidentAcknowledgeParams contains the request parameters for POST /expectation_incidents/{id}/acknowledge.
+// ExpectationIncidentResolveParams contains the request parameters for POST /expectation_incidents/{id}/resolve.
 //
-// Acknowledge an expectation incident
-type ExpectationIncidentAcknowledgeParams struct {
+// Resolve an expectation incident
+type ExpectationIncidentResolveParams struct {
 	// Expectation Incident ID. Required; sent in the request path.
 	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
 }
