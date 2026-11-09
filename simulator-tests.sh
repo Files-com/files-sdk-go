@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Runs the Go SDK's tests that need the Files.com mock server's simulator, which `go test ./...` skips without one.
-# Each group runs in one targets/mock-server/with-scenario.rb launch of its own, from the generated mock server named by
-# the first argument, with the race detector and FILES_API_SCENARIOS=required, so a test that would be skipped fails.
+# Each group runs in one targets/mock-server/with-scenario.rb launch of its own, under its scenario, from the generated
+# mock server named by the first argument, with the race detector and FILES_API_SCENARIOS=required, so a test that would
+# be skipped fails. The failure-cases group runs the shared failure-case matrix (user.TestFailureCases), whose launcher
+# adds the scenario's fault rules and fails unless every case passed with exactly its expected attempts and decisions.
 # go test's JSON events must then show every listed test run once and pass once, with no skip or failure anywhere in
 # the run, each listed matrix with exactly its cases passed, and the package passed. The launcher's records and the
 # go test events of each group go to <output directory>/<group>, which must not exist yet.
@@ -34,8 +36,8 @@ file_matrices="TestDownload/downloader=12 TestUploader/uploader=12"
 filemigration_tests=(TestClient_Wait)
 
 run_group() {
-  local group="$1" package="$2" matrices="$3"
-  shift 3
+  local group="$1" package="$2" matrices="$3" scenario="$4"
+  shift 4
   local run="${out}/${group}"
   [[ ! -e "${run}" ]] || { echo "${run} already exists" >&2; exit 1; }
   mkdir -p "${run}"
@@ -44,7 +46,7 @@ run_group() {
   local status=0
   (
     cd "${DIR}"
-    FILES_API_SCENARIOS=required ruby "${mock}/with-scenario.rb" --scenario api-scenarios-canonical --out "${run}/launcher" \
+    FILES_API_SCENARIOS=required ruby "${mock}/with-scenario.rb" --scenario ${scenario} --out "${run}/launcher" \
       --startup-timeout 30 --consumer-timeout 180 --settle-timeout 5 -- \
       bash -c 'go test -race -count=1 -json -run "$1" "$2" > "$3"' consumer "${selector}" "${package}" "${run}/go-test.jsonl"
   ) || status=$?
@@ -76,6 +78,8 @@ run_group() {
 }
 
 status=0
-run_group file ./file "${file_matrices}" "${file_tests[@]}" || status=1
-run_group filemigration ./filemigration "" "${filemigration_tests[@]}" || status=1
+run_group file ./file "${file_matrices}" api-scenarios-canonical "${file_tests[@]}" || status=1
+run_group filemigration ./filemigration "" api-scenarios-canonical "${filemigration_tests[@]}" || status=1
+# The SDK's own retries resend a dropped request (the scenario's sdk-network-retries variant).
+run_group failure-cases ./user "" "failure-cases --failure-variant sdk-network-retries" TestFailureCases || status=1
 exit "${status}"
