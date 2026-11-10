@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	iofs "io/fs"
 	"net"
 	"net/http"
 	"os"
@@ -4856,6 +4857,7 @@ func TestClassifyMountError(t *testing.T) {
 		{name: "folder not empty", err: files_sdk.ResponseError{Type: string(files_sdk.ErrFolderNotEmpty)}, wantClass: "folder_not_empty", wantErrc: -fuse.ENOTEMPTY},
 		{name: "resource locked message", err: errors.New("resource locked by another operation"), wantClass: "resource_locked", wantErrc: -fuse.EAGAIN},
 		{name: "resource locked type without message", err: files_sdk.ResponseError{Type: string(files_sdk.ErrResourceLocked)}, wantClass: "unknown", wantErrc: -fuse.EIO},
+		{name: "permission denied", err: &iofs.PathError{Op: "read", Path: "/a.txt", Err: fmt.Errorf("%w: Access denied by the remote service", iofs.ErrPermission)}, wantClass: "permission_denied", wantErrc: -fuse.EACCES},
 		{name: "unknown", err: errors.New("backend exploded"), wantClass: "unknown", wantErrc: -fuse.EIO},
 	}
 

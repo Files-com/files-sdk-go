@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	iofs "io/fs"
 	"net"
 	"os"
 	path_lib "path"
@@ -2523,6 +2524,11 @@ func classifyMountError(err error) (string, int) {
 	}
 	if isResourceLocked(err) {
 		return "resource_locked", -fuse.EAGAIN
+	}
+	// Provider backends report storage that refuses an operation as
+	// fs.ErrPermission, which apps show as access denied.
+	if errors.Is(err, iofs.ErrPermission) {
+		return "permission_denied", -fuse.EACCES
 	}
 	return "unknown", -fuse.EIO
 }
