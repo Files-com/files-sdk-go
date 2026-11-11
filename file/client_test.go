@@ -1784,10 +1784,10 @@ func TestUploadsCloseErroredResponsesOnce(t *testing.T) {
 				u := &uploadIO{Client: &Client{Config: config}}
 				var err error
 				if version == "v1" {
-					_, err = u.uploadPart(ctx, &Part{FileUploadPart: upload, ProxyReader: reader})
+					_, err = u.uploadPart(ctx, &Part{FileUploadPart: upload, ProxyReader: reader}, false)
 				} else {
 					e := &uploadV2Engine{u: u}
-					_, _, _, _, err = e.uploadPart(ctx, &uploadV2Part{uploadV2PartDescriptor: uploadV2PartDescriptor{number: 1, upload: upload}, reader: reader})
+					_, _, _, _, err = e.uploadPart(ctx, &uploadV2Part{uploadV2PartDescriptor: uploadV2PartDescriptor{number: 1, upload: upload}, reader: reader}, false)
 				}
 				require.Error(t, err)
 				require.Len(t, bodies, 1)
@@ -1966,10 +1966,10 @@ func TestUploadPartsAreNeverMovedByARegionMismatch(t *testing.T) {
 			u := &uploadIO{Client: &Client{Config: config}}
 			var err error
 			if version == "v1" {
-				_, err = u.uploadPart(context.Background(), &Part{FileUploadPart: upload, ProxyReader: reader})
+				_, err = u.uploadPart(context.Background(), &Part{FileUploadPart: upload, ProxyReader: reader}, false)
 			} else {
 				e := &uploadV2Engine{u: u}
-				_, _, _, _, err = e.uploadPart(context.Background(), &uploadV2Part{uploadV2PartDescriptor: uploadV2PartDescriptor{number: 1, upload: upload}, reader: reader})
+				_, _, _, _, err = e.uploadPart(context.Background(), &uploadV2Part{uploadV2PartDescriptor: uploadV2PartDescriptor{number: 1, upload: upload}, reader: reader}, false)
 			}
 			require.Error(t, err)
 			require.NotEmpty(t, hosts)

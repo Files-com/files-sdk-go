@@ -98,6 +98,51 @@ func TestDownloadDirectOnlyResponsePreservesDirectError(t *testing.T) {
 	require.Equal(t, http.StatusServiceUnavailable, directErr.StatusCode)
 }
 
+// A read only the Agent can serve gets a new URL when the Agent's refusal says the URL expired, and only then.
+func TestDownloadDirectOnlyRenewsOnlyWhenTheAgentSaysItsURLExpired(t *testing.T) {
+	for name, test := range map[string]struct {
+		body    string
+		renewed bool
+	}{
+		"expired":       {`<Error><Code>ExpiredToken</Code><Message>The provided token has expired.</Message></Error>`, true},
+		"other refusal": {`<Error><Code>InvalidArgument</Code><Message>Token expired</Message></Error>`, false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			var agentCalls atomic.Int32
+			info := testDirectTransferInfo(t, "/downloads?jwt=direct-token", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				if agentCalls.Add(1) == 1 {
+					w.Header().Set("Content-Type", "application/xml")
+					w.WriteHeader(http.StatusBadRequest)
+					_, _ = w.Write([]byte(test.body))
+					return
+				}
+				_, _ = w.Write([]byte("direct"))
+			}))
+			api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				require.NoError(t, json.NewEncoder(w).Encode(files_sdk.File{Path: "/download.bin", DirectConnectionInfo: info}))
+			}))
+			t.Cleanup(api.Close)
+			config := files_sdk.Config{EndpointOverride: api.URL, Environment: files_sdk.Development, Logger: log.New(io.Discard, "", 0)}.Init()
+			f := (&File{File: &files_sdk.File{Path: "/download.bin"}, FS: (&FS{Context: context.Background()}).Init(config, false)}).Init()
+
+			got, err := io.ReadAll(f)
+
+			if test.renewed {
+				require.NoError(t, err)
+				require.Equal(t, "direct", string(got))
+				require.Equal(t, int32(2), agentCalls.Load())
+				return
+			}
+			var directErr *files_sdk.DirectTransferResponseError
+			require.ErrorAs(t, err, &directErr)
+			require.Equal(t, http.StatusBadRequest, directErr.StatusCode)
+			require.False(t, files_sdk.IsExpired(err))
+			require.Equal(t, int32(1), agentCalls.Load())
+		})
+	}
+}
+
 func TestDownloadRejectsResponseWithoutDownloadTarget(t *testing.T) {
 	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

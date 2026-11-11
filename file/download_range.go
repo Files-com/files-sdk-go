@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/internal/expiredurl"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
@@ -229,7 +230,7 @@ func (r *resumableRangeReader) open() error {
 				if response.StatusCode == http.StatusPreconditionFailed {
 					return reject(downloadVersionChanged("range precondition failed"))
 				}
-				if err := lib.ResponseErrors(response, lib.IsStatus(http.StatusForbidden), files_sdk.APIError(), lib.NotStatus(http.StatusPartialContent)); err != nil {
+				if err := expiredurl.ResponseErrors(response, lib.IsStatus(http.StatusForbidden), files_sdk.APIError(), lib.NotStatus(http.StatusPartialContent)); err != nil {
 					return reject(err)
 				}
 				coverage, valid := parseContentRange(response.Header.Get("Content-Range"))

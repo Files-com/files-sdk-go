@@ -16,6 +16,7 @@ import (
 	"github.com/Files-com/files-sdk-go/v3/downloadurl"
 	"github.com/Files-com/files-sdk-go/v3/file/manager"
 	"github.com/Files-com/files-sdk-go/v3/file/status"
+	"github.com/Files-com/files-sdk-go/v3/internal/expiredurl"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/hashicorp/go-retryablehttp"
 )
@@ -453,13 +454,19 @@ func (u *uploadIO) runUploadPart(ctx context.Context, part *Part) {
 	start := time.Now()
 	for {
 		runCount++
-		part.EtagsParam, part.error = u.uploadPart(ctx, part)
+		// Every run after the first sends again a part storage refused as expired.
+		etags, err := u.uploadPart(ctx, part, runCount > 1)
+		if errors.Is(err, errUploadPartResendWithdrawn) {
+			// The part fails with storage's refusal, which it still holds.
+			break
+		}
+		part.EtagsParam, part.error = etags, err
 		part.bytes = int64(part.ProxyReader.BytesRead())
 		part.Touch()
 		if part.error == nil {
 			break
 		} else if lib.S3ErrorIsRequestHasExpired(part.error) || files_sdk.IsExpired(part.error) {
-			if runCount >= maxUploadPartAttempts {
+			if runCount >= maxUploadPartAttempts || !uploadPartMayBeSentAgain(part.FileUploadPart) {
 				break
 			}
 			part.FileUploadPart.Expires = ""
@@ -475,6 +482,19 @@ func (u *uploadIO) runUploadPart(ctx context.Context, part *Part) {
 	u.uploadV1Stats.recordPartComplete(part.bytes, time.Since(start), part.error)
 	u.onComplete <- part
 }
+
+// uploadPartMayBeSentAgain reports whether a begin_upload answer for a part,
+// the one it was sent with or the renewal that follows storage's refusal of
+// its URL as expired, lets it be sent again. Unless its retry_parts says
+// otherwise, it does.
+func uploadPartMayBeSentAgain(grant files_sdk.FileUploadPart) bool {
+	return grant.RetryParts == nil || *grant.RetryParts
+}
+
+// errUploadPartResendWithdrawn stops a part before it is sent again when the
+// renewal of its expired URL no longer lets it be. The run that receives it
+// fails the part with storage's refusal instead.
+var errUploadPartResendWithdrawn = errors.New("the renewed upload URL does not let the part be sent again")
 
 func (u *uploadIO) rewindPartForRetry(part *Part, runCount int, message string) bool {
 	if !part.ProxyReader.Rewind() {
@@ -610,7 +630,7 @@ func (u *uploadIO) completeUpload(ctx context.Context, providedMtime *time.Time,
 	}, files_sdk.WithContext(ctx))
 }
 
-func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsParam, error) {
+func (u *uploadIO) uploadPart(ctx context.Context, part *Part, resend bool) (files_sdk.EtagsParam, error) {
 	var err error
 	// Stub for test fixtures being expired
 	if part.UploadUri == "" || (part.PartNumber != 1 && time.Now().After(part.ExpiresTime())) {
@@ -645,6 +665,9 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 
 		if err != nil {
 			return files_sdk.EtagsParam{}, err
+		}
+		if resend && !uploadPartMayBeSentAgain(part.FileUploadPart) {
+			return files_sdk.EtagsParam{}, errUploadPartResendWithdrawn
 		}
 	}
 	headers := http.Header{}
@@ -681,7 +704,7 @@ func (u *uploadIO) uploadPart(ctx context.Context, part *Part) (files_sdk.EtagsP
 		u.uploadV1Stats.recordHTTPCall(time.Since(callStart), int64(part.ProxyReader.Len()), err)
 		return files_sdk.EtagsParam{}, err
 	}
-	if responseErr := lib.ResponseErrors(res, files_sdk.APIError(), lib.S3XMLError, lib.NonOkError); responseErr != nil {
+	if responseErr := expiredurl.ResponseErrors(res, files_sdk.APIError(), lib.S3XMLError, lib.NonOkError); responseErr != nil {
 		lib.CloseBody(res)
 		u.uploadV1Stats.recordHTTPCall(time.Since(callStart), int64(part.ProxyReader.Len()), responseErr)
 		return files_sdk.EtagsParam{}, responseErr

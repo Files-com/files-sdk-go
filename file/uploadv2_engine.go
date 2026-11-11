@@ -15,6 +15,7 @@ import (
 	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
+	"github.com/Files-com/files-sdk-go/v3/internal/expiredurl"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/hashicorp/go-retryablehttp"
 )
@@ -1127,7 +1128,13 @@ func (e *uploadV2Engine) runPart(ctx context.Context, part *uploadV2Part) upload
 	result := uploadV2PartResult{part: part}
 	for attempt := 1; attempt <= maxUploadPartAttempts; attempt++ {
 		start := time.Now()
-		result.etag, result.statusCode, result.backPressure, result.retryAfter, result.err = e.uploadPart(ctx, part)
+		// Every attempt after the first sends again a part storage refused as expired.
+		etag, statusCode, backPressure, retryAfter, err := e.uploadPart(ctx, part, attempt > 1)
+		if errors.Is(err, errUploadPartResendWithdrawn) {
+			// The part fails with storage's refusal, as the attempt that received it reported.
+			return result
+		}
+		result.etag, result.statusCode, result.backPressure, result.retryAfter, result.err = etag, statusCode, backPressure, retryAfter, err
 		result.duration = time.Since(start)
 		if result.err != nil && uploadV2NetworkBackPressure(result.err) {
 			result.backPressure = true
@@ -1140,7 +1147,7 @@ func (e *uploadV2Engine) runPart(ctx context.Context, part *uploadV2Part) upload
 		if result.err == nil {
 			return result
 		}
-		if !(lib.S3ErrorIsRequestHasExpired(result.err) || files_sdk.IsExpired(result.err)) {
+		if !(lib.S3ErrorIsRequestHasExpired(result.err) || files_sdk.IsExpired(result.err)) || !uploadPartMayBeSentAgain(part.upload) {
 			return result
 		}
 		part.upload.Expires = ""
@@ -1152,7 +1159,7 @@ func (e *uploadV2Engine) runPart(ctx context.Context, part *uploadV2Part) upload
 	return result
 }
 
-func (e *uploadV2Engine) uploadPart(ctx context.Context, part *uploadV2Part) (files_sdk.EtagsParam, int, bool, time.Duration, error) {
+func (e *uploadV2Engine) uploadPart(ctx context.Context, part *uploadV2Part, resend bool) (files_sdk.EtagsParam, int, bool, time.Duration, error) {
 	if part.upload.UploadUri == "" || (part.upload.PartNumber != 1 && time.Now().After(part.upload.ExpiresTime())) {
 		if !part.upload.ExpiresTime().IsZero() {
 			e.u.LogPath(e.u.Path, map[string]any{
@@ -1189,6 +1196,9 @@ func (e *uploadV2Engine) uploadPart(ctx context.Context, part *uploadV2Part) (fi
 			decorateUploadURLWithPartOffset(&part.upload, part.number, part.offset.off)
 		}
 		part.legacy.FileUploadPart = part.upload
+		if resend && !uploadPartMayBeSentAgain(part.upload) {
+			return files_sdk.EtagsParam{}, 0, false, 0, errUploadPartResendWithdrawn
+		}
 	}
 
 	headers := http.Header{}
@@ -1280,7 +1290,7 @@ func (e *uploadV2Engine) uploadPart(ctx context.Context, part *uploadV2Part) (fi
 			retryAfterSeen = retryAfter
 		}
 	}
-	if err := lib.ResponseErrors(res, files_sdk.APIError(), lib.S3XMLError, lib.NonOkError); err != nil {
+	if err := expiredurl.ResponseErrors(res, files_sdk.APIError(), lib.S3XMLError, lib.NonOkError); err != nil {
 		e.stats.recordHTTPCall(callDuration, int64(part.reader.Len()), err)
 		return files_sdk.EtagsParam{}, statusCode, backPressureSeen, retryAfterSeen, err
 	}

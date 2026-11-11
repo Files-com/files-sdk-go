@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -324,6 +325,100 @@ func TestFileReadRenewalStopsAfterOneForbiddenResponseRefresh(t *testing.T) {
 			require.Equal(t, 2, transfers)
 			require.Equal(t, 1, metadata)
 		})
+	}
+}
+
+// transferRefusal is how a transfer URL is refused: its status, content type and body.
+type transferRefusal struct {
+	name, contentType, body string
+	status                  int
+}
+
+// How storage, and Files.com for a URL it serves, refuse a signed URL that has expired, whatever the URL's own expiry.
+var expiredURLRefusals = []transferRefusal{
+	{"s3", "application/xml", `<Error><Code>AccessDenied</Code><Message>Request has expired</Message></Error>`, http.StatusForbidden},
+	{"expired token", "application/xml", `<Error><Code>ExpiredToken</Code><Message>The provided token has expired.</Message></Error>`, http.StatusBadRequest},
+	{"azure", "application/xml", `<Error><Code>AuthenticationFailed</Code><Message>Server failed to authenticate the request.</Message><AuthenticationErrorDetail>Signature not valid in the specified time frame</AuthenticationErrorDetail></Error>`, http.StatusForbidden},
+	{"download request", "application/json", `{"type":"download_request_expired","error":"Download request expired"}`, http.StatusBadRequest},
+	{"upload request", "application/json", `{"type":"upload_request_expired","error":"Upload request expired"}`, http.StatusBadRequest},
+}
+
+// A read renews its URL once when storage's refusal says that URL has expired. Any other refusal fails the read without
+// a renewal, and a successful body that reads like a refusal is the file's content.
+func TestFileReadRenewsOnlyWhenStorageSaysItsURLExpired(t *testing.T) {
+	content := `<Error><Code>ExpiredToken</Code></Error>`
+	typed := `{"type":"download_request_expired","error":"Download request expired"}`
+	refusals := append([]transferRefusal{
+		// Its first 4096 bytes parse as an expired type, but the whole body is not JSON.
+		{"json cut short", "application/json", typed + strings.Repeat(" ", 4096-len(typed)) + `}`, http.StatusBadRequest},
+		{name: "none"},
+		{"expired word", "application/xml", `<Error><Code>InvalidArgument</Code><Message>X-Amz-Expires must be less than a week</Message></Error>`, http.StatusBadRequest},
+		{"structured error", "application/json", `{"type":"bad-request/invalid-body","error":"Request has expired"}`, http.StatusBadRequest},
+		// A JSON body says an expiry only by its type, whatever words it carries.
+		{"json other type", "application/json", `{"type":"not_authorized","error":"Request has expired"}`, http.StatusBadRequest},
+		{"json other data", "application/json", `{"type":"other","data":"<Code>ExpiredToken</Code>"}`, http.StatusBadRequest},
+		{"json array", "application/json", `[{"Message":"Request has expired"}]`, http.StatusBadRequest},
+		{"json string", "application/json", `"Request has expired"`, http.StatusBadRequest},
+		{"malformed json object", "application/json", `{"error":"Request has expired"`, http.StatusBadRequest},
+		{"malformed json array", "application/json", `[{"Message":"<Code>ExpiredToken</Code>"`, http.StatusBadRequest},
+	}, expiredURLRefusals...)
+	for _, operation := range []string{"read", "range"} {
+		for _, refusal := range refusals {
+			t.Run(operation+"/"+refusal.name, func(t *testing.T) {
+				var stale, fresh, metadata int
+				answer := func(req *http.Request, code int, contentType, payload string) *http.Response {
+					header := http.Header{"Content-Type": []string{contentType}}
+					if code == http.StatusPartialContent {
+						header.Set("Content-Range", fmt.Sprintf("bytes 0-%d/%d", len(payload)-1, len(payload)))
+						header.Set("ETag", `"v1"`)
+					}
+					return &http.Response{StatusCode: code, Header: header, Body: io.NopCloser(strings.NewReader(payload)), ContentLength: int64(len(payload)), Request: req}
+				}
+				config := files_sdk.Config{EndpointOverride: "https://api.test", DisableDirectTransfers: true}.Init().SetCustomClient(&http.Client{Transport: ownedHTTPResponseTransport(func(req *http.Request) (*http.Response, error) {
+					switch {
+					case req.URL.Host == "api.test":
+						metadata++
+						return answer(req, http.StatusOK, "application/json", `{"path":"file","download_uri":"https://download.test/fresh"}`), nil
+					case req.URL.Path == "/stale":
+						stale++
+						if refusal.status != 0 {
+							return answer(req, refusal.status, refusal.contentType, refusal.body), nil
+						}
+					default:
+						fresh++
+					}
+					if operation == "range" {
+						return answer(req, http.StatusPartialContent, "application/octet-stream", content), nil
+					}
+					return answer(req, http.StatusOK, "application/octet-stream", content), nil
+				})})
+				file := (&File{File: &files_sdk.File{Path: "file", DownloadUri: "https://download.test/stale"}, FS: (&FS{Context: context.Background()}).Init(config, false)}).Init()
+				var got []byte
+				var err error
+				if operation == "range" {
+					var reader io.ReadCloser
+					if reader, err = file.ReaderRange(0, int64(len(content))-1); err == nil {
+						got, err = io.ReadAll(reader)
+						require.NoError(t, reader.Close())
+					}
+				} else {
+					got, err = io.ReadAll(file)
+				}
+				switch {
+				case slices.Contains(expiredURLRefusals, refusal):
+					require.NoError(t, err)
+					require.Equal(t, content, string(got))
+					require.Equal(t, []int{1, 1, 1}, []int{stale, metadata, fresh})
+				case refusal.status == 0:
+					require.NoError(t, err)
+					require.Equal(t, content, string(got))
+					require.Equal(t, []int{1, 0, 0}, []int{stale, metadata, fresh})
+				default:
+					require.Error(t, err)
+					require.Equal(t, []int{0, 0}, []int{metadata, fresh})
+				}
+			})
+		}
 	}
 }
 

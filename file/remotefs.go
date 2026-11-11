@@ -18,6 +18,7 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/folder"
+	"github.com/Files-com/files-sdk-go/v3/internal/expiredurl"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/samber/lo"
 )
@@ -264,7 +265,7 @@ func (f *File) readCloserInitContext(ctx context.Context) (readCloser io.ReadClo
 		files_sdk.ResponseOption(func(response *http.Response) error {
 			f.MaxConnections = parseMaxConnections(response)
 			f.downloadRequestId = response.Header.Get("X-Files-Download-Request-Id")
-			if err := lib.ResponseErrors(response, files_sdk.APIError(), lib.NotStatus(http.StatusOK)); err != nil {
+			if err := expiredurl.ResponseErrors(response, files_sdk.APIError(), lib.NotStatus(http.StatusOK)); err != nil {
 				return &goFs.PathError{Path: f.File.Path, Err: err, Op: "read"}
 			}
 			size, sizeTrust = parseSize(response)

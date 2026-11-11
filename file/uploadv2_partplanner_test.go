@@ -526,7 +526,7 @@ func TestUploadV2ChecksumTrailerFeatureFlagUsesAWSChunkedForSignedS3URL(t *testi
 		},
 	}
 
-	etag, _, _, _, err := engine.uploadPart(context.Background(), uploadPart)
+	etag, _, _, _, err := engine.uploadPart(context.Background(), uploadPart, false)
 
 	require.NoError(t, err)
 	assert.Equal(t, files_sdk.EtagsParam{Part: "1", Etag: "checksum-etag"}, etag)
@@ -574,7 +574,7 @@ func TestUploadV2ChecksumTrailerFeatureFlagSkipsUnsignedS3URL(t *testing.T) {
 		},
 	}
 
-	etag, _, _, _, err := engine.uploadPart(context.Background(), uploadPart)
+	etag, _, _, _, err := engine.uploadPart(context.Background(), uploadPart, false)
 
 	require.NoError(t, err)
 	assert.Equal(t, files_sdk.EtagsParam{Part: "1", Etag: "raw-etag"}, etag)
@@ -622,7 +622,7 @@ func TestUploadV2ChecksumTrailerFeatureFlagSkipsUnsupportedDestination(t *testin
 		},
 	}
 
-	etag, _, _, _, err := engine.uploadPart(context.Background(), uploadPart)
+	etag, _, _, _, err := engine.uploadPart(context.Background(), uploadPart, false)
 
 	require.NoError(t, err)
 	assert.Equal(t, files_sdk.EtagsParam{Part: "1", Etag: "raw-etag"}, etag)
@@ -2161,7 +2161,7 @@ func TestUploadV2RefreshesPartURLWithStableOffset(t *testing.T) {
 		},
 	}
 
-	_, _, _, _, err := engine.uploadPart(context.Background(), uploadPart)
+	_, _, _, _, err := engine.uploadPart(context.Background(), uploadPart, false)
 
 	require.NoError(t, err)
 	uploadRequests := server.TrackRequest["/upload/*path"]
@@ -2302,7 +2302,7 @@ func TestUploadV2UploadPartClosesErrorResponseBody(t *testing.T) {
 		},
 	}
 
-	_, _, _, _, err := engine.uploadPart(context.Background(), uploadPart)
+	_, _, _, _, err := engine.uploadPart(context.Background(), uploadPart, false)
 
 	require.Error(t, err)
 	assert.True(t, closed.Load())

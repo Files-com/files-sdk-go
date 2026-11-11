@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Files-com/files-sdk-go/v3/internal/expiredurl"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
@@ -339,9 +340,20 @@ func IsErrorGroup(err error, responseGroup ResponseErrorGroup) bool {
 	return responseErrorGroupForType(errType) == responseGroup
 }
 
-// IsExpired reports whether an upload or download request has expired.
+// IsExpired reports whether an upload or download request has expired: err
+// contains an API error of type ErrDownloadRequestExpired or
+// ErrUploadRequestExpired, or is the SDK's error for a transfer response, HTTP
+// 400 or 403, that says the signed URL it was sent to has expired. Storage
+// says so as Amazon S3's "Request has expired", Amazon's and Google's
+// ExpiredToken code, or Azure's "Signature not valid in the specified time
+// frame", within the first 4096 bytes of its answer. A refusal that only
+// denies access, a 403 included, is not an expiry.
 func IsExpired(err error) bool {
-	return IsAnyErrorType(err, ErrDownloadRequestExpired, ErrUploadRequestExpired)
+	if IsAnyErrorType(err, ErrDownloadRequestExpired, ErrUploadRequestExpired) || expiredurl.Marked(err) {
+		return true
+	}
+	var directErr *DirectTransferResponseError
+	return errors.As(err, &directErr) && directErr.expired
 }
 
 // IsExist reports whether err matches ErrDestinationExists through errors.Is.

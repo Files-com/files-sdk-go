@@ -13,6 +13,7 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache"
+	"github.com/Files-com/files-sdk-go/v3/internal/expiredurl"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
@@ -117,10 +118,7 @@ func captureRangeResponse(result *remoteRangeResponse, knownSize int64, requeste
 	case http.StatusRequestedRangeNotSatisfiable:
 		return fmt.Errorf("%w: %s", errRangeNotSatisfiable, response.Header.Get("Content-Range"))
 	default:
-		if err := files_sdk.APIError()(response); err != nil {
-			return err
-		}
-		if err := lib.NonOkError(response); err != nil {
+		if err := expiredurl.ResponseErrors(response, files_sdk.APIError(), lib.NonOkError); err != nil {
 			return err
 		}
 		return fmt.Errorf("%w: unexpected HTTP status %d", errMalformedRangeResponse, response.StatusCode)

@@ -405,6 +405,118 @@ func (m *MockUploader) Find(files_sdk.FileFindParams, ...files_sdk.RequestRespon
 	return m.File, m.findError
 }
 
+// A part storage refuses because its URL has expired is sent again, with the same bytes, to a new URL begin_upload gives
+// for the same part of the same upload, unless begin_upload, first or in that renewal, says parts may not be sent again:
+// the part then fails with storage's refusal. Any other refusal fails the part without a new URL.
+func TestUploadPartIsSentAgainOnlyWhenStorageSaysItsURLExpired(t *testing.T) {
+	type upload struct {
+		refusal                       transferRefusal
+		retryParts, renewedRetryParts *bool
+	}
+	uploads := []upload{
+		{refusal: transferRefusal{"access denied", "application/xml", `<Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>`, http.StatusForbidden}},
+		{refusal: transferRefusal{"signature mismatch", "application/xml", `<Error><Code>SignatureDoesNotMatch</Code><Message>The request signature we calculated does not match the signature you provided.</Message></Error>`, http.StatusForbidden}},
+		{refusal: transferRefusal{"structured error", "application/json", `{"type":"not-authorized/insufficient-permission-for-params","error":"Request has expired"}`, http.StatusForbidden}},
+		{refusal: expiredURLRefusals[0], retryParts: lib.Bool(false), renewedRetryParts: lib.Bool(false)},
+		{refusal: expiredURLRefusals[0], retryParts: lib.Bool(true), renewedRetryParts: lib.Bool(false)},
+	}
+	for _, refusal := range expiredURLRefusals {
+		uploads = append(uploads, upload{refusal: refusal})
+	}
+	data := []byte("0123456789")
+	for _, engine := range []string{"v1", "v2"} {
+		for _, test := range uploads {
+			name := test.refusal.name
+			if test.renewedRetryParts != nil {
+				name += fmt.Sprintf(" with retry_parts %v then %v", *test.retryParts, *test.renewedRetryParts)
+			}
+			t.Run(engine+"/"+name, func(t *testing.T) {
+				server := (&MockAPIServer{T: t}).Do()
+				defer server.Shutdown()
+				server.MockFiles["file.bak"] = mockFile{File: files_sdk.File{Size: int64(len(data))}}
+				var mu sync.Mutex
+				var begins []files_sdk.FileBeginUploadParams
+				var sent [][]byte
+				server.MockRoute("/api/rest/v1/file_actions/begin_upload/file.bak", func(c *gin.Context, model interface{}) bool {
+					params, ok := model.(files_sdk.FileBeginUploadParams)
+					if !ok {
+						return false
+					}
+					mu.Lock()
+					begins = append(begins, params)
+					retryParts := test.retryParts
+					if len(begins) > 1 {
+						retryParts = test.renewedRetryParts
+					}
+					mu.Unlock()
+					c.JSON(http.StatusOK, files_sdk.FileUploadPartCollection{{
+						HttpMethod:    "POST",
+						Path:          "file.bak",
+						Ref:           "put-1",
+						UploadUri:     server.Server.URL + "/upload/file.bak?part_number=1",
+						ParallelParts: lib.Bool(true),
+						RetryParts:    retryParts,
+						Expires:       time.Now().Add(time.Hour).Format(time.RFC3339),
+						PartNumber:    1,
+					}})
+					return true
+				})
+				server.MockRoute("/upload/file.bak", func(c *gin.Context, _ interface{}) bool {
+					body, err := io.ReadAll(c.Request.Body)
+					if err != nil {
+						t.Errorf("reading the part: %v", err)
+					}
+					mu.Lock()
+					sent = append(sent, body)
+					first := len(sent) == 1
+					mu.Unlock()
+					if first {
+						c.Data(test.refusal.status, test.refusal.contentType, []byte(test.refusal.body))
+						return true
+					}
+					c.Header("Etag", "etag")
+					c.Status(http.StatusOK)
+					return true
+				})
+				options := []UploadOption{
+					UploadWithSize(int64(len(data))),
+					UploadWithReaderAt(bytes.NewReader(data)),
+					UploadWithDestinationPath("file.bak"),
+					UploadWithManager(lib.NewConstrainedWorkGroup(1)),
+				}
+				if engine == "v2" {
+					options = append(options, UploadWithV2())
+				}
+
+				_, err := server.Client().UploadWithResume(options...)
+
+				mu.Lock()
+				defer mu.Unlock()
+				if !slices.Contains(expiredURLRefusals, test.refusal) || test.renewedRetryParts != nil {
+					require.Error(t, err)
+					require.Equal(t, [][]byte{data}, sent)
+					if test.renewedRetryParts != nil {
+						// Storage's refusal, whether or not the part's URL was renewed before it could be sent again.
+						require.True(t, files_sdk.IsExpired(err), "%v", err)
+						require.ErrorContains(t, err, "Request has expired")
+					}
+					wantBegins := 1
+					if test.retryParts != nil && *test.retryParts {
+						wantBegins = 2
+					}
+					require.Len(t, begins, wantBegins)
+					return
+				}
+				require.NoError(t, err)
+				require.Equal(t, [][]byte{data, data}, sent)
+				require.Len(t, begins, 2)
+				require.Equal(t, "put-1", begins[1].Ref)
+				require.Equal(t, int64(1), begins[1].Part)
+			})
+		}
+	}
+}
+
 func uploadWithS3PartError(t *testing.T, code string, status int, readerOpt UploadOption) (UploadResumable, error, int) {
 	t.Helper()
 

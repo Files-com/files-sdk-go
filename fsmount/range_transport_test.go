@@ -242,47 +242,73 @@ func TestSDKRemoteBackendDownloadRangeRejectsShortAndLongBodies(t *testing.T) {
 	}
 }
 
+// A range refreshes its URL once when the refusal says the URL expired; any other refusal fails the range without a
+// refresh.
 func TestSDKRemoteBackendDownloadRangeRefreshesExpiredURLOnce(t *testing.T) {
-	var expiredCalls atomic.Int32
-	var metadataCalls atomic.Int32
-	var freshCalls atomic.Int32
-	var server *httptest.Server
-	server = httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
-		switch request.URL.Path {
-		case "/expired":
-			expiredCalls.Add(1)
-			response.Header().Set("Content-Type", "application/json")
-			response.WriteHeader(http.StatusForbidden)
-			_, _ = response.Write([]byte(`{"type":"download_request_expired","error":"expired"}`))
-		case "/fresh":
-			freshCalls.Add(1)
-			response.Header().Set("Content-Range", "bytes 5-9/100")
-			response.Header().Set("Content-Length", "5")
-			response.WriteHeader(http.StatusPartialContent)
-			_, _ = response.Write([]byte("fresh"))
-		default:
-			metadataCalls.Add(1)
-			response.Header().Set("Content-Type", "application/json")
-			_, _ = fmt.Fprintf(response, `{"path":"remote.bin","size":100,"download_uri":%q}`, server.URL+"/fresh")
-		}
-	}))
-	defer server.Close()
+	for name, test := range map[string]struct {
+		status        int
+		contentType   string
+		body          string
+		wantRefreshed bool
+	}{
+		"files expired":    {http.StatusForbidden, "application/json", `{"type":"download_request_expired","error":"expired"}`, true},
+		"storage expired":  {http.StatusBadRequest, "application/xml", `<Error><Code>ExpiredToken</Code><Message>The provided token has expired.</Message></Error>`, true},
+		"expired word":     {http.StatusBadRequest, "application/xml", `<Error><Code>InvalidArgument</Code><Message>X-Amz-Expires must be less than a week</Message></Error>`, false},
+		"structured error": {http.StatusBadRequest, "application/json", `{"type":"bad-request/invalid-body","error":"Request has expired"}`, false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			var expiredCalls atomic.Int32
+			var metadataCalls atomic.Int32
+			var freshCalls atomic.Int32
+			var server *httptest.Server
+			server = httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
+				switch request.URL.Path {
+				case "/expired":
+					expiredCalls.Add(1)
+					response.Header().Set("Content-Type", test.contentType)
+					response.WriteHeader(test.status)
+					_, _ = response.Write([]byte(test.body))
+				case "/fresh":
+					freshCalls.Add(1)
+					response.Header().Set("Content-Range", "bytes 5-9/100")
+					response.Header().Set("Content-Length", "5")
+					response.WriteHeader(http.StatusPartialContent)
+					_, _ = response.Write([]byte("fresh"))
+				default:
+					metadataCalls.Add(1)
+					response.Header().Set("Content-Type", "application/json")
+					_, _ = fmt.Fprintf(response, `{"path":"remote.bin","size":100,"download_uri":%q}`, server.URL+"/fresh")
+				}
+			}))
+			defer server.Close()
 
-	backend := newRangeTestSDKBackend(files_sdk.Config{DisableDirectTransfers: true, EndpointOverride: server.URL})
-	result, err := backend.downloadRange(
-		files_sdk.FileDownloadParams{File: files_sdk.File{Path: "remote.bin", Size: 100, DownloadUri: server.URL + "/expired"}},
-		cache.ByteRange{Start: 5, End: 10},
-	)
-	if err != nil {
-		t.Fatalf("downloadRange failed: %v", err)
-	}
-	data, readErr := io.ReadAll(result.Body)
-	_ = result.Body.Close()
-	if readErr != nil || string(data) != "fresh" {
-		t.Fatalf("refreshed body = %q, %v; want fresh, nil", data, readErr)
-	}
-	if expiredCalls.Load() != 1 || metadataCalls.Load() != 1 || freshCalls.Load() != 1 {
-		t.Fatalf("calls = expired %d metadata %d fresh %d; want 1 each", expiredCalls.Load(), metadataCalls.Load(), freshCalls.Load())
+			backend := newRangeTestSDKBackend(files_sdk.Config{DisableDirectTransfers: true, EndpointOverride: server.URL})
+			result, err := backend.downloadRange(
+				files_sdk.FileDownloadParams{File: files_sdk.File{Path: "remote.bin", Size: 100, DownloadUri: server.URL + "/expired"}},
+				cache.ByteRange{Start: 5, End: 10},
+			)
+			if !test.wantRefreshed {
+				if err == nil {
+					_ = result.Body.Close()
+					t.Fatal("downloadRange succeeded after a refusal that is not an expiry")
+				}
+				if expiredCalls.Load() != 1 || metadataCalls.Load() != 0 || freshCalls.Load() != 0 {
+					t.Fatalf("calls = expired %d metadata %d fresh %d; want 1, 0, 0", expiredCalls.Load(), metadataCalls.Load(), freshCalls.Load())
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("downloadRange failed: %v", err)
+			}
+			data, readErr := io.ReadAll(result.Body)
+			_ = result.Body.Close()
+			if readErr != nil || string(data) != "fresh" {
+				t.Fatalf("refreshed body = %q, %v; want fresh, nil", data, readErr)
+			}
+			if expiredCalls.Load() != 1 || metadataCalls.Load() != 1 || freshCalls.Load() != 1 {
+				t.Fatalf("calls = expired %d metadata %d fresh %d; want 1 each", expiredCalls.Load(), metadataCalls.Load(), freshCalls.Load())
+			}
+		})
 	}
 }
 

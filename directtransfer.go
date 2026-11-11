@@ -17,6 +17,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Files-com/files-sdk-go/v3/internal/expiredurl"
 	"github.com/Files-com/files-sdk-go/v3/internal/transferguard"
 	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/hashicorp/go-retryablehttp"
@@ -44,10 +45,12 @@ var (
 
 // DirectTransferResponseError describes an unsuccessful response from an Agent's
 // direct endpoint. StatusCode contains the HTTP status; RetryAfter contains the
-// parsed Retry-After delay, or zero when no valid delay is available.
+// parsed Retry-After delay, or zero when no valid delay is available. IsExpired
+// reports whether the response said its URL had expired.
 type DirectTransferResponseError struct {
 	StatusCode int
 	RetryAfter time.Duration
+	expired    bool
 }
 
 // Error returns a message containing the direct endpoint's HTTP status.
@@ -213,6 +216,7 @@ func sendDirectTransferRequest(config Config, info DirectConnectionInfo, cache *
 		directErr := &DirectTransferResponseError{
 			StatusCode: response.StatusCode,
 			RetryAfter: directTransferRetryAfter(response.Header.Get("Retry-After")),
+			expired:    expiredurl.Read(response),
 		}
 		lib.CloseBody(response)
 		return response, directErr
