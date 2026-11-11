@@ -115,6 +115,7 @@ Parameters, `files_sdk.ExpectationCreateParams`:
 | `ScheduleTimesOfDay` | `[]string` | `schedule_times_of_day` | no | Times of day in HH:MM format for the Expectation schedule. |
 | `ScheduleTimeZone` | `string` | `schedule_time_zone` | no | Time zone used by the Expectation schedule. |
 | `HolidayRegion` | `string` | `holiday_region` | no | Optional holiday region used by the Expectation schedule. |
+| `ScheduleTimeExceptions` | `[]map[string]interface{}` | `schedule_time_exceptions` | no | Calendar-based replacement due times. Matching dates replace all normal times; holiday exclusions still apply. Calendars specifying different times on the same date conflict. |
 | `LookbackInterval` | `int64` | `lookback_interval` | no | How many seconds before the due boundary the window starts. |
 | `LateAcceptanceInterval` | `int64` | `late_acceptance_interval` | no | How many seconds a schedule-driven window may remain eligible to close as late. |
 | `InactivityInterval` | `int64` | `inactivity_interval` | no | How many quiet seconds are required before final closure. |
@@ -197,6 +198,7 @@ Parameters, `files_sdk.ExpectationUpdateParams`:
 | `ScheduleTimesOfDay` | `[]string` | `schedule_times_of_day` | no | Times of day in HH:MM format for the Expectation schedule. |
 | `ScheduleTimeZone` | `string` | `schedule_time_zone` | no | Time zone used by the Expectation schedule. |
 | `HolidayRegion` | `string` | `holiday_region` | no | Optional holiday region used by the Expectation schedule. |
+| `ScheduleTimeExceptions` | `[]map[string]interface{}` | `schedule_time_exceptions` | no | Calendar-based replacement due times. Matching dates replace all normal times; holiday exclusions still apply. Calendars specifying different times on the same date conflict. |
 | `LookbackInterval` | `int64` | `lookback_interval` | no | How many seconds before the due boundary the window starts. |
 | `LateAcceptanceInterval` | `int64` | `late_acceptance_interval` | no | How many seconds a schedule-driven window may remain eligible to close as late. |
 | `InactivityInterval` | `int64` | `inactivity_interval` | no | How many quiet seconds are required before final closure. |
@@ -281,6 +283,7 @@ if err != nil {
 | `ScheduleTimeZone` | `string` | `schedule_time_zone` | Time zone used by the Expectation schedule. |
 | `HolidayRegion` | `string` | `holiday_region` | Optional holiday region used by the Expectation schedule. |
 | `LookbackInterval` | `int64` | `lookback_interval` | How many seconds before the due boundary the window starts. |
+| `ScheduleTimeExceptions` | `[]map[string]interface{}` | `schedule_time_exceptions` | Calendar-based replacement due times. Matching dates replace all normal times; holiday exclusions still apply. Calendars specifying different times on the same date conflict. |
 | `LateAcceptanceInterval` | `int64` | `late_acceptance_interval` | How many seconds a schedule-driven window may remain eligible to close as late. |
 | `InactivityInterval` | `int64` | `inactivity_interval` | How many quiet seconds are required before final closure. |
 | `MaxOpenInterval` | `int64` | `max_open_interval` | Hard-stop duration in seconds for unscheduled expectations. |

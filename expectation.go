@@ -47,6 +47,8 @@ type Expectation struct {
 	HolidayRegion string `json:"holiday_region,omitempty" path:"holiday_region,omitempty" url:"holiday_region,omitempty"`
 	// How many seconds before the due boundary the window starts.
 	LookbackInterval int64 `json:"lookback_interval,omitempty" path:"lookback_interval,omitempty" url:"lookback_interval,omitempty"`
+	// Calendar-based replacement due times. Matching dates replace all normal times; holiday exclusions still apply. Calendars specifying different times on the same date conflict.
+	ScheduleTimeExceptions []map[string]interface{} `json:"schedule_time_exceptions,omitempty" path:"schedule_time_exceptions,omitempty" url:"schedule_time_exceptions,omitempty"`
 	// How many seconds a schedule-driven window may remain eligible to close as late.
 	LateAcceptanceInterval int64 `json:"late_acceptance_interval,omitempty" path:"late_acceptance_interval,omitempty" url:"late_acceptance_interval,omitempty"`
 	// How many quiet seconds are required before final closure.
@@ -144,6 +146,8 @@ type ExpectationCreateParams struct {
 	ScheduleTimeZone string `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
 	// Optional holiday region used by the Expectation schedule.
 	HolidayRegion string `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
+	// Calendar-based replacement due times. Matching dates replace all normal times; holiday exclusions still apply. Calendars specifying different times on the same date conflict.
+	ScheduleTimeExceptions []map[string]interface{} `url:"schedule_time_exceptions,omitempty" json:"schedule_time_exceptions,omitempty" path:"schedule_time_exceptions"`
 	// How many seconds before the due boundary the window starts.
 	LookbackInterval int64 `url:"lookback_interval,omitempty" json:"lookback_interval,omitempty" path:"lookback_interval"`
 	// How many seconds a schedule-driven window may remain eligible to close as late.
@@ -200,6 +204,8 @@ type ExpectationUpdateParams struct {
 	ScheduleTimeZone string `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
 	// Optional holiday region used by the Expectation schedule.
 	HolidayRegion string `url:"holiday_region,omitempty" json:"holiday_region,omitempty" path:"holiday_region"`
+	// Calendar-based replacement due times. Matching dates replace all normal times; holiday exclusions still apply. Calendars specifying different times on the same date conflict.
+	ScheduleTimeExceptions []map[string]interface{} `url:"schedule_time_exceptions,omitempty" json:"schedule_time_exceptions,omitempty" path:"schedule_time_exceptions"`
 	// How many seconds before the due boundary the window starts.
 	LookbackInterval int64 `url:"lookback_interval,omitempty" json:"lookback_interval,omitempty" path:"lookback_interval"`
 	// How many seconds a schedule-driven window may remain eligible to close as late.
