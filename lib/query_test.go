@@ -14,6 +14,10 @@ type UserExample struct {
 	Path       string  `json:"-" path:"path"`
 }
 
+type StringIdExample struct {
+	Id string `json:"-" path:"id"`
+}
+
 func TestBuildPath(t *testing.T) {
 	type args struct {
 		resourcePath string
@@ -112,6 +116,20 @@ func TestBuildPath(t *testing.T) {
 			args: args{
 				"root/{path}",
 				map[string]interface{}{"path": "a/my-path"}},
+		},
+		{
+			name: "given a map of strings",
+			want: "files/a/my-path",
+			args: args{
+				"files/{path}",
+				map[string]string{"path": "a/my-path"}},
+		},
+		{
+			name: "string id",
+			want: "chat_sessions/a%20b%2Fc",
+			args: args{
+				"chat_sessions/{id}",
+				StringIdExample{Id: "a b/c"}},
 		},
 	}
 	for _, tt := range tests {

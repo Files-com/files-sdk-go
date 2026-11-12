@@ -716,6 +716,47 @@ func TestRemoteFsWriteSessionUploadPublishesTransferEvents(t *testing.T) {
 	}
 }
 
+func TestRemoteFsIdleUploadSweepKeepsWritesMadeBeforeFirstFlush(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	uploads := make(chan []byte, 1)
+	fs.uploadWorkingCopy = func(ctx context.Context, node *fsNode, path string, reader uploadWorkingCopyReader, mtime time.Time, fh uint64) (uploadedFileMetadata, error) {
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			return uploadedFileMetadata{}, err
+		}
+		uploads <- data
+		return testUploadedMetadata(int64(len(data)), mtime), nil
+	}
+
+	path := "/report.docx"
+	errc, fh := fs.Create(path, fuse.O_RDWR|fuse.O_CREAT, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned unexpected error: %d", errc)
+	}
+	defer fs.Release(path, fh)
+
+	payload := []byte("written before the sweep")
+	if n := fs.Write(path, payload, 0, fh); n != len(payload) {
+		t.Fatalf("Write returned %d, want %d", n, len(payload))
+	}
+
+	vfs.handles.cancelIdleUploads()
+
+	if errc := fs.Flush(path, fh); errc != 0 {
+		t.Fatalf("Flush returned unexpected error: %d", errc)
+	}
+	select {
+	case uploaded := <-uploads:
+		if !bytes.Equal(uploaded, payload) {
+			t.Fatalf("uploaded %q, want %q", uploaded, payload)
+		}
+	default:
+		t.Fatal("Flush uploaded nothing; the sweep discarded the open write session")
+	}
+}
+
 func TestRemoteFsProviderWriteSessionUploadPublishesTransferProgress(t *testing.T) {
 	_, vfs, cacheStore := newTestRemoteFs(t)
 	defer vfs.destroy()
@@ -5870,6 +5911,43 @@ func TestRemoteFsReadOnlyCreateLeavesNoLockAfterRelease(t *testing.T) {
 	}
 	if created != deleted {
 		t.Fatalf("locks created = %d, released = %d; a lock outlived its handle", created, deleted)
+	}
+}
+
+func TestRemoteFsDestroyReleasesLocksHeldByOpenHandles(t *testing.T) {
+	fs, vfs, _ := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	fs.disableLocking = false
+	released := make(chan string, 1)
+	fs.backend = &fakeRemoteBackend{
+		createLockFunc: func(params files_sdk.LockCreateParams, opts ...files_sdk.RequestResponseOption) (files_sdk.Lock, error) {
+			return files_sdk.Lock{Path: params.Path, Token: "token"}, nil
+		},
+		deleteLockFunc: func(params files_sdk.LockDeleteParams, opts ...files_sdk.RequestResponseOption) error {
+			released <- params.Path
+			return nil
+		},
+	}
+
+	if errc, _ := fs.Create("/open.docx", fuse.O_RDWR|fuse.O_CREAT, 0o644); errc != 0 {
+		t.Fatalf("Create returned %d, want 0", errc)
+	}
+
+	destroyed := make(chan struct{})
+	go func() {
+		fs.Destroy()
+		close(destroyed)
+	}()
+	select {
+	case <-destroyed:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Destroy did not return while a file lock was held")
+	}
+	select {
+	case <-released:
+	default:
+		t.Fatal("Destroy returned without releasing the held file lock")
 	}
 }
 

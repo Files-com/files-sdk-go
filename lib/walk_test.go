@@ -180,13 +180,13 @@ func TestWalkReportsErrorsOfDifferentTypes(t *testing.T) {
 	defer manager.WaitAllDone()
 	defer iter.Stop()
 
-	// Each error is its own Next event, and Err returns the error the callback returned.
-	var reported []error
+	// Errors aren't values: Next records each one without returning, and Err
+	// returns the last error a callback returned.
 	for iter.Next() {
-		reported = append(reported, iter.Err())
+		t.Fatalf("Next returned a value for an error: %v", iter.Current())
 	}
 
-	assert.ElementsMatch(t, []error{first, second}, reported)
+	assert.Contains(t, []error{first, second}, iter.Err())
 }
 
 func TestWalkRootEmission(t *testing.T) {
@@ -307,8 +307,7 @@ func nextWalkString(t *testing.T, iter *IterChan[string]) (string, bool) {
 	go func() {
 		ok := iter.Next()
 		next := result{ok: ok, err: iter.Err()}
-		// Next also returns true for an error, which leaves no current path to read.
-		if next.ok && next.err == nil {
+		if next.ok {
 			next.path = iter.Resource()
 		}
 		done <- next

@@ -28,7 +28,13 @@ func (fs *LocalFs) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int)
 		return -fuse.ENOENT
 	}
 
-	stat.Mode = platformFileMode(uint32(info.Mode()))
+	// Go's FileMode marks directories with its own high bit, but WinFsp reads the
+	// POSIX S_IFMT bits, so set those from the file type.
+	fileType := uint32(fuse.S_IFREG)
+	if info.IsDir() {
+		fileType = fuse.S_IFDIR
+	}
+	stat.Mode = platformFileMode(fileType | uint32(info.Mode().Perm()))
 	stat.Size = int64(info.Size())
 	node, ok := fs.vfs.fetch(path)
 	if ok && node.info.uid != 0 {

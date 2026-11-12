@@ -706,10 +706,23 @@ func (n *fsNode) waitForUploadWithProgressTimeout(stallTimeout time.Duration) er
 	return n.writeSessionWaitForFinalize(stallTimeout)
 }
 
-// uploadStats safely returns (ref, bytes, lastActivity) for logging/metrics.
-func (n *fsNode) uploadStats() (string, int64, time.Time) {
-	ref, bytes, last, _ := n.writeSessionUploadStats()
-	return ref, bytes, last
+// runningUploadStats returns the progress of the upload that is sending this
+// node's working copy. uploading is false when no upload is running, including
+// while a write session is still collecting writes before its first flush.
+func (n *fsNode) runningUploadStats() (bytesWritten int64, lastActivity time.Time, uploading bool) {
+	session := n.getWriteSession()
+	if session == nil {
+		return 0, timeZero, false
+	}
+
+	session.mu.Lock()
+	upload := session.upload
+	session.mu.Unlock()
+	if upload == nil {
+		return 0, timeZero, false
+	}
+	_, bytesWritten, lastActivity = upload.stats()
+	return bytesWritten, lastActivity, true
 }
 
 func (n *fsNode) cancelUpload() {

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	iofs "io/fs"
+	"maps"
 	"net"
 	"os"
 	path_lib "path"
@@ -397,9 +398,12 @@ func (fs *RemoteFs) Destroy() {
 	fs.log.Debug("RemoteFs: Destroy: removing all file locks")
 	fs.closeRangeDownloads()
 
+	// unlock takes lockMapMutex itself, so copy the held locks and release the
+	// mutex before unlocking them.
 	fs.lockMapMutex.Lock()
-	defer fs.lockMapMutex.Unlock()
-	for path, lockInfo := range fs.lockMap {
+	heldLocks := maps.Clone(fs.lockMap)
+	fs.lockMapMutex.Unlock()
+	for path, lockInfo := range heldLocks {
 		fs.unlock(path, lockInfo.Fh)
 	}
 
@@ -2817,13 +2821,16 @@ func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, opErr 
 			childPath := path_lib.Join(path, path_lib.Base(lock.Path))
 
 			// Ignore paths where the lock is held by this file system.
-			if _, ok := fs.lockMap[childPath]; ok {
+			fs.lockMapMutex.Lock()
+			_, heldHere := fs.lockMap[childPath]
+			fs.lockMapMutex.Unlock()
+			if heldHere {
 				continue
 			}
 
 			if child, ok := fs.vfs.fetch(childPath); ok {
 				fs.log.Trace("RemoteFs: listDir: Found lock for child path %v, setting lock owner to %v", childPath, lock.Username)
-				child.info.lockOwner = lock.Username
+				child.setLockOwner(lock.Username)
 			}
 		}
 		return locks.Err()

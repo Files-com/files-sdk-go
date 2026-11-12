@@ -47,6 +47,8 @@ func BuildPath(resourcePath string, values interface{}) (string, error) {
 		var exists bool
 		if m, ok := values.(map[string]interface{}); ok {
 			value, exists = m[placeholder]
+		} else if m, ok := values.(map[string]string); ok {
+			value, exists = m[placeholder]
 		} else if pathValue, err := findTag(values, "path", placeholder); err == nil {
 			exists = true
 			value = pathValue
@@ -69,12 +71,15 @@ func BuildPath(resourcePath string, values interface{}) (string, error) {
 		var stringValue string
 		switch v := value.(type) {
 		case string:
-			var err error
 			if placeholder == "path" {
+				var err error
 				stringValue, err = PathEscape(v)
 				if err != nil {
 					return "", err
 				}
+			} else {
+				// Any other placeholder fills a single path segment.
+				stringValue = url.PathEscape(v)
 			}
 		default:
 			stringValue = fmt.Sprintf("%v", v)

@@ -22,17 +22,21 @@ func (i *IterChan[T]) Init(ctx context.Context) *IterChan[T] {
 	return i
 }
 
+// Next waits for the next value and reports whether there is one. An error sent
+// on SendError is not a value: Next records it for Err and keeps waiting, so
+// callers read Err once Next returns false.
 func (i *IterChan[T]) Next() bool {
-	select {
-	case current := <-i.Send:
-		i.current.Store(current)
-	case err := <-i.SendError:
-		i.Error.Store(iterError{err})
-	case <-i.Done():
-		return false
+	for {
+		select {
+		case current := <-i.Send:
+			i.current.Store(current)
+			return true
+		case err := <-i.SendError:
+			i.Error.Store(iterError{err})
+		case <-i.Done():
+			return false
+		}
 	}
-
-	return true
 }
 
 func (i *IterChan[T]) Current() interface{} {
