@@ -183,6 +183,9 @@ func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
 			})
 		}
 		u.Parts = Parts{} // parts are invalidated
+		// A saved target belongs to the previous upload, or to none when that
+		// upload failed before it got a URL. The new upload's URL decides it.
+		u.uploadV2ResumeTarget = ""
 		if u.Manager.WaitWithContext(ctx) {
 			u.FileUploadPart, err = u.startUpload(
 				ctx,

@@ -189,6 +189,62 @@ func TestUploadV2ResumeUsesPersistedTargetWithoutSignedURL(t *testing.T) {
 	assert.Equal(t, AdaptiveTransferS3MaxConcurrency, u.uploadV2MaxConcurrency())
 }
 
+func TestUploadV2RetryAfterFailedBeginUploadSendsS3URLUnchanged(t *testing.T) {
+	server := (&MockAPIServer{T: t}).Do()
+	defer server.Shutdown()
+	path := "v2-retry-s3.txt"
+	var beginUploads atomic.Int32
+	server.MockRoute("/api/rest/v1/file_actions/begin_upload/"+path, func(ctx *gin.Context, model interface{}) bool {
+		if beginUploads.Add(1) == 1 {
+			ctx.JSON(http.StatusForbidden, files_sdk.ResponseError{
+				Type:         "not-authorized/not-authorized",
+				Title:        "Not Authorized",
+				ErrorMessage: "Not Authorized",
+			})
+			return true
+		}
+		server.MockFiles[path] = mockFile{File: files_sdk.File{Path: path, Size: 5}}
+		ctx.JSON(http.StatusOK, files_sdk.FileUploadPartCollection{
+			files_sdk.FileUploadPart{
+				HttpMethod:    "POST",
+				Path:          path,
+				Ref:           "put-1",
+				UploadUri:     server.Server.URL + "/upload/" + path + "?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=access%2F20261111%2Feu-west-2%2Fs3%2Faws4_request&X-Amz-Date=20261111T120000Z&X-Amz-Expires=900&X-Amz-SignedHeaders=host&partNumber=1&uploadId=upload-id&X-Amz-Signature=signed",
+				ParallelParts: lib.Bool(true),
+				Expires:       time.Now().Add(time.Hour).Format(time.RFC3339),
+				PartNumber:    1,
+			},
+		})
+		return true
+	})
+	client := server.Client()
+	upload := func(resume UploadResumable) (UploadResumable, error) {
+		return client.UploadWithResume(
+			UploadWithV2(),
+			UploadWithReaderAt(bytes.NewReader([]byte("hello"))),
+			UploadWithDestinationPath(path),
+			UploadWithSize(5),
+			UploadWithResume(resume),
+		)
+	}
+
+	resumable, err := upload(UploadResumable{})
+	require.Error(t, err)
+
+	_, err = upload(resumable)
+	require.NoError(t, err)
+
+	uploads := server.TrackRequest["/upload/*path"]
+	require.NotEmpty(t, uploads)
+	for _, uploadURL := range uploads {
+		query := uploadV2TestQuery(t, uploadURL)
+		assert.Empty(t, query.Get("part_offset"), uploadURL)
+		assert.Empty(t, query.Get("part_number"), uploadURL)
+		assert.Equal(t, "1", query.Get("partNumber"), uploadURL)
+		assert.Equal(t, "signed", query.Get("X-Amz-Signature"), uploadURL)
+	}
+}
+
 func TestUploadV2ClassifiesDirectTarget(t *testing.T) {
 	part := uploadV2TestPart("https://files-agent-proxy.test/uploads")
 	part.DirectConnectionInfo = testDirectConnectionInfo("/uploads?jwt=direct-token")
