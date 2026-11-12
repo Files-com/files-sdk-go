@@ -116,6 +116,8 @@ type uploadIO struct {
 	actionAttributes           map[string]any
 	startedCallback            func(files_sdk.FileUploadPart)
 	renamedCallback            func() (string, string)
+	// finalizationProgress is UploadWithFinalizationProgress's.
+	finalizationProgress FinalizationProgress
 }
 
 func (u *uploadIO) Run(ctx context.Context) (UploadResumable, error) {
@@ -262,8 +264,10 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 				u.logUploadV2Complete(allErrors, u.bytesWritten)
 				return u.UploadResumable(), allErrors
 			}
-			// Use a detached context so a job cancellation doesn't prevent
-			// committing a file whose bytes are already on the server.
+			// Use a detached context for the request that finishes the upload, so a job
+			// cancellation doesn't prevent committing a file whose bytes are already on
+			// the server. Once Files.com has answered that it is still finishing the
+			// upload, the job's context stops the wait for its outcome.
 			path, ref := u.Path, u.FileUploadPart.Ref
 			if u.renamedCallback != nil {
 				path, ref = u.renamedCallback()
@@ -271,7 +275,7 @@ func (u *uploadIO) waitOnParts(ctx context.Context, cancelParts context.CancelCa
 			u.Manager.WaitWithContext(context.Background())
 			var err error
 			finalizeStart := time.Now()
-			u.file, err = u.completeUpload(context.Background(), u.ProvidedMtime, u.etags, u.bytesWritten, path, ref)
+			u.file, err = u.completeUpload(context.Background(), ctx, u.ProvidedMtime, u.etags, u.bytesWritten, path, ref)
 			u.uploadV1Stats.recordFinalize(time.Since(finalizeStart), err)
 			u.Manager.Done()
 			u.logUploadV1SchedulerSummary(err)
@@ -614,23 +618,6 @@ func (u *uploadIO) markTransferStarted() {
 		return
 	}
 	u.Progress(0)
-}
-
-func (u *uploadIO) completeUpload(ctx context.Context, providedMtime *time.Time, etags []files_sdk.EtagsParam, bytesWritten int64, path string, ref string) (files_sdk.File, error) {
-	if providedMtime != nil && providedMtime.IsZero() {
-		providedMtime = nil
-	}
-
-	return u.Create(files_sdk.FileCreateParams{
-		ProvidedMtime:    providedMtime,
-		EtagsParam:       etags,
-		Action:           "end",
-		Path:             path,
-		Ref:              ref,
-		Size:             bytesWritten,
-		MkdirParents:     lib.Bool(true),
-		ActionAttributes: u.actionAttributes,
-	}, files_sdk.WithContext(ctx))
 }
 
 func (u *uploadIO) uploadPart(ctx context.Context, part *Part, resend bool) (files_sdk.EtagsParam, error) {

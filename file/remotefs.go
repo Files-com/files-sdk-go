@@ -837,7 +837,9 @@ func (s *stagedRemoteFile) Write(p []byte) (int, error) {
 }
 
 // Close uploads the temporary file, unless a write failed or the context has ended, then removes it. Ending the context
-// during the upload stops the parts still being sent; once every part has been sent, the upload is completed regardless.
+// during the upload stops the parts still being sent; once every part has been sent, the request that finishes the
+// upload is sent regardless. If Files.com answers that it is still finishing the upload, ending the context stops only
+// the wait for its outcome, and Close returns an *UploadCompletionUnknownError.
 // After an upload is attempted, the files and listings cached by the FS, which every FS WithContext made from it shares,
 // are dropped, so the next Open or ReadDir asks the API again; reads running alongside Close, and other clients' writes,
 // can still leave them stale. Close runs once, and a later Close returns its error without uploading again. The error is

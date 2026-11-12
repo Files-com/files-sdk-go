@@ -27,15 +27,24 @@ type UploadStatus struct {
 	status.Changes
 	endedAt   time.Time
 	startedAt time.Time
+	// finalizing, finalizationProgress and finalizingSince are JobFile's Finalizing, FinalizationProgress and
+	// FinalizingSince.
+	finalizing           bool
+	finalizationProgress *int64
+	finalizingSince      time.Time
 }
 
 var _ IFile = &UploadStatus{}
 
 func (u *UploadStatus) EndedAt() time.Time {
+	u.Mutex.RLock()
+	defer u.Mutex.RUnlock()
 	return u.endedAt
 }
 
 func (u *UploadStatus) StartedAt() time.Time {
+	u.Mutex.RLock()
+	defer u.Mutex.RUnlock()
 	return u.startedAt
 }
 
@@ -74,6 +83,8 @@ func (u *UploadStatus) RemotePath() string {
 }
 
 func (u *UploadStatus) CheckpointResumable() UploadResumable {
+	u.Mutex.RLock()
+	defer u.Mutex.RUnlock()
 	return u.UploadResumable
 }
 
@@ -141,4 +152,30 @@ func (u *UploadStatus) SetUploadedBytes(b int64) {
 	u.Mutex.Lock()
 	defer u.Mutex.Unlock()
 	u.uploadedBytes = b
+}
+
+// finalizationPending records an answer that Files.com is still finishing the upload, with its progress or nil.
+func (u *UploadStatus) finalizationPending(progress *int64) {
+	u.Mutex.Lock()
+	defer u.Mutex.Unlock()
+	if !u.finalizing {
+		u.finalizingSince = time.Now()
+	}
+	u.finalizing = true
+	u.finalizationProgress = progress
+}
+
+// clearFinalization records that the upload is not waiting for Files.com to finish it.
+func (u *UploadStatus) clearFinalization() {
+	u.Mutex.Lock()
+	defer u.Mutex.Unlock()
+	u.finalizing = false
+	u.finalizationProgress = nil
+	u.finalizingSince = time.Time{}
+}
+
+func (u *UploadStatus) finalization() (bool, *int64, time.Time) {
+	u.Mutex.RLock()
+	defer u.Mutex.RUnlock()
+	return u.finalizing, u.finalizationProgress, u.finalizingSince
 }

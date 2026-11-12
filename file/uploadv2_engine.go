@@ -626,7 +626,7 @@ func (e *uploadV2Engine) run(ctx context.Context) (UploadResumable, error) {
 		"read_duration_ms": e.readDuration.Milliseconds(),
 		"read_duration_ns": e.readDuration.Nanoseconds(),
 	})
-	file, err := e.u.completeUpload(ctx, e.u.ProvidedMtime, e.etagsForComplete(), e.u.bytesWritten, path, ref)
+	file, err := e.u.completeUpload(ctx, ctx, e.u.ProvidedMtime, e.etagsForComplete(), e.u.bytesWritten, path, ref)
 	e.u.file = file
 	if err != nil {
 		e.u.LogPath(e.u.Path, map[string]any{

@@ -69,6 +69,9 @@ func ToStatusFile(f IFile) JobFile {
 	if cr, ok := f.(checkpointResumableProvider); ok {
 		jf.CheckpointResumable = cr.CheckpointResumable()
 	}
+	if us, ok := f.(*UploadStatus); ok {
+		jf.Finalizing, jf.FinalizationProgress, jf.FinalizingSince = us.finalization()
+	}
 	if ds, ok := f.(*DownloadStatus); ok {
 		jf.TmpPath = ds.tmpDownloadPath()
 		jf.DownloadBinding = ds.downloadBinding()

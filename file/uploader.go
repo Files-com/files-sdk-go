@@ -2,6 +2,7 @@ package file
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -368,6 +369,10 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 			UploadWithResume(uploadStatus.UploadResumable),
 			UploadWithProgress(progressFn),
 			UploadWithDestinationPath(uploadStatus.RemotePath()),
+			UploadWithFinalizationProgress(func(percent *int64) {
+				uploadStatus.finalizationPending(percent)
+				uploadStatus.Job().UpdateStatusWithBytes(status.Uploading, uploadStatus, 0)
+			}),
 		}
 		if useSDKDefaultAdaptiveCaps {
 			opts = append(opts, uploadWithV2SDKDefaultCaps())
@@ -402,7 +407,18 @@ func enqueueUpload(ctx context.Context, job *Job, uploadStatus *UploadStatus, on
 			}
 		}
 
-		uploadStatus.UploadResumable, err = uploadStatus.UploadWithResume(opts...)
+		// A retry starts again without the finalization of the attempt before it.
+		uploadStatus.clearFinalization()
+		resumable, err := uploadStatus.UploadWithResume(opts...)
+		// The CLI reads the checkpoint of running uploads (CheckpointResumable) while they run.
+		uploadStatus.Mutex.Lock()
+		uploadStatus.UploadResumable = resumable
+		uploadStatus.Mutex.Unlock()
+		// A file that stopped waiting for Files.com to finish it stays Finalizing: its outcome is unknown.
+		var completionUnknown *UploadCompletionUnknownError
+		if !errors.As(err, &completionUnknown) {
+			uploadStatus.clearFinalization()
+		}
 		if err != nil {
 			if resumedBytes > 0 {
 				// Strip pre-existing bytes so the folder accumulator only

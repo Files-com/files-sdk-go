@@ -145,6 +145,21 @@ func WithUploadRenamedCallback(cb func() (path, ref string)) UploadOption {
 	}
 }
 
+// FinalizationProgress receives Files.com's approximate percentage, 0 to 100, of the work of finishing an upload, or
+// nil when its answer gave none.
+type FinalizationProgress func(percent *int64)
+
+// UploadWithFinalizationProgress calls progress each time Files.com answers the request that finishes the upload by
+// saying it is still finishing it, as it can for a remote server mount or a Files.com Agent. Each call means the upload
+// is still pending, at 100 too; whether it completed comes, as for any upload, from the upload's result and error. The
+// upload calls progress on its own goroutine and waits for it to return.
+func UploadWithFinalizationProgress(progress FinalizationProgress) UploadOption {
+	return func(params uploadIO) (uploadIO, error) {
+		params.finalizationProgress = progress
+		return params, nil
+	}
+}
+
 func (c *Client) Upload(opts ...UploadOption) error {
 	_, err := c.UploadWithResume(opts...)
 

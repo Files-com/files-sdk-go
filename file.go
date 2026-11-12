@@ -200,6 +200,8 @@ type FileCreateParams struct {
 	WithDirectConnectionInfo *bool `url:"with_direct_connection_info,omitempty" json:"with_direct_connection_info,omitempty" path:"with_direct_connection_info"`
 	// Sent to the API as action_attributes.
 	ActionAttributes map[string]any `url:"action_attributes,omitempty" json:"action_attributes,omitempty" path:"action_attributes"`
+	// Sent to the API as async_finalize.
+	AsyncFinalize *bool `url:"async_finalize,omitempty" json:"async_finalize,omitempty" path:"async_finalize"`
 }
 
 // FileUpdateParams contains the request parameters for PATCH /files/{path}.

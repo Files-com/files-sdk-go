@@ -1291,6 +1291,45 @@ fails without sending anything if the content does not have the size you gave,
 has more than your limit, cannot be read, or the context ends while it is being
 read. The SDK does not close your reader, and each attachment can be sent once.
 
+## Finishing an Upload
+
+An upload ends with a request that asks Files.com to finish it. For a remote
+server mount or a Files.com Agent, Files.com can answer that it is still
+finishing the upload in the background. The upload helpers, such as
+`Client.Upload`, `UploadWithResume`, `UploadTo<Destination>`, upload jobs from
+`Client.Uploader` and the writer `FS.Create` returns, then send the same request
+again after each such answer, waiting one second after the first, two after the
+second and three after each later one, until Files.com answers with the File or
+an error, and return as they do for any upload. Each repeated request sends what
+the first one did: the client's `Config` as it was then, with the
+`FILES_API_KEY` and default HTTP client it resolved, even if they change
+meanwhile.
+
+`UploadWithFinalizationProgress` passed to `Client.Upload` or `UploadWithResume`
+is called with each such answer: with Files.com's approximate percentage of the
+work, 0 to 100, or nil when it gives none. Each call means the upload is still
+pending, even at 100; the upload's result or error is its outcome.
+
+An upload job reports each of those answers to its
+`OnBytesChange(status.Uploading)` reporters: the `JobFile` has `Finalizing` set,
+`FinalizingSince` is when the first such answer came, and `FinalizationProgress`
+is Files.com's approximate percentage of the work, or nil when it gives none.
+Its status stays `uploading` and its transferred bytes do not change; only the
+`complete` status means the upload is complete, even at 100%. A file that ends
+`canceled` or `errored` while still `Finalizing` stopped waiting without an
+outcome.
+
+Ending the upload's context while it waits stops only the wait, not the work on
+Files.com. The upload then fails with an `*UploadCompletionUnknownError`, which
+`errors.Is` matches to `context.Canceled` or `context.DeadlineExceeded`:
+Files.com may still complete the upload. It fails the same way when the repeated
+request still fails after its retries, with a network error, a server error or a
+rate limit (429), or when an answer cannot be read. Any other error Files.com
+answers with, such as a 4xx, is the upload's outcome and is returned as it is.
+Resuming with the returned `UploadResumable` sends the same request again when
+it kept the upload's parts, as it does for a file or an `io.ReaderAt` of known
+size, and an upload job's `UploadCheckpoint` keeps such a file as pending.
+
 ## Writing Files Through `file.FS`
 
 `file.FS` provides remote reads and directory listings through Go's `io/fs`
@@ -1331,8 +1370,11 @@ calling it again returns the same result, and `Write` after `Close` fails with
 The writer uses the `FS`'s context, set with `WithContext`, or
 `context.Background()` when there is none. If that context has ended before
 `Close`, as above, nothing is uploaded. If it ends during the upload, the parts
-still being sent stop, but once every part has been sent the upload is
-completed anyway, so cancelling does not guarantee that nothing was written.
+still being sent stop, but once every part has been sent the request that
+finishes the upload is sent anyway, so cancelling does not guarantee that
+nothing was written. If Files.com answers that it is still finishing the
+upload, the ended context stops only the wait, and `Close` returns an
+`*UploadCompletionUnknownError` (see Finishing an Upload).
 
 `WithContext` keeps `Root`. After `Close` attempts an upload, the files and
 listings cached by the `FS`, and by every `FS` made from it with
