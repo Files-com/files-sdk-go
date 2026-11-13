@@ -669,3 +669,76 @@ func TestProviderModeUploadWorkingCopyReturnsProviderWriteError(t *testing.T) {
 		t.Fatalf("uploadWorkingCopy error = %v, want %v", err, writeErr)
 	}
 }
+
+func TestRemoteFsProviderRefusesNewFilesInAReadOnlyRoot(t *testing.T) {
+	_, vfs, cacheStore := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	var wrote bool
+	provider := &testProviderBackend{
+		statFunc: func(_ context.Context, path string) (ProviderEntry, error) {
+			if path != "/" {
+				return ProviderEntry{}, os.ErrNotExist
+			}
+			return ProviderEntry{Path: "/", Type: ProviderTypeDirectory, Permissions: "r"}, nil
+		},
+		writeFunc: func(context.Context, string, io.Reader, int64, time.Time) (ProviderEntry, error) {
+			wrote = true
+			return ProviderEntry{}, nil
+		},
+	}
+	fs, err := newRemoteFs(MountParams{
+		Config:          &files_sdk.Config{},
+		ProviderBackend: provider,
+		TmpFsPath:       t.TempDir(),
+	}, vfs, &log.NoOpLogger{}, cacheStore)
+	if err != nil {
+		t.Fatalf("newRemoteFs failed: %v", err)
+	}
+	fs.Init()
+	// A mount looks up its root when it starts, which newTestRemoteFs skips.
+	root, _ := vfs.fetch("/")
+	root.expireInfo()
+
+	if errc, _ := fs.Create("/new.txt", os.O_CREATE|os.O_WRONLY, 0o644); errc != -fuse.EACCES {
+		t.Fatalf("Create returned %d, want EACCES", errc)
+	}
+	if errc := fs.Mkdir("/new-folder", 0o755); errc != -fuse.EACCES {
+		t.Fatalf("Mkdir returned %d, want EACCES", errc)
+	}
+	if wrote {
+		t.Fatal("wrote to a read-only root")
+	}
+}
+
+func TestRemoteFsProviderCreatesFilesInAWritableRoot(t *testing.T) {
+	_, vfs, cacheStore := newTestRemoteFs(t)
+	defer vfs.destroy()
+
+	provider := &testProviderBackend{
+		statFunc: func(_ context.Context, path string) (ProviderEntry, error) {
+			if path != "/" {
+				return ProviderEntry{}, os.ErrNotExist
+			}
+			return ProviderEntry{Path: "/", Type: ProviderTypeDirectory}, nil
+		},
+	}
+	fs, err := newRemoteFs(MountParams{
+		Config:          &files_sdk.Config{},
+		ProviderBackend: provider,
+		TmpFsPath:       t.TempDir(),
+	}, vfs, &log.NoOpLogger{}, cacheStore)
+	if err != nil {
+		t.Fatalf("newRemoteFs failed: %v", err)
+	}
+	fs.Init()
+	// A mount looks up its root when it starts, which newTestRemoteFs skips.
+	root, _ := vfs.fetch("/")
+	root.expireInfo()
+
+	errc, fh := fs.Create("/new.txt", os.O_CREATE|os.O_WRONLY, 0o644)
+	if errc != 0 {
+		t.Fatalf("Create returned %d, want 0", errc)
+	}
+	fs.Release("/new.txt", fh)
+}

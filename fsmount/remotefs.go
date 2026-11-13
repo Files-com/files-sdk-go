@@ -2700,8 +2700,9 @@ func (fs *RemoteFs) loadParent(path string) (errc int) {
 func (fs *RemoteFs) findDir(path string) (node *fsNode, errc int) {
 	remotePath := fs.remotePath(path)
 
-	if remotePath == "/" {
+	if remotePath == "/" && fs.providerBackend == nil {
 		// Special case that the root directory of a Files.com site can't be stat'd.
+		// Provider backends stat their root, which says whether it's writable.
 		node = fs.vfs.getOrCreate(path, nodeTypeDir)
 		node.updateInfo(fsNodeInfo{
 			nodeType:     nodeTypeDir,
