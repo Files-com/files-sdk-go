@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -17,6 +18,8 @@ import (
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/file"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache"
+	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache/disk"
+	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
 func TestSDKRemoteBackendDownloadRange(t *testing.T) {
@@ -135,6 +138,119 @@ func TestRemoteFsRangeSourceCompleteDownloadOmitsRangeHeader(t *testing.T) {
 	}
 	if result.Partial || result.Returned != complete || result.TotalSize != int64(len(payload)) {
 		t.Fatalf("complete response = partial %t returned %#v total %d", result.Partial, result.Returned, result.TotalSize)
+	}
+}
+
+func TestRemoteFsDateGuardSurvivesTheRangeToWholeFallback(t *testing.T) {
+	const baseline = "Wed, 21 Oct 2015 07:28:00 GMT"
+	for _, tc := range []struct {
+		name, initial, later                string
+		ignoreCondition, changed, duplicate bool
+		clientCheck, mountCheck             *bool
+		disabled, mutate                    bool
+	}{
+		{name: "stable", initial: baseline, later: baseline},
+		{name: "earlier", initial: baseline, later: "Wed, 21 Oct 2015 07:27:59 GMT"},
+		{name: "missing"},
+		{name: "duplicate", initial: baseline, later: baseline, duplicate: true},
+		{name: "invalid", initial: "not an HTTP date", later: "not an HTTP date"},
+		{name: "later-missing", initial: baseline},
+		{name: "later-invalid", initial: baseline, later: "not an HTTP date"},
+		{name: "newer-precondition", initial: baseline, later: "Wed, 21 Oct 2015 07:28:01 GMT", changed: true},
+		{name: "newer-ignored-condition", initial: baseline, later: "Wed, 21 Oct 2015 07:28:01 GMT", ignoreCondition: true, changed: true},
+		{name: "client-disabled", initial: baseline, later: "Wed, 21 Oct 2015 07:28:01 GMT", clientCheck: lib.Bool(false), disabled: true},
+		{name: "mount-disabled", initial: baseline, later: "Wed, 21 Oct 2015 07:28:01 GMT", clientCheck: lib.Bool(true), mountCheck: lib.Bool(false), disabled: true},
+		{name: "mount-enabled", initial: baseline, later: "Wed, 21 Oct 2015 07:28:01 GMT", clientCheck: lib.Bool(false), mountCheck: lib.Bool(true), changed: true},
+		{name: "mount-snapshot", initial: baseline, later: "Wed, 21 Oct 2015 07:28:01 GMT", clientCheck: lib.Bool(true), mutate: true, changed: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			payload := bytes.Repeat([]byte("a"), 2<<20)
+			var mu sync.Mutex
+			var requests []http.Header
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				mu.Lock()
+				requests = append(requests, r.Header.Clone())
+				count := len(requests)
+				mu.Unlock()
+				modified := tc.initial
+				if count > 1 {
+					modified = tc.later
+				}
+				w.Header().Set("Last-Modified", modified)
+				if tc.duplicate {
+					w.Header().Add("Last-Modified", modified)
+				}
+				if tc.changed && !tc.ignoreCondition && r.Header.Get("If-Unmodified-Since") == baseline {
+					w.WriteHeader(http.StatusPreconditionFailed)
+					return
+				}
+				start, end := 0, len(payload)-1
+				if ranges := r.Header.Get("Range"); ranges != "" {
+					_, _ = fmt.Sscanf(ranges, "bytes=%d-%d", &start, &end)
+					w.Header().Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", start, end, len(payload)))
+					w.Header().Set("Content-Length", fmt.Sprint(end-start+1))
+					w.WriteHeader(http.StatusPartialContent)
+				} else {
+					w.Header().Set("Content-Length", fmt.Sprint(len(payload)))
+				}
+				_, _ = w.Write(payload[start : end+1])
+			}))
+			defer server.Close()
+			fs, vfs, _ := newTestRemoteFs(t)
+			defer vfs.destroy()
+			path := "/dated.bin"
+			modTime := time.Date(2026, time.September, 1, 0, 0, 0, 0, time.UTC)
+			node := vfs.getOrCreate(path, nodeTypeFile)
+			node.updateInfo(fsNodeInfo{nodeType: nodeTypeFile, size: int64(len(payload)), modTime: modTime, creationTime: modTime})
+			node.setDownloadURI(server.URL)
+			store, err := disk.NewDiskCache(t.TempDir(), disk.WithCapacityBytes(8<<30))
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(store.StopMaintenance)
+			config := files_sdk.Config{DisableDirectTransfers: true, CheckDownloadModificationTime: tc.clientCheck, FeatureFlags: map[string]bool{files_sdk.FeatureFlagSparseRangeReads: true}}
+			fs, err = newRemoteFs(MountParams{Config: &config, CheckDownloadModificationTime: tc.mountCheck, IgnorePatterns: []string{}}, vfs, fs.log, store)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if tc.mutate {
+				*tc.clientCheck = false
+			}
+			fs.backend = newRangeTestSDKBackend(config)
+			streams := fs.rangeDownloads()
+			t.Cleanup(streams.Close)
+			streams.policy = testStreamPolicy()
+			streams.policy.smallFileSize = 0
+			meta := cacheEntryMetadata(path, int64(len(payload)), modTime)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			err = streams.Wait(ctx, 1, path, meta, cache.ByteRange{Start: 0, End: 4096})
+			if tc.changed {
+				if !errors.Is(err, errRangeVersionChanged) {
+					t.Fatalf("download error = %v, want changed source", err)
+				}
+			} else {
+				if err != nil {
+					t.Fatal(err)
+				}
+				if got := readThrough(t, store, streams, meta, int64(len(payload))-4096, 4096); !bytes.Equal(got, payload[len(payload)-4096:]) {
+					t.Fatal("whole response returned the wrong bytes")
+				}
+			}
+			streams.Close()
+			mu.Lock()
+			defer mu.Unlock()
+			if len(requests) != 2 || requests[0].Get("Range") == "" || requests[1].Get("Range") != "" {
+				t.Fatalf("requests = %v, want one range probe followed by a whole response", requests)
+			}
+			condition := ""
+			if tc.initial == baseline && !tc.duplicate && !tc.disabled {
+				condition = baseline
+			}
+			if got := requests[1].Get("If-Unmodified-Since"); got != condition {
+				t.Fatalf("If-Unmodified-Since = %q, want %q", got, condition)
+			}
+		})
 	}
 }
 

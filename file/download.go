@@ -8,6 +8,7 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/file/manager"
+	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 
 func (c *Client) DownloadRetry(job Job, opts ...files_sdk.RequestResponseOption) *Job {
@@ -36,6 +37,7 @@ func (c *Client) DownloadRetry(job Job, opts ...files_sdk.RequestResponseOption)
 			AdaptiveDownloadV2TuningSet:          newJob.Params.(DownloaderParams).AdaptiveDownloadV2TuningSet,
 			AdaptiveDownloadV2Tuning:             newJob.Params.(DownloaderParams).AdaptiveDownloadV2Tuning,
 			ZipBatch:                             newJob.Params.(DownloaderParams).ZipBatch,
+			CheckDownloadModificationTime:        newJob.Params.(DownloaderParams).CheckDownloadModificationTime,
 		},
 		opts...)
 }
@@ -89,6 +91,8 @@ type DownloaderParams struct {
 	DryRun             bool
 	PriorJobCheckpoint *JobDownloadCheckpoint
 	ResumeTmpPath      string // Full path to the temp file from a prior paused download session.
+	// CheckDownloadModificationTime overrides Config for this download job; nil inherits its default-enabled value.
+	CheckDownloadModificationTime *bool
 	// AdaptiveConcurrency enables opt-in download V2 adaptive range concurrency.
 	AdaptiveConcurrency bool
 	// AdaptiveConcurrencyUseSDKDefaultCaps uses SDK V2 caps instead of treating an
@@ -109,6 +113,13 @@ type DownloaderParams struct {
 
 func (c *Client) Downloader(params DownloaderParams, opts ...files_sdk.RequestResponseOption) *Job {
 	params.config = c.Config
+	checkModificationTime := params.config.ChecksDownloadModificationTime()
+	if params.CheckDownloadModificationTime != nil {
+		checkModificationTime = *params.CheckDownloadModificationTime
+	}
+	// Keep a private value for every file in the job, including a later whole-file retry.
+	params.CheckDownloadModificationTime = lib.Bool(checkModificationTime)
+	params.config.CheckDownloadModificationTime = params.CheckDownloadModificationTime
 	// A client on a new transport, made for this job's manager, whose connections only this job uses.
 	var matchedClient *http.Client
 	if params.AdaptiveConcurrency && (params.AdaptiveConcurrencyUseSDKDefaultCaps || params.Manager == nil) {

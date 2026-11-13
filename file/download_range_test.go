@@ -22,10 +22,11 @@ import (
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/file/manager"
 	"github.com/Files-com/files-sdk-go/v3/file/status"
+	"github.com/Files-com/files-sdk-go/v3/lib"
 	"github.com/stretchr/testify/require"
 )
 
-type versionDownloadRequest struct{ uri, ranges, match string }
+type versionDownloadRequest struct{ uri, ranges, match, unmodifiedSince string }
 
 // boundStageCheckpoint is fixture data from a settled response: the stage's
 // bytes belong to this exact source version and destination.
@@ -60,6 +61,7 @@ func waitForDownloadTestJob(t *testing.T, ctx context.Context, job *Job) {
 }
 
 type versionDownloadFixture struct {
+	beforeStart                                   func()
 	mu                                            sync.Mutex
 	url                                           string
 	data                                          []byte
@@ -67,6 +69,11 @@ type versionDownloadFixture struct {
 	failed, expire, expired, changed, noValidator bool
 	alwaysShort                                   bool
 	ignoresRange                                  bool
+	lastModified, laterLastModified               string
+	ignoreDateCondition, expireSecond             bool
+	omitLaterDate                                 bool
+	duplicateDate                                 bool
+	clientDateCheck, localDateCheck               *bool
 }
 
 func newVersionDownloadFixture(t *testing.T) *versionDownloadFixture {
@@ -90,7 +97,10 @@ func (f *versionDownloadFixture) serve(w http.ResponseWriter, req *http.Request)
 		return
 	}
 	ranges := req.Header.Get("Range")
-	f.requests = append(f.requests, versionDownloadRequest{uri: req.URL.Path, ranges: ranges, match: req.Header.Get("If-Match")})
+	f.requests = append(f.requests, versionDownloadRequest{uri: req.URL.Path, ranges: ranges, match: req.Header.Get("If-Match"), unmodifiedSince: req.Header.Get("If-Unmodified-Since")})
+	if f.expireSecond && len(f.requests) == 2 {
+		f.expired = true
+	}
 	if f.ignoresRange {
 		ranges = ""
 	}
@@ -114,7 +124,27 @@ func (f *versionDownloadFixture) serve(w http.ResponseWriter, req *http.Request)
 		etag = `"replacement"`
 	}
 	noValidator := f.noValidator
+	modified := f.lastModified
+	if len(f.requests) > 1 && f.laterLastModified != "" {
+		modified = f.laterLastModified
+	}
+	if len(f.requests) > 1 && f.omitLaterDate {
+		modified = ""
+	}
+	condition, conditionErr := http.ParseTime(req.Header.Get("If-Unmodified-Since"))
+	responseDate, responseDateErr := http.ParseTime(modified)
+	rejectDate := !f.ignoreDateCondition && req.Header.Get("If-Match") == "" && conditionErr == nil && responseDateErr == nil && responseDate.After(condition)
 	f.mu.Unlock()
+	if modified != "" {
+		w.Header().Set("Last-Modified", modified)
+		if f.duplicateDate {
+			w.Header().Add("Last-Modified", modified)
+		}
+	}
+	if rejectDate {
+		w.WriteHeader(http.StatusPreconditionFailed)
+		return
+	}
 	if !noValidator {
 		w.Header().Set("ETag", etag)
 	}
@@ -130,12 +160,15 @@ func (f *versionDownloadFixture) serve(w http.ResponseWriter, req *http.Request)
 }
 
 func (f *versionDownloadFixture) client() *Client {
-	return &Client{Config: files_sdk.Config{EndpointOverride: f.url, DisableDirectTransfers: true}.Init()}
+	return &Client{Config: files_sdk.Config{EndpointOverride: f.url, DisableDirectTransfers: true, CheckDownloadModificationTime: f.clientDateCheck}.Init()}
 }
 
 func (f *versionDownloadFixture) run(t *testing.T, adaptive bool) (*Job, string) {
 	dest := filepath.Join(t.TempDir(), "out.bin")
-	job := f.client().Downloader(DownloaderParams{RemotePath: "remote.bin", LocalPath: dest, Manager: manager.Build(2, 1, false), AdaptiveConcurrency: adaptive})
+	job := f.client().Downloader(DownloaderParams{RemotePath: "remote.bin", LocalPath: dest, Manager: manager.Build(2, 1, false), AdaptiveConcurrency: adaptive, CheckDownloadModificationTime: f.localDateCheck})
+	if f.beforeStart != nil {
+		f.beforeStart()
+	}
 	job.Start()
 	job.Wait()
 	require.Len(t, job.Statuses, 1)
@@ -148,6 +181,8 @@ func TestDownloaderResumesTheFirstUnreceivedByteWithItsVersion(t *testing.T) {
 			t.Run(fmt.Sprintf("adaptive=%v/renew=%v", adaptive, renew), func(t *testing.T) {
 				f := newVersionDownloadFixture(t)
 				f.expire = renew
+				f.lastModified = "Wed, 21 Oct 2015 07:28:00 GMT"
+				f.laterLastModified = "Wed, 21 Oct 2015 07:29:00 GMT"
 				job, dest := f.run(t, adaptive)
 				require.NoError(t, job.Statuses[0].Err())
 				out, err := os.ReadFile(dest)
@@ -158,6 +193,9 @@ func TestDownloaderResumesTheFirstUnreceivedByteWithItsVersion(t *testing.T) {
 				f.mu.Unlock()
 				resumed := false
 				for _, req := range requests {
+					if req.match != "" {
+						require.Empty(t, req.unmodifiedSince, "If-Match takes precedence over the date guard")
+					}
 					if strings.HasPrefix(req.ranges, "bytes=1048576-") && req.match == `"original"` && (!renew || req.uri == "/fresh") {
 						resumed = true
 					}
@@ -166,6 +204,200 @@ func TestDownloaderResumesTheFirstUnreceivedByteWithItsVersion(t *testing.T) {
 			})
 		}
 	}
+}
+
+func TestDownloaderRejectsNewerDateBeforePublishingAWholeResponse(t *testing.T) {
+	for _, adaptive := range []bool{false, true} {
+		for _, ignoreCondition := range []bool{false, true} {
+			t.Run(fmt.Sprintf("adaptive=%v/ignores-condition=%v", adaptive, ignoreCondition), func(t *testing.T) {
+				f := newVersionDownloadFixture(t)
+				f.noValidator = true
+				f.lastModified = "Wed, 21 Oct 2015 07:28:00 GMT"
+				f.laterLastModified = "Wed, 21 Oct 2015 07:28:01 GMT"
+				f.ignoreDateCondition = ignoreCondition
+				job, dest := f.run(t, adaptive)
+				require.ErrorIs(t, job.Statuses[0].Err(), files_sdk.ErrDownloadSourceChanged)
+				_, err := os.Stat(dest)
+				require.True(t, os.IsNotExist(err))
+				f.mu.Lock()
+				defer f.mu.Unlock()
+				require.Len(t, f.requests, 2, "a timestamp does not qualify the source for parallel ranges")
+				require.Empty(t, f.requests[0].unmodifiedSince)
+				require.Empty(t, f.requests[1].ranges)
+				require.Equal(t, f.lastModified, f.requests[1].unmodifiedSince)
+			})
+		}
+	}
+}
+
+func TestDownloadDateGuardKeepsTheFirstValidDateAcrossRanges(t *testing.T) {
+	for _, tc := range []struct {
+		name, initial, later, condition string
+		omitLater, duplicate            bool
+	}{
+		{name: "stable", initial: "Wed, 21 Oct 2015 07:28:00 GMT", condition: "Wed, 21 Oct 2015 07:28:00 GMT"},
+		{name: "earlier", initial: "Wed, 21 Oct 2015 07:28:00 GMT", later: "Wed, 21 Oct 2015 07:27:59 GMT", condition: "Wed, 21 Oct 2015 07:28:00 GMT"},
+		{name: "obsolete-http-date", initial: "Wednesday, 21-Oct-15 07:28:00 GMT", later: "Wed, 21 Oct 2015 07:28:00 GMT", condition: "Wed, 21 Oct 2015 07:28:00 GMT"},
+		{name: "missing"},
+		{name: "duplicate", initial: "Wed, 21 Oct 2015 07:28:00 GMT", duplicate: true},
+		{name: "invalid", initial: "not an HTTP date"},
+		{name: "later-missing", initial: "Wed, 21 Oct 2015 07:28:00 GMT", condition: "Wed, 21 Oct 2015 07:28:00 GMT", omitLater: true},
+		{name: "later-invalid", initial: "Wed, 21 Oct 2015 07:28:00 GMT", later: "not an HTTP date", condition: "Wed, 21 Oct 2015 07:28:00 GMT"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newVersionDownloadFixture(t)
+			f.data, f.noValidator = []byte("first part then second part"), true
+			f.lastModified, f.laterLastModified = tc.initial, tc.later
+			f.omitLaterDate, f.duplicateDate = tc.omitLater, tc.duplicate
+			remote := (&File{File: &files_sdk.File{Path: "remote.bin", DownloadUri: f.url + "/transfer"}, FS: (&FS{Context: context.Background()}).Init(f.client().Config, false)}).Init()
+			for offset := int64(0); offset < 3; offset++ {
+				reader, err := remote.ReaderRange(offset, offset)
+				require.NoError(t, err)
+				data, err := io.ReadAll(reader)
+				require.NoError(t, err)
+				require.NoError(t, reader.Close())
+				require.Equal(t, f.data[offset:offset+1], data)
+			}
+			f.mu.Lock()
+			defer f.mu.Unlock()
+			for _, req := range f.requests[1:] {
+				require.Equal(t, tc.condition, req.unmodifiedSince)
+				require.Empty(t, req.match)
+			}
+		})
+	}
+}
+
+func TestDownloadDateGuardSurvivesURLRenewal(t *testing.T) {
+	f := newVersionDownloadFixture(t)
+	f.data, f.noValidator = []byte("date-bound range data"), true
+	f.lastModified, f.expireSecond = "Wed, 21 Oct 2015 07:28:00 GMT", true
+	remote := (&File{File: &files_sdk.File{Path: "remote.bin", DownloadUri: f.url + "/transfer"}, FS: (&FS{Context: context.Background()}).Init(f.client().Config, false)}).Init()
+	for offset := int64(0); offset < 2; offset++ {
+		reader, err := remote.ReaderRange(offset, offset)
+		require.NoError(t, err)
+		_, err = io.Copy(io.Discard, reader)
+		require.NoError(t, err)
+		require.NoError(t, reader.Close())
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	require.Len(t, f.requests, 3)
+	require.Equal(t, "/fresh", f.requests[2].uri)
+	for _, req := range f.requests[1:] {
+		require.Equal(t, f.lastModified, req.unmodifiedSince)
+	}
+}
+
+func TestDownloaderModificationTimeCheckOptions(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		client, local *bool
+		checks        bool
+		mutate        bool
+	}{
+		{name: "explicit-true", client: lib.Bool(true), checks: true},
+		{name: "client-disabled", client: lib.Bool(false)},
+		{name: "job-disabled", client: lib.Bool(true), local: lib.Bool(false)},
+		{name: "job-enabled", client: lib.Bool(false), local: lib.Bool(true), checks: true},
+		{name: "client-snapshot", client: lib.Bool(true), checks: true, mutate: true},
+		{name: "job-snapshot", local: lib.Bool(true), checks: true, mutate: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newVersionDownloadFixture(t)
+			f.noValidator, f.ignoreDateCondition = true, true
+			f.lastModified, f.laterLastModified = "Wed, 21 Oct 2015 07:28:00 GMT", "Wed, 21 Oct 2015 07:28:01 GMT"
+			f.clientDateCheck, f.localDateCheck = tc.client, tc.local
+			if tc.mutate {
+				f.beforeStart = func() {
+					if tc.local != nil {
+						*tc.local = false
+					} else {
+						*tc.client = false
+					}
+				}
+			}
+			job, dest := f.run(t, true)
+			if tc.checks {
+				require.ErrorIs(t, job.Statuses[0].Err(), files_sdk.ErrDownloadSourceChanged)
+			} else {
+				require.NoError(t, job.Statuses[0].Err())
+				data, err := os.ReadFile(dest)
+				require.NoError(t, err)
+				require.Equal(t, f.data, data)
+			}
+			f.mu.Lock()
+			defer f.mu.Unlock()
+			condition := ""
+			if tc.checks {
+				condition = f.lastModified
+			}
+			require.Len(t, f.requests, 2)
+			require.Equal(t, condition, f.requests[1].unmodifiedSince)
+			require.Empty(t, f.requests[1].ranges, "date opt-out does not authorize parallel ranges")
+		})
+	}
+}
+
+func TestDownloadDateGuardSnapshotsTheReadHandleSetting(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprint(enabled), func(t *testing.T) {
+			f := newVersionDownloadFixture(t)
+			f.data, f.noValidator, f.ignoreDateCondition = []byte("date guard"), true, true
+			f.lastModified, f.laterLastModified = "Wed, 21 Oct 2015 07:28:00 GMT", "Wed, 21 Oct 2015 07:28:01 GMT"
+			setting := enabled
+			f.clientDateCheck = &setting
+			remote := (&File{File: &files_sdk.File{Path: "remote.bin", DownloadUri: f.url + "/transfer"}, FS: (&FS{Context: context.Background()}).Init(f.client().Config, false)}).Init()
+			reader, err := remote.ReaderRange(0, 0)
+			require.NoError(t, err)
+			_, err = io.Copy(io.Discard, reader)
+			require.NoError(t, err)
+			require.NoError(t, reader.Close())
+			setting = !enabled
+			reader, err = remote.ReaderRange(1, 1)
+			if enabled {
+				require.ErrorIs(t, err, files_sdk.ErrDownloadSourceChanged)
+			} else {
+				require.NoError(t, err)
+				_, err = io.Copy(io.Discard, reader)
+				require.NoError(t, err)
+				require.NoError(t, reader.Close())
+			}
+			f.mu.Lock()
+			defer f.mu.Unlock()
+			condition := ""
+			if enabled {
+				condition = f.lastModified
+			}
+			require.Equal(t, condition, f.requests[1].unmodifiedSince)
+		})
+	}
+}
+
+func TestDownloadDateOptOutKeepsStrongVersionAndHTTPErrors(t *testing.T) {
+	f := newVersionDownloadFixture(t)
+	f.data, f.failed, f.clientDateCheck = []byte("version-bound"), true, lib.Bool(false)
+	remote := (&File{File: &files_sdk.File{Path: "remote.bin", DownloadUri: f.url + "/transfer"}, FS: (&FS{Context: context.Background()}).Init(f.client().Config, false)}).Init()
+	reader, err := remote.ReaderRange(0, 0)
+	require.NoError(t, err)
+	_, err = io.Copy(io.Discard, reader)
+	require.NoError(t, err)
+	require.NoError(t, reader.Close())
+	f.mu.Lock()
+	f.changed = true
+	f.mu.Unlock()
+	_, err = remote.ReaderRange(1, 1)
+	require.ErrorIs(t, err, files_sdk.ErrDownloadSourceChanged)
+	f.mu.Lock()
+	require.Equal(t, `"original"`, f.requests[1].match)
+	require.Empty(t, f.requests[1].unmodifiedSince)
+	f.mu.Unlock()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusPreconditionFailed) }))
+	defer server.Close()
+	remote = (&File{File: &files_sdk.File{Path: "remote.bin", DownloadUri: server.URL}, FS: (&FS{Context: context.Background()}).Init(f.client().Config, false)}).Init()
+	_, err = remote.ReaderRange(0, 0)
+	require.ErrorIs(t, err, files_sdk.ErrDownloadSourceChanged, "date opt-out does not make HTTP412 successful")
 }
 
 func TestDownloaderRejectsSameSizeRangeReplacement(t *testing.T) {

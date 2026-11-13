@@ -60,6 +60,9 @@ type MountParams struct {
 	// Optional when ProviderBackend is set. Files.com API mounts still require
 	// a usable API configuration.
 	Config *files_sdk.Config
+	// CheckDownloadModificationTime overrides Config for this mount; nil inherits its default-enabled value.
+	// The mount snapshots it before any read handles or download streams begin.
+	CheckDownloadModificationTime *bool
 
 	// Optional. When set, fsmount talks to this backend instead of the Files.com API.
 	// This is intended for direct provider mounts implemented by the caller.

@@ -56,6 +56,7 @@ type rangeStreams struct {
 	newReporter      func(path string, size int64) *transferReporter
 	versionChanged   func(path string)
 	responseAccepted func(path, uri string)
+	skipDates        bool
 
 	mu        sync.Mutex
 	files     map[string]*streamFile
@@ -182,6 +183,8 @@ type streamFile struct {
 	// proves another response holds the same file, so later responses are
 	// checked against those bytes.
 	unvalidated bool
+	// lastModified is an attempt-local best-effort guard, not cache identity.
+	lastModified time.Time
 
 	// publishMu keeps cancellation from returning while a cache write for this
 	// version is in progress.

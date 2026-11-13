@@ -228,6 +228,7 @@ func (s *rangeStreams) fetchOnce(stream *rangeStream) error {
 	s.mu.Lock()
 	meta := stream.file.meta
 	kind := stream.kind
+	ctx := context.WithValue(stream.ctx, rangeDateKey{}, rangeDate{modified: stream.file.lastModified, disabled: s.skipDates})
 	requested := cache.ByteRange{Start: stream.pos, End: stream.end}
 	if kind == streamWhole {
 		requested = cache.ByteRange{Start: 0, End: meta.Size}
@@ -247,10 +248,10 @@ func (s *rangeStreams) fetchOnce(stream *rangeStream) error {
 		if !ok {
 			err = errors.New("range source does not support complete-file downloads")
 		} else {
-			response, err = complete.DownloadComplete(stream.ctx, stream.file.path, meta, requested)
+			response, err = complete.DownloadComplete(ctx, stream.file.path, meta, requested)
 		}
 	} else {
-		response, err = s.source.DownloadRange(stream.ctx, stream.file.path, meta, requested)
+		response, err = s.source.DownloadRange(ctx, stream.file.path, meta, requested)
 	}
 	var transferred int64
 	if err == nil {
@@ -417,6 +418,12 @@ func (s *rangeStreams) bindResponseLocked(stream *rangeStream, response remoteRa
 	}
 	if meta.ETag != "" && response.ETag != meta.ETag {
 		return meta, "", errRangeVersionChanged
+	}
+	if !s.skipDates && meta.ETag == "" && !file.lastModified.IsZero() && response.LastModified.After(file.lastModified) {
+		return meta, "", errRangeVersionChanged
+	}
+	if !s.skipDates && file.lastModified.IsZero() {
+		file.lastModified = response.LastModified
 	}
 	// Bytes cached from a response without a validator may already have been
 	// read, and nothing proves another response holds the same file. A later

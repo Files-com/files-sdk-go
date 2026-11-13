@@ -116,6 +116,7 @@ type RemoteFs struct {
 	cacheStore cacheStore
 
 	sparseRangeReads bool
+	skipDateChecks   bool
 
 	rangeOperationsMu sync.RWMutex
 	rangePathMutexes  *fssync.PathRWMutex
@@ -296,6 +297,13 @@ func newRemoteFs(params MountParams, vfs *virtualfs, log log.Logger, cs cacheSto
 	if params.Root == "" {
 		params.Root = "/"
 	}
+	checkModificationTime := true
+	if params.Config != nil {
+		checkModificationTime = params.Config.ChecksDownloadModificationTime()
+	}
+	if params.CheckDownloadModificationTime != nil {
+		checkModificationTime = *params.CheckDownloadModificationTime
+	}
 
 	limiter := lim.NewFuseOpLimiter(map[lim.FuseOpType]int64{
 		lim.FuseOpDownload: downloadOpLimit,
@@ -317,6 +325,7 @@ func newRemoteFs(params MountParams, vfs *virtualfs, log log.Logger, cs cacheSto
 		events:           params.EventPublisher,
 		cacheStore:       cs,
 		sparseRangeReads: sparseRangeReadsEnabled(params.Config),
+		skipDateChecks:   !checkModificationTime,
 		rangePathMutexes: fssync.NewPathRWMutex(),
 		ops:              limiter,
 		loadDirMutexes:   fssync.NewPathMutex(),

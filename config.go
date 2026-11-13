@@ -20,7 +20,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 )
 
-var VERSION = "3.3.364"
+var VERSION = "3.3.365"
 var defaultUserAgent = userAgentWithMetadata(fmt.Sprintf("%v %v", UserAgent, strings.TrimSpace(VERSION)), runtime.GOOS, runtime.Version())
 
 const (
@@ -68,6 +68,10 @@ type Config struct {
 	// DisableRegionRelocation stops API requests from following a lockout region mismatch to the host it names. The
 	// mismatch is still recognized: the call fails with a *RegionMismatchError that describes it.
 	DisableRegionRelocation bool `json:"disable_region_relocation"`
+	// CheckDownloadModificationTime enables the best-effort Last-Modified / If-Unmodified-Since guard.
+	// Nil defaults to true. False leaves strong ETag, size and HTTP error checks enabled.
+	// Download jobs, filesystem read handles and mounts snapshot this value when they begin.
+	CheckDownloadModificationTime *bool `json:"check_download_modification_time,omitempty"`
 	// TrustRegionOrigin decides whether a lockout region mismatch may move an API request, with its credentials, to
 	// an HTTPS origin other than files.com or one of its subdomains on the default port. It receives the origin the
 	// API named and the origin the request was sent to. HTTP origins are never trusted.
@@ -106,6 +110,11 @@ func (c Config) Init() Config {
 	}
 
 	return c
+}
+
+// ChecksDownloadModificationTime resolves the default-enabled download date setting.
+func (c Config) ChecksDownloadModificationTime() bool {
+	return c.CheckDownloadModificationTime == nil || *c.CheckDownloadModificationTime
 }
 
 func (c Config) Endpoint() string {

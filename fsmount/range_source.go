@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"slices"
+	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/events"
@@ -33,7 +34,7 @@ func (s *remoteFsRangeSource) DownloadRange(ctx context.Context, path string, me
 			params.File.DownloadUri = node.getDownloadURI()
 		}
 
-		response, err := s.fs.backend.downloadRange(params, requested, files_sdk.WithContext(ctx), rangeVersionOption(meta))
+		response, err := s.fs.backend.downloadRange(params, requested, files_sdk.WithContext(ctx), rangeVersionOption(ctx, meta))
 		if errors.Is(err, errRangeDownloadUnsupported) {
 			response, err = s.downloadComplete(ctx, params, meta, requested)
 		}
@@ -96,9 +97,9 @@ func (s *remoteFsRangeSource) downloadComplete(ctx context.Context, params files
 	file, err := s.fs.backend.download(
 		params,
 		files_sdk.WithContext(ctx),
-		rangeVersionOption(meta),
+		rangeVersionOption(ctx, meta),
 		files_sdk.ResponseOption(func(response *http.Response) error {
-			return captureRangeResponse(&result, params.File.Size, requested, response)
+			return captureRangeResponse(&result, params.File.Size, requested, response, rangeDateEnabled(ctx))
 		}),
 	)
 	result.File = file
@@ -111,10 +112,24 @@ func (s *remoteFsRangeSource) downloadComplete(ctx context.Context, params files
 	return result, nil
 }
 
-func rangeVersionOption(meta cache.EntryMetadata) files_sdk.RequestResponseOption {
+type rangeDateKey struct{}
+
+type rangeDate struct {
+	modified time.Time
+	disabled bool
+}
+
+func rangeDateEnabled(ctx context.Context) bool {
+	date, _ := ctx.Value(rangeDateKey{}).(rangeDate)
+	return !date.disabled
+}
+
+func rangeVersionOption(ctx context.Context, meta cache.EntryMetadata) files_sdk.RequestResponseOption {
 	headers := &http.Header{}
 	if meta.ETag != "" {
 		headers.Set("If-Match", meta.ETag)
+	} else if date, ok := ctx.Value(rangeDateKey{}).(rangeDate); ok && !date.disabled && !date.modified.IsZero() {
+		headers.Set("If-Unmodified-Since", date.modified.UTC().Format(http.TimeFormat))
 	}
 	return files_sdk.RequestHeadersOption(headers)
 }
@@ -128,6 +143,7 @@ func (fs *RemoteFs) rangeDownloads() *rangeStreams {
 	if fs.ranges == nil {
 		policy := defaultStreamPolicy(fs.sparseRangeReads, cacheCapacity(fs.cacheStore))
 		fs.ranges = newRangeStreams(fs.cacheStore, &remoteFsRangeSource{fs: fs}, policy)
+		fs.ranges.skipDates = fs.skipDateChecks
 		fs.ranges.responseAccepted = func(path, uri string) {
 			if uri != "" {
 				if node, ok := fs.vfs.fetch(path); ok {

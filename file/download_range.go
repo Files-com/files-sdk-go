@@ -21,8 +21,29 @@ type downloadRepresentation struct {
 	mu           sync.Mutex
 	initializing chan struct{}
 	etag         string
+	lastModified string
 	total        int64
 	whole        bool
+}
+
+// Dates are a best-effort guard, never a substitute for the strong validator
+// required by multipart downloads and persistent resume.
+func downloadLastModified(headers http.Header) string {
+	values := headers.Values("Last-Modified")
+	if len(values) != 1 {
+		return ""
+	}
+	modified, err := http.ParseTime(values[0])
+	if err != nil {
+		return ""
+	}
+	return modified.UTC().Format(http.TimeFormat)
+}
+
+func downloadDateChanged(baseline string, headers http.Header) bool {
+	bound, boundErr := http.ParseTime(baseline)
+	modified, err := http.ParseTime(downloadLastModified(headers))
+	return boundErr == nil && err == nil && modified.After(bound)
 }
 
 func strongDownloadETag(value string) string {
@@ -38,15 +59,16 @@ func strongDownloadETag(value string) string {
 	return value
 }
 
-func (s *downloadRepresentation) begin(ctx context.Context, allowSingle bool) (leader bool, etag string, total int64, err error) {
+func (s *downloadRepresentation) begin(ctx context.Context, allowSingle bool) (leader bool, etag, lastModified string, total int64, err error) {
 	for {
 		s.mu.Lock()
 		if s.whole {
+			lastModified = s.lastModified
 			s.mu.Unlock()
 			if allowSingle {
-				return false, "", 0, nil
+				return false, "", lastModified, 0, nil
 			}
-			return false, "", 0, errDownloadWholeResponse
+			return false, "", lastModified, 0, errDownloadWholeResponse
 		}
 		if s.etag != "" {
 			etag, total = s.etag, s.total
@@ -55,22 +77,26 @@ func (s *downloadRepresentation) begin(ctx context.Context, allowSingle bool) (l
 		}
 		if s.initializing == nil {
 			s.initializing = make(chan struct{})
+			lastModified = s.lastModified
 			s.mu.Unlock()
-			return true, "", 0, nil
+			return true, "", lastModified, 0, nil
 		}
 		ready := s.initializing
 		s.mu.Unlock()
 		select {
 		case <-ready:
 		case <-ctx.Done():
-			return false, "", 0, ctx.Err()
+			return false, "", "", 0, ctx.Err()
 		}
 	}
 }
 
-func (s *downloadRepresentation) finish(etag string, total int64, err error) error {
+func (s *downloadRepresentation) finish(etag, lastModified string, total int64, err error) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.lastModified == "" && (err == nil || errors.Is(err, errDownloadWholeResponse)) {
+		s.lastModified = lastModified
+	}
 	if err == nil {
 		if etag == "" && s.etag == "" {
 			s.whole, s.total = true, total
@@ -118,6 +144,7 @@ type resumableRangeReader struct {
 	budget           *downloadReadBudget
 	next, end, total int64
 	etag             string
+	lastModified     string
 	body             io.ReadCloser
 	pending          error
 	terminal         error
@@ -144,14 +171,14 @@ func (f *File) openRange(ctx context.Context, off, end int64, attempts int, requ
 	f.fileMutex.Lock()
 	representation := f.representation
 	f.fileMutex.Unlock()
-	leader, etag, total, err := representation.begin(ctx, !requireVersion)
+	leader, etag, lastModified, total, err := representation.begin(ctx, !requireVersion)
 	if err != nil {
 		return nil, downloadV2Range{}, err
 	}
-	r := &resumableRangeReader{file: f, ctx: ctx, budget: budget, next: off, end: end, etag: etag, total: total, requireVersion: requireVersion}
+	r := &resumableRangeReader{file: f, ctx: ctx, budget: budget, next: off, end: end, etag: etag, lastModified: lastModified, total: total, requireVersion: requireVersion}
 	err = r.open()
 	if leader {
-		err = representation.finish(r.etag, r.total, err)
+		err = representation.finish(r.etag, r.lastModified, r.total, err)
 	}
 	if err != nil {
 		return nil, downloadV2Range{}, errors.Join(err, r.closeBody())
@@ -209,6 +236,8 @@ func (r *resumableRangeReader) open() error {
 		headers.Set("Range", fmt.Sprintf("bytes=%d-%d", r.next, r.end))
 		if r.etag != "" {
 			headers.Set("If-Match", r.etag)
+		} else if r.file.checkDownloadModificationTime && r.lastModified != "" {
+			headers.Set("If-Unmodified-Since", r.lastModified)
 		}
 		var maxConnections int
 		var requestID string
@@ -218,6 +247,14 @@ func (r *resumableRangeReader) open() error {
 				body := &rangeResponseBody{ReadCloser: response.Body}
 				response.Body = body
 				reject := func(cause error) error { return discardRangeResponse(response, body, cause) }
+				if r.file.checkDownloadModificationTime && r.etag == "" && (response.StatusCode == http.StatusOK || response.StatusCode == http.StatusPartialContent) {
+					if downloadDateChanged(r.lastModified, response.Header) {
+						return reject(downloadVersionChanged("download modification time changed"))
+					}
+					if r.lastModified == "" {
+						r.lastModified = downloadLastModified(response.Header)
+					}
+				}
 				if response.StatusCode == http.StatusOK {
 					if r.etag == "" {
 						return reject(errDownloadWholeResponse)

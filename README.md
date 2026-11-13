@@ -1394,6 +1394,51 @@ cannot guarantee exclusive allocation of a new remote directory. Earlier
 versions treated the pattern as a literal path and accepted existing
 directories; the method now reports that unsupported allocation contract.
 
+## Download source changes
+
+Download jobs and `file.FS` readers retain one valid HTTP `Last-Modified`
+timestamp from their first content response and send it as
+`If-Unmodified-Since` on subsequent requests
+when no stronger `If-Match` condition applies. The same timestamp remains in
+use across request retries and download URL renewal. A newer response timestamp
+or HTTP 412 reports `ErrDownloadSourceChanged` before those response bytes are
+accepted. Mounted filesystem downloads use the same date guard through their
+existing source-change handling. Missing, invalid or duplicate timestamps
+remain compatible.
+
+This guard has one-second precision. It cannot detect preserved modification
+times, changes within the same second, or changes during a response. It does
+not detect replacements whose timestamp is earlier than the baseline. An Agent
+file with a modification time in the future can fail this guard even while
+unchanged; correct its timestamp before downloading again. The guard does
+not qualify a source for parallel downloading or persistent resume: those paths
+still require a strong ETag and a known total size. Download jobs use a whole
+response for a source without that proof, retaining the date learned by an
+existing range probe.
+
+Timestamp checks are enabled by default (`nil`). Set the client option to
+`lib.Bool(false)` to disable them:
+
+```go
+config := files_sdk.Config{CheckDownloadModificationTime: lib.Bool(false)}
+client := file.Client{Config: config}
+```
+
+`DownloaderParams.CheckDownloadModificationTime` overrides the client for one
+job; `fsmount.MountParams.CheckDownloadModificationTime` overrides it for one
+mount. Both take `*bool`: nil inherits the client setting, and `lib.Bool(true)`
+enables checks explicitly. Jobs, filesystem read handles and mounts snapshot
+their setting when created. Disabling it removes automatic timestamp capture,
+`If-Unmodified-Since` and newer-date comparisons, so changes detectable only
+by modification time can go unnoticed. Strong ETag, size and HTTP error checks
+remain enabled.
+
+A source change stops the attempt and prevents publication of its temporary
+file. Download jobs retry from the beginning within their configured file retry
+budget; after that, start a new download once the source is stable. A stream
+already delivered to a caller cannot retract or silently replay its bytes;
+discard its partial output before starting again.
+
 ## Native Filesystem Adapter
 
 Use `remote.Native()` for independent `io/fs` handles and a consistent relative

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/fsmount/internal/cache"
@@ -29,12 +30,13 @@ var (
 // remoteRangeResponse describes the bytes returned for one remote range request.
 // TotalSize is -1 when the response does not supply it.
 type remoteRangeResponse struct {
-	ETag      string
-	File      files_sdk.File
-	Returned  cache.ByteRange
-	TotalSize int64
-	Partial   bool
-	Body      io.ReadCloser
+	ETag         string
+	LastModified time.Time
+	File         files_sdk.File
+	Returned     cache.ByteRange
+	TotalSize    int64
+	Partial      bool
+	Body         io.ReadCloser
 }
 
 func (b *sdkRemoteBackend) downloadRange(params files_sdk.FileDownloadParams, requested cache.ByteRange, opts ...files_sdk.RequestResponseOption) (remoteRangeResponse, error) {
@@ -45,6 +47,7 @@ func (b *sdkRemoteBackend) downloadRange(params files_sdk.FileDownloadParams, re
 		return remoteRangeResponse{}, fmt.Errorf("%w: empty requested range [%d, %d)", cache.ErrInvalidByteRange, requested.Start, requested.End)
 	}
 
+	checkModificationTime := rangeDateEnabled(files_sdk.ContextOption(opts))
 	for attempt := 0; attempt < 2; attempt++ {
 		result := remoteRangeResponse{TotalSize: -1}
 		headers := &http.Header{}
@@ -54,7 +57,7 @@ func (b *sdkRemoteBackend) downloadRange(params files_sdk.FileDownloadParams, re
 			rangeOpts,
 			files_sdk.RequestHeadersOption(headers),
 			files_sdk.ResponseOption(func(response *http.Response) error {
-				return captureRangeResponse(&result, params.File.Size, requested, response)
+				return captureRangeResponse(&result, params.File.Size, requested, response, checkModificationTime)
 			}),
 		)
 
@@ -80,8 +83,13 @@ func (b *providerRemoteBackend) downloadRange(_ files_sdk.FileDownloadParams, _ 
 	return remoteRangeResponse{}, errRangeDownloadUnsupported
 }
 
-func captureRangeResponse(result *remoteRangeResponse, knownSize int64, requested cache.ByteRange, response *http.Response) error {
+func captureRangeResponse(result *remoteRangeResponse, knownSize int64, requested cache.ByteRange, response *http.Response, checkModificationTime bool) error {
 	result.ETag = strongETag(response.Header.Get("ETag"))
+	if checkModificationTime {
+		if values := response.Header.Values("Last-Modified"); len(values) == 1 {
+			result.LastModified, _ = http.ParseTime(values[0])
+		}
+	}
 	switch response.StatusCode {
 	case http.StatusPartialContent:
 		returned, totalSize, err := parseContentRange(response.Header.Get("Content-Range"))

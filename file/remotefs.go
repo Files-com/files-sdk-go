@@ -69,8 +69,9 @@ type File struct {
 	fileMutex         *sync.Mutex
 	readDirState      *readDirState
 	SizeTrust
-	serverBytesSent int64
-	representation  *downloadRepresentation
+	serverBytesSent               int64
+	representation                *downloadRepresentation
+	checkDownloadModificationTime bool
 }
 
 type ReadDirFile struct {
@@ -96,6 +97,10 @@ func (f *File) Init() *File {
 	f.readDirState = &readDirState{}
 	f.SizeTrust = NullSizeTrust
 	f.representation = &downloadRepresentation{}
+	f.checkDownloadModificationTime = true
+	if f.FS != nil {
+		f.checkDownloadModificationTime = f.Config.ChecksDownloadModificationTime()
+	}
 	return f
 }
 
@@ -259,12 +264,23 @@ func (f *File) readCloserInitContext(ctx context.Context) (readCloser io.ReadClo
 	var size int64
 	var sizeTrust SizeTrust
 	var fileInfo files_sdk.File
+	headers := &http.Header{}
+	f.representation.mu.Lock()
+	if f.representation.etag != "" {
+		headers.Set("If-Match", f.representation.etag)
+	} else if f.checkDownloadModificationTime && f.representation.lastModified != "" {
+		headers.Set("If-Unmodified-Since", f.representation.lastModified)
+	}
+	f.representation.mu.Unlock()
 	fileInfo, err = (&Client{Config: f.Config}).Download(
 		files_sdk.FileDownloadParams{File: *f.File},
-		files_sdk.WithContext(ctx),
+		files_sdk.WithContext(ctx), files_sdk.RequestHeadersOption(headers),
 		files_sdk.ResponseOption(func(response *http.Response) error {
 			f.MaxConnections = parseMaxConnections(response)
 			f.downloadRequestId = response.Header.Get("X-Files-Download-Request-Id")
+			if response.StatusCode == http.StatusPreconditionFailed {
+				return downloadVersionChanged("download precondition failed")
+			}
 			if err := expiredurl.ResponseErrors(response, files_sdk.APIError(), lib.NotStatus(http.StatusOK)); err != nil {
 				return &goFs.PathError{Path: f.File.Path, Err: err, Op: "read"}
 			}
@@ -275,6 +291,13 @@ func (f *File) readCloserInitContext(ctx context.Context) (readCloser io.ReadClo
 			if bound != "" && (bound != etag || total != size || sizeTrust != TrustedSizeValue) {
 				f.representation.mu.Unlock()
 				return downloadVersionChanged("whole response representation changed")
+			}
+			if f.checkDownloadModificationTime && bound == "" && downloadDateChanged(f.representation.lastModified, response.Header) {
+				f.representation.mu.Unlock()
+				return downloadVersionChanged("download modification time changed")
+			}
+			if f.checkDownloadModificationTime && f.representation.lastModified == "" {
+				f.representation.lastModified = downloadLastModified(response.Header)
 			}
 			if etag != "" && sizeTrust == TrustedSizeValue {
 				f.representation.etag, f.representation.total, f.representation.whole = etag, size, false
