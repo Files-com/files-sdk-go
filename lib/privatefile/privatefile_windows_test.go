@@ -3,8 +3,10 @@
 package privatefile
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -266,12 +268,7 @@ func TestCheckContainerHonorsDenyEntriesWithoutIgnoringRemainingAccess(t *testin
 		t.Run(tc.name, func(t *testing.T) {
 			dir := t.TempDir()
 			require.NoError(t, EnsureDir(dir))
-			// Keep the allow and deny entries in their actual on-disk order.
-			sd, err := windows.SecurityDescriptorFromString(fmt.Sprintf("D:P%s(A;;FA;;;%s)(A;;FA;;;SY)(A;;FA;;;BA)", tc.entries, trust.user))
-			require.NoError(t, err)
-			acl, _, err := sd.DACL()
-			require.NoError(t, err)
-			require.NoError(t, windows.SetNamedSecurityInfo(dir, windows.SE_FILE_OBJECT, windows.DACL_SECURITY_INFORMATION|windows.PROTECTED_DACL_SECURITY_INFORMATION, nil, nil, acl, nil))
+			setPrivateDACLWith(t, trust, dir, tc.entries)
 			err = CheckContainer(dir)
 			if tc.wantErr != "" {
 				require.ErrorContains(t, err, tc.wantErr)
@@ -280,6 +277,137 @@ func TestCheckContainerHonorsDenyEntriesWithoutIgnoringRemainingAccess(t *testin
 			}
 		})
 	}
+}
+
+// setPrivateDACLWith gives path a protected DACL holding entries, an SDDL
+// fragment kept in its on-disk order, before the private entries.
+func setPrivateDACLWith(t *testing.T, trust trustedSIDs, path string, entries string) {
+	t.Helper()
+	sd, err := windows.SecurityDescriptorFromString(fmt.Sprintf("D:P%s(A;OICI;FA;;;%s)(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)", entries, trust.user))
+	require.NoError(t, err)
+	acl, _, err := sd.DACL()
+	require.NoError(t, err)
+	require.NoError(t, windows.SetNamedSecurityInfo(path, windows.SE_FILE_OBJECT, windows.DACL_SECURITY_INFORMATION|windows.PROTECTED_DACL_SECURITY_INFORMATION, nil, nil, acl, nil))
+}
+
+// OpenAI Codex grants its sandbox group read, write, execute and delete access
+// (0x1301bf, without delete-child) to its project folder and everything below
+// it. Started in the home folder, that covers the temporary folder and every
+// folder between, with the right to create folders in them. A directory held
+// open below them keeps them all in place on a local NTFS volume, so
+// MkdirTempHeld accepts the temporary folder, while CheckContainer, whose
+// caller holds nothing, still refuses it.
+func TestMkdirTempHeldDoesNotDependOnTheFoldersAboveIt(t *testing.T) {
+	trust, err := loadTrusted()
+	require.NoError(t, err)
+	home := t.TempDir()
+	require.NoError(t, EnsureDir(home))
+	setPrivateDACLWith(t, trust, home, "(A;OICI;0x1301bf;;;BU)")
+	temp := filepath.Join(home, "AppData", "Local", "Temp")
+	require.NoError(t, os.MkdirAll(temp, 0o700))
+	require.ErrorContains(t, CheckContainer(temp), "delete or rename the folder")
+
+	store, held, err := MkdirTempHeld(temp, "store-*")
+	require.NoError(t, err)
+	t.Cleanup(func() { held.Close() })
+	assert.Equal(t, temp, filepath.Dir(store))
+	requirePrivate(t, store)
+	require.Error(t, os.Rename(store, store+"-moved"), "the storage is held from the moment it exists")
+	for dir := temp; dir != home; dir = filepath.Dir(dir) {
+		require.Error(t, os.Rename(dir, dir+"-moved"), "%s stays in place while the storage is held", dir)
+	}
+}
+
+// A root accepted only while held may have been open to other accounts, so a
+// directory found in it is used only if it is already private: one that is
+// not could have been put there by another account, which might still hold it
+// open.
+func TestEnsureDirInCreatesOrAcceptsOnlyPrivateDirectories(t *testing.T) {
+	rootPath := t.TempDir()
+	root, err := os.Open(rootPath)
+	require.NoError(t, err)
+	t.Cleanup(func() { root.Close() })
+
+	require.NoError(t, EnsureDirIn(root, "data"))
+	requirePrivate(t, filepath.Join(rootPath, "data"))
+	require.NoError(t, EnsureDirIn(root, "data"), "a private directory from an earlier run is reused")
+
+	planted := filepath.Join(rootPath, "planted")
+	require.NoError(t, os.Mkdir(planted, 0o700))
+	grantEveryoneRead(t, planted)
+	require.ErrorContains(t, EnsureDirIn(root, "planted"), "not private")
+	assert.True(t, grantsEveryone(t, planted), "a refused directory is left as it was")
+
+	require.NoError(t, os.WriteFile(filepath.Join(rootPath, "file"), nil, 0o600))
+	require.Error(t, EnsureDirIn(root, "file"))
+}
+
+// A caller that holds the container itself open, as the disk cache does with
+// its root, may use a folder another account can delete or rename, below
+// folders others control, but not a folder whose entries others can remove.
+func TestCheckContainerHeldAcceptsAFolderHeldOpen(t *testing.T) {
+	trust, err := loadTrusted()
+	require.NoError(t, err)
+	private := t.TempDir()
+	require.NoError(t, EnsureDir(private))
+	held, err := CheckContainerHeld(private)
+	require.NoError(t, err)
+	assert.Nil(t, held, "a folder that passes CheckContainer needs nothing held")
+
+	home := t.TempDir()
+	require.NoError(t, EnsureDir(home))
+	setPrivateDACLWith(t, trust, home, "(A;OICI;0x1301bf;;;BU)")
+	cache := filepath.Join(home, "cache")
+	require.NoError(t, os.Mkdir(cache, 0o700))
+	require.Error(t, CheckContainer(cache))
+	held, err = CheckContainerHeld(cache)
+	require.NoError(t, err)
+	require.NotNil(t, held)
+	require.Error(t, os.Rename(cache, cache+"-moved"), "the held folder cannot be renamed")
+	require.NoError(t, held.Close())
+	require.NoError(t, os.Rename(cache, cache+"-moved"), "the folder is released once closed")
+
+	shared := filepath.Join(home, "shared")
+	require.NoError(t, Mkdir(shared))
+	setPrivateDACLWith(t, trust, shared, "(A;;0x40;;;BU)")
+	_, err = CheckContainerHeld(shared)
+	require.ErrorContains(t, err, "delete files or subfolders")
+}
+
+// A held directory keeps in place only the directories it is actually inside.
+// A folder above a junction on the way is not one of them, so delete access to
+// it is refused even for a held directory.
+func TestMkdirTempHeldRefusesDeleteAccessAboveALink(t *testing.T) {
+	trust, err := loadTrusted()
+	require.NoError(t, err)
+	base := t.TempDir()
+	require.NoError(t, EnsureDir(base))
+	outer := filepath.Join(base, "outer")
+	require.NoError(t, Mkdir(outer))
+	target := filepath.Join(base, "target")
+	require.NoError(t, Mkdir(target))
+	link := filepath.Join(outer, "link")
+	out, err := exec.Command("cmd", "/c", "mklink", "/J", link, target).CombinedOutput()
+	require.NoError(t, err, string(out))
+	setPrivateDACLWith(t, trust, outer, "(A;;0x1301bf;;;BU)")
+
+	_, _, err = MkdirTempHeld(link, "store-*")
+	require.Error(t, err)
+	// Windows itself refuses to follow a junction a standard user created
+	// (ERROR_UNTRUSTED_MOUNT_POINT), so only an administrator run reaches the
+	// folder above it.
+	const errorUntrustedMountPoint = windows.Errno(448)
+	if !errors.Is(err, errorUntrustedMountPoint) {
+		assert.ErrorContains(t, err, "delete or rename the folder")
+		assert.ErrorContains(t, err, outer)
+	}
+	entries, err := os.ReadDir(target)
+	require.NoError(t, err)
+	assert.Empty(t, entries, "nothing is created behind a refused path")
+
+	_, held, err := MkdirTempHeld(target, "store-*")
+	require.NoError(t, err, "the same folder reached directly is not affected")
+	held.Close()
 }
 
 func TestCheckContainerRejectsAnUnresolvedAccountWithActionableError(t *testing.T) {

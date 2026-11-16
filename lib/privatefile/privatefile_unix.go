@@ -100,8 +100,10 @@ func checkLinkComponent(path string) error {
 // writable by its group or by everyone unless the sticky bit limits removal to
 // each entry's owner. A group-writable directory is refused even when the
 // current user owns it: nothing here can tell whether the group holds anyone
-// else, and private storage must not depend on that.
-func checkContainerComponent(path string) error {
+// else, and private storage must not depend on that. Holding a directory open
+// does not keep anything in place here (see heldDirKeepsParents), so hold is
+// always unheld.
+func checkContainerComponent(path string, hold containerHold) error {
 	info, err := os.Lstat(path)
 	if err != nil {
 		return err
@@ -237,4 +239,61 @@ func (p publicationPlatform) applyToPublished(root *os.Root, name string, publis
 		return &fs.PathError{Op: "chmod", Path: filepath.Join(root.Name(), name), Err: errPublishedReplaced}
 	}
 	return f.Chmod(p.mode)
+}
+
+// heldDirKeepsParents reports whether a directory held open keeps the
+// directories above it in place. POSIX systems rename and remove directories
+// whatever is open inside them, so it never does.
+func heldDirKeepsParents(f *os.File) bool {
+	return false
+}
+
+// openContainer opens dir to create private directories inside it.
+func openContainer(dir string) (*os.File, error) {
+	return os.Open(dir)
+}
+
+// mkdirHeld creates name inside container, private, and returns it open.
+// CheckContainer has made sure no other user can replace an entry of
+// container, so the directory opened is the one created.
+func mkdirHeld(container *os.File, name string) (*os.File, error) {
+	path := filepath.Join(container.Name(), name)
+	if err := Mkdir(path); err != nil {
+		return nil, err
+	}
+	held, err := os.Open(path)
+	if err == nil {
+		err = checkHeldDir(path, held)
+	}
+	if err != nil {
+		if held != nil {
+			held.Close()
+		}
+		os.Remove(path)
+		return nil, err
+	}
+	return held, nil
+}
+
+// checkHeldDir checks that held is the directory at path and that this user
+// owns it.
+func checkHeldDir(path string, held *os.File) error {
+	opened, err := held.Stat()
+	if err != nil {
+		return err
+	}
+	info, err := os.Lstat(path)
+	if err != nil {
+		return err
+	}
+	if !os.SameFile(opened, info) {
+		return &fs.PathError{Op: "mkdirtemp", Path: path, Err: errors.New("directory was replaced while it was being opened")}
+	}
+	return CheckEntry(path, info)
+}
+
+// ensureDirIn is EnsureDir for name inside root. CheckContainerHeld never asks
+// a POSIX caller to hold root, so nothing here relies on the hold.
+func ensureDirIn(root *os.File, name string) error {
+	return EnsureDir(filepath.Join(root.Name(), name))
 }

@@ -30,9 +30,9 @@ import (
 // random string, like os.MkdirTemp, but the directory is private on every
 // platform, including Windows where os.MkdirTemp inherits the parent's access.
 func MkdirTemp(dir string, pattern string) (string, error) {
-	prefix, suffix, _ := strings.Cut(pattern, "*")
-	if strings.ContainsAny(prefix, `/\`) || strings.ContainsAny(suffix, `/\`) {
-		return "", &fs.PathError{Op: "mkdirtemp", Path: pattern, Err: errors.New("pattern contains path separator")}
+	prefix, suffix, err := tempPattern(pattern)
+	if err != nil {
+		return "", err
 	}
 	if dir == "" {
 		dir = os.TempDir()
@@ -47,6 +47,15 @@ func MkdirTemp(dir string, pattern string) (string, error) {
 			return "", err
 		}
 	}
+}
+
+// tempPattern splits a MkdirTemp pattern around its final "*".
+func tempPattern(pattern string) (string, string, error) {
+	prefix, suffix, _ := strings.Cut(pattern, "*")
+	if strings.ContainsAny(prefix, `/\`) || strings.ContainsAny(suffix, `/\`) {
+		return "", "", &fs.PathError{Op: "mkdirtemp", Path: pattern, Err: errors.New("pattern contains path separator")}
+	}
+	return prefix, suffix, nil
 }
 
 // Publication is the access a privately staged file receives when it is
@@ -110,6 +119,136 @@ var errPublishedReplaced = errors.New("privatefile: the published file was repla
 // A configuration that fails this check is refused with a descriptive error
 // rather than used, because there is no way to make storage inside it private.
 func CheckContainer(dir string) error {
+	return checkContainer(dir, unheld)
+}
+
+// containerHold says what a caller holds open while it uses a container, which
+// on some file systems keeps directories in place regardless of their access.
+type containerHold int
+
+const (
+	// unheld: nothing is held; every directory is checked in full.
+	unheld containerHold = iota
+	// heldBelow: a directory below the one being checked is held open.
+	heldBelow
+	// heldHere: the directory being checked is itself held open.
+	heldHere
+)
+
+// MkdirTempHeld creates a private directory inside dir like MkdirTemp, after
+// checking dir like CheckContainer, and returns it open. An empty dir means
+// the system temporary directory, as for MkdirTemp. The caller keeps the
+// returned file open for as long as it uses the directory, and closes it
+// before removing the directory.
+//
+// On Windows the directory is created and opened in one step, inside the
+// directory dir was opened as, with its private access already applied and
+// without sharing delete access, so there is no moment at which it exists
+// unprotected or could be swapped for another directory. On a local NTFS
+// volume, Windows also does not rename or move a directory while anything
+// inside it is open. So while it is held, no account can take away the
+// directory or any directory above it, whatever access it has to them, and
+// those directories are not checked: only links on the way still are, and the
+// directories above a link, which the held directory is not inside. Elsewhere,
+// and on POSIX systems, dir is checked in full, like CheckContainer.
+func MkdirTempHeld(dir string, pattern string) (string, *os.File, error) {
+	prefix, suffix, err := tempPattern(pattern)
+	if err != nil {
+		return "", nil, err
+	}
+	if dir == "" {
+		dir = os.TempDir()
+	}
+	container, err := openContainer(dir)
+	if err != nil {
+		return "", nil, err
+	}
+	defer container.Close()
+	hold := unheld
+	if heldDirKeepsParents(container) {
+		hold = heldBelow
+	}
+	if err := checkContainer(dir, hold); err != nil {
+		return "", nil, err
+	}
+	opened, err := container.Stat()
+	if err != nil {
+		return "", nil, err
+	}
+	info, err := os.Stat(dir)
+	if err != nil {
+		return "", nil, err
+	}
+	if !os.SameFile(opened, info) {
+		return "", nil, &fs.PathError{Op: "mkdirtemp", Path: dir, Err: errors.New("directory was replaced while it was being checked")}
+	}
+	for attempt := 0; ; attempt++ {
+		name := prefix + rand.Text() + suffix
+		held, err := mkdirHeld(container, name)
+		if err == nil {
+			return filepath.Join(dir, name), held, nil
+		}
+		if !errors.Is(err, fs.ErrExist) || attempt >= 100 {
+			return "", nil, err
+		}
+	}
+}
+
+// CheckContainerHeld checks dir like CheckContainer for a caller that keeps
+// dir itself open for as long as it uses it. If dir passes CheckContainer,
+// nothing needs to be held: the returned file is nil. Otherwise, on a local
+// NTFS volume, dir is opened and accepted when the directories above it are
+// left out of the check and deleting or renaming dir itself is allowed: while
+// dir is open, no account can take it or any directory above it away (see
+// MkdirTempHeld). The rights to remove entries from dir or to change its
+// security are still refused. The caller keeps the returned file open while it
+// uses dir and closes it afterwards.
+func CheckContainerHeld(dir string) (*os.File, error) {
+	unheldErr := CheckContainer(dir)
+	if unheldErr == nil {
+		return nil, nil
+	}
+	held, err := os.Open(dir)
+	if err != nil {
+		return nil, unheldErr
+	}
+	if !heldDirKeepsParents(held) {
+		held.Close()
+		return nil, unheldErr
+	}
+	if err := checkContainer(dir, heldHere); err != nil {
+		held.Close()
+		return nil, err
+	}
+	opened, err := held.Stat()
+	if err != nil {
+		held.Close()
+		return nil, err
+	}
+	info, err := os.Stat(dir)
+	if err != nil {
+		held.Close()
+		return nil, err
+	}
+	if !os.SameFile(opened, info) {
+		held.Close()
+		return nil, &fs.PathError{Op: "checkcontainer", Path: dir, Err: errors.New("directory was replaced while it was being checked")}
+	}
+	return held, nil
+}
+
+// EnsureDirIn makes name, inside the directory root that CheckContainerHeld
+// returned, a private directory, going through the open root rather than its
+// path. A missing directory is created private. An existing one must already
+// be private, owned by this user or the system, and not a link: one that is
+// not could have been put there by another account, which might still hold it
+// open, so it is refused rather than made private.
+func EnsureDirIn(root *os.File, name string) error {
+	return ensureDirIn(root, name)
+}
+
+// checkContainer is CheckContainer with what the caller holds open.
+func checkContainer(dir string, hold containerHold) error {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		return err
@@ -121,15 +260,17 @@ func CheckContainer(dir string) error {
 	if !info.IsDir() {
 		return &fs.PathError{Op: "checkcontainer", Path: dir, Err: errors.New("not a directory")}
 	}
-	return checkContainerPath(abs, 0)
+	return checkContainerPath(abs, 0, hold)
 }
 
 // maxLinkDepth bounds the chains of links CheckContainer follows.
 const maxLinkDepth = 40
 
 // checkContainerPath checks every component of path, following each link
-// component into the path it names.
-func checkContainerPath(path string, depth int) error {
+// component into the path it names. A held directory keeps in place only the
+// directories it is actually inside: the path a link names, but not the
+// directories above the link itself, so those are checked as unheld.
+func checkContainerPath(path string, depth int, hold containerHold) error {
 	if depth > maxLinkDepth {
 		return &fs.PathError{Op: "checkcontainer", Path: path, Err: errors.New("too many levels of symbolic links")}
 	}
@@ -139,8 +280,11 @@ func checkContainerPath(path string, depth int) error {
 			return err
 		}
 		if !isLink(info) {
-			if err := checkContainerComponent(component); err != nil {
+			if err := checkContainerComponent(component, hold); err != nil {
 				return err
+			}
+			if hold == heldHere {
+				hold = heldBelow
 			}
 			continue
 		}
@@ -154,9 +298,10 @@ func checkContainerPath(path string, depth int) error {
 		if !filepath.IsAbs(target) {
 			target = filepath.Join(filepath.Dir(component), target)
 		}
-		if err := checkContainerPath(target, depth+1); err != nil {
+		if err := checkContainerPath(target, depth+1, hold); err != nil {
 			return err
 		}
+		hold = unheld
 	}
 	return nil
 }

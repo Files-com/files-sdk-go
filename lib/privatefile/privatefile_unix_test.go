@@ -94,6 +94,60 @@ func TestEnsureEntryPrivateRepairsOwnedEntriesOnly(t *testing.T) {
 	assert.Equal(t, fs.FileMode(0o644), perm(t, outside))
 }
 
+func TestMkdirTempHeldReturnsTheNewPrivateDirectoryOpen(t *testing.T) {
+	root := t.TempDir()
+	withUmask(t, 0)
+	require.NoError(t, os.Chmod(root, 0o700))
+	path, held, err := MkdirTempHeld(root, "store-*")
+	require.NoError(t, err)
+	defer held.Close()
+	assert.Equal(t, root, filepath.Dir(path))
+	assert.Equal(t, fs.FileMode(0o700), perm(t, path))
+	opened, err := held.Stat()
+	require.NoError(t, err)
+	info, err := os.Lstat(path)
+	require.NoError(t, err)
+	assert.True(t, os.SameFile(opened, info), "the open directory is the one created")
+
+	open := filepath.Join(root, "open")
+	require.NoError(t, os.Mkdir(open, 0o777))
+	_, _, err = MkdirTempHeld(open, "store-*")
+	require.ErrorContains(t, err, "writable by every user", "the container is checked first")
+	entries, err := os.ReadDir(open)
+	require.NoError(t, err)
+	assert.Empty(t, entries, "nothing is created in a refused container")
+
+	// Without a directory, the system temporary directory is both checked and
+	// used, whatever the working directory is.
+	t.Chdir(root)
+	t.Setenv("TMPDIR", open)
+	_, _, err = MkdirTempHeld("", "store-*")
+	require.ErrorContains(t, err, "writable by every user")
+	entries, err = os.ReadDir(open)
+	require.NoError(t, err)
+	assert.Empty(t, entries)
+	t.Setenv("TMPDIR", root)
+	path, held, err = MkdirTempHeld("", "store-*")
+	require.NoError(t, err)
+	held.Close()
+	assert.Equal(t, root, filepath.Dir(path))
+}
+
+// Holding a directory open keeps nothing in place here, so CheckContainerHeld
+// is CheckContainer and never asks for anything to be held.
+func TestCheckContainerHeldIsCheckContainerHere(t *testing.T) {
+	root := t.TempDir()
+	withUmask(t, 0)
+	require.NoError(t, os.Chmod(root, 0o700))
+	held, err := CheckContainerHeld(root)
+	require.NoError(t, err)
+	assert.Nil(t, held)
+	open := filepath.Join(root, "open")
+	require.NoError(t, os.Mkdir(open, 0o777))
+	_, err = CheckContainerHeld(open)
+	require.ErrorContains(t, err, "writable by every user")
+}
+
 func TestCheckContainerAcceptsTrustedLocationsAndRejectsReplaceableOnes(t *testing.T) {
 	require.NoError(t, CheckContainer(os.TempDir()), "the system temporary directory is sticky and trusted")
 

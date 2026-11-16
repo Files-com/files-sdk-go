@@ -181,6 +181,10 @@ type DiskCache struct {
 	metaDir  string
 
 	lruDirty atomic.Bool
+
+	// held keeps the cache root open when its location is accepted only while
+	// it is open; see privatefile.CheckContainerHeld and Close.
+	held atomic.Pointer[os.File]
 }
 
 // NewDiskCache creates a DiskCache rooted at path and applies any options. The provided path must
@@ -200,13 +204,21 @@ type DiskCache struct {
 //   - Capacity: DefaultCapacity
 //   - MaxAge: DefaultMaxAge
 //   - MaxFileCount: DefaultMaxFileCount
-func NewDiskCache(path string, opts ...Option) (*DiskCache, error) {
+func NewDiskCache(path string, opts ...Option) (_ *DiskCache, err error) {
 	// make sure the path is writable
 	if err := validateCachePath(path); err != nil {
 		return nil, err
 	}
-	if err := privatefile.CheckContainer(path); err != nil {
+	held, err := privatefile.CheckContainerHeld(path)
+	if err != nil {
 		return nil, fmt.Errorf("diskCache: cache root path cannot hold private data: %w", err)
+	}
+	if held != nil {
+		defer func() {
+			if err != nil {
+				held.Close()
+			}
+		}()
 	}
 
 	// ensure the private data and state directories exist
@@ -222,8 +234,16 @@ func NewDiskCache(path string, opts ...Option) (*DiskCache, error) {
 		if err := checkTree(dir); err != nil {
 			return nil, fmt.Errorf("diskCache: existing cache state in %s cannot be made private: %w", path, err)
 		}
-		if err := privatefile.EnsureDir(dir); err != nil {
-			return nil, fmt.Errorf("diskCache: error creating private directory in cache root %s: %w", path, err)
+		// A root accepted only while held is reached through its handle, and
+		// an existing directory in it must already be private.
+		var ensure error
+		if held != nil {
+			ensure = privatefile.EnsureDirIn(held, filepath.Base(dir))
+		} else {
+			ensure = privatefile.EnsureDir(dir)
+		}
+		if ensure != nil {
+			return nil, fmt.Errorf("diskCache: error creating private directory in cache root %s: %w", path, ensure)
 		}
 		if err := makeTreePrivate(dir); err != nil {
 			return nil, fmt.Errorf("diskCache: error protecting existing cache state in %s: %w", path, err)
@@ -255,6 +275,7 @@ func NewDiskCache(path string, opts ...Option) (*DiskCache, error) {
 		rangeWriteLocks:     fssync.NewPathMutex(),
 		dataFiles:           make(map[string]*dataFile),
 	}
+	dc.held.Store(held)
 
 	// apply options
 	for _, opt := range opts {
@@ -830,6 +851,16 @@ func (dc *DiskCache) StopMaintenance() {
 
 	dc.persistLRUState()
 	dc.closeAllDataFiles()
+}
+
+// Close releases the cache root, which the cache keeps open when its location
+// is accepted only while it is open (see privatefile.CheckContainerHeld). The
+// cache is not used after Close.
+func (dc *DiskCache) Close() error {
+	if held := dc.held.Swap(nil); held != nil {
+		return held.Close()
+	}
+	return nil
 }
 
 // Stats returns the current cache statistics, once the startup scan has

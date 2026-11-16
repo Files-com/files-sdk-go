@@ -177,6 +177,8 @@ type cacheStore interface {
 	DeletePartial(path string) bool
 	StartMaintenance()
 	StopMaintenance()
+	// Close releases what the cache holds open. The cache is not used afterwards.
+	Close() error
 	// Pin increments the reference count for a file, preventing it from being evicted
 	Pin(path string)
 	PinPartial(path string)
@@ -418,6 +420,9 @@ func (fs *RemoteFs) Destroy() {
 
 	fs.log.Debug("RemoteFs: Destroy: stopping cache maintenance")
 	fs.cacheStore.StopMaintenance()
+	if err := fs.cacheStore.Close(); err != nil {
+		fs.log.Debug("RemoteFs: Destroy: failed to release the cache: %v", err)
+	}
 	fs.stopWebSync()
 }
 

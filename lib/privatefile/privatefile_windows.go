@@ -342,7 +342,20 @@ const containerModifyRights = fileDeleteChild | windows.DELETE | windows.WRITE_D
 
 // checkContainerComponent refuses a directory an untrusted account owns or
 // can replace entries in. Verified local administrators are trusted.
-func checkContainerComponent(path string) error {
+//
+// A directory below path that the caller holds open (heldBelow) keeps path in
+// place, so path is not examined; see heldDirKeepsParents. A directory the
+// caller holds open itself (heldHere) cannot be deleted or renamed by anyone
+// while it is open, so DELETE on it is accepted, but the rights to remove its
+// entries or change its security are still refused.
+func checkContainerComponent(path string, hold containerHold) error {
+	if hold == heldBelow {
+		return nil
+	}
+	modifyRights := uint32(containerModifyRights)
+	if hold == heldHere {
+		modifyRights &^= windows.DELETE
+	}
 	handle, err := openForSecurity(path, windows.READ_CONTROL)
 	if err != nil {
 		return &fs.PathError{Op: "checkcontainer", Path: path, Err: err}
@@ -368,7 +381,7 @@ func checkContainerComponent(path string) error {
 			continue
 		}
 		if ace.header.AceType != windows.ACCESS_ALLOWED_ACE_TYPE && ace.header.AceType != windows.ACCESS_DENIED_ACE_TYPE {
-			if uint32(ace.mask)&containerModifyRights != 0 {
+			if uint32(ace.mask)&modifyRights != 0 {
 				return t.containerError(path, fmt.Errorf("cannot verify Windows permissions: unsupported access entry type %d", ace.header.AceType))
 			}
 			continue
@@ -376,7 +389,7 @@ func checkContainerComponent(path string) error {
 		if ace.header.AceType != windows.ACCESS_ALLOWED_ACE_TYPE {
 			continue
 		}
-		if uint32(ace.mask)&containerModifyRights == 0 || t.mayModifyContainer(ace.sid) {
+		if uint32(ace.mask)&modifyRights == 0 || t.mayModifyContainer(ace.sid) {
 			continue
 		}
 		if checked[ace.sid.String()] {
@@ -389,7 +402,7 @@ func checkContainerComponent(path string) error {
 		if err != nil {
 			return t.containerError(path, fmt.Errorf("cannot verify Windows permissions for %s: %w", ace.sid, err))
 		}
-		if rights&containerModifyRights == 0 {
+		if rights&modifyRights == 0 {
 			continue
 		}
 		account, administrator, err := t.containerAccount(ace.sid)
@@ -399,9 +412,41 @@ func checkContainerComponent(path string) error {
 		if administrator {
 			continue
 		}
-		return t.containerError(path, fmt.Errorf("folder lets %s %s; private storage below it could be replaced by that account", account, containerRightsNames(rights)))
+		return t.containerError(path, fmt.Errorf("folder lets %s %s; private storage below it could be replaced by that account", account, containerRightsNames(rights&modifyRights)))
 	}
 	return nil
+}
+
+// heldDirKeepsParents reports whether f, a directory held open, keeps every
+// directory above it in place. NTFS does not rename or move a directory while
+// anything inside it is open, whatever the rights of the account trying, and
+// f holds no share-delete access, so f itself cannot be deleted or renamed
+// either. That is relied on only for local NTFS volumes, where it was
+// verified; on a network share or another file system the directories above
+// are checked as if nothing were held.
+func heldDirKeepsParents(f *os.File) bool {
+	h := windows.Handle(f.Fd())
+	path := make([]uint16, windows.MAX_PATH)
+	for {
+		// Flags 0: FILE_NAME_NORMALIZED and VOLUME_NAME_DOS.
+		n, err := windows.GetFinalPathNameByHandle(h, &path[0], uint32(len(path)), 0)
+		if err != nil {
+			return false
+		}
+		if n < uint32(len(path)) {
+			path = path[:n]
+			break
+		}
+		path = make([]uint16, n)
+	}
+	if strings.HasPrefix(windows.UTF16ToString(path), `\\?\UNC\`) {
+		return false
+	}
+	var fileSystem [windows.MAX_PATH + 1]uint16
+	if err := windows.GetVolumeInformationByHandle(h, nil, 0, nil, nil, nil, &fileSystem[0], uint32(len(fileSystem))); err != nil {
+		return false
+	}
+	return windows.UTF16ToString(fileSystem[:]) == "NTFS"
 }
 
 // containerAccount trusts individual local administrators on the same basis
@@ -583,6 +628,118 @@ func openRelative(root *os.Root, name string, access uint32, disposition uint32,
 	}
 	const fileOpened = 1 // FILE_OPENED: an existing file was opened
 	return handle, iosb.Information == fileOpened, nil
+}
+
+// openContainer opens dir, following links, to create directories inside it
+// through the handle. Other processes may still delete or rename dir: what
+// keeps it in place is a directory then created inside it and held open.
+func openContainer(dir string) (*os.File, error) {
+	name, err := windows.UTF16PtrFromString(dir)
+	if err != nil {
+		return nil, &fs.PathError{Op: "open", Path: dir, Err: err}
+	}
+	handle, err := windows.CreateFile(name, windows.FILE_GENERIC_READ, windows.FILE_SHARE_READ|windows.FILE_SHARE_WRITE|windows.FILE_SHARE_DELETE, nil, windows.OPEN_EXISTING, windows.FILE_FLAG_BACKUP_SEMANTICS, 0)
+	if err != nil {
+		return nil, &fs.PathError{Op: "open", Path: dir, Err: err}
+	}
+	return os.NewFile(uintptr(handle), dir), nil
+}
+
+// createDirIn creates or opens the directory name inside the directory open
+// as parent, through the handle rather than a path, and returns it open. A
+// directory it creates has the protected private DACL from the moment it
+// exists. The handle does not share delete access, so while it is open nobody
+// can delete or rename the directory. created reports that it did not exist.
+func createDirIn(parent *os.File, name string, disposition uint32) (handle windows.Handle, created bool, err error) {
+	path := filepath.Join(parent.Name(), name)
+	sd, err := privateSecurityDescriptor()
+	if err != nil {
+		return 0, false, &fs.PathError{Op: "mkdir", Path: path, Err: err}
+	}
+	objectName, err := windows.NewNTUnicodeString(name)
+	if err != nil {
+		return 0, false, &fs.PathError{Op: "mkdir", Path: path, Err: err}
+	}
+	oa := windows.OBJECT_ATTRIBUTES{
+		RootDirectory:      windows.Handle(parent.Fd()),
+		ObjectName:         objectName,
+		Attributes:         windows.OBJ_CASE_INSENSITIVE,
+		SecurityDescriptor: sd,
+	}
+	oa.Length = uint32(unsafe.Sizeof(oa))
+	var iosb windows.IO_STATUS_BLOCK
+	err = windows.NtCreateFile(
+		&handle,
+		windows.FILE_GENERIC_READ,
+		&oa,
+		&iosb,
+		nil,
+		0,
+		windows.FILE_SHARE_READ|windows.FILE_SHARE_WRITE,
+		disposition,
+		windows.FILE_SYNCHRONOUS_IO_NONALERT|windows.FILE_DIRECTORY_FILE|windows.FILE_OPEN_REPARSE_POINT,
+		0,
+		0,
+	)
+	if err != nil {
+		var errno error = err
+		if status, ok := err.(windows.NTStatus); ok {
+			errno = status.Errno()
+		}
+		return 0, false, &fs.PathError{Op: "mkdir", Path: path, Err: errno}
+	}
+	const fileCreated = 2 // FILE_CREATED: the directory did not exist
+	return handle, iosb.Information == fileCreated, nil
+}
+
+// mkdirHeld creates name inside container, private and held open, in one step.
+func mkdirHeld(container *os.File, name string) (*os.File, error) {
+	handle, _, err := createDirIn(container, name, windows.FILE_CREATE)
+	if err != nil {
+		return nil, err
+	}
+	return os.NewFile(uintptr(handle), filepath.Join(container.Name(), name)), nil
+}
+
+// ensureDirIn is EnsureDirIn: name is created private inside root, or opened
+// there and accepted only when it is a real directory that is already private.
+func ensureDirIn(root *os.File, name string) error {
+	handle, created, err := createDirIn(root, name, windows.FILE_OPEN_IF)
+	if err != nil {
+		return err
+	}
+	defer windows.CloseHandle(handle)
+	if created {
+		return nil
+	}
+	path := filepath.Join(root.Name(), name)
+	var info windows.ByHandleFileInformation
+	if err := windows.GetFileInformationByHandle(handle, &info); err != nil {
+		return &fs.PathError{Op: "ensuredir", Path: path, Err: err}
+	}
+	if info.FileAttributes&windows.FILE_ATTRIBUTE_REPARSE_POINT != 0 {
+		return &fs.PathError{Op: "ensuredir", Path: path, Err: errors.New("must be a directory, but it is a reparse point")}
+	}
+	sec, err := readSecurity(handle)
+	if err != nil {
+		return &fs.PathError{Op: "ensuredir", Path: path, Err: err}
+	}
+	t, err := loadTrusted()
+	if err != nil {
+		return err
+	}
+	if !t.isTrustedOwner(sec.owner) {
+		return &fs.PathError{Op: "ensuredir", Path: path, Err: fmt.Errorf("owned by %s, not by this user or the system", sec.owner)}
+	}
+	if sec.dacl == nil || !sec.protected {
+		return &fs.PathError{Op: "ensuredir", Path: path, Err: errors.New("existing directory is not private, so another account may have put it here")}
+	}
+	for _, ace := range sec.entries() {
+		if ace.header.AceType == windows.ACCESS_ALLOWED_ACE_TYPE && !t.isTrustedOwner(ace.sid) {
+			return &fs.PathError{Op: "ensuredir", Path: path, Err: fmt.Errorf("existing directory grants access to %s, so another account may have put it here", ace.sid)}
+		}
+	}
+	return nil
 }
 
 // openForSecurity opens path for reading or changing its security and reading

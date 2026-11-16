@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 	"unsafe"
@@ -166,6 +167,95 @@ func TestNewDiskCacheRefusesLegacyFileWithOutsideName(t *testing.T) {
 	if err != nil || string(data) != string(content) {
 		t.Fatalf("the caller's outside file changed: %q, %v", data, err)
 	}
+}
+
+// OpenAI Codex, started in the user's home folder, gives its sandbox group read,
+// write, execute and delete access (0x1301bf) to everything below it, the
+// cache root included. The cache then keeps its root open while it is in use,
+// so the root cannot be taken away, and it still stores its data privately.
+func TestNewDiskCacheHoldsARootOthersCanDelete(t *testing.T) {
+	root := codexHomeCacheRoot(t)
+	dc, err := disk.NewDiskCache(root, disk.WithLruFlushInterval(time.Hour))
+	if err != nil {
+		t.Fatalf("NewDiskCache refused a root others may only delete, while it holds it: %v", err)
+	}
+	const path = "/confidential/payroll.txt"
+	content := []byte("cached bytes that only the owner may read")
+	if _, err := dc.Write(path, content, 0); err != nil {
+		t.Fatal(err)
+	}
+	if err := dc.Commit(path, fscache.NewEntryMetadata(path, int64(len(content)), time.Unix(1, 0))); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(root, root+"-moved"); err == nil {
+		t.Fatal("the cache root was renamed while the cache held it")
+	}
+	if err := filepath.WalkDir(root, func(p string, _ fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if p != root && strings.Contains(sddlOf(t, p), ";BU)") {
+			t.Errorf("%s grants access to Users: %s", p, sddlOf(t, p))
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	dc.StopMaintenance()
+	if err := dc.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(root, root+"-moved"); err != nil {
+		t.Fatalf("the cache root stayed held after Close: %v", err)
+	}
+}
+
+// In a root accepted only while held, a cache folder that already exists but
+// is not private could have been put there by another account, which might
+// still hold it open, so the cache refuses it rather than making it private.
+func TestNewDiskCacheRefusesANonPrivateFolderInAHeldRoot(t *testing.T) {
+	root := codexHomeCacheRoot(t)
+	planted := filepath.Join(root, "data")
+	if err := os.Mkdir(planted, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := disk.NewDiskCache(root, disk.WithLruFlushInterval(time.Hour)); err == nil || !strings.Contains(err.Error(), "not private") {
+		t.Fatalf("NewDiskCache accepted a folder another account could have put in the cache root: %v", err)
+	}
+	if sddl := sddlOf(t, planted); !strings.Contains(sddl, ";BU)") {
+		t.Fatalf("the refused folder was changed: %s", sddl)
+	}
+	if err := os.Rename(root, root+"-moved"); err != nil {
+		t.Fatalf("the cache root stayed held after NewDiskCache failed: %v", err)
+	}
+}
+
+// codexHomeCacheRoot returns a cache root below a folder that grants Users the
+// access OpenAI Codex gives its sandbox group on a project folder started in
+// the home folder (0x1301bf, inherited): read, write, execute and delete.
+func codexHomeCacheRoot(t *testing.T) string {
+	t.Helper()
+	user, err := windows.GetCurrentProcessToken().GetTokenUser()
+	if err != nil {
+		t.Fatal(err)
+	}
+	home := t.TempDir()
+	sd, err := windows.SecurityDescriptorFromString("D:P(A;OICI;0x1301bf;;;BU)(A;OICI;FA;;;SY)(A;OICI;FA;;;BA)(A;OICI;FA;;;" + user.User.Sid.String() + ")")
+	if err != nil {
+		t.Fatal(err)
+	}
+	acl, _, err := sd.DACL()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := windows.SetNamedSecurityInfo(home, windows.SE_FILE_OBJECT, windows.DACL_SECURITY_INFORMATION|windows.PROTECTED_DACL_SECURITY_INFORMATION, nil, nil, acl, nil); err != nil {
+		t.Fatal(err)
+	}
+	root := filepath.Join(home, "Files.com", "cache")
+	if err := os.MkdirAll(root, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	return root
 }
 
 func sddlOf(t *testing.T, path string) string {

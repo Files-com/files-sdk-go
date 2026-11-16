@@ -592,6 +592,11 @@ func (mc *MemoryCache) StartMaintenance() {
 	}()
 }
 
+// Close releases nothing: a memory cache holds nothing open on disk.
+func (mc *MemoryCache) Close() error {
+	return nil
+}
+
 // StopMaintenance stops the maintenance goroutine if it is running.
 func (mc *MemoryCache) StopMaintenance() {
 	mc.maintMu.Lock()

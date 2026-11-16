@@ -423,6 +423,7 @@ func newFsWithStorage(params MountParams, storage mountStorage, logger lib.Level
 
 	remotefs, err := newRemoteFs(params, vfs, logger, cache)
 	if err != nil {
+		cache.Close()
 		return nil, fmt.Errorf("failed to create remote file system: %w", err)
 	}
 	remotefs.writeSessionDir = storage.write
@@ -448,6 +449,7 @@ func newFsWithStorage(params MountParams, storage mountStorage, logger lib.Level
 
 	ig, err := ignoreFromPatterns(params.IgnorePatterns)
 	if err != nil {
+		cache.Close()
 		return nil, err
 	}
 	fs.ignore = ig
@@ -546,6 +548,8 @@ type mountStorage struct {
 	root  string
 	local string
 	write string
+	// held keeps root open while the mount runs; see privatefile.MkdirTempHeld.
+	held *os.File
 }
 
 const (
@@ -555,19 +559,17 @@ const (
 
 // newMountStorage creates the mount's private storage inside parent, in a folder named
 // after the file system. A parent that other users could modify is refused: they could
-// replace the private directory with their own.
+// replace the private directory with their own. The storage stays open until it is removed.
 func newMountStorage(parent string, name string) (mountStorage, error) {
-	if err := privatefile.CheckContainer(parent); err != nil {
-		return mountStorage{}, fmt.Errorf("temporary file system path cannot hold the mount's private storage: %w", err)
-	}
-	root, err := privatefile.MkdirTemp(parent, name+"-*")
+	root, held, err := privatefile.MkdirTempHeld(parent, name+"-*")
 	if err != nil {
-		return mountStorage{}, fmt.Errorf("failed to create temporary local file system: %w", err)
+		return mountStorage{}, fmt.Errorf("temporary file system path cannot hold the mount's private storage: %w", err)
 	}
 	storage := mountStorage{
 		root:  root,
 		local: filepath.Join(root, mountStorageLocalDir),
 		write: filepath.Join(root, mountStorageWriteDir),
+		held:  held,
 	}
 	for _, dir := range []string{storage.local, storage.write} {
 		if err := privatefile.Mkdir(dir); err != nil {
@@ -582,6 +584,9 @@ func newMountStorage(parent string, name string) (mountStorage, error) {
 func (s mountStorage) remove() error {
 	if s.root == "" {
 		return nil
+	}
+	if s.held != nil {
+		s.held.Close()
 	}
 	return os.RemoveAll(s.root)
 }

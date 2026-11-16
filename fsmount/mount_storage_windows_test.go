@@ -3,11 +3,37 @@
 package fsmount
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
 )
+
+// While a mount runs, its open storage keeps the folders above it in place, so
+// an account that may delete or rename one of them cannot move the storage
+// away and leave its path to be recreated elsewhere.
+func TestMountStorageKeepsTheFoldersAboveItInPlace(t *testing.T) {
+	parent := filepath.Join(t.TempDir(), "Temp")
+	if err := os.Mkdir(parent, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	storage, err := newMountStorage(parent, DefaultFileSystemName)
+	if err != nil {
+		t.Fatalf("newMountStorage failed: %v", err)
+	}
+	moved := parent + "-moved"
+	if err := os.Rename(parent, moved); err == nil {
+		t.Fatalf("%s was moved while the mount's storage inside it was open", parent)
+	}
+	if err := storage.remove(); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(parent, moved); err != nil {
+		t.Fatalf("%s should move once the mount's storage is removed: %v", parent, err)
+	}
+}
 
 // requireOwnerOnlyDir asserts that dir has a protected DACL that grants access
 // only to the current user, SYSTEM and Administrators.
