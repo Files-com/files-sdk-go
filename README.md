@@ -839,6 +839,7 @@ if err != nil {
 | `bad-request/request-params-invalid` | `ErrRequestParamsInvalid` | Request Params Invalid |
 | `bad-request/request-params-required` | `ErrRequestParamsRequired` | Request Params Required |
 | `bad-request/search-all-on-child-path` | `ErrSearchAllOnChildPath` | Search All On Child Path |
+| `bad-request/search-query-too-short` | `ErrSearchQueryTooShort` | Search Query Too Short |
 | `bad-request/unrecognized-sort-index` | `ErrUnrecognizedSortIndex` | Unrecognized Sort Index |
 | `bad-request/unsupported-http-response-format` | `ErrUnsupportedHttpResponseFormat` | Unsupported Http Response Format |
 | `bad-request/unsupported-media-type` | `ErrUnsupportedMediaType` | Unsupported Media Type |
@@ -978,6 +979,7 @@ if err != nil {
 | `processing-failure/remote-server-error` | `ErrRemoteServerError` | Remote Server Error |
 | `processing-failure/resource-belongs-to-parent-site` | `ErrResourceBelongsToParentSite` | Resource Belongs To Parent Site |
 | `processing-failure/resource-locked` | `ErrResourceLocked` | Resource Locked |
+| `processing-failure/search-timed-out` | `ErrSearchTimedOut` | Search Timed Out |
 | `processing-failure/subfolder-locked` | `ErrSubfolderLocked` | Subfolder Locked |
 | `processing-failure/sync-in-progress` | `ErrSyncInProgress` | Sync In Progress |
 | `processing-failure/two-factor-authentication-code-already-sent` | `ErrTwoFactorAuthenticationCodeAlreadySent` | Two Factor Authentication Code Already Sent |

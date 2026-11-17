@@ -105,7 +105,7 @@ type FolderListForParams struct {
 	Search string `url:"search,omitempty" json:"search,omitempty" path:"search"`
 	// If provided, the search string in `search` will search for files where this custom metadata key matches the value sent in `search`. Set this to `*` to allow any metadata key to match the value sent in `search`.
 	SearchCustomMetadataKey string `url:"search_custom_metadata_key,omitempty" json:"search_custom_metadata_key,omitempty" path:"search_custom_metadata_key"`
-	// Search entire site? If true, we will search the entire site. Do not provide a path when using this parameter. This is the same API used by the search bar in the web UI when running 'Search All Files'. Search results are a best effort, not real time, and not guaranteed to match every file. This field should only be used for ad-hoc (human) searching, and not as part of an automated process.
+	// Search entire site? If true, we will search the entire site. Do not provide a path when using this parameter. The search term must contain at least 3 characters after replacing `*` with spaces and trimming leading and trailing whitespace. This is the same API used by the search bar in the web UI when running 'Search All Files'. Search results are a best effort, not real time, and not guaranteed to match every file. This field should only be used for ad-hoc (human) searching, and not as part of an automated process.
 	SearchAll *bool `url:"search_all,omitempty" json:"search_all,omitempty" path:"search_all"`
 	// Include file previews?
 	WithPreviews *bool `url:"with_previews,omitempty" json:"with_previews,omitempty" path:"with_previews"`
