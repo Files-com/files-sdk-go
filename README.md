@@ -840,7 +840,6 @@ if err != nil {
 | `bad-request/request-params-required` | `ErrRequestParamsRequired` | Request Params Required |
 | `bad-request/search-all-on-child-path` | `ErrSearchAllOnChildPath` | Search All On Child Path |
 | `bad-request/unrecognized-sort-index` | `ErrUnrecognizedSortIndex` | Unrecognized Sort Index |
-| `bad-request/unsupported-currency` | `ErrUnsupportedCurrency` | Unsupported Currency |
 | `bad-request/unsupported-http-response-format` | `ErrUnsupportedHttpResponseFormat` | Unsupported Http Response Format |
 | `bad-request/unsupported-media-type` | `ErrUnsupportedMediaType` | Unsupported Media Type |
 | `bad-request/user-id-invalid` | `ErrUserIdInvalid` | User Id Invalid |

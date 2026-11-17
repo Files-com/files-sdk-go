@@ -94,7 +94,6 @@ const (
 	ErrRequestParamsRequired                                                  ResponseErrorType = "bad-request/request-params-required"
 	ErrSearchAllOnChildPath                                                   ResponseErrorType = "bad-request/search-all-on-child-path"
 	ErrUnrecognizedSortIndex                                                  ResponseErrorType = "bad-request/unrecognized-sort-index"
-	ErrUnsupportedCurrency                                                    ResponseErrorType = "bad-request/unsupported-currency"
 	ErrUnsupportedHttpResponseFormat                                          ResponseErrorType = "bad-request/unsupported-http-response-format"
 	ErrUnsupportedMediaType                                                   ResponseErrorType = "bad-request/unsupported-media-type"
 	ErrUserIdInvalid                                                          ResponseErrorType = "bad-request/user-id-invalid"
