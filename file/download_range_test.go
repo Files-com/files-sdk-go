@@ -5,10 +5,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -667,9 +669,82 @@ func TestDownloadNeverSendsAnUnchangedExpiredRenewal(t *testing.T) {
 	})})
 	_, err := (&Client{Config: config}).Download(files_sdk.FileDownloadParams{File: files_sdk.File{Path: "file", DownloadUri: uri}}, files_sdk.ResponseBodyOption(func(io.ReadCloser) error { callbacks++; return nil }))
 	require.ErrorIs(t, err, errDownloadURLExpired)
-	require.Equal(t, 1, metadata)
+	// One refresh of the stale stored URL, then the read's one renewal.
+	require.Equal(t, 2, metadata)
 	require.Zero(t, transfers)
 	require.Zero(t, callbacks)
+}
+
+// A stored URL that already expired is replaced without using up the read's renewal. A retry refused because its URL
+// expired while the request was retried gets a new URL within a range read's attempt limit; a whole-file read gets one,
+// and then fails with the error that made it retry.
+func TestDownloadReplacesURLsThatExpireWhileRetrying(t *testing.T) {
+	content := "body"
+	for _, tc := range []struct {
+		operation string
+		stalls    int
+		fails     bool
+	}{
+		{"read", 1, false},
+		{"range", 1, false},
+		{"range", 2, false},
+		{"read", 2, true},
+	} {
+		t.Run(fmt.Sprintf("%v/%v stalls", tc.operation, tc.stalls), func(t *testing.T) {
+			var metadata, transfers int
+			config := files_sdk.Config{EndpointOverride: "https://api.test", DisableDirectTransfers: true}.Init().SetCustomClient(&http.Client{Transport: ownedHTTPResponseTransport(func(req *http.Request) (*http.Response, error) {
+				if req.URL.Host == "api.test" {
+					metadata++
+					// URLs that a request stalls on expire quickly; the last one does not.
+					lifetime := time.Minute
+					if metadata <= tc.stalls {
+						lifetime = 200 * time.Millisecond
+					}
+					uri := "https://download.test/file?se=" + url.QueryEscape(time.Now().Add(lifetime).UTC().Format(time.RFC3339Nano))
+					payload, _ := json.Marshal(map[string]any{"path": "file", "download_uri": uri})
+					return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": []string{"application/json"}}, Body: io.NopCloser(bytes.NewReader(payload)), ContentLength: int64(len(payload)), Request: req}, nil
+				}
+				transfers++
+				if transfers <= tc.stalls {
+					expires, err := time.Parse(time.RFC3339Nano, req.URL.Query().Get("se"))
+					require.NoError(t, err)
+					time.Sleep(time.Until(expires) + 50*time.Millisecond)
+					return nil, errors.New("connection reset")
+				}
+				header := http.Header{}
+				code := http.StatusOK
+				if tc.operation == "range" {
+					code = http.StatusPartialContent
+					header.Set("Content-Range", fmt.Sprintf("bytes 0-%d/%d", len(content)-1, len(content)))
+					header.Set("ETag", `"v1"`)
+				}
+				return &http.Response{StatusCode: code, Header: header, Body: io.NopCloser(strings.NewReader(content)), ContentLength: int64(len(content)), Request: req}, nil
+			})})
+			stale := "https://download.test/file?se=" + url.QueryEscape(time.Now().Add(-time.Hour).UTC().Format(time.RFC3339Nano))
+			file := (&File{File: &files_sdk.File{Path: "file", DownloadUri: stale}, FS: (&FS{Context: context.Background()}).Init(config, false)}).Init()
+			var got []byte
+			var err error
+			if tc.operation == "range" {
+				var reader io.ReadCloser
+				if reader, err = file.ReaderRange(0, int64(len(content))-1); err == nil {
+					got, err = io.ReadAll(reader)
+					require.NoError(t, reader.Close())
+				}
+			} else {
+				got, err = io.ReadAll(file)
+			}
+			if tc.fails {
+				require.ErrorIs(t, err, errDownloadURLExpired)
+				require.ErrorContains(t, err, "connection reset")
+				require.NotContains(t, err.Error(), "download.test")
+				require.Equal(t, []int{tc.stalls, tc.stalls}, []int{metadata, transfers})
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, content, string(got))
+			require.Equal(t, []int{tc.stalls + 1, tc.stalls + 1}, []int{metadata, transfers})
+		})
+	}
 }
 
 func TestOldCompleteHTTPCheckpointRestartsFromZero(t *testing.T) {

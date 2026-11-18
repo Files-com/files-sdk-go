@@ -151,10 +151,6 @@ func (c *Client) DownloadUri(params files_sdk.FileDownloadParams, opts ...files_
 		// url is nil when DownloadUri does not parse; Download then returns that parse error from building its request.
 		if parseErr == nil {
 			if remaining, valid := url.Valid(time.Millisecond * 250); !valid {
-				_, budget := withDownloadBudget(files_sdk.ContextOption(opts))
-				if !budget.renew() {
-					return params.File, errDownloadURLExpired
-				}
 				err = files_sdk.Resource(c.Config, lib.Resource{Method: "GET", Path: "/files/{path}", Params: params, Entity: &params.File}, opts...)
 				if params.File.DownloadUri == url.URL.String() {
 					c.LogPath(params.Path, map[string]interface{}{"message": "URL was expired. Fetched a new URL but it didn't change", "Remaining": remaining, "Time": url.Time})
@@ -180,7 +176,17 @@ func (c *Client) Download(params files_sdk.FileDownloadParams, opts ...files_sdk
 		}
 		state := &downloadRequestState{}
 		file, err := c.downloadOnce(params, state, options...)
-		if state.hasStartedResponse() || errors.Is(err, files_sdk.ErrDirectTransferResponseStarted) || !errors.Is(err, errDownloadURLExpired) || !budget.renew() {
+		if state.hasStartedResponse() || errors.Is(err, files_sdk.ErrDirectTransferResponseStarted) || !errors.Is(err, errDownloadURLExpired) {
+			return file, err
+		}
+		// A retry refused because its URL expired was never sent. Where the read
+		// has an attempt limit, that limit bounds getting another URL, and the
+		// read keeps its renewal.
+		if state.wasExpired() && budget.attemptLimited() {
+			if !budget.canAttempt() {
+				return file, err
+			}
+		} else if !budget.renew() {
 			return file, err
 		}
 		params.File = file
@@ -237,7 +243,7 @@ func (c *Client) downloadOnce(params files_sdk.FileDownloadParams, requestState 
 			return params.File, errDownloadFrontend
 		}
 		if requestState.wasExpired() {
-			return params.File, errors.Join(errDownloadURLExpired, err)
+			return params.File, requestState.expiredError(err)
 		}
 		// Bytes already reached the response options, so the request must not
 		// be sent again, whatever else the error wraps.
@@ -254,7 +260,7 @@ func (c *Client) downloadOnce(params files_sdk.FileDownloadParams, requestState 
 		return params.File, errDownloadFrontend
 	}
 	if requestState.wasExpired() {
-		err = errors.Join(errDownloadURLExpired, err)
+		err = requestState.expiredError(err)
 	}
 
 	return params.File, err

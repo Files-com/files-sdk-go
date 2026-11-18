@@ -3,7 +3,9 @@ package file
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -27,8 +29,11 @@ func downloadResponseGuard(response *http.Response) error {
 	return nil
 }
 
-// A logical read shares one renewal across initial expiry, HTTP retries and
-// partial-body continuation. Initial acquisition of a missing URL is not renewal.
+// A logical read gets one renewal: a new URL after storage refused one as
+// expired, or after one expired before it could be sent. Getting a URL the read
+// has not sent yet, because it is missing or about to expire, is not renewal.
+// A read with an attempt limit also gets a new URL each time a retry is refused
+// because its URL expired while the request was retried, until that limit.
 type downloadReadBudget struct {
 	mu        sync.Mutex
 	renewed   bool
@@ -55,6 +60,12 @@ func (b *downloadReadBudget) canAttempt() bool {
 	return !b.limited || b.remaining > 0
 }
 
+func (b *downloadReadBudget) attemptLimited() bool {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.limited
+}
+
 func (b *downloadReadBudget) attemptsRemaining() int {
 	b.mu.Lock()
 	defer b.mu.Unlock()
@@ -78,6 +89,9 @@ type downloadRequestState struct {
 	expired         bool
 	frontend        bool
 	responseStarted bool
+	// Why the last retried attempt failed, so a retry refused because its URL
+	// expired still reports what went wrong first.
+	retryCause error
 }
 
 func withDownloadBudget(ctx context.Context) (context.Context, *downloadReadBudget) {
@@ -142,6 +156,9 @@ func downloadTransferConfig(config files_sdk.Config, state *downloadRequestState
 		Backoff: base.Backoff, ErrorHandler: base.ErrorHandler, PrepareRetry: base.PrepareRetry,
 		CheckRetry: func(ctx context.Context, response *http.Response, err error) (bool, error) {
 			retry, policyErr := check(ctx, response, err)
+			if retry {
+				state.recordRetryCause(response, err)
+			}
 			if state.wasFrontend() {
 				return false, errDownloadFrontend
 			}
@@ -176,6 +193,35 @@ func (s *downloadRequestState) wasExpired() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.expired
+}
+
+func (s *downloadRequestState) recordRetryCause(response *http.Response, err error) {
+	if errors.Is(err, errDownloadURLExpired) {
+		return
+	}
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) {
+		// The URL is signed: keep it out of the error.
+		err = &url.Error{Op: urlErr.Op, URL: "[redacted]", Err: urlErr.Err}
+	}
+	if err == nil && response != nil {
+		err = fmt.Errorf("download response status %v", response.Status)
+	}
+	s.mu.Lock()
+	s.retryCause = err
+	s.mu.Unlock()
+}
+
+// expiredError reports a URL that expired before it could be sent, with the
+// failure of the retried attempt that let it expire when there was one.
+func (s *downloadRequestState) expiredError(err error) error {
+	s.mu.Lock()
+	cause := s.retryCause
+	s.mu.Unlock()
+	if cause != nil {
+		return errors.Join(errDownloadURLExpired, cause)
+	}
+	return errors.Join(errDownloadURLExpired, err)
 }
 
 func (s *downloadRequestState) wasFrontend() bool {
