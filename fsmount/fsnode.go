@@ -224,7 +224,10 @@ func (n *fsNode) updateChildPaths(buildChildPaths func(string) (map[string]struc
 
 	n.childPaths = childPaths
 	n.childPathsExpires = time.Now().Add(n.cacheTTL)
+	// infoExpires belongs to statusMu, like the other node info.
+	n.statusMu.Lock()
 	n.extendTtl()
+	n.statusMu.Unlock()
 	return err
 }
 
@@ -275,6 +278,13 @@ func (n *fsNode) isUnmaterialized() bool {
 	n.statusMu.Lock()
 	defer n.statusMu.Unlock()
 	return n.unmaterialized
+}
+
+// expireChildPaths makes the next listing of the folder ask the storage.
+func (n *fsNode) expireChildPaths() {
+	n.childPathsMutex.Lock()
+	defer n.childPathsMutex.Unlock()
+	n.childPathsExpires = timeZero
 }
 
 func (n *fsNode) childPathsExpired() bool {

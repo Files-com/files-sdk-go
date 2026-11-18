@@ -114,6 +114,8 @@ type RemoteFs struct {
 	initTime time.Time
 
 	cacheStore cacheStore
+	// offline keeps files and folders for offline use. It needs the disk cache.
+	offline *offlineKeeper
 
 	sparseRangeReads bool
 	skipDateChecks   bool
@@ -185,6 +187,15 @@ type cacheStore interface {
 	// Unpin decrements the reference count for a file
 	Unpin(path string)
 	UnpinPartial(path string)
+	// SetKept keeps the entries of paths for offline use, or stops keeping
+	// them. Kept entries are never removed to meet the cache's limits.
+	SetKept(paths []string, kept bool) error
+	IsKept(path string) bool
+	// DeleteWhenClosed marks the entry of path to be deleted when its last
+	// handle closes, if it is open, and reports whether it was.
+	DeleteWhenClosed(path string) bool
+	// OfflineDir is where the mount saves what kept folders need offline.
+	OfflineDir() (string, error)
 }
 
 // cacheReader wraps the cacheStore to provide an io.Reader interface for reading cached files.
@@ -356,6 +367,12 @@ func newRemoteFs(params MountParams, vfs *virtualfs, log log.Logger, cs cacheSto
 	if fs.events == nil {
 		fs.events = &events.NoOpEventPublisher{}
 	}
+	// Keeping files offline needs the disk cache, which the memory cache isn't.
+	if keeper, err := newOfflineKeeper(fs); err == nil {
+		fs.offline = keeper
+	} else {
+		fs.log.Debug("RemoteFs: files can't be kept offline: %v", err)
+	}
 	return fs, nil
 }
 
@@ -397,6 +414,9 @@ func (fs *RemoteFs) Init() {
 	// start the disk cache maintenance goroutine
 	// this does not block and ensures only one goroutine is started
 	fs.cacheStore.StartMaintenance()
+	if fs.offline != nil {
+		fs.offline.start()
+	}
 
 	// start the web sync watcher on Windows, which periodically checks for changes made via the web interface
 	// and notifies the OS to refresh the directory view
@@ -418,6 +438,9 @@ func (fs *RemoteFs) Destroy() {
 		fs.unlock(path, lockInfo.Fh)
 	}
 
+	if fs.offline != nil {
+		fs.offline.close()
+	}
 	fs.log.Debug("RemoteFs: Destroy: stopping cache maintenance")
 	fs.cacheStore.StopMaintenance()
 	if err := fs.cacheStore.Close(); err != nil {
@@ -428,6 +451,15 @@ func (fs *RemoteFs) Destroy() {
 
 func (fs *RemoteFs) Validate() error {
 	fs.Init()
+	// A mount that keeps files offline starts without the storage, showing what
+	// it saved, and doesn't wait long for storage that can't be reached.
+	ctx := context.Background()
+	k := fs.offline
+	if k != nil && k.active() {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, offlineRemoteTimeout)
+		defer cancel()
+	}
 	// Make sure the root directory can be listed.
 	// no need to guard this with an operation limit since it's only called once during initialization
 	it, err := fs.backend.listFor(files_sdk.FolderListForParams{
@@ -435,10 +467,15 @@ func (fs *RemoteFs) Validate() error {
 		ListParams: files_sdk.ListParams{
 			PerPage: 1,
 		},
-	})
+	}, files_sdk.WithContext(ctx))
 	if err == nil {
 		it.Next() // Get 1 item. This is what actually triggers the API call.
 		err = it.Err()
+	}
+	if err != nil && k != nil && k.active() && offlineFallbackAllowed(err) && k.hasSavedListing("/") {
+		k.markUnreachable()
+		fs.log.Info("offline: mounting without the storage: %v", err)
+		return nil
 	}
 	return err
 }
@@ -2268,6 +2305,9 @@ func (fs *RemoteFs) rename(oldpath, newpath string) {
 	// 1) Update the in-memory node map (and parent childPaths) first.
 	//    vfs.rename should handle moving the node and fixing parent listings.
 	node := fs.vfs.rename(oldpath, newpath)
+	if fs.offline != nil {
+		fs.offline.renamed(oldpath, newpath)
+	}
 
 	// 2) Move any lock entry old -> new.
 	fs.lockMapMutex.Lock()
@@ -2657,6 +2697,9 @@ func (fs *RemoteFs) handleDeleteResult(path string, err error) (errc int) {
 }
 
 func (fs *RemoteFs) finalizeDelete(path string) {
+	if fs.offline != nil {
+		fs.offline.deleted(path)
+	}
 	unlockRangeMutation := fs.lockRangeMutation(path)
 	defer unlockRangeMutation()
 	fs.cancelRangeDownloads(path)
@@ -2726,10 +2769,19 @@ func (fs *RemoteFs) findDir(path string) (node *fsNode, errc int) {
 		return node, errc
 	}
 
+	findCtx := context.Background()
+	if k := fs.offline; k != nil && k.active() {
+		if saved, ok := k.savedFolder(path); ok && k.unreachable() {
+			return fs.createNode(path, saved), 0
+		}
+		var cancel context.CancelFunc
+		findCtx, cancel = k.remoteContext(path)
+		defer cancel()
+	}
 	var item files_sdk.File
 	var err error
 	err = fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
-		item, err = fs.backend.find(files_sdk.FileFindParams{Path: remotePath})
+		item, err = fs.backend.find(files_sdk.FileFindParams{Path: remotePath}, files_sdk.WithContext(findCtx))
 		return err
 	})
 	if errors.Is(err, lim.ErrNoSlotsAvailable) {
@@ -2741,6 +2793,15 @@ func (fs *RemoteFs) findDir(path string) (node *fsNode, errc int) {
 		errc = -fuse.ENOENT
 		return node, errc
 	}
+	if k := fs.offline; k != nil && k.active() && offlineFallbackAllowed(err) {
+		k.markUnreachable()
+		// A folder known from a saved listing shows while the storage can't be reached.
+		if saved, ok := k.savedFolder(path); ok {
+			return fs.createNode(path, saved), 0
+		}
+	}
+	// A found folder doesn't mark the storage as reachable: provider backends
+	// answer for their root without asking the storage. Listings do.
 	if errc = fs.handleError(path, err); errc != 0 {
 		return nil, errc
 	}
@@ -2780,7 +2841,7 @@ func (fs *RemoteFs) loadDir(node *fsNode) (errc int) {
 	if node.infoExpired() {
 		refreshed = true
 		fs.log.Debug("RemoteFs: loadDir: Refreshing directory listing: %v", node.path)
-		err := node.updateChildPaths(fs.listDir)
+		err := node.updateChildPaths(fs.listDirOrSaved)
 		if errors.Is(err, lim.ErrNoSlotsAvailable) {
 			return -fuse.EAGAIN
 		}
@@ -2794,11 +2855,17 @@ func (fs *RemoteFs) loadDir(node *fsNode) (errc int) {
 }
 
 func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, opErr error) {
+	return fs.listDirContext(context.Background(), path)
+}
+
+// listDirContext lists a folder from the storage, giving up when ctx ends.
+func (fs *RemoteFs) listDirContext(listCtx context.Context, path string) (childPaths map[string]struct{}, opErr error) {
 	fs.log.Trace("RemoteFs: listDir: Listing directory: %v", path)
 	previous := fs.vfs.childNodes(path)
 
+	var items []files_sdk.File
 	opErr = fs.ops.TryWithLimit(context.Background(), lim.FuseOpOther, func(ctx context.Context) error {
-		it, err := fs.backend.listFor(files_sdk.FolderListForParams{Path: fs.remotePath(path)})
+		it, err := fs.backend.listFor(files_sdk.FolderListForParams{Path: fs.remotePath(path)}, files_sdk.WithContext(listCtx))
 		if err != nil {
 			return err
 		}
@@ -2806,7 +2873,11 @@ func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, opErr 
 		childPaths = make(map[string]struct{})
 
 		for it.Next() {
+			if len(items) == 0 {
+				storageAnswered(listCtx)
+			}
 			item := it.File()
+			items = append(items, item)
 
 			childPath := path_lib.Join(path, item.DisplayName)
 			childPaths[childPath] = struct{}{}
@@ -2825,7 +2896,7 @@ func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, opErr 
 		locks, err := fs.backend.listLocksFor(files_sdk.LockListForParams{
 			Path:            fs.remotePath(path),
 			IncludeChildren: lib.Ptr(true),
-		})
+		}, files_sdk.WithContext(listCtx))
 
 		if err != nil {
 			return err
@@ -2857,6 +2928,9 @@ func (fs *RemoteFs) listDir(path string) (childPaths map[string]struct{}, opErr 
 		for _, removedPath := range fs.vfs.removeMissingChildren(previous, childPaths) {
 			fs.cancelRangeDownloads(removedPath)
 			_ = fs.cacheStore.Delete(removedPath)
+		}
+		if fs.offline != nil {
+			fs.offline.listed(path, items)
 		}
 	}
 
@@ -2932,7 +3006,11 @@ func (fs *RemoteFs) createNode(path string, item files_sdk.File) *fsNode {
 	var existingCreationTime time.Time
 	// best-effort invalidate stale data
 	if prev, ok := fs.vfs.fetch(path); ok && prev.info.nodeType == nodeTypeFile {
-		if prev.info.size != item.Size || !prev.info.modTime.Equal(item.ModTime()) {
+		// A file kept offline keeps its last version until the new one is
+		// downloaded, so it still opens if the storage goes away first. The
+		// cache answers reads by version, so the old data never passes for
+		// the new.
+		if (prev.info.size != item.Size || !prev.info.modTime.Equal(item.ModTime())) && !fs.cacheStore.IsKept(path) {
 			unlockRangeMutation := fs.lockRangeMutation(path)
 			defer unlockRangeMutation()
 			fs.cancelRangeDownloads(path)

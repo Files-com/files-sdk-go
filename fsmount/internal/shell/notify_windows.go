@@ -12,6 +12,9 @@ import (
 const (
 	// SHCNE_UPDATEDIR notifies the shell that a directory has changed.
 	SHCNE_UPDATEDIR = 0x00001000
+	// SHCNE_UPDATEITEM notifies the shell that an item's attributes changed,
+	// so Explorer asks again for its overlay icon.
+	SHCNE_UPDATEITEM = 0x00002000
 	// SHCNF_PATHW indicates a Unicode path parameter.
 	SHCNF_PATHW = 0x00000005
 )
@@ -86,4 +89,27 @@ func NotifyUpdatedDir(path string) error {
 		return err
 	}
 	return notifier.notifyUpdatedDir(path)
+}
+
+// NotifyUpdatedItem tells Windows Explorer that a file or folder changed, so it
+// redraws the item and asks again for its overlay icon.
+func NotifyUpdatedItem(path string) error {
+	notifier, err := getDefaultNotifier()
+	if err != nil {
+		return err
+	}
+	if path == "" {
+		return nil
+	}
+	p, err := syscall.UTF16PtrFromString(path)
+	if err != nil {
+		return fmt.Errorf("failed to convert path to UTF16: %w", err)
+	}
+	notifier.proc.Call(
+		uintptr(SHCNE_UPDATEITEM),
+		uintptr(SHCNF_PATHW),
+		uintptr(unsafe.Pointer(p)),
+		uintptr(0),
+	)
+	return nil
 }

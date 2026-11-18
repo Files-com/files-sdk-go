@@ -168,6 +168,15 @@ type DiskCache struct {
 	pinnedFiles   map[string]int
 	pinnedFilesMu sync.Mutex
 	clearPending  map[string]struct{}
+	// deleteOnClose holds entries that stopped being kept while open. They are
+	// deleted when their last handle closes, with whatever was written to them
+	// in the meantime.
+	deleteOnClose map[string]struct{}
+
+	// kept holds the entries kept for offline use. They live outside the LRU,
+	// so the size, age and file count limits never remove them.
+	kept   map[string]struct{}
+	keptMu sync.Mutex
 
 	maintenanceRunMu sync.Mutex
 	maintMu          sync.Mutex
@@ -270,6 +279,7 @@ func NewDiskCache(path string, opts ...Option) (_ *DiskCache, err error) {
 		lru:                 nil,
 		pinnedFiles:         make(map[string]int),
 		clearPending:        make(map[string]struct{}),
+		deleteOnClose:       make(map[string]struct{}),
 		accountedBytes:      make(map[string]int64),
 		rangeWrites:         make(map[string]*rangeWriteState),
 		rangeWriteLocks:     fssync.NewPathMutex(),
@@ -308,6 +318,10 @@ func NewDiskCache(path string, opts ...Option) (_ *DiskCache, err error) {
 			return nil, fmt.Errorf("diskCache: error creating LRU cache: %w", err)
 		}
 		dc.lru = lru
+	}
+
+	if err := dc.loadKept(); err != nil {
+		return nil, err
 	}
 
 	// restore LRU state from disk if present
@@ -396,7 +410,7 @@ func (dc *DiskCache) read(path string, buff []byte, ofst int64) (n int, err erro
 
 	// the file exists, but may not have been in the LRU, calling Add will ensure it is in the LRU
 	// and is safe to call if the key was already present
-	dc.lru.Add(fqPath, struct{}{})
+	dc.lruAdd(fqPath)
 	dc.lruDirty.Store(true)
 
 	return n, nil
@@ -520,7 +534,7 @@ func (dc *DiskCache) Write(path string, buff []byte, ofst int64) (n int, err err
 
 	// the file exists, but may not have been in the LRU, calling Add will ensure it is in the LRU
 	// and is safe to call if the key was already present
-	dc.lru.Add(fqPath, struct{}{})
+	dc.lruAdd(fqPath)
 	dc.lruDirty.Store(true)
 
 	return n, nil
@@ -689,6 +703,11 @@ func (dc *DiskCache) Invalidate() (*InvalidatedEntries, error) {
 	clear(dc.rangeWrites)
 	dc.rangeWritesMu.Unlock()
 	oldMetaDir, err := dc.rotateMetadataDirectoryLocked()
+	if err == nil && oldMetaDir != "" {
+		// Kept entries stay through a clear, so their metadata moves to the new
+		// directory.
+		dc.restoreKeptMetadataLocked(oldMetaDir)
+	}
 	dc.writeMu.Unlock()
 	// Closing waits for the files' current users, so it runs without writeMu.
 	dc.closeAllDataFiles()
@@ -733,6 +752,9 @@ func (invalidated *InvalidatedEntries) Remove() error {
 	}
 
 	for _, path := range paths {
+		if dc.isKept(path) {
+			continue
+		}
 		dc.writeMu.Lock()
 		if dc.writtenSinceInvalidationLocked(path) {
 			dc.writeMu.Unlock()
@@ -934,12 +956,13 @@ func (dc *DiskCache) Unpin(path string) {
 		dc.log.Trace("DiskCache: unpinned %s (fqPath: %s, count: %d)", path, fqPath, dc.pinnedFiles[fqPath])
 	}
 	_, clearPending := dc.clearPending[fqPath]
+	_, deleteOnClose := dc.deleteOnClose[fqPath]
 
 	dc.pinnedFilesMu.Unlock()
 	if !fullyUnpinned {
 		return
 	}
-	if !clearPending && dc.Capacity == 0 && dc.MaxFileCount == 0 {
+	if !clearPending && !deleteOnClose && dc.Capacity == 0 && dc.MaxFileCount == 0 {
 		return
 	}
 
@@ -954,12 +977,12 @@ func (dc *DiskCache) Unpin(path string) {
 		return
 	}
 	_, clearPending = dc.clearPending[fqPath]
-	if clearPending {
-		delete(dc.clearPending, fqPath)
-	}
+	_, deleteOnClose = dc.deleteOnClose[fqPath]
+	delete(dc.clearPending, fqPath)
+	delete(dc.deleteOnClose, fqPath)
 	dc.pinnedFilesMu.Unlock()
 
-	if clearPending {
+	if clearPending || deleteOnClose {
 		_ = dc.deleteMetadataForEntryPath(fqPath)
 		if err := dc.deleteFile(fqPath); err != nil {
 			dc.log.Trace("DiskCache: error deleting cleared cache file %s: %v", fqPath, err)
@@ -1022,6 +1045,10 @@ func (dc *DiskCache) isPinned(key string) bool {
 // onEvict is called when a key is evicted from the LRU. This includes when the key is removed
 // explicitly via Remove or RemoveOldest.
 func (dc *DiskCache) onEvict(path string, value struct{}) {
+	// Kept entries leave the LRU when they are kept, and stay on disk.
+	if dc.isKept(path) {
+		return
+	}
 	// NEVER evict pinned files (files with open handles)
 	if dc.isPinned(path) {
 		dc.log.Trace("DiskCache: skipping eviction of pinned file: %s", path)
@@ -1433,7 +1460,7 @@ func (dc *DiskCache) loadLRUState() error {
 	}
 	// add keys in order to LRU
 	for _, k := range state.Keys {
-		dc.lru.Add(k, struct{}{})
+		dc.lruAdd(k)
 		dc.lruDirty.Store(true)
 	}
 
@@ -1578,7 +1605,7 @@ func (dc *DiskCache) runMaintenanceOnce(ctx context.Context) {
 
 			expired := dc.MaxAge > 0 && time.Since(info.ModTime()) > dc.MaxAge
 			if expired {
-				if dc.isPinned(p) {
+				if dc.isPinnedOrKept(p) {
 					retainedCount++
 					retainedSize += accounted
 					if !dc.lru.Contains(p) {
@@ -1640,7 +1667,7 @@ func (dc *DiskCache) runMaintenanceOnce(ctx context.Context) {
 	// this technically could change the LRU order, but since maintenance is
 	// best-effort, it's acceptable
 	for _, p := range notInLru {
-		dc.lru.Add(p, struct{}{})
+		dc.lruAdd(p)
 		select {
 		case <-ctx.Done():
 			return
@@ -1674,7 +1701,7 @@ func (dc *DiskCache) deleteIfExpired(path string, info os.FileInfo) (deleted boo
 	if dc.MaxAge > 0 {
 		age := time.Since(info.ModTime())
 		if age > dc.MaxAge {
-			if dc.isPinned(fqPath) {
+			if dc.isPinnedOrKept(fqPath) {
 				return false, nil
 			}
 			_ = dc.deleteMetadataForEntryPath(fqPath)
@@ -1705,7 +1732,7 @@ func (dc *DiskCache) deleteOneByMtime() bool {
 			if err != nil || info.IsDir() {
 				return nil
 			}
-			if dc.isPinned(p) {
+			if dc.isPinnedOrKept(p) {
 				return nil
 			}
 			if oldest == nil || info.ModTime().Before(oldest.t) {

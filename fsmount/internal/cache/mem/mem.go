@@ -4,6 +4,7 @@ package mem
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -738,4 +739,27 @@ func (mc *MemoryCache) validateOpts() error {
 
 func memoryPartialKey(path string) string {
 	return partialKeyPrefix + path
+}
+
+// SetKept is not supported: keeping files offline needs the disk cache.
+func (mc *MemoryCache) SetKept(paths []string, kept bool) error {
+	if !kept || len(paths) == 0 {
+		return nil
+	}
+	return errors.New("keeping files offline needs the disk cache")
+}
+
+// IsKept reports false: the memory cache keeps nothing offline.
+func (mc *MemoryCache) IsKept(path string) bool {
+	return false
+}
+
+// DeleteWhenClosed reports false: the memory cache deletes entries right away.
+func (mc *MemoryCache) DeleteWhenClosed(path string) bool {
+	return false
+}
+
+// OfflineDir is not supported: keeping files offline needs the disk cache.
+func (mc *MemoryCache) OfflineDir() (string, error) {
+	return "", errors.New("keeping files offline needs the disk cache")
 }

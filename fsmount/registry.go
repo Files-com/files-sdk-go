@@ -107,3 +107,21 @@ func (h *Host) Notify(path string, action uint32) bool {
 	}
 	return h.fuseHost.Notify(path, action)
 }
+
+// KeepOffline keeps a file or folder of the mount for offline use, or stops
+// keeping it. path is relative to the mount, with either slash.
+func (h *Host) KeepOffline(path string, keep bool) error {
+	if h.fs == nil || h.fs.remote == nil {
+		return fmt.Errorf("the mount is not ready")
+	}
+	return h.fs.remote.KeepOffline(path, keep)
+}
+
+// OfflineStates says how far each path of the mount is kept for offline use.
+// Paths are relative to the mount, with either slash.
+func (h *Host) OfflineStates(paths []string) []OfflineState {
+	if h.fs == nil || h.fs.remote == nil {
+		return make([]OfflineState, len(paths))
+	}
+	return h.fs.remote.OfflineStates(paths)
+}

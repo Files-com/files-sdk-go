@@ -260,7 +260,7 @@ func (dc *DiskCache) writeRangeChunk(path string, requested cache.EntryMetadata,
 	}
 	dc.stats.WriteCount.Add(1)
 	dc.stats.WriteBytes.Add(newBytes)
-	dc.lru.Add(fqPath, struct{}{})
+	dc.lruAdd(fqPath)
 	dc.lruDirty.Store(true)
 	return &state, nil
 }
@@ -416,8 +416,9 @@ func (dc *DiskCache) rangeMetadata(path string, requested cache.EntryMetadata) (
 	if !stored.Matches(requested) {
 		// An older open handle can still ask for its version after a newer
 		// version has replaced the entry. That stale request must miss without
-		// invalidating the newer cached bytes.
-		if !stored.ModTime.After(requested.ModTime) {
+		// invalidating the newer cached bytes. A kept entry stays until the
+		// new version is written over it, so it still opens offline.
+		if !stored.ModTime.After(requested.ModTime) && !dc.isKept(dc.entryPath(path)) {
 			_ = dc.Delete(path)
 		}
 		return cache.EntryMetadata{}, false, nil
