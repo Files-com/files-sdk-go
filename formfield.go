@@ -18,9 +18,9 @@ type FormField struct {
 	HelpText string `json:"help_text,omitempty" path:"help_text,omitempty" url:"help_text,omitempty"`
 	// Type of Field.
 	FieldType string `json:"field_type,omitempty" path:"field_type,omitempty" url:"field_type,omitempty"`
-	// Options to display for radio and dropdown.
+	// Options to display for radio, dropdown, and multi_select.
 	OptionsForSelect []string `json:"options_for_select,omitempty" path:"options_for_select,omitempty" url:"options_for_select,omitempty"`
-	// Default option for radio and dropdown.
+	// Default option for radio, dropdown, and multi_select.
 	DefaultOption string `json:"default_option,omitempty" path:"default_option,omitempty" url:"default_option,omitempty"`
 	// Form field set id.
 	FormFieldSetId int64 `json:"form_field_set_id,omitempty" path:"form_field_set_id,omitempty" url:"form_field_set_id,omitempty"`

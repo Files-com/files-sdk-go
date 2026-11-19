@@ -16,6 +16,6 @@ This package has no API operations of its own.
 | `Required` | `*bool` | `required` | Is this a required field? |
 | `HelpText` | `string` | `help_text` | Help text to be displayed |
 | `FieldType` | `string` | `field_type` | Type of Field |
-| `OptionsForSelect` | `[]string` | `options_for_select` | Options to display for radio and dropdown |
-| `DefaultOption` | `string` | `default_option` | Default option for radio and dropdown |
+| `OptionsForSelect` | `[]string` | `options_for_select` | Options to display for radio, dropdown, and multi_select |
+| `DefaultOption` | `string` | `default_option` | Default option for radio, dropdown, and multi_select |
 | `FormFieldSetId` | `int64` | `form_field_set_id` | Form field set id |

@@ -73,11 +73,11 @@ type FormFieldSetCreateParams struct {
 	// Each element is an object with these keys:
 	// id (integer, int32): Id of existing Form Field.
 	// label (string): Label of Field.
-	// field_type (string): Type of field: text, text_area, dropdown, radio, or date.
+	// field_type (string): Type of field: text, text_area, dropdown, radio, date, or multi_select.
 	// help_text (string): Help text of field.
 	// required (boolean): Is this a required field? (default true).
-	// options_for_select (string): List of options for dropdown or radio.
-	// default_option (string): Default option to be preselected in the dropdown or radio.
+	// options_for_select (string): List of options for dropdown, radio, or multi_select.
+	// default_option (string): Default option to be preselected in dropdown, radio, or multi_select.
 	FormFields []map[string]interface{} `url:"form_fields,omitempty" json:"form_fields,omitempty" path:"form_fields"`
 }
 
@@ -100,11 +100,11 @@ type FormFieldSetUpdateParams struct {
 	// Each element is an object with these keys:
 	// id (integer, int32): Id of existing Form Field.
 	// label (string): Label of Field.
-	// field_type (string): Type of field: text, text_area, dropdown, radio, or date.
+	// field_type (string): Type of field: text, text_area, dropdown, radio, date, or multi_select.
 	// help_text (string): Help text of field.
 	// required (boolean): Is this a required field? (default true).
-	// options_for_select (string): List of options for dropdown or radio.
-	// default_option (string): Default option to be preselected in the dropdown or radio.
+	// options_for_select (string): List of options for dropdown, radio, or multi_select.
+	// default_option (string): Default option to be preselected in dropdown, radio, or multi_select.
 	FormFields []map[string]interface{} `url:"form_fields,omitempty" json:"form_fields,omitempty" path:"form_fields"`
 }
 
