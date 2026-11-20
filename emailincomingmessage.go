@@ -13,13 +13,15 @@ type EmailIncomingMessage struct {
 	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
 	// Id of the Inbox associated with this message.
 	InboxId int64 `json:"inbox_id,omitempty" path:"inbox_id,omitempty" url:"inbox_id,omitempty"`
+	// ID of the Workspace that owns the Inbox. The Default Workspace has ID 0.
+	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	// Sender of the email.
 	Sender string `json:"sender,omitempty" path:"sender,omitempty" url:"sender,omitempty"`
 	// Sender name.
 	SenderName string `json:"sender_name,omitempty" path:"sender_name,omitempty" url:"sender_name,omitempty"`
 	// Status of the message.
 	Status string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
-	// Body of the email.
+	// Body of the email. Only available to Site Administrators.
 	Body string `json:"body,omitempty" path:"body,omitempty" url:"body,omitempty"`
 	// Message describing the failure.
 	Message string `json:"message,omitempty" path:"message,omitempty" url:"message,omitempty"`
@@ -39,9 +41,9 @@ type EmailIncomingMessageCollection []EmailIncomingMessage
 
 // EmailIncomingMessageListParams contains the request parameters for GET /email_incoming_messages.
 type EmailIncomingMessageListParams struct {
-	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `created_at`, `sender`, `status` or `inbox_id`.
+	// If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `created_at`, `workspace_id`, `sender`, `status` or `inbox_id`.
 	SortBy interface{} `url:"sort_by,omitempty" json:"sort_by,omitempty" path:"sort_by"`
-	// If set, return records where the specified field is equal to the supplied value. Valid fields are `created_at`, `inbox_id`, `sender` or `status`. Valid field combinations are `[ inbox_id, created_at ]`, `[ sender, created_at ]`, `[ status, created_at ]`, `[ inbox_id, status ]`, `[ status, sender ]`, `[ inbox_id, status, created_at ]`, `[ status, sender, created_at ]`, `[ inbox_id, status, sender ]` or `[ inbox_id, status, sender, created_at ]`.
+	// If set, return records where the specified field is equal to the supplied value. Valid fields are `created_at`, `inbox_id`, `sender`, `status` or `workspace_id`. Valid field combinations are `[ inbox_id, created_at ]`, `[ sender, created_at ]`, `[ status, created_at ]`, `[ workspace_id, created_at ]`, `[ inbox_id, status ]`, `[ workspace_id, inbox_id ]`, `[ status, sender ]`, `[ workspace_id, sender ]`, `[ workspace_id, status ]`, `[ inbox_id, status, created_at ]`, `[ workspace_id, inbox_id, created_at ]`, `[ status, sender, created_at ]`, `[ workspace_id, sender, created_at ]`, `[ workspace_id, status, created_at ]`, `[ inbox_id, status, sender ]`, `[ workspace_id, inbox_id, status ]`, `[ workspace_id, status, sender ]`, `[ inbox_id, status, sender, created_at ]`, `[ workspace_id, inbox_id, status, created_at ]`, `[ workspace_id, status, sender, created_at ]`, `[ workspace_id, inbox_id, status, sender ]` or `[ workspace_id, inbox_id, status, sender, created_at ]`.
 	Filter interface{} `url:"filter,omitempty" json:"filter,omitempty" path:"filter"`
 	// If set, return records where the specified field is greater than the supplied value. Valid fields are `created_at`.
 	FilterGt interface{} `url:"filter_gt,omitempty" json:"filter_gt,omitempty" path:"filter_gt"`

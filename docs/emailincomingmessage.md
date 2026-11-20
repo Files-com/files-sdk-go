@@ -35,8 +35,8 @@ Parameters, `files_sdk.EmailIncomingMessageListParams`:
 
 | Field | Go type | API name | Required | Description |
 | --- | --- | --- | --- | --- |
-| `SortBy` | `interface{}` | `sort_by` | no | If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `created_at`, `sender`, `status` or `inbox_id`. |
-| `Filter` | `interface{}` | `filter` | no | If set, return records where the specified field is equal to the supplied value. Valid fields are `created_at`, `inbox_id`, `sender` or `status`. Valid field combinations are `[ inbox_id, created_at ]`, `[ sender, created_at ]`, `[ status, created_at ]`, `[ inbox_id, status ]`, `[ status, sender ]`, `[ inbox_id, status, created_at ]`, `[ status, sender, created_at ]`, `[ inbox_id, status, sender ]` or `[ inbox_id, status, sender, created_at ]`. |
+| `SortBy` | `interface{}` | `sort_by` | no | If set, sort records by the specified field in either `asc` or `desc` direction. Valid fields are `created_at`, `workspace_id`, `sender`, `status` or `inbox_id`. |
+| `Filter` | `interface{}` | `filter` | no | If set, return records where the specified field is equal to the supplied value. Valid fields are `created_at`, `inbox_id`, `sender`, `status` or `workspace_id`. Valid field combinations are `[ inbox_id, created_at ]`, `[ sender, created_at ]`, `[ status, created_at ]`, `[ workspace_id, created_at ]`, `[ inbox_id, status ]`, `[ workspace_id, inbox_id ]`, `[ status, sender ]`, `[ workspace_id, sender ]`, `[ workspace_id, status ]`, `[ inbox_id, status, created_at ]`, `[ workspace_id, inbox_id, created_at ]`, `[ status, sender, created_at ]`, `[ workspace_id, sender, created_at ]`, `[ workspace_id, status, created_at ]`, `[ inbox_id, status, sender ]`, `[ workspace_id, inbox_id, status ]`, `[ workspace_id, status, sender ]`, `[ inbox_id, status, sender, created_at ]`, `[ workspace_id, inbox_id, status, created_at ]`, `[ workspace_id, status, sender, created_at ]`, `[ workspace_id, inbox_id, status, sender ]` or `[ workspace_id, inbox_id, status, sender, created_at ]`. |
 | `FilterGt` | `interface{}` | `filter_gt` | no | If set, return records where the specified field is greater than the supplied value. Valid fields are `created_at`. |
 | `FilterGteq` | `interface{}` | `filter_gteq` | no | If set, return records where the specified field is greater than or equal the supplied value. Valid fields are `created_at`. |
 | `FilterPrefix` | `interface{}` | `filter_prefix` | no | If set, return records where the specified field is prefixed by the supplied value. Valid fields are `sender`. |
@@ -69,10 +69,11 @@ for item, err := range it.All() {
 | --- | --- | --- | --- |
 | `Id` | `int64` | `id` | Id of the Email Incoming Message |
 | `InboxId` | `int64` | `inbox_id` | Id of the Inbox associated with this message |
+| `WorkspaceId` | `int64` | `workspace_id` | ID of the Workspace that owns the Inbox. The Default Workspace has ID 0. |
 | `Sender` | `string` | `sender` | Sender of the email |
 | `SenderName` | `string` | `sender_name` | Sender name |
 | `Status` | `string` | `status` | Status of the message |
-| `Body` | `string` | `body` | Body of the email |
+| `Body` | `string` | `body` | Body of the email. Only available to Site Administrators. |
 | `Message` | `string` | `message` | Message describing the failure |
 | `CreatedAt` | `*time.Time` | `created_at` | Message creation date/time |
 | `InboxTitle` | `string` | `inbox_title` | Title of the Inbox associated with this message |
