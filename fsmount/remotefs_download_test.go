@@ -640,7 +640,7 @@ func TestChangesDoNotWaitForReadsBlockedOnDownloads(t *testing.T) {
 				}
 				root, _ := fs.vfs.fetch("/")
 				root.expireInfo()
-				root.childPathsExpires = timeZero
+				root.childPathsExpires.Store(nil)
 				changeDone <- fs.Readdir("/", func(string, *fuse.Stat_t, int64) bool { return true }, 0, ^uint64(0))
 			}()
 			select {

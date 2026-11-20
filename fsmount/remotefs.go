@@ -2287,7 +2287,8 @@ func (fs *RemoteFs) ensureFullyCached(path string, size int64) error {
 	if !ok {
 		return fmt.Errorf("ensureFullyCached: vfs node missing for %s", path)
 	}
-	meta := cacheEntryMetadata(path, size, node.info.modTime)
+	// The keeper's downloads run while listings update the node.
+	meta := cacheEntryMetadata(path, size, node.currentInfo().modTime)
 	complete, err := fs.cacheStore.RangeEntryComplete(path, meta)
 	if err != nil || complete {
 		return err
@@ -3005,18 +3006,21 @@ func (fs *RemoteFs) createNode(path string, item files_sdk.File) *fsNode {
 	}
 	var existingCreationTime time.Time
 	// best-effort invalidate stale data
-	if prev, ok := fs.vfs.fetch(path); ok && prev.info.nodeType == nodeTypeFile {
-		// A file kept offline keeps its last version until the new one is
-		// downloaded, so it still opens if the storage goes away first. The
-		// cache answers reads by version, so the old data never passes for
-		// the new.
-		if (prev.info.size != item.Size || !prev.info.modTime.Equal(item.ModTime())) && !fs.cacheStore.IsKept(path) {
-			unlockRangeMutation := fs.lockRangeMutation(path)
-			defer unlockRangeMutation()
-			fs.cancelRangeDownloads(path)
-			_ = fs.cacheStore.Delete(path)
+	// Another lookup of the same path may be updating it.
+	if prev, ok := fs.vfs.fetch(path); ok {
+		if prevInfo := prev.currentInfo(); prevInfo.nodeType == nodeTypeFile {
+			// A file kept offline keeps its last version until the new one is
+			// downloaded, so it still opens if the storage goes away first. The
+			// cache answers reads by version, so the old data never passes for
+			// the new.
+			if (prevInfo.size != item.Size || !prevInfo.modTime.Equal(item.ModTime())) && !fs.cacheStore.IsKept(path) {
+				unlockRangeMutation := fs.lockRangeMutation(path)
+				defer unlockRangeMutation()
+				fs.cancelRangeDownloads(path)
+				_ = fs.cacheStore.Delete(path)
+			}
+			existingCreationTime = prevInfo.creationTime
 		}
-		existingCreationTime = prev.info.creationTime
 	}
 
 	node := fs.vfs.getOrCreate(path, nt)
