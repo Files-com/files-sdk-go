@@ -18,7 +18,7 @@ func refreshDirectory(t *testing.T, fs *RemoteFs, path string) []string {
 		t.Fatalf("directory %q is not cached", path)
 	}
 	node.expireInfo()
-	node.childPathsExpires = timeZero
+	node.childPathsExpires.Store(nil)
 	var names []string
 	if errc := fs.Readdir(path, func(name string, _ *fuse.Stat_t, _ int64) bool {
 		if name != "." && name != ".." {
@@ -142,7 +142,7 @@ func TestRemoteRefreshDoesNotForgetNamesAfterPartialListing(t *testing.T) {
 	}
 	root, _ := vfs.fetch("/")
 	root.expireInfo()
-	root.childPathsExpires = timeZero
+	root.childPathsExpires.Store(nil)
 	if errc := fs.Readdir("/", func(string, *fuse.Stat_t, int64) bool { return true }, 0, ^uint64(0)); errc == 0 {
 		t.Fatal("partial listing unexpectedly succeeded")
 	}

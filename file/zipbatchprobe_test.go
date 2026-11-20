@@ -267,13 +267,16 @@ func TestZipBatchReprobeCommitsAfterDissolve(t *testing.T) {
 
 func TestZipBatchReprobeBacksOffRepeatedDissolves(t *testing.T) {
 	withZipBatchProbeTestWindows(t)
+	zipBatchTuning.ProbePhaseAMinDuration = 100 * time.Millisecond
+	zipBatchTuning.ProbePhaseAWindow = 100 * time.Millisecond
 	zipBatchTuning.ProbePhaseBMinCompletions = 4
-	zipBatchTuning.DefaultReprobeInterval = 10 * time.Millisecond
-	zipBatchTuning.MaxReprobeInterval = 40 * time.Millisecond
+	zipBatchTuning.ProbePhaseBWindow = 100 * time.Millisecond
+	zipBatchTuning.DefaultReprobeInterval = 300 * time.Millisecond
+	zipBatchTuning.MaxReprobeInterval = 600 * time.Millisecond
 	root := t.TempDir()
-	server := newZipBatchMockServer(t, zipBatchTestFiles(900), nil)
-	server.DownloadDelay = func(string) time.Duration { return 2 * time.Millisecond }
-	server.ZipDownloadChunkDelay = func(int, []string) time.Duration { return 4 * time.Millisecond }
+	server := newZipBatchMockServer(t, zipBatchTestFiles(450), nil)
+	server.DownloadDelay = func(string) time.Duration { return 10 * time.Millisecond }
+	server.ZipDownloadChunkDelay = func(int, []string) time.Duration { return 30 * time.Millisecond }
 	defer server.Shutdown()
 
 	job := runZipBatchDownloadWithParams(t, server, DownloaderParams{
