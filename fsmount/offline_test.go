@@ -16,7 +16,6 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -41,8 +40,6 @@ type offlineStorage struct {
 	listGate  map[string]*offlineGate
 	// Per file: a gate its next download waits at, before any bytes.
 	downloadGate map[string]*offlineGate
-	// How many times each folder was listed.
-	listed map[string]int
 }
 
 type offlinePause struct {
@@ -101,7 +98,6 @@ func newOfflineStorage(files map[string]string) *offlineStorage {
 		listGate:  make(map[string]*offlineGate),
 
 		downloadGate: make(map[string]*offlineGate),
-		listed:       make(map[string]int),
 	}
 	for path, content := range files {
 		s.files[path] = []byte(content)
@@ -157,7 +153,6 @@ func (s *offlineStorage) find(path string) (files_sdk.File, error) {
 
 func (s *offlineStorage) list(ctx context.Context, path string) (remoteFileIter, error) {
 	s.mu.Lock()
-	s.listed[path]++
 	if gate := s.listGate[path]; gate != nil {
 		delete(s.listGate, path)
 		s.mu.Unlock()
@@ -499,287 +494,6 @@ func TestOfflineKeptPathsAreRememberedAfterARestart(t *testing.T) {
 	}
 	if got := strings.Join(childNames(childPaths), ","); got != "a.txt,sub" {
 		t.Fatalf("kept folder lists %q after a restart, want a.txt,sub", got)
-	}
-}
-
-func TestOfflineManyKeptPathsLeaveTheMountUsableAfterARestart(t *testing.T) {
-	files := map[string]string{"/other/c.txt": "charlie"}
-	var kept []string
-	gates := make(map[string]*offlineGate)
-	for i := 1; i <= 2*otherOpLimit; i++ {
-		folder := fmt.Sprintf("/d%02d", i)
-		files[folder+"/f.txt"] = "x"
-		kept = append(kept, folder+"/f.txt")
-		gates[folder] = newOfflineGate()
-	}
-	storage := newOfflineStorage(files)
-	fs := newOfflineTestFs(t, storage)
-	fs.offline.close()
-
-	// After a restart nothing has been listed yet, so each kept file's walk
-	// lists its folder on the storage, which holds the listings open.
-	restarted, err := newOfflineKeeper(fs)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, path := range kept {
-		restarted.roots[path] = struct{}{}
-	}
-	openGates := sync.OnceFunc(func() {
-		for _, gate := range gates {
-			close(gate.open)
-		}
-	})
-	t.Cleanup(openGates)
-	storage.with(func() {
-		for folder, gate := range gates {
-			storage.listGate[folder] = gate
-		}
-		// Every walk looks for the root's listing before the first one is
-		// saved, as with a storage across a network.
-		storage.listPause["/"] = offlinePause{before: 0, pause: 100 * time.Millisecond}
-	})
-	fs.offline = restarted
-	restarted.start()
-	// Wait until no more listings start.
-	listings := func() int {
-		n := 0
-		for _, gate := range gates {
-			select {
-			case <-gate.reached:
-				n++
-			default:
-			}
-		}
-		return n
-	}
-	last, since := 0, time.Now()
-	for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); time.Sleep(5 * time.Millisecond) {
-		if n := listings(); n != last {
-			last, since = n, time.Now()
-		} else if n > 0 && time.Since(since) > 200*time.Millisecond {
-			break
-		}
-	}
-	if last == 0 {
-		t.Fatal("no kept folder was listed")
-	}
-
-	// The mount answers while the walks wait for the storage: Windows
-	// doesn't mount a drive whose first lookups fail.
-	var stat fuse.Stat_t
-	if errc := fs.Getattr("/other/c.txt", &stat, ^uint64(0)); errc != 0 {
-		t.Fatalf("Getattr while the kept paths are walked: errno %d", errc)
-	}
-	openGates()
-
-	want := make(map[string]OfflineState, len(kept))
-	for _, path := range kept {
-		want[path] = OfflineKept
-	}
-	waitForStates(t, fs, want)
-	// The walks share the root's listing instead of each listing it.
-	storage.with(func() {
-		if storage.listed["/"] > offlineListings {
-			t.Fatalf("the root was listed %d times for %d kept paths", storage.listed["/"], len(kept))
-		}
-	})
-}
-
-func TestOfflineKeptPathIsBrowsableOfflineAfterItsKeepWasCutShort(t *testing.T) {
-	storage := newOfflineStorage(map[string]string{"/a/b/c/x.txt": "xray", "/other/y.txt": "yankee"})
-	fs := newOfflineTestFs(t, storage)
-	fs.offline.close()
-
-	// The kept path was saved, but the mount closed before its keep saved
-	// the folders above it.
-	restarted, err := newOfflineKeeper(fs)
-	if err != nil {
-		t.Fatal(err)
-	}
-	restarted.roots["/a/b/c/x.txt"] = struct{}{}
-	fs.offline = restarted
-	restarted.start()
-	waitForStates(t, fs, map[string]OfflineState{"/a/b/c/x.txt": OfflineKept})
-
-	storage.setDown(true)
-	restarted.markUnreachable()
-	for _, folder := range []string{"/", "/a", "/a/b", "/a/b/c"} {
-		if _, err := fs.listDirOrSaved(folder); err != nil {
-			t.Fatalf("listing %s without the storage: %v", folder, err)
-		}
-	}
-}
-
-func TestOfflineKeptFileIsBrowsableOfflineAfterItsRenameWasCutShort(t *testing.T) {
-	storage := newOfflineStorage(map[string]string{"/f/x.txt": "xray"})
-	fs := newOfflineTestFs(t, storage)
-	if err := fs.KeepOffline("/f/x.txt", true); err != nil {
-		t.Fatal(err)
-	}
-	waitForStates(t, fs, map[string]OfflineState{"/f/x.txt": OfflineKept})
-	fs.offline.close()
-
-	// The folder was renamed to g, but the mount closed before the root's
-	// saved listing learned the new name.
-	storage.with(func() {
-		delete(storage.files, "/f/x.txt")
-		storage.files["/g/x.txt"] = []byte("xray")
-	})
-	restarted, err := newOfflineKeeper(fs)
-	if err != nil {
-		t.Fatal(err)
-	}
-	restarted.roots = map[string]struct{}{"/g/x.txt": {}}
-	fs.offline = restarted
-	restarted.start()
-	waitForStates(t, fs, map[string]OfflineState{"/g/x.txt": OfflineKept})
-
-	storage.setDown(true)
-	restarted.markUnreachable()
-	root, err := fs.listDirOrSaved("/")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got := strings.Join(childNames(root), ","); got != "g" {
-		t.Fatalf("the root lists %q without the storage, want g", got)
-	}
-	if _, err := fs.listDirOrSaved("/g"); err != nil {
-		t.Fatalf("listing /g without the storage: %v", err)
-	}
-}
-
-func TestOfflineRenamesShowInSavedListingsRightAway(t *testing.T) {
-	storage := newOfflineStorage(map[string]string{
-		"/p/keep.txt":  "kilo",
-		"/p/mv/x.txt":  "xray",
-		"/s/only.txt":  "oscar",
-		"/q/z.txt":     "zulu",
-		"/busy1/a.txt": "alpha",
-		"/busy2/b.txt": "bravo",
-	})
-	fs := newOfflineTestFs(t, storage)
-	for _, path := range []string{"/p/keep.txt", "/p/mv", "/s/only.txt", "/q/z.txt"} {
-		if err := fs.KeepOffline(path, true); err != nil {
-			t.Fatal(err)
-		}
-	}
-	waitForStates(t, fs, map[string]OfflineState{
-		"/p/keep.txt": OfflineKept,
-		"/p/mv/x.txt": OfflineKept,
-		"/s/only.txt": OfflineKept,
-		"/q/z.txt":    OfflineKept,
-	})
-
-	// Two keeps that wait for the storage take both listing slots, so the
-	// renames' refreshes wait too.
-	gates := []*offlineGate{newOfflineGate(), newOfflineGate()}
-	openGates := sync.OnceFunc(func() {
-		for _, gate := range gates {
-			close(gate.open)
-		}
-	})
-	t.Cleanup(openGates)
-	storage.with(func() {
-		storage.listGate["/busy1"] = gates[0]
-		storage.listGate["/busy2"] = gates[1]
-	})
-	for i, path := range []string{"/busy1", "/busy2"} {
-		if err := fs.KeepOffline(path, true); err != nil {
-			t.Fatal(err)
-		}
-		select {
-		case <-gates[i].reached:
-		case <-time.After(5 * time.Second):
-			t.Fatalf("keeping %s didn't list it", path)
-		}
-	}
-	// A folder moves out of a folder that stays kept, and the only kept
-	// file of a folder moves into a kept folder.
-	if errc := fs.Rename("/p/mv", "/q/mv"); errc != 0 {
-		t.Fatalf("Rename: errno %d", errc)
-	}
-	if errc := fs.Rename("/s/only.txt", "/q/only.txt"); errc != 0 {
-		t.Fatalf("Rename: errno %d", errc)
-	}
-	// The mount closes before the refreshes run.
-	fs.offline.close()
-	openGates()
-
-	storage.setDown(true)
-	fs.offline.markUnreachable()
-	for folder, want := range map[string]string{"/p": "keep.txt", "/q": "mv,only.txt,z.txt"} {
-		children, err := fs.listDirOrSaved(folder)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if got := strings.Join(childNames(children), ","); got != want {
-			t.Fatalf("%s lists %q without the storage, want %s", folder, got, want)
-		}
-	}
-}
-
-// pausedDeletion holds the first deletion of one cached file until resume
-// closes.
-type pausedDeletion struct {
-	cacheStore
-	path    string
-	reached chan struct{}
-	resume  chan struct{}
-	paused  atomic.Bool
-}
-
-func (c *pausedDeletion) DeleteWhenClosed(path string) bool {
-	if path == c.path && c.paused.CompareAndSwap(false, true) {
-		close(c.reached)
-		<-c.resume
-	}
-	return c.cacheStore.DeleteWhenClosed(path)
-}
-
-func TestOfflineFolderRenamedAndRenamedBackKeepsItsFiles(t *testing.T) {
-	_, fs := keptDocs(t)
-	deletion := &pausedDeletion{
-		cacheStore: fs.cacheStore,
-		path:       "/docs/sub/b.txt",
-		reached:    make(chan struct{}),
-		resume:     make(chan struct{}),
-	}
-	fs.cacheStore = deletion
-	resume := sync.OnceFunc(func() { close(deletion.resume) })
-	t.Cleanup(resume)
-
-	if errc := fs.Rename("/docs/sub", "/docs/renamed"); errc != 0 {
-		t.Fatalf("Rename: errno %d", errc)
-	}
-	select {
-	case <-deletion.reached:
-	case <-time.After(5 * time.Second):
-		t.Fatal("the old name's copy was never deleted")
-	}
-	// The user moves it back once the new name shows it kept. That waits
-	// for the old copies to go.
-	shownKept := false
-	for deadline := time.Now().Add(time.Second); time.Now().Before(deadline); time.Sleep(10 * time.Millisecond) {
-		if fs.OfflineStates([]string{"/docs/renamed/b.txt"})[0] == OfflineKept {
-			shownKept = true
-			break
-		}
-	}
-	if !shownKept {
-		resume()
-		waitUntilDeleted(t, fs, "/docs/sub/b.txt", "the old name's copy was never deleted")
-		waitForStates(t, fs, map[string]OfflineState{"/docs/renamed/b.txt": OfflineKept})
-	}
-	if errc := fs.Rename("/docs/renamed", "/docs/sub"); errc != 0 {
-		t.Fatalf("Rename back: errno %d", errc)
-	}
-	waitForStates(t, fs, map[string]OfflineState{"/docs/sub/b.txt": OfflineKept})
-	resume()
-	for deadline := time.Now().Add(time.Second); time.Now().Before(deadline); time.Sleep(10 * time.Millisecond) {
-		if !cachedOnDisk(fs, "/docs/sub/b.txt") {
-			t.Fatal("renaming the folder back lost the copy kept under its first name")
-		}
 	}
 }
 

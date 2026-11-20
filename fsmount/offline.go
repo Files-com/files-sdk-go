@@ -52,9 +52,6 @@ func (s OfflineState) String() string {
 
 const (
 	offlineDownloadWorkers = 2
-	// At most this many of the keeper's listings run at once. They use the
-	// mount's operation slots, which the mount's own callbacks need too.
-	offlineListings = 2
 	// A kept file that failed to download is tried again after this long.
 	offlineRetryDelay = time.Minute
 	// While the storage can't be reached, it is asked again in the background
@@ -144,10 +141,6 @@ type offlineKeeper struct {
 	checking       bool
 
 	startOnce sync.Once
-	// Holds a token for each of the keeper's listings that is running.
-	listingSlots chan struct{}
-	// Closed when the keeper closes.
-	done chan struct{}
 
 	queueMu  sync.Mutex
 	queue    []string
@@ -166,15 +159,13 @@ func newOfflineKeeper(fs *RemoteFs) (*offlineKeeper, error) {
 		return nil, err
 	}
 	k := &offlineKeeper{
-		fs:           fs,
-		dir:          dir,
-		roots:        make(map[string]struct{}),
-		listings:     make(map[string]*savedListing),
-		pending:      make(map[string]struct{}),
-		walks:        make(map[string]int),
-		queued:       make(map[string]struct{}),
-		listingSlots: make(chan struct{}, offlineListings),
-		done:         make(chan struct{}),
+		fs:       fs,
+		dir:      dir,
+		roots:    make(map[string]struct{}),
+		listings: make(map[string]*savedListing),
+		pending:  make(map[string]struct{}),
+		walks:    make(map[string]int),
+		queued:   make(map[string]struct{}),
 	}
 	k.queueCnd = sync.NewCond(&k.queueMu)
 	data, err := os.ReadFile(filepath.Join(dir, offlineRootsFile))
@@ -210,37 +201,14 @@ func (k *offlineKeeper) startWork() {
 		k.beginWalk(root)
 		go func() {
 			defer k.endWalk(root)
-			// A keep or rename cut short by the mount closing may not have
-			// saved the folders above the kept path as they are now, which
-			// it is reached through offline.
-			for _, ancestor := range ancestors(root) {
-				next := strings.SplitN(strings.TrimPrefix(strings.TrimPrefix(root, ancestor), "/"), "/", 2)[0]
-				saved := func() bool { return k.savedListingHas(ancestor, next) }
-				if !saved() {
-					// Other kept paths in the folder may list it first.
-					k.relistUnless(ancestor, saved)
-				}
-			}
 			k.walk(root)
 		}()
 	}
 }
 
-func (k *offlineKeeper) isClosed() bool {
-	select {
-	case <-k.done:
-		return true
-	default:
-		return false
-	}
-}
-
 func (k *offlineKeeper) close() {
 	k.queueMu.Lock()
-	if !k.closed {
-		k.closed = true
-		close(k.done)
-	}
+	k.closed = true
 	k.queueCnd.Broadcast()
 	k.queueMu.Unlock()
 	k.workers.Wait()
@@ -400,13 +368,12 @@ func (k *offlineKeeper) listed(path string, items []files_sdk.File) {
 	}
 	listing := &savedListing{Path: path}
 	if node, ok := k.fs.vfs.fetch(path); ok && path != "/" {
-		info := node.currentInfo()
 		self := savedEntry{
 			Name:        path_lib.Base(path),
 			Dir:         true,
-			ModTime:     info.modTime,
-			Created:     info.creationTime,
-			Permissions: info.remotePermissions,
+			ModTime:     node.info.modTime,
+			Created:     node.info.creationTime,
+			Permissions: node.info.remotePermissions,
 		}
 		listing.Self = &self
 	}
@@ -678,72 +645,6 @@ func storageAnswered(ctx context.Context) {
 	}
 }
 
-// savedListingHas reports whether folder's saved listing has name in it.
-func (k *offlineKeeper) savedListingHas(folder, name string) bool {
-	k.mu.Lock()
-	defer k.mu.Unlock()
-	listing, ok := k.listingLocked(cleanMountPath(folder))
-	if !ok {
-		return false
-	}
-	// Saved listings are sorted by name.
-	i := sort.Search(len(listing.Entries), func(i int) bool { return listing.Entries[i].Name >= name })
-	return i < len(listing.Entries) && listing.Entries[i].Name == name
-}
-
-// renameInListingsLocked moves oldPath's entry from its folder's saved listing
-// to newPath's folder's, under the new name. The folders then show the
-// rename offline, also when the mount closes before they are listed again.
-func (k *offlineKeeper) renameInListingsLocked(oldPath, newPath string) {
-	oldName, newName := path_lib.Base(oldPath), path_lib.Base(newPath)
-	from, ok := k.listingLocked(path_lib.Dir(oldPath))
-	if !ok {
-		return
-	}
-	var moved *savedEntry
-	for _, entry := range from.Entries {
-		if entry.Name == oldName {
-			copied := entry
-			moved = &copied
-		}
-	}
-	if moved == nil {
-		return
-	}
-	moved.Name = newName
-	to := listingWithout(from, oldName)
-	if path_lib.Dir(newPath) != path_lib.Dir(oldPath) {
-		k.saveListingOrLogLocked(to)
-		saved, ok := k.listingLocked(path_lib.Dir(newPath))
-		if !ok {
-			return
-		}
-		to = listingWithout(saved, newName)
-	} else {
-		to = listingWithout(to, newName)
-	}
-	to.Entries = append(to.Entries, *moved)
-	k.saveListingOrLogLocked(to)
-}
-
-// listingWithout returns a copy of listing without name. Saved listings don't
-// change: a change saves a new one.
-func listingWithout(listing *savedListing, name string) *savedListing {
-	changed := &savedListing{Path: listing.Path, Self: listing.Self}
-	for _, entry := range listing.Entries {
-		if entry.Name != name {
-			changed.Entries = append(changed.Entries, entry)
-		}
-	}
-	return changed
-}
-
-func (k *offlineKeeper) saveListingOrLogLocked(listing *savedListing) {
-	if err := k.saveListingLocked(listing); err != nil {
-		k.fs.log.Debug("offline: saving the listing of %v failed: %v", listing.Path, err)
-	}
-}
-
 // hasSavedListing reports whether a folder has a saved listing.
 func (k *offlineKeeper) hasSavedListing(path string) bool {
 	k.mu.Lock()
@@ -784,9 +685,6 @@ func (k *offlineKeeper) renamed(oldPath, newPath string) {
 			delete(k.pending, pendingPath)
 		}
 	}
-	// Before the old folders' listings are forgotten, which can be the one
-	// the entry moves from.
-	k.renameInListingsLocked(oldPath, newPath)
 	for _, dir := range oldDirs {
 		k.forgetListingLocked(dir)
 	}
@@ -827,9 +725,7 @@ func (k *offlineKeeper) renamed(oldPath, newPath string) {
 
 	go func() {
 		// Rename holds the old path's range lock while it calls this, and
-		// deletes that path's own copy itself. The new name is walked after
-		// the old copies are gone, so moving it back can't lose the copies
-		// kept again.
+		// deletes that path's own copy itself.
 		for _, file := range oldFiles {
 			if file != oldPath {
 				k.fs.deleteCachedFile(file)
@@ -880,14 +776,14 @@ func (k *offlineKeeper) walk(path string) {
 			return
 		}
 	}
-	if info := node.currentInfo(); info.nodeType != nodeTypeDir {
+	if node.info.nodeType != nodeTypeDir {
 		k.mu.Lock()
 		// Online Only may have come while the walk waited for the storage.
 		if _, covered := k.coveringRootLocked(path); !covered {
 			k.mu.Unlock()
 			return
 		}
-		entry := savedEntry{Name: path_lib.Base(path), Size: info.size, ModTime: info.modTime}
+		entry := savedEntry{Name: path_lib.Base(path), Size: node.info.size, ModTime: node.info.modTime}
 		complete := k.complete(path, entry)
 		if !complete {
 			k.pending[path] = struct{}{}
@@ -921,27 +817,7 @@ func (k *offlineKeeper) walk(path string) {
 // relist lists a folder from the storage, which saves its listing when it is
 // kept or above a kept path.
 func (k *offlineKeeper) relist(path string) {
-	k.relistUnless(path, nil)
-}
-
-// relistUnless lists a folder like relist, unless done says it no longer
-// needs to once a listing slot is free.
-func (k *offlineKeeper) relistUnless(path string, done func() bool) {
 	if k.unreachable() {
-		return
-	}
-	// At most offlineListings of these run at once. A mount with many kept
-	// paths used to list them all at once after a restart: the listings took
-	// every operation slot, so the mount's first lookups failed and Windows
-	// didn't mount the drive. Listings still waiting when the mount closes
-	// don't run.
-	select {
-	case k.listingSlots <- struct{}{}:
-		defer func() { <-k.listingSlots }()
-	case <-k.done:
-		return
-	}
-	if k.isClosed() || (done != nil && done()) {
 		return
 	}
 	node, ok := k.fs.vfs.fetch(path)
@@ -1038,8 +914,7 @@ func (k *offlineKeeper) download(path string) {
 		k.retryLater(path)
 		return
 	}
-	info := node.currentInfo()
-	version := savedEntry{Name: path_lib.Base(path), Size: info.size, ModTime: info.modTime}
+	version := savedEntry{Name: path_lib.Base(path), Size: node.info.size, ModTime: node.info.modTime}
 	err := k.fs.ensureFullyCached(path, version.Size)
 	if err != nil {
 		k.fs.log.Debug("offline: downloading %v failed: %v", path, err)

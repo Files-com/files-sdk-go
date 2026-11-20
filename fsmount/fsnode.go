@@ -9,7 +9,6 @@ import (
 	"io"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/Files-com/files-sdk-go/v3/lib"
@@ -39,12 +38,10 @@ type fsNode struct {
 	// the set of paths that are children of this node.
 	childPaths map[string]struct{}
 
-	// childPathsExpires is the time when the child paths need to be rebuilt,
-	// or nil when they need it now. updateInfo resets it while other code
-	// lists the folder, so it is atomic.
-	childPathsExpires atomic.Pointer[time.Time]
+	// childPathsExpires is the time when the child paths need to be rebuilt.
+	childPathsExpires time.Time
 
-	// childPathsMutex synchronizes access to childPaths and their rebuilds.
+	// childPathsMutex is used to synchronize access to childPaths and childPathsExpires.
 	childPathsMutex sync.Mutex
 
 	// Used to synchronize write-session state on the node.
@@ -122,7 +119,7 @@ func (n *fsNode) updateInfo(info fsNodeInfo) {
 
 	n.info = info
 	// Force a rebuild of child paths (if the current node is a directory).
-	n.childPathsExpires.Store(nil)
+	n.childPathsExpires = timeZero
 	if info.nodeType == nodeTypeFile {
 		n.extendTtl()
 	}
@@ -226,8 +223,7 @@ func (n *fsNode) updateChildPaths(buildChildPaths func(string) (map[string]struc
 	}
 
 	n.childPaths = childPaths
-	expires := time.Now().Add(n.cacheTTL)
-	n.childPathsExpires.Store(&expires)
+	n.childPathsExpires = time.Now().Add(n.cacheTTL)
 	// infoExpires belongs to statusMu, like the other node info.
 	n.statusMu.Lock()
 	n.extendTtl()
@@ -285,24 +281,14 @@ func (n *fsNode) isUnmaterialized() bool {
 }
 
 // expireChildPaths makes the next listing of the folder ask the storage.
-// expireChildPaths waits for a rebuild in progress, so the next one lists
-// the folder again.
 func (n *fsNode) expireChildPaths() {
 	n.childPathsMutex.Lock()
 	defer n.childPathsMutex.Unlock()
-	n.childPathsExpires.Store(nil)
+	n.childPathsExpires = timeZero
 }
 
 func (n *fsNode) childPathsExpired() bool {
-	expires := n.childPathsExpires.Load()
-	return expires == nil || expires.Before(time.Now())
-}
-
-// currentInfo returns a copy of the node's info.
-func (n *fsNode) currentInfo() fsNodeInfo {
-	n.statusMu.Lock()
-	defer n.statusMu.Unlock()
-	return n.info
+	return n.childPathsExpires.IsZero() || n.childPathsExpires.Before(time.Now())
 }
 
 func (n *fsNode) isLocked() bool {
