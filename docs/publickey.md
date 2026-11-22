@@ -218,7 +218,7 @@ if err != nil {
 | `FingerprintSha256` | `string` | `fingerprint_sha256` | Public key fingerprint (SHA256) |
 | `Status` | `string` | `status` | Only returned when generating keys. Can be invalid, not_generated, generating, complete |
 | `LastLoginAt` | `*time.Time` | `last_login_at` | Key's most recent login time via SFTP |
-| `GeneratedPrivateKey` | `string` | `generated_private_key` | Only returned when generating keys. Private key generated for the user. |
+| `GeneratedPrivateKey` | `string` | `generated_private_key` | Available for 60 minutes after key creation, only to the API key or login session that requested generation. |
 | `GeneratedPublicKey` | `string` | `generated_public_key` | Only returned when generating keys. Public key generated for the user. |
 | `Username` | `string` | `username` | Username of the user this public key is associated with |
 | `UserId` | `int64` | `user_id` | User ID this public key is associated with |

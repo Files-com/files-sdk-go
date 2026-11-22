@@ -29,7 +29,7 @@ type PublicKey struct {
 	Status string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
 	// Key's most recent login time via SFTP.
 	LastLoginAt *time.Time `json:"last_login_at,omitempty" path:"last_login_at,omitempty" url:"last_login_at,omitempty"`
-	// Only returned when generating keys. Private key generated for the user.
+	// Available for 60 minutes after key creation, only to the API key or login session that requested generation.
 	GeneratedPrivateKey string `json:"generated_private_key,omitempty" path:"generated_private_key,omitempty" url:"generated_private_key,omitempty"`
 	// Only returned when generating keys. Public key generated for the user.
 	GeneratedPublicKey string `json:"generated_public_key,omitempty" path:"generated_public_key,omitempty" url:"generated_public_key,omitempty"`
