@@ -382,7 +382,7 @@ type Site struct {
 	WelcomeCustomText string `json:"welcome_custom_text,omitempty" path:"welcome_custom_text,omitempty" url:"welcome_custom_text,omitempty"`
 	// Custom footer text for system-generated emails (as Markdown). Supports standard strftime date/time patterns like %Y (4-digit year), %m (month), %d (day).
 	EmailFooterCustomText string `json:"email_footer_custom_text,omitempty" path:"email_footer_custom_text,omitempty" url:"email_footer_custom_text,omitempty"`
-	// Include this email in welcome emails if enabled.
+	// Copy welcome emails to this address when the email contains neither a create-password link nor a password.
 	WelcomeEmailCc string `json:"welcome_email_cc,omitempty" path:"welcome_email_cc,omitempty" url:"welcome_email_cc,omitempty"`
 	// Include this email subject in welcome emails if enabled.
 	WelcomeEmailSubject string `json:"welcome_email_subject,omitempty" path:"welcome_email_subject,omitempty" url:"welcome_email_subject,omitempty"`
@@ -436,7 +436,7 @@ type SiteUpdateParams struct {
 	ShowRequestAccessLink *bool `url:"show_request_access_link,omitempty" json:"show_request_access_link,omitempty" path:"show_request_access_link"`
 	// Create parent directories if they do not exist during uploads? This is primarily used to work around broken upload clients that assume servers will perform this step.
 	AlwaysMkdirParents *bool `url:"always_mkdir_parents,omitempty" json:"always_mkdir_parents,omitempty" path:"always_mkdir_parents"`
-	// Include this email in welcome emails if enabled.
+	// Copy welcome emails to this address when the email contains neither a create-password link nor a password.
 	WelcomeEmailCc string `url:"welcome_email_cc,omitempty" json:"welcome_email_cc,omitempty" path:"welcome_email_cc"`
 	// Include this email subject in welcome emails if enabled.
 	WelcomeEmailSubject string `url:"welcome_email_subject,omitempty" json:"welcome_email_subject,omitempty" path:"welcome_email_subject"`

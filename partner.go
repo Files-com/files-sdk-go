@@ -18,7 +18,7 @@ type Partner struct {
 	AllowProvidingGpgKeys *bool `json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys,omitempty" url:"allow_providing_gpg_keys,omitempty"`
 	// Allow Partner Admins to create users.
 	AllowUserCreation *bool `json:"allow_user_creation,omitempty" path:"allow_user_creation,omitempty" url:"allow_user_creation,omitempty"`
-	// When `true`, emails sent to Partner users are copied to the responsible User or Group.
+	// When `true`, the responsible User or Group receives eligible email copies for Partner Users without their own Responsible Party. Welcome emails trigger a separate onboarding notice. Password recovery links, email verification codes, and signed export links go only to the primary email address.
 	CcEmailsToResponsibleParty *bool `json:"cc_emails_to_responsible_party,omitempty" path:"cc_emails_to_responsible_party,omitempty" url:"cc_emails_to_responsible_party,omitempty"`
 	// Approved Connected Sites relationships for this Partner, in both directions. Empty when this Partner has no connections. Read-only.
 	Connections []PartnerConnection `json:"connections,omitempty" path:"connections,omitempty" url:"connections,omitempty"`
@@ -108,7 +108,7 @@ type PartnerCreateParams struct {
 	AllowProvidingGpgKeys *bool `url:"allow_providing_gpg_keys,omitempty" json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys"`
 	// Allow Partner Admins to create users.
 	AllowUserCreation *bool `url:"allow_user_creation,omitempty" json:"allow_user_creation,omitempty" path:"allow_user_creation"`
-	// When `true`, emails sent to Partner users are copied to the responsible User or Group.
+	// When `true`, the responsible User or Group receives eligible email copies for Partner Users without their own Responsible Party. Welcome emails trigger a separate onboarding notice. Password recovery links, email verification codes, and signed export links go only to the primary email address.
 	CcEmailsToResponsibleParty *bool `url:"cc_emails_to_responsible_party,omitempty" json:"cc_emails_to_responsible_party,omitempty" path:"cc_emails_to_responsible_party"`
 	// Notes about this Partner.
 	Notes string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`
@@ -146,7 +146,7 @@ type PartnerUpdateParams struct {
 	AllowProvidingGpgKeys *bool `url:"allow_providing_gpg_keys,omitempty" json:"allow_providing_gpg_keys,omitempty" path:"allow_providing_gpg_keys"`
 	// Allow Partner Admins to create users.
 	AllowUserCreation *bool `url:"allow_user_creation,omitempty" json:"allow_user_creation,omitempty" path:"allow_user_creation"`
-	// When `true`, emails sent to Partner users are copied to the responsible User or Group.
+	// When `true`, the responsible User or Group receives eligible email copies for Partner Users without their own Responsible Party. Welcome emails trigger a separate onboarding notice. Password recovery links, email verification codes, and signed export links go only to the primary email address.
 	CcEmailsToResponsibleParty *bool `url:"cc_emails_to_responsible_party,omitempty" json:"cc_emails_to_responsible_party,omitempty" path:"cc_emails_to_responsible_party"`
 	// Notes about this Partner.
 	Notes string `url:"notes,omitempty" json:"notes,omitempty" path:"notes"`

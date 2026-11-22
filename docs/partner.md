@@ -106,7 +106,7 @@ Parameters, `files_sdk.PartnerCreateParams`:
 | `AllowCredentialChanges` | `*bool` | `allow_credential_changes` | no | Allow Partner Admins to change or reset credentials for users belonging to this Partner. |
 | `AllowProvidingGpgKeys` | `*bool` | `allow_providing_gpg_keys` | no | Allow Partner Admins to provide GPG keys. |
 | `AllowUserCreation` | `*bool` | `allow_user_creation` | no | Allow Partner Admins to create users. |
-| `CcEmailsToResponsibleParty` | `*bool` | `cc_emails_to_responsible_party` | no | When `true`, emails sent to Partner users are copied to the responsible User or Group. |
+| `CcEmailsToResponsibleParty` | `*bool` | `cc_emails_to_responsible_party` | no | When `true`, the responsible User or Group receives eligible email copies for Partner Users without their own Responsible Party. Welcome emails trigger a separate onboarding notice. Password recovery links, email verification codes, and signed export links go only to the primary email address. |
 | `Notes` | `string` | `notes` | no | Notes about this Partner. |
 | `PartnerChannelTemplateId` | `int64` | `partner_channel_template_id` | no | ID of the Partner Channel Template assigned to this Partner. |
 | `ResponsibleGroupId` | `int64` | `responsible_group_id` | no | ID of the Group responsible for this Partner. |
@@ -157,7 +157,7 @@ Parameters, `files_sdk.PartnerUpdateParams`:
 | `AllowCredentialChanges` | `*bool` | `allow_credential_changes` | no | Allow Partner Admins to change or reset credentials for users belonging to this Partner. |
 | `AllowProvidingGpgKeys` | `*bool` | `allow_providing_gpg_keys` | no | Allow Partner Admins to provide GPG keys. |
 | `AllowUserCreation` | `*bool` | `allow_user_creation` | no | Allow Partner Admins to create users. |
-| `CcEmailsToResponsibleParty` | `*bool` | `cc_emails_to_responsible_party` | no | When `true`, emails sent to Partner users are copied to the responsible User or Group. |
+| `CcEmailsToResponsibleParty` | `*bool` | `cc_emails_to_responsible_party` | no | When `true`, the responsible User or Group receives eligible email copies for Partner Users without their own Responsible Party. Welcome emails trigger a separate onboarding notice. Password recovery links, email verification codes, and signed export links go only to the primary email address. |
 | `Notes` | `string` | `notes` | no | Notes about this Partner. |
 | `PartnerChannelTemplateId` | `int64` | `partner_channel_template_id` | no | ID of the Partner Channel Template assigned to this Partner. |
 | `ResponsibleGroupId` | `int64` | `responsible_group_id` | no | ID of the Group responsible for this Partner. |
@@ -231,7 +231,7 @@ if err != nil {
 | `AllowCredentialChanges` | `*bool` | `allow_credential_changes` | Allow Partner Admins to change or reset credentials for users belonging to this Partner. |
 | `AllowProvidingGpgKeys` | `*bool` | `allow_providing_gpg_keys` | Allow Partner Admins to provide GPG keys. |
 | `AllowUserCreation` | `*bool` | `allow_user_creation` | Allow Partner Admins to create users. |
-| `CcEmailsToResponsibleParty` | `*bool` | `cc_emails_to_responsible_party` | When `true`, emails sent to Partner users are copied to the responsible User or Group. |
+| `CcEmailsToResponsibleParty` | `*bool` | `cc_emails_to_responsible_party` | When `true`, the responsible User or Group receives eligible email copies for Partner Users without their own Responsible Party. Welcome emails trigger a separate onboarding notice. Password recovery links, email verification codes, and signed export links go only to the primary email address. |
 | `Connections` | `[]files_sdk.PartnerConnection` | `connections` | Approved Connected Sites relationships for this Partner, in both directions. Empty when this Partner has no connections. Read-only. |
 | `Id` | `int64` | `id` | The unique ID of the Partner. |
 | `AiAssistantPersonalityId` | `int64` | `ai_assistant_personality_id` | AI Assistant Personality ID assigned to this Partner, if any. Users in the Partner inherit it unless a direct per-user assignment overrides it. |

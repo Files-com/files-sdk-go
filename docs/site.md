@@ -121,7 +121,7 @@ Parameters, `files_sdk.SiteUpdateParams`:
 | `AskAboutOverwrites` | `*bool` | `ask_about_overwrites` | no | If false, rename conflicting files instead of asking for overwrite confirmation. Only applies to web interface. |
 | `ShowRequestAccessLink` | `*bool` | `show_request_access_link` | no | Show request access link for users without access? Currently unused. |
 | `AlwaysMkdirParents` | `*bool` | `always_mkdir_parents` | no | Create parent directories if they do not exist during uploads? This is primarily used to work around broken upload clients that assume servers will perform this step. |
-| `WelcomeEmailCc` | `string` | `welcome_email_cc` | no | Include this email in welcome emails if enabled |
+| `WelcomeEmailCc` | `string` | `welcome_email_cc` | no | Copy welcome emails to this address when the email contains neither a create-password link nor a password. |
 | `WelcomeEmailSubject` | `string` | `welcome_email_subject` | no | Include this email subject in welcome emails if enabled |
 | `WelcomeCustomText` | `string` | `welcome_custom_text` | no | Custom text send in user welcome email |
 | `Language` | `string` | `language` | no | Site default language |
@@ -510,7 +510,7 @@ fmt.Println(result)
 | `UsernameDisplay` | `string` | `username_display` | How usernames are displayed in the web UI. Can be `username_only`, `full_name_only`, `full_name_username`, `full_name_company`, or `full_name_username_company`. |
 | `WelcomeCustomText` | `string` | `welcome_custom_text` | Custom text send in user welcome email |
 | `EmailFooterCustomText` | `string` | `email_footer_custom_text` | Custom footer text for system-generated emails (as Markdown). Supports standard strftime date/time patterns like %Y (4-digit year), %m (month), %d (day). |
-| `WelcomeEmailCc` | `string` | `welcome_email_cc` | Include this email in welcome emails if enabled |
+| `WelcomeEmailCc` | `string` | `welcome_email_cc` | Copy welcome emails to this address when the email contains neither a create-password link nor a password. |
 | `WelcomeEmailSubject` | `string` | `welcome_email_subject` | Include this email subject in welcome emails if enabled |
 | `WelcomeEmailEnabled` | `*bool` | `welcome_email_enabled` | Will the welcome email be sent to new users? |
 | `WelcomeScreen` | `string` | `welcome_screen` | Does the welcome screen appear? |
