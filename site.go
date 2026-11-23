@@ -170,6 +170,8 @@ type Site struct {
 	DisablePasswordReset *bool `json:"disable_password_reset,omitempty" path:"disable_password_reset,omitempty" url:"disable_password_reset,omitempty"`
 	// Custom domain.
 	Domain string `json:"domain,omitempty" path:"domain,omitempty" url:"domain,omitempty"`
+	// Allow eligible Remote Server Mount and Files.com Agent transfer URLs to use the Site's custom domain. Enabling can serve file content from the same hostname as the signed-in web app. Disabled by default.
+	DangerouslyUseCustomDomainForTransferUrls *bool `json:"dangerously_use_custom_domain_for_transfer_urls,omitempty" path:"dangerously_use_custom_domain_for_transfer_urls,omitempty" url:"dangerously_use_custom_domain_for_transfer_urls,omitempty"`
 	// Send HSTS (HTTP Strict Transport Security) header when visitors access the site via a custom domain?
 	DomainHstsHeader *bool `json:"domain_hsts_header,omitempty" path:"domain_hsts_header,omitempty" url:"domain_hsts_header,omitempty"`
 	// Letsencrypt chain to use when registering SSL Certificate for domain. No longer used as of 2026.
@@ -432,6 +434,8 @@ type SiteUpdateParams struct {
 	BundleExpiration int64 `url:"bundle_expiration,omitempty" json:"bundle_expiration,omitempty" path:"bundle_expiration"`
 	// Maximum visitors per Share Link on this Site. Applies immediately to existing Share Links and across all Workspaces. Null disables the Site-wide cap.
 	BundleMaxUses int64 `url:"bundle_max_uses,omitempty" json:"bundle_max_uses,omitempty" path:"bundle_max_uses"`
+	// Allow eligible Remote Server Mount and Files.com Agent transfer URLs to use the Site's custom domain. Enabling can serve file content from the same hostname as the signed-in web app. Disabled by default.
+	DangerouslyUseCustomDomainForTransferUrls *bool `url:"dangerously_use_custom_domain_for_transfer_urls,omitempty" json:"dangerously_use_custom_domain_for_transfer_urls,omitempty" path:"dangerously_use_custom_domain_for_transfer_urls"`
 	// Will the welcome email be sent to new users?
 	WelcomeEmailEnabled *bool `url:"welcome_email_enabled,omitempty" json:"welcome_email_enabled,omitempty" path:"welcome_email_enabled"`
 	// If false, rename conflicting files instead of asking for overwrite confirmation. Only applies to web interface.

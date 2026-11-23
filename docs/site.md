@@ -118,6 +118,7 @@ Parameters, `files_sdk.SiteUpdateParams`:
 | `AllowBundleNames` | `*bool` | `allow_bundle_names` | no | Are manual Bundle names allowed? |
 | `BundleExpiration` | `int64` | `bundle_expiration` | no | Site-wide Bundle expiration in days |
 | `BundleMaxUses` | `int64` | `bundle_max_uses` | no | Maximum visitors per Share Link on this Site. Applies immediately to existing Share Links and across all Workspaces. Null disables the Site-wide cap. |
+| `DangerouslyUseCustomDomainForTransferUrls` | `*bool` | `dangerously_use_custom_domain_for_transfer_urls` | no | Allow eligible Remote Server Mount and Files.com Agent transfer URLs to use the Site's custom domain. Enabling can serve file content from the same hostname as the signed-in web app. Disabled by default. |
 | `WelcomeEmailEnabled` | `*bool` | `welcome_email_enabled` | no | Will the welcome email be sent to new users? |
 | `AskAboutOverwrites` | `*bool` | `ask_about_overwrites` | no | If false, rename conflicting files instead of asking for overwrite confirmation. Only applies to web interface. |
 | `ShowRequestAccessLink` | `*bool` | `show_request_access_link` | no | Show request access link for users without access? Currently unused. |
@@ -405,6 +406,7 @@ fmt.Println(result)
 | `FileActivityEventsEnabled` | `*bool` | `file_activity_events_enabled` | If true, file operations produce file_action.activity.v1 EventChannel events in all workspaces. Defaults to false; subscription filters and workspace access still control delivery. |
 | `DisablePasswordReset` | `*bool` | `disable_password_reset` | Is password reset disabled? |
 | `Domain` | `string` | `domain` | Custom domain |
+| `DangerouslyUseCustomDomainForTransferUrls` | `*bool` | `dangerously_use_custom_domain_for_transfer_urls` | Allow eligible Remote Server Mount and Files.com Agent transfer URLs to use the Site's custom domain. Enabling can serve file content from the same hostname as the signed-in web app. Disabled by default. |
 | `DomainHstsHeader` | `*bool` | `domain_hsts_header` | Send HSTS (HTTP Strict Transport Security) header when visitors access the site via a custom domain? |
 | `DomainLetsencryptChain` | `string` | `domain_letsencrypt_chain` | Letsencrypt chain to use when registering SSL Certificate for domain. No longer used as of 2026. |
 | `Email` | `string` | `email` | Main email for this site |
