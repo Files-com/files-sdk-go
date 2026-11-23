@@ -62,6 +62,8 @@ type Site struct {
 	BundleActivityNotifications string `json:"bundle_activity_notifications,omitempty" path:"bundle_activity_notifications,omitempty" url:"bundle_activity_notifications,omitempty"`
 	// Site-wide Bundle expiration in days.
 	BundleExpiration int64 `json:"bundle_expiration,omitempty" path:"bundle_expiration,omitempty" url:"bundle_expiration,omitempty"`
+	// Maximum visitors per Share Link on this Site. Applies immediately to existing Share Links and across all Workspaces. Null disables the Site-wide cap.
+	BundleMaxUses int64 `json:"bundle_max_uses,omitempty" path:"bundle_max_uses,omitempty" url:"bundle_max_uses,omitempty"`
 	// Custom error message to show when bundle is not found.
 	BundleNotFoundMessage string `json:"bundle_not_found_message,omitempty" path:"bundle_not_found_message,omitempty" url:"bundle_not_found_message,omitempty"`
 	// Do Bundles require password protection?
@@ -428,6 +430,8 @@ type SiteUpdateParams struct {
 	AllowBundleNames *bool `url:"allow_bundle_names,omitempty" json:"allow_bundle_names,omitempty" path:"allow_bundle_names"`
 	// Site-wide Bundle expiration in days.
 	BundleExpiration int64 `url:"bundle_expiration,omitempty" json:"bundle_expiration,omitempty" path:"bundle_expiration"`
+	// Maximum visitors per Share Link on this Site. Applies immediately to existing Share Links and across all Workspaces. Null disables the Site-wide cap.
+	BundleMaxUses int64 `url:"bundle_max_uses,omitempty" json:"bundle_max_uses,omitempty" path:"bundle_max_uses"`
 	// Will the welcome email be sent to new users?
 	WelcomeEmailEnabled *bool `url:"welcome_email_enabled,omitempty" json:"welcome_email_enabled,omitempty" path:"welcome_email_enabled"`
 	// If false, rename conflicting files instead of asking for overwrite confirmation. Only applies to web interface.

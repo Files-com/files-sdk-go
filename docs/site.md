@@ -117,6 +117,7 @@ Parameters, `files_sdk.SiteUpdateParams`:
 | `ReplyToEmail` | `string` | `reply_to_email` | no | Reply-to email for this site |
 | `AllowBundleNames` | `*bool` | `allow_bundle_names` | no | Are manual Bundle names allowed? |
 | `BundleExpiration` | `int64` | `bundle_expiration` | no | Site-wide Bundle expiration in days |
+| `BundleMaxUses` | `int64` | `bundle_max_uses` | no | Maximum visitors per Share Link on this Site. Applies immediately to existing Share Links and across all Workspaces. Null disables the Site-wide cap. |
 | `WelcomeEmailEnabled` | `*bool` | `welcome_email_enabled` | no | Will the welcome email be sent to new users? |
 | `AskAboutOverwrites` | `*bool` | `ask_about_overwrites` | no | If false, rename conflicting files instead of asking for overwrite confirmation. Only applies to web interface. |
 | `ShowRequestAccessLink` | `*bool` | `show_request_access_link` | no | Show request access link for users without access? Currently unused. |
@@ -350,6 +351,7 @@ fmt.Println(result)
 | `AskAboutOverwrites` | `*bool` | `ask_about_overwrites` | If false, rename conflicting files instead of asking for overwrite confirmation. Only applies to web interface. |
 | `BundleActivityNotifications` | `string` | `bundle_activity_notifications` | Do Bundle owners receive activity notifications? |
 | `BundleExpiration` | `int64` | `bundle_expiration` | Site-wide Bundle expiration in days |
+| `BundleMaxUses` | `int64` | `bundle_max_uses` | Maximum visitors per Share Link on this Site. Applies immediately to existing Share Links and across all Workspaces. Null disables the Site-wide cap. |
 | `BundleNotFoundMessage` | `string` | `bundle_not_found_message` | Custom error message to show when bundle is not found. |
 | `BundlePasswordRequired` | `*bool` | `bundle_password_required` | Do Bundles require password protection? |
 | `BundlesDefaultOwnedByPrimaryGroup` | `*bool` | `bundles_default_owned_by_primary_group` | If true, new Share Links created by a user with a primary group will default to that group as owner. |

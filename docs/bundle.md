@@ -117,7 +117,7 @@ Parameters, `files_sdk.BundleCreateParams`:
 | `DontSeparateSubmissionsByFolder` | `*bool` | `dont_separate_submissions_by_folder` | no | Do not create subfolders for files uploaded to this share. Note: there are subtle security pitfalls with allowing anonymous uploads from multiple users to live in the same folder. We strongly discourage use of this option unless absolutely required. |
 | `ExpiresAt` | `*time.Time` | `expires_at` | no | Explicit Bundle expiration date/time. If not set, the site-wide expiration setting may apply. |
 | `FinalizeSnapshot` | `*bool` | `finalize_snapshot` | no | If true, finalize the snapshot of this bundle's contents. Note that `create_snapshot` must also be true. |
-| `MaxUses` | `int64` | `max_uses` | no | Maximum number of times bundle can be accessed |
+| `MaxUses` | `int64` | `max_uses` | no | Visitor limit configured for this Share Link. Null uses the Site-wide cap, if set. The configured limit cannot exceed the Site-wide cap. |
 | `GroupId` | `int64` | `group_id` | no | Owning group ID. If set, members of this group can view, edit, and share this Share Link. |
 | `InternalName` | `string` | `internal_name` | no | Internal name for identifying this Share Link. |
 | `Description` | `string` | `description` | no | Public description |
@@ -218,7 +218,7 @@ Parameters, `files_sdk.BundleUpdateParams`:
 | `ExpiresAt` | `*time.Time` | `expires_at` | no | Explicit Bundle expiration date/time. If not set, the site-wide expiration setting may apply. |
 | `FinalizeSnapshot` | `*bool` | `finalize_snapshot` | no | If true, finalize the snapshot of this bundle's contents. Note that `create_snapshot` must also be true. |
 | `InboxId` | `int64` | `inbox_id` | no | ID of the associated inbox, if available. |
-| `MaxUses` | `int64` | `max_uses` | no | Maximum number of times bundle can be accessed |
+| `MaxUses` | `int64` | `max_uses` | no | Visitor limit configured for this Share Link. Null uses the Site-wide cap, if set. The configured limit cannot exceed the Site-wide cap. |
 | `GroupId` | `int64` | `group_id` | no | Owning group ID. If set, members of this group can view, edit, and share this Share Link. |
 | `InternalName` | `string` | `internal_name` | no | Internal name for identifying this Share Link. |
 | `Note` | `string` | `note` | no | Bundle internal note |
@@ -326,7 +326,8 @@ if err != nil {
 | `DeletedAt` | `*time.Time` | `deleted_at` | Bundle deleted at date/time |
 | `DontSeparateSubmissionsByFolder` | `*bool` | `dont_separate_submissions_by_folder` | Do not create subfolders for files uploaded to this share. Note: there are subtle security pitfalls with allowing anonymous uploads from multiple users to live in the same folder. We strongly discourage use of this option unless absolutely required. |
 | `EffectiveExpiresAt` | `*time.Time` | `effective_expires_at` | Read-only expiration date/time, using the explicit expiration or the site-wide setting when applicable. Null when the Share Link does not expire. |
-| `MaxUses` | `int64` | `max_uses` | Maximum number of times bundle can be accessed |
+| `MaxUses` | `int64` | `max_uses` | Visitor limit configured for this Share Link. Null uses the Site-wide cap, if set. The configured limit cannot exceed the Site-wide cap. |
+| `EffectiveMaxUses` | `int64` | `effective_max_uses` | Read-only visitor limit actually enforced for this Share Link. Uses the lower of the link limit and the Site-wide cap when both are set. Null means unlimited. |
 | `InternalName` | `string` | `internal_name` | Internal name for identifying this Share Link. |
 | `Note` | `string` | `note` | Bundle internal note |
 | `PathTemplate` | `string` | `path_template` | Template for creating submission subfolders. Can use the uploader's name, email address, ip, company, `strftime` directives, and any custom form data. |

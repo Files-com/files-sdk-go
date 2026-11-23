@@ -65,8 +65,10 @@ type Bundle struct {
 	DontSeparateSubmissionsByFolder *bool `json:"dont_separate_submissions_by_folder,omitempty" path:"dont_separate_submissions_by_folder,omitempty" url:"dont_separate_submissions_by_folder,omitempty"`
 	// Read-only expiration date/time, using the explicit expiration or the site-wide setting when applicable. Null when the Share Link does not expire.
 	EffectiveExpiresAt *time.Time `json:"effective_expires_at,omitempty" path:"effective_expires_at,omitempty" url:"effective_expires_at,omitempty"`
-	// Maximum number of times bundle can be accessed.
+	// Visitor limit configured for this Share Link. Null uses the Site-wide cap, if set. The configured limit cannot exceed the Site-wide cap.
 	MaxUses int64 `json:"max_uses,omitempty" path:"max_uses,omitempty" url:"max_uses,omitempty"`
+	// Read-only visitor limit actually enforced for this Share Link. Uses the lower of the link limit and the Site-wide cap when both are set. Null means unlimited.
+	EffectiveMaxUses int64 `json:"effective_max_uses,omitempty" path:"effective_max_uses,omitempty" url:"effective_max_uses,omitempty"`
 	// Internal name for identifying this Share Link.
 	InternalName string `json:"internal_name,omitempty" path:"internal_name,omitempty" url:"internal_name,omitempty"`
 	// Bundle internal note.
@@ -202,7 +204,7 @@ type BundleCreateParams struct {
 	ExpiresAt *time.Time `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
 	// If true, finalize the snapshot of this bundle's contents. Note that `create_snapshot` must also be true.
 	FinalizeSnapshot *bool `url:"finalize_snapshot,omitempty" json:"finalize_snapshot,omitempty" path:"finalize_snapshot"`
-	// Maximum number of times bundle can be accessed.
+	// Visitor limit configured for this Share Link. Null uses the Site-wide cap, if set. The configured limit cannot exceed the Site-wide cap.
 	MaxUses int64 `url:"max_uses,omitempty" json:"max_uses,omitempty" path:"max_uses"`
 	// Owning group ID. If set, members of this group can view, edit, and share this Share Link.
 	GroupId int64 `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
@@ -294,7 +296,7 @@ type BundleUpdateParams struct {
 	FinalizeSnapshot *bool `url:"finalize_snapshot,omitempty" json:"finalize_snapshot,omitempty" path:"finalize_snapshot"`
 	// ID of the associated inbox, if available.
 	InboxId int64 `url:"inbox_id,omitempty" json:"inbox_id,omitempty" path:"inbox_id"`
-	// Maximum number of times bundle can be accessed.
+	// Visitor limit configured for this Share Link. Null uses the Site-wide cap, if set. The configured limit cannot exceed the Site-wide cap.
 	MaxUses int64 `url:"max_uses,omitempty" json:"max_uses,omitempty" path:"max_uses"`
 	// Owning group ID. If set, members of this group can view, edit, and share this Share Link.
 	GroupId int64 `url:"group_id,omitempty" json:"group_id,omitempty" path:"group_id"`
