@@ -115,6 +115,7 @@ Parameters, `files_sdk.SyncCreateParams`:
 | `RecurringDays` | `[]int64` | `recurring_days` | no | If trigger type is `daily`, this specifies one or more day numbers to run in one of the supported intervals: `week`, `month`, `quarter`, `year`. |
 | `ScheduleId` | `int64` | `schedule_id` | no | If trigger is `custom_schedule`, the reusable Schedule used instead of the sync's schedule fields. |
 | `ScheduleDaysOfWeek` | `[]int64` | `schedule_days_of_week` | no | If trigger is `custom_schedule`, Custom schedule description for when the sync should be run. 0-based days of the week. 0 is Sunday, 1 is Monday, etc. |
+| `ScheduleIntervalMinutes` | `int64` | `schedule_interval_minutes` | no | Run every N minutes (1–59, subject to the Site plan minimum). Use by itself with `custom_schedule`. |
 | `ScheduleTimeZone` | `string` | `schedule_time_zone` | no | Time zone for the schedule. If not set, times are interpreted as UTC. |
 | `ScheduleTimesOfDay` | `[]string` | `schedule_times_of_day` | no | Times of day to run in HH:MM format. For `custom_schedule`, run at these times on specified days of week. For `daily`, run at these times on the scheduled interval date. |
 | `SrcPath` | `string` | `src_path` | no | Absolute source path for the sync |
@@ -227,6 +228,7 @@ Parameters, `files_sdk.SyncUpdateParams`:
 | `RecurringDays` | `[]int64` | `recurring_days` | no | If trigger type is `daily`, this specifies one or more day numbers to run in one of the supported intervals: `week`, `month`, `quarter`, `year`. |
 | `ScheduleId` | `int64` | `schedule_id` | no | If trigger is `custom_schedule`, the reusable Schedule used instead of the sync's schedule fields. |
 | `ScheduleDaysOfWeek` | `[]int64` | `schedule_days_of_week` | no | If trigger is `custom_schedule`, Custom schedule description for when the sync should be run. 0-based days of the week. 0 is Sunday, 1 is Monday, etc. |
+| `ScheduleIntervalMinutes` | `int64` | `schedule_interval_minutes` | no | Run every N minutes (1–59, subject to the Site plan minimum). Use by itself with `custom_schedule`. |
 | `ScheduleTimeZone` | `string` | `schedule_time_zone` | no | Time zone for the schedule. If not set, times are interpreted as UTC. |
 | `ScheduleTimesOfDay` | `[]string` | `schedule_times_of_day` | no | Times of day to run in HH:MM format. For `custom_schedule`, run at these times on specified days of week. For `daily`, run at these times on the scheduled interval date. |
 | `SrcPath` | `string` | `src_path` | no | Absolute source path for the sync |
@@ -323,6 +325,7 @@ if err != nil {
 | `RecurringDays` | `[]int64` | `recurring_days` | If trigger type is `daily`, this specifies one or more day numbers to run in one of the supported intervals: `week`, `month`, `quarter`, `year`. |
 | `ScheduleId` | `int64` | `schedule_id` | If trigger is `custom_schedule`, the reusable Schedule used instead of the sync's schedule fields. |
 | `ScheduleDaysOfWeek` | `[]int64` | `schedule_days_of_week` | If trigger is `custom_schedule`, Custom schedule description for when the sync should be run. 0-based days of the week. 0 is Sunday, 1 is Monday, etc. |
+| `ScheduleIntervalMinutes` | `int64` | `schedule_interval_minutes` | Run every N minutes (1–59, subject to the Site plan minimum). Use by itself with `custom_schedule`. |
 | `ScheduleTimesOfDay` | `[]string` | `schedule_times_of_day` | Times of day to run in HH:MM format. For `custom_schedule`, run at these times on specified days of week. For `daily`, run at these times on the scheduled interval date. |
 | `ScheduleTimeZone` | `string` | `schedule_time_zone` | Time zone for the schedule. If not set, times are interpreted as UTC. |
 | `HolidayRegion` | `string` | `holiday_region` | Skip the sync if there is a formal, observed holiday for this region. |

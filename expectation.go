@@ -39,6 +39,8 @@ type Expectation struct {
 	ScheduleId int64 `json:"schedule_id,omitempty" path:"schedule_id,omitempty" url:"schedule_id,omitempty"`
 	// If trigger is `custom_schedule`, the 0-based weekdays used by the schedule.
 	ScheduleDaysOfWeek []int64 `json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week,omitempty" url:"schedule_days_of_week,omitempty"`
+	// Set a delivery deadline every N minutes (1–59, subject to the Site plan minimum). Use by itself with `custom_schedule`.
+	ScheduleIntervalMinutes int64 `json:"schedule_interval_minutes,omitempty" path:"schedule_interval_minutes,omitempty" url:"schedule_interval_minutes,omitempty"`
 	// Times of day in HH:MM format for the Expectation schedule.
 	ScheduleTimesOfDay []string `json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day,omitempty" url:"schedule_times_of_day,omitempty"`
 	// Time zone used by the Expectation schedule.
@@ -140,6 +142,8 @@ type ExpectationCreateParams struct {
 	ScheduleId int64 `url:"schedule_id,omitempty" json:"schedule_id,omitempty" path:"schedule_id"`
 	// If trigger is `custom_schedule`, the 0-based weekdays used by the schedule.
 	ScheduleDaysOfWeek []int64 `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
+	// Set a delivery deadline every N minutes (1–59, subject to the Site plan minimum). Use by itself with `custom_schedule`.
+	ScheduleIntervalMinutes int64 `url:"schedule_interval_minutes,omitempty" json:"schedule_interval_minutes,omitempty" path:"schedule_interval_minutes"`
 	// Times of day in HH:MM format for the Expectation schedule.
 	ScheduleTimesOfDay []string `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
 	// Time zone used by the Expectation schedule.
@@ -198,6 +202,8 @@ type ExpectationUpdateParams struct {
 	ScheduleId int64 `url:"schedule_id,omitempty" json:"schedule_id,omitempty" path:"schedule_id"`
 	// If trigger is `custom_schedule`, the 0-based weekdays used by the schedule.
 	ScheduleDaysOfWeek []int64 `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
+	// Set a delivery deadline every N minutes (1–59, subject to the Site plan minimum). Use by itself with `custom_schedule`.
+	ScheduleIntervalMinutes int64 `url:"schedule_interval_minutes,omitempty" json:"schedule_interval_minutes,omitempty" path:"schedule_interval_minutes"`
 	// Times of day in HH:MM format for the Expectation schedule.
 	ScheduleTimesOfDay []string `url:"schedule_times_of_day,omitempty" json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day"`
 	// Time zone used by the Expectation schedule.

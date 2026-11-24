@@ -67,6 +67,8 @@ type Sync struct {
 	ScheduleId int64 `json:"schedule_id,omitempty" path:"schedule_id,omitempty" url:"schedule_id,omitempty"`
 	// If trigger is `custom_schedule`, Custom schedule description for when the sync should be run. 0-based days of the week. 0 is Sunday, 1 is Monday, etc.
 	ScheduleDaysOfWeek []int64 `json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week,omitempty" url:"schedule_days_of_week,omitempty"`
+	// Run every N minutes (1–59, subject to the Site plan minimum). Use by itself with `custom_schedule`.
+	ScheduleIntervalMinutes int64 `json:"schedule_interval_minutes,omitempty" path:"schedule_interval_minutes,omitempty" url:"schedule_interval_minutes,omitempty"`
 	// Times of day to run in HH:MM format. For `custom_schedule`, run at these times on specified days of week. For `daily`, run at these times on the scheduled interval date.
 	ScheduleTimesOfDay []string `json:"schedule_times_of_day,omitempty" path:"schedule_times_of_day,omitempty" url:"schedule_times_of_day,omitempty"`
 	// Time zone for the schedule. If not set, times are interpreted as UTC.
@@ -151,6 +153,8 @@ type SyncCreateParams struct {
 	ScheduleId int64 `url:"schedule_id,omitempty" json:"schedule_id,omitempty" path:"schedule_id"`
 	// If trigger is `custom_schedule`, Custom schedule description for when the sync should be run. 0-based days of the week. 0 is Sunday, 1 is Monday, etc.
 	ScheduleDaysOfWeek []int64 `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
+	// Run every N minutes (1–59, subject to the Site plan minimum). Use by itself with `custom_schedule`.
+	ScheduleIntervalMinutes int64 `url:"schedule_interval_minutes,omitempty" json:"schedule_interval_minutes,omitempty" path:"schedule_interval_minutes"`
 	// Time zone for the schedule. If not set, times are interpreted as UTC.
 	ScheduleTimeZone string `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
 	// Times of day to run in HH:MM format. For `custom_schedule`, run at these times on specified days of week. For `daily`, run at these times on the scheduled interval date.
@@ -221,6 +225,8 @@ type SyncUpdateParams struct {
 	ScheduleId int64 `url:"schedule_id,omitempty" json:"schedule_id,omitempty" path:"schedule_id"`
 	// If trigger is `custom_schedule`, Custom schedule description for when the sync should be run. 0-based days of the week. 0 is Sunday, 1 is Monday, etc.
 	ScheduleDaysOfWeek []int64 `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
+	// Run every N minutes (1–59, subject to the Site plan minimum). Use by itself with `custom_schedule`.
+	ScheduleIntervalMinutes int64 `url:"schedule_interval_minutes,omitempty" json:"schedule_interval_minutes,omitempty" path:"schedule_interval_minutes"`
 	// Time zone for the schedule. If not set, times are interpreted as UTC.
 	ScheduleTimeZone string `url:"schedule_time_zone,omitempty" json:"schedule_time_zone,omitempty" path:"schedule_time_zone"`
 	// Times of day to run in HH:MM format. For `custom_schedule`, run at these times on specified days of week. For `daily`, run at these times on the scheduled interval date.

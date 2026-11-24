@@ -112,6 +112,7 @@ Parameters, `files_sdk.AiTaskCreateParams`:
 | `RecurringDays` | `[]int64` | `recurring_days` | no | If trigger is `daily`, this selects one or more day numbers inside a `week`, `month`, `quarter`, or `year` interval. |
 | `ScheduleId` | `int64` | `schedule_id` | no | If trigger is `custom_schedule`, the reusable Schedule used instead of the AI Task's schedule fields. |
 | `ScheduleDaysOfWeek` | `[]int64` | `schedule_days_of_week` | no | If trigger is `custom_schedule`, the 0-based weekdays used by the schedule. |
+| `ScheduleIntervalMinutes` | `int64` | `schedule_interval_minutes` | no | Run every N minutes (1–59, subject to the Site plan minimum). Use by itself with `custom_schedule`. |
 | `ScheduleTimeZone` | `string` | `schedule_time_zone` | no | Time zone used by the AI Task schedule. |
 | `ScheduleTimesOfDay` | `[]string` | `schedule_times_of_day` | no | Times of day in HH:MM format for the AI Task schedule. |
 | `Source` | `string` | `source` | no | Source glob used with `path` for action-triggered AI Tasks. |
@@ -193,6 +194,7 @@ Parameters, `files_sdk.AiTaskUpdateParams`:
 | `RecurringDays` | `[]int64` | `recurring_days` | no | If trigger is `daily`, this selects one or more day numbers inside a `week`, `month`, `quarter`, or `year` interval. |
 | `ScheduleId` | `int64` | `schedule_id` | no | If trigger is `custom_schedule`, the reusable Schedule used instead of the AI Task's schedule fields. |
 | `ScheduleDaysOfWeek` | `[]int64` | `schedule_days_of_week` | no | If trigger is `custom_schedule`, the 0-based weekdays used by the schedule. |
+| `ScheduleIntervalMinutes` | `int64` | `schedule_interval_minutes` | no | Run every N minutes (1–59, subject to the Site plan minimum). Use by itself with `custom_schedule`. |
 | `ScheduleTimeZone` | `string` | `schedule_time_zone` | no | Time zone used by the AI Task schedule. |
 | `ScheduleTimesOfDay` | `[]string` | `schedule_times_of_day` | no | Times of day in HH:MM format for the AI Task schedule. |
 | `Source` | `string` | `source` | no | Source glob used with `path` for action-triggered AI Tasks. |
@@ -274,6 +276,7 @@ if err != nil {
 | `RecurringDays` | `[]int64` | `recurring_days` | If trigger is `daily`, this selects one or more day numbers inside a `week`, `month`, `quarter`, or `year` interval. |
 | `ScheduleId` | `int64` | `schedule_id` | If trigger is `custom_schedule`, the reusable Schedule used instead of the AI Task's schedule fields. |
 | `ScheduleDaysOfWeek` | `[]int64` | `schedule_days_of_week` | If trigger is `custom_schedule`, the 0-based weekdays used by the schedule. |
+| `ScheduleIntervalMinutes` | `int64` | `schedule_interval_minutes` | Run every N minutes (1–59, subject to the Site plan minimum). Use by itself with `custom_schedule`. |
 | `ScheduleTimesOfDay` | `[]string` | `schedule_times_of_day` | Times of day in HH:MM format for the AI Task schedule. |
 | `ScheduleTimeZone` | `string` | `schedule_time_zone` | Time zone used by the AI Task schedule. |
 | `HolidayRegion` | `string` | `holiday_region` | Optional holiday region used by the AI Task schedule. |
