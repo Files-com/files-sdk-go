@@ -129,6 +129,22 @@ func TestBuildRequestSendsFileParamsAsReplayableMultipartForm(t *testing.T) {
 	assert.ErrorContains(t, err, "watermark_attachment_file")
 }
 
+func TestParseResponseKeepsTheStatusCodeOfANonJSONError(t *testing.T) {
+	res := &http.Response{
+		StatusCode:    http.StatusInternalServerError,
+		Header:        http.Header{},
+		ContentLength: 0,
+		Body:          io.NopCloser(strings.NewReader("")),
+	}
+
+	_, _, err := ParseResponse(res, "/file_actions/begin_upload/report.csv")
+
+	var responseErr lib.ResponseError
+	require.True(t, errors.As(err, &responseErr))
+	assert.Equal(t, http.StatusInternalServerError, responseErr.StatusCode)
+	assert.Equal(t, "/file_actions/begin_upload/report.csv - status code: 500 - ", err.Error())
+}
+
 func TestCallLogsDebugResponseAndKeepsItsBody(t *testing.T) {
 	body := `[{"id":231,"description":"ordinary-debug-response-marker"}]`
 	retriedBody := `{"error":"ordinary-debug-retried-marker","http-code":503}`

@@ -188,7 +188,7 @@ func ParseResponse(res *http.Response, resource string) (*[]byte, *http.Response
 		return &defaultValue, res, nil
 	}
 	nonOkError := lib.NonOkErrorCustom(func(err error) error {
-		return fmt.Errorf("%v - %v", resource, err)
+		return fmt.Errorf("%v - %w", resource, err)
 	})
 
 	if err := lib.ResponseErrors(res, APIError(), nonOkError); err != nil {
