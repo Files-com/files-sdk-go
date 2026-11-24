@@ -102,6 +102,7 @@ Parameters, `files_sdk.SnapshotCreateParams`:
 | `Name` | `string` | `name` | no | A name for the snapshot. |
 | `Paths` | `[]string` | `paths` | no | An array of paths to add to the snapshot. |
 | `WorkspaceId` | `int64` | `workspace_id` | no | Workspace ID. `0` means the default workspace. |
+| `SharedWorkflowId` | `int64` | `shared_workflow_id` | no | Shared Workflow for which the Snapshot was created. |
 
 Example:
 
@@ -231,4 +232,5 @@ if err != nil {
 | `UserId` | `int64` | `user_id` | The user that created this snapshot, if applicable. |
 | `BundleId` | `int64` | `bundle_id` | The bundle using this snapshot, if applicable. |
 | `WorkspaceId` | `int64` | `workspace_id` | Workspace ID. `0` means the default workspace. |
+| `SharedWorkflowId` | `int64` | `shared_workflow_id` | Shared Workflow for which the Snapshot was created. |
 | `Paths` | `[]string` | `paths` | An array of paths to add to the snapshot. |

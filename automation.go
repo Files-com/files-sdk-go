@@ -89,6 +89,12 @@ type Automation struct {
 	ScheduleTimeZone string `json:"schedule_time_zone,omitempty" path:"schedule_time_zone,omitempty" url:"schedule_time_zone,omitempty"`
 	// Source path/glob. See Automation docs for exact description, but this is used to filter for files in the `path` to find files to operate on. Supports globs, except on remote mounts.
 	Source string `json:"source,omitempty" path:"source,omitempty" url:"source,omitempty"`
+	// Users who can start this Shared Workflow.
+	SharedTriggerUserIds []int64 `json:"shared_trigger_user_ids,omitempty" path:"shared_trigger_user_ids,omitempty" url:"shared_trigger_user_ids,omitempty"`
+	// Groups whose members can start this Shared Workflow.
+	SharedTriggerGroupIds []int64 `json:"shared_trigger_group_ids,omitempty" path:"shared_trigger_group_ids,omitempty" url:"shared_trigger_group_ids,omitempty"`
+	// Partners whose users can start this Shared Workflow.
+	SharedTriggerPartnerIds []int64 `json:"shared_trigger_partner_ids,omitempty" path:"shared_trigger_partner_ids,omitempty" url:"shared_trigger_partner_ids,omitempty"`
 	// IDs of Syncs to run by this Automation.
 	SyncIds []int64 `json:"sync_ids,omitempty" path:"sync_ids,omitempty" url:"sync_ids,omitempty"`
 	// If trigger is `action`, this is the list of action types on which to trigger the automation. Valid actions are create, copy, move, archived_delete, update, read, destroy.
@@ -133,6 +139,7 @@ func (u AutomationTriggerEnum) Enum() map[string]AutomationTriggerEnum {
 		"webhook":         AutomationTriggerEnum("webhook"),
 		"email":           AutomationTriggerEnum("email"),
 		"action":          AutomationTriggerEnum("action"),
+		"shared":          AutomationTriggerEnum("shared"),
 	}
 }
 
@@ -205,6 +212,12 @@ type AutomationCreateParams struct {
 	GroupIds string `url:"group_ids,omitempty" json:"group_ids,omitempty" path:"group_ids"`
 	// If trigger is `custom_schedule`, the reusable Schedule used instead of the automation's schedule fields.
 	ScheduleId int64 `url:"schedule_id,omitempty" json:"schedule_id,omitempty" path:"schedule_id"`
+	// Users who can start this Shared Workflow.
+	SharedTriggerUserIds []int64 `url:"shared_trigger_user_ids,omitempty" json:"shared_trigger_user_ids,omitempty" path:"shared_trigger_user_ids"`
+	// Groups whose members can start this Shared Workflow.
+	SharedTriggerGroupIds []int64 `url:"shared_trigger_group_ids,omitempty" json:"shared_trigger_group_ids,omitempty" path:"shared_trigger_group_ids"`
+	// Partners whose users can start this Shared Workflow.
+	SharedTriggerPartnerIds []int64 `url:"shared_trigger_partner_ids,omitempty" json:"shared_trigger_partner_ids,omitempty" path:"shared_trigger_partner_ids"`
 	// If trigger is `custom_schedule` without `schedule_id`, a list of days of the week to run this automation. 0 is Sunday, 1 is Monday, etc.
 	ScheduleDaysOfWeek []int64 `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	// Run every N minutes (1–59, subject to the Site plan minimum). Use by itself with `custom_schedule`. For v2 Automations, set this field in the Scheduled trigger's definition.
@@ -245,7 +258,7 @@ type AutomationCreateParams struct {
 	RetryOnFailureIntervalInMinutes int64 `url:"retry_on_failure_interval_in_minutes,omitempty" json:"retry_on_failure_interval_in_minutes,omitempty" path:"retry_on_failure_interval_in_minutes"`
 	// If the Automation fails, retry at most this many times. Maximum allowed value: 10. Set to null to disable.
 	RetryOnFailureNumberOfAttempts int64 `url:"retry_on_failure_number_of_attempts,omitempty" json:"retry_on_failure_number_of_attempts,omitempty" path:"retry_on_failure_number_of_attempts"`
-	// How this automation is triggered to run. Values: manual, daily, custom_schedule, webhook, email, action.
+	// How this automation is triggered to run. Values: manual, daily, custom_schedule, webhook, email, action, shared.
 	Trigger AutomationTriggerEnum `url:"trigger,omitempty" json:"trigger,omitempty" path:"trigger"`
 	// If trigger is `action`, this is the list of action types on which to trigger the automation. Valid actions are create, copy, move, archived_delete, update, read, destroy.
 	TriggerActions []string `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`
@@ -303,6 +316,12 @@ type AutomationUpdateParams struct {
 	GroupIds string `url:"group_ids,omitempty" json:"group_ids,omitempty" path:"group_ids"`
 	// If trigger is `custom_schedule`, the reusable Schedule used instead of the automation's schedule fields.
 	ScheduleId int64 `url:"schedule_id,omitempty" json:"schedule_id,omitempty" path:"schedule_id"`
+	// Users who can start this Shared Workflow.
+	SharedTriggerUserIds []int64 `url:"shared_trigger_user_ids,omitempty" json:"shared_trigger_user_ids,omitempty" path:"shared_trigger_user_ids"`
+	// Groups whose members can start this Shared Workflow.
+	SharedTriggerGroupIds []int64 `url:"shared_trigger_group_ids,omitempty" json:"shared_trigger_group_ids,omitempty" path:"shared_trigger_group_ids"`
+	// Partners whose users can start this Shared Workflow.
+	SharedTriggerPartnerIds []int64 `url:"shared_trigger_partner_ids,omitempty" json:"shared_trigger_partner_ids,omitempty" path:"shared_trigger_partner_ids"`
 	// If trigger is `custom_schedule` without `schedule_id`, a list of days of the week to run this automation. 0 is Sunday, 1 is Monday, etc.
 	ScheduleDaysOfWeek []int64 `url:"schedule_days_of_week,omitempty" json:"schedule_days_of_week,omitempty" path:"schedule_days_of_week"`
 	// Run every N minutes (1–59, subject to the Site plan minimum). Use by itself with `custom_schedule`. For v2 Automations, set this field in the Scheduled trigger's definition.
@@ -343,7 +362,7 @@ type AutomationUpdateParams struct {
 	RetryOnFailureIntervalInMinutes int64 `url:"retry_on_failure_interval_in_minutes,omitempty" json:"retry_on_failure_interval_in_minutes,omitempty" path:"retry_on_failure_interval_in_minutes"`
 	// If the Automation fails, retry at most this many times. Maximum allowed value: 10. Set to null to disable.
 	RetryOnFailureNumberOfAttempts int64 `url:"retry_on_failure_number_of_attempts,omitempty" json:"retry_on_failure_number_of_attempts,omitempty" path:"retry_on_failure_number_of_attempts"`
-	// How this automation is triggered to run. Values: manual, daily, custom_schedule, webhook, email, action.
+	// How this automation is triggered to run. Values: manual, daily, custom_schedule, webhook, email, action, shared.
 	Trigger AutomationTriggerEnum `url:"trigger,omitempty" json:"trigger,omitempty" path:"trigger"`
 	// If trigger is `action`, this is the list of action types on which to trigger the automation. Valid actions are create, copy, move, archived_delete, update, read, destroy.
 	TriggerActions []string `url:"trigger_actions,omitempty" json:"trigger_actions,omitempty" path:"trigger_actions"`

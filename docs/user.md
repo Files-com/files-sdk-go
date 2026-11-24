@@ -132,7 +132,7 @@ Parameters, `files_sdk.UserCreateParams`:
 | `BypassSiteAllowedIps` | `*bool` | `bypass_site_allowed_ips` | no | Allow this user to skip site-wide IP blacklists? |
 | `DavPermission` | `*bool` | `dav_permission` | no | Can the user connect with WebDAV? |
 | `DesktopConfigurationProfileId` | `int64` | `desktop_configuration_profile_id` | no | Desktop Configuration Profile ID assigned directly to this user, if any. |
-| `DefaultWorkspaceId` | `int64` | `default_workspace_id` | no | Workspace ID the user should land in by default when more than one Workspace is available. |
+| `PreferredWorkspaceId` | `int64` | `preferred_workspace_id` | no | Workspace ID the user should land in by default when more than one Workspace is available. |
 | `Disabled` | `*bool` | `disabled` | no | Is user disabled? Disabled users cannot log in, and do not count for billing purposes. Users can be automatically disabled after an inactivity period via a Site setting or schedule to be deactivated after specific date. |
 | `FilesystemLayout` | `files_sdk.UserFilesystemLayoutEnum` | `filesystem_layout` | no | File system layout Values: `site_root`, `user_root`, `partner_root`, `integration_centric`, `workspace_root`. |
 | `FtpPermission` | `*bool` | `ftp_permission` | no | Can the user access with FTP/FTPS? |
@@ -320,7 +320,7 @@ Parameters, `files_sdk.UserUpdateParams`:
 | `BypassSiteAllowedIps` | `*bool` | `bypass_site_allowed_ips` | no | Allow this user to skip site-wide IP blacklists? |
 | `DavPermission` | `*bool` | `dav_permission` | no | Can the user connect with WebDAV? |
 | `DesktopConfigurationProfileId` | `int64` | `desktop_configuration_profile_id` | no | Desktop Configuration Profile ID assigned directly to this user, if any. |
-| `DefaultWorkspaceId` | `int64` | `default_workspace_id` | no | Workspace ID the user should land in by default when more than one Workspace is available. |
+| `PreferredWorkspaceId` | `int64` | `preferred_workspace_id` | no | Workspace ID the user should land in by default when more than one Workspace is available. |
 | `Disabled` | `*bool` | `disabled` | no | Is user disabled? Disabled users cannot log in, and do not count for billing purposes. Users can be automatically disabled after an inactivity period via a Site setting or schedule to be deactivated after specific date. |
 | `FilesystemLayout` | `files_sdk.UserFilesystemLayoutEnum` | `filesystem_layout` | no | File system layout Values: `site_root`, `user_root`, `partner_root`, `integration_centric`, `workspace_root`. |
 | `FtpPermission` | `*bool` | `ftp_permission` | no | Can the user access with FTP/FTPS? |
@@ -504,7 +504,7 @@ if err != nil {
 | `WorkspaceAdmin` | `*bool` | `workspace_admin` | Whether the user is an administrator of their own Custom Workspace. Does not reflect administration granted through Permissions. |
 | `SiteId` | `int64` | `site_id` | Site ID |
 | `WorkspaceId` | `int64` | `workspace_id` | ID of the Workspace the user belongs to. 0 is the Default Workspace. |
-| `DefaultWorkspaceId` | `int64` | `default_workspace_id` | Workspace ID the user should land in by default when more than one Workspace is available. |
+| `PreferredWorkspaceId` | `int64` | `preferred_workspace_id` | Workspace ID the user should land in by default when more than one Workspace is available. |
 | `SkipWelcomeScreen` | `*bool` | `skip_welcome_screen` | Skip Welcome page in the UI? |
 | `FtpTlsSessionReuseRequired` | `string` | `ftp_tls_session_reuse_required` | FTP TLS session reuse requirement: use_system_setting, always_require, or never_require |
 | `SslRequired` | `string` | `ssl_required` | SSL required setting |

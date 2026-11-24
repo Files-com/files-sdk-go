@@ -165,6 +165,7 @@ Parameters, `files_sdk.GroupUpdateParams`:
 | `IntegrationCentricProfileId` | `int64` | `integration_centric_profile_id` | no | Integration Centric Profile ID assigned to this Group, if any. Users in the Group inherit it unless a direct per-user assignment overrides it. |
 | `AllowedIps` | `string` | `allowed_ips` | no | A list of allowed IPs if applicable. Newline delimited |
 | `Name` | `string` | `name` | no | Group name. |
+| `PreferredWorkspaceId` | `int64` | `preferred_workspace_id` | no | Custom Workspace a new Group member will use as their Preferred Workspace if they have no saved preference. The Group must have a Permission in that Workspace. |
 
 Example:
 
@@ -239,5 +240,6 @@ if err != nil {
 | `S3CompatibleEndpointPermission` | `*bool` | `s3_compatible_endpoint_permission` | If true, users in this group can access the S3-compatible endpoint. This will override a false value of `s3_compatible_endpoint_permission` on the user level. Defaults to false. |
 | `DesktopConfigurationProfileId` | `int64` | `desktop_configuration_profile_id` | Desktop Configuration Profile ID assigned to this Group, if any. Users in the Group inherit it unless a direct per-user assignment overrides it. |
 | `IntegrationCentricProfileId` | `int64` | `integration_centric_profile_id` | Integration Centric Profile ID assigned to this Group, if any. Users in the Group inherit it unless a direct per-user assignment overrides it. |
+| `PreferredWorkspaceId` | `int64` | `preferred_workspace_id` | Custom Workspace a new Group member will use as their Preferred Workspace if they have no saved preference. The Group must have a Permission in that Workspace. |
 | `SiteId` | `int64` | `site_id` | Site ID |
 | `WorkspaceId` | `int64` | `workspace_id` | Workspace ID |

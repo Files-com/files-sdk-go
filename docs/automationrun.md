@@ -187,13 +187,16 @@ fmt.Println(result)
 | Field | Go type | JSON key | Description |
 | --- | --- | --- | --- |
 | `Id` | `int64` | `id` | ID. |
+| `CompletedAt` | `*time.Time` | `completed_at` | Automation run completion/failure date/time. |
+| `CreatedAt` | `*time.Time` | `created_at` | Automation run start date/time. |
+| `Status` | `string` | `status` | The status of the AutomationRun. One of `queued`, `running`, `success`, `partial_failure`, `failure`, `skipped`, or `canceled`. |
 | `AutomationId` | `int64` | `automation_id` | ID of the associated Automation. |
 | `AutomationVersionId` | `int64` | `automation_version_id` | ID of the immutable Automation version pinned by this run. |
 | `Version` | `int64` | `version` | Pinned Automation v2 definition version. |
 | `WorkspaceId` | `int64` | `workspace_id` | Workspace ID. |
+| `InitiatingUserId` | `int64` | `initiating_user_id` | User who initiated a Shared Workflow run. |
+| `InitiatingInterface` | `string` | `initiating_interface` | Interface from which the Shared Workflow was started. |
 | `CancelRequestedAt` | `*time.Time` | `cancel_requested_at` | Date/time at which cancellation was requested. |
-| `CompletedAt` | `*time.Time` | `completed_at` | Automation run completion/failure date/time. |
-| `CreatedAt` | `*time.Time` | `created_at` | Automation run start date/time. |
 | `RetryAt` | `*time.Time` | `retry_at` | If set, this automation will be retried at this date/time due to `failure` or `partial_failure`. |
 | `RetriedAt` | `*time.Time` | `retried_at` | If set, this Automation run was retried due to `failure` or `partial_failure`. |
 | `RetriedInRunId` | `int64` | `retried_in_run_id` | ID of the run that is or will be retrying this run. |
@@ -201,7 +204,6 @@ fmt.Println(result)
 | `RerunOfRunId` | `int64` | `rerun_of_run_id` | ID of the run whose persisted node outputs this run reused. |
 | `RerunFromNodeId` | `string` | `rerun_from_node_id` | Node at which this run resumed execution. |
 | `Runtime` | `float64` | `runtime` | Automation run runtime. |
-| `Status` | `string` | `status` | The status of the AutomationRun. One of `queued`, `running`, `success`, `partial_failure`, `failure`, `skipped`, or `canceled`. |
 | `SuccessfulOperations` | `int64` | `successful_operations` | Count of successful operations. |
 | `FailedOperations` | `int64` | `failed_operations` | Count of failed operations. |
 | `Definition` | `interface{}` | `definition` | Automation definition snapshot pinned by this run. For performance reasons, this is not provided when listing Automation runs. |

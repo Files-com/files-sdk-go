@@ -11,6 +11,12 @@ import (
 type AutomationRun struct {
 	// ID.
 	Id int64 `json:"id,omitempty" path:"id,omitempty" url:"id,omitempty"`
+	// Automation run completion/failure date/time.
+	CompletedAt *time.Time `json:"completed_at,omitempty" path:"completed_at,omitempty" url:"completed_at,omitempty"`
+	// Automation run start date/time.
+	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
+	// The status of the AutomationRun. One of `queued`, `running`, `success`, `partial_failure`, `failure`, `skipped`, or `canceled`.
+	Status string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
 	// ID of the associated Automation.
 	AutomationId int64 `json:"automation_id,omitempty" path:"automation_id,omitempty" url:"automation_id,omitempty"`
 	// ID of the immutable Automation version pinned by this run.
@@ -19,12 +25,12 @@ type AutomationRun struct {
 	Version int64 `json:"version,omitempty" path:"version,omitempty" url:"version,omitempty"`
 	// Workspace ID.
 	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	// User who initiated a Shared Workflow run.
+	InitiatingUserId int64 `json:"initiating_user_id,omitempty" path:"initiating_user_id,omitempty" url:"initiating_user_id,omitempty"`
+	// Interface from which the Shared Workflow was started.
+	InitiatingInterface string `json:"initiating_interface,omitempty" path:"initiating_interface,omitempty" url:"initiating_interface,omitempty"`
 	// Date/time at which cancellation was requested.
 	CancelRequestedAt *time.Time `json:"cancel_requested_at,omitempty" path:"cancel_requested_at,omitempty" url:"cancel_requested_at,omitempty"`
-	// Automation run completion/failure date/time.
-	CompletedAt *time.Time `json:"completed_at,omitempty" path:"completed_at,omitempty" url:"completed_at,omitempty"`
-	// Automation run start date/time.
-	CreatedAt *time.Time `json:"created_at,omitempty" path:"created_at,omitempty" url:"created_at,omitempty"`
 	// If set, this automation will be retried at this date/time due to `failure` or `partial_failure`.
 	RetryAt *time.Time `json:"retry_at,omitempty" path:"retry_at,omitempty" url:"retry_at,omitempty"`
 	// If set, this Automation run was retried due to `failure` or `partial_failure`.
@@ -39,8 +45,6 @@ type AutomationRun struct {
 	RerunFromNodeId string `json:"rerun_from_node_id,omitempty" path:"rerun_from_node_id,omitempty" url:"rerun_from_node_id,omitempty"`
 	// Automation run runtime.
 	Runtime float64 `json:"runtime,omitempty" path:"runtime,omitempty" url:"runtime,omitempty"`
-	// The status of the AutomationRun. One of `queued`, `running`, `success`, `partial_failure`, `failure`, `skipped`, or `canceled`.
-	Status string `json:"status,omitempty" path:"status,omitempty" url:"status,omitempty"`
 	// Count of successful operations.
 	SuccessfulOperations int64 `json:"successful_operations,omitempty" path:"successful_operations,omitempty" url:"successful_operations,omitempty"`
 	// Count of failed operations.

@@ -32,6 +32,8 @@ type PartnerChannelTemplate struct {
 	ToPartnerManagedFolderPaths []string `json:"to_partner_managed_folder_paths,omitempty" path:"to_partner_managed_folder_paths,omitempty" url:"to_partner_managed_folder_paths,omitempty"`
 	// Managed folder paths inside the from-Partner folder.
 	FromPartnerManagedFolderPaths []string `json:"from_partner_managed_folder_paths,omitempty" path:"from_partner_managed_folder_paths,omitempty" url:"from_partner_managed_folder_paths,omitempty"`
+	// Form Field Sets attached to From Partner upload destinations. Managed Partner Channels receive copies of these assignments.
+	FromPartnerUploadForms []PartnerChannelUploadForm `json:"from_partner_upload_forms,omitempty" path:"from_partner_upload_forms,omitempty" url:"from_partner_upload_forms,omitempty"`
 	// Resolved to-Partner subfolder name. Null when the direction is disabled or uses the Channel folder directly.
 	EffectiveToPartnerFolderName string `json:"effective_to_partner_folder_name,omitempty" path:"effective_to_partner_folder_name,omitempty" url:"effective_to_partner_folder_name,omitempty"`
 	// Resolved from-Partner subfolder name. Null when the direction is disabled or uses the Channel folder directly.
@@ -90,6 +92,8 @@ type PartnerChannelTemplateCreateParams struct {
 	FromPartnerFolderName string `url:"from_partner_folder_name,omitempty" json:"from_partner_folder_name,omitempty" path:"from_partner_folder_name"`
 	// Managed folder paths inside the from-Partner folder.
 	FromPartnerManagedFolderPaths []string `url:"from_partner_managed_folder_paths,omitempty" json:"from_partner_managed_folder_paths,omitempty" path:"from_partner_managed_folder_paths"`
+	// Form Field Sets for From Partner upload destinations, copied to managed Partner Channels. Each entry has a `path` relative to the From Partner folder and a `form_field_set_id`. Use an empty `path` when the Template has no managed folders. Providing this replaces all assignments, and an empty array removes them.
+	FromPartnerUploadForms []map[string]interface{} `url:"from_partner_upload_forms,omitempty" json:"from_partner_upload_forms,omitempty" path:"from_partner_upload_forms"`
 	// Optional route path pattern for files uploaded by the Partner. Supports {{partner_name}}.
 	FromPartnerRoutePathPattern string `url:"from_partner_route_path_pattern,omitempty" json:"from_partner_route_path_pattern,omitempty" path:"from_partner_route_path_pattern"`
 	// Optional Channel-level to-Partner folder name override.
@@ -118,6 +122,8 @@ type PartnerChannelTemplateUpdateParams struct {
 	FromPartnerFolderName string `url:"from_partner_folder_name,omitempty" json:"from_partner_folder_name,omitempty" path:"from_partner_folder_name"`
 	// Managed folder paths inside the from-Partner folder.
 	FromPartnerManagedFolderPaths []string `url:"from_partner_managed_folder_paths,omitempty" json:"from_partner_managed_folder_paths,omitempty" path:"from_partner_managed_folder_paths"`
+	// Form Field Sets for From Partner upload destinations, copied to managed Partner Channels. Each entry has a `path` relative to the From Partner folder and a `form_field_set_id`. Use an empty `path` when the Template has no managed folders. Providing this replaces all assignments, and an empty array removes them.
+	FromPartnerUploadForms []map[string]interface{} `url:"from_partner_upload_forms,omitempty" json:"from_partner_upload_forms,omitempty" path:"from_partner_upload_forms"`
 	// Optional route path pattern for files uploaded by the Partner. Supports {{partner_name}}.
 	FromPartnerRoutePathPattern string `url:"from_partner_route_path_pattern,omitempty" json:"from_partner_route_path_pattern,omitempty" path:"from_partner_route_path_pattern"`
 	// Optional Channel-level to-Partner folder name override.

@@ -213,6 +213,6 @@ if err != nil {
 | `SkipName` | `*bool` | `skip_name` | Any associated InboxRegistrations or BundleRegistrations can be saved without providing name |
 | `SkipEmail` | `*bool` | `skip_email` | Any associated InboxRegistrations or BundleRegistrations can be saved without providing email |
 | `SkipCompany` | `*bool` | `skip_company` | Any associated InboxRegistrations or BundleRegistrations can be saved without providing company |
-| `InUse` | `*bool` | `in_use` | Form Field Set is in use by an active Inbox / Bundle / Inbox Registration / Bundle Registration |
+| `InUse` | `*bool` | `in_use` | Form Field Set is in use by an active Inbox, Share Link, Partner Channel upload destination, or Shared Trigger. |
 | `UserId` | `int64` | `user_id` | User ID. Provide a value of `0` to operate the current session's user. |
 | `WorkspaceId` | `int64` | `workspace_id` | Workspace ID |

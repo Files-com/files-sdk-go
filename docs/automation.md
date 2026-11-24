@@ -135,6 +135,9 @@ Parameters, `files_sdk.AutomationCreateParams`:
 | `UserIds` | `string` | `user_ids` | no | A list of user IDs the automation is associated with. If sent as a string, it should be comma-delimited. |
 | `GroupIds` | `string` | `group_ids` | no | A list of group IDs the automation is associated with. If sent as a string, it should be comma-delimited. |
 | `ScheduleId` | `int64` | `schedule_id` | no | If trigger is `custom_schedule`, the reusable Schedule used instead of the automation's schedule fields. |
+| `SharedTriggerUserIds` | `[]int64` | `shared_trigger_user_ids` | no | Users who can start this Shared Workflow. |
+| `SharedTriggerGroupIds` | `[]int64` | `shared_trigger_group_ids` | no | Groups whose members can start this Shared Workflow. |
+| `SharedTriggerPartnerIds` | `[]int64` | `shared_trigger_partner_ids` | no | Partners whose users can start this Shared Workflow. |
 | `ScheduleDaysOfWeek` | `[]int64` | `schedule_days_of_week` | no | If trigger is `custom_schedule` without `schedule_id`, a list of days of the week to run this automation. 0 is Sunday, 1 is Monday, etc. |
 | `ScheduleIntervalMinutes` | `int64` | `schedule_interval_minutes` | no | Run every N minutes (1–59, subject to the Site plan minimum). Use by itself with `custom_schedule`. For v2 Automations, set this field in the Scheduled trigger's definition. |
 | `ScheduleTimesOfDay` | `[]string` | `schedule_times_of_day` | no | Times of day to run in HH:MM format (24-hour). Required for `custom_schedule` without `schedule_id` or `schedule_interval_minutes`. For `daily` triggers, the default is midnight UTC. |
@@ -155,7 +158,7 @@ Parameters, `files_sdk.AutomationCreateParams`:
 | `PathTimeZone` | `string` | `path_time_zone` | no | Timezone to use when rendering timestamps in paths. |
 | `RetryOnFailureIntervalInMinutes` | `int64` | `retry_on_failure_interval_in_minutes` | no | If the Automation fails, retry at this interval (in minutes). Acceptable values are 5 through 1440 (one day). Set to null to disable. |
 | `RetryOnFailureNumberOfAttempts` | `int64` | `retry_on_failure_number_of_attempts` | no | If the Automation fails, retry at most this many times. Maximum allowed value: 10. Set to null to disable. |
-| `Trigger` | `files_sdk.AutomationTriggerEnum` | `trigger` | no | How this automation is triggered to run. Values: `manual`, `daily`, `custom_schedule`, `webhook`, `email`, `action`. |
+| `Trigger` | `files_sdk.AutomationTriggerEnum` | `trigger` | no | How this automation is triggered to run. Values: `manual`, `daily`, `custom_schedule`, `webhook`, `email`, `action`, `shared`. |
 | `TriggerActions` | `[]string` | `trigger_actions` | no | If trigger is `action`, this is the list of action types on which to trigger the automation. Valid actions are create, copy, move, archived_delete, update, read, destroy |
 | `Value` | `interface{}` | `value` | no | A Hash of attributes specific to the automation type. |
 | `RecurringDay` | `int64` | `recurring_day` | no | If trigger type is `daily`, this specifies a day number to run in one of the supported intervals: `week`, `month`, `quarter`, `year`. |
@@ -264,6 +267,9 @@ Parameters, `files_sdk.AutomationUpdateParams`:
 | `UserIds` | `string` | `user_ids` | no | A list of user IDs the automation is associated with. If sent as a string, it should be comma-delimited. |
 | `GroupIds` | `string` | `group_ids` | no | A list of group IDs the automation is associated with. If sent as a string, it should be comma-delimited. |
 | `ScheduleId` | `int64` | `schedule_id` | no | If trigger is `custom_schedule`, the reusable Schedule used instead of the automation's schedule fields. |
+| `SharedTriggerUserIds` | `[]int64` | `shared_trigger_user_ids` | no | Users who can start this Shared Workflow. |
+| `SharedTriggerGroupIds` | `[]int64` | `shared_trigger_group_ids` | no | Groups whose members can start this Shared Workflow. |
+| `SharedTriggerPartnerIds` | `[]int64` | `shared_trigger_partner_ids` | no | Partners whose users can start this Shared Workflow. |
 | `ScheduleDaysOfWeek` | `[]int64` | `schedule_days_of_week` | no | If trigger is `custom_schedule` without `schedule_id`, a list of days of the week to run this automation. 0 is Sunday, 1 is Monday, etc. |
 | `ScheduleIntervalMinutes` | `int64` | `schedule_interval_minutes` | no | Run every N minutes (1–59, subject to the Site plan minimum). Use by itself with `custom_schedule`. For v2 Automations, set this field in the Scheduled trigger's definition. |
 | `ScheduleTimesOfDay` | `[]string` | `schedule_times_of_day` | no | Times of day to run in HH:MM format (24-hour). Required for `custom_schedule` without `schedule_id` or `schedule_interval_minutes`. For `daily` triggers, the default is midnight UTC. |
@@ -284,7 +290,7 @@ Parameters, `files_sdk.AutomationUpdateParams`:
 | `PathTimeZone` | `string` | `path_time_zone` | no | Timezone to use when rendering timestamps in paths. |
 | `RetryOnFailureIntervalInMinutes` | `int64` | `retry_on_failure_interval_in_minutes` | no | If the Automation fails, retry at this interval (in minutes). Acceptable values are 5 through 1440 (one day). Set to null to disable. |
 | `RetryOnFailureNumberOfAttempts` | `int64` | `retry_on_failure_number_of_attempts` | no | If the Automation fails, retry at most this many times. Maximum allowed value: 10. Set to null to disable. |
-| `Trigger` | `files_sdk.AutomationTriggerEnum` | `trigger` | no | How this automation is triggered to run. Values: `manual`, `daily`, `custom_schedule`, `webhook`, `email`, `action`. |
+| `Trigger` | `files_sdk.AutomationTriggerEnum` | `trigger` | no | How this automation is triggered to run. Values: `manual`, `daily`, `custom_schedule`, `webhook`, `email`, `action`, `shared`. |
 | `TriggerActions` | `[]string` | `trigger_actions` | no | If trigger is `action`, this is the list of action types on which to trigger the automation. Valid actions are create, copy, move, archived_delete, update, read, destroy |
 | `Value` | `interface{}` | `value` | no | A Hash of attributes specific to the automation type. |
 | `RecurringDay` | `int64` | `recurring_day` | no | If trigger type is `daily`, this specifies a day number to run in one of the supported intervals: `week`, `month`, `quarter`, `year`. |
@@ -389,6 +395,9 @@ if err != nil {
 | `ScheduleTimesOfDay` | `[]string` | `schedule_times_of_day` | Times of day to run in HH:MM format (24-hour). For `custom_schedule`, run at these times on specified days of week. For `daily`, run at these times on the scheduled interval date. |
 | `ScheduleTimeZone` | `string` | `schedule_time_zone` | Time zone for the schedule. If not set, times are interpreted as UTC. |
 | `Source` | `string` | `source` | Source path/glob. See Automation docs for exact description, but this is used to filter for files in the `path` to find files to operate on. Supports globs, except on remote mounts. |
+| `SharedTriggerUserIds` | `[]int64` | `shared_trigger_user_ids` | Users who can start this Shared Workflow. |
+| `SharedTriggerGroupIds` | `[]int64` | `shared_trigger_group_ids` | Groups whose members can start this Shared Workflow. |
+| `SharedTriggerPartnerIds` | `[]int64` | `shared_trigger_partner_ids` | Partners whose users can start this Shared Workflow. |
 | `SyncIds` | `[]int64` | `sync_ids` | IDs of Syncs to run by this Automation. |
 | `TriggerActions` | `[]string` | `trigger_actions` | If trigger is `action`, this is the list of action types on which to trigger the automation. Valid actions are create, copy, move, archived_delete, update, read, destroy |
 | `Trigger` | `string` | `trigger` | How this automation is triggered to run. |

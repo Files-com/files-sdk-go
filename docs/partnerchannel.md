@@ -104,6 +104,7 @@ Parameters, `files_sdk.PartnerChannelCreateParams`:
 | `UseChannelRoot` | `*bool` | `use_channel_root` | no | Use the Channel folder directly for a one-way exchange. Defaults to false. Cannot be changed after creation. Folder name overrides must be blank when enabled, and the Channel must remain one-way. |
 | `FromPartnerFolderName` | `string` | `from_partner_folder_name` | no | Optional Channel-level from-Partner folder name override. |
 | `FromPartnerManagedFolderPaths` | `[]string` | `from_partner_managed_folder_paths` | no | Managed folder paths inside the from-Partner folder. |
+| `FromPartnerUploadForms` | `[]map[string]interface{}` | `from_partner_upload_forms` | no | Form Field Sets for From Partner upload destinations. Each entry has a `path` relative to the From Partner folder and a `form_field_set_id`. Use an empty `path` when the Channel has no managed folders. Providing this replaces all assignments, and an empty array removes them. |
 | `FromPartnerRoutePath` | `string` | `from_partner_route_path` | no | Optional route path for files uploaded by the Partner. |
 | `ToPartnerFolderName` | `string` | `to_partner_folder_name` | no | Optional Channel-level to-Partner folder name override. |
 | `ToPartnerManagedFolderPaths` | `[]string` | `to_partner_managed_folder_paths` | no | Managed folder paths inside the to-Partner folder. |
@@ -150,6 +151,7 @@ Parameters, `files_sdk.PartnerChannelUpdateParams`:
 | `UseChannelRoot` | `*bool` | `use_channel_root` | no | Use the Channel folder directly for a one-way exchange. Defaults to false. Cannot be changed after creation. Folder name overrides must be blank when enabled, and the Channel must remain one-way. |
 | `FromPartnerFolderName` | `string` | `from_partner_folder_name` | no | Optional Channel-level from-Partner folder name override. |
 | `FromPartnerManagedFolderPaths` | `[]string` | `from_partner_managed_folder_paths` | no | Managed folder paths inside the from-Partner folder. |
+| `FromPartnerUploadForms` | `[]map[string]interface{}` | `from_partner_upload_forms` | no | Form Field Sets for From Partner upload destinations. Each entry has a `path` relative to the From Partner folder and a `form_field_set_id`. Use an empty `path` when the Channel has no managed folders. Providing this replaces all assignments, and an empty array removes them. |
 | `FromPartnerRoutePath` | `string` | `from_partner_route_path` | no | Optional route path for files uploaded by the Partner. |
 | `ToPartnerFolderName` | `string` | `to_partner_folder_name` | no | Optional Channel-level to-Partner folder name override. |
 | `ToPartnerManagedFolderPaths` | `[]string` | `to_partner_managed_folder_paths` | no | Managed folder paths inside the to-Partner folder. |
@@ -227,6 +229,7 @@ if err != nil {
 | `ToPartnerRoutePath` | `string` | `to_partner_route_path` | Optional route path for files delivered to the Partner. |
 | `ToPartnerManagedFolderPaths` | `[]string` | `to_partner_managed_folder_paths` | Managed folder paths inside the to-Partner folder. |
 | `FromPartnerManagedFolderPaths` | `[]string` | `from_partner_managed_folder_paths` | Managed folder paths inside the from-Partner folder. |
+| `FromPartnerUploadForms` | `[]files_sdk.PartnerChannelUploadForm` | `from_partner_upload_forms` | Form Field Sets attached to From Partner upload destinations. |
 | `EffectiveToPartnerFolderName` | `string` | `effective_to_partner_folder_name` | Resolved to-Partner subfolder name. Null when the direction is disabled or uses the Channel folder directly. |
 | `EffectiveFromPartnerFolderName` | `string` | `effective_from_partner_folder_name` | Resolved from-Partner subfolder name. Null when the direction is disabled or uses the Channel folder directly. |
 | `ChannelPath` | `string` | `channel_path` | Resolved Channel folder path. |

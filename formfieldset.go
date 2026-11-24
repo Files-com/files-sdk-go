@@ -24,7 +24,7 @@ type FormFieldSet struct {
 	SkipEmail *bool `json:"skip_email,omitempty" path:"skip_email,omitempty" url:"skip_email,omitempty"`
 	// Any associated InboxRegistrations or BundleRegistrations can be saved without providing company.
 	SkipCompany *bool `json:"skip_company,omitempty" path:"skip_company,omitempty" url:"skip_company,omitempty"`
-	// Form Field Set is in use by an active Inbox / Bundle / Inbox Registration / Bundle Registration.
+	// Form Field Set is in use by an active Inbox, Share Link, Partner Channel upload destination, or Shared Trigger.
 	InUse *bool `json:"in_use,omitempty" path:"in_use,omitempty" url:"in_use,omitempty"`
 	// User ID. Provide a value of `0` to operate the current session's user.
 	UserId int64 `json:"user_id,omitempty" path:"user_id,omitempty" url:"user_id,omitempty"`

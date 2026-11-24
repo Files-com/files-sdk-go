@@ -38,6 +38,8 @@ type Group struct {
 	DesktopConfigurationProfileId int64 `json:"desktop_configuration_profile_id,omitempty" path:"desktop_configuration_profile_id,omitempty" url:"desktop_configuration_profile_id,omitempty"`
 	// Integration Centric Profile ID assigned to this Group, if any. Users in the Group inherit it unless a direct per-user assignment overrides it.
 	IntegrationCentricProfileId int64 `json:"integration_centric_profile_id,omitempty" path:"integration_centric_profile_id,omitempty" url:"integration_centric_profile_id,omitempty"`
+	// Custom Workspace a new Group member will use as their Preferred Workspace if they have no saved preference. The Group must have a Permission in that Workspace.
+	PreferredWorkspaceId int64 `json:"preferred_workspace_id,omitempty" path:"preferred_workspace_id,omitempty" url:"preferred_workspace_id,omitempty"`
 	// Site ID.
 	SiteId int64 `json:"site_id,omitempty" path:"site_id,omitempty" url:"site_id,omitempty"`
 	// Workspace ID.
@@ -138,6 +140,8 @@ type GroupUpdateParams struct {
 	AllowedIps string `url:"allowed_ips,omitempty" json:"allowed_ips,omitempty" path:"allowed_ips"`
 	// Group name.
 	Name string `url:"name,omitempty" json:"name,omitempty" path:"name"`
+	// Custom Workspace a new Group member will use as their Preferred Workspace if they have no saved preference. The Group must have a Permission in that Workspace.
+	PreferredWorkspaceId int64 `url:"preferred_workspace_id,omitempty" json:"preferred_workspace_id,omitempty" path:"preferred_workspace_id"`
 }
 
 // GroupDeleteParams contains the request parameters for DELETE /groups/{id}.

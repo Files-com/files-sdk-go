@@ -23,6 +23,8 @@ type Snapshot struct {
 	BundleId int64 `json:"bundle_id,omitempty" path:"bundle_id,omitempty" url:"bundle_id,omitempty"`
 	// Workspace ID. `0` means the default workspace.
 	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
+	// Shared Workflow for which the Snapshot was created.
+	SharedWorkflowId int64 `json:"shared_workflow_id,omitempty" path:"shared_workflow_id,omitempty" url:"shared_workflow_id,omitempty"`
 	// An array of paths to add to the snapshot.
 	Paths []string `json:"paths,omitempty" path:"paths,omitempty" url:"paths,omitempty"`
 }
@@ -57,6 +59,8 @@ type SnapshotCreateParams struct {
 	Paths []string `url:"paths,omitempty" json:"paths,omitempty" path:"paths"`
 	// Workspace ID. `0` means the default workspace.
 	WorkspaceId int64 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
+	// Shared Workflow for which the Snapshot was created.
+	SharedWorkflowId int64 `url:"shared_workflow_id,omitempty" json:"shared_workflow_id,omitempty" path:"shared_workflow_id"`
 }
 
 // SnapshotFinalizeParams contains the request parameters for POST /snapshots/{id}/finalize.

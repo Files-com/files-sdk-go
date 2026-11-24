@@ -161,7 +161,7 @@ type User struct {
 	// ID of the Workspace the user belongs to. 0 is the Default Workspace.
 	WorkspaceId int64 `json:"workspace_id,omitempty" path:"workspace_id,omitempty" url:"workspace_id,omitempty"`
 	// Workspace ID the user should land in by default when more than one Workspace is available.
-	DefaultWorkspaceId int64 `json:"default_workspace_id,omitempty" path:"default_workspace_id,omitempty" url:"default_workspace_id,omitempty"`
+	PreferredWorkspaceId int64 `json:"preferred_workspace_id,omitempty" path:"preferred_workspace_id,omitempty" url:"preferred_workspace_id,omitempty"`
 	// Skip Welcome page in the UI?
 	SkipWelcomeScreen *bool `json:"skip_welcome_screen,omitempty" path:"skip_welcome_screen,omitempty" url:"skip_welcome_screen,omitempty"`
 	// FTP TLS session reuse requirement: use_system_setting, always_require, or never_require.
@@ -400,7 +400,7 @@ type UserCreateParams struct {
 	// Desktop Configuration Profile ID assigned directly to this user, if any.
 	DesktopConfigurationProfileId int64 `url:"desktop_configuration_profile_id,omitempty" json:"desktop_configuration_profile_id,omitempty" path:"desktop_configuration_profile_id"`
 	// Workspace ID the user should land in by default when more than one Workspace is available.
-	DefaultWorkspaceId int64 `url:"default_workspace_id,omitempty" json:"default_workspace_id,omitempty" path:"default_workspace_id"`
+	PreferredWorkspaceId int64 `url:"preferred_workspace_id,omitempty" json:"preferred_workspace_id,omitempty" path:"preferred_workspace_id"`
 	// Is user disabled? Disabled users cannot log in, and do not count for billing purposes. Users can be automatically disabled after an inactivity period via a Site setting or schedule to be deactivated after specific date.
 	Disabled *bool `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
 	// File system layout. Values: site_root, user_root, partner_root, integration_centric, workspace_root.
@@ -570,7 +570,7 @@ type UserUpdateParams struct {
 	// Desktop Configuration Profile ID assigned directly to this user, if any.
 	DesktopConfigurationProfileId int64 `url:"desktop_configuration_profile_id,omitempty" json:"desktop_configuration_profile_id,omitempty" path:"desktop_configuration_profile_id"`
 	// Workspace ID the user should land in by default when more than one Workspace is available.
-	DefaultWorkspaceId int64 `url:"default_workspace_id,omitempty" json:"default_workspace_id,omitempty" path:"default_workspace_id"`
+	PreferredWorkspaceId int64 `url:"preferred_workspace_id,omitempty" json:"preferred_workspace_id,omitempty" path:"preferred_workspace_id"`
 	// Is user disabled? Disabled users cannot log in, and do not count for billing purposes. Users can be automatically disabled after an inactivity period via a Site setting or schedule to be deactivated after specific date.
 	Disabled *bool `url:"disabled,omitempty" json:"disabled,omitempty" path:"disabled"`
 	// File system layout. Values: site_root, user_root, partner_root, integration_centric, workspace_root.
