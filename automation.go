@@ -101,7 +101,7 @@ type Automation struct {
 	UserIds []int64 `json:"user_ids,omitempty" path:"user_ids,omitempty" url:"user_ids,omitempty"`
 	// A Hash of attributes specific to the automation type.
 	Value interface{} `json:"value,omitempty" path:"value,omitempty" url:"value,omitempty"`
-	// If trigger is `webhook`, this is the URL of the webhook to trigger the Automation.
+	// If trigger is `webhook`, this is the URL to start the Automation. For a v2 webhook configured to upload a file, POST multipart form data with a single `file` part or send a raw body with the `X-Files-Filename` header. A JSON body is saved as `payload.json` when the header is omitted.
 	WebhookUrl string `json:"webhook_url,omitempty" path:"webhook_url,omitempty" url:"webhook_url,omitempty"`
 	// Skip the automation if there is a formal, observed holiday for this region.
 	HolidayRegion string `json:"holiday_region,omitempty" path:"holiday_region,omitempty" url:"holiday_region,omitempty"`

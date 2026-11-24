@@ -395,5 +395,5 @@ if err != nil {
 | `UserId` | `int64` | `user_id` | User ID of the Automation's creator. |
 | `UserIds` | `[]int64` | `user_ids` | IDs of Users for the Automation (i.e. who to Request File from) |
 | `Value` | `interface{}` | `value` | A Hash of attributes specific to the automation type. |
-| `WebhookUrl` | `string` | `webhook_url` | If trigger is `webhook`, this is the URL of the webhook to trigger the Automation. |
+| `WebhookUrl` | `string` | `webhook_url` | If trigger is `webhook`, this is the URL to start the Automation. For a v2 webhook configured to upload a file, POST multipart form data with a single `file` part or send a raw body with the `X-Files-Filename` header. A JSON body is saved as `payload.json` when the header is omitted. |
 | `HolidayRegion` | `string` | `holiday_region` | Skip the automation if there is a formal, observed holiday for this region. |

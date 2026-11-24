@@ -51,13 +51,15 @@ func (u EventTargetTargetTypeEnum) String() string {
 // Enum returns the documented values keyed by their API strings.
 func (u EventTargetTargetTypeEnum) Enum() map[string]EventTargetTargetTypeEnum {
 	return map[string]EventTargetTargetTypeEnum{
-		"email":         EventTargetTargetTypeEnum("email"),
-		"webhook":       EventTargetTargetTypeEnum("webhook"),
-		"slack_webhook": EventTargetTargetTypeEnum("slack_webhook"),
-		"teams_webhook": EventTargetTargetTypeEnum("teams_webhook"),
-		"amazon_sns":    EventTargetTargetTypeEnum("amazon_sns"),
-		"google_pubsub": EventTargetTargetTypeEnum("google_pubsub"),
-		"folder":        EventTargetTargetTypeEnum("folder"),
+		"email":             EventTargetTargetTypeEnum("email"),
+		"webhook":           EventTargetTargetTypeEnum("webhook"),
+		"slack_webhook":     EventTargetTargetTypeEnum("slack_webhook"),
+		"teams_webhook":     EventTargetTargetTypeEnum("teams_webhook"),
+		"amazon_sns":        EventTargetTargetTypeEnum("amazon_sns"),
+		"google_pubsub":     EventTargetTargetTypeEnum("google_pubsub"),
+		"folder":            EventTargetTargetTypeEnum("folder"),
+		"amazon_sqs":        EventTargetTargetTypeEnum("amazon_sqs"),
+		"azure_service_bus": EventTargetTargetTypeEnum("azure_service_bus"),
 	}
 }
 
@@ -91,7 +93,7 @@ type EventTargetCreateParams struct {
 	Config interface{} `url:"config" json:"config" path:"config"`
 	// Event Target delivery policy. Email and folder targets support batch_interval in seconds, between 600 and 86400. Slack and Teams support delivery_mode (immediate or subfolder_summary), summary_path (empty string means root), and summary_delay (15–300 seconds, default 60). The summary applies to matching file activity under summary_path; other matching events retain immediate delivery.
 	DeliveryPolicy interface{} `url:"delivery_policy,omitempty" json:"delivery_policy,omitempty" path:"delivery_policy"`
-	// Event Target type. Values: email, webhook, slack_webhook, teams_webhook, amazon_sns, google_pubsub, folder. Required.
+	// Event Target type. Values: email, webhook, slack_webhook, teams_webhook, amazon_sns, google_pubsub, folder, amazon_sqs, azure_service_bus. Required.
 	TargetType EventTargetTargetTypeEnum `url:"target_type" json:"target_type" path:"target_type"`
 }
 
