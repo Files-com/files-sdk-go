@@ -93,6 +93,10 @@ type SsoStrategy struct {
 	LdapDomain string `json:"ldap_domain,omitempty" path:"ldap_domain,omitempty" url:"ldap_domain,omitempty"`
 	// Should this strategy be displayed on the login page?
 	DisplayOnLoginPage *bool `json:"display_on_login_page,omitempty" path:"display_on_login_page,omitempty" url:"display_on_login_page,omitempty"`
+	// Username domain that can publicly discover this SSO provider on this site. Set after saving the provider. Set to null to turn off discovery.
+	PublicSsoDomain string `json:"public_sso_domain,omitempty" path:"public_sso_domain,omitempty" url:"public_sso_domain,omitempty"`
+	// This provider's DNS TXT value to publish at _files-sso.<domain> before enabling public SSO discovery for that domain.
+	PublicSsoDomainDnsValue string `json:"public_sso_domain_dns_value,omitempty" path:"public_sso_domain_dns_value,omitempty" url:"public_sso_domain_dns_value,omitempty"`
 	// LDAP host.
 	LdapHost string `json:"ldap_host,omitempty" path:"ldap_host,omitempty" url:"ldap_host,omitempty"`
 	// LDAP backup host.

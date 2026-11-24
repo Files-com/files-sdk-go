@@ -161,6 +161,8 @@ if err != nil {
 | `LdapBaseDn` | `string` | `ldap_base_dn` | Base DN for looking up users in LDAP server |
 | `LdapDomain` | `string` | `ldap_domain` | Domain name that will be appended to LDAP usernames |
 | `DisplayOnLoginPage` | `*bool` | `display_on_login_page` | Should this strategy be displayed on the login page? |
+| `PublicSsoDomain` | `string` | `public_sso_domain` | Username domain that can publicly discover this SSO provider on this site. Set after saving the provider. Set to null to turn off discovery. |
+| `PublicSsoDomainDnsValue` | `string` | `public_sso_domain_dns_value` | This provider's DNS TXT value to publish at _files-sso.<domain> before enabling public SSO discovery for that domain. |
 | `LdapHost` | `string` | `ldap_host` | LDAP host |
 | `LdapHost2` | `string` | `ldap_host_2` | LDAP backup host |
 | `LdapHost3` | `string` | `ldap_host_3` | LDAP backup host |
