@@ -131,6 +131,30 @@ func UpdateWithMap(params map[string]interface{}, opts ...files_sdk.RequestRespo
 	return (&Client{}).UpdateWithMap(params, opts...)
 }
 
+// UpdateBundle calls PATCH /bundles/{id}/paths/{path}.
+func (c *Client) UpdateBundle(params files_sdk.BundleUpdateBundleParams, opts ...files_sdk.RequestResponseOption) (bundlePath files_sdk.BundlePath, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/bundles/{id}/paths/{path}", Params: params, Entity: &bundlePath}, opts...)
+	return
+}
+
+// UpdateBundle calls Client.UpdateBundle using the default configuration.
+func UpdateBundle(params files_sdk.BundleUpdateBundleParams, opts ...files_sdk.RequestResponseOption) (bundlePath files_sdk.BundlePath, err error) {
+	return (&Client{}).UpdateBundle(params, opts...)
+}
+
+// UpdateBundleWithMap calls PATCH /bundles/{id}/paths/{path} using API parameter names as map keys.
+// Include any path parameters in the map. Unlike optional struct fields, explicit
+// zero values in the map are included in the request.
+func (c *Client) UpdateBundleWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (bundlePath files_sdk.BundlePath, err error) {
+	err = files_sdk.Resource(c.Config, lib.Resource{Method: "PATCH", Path: "/bundles/{id}/paths/{path}", Params: params, Entity: &bundlePath}, opts...)
+	return
+}
+
+// UpdateBundleWithMap calls Client.UpdateBundleWithMap using the default configuration.
+func UpdateBundleWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (bundlePath files_sdk.BundlePath, err error) {
+	return (&Client{}).UpdateBundleWithMap(params, opts...)
+}
+
 // Delete calls DELETE /bundles/{id}.
 func (c *Client) Delete(params files_sdk.BundleDeleteParams, opts ...files_sdk.RequestResponseOption) (err error) {
 	err = files_sdk.Resource(c.Config, lib.Resource{Method: "DELETE", Path: "/bundles/{id}", Params: params, Entity: nil}, opts...)

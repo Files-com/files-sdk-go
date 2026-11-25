@@ -23,5 +23,7 @@ This package has no API operations of its own.
 | `DurationMs` | `int64` | `duration_ms` | Node runtime in milliseconds. |
 | `Inputs` | `[]map[string]interface{}` | `inputs` | Ordered inbound edge references. |
 | `Outputs` | `interface{}` | `outputs` | Output counts, item kinds, and typed-error summaries by outlet. |
-| `InputItems` | `interface{}` | `input_items` | Materialized input items currently available, grouped by inlet. |
-| `OutputItems` | `interface{}` | `output_items` | Materialized output items grouped by outlet. |
+| `InputItems` | `interface{}` | `input_items` | Available input items grouped by inlet. Resolve large values with item_refs and item_values. |
+| `OutputItems` | `interface{}` | `output_items` | Output items grouped by outlet. Resolve large values with item_refs and item_values. |
+| `ItemRefs` | `[]map[string]interface{}` | `item_refs` | References with a path from the response root and a digest. Replace the null at each path with the value for that digest. Path segments are literal object keys or zero-based array indexes. |
+| `ItemValues` | `[]map[string]interface{}` | `item_values` | Ordered entries with a digest, a value, and optional item_refs relative to that value. References inside entries point to earlier entries in this array. |

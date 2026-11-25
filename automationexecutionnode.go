@@ -33,10 +33,14 @@ type AutomationExecutionNode struct {
 	Inputs []map[string]interface{} `json:"inputs,omitempty" path:"inputs,omitempty" url:"inputs,omitempty"`
 	// Output counts, item kinds, and typed-error summaries by outlet.
 	Outputs interface{} `json:"outputs,omitempty" path:"outputs,omitempty" url:"outputs,omitempty"`
-	// Materialized input items currently available, grouped by inlet.
+	// Available input items grouped by inlet. Resolve large values with item_refs and item_values.
 	InputItems interface{} `json:"input_items,omitempty" path:"input_items,omitempty" url:"input_items,omitempty"`
-	// Materialized output items grouped by outlet.
+	// Output items grouped by outlet. Resolve large values with item_refs and item_values.
 	OutputItems interface{} `json:"output_items,omitempty" path:"output_items,omitempty" url:"output_items,omitempty"`
+	// References with a path from the response root and a digest. Replace the null at each path with the value for that digest. Path segments are literal object keys or zero-based array indexes.
+	ItemRefs []map[string]interface{} `json:"item_refs,omitempty" path:"item_refs,omitempty" url:"item_refs,omitempty"`
+	// Ordered entries with a digest, a value, and optional item_refs relative to that value. References inside entries point to earlier entries in this array.
+	ItemValues []map[string]interface{} `json:"item_values,omitempty" path:"item_values,omitempty" url:"item_values,omitempty"`
 }
 
 // Identifier no path or id

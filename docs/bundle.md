@@ -13,6 +13,7 @@ import (
 
 	files_sdk "github.com/Files-com/files-sdk-go/v3"
 	"github.com/Files-com/files-sdk-go/v3/bundle"
+	"github.com/Files-com/files-sdk-go/v3/lib"
 )
 ```
 
@@ -114,7 +115,7 @@ Parameters, `files_sdk.BundleCreateParams`:
 | `BypassesSiteExpirationRules` | `*bool` | `bypasses_site_expiration_rules` | no | If true, this Share Link bypasses site-wide expiration rules. Only site admins may set this. |
 | `FormFieldSetId` | `int64` | `form_field_set_id` | no | Id of Form Field Set to use with this bundle |
 | `CreateSnapshot` | `*bool` | `create_snapshot` | no | If true, create a snapshot of this bundle's contents. |
-| `DontSeparateSubmissionsByFolder` | `*bool` | `dont_separate_submissions_by_folder` | no | Do not create subfolders for files uploaded to this share. Note: there are subtle security pitfalls with allowing anonymous uploads from multiple users to live in the same folder. We strongly discourage use of this option unless absolutely required. |
+| `DontSeparateSubmissionsByFolder` | `*bool` | `dont_separate_submissions_by_folder` | no | Do not create subfolders for files uploaded to this share. Upload-only Share Links with non-recursive folder access require this to be true. If omitted on create, the API sets it to true for those links. Note: there are subtle security pitfalls with allowing anonymous uploads from multiple users to live in the same folder. We strongly discourage use of this option unless absolutely required. |
 | `ExpiresAt` | `*time.Time` | `expires_at` | no | Explicit Bundle expiration date/time. If not set, the site-wide expiration setting may apply. |
 | `FinalizeSnapshot` | `*bool` | `finalize_snapshot` | no | If true, finalize the snapshot of this bundle's contents. Note that `create_snapshot` must also be true. |
 | `MaxUses` | `int64` | `max_uses` | no | Visitor limit configured for this Share Link. Null uses the Site-wide cap, if set. The configured limit cannot exceed the Site-wide cap. |
@@ -214,7 +215,7 @@ Parameters, `files_sdk.BundleUpdateParams`:
 | `Code` | `string` | `code` | no | Bundle code. This code forms the end part of the Public URL. |
 | `CreateSnapshot` | `*bool` | `create_snapshot` | no | If true, create a snapshot of this bundle's contents. |
 | `Description` | `string` | `description` | no | Public description |
-| `DontSeparateSubmissionsByFolder` | `*bool` | `dont_separate_submissions_by_folder` | no | Do not create subfolders for files uploaded to this share. Note: there are subtle security pitfalls with allowing anonymous uploads from multiple users to live in the same folder. We strongly discourage use of this option unless absolutely required. |
+| `DontSeparateSubmissionsByFolder` | `*bool` | `dont_separate_submissions_by_folder` | no | Do not create subfolders for files uploaded to this share. Upload-only Share Links with non-recursive folder access require this to be true. If omitted on create, the API sets it to true for those links. Note: there are subtle security pitfalls with allowing anonymous uploads from multiple users to live in the same folder. We strongly discourage use of this option unless absolutely required. |
 | `ExpiresAt` | `*time.Time` | `expires_at` | no | Explicit Bundle expiration date/time. If not set, the site-wide expiration setting may apply. |
 | `FinalizeSnapshot` | `*bool` | `finalize_snapshot` | no | If true, finalize the snapshot of this bundle's contents. Note that `create_snapshot` must also be true. |
 | `InboxId` | `int64` | `inbox_id` | no | ID of the associated inbox, if available. |
@@ -257,6 +258,58 @@ With a map:
 ```go
 result, err := bundle.UpdateWithMap(map[string]interface{}{
 	"id": 1,
+})
+if err != nil {
+	return err
+}
+fmt.Println(result)
+```
+
+### UpdateBundle
+
+`PATCH /bundles/{id}/paths/{path}`
+
+Update Bundle Path
+
+```go
+func (c *Client) UpdateBundle(params files_sdk.BundleUpdateBundleParams, opts ...files_sdk.RequestResponseOption) (bundlePath files_sdk.BundlePath, err error)
+func UpdateBundle(params files_sdk.BundleUpdateBundleParams, opts ...files_sdk.RequestResponseOption) (bundlePath files_sdk.BundlePath, err error)
+func (c *Client) UpdateBundleWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (bundlePath files_sdk.BundlePath, err error)
+func UpdateBundleWithMap(params map[string]interface{}, opts ...files_sdk.RequestResponseOption) (bundlePath files_sdk.BundlePath, err error)
+```
+
+`UpdateBundleWithMap` takes the parameters as a map keyed by their API names, path parameters
+included. Unlike optional struct fields, explicit zero values in the map are sent.
+
+Parameters, `files_sdk.BundleUpdateBundleParams`:
+
+| Field | Go type | API name | Required | Description |
+| --- | --- | --- | --- | --- |
+| `Id` | `int64` | `id`, in the path | yes | Bundle ID. |
+| `Path` | `string` | `path`, in the path | yes | Path to operate on. |
+| `Recursive` | `*bool` | `recursive` | yes | Allow access to subfolders content? |
+
+Example:
+
+```go
+result, err := bundle.UpdateBundle(files_sdk.BundleUpdateBundleParams{
+	Id:        1,
+	Path:      "path",
+	Recursive: lib.Bool(true),
+})
+if err != nil {
+	return err
+}
+fmt.Println(result)
+```
+
+With a map:
+
+```go
+result, err := bundle.UpdateBundleWithMap(map[string]interface{}{
+	"id":        1,
+	"path":      "path",
+	"recursive": true,
 })
 if err != nil {
 	return err
@@ -324,7 +377,7 @@ if err != nil {
 | `CreatedAt` | `*time.Time` | `created_at` | Bundle created at date/time |
 | `Deleted` | `*bool` | `deleted` | Indicates if the bundle has been deleted. |
 | `DeletedAt` | `*time.Time` | `deleted_at` | Bundle deleted at date/time |
-| `DontSeparateSubmissionsByFolder` | `*bool` | `dont_separate_submissions_by_folder` | Do not create subfolders for files uploaded to this share. Note: there are subtle security pitfalls with allowing anonymous uploads from multiple users to live in the same folder. We strongly discourage use of this option unless absolutely required. |
+| `DontSeparateSubmissionsByFolder` | `*bool` | `dont_separate_submissions_by_folder` | Do not create subfolders for files uploaded to this share. Upload-only Share Links with non-recursive folder access require this to be true. If omitted on create, the API sets it to true for those links. Note: there are subtle security pitfalls with allowing anonymous uploads from multiple users to live in the same folder. We strongly discourage use of this option unless absolutely required. |
 | `EffectiveExpiresAt` | `*time.Time` | `effective_expires_at` | Read-only expiration date/time, using the explicit expiration or the site-wide setting when applicable. Null when the Share Link does not expire. |
 | `MaxUses` | `int64` | `max_uses` | Visitor limit configured for this Share Link. Null uses the Site-wide cap, if set. The configured limit cannot exceed the Site-wide cap. |
 | `EffectiveMaxUses` | `int64` | `effective_max_uses` | Read-only visitor limit actually enforced for this Share Link. Uses the lower of the link limit and the Site-wide cap when both are set. Null means unlimited. |

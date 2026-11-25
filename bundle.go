@@ -61,7 +61,7 @@ type Bundle struct {
 	Deleted *bool `json:"deleted,omitempty" path:"deleted,omitempty" url:"deleted,omitempty"`
 	// Bundle deleted at date/time.
 	DeletedAt *time.Time `json:"deleted_at,omitempty" path:"deleted_at,omitempty" url:"deleted_at,omitempty"`
-	// Do not create subfolders for files uploaded to this share. Note: there are subtle security pitfalls with allowing anonymous uploads from multiple users to live in the same folder. We strongly discourage use of this option unless absolutely required.
+	// Do not create subfolders for files uploaded to this share. Upload-only Share Links with non-recursive folder access require this to be true. If omitted on create, the API sets it to true for those links. Note: there are subtle security pitfalls with allowing anonymous uploads from multiple users to live in the same folder. We strongly discourage use of this option unless absolutely required.
 	DontSeparateSubmissionsByFolder *bool `json:"dont_separate_submissions_by_folder,omitempty" path:"dont_separate_submissions_by_folder,omitempty" url:"dont_separate_submissions_by_folder,omitempty"`
 	// Read-only expiration date/time, using the explicit expiration or the site-wide setting when applicable. Null when the Share Link does not expire.
 	EffectiveExpiresAt *time.Time `json:"effective_expires_at,omitempty" path:"effective_expires_at,omitempty" url:"effective_expires_at,omitempty"`
@@ -198,7 +198,7 @@ type BundleCreateParams struct {
 	FormFieldSetId int64 `url:"form_field_set_id,omitempty" json:"form_field_set_id,omitempty" path:"form_field_set_id"`
 	// If true, create a snapshot of this bundle's contents.
 	CreateSnapshot *bool `url:"create_snapshot,omitempty" json:"create_snapshot,omitempty" path:"create_snapshot"`
-	// Do not create subfolders for files uploaded to this share. Note: there are subtle security pitfalls with allowing anonymous uploads from multiple users to live in the same folder. We strongly discourage use of this option unless absolutely required.
+	// Do not create subfolders for files uploaded to this share. Upload-only Share Links with non-recursive folder access require this to be true. If omitted on create, the API sets it to true for those links. Note: there are subtle security pitfalls with allowing anonymous uploads from multiple users to live in the same folder. We strongly discourage use of this option unless absolutely required.
 	DontSeparateSubmissionsByFolder *bool `url:"dont_separate_submissions_by_folder,omitempty" json:"dont_separate_submissions_by_folder,omitempty" path:"dont_separate_submissions_by_folder"`
 	// Explicit Bundle expiration date/time. If not set, the site-wide expiration setting may apply.
 	ExpiresAt *time.Time `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
@@ -288,7 +288,7 @@ type BundleUpdateParams struct {
 	CreateSnapshot *bool `url:"create_snapshot,omitempty" json:"create_snapshot,omitempty" path:"create_snapshot"`
 	// Public description.
 	Description string `url:"description,omitempty" json:"description,omitempty" path:"description"`
-	// Do not create subfolders for files uploaded to this share. Note: there are subtle security pitfalls with allowing anonymous uploads from multiple users to live in the same folder. We strongly discourage use of this option unless absolutely required.
+	// Do not create subfolders for files uploaded to this share. Upload-only Share Links with non-recursive folder access require this to be true. If omitted on create, the API sets it to true for those links. Note: there are subtle security pitfalls with allowing anonymous uploads from multiple users to live in the same folder. We strongly discourage use of this option unless absolutely required.
 	DontSeparateSubmissionsByFolder *bool `url:"dont_separate_submissions_by_folder,omitempty" json:"dont_separate_submissions_by_folder,omitempty" path:"dont_separate_submissions_by_folder"`
 	// Explicit Bundle expiration date/time. If not set, the site-wide expiration setting may apply.
 	ExpiresAt *time.Time `url:"expires_at,omitempty" json:"expires_at,omitempty" path:"expires_at"`
@@ -338,6 +338,18 @@ type BundleUpdateParams struct {
 	WatermarkValue interface{} `url:"watermark_value,omitempty" json:"watermark_value,omitempty" path:"watermark_value"`
 	// Workspace ID. `0` means the default workspace.
 	WorkspaceId int64 `url:"workspace_id,omitempty" json:"workspace_id,omitempty" path:"workspace_id"`
+}
+
+// BundleUpdateBundleParams contains the request parameters for PATCH /bundles/{id}/paths/{path}.
+//
+// Update Bundle Path
+type BundleUpdateBundleParams struct {
+	// Bundle ID. Required; sent in the request path.
+	Id int64 `url:"-,omitempty" json:"-,omitempty" path:"id"`
+	// Path to operate on. Required; sent in the request path.
+	Path string `url:"-,omitempty" json:"-,omitempty" path:"path"`
+	// Allow access to subfolders content? Required.
+	Recursive *bool `url:"recursive" json:"recursive" path:"recursive"`
 }
 
 // BundleDeleteParams contains the request parameters for DELETE /bundles/{id}.
